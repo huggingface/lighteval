@@ -13,12 +13,12 @@ from lighteval.metrics.metrics_corpus import (
 from lighteval.metrics.metrics_sample import (
     BLEU,
     BLEURT,
+    MRR,
     ROUGE,
     BertScore,
     ExactMatches,
     F1_score,
     LoglikelihoodAcc,
-    MRR,
     Recall,
     StringDistance,
     acc_golds_likelihood,
