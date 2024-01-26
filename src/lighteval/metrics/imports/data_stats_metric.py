@@ -5,7 +5,6 @@ from multiprocessing import Pool
 
 import spacy
 
-from lighteval.logging.hierarchical_logger import hlog
 from lighteval.metrics.imports.data_stats_utils import Fragments
 
 
@@ -54,7 +53,7 @@ class DataStatsMetric(Metric):
         try:
             _en = spacy.load("en_core_web_sm")
         except OSError:
-            hlog("Downloading the spacy en_core_web_sm model\n" "(don't worry, this will only happen once)")
+            print("Downloading the spacy en_core_web_sm model\n" "(don't worry, this will only happen once)")
             from spacy.cli import download
 
             download("en_core_web_sm")

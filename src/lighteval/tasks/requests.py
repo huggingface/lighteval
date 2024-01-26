@@ -29,7 +29,7 @@ class Request:
     """
 
     task_name: str
-    example_index: int
+    example_index: str
     request_index: int
     context: str
 
@@ -137,7 +137,7 @@ class Doc:
     task_name: str = ""
 
     # For few-shot
-    instruction: Optional[list[str]] = None
+    instruction: Optional[str] = None
     target_for_fewshot_sorting: Optional[str] = None  # will probably have to be removed in the future
 
     # Filled when parsing and adding the few-shot context

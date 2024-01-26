@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Tuple, Union
+from typing import Iterable, Optional, Tuple, Union
 
 import torch
 import torch.nn.functional as F
@@ -307,14 +307,6 @@ class BaseModel:
             add_special_tokens = self.add_special_tokens
         return self.tokenizer.encode(string, add_special_tokens=add_special_tokens)
 
-    def tok_encode_batch(self, strings: list[str]) -> TokenSequence:
-        return self.tokenizer(
-            strings,
-            padding=True,
-            add_special_tokens=self.add_special_tokens,
-            return_tensors="pt",
-        )
-
     def tok_decode(self, tokens: torch.LongTensor) -> list[str]:
         return self.tokenizer.batch_decode(tokens, skip_special_tokens=True)
 
@@ -531,7 +523,7 @@ class BaseModel:
         return self._loglikelihood_tokens(tokenized_reqs, override_bs=override_bs, dataset_splits=DATASET_SPLITS)
 
     def loglikelihood_rolling(
-        self, requests: list[LoglikelihoodRollingRequest], override_bs=None
+        self, requests: Iterable[LoglikelihoodRollingRequest], override_bs=None
     ) -> list[LoglikelihoodReturn]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         tokenized_reqs = []

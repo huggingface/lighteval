@@ -1,5 +1,6 @@
 """Simplified version of the BertScorer lib - we only import what we need."""
 import os
+import sys
 import time
 from collections import defaultdict
 
@@ -7,8 +8,6 @@ import pandas as pd
 import torch
 from torch.nn.utils.rnn import pad_sequence
 from transformers import AutoModel, AutoTokenizer
-
-from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 
 
 def padding(arr, pad_token, dtype=torch.long):
@@ -195,14 +194,18 @@ def greedy_cos_idf(
         F = F.view(L, B)
 
     if torch.any(hyp_zero_mask):
-        hlog_warn(
+        print(
             "Warning: Empty candidate sentence detected; setting raw BERTscores to 0.",
+            file=sys.stderr,
         )
         P = P.masked_fill(hyp_zero_mask, 0.0)
         R = R.masked_fill(hyp_zero_mask, 0.0)
 
     if torch.any(ref_zero_mask):
-        hlog_warn("Warning: Empty reference sentence detected; setting raw BERTScores to 0.")
+        print(
+            "Warning: Empty reference sentence detected; setting raw BERTScores to 0.",
+            file=sys.stderr,
+        )
         P = P.masked_fill(ref_zero_mask, 0.0)
         R = R.masked_fill(ref_zero_mask, 0.0)
 
@@ -433,7 +436,7 @@ class BERTScorer:
                 count += len(ref_group)
 
         if verbose:
-            hlog("calculating scores...")
+            print("calculating scores...")
             start = time.perf_counter()
 
         if self.idf:
@@ -469,6 +472,6 @@ class BERTScorer:
 
         if verbose:
             time_diff = time.perf_counter() - start
-            hlog(f"done in {time_diff:.2f} seconds, {len(refs) / time_diff:.2f} sentences/sec")
+            print(f"done in {time_diff:.2f} seconds, {len(refs) / time_diff:.2f} sentences/sec")
 
         return out
