@@ -25,15 +25,12 @@ Optional:
 
 ### Usage
 - Launching on CPU
-    - `python main.py --model_args="pretrained=<path to your model on the hub>" --device=cpu <task parameters>  --output_dir output_dir`
-- Launching on GPU
-    - On one GPU
-        - `python main.py --model_args="pretrained=<path to your model on the hub>" --device=gpu:0 <task parameters> --output_dir output_dir`
-    - Using data parallelism on several GPUs
-        - If you want to use data parallelism, first configure accelerate (`accelerate config`).
-        - `accelerate launch <accelerate parameters> main.py --model_args="pretrained=<path to your model on the hub>" <task parameters>`
-        for instance: `accelerate launch --multi_gpu --num_processes 8 main.py --model_args="pretrained=EleutherAI/gpt-j-6b,dtype=float16,model_parallel=True" --tasks "helm|hellaswag,lighteval|hellaswag" --override_batch_size 8 --num_fewshot 10 --output_dir output_dir`
-        - Note: if you use model_parallel, accelerate will use 2 processes for model parallel, num_processes for data parallel
+    - `python src/main.py --model_args="pretrained=<path to your model on the hub>" <task parameters> --output_dir output_dir`
+- Using data parallelism on several GPUs
+    - If you want to use data parallelism, first configure accelerate (`accelerate config`).
+    - `accelerate launch <accelerate parameters> src/main.py --model_args="pretrained=<path to your model on the hub>" <task parameters>  --output_dir=<your output dir>`
+    for instance: `python -m accelerate launch --multi_gpu --num_processes=8 src/main.py --model_args "pretrained=gpt2" --tasks tasks_examples/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir=tmp/`
+    - Note: if you use model_parallel, accelerate will use 2 processes for model parallel, num_processes for data parallel
 
 The task parameters indicate which tasks you want to launch. You can select:
 - one or several tasks, with `--tasks task_names`, with task_names in the [metadata table](metadata_table.json), separated by commas. You must specify which version of the task you want (= in which suite it is), by prepending the suite name, as well as the number of training few_shots prompts for the given task, and whether you want to automatically reduce the number of few_shots if they make the prompt too long (`suite|task|few_shot|1 or 0 to automatically reduce the number of few_shots or not`).
@@ -41,15 +38,7 @@ The task parameters indicate which tasks you want to launch. You can select:
 
 Example
 If you want to compare hellaswag from helm and the harness on Gpt-6j, you can do
-`python run_eval.py --model hf_causal --model_args="pretrained=EleutherAI/gpt-j-6b" --tasks helm|hellaswag,lighteval|hellaswag`
-
-Other cool parameters:
-- `--save_queries` will print the prompts, generations and golds.
-- `--max_samples num_samples` allows you to only run an eval on a subset of samples for debugging
-- `--batch_size size` selects the batch size to use for your xp otherwise we use `accelerate` `find_executable_batch_size` auto detection of max batch size
-- `--num_fewshots` selects the number of few-shot prompts you want to use to launch your experiment - it applies to all selected evals.
-- `--num_fewshot_seeds` allows you to launch the same few-shot experiment, with several samplings for the few shot prompts (like is done in HELM). Careful, each added num_fewshot_trial increases the time the suite takes to run.
-
+`python src/main.py --model hf_causal --model_args="pretrained=EleutherAI/gpt-j-6b" --tasks helm|hellaswag|0|0,lighteval|hellaswag|0|0 --output_dir output_dir`
 
 ## Adding a new task
 To add a new task, first **add its dataset** on the hub.
@@ -199,92 +188,10 @@ echo "START TIME: $(date)"
 # Activate your relevant virtualenv
 source <path_to_your_venv>/activate #or conda activate yourenv
 
-cd <path_to_your_lighteval>/lighteval-harness
-
-accelerate_args="--config_file <path_to_your_config_file>"
+cd <path_to_your_lighteval>/lighteval
 
 export CUDA_LAUNCH_BLOCKING=1
-srun accelerate launch ${accelerate_args} run_eval.py --model "hf-causal" --model_args "pretrained=EleutherAI/gpt-j-6b" --suite "helm_general" --batch_size 8
-```
-
-### Evaluate a whole suite on 3 node, 24 GPUs total
-1) Create a shell script
-```bash
-#!/bin/bash
-# HOSTNAMES MASTER_ADDR MASTER_PORT COUNT_NODE are coming from the main script
-
-set -x -e
-
-echo "START TIME: $(date)"
-
-export TMPDIR=/scratch
-
-echo myuser=`whoami`
-echo COUNT_NODE=$COUNT_NODE
-echo LD_LIBRARY_PATH = $LD_LIBRARY_PATH
-echo PATH = $PATH
-echo HOSTNAMES = $HOSTNAMES
-echo hostname = `hostname`
-echo MASTER_ADDR= $MASTER_ADDR
-echo MASTER_PORT= $MASTER_PORT
-
-echo $SLURM_PROCID $SLURM_JOBID $SLURM_LOCALID $SLURM_NODEID
-
-H=`hostname`
-RANK=`echo -e $HOSTNAMES  | python3 -c "import sys;[sys.stdout.write(str(i)) for i,line in enumerate(next(sys.stdin).split(' ')) if line.strip() == '$H'.strip()]"`
-echo RANK=$RANK
-
-
-# Activate your relevant virtualenv
-source <path_to_your_venv>/activate #or conda activate yourenv
-# Check it worked
-echo python3 version = `python3 --version`
-
-cd <path_to_your_lighteval>/lighteval-harness
-
-# These arguments manage the multi node env
-accelerate_args="--num_processes $(( 8 * $COUNT_NODE )) --num_machines $COUNT_NODE --multi_gpu --machine_rank $RANK --main_process_ip $MASTER_ADDR --main_process_port $MASTER_PORT"
-batch_size=$(( 8 * $COUNT_NODE ))
-
-srun accelerate launch ${accelerate_args} run_eval.py --model "hf-causal" --model_args "pretrained=EleutherAI/gpt-j-6b" --suite "helm_general" --batch_size ${batch_size}
-```
-
-2) Create the matching slurm file
-
-```bash
-#!/bin/bash
-#SBATCH --job-name=kirby-3-nodes
-#SBATCH --nodes=3
-#SBATCH --exclusive
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=24
-#SBATCH --gres=gpu:8
-#SBATCH --mem-per-cpu=11G # This is essentially 1.1T / 96
-#SBATCH --partition=production-cluster
-#SBATCH --mail-type=ALL
-#SBATCH --output=slurm-%j-%x.out          # output file name
-#SBATCH --mail-user=clementine@huggingface.co
-
-set -x -e
-export TMPDIR=/scratch
-
-echo "START TIME: $(date)"
-
-# Activate your relevant virtualenv
-source <path_to_your_venv>/activate #or conda activate yourenv
-
-# sent to sub script
-export HOSTNAMES=`scontrol show hostnames "$SLURM_JOB_NODELIST"`
-export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
-export MASTER_PORT=12802
-export COUNT_NODE=`scontrol show hostnames "$SLURM_JOB_NODELIST" | wc -l`
-
-echo go $COUNT_NODE
-echo $HOSTNAMES
-
-mkdir -p logs/${SLURM_JOBID}
-
-srun --output=logs/%j/helm-%t.log bash launch_multinode.sh
+srun accelerate launch --multi_gpu --num_processes=8 src/main.py --model_args "pretrained=your model name" --tasks tasks_examples/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir=your output dir
 ```
 
 ## Releases
