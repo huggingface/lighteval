@@ -23,9 +23,9 @@ if is_accelerate_available():
 @dataclass
 class ModelInfo:
     model_name: str
-    model_sha: Optional[str] = None
-    model_dtype: Optional[str] = None
-    model_size: Optional[str] = None
+    model_sha: str = ""
+    model_dtype: str = ""
+    model_size: str = ""
 
 
 def load_model(  # noqa: C901

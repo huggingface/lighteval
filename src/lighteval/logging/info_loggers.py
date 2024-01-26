@@ -1,7 +1,8 @@
-import collections
 import os
 import time
+from collections import defaultdict
 from dataclasses import asdict, dataclass, field
+from typing import Optional
 
 import git
 import numpy as np
@@ -48,20 +49,20 @@ class GeneralConfigLogger:
     """
 
     # general
-    lighteval_sha: str = None
-    num_fewshot_seeds: int = None
-    override_batch_size: int = None
-    max_samples: int = None
-    job_id: int = None
-    start_time: float = None
-    end_time: float = None
-    total_evaluation_time_secondes: str = None
+    lighteval_sha: str = ""
+    num_fewshot_seeds: int = 0
+    override_batch_size: Optional[int] = None
+    max_samples: Optional[int] = None
+    job_id: Optional[int] = None
+    start_time: float = 0
+    end_time: float = 0
+    total_evaluation_time_secondes: str = ""
 
     # model info
-    model_name: str = None
-    model_sha: str = None
-    model_dtype: str = None
-    model_size: str = None
+    model_name: str = ""
+    model_sha: str = ""
+    model_dtype: str = ""
+    model_size: str = ""
 
     # Nanotron/Brrr config
     config: "BrrrConfig" = None
@@ -132,8 +133,8 @@ class DetailsLogger:
         """
 
         example: str = ""
-        instruction: str = ""
-        full_prompt: str = ""
+        instruction: Optional[str] = None
+        full_prompt: Optional[str] = None
         num_effective_few_shots: int = 0
         num_asked_few_shots: int = 0
         predictions: list = field(default_factory=list)
@@ -233,12 +234,12 @@ class DetailsLogger:
         hash_input_tokens: str = ""
         hash_cont_tokens: str = ""
 
-    hashes: dict[str, list[Hash]] = collections.defaultdict(list)
-    compiled_hashes: dict[str, CompiledHash] = collections.defaultdict(CompiledHash)
+    hashes: dict[str, list[Hash]] = defaultdict(list)
+    compiled_hashes: dict[str, CompiledHash] = defaultdict(CompiledHash)
 
     # dict of details for each task, i.e. winogrande: [example1_details, example2_details, ...]
-    details: dict[str, list[Detail]] = collections.defaultdict(list)
-    compiled_details: dict[str, CompiledDetail] = collections.defaultdict(CompiledDetail)
+    details: dict[str, list[Detail]] = defaultdict(list)
+    compiled_details: dict[str, CompiledDetail] = defaultdict(CompiledDetail)
     compiled_details_over_all_tasks: CompiledDetailOverAllTasks = CompiledDetailOverAllTasks()
 
     def log(self, task_name: str, task: LightevalTask, doc: Doc, outputs: list[ModelReturn], metrics: dict) -> None:
@@ -375,8 +376,8 @@ class MetricsLogger:
             Example: {"winogrande|winogrande_xl": {"accuracy": 0.5}}
     """
 
-    metrics_values: dict[str, dict[str, list[float]]] = collections.defaultdict(lambda: collections.defaultdict(list))
-    metric_aggregated: dict[str, dict[str, float]] = collections.defaultdict(lambda: collections.defaultdict(dict))
+    metrics_values: defaultdict[str, defaultdict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
+    metric_aggregated: defaultdict[str, defaultdict[str, dict]] = defaultdict(lambda: defaultdict(dict))
 
     def log(self, task_name: str, metrics: dict) -> None:
         for metric_name, metric_value in metrics.items():
