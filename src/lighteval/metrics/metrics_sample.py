@@ -31,17 +31,17 @@ class ExactMatches:
         """An exact match class.
 
         Args:
-            aggregation_function (callable, optional): How to aggregate the item results. Defaults to max. 
-                Used if there are several golds or predictions on which scores were computed. 
-            normalize_gold (callable, optional): Function to use to normalize the reference strings. 
+            aggregation_function (callable, optional): How to aggregate the item results. Defaults to max.
+                Used if there are several golds or predictions on which scores were computed.
+            normalize_gold (callable, optional): Function to use to normalize the reference strings.
                 Defaults to None if no normalization is applied.
-            normalize_pred (callable, optional): Function to use to normalize the predicted strings. 
+            normalize_pred (callable, optional): Function to use to normalize the predicted strings.
                 Defaults to None if no normalization is applied.
             strip_strings (bool, optional): Whether to strip both reference and predictions. Defaults to False.
-            type_exact_match (str, optional): Defines what type of match to apply (post normalization if present). 
+            type_exact_match (str, optional): Defines what type of match to apply (post normalization if present).
                 Can be any of `prefix`, `suffix` or `full`. Defaults to "full".
-                `prefix` checks if the prediction starts with the gold, 
-                `suffix` if the prediction ends with the gold, 
+                `prefix` checks if the prediction starts with the gold,
+                `suffix` if the prediction ends with the gold,
                 `full` if the prediction and gold are equal
         """
         if aggregation_function is None:
@@ -87,7 +87,7 @@ class ExactMatches:
             pred (str): One of the possible predictions
 
         Returns:
-            float: The exact match score. Will be 1 for a match, 0 otherwise. 
+            float: The exact match score. Will be 1 for a match, 0 otherwise.
         """
         if not pred:
             return 0
@@ -116,14 +116,14 @@ class F1_score:
         normalize_pred: callable = None,
         strip_strings: bool = False,
     ):
-        """An F1 score class. F1 is computed over the bag of words of the golds and predictions. 
+        """An F1 score class. F1 is computed over the bag of words of the golds and predictions.
 
         Args:
-            aggregation_function (callable, optional): How to aggregate the item results. Defaults to max. 
-                Used if there are several golds or predictions on which scores were computed. 
-            normalize_gold (callable, optional): Function to use to normalize the reference strings. 
+            aggregation_function (callable, optional): How to aggregate the item results. Defaults to max.
+                Used if there are several golds or predictions on which scores were computed.
+            normalize_gold (callable, optional): Function to use to normalize the reference strings.
                 Defaults to None if no normalization is applied.
-            normalize_pred (callable, optional): Function to use to normalize the predicted strings. 
+            normalize_pred (callable, optional): Function to use to normalize the predicted strings.
                 Defaults to None if no normalization is applied.
             strip_strings (bool, optional): Whether to strip both reference and predictions. Defaults to False.
         """
@@ -180,14 +180,14 @@ class F1_score:
 
 class LoglikelihoodAcc:
     def __init__(self, length_normalization: bool = False, ignore_first_space: bool = False) -> None:
-        """Log likelihood accuracy class. It tests if the highest log-probability of the possible choices 
+        """Log likelihood accuracy class. It tests if the highest log-probability of the possible choices
         is actually in the gold ones.
 
         Args:
             length_normalization (bool, optional): Whether log-likelihood scores should be normalized for sentence length. Defaults to False.
                 Should be True for most cases.
             ignore_first_space (bool, optional): Whether to ignore the first token's log prob (if it's a space only). Defaults to False.
-                Only case when it should be True is when the possible choices (for example `A`,`B` ...) have an extra 
+                Only case when it should be True is when the possible choices (for example `A`,`B` ...) have an extra
                 space added in front of them to manage tokenization issues (` A`, ` B`, ...) for some models.
         """
         self.length_normalization = length_normalization
@@ -200,7 +200,7 @@ class LoglikelihoodAcc:
         Args:
             gold_ixs (list[int]): All the gold choices indices
             choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
-            formatted_doc (Doc): Original document for the sample. 
+            formatted_doc (Doc): Original document for the sample.
                 Used to get the original choices's length for possible normalisation
 
         Returns:
@@ -227,13 +227,13 @@ class Recall:
         """Recall metric class. It checks if the top `at` best choices include one of the golds or not.
 
         Args:
-            at (int): Depth level of the recall. 
+            at (int): Depth level of the recall.
                 Recall at 1 is equivalent to a logprob accuracy without normalization.
         """
         self.recall_depth = at
 
     def compute(self, choices_logprob: list[float], gold_ixs: list[int], **kwargs) -> int:
-        """Computes the recall at the requested depth level: looks at the `n` best predicted choices (with the 
+        """Computes the recall at the requested depth level: looks at the `n` best predicted choices (with the
         highest log probabilies) and see if there is an actual gold among them.
 
         Args:
@@ -250,7 +250,7 @@ class Recall:
 
 class MRR:
     def __init__(self, length_normalization: bool = False):
-        """A mean reciprocal rank class. 
+        """A mean reciprocal rank class.
 
         Args:
             length_normalization (bool, optional): Whether to use normalisation be choice length when computing the best log-probabilities. Defaults to False.
@@ -263,11 +263,11 @@ class MRR:
         Args:
             gold_ixs (list[int]): All the gold choices indices
             choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
-            formatted_doc (Doc): Original document for the sample. 
+            formatted_doc (Doc): Original document for the sample.
                 Used to get the original choices's length for possible normalisation
 
         Returns:
-            float: MRR score. 
+            float: MRR score.
         """
         if self.length_normalization:
             choices_logprob = [choices_logprob[ix] / len(formatted_doc.choices[ix]) for ix in len(choices_logprob)]
@@ -304,14 +304,14 @@ class ROUGE:
 
         Args:
             methods (str | list[str]): What type of ROUGE scoring to use. Can be one or any of `rouge1`, `rouge2`, `rougeL` or `rougeLsum`.
-            multiple_golds (bool, optional): Whether to compute ROUGE by allowing the comparision to several golds 
+            multiple_golds (bool, optional): Whether to compute ROUGE by allowing the comparision to several golds
                 at once, or to compute ROUGE on individual gold/prediction pairs and aggregate afterwards. Defaults to False.
             bootstrap (bool, optional): Whether to use bootstrapping. Defaults to False.
-            aggregation_function (callable, optional): How to aggregate the item results. Defaults to max. 
-                Used if there are several golds or predictions on which scores were computed. 
-            normalize_gold (callable, optional): Function to use to normalize the reference strings. 
+            aggregation_function (callable, optional): How to aggregate the item results. Defaults to max.
+                Used if there are several golds or predictions on which scores were computed.
+            normalize_gold (callable, optional): Function to use to normalize the reference strings.
                 Defaults to None if no normalization is applied.
-            normalize_pred (callable, optional): Function to use to normalize the predicted strings. 
+            normalize_pred (callable, optional): Function to use to normalize the predicted strings.
                 Defaults to None if no normalization is applied.
         """
         if aggregation_function and bootstrap:
@@ -339,7 +339,7 @@ class ROUGE:
             predictions (list[str]): Predicted strings
 
         Returns:
-            float or dict: Aggregated score over the current sample's items. 
+            float or dict: Aggregated score over the current sample's items.
                 If several rouge functions have been selected, returns a dict which maps name and scores.
         """
         # Normalize
@@ -395,9 +395,9 @@ class BertScore:
         `microsoft/deberta-large-mnli` as scorer
 
         Args:
-            normalize_gold (callable, optional): Function to use to normalize the reference strings. 
+            normalize_gold (callable, optional): Function to use to normalize the reference strings.
                 Defaults to None if no normalization is applied.
-            normalize_pred (callable, optional): Function to use to normalize the predicted strings. 
+            normalize_pred (callable, optional): Function to use to normalize the predicted strings.
                 Defaults to None if no normalization is applied.
         """
         self.bert_scorer = BERTScorer(
@@ -415,7 +415,7 @@ class BertScore:
             predictions (list[str]): Predicted strings
 
         Returns:
-            dict: Scores over the current sample's items. 
+            dict: Scores over the current sample's items.
         """
         golds = as_list(golds)
         predictions = as_list(predictions)
@@ -430,7 +430,7 @@ class BertScore:
         return {"BERTScore-P": p[0].item(), "BERTScore-R": r[0].item(), "BERTScore-F": f[0].item()}
 
 
-# todo: make into clean classes with call to normalizer        
+# todo: make into clean classes with call to normalizer
 def extractiveness(formatted_doc: Doc, predictions: list[str], **kwargs):
     inp = remove_braces(formatted_doc.specific["text"])
     pred = remove_braces_and_strip(predictions[0])
@@ -442,7 +442,7 @@ def extractiveness(formatted_doc: Doc, predictions: list[str], **kwargs):
     }
 
 
-# todo: make into clean classes with call to normalizer        
+# todo: make into clean classes with call to normalizer
 def faithfulness(formatted_doc: Doc, predictions: list[str], **kwargs):
     inp = remove_braces(formatted_doc.specific["text"])
     pred = remove_braces_and_strip(predictions[0])
@@ -467,7 +467,7 @@ class BLEURT:
             predictions (list[str]): Predicted strings
 
         Returns:
-            float: Score over the current sample's items. 
+            float: Score over the current sample's items.
         """
         if len(predictions) == 1:
             predictions = predictions * len(golds)
@@ -478,7 +478,7 @@ class BLEURT:
 
 class BLEU:
     def __init__(self, n_gram: int):
-        """BLEU scorer class. Relies on `nltk`'s sentencebleu for scoring. 
+        """BLEU scorer class. Relies on `nltk`'s sentencebleu for scoring.
         TODO: Will have to move this to sacrebleu.
 
         Args:
@@ -494,7 +494,7 @@ class BLEU:
             predictions (list[str]): Predicted strings
 
         Returns:
-            float: Score over the current sample's items. 
+            float: Score over the current sample's items.
         """
         return np.mean([self._bleu_score(golds, p) for p in predictions])
 
@@ -506,7 +506,7 @@ class BLEU:
             predictions (str): One of the predicted strings
 
         Returns:
-            float: Score over the current prediction. 
+            float: Score over the current prediction.
         """
         weights = [1 if ix == self.n_gram else 0 for ix in range(1, 5)]
         return sentence_bleu([word_tokenize(g) for g in gold], word_tokenize(pred), weights=weights)

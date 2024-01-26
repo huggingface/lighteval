@@ -9,8 +9,8 @@ import sacrebleu
 import sklearn.metrics
 
 from lighteval.metrics.sample_preparator import (
-    LogprobCorpusMetricInput,
     GenerativeCorpusMetricInput,
+    LogprobCorpusMetricInput,
     PerplexityCorpusMetricInput,
 )
 from lighteval.utils import as_list
@@ -41,7 +41,7 @@ class CorpusLevelF1Score:
         """
         if self.average not in ["weighted", "macro", "micro"]:
             raise ValueError(f"A CorpusLevelF1Score must be initialized with weighted, macro, micro as an average function. {average} was used.")
-        self.average = average 
+        self.average = average
         self.num_classes = num_classes
 
     def compute(self, items: list[LogprobCorpusMetricInput]):
@@ -87,12 +87,12 @@ class CorpusLevelTranslationMetric:
 
 class CorpusLevelPerplexityMetric:
     def __init__(self, metric_type: str):
-        """Stores the relevant parameter for a corpus level perplexity metric. 
-        Perplexity metrics compute more or less the same thing, which is a variation on the 
-        average of log-probabilities over a sequence, but the normalization and processing applied 
+        """Stores the relevant parameter for a corpus level perplexity metric.
+        Perplexity metrics compute more or less the same thing, which is a variation on the
+        average of log-probabilities over a sequence, but the normalization and processing applied
         is different depending on the metric type.
-        Perplexity uses an exponential and no weights for the average, weighted perplexity uses an exponential 
-        and the number of words as weights for the log-prob average, and bits per byte uses the number of bits 
+        Perplexity uses an exponential and no weights for the average, weighted perplexity uses an exponential
+        and the number of words as weights for the log-prob average, and bits per byte uses the number of bits
         for normalization and divides the results by log(2).
 
         Args:
