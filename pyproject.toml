@@ -1,0 +1,95 @@
+# Code style
+[tool.ruff]
+# Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
+# Never enforce `E501` (line length violations).
+ignore = ["E501"]
+select = ["C", "E", "F", "I", "W"]
+line-length = 119
+fixable = ["A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W", "ANN", "ARG", "BLE", "COM", "DJ", "DTZ", "EM", "ERA", "EXE", "FBT", "ICN", "INP", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP", "YTT"]
+
+[tool.ruff.isort]
+lines-after-imports = 2
+known-first-party = ["lighteval"]
+
+[tool.ruff.format]
+quote-style = "double" # Like Black, use double quotes for strings.
+indent-style = "space" # Like Black, indent with spaces, rather than tabs.
+skip-magic-trailing-comma = false # Like Black, respect magic trailing commas.
+line-ending = "auto" # Like Black, automatically detect the appropriate line ending.
+
+# Building package
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "lighteval"
+version = "0.0.1"
+authors = [
+  { name="Clémentine Fourrier", email="clementine@huggingface.com" },
+  { name="Nathan Habib", email="nathan.habib@huggingface.com" },
+  { name="Thomas Wolf", email="thom@huggingface.com" },
+]
+maintainers = [
+  { name="Clémentine Fourrier", email="clementine@huggingface.com" },
+  { name="Nathan Habib", email="nathan.habib@huggingface.com" },
+]
+description = "A lightweight and configurable evaluation package"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT License"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+keywords = ["evaluation", "nlp", "llm"]
+dependencies = [
+    # Base dependencies
+    "transformers>=4.36.0",
+    "huggingface_hub==0.19.4",
+    "torch>=2.0",
+    "GitPython==3.1.31", # for logging
+    "datasets>=2.14.0",
+    # Test
+    "pytest==7.4.0",
+    # Prettiness
+    "termcolor==2.3.0",
+    "pytablewriter",
+    "colorama",
+    # Base metrics
+    "nltk==3.8.1",
+    "numpy",
+    "scikit-learn",
+    "spacy==3.7.2",
+    "sacrebleu",
+    "rouge_score==0.1.2",
+    "sentencepiece==0.1.99",
+    "protobuf==3.20.*", # pinned for sentencepiece compat
+    "pycountry",
+    # Code style
+    "ruff==v0.1.2",
+]
+
+[project.optional-dependencies]
+accelerate = ["accelerate@git+https://github.com/huggingface/accelerate@739b135f8367becb67ffaada12fe76e3aa60fefd"]
+tgi = ["text-generation==0.6.0"]
+optimum = ["optimum==1.12.0"]
+# Quantization and adapter weights
+quantization = ["bitsandbytes>=0.41.0", "auto-gptq>=0.4.2"]
+adapters = ["peft==0.3.0"]
+nanotron = [
+  "nanotron@git+https://github.com/huggingface/nanotron@8c1a49588d0745a6404644a86547c2dd6a63640e",
+  "brrr@git+https://github.com/huggingface/brrr@e8a503e2ec08b34eed7522d331aec3bee8cdd29b",
+  "tensorboardX"
+]
+
+
+[project.urls]
+Homepage = "https://github.com/huggingface/lighteval"
+Issues = "https://github.com/huggingface/lighteval/issues"
+# Documentation = ""
+# Changelog = "https://github.com/huggingface/lighteval/blob/master/CHANGELOG.md"

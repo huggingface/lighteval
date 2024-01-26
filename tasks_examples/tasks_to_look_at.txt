@@ -1,0 +1,8 @@
+lighteval|headqa:en|0|0 # problem when loading dataset, check dataset
+lighteval|headqa:es|0|0 # problem when loading dataset, check dataset
+bigbench
+# task with both generative and logprob, possible issue...
+helm|legalsupport|0|0
+helm|med_mcqa|0|0
+helm|med_qa|0|0
+original|arc:c:letters|0|0
