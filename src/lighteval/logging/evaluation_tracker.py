@@ -3,7 +3,7 @@ import os
 import re
 import time
 from dataclasses import asdict, is_dataclass
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Optional
 
@@ -265,7 +265,7 @@ class EvaluationTracker:
         multiple_results = len(results_files) > 1
 
         # Get last eval results date for each task (evals might be non overlapping)
-        last_eval_date_results = {}
+        last_eval_date_results: dict[str, date] = {}
         for sub_file in parquet_files:
             # subfile have this general format:
             # `2023-09-03T10-57-04.203304/details_harness|hendrycksTest-us_foreign_policy|5_2023-09-03T10-57-04.203304.parquet`
@@ -279,27 +279,29 @@ class EvaluationTracker:
             # iso_date[13] = iso_date[16] = ':'
             iso_date = iso_date[:13] + ":" + iso_date[14:16] + ":" + iso_date[17:]
 
-            eval_date = datetime.fromisoformat(iso_date)
+            eval_date: date = datetime.fromisoformat(iso_date)
 
             last_eval_date_results[task_name] = (
                 max(last_eval_date_results[task_name], eval_date) if task_name in last_eval_date_results else eval_date
             )
         max_last_eval_date_results = list(last_eval_date_results.values())[0]
+        last_eval_date_results_iso: dict[str, str] = {}
         # Now we convert them in iso-format
         for task in last_eval_date_results:
             if max_last_eval_date_results < last_eval_date_results[task]:
                 max_last_eval_date_results = last_eval_date_results[task]
-            last_eval_date_results[task] = last_eval_date_results[task].isoformat()
-        max_last_eval_date_results = max_last_eval_date_results.isoformat()
+            last_eval_date_results_iso[task] = last_eval_date_results[task].isoformat()
+
+        max_last_eval_date_results_iso = max_last_eval_date_results.isoformat()
 
         # Add the YAML for the configs
         card_metadata = MetadataConfigs()
 
         # Add the results config and add the result file as a parquet file
         for sub_file in parquet_results_files:
-            eval_date = os.path.basename(sub_file).replace("results_", "").replace(".parquet", "")
-            sanitized_eval_date = re.sub(r"[^\w\.]", "_", eval_date)
-            sanitized_last_eval_date_results = re.sub(r"[^\w\.]", "_", max_last_eval_date_results)
+            eval_date_for_file = os.path.basename(sub_file).replace("results_", "").replace(".parquet", "")
+            sanitized_eval_date = re.sub(r"[^\w\.]", "_", eval_date_for_file)
+            sanitized_last_eval_date_results = re.sub(r"[^\w\.]", "_", max_last_eval_date_results_iso)
 
             repo_file_name = os.path.basename(sub_file)
 
@@ -329,10 +331,10 @@ class EvaluationTracker:
         for sub_file in parquet_files:
             task_name = os.path.basename(sub_file).replace("details_", "").split("_2023")[0].split("_2024")[0]
             sanitized_task = re.sub(r"\W", "_", task_name)
-            eval_date = os.path.dirname(sub_file)
-            sanitized_eval_date = re.sub(r"[^\w\.]", "_", eval_date)
+            eval_date_for_file = os.path.dirname(sub_file)
+            sanitized_eval_date = re.sub(r"[^\w\.]", "_", eval_date_for_file)
             repo_file_name = os.path.join("**", os.path.basename(sub_file))
-            sanitized_last_eval_date_results = re.sub(r"[^\w\.]", "_", last_eval_date_results[task_name])
+            sanitized_last_eval_date_results = re.sub(r"[^\w\.]", "_", last_eval_date_results_iso[task_name])
 
             if multiple_results:
                 if sanitized_task not in card_metadata:
@@ -418,7 +420,7 @@ class EvaluationTracker:
 
         # Cleanup a little the dataset card
         # Get the top results
-        last_results_file = [f for f in results_files if max_last_eval_date_results.replace(":", "-") in f][0]
+        last_results_file = [f for f in results_files if max_last_eval_date_results_iso.replace(":", "-") in f][0]
         last_results_file_path = hf_hub_url(repo_id=repo_id, filename=last_results_file, repo_type="dataset")
         f = load_dataset("json", data_files=last_results_file_path, split="train")
         results_dict = f["results"][0]
@@ -451,7 +453,7 @@ class EvaluationTracker:
             f"To load the details from a run, you can for instance do the following:\n"
             f'```python\nfrom datasets import load_dataset\ndata = load_dataset("{repo_id}",\n\t"{sanitized_task}",\n\tsplit="train")\n```\n\n'
             f"## Latest results\n\n"
-            f'These are the [latest results from run {max_last_eval_date_results}]({last_results_file_path.replace("/resolve/", "/blob/")})'
+            f'These are the [latest results from run {max_last_eval_date_results_iso}]({last_results_file_path.replace("/resolve/", "/blob/")})'
             f"(note that their might be results for other tasks in the repos if successive evals didn't cover the same tasks. "
             f'You find each in the results and the "latest" split for each eval):\n\n'
             f"```python\n{results_string}\n```",
@@ -469,7 +471,7 @@ class EvaluationTracker:
         card.push_to_hub(repo_id, repo_type="dataset")
 
     def push_results_to_tensorboard(  # noqa: C901
-        self, results: dict[str, dict[str, float]], details: dict[str, DetailsLogger.CompiledDetail]
+        self, results: dict[str, dict[str, float]], details: dict[str, list[DetailsLogger.Detail]]
     ):
         if not is_nanotron_available():
             hlog_warn("You cannot push results to tensorboard with having nanotron installed. Skipping")
@@ -493,7 +495,7 @@ class EvaluationTracker:
             path_in_repo="tb",
             commit_every=6000,  # Very long time so that we can change our files names and trigger push ourselves (see below)
         )
-        bench_averages = {}
+        bench_averages: dict[str, dict[str, list[float]]] = {}
         for name, values in results.items():
             splited_name = name.split("|")
             if len(splited_name) == 3:
@@ -521,8 +523,8 @@ class EvaluationTracker:
                 else:
                     tb_context.add_scalar(f"{prefix}/{task_name}/{metric}", value, global_step=global_step)
         # e.g. MMLU
-        for name, values in bench_averages.items():
-            for metric, values in values.items():
+        for name, averages in bench_averages.items():
+            for metric, values in averages.items():
                 hlog(f"Pushing average {name} {metric} {sum(values) / len(values)} to tensorboard")
                 tb_context.add_scalar(f"{prefix}/{name}/{metric}", sum(values) / len(values), global_step=global_step)
 
