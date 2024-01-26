@@ -300,8 +300,22 @@ class ROUGE:
         normalize_pred: callable = None,
         aggregation_function: callable = None,
     ):
+        """A ROUGE wrapper method. Relies on `rouge_scorer`.
+
+        Args:
+            methods (str | list[str]): What type of ROUGE scoring to use. Can be one or any of `rouge1`, `rouge2`, `rougeL` or `rougeLsum`.
+            multiple_golds (bool, optional): Whether to compute ROUGE by allowing the comparision to several golds 
+                at once, or to compute ROUGE on individual gold/prediction pairs and aggregate afterwards. Defaults to False.
+            bootstrap (bool, optional): Whether to use bootstrapping. Defaults to False.
+            aggregation_function (callable, optional): How to aggregate the item results. Defaults to max. 
+                Used if there are several golds or predictions on which scores were computed. 
+            normalize_gold (callable, optional): Function to use to normalize the reference strings. 
+                Defaults to None if no normalization is applied.
+            normalize_pred (callable, optional): Function to use to normalize the predicted strings. 
+                Defaults to None if no normalization is applied.
+        """
         if aggregation_function and bootstrap:
-            hlog_warn("Can't use both bootstrapping and an aggreagation function in Rouge. Keeping bootstrap.")
+            hlog_warn("Can't use both bootstrapping and an aggregation function in Rouge. Keeping bootstrap.")
         self.aggregation_function = aggregation_function
         if self.aggregation_function is None:
             self.aggregation_function = np.mean
@@ -317,7 +331,17 @@ class ROUGE:
         self.normalize_gold = normalize_gold
         self.normalize_pred = normalize_pred
 
-    def compute(self, golds: list[str], predictions: list[str], **kwargs):
+    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float | dict:
+        """Computes the metric(s) over a list of golds and predictions for one single sample.
+
+        Args:
+            golds (list[str]): Reference targets
+            predictions (list[str]): Predicted strings
+
+        Returns:
+            float or dict: Aggregated score over the current sample's items. 
+                If several rouge functions have been selected, returns a dict which maps name and scores.
+        """
         # Normalize
         if self.normalize_gold:
             golds = [self.normalize_gold(g) for g in golds]
@@ -326,17 +350,17 @@ class ROUGE:
             predictions = [self.normalize_pred(p) for p in predictions]
 
         if self.bootstrap:  # For t5 style rouge score
-            scores = self.rouge_score_with_bootsrap(golds=golds, predictions=predictions)
+            scores = self._rouge_score_with_bootsrap(golds=golds, predictions=predictions)
         elif self.multiple_golds:
-            scores = self.rouge_score_multi_golds(golds=golds, preds=predictions)
+            scores = self._rouge_score_multi_golds(golds=golds, preds=predictions)
         else:
-            scores = self.rouge_score(golds=golds, preds=predictions)
+            scores = self._rouge_score(golds=golds, preds=predictions)
 
         if len(scores) == 1:
             return list(scores.values())[0]
         return scores
 
-    def rouge_score(self, golds: list[str], preds: list[str]):
+    def _rouge_score(self, golds: list[str], preds: list[str]):
         scores = {m: [] for m in self.methods}
         for pred in preds:
             for gold in golds:
@@ -345,7 +369,7 @@ class ROUGE:
                     scores[method].append(cur_scores[method].fmeasure)
         return {method: self.aggregation_function(scores[method]) for method in self.methods}
 
-    def rouge_score_multi_golds(self, golds: list[str], preds: list[str]):
+    def _rouge_score_multi_golds(self, golds: list[str], preds: list[str]):
         scores = {m: [] for m in self.methods}
         for pred in preds:
             cur_scores = self.scorer.score_multi(golds, pred)
@@ -353,7 +377,7 @@ class ROUGE:
                 scores[method].append(cur_scores[method].fmeasure)
         return {method: self.aggregation_function(scores[method]) for method in self.methods}
 
-    def rouge_score_with_bootsrap(self, golds: list[str], preds: list[str]):
+    def _rouge_score_with_bootsrap(self, golds: list[str], preds: list[str]):
         aggregator = scoring.BootstrapAggregator()
         for g, p in zip(golds, preds):
             aggregator.add_scores(self.scorer.score(g, p))
@@ -367,6 +391,15 @@ class BertScore:
         normalize_gold: callable = None,
         normalize_pred: callable = None,
     ):
+        """A BERT scorer class. Relies on some called extracted from `bert-score`. By default, will use the
+        `microsoft/deberta-large-mnli` as scorer
+
+        Args:
+            normalize_gold (callable, optional): Function to use to normalize the reference strings. 
+                Defaults to None if no normalization is applied.
+            normalize_pred (callable, optional): Function to use to normalize the predicted strings. 
+                Defaults to None if no normalization is applied.
+        """
         self.bert_scorer = BERTScorer(
             model_type="microsoft/deberta-large-mnli", lang="en", rescale_with_baseline=True, num_layers=9
         )
@@ -374,7 +407,16 @@ class BertScore:
         self.normalize_gold = normalize_gold
         self.normalize_pred = normalize_pred
 
-    def compute(self, golds: list[str], predictions: list[str]):
+    def compute(self, golds: list[str], predictions: list[str]) -> dict:
+        """Computes the prediction, recall and f1 score using the bert scorer.
+
+        Args:
+            golds (list[str]): Reference targets
+            predictions (list[str]): Predicted strings
+
+        Returns:
+            dict: Scores over the current sample's items. 
+        """
         golds = as_list(golds)
         predictions = as_list(predictions)
         # Normalize
@@ -388,6 +430,7 @@ class BertScore:
         return {"BERTScore-P": p[0].item(), "BERTScore-R": r[0].item(), "BERTScore-F": f[0].item()}
 
 
+# todo: make into clean classes with call to normalizer        
 def extractiveness(formatted_doc: Doc, predictions: list[str], **kwargs):
     inp = remove_braces(formatted_doc.specific["text"])
     pred = remove_braces_and_strip(predictions[0])
@@ -399,6 +442,7 @@ def extractiveness(formatted_doc: Doc, predictions: list[str], **kwargs):
     }
 
 
+# todo: make into clean classes with call to normalizer        
 def faithfulness(formatted_doc: Doc, predictions: list[str], **kwargs):
     inp = remove_braces(formatted_doc.specific["text"])
     pred = remove_braces_and_strip(predictions[0])
@@ -407,13 +451,24 @@ def faithfulness(formatted_doc: Doc, predictions: list[str], **kwargs):
 
 
 class BLEURT:
-    # Model chosen could also be Elron/bleurt-base-128
     def __init__(self):
+        """Creates a BLEURT scorer using a light bleurt-tiny-512 model.
+        For more complex use cases, could also be Elron/bleurt-base-128
+        """
         self.tokenizer = AutoTokenizer.from_pretrained("Elron/bleurt-tiny-512")
         self.model = AutoModelForSequenceClassification.from_pretrained("Elron/bleurt-tiny-512")
         self.model.eval()
 
     def compute(self, golds: list[str], predictions: list[str]) -> float:
+        """Uses the stored BLEURT scorer to compute the score on the current sample.
+
+        Args:
+            golds (list[str]): Reference targets
+            predictions (list[str]): Predicted strings
+
+        Returns:
+            float: Score over the current sample's items. 
+        """
         if len(predictions) == 1:
             predictions = predictions * len(golds)
         scores = self.model(**self.tokenizer(golds, predictions, return_tensors="pt"))[0].squeeze()
@@ -423,12 +478,36 @@ class BLEURT:
 
 class BLEU:
     def __init__(self, n_gram: int):
+        """BLEU scorer class. Relies on `nltk`'s sentencebleu for scoring. 
+        TODO: Will have to move this to sacrebleu.
+
+        Args:
+            n_gram (int): Number of n_grams to use for scoring.
+        """
         self.n_gram = n_gram
 
     def compute(self, golds: list[str], predictions: list[str], **kwargs):
-        return np.mean([self.bleu_score(golds, p) for p in predictions])
+        """Computes the sentence level BLEU between the golds and each prediction, then takes the average.
 
-    def bleu_score(self, gold: list[str], pred: str):
+        Args:
+            golds (list[str]): Reference targets
+            predictions (list[str]): Predicted strings
+
+        Returns:
+            float: Score over the current sample's items. 
+        """
+        return np.mean([self._bleu_score(golds, p) for p in predictions])
+
+    def _bleu_score(self, gold: list[str], pred: str) -> float:
+        """Computes the BLEU score between a list of golds and the current prediction.
+
+        Args:
+            golds (list[str]): Reference targets
+            predictions (str): One of the predicted strings
+
+        Returns:
+            float: Score over the current prediction. 
+        """
         weights = [1 if ix == self.n_gram else 0 for ix in range(1, 5)]
         return sentence_bleu([word_tokenize(g) for g in gold], word_tokenize(pred), weights=weights)
 
@@ -439,6 +518,12 @@ class StringDistance:
         metric_types: list[str] | str,
         strip_prediction: bool = True,
     ):
+        """Contains a number of string distance and edition metrics. Relies on nltk to compute the edit distance.
+
+        Args:
+            metric_types (list[str] | str): Can be one or any of `longest_common_prefix_length`, `edit_distance` or `edit_similarity`.
+            strip_prediction (bool, optional): Whether to strip the prediction. Defaults to True.
+        """
         allowed_values = ["longest_common_prefix_length", "edit_distance", "edit_similarity"]
         metric_types = as_list(metric_types)
         if any(metric_type not in allowed_values for metric_type in metric_types):
@@ -449,7 +534,16 @@ class StringDistance:
         self.strip_prediction = strip_prediction
         self.sample_aggregations = {"longest_common_prefix_length": max, "edit_distance": min, "edit_similarity": max}
 
-    def compute(self, gold: list[str], predictions: list[str], **kwargs):
+    def compute(self, gold: list[str], predictions: list[str], **kwargs) -> dict:
+        """Computes all the requested metrics on the golds and prediction.
+
+        Args:
+            gold (list[str]): A list of possible golds. If it contains more than one item, only the first one is kept.
+            predictions (list[str]): Predicted strings.
+
+        Returns:
+           dict: The different scores computed
+        """
         if len(gold) > 0:
             hlog_warn("Provided more than one gold to compute a string distance metric. Just using the first one.")
         reference = gold[0]
@@ -488,7 +582,7 @@ class StringDistance:
         """Compute the length of the longest common prefix."""
         min_len = min(len(s1), len(s2))
         s1, s2 = s1[:min_len], s2[:min_len]
-        (nonzeros,) = np.cumprod(s1 == s2).nonzero()  # Get indices (inclusive) up to which s1 and s2 are the same.
+        (nonzeros,) = np.cumprod(s1 == s2).nonzero()
         return int(np.max(nonzeros)) + 1 if len(nonzeros) > 0 else 0
 
     def edit_similarity(self, s1, s2):
@@ -500,7 +594,4 @@ class StringDistance:
             arXiv preprint arXiv:2107.06499 (2021).
         """
         edist = edit_distance(s1, s2)
-
-        # Some models can return an empty completion e.g., openai/text-davinci-002
-        # returns '<|endoftext|>' token immediately for a certain request.
         return 1.0 - edist / max(len(s1), len(s2)) if len(s1) > 0 and len(s2) > 0 else 0
