@@ -3,14 +3,12 @@
 ## Context
 LightEval is an evaluation suite which gathers a selection of features from widely used benchmarks recently proposed:
 - from the [Eleuther AI Harness](https://github.com/EleutherAI/lm-evaluation-harness), we use the nice request management
-- from [HELM](https://crfm.stanford.edu/helm/latest/), we keep the qualitative metrics
-- from our previous internal evaluation suite, we keep the easy evaluation loading.
+- from [HELM](https://crfm.stanford.edu/helm/latest/), we keep the qualitative and rich metrics
+- from our previous internal evaluation suite, we keep the easy edition, evaluation loading and speed.
 
 We also ported all the evaluations from HELM and BigBench.
 
 ## How to install and use
-At the moment, the core of our code relies on the evaluation harness as a dependency. This is likely to change from v0 to v1.
-
 ### Requirements
 0) Create your virtual environment using virtualenv or conda depending on your preferences. We require Python3.10
 
