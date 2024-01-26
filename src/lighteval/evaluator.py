@@ -3,7 +3,7 @@
 
 import collections
 import copy
-from typing import Dict, Optional, Union
+from typing import Dict, Union
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog
@@ -18,8 +18,8 @@ def evaluate(  # noqa: C901
     requests_dict: Dict[RequestType, list[Request]],
     docs: Dict[TaskExampleId, Doc],
     task_dict: Dict[str, LightevalTask],
-    evaluation_tracker: EvaluationTracker,
-    override_bs: Optional[int] = None,
+    override_bs: int = None,
+    evaluation_tracker: EvaluationTracker = None,
 ) -> EvaluationTracker:
     """Instantiate and evaluate a model on a list of tasks.
 

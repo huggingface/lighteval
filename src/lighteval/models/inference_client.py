@@ -1,20 +1,12 @@
 import asyncio
 import math
-from typing import Coroutine, Tuple, Union
+from typing import Coroutine, List, Tuple, Union
 
 import numpy as np
 import requests
 from tqdm import tqdm
 from transformers import AutoTokenizer
 
-from lighteval.models.model_output import GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
-from lighteval.tasks.requests import (
-    GreedyUntilRequest,
-    GreedyUntilWithLogitsRequest,
-    LoglikelihoodRequest,
-    LoglikelihoodRollingRequest,
-    LoglikelihoodSingleTokenRequest,
-)
 from lighteval.utils import NO_TGI_ERROR_MSG, as_list, is_tgi_available
 
 
@@ -48,7 +40,7 @@ class ModelClient:
         self.model_info = requests.get(f"{address}/info").json()
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_info["model_id"])
 
-    def __process_request_generate(self, request: Tuple[str, Union[Tuple, list]]) -> Coroutine[None, list, str]:
+    def __process_request_generate(self, request: Tuple[str, Union[Tuple, List]]) -> Coroutine[None, List, str]:
         context, stopping_arugments = request
 
         if isinstance(stopping_arugments, tuple):
@@ -75,11 +67,11 @@ class ModelClient:
 
         return generated_text
 
-    async def __process_batch_generate(self, requests: list[Tuple[str, Union[Tuple, list]]]):
+    async def __process_batch_generate(self, requests: List[Tuple[str, Union[Tuple, List]]]):
         return await asyncio.gather(*[self.__process_request_generate(request) for request in requests])
 
-    def greedy_until(self, requests: list[GreedyUntilRequest], override_bs=None) -> list[GenerateReturn]:
-        generated_texts: list[str] = []
+    def greedy_until(self, requests: List[Tuple[str, Union[Tuple, List]]], override_bs=None) -> List[str]:
+        generated_texts: List[str] = []
 
         batch_size = override_bs if override_bs > 0 else BATCH_SIZE
 
@@ -91,16 +83,16 @@ class ModelClient:
 
         return generated_texts
 
-    def __process_request_logprob(self, request: Tuple[str, str]) -> Coroutine[None, list, str]:
+    def __process_request_logprob(self, request: Tuple[str, str]) -> Coroutine[None, List, str]:
         context, choice = request
         out = self.client.generate(context + choice, max_new_tokens=1, decoder_input_details=True)
         return out
 
-    async def __process_batch_logprob(self, requests: list[Tuple[str, str]]):
+    async def __process_batch_logprob(self, requests: List[Tuple[str, str]]):
         return await asyncio.gather(*[self.__process_request_logprob(request) for request in requests])
 
-    def loglikelihood(self, requests: list[LoglikelihoodRequest], override_bs=None) -> list[LoglikelihoodReturn]:
-        res: list[Tuple[float, bool]] = []
+    def loglikelihood(self, requests: List[Tuple[str, str]], override_bs=None) -> List[Tuple[float, bool]]:
+        res: List[Tuple[float, bool]] = []
 
         batch_size = override_bs if override_bs > 0 else BATCH_SIZE
 
@@ -124,21 +116,6 @@ class ModelClient:
                 res.append((logit_sum, False))
 
         return res
-
-    def greedy_until_with_logits(
-        self, requests: list[GreedyUntilWithLogitsRequest], override_bs=None
-    ) -> list[GenerateReturn]:
-        raise NotImplementedError("Greedy until with logits is not implemented for TGI")
-
-    def loglikelihood_rolling(
-        self, requests: list[LoglikelihoodRollingRequest], override_bs=None
-    ) -> list[LoglikelihoodReturn]:
-        raise NotImplementedError("Loglikelihood rolling is not implemented for TGI")
-
-    def loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs=None
-    ) -> list[LoglikelihoodSingleTokenReturn]:
-        raise NotImplementedError("Loglikelihood single token is not implemented for TGI")
 
     def set_cache_hook(self, cache_hook):
         self.cache_hook = cache_hook

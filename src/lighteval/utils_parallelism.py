@@ -1,7 +1,6 @@
 import functools
 import gc
 import inspect
-from typing import Optional
 
 import torch
 
@@ -32,7 +31,7 @@ def should_reduce_batch_size(exception: Exception) -> bool:
     return False
 
 
-def find_executable_batch_size(function: Optional[callable] = None, starting_batch_size: int = 128):
+def find_executable_batch_size(function: callable = None, starting_batch_size: int = 128):
     """
     A basic decorator that will try to execute `function`. If it fails from exceptions related to out-of-memory or
     CUDNN, the batch size is cut in half and passed to `function`

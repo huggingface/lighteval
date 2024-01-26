@@ -5,7 +5,6 @@ import time
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from datasets import Dataset, load_dataset
 from datasets.utils.metadata import MetadataConfigs
@@ -250,7 +249,7 @@ class EvaluationTracker:
 
         self.recreate_metadata_card(repo_id, model_name)
 
-    def recreate_metadata_card(self, repo_id: str, model_name: Optional[str] = None) -> None:  # noqa: C901
+    def recreate_metadata_card(self, repo_id: str, model_name: str = None) -> None:  # noqa: C901
         """Fully updates the details repository metadata card for the currently evaluated model
 
         Args:

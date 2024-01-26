@@ -38,10 +38,10 @@ class AdapterModel(BaseModel):
             model = PeftModel.from_pretrained(base, adapter_weights)
             model = model.merge_and_unload()
 
-            print("Saving model with adapter applied")
+            hlog("Saving model with adapter applied")
             base.save_pretrained(merged_path)
 
-        print(f"Loading model from {merged_path}")
+        hlog(f"Loading model from {merged_path}")
 
         model = self.AUTO_MODEL_CLASS.from_pretrained(
             merged_path,

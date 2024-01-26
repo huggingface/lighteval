@@ -41,10 +41,10 @@ class DeltaModel(BaseModel):
                 assert name in delta.state_dict()
                 param.data += delta.state_dict()[name]
 
-            print("Saving delta-applied model")
+            hlog("Saving delta-applied model")
             base.save_pretrained(merged_path)
 
-        print(f"Loading delta-applied model from {delta_model}-delta-applied")
+        hlog(f"Loading delta-applied model from {delta_model}-delta-applied")
 
         model = self.AUTO_MODEL_CLASS.from_pretrained(
             merged_path,

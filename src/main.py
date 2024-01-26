@@ -85,6 +85,7 @@ def get_parser():
         help="Hub organisation where you want to store the results. Your current token must have write access to it",
     )
     parser.add_argument("--job_id", type=str, help="Optional Job ID for future reference", default="")
+    parser.add_argument("--use_chat_template", default=False, action="store_true")
     parser.add_argument(
         "--custom_tasks_file",
         type=str,
@@ -97,7 +98,6 @@ def get_parser():
         default=None,
         help="Id of a task, e.g. 'original|mmlu:abstract_algebra|5' or path to a texte file with a list of tasks",
     )
-
     return parser
 
 
@@ -145,6 +145,7 @@ def main(args):
                 model,
                 args.max_samples,
                 evaluation_tracker,
+                args.use_chat_template,
             )
 
     with htrack_block("Setting seeds and waiting for all processes"):
