@@ -13,6 +13,7 @@ from lighteval.metrics.metrics_corpus import (
 from lighteval.metrics.metrics_sample import (
     BLEU,
     BLEURT,
+    MRR,
     ROUGE,
     BertScore,
     ExactMatches,
@@ -23,7 +24,6 @@ from lighteval.metrics.metrics_sample import (
     acc_golds_likelihood,
     extractiveness,
     faithfulness,
-    mrr,
 )
 from lighteval.metrics.normalizations import (
     bigbench_normalizer,
@@ -277,7 +277,7 @@ class Metrics(Enum):
     )
     mrr = SampleLevelMetric(
         metric="mrr",
-        sample_level_fn=mrr,
+        sample_level_fn=MRR().compute,
         category=MetricCategory.MULTICHOICE,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=np.mean,
