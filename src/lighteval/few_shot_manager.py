@@ -3,12 +3,16 @@ from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
 from itertools import cycle
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from transformers import AutoTokenizer
 
 from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.tasks.requests import Doc
+
+
+if TYPE_CHECKING:
+    from lighteval.tasks.lighteval_task import LightevalTask
 
 
 @dataclass
@@ -32,7 +36,7 @@ ALLOWED_SELECTIONS = FewShotSelection._member_names_
 
 
 class FewShotSampler:
-    def __init__(self, few_shots_select: str = "balanced", few_shots_split: Optional[str] = None):
+    def __init__(self, few_shots_select: str = "balanced", few_shots_split: str = None):
         # If no info was selected in the config file, it will pass None by default
         if few_shots_select is None:
             few_shots_select = "balanced"
@@ -52,9 +56,12 @@ class FewShotSampler:
         task: "LightevalTask",  # noqa F821
         num_fewshot: int,
         variance_seed: int,
-        sampler: Optional[random.Random] = None,
-        formatted_doc: Optional[Doc] = None,
+        sampler: random.Random = None,
+        formatted_doc: Doc = None,
     ):
+        if num_fewshot == 0:
+            return []
+
         # If there is no cache, we initialize it
         if variance_seed not in self._fewshot_cache:
             fewshotpool = task.fewshot_docs()
@@ -104,7 +111,7 @@ class FewShotSampler:
         fewshotpool: list[Doc],
         num_fewshot: int,
         variance_seed: int,
-        task: "LightevalTask",  # noqa F821
+        task: "LightevalTask",
     ):
         # rnd = random.Random(variance_seed)
         random.seed(variance_seed)
@@ -149,9 +156,44 @@ class FewShotSampler:
 
         self._fewshot_cache[variance_seed] = examples  # Store few shot examples
 
+    def get_examples_with_chat_template(
+        self,
+        task: "LightevalTask",
+        tokenizer: AutoTokenizer,
+        example: str,
+        instruction: str,
+        fewshot_ex: list[str],
+    ):
+        examples = []
+        for ex in fewshot_ex:
+            # many places to put these "\n" though
+            examples.append({"role": "user", "content": task.doc_to_text_without_instructions(ex)})
+            examples.append({"role": "assistant", "content": task.doc_to_target(ex)})
+        # We add the actual example
+        examples.append({"role": "user", "content": example})
+        # We add the initial instruction if present
+        examples[0]["content"] = instruction + examples[0]["content"]
+        return tokenizer.apply_chat_template(examples, tokenize=False, add_generation_prompt=True)
+
+    def get_examples(
+        self,
+        task: "LightevalTask",
+        example: str,
+        instruction: str,
+        fewshot_ex: list[str],
+    ):
+        if len(fewshot_ex) == 0:
+            return instruction + example
+
+        labeled_examples = (
+            "\n\n".join([task.doc_to_text_without_instructions(ex) + task.doc_to_target(ex) for ex in fewshot_ex])
+            + "\n\n"
+        )
+        return instruction + labeled_examples + example
+
     def fewshot_context(
         self,
-        task: "LightevalTask",  # noqa F821
+        task: "LightevalTask",
         doc: Doc,
         num_fewshot: int,
         seed: int,
@@ -159,6 +201,7 @@ class FewShotSampler:
         truncate_few_shots: bool = False,
         max_model_length: Optional[int] = None,
         tokenizer: Optional[AutoTokenizer] = None,
+        use_chat_template=False,
     ):
         """Returns a fewshot context string that is made up of a prepended description
         (if provided), the `num_fewshot` number of examples, and an appended prompt example.
@@ -173,51 +216,58 @@ class FewShotSampler:
         :returns: str
             The fewshot context.
         """
+        if use_chat_template and tokenizer is None:
+            raise Exception("You can't use a chat template if you don't pass the tokenizer")
+
         example, instruction = task.doc_to_text_and_instructions(doc)
 
-        if num_fewshot == 0:
-            labeled_examples = ""
-            num_effective_few_shots = 0
-        else:
-            fewshot_ex = self.sample_fewshot_examples(
-                task=task, num_fewshot=num_fewshot, formatted_doc=doc, variance_seed=seed, sampler=sampler
+        # will be an empty list if num_fewshot == 0
+        fewshot_ex = self.sample_fewshot_examples(
+            task=task, num_fewshot=num_fewshot, formatted_doc=doc, variance_seed=seed, sampler=sampler
+        )
+
+        num_effective_fewshots = num_fewshot
+
+        if use_chat_template:
+            output = self.get_examples_with_chat_template(
+                task=task, tokenizer=tokenizer, example=example, instruction=instruction, fewshot_ex=fewshot_ex
             )
+            toks = tokenizer(output)["input_ids"]
+        else:
+            output = self.get_examples(task=task, example=example, instruction=instruction, fewshot_ex=fewshot_ex)
+            toks = tokenizer(output)["input_ids"]
 
-            # Manages truncation while respecting the tokenization
-            if truncate_few_shots and max_model_length is not None and tokenizer is not None:
-                num_effective_few_shots = len(fewshot_ex)
-                labeled_examples = (
-                    "\n\n".join(
-                        [task.doc_to_text_without_instructions(ex) + task.doc_to_target(ex) for ex in fewshot_ex]
-                    )
-                    + "\n\n"
-                )
-                toks = tokenizer(instruction + labeled_examples + example)["input_ids"]
-                # If self.generation_size is None, the maximum allowed generation size depends
-                # on the model maximum context length, not on the task - we don't take it into account here
-                gen_size = task.generation_size if task.generation_size is not None else 0
-                while len(toks) + gen_size > max_model_length and num_effective_few_shots >= 0:
-                    num_effective_few_shots -= 1
-                    fewshot_ex = fewshot_ex[:-1]
-                    labeled_examples = (
-                        "\n\n".join(
-                            [task.doc_to_text_without_instructions(ex) + task.doc_to_target(ex) for ex in fewshot_ex]
-                        )
-                        + "\n\n"
-                    )
-                    toks = tokenizer(instruction + labeled_examples + example)["input_ids"]
-            else:  # No truncation
-                labeled_examples = (
-                    "\n\n".join(
-                        [task.doc_to_text_without_instructions(ex) + task.doc_to_target(ex) for ex in fewshot_ex]
-                    )
-                    + "\n\n"
-                )
-                num_effective_few_shots = num_fewshot
+        # If we need to truncate few-shots to fit in the context
+        if truncate_few_shots and max_model_length is not None and tokenizer is not None:
+            # If self.generation_size is None, the maximum allowed generation size depends
+            # on the model maximum context length, not on the task - we don't take it into account here
+            # but we probably should
+            gen_size = task.generation_size if task.generation_size is not None else 0
 
-        return instruction + labeled_examples + example, num_effective_few_shots
+            while len(toks) + gen_size > max_model_length and num_effective_fewshots >= 0:
+                num_effective_fewshots -= 1
 
-    def get_fewshot_seeds(self, few_shot_iterations: Optional[int] = None) -> list[int]:
+                if use_chat_template:
+                    output = self.get_examples_with_chat_template(
+                        task=task,
+                        tokenizer=tokenizer,
+                        example=example,
+                        instruction=instruction,
+                        fewshot_ex=fewshot_ex[:num_effective_fewshots],
+                    )
+                    toks = tokenizer(output)["input_ids"]
+                else:
+                    output = self.get_examples(
+                        task=task,
+                        example=example,
+                        instruction=instruction,
+                        fewshot_ex=fewshot_ex[:num_effective_fewshots],
+                    )
+                    toks = tokenizer(output)["input_ids"]
+
+        return output, num_effective_fewshots
+
+    def get_fewshot_seeds(self, few_shot_iterations: int = None) -> list[int]:
         """Return a list of seeds for sampling several times the few shots"""
         # todo @saylortwift: check which seed for bb
         if few_shot_iterations <= 1:
