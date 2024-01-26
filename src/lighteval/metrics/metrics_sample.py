@@ -1,3 +1,6 @@
+"""This module manages all the metrics occurring at the sample level. The results of said metrics are then aggregated
+using simple function (min, mean, max, ...) at the corpus level. Most metrics fall under this category.
+"""
 import nltk
 import numpy as np
 from nltk.metrics.distance import edit_distance
@@ -16,7 +19,6 @@ from lighteval.tasks.requests import Doc
 from lighteval.utils import as_list
 
 
-# Parametrized metrics are defined as classes
 class ExactMatches:
     def __init__(
         self,
@@ -26,6 +28,22 @@ class ExactMatches:
         strip_strings: bool = False,
         type_exact_match: str = "full",
     ):
+        """An exact match class.
+
+        Args:
+            aggregation_function (callable, optional): How to aggregate the item results. Defaults to max. 
+                Used if there are several golds or predictions on which scores were computed. 
+            normalize_gold (callable, optional): Function to use to normalize the reference strings. 
+                Defaults to None if no normalization is applied.
+            normalize_pred (callable, optional): Function to use to normalize the predicted strings. 
+                Defaults to None if no normalization is applied.
+            strip_strings (bool, optional): Whether to strip both reference and predictions. Defaults to False.
+            type_exact_match (str, optional): Defines what type of match to apply (post normalization if present). 
+                Can be any of `prefix`, `suffix` or `full`. Defaults to "full".
+                `prefix` checks if the prediction starts with the gold, 
+                `suffix` if the prediction ends with the gold, 
+                `full` if the prediction and gold are equal
+        """
         if aggregation_function is None:
             aggregation_function = max
         self.aggregation_function = aggregation_function
@@ -41,6 +59,15 @@ class ExactMatches:
         self.type_exact_match = type_exact_match
 
     def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float:
+        """Computes the metric over a list of golds and predictions for one single sample.
+
+        Args:
+            golds (list[str]): Reference targets
+            predictions (list[str]): Predicted strings
+
+        Returns:
+            float: Aggregated score over the current sample's items.
+        """
         results = []
         # We might need to flatten golds if they are a list of lists
         for gold in golds:
@@ -53,6 +80,15 @@ class ExactMatches:
         gold: str,
         pred: str,
     ) -> float:
+        """Compares two strings only.
+
+        Args:
+            gold (str): One of the possible references
+            pred (str): One of the possible predictions
+
+        Returns:
+            float: The exact match score. Will be 1 for a match, 0 otherwise. 
+        """
         if not pred:
             return 0
 
@@ -79,8 +115,18 @@ class F1_score:
         normalize_gold: callable = None,
         normalize_pred: callable = None,
         strip_strings: bool = False,
-        type_f1: str = "",
     ):
+        """An F1 score class. F1 is computed over the bag of words of the golds and predictions. 
+
+        Args:
+            aggregation_function (callable, optional): How to aggregate the item results. Defaults to max. 
+                Used if there are several golds or predictions on which scores were computed. 
+            normalize_gold (callable, optional): Function to use to normalize the reference strings. 
+                Defaults to None if no normalization is applied.
+            normalize_pred (callable, optional): Function to use to normalize the predicted strings. 
+                Defaults to None if no normalization is applied.
+            strip_strings (bool, optional): Whether to strip both reference and predictions. Defaults to False.
+        """
         if aggregation_function is None:
             aggregation_function = max
         self.aggregation_function = aggregation_function
@@ -88,9 +134,17 @@ class F1_score:
         self.normalize_gold = normalize_gold
         self.normalize_pred = normalize_pred
         self.strip_strings = strip_strings
-        self.type_f1 = type_f1
 
     def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float:
+        """Computes the metric over a list of golds and predictions for one single sample.
+
+        Args:
+            golds (list[str]): Reference targets
+            predictions (list[str]): Predicted strings
+
+        Returns:
+            float: Aggregated score over the current sample's items.
+        """
         results = []
         # We might need to flatten golds if they are a list of lists
         for gold in golds:
@@ -99,6 +153,15 @@ class F1_score:
         return self.aggregation_function(results)
 
     def compute_one_item(self, gold: str, pred: str) -> float:
+        """Compares two strings only.
+
+        Args:
+            gold (str): One of the possible references
+            pred (str): One of the possible predictions
+
+        Returns:
+            float: The f1 score over the bag of words, computed using nltk.
+        """
         if self.normalize_gold:
             gold = self.normalize_gold(gold)
 
@@ -117,10 +180,32 @@ class F1_score:
 
 class LoglikelihoodAcc:
     def __init__(self, length_normalization: bool = False, ignore_first_space: bool = False) -> None:
+        """Log likelihood accuracy class. It tests if the highest log-probability of the possible choices 
+        is actually in the gold ones.
+
+        Args:
+            length_normalization (bool, optional): Whether log-likelihood scores should be normalized for sentence length. Defaults to False.
+                Should be True for most cases.
+            ignore_first_space (bool, optional): Whether to ignore the first token's log prob (if it's a space only). Defaults to False.
+                Only case when it should be True is when the possible choices (for example `A`,`B` ...) have an extra 
+                space added in front of them to manage tokenization issues (` A`, ` B`, ...) for some models.
+        """
         self.length_normalization = length_normalization
         self.ignore_first_space = ignore_first_space
 
-    def compute(self, gold_ixs: list[int], choices_logprob: list[list[float]], formatted_doc: Doc, **kwargs):
+    def compute(self, gold_ixs: list[int], choices_logprob: list[float], formatted_doc: Doc, **kwargs) -> int:
+        """Computs the log likelihood accuracy: is the choice with the highest logprob in `choices_logprob` present
+        in the `gold_idxs`?
+
+        Args:
+            gold_ixs (list[int]): All the gold choices indices
+            choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
+            formatted_doc (Doc): Original document for the sample. 
+                Used to get the original choices's length for possible normalisation
+
+        Returns:
+            int: The eval score: 1 if the best log-prob choice is in gold, 0 otherwise.
+        """
         if self.length_normalization:
             normalized_log_probs = []
             for ix, choice in enumerate(formatted_doc.choices):
@@ -139,21 +224,67 @@ class LoglikelihoodAcc:
 
 class Recall:
     def __init__(self, at: int) -> None:
+        """Recall metric class. It checks if the top `at` best choices include one of the golds or not.
+
+        Args:
+            at (int): Depth level of the recall. 
+                Recall at 1 is equivalent to a logprob accuracy without normalization.
+        """
         self.recall_depth = at
 
-    def compute(self, choices_logprob, gold_ixs, **kwargs):
-        if self.at == 1:
+    def compute(self, choices_logprob: list[float], gold_ixs: list[int], **kwargs) -> int:
+        """Computes the recall at the requested depth level: looks at the `n` best predicted choices (with the 
+        highest log probabilies) and see if there is an actual gold among them.
+
+        Args:
+            gold_ixs (list[int]): All the gold choices indices
+            choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
+
+        Returns:
+            int: Score: 1 if one of the top level predicted choices was correct, 0 otherwise.
+        """
+        if self.recall_depth == 1:
             return int(np.argmax(choices_logprob) in gold_ixs)
         return (int(any(ix in gold_ixs for ix in np.array(choices_logprob).argsort()[::-1][: self.recall_depth])),)
 
 
-def mrr(choices_logprob: list[float], gold_ixs: list[float], **kwargs):
-    ranked_choices = [sorted(choices_logprob, reverse=True).index(choices_logprob[gold]) for gold in gold_ixs]
-    return 1.0 / (min(ranked_choices) + 1)
+class MRR:
+    def __init__(self, length_normalization: bool = False):
+        """A mean reciprocal rank class. 
+
+        Args:
+            length_normalization (bool, optional): Whether to use normalisation be choice length when computing the best log-probabilities. Defaults to False.
+        """
+        self.length_normalization = length_normalization
+
+    def compute(self, choices_logprob: list[float], gold_ixs: list[float], formatted_doc: Doc, **kwargs) -> float:
+        """Mean reciprocal rank. Measures the quality of a ranking of choices (ordered by correctness).
+
+        Args:
+            gold_ixs (list[int]): All the gold choices indices
+            choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
+            formatted_doc (Doc): Original document for the sample. 
+                Used to get the original choices's length for possible normalisation
+
+        Returns:
+            float: MRR score. 
+        """
+        if self.length_normalization:
+            choices_logprob = [choices_logprob[ix] / len(formatted_doc.choices[ix]) for ix in len(choices_logprob)]
+        ranked_choices = [sorted(choices_logprob, reverse=True).index(choices_logprob[gold]) for gold in gold_ixs]
+        return 1.0 / (min(ranked_choices) + 1)
 
 
-def acc_golds_likelihood(results: list[int], formatted_doc: Doc, **kwargs):
-    results = results[: len(formatted_doc.get_golds())]  # todo: check, might not be needed
+def acc_golds_likelihood(results: list[tuple[float, int]], **kwargs) -> int:
+    """Tests if at least one of predicted gold targets' log-likelihood is above 0.5.
+
+    Args:
+        results (list[int]): List of tuples containing, for each gold, the predictions log-probabilities associated with whether they are above 0.5 aggregated.
+        formatted_doc (Doc): _description_
+
+    Returns:
+        int: 1 if at least one of the possible golds had a log-likelihood above 0.5.
+    """
     return max([int(acc_ppl) for _, acc_ppl in results])
 
 
