@@ -39,9 +39,9 @@ class CorpusLevelF1Score:
             average (str): Method to use to compute the f1 score. Can be weighted, macro, micro.
             num_classes (int, optional): Num of possible choice classes. Defaults to 2. If this parameter is above 2, we'll compute multi f1 corpus score
         """
-        if average not in ["weighted", "macro", "micro"]:
+        if average not in ["weighted", "macro", "micro", None]:
             raise ValueError(
-                f"A CorpusLevelF1Score must be initialized with weighted, macro, micro as an average function. {average} was used."
+                f"A CorpusLevelF1Score must be initialized with weighted, macro, micro, or None as an average function. {average} was used."
             )
         self.average = average
         self.num_classes = num_classes
