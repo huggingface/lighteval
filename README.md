@@ -32,7 +32,7 @@ Optional:
     - Using data parallelism on several GPUs
         - If you want to use data parallelism, first configure accelerate (`accelerate config`).
         - `accelerate launch <accelerate parameters> main.py --model_args="pretrained=<path to your model on the hub>" <task parameters>`
-        for instance: `accelerate launch --multi_gpu --num_processes 8 main.py --model_args="pretrained=EleutherAI/gpt-j-6b,dtype=float16,model_parallel=True" --tasks "helm|hellaswag,harness|hellaswag" --override_batch_size 8 --num_fewshot 10 --output_dir output_dir`
+        for instance: `accelerate launch --multi_gpu --num_processes 8 main.py --model_args="pretrained=EleutherAI/gpt-j-6b,dtype=float16,model_parallel=True" --tasks "helm|hellaswag,lighteval|hellaswag" --override_batch_size 8 --num_fewshot 10 --output_dir output_dir`
         - Note: if you use model_parallel, accelerate will use 2 processes for model parallel, num_processes for data parallel
 
 The task parameters indicate which tasks you want to launch. You can select:
@@ -41,7 +41,7 @@ The task parameters indicate which tasks you want to launch. You can select:
 
 Example
 If you want to compare hellaswag from helm and the harness on Gpt-6j, you can do
-`python run_eval.py --model hf_causal --model_args="pretrained=EleutherAI/gpt-j-6b" --tasks helm|hellaswag,harness|hellaswag`
+`python run_eval.py --model hf_causal --model_args="pretrained=EleutherAI/gpt-j-6b" --tasks helm|hellaswag,lighteval|hellaswag`
 
 Other cool parameters:
 - `--save_queries` will print the prompts, generations and golds.
@@ -54,33 +54,43 @@ Other cool parameters:
 ## Adding a new task
 To add a new task, first **add its dataset** on the hub.
 
-Then, **find a suitable prompt function** or **create a new prompt function** in `src/prompt_formatting.py`. This function must output a dict, which should contain `query`, your prompt, and either `gold`, the gold output, or `choices` and `gold_index`, the list of choices and index or indices of correct answers. If your query contains an instruction which should not be repeated in a few shot setup, add it to an `instruction` field.
+Then, **find a suitable prompt function** or **create a new prompt function** in `src/prompt_formatting.py`. This function must output a `Doc` object, which should contain `query`, your prompt, and either `gold`, the gold output, or `choices` and `gold_index`, the list of choices and index or indices of correct answers. If your query contains an instruction which should not be repeated in a few shot setup, add it to an `instruction` field.
 
 Lastly, create a **line summary** of your evaluation, in `metadata_table.json`. This summary should contain the following fields:
 - `name` (str), your evaluation name
-- `hf_repo` (str), the path of your eval on the hub
-- `hf_subset` (str), the subset you want to use (note1: when the dataset has no subset, fill this field with `"default"`, not with `None` or `""`) (note2: you cannot use a list here)
+- `suite` (list), the suite(s) to which your evaluation should belong. This field allows us to compare different tasks implementation, and is used a task selection to differentiate the versions to launch. At the moment, you'll find the keywords ["helm", "bigbench", "original", "lighteval"]; you can add also add new ones (for test, we recommend using "custom").
+- `prompt_function` (str), the name of the prompt function you defined in the step above
+- `hf_repo` (str), the path to your evaluation dataset on the hub
+- `hf_subset` (str), the specific subset you want to use for your evaluation (note: when the dataset has no subset, fill this field with `"default"`, not with `None` or `""`) 
 - `hf_avail_splits` (list), all the splits available for your dataset (train, valid or validation, test, other...)
 - `evaluation_splits` (list), the splits you want to use for evaluation
+- `few_shots_split` (str, can be `null`), the specific split from which you want to select samples for your few-shot examples. It should be different from the sets included in `evaluation_splits`
+- `few_shots_select` (str, can be `null`), the method that you will use to select items for your few-shot examples. Can be `null`, or one of: 
+    - `balanced` selects examples from the `few_shots_split` with balanced labels, to avoid skewing the few shot examples (hence the model generations) towards one specific label
+    - `random` selects examples at random from the `few_shots_split`
+    - `random_sampling` selects new examples at random from the `few_shots_split` for every new item, but if a sampled item is equal to the current one, it is removed from the available samples
+    - `random_sampling_from_train` selects new examples at random from the `few_shots_split` for every new item, but if a sampled item is equal to the current one, it is kept! Only use this if you know what you are doing.
+    - `sequential` selects the first `n` examples of the `few_shots_split`
 - `generation_size` (int), the maximum number of tokens allowed for a generative evaluation. If your evaluation is a log likelihood evaluation (multi-choice), this value should be -1
 - `stop_sequence` (list), a list of strings acting as end of sentence tokens for your generation
 - `metric` (list), the metrics you want to use for your evaluation (see next section for a detailed explanation)
-- `suite` (list), the suites to which your evaluation should belong. At the moment, we cover ["helm", "harness", "bigbench", "original", "lighteval"], and you can add new ones (for test, we recommend using "custom"). This section is also where we'll put tags (qa, summarization, ...) and any information we might want to use to group evaluations. This field is very important if you are adding an evaluation with the same name as an already existing one, as you'll select it on the suite.
-- `prompt_function` (str), the name of the prompt function you defined in the step above
 - `output_regex` (str), A regex string that will be used to filter your generation. (Genrative metrics will only select tokens that are between the first and the second sequence matched by the regex. For example, for a regex matching `\n` and a generation `\nModel generation output\nSome other text` the metric will only be fed with `Model generation output`)
+- `frozen` (bool), for now is set to False, but we will steadily pass all stable tasks to True.
 
 ## Available metrics
 ### Metrics for multiple choice tasks
 These metrics use log-likelihood of the different possible targets.
-- `loglikelihood_acc` (Harness): Fraction of instances where the choice with the best logprob was correct,
-- `loglikelihood_acc_norm` (Harness): Fraction of instances where the choice with the best logprob, normalized by sequence length, was correct,
-- `loglikelihood_f1` (Harness): Average F1 score of the multichoice selection,
+- `loglikelihood_acc` (Harness): Fraction of instances where the choice with the best logprob was correct - also exists in a faster version for tasks where the possible choices include only one token (`loglikelihood_acc_single_token`)
+- `loglikelihood_acc_norm` (Harness): Fraction of instances where the choice with the best logprob, normalized by sequence length, was correct - also exists in a faster version for tasks where the possible choices include only one token (`loglikelihood_acc_norm_single_token`)
+- `loglikelihood_acc_norm_nospace` (Harness): Fraction of instances where the choice with the best logprob, normalized by sequence length, was correct, with the first space ignored
+- `loglikelihood_f1` (Harness): Corpus level F1 score of the multichoice selection - also exists in a faster version for tasks where the possible choices include only one token (`loglikelihood_f1_single_token`)
 - `mcc` (Harness): Matthew's correlation coefficient (measure of agreement between statistical distributions),
-- `recall@1` (Harness): Fraction of instances where the choice with the best logprob was correct (equivalent here to `loglikelihood_acc`),
-- `recall@2` (Harness): Fraction of instances where the choice with the 2nd best logprob or better was correct,
-- `mrr` (Harness): Mean reciprocal rank, measure of the quality of a ranking of choices ordered by correctness/relevance,
+- `recall_at_1` (Harness): Fraction of instances where the choice with the best logprob was correct - also exists in a faster version for tasks where the possible choices include only one token per choice (`recall_at_1_single_token`)
+- `recall_at_2` (Harness): Fraction of instances where the choice with the 2nd best logprob or better was correct  - also exists in a faster version for tasks where the possible choices include only one token per choice (`recall_at_2_single_token`)
+- `mrr` (Harness): Mean reciprocal rank, measure of the quality of a ranking of choices ordered by correctness/relevance  - also exists in a faster version for tasks where the possible choices include only one token (`mrr_single_token`)
 - `target_perplexity` (Harness): Perplexity of the different choices available.
 - `acc_golds_likelihood`: (Harness): A bit different, it actually checks if the average logprob of a single target is above or below 0.5
+- `multi_f1_numeric`: Loglikelihood F1 score for multiple gold targets
 
 All these metrics also exist in a "single token" version (`loglikelihood_acc_single_token`, `loglikelihood_acc_norm_single_token`, `loglikelihood_f1_single_token`, `mcc_single_token`, `recall@2_single_token` and `mrr_single_token`). When the multichoice option compare only one token (ex: "A" vs "B" vs "C" vs "D", or "yes" vs "no"), using these metrics in the single token version will divide the time spent by the number of choices. Single token evals also include:
 - `multi_f1_numeric` (Harness, for CB): computes the f1 score of all possible choices and averages it.
@@ -97,22 +107,21 @@ These metrics need the model to generate an output. They are therefore slower.
 - Base:
     - `perfect_exact_match` (Harness): Fraction of instances where the prediction matches the gold exactly.
     - `exact_match` (HELM): Fraction of instances where the prediction matches the gold at the exception of the border whitespaces (= after a `strip` has been applied to both).
-    - `quasi_exact_match` (HELM): Fraction of instances where the normalized prediction matches the normalized gold (normalization done on whitespace, articles, capitalization, ...)
+    - `quasi_exact_match` (HELM): Fraction of instances where the normalized prediction matches the normalized gold (normalization done on whitespace, articles, capitalization, ...). Other variations exist, with other normalizers, such as `quasi_exact_match_triviaqa`, which only normalizes the predictions after applying a strip to all sentences.
     - `prefix_exact_match` (HELM): Fraction of instances where the beginning of the prediction matches the gold at the exception of the border whitespaces (= after a `strip` has been applied to both).
     - `prefix_quasi_exact_match` (HELM): Fraction of instances where the normalized beginning of the prediction matches the normalized gold (normalization done on whitespace, articles, capitalization, ...)
     - `exact_match_indicator`: Exact match with some preceding context (before an indicator) removed
-    - `f1_sequence` (BigBench): Average F1 score at the sentence level.
-    - `f1_from_bags` (Harness): Average F1 score at the bag of word level (sentence > bag of words).
-    - `f1_quasi` (HELM): Average F1 score in terms of word overlap between the model output and gold, with external whitespaces removed using strip
-- Reasoning:
-    - `iou_set_match` (HELM): Intersection over union in terms of set overlap between the model predicted set and gold set.
-    - `exact_set_match` (HELM): Fraction of instances that the predicted output set matches the gold set exactly.
-    - `f1_set_match` (HELM): Average F1 score in terms of set overlap between the model predicted set and correct reference set.
+    - `f1_score_quasi` (HELM): Average F1 score in terms of word overlap between the model output and gold, with both being normalized first
+    - `f1_score`:  Average F1 score in terms of word overlap between the model output and gold without normalisation
+    - `f1_score_macro`: Corpus level macro F1 score 
+    - `f1_score_macro`: Corpus level micro F1 score
 - Summarization:
     - `rouge` (Harness): Average ROUGE score [(Lin, 2004)](https://aclanthology.org/W04-1013/)
-    - `rouge_1` (HELM): Average ROUGE score [(Lin, 2004)](https://aclanthology.org/W04-1013/) based on 1-gram overlap.
-    - `rouge_2` (HELM): Average ROUGE score [(Lin, 2004)](https://aclanthology.org/W04-1013/) based on 2-gram overlap.
-    - `rouge_l` (HELM): Average ROUGE score [(Lin, 2004)](https://aclanthology.org/W04-1013/) based on longest common subsequence overlap.
+    - `rouge1` (HELM): Average ROUGE score [(Lin, 2004)](https://aclanthology.org/W04-1013/) based on 1-gram overlap.
+    - `rouge2` (HELM): Average ROUGE score [(Lin, 2004)](https://aclanthology.org/W04-1013/) based on 2-gram overlap.
+    - `rougeL` (HELM): Average ROUGE score [(Lin, 2004)](https://aclanthology.org/W04-1013/) based on longest common subsequence overlap.
+    - `rougeLsum` (HELM): Average ROUGE score [(Lin, 2004)](https://aclanthology.org/W04-1013/) based on longest common subsequence overlap.
+    - `rouge_t5` (BigBench): Corpus level ROUGE score for all available ROUGE metrics
     - `faithfulness` (HELM): Faithfulness scores based on the SummaC method of [Laban et al. (2022)](https://aclanthology.org/2022.tacl-1.10/).
     - `extractiveness` (HELM): Reports, based on [(Grusky et al., 2018)](https://aclanthology.org/N18-1065/)
         - `summarization_coverage`: Extent to which the model-generated summaries are extractive fragments from the source document,
@@ -120,9 +129,9 @@ These metrics need the model to generate an output. They are therefore slower.
         - `summarization_compression`: Extent to which the model-generated summaries are compressed relative to the source document.
     - `bert_score` (HELM): Reports the average BERTScore precision, recall, and f1 score [(Zhang et al., 2020)](https://openreview.net/pdf?id=SkeHuCVFDr) between model generation and gold summary.
 - Translation
-    - `bleu` (Harness): Average Corpus BLEU score [(Papineni et al., 2002)](https://aclanthology.org/P02-1040/) - uses the sacrebleu implementation.
-    - `bleu_1` (HELM): Average BLEU score [(Papineni et al., 2002)](https://aclanthology.org/P02-1040/) based on 1-gram overlap - uses the nltk implementation.
-    - `bleu_4` (HELM): Average BLEU score [(Papineni et al., 2002)](https://aclanthology.org/P02-1040/) based on 4-gram overlap - uses the nltk implementation.
+    - `bleu`: Corpus level BLEU score [(Papineni et al., 2002)](https://aclanthology.org/P02-1040/) - uses the sacrebleu implementation.
+    - `bleu_1` (HELM): Average sample BLEU score [(Papineni et al., 2002)](https://aclanthology.org/P02-1040/) based on 1-gram overlap - uses the nltk implementation.
+    - `bleu_4` (HELM): Average sample BLEU score [(Papineni et al., 2002)](https://aclanthology.org/P02-1040/) based on 4-gram overlap - uses the nltk implementation.
     - `chrf` (Harness): Character n-gram matches f-score.
     - `ter` (Harness): Translation edit/error rate.
 - Bias, toxicity, copyright
@@ -131,27 +140,19 @@ These metrics need the model to generate an output. They are therefore slower.
         - `longest_common_prefix_length`: average length of longest common prefix between model generation and reference,
         - `edit_distance`: average Levenshtein edit distance between model generation and reference,
         - `edit_similarity`: average Levenshtein edit similarity (normalized by length of longer sequence) between model generation and reference.
-- Math and code:
-    - `code_eval_HE` (HELM): Reports metrics for the HumanEval code dataset (*implies executing generated code locally!*)
-        - `code_eval_acc`: Fraction of instances that the model output evaluates to the correct answer.
-        - `pass@1`: Fraction of model outputs that pass the associated test cases.
-        - `pass@k`: Fraction of k model outputs that pass the associated test cases.
-    - `code_eval_APPS` (HELM): Reports metrics for the APPS code dataset (*implies executing generated code locally!*)
-        - `code_eval_test_avg`: Fraction of test cases passed.
-        - `code_eval_strict_acc`: Fraction of models outputs that pass all associated test cases.
+- Math:
     - `quasi_exact_match_math` (HELM): Fraction of instances where the normalized prediction matches the normalized gold (normalization done for math, where latex symbols, units, etc are removed)
+    - `quasi_exact_match_gsm8k` (Harness): Fraction of instances where the normalized prediction matches the normalized gold (normalization done for gsm8k, where latex symbols, units, etc are removed)
+
+### Metrics for specific tasks
+To keep compatibility with the Harness for some specific tasks, we ported their evaluations more or less as such. They include `drop` (for the DROP dataset) and `truthfulqa_mc_metrics` (for TruthfulQA). In general, except for tasks where the dataset has a very different formatting than usual (an other language, programming language, math, ...), we want to use standard implementations of the above metrics. It makes little sense to have 10 different versions of an exact match depending on the task. However, most of the above metrics are parametrizable so that you can change the normalization applied easily for experimental purposes.
 
 ### Not working yet
 These metrics need both the generation and its logprob. They are not working at the moment, as this fn is not in the AI Harness.
-- `prediction_perplexity` (HELM): Measure of the logprob of a given generation.
-
-### Specific metrics
-Metrics in the `specific` file are metrics which have been designed for one precise dataset in one evaluation suite. They are not generic and shouldn't be used outside of their specific use case. Use them as little as possible, as it's redefined metrics like these which reduce the quality and reproducibility of evaluations.
+- `prediction_perplexity` (HELM): Measure of the logprob of a given input.
 
 ## Adding a new metric
-If you want to add a new metric, define its function in the corresponding file in `src/metrics` (summarization for summarization metrics, code for code evaluation metrics, you get the gist), which should return a dict of `{"metric_name": score}`. You also need to add 2 mappings to the "metric_name": which aggregation method to use in `type_aggregate` (`summarization_aggregate` for a summarization metric for ex, at the end of the file), and if a higher value for your metric indicates a better score (in `type_higher_is_better`, such as `summarization_higher_is_better`).
-You then need to add your metric to one of the lists in `src/metrics/__init__.py`, depending on what your metric needs (respective log likelihoods of different choices? log likelihood of prompt (for perplexity for ex)? generation? generation and log likelihood?), and lastly to edit `process_results` in `src/tasks_from_config` to indicate the mapping which exists between the function name and the score.
-
+If you want to add a new metric, first check if you can use one of the parametrized functions in `src.lighteval.metrics.metrics_corpus` or `metrics_sample`. If not, add it to either of these files depending on the level at which it is applied. Then, follow the example in `src.lighteval.metrics.metrics` to register your metric. 
 
 ## Examples of scripts to launch lighteval on the cluster
 ### Evaluate a whole suite on one node, 8 GPUs
