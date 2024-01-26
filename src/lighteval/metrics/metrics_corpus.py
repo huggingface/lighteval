@@ -40,13 +40,14 @@ class CorpusLevelF1Score:
             num_classes (int, optional): Num of possible choice classes. Defaults to 2. If this parameter is above 2, we'll compute multi f1 corpus score
         """
         if self.average not in ["weighted", "macro", "micro"]:
-            raise ValueError(f"A CorpusLevelF1Score must be initialized with weighted, macro, micro as an average function. {average} was used.")
+            raise ValueError(
+                f"A CorpusLevelF1Score must be initialized with weighted, macro, micro as an average function. {average} was used."
+            )
         self.average = average
         self.num_classes = num_classes
 
     def compute(self, items: list[LogprobCorpusMetricInput]):
-        """Computes the metric score over all the corpus generated items, by using the scikit learn implementation.
-        """
+        """Computes the metric score over all the corpus generated items, by using the scikit learn implementation."""
         golds = [i.golds for i in items]
         preds = [i.preds for i in items]
         # Single f1
@@ -78,8 +79,7 @@ class CorpusLevelTranslationMetric:
             raise ValueError(f"Unknown corpus level translation metric type : {metric_type}")
 
     def compute(self, items: list[GenerativeCorpusMetricInput]) -> float:
-        """Computes the metric score over all the corpus generated items, by using the sacrebleu implementation.
-        """
+        """Computes the metric score over all the corpus generated items, by using the sacrebleu implementation."""
         golds = [i.golds for i in items]
         preds = [as_list(i.preds) for i in items]
         return float(self.metric(hypotheses=preds, references=golds).score)
@@ -104,8 +104,7 @@ class CorpusLevelPerplexityMetric:
         self.metric_type = metric_type
 
     def compute(self, items: list[PerplexityCorpusMetricInput]):
-        """Computes the metric score over all the corpus generated items.
-        """
+        """Computes the metric score over all the corpus generated items."""
         logprobs = [i.logprobs for i in items]
         weights = [i.weights for i in items]
 
