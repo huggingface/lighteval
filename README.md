@@ -6,7 +6,9 @@ LightEval is an evaluation suite which gathers a selection of features from wide
 - from [HELM](https://crfm.stanford.edu/helm/latest/), we keep the qualitative and rich metrics
 - from our previous internal evaluation suite, we keep the easy edition, evaluation loading and speed.
 
-We also ported all the evaluations from HELM and BigBench.
+It is still an early, internal version - it should be nice to use but don't expect 100% stability!
+
+In case of problems or question, feel free to open an issue! 
 
 ## How to install and use
 ### Requirements
@@ -34,7 +36,7 @@ Optional:
         - Note: if you use model_parallel, accelerate will use 2 processes for model parallel, num_processes for data parallel
 
 The task parameters indicate which tasks you want to launch. You can select:
-- one or several tasks, with `--tasks task_names`, with task_names in the [metadata table](metadata_table.json), separated by commas. You must specify which version of the task you want (= in which suite it is), by prepending the suite name (`suite|task`). You can also add the number of training few_shots prompts for the given task (`suite|task|few_shot`), and whether you want truncation for your task (`suite|task|few_shot|1 or 0 to indicate if you want few_shot truncation or not`).
+- one or several tasks, with `--tasks task_names`, with task_names in the [metadata table](metadata_table.json), separated by commas. You must specify which version of the task you want (= in which suite it is), by prepending the suite name, as well as the number of training few_shots prompts for the given task, and whether you want truncation if the prompt is too long (`suite|task|few_shot|1 or 0 to indicate if you want few_shot truncation or not`).
 - a file path, which contains tasks following the above format.
 
 Example
