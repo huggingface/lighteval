@@ -1,4 +1,4 @@
-# LightEval [kaːbiː]
+# LightEval 🌤️
 
 ## Context
 LightEval is an evaluation suite which gathers a selection of features from widely used benchmarks recently proposed:
