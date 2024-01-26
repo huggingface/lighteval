@@ -1,0 +1,43 @@
+name: Quality
+
+on:
+  push:
+    branches:
+      - main
+      - v*-release
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  run_tests:
+   name: Run tests
+   runs-on: ubuntu-latest
+   steps:
+     - name: Checkout code
+       uses: actions/checkout@v3
+       with:
+        lfs: 'true'
+        ref: ${{ github.event.pull_request.head.sha }} # we want to test against our branch not against a merge commit
+     - name: Setup Python environment
+       uses: actions/setup-python@v4
+       with:
+         python-version: '3.10'
+         cache: 'pip'
+     - name: Install lighteval in editable mode
+       run: |
+         pip install -e .[accelerate]
+     - name: Get cached files
+       uses: actions/cache@v2
+       id: get-cache
+       with:
+         path: "cache"
+         key: test-cache-HF
+     - name: Test
+       run: | # PYTHONPATH="${PYTHONPATH}:src" HF_DATASETS_CACHE="cache/datasets" HF_HOME="cache/models"
+        python -m pytest --disable-pytest-warnings
+     - name: Write cache
+       uses: actions/cache@v2
+       with:
+         path: "cache"
+         key: test-cache-HF
