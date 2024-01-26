@@ -1,3 +1,5 @@
+from typing import Optional
+
 import nltk
 import numpy as np
 from nltk.metrics.distance import edit_distance
@@ -20,9 +22,9 @@ from lighteval.utils import as_list
 class ExactMatches:
     def __init__(
         self,
-        aggregation_function: callable = None,
-        normalize_gold: callable = None,
-        normalize_pred: callable = None,
+        aggregation_function: Optional[callable] = None,
+        normalize_gold: Optional[callable] = None,
+        normalize_pred: Optional[callable] = None,
         strip_strings: bool = False,
         type_exact_match: str = "full",
     ):
@@ -75,9 +77,9 @@ class ExactMatches:
 class F1_score:
     def __init__(
         self,
-        aggregation_function: callable = None,
-        normalize_gold: callable = None,
-        normalize_pred: callable = None,
+        aggregation_function: Optional[callable] = None,
+        normalize_gold: Optional[callable] = None,
+        normalize_pred: Optional[callable] = None,
         strip_strings: bool = False,
         type_f1: str = "",
     ):
@@ -165,9 +167,9 @@ class ROUGE:
         methods: str | list[str],
         multiple_golds: bool = False,
         bootstrap: bool = False,
-        normalize_gold: callable = None,
-        normalize_pred: callable = None,
-        aggregation_function: callable = None,
+        normalize_gold: Optional[callable] = None,
+        normalize_pred: Optional[callable] = None,
+        aggregation_function: Optional[callable] = None,
     ):
         if aggregation_function and bootstrap:
             hlog_warn("Can't use both bootstrapping and an aggreagation function in Rouge. Keeping bootstrap.")
@@ -233,8 +235,8 @@ class ROUGE:
 class BertScore:
     def __init__(
         self,
-        normalize_gold: callable = None,
-        normalize_pred: callable = None,
+        normalize_gold: Optional[callable] = None,
+        normalize_pred: Optional[callable] = None,
     ):
         self.bert_scorer = BERTScorer(
             model_type="microsoft/deberta-large-mnli", lang="en", rescale_with_baseline=True, num_layers=9

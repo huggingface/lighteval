@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 
 
 class LightevalTask:
-    def __init__(self, name: str, cfg: dict, cache_dir: str = None, custom_tasks_module=None):
+    def __init__(self, name: str, cfg: dict, cache_dir: Optional[str] = None, custom_tasks_module=None):
         self.name = name
         self.VERSION = 0
         self.is_main_process = False
@@ -367,7 +367,6 @@ def create_requests_from_tasks(  # noqa: C901
     lm: BaseModel,
     max_samples: int,
     evaluation_tracker: "EvaluationTracker",
-    use_chat_template: bool,
 ) -> Tuple[dict[RequestType, list[Request]], dict[TaskExampleId, Doc]]:
     """
     Takes a task dict and a fewshot dict and returns a dict of requests, a dict of docs, and a dict of requests origins.
@@ -411,7 +410,7 @@ def create_requests_from_tasks(  # noqa: C901
 
         seeds = task.fewshot_sampler.get_fewshot_seeds(num_fewshot_seeds)
 
-        # We can do several round of fewshots sampling to get some variance informations
+        # We can do several round of few_shots sampling to get some variance informations
         for seed in seeds:
             for doc_id in range(n_samples):
                 doc_id_seed = f"{doc_id}_{seed}"  # if we do several rounds of few shot sampling we have several seeds
@@ -429,7 +428,6 @@ def create_requests_from_tasks(  # noqa: C901
                         max_model_length=lm.max_length,
                         sampler=rnd,
                         tokenizer=lm.tokenizer,
-                        use_chat_template=use_chat_template,
                     )
                     doc.num_effective_few_shots = num_effective_few_shots
                     doc.num_asked_few_shots = num_fewshot

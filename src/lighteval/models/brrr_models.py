@@ -656,7 +656,7 @@ class BRRRModel:
             input_ids=input_ids, input_mask=input_mask, input_lengths=input_lengths, truncated=truncated, padded=padded
         )
 
-    def gather(self, output_tensor: torch.Tensor, process_group: dist.ProcessGroup = None) -> torch.Tensor:
+    def gather(self, output_tensor: torch.Tensor, process_group: Optional[dist.ProcessGroup] = None) -> torch.Tensor:
         """Gather together tensors of (possibly) various size spread on separate GPUs (first exchange the lengths and then pad and gather)"""
         if process_group is None:
             process_group = self.parallel_context.dp_pg
