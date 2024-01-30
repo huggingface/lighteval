@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Tuple, Union
+from typing import Tuple, Union
 
 from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.adapter_model import AdapterModel

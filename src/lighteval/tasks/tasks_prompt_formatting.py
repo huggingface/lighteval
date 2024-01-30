@@ -3,7 +3,6 @@ import json
 import random
 import re
 import string
-from typing import Optional
 
 import pycountry
 
