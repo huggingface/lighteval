@@ -40,7 +40,19 @@ if TYPE_CHECKING:
 
 
 class LightevalTask:
-    def __init__(self, name: str, cfg: dict, cache_dir: str = None, custom_tasks_module=None):
+    def __init__(self, name: str, cfg: dict, cache_dir: Optional[str] = None, custom_tasks_module=None):
+        """
+        Initialize a LightEval task.
+
+        Args:
+            name (str): The name of the task.
+            cfg (dict): The configuration dictionary containing
+                task-specific settings (from the task_table.json file).
+            cache_dir (Optional[str], optional): The directory to cache the
+                dataset. Defaults to None.
+            custom_tasks_module ([type], optional): A custom module
+                containing task-specific functions. Defaults to None.
+        """
         self.name = name
         self.VERSION = 0
         self.is_main_process = False
@@ -108,6 +120,16 @@ class LightevalTask:
         return self._cfg
 
     def doc_to_text_without_instructions(self, doc: Doc) -> str:
+        """
+        Returns the query of the document without the instructions. If the
+        document has instructions, it removes them from the query:
+
+        Args:
+            doc (Doc): The document.
+
+        Returns:
+            str: The query of the document without the instructions.
+        """
         if doc.instruction is not None:
             if not doc.query.startswith(doc.instruction):
                 raise ValueError(f"Prompt query {doc.query} is not starting with instruction {doc.instruction}")
@@ -115,6 +137,18 @@ class LightevalTask:
         return doc.query
 
     def doc_to_text_and_instructions(self, doc: Doc) -> Tuple[str, str]:
+        """
+        Returns a tuple with the query of the document and the instructions.
+        If the document has no instructions, the second element of the tuple is
+        an empty string.
+
+        Args:
+            doc (Doc): The document.
+
+        Returns:
+            Tuple[str, str]: A tuple with the query of the document and the
+                instructions.
+        """
         if doc.instruction is not None:
             if not doc.query.startswith(doc.instruction):
                 raise ValueError(f"Prompt query {doc.query} is not starting with instruction {doc.instruction}")
@@ -122,10 +156,17 @@ class LightevalTask:
         return (doc.query, "")
 
     def get_first_possible_fewshot_splits(self, number_of_splits: int = 1) -> list[str]:
-        """Parses the possible fewshot split keys in order:
-        train, then validation keys
-        and matches them with the available keys.
-        Returns the first available.
+        """
+        Parses the possible fewshot split keys in order: train, then validation
+        keys and matches them with the available keys.  Returns the first
+        available.
+
+        Args:
+            number_of_splits (int, optional): The number of splits to return.
+                Defaults to 1.
+
+        Returns:
+            list[str]: The list of the first available fewshot splits.
         """
         # Possible few shot splits are the available splits not used for evaluation
         possible_fewshot_splits = [k for k in self.all_available_splits if k not in self.evaluation_split]
@@ -145,6 +186,17 @@ class LightevalTask:
         return None
 
     def _get_docs_from_split(self, keys, few_shots=False) -> list[Doc]:
+        """
+        Get the documents from the dataset for the given keys (splits).
+
+        Args:
+            keys (list): The list of keys (splits).
+            few_shots (bool, optional): Whether the documents are used for few
+                shot examples. Defaults to False.
+
+        Returns:
+            list[Doc]: The list of documents.
+        """
         if self.dataset is None:
             self.dataset = download_dataset_worker((self.dataset_path, self.dataset_config_name))
 
@@ -159,6 +211,13 @@ class LightevalTask:
         return docs
 
     def fewshot_docs(self) -> list[Doc]:
+        """
+        Returns the few shot documents. If the few shot documents are not
+        available, it gets them from the few shot split or the evaluation split.
+
+        Returns:
+            list[Doc]: The few shot documents.
+        """
         if self._fewshot_docs is None:
             self._fewshot_docs = []
 
@@ -170,11 +229,28 @@ class LightevalTask:
         return self._fewshot_docs
 
     def eval_docs(self) -> list[Doc]:
+        """
+        Returns the evaluation documents.
+
+        Returns:
+            list[Doc]: The evaluation documents.
+        """
         if self._docs is None:
             self._docs = self._get_docs_from_split(self.evaluation_split)
         return self._docs
 
-    def doc_to_target(self, formatted_doc: Doc, few_shot: bool = False):
+    def doc_to_target(self, formatted_doc: Doc, few_shot: bool = False) -> str:
+        """
+        Returns the target of the given document.
+
+        Args:
+            formatted_doc (Doc): The formatted document.
+            few_shot (bool, optional): Whether the document is used for few
+                shot examples. Defaults to False.
+
+        Returns:
+            str: The target of the document.
+        """
         if few_shot:
             if formatted_doc.target_for_fewshot_sorting is not None:
                 return formatted_doc.target_for_fewshot_sorting
@@ -184,6 +260,16 @@ class LightevalTask:
 
     # Requests
     def get_request_type(self) -> list[RequestType]:
+        """
+        Returns the request types for the task.
+
+        Returns:
+            list[RequestType]: The request types for the task.
+
+        Raises:
+            NotImplementedError: If the request type is not implemented for the
+                task.
+        """
         request_types = []
         if self.has_metric_category[MetricCategory.TARGET_PERPLEXITY]:
             request_types.append(RequestType.LOGLIKELIHOOD)
@@ -207,7 +293,7 @@ class LightevalTask:
         self, formatted_doc: Doc, context: str, document_id_seed: str, current_task_name: str
     ) -> List[Request]:
         """
-        Constructs a list of requests based on the given parameters.
+        Constructs a list of requests from the task based on the given parameters.
 
         Args:
             formatted_doc (Doc): The formatted document almost straight from the dataset.
@@ -282,7 +368,17 @@ class LightevalTask:
 
         return requests
 
-    def process_results(self, formatted_doc: Doc, results: list[ModelReturn]):
+    def process_results(self, formatted_doc: Doc, results: list[ModelReturn]) -> dict[str, float]:
+        """
+        Processes the results of the task. and stores them in the output dict.
+
+        Args:
+            formatted_doc (Doc): The formatted document of the task.
+            results (list[ModelReturn]): The results of the task, returned by the model class after evaluation.
+
+        Returns:
+            dict[str, float]: The output dictionary containing the results of the task.
+        """
         # Metrics management is done in metrics.__init__
         outputs = {}
         if self.has_metric_category[MetricCategory.TARGET_PERPLEXITY]:
@@ -319,6 +415,10 @@ class LightevalTask:
         return outputs
 
     def aggregation(self):
+        """
+        Return a dict with metric name and its aggregation function for all
+        metrics
+        """
         return Metrics.corpus_level_fns()
 
     @staticmethod
@@ -349,6 +449,10 @@ class LightevalTask:
 
 
 def download_dataset_worker(args):
+    """
+    Worker function to download a dataset from the HuggingFace Hub.
+    Used for parallel dataset loading.
+    """
     dataset_path, dataset_config_name = args
     dataset = load_dataset(
         path=dataset_path,
@@ -370,22 +474,27 @@ def create_requests_from_tasks(  # noqa: C901
     use_chat_template: bool,
 ) -> Tuple[dict[RequestType, list[Request]], dict[TaskExampleId, Doc]]:
     """
-    Takes a task dict and a fewshot dict and returns a dict of requests, a dict of docs, and a dict of requests origins.
-    The construction of prompts and thus the managing of few shots is done here.
+    Takes a task dict and a fewshot dict and returns a dict of requests, a dict
+    of docs, and a dict of requests origins.  The construction of prompts and
+    thus the managing of few shots is done here.
 
     Args:
-        task_dict (_type_): _description_
-        fewshot_dict (_type_): _description_
-        num_fewshot_seeds (_type_): _description_
-        lm (_type_): _description_
-        max_samples (_type_): _description_
-        evaluation_tracker (_type_): _description_
+        task_dict (dict[str, LightevalTask]): A dictionary of tasks.
+        fewshot_dict (dict[str, list[Tuple[int, bool]]]): A dictionary of few
+            shot examples.
+        num_fewshot_seeds (int): The number of few shot seeds.
+        lm (BaseModel): The language model.
+        max_samples (int): The maximum number of samples.
+        evaluation_tracker (EvaluationTracker): The evaluation tracker.
+        use_chat_template (bool): Whether to use the chat template.
 
     Raises:
-        RuntimeError: _description_
+        NotImplementedError: If the request type is not implemented for the
+            task.
 
     Returns:
-        _type_: _description_
+        Tuple[dict[RequestType, list[Request]], dict[TaskExampleId, Doc]]: A
+            tuple containing the requests and the documents.
     """
     docs: dict[TaskExampleId, Doc] = {}
     requests: dict[RequestType, list[Request]] = collections.defaultdict(list)
