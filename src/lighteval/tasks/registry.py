@@ -22,11 +22,36 @@ TABLE_PATH = os.path.join(os.path.dirname(__file__), "tasks_table.jsonl")
 
 
 class Registry:
-    def __init__(self, cache_dir):
-        self.cache_dir = cache_dir
-        self.TASK_REGISTRY = {**create_config_tasks(cache_dir=cache_dir)}
+    def __init__(self, cache_dir: str):
+        """
+        Initialize the Registry class.
 
-    def get_task_class(self, task_name, custom_tasks_registry=None):
+        Args:
+            cache_dir (str): The directory path for caching.
+
+        Attributes:
+            cache_dir (str): The directory path for caching.
+            TASK_REGISTRY (dict[str, LightevalTask]): A dictionary containing the registered tasks.
+        """
+        self.cache_dir: str = cache_dir
+        self.TASK_REGISTRY: dict[str, LightevalTask] = {**create_config_tasks(cache_dir=cache_dir)}
+
+    def get_task_class(
+        self, task_name: str, custom_tasks_registry: Optional[dict[str, LightevalTask]] = None
+    ) -> LightevalTask:
+        """
+        Get the task class based on the task name.
+
+        Args:
+            task_name (str): The name of the task.
+            custom_tasks_registry (Optional[dict[str, LightevalTask]]): A dictionary containing custom tasks.
+
+        Returns:
+            LightevalTask: The task class.
+
+        Raises:
+            ValueError: If the task is not found in the task registry or custom task registry.
+        """
         if task_name in self.TASK_REGISTRY:
             return self.TASK_REGISTRY[task_name]
         elif custom_tasks_registry is not None and task_name in custom_tasks_registry:
@@ -41,14 +66,27 @@ class Registry:
     def get_task_dict(
         self, task_name_list: List[str], custom_tasks_file: Optional[str] = None
     ) -> Dict[str, LightevalTask]:
-        ## todo: make clearer
+        """
+        Get a dictionary of tasks based on the task name list.
+
+        Args:
+            task_name_list (List[str]): A list of task names.
+            custom_tasks_file (Optional[str]): The path to the custom tasks file.
+
+        Returns:
+            Dict[str, LightevalTask]: A dictionary containing the tasks.
+
+        Notes:
+            - If custom_tasks_file is provided, it will import the custom tasks module and create a custom tasks registry.
+            - Each task in the task_name_list will be instantiated with the corresponding task class.
+        """
         if custom_tasks_file is not None:
             dataset_module = dataset_module_factory(str(custom_tasks_file))
             custom_tasks_module = importlib.import_module(dataset_module.module_path)
             custom_tasks_registry = create_config_tasks(
                 meta_table=custom_tasks_module.TASKS_TABLE, cache_dir=self.cache_dir
             )
-            print(custom_tasks_registry)
+            hlog(custom_tasks_registry)
         else:
             custom_tasks_module = None
             custom_tasks_registry = None
@@ -80,7 +118,6 @@ def taskinfo_selector(
         tasks (str): A string containing a comma-separated list of tasks in the
             format "suite|task|few_shot|truncate_few_shots" or a path to a file
             containing a list of tasks.
-        few_shot_default (int, optional): The default few_shot value to use if not provided.
 
     Returns:
         tuple[list[str], dict[str, list[tuple[int, bool]]]]: A tuple containing:
@@ -117,9 +154,20 @@ def taskinfo_selector(
     return sorted(few_shot_dict.keys()), {k: list(set(v)) for k, v in few_shot_dict.items()}
 
 
-def create_config_tasks(meta_table=None, cache_dir: str = None) -> Dict[str, LightevalTask]:
-    """Creates a dictionary of tasks from a list of subjects
-    :return: {task_name: task}
+def create_config_tasks(
+    meta_table: Optional[Dataset] = None, cache_dir: Optional[str] = None
+) -> Dict[str, LightevalTask]:
+    """
+    Create configuration tasks based on the provided meta_table.
+
+    Args:
+        meta_table (Optional[Dataset]): The meta_table containing task
+            configurations. If not provided, it will be loaded from TABLE_PATH.
+        cache_dir (Optional[str]): The directory to store cached data. If not
+            provided, the default cache directory will be used.
+
+    Returns:
+        Dict[str, LightevalTask]: A dictionary of task names mapped to their corresponding LightevalTask classes.
     """
 
     def create_task(name, cfg, cache_dir):
