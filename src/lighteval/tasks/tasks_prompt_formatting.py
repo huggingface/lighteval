@@ -6,6 +6,7 @@ import string
 
 import pycountry
 
+from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.tasks.requests import Doc
 from lighteval.utils import as_list
 
@@ -157,7 +158,7 @@ def bbh_formal_fallacies(line, task_name: str = None):
     
 def bbh_geometric_shapes(line, task_name: str = None):
     instruction = "Name geometric shapes from their SVG paths.\n\n"
-    choices = [f"({c})" for c in LETTER_INDICES[:9]]
+    choices = [f"({c})" for c in LETTER_INDICES[:11]]
     return bbh(line, instruction, choices, task_name)
     
 def bbh_hyperbaton(line, task_name: str = None):
@@ -181,6 +182,9 @@ def bbh_logical_deduction_three_objects(line, task_name: str = None):
     return bbh(line, instruction, choices, task_name)
     
 def bbh_movie_recommendation(line, task_name: str = None):
+    if line["target"] == "Monsters, Inc": # this line is not correctly formatted
+        hlog_warn("One sample removed from task bbh:movie_recommentation because its line is incorrectly formatted.")
+        return []
     instruction = "Recommend movies similar to the given list of movies.\n\n"
     choices = [f"({c})" for c in LETTER_INDICES[:6]]
     return bbh(line, instruction, choices, task_name)
@@ -197,7 +201,7 @@ def bbh_navigate(line, task_name: str = None):
     
 def bbh_object_counting(line, task_name: str = None):
     instruction = "Questions that involve enumerating objects and asking the model to count them.\n\n"
-    choices = [i for i in range(18)]
+    choices = [str(i) for i in range(1, 19)]
     return bbh(line, instruction, choices, task_name)
     
 def bbh_penguins_in_a_table(line, task_name: str = None):
@@ -211,6 +215,9 @@ def bbh_reasoning_about_colored_objects(line, task_name: str = None):
     return bbh(line, instruction, choices, task_name)
     
 def bbh_ruin_names(line, task_name: str = None):
+    if line["target"] in ["dearth, wind, & fire", "rita, sue and bob poo"]: # line not correctly formatted
+        hlog_warn("One sample removed from task bbh:ruin_names because its line is incorrectly formatted.")
+        return []
     instruction = "Select the humorous edit that 'ruins' the input movie or musical artist name.\n\n"
     choices = [f"({c})" for c in LETTER_INDICES[:6]]
     return bbh(line, instruction, choices, task_name)
