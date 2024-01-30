@@ -19,7 +19,7 @@ from lighteval.utils_parallelism import test_all_gather
 
 
 if not is_accelerate_available() and not is_tgi_available():
-    hlog_warn("Using either accelerate or text-generation to run this script is advised.")
+    hlog_warn("Using either accelerate or text-generation-inference to run this script is advised.")
 
 TOKEN = os.getenv("HF_TOKEN")
 CACHE_DIR = os.getenv("HF_HOME")
