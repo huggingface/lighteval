@@ -12,6 +12,8 @@ In case of problems or question, feel free to open an issue!
 
 ## How to install and use
 ### Requirements
+
+
 0) Create your virtual environment using virtualenv or conda depending on your preferences. We require Python3.10
 
 1) Clone the package using `git clone`, then `cd lighteval-harness`, `pip install -e .` Once the dependencies are installed, `cd src`.
