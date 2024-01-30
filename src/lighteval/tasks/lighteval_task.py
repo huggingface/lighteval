@@ -324,7 +324,7 @@ class LightevalTask:
     @staticmethod
     def load_datasets(tasks: list["LightevalTask"], dataset_loading_processes: int = 1) -> None:
         """
-        Load datasets for the given tasks.
+        Load datasets from the HuggingFace Hub for the given tasks.
 
         Args:
             tasks (list): A list of tasks.
