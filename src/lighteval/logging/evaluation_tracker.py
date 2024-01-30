@@ -523,8 +523,8 @@ class EvaluationTracker:
                 else:
                     tb_context.add_scalar(f"{prefix}/{task_name}/{metric}", value, global_step=global_step)
         # e.g. MMLU
-        for name, averages in bench_averages.items():
-            for metric, values in averages.items():
+        for name, values in bench_averages.items():
+            for metric, values in values.items():
                 hlog(f"Pushing average {name} {metric} {sum(values) / len(values)} to tensorboard")
                 tb_context.add_scalar(f"{prefix}/{name}/{metric}", sum(values) / len(values), global_step=global_step)
 

@@ -367,6 +367,7 @@ def create_requests_from_tasks(  # noqa: C901
     lm: BaseModel,
     max_samples: int,
     evaluation_tracker: "EvaluationTracker",
+    use_chat_template: bool,
 ) -> Tuple[dict[RequestType, list[Request]], dict[TaskExampleId, Doc]]:
     """
     Takes a task dict and a fewshot dict and returns a dict of requests, a dict of docs, and a dict of requests origins.
@@ -428,6 +429,7 @@ def create_requests_from_tasks(  # noqa: C901
                         max_model_length=lm.max_length,
                         sampler=rnd,
                         tokenizer=lm.tokenizer,
+                        use_chat_template=use_chat_template,
                     )
                     doc.num_effective_few_shots = num_effective_few_shots
                     doc.num_asked_few_shots = num_fewshot
