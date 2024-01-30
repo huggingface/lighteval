@@ -28,7 +28,8 @@ if is_nanotron_available():
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
-    """Provides a proper json encoding for the loggers and trackers json dumps.
+    """
+    Provides a proper json encoding for the loggers and trackers json dumps.
     Notably manages the json encoding of dataclasses.
     """
 
@@ -39,10 +40,16 @@ class EnhancedJSONEncoder(json.JSONEncoder):
 
 
 class EvaluationTracker:
-    """Keeps track of the overall evaluation process and relevant informations.
+    """
+    Keeps track of the overall evaluation process and relevant informations.
 
-    The [`EvaluationTracker`] contains specific loggers for experiments details ([`DetailsLogger`]), metrics ([`MetricsLogger`]), task versions ([`VersionsLogger`]) as well as for the general configurations of both the specific task ([`TaskConfigLogger`]) and overall evaluation run ([`GeneralConfigLogger`]).
-    It compiles the data from these loggers and writes it to files, which can be published to the Hugging Face hub if requested.
+    The [`EvaluationTracker`] contains specific loggers for experiments details
+    ([`DetailsLogger`]), metrics ([`MetricsLogger`]), task versions
+    ([`VersionsLogger`]) as well as for the general configurations of both the
+    specific task ([`TaskConfigLogger`]) and overall evaluation run
+    ([`GeneralConfigLogger`]).  It compiles the data from these loggers and
+    writes it to files, which can be published to the Hugging Face hub if
+    requested.
     """
 
     details_logger: DetailsLogger
@@ -53,11 +60,15 @@ class EvaluationTracker:
     hub_results_org: str
 
     def __init__(self, hub_results_org: str = "", token: str = "") -> None:
-        """Creates all the necessary loggers for evaluation tracking.
+        """
+        Creates all the necessary loggers for evaluation tracking.
 
         Args:
-            hub_results_org (str): The organisation to push the results to. See more details about the datasets organisation in [`EvaluationTracker.save`]
-            token (str): Token to use when pushing to the hub. This token should have write access to `hub_results_org`.
+            hub_results_org (str): The organisation to push the results to. See
+                more details about the datasets organisation in
+                [`EvaluationTracker.save`]
+            token (str): Token to use when pushing to the hub. This token should
+                have write access to `hub_results_org`.
         """
         self.details_logger = DetailsLogger()
         self.metrics_logger = MetricsLogger()

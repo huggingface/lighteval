@@ -2,6 +2,7 @@ import collections
 import os
 import time
 from dataclasses import asdict, dataclass, field
+from typing import Union
 
 import git
 import numpy as np
@@ -72,7 +73,27 @@ class GeneralConfigLogger:
         self.lighteval_sha = repo.git.rev_parse("HEAD")
         self.start_time = time.perf_counter()
 
-    def log_args_info(self, num_fewshot_seeds, override_batch_size, max_samples, job_id, config=None) -> None:
+    def log_args_info(
+        self,
+        num_fewshot_seeds: int,
+        override_batch_size: Union[None, int],
+        max_samples: Union[None, int],
+        job_id: str,
+        config: "BrrrConfig" = None,
+    ) -> None:
+        """
+        Logs the information about the arguments passed to the method.
+
+        Args:
+            num_fewshot_seeds (int): The number of few-shot seeds.
+            override_batch_size (Union[None, int]): The overridden batch size.
+            max_samples (Union[None, int]): The maximum number of samples.
+            job_id (str): The job ID.
+            config (optional): BrrrConfig
+
+        Returns:
+            None
+        """
         self.num_fewshot_seeds = num_fewshot_seeds
         self.override_batch_size = override_batch_size
         self.max_samples = max_samples

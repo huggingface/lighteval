@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Optional, Union
 
 import torch
-from transformers import AutoConfig, BitsAndBytesConfig, GPTQConfig
+from transformers import AutoConfig, BitsAndBytesConfig, GPTQConfig, PretrainedConfig
 
 from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.utils import _get_model_sha
@@ -23,12 +23,16 @@ if is_accelerate_available():
 
 @dataclass
 class EnvConfig:
+    """
+    Configuration class for environment settings.
+
+    Attributes:
+        cache_dir (str): The directory for caching data.
+        token (str): The authentication token used for accessing the HuggingFace Hub.
+    """
     cache_dir: str = None
     token: str = None
 
-
-@dataclass
-class BaseModelConfig:
     """Args:
     pretrained (str):
         The HuggingFace Hub model ID name or the path to a pre-trained
@@ -48,6 +52,50 @@ class BaseModelConfig:
         Converts the model weights to `dtype`, if specified. Strings get
         converted to `torch.dtype` objects (e.g. `float16` -> `torch.float16`).
         Use `dtype="auto"` to derive the type from the model’s weights.
+    """
+
+
+
+@dataclass
+class BaseModelConfig:
+    """
+    Base configuration class for models.
+
+    Attributes:
+        pretrained (str): The HuggingFace Hub model ID name or the path to a
+            pre-trained model to load. This is effectively the
+            `pretrained_model_name_or_path` argument of `from_pretrained` in the
+            HuggingFace `transformers` API.
+        accelerator (Accelerator): The accelerator to use for model training.
+        tokenizer (Optional[str]): The HuggingFace Hub tokenizer ID that will be
+            used for tokenization.
+        multichoice_continuations_start_space (Optional[bool]): Whether to add a
+            space at the start of each continuation in multichoice generation.
+        subfolder (Optional[str]): The subfolder within the model repository.
+        revision (str): The revision of the model.
+        batch_size (int): The batch size for model training.
+        max_gen_toks (Optional[int]): The maximum number of tokens to generate.
+        max_length (Optional[int]): The maximum length of the generated output.
+        add_special_tokens (bool, optional, defaults to True):
+            Whether to add special tokens to the input sequences. If `None`, the
+            default value will be set to `True` for seq2seq models (e.g. T5) and
+            `False` for causal models.
+        model_parallel (Optional[bool]): Whether to use model parallelism.
+        dtype (Optional[Union[str, torch.dtype]]): The data type of the model.
+        device (Union[int, str]): The device to use for model training.
+        quantization_config (Optional[BitsAndBytesConfig]): The quantization
+            configuration for the model.
+        load_in_8bit (bool): Whether to load the model in 8-bit precision.
+        load_in_4bit (bool): Whether to load the model in 4-bit precision.
+        trust_remote_code (bool): Whether to trust remote code during model
+            loading.
+
+    Methods:
+        __post_init__(): Performs post-initialization checks on the configuration.
+        _init_configs(model_name, env_config): Initializes the model configuration.
+        init_configs(env_config): Initializes the model configuration using the environment configuration.
+        get_model_sha(): Retrieves the SHA of the model.
+
     """
 
     pretrained: str
@@ -77,7 +125,7 @@ class BaseModelConfig:
         if not isinstance(self.device, str):
             raise ValueError("Current device must be passed as string.")
 
-    def _init_configs(self, model_name, env_config: EnvConfig):
+    def _init_configs(self, model_name: str, env_config: EnvConfig) -> PretrainedConfig:
         revision = self.revision
         if self.subfolder:
             revision = f"{self.revision}/{self.subfolder}"
@@ -98,7 +146,7 @@ class BaseModelConfig:
 
         return auto_config
 
-    def init_configs(self, env_config: EnvConfig):
+    def init_configs(self, env_config: EnvConfig) -> PretrainedConfig:
         return self._init_configs(self.pretrained, env_config=env_config)
 
     def get_model_sha(self):
