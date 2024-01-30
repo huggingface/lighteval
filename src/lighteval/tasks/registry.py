@@ -95,18 +95,17 @@ def taskinfo_selector(
 
     for task in tasks.split(","):
         try:
-            suite_name, task_name, few_shot, truncate_few_shots = tuple(task.split("|"))
-            truncate_few_shots = int(truncate_few_shots)
+            suite_name, task_name, few_shot_str, truncate_few_shots_str = tuple(task.split("|"))
         except ValueError:
             raise ValueError(
                 f"Cannot get task info from {task}. correct format is suite|task|few_shot|truncate_few_shots"
             )
 
-        if truncate_few_shots not in [0, 1]:
-            raise ValueError(f"TruncateFewShots must be 0 or 1, got {truncate_few_shots}")
+        if truncate_few_shots_str not in ["0", "1"]:
+            raise ValueError(f"TruncateFewShots must be 0 or 1, got {truncate_few_shots_str}")
 
-        truncate_few_shots = bool(truncate_few_shots)
-        few_shot = int(few_shot)
+        truncate_few_shots = bool(int(truncate_few_shots_str))
+        few_shot = int(few_shot_str)
 
         if suite_name not in DEFAULT_SUITES:
             hlog(f"Suite {suite_name} unknown. This is not normal, unless you are testing adding new evaluations.")
