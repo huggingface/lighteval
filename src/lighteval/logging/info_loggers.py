@@ -101,16 +101,16 @@ class GeneralConfigLogger:
         self.config = config
 
     def log_model_info(self, model_info: ModelInfo) -> None:
-            """
-            Logs the model information.
+        """
+        Logs the model information.
 
-            Args:
-                model_info (ModelInfo): The model information to be logged.
-            """
-            self.model_name = model_info.model_name
-            self.model_sha = model_info.model_sha
-            self.model_dtype = model_info.model_dtype
-            self.model_size = model_info.model_size
+        Args:
+            model_info (ModelInfo): The model information to be logged.
+        """
+        self.model_name = model_info.model_name
+        self.model_sha = model_info.model_sha
+        self.model_dtype = model_info.model_dtype
+        self.model_size = model_info.model_size
 
     def log_end_time(self) -> None:
         self.end_time = time.perf_counter()
