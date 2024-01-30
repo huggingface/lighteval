@@ -71,8 +71,8 @@ def get_custom_tasks(custom_tasks_file: str) -> Tuple[ModuleType, str]:
 
 
 def taskinfo_selector(
-    tasks: str, few_shot_default: int = 0
-) -> tuple[list[str], dict[str, list[tuple[int, bool]]], dict[str, str]]:
+    tasks: str,
+) -> tuple[list[str], dict[str, list[tuple[int, bool]]]]:
     """
     Selects task information based on the given tasks and description dictionary path.
 
@@ -80,12 +80,12 @@ def taskinfo_selector(
         tasks (str): A string containing a comma-separated list of tasks in the
             format "suite|task|few_shot|truncate_few_shots" or a path to a file
             containing a list of tasks.
+        few_shot_default (int, optional): The default few_shot value to use if not provided.
 
     Returns:
-        tuple[list[str], dict[str, list[tuple[int, bool]]], dict[str, str]]: A tuple containing:
+        tuple[list[str], dict[str, list[tuple[int, bool]]]]: A tuple containing:
             - A sorted list of unique task names in the format "suite|task".
             - A dictionary mapping each task name to a list of tuples representing the few_shot and truncate_few_shots values.
-            - A dictionary containing the description dictionary loaded from the given path, or an empty dictionary if no path is provided.
     """
     few_shot_dict = collections.defaultdict(list)
 

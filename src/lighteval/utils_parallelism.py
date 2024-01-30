@@ -92,6 +92,16 @@ def find_executable_batch_size(function: callable = None, starting_batch_size: i
 
 
 def test_all_gather(accelerator=None, parallel_context=None):
+    """
+    Test the gather operation in a parallel setup.
+
+    Args:
+        accelerator (Optional): The accelerator object used for parallelism.
+        parallel_context (Optional): The parallel context object used for parallelism.
+
+    Raises:
+        ImportError: If the required accelerator or parallel context is not available.
+    """
     if accelerator:
         if not is_accelerate_available():
             raise ImportError(NO_ACCELERATE_ERROR_MSG)

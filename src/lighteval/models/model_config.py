@@ -1,3 +1,4 @@
+from argparse import Namespace
 from dataclasses import dataclass
 from typing import Optional, Union
 
@@ -30,6 +31,7 @@ class EnvConfig:
         cache_dir (str): The directory for caching data.
         token (str): The authentication token used for accessing the HuggingFace Hub.
     """
+
     cache_dir: str = None
     token: str = None
 
@@ -53,7 +55,6 @@ class EnvConfig:
         converted to `torch.dtype` objects (e.g. `float16` -> `torch.float16`).
         Use `dtype="auto"` to derive the type from the model’s weights.
     """
-
 
 
 @dataclass
@@ -194,8 +195,23 @@ class TGIModelConfig:
     inference_server_auth: str
 
 
-def create_model_config(args, accelerator: Accelerator):  # noqa C901
-    # Tests
+def create_model_config(args: Namespace, accelerator: Union[Accelerator, None]) -> BaseModelConfig:  # noqa: C901
+    """
+    Create a model configuration based on the provided arguments.
+
+    Args:
+        args (Namespace): The command-line arguments.
+        accelerator (Union[Accelerator, None]): The accelerator to use for model training.
+
+    Returns:
+        BaseModelConfig: The model configuration.
+
+    Raises:
+        ValueError: If both an inference server address and model arguments are provided.
+        ValueError: If both multichoice continuations start with a space and do not start with a space.
+        ValueError: If a base model is not specified when using delta weights or adapter weights.
+        ValueError: If a base model is specified when not using delta weights or adapter weights.
+    """
     if args.inference_server_address is not None and args.model_args is not None:
         raise ValueError("You cannot both use an inference server and load a model from its checkpoint.")
 
