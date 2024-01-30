@@ -22,6 +22,10 @@ TABLE_PATH = os.path.join(os.path.dirname(__file__), "tasks_table.jsonl")
 
 
 class Registry:
+    """
+    The Registry class is used to manage the task registry and get task classes.
+    """
+
     def __init__(self, cache_dir: str):
         """
         Initialize the Registry class.
