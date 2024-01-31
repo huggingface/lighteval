@@ -1,6 +1,7 @@
 import ast
 import json
 import random
+import numpy as np
 import re
 import string
 
@@ -115,22 +116,43 @@ def babi_qa(line, task_name: str = None):  # HELM
             story.append(text)
     return queries
 
+def bbh_harness(line, task_name: str = None):
+    line = {k: v for k, v in line.items() if v is not None}
+
+    task_prefix = line.get("task_prefix", "")
+    example_input_prefix = line.get("example_input_prefix", "\nQ: ")
+    query = f"{task_prefix}{example_input_prefix}{line['input']}"
+
+    rng = np.random.RandomState(seed=42)
+    choice_prefix = line.get("choice_prefix", "\n  choice: ")
+    append_choices = bool(line.get("append_choices_to_input", True))
+    if append_choices:
+        permuted_choices = list(rng.permutation(sorted(line["choices"])))
+        query = f"{query}{choice_prefix}{choice_prefix.join(permuted_choices)}"
+
+    example_output_prefix = line.get("example_output_prefix", "\nA: ")
+    query = f"{query}{example_output_prefix}"
+
+    gold_item = line["choices"][line["target_idx"]]
+    correct_index = permuted_choices.index(gold_item)
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=permuted_choices,
+        gold_index=correct_index,
+        target_for_fewshot_sorting=permuted_choices,
+        instruction=line.get("task_prefix", None),
+    )
 
 def bbh_lighteval(line, task_name: str = None):
-    query = "", ""
-    if "task_prefix" in line:
-        query = line["task_prefix"]
-    if "example_input_prefix" in line:
-        query += line["example_input_prefix"]
-    else:
-        query += "Q: "
+    line = {k: v for k, v in line.items() if v is not None}
+    
+    query = line.get("task_prefix", "") 
+    query +=line.get("example_input_prefix", "\nQuestion: ")
     query += line["input"]
-    if "example_output_prefix" in line:
-        query += line["example_output_prefix"]
-    else:
-        query += "Choices:"
+    query += line.get("choice_prefix", "\n  Choices: ")
     query += "".join([f"\n{key}. {choice}" for key, choice in zip(LETTER_INDICES, line["choices"])])
-    query += "\nAnswer: "
+    query += line.get("example_output_prefix", "\nAnswer: ")
 
     return Doc(
         task_name=task_name,
