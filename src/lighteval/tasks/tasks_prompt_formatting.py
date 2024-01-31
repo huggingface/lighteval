@@ -1,10 +1,10 @@
 import ast
 import json
 import random
-import numpy as np
 import re
 import string
 
+import numpy as np
 import pycountry
 
 from lighteval.logging.hierarchical_logger import hlog_warn
@@ -146,8 +146,8 @@ def bbh_harness(line, task_name: str = None):
 
 def bbh_lighteval(line, task_name: str = None):
     line = {k: v for k, v in line.items() if v is not None}
-    
-    query = line.get("task_prefix", "") 
+
+    query = line.get("task_prefix", "")
     query +=line.get("example_input_prefix", "\nQuestion: ")
     query += line["input"]
     query += line.get("choice_prefix", "\n  Choices: ")
