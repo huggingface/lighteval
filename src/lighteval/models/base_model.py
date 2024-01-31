@@ -4,8 +4,8 @@ from typing import Optional, Tuple, Union
 import torch
 import torch.nn.functional as F
 import transformers
-from torch.utils.data import DataLoader
 from torch.nn.utils.rnn import pad_sequence
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoTokenizer, BatchEncoding
 
@@ -846,7 +846,7 @@ class BaseModel:
                 # Sync all
                 ## Need reshape before gather
                 batched_inputs, len_inputs = self.pad_and_gather(prepared_batch.input_ids)
-                # We sometimes have different tasks with a different number of choices. 
+                # We sometimes have different tasks with a different number of choices.
                 # Padding to -10000 makes sure that we won't reach index problems later as all log probs will be smaller than that
                 batch_probs = pad_sequence(batch_probs, batch_first=True, padding_value=-10000000)
                 batch_probs, len_probs = self.pad_and_gather(batch_probs)
