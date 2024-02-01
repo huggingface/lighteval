@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+import json
+from dataclasses import asdict, dataclass
 from enum import Enum, auto
 from typing import NamedTuple, Optional, Union
 
@@ -154,3 +155,7 @@ class Doc:
             for local_gold in local_golds:
                 golds.append(local_gold)
         return golds
+
+    def __repr__(self):
+        doc_dict = asdict(self)
+        return json.dumps(doc_dict)

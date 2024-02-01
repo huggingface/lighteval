@@ -97,6 +97,9 @@ class LightevalTask:
         self.generation_size = cfg["generation_size"]
         self.stop_sequence = cfg["stop_sequence"]
         self.output_regex = cfg["output_regex"]
+        self.must_remove_duplicate_docs = cfg["must_remove_duplicate_docs"]
+        if self.must_remove_duplicate_docs is None:
+            self.must_remove_duplicate_docs = False
 
         # Save options
         self.save_queries: bool = False
@@ -158,6 +161,14 @@ class LightevalTask:
                 docs.extend(as_list(self.formatter(item, self.name)))
         return docs
 
+    def remove_duplicate_docs(self, docs: list[Doc]) -> list[Doc]:
+        seen_examples, res = set(), []
+        for doc in docs:
+            if str(doc) not in seen_examples:
+                res.append(doc)
+                seen_examples.add(str(doc))
+        return res
+
     def fewshot_docs(self) -> list[Doc]:
         if self._fewshot_docs is None:
             self._fewshot_docs = []
@@ -172,6 +183,8 @@ class LightevalTask:
     def eval_docs(self) -> list[Doc]:
         if self._docs is None:
             self._docs = self._get_docs_from_split(self.evaluation_split)
+            if self.must_remove_duplicate_docs:
+                self._docs = self.remove_duplicate_docs(self._docs)
         return self._docs
 
     def doc_to_target(self, formatted_doc: Doc, few_shot: bool = False):
