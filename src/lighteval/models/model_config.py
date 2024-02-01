@@ -146,7 +146,7 @@ class TGIModelConfig:
     inference_server_auth: str
 
 
-def create_model_config(args, accelerator: Accelerator):  # noqa C901
+def create_model_config(args, accelerator: "Accelerator"):  # noqa C901
     # Tests
     if args.inference_server_address is not None and args.model_args is not None:
         raise ValueError("You cannot both use an inference server and load a model from its checkpoint.")
