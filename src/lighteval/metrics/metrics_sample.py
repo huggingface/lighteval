@@ -275,17 +275,16 @@ class MRR:
         return 1.0 / (min(ranked_choices) + 1)
 
 
-def acc_golds_likelihood(results: list[tuple[float, int]], **kwargs) -> int:
+def acc_golds_likelihood(target_acc: list[int] | int, **kwargs) -> int:
     """Tests if at least one of predicted gold targets' log-likelihood is above 0.5.
 
     Args:
-        results (list[int]): List of tuples containing, for each gold, the predictions log-probabilities associated with whether they are above 0.5 aggregated.
-        formatted_doc (Doc): _description_
+        target_acc (list[int]): List of scores indicating whether the predictions log-probabilities are above 0.5 aggregated.
 
     Returns:
         int: 1 if at least one of the possible golds had a log-likelihood above 0.5.
     """
-    return max([int(acc_ppl) for _, acc_ppl in results])
+    return max([int(acc_ppl) for acc_ppl in as_list(target_acc)])
 
 
 class ROUGE:
