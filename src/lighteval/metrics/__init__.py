@@ -8,11 +8,12 @@ from lighteval.utils import as_list
 
 def apply_target_perplexity_metric(results: list[ModelReturn], formatted_doc: Doc, metrics: list[str]):
     outputs = {}
-    current_results = [results.pop(0) for _ in range(len(formatted_doc.get_golds()))]
+    current_result = results.pop(0)
+    reference_text = formatted_doc.choices[formatted_doc.gold_index]
 
     for metric in metrics:
-        if Metrics[metric].value.category == MetricCategory.PERPLEXITY:
-            outputs.update(Metrics[metric].value.compute(results=current_results))
+        if Metrics[metric].value.category == MetricCategory.TARGET_PERPLEXITY:
+            outputs.update(Metrics[metric].value.compute(results=current_result, reference_text=reference_text))
 
     return results, outputs
 
