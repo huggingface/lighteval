@@ -15,7 +15,11 @@ def apply_target_perplexity_metric(results: list[ModelReturn], formatted_doc: Do
 
     for metric in metrics:
         if Metrics[metric].value.category == MetricCategory.TARGET_PERPLEXITY:
-            outputs.update(Metrics[metric].value.compute(logprobs=target_logprob, target_acc=target_acc, reference_text=reference_text))
+            outputs.update(
+                Metrics[metric].value.compute(
+                    logprobs=target_logprob, target_acc=target_acc, reference_text=reference_text
+                )
+            )
 
     return results, outputs
 
@@ -33,7 +37,9 @@ def apply_perplexity_metric(results: list[ModelReturn], formatted_doc: Doc, metr
 
     for metric in metrics:
         if Metrics[metric].value.category == MetricCategory.PERPLEXITY:
-            outputs.update(Metrics[metric].value.compute(logprobs=current_result.result, reference_text=reference_text))
+            outputs.update(
+                Metrics[metric].value.compute(logprobs=current_result.result, reference_text=reference_text)
+            )
 
     return results, outputs
 
