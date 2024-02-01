@@ -117,7 +117,7 @@ def babi_qa(line, task_name: str = None):  # HELM
     return queries
 
 def bbh_harness(line, task_name: str = None):
-    line = {k: v for k, v in line.items() if v is not None}
+    line = {k: v for k, v in line.items() if v not in [None, ""]}
 
     task_prefix = line.get("task_prefix", "")
     example_input_prefix = line.get("example_input_prefix", "\nQ: ")
@@ -125,22 +125,25 @@ def bbh_harness(line, task_name: str = None):
 
     rng = np.random.RandomState(seed=42)
     choice_prefix = line.get("choice_prefix", "\n  choice: ")
-    append_choices = bool(line.get("append_choices_to_input", True))
+    append_choices = bool(line.get("append_choices", True))
+    # default
+    correct_index = line["target_idx"]
+    choices = line["choices"]
     if append_choices:
-        permuted_choices = list(rng.permutation(sorted(line["choices"])))
-        query = f"{query}{choice_prefix}{choice_prefix.join(permuted_choices)}"
+        choices = list(rng.permutation(sorted(line["choices"])))
+        query = f"{query}{choice_prefix}{choice_prefix.join(choices)}"
+        gold_item = line["choices"][line["target_idx"]]
+        correct_index = choices.index(gold_item)
 
     example_output_prefix = line.get("example_output_prefix", "\nA: ")
     query = f"{query}{example_output_prefix}"
 
-    gold_item = line["choices"][line["target_idx"]]
-    correct_index = permuted_choices.index(gold_item)
     return Doc(
         task_name=task_name,
         query=query,
-        choices=permuted_choices,
+        choices=choices,
         gold_index=correct_index,
-        target_for_fewshot_sorting=permuted_choices,
+        target_for_fewshot_sorting=choices,
         instruction=line.get("task_prefix", None),
     )
 
