@@ -1,7 +1,8 @@
-# flake8: noqa: C901
+# flake8: noqa: C901,E1120
 import os
 import time
-from typing import List, Optional, Tuple, Union
+from dataclasses import dataclass
+from typing import List, Optional, Tuple, Union, Type
 
 import torch
 import torch.nn.functional as F
@@ -28,6 +29,12 @@ from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
 from transformers import AutoTokenizer, BatchEncoding
 
+from lighteval.tasks.requests import (
+    GreedyUntilRequest,
+    LoglikelihoodRequest,
+    LoglikelihoodRollingRequest,
+    LoglikelihoodSingleTokenRequest,
+)
 from lighteval.data import (
     GenDistributedSampler,
     GenerativeTaskDataset,
@@ -48,8 +55,7 @@ logger = logging.get_logger(__name__)
 
 TokenSequence = Union[List[int], torch.LongTensor, torch.Tensor, BatchEncoding]
 
-# _DeviceMapping = NewType("DeviceMapping", Mapping[str, Union[int, str, torch.device]])
-
+STARTING_BATCH_SIZE = 512
 
 class BRRRModel:
     # Default max sequence length setting for when no `max_length` is provided
@@ -75,6 +81,7 @@ class BRRRModel:
         s5cmd_numworkers: int = 64,
         s5cmd_concurrency: int = 10,
         s5cmd_path: str = "/admin/home/thomwolf/miniconda/envs/b4r/bin/s5cmd",
+        model_class: Optional[Type] = None,
     ):
         """Initializes a brrr model for evaluation.
         Args:
@@ -127,6 +134,9 @@ class BRRRModel:
         self.tokenizer.model_max_length = self.max_length
 
         model_config_cls = self.model_config.__class__.__name__
+        if model_class is not None:
+            CONFIG_TO_MODEL_CLASS[self.model_config.__class__.__name__] = model_class
+
         if model_config_cls not in CONFIG_TO_MODEL_CLASS:
             raise ValueError(
                 f"Unsupported model config {model_config_cls}. Only {CONFIG_TO_MODEL_CLASS.keys()} are supported"
@@ -401,7 +411,7 @@ class BRRRModel:
         continuation_enc = whole_enc[context_enc_len:]
         return context_enc, continuation_enc
 
-    def homogeneize_ending_conditions(self, ending_condition: tuple | dict | list | str) -> tuple[list, int]:
+    def homogeneize_ending_conditions(self, ending_condition: Union[tuple, dict, list, str]) -> tuple[list, int]:
         """Ending conditions are submitted in several possible formats.
         By default in lighteval we pass them as tuples (stop sequence, max number of items).
         In the harness they sometimes are passed as dicts {"until": .., "max_length": ...} or
@@ -496,7 +506,7 @@ class BRRRModel:
             disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
         )
 
-    def loglikelihood(self, requests: List[Tuple[str, str]], override_bs=None) -> List[LoglikelihoodReturn]:
+    def loglikelihood(self, requests: List[LoglikelihoodRequest], override_bs=None) -> List[LoglikelihoodReturn]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
 
@@ -525,7 +535,7 @@ class BRRRModel:
             disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
         )
 
-    def loglikelihood_rolling(self, requests: List[Tuple[str, str]], override_bs=None) -> List[LoglikelihoodReturn]:
+    def loglikelihood_rolling(self, requests: List[LoglikelihoodRollingRequest], override_bs=None) -> List[LoglikelihoodReturn]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         tokenized_reqs = []
 
@@ -615,7 +625,7 @@ class BRRRModel:
 
             # when too long to fit in context, truncate from the left
             inp = torch.tensor(
-                (tokens)[-max_context:],  # [:-1],
+                tokens[-max_context:],  # [:-1],
                 dtype=torch.long,
             )
 
@@ -706,7 +716,7 @@ class BRRRModel:
 
     @torch.inference_mode()
     def _loglikelihood_single_token(
-        self, requests, disable_tqdm: bool = False, override_bs: int = -1, dataset_splits: int = 1
+        self, requests: List[LoglikelihoodSingleTokenRequest], disable_tqdm: bool = False, override_bs: int = -1, dataset_splits: int = 1
     ) -> List[LoglikelihoodSingleTokenReturn]:
         dataset = LoglikelihoodSingleTokenDataset(requests=requests)
         res = []
@@ -928,7 +938,7 @@ class BRRRModel:
             # We are in a process which return no output (beginning/middle of the PP group)
             return []
 
-        return dataset.ordered.get_original(res)
+        return dataset.get_original_order(res)
 
     @torch.inference_mode()
     def _loglikelihood_tokens(
@@ -939,26 +949,14 @@ class BRRRModel:
         dataset_splits: int = 1,
         return_bool_score: bool = True,
     ) -> List[LoglikelihoodReturn]:
-        dataset = LoglikelihoodDataset(requests=requests)
+        dataset = LoglikelihoodDataset(requests=requests, dataset_splits=dataset_splits)
         res = []
 
         # Dataset is sorted in descending size.
         # every 20-25% of the dataset we try to double the batch size for speed up
-        starting_batch_size = 512
+        starting_batch_size = STARTING_BATCH_SIZE
 
-        total_length, subset_length = self._get_subsets(dataset, dataset_splits)
-
-        for s, subset_start in enumerate(
-            tqdm(
-                range(0, total_length, subset_length),
-                disable=disable_tqdm,
-                position=0,
-                desc=f"loglikelihood -- Node {dist.get_rank(self.parallel_context.world_pg)}",
-            )
-        ):
-            dataset.split_start = subset_start
-            dataset.split_end = min(subset_start + subset_length, total_length)
-
+        for s, (split_start, split_end) in tqdm(enumerate(dataset.splits_start_end_iterator())):
             # automatic (variable) batch size detection for vectorization
             # pull longest context sample from request
             _, context_enc, continuation_enc = dataset[0]
@@ -1162,13 +1160,13 @@ class BRRRModel:
         #         print(f"i {i} padded: {r.padded}")
 
         if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
-            assert len(res) == total_length, "we didn't cover all the data"
+            assert len(res) == (split_end-split_start), "we didn't cover all the data"
 
         if len(res) == 0:
             # We are in a process which return no output (beginning/middle of the PP group)
             return []
 
-        return dataset.ordered.get_original(res)
+        return dataset.get_original_order(res)
 
     @torch.inference_mode()
     def greedy_until(
@@ -1185,21 +1183,21 @@ class BRRRModel:
         # pull longest context sample from request
         if task_names:
             enc_inputs = [
-                (
+                (index, (
                     self.tok_encode(req.context),
                     self.homogeneize_ending_conditions((req.stop_sequence, req.generation_size)),
                     task_name,
-                )
-                for req, task_name in zip(requests, task_names)
+                ))
+                for index, (req, task_name) in enumerate(zip(requests, task_names))
             ]
         else:
             enc_inputs = [
-                (
+                (index, (
                     self.tok_encode(req.context),
                     self.homogeneize_ending_conditions((req.stop_sequence, req.generation_size)),
                     None,
-                )
-                for req in requests
+                ))
+                for index, req in enumerate(requests)
             ]
 
         dataset = GenerativeTaskDataset(requests=enc_inputs, dataset_splits=dataset_splits)
@@ -1221,10 +1219,10 @@ class BRRRModel:
             )
         ):
             # print(dataset[0])
-            (context_enc, _, _) = dataset[0]
-            # max_gen = max(d[1][1][1] for d in dataset)
-            # max_input_length = min(len(context_enc) + max_gen, self.max_length)
-            max_input_length = len(context_enc)
+            _, (context_enc, _, _) = dataset[0]
+            max_gen = max(d[1][1][1] for d in dataset)
+            max_input_length = min(len(context_enc) + max_gen, self.max_length)
+            # max_input_length = len(context_enc)
             batch_size = self._get_batch_size(
                 override_bs=override_bs, max_input_length=max_input_length, starting_batch_size=starting_batch_size
             )
@@ -1259,7 +1257,7 @@ class BRRRModel:
                         rank=0,
                     )
                 iteration_start_time = time.time()
-                batch_data = zip(*all_batch)
+                example_index, batch_data = zip(*all_batch)
                 context = [c[0] for c in batch_data]
                 task_names = [c[2] for c in batch_data]
                 # we take the longest asked generation in the batch
@@ -1320,7 +1318,7 @@ class BRRRModel:
                     generations = batch_generations.numpy(force=True)
                     input_ids = batch_input_ids.numpy(force=True)
 
-                    batch_example_index = torch.tensor(0, device=self.device)
+                    batch_example_index = torch.tensor(example_index, device=self.device)
                     batch_example_index = self.gather(batch_example_index)
                     batch_truncated = torch.tensor(batch_model.truncated, device=self.device)
                     batch_truncated = self.gather(batch_truncated)
@@ -1376,7 +1374,7 @@ class BRRRModel:
             # We are in a process which return no output (beginning/middle of the PP group)
             return []
 
-        return dataset.ordered.get_original(res)
+        return dataset.get_original_order(res)
 
 
 class MultiTokenEOSCriteria(transformers.StoppingCriteria):
