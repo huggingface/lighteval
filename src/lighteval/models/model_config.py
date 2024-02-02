@@ -146,10 +146,33 @@ class TGIModelConfig:
     inference_server_auth: str
 
 
+@dataclass
+class InferenceModelConfig:
+    model: str
+
+
+@dataclass
+class InferenceEndpointModelConfig:
+    name: str
+    repository: str
+    accelerator: str
+    vendor: str
+    region: str
+    instance_size: str
+    instance_type: str
+    framework: str = "pytorch"
+    endpoint_type: str = "protected"
+
+
 def create_model_config(args, accelerator: Accelerator):  # noqa C901
     # Tests
     if args.inference_server_address is not None and args.model_args is not None:
         raise ValueError("You cannot both use an inference server and load a model from its checkpoint.")
+
+    if args.inference_server_address is not None:
+        return TGIModelConfig(
+            inference_server_address=args.inference_server_address, inference_server_auth=args.inference_server_auth
+        )
 
     multichoice_continuations_start_space = args.multichoice_continuations_start_space
     if not multichoice_continuations_start_space and not args.no_multichoice_continuations_start_space:
