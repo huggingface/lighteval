@@ -106,14 +106,14 @@ class PerplexityPreparator:
         if self.units_type == "bytes":
             return len(text.encode("utf-8"))
 
-    def prepare(self, results, reference_text, **kwargs):
+    def prepare(self, logprobs: list[float] | float, reference_text: str, **kwargs):
         """Prepares an individual perplexity example to the format expected by metrics computed at the corpus level (aggregated).
 
         Args:
-            results (list[float]): List of the logprobabilities computed for each item
+            logprobs (list[float]): List of the logprobabilities computed for each item of the sequence or single aggregated logprob over the sequence
             reference_text (str): Current reference text for which to compute the length in self.units_type
 
         Returns:
             PerplexityCorpusMetricInput: Stores the measured logprobs and associated text lengths, counted in the reference unit.
         """
-        return PerplexityCorpusMetricInput(logprobs=results.result, weights=self.count_units(reference_text))
+        return PerplexityCorpusMetricInput(logprobs=logprobs, weights=self.count_units(reference_text))
