@@ -8,7 +8,7 @@ LightEval is an evaluation suite which gathers a selection of features from wide
 
 It is still an early, internal version - it should be nice to use but don't expect 100% stability!
 
-In case of problems or question, feel free to open an issue! 
+In case of problems or question, feel free to open an issue!
 
 ## How to install and use
 ### Requirements
@@ -50,11 +50,11 @@ Lastly, create a **line summary** of your evaluation, in `metadata_table.json`. 
 - `suite` (list), the suite(s) to which your evaluation should belong. This field allows us to compare different tasks implementation, and is used a task selection to differentiate the versions to launch. At the moment, you'll find the keywords ["helm", "bigbench", "original", "lighteval"]; you can add also add new ones (for test, we recommend using "custom").
 - `prompt_function` (str), the name of the prompt function you defined in the step above
 - `hf_repo` (str), the path to your evaluation dataset on the hub
-- `hf_subset` (str), the specific subset you want to use for your evaluation (note: when the dataset has no subset, fill this field with `"default"`, not with `None` or `""`) 
+- `hf_subset` (str), the specific subset you want to use for your evaluation (note: when the dataset has no subset, fill this field with `"default"`, not with `None` or `""`)
 - `hf_avail_splits` (list), all the splits available for your dataset (train, valid or validation, test, other...)
 - `evaluation_splits` (list), the splits you want to use for evaluation
 - `few_shots_split` (str, can be `null`), the specific split from which you want to select samples for your few-shot examples. It should be different from the sets included in `evaluation_splits`
-- `few_shots_select` (str, can be `null`), the method that you will use to select items for your few-shot examples. Can be `null`, or one of: 
+- `few_shots_select` (str, can be `null`), the method that you will use to select items for your few-shot examples. Can be `null`, or one of:
     - `balanced` selects examples from the `few_shots_split` with balanced labels, to avoid skewing the few shot examples (hence the model generations) towards one specific label
     - `random` selects examples at random from the `few_shots_split`
     - `random_sampling` selects new examples at random from the `few_shots_split` for every new item, but if a sampled item is equal to the current one, it is removed from the available samples
@@ -102,7 +102,7 @@ These metrics need the model to generate an output. They are therefore slower.
     - `exact_match_indicator`: Exact match with some preceding context (before an indicator) removed
     - `f1_score_quasi` (HELM): Average F1 score in terms of word overlap between the model output and gold, with both being normalized first
     - `f1_score`:  Average F1 score in terms of word overlap between the model output and gold without normalisation
-    - `f1_score_macro`: Corpus level macro F1 score 
+    - `f1_score_macro`: Corpus level macro F1 score
     - `f1_score_macro`: Corpus level micro F1 score
 - Summarization:
     - `rouge` (Harness): Average ROUGE score [(Lin, 2004)](https://aclanthology.org/W04-1013/)
@@ -141,7 +141,7 @@ These metrics need both the generation and its logprob. They are not working at 
 - `prediction_perplexity` (HELM): Measure of the logprob of a given input.
 
 ## Adding a new metric
-If you want to add a new metric, first check if you can use one of the parametrized functions in `src.lighteval.metrics.metrics_corpus` or `metrics_sample`. If not, add it to either of these files depending on the level at which it is applied. Then, follow the example in `src.lighteval.metrics.metrics` to register your metric. 
+If you want to add a new metric, first check if you can use one of the parametrized functions in `src.lighteval.metrics.metrics_corpus` or `metrics_sample`. If not, add it to either of these files depending on the level at which it is applied. Then, follow the example in `src.lighteval.metrics.metrics` to register your metric.
 
 ## Examples of scripts to launch lighteval on the cluster
 ### Evaluate a whole suite on one node, 8 GPUs
