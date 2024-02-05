@@ -30,7 +30,7 @@ from transformers import AutoTokenizer, BatchEncoding
 
 from lighteval.data import (
     GenDistributedSampler,
-    GenerativeTaskDataset,
+    GenerativeTaskDatasetBrrr,
     LoglikelihoodDataset,
     LoglikelihoodSingleTokenDataset,
 )
@@ -1211,7 +1211,7 @@ class BRRRModel:
                 for index, req in enumerate(requests)
             ]
 
-        dataset = GenerativeTaskDataset(requests=enc_inputs, dataset_splits=dataset_splits)
+        dataset = GenerativeTaskDatasetBrrr(requests=enc_inputs, dataset_splits=dataset_splits)
         res = []
 
         # Dataset is sorted in descending size.
