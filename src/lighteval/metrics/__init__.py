@@ -7,6 +7,8 @@ from lighteval.utils import as_list
 
 
 def apply_target_perplexity_metric(results: list[ModelReturn], formatted_doc: Doc, metrics: list[str]):
+    if len(formatted_doc.get_golds()) != 1:
+        raise ValueError("Target perplexity metric can only be used with one gold reference")
     outputs = {}
     reference_text = formatted_doc.get_golds()[0]
     current_result = results.pop(0)
