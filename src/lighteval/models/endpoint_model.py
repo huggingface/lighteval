@@ -57,7 +57,7 @@ class InferenceEndpointModel(LightevalModel):
                     "url": "ghcr.io/huggingface/text-generation-inference:1.1.0",
                 },
             )
-            self.endpoint.wait()  # Waits for the endpoint to be deployed
+            self.endpoint.wait(timeout=600)  # Waits for the endpoint to be deployed
             self.name = self.endpoint.name
             self.revision = self.endpoint.revision
             self.client: AsyncInferenceClient = self.endpoint.async_client

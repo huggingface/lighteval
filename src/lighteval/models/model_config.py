@@ -182,8 +182,9 @@ def create_model_config(args, accelerator: Accelerator):  # noqa C901
     # Endpoint
     if args.endpoint_model_name:
         if args.vendor is not None:
+            model = args.endpoint_model_name.split("/")[1].lower()
             return InferenceEndpointModelConfig(
-                name=f"endpoint-{args.endpoint_model_name}-eval",
+                name=f"{model}-lighteval",
                 repository=args.endpoint_model_name,
                 accelerator=args.accelerator,
                 region=args.region,
