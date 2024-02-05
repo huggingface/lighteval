@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import Dataset
 from torch.utils.data.distributed import DistributedSampler, T_co
 
-from lighteval.logging.hierarchical_logger import hlog, hlog_warn
+from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.tasks.requests import Request
 
 
@@ -193,6 +193,7 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         meta_data = x[1]
         _, gen_length = meta_data[0], meta_data[1]
         return -(len(toks) + gen_length)
+
 
 class GenerativeTaskDatasetBrrr(DynamicBatchDataset):
     def _sorting_criteria(self, x) -> int:
