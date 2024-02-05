@@ -165,7 +165,7 @@ class InferenceEndpointModelConfig:
 
 
 def create_model_config(args, accelerator: Accelerator):  # noqa C901
-    # Tests
+    # Incompatible models
     if args.inference_server_address is not None and args.model_args is not None:
         raise ValueError("You cannot both use an inference server and load a model from its checkpoint.")
     if args.inference_server_address is not None and args.endpoint_model_name is not None:
@@ -173,11 +173,13 @@ def create_model_config(args, accelerator: Accelerator):  # noqa C901
     if args.endpoint_model_name is not None and args.model_args is not None:
         raise ValueError("You cannot both load a model from its checkpoint and from an inference endpoint.")
 
+    # TGI
     if args.inference_server_address is not None:
         return TGIModelConfig(
             inference_server_address=args.inference_server_address, inference_server_auth=args.inference_server_auth
         )
 
+    # Endpoint
     if args.endpoint_model_name:
         if args.vendor is not None:
             return InferenceEndpointModelConfig(
@@ -185,11 +187,13 @@ def create_model_config(args, accelerator: Accelerator):  # noqa C901
                 repository=args.endpoint_model_name,
                 accelerator=args.accelerator,
                 region=args.region,
+                vendor=args.vendor,
                 instance_size=args.instance_size,
                 instance_type=args.instance_type,
             )
         return InferenceModelConfig(model=args.endpoint_model_name)
 
+    # Base
     multichoice_continuations_start_space = args.multichoice_continuations_start_space
     if not multichoice_continuations_start_space and not args.no_multichoice_continuations_start_space:
         multichoice_continuations_start_space = None

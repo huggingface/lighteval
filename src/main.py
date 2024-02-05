@@ -34,10 +34,11 @@ else:
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    # Model type 1) Base model
     group = parser.add_mutually_exclusive_group(required=True)
-    weight_type_group = parser.add_mutually_exclusive_group()
+    task_type_group = parser.add_mutually_exclusive_group(required=True)
 
+    # Model type 1) Base model
+    weight_type_group = parser.add_mutually_exclusive_group()
     weight_type_group.add_argument(
         "--delta_weights",
         action="store_true",
@@ -54,7 +55,7 @@ def get_parser():
         "--base_model", type=str, default=None, help="name of the base model to be used for delta or adapter weights"
     )
 
-    parser.add_argument("--model_args", required=True)
+    task_type_group.add_argument("--model_args")
     parser.add_argument("--model_dtype", type=str, default=None)
     parser.add_argument(
         "--multichoice_continuations_start_space",
@@ -68,10 +69,10 @@ def get_parser():
     )
     parser.add_argument("--use_chat_template", default=False, action="store_true")
     # Model type 2) TGI
-    parser.add_argument("--inference_server_address", type=str, default=None)
+    task_type_group.add_argument("--inference_server_address", type=str)
     parser.add_argument("--inference_server_auth", type=str, default=None)
     # Model type 3) Inference endpoints
-    parser.add_argument("--endpoint_model_name", type=str, default=None)
+    task_type_group.add_argument("--endpoint_model_name", type=str)
     parser.add_argument("--accelerator", type=str, default=None)
     parser.add_argument("--vendor", type=str, default=None)
     parser.add_argument("--region", type=str, default=None)
@@ -202,6 +203,8 @@ def main(args):
                 shutil.rmtree(tmp_weights_dir)
 
         print(make_results_table(final_dict))
+
+        model.cleanup()
 
         return final_dict
 

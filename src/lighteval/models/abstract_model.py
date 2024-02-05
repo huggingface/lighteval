@@ -23,6 +23,9 @@ class LightevalModel(ABC):
     ):
         return NotImplemented
 
+    def cleanup(self):
+        return
+
     @abstractmethod
     def greedy_until_with_logits(
         self,

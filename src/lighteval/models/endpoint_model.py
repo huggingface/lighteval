@@ -68,11 +68,7 @@ class InferenceEndpointModel(LightevalModel):
             self.revision = "default"
             self.client = AsyncInferenceClient(model=config.model, token=env_config.token)
 
-    def pause(self):
-        if self.endpoint is not None:
-            self.endpoint.scale_to_zero()
-
-    def delete(self):
+    def cleanup(self):
         if self.endpoint is not None:
             self.endpoint.delete()
             hlog_warn(
@@ -81,7 +77,7 @@ class InferenceEndpointModel(LightevalModel):
 
     def __process_request(
         self, context: str, stop_tokens: list[str], max_tokens: int
-    ) -> Coroutine[None, list[TextGenerationResponse]]:
+    ) -> Coroutine[None, list[TextGenerationResponse], str]:
         # Todo: add an option to launch with conversational instead for chat prompts
         # https://huggingface.co/docs/huggingface_hub/v0.20.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.conversational
         generated_text = self.client.text_generation(
