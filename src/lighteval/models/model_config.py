@@ -168,11 +168,27 @@ def create_model_config(args, accelerator: Accelerator):  # noqa C901
     # Tests
     if args.inference_server_address is not None and args.model_args is not None:
         raise ValueError("You cannot both use an inference server and load a model from its checkpoint.")
+    if args.inference_server_address is not None and args.endpoint_model_name is not None:
+        raise ValueError("You cannot both use a local inference server and load a model from an inference endpoint.")
+    if args.endpoint_model_name is not None and args.model_args is not None:
+        raise ValueError("You cannot both load a model from its checkpoint and from an inference endpoint.")
 
     if args.inference_server_address is not None:
         return TGIModelConfig(
             inference_server_address=args.inference_server_address, inference_server_auth=args.inference_server_auth
         )
+
+    if args.endpoint_model_name:
+        if args.vendor is not None:
+            return InferenceEndpointModelConfig(
+                name=f"endpoint-{args.endpoint_model_name}-eval",
+                repository=args.endpoint_model_name,
+                accelerator=args.accelerator,
+                region=args.region,
+                instance_size=args.instance_size,
+                instance_type=args.instance_type,
+            )
+        return InferenceModelConfig(model=args.endpoint_model_name)
 
     multichoice_continuations_start_space = args.multichoice_continuations_start_space
     if not multichoice_continuations_start_space and not args.no_multichoice_continuations_start_space:

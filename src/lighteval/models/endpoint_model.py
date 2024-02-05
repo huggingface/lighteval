@@ -58,10 +58,14 @@ class InferenceEndpointModel(LightevalModel):
                 },
             )
             self.endpoint.wait()  # Waits for the endpoint to be deployed
+            self.name = self.endpoint.name
+            self.revision = self.endpoint.revision
             self.client: AsyncInferenceClient = self.endpoint.async_client
 
         else:  # Free inference client
             self.endpoint = None
+            self.name = config.model
+            self.revision = "default"
             self.client = AsyncInferenceClient(model=config.model, token=env_config.token)
 
     def pause(self):

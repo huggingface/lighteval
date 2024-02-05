@@ -378,6 +378,7 @@ class BaseModel(LightevalModel):
         returns_logits: bool = False,
         disable_tqdm: bool = False,
         override_bs: Optional[int] = None,
+        dataset_splits: int = 4,
     ) -> list[GenerateReturn]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
