@@ -10,6 +10,7 @@ from transformers import AutoTokenizer, BatchEncoding
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
 from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
+from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.model_config import BaseModelConfig, EnvConfig
 from lighteval.models.model_output import Batch, GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
 from lighteval.models.utils import _get_dtype, _get_precision, _simplify_name
@@ -37,7 +38,7 @@ DATASET_SPLITS = 4
 STARTING_BATCH_SIZE = 512
 
 
-class BaseModel:
+class BaseModel(LightevalModel):
     AUTO_CONFIG_CLASS: transformers.AutoConfig = transformers.AutoConfig
     AUTO_TOKENIZER_CLASS: transformers.AutoTokenizer = transformers.AutoTokenizer
     AUTO_MODEL_CLASS: transformers.AutoModel = transformers.AutoModelForCausalLM
