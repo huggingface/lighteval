@@ -191,7 +191,7 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         """
         toks = x[0]
         meta_data = x[1]
-        stop_tokens, gen_length = meta_data[0], meta_data[1]
+        _, gen_length = meta_data[0], meta_data[1]
         return -(len(toks) + gen_length)
 
 

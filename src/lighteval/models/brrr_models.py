@@ -1,8 +1,7 @@
-# flake8: noqa: C901,E1120
+# ruff: noqa: C901, E1120
 import os
 import time
-from dataclasses import dataclass
-from typing import List, Optional, Tuple, Union, Type
+from typing import List, Optional, Tuple, Type, Union
 
 import torch
 import torch.nn.functional as F
@@ -29,12 +28,6 @@ from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
 from transformers import AutoTokenizer, BatchEncoding
 
-from lighteval.tasks.requests import (
-    GreedyUntilRequest,
-    LoglikelihoodRequest,
-    LoglikelihoodRollingRequest,
-    LoglikelihoodSingleTokenRequest,
-)
 from lighteval.data import (
     GenDistributedSampler,
     GenerativeTaskDataset,
@@ -42,7 +35,12 @@ from lighteval.data import (
     LoglikelihoodSingleTokenDataset,
 )
 from lighteval.models.model_output import Batch, GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
-from lighteval.tasks.requests import GreedyUntilRequest
+from lighteval.tasks.requests import (
+    GreedyUntilRequest,
+    LoglikelihoodRequest,
+    LoglikelihoodRollingRequest,
+    LoglikelihoodSingleTokenRequest,
+)
 from lighteval.utils import as_list
 from lighteval.utils_parallelism import find_executable_batch_size
 
@@ -56,6 +54,7 @@ logger = logging.get_logger(__name__)
 TokenSequence = Union[List[int], torch.LongTensor, torch.Tensor, BatchEncoding]
 
 STARTING_BATCH_SIZE = 512
+
 
 class BRRRModel:
     # Default max sequence length setting for when no `max_length` is provided
@@ -535,7 +534,9 @@ class BRRRModel:
             disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
         )
 
-    def loglikelihood_rolling(self, requests: List[LoglikelihoodRollingRequest], override_bs=None) -> List[LoglikelihoodReturn]:
+    def loglikelihood_rolling(
+        self, requests: List[LoglikelihoodRollingRequest], override_bs=None
+    ) -> List[LoglikelihoodReturn]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         tokenized_reqs = []
 
@@ -716,7 +717,11 @@ class BRRRModel:
 
     @torch.inference_mode()
     def _loglikelihood_single_token(
-        self, requests: List[LoglikelihoodSingleTokenRequest], disable_tqdm: bool = False, override_bs: int = -1, dataset_splits: int = 1
+        self,
+        requests: List[LoglikelihoodSingleTokenRequest],
+        disable_tqdm: bool = False,
+        override_bs: int = -1,
+        dataset_splits: int = 1,
     ) -> List[LoglikelihoodSingleTokenReturn]:
         dataset = LoglikelihoodSingleTokenDataset(requests=requests)
         res = []
@@ -1160,7 +1165,7 @@ class BRRRModel:
         #         print(f"i {i} padded: {r.padded}")
 
         if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
-            assert len(res) == (split_end-split_start), "we didn't cover all the data"
+            assert len(res) == (split_end - split_start), "we didn't cover all the data"
 
         if len(res) == 0:
             # We are in a process which return no output (beginning/middle of the PP group)
@@ -1183,20 +1188,26 @@ class BRRRModel:
         # pull longest context sample from request
         if task_names:
             enc_inputs = [
-                (index, (
-                    self.tok_encode(req.context),
-                    self.homogeneize_ending_conditions((req.stop_sequence, req.generation_size)),
-                    task_name,
-                ))
+                (
+                    index,
+                    (
+                        self.tok_encode(req.context),
+                        self.homogeneize_ending_conditions((req.stop_sequence, req.generation_size)),
+                        task_name,
+                    ),
+                )
                 for index, (req, task_name) in enumerate(zip(requests, task_names))
             ]
         else:
             enc_inputs = [
-                (index, (
-                    self.tok_encode(req.context),
-                    self.homogeneize_ending_conditions((req.stop_sequence, req.generation_size)),
-                    None,
-                ))
+                (
+                    index,
+                    (
+                        self.tok_encode(req.context),
+                        self.homogeneize_ending_conditions((req.stop_sequence, req.generation_size)),
+                        None,
+                    ),
+                )
                 for index, req in enumerate(requests)
             ]
 
