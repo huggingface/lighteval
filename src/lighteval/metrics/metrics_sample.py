@@ -1,6 +1,8 @@
 """This module manages all the metrics occurring at the sample level. The results of said metrics are then aggregated
 using simple function (min, mean, max, ...) at the corpus level. Most metrics fall under this category.
 """
+from typing import Union
+
 import nltk
 import numpy as np
 from nltk.metrics.distance import edit_distance
@@ -275,7 +277,7 @@ class MRR:
         return 1.0 / (min(ranked_choices) + 1)
 
 
-def acc_golds_likelihood(target_acc: list[int] | int, **kwargs) -> int:
+def acc_golds_likelihood(target_acc: Union[list[int], int], **kwargs) -> int:
     """Tests if at least one of predicted gold targets' log-likelihood is above 0.5.
 
     Args:
