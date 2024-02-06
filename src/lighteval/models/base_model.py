@@ -302,22 +302,41 @@ class BaseModel(LightevalModel):
     def device(self) -> Union[int, str, torch.device]:
         return self._device
 
-    def tok_encode(self, string: str, add_special_tokens: Optional[bool] = None) -> TokenSequence:
-        # TODO: Merge `tok_encode_batch` here.
+    @property
+    def disable_tqdm(self) -> bool:
+        disable_tqdm = False
+        if self.accelerator:
+            disable_tqdm = bool(not self.accelerator.is_main_process)
+        return disable_tqdm
+
+    def tok_encode(self, str_to_encode: str | list[str], add_special_tokens: Optional[bool] = None) -> TokenSequence:
         if add_special_tokens is None:
             add_special_tokens = self.add_special_tokens
-        return self.tokenizer.encode(string, add_special_tokens=add_special_tokens)
-
-    def tok_encode_batch(self, strings: list[str]) -> TokenSequence:
+        if isinstance(str_to_encode, str):
+            return self.tokenizer.encode(str_to_encode, add_special_tokens=add_special_tokens)
         return self.tokenizer(
-            strings,
+            str_to_encode,
             padding=True,
-            add_special_tokens=self.add_special_tokens,
+            add_special_tokens=add_special_tokens,
             return_tensors="pt",
         )
 
     def tok_decode(self, tokens: torch.LongTensor) -> list[str]:
         return self.tokenizer.batch_decode(tokens, skip_special_tokens=True)
+
+    def _check_continuations_start_space(self, continuation: str) -> str:
+        """Some models tokenizer want a space at the beginning and other not. We update this if needed here.
+        multichoice_continuations_start_space can be:
+        - True (add a space if these isn't one)
+        - False (remove a space if there is one)
+        - None (Don't touch - default)
+        Todo: find a way to add this back WITHOUT breaking compatibility with the harness
+        """
+        if self.multichoice_continuations_start_space is True and continuation[0] != " ":
+            continuation = " " + continuation
+        if self.multichoice_continuations_start_space is False and continuation[0] == " ":
+            continuation = continuation.lstrip()
+        return continuation
 
     def _model_call(self, inputs: torch.Tensor) -> torch.Tensor:
         return self.model(inputs).logits
@@ -344,7 +363,6 @@ class BaseModel(LightevalModel):
     def greedy_until_with_logits(
         self,
         requests: list[GreedyUntilWithLogitsRequest],
-        disable_tqdm: bool = False,
         override_bs: Optional[int] = None,
         dataset_splits: int = 4,
     ) -> list[GenerateReturn]:
@@ -355,7 +373,6 @@ class BaseModel(LightevalModel):
         Args:
             requests (list[tuple[str, dict]]): A list of input requests,
                 where each request is a tuple containing a prompt string and a dictionary of additional parameters.
-            disable_tqdm (bool, optional): Whether to disable the tqdm progress bar. Defaults to False.
             override_bs (Optional[int], optional): Overrides the batch size for generation. Defaults to None.
             dataset_splits (int, optional): Number of splits to divide the dataset into for parallel generation. Defaults to 4.
 
@@ -367,7 +384,7 @@ class BaseModel(LightevalModel):
         return self.greedy_until(
             requests,
             returns_logits=True,
-            disable_tqdm=disable_tqdm,
+            disable_tqdm=self.disable_tqdm,
             override_bs=override_bs,
             dataset_splits=dataset_splits,
         )
@@ -376,7 +393,6 @@ class BaseModel(LightevalModel):
         self,
         requests: list[GreedyUntilRequest],
         returns_logits: bool = False,
-        disable_tqdm: bool = False,
         override_bs: Optional[int] = None,
         dataset_splits: int = 4,
     ) -> list[GenerateReturn]:
@@ -386,29 +402,29 @@ class BaseModel(LightevalModel):
         Args:
             requests (list[Request]): list of requests containing the context and ending conditions.
             returns_logits (bool, optional): Whether to return the logits of the generated responses. Defaults to False.
-            disable_tqdm (bool, optional): Whether to disable the progress bar. Defaults to False.
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
             dataset_splits (int, optional): Number of splits to divide the dataset into. Defaults to 4.
 
         Returns:
             list[GenerateReturn]: list of generated responses.
         """
-        inputs = [
-            (
-                request.context,
-                (request.stop_sequence + [self.eot_token], request.generation_size),
-            )
-            for request in requests
-        ]
-        dataset = GenerativeTaskDataset(requests=inputs, dataset_splits=DATASET_SPLITS)
+        for request in requests:
+            request.stop_sequence = request.stop_sequence + [self.eot_token]
+        dataset = GenerativeTaskDataset(requests=requests, dataset_splits=dataset_splits)
         starting_batch_size = STARTING_BATCH_SIZE
         results = []
 
         for split_start, split_end in tqdm(
-            dataset.splits_start_end_iterator(), total=DATASET_SPLITS, desc="Splits", position=0, disable=disable_tqdm
+            dataset.splits_start_end_iterator(),
+            total=DATASET_SPLITS,
+            desc="Splits",
+            position=0,
+            disable=self.disable_tqdm,
         ):
             # longest context in the current split
-            context, (_, max_gen) = dataset[0]
+            context = dataset[0].context
+            max_gen = dataset[0].generation_size
+
             longest_context_continuation_size_in_split = len(context) + max_gen
             max_context_continuation_size_allowed = min(longest_context_continuation_size_in_split, self.max_length)
             batch_size = self._get_batch_size(
@@ -422,12 +438,15 @@ class BaseModel(LightevalModel):
             if self.accelerator:
                 dataloader = self.accelerator.prepare(dataloader)
 
-            for batch in tqdm(dataloader, desc="Greedy generation", position=1, leave=False, disable=disable_tqdm):
+            for batch in tqdm(
+                dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
+            ):
                 # NOTE: we are assuming all items in a batch behave similarly (same
                 # stop_tokens and max_tokens genrated) which is not necessarily
                 # the case! Because of that we only use batch size of 1
-                stop_tokens, max_generated_tokens = batch[0][1]
-                context = [c[0] for c in batch]
+                stop_tokens = batch[0].stop_sequence
+                max_generated_tokens = batch[0].generation_size
+                context = [c.context for c in batch]
                 max_context_allowed_by_model = self.max_length - max_generated_tokens
 
                 tokenized = self.tokenizer(
@@ -490,20 +509,6 @@ class BaseModel(LightevalModel):
 
         return dataset.get_original_order(results)
 
-    def _check_continuations_start_space(self, continuation: str) -> str:
-        """Some models tokenizer want a space at the beginning and other not. We update this if needed here.
-        multichoice_continuations_start_space can be:
-        - True (add a space if these isn't one)
-        - False (remove a space if there is one)
-        - None (Don't touch - default)
-        Todo: find a way to add this back WITHOUT breaking compatibility with the harness
-        """
-        if self.multichoice_continuations_start_space is True and continuation[0] != " ":
-            continuation = " " + continuation
-        if self.multichoice_continuations_start_space is False and continuation[0] == " ":
-            continuation = continuation.lstrip()
-        return continuation
-
     def loglikelihood(
         self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
     ) -> list[LoglikelihoodReturn]:
@@ -516,41 +521,34 @@ class BaseModel(LightevalModel):
         Returns:
             list[Tuple[float, bool]]: _description_
         """
-        tokenized_reqs = []
-
         for request in requests:
-            context, continuation = request.context, request.choice
-
-            if context == "":
-                context_enc, continuation_enc = [self.eot_token_id], self.tok_encode(continuation)
+            if request.context == "":
+                request.tokenized_context = [self.eot_token_id]
+                request.tokenized_continuation = self.tok_encode(request.choice)
             else:
                 # DO NOT CHANGE THE FOLLOWING LINE!
                 # It is mandatory for compatibility with the harness!!!
-                context_enc, continuation_enc = self._encode_pair(context, continuation)
+                request.tokenized_context, request.tokenized_continuation = self._encode_pair(
+                    request.context, request.choice
+                )
 
-            tokenized_reqs.append(((context, continuation), context_enc, continuation_enc))
+            # tokenized_reqs.append(((context, continuation), context_enc, continuation_enc))
 
-        return self._loglikelihood_tokens(tokenized_reqs, override_bs=override_bs, dataset_splits=DATASET_SPLITS)
+        return self._loglikelihood_tokens(requests, override_bs=override_bs, dataset_splits=DATASET_SPLITS)
 
     def loglikelihood_rolling(
         self, requests: list[LoglikelihoodRollingRequest], override_bs=None
     ) -> list[LoglikelihoodReturn]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
-        tokenized_reqs = []
 
         for request in requests:  # tuple of one elem
-            context = request.context
-            fake_context_enc, context_enc = [self.eot_token_id], self.tok_encode(context)
+            request.tokenized_context = [self.eot_token_id]  # Fake context
+            request.tokenized_continuation = self.tok_encode(request.context)
+            # tokenized_reqs.append((("", context), fake_context_enc, context_enc))
 
-            tokenized_reqs.append((("", context), fake_context_enc, context_enc))
-
-        disable_tqdm = False
-        if self.accelerator:
-            disable_tqdm = bool(not self.accelerator.is_main_process)
         results = self._loglikelihood_tokens(
-            tokenized_reqs,
+            requests,
             override_bs=override_bs,
-            disable_tqdm=disable_tqdm,
             return_bool_score=False,
             dataset_splits=DATASET_SPLITS,
         )
@@ -559,7 +557,6 @@ class BaseModel(LightevalModel):
     def _loglikelihood_tokens(
         self,
         requests,
-        disable_tqdm: bool = False,
         override_bs: int = -1,
         dataset_splits: int = 4,
         return_bool_score: bool = True,
@@ -569,7 +566,8 @@ class BaseModel(LightevalModel):
         res = []
 
         for split_start, split_end in tqdm(dataset.splits_start_end_iterator()):
-            _, context_enc, continuation_enc = dataset[0]
+            context_enc = dataset[0].tokenized_context
+            continuation_enc = dataset[0].tokenized_continuation
             max_context = len((context_enc + continuation_enc)[-(self.max_length + 1) :][:-1])
 
             batch_size = self._get_batch_size(
@@ -581,9 +579,9 @@ class BaseModel(LightevalModel):
             if self.accelerator:
                 dataloader = self.accelerator.prepare(dataloader)
 
-            for batch in tqdm(dataloader, disable=disable_tqdm):
+            for batch in tqdm(dataloader, disable=self.disable_tqdm):
                 inputs = [
-                    context_enc + continuation_enc[:-1] for _, context_enc, continuation_enc in batch
+                    request.tokenized_context + request.tokenized_continuation[:-1] for request in batch
                 ]  # The last token doesn't need to be input in the model
                 prepared_batch = self.prepare_batch(inputs, padding_length=max_context, max_context=max_context)
 
@@ -593,7 +591,8 @@ class BaseModel(LightevalModel):
                 logits_sum = []
                 max_equals = []
                 batch_cont_tokens = []
-                for (_, _, cont_toks), logits, inplen in zip(batch, multi_logits, prepared_batch.input_lengths):
+                for cur_request, logits, inplen in zip(batch, multi_logits, prepared_batch.input_lengths):
+                    cont_toks = cur_request.tokenized_continuation
                     # We only look at the continuation tokens
                     contlen = len(cont_toks)
                     if contlen > inplen:
@@ -769,20 +768,14 @@ class BaseModel(LightevalModel):
         Returns:
             list[Tuple[float, bool]]: _description_
         """
-        tokenized_reqs = []
-
         for request in requests:
-            context = request.context
-            continuations = request.choices
-
-            if context == "":
-                # end of text as context
-                context_enc = [self.eot_token_id]
+            if request.context == "":
+                request.tokenized_context = [self.eot_token_id]
             else:
-                context_enc = self.tok_encode(context)
+                request.tokenized_context = self.tok_encode(request.context)
 
             # Some models tokenizer want a space at the beginning and other not
-            continuations = [self._check_continuations_start_space(c) for c in continuations]
+            continuations = [self._check_continuations_start_space(c) for c in request.choices]
 
             # We must not accidentally prepend a continuation with a start of sentence token.
             continuations_enc = [self.tok_encode(c, add_special_tokens=False) for c in continuations]
@@ -791,23 +784,19 @@ class BaseModel(LightevalModel):
                     f"Trying to do single token multiple choice but one choice has several tokens: {continuations_enc}. "
                     "If the additional pre-token is a space, try to set --no_multichoice_continuations_start_space "
                 )
+            request.tokenized_continuation = continuations_enc
 
-            tokenized_reqs.append(((context, continuations), context_enc, continuations_enc))
-        disable_tqdm = False
-        if self.accelerator:
-            disable_tqdm = bool(not self.accelerator.is_main_process)
-
-        return self._loglikelihood_single_token(tokenized_reqs, override_bs=override_bs, disable_tqdm=disable_tqdm)
+        return self._loglikelihood_single_token(requests, override_bs=override_bs)
 
     def _loglikelihood_single_token(
-        self, requests, disable_tqdm: bool = False, override_bs: int = -1, dataset_splits: int = 4
+        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: int = -1, dataset_splits: int = 4
     ) -> list[LoglikelihoodSingleTokenReturn]:
         dataset = LoglikelihoodSingleTokenDataset(requests=requests, dataset_splits=dataset_splits)
         starting_batch_size = STARTING_BATCH_SIZE
         res = []
 
         for split_start, split_end in tqdm(dataset.splits_start_end_iterator()):
-            _, context_enc, _ = dataset[0]
+            context_enc = dataset[0].tokenized_context
             max_context = len(context_enc[-self.max_length :])
             batch_size = self._get_batch_size(override_bs=override_bs, max_input_length=max_context)
             starting_batch_size = batch_size * 2
@@ -816,7 +805,7 @@ class BaseModel(LightevalModel):
             if self.accelerator is not None:
                 dataloader = self.accelerator.prepare(dataloader)
 
-            for batch in tqdm(dataloader, disable=disable_tqdm, position=1):
+            for batch in tqdm(dataloader, disable=self.disable_tqdm, position=1):
                 inputs = [context_enc for _, context_enc, _ in batch]
 
                 prepared_batch = self.prepare_batch(inputs, padding_length=max_context, max_context=max_context)
@@ -827,13 +816,13 @@ class BaseModel(LightevalModel):
 
                 batch_probs = []
                 batch_cont_tokens = []
-                for (_, _, cont_toks), logits, inplen in zip(batch, out, prepared_batch.input_lengths):
+                for cur_request, logits, inplen in zip(batch, out, prepared_batch.input_lengths):
                     # Get the last token
                     logits = logits[inplen - 1]  # [vocab]
 
-                    cont_toks = torch.tensor(cont_toks, dtype=torch.long, device=self.device).squeeze(
-                        -1
-                    )  # [num_choices]
+                    cont_toks = torch.tensor(
+                        cur_request.tokenized_continuation, dtype=torch.long, device=self.device
+                    ).squeeze(-1)  # [num_choices]
 
                     # Obtain log-probs at the corresponding continuation token indices
                     # last_token_slice = logits[:, -1, :].squeeze(0).tolist()

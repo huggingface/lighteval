@@ -162,6 +162,7 @@ class InferenceEndpointModelConfig:
     instance_type: str
     framework: str = "pytorch"
     endpoint_type: str = "protected"
+    should_reuse_existing: bool = False
 
 
 def create_model_config(args, accelerator: Accelerator):  # noqa C901
@@ -191,6 +192,7 @@ def create_model_config(args, accelerator: Accelerator):  # noqa C901
                 vendor=args.vendor,
                 instance_size=args.instance_size,
                 instance_type=args.instance_type,
+                should_reuse_existing=args.reuse_existing,
             )
         return InferenceModelConfig(model=args.endpoint_model_name)
 

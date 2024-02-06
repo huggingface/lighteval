@@ -5,7 +5,14 @@ from torch.utils.data import Dataset
 from torch.utils.data.distributed import DistributedSampler, T_co
 
 from lighteval.logging.hierarchical_logger import hlog_warn
-from lighteval.tasks.requests import Request
+from lighteval.tasks.requests import (
+    GreedyUntilRequest,
+    GreedyUntilWithLogitsRequest,
+    LoglikelihoodRequest,
+    LoglikelihoodRollingRequest,
+    LoglikelihoodSingleTokenRequest,
+    Request,
+)
 
 
 class DynamicBatchDataset(Dataset):
@@ -124,12 +131,12 @@ class DynamicBatchDataset(Dataset):
         """
         return self.split_end - self.split_start
 
-    def _sorting_criteria(self, x) -> int:
+    def _sorting_criteria(self, request) -> int:
         raise NotImplementedError()
 
 
 class LoglikelihoodDataset(DynamicBatchDataset):
-    def _sorting_criteria(self, x) -> int:
+    def _sorting_criteria(self, request: LoglikelihoodRequest | LoglikelihoodRollingRequest) -> int:
         """
         Collates the input data for batching.
 
@@ -149,13 +156,12 @@ class LoglikelihoodDataset(DynamicBatchDataset):
         Returns:
             tuple: A tuple containing the sorted input data.
         """
-
-        toks = x[1] + x[2]
+        toks = request.tokenized_context + request.tokenized_continuation
         return -len(toks)
 
 
 class LoglikelihoodSingleTokenDataset(DynamicBatchDataset):
-    def _sorting_criteria(self, x) -> int:
+    def _sorting_criteria(self, request: LoglikelihoodSingleTokenRequest) -> int:
         """
         Collates the input data for batching.
 
@@ -167,19 +173,15 @@ class LoglikelihoodSingleTokenDataset(DynamicBatchDataset):
         is useful to simplify the batching logic and more importantly to make
         automatic adaptive batches much much easier to implement
         - any OOMs will happen right away rather than near the end
-
-        Args:
-            x (tuple): A tuple containing the input data.
-
-        Returns:
-            tuple: A tuple containing the collated data.
         """
-        toks = x[1]  # We take only the prompt, no need for the continuation (since it's a list of single tokens)
+        toks = (
+            request.tokenized_context
+        )  # We take only the prompt, no need for the continuation (since it's a list of single tokens)
         return -len(toks)
 
 
 class GenerativeTaskDataset(DynamicBatchDataset):
-    def _sorting_criteria(self, x) -> int:
+    def _sorting_criteria(self, request: GreedyUntilRequest | GreedyUntilWithLogitsRequest) -> int:
         """
         Collate function for generating batches.
 
@@ -189,7 +191,8 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         Returns:
             Any: The collated data.
         """
-        toks, (stop_tokens, gen_length) = x
+        toks = (request.context,)
+        gen_length = request.generation_size
         return -(len(toks) + gen_length)
 
 

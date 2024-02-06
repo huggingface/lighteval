@@ -78,6 +78,7 @@ def get_parser():
     parser.add_argument("--region", type=str, default=None)
     parser.add_argument("--instance_size", type=str, default=None)
     parser.add_argument("--instance_type", type=str, default=None)
+    parser.add_argument("--reuse_existing", default=False, action="store_true")
     # Debug
     parser.add_argument("--max_samples", type=int, default=None)
     parser.add_argument("--job_id", type=str, help="Optional Job ID for future reference", default="")

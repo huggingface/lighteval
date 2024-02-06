@@ -1,10 +1,11 @@
 import asyncio
 from typing import Coroutine, List, Optional, Union
 
-from huggingface_hub import AsyncInferenceClient, InferenceEndpoint, create_inference_endpoint
+from huggingface_hub import AsyncInferenceClient, InferenceEndpoint, create_inference_endpoint, get_inference_endpoint
 from huggingface_hub.inference._text_generation import TextGenerationResponse
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.logging.hierarchical_logger import hlog_warn
@@ -30,33 +31,38 @@ class InferenceEndpointModel(LightevalModel):
     endpoints, which will use text-generation-inference to deploy your model for the duration of the evaluation.
     """
 
+    _DEFAULT_MAX_LENGTH = 2048
+
     def __init__(
         self, config: Union[InferenceEndpointModelConfig, InferenceModelConfig], env_config: EnvConfig
     ) -> None:
         if isinstance(config, InferenceEndpointModelConfig):
-            self.endpoint: InferenceEndpoint = create_inference_endpoint(
-                name=config.name,
-                repository=config.repository,
-                framework=config.framework,
-                task="text-generation",
-                accelerator=config.accelerator,
-                vendor=config.vendor,
-                region=config.region,
-                type=config.endpoint_type,
-                instance_size=config.instance_size,
-                instance_type=config.instance_type,
-                token=env_config.token,
-                custom_image={
-                    "health_route": "/health",
-                    "env": {
-                        "MAX_BATCH_PREFILL_TOKENS": "2048",
-                        "MAX_INPUT_LENGTH": "1024",
-                        "MAX_TOTAL_TOKENS": "1512",
-                        "MODEL_ID": "/repository",
+            if config.should_reuse_existing:
+                self.endpoint = get_inference_endpoint(name=config.name, token=env_config.token)
+            else:
+                self.endpoint: InferenceEndpoint = create_inference_endpoint(
+                    name=config.name,
+                    repository=config.repository,
+                    framework=config.framework,
+                    task="text-generation",
+                    accelerator=config.accelerator,
+                    vendor=config.vendor,
+                    region=config.region,
+                    type=config.endpoint_type,
+                    instance_size=config.instance_size,
+                    instance_type=config.instance_type,
+                    token=env_config.token,
+                    custom_image={
+                        "health_route": "/health",
+                        "env": {
+                            "MAX_BATCH_PREFILL_TOKENS": "2048",
+                            "MAX_INPUT_LENGTH": "1024",
+                            "MAX_TOTAL_TOKENS": "1512",
+                            "MODEL_ID": "/repository",
+                        },
+                        "url": "ghcr.io/huggingface/text-generation-inference:1.1.0",
                     },
-                    "url": "ghcr.io/huggingface/text-generation-inference:1.1.0",
-                },
-            )
+                )
             self.endpoint.wait(timeout=600)  # Waits for the endpoint to be deployed
             self.name = self.endpoint.name
             self.revision = self.endpoint.revision
@@ -68,12 +74,24 @@ class InferenceEndpointModel(LightevalModel):
             self.revision = "default"
             self.client = AsyncInferenceClient(model=config.model, token=env_config.token)
 
+        self.tokenizer = AutoTokenizer.from_pretrained(self.name)
+
     def cleanup(self):
         if self.endpoint is not None:
             self.endpoint.delete()
             hlog_warn(
                 "You deleted your endpoint after using it. You'll need to create it again if you need to reuse it."
             )
+
+    def max_length(self):
+        if self._max_length is not None:
+            return self._max_length
+
+        if hasattr(self.tokenizer, "model_max_length"):
+            self._max_length = self.tokenizer.model_max_length
+        else:
+            self._max_length = self._DEFAULT_MAX_LENGTH
+        return self._max_length
 
     def __process_request(
         self, context: str, stop_tokens: list[str], max_tokens: int

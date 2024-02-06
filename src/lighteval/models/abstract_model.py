@@ -21,12 +21,18 @@ class LightevalModel(ABC):
         config,
         env_config: EnvConfig,
     ):
+        self.tokenizer = None
         return NotImplemented
 
     def cleanup(self):
         return
 
+    @property
     @abstractmethod
+    def max_length(self) -> int:
+        """Return the maximum sequence length of the model."""
+        raise NotImplementedError
+
     def greedy_until_with_logits(
         self,
         requests: list[GreedyUntilWithLogitsRequest],
