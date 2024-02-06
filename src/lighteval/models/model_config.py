@@ -207,7 +207,7 @@ def create_model_config(args: Namespace, accelerator: Union[Accelerator, None]) 
 
     Raises:
         ValueError: If both an inference server address and model arguments are provided.
-        ValueError: If both multichoice continuations start with a space and do not start with a space.
+     ValueError: If multichoice continuations both should start with a space and should not start with a space.
         ValueError: If a base model is not specified when using delta weights or adapter weights.
         ValueError: If a base model is specified when not using delta weights or adapter weights.
     """
