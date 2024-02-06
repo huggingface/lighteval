@@ -196,6 +196,21 @@ class GenerativeTaskDataset(DynamicBatchDataset):
 
 
 class GenerativeTaskDatasetNanotron(DynamicBatchDataset):
+    def __getitem__(self, index) -> Request:
+        """
+        Get an item from the dataset depending on the split we are currently in.
+        For instance, if we are in split 0, we will get the item at index 0, if
+        we are in split 1, we will get the item at index self.split_size, etc.
+        Used for dynamic batching.
+
+        Args:
+            index (int): The index of the item.
+
+        Returns:
+            Any: The item at the specified index.
+        """
+        return index, self.sorted_data[index + self.split_start]
+
     def _sorting_criteria(self, x) -> int:
         """
         Collate function for generating batches.
@@ -206,8 +221,8 @@ class GenerativeTaskDatasetNanotron(DynamicBatchDataset):
         Returns:
             Any: The collated data.
         """
-        toks = x[1][0]
-        meta_data = x[1][1]
+        toks = x[0]
+        meta_data = x[1]
         _, gen_length = meta_data[0], meta_data[1]
         return -(len(toks) + gen_length)
 

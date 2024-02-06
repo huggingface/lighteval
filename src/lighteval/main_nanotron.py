@@ -2,15 +2,13 @@
 import argparse
 import os
 import random
+from typing import Optional, Type
 
 import numpy as np
 import torch
-from brrr.config import BrrrConfig
-from brrr.s3_checkpoints import fs_copy
-from brrr.utils import check_env
 from nanotron import distributed as dist
 from nanotron import logging
-from nanotron.config import get_config_from_file
+from nanotron.config import Config, get_config_from_file
 from nanotron.logging import get_logger, log_rank
 from nanotron.parallel.context import ParallelContext
 from nanotron.utils import local_ranks_zero_first
@@ -18,14 +16,15 @@ from nanotron.utils import local_ranks_zero_first
 from lighteval.evaluator import evaluate, make_results_table
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog, htrack, htrack_block
-from lighteval.models.brrr_models import BRRRModel
 from lighteval.models.model_loader import ModelInfo
+from lighteval.models.nanotron_model import NanotronLightevalModel
 from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_tasks
 from lighteval.tasks.registry import Registry, get_custom_tasks, taskinfo_selector
 
 
 logger = get_logger(__name__)
 
+SEED = 1234
 TOKEN = os.getenv("HF_TOKEN")
 CACHE_DIR = os.getenv("HF_HOME", "/scratch")
 
@@ -77,39 +76,35 @@ def get_parser():
 
 
 @htrack()
-def main(args):
-    cache_dir = args.cache_dir or CACHE_DIR
-    check_env()
+def eval(
+    local_config_path: str,
+    lighteval_config_path: Optional[str] = None,
+    cache_dir: str = None,
+    config_cls: Type = Config,
+    model_config_cls: Optional[Type] = None,
+    model_cls: Optional[Type] = None,
+):
+    if cache_dir is None:
+        cache_dir = CACHE_DIR
 
     dist.initialize_torch_distributed()
 
     with htrack_block("get config"):
         if not args.checkpoint_config_path.endswith(".yaml"):
             raise ValueError("The checkpoint path should point to a YAML file")
-        local_config_path = args.checkpoint_config_path
-        if args.checkpoint_config_path.startswith("s3:/"):
-            local_config_path = args.checkpoint_config_path.replace("s3:/", cache_dir)
-            with local_ranks_zero_first():
-                if os.environ.get("LOCAL_RANK", None) == "0":
-                    os.makedirs(os.path.dirname(local_config_path), exist_ok=True)
-                    fs_copy(args.checkpoint_config_path, local_config_path)
 
-        brrr_config: BrrrConfig = get_config_from_file(local_config_path, config_class=BrrrConfig)
+        nanotron_config: config_cls = get_config_from_file(
+            local_config_path, config_class=config_cls, model_config_class=model_config_cls, strict=False
+        )
 
-        if args.lighteval_override:
-            local_override_path = args.lighteval_override.replace("s3:/", cache_dir)
-            if args.lighteval_override.startswith("s3:/"):
-                local_override_path = args.lighteval_override.replace("s3:/", cache_dir)
-                with local_ranks_zero_first():
-                    if os.environ.get("LOCAL_RANK", None) == "0":
-                        os.makedirs(os.path.dirname(local_override_path), exist_ok=True)
-                        fs_copy(args.lighteval_override, local_override_path)
-            lighteval_brrr_config: BrrrConfig = get_config_from_file(local_override_path, config_class=BrrrConfig)
-            lighteval_config = lighteval_brrr_config.lighteval
-            brrr_config.lighteval = lighteval_config
+        if lighteval_config_path:
+            lighteval_nanotron_config: config_cls = get_config_from_file(
+                lighteval_config_path, config_class=config_cls
+            )
+            lighteval_config = lighteval_nanotron_config.lighteval
+            nanotron_config.lighteval = lighteval_config
         else:
-            local_override_path = ""
-            lighteval_config = brrr_config.lighteval
+            lighteval_config = nanotron_config.lighteval
 
         parallel_context = ParallelContext(
             tensor_parallel_size=lighteval_config.parallelism.tp,
@@ -123,7 +118,7 @@ def main(args):
             override_batch_size=None,
             max_samples=lighteval_config.tasks.max_samples,
             job_id=os.environ.get("SLURM_JOB_ID", None),
-            config=brrr_config.as_dict(),
+            config=nanotron_config.as_dict(),
         )
 
     with htrack_block("Test all gather"):
@@ -153,21 +148,19 @@ def main(args):
 
     with htrack_block("Model loading"):
         # We need to load the model in the main process first to avoid downloading the model multiple times
-        model = BRRRModel(
-            checkpoint_path=brrr_config.s3_upload.upload_s3_path / str(brrr_config.general.step),
-            model_args=brrr_config.model,
-            tokenizer=brrr_config.tokenizer,
+        model = NanotronLightevalModel(
+            checkpoint_path=os.path.dirname(local_config_path),
+            model_args=nanotron_config.model,
+            tokenizer=nanotron_config.tokenizer,
             parallel_context=parallel_context,
             parallel_config=lighteval_config.parallelism,
             lighteval_config=lighteval_config,
             batch_size=lighteval_config.batch_size,
             cache_dir=os.environ.get("HF_HOME", "/scratch"),
             debug_one_layer_model=False,
-            s5cmd_path=args.s5cmd_path,
-            s5cmd_numworkers=args.s5cmd_numworkers,
-            s5cmd_concurrency=args.s5cmd_concurrency,
+            model_class=model_cls,
         )
-        model_info = ModelInfo(model_name=f"{brrr_config.general.run}/{brrr_config.general.step}")
+        model_info = ModelInfo(model_name=f"{nanotron_config.general.run}/{nanotron_config.general.step}")
         evaluation_tracker.general_config_logger.log_model_info(model_info)
 
     with htrack_block("Tasks loading"):
@@ -195,12 +188,13 @@ def main(args):
                 lm=model,
                 max_samples=lighteval_config.tasks.max_samples,
                 evaluation_tracker=evaluation_tracker,
+                use_chat_template=False,
             )
 
     with htrack_block("Setting seeds and waiting for all processes"):
-        hlog(f"setting seed to {1234} for random and numpy")
-        random.seed(1234)
-        np.random.seed(1234)
+        hlog(f"setting seed to {SEED} for random and numpy")
+        random.seed(SEED)
+        np.random.seed(SEED)
         dist.barrier()
 
     with htrack_block("Evaluation"):
@@ -239,4 +233,4 @@ def main(args):
 if __name__ == "__main__":
     parser = get_parser()
     args, unknowns = parser.parse_known_args()
-    main(args)
+    eval(args.checkpoint_config_path, args.lighteval_override, args.cache_dir)

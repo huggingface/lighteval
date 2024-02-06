@@ -1,17 +1,15 @@
-# ruff: noqa: C901, E1120
+# ruff: noqa: C901,E1120
 import os
 import time
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Type, Union
 
 import torch
 import torch.nn.functional as F
 import transformers
-from brrr.config import LightEvalConfig, ModelArgs, ParallelismArgs
-from brrr.s3_checkpoints import S3Mover, check_path_is_local
 from datasets.download.streaming_download_manager import xPath
 from nanotron import distributed as dist
 from nanotron import logging
-from nanotron.config import TokenizerArgs
+from nanotron.config import LightEvalConfig, ModelArgs, ParallelismArgs, TokenizerArgs
 from nanotron.generation.decode import decode_tokenized
 from nanotron.logging import human_format, log_rank
 from nanotron.models import build_model
@@ -35,11 +33,12 @@ from lighteval.data import (
     LoglikelihoodSingleTokenDataset,
 )
 from lighteval.models.model_output import Batch, GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
+from lighteval.tasks.requests import (
+    GreedyUntilRequest,
+)
 from lighteval.utils import as_list
 from lighteval.utils_parallelism import find_executable_batch_size
 
-
-# from .brrr_generation import GenerationConfig, GenerationInputs, SamplerType, greedy_search_tokenized
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -50,7 +49,7 @@ TokenSequence = Union[List[int], torch.LongTensor, torch.Tensor, BatchEncoding]
 # _DeviceMapping = NewType("DeviceMapping", Mapping[str, Union[int, str, torch.device]])
 
 
-class BRRRModel:
+class NanotronLightevalModel:
     # Default max sequence length setting for when no `max_length` is provided
     # or no max length config setting is found in the model or tokenizer.
     _DEFAULT_MAX_LENGTH: int = 2048
@@ -71,11 +70,9 @@ class BRRRModel:
         trust_remote_code: bool = False,
         cache_dir: str = "/scratch",
         debug_one_layer_model: bool = False,
-        s5cmd_numworkers: int = 64,
-        s5cmd_concurrency: int = 10,
-        s5cmd_path: str = "/admin/home/thomwolf/miniconda/envs/b4r/bin/s5cmd",
+        model_class: Optional[Type] = None,
     ):
-        """Initializes a brrr model for evaluation.
+        """Initializes a nanotron model for evaluation.
         Args:
         """
         super().__init__()
@@ -126,6 +123,8 @@ class BRRRModel:
         self.tokenizer.model_max_length = self.max_length
 
         model_config_cls = self.model_config.__class__.__name__
+        if model_class is not None:
+            CONFIG_TO_MODEL_CLASS[model_config_cls] = model_class
         if model_config_cls not in CONFIG_TO_MODEL_CLASS:
             raise ValueError(
                 f"Unsupported model config {model_config_cls}. Only {CONFIG_TO_MODEL_CLASS.keys()} are supported"
@@ -166,7 +165,7 @@ class BRRRModel:
         )
 
         # Mark some parameters as tied
-        # TODO @nouamane: this is only needed for training, can we just mark params as BRRRParameter instead?
+        # TODO @nouamane: this is only needed for training, can we just mark params as NanotronParameter instead?
         mark_tied_parameters(model=model, parallel_context=parallel_context, parallel_config=parallel_config)
 
         log_rank(
@@ -185,49 +184,7 @@ class BRRRModel:
             level=logging.WARNING,
             rank=0,
         )
-        if check_path_is_local(checkpoint_path):
-            load_weights(model=model, parallel_context=parallel_context, root_folder=xPath(checkpoint_path))
-        else:
-            local_path = str(checkpoint_path).replace("s3:/", cache_dir)
-            loaded = False
-            if float(os.environ.get("WORLD_SIZE", 1)) // float(
-                os.environ.get("LOCAL_WORLD_SIZE", 1)
-            ) == 1 and os.path.exists(local_path):
-                # If we have only one node and the local folder already exists, we can try to load from there
-                # Sometimes the checkpoints is already here but since it may be on some nodes nd not others we still need to download everywhere
-                # so we can only use this pathway when we have a single node (WORLD_SIZE == LOCAL_WORLD_SIZE)
-                try:
-                    log_rank(
-                        f"Testing loading checkpoint from {local_path}:",
-                        logger=logger,
-                        level=logging.WARNING,
-                        rank=0,
-                    )
-                    load_weights(model=model, parallel_context=parallel_context, root_folder=xPath(local_path))
-                    loaded = True
-                except ValueError:
-                    loaded = False
-            if not loaded:
-                log_rank(
-                    f"Downloading checkpoint from S3 in {local_path}. ",
-                    logger=logger,
-                    level=logging.WARNING,
-                    rank=0,
-                )
-                # Download checkpoint from S3
-                s3_mover = S3Mover(
-                    os.path.join(local_path, "model"),
-                    os.path.join(checkpoint_path, "model"),
-                    s5cmd_numworkers=s5cmd_numworkers,
-                    s5cmd_concurrency=s5cmd_concurrency,
-                    s5cmd_path=s5cmd_path,
-                    dummy=bool(int(os.environ.get("LOCAL_RANK", None)) != 0),
-                )
-                s3_mover.distributed_wait_for_completion(self.parallel_context.world_pg)
-                s3_mover.start_downloading()
-                s3_mover.distributed_wait_for_completion(self.parallel_context.world_pg)
-                load_weights(model=model, parallel_context=parallel_context, root_folder=xPath(local_path))
-
+        load_weights(model=model, parallel_context=parallel_context, root_folder=xPath(checkpoint_path))
         model.eval()
 
         # We don't need the loss
@@ -410,7 +367,7 @@ class BRRRModel:
         """
         max_tokens, stop_sequences = None, None
         # Filling with input values or default
-        if isinstance(ending_condition, tuple):
+        if isinstance(ending_condition, tuple) and len(ending_condition) == 2:
             stop_sequence_arg, max_gen_tokens_arg = ending_condition
             stop_sequences = as_list(stop_sequence_arg)
             max_tokens = max_gen_tokens_arg
@@ -927,7 +884,7 @@ class BRRRModel:
             # We are in a process which return no output (beginning/middle of the PP group)
             return []
 
-        return dataset.ordered.get_original(res)
+        return dataset.get_original_order(res)
 
     @torch.inference_mode()
     def _loglikelihood_tokens(
@@ -938,7 +895,7 @@ class BRRRModel:
         dataset_splits: int = 1,
         return_bool_score: bool = True,
     ) -> List[LoglikelihoodReturn]:
-        dataset = LoglikelihoodDataset(requests=requests)
+        dataset = LoglikelihoodDataset(requests=requests, dataset_splits=dataset_splits)
         res = []
 
         # Dataset is sorted in descending size.
@@ -1167,12 +1124,12 @@ class BRRRModel:
             # We are in a process which return no output (beginning/middle of the PP group)
             return []
 
-        return dataset.ordered.get_original(res)
+        return dataset.get_original_order(res)
 
     @torch.inference_mode()
     def greedy_until(
         self,
-        requests: List[Tuple[str, dict]],
+        requests: List[GreedyUntilRequest],
         task_names: Optional[List[str]] = None,
         returns_logits=False,
         disable_tqdm: bool = False,
@@ -1184,15 +1141,16 @@ class BRRRModel:
         # pull longest context sample from request
         if task_names:
             enc_inputs = [
-                (self.tok_encode(req[0]), self.homogeneize_ending_conditions(req[1]), task_name)
+                (self.tok_encode(req.context), self.homogeneize_ending_conditions(req.stop_sequence), task_name)
                 for req, task_name in zip(requests, task_names)
             ]
         else:
             enc_inputs = [
-                (self.tok_encode(req[0]), self.homogeneize_ending_conditions(req[1]), None) for req in requests
+                (self.tok_encode(req.context), self.homogeneize_ending_conditions(req.stop_sequence), None)
+                for req in requests
             ]
 
-        dataset = GenerativeTaskDatasetNanotron(requests=enc_inputs)
+        dataset = GenerativeTaskDatasetNanotron(requests=enc_inputs, dataset_splits=dataset_splits)
         res = []
 
         # Dataset is sorted in descending size.
@@ -1366,7 +1324,7 @@ class BRRRModel:
             # We are in a process which return no output (beginning/middle of the PP group)
             return []
 
-        return dataset.ordered.get_original(res)
+        return dataset.get_original_order(res)
 
 
 class MultiTokenEOSCriteria(transformers.StoppingCriteria):
