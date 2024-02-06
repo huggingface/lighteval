@@ -85,7 +85,7 @@ def apply_multichoice_metric(results: list[ModelReturn], formatted_doc: Doc, met
         raise ValueError(
             "You can't use a multi choice metric with only one choice. Use `acc_golds_likelihood` instead."
         )
-    choices_logprob = [results[i].result[0] for i in range(len(formatted_doc.choices))]
+    choices_logprob = [sum(results[i].result) for i in range(len(formatted_doc.choices))]
     gold_ixs = as_list(formatted_doc.gold_index)
 
     for metric in metrics:
