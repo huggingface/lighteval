@@ -28,7 +28,8 @@ if is_nanotron_available():
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
-    """Provides a proper json encoding for the loggers and trackers json dumps.
+    """
+    Provides a proper json encoding for the loggers and trackers json dumps.
     Notably manages the json encoding of dataclasses.
     """
 
@@ -39,10 +40,16 @@ class EnhancedJSONEncoder(json.JSONEncoder):
 
 
 class EvaluationTracker:
-    """Keeps track of the overall evaluation process and relevant informations.
+    """
+    Keeps track of the overall evaluation process and relevant informations.
 
-    The [`EvaluationTracker`] contains specific loggers for experiments details ([`DetailsLogger`]), metrics ([`MetricsLogger`]), task versions ([`VersionsLogger`]) as well as for the general configurations of both the specific task ([`TaskConfigLogger`]) and overall evaluation run ([`GeneralConfigLogger`]).
-    It compiles the data from these loggers and writes it to files, which can be published to the Hugging Face hub if requested.
+    The [`EvaluationTracker`] contains specific loggers for experiments details
+    ([`DetailsLogger`]), metrics ([`MetricsLogger`]), task versions
+    ([`VersionsLogger`]) as well as for the general configurations of both the
+    specific task ([`TaskConfigLogger`]) and overall evaluation run
+    ([`GeneralConfigLogger`]).  It compiles the data from these loggers and
+    writes it to files, which can be published to the Hugging Face hub if
+    requested.
     """
 
     details_logger: DetailsLogger
@@ -53,11 +60,15 @@ class EvaluationTracker:
     hub_results_org: str
 
     def __init__(self, hub_results_org: str = "", token: str = "") -> None:
-        """Creates all the necessary loggers for evaluation tracking.
+        """
+        Creates all the necessary loggers for evaluation tracking.
 
         Args:
-            hub_results_org (str): The organisation to push the results to. See more details about the datasets organisation in [`EvaluationTracker.save`]
-            token (str): Token to use when pushing to the hub. This token should have write access to `hub_results_org`.
+            hub_results_org (str): The organisation to push the results to. See
+                more details about the datasets organisation in
+                [`EvaluationTracker.save`]
+            token (str): Token to use when pushing to the hub. This token should
+                have write access to `hub_results_org`.
         """
         self.details_logger = DetailsLogger()
         self.metrics_logger = MetricsLogger()
@@ -79,7 +90,8 @@ class EvaluationTracker:
     ) -> None:
         """Saves the experiment information and results to files, and to the hub if requested.
 
-        Note: In case of save failure, this function will only print a warning, with the error message.
+        Note:
+            In case of save failure, this function will only print a warning, with the error message.
 
         Args:
             output_dir (str): Local folder path where you want results to be saved
@@ -204,6 +216,7 @@ class EvaluationTracker:
             details_folder_path (str or Path): Local path of the current's experiment details folder.
                 The details folder (created by [`EvaluationTracker.save`]) should contain one parquet file per task used during the evaluation run of the current model.
             push_as_public (bool, optional): If True, the results will be pushed publicly, else the datasets will be private.
+
         """
         results_file_path = str(results_file_path)
         details_folder_path = str(details_folder_path)
@@ -255,6 +268,7 @@ class EvaluationTracker:
         Args:
             repo_id (str): Details dataset repository path on the hub (`org/dataset`)
             model_name (str): Name of the currently evaluated model.
+
         """
         # Add a nice dataset card and the configuration YAML
         files_in_repo = self.api.list_repo_files(repo_id=repo_id, repo_type="dataset")
