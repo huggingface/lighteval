@@ -74,14 +74,13 @@ class BaseModelConfig:
             space at the start of each continuation in multichoice generation.
             For example, context: "What is the capital of France?" and choices: "Paris", "London".
             Will be tokenized as: "What is the capital of France? Paris" and "What is the capital of France? London".
-        subfolder (Optional[str]): Tsubfolder within the model repository.
-        revision (str): revision of the model.
-        batch_size (int): batch size for model training.
-        max_gen_toks (Optional[int]): maximum number of tokens to generate.
-        max_length (Optional[int]): maximum length of the generated output.
-        add_special_tokens (bool, optional, defaults to True):
-            Whether to add special tokens to the input sequences. If `None`, the
-            default value will be set to `True` for seq2seq models (e.g. T5) and
+        subfolder (Optional[str]): The subfolder within the model repository.
+        revision (str): The revision of the model.
+        batch_size (int): The batch size for model training.
+        max_gen_toks (Optional[int]): The maximum number of tokens to generate.
+        max_length (Optional[int]): The maximum length of the generated output.
+        add_special_tokens (bool, optional, defaults to True): Whether to add special tokens to the input sequences. 
+           If `None`, the default value will be set to `True` for seq2seq models (e.g. T5) and
             `False` for causal models.
         model_parallel (Optional[bool]): Whether to use model parallelism.
         dtype (Optional[Union[str, torch.dtype]]): data type of the model.
@@ -210,7 +209,7 @@ def create_model_config(args: Namespace, accelerator: Union[Accelerator, None]) 
 
     Raises:
         ValueError: If both an inference server address and model arguments are provided.
-        ValueError: If both multichoice continuations start with a space and do not start with a space.
+     ValueError: If multichoice continuations both should start with a space and should not start with a space.
         ValueError: If a base model is not specified when using delta weights or adapter weights.
         ValueError: If a base model is specified when not using delta weights or adapter weights.
     """
