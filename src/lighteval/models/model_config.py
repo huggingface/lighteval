@@ -77,9 +77,8 @@ class BaseModelConfig:
         batch_size (int): The batch size for model training.
         max_gen_toks (Optional[int]): The maximum number of tokens to generate.
         max_length (Optional[int]): The maximum length of the generated output.
-        add_special_tokens (bool, optional, defaults to True):
-            Whether to add special tokens to the input sequences. If `None`, the
-            default value will be set to `True` for seq2seq models (e.g. T5) and
+        add_special_tokens (bool, optional, defaults to True): Whether to add special tokens to the input sequences. 
+           If `None`, the default value will be set to `True` for seq2seq models (e.g. T5) and
             `False` for causal models.
         model_parallel (Optional[bool]): Whether to use model parallelism.
         dtype (Optional[Union[str, torch.dtype]]): The data type of the model.
