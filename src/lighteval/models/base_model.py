@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import transformers
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import AutoModel, AutoTokenizer, BatchEncoding
+from transformers import AutoModelForCausalLM, AutoTokenizer, BatchEncoding
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
 from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
@@ -51,7 +51,7 @@ class BaseModel(LightevalModel):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self.accelerator = config.accelerator
         self._batch_size = config.batch_size
-        self._max_length = config.max_length
+        self._max_length = self._init_max_length(config.max_length)
         self._config = config.init_configs(env_config)
 
         self.add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
@@ -140,7 +140,7 @@ class BaseModel(LightevalModel):
         config.model_parallel, max_memory, device_map = self.init_model_parallel(config.model_parallel)
         torch_dtype = _get_dtype(config.dtype, self._config)
 
-        model = AutoModel.from_pretrained(
+        model = AutoModelForCausalLM.from_pretrained(
             config.pretrained,
             revision=config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
             max_memory=max_memory,
@@ -208,15 +208,10 @@ class BaseModel(LightevalModel):
         return tokenizer
 
     @property
-    def eot_token(self) -> str:
-        return self.tokenizer.eos_token
-
-    @property
-    def eot_token_id(self) -> int:
-        return self.tokenizer.eos_token_id
-
-    @property
     def max_length(self) -> int:
+        return self._max_length
+
+    def _init_max_length(self, max_length) -> int:
         """Return the maximum sequence length of the model.
         NOTE: Different model configurations have different max sequence length
         attribute names.
@@ -231,10 +226,10 @@ class BaseModel(LightevalModel):
                 based on the model's configuration or tokenizer's model_max_length attribute.
 
         Returns:
-            None
+            int: Max length to use depending on the available args and config
         """
-        if self._max_length is not None:
-            return self._max_length
+        if max_length is not None:
+            return max_length
         # Try to get the sequence length from the model config.
         seqlen_config_attrs = ("n_positions", "max_position_embeddings", "n_ctx")
 
@@ -263,6 +258,7 @@ class BaseModel(LightevalModel):
             disable_tqdm = bool(not self.accelerator.is_main_process)
         return disable_tqdm
 
+    # Tokenization helpers
     def tok_encode_pair(self, context, continuation):
         n_spaces = len(context) - len(context.rstrip())
         if n_spaces > 0:
@@ -374,7 +370,7 @@ class BaseModel(LightevalModel):
             list[GenerateReturn]: list of generated responses.
         """
         for request in requests:
-            request.stop_sequence = request.stop_sequence + [self.eot_token]
+            request.stop_sequence = request.stop_sequence + [self.tokenizer.eos_token]
         dataset = GenerativeTaskDataset(requests=requests, dataset_splits=dataset_splits)
         starting_batch_size = STARTING_BATCH_SIZE
         results = []
@@ -488,7 +484,7 @@ class BaseModel(LightevalModel):
         """
         for request in requests:
             if request.context == "":
-                request.tokenized_context = [self.eot_token_id]
+                request.tokenized_context = [self.tokenizer.eos_token_id]
                 request.tokenized_continuation = self.tok_encode(request.choice)
             else:
                 # DO NOT CHANGE THE FOLLOWING LINE!
@@ -507,7 +503,7 @@ class BaseModel(LightevalModel):
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
 
         for request in requests:  # tuple of one elem
-            request.tokenized_context = [self.eot_token_id]  # Fake context
+            request.tokenized_context = [self.tokenizer.eos_token_id]  # Fake context
             request.tokenized_continuation = self.tok_encode(request.context)
             # tokenized_reqs.append((("", context), fake_context_enc, context_enc))
 
@@ -735,7 +731,7 @@ class BaseModel(LightevalModel):
         """
         for request in requests:
             if request.context == "":
-                request.tokenized_context = [self.eot_token_id]
+                request.tokenized_context = [self.tokenizer.eos_token_id]
             else:
                 request.tokenized_context = self.tok_encode(request.context)
 

@@ -1,7 +1,7 @@
 from contextlib import nullcontext
 
 import torch
-from transformers import AutoModel, PreTrainedTokenizer
+from transformers import AutoModelForCausalLM, PreTrainedTokenizer
 
 from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.base_model import BaseModel
@@ -20,7 +20,7 @@ class AdapterModel(BaseModel):
         # (= the parent model, not the model of interest)
         return self._create_auto_tokenizer_with_name(config.base_model, config=config, env_config=env_config)
 
-    def _create_auto_model(self, config: AdapterModelConfig, env_config: EnvConfig) -> AutoModel:
+    def _create_auto_model(self, config: AdapterModelConfig, env_config: EnvConfig) -> AutoModelForCausalLM:
         """Returns a PeftModel from a base model and a version fined tuned using PEFT."""
         torch_dtype = _get_dtype(config.dtype, self._config)
         config.model_parallel, max_memory, device_map = self.init_model_parallel(config.model_parallel)
@@ -31,7 +31,7 @@ class AdapterModel(BaseModel):
 
         if self.accelerator.is_local_main_process if self.accelerator is not None else nullcontext():
             hlog(f"Loading model from {adapter_weights} and applying adapter to {config.base_model}")
-            base = AutoModel.from_pretrained(
+            base = AutoModelForCausalLM.from_pretrained(
                 config.base_model, torch_dtype=torch.float16, low_cpu_mem_usage=True, token=env_config.token
             )
             # Should pass revision
@@ -43,7 +43,7 @@ class AdapterModel(BaseModel):
 
         hlog(f"Loading model from {merged_path}")
 
-        model = AutoModel.from_pretrained(
+        model = AutoModelForCausalLM.from_pretrained(
             merged_path,
             max_memory=max_memory,
             device_map=device_map,

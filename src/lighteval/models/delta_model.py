@@ -2,7 +2,7 @@ from contextlib import nullcontext
 
 import torch
 from tqdm import tqdm
-from transformers import AutoModel
+from transformers import AutoModelForCausalLM
 
 from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.base_model import BaseModel
@@ -15,7 +15,7 @@ class DeltaModel(BaseModel):
         self,
         config: DeltaModelConfig,
         env_config: EnvConfig,
-    ) -> AutoModel:
+    ) -> AutoModelForCausalLM:
         """Returns a model created by adding the weights of a delta model to a base model."""
         config.model_parallel, max_memory, device_map = self.init_model_parallel(config.model_parallel)
         torch_dtype = _get_dtype(config.dtype, self._config)
@@ -26,10 +26,10 @@ class DeltaModel(BaseModel):
 
         if self.accelerator.is_main_process if self.accelerator is not None else nullcontext():
             hlog(f"Loading base and delta models from {config.base_model} and {delta_model}")
-            base = AutoModel.from_pretrained(
+            base = AutoModelForCausalLM.from_pretrained(
                 config.base_model, torch_dtype=torch.float16, low_cpu_mem_usage=True, token=env_config.token
             )
-            delta = AutoModel.from_pretrained(
+            delta = AutoModelForCausalLM.from_pretrained(
                 delta_model,
                 revision=config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
                 torch_dtype=torch.float16,
@@ -46,7 +46,7 @@ class DeltaModel(BaseModel):
 
         hlog(f"Loading delta-applied model from {delta_model}-delta-applied")
 
-        model = AutoModel.from_pretrained(
+        model = AutoModelForCausalLM.from_pretrained(
             merged_path,
             max_memory=max_memory,
             device_map=device_map,
