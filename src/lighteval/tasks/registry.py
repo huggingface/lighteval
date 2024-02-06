@@ -31,10 +31,10 @@ class Registry:
         Initialize the Registry class.
 
         Args:
-            cache_dir (str): The directory path for caching.
+            cache_dir (str): Directory path for caching.
 
         Attributes:
-            cache_dir (str): The directory path for caching.
+            cache_dir (str): Directory path for caching.
             TASK_REGISTRY (dict[str, LightevalTask]): A dictionary containing the registered tasks.
         """
         self.cache_dir: str = cache_dir
@@ -47,11 +47,11 @@ class Registry:
         Get the task class based on the task name.
 
         Args:
-            task_name (str): The name of the task.
+            task_name (str): Name of the task.
             custom_tasks_registry (Optional[dict[str, LightevalTask]]): A dictionary containing custom tasks.
 
         Returns:
-            LightevalTask: The task class.
+            LightevalTask: Task class.
 
         Raises:
             ValueError: If the task is not found in the task registry or custom task registry.
@@ -75,7 +75,7 @@ class Registry:
 
         Args:
             task_name_list (List[str]): A list of task names.
-            custom_tasks_file (Optional[str]): The path to the custom tasks file.
+            custom_tasks_file (Optional[str]): Path to the custom tasks file.
 
         Returns:
             Dict[str, LightevalTask]: A dictionary containing the tasks.
@@ -165,9 +165,9 @@ def create_config_tasks(
     Create configuration tasks based on the provided meta_table.
 
     Args:
-        meta_table (Optional[Dataset]): The meta_table containing task
+        meta_table (Optional[Dataset]): meta_table containing task
             configurations. If not provided, it will be loaded from TABLE_PATH.
-        cache_dir (Optional[str]): The directory to store cached data. If not
+        cache_dir (Optional[str]): Directory to store cached data. If not
             provided, the default cache directory will be used.
 
     Returns:

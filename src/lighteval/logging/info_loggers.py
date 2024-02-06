@@ -85,10 +85,10 @@ class GeneralConfigLogger:
         Logs the information about the arguments passed to the method.
 
         Args:
-            num_fewshot_seeds (int): The number of few-shot seeds.
-            override_batch_size (Union[None, int]): The overridden batch size.
-            max_samples (Union[None, int]): The maximum number of samples.
-            job_id (str): The job ID.
+            num_fewshot_seeds (int): number of few-shot seeds.
+            override_batch_size (Union[None, int]): overridden batch size.
+            max_samples (Union[None, int]): maximum number of samples, if None, use all the samples available.
+            job_id (str): job ID.
             config (optional): BrrrConfig
 
         Returns:
@@ -105,7 +105,7 @@ class GeneralConfigLogger:
         Logs the model information.
 
         Args:
-            model_info (ModelInfo): The model information to be logged.
+            model_info (ModelInfo): model information to be logged.
         """
         self.model_name = model_info.model_name
         self.model_sha = model_info.model_sha
@@ -187,7 +187,7 @@ class DetailsLogger:
             padded (int): Total umber of samples which needed padding during the batching step for the current task.
             non_padded (int): Total number of samples which did not need padding during the batching step for the current task.
             effective_few_shots (float): Average effective few shots across all samples for the current task.
-                The effective few shot is the number of few shots actually used to fit the prompt in the model context
+                effective few shot is the number of few shots actually used to fit the prompt in the model context
                 length while allowing model generation of the expected size.
             num_truncated_few_shots (int): Total number of samples which required truncated prompts to fit the model size for the current task.
         """
@@ -213,7 +213,7 @@ class DetailsLogger:
             padded (int): Number of samples which needed padding during the batching step across all tasks.
             non_padded (int): Number of samples which did not need padding during the batching step across all tasks.
             effective_few_shots (float): Average effective few shots across all samples across all tasks.
-                The effective few shot is the number of few shots actually used to fit the prompt in the model context
+                effective few shot is the number of few shots actually used to fit the prompt in the model context
                 length while allowing model generation of the expected size.
             num_truncated_few_shots (int): Number of samples which required truncated prompts to fit the model size across all tasks.
         """

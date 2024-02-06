@@ -28,8 +28,8 @@ class EnvConfig:
     Configuration class for environment settings.
 
     Attributes:
-        cache_dir (str): The directory for caching data.
-        token (str): The authentication token used for accessing the HuggingFace Hub.
+        cache_dir (str): directory for caching data.
+        token (str): authentication token used for accessing the HuggingFace Hub.
     """
 
     cache_dir: str = None
@@ -37,7 +37,7 @@ class EnvConfig:
 
     """Args:
     pretrained (str):
-        The HuggingFace Hub model ID name or the path to a pre-trained
+        HuggingFace Hub model ID name or the path to a pre-trained
         model to load. This is effectively the `pretrained_model_name_or_path`
         argument of `from_pretrained` in the HuggingFace `transformers` API.
     add_special_tokens (bool, optional, defaults to True):
@@ -63,29 +63,31 @@ class BaseModelConfig:
     Base configuration class for models.
 
     Attributes:
-        pretrained (str): The HuggingFace Hub model ID name or the path to a
+        pretrained (str): HuggingFace Hub model ID name or the path to a
             pre-trained model to load. This is effectively the
             `pretrained_model_name_or_path` argument of `from_pretrained` in the
             HuggingFace `transformers` API.
-        accelerator (Accelerator): The accelerator to use for model training.
-        tokenizer (Optional[str]): The HuggingFace Hub tokenizer ID that will be
+        accelerator (Accelerator): accelerator to use for model training.
+        tokenizer (Optional[str]): HuggingFace Hub tokenizer ID that will be
             used for tokenization.
         multichoice_continuations_start_space (Optional[bool]): Whether to add a
             space at the start of each continuation in multichoice generation.
-        subfolder (Optional[str]): The subfolder within the model repository.
-        revision (str): The revision of the model.
-        batch_size (int): The batch size for model training.
-        max_gen_toks (Optional[int]): The maximum number of tokens to generate.
-        max_length (Optional[int]): The maximum length of the generated output.
+            For example, context: "What is the capital of France?" and choices: "Paris", "London".
+            Will be tokenized as: "What is the capital of France? Paris" and "What is the capital of France? London".
+        subfolder (Optional[str]): Tsubfolder within the model repository.
+        revision (str): revision of the model.
+        batch_size (int): batch size for model training.
+        max_gen_toks (Optional[int]): maximum number of tokens to generate.
+        max_length (Optional[int]): maximum length of the generated output.
         add_special_tokens (bool, optional, defaults to True):
             Whether to add special tokens to the input sequences. If `None`, the
             default value will be set to `True` for seq2seq models (e.g. T5) and
             `False` for causal models.
         model_parallel (Optional[bool]): Whether to use model parallelism.
-        dtype (Optional[Union[str, torch.dtype]]): The data type of the model.
-        device (Union[int, str]): The device to use for model training.
-        quantization_config (Optional[BitsAndBytesConfig]): The quantization
-            configuration for the model.
+        dtype (Optional[Union[str, torch.dtype]]): data type of the model.
+        device (Union[int, str]): device to use for model training.
+        quantization_config (Optional[BitsAndBytesConfig]): quantization
+            configuration for the model. Needed for 4-bit and 8-bit precision.
         load_in_8bit (bool): Whether to load the model in 8-bit precision.
         load_in_4bit (bool): Whether to load the model in 4-bit precision.
         trust_remote_code (bool): Whether to trust remote code during model
@@ -200,11 +202,11 @@ def create_model_config(args: Namespace, accelerator: Union[Accelerator, None]) 
     Create a model configuration based on the provided arguments.
 
     Args:
-        args (Namespace): The command-line arguments.
-        accelerator (Union[Accelerator, None]): The accelerator to use for model training.
+        args (Namespace): command-line arguments.
+        accelerator (Union[Accelerator, None]): accelerator to use for model training.
 
     Returns:
-        BaseModelConfig: The model configuration.
+        BaseModelConfig: model configuration.
 
     Raises:
         ValueError: If both an inference server address and model arguments are provided.

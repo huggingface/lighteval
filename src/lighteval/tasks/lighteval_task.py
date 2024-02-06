@@ -45,10 +45,10 @@ class LightevalTask:
         Initialize a LightEval task.
 
         Args:
-            name (str): The name of the task.
-            cfg (dict): The configuration dictionary containing
+            name (str): name of the task.
+            cfg (dict): configuration dictionary containing
                 task-specific settings (from the task_table.json file).
-            cache_dir (Optional[str], optional): The directory to cache the
+            cache_dir (Optional[str], optional): directory to cache the
                 dataset. Defaults to None.
             custom_tasks_module ([type], optional): A custom module
                 containing task-specific functions. Defaults to None.
@@ -125,10 +125,11 @@ class LightevalTask:
         document has instructions, it removes them from the query:
 
         Args:
-            doc (Doc): The document.
+            doc (Doc): document class, containing the query and the
+                instructions.
 
         Returns:
-            str: The query of the document without the instructions.
+            str: Query of the document without the instructions.
         """
         if doc.instruction is not None:
             if not doc.query.startswith(doc.instruction):
@@ -143,7 +144,7 @@ class LightevalTask:
         an empty string.
 
         Args:
-            doc (Doc): The document.
+            doc (Doc): document, containing the query and the instructions.
 
         Returns:
             Tuple[str, str]: A tuple with the query of the document and the
@@ -162,11 +163,11 @@ class LightevalTask:
         available.
 
         Args:
-            number_of_splits (int, optional): The number of splits to return.
+            number_of_splits (int, optional): Number of splits to return.
                 Defaults to 1.
 
         Returns:
-            list[str]: The list of the first available fewshot splits.
+            list[str]: List of the first available fewshot splits.
         """
         # Possible few shot splits are the available splits not used for evaluation
         possible_fewshot_splits = [k for k in self.all_available_splits if k not in self.evaluation_split]
@@ -185,24 +186,24 @@ class LightevalTask:
         hlog_warn(f"Careful, the task {self.name} is using evaluation data to build the few shot examples.")
         return None
 
-    def _get_docs_from_split(self, keys, few_shots=False) -> list[Doc]:
+    def _get_docs_from_split(self, splits: list[str], few_shots=False) -> list[Doc]:
         """
         Get the documents from the dataset for the given keys (splits).
 
         Args:
-            keys (list): The list of keys (splits).
+            splits (list[str]): List of splits, (e.g. ["train", "dev"])
             few_shots (bool, optional): Whether the documents are used for few
                 shot examples. Defaults to False.
 
         Returns:
-            list[Doc]: The list of documents.
+            list[Doc]: List of documents.
         """
         if self.dataset is None:
             self.dataset = download_dataset_worker((self.dataset_path, self.dataset_config_name))
 
         docs = []
-        for key in keys:
-            for item in self.dataset[key]:
+        for split in splits:
+            for item in self.dataset[split]:
                 # Some tasks formatting is applied differently when the document is used for fewshot examples
                 # vs when it's used for the actual prompt. That's why we store whether we are currently using the
                 # doc for a fewshot sample (few_shots=True) or not, which then leads to the creation of a different Doc.
@@ -216,7 +217,8 @@ class LightevalTask:
         available, it gets them from the few shot split or the evaluation split.
 
         Returns:
-            list[Doc]: The few shot documents.
+            list[Doc]: Documents that will be used for few shot examples. One
+                document = one few shot example.
         """
         if self._fewshot_docs is None:
             self._fewshot_docs = []
@@ -233,7 +235,7 @@ class LightevalTask:
         Returns the evaluation documents.
 
         Returns:
-            list[Doc]: The evaluation documents.
+            list[Doc]: Evaluation documents.
         """
         if self._docs is None:
             self._docs = self._get_docs_from_split(self.evaluation_split)
@@ -244,12 +246,12 @@ class LightevalTask:
         Returns the target of the given document.
 
         Args:
-            formatted_doc (Doc): The formatted document.
+            formatted_doc (Doc): Formatted document.
             few_shot (bool, optional): Whether the document is used for few
                 shot examples. Defaults to False.
 
         Returns:
-            str: The target of the document.
+            str: Target of the document, which is the correct answer for a document.
         """
         if few_shot:
             if formatted_doc.target_for_fewshot_sorting is not None:
@@ -264,7 +266,7 @@ class LightevalTask:
         Returns the request types for the task.
 
         Returns:
-            list[RequestType]: The request types for the task.
+            list[RequestType]: Request types for the task.
 
         Raises:
             NotImplementedError: If the request type is not implemented for the
@@ -296,13 +298,13 @@ class LightevalTask:
         Constructs a list of requests from the task based on the given parameters.
 
         Args:
-            formatted_doc (Doc): The formatted document almost straight from the dataset.
-            ctx (str): The context, which is the few shot examples + the query.
-            document_id_seed (str): The index of the document in the task appended with the seed used for the few shot sampling.
-            current_task_name (str): The name of the current task.
+            formatted_doc (Doc): Formatted document almost straight from the dataset.
+            ctx (str): Context, which is the few shot examples + the query.
+            document_id_seed (str): Index of the document in the task appended with the seed used for the few shot sampling.
+            current_task_name (str): Name of the current task.
 
         Returns:
-            dict[RequestType, List[Request]]: The list of requests.
+            dict[RequestType, List[Request]]: List of requests.
         """
         requests = {type: [] for type in RequestType}
 
@@ -370,14 +372,14 @@ class LightevalTask:
 
     def process_results(self, formatted_doc: Doc, results: list[ModelReturn]) -> dict[str, float]:
         """
-        Processes the results of the task. and stores them in the output dict.
+        Processes the results of the task, and stores them in the output dict.
 
         Args:
-            formatted_doc (Doc): The formatted document of the task.
-            results (list[ModelReturn]): The results of the task, returned by the model class after evaluation.
+            formatted_doc (Doc): formatted document of the task.
+            results (list[ModelReturn]): results of the task, returned by the model class after evaluation.
 
         Returns:
-            dict[str, float]: The output dictionary containing the results of the task.
+            dict[str, float]: output dictionary containing the results of the task.
         """
         # Metrics management is done in metrics.__init__
         outputs = {}
@@ -428,7 +430,7 @@ class LightevalTask:
 
         Args:
             tasks (list): A list of tasks.
-            dataset_loading_processes (int, optional): The number of processes to use for dataset loading. Defaults to 1.
+            dataset_loading_processes (int, optional): number of processes to use for dataset loading. Defaults to 1.
 
         Returns:
             None
@@ -482,10 +484,12 @@ def create_requests_from_tasks(  # noqa: C901
         task_dict (dict[str, LightevalTask]): A dictionary of tasks.
         fewshot_dict (dict[str, list[Tuple[int, bool]]]): A dictionary of few
             shot examples.
-        num_fewshot_seeds (int): The number of few shot seeds.
-        lm (BaseModel): The language model.
-        max_samples (int): The maximum number of samples.
-        evaluation_tracker (EvaluationTracker): The evaluation tracker.
+        num_fewshot_seeds (int): number of few shot seeds.
+        lm (BaseModel): language model class that will be used to eventually
+            truncate the few shot examples (we need the maximum input size of the
+            model)
+        max_samples (int): maximum number of samples.
+        evaluation_tracker (EvaluationTracker): evaluation tracker.
         use_chat_template (bool): Whether to use the chat template.
 
     Raises:
