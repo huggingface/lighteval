@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import transformers
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import AutoTokenizer, BatchEncoding
+from transformers import AutoModel, AutoTokenizer, BatchEncoding
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
 from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
@@ -39,10 +39,6 @@ STARTING_BATCH_SIZE = 512
 
 
 class BaseModel(LightevalModel):
-    AUTO_CONFIG_CLASS: transformers.AutoConfig = transformers.AutoConfig
-    AUTO_TOKENIZER_CLASS: transformers.AutoTokenizer = transformers.AutoTokenizer
-    AUTO_MODEL_CLASS: transformers.AutoModel = transformers.AutoModelForCausalLM
-
     # Default max sequence length setting for when no `max_length` is provided
     # or no max length config setting is found in the model or tokenizer.
     _DEFAULT_MAX_LENGTH: int = 2048
@@ -55,11 +51,10 @@ class BaseModel(LightevalModel):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self.accelerator = config.accelerator
         self._batch_size = config.batch_size
-        self._max_gen_toks = config.max_gen_toks
         self._max_length = config.max_length
         self._config = config.init_configs(env_config)
 
-        self._add_special_tokens = config.add_special_tokens
+        self.add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
         self.tokenizer = self._create_auto_tokenizer(config, env_config)
 
         # If model_parallel is not set we compare the number of process with the number of GPUs
@@ -81,17 +76,6 @@ class BaseModel(LightevalModel):
         self.model_sha = config.get_model_sha()
 
         self.precision = _get_precision(config, model_auto_config=self._config)
-
-    def _encode_pair(self, context, continuation):
-        n_spaces = len(context) - len(context.rstrip())
-        if n_spaces > 0:
-            continuation = context[-n_spaces:] + continuation
-            context = context[:-n_spaces]
-        whole_enc = self.tok_encode(context + continuation)
-        context_enc = self.tok_encode(context)
-        context_enc_len = len(context_enc)
-        continuation_enc = whole_enc[context_enc_len:]
-        return context_enc, continuation_enc
 
     def init_model_parallel(self, model_parallel: bool = None) -> Tuple[bool, Optional[dict], Optional[str]]:
         """Compute all the parameters related to model_parallel"""
@@ -156,7 +140,7 @@ class BaseModel(LightevalModel):
         config.model_parallel, max_memory, device_map = self.init_model_parallel(config.model_parallel)
         torch_dtype = _get_dtype(config.dtype, self._config)
 
-        model = self.AUTO_MODEL_CLASS.from_pretrained(
+        model = AutoModel.from_pretrained(
             config.pretrained,
             revision=config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
             max_memory=max_memory,
@@ -224,42 +208,12 @@ class BaseModel(LightevalModel):
         return tokenizer
 
     @property
-    def add_special_tokens(self) -> bool:
-        """
-        Determines whether to include special tokens in encoded text.
-        TODO: Remove these conditionals once HuggingFace supports a way to
-        check whether or not an arbitrary model was trained with special tokens.
-
-        Returns:
-            bool: True if special tokens should be included, False otherwise.
-
-        Raises:
-            ValueError: If the `add_special_tokens` value cannot be determined from the model class.
-        """
-        if self._add_special_tokens is not None:
-            return self._add_special_tokens
-        elif self.AUTO_MODEL_CLASS is transformers.AutoModelForCausalLM:
-            return False
-        elif self.AUTO_MODEL_CLASS is transformers.AutoModelForSeq2SeqLM:
-            return True
-        else:
-            raise ValueError(
-                "Could not determine `add_special_tokens` value from the model "
-                "class. Set to `True` or `False` depending on whether the model "
-                "was pre-trained with special tokens."
-            )
-
-    @property
     def eot_token(self) -> str:
         return self.tokenizer.eos_token
 
     @property
     def eot_token_id(self) -> int:
         return self.tokenizer.eos_token_id
-
-    @property
-    def max_gen_toks(self) -> int:
-        return self._max_gen_toks
 
     @property
     def max_length(self) -> int:
@@ -308,6 +262,17 @@ class BaseModel(LightevalModel):
         if self.accelerator:
             disable_tqdm = bool(not self.accelerator.is_main_process)
         return disable_tqdm
+
+    def tok_encode_pair(self, context, continuation):
+        n_spaces = len(context) - len(context.rstrip())
+        if n_spaces > 0:
+            continuation = context[-n_spaces:] + continuation
+            context = context[:-n_spaces]
+        whole_enc = self.tok_encode(context + continuation)
+        context_enc = self.tok_encode(context)
+        context_enc_len = len(context_enc)
+        continuation_enc = whole_enc[context_enc_len:]
+        return context_enc, continuation_enc
 
     def tok_encode(self, str_to_encode: str | list[str], add_special_tokens: Optional[bool] = None) -> TokenSequence:
         if add_special_tokens is None:
@@ -528,7 +493,7 @@ class BaseModel(LightevalModel):
             else:
                 # DO NOT CHANGE THE FOLLOWING LINE!
                 # It is mandatory for compatibility with the harness!!!
-                request.tokenized_context, request.tokenized_continuation = self._encode_pair(
+                request.tokenized_context, request.tokenized_continuation = self.tok_encode_pair(
                     request.context, request.choice
                 )
 

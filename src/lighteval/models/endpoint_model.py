@@ -15,7 +15,7 @@ from tqdm import tqdm
 from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
-from lighteval.logging.hierarchical_logger import hlog_warn
+from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.model_config import EnvConfig, InferenceEndpointModelConfig, InferenceModelConfig
 from lighteval.models.model_output import GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
@@ -70,7 +70,9 @@ class InferenceEndpointModel(LightevalModel):
                         "url": "ghcr.io/huggingface/text-generation-inference:1.1.0",
                     },
                 )
+            hlog("Deploying your endpoint. Please wait.")
             self.endpoint.wait(timeout=600)  # Waits for the endpoint to be deployed
+            hlog("Endpoint successfully deployed!")
             self.name = config.repository
             self.revision = self.endpoint.revision
             self.async_client: AsyncInferenceClient = self.endpoint.async_client

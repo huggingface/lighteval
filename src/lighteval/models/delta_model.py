@@ -26,10 +26,10 @@ class DeltaModel(BaseModel):
 
         if self.accelerator.is_main_process if self.accelerator is not None else nullcontext():
             hlog(f"Loading base and delta models from {config.base_model} and {delta_model}")
-            base = self.AUTO_MODEL_CLASS.from_pretrained(
+            base = AutoModel.from_pretrained(
                 config.base_model, torch_dtype=torch.float16, low_cpu_mem_usage=True, token=env_config.token
             )
-            delta = self.AUTO_MODEL_CLASS.from_pretrained(
+            delta = AutoModel.from_pretrained(
                 delta_model,
                 revision=config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
                 torch_dtype=torch.float16,
@@ -46,7 +46,7 @@ class DeltaModel(BaseModel):
 
         hlog(f"Loading delta-applied model from {delta_model}-delta-applied")
 
-        model = self.AUTO_MODEL_CLASS.from_pretrained(
+        model = AutoModel.from_pretrained(
             merged_path,
             max_memory=max_memory,
             device_map=device_map,

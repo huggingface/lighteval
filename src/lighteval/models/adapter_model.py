@@ -31,7 +31,7 @@ class AdapterModel(BaseModel):
 
         if self.accelerator.is_local_main_process if self.accelerator is not None else nullcontext():
             hlog(f"Loading model from {adapter_weights} and applying adapter to {config.base_model}")
-            base = self.AUTO_MODEL_CLASS.from_pretrained(
+            base = AutoModel.from_pretrained(
                 config.base_model, torch_dtype=torch.float16, low_cpu_mem_usage=True, token=env_config.token
             )
             # Should pass revision
@@ -43,7 +43,7 @@ class AdapterModel(BaseModel):
 
         hlog(f"Loading model from {merged_path}")
 
-        model = self.AUTO_MODEL_CLASS.from_pretrained(
+        model = AutoModel.from_pretrained(
             merged_path,
             max_memory=max_memory,
             device_map=device_map,
