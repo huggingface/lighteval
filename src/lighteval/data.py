@@ -72,7 +72,7 @@ class DynamicBatchDataset(Dataset):
 
         return original_order
 
-    def get_set_split_start_end(self, split_id: int) -> tuple[int, int]:
+    def get_split_start_end(self, split_id: int) -> tuple[int, int]:
         """
         Get the start and end indices of a dataset split.
 
@@ -96,7 +96,7 @@ class DynamicBatchDataset(Dataset):
             tuple: A tuple containing the start and end indices of a split.
         """
         for split_id in range(self.dataset_splits):
-            yield self.get_set_split_start_end(split_id)
+            yield self.get_split_start_end(split_id)
 
     def __getitem__(self, index) -> Request:
         """
@@ -195,7 +195,7 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         return -(len(toks) + gen_length)
 
 
-class GenerativeTaskDatasetBrrr(DynamicBatchDataset):
+class GenerativeTaskDatasetNanotron(DynamicBatchDataset):
     def _sorting_criteria(self, x) -> int:
         """
         Collate function for generating batches.

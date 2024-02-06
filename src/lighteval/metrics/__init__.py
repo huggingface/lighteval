@@ -7,21 +7,12 @@ from lighteval.utils import as_list
 
 
 def apply_target_perplexity_metric(results: list[ModelReturn], formatted_doc: Doc, metrics: list[str]):
-    if len(formatted_doc.get_golds()) != 1:
-        raise ValueError("Target perplexity metric can only be used with one gold reference")
     outputs = {}
-    reference_text = formatted_doc.get_golds()[0]
-    current_result = results.pop(0)
-    target_logprob = current_result.result[0]
-    target_acc = current_result.result[1]
+    current_results = [results.pop(0) for _ in range(len(formatted_doc.get_golds()))]
 
     for metric in metrics:
-        if Metrics[metric].value.category == MetricCategory.TARGET_PERPLEXITY:
-            outputs.update(
-                Metrics[metric].value.compute(
-                    logprobs=target_logprob, target_acc=target_acc, reference_text=reference_text
-                )
-            )
+        if Metrics[metric].value.category == MetricCategory.PERPLEXITY:
+            outputs.update(Metrics[metric].value.compute(results=current_results))
 
     return results, outputs
 
@@ -39,9 +30,7 @@ def apply_perplexity_metric(results: list[ModelReturn], formatted_doc: Doc, metr
 
     for metric in metrics:
         if Metrics[metric].value.category == MetricCategory.PERPLEXITY:
-            outputs.update(
-                Metrics[metric].value.compute(logprobs=current_result.result, reference_text=reference_text)
-            )
+            outputs.update(Metrics[metric].value.compute(results=current_result, reference_text=reference_text))
 
     return results, outputs
 
