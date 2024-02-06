@@ -196,7 +196,7 @@ class TGIModelConfig:
     inference_server_auth: str
 
 
-def create_model_config(args: Namespace, accelerator: Union[Accelerator, None]) -> BaseModelConfig:  # noqa: C901
+def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]) -> BaseModelConfig:  # noqa: C901
     """
     Create a model configuration based on the provided arguments.
 
