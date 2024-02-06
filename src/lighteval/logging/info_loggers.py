@@ -2,6 +2,7 @@ import collections
 import os
 import time
 from dataclasses import asdict, dataclass, field
+from typing import Union
 
 import git
 import numpy as np
@@ -38,7 +39,7 @@ class GeneralConfigLogger:
         job_id (int): If the evaluation suite is launched as a slurm job, stores the current job id.
             Purely informative parameter used to retrieve scheduler logs.
         start_time (float): Start time of the experiment. Logged at class init.
-        end_time (float): Start time of the experiment. Logged when calling [`GeneralConfigLogger.log_end_time`]
+        end_time (float): End time of the experiment. Logged when calling [`GeneralConfigLogger.log_end_time`]
         total_evaluation_time_secondes (str): Inferred total evaluation time in seconds (from the start and end times).
         model_name (str): Name of the currently evaluated model.
         model_sha (str): Commit hash of the currently evaluated model on the hub if available.
@@ -72,7 +73,30 @@ class GeneralConfigLogger:
         self.lighteval_sha = repo.git.rev_parse("HEAD")
         self.start_time = time.perf_counter()
 
-    def log_args_info(self, num_fewshot_seeds, override_batch_size, max_samples, job_id, config=None) -> None:
+    def log_args_info(
+        self,
+        num_fewshot_seeds: int,
+        override_batch_size: Union[None, int],
+        max_samples: Union[None, int],
+        job_id: str,
+        config: "BrrrConfig" = None,
+    ) -> None:
+        """
+        Logs the information about the arguments passed to the method.
+
+        Args:
+            num_fewshot_seeds (int): number of few-shot seeds.
+            override_batch_size (Union[None, int]): overridden batch size.
+                If strictly positive, its value is used as the batch size for all experiments.
+                Else, the batch size is automatically inferred depending on what fits in memory.
+            max_samples (Union[None, int]): maximum number of samples, if None, use all the samples available.
+            job_id (str): job ID, used to retrieve logs.
+            config (optional): BrrrConfig
+
+        Returns:
+            None
+
+        """
         self.num_fewshot_seeds = num_fewshot_seeds
         self.override_batch_size = override_batch_size
         self.max_samples = max_samples
@@ -80,6 +104,13 @@ class GeneralConfigLogger:
         self.config = config
 
     def log_model_info(self, model_info: ModelInfo) -> None:
+        """
+        Logs the model information.
+
+        Args:
+            model_info (ModelInfo): Model information to be logged.
+
+        """
         self.model_name = model_info.model_name
         self.model_sha = model_info.model_sha
         self.model_dtype = model_info.model_dtype
@@ -102,6 +133,7 @@ class DetailsLogger:
             Example: winogrande: [sample1_details, sample2_details, ...]
         compiled_details (dict[str, `CompiledDetail`]): : Maps each task name to the list of its samples' compiled details.
         compiled_details_over_all_tasks (CompiledDetailOverAllTasks): Aggregated details over all the tasks.
+
     """
 
     @dataclass()
@@ -129,6 +161,7 @@ class DetailsLogger:
             choices (list): List of the possible choices (for multichoice/loglikelihood evaluations)
             gold_index (list): Indices of the gold targets among the [`choices`]
             metrics (dict): Metric name to current example score
+
         """
 
         example: str = ""
@@ -160,9 +193,10 @@ class DetailsLogger:
             padded (int): Total umber of samples which needed padding during the batching step for the current task.
             non_padded (int): Total number of samples which did not need padding during the batching step for the current task.
             effective_few_shots (float): Average effective few shots across all samples for the current task.
-                The effective few shot is the number of few shots actually used to fit the prompt in the model context
+                effective few shot is the number of few shots actually used to fit the prompt in the model context
                 length while allowing model generation of the expected size.
             num_truncated_few_shots (int): Total number of samples which required truncated prompts to fit the model size for the current task.
+
         """
 
         hashes: dict = field(default_factory=dict)
@@ -186,9 +220,10 @@ class DetailsLogger:
             padded (int): Number of samples which needed padding during the batching step across all tasks.
             non_padded (int): Number of samples which did not need padding during the batching step across all tasks.
             effective_few_shots (float): Average effective few shots across all samples across all tasks.
-                The effective few shot is the number of few shots actually used to fit the prompt in the model context
+                effective few shot is the number of few shots actually used to fit the prompt in the model context
                 length while allowing model generation of the expected size.
             num_truncated_few_shots (int): Number of samples which required truncated prompts to fit the model size across all tasks.
+
         """
 
         hashes: dict = field(default_factory=dict)
@@ -388,7 +423,8 @@ class MetricsLogger:
 
         Args:
             task_dict (dict[str, LightevalTask]): used to determine what aggregation function to use for each metric
-            bootstrap_iters (int, optional): _description_. Defaults to 1000.
+            bootstrap_iters (int, optional): Number of runs used to run the statistical bootstrap. Defaults to 1000.
+
         """
 
         for task_name, metrics in self.metrics_values.items():
@@ -440,6 +476,7 @@ class VersionsLogger:
 
     Attributes:
         version (dict[str, int]): Maps the task names with the task versions.
+
     """
 
     # the versions dict will be a dict of task_name: task_version
@@ -455,6 +492,7 @@ class TaskConfigLogger:
 
     Attributes:
         tasks_config (dict[str, TaskConfig]): Maps each task to its associated [`TaskConfig`]
+
     """
 
     @dataclass
@@ -479,6 +517,7 @@ class TaskConfigLogger:
             truncated_num_docs (bool): Whether less than the total number of documents were used
             output_regex (str)
             frozen (bool)
+
         """
 
         name: str

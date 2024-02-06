@@ -501,7 +501,7 @@ class Metrics(Enum):
         return res
 
     @staticmethod
-    def corpus_level_fns():
+    def corpus_level_fns() -> dict[str, callable]:
         res = {}
         for metric in Metrics:
             if metric.value.category == MetricCategory.IGNORED:

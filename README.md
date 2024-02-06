@@ -1,13 +1,13 @@
 # LightEval 🌤️
-A lightweight LLM evaluation 
+A lightweight LLM evaluation
 
 ## Context
 LightEval is a lightweight LLM evaluation suite that Hugging Face has been using internally with the recently released LLM data processing library [datatrove](https://github.com/huggingface/datatrove), LLM training library [nanotron](https://github.com/huggingface/nanotron) and logging/experimentation code base [brrr](https://github.com/huggingface/brrr).
 
-We're releasing it with the community in the spirit of building in the open. 
+We're releasing it with the community in the spirit of building in the open.
 
 Note that it is still very much early so don't expect 100% stability ^^'
-In case of problems or question, feel free to open an issue! 
+In case of problems or question, feel free to open an issue!
 
 ## News
 - **Feb 07, 2024**: Release of `lighteval``
@@ -27,13 +27,13 @@ However, we are very grateful to the Harness and HELM teams for their continued 
         - [logging](https://github.com/huggingface/lighteval/tree/main/src/lighteval/logging): Our loggers, to display experiment information and push it to the hub after a run
         - [metrics](https://github.com/huggingface/lighteval/tree/main/src/lighteval/metrics): All the available metrics you can use. They are described in metrics, and divided between sample metrics (applied at the sample level, such as a prediction accuracy) and corpus metrics (applied over the whole corpus). You'll also find available normalisation functions.
         - [models](https://github.com/huggingface/lighteval/tree/main/src/lighteval/models): Possible models to use. We cover transformers (base_model), with adapter or delta weights, as well as TGI models locally deployed (it's likely the code here is out of date though), and brrr/nanotron models.
-        - [tasks](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks): Available tasks. The complete list is in `tasks_table.jsonl`, and you'll find all the prompts in `ŧasks_prompt_formatting.py`. 
+        - [tasks](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks): Available tasks. The complete list is in `tasks_table.jsonl`, and you'll find all the prompts in `ŧasks_prompt_formatting.py`.
 - [tasks_examples](https://github.com/huggingface/lighteval/tree/main/tasks_examples) contains a list of available tasks you can launch. We advise using tasks in the `recommended_set`, as it's possible that some of the other tasks need double checking.
 - [tests](https://github.com/huggingface/lighteval/tree/main/tests) contains our test suite, that we run at each PR to prevent regressions in metrics/prompts/tasks, for a subset of important tasks.
 
 ## How to install and use
-Note: 
-- Use the Eleuther AI Harness (`lm_eval`) to share comparable numbers with everyone (e.g. on the Open LLM Leaderboard). 
+Note:
+- Use the Eleuther AI Harness (`lm_eval`) to share comparable numbers with everyone (e.g. on the Open LLM Leaderboard).
 - Use `lighteval` during training with the nanotron/datatrove LLM training stack and/or for quick eval/benchmark experimentations.
 
 ### Installation
@@ -42,7 +42,7 @@ Create your virtual environment using virtualenv or conda depending on your pref
 conda create -n lighteval python==3.10
 ```
 
-Clone the package 
+Clone the package
 ```bash
 git clone
 cd lighteval-harness
@@ -51,26 +51,30 @@ cd lighteval-harness
 Install the dependencies. For the default installation, you just need:
 ```bash
 pip install -e .
-cd src
 ```
 
 If you want to run your models using accelerate, tgi or optimum, do quantization, or use adapter weights, you will need to specify the optional dependencies group fitting your use case (`accelerate`,`tgi`,`optimum`,`quantization`,`adapters`,`nanotron`) at install time
 ```bash
 pip install -e .[optional1,optional2]
-cd src
 ```
 
 The setup we tested most is:
 ```bash
 pip install -e .[accelerate,quantization,adapters]
-cd src
+```
+
+If you want to push your results to the hub, don't forget to add your user token to the environment variable `HUGGING_FACE_HUB_TOKEN`.
+
+Lastly, if you intend to push to the code base, you'll need to install the precommit hook for styling tests.
+```bash
+pip install pre-commit
+pre-commit install
 ```
 
 Optional steps.
 - to load and push big models/datasets, your machine likely needs Git LFS. You can install it with `sudo apt-get install git-lfs`
 - If you want to run bigbench evaluations, install bigbench `pip install "bigbench@https://storage.googleapis.com/public_research_data/bigbench/bigbench-0.0.1.tar.gz"`
 
-If you want to push your results to the hub, don't forget to add your user token to the environment variable `HUGGING_FACE_HUB_TOKEN`.
 
 ### Testing that everything was installed correctly
 If you want to test your install, you can run your first evaluation on GPUs (8GPU, single node), using
@@ -98,7 +102,7 @@ If you want to compare hellaswag from helm and the harness on Gpt-6j, you can do
 
 ## Customisation
 ### Adding a new metric
-If you want to add a new metric, first check if you can use one of the parametrized functions in `src.lighteval.metrics.metrics_corpus` or `src.lighteval.metrics.metrics_sample`. If not, add it to either of these files depending on the level at which it is applied. 
+If you want to add a new metric, first check if you can use one of the parametrized functions in `src.lighteval.metrics.metrics_corpus` or `src.lighteval.metrics.metrics_sample`. If not, add it to either of these files depending on the level at which it is applied.
 Then, follow the example in `src.lighteval.metrics.metrics` to register your metric.
 
 ### Adding a new task
