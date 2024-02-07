@@ -1116,7 +1116,7 @@ class NanotronLightevalModel(LightevalModel):
         # automatic (variable) batch size detection for vectorization
         # pull longest context sample from request
         for request in requests:
-            request.stop_sequence = request.stop_sequence + [self.tokenizer.eos_token]
+            request.stop_sequence = list(request.stop_sequence) + [self.tokenizer.eos_token]
             request.tokenized_context = self.tok_encode(request.context)
 
         dataset = GenerativeTaskDatasetNanotron(requests=requests, dataset_splits=dataset_splits)
