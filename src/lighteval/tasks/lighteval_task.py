@@ -1,6 +1,5 @@
 import collections
 import random
-from dataclasses import dataclass
 from multiprocessing import Pool
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple
@@ -38,42 +37,6 @@ from . import tasks_prompt_formatting
 
 if TYPE_CHECKING:
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-
-
-@dataclass
-class CustomEvaluationTaskConfig:
-    name: str
-    prompt_function: str
-    hf_repo: str
-    hf_subset: str
-    metric: Tuple[Metrics]
-    hf_avail_splits: Optional[Tuple[str]] = None
-    evaluation_splits: Optional[Tuple[str]] = None
-    few_shots_split: Optional[str] = None
-    few_shots_select: Optional[str] = None
-    generation_size: int = -1
-    stop_sequence: Optional[Tuple[str]] = None
-    output_regex: Optional[str] = None
-
-    frozen: bool = False
-    suite: Optional[Tuple[str]] = None  # we use this to know if we should use a custom lighteval or bigcode task
-
-    def __post_init__(self):
-        if self.suite is None:
-            self.suite = ["custom"]
-        if self.hf_avail_splits is None:
-            self.hf_avail_splits = ["train", "validation", "test"]
-        if self.evaluation_splits is None:
-            self.evaluation_splits = ["validation"]
-        if self.stop_sequence is None:
-            self.stop_sequence = ["\n"]
-
-        # Convert list to tuple for hashing
-        self.metric = tuple(self.metric)
-        self.hf_avail_splits = tuple(self.hf_avail_splits) if self.hf_avail_splits else None
-        self.evaluation_splits = tuple(self.evaluation_splits) if self.evaluation_splits else None
-        self.suite = tuple(self.suite) if self.suite else None
-        self.stop_sequence = tuple(self.stop_sequence) if self.stop_sequence else None
 
 
 class LightevalTask:
