@@ -6,41 +6,44 @@ This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then im
 """
 import re
 from dataclasses import asdict
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
-from lighteval.metrics import MetricCategory, Metrics
-from lighteval.tasks.lighteval_task import CustomEvaluationTaskConfig
 from lighteval.tasks.requests import Doc
-from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
+
+from .custom_evaluation_utils import *
 
 
-_TASKS_STRINGS: List[Tuple[CustomEvaluationTaskConfig, str]] = []
-_TASKS: List[CustomEvaluationTaskConfig] = []
+# fmt: off
+LETTER_INDICES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+# fmt: on
+
+_TASKS_STRINGS: List[Tuple[CustomEvaluationTask, str]] = []
+_TASKS: List[CustomEvaluationTask] = []
 
 ## COMMON_SENSE_REASONING_TASKS ##
 COMMON_SENSE_REASONING_TASKS = [
-    CustomEvaluationTaskConfig(
+    CustomEvaluationTask(
         name="hellaswag",
         prompt_function="hellaswag_prompt",
         hf_repo="hellaswag",
         hf_subset="default",
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
     ),
-    CustomEvaluationTaskConfig(
+    CustomEvaluationTask(
         name="winogrande",
         prompt_function="winogrande",
         hf_repo="winogrande",
         hf_subset="winogrande_xl",
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
     ),
-    CustomEvaluationTaskConfig(
+    CustomEvaluationTask(
         name="piqa",
         prompt_function="piqa_harness",
         hf_repo="piqa",
         hf_subset="plain_text",
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
     ),
-    CustomEvaluationTaskConfig(
+    CustomEvaluationTask(
         name="siqa",
         prompt_function="siqa_prompt",
         hf_repo="lighteval/siqa",
@@ -48,14 +51,14 @@ COMMON_SENSE_REASONING_TASKS = [
         hf_avail_splits=["train", "validation"],
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
     ),
-    CustomEvaluationTaskConfig(
+    CustomEvaluationTask(
         name="openbookqa",
         prompt_function="openbookqa",
         hf_repo="openbookqa",
         hf_subset="main",
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
     ),
-    CustomEvaluationTaskConfig(
+    CustomEvaluationTask(
         name="arc:easy",
         prompt_function="arc",
         hf_repo="ai2_arc",
@@ -64,7 +67,7 @@ COMMON_SENSE_REASONING_TASKS = [
         generation_size=1,
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
     ),
-    CustomEvaluationTaskConfig(
+    CustomEvaluationTask(
         name="arc:challenge",
         prompt_function="arc",
         hf_repo="ai2_arc",
@@ -73,7 +76,7 @@ COMMON_SENSE_REASONING_TASKS = [
         generation_size=1,
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
     ),
-    CustomEvaluationTaskConfig(
+    CustomEvaluationTask(
         name="commonsense_qa",
         prompt_function="commonsense_qa_prompt",
         hf_repo="commonsense_qa",
@@ -131,7 +134,7 @@ _TASKS += COMMON_SENSE_REASONING_TASKS
 ## WORLD_KNOWLEDGE_TASKS ##
 
 WORLD_KNOWLEDGE_TASKS = [
-    CustomEvaluationTaskConfig(
+    CustomEvaluationTask(
         name="trivia_qa",
         prompt_function="triviaqa",
         hf_repo="trivia_qa",
@@ -140,7 +143,7 @@ WORLD_KNOWLEDGE_TASKS = [
         generation_size=20,
         stop_sequence=["\n", ".", ","],
     ),
-    CustomEvaluationTaskConfig(
+    CustomEvaluationTask(
         name="natural_questions",
         prompt_function="natural_questions_prompt",
         hf_repo="lighteval/natural_questions_clean",
@@ -170,14 +173,14 @@ _TASKS += WORLD_KNOWLEDGE_TASKS
 ## Reading comprehension ##
 
 READING_COMP_TASKS = [
-    CustomEvaluationTaskConfig(
+    CustomEvaluationTask(
         name="super_glue:boolq",
         prompt_function="boolq_prompt",
         hf_repo="super_glue",
         hf_subset="boolq",
         metric=["target_perplexity"],
     ),
-    CustomEvaluationTaskConfig(
+    CustomEvaluationTask(
         name="quac",
         prompt_function="quac",
         hf_repo="lighteval/quac_helm",
@@ -204,7 +207,7 @@ _TASKS += READING_COMP_TASKS
 
 
 ## MATH ##
-class CustomMathEvaluationTask(CustomEvaluationTaskConfig):
+class CustomMathEvaluationTask(CustomEvaluationTask):
     """Custom class for math tasks with all the defaults set"""
 
     def __init__(
@@ -251,7 +254,7 @@ MATH_TASKS = [
     CustomMathEvaluationTask(name="math:prealgebra", hf_subset="prealgebra"),
     CustomMathEvaluationTask(name="math:precalculus", hf_subset="precalculus"),
 ]
-GSM8K = CustomEvaluationTaskConfig(
+GSM8K = CustomEvaluationTask(
     name="gsm8k",
     prompt_function="gsm8k",
     hf_repo="gsm8k",
@@ -272,7 +275,7 @@ _TASKS += MATH_TASKS + [GSM8K]
 
 
 ## MMLU ##
-class CustomMMLUEvaluationTask(CustomEvaluationTaskConfig):
+class CustomMMLUEvaluationTask(CustomEvaluationTask):
     def __init__(
         self,
         name,
@@ -415,7 +418,7 @@ _TASKS += MMLU_TASKS
 ## BBH ##
 
 
-class CustomBBHEvaluationTask(CustomEvaluationTaskConfig):
+class CustomBBHEvaluationTask(CustomEvaluationTask):
     def __init__(
         self,
         name,
@@ -506,7 +509,7 @@ _TASKS += BBH_TASKS
 
 
 ## AGI eval ##
-class CustomAGIEvalEvaluationTask(CustomEvaluationTaskConfig):
+class CustomAGIEvalEvaluationTask(CustomEvaluationTask):
     def __init__(
         self,
         name,
@@ -617,7 +620,7 @@ _TASKS += AGIEVAL_TASKS
 
 
 ## HUMAN EVAL ##
-# human_eval = CustomEvaluationTaskConfig(
+# human_eval = CustomEvaluationTask(
 #         name="human_eval",
 #         prompt_function="human_eval",
 #         hf_repo="lighteval/human_eval",
@@ -625,9 +628,9 @@ _TASKS += AGIEVAL_TASKS
 #     ),
 
 
-def has_generative_metrics(task: CustomEvaluationTaskConfig) -> bool:
+def has_generative_metrics(task: CustomEvaluationTask) -> bool:
     for metric in task.metric:
-        if metric.category == MetricCategory.GENERATIVE:
+        if metric in NEEDS_GENERATION_ONLY:
             return True
     return False
 
