@@ -626,7 +626,7 @@ class BaseModel(LightevalModel):
         return dataset.get_original_order(res)
 
     def prepare_batch(
-        self, batch: list[str], padding_length: int, max_context: Optional[int] = None, single_token: bool = False
+        self, batch: list[Request], padding_length: int, max_context: Optional[int] = None, single_token: bool = False
     ):
         """Tokenize a batch of inputs and return also the length, truncations and padding"""
         if single_token:
