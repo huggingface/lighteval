@@ -11,7 +11,7 @@ It is still an early, internal version - it should be nice to use but don't expe
 In case of problems or question, feel free to open an issue!
 
 ## How to install and use
-### Requirements
+### Installation
 0) Create your virtual environment using virtualenv or conda depending on your preferences. We require Python3.10
 
 1) Clone the package using `git clone`, then `cd lighteval-harness`, `pip install -e .` Once the dependencies are installed, `cd src`.
@@ -21,6 +21,12 @@ Optional:
 - If you want to run bigbench evaluations, install bigbench `pip install "bigbench@https://storage.googleapis.com/public_research_data/bigbench/bigbench-0.0.1.tar.gz"`
 
 2) Add your user token to the environment variable `HUGGING_FACE_HUB_TOKEN` if you want to push your results to the hub
+
+For the linting:
+```bash
+pre-commit install
+pre-commit run --config .pre-commit-config.yaml --all-files
+```
 
 
 ### Usage

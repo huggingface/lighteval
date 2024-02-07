@@ -198,6 +198,37 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         return -(len(toks) + gen_length)
 
 
+class GenerativeTaskDatasetNanotron(DynamicBatchDataset):
+    def __getitem__(self, index) -> Request:
+        """
+        Get an item from the dataset depending on the split we are currently in.
+        For instance, if we are in split 0, we will get the item at index 0, if
+        we are in split 1, we will get the item at index self.split_size, etc.
+        Used for dynamic batching.
+
+        Args:
+            index (int): The index of the item.
+
+        Returns:
+            Any: The item at the specified index.
+        """
+        return index, self.sorted_data[index + self.split_start]
+
+    def _sorting_criteria(self, request) -> int:
+        """
+        Collate function for generating batches.
+
+        Args:
+            x (Any): The input data.
+
+        Returns:
+            Any: The collated data.
+        """
+        toks = request.tokenized_context
+        gen_length = request.generation_size
+        return -(len(toks) + gen_length)
+
+
 class GenDistributedSampler(DistributedSampler):
     """A distributed sampler that copy the last element only when drop_last is False so we keep a small padding in the batches
     as our samples are sorted by length.

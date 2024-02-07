@@ -18,13 +18,11 @@ from lighteval.logging.info_loggers import (
     TaskConfigLogger,
     VersionsLogger,
 )
-from lighteval.utils import is_nanotron_available
+from lighteval.utils import is_nanotron_available, obj_to_markdown
 
 
 if is_nanotron_available():
-    from brrr.config import BrrrConfig
-    from brrr.experiment_loggers import obj_to_markdown
-    from nanotron.config import get_config_from_dict
+    from nanotron.config import Config, get_config_from_dict
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
@@ -104,81 +102,81 @@ class EvaluationTracker:
 
         """
         hlog("Saving experiment tracker")
-        try:
-            date_id = datetime.now().isoformat().replace(":", "-")
+        # try:
+        date_id = datetime.now().isoformat().replace(":", "-")
 
-            output_dir_results = Path(output_dir) / "results" / self.general_config_logger.model_name
-            output_dir_details = Path(output_dir) / "details" / self.general_config_logger.model_name
-            output_dir_details_sub_folder = output_dir_details / date_id
-            output_dir_results.mkdir(parents=True, exist_ok=True)
-            output_dir_details_sub_folder.mkdir(parents=True, exist_ok=True)
+        output_dir_results = Path(output_dir) / "results" / self.general_config_logger.model_name
+        output_dir_details = Path(output_dir) / "details" / self.general_config_logger.model_name
+        output_dir_details_sub_folder = output_dir_details / date_id
+        output_dir_results.mkdir(parents=True, exist_ok=True)
+        output_dir_details_sub_folder.mkdir(parents=True, exist_ok=True)
 
-            output_results_file = output_dir_results / f"results_{date_id}.json"
-            output_results_in_details_file = output_dir_details / f"results_{date_id}.json"
+        output_results_file = output_dir_results / f"results_{date_id}.json"
+        output_results_in_details_file = output_dir_details / f"results_{date_id}.json"
 
-            hlog(f"Saving results to {output_results_file} and {output_results_in_details_file}")
+        hlog(f"Saving results to {output_results_file} and {output_results_in_details_file}")
 
-            to_dump = {
-                "config_general": asdict(self.general_config_logger),
-                "results": self.metrics_logger.metric_aggregated,
-                "versions": self.versions_logger.versions,
-                "config_tasks": self.task_config_logger.tasks_configs,
-                "summary_tasks": self.details_logger.compiled_details,
-                "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
-            }
-            dumped = json.dumps(to_dump, cls=EnhancedJSONEncoder, indent=2)
+        to_dump = {
+            "config_general": asdict(self.general_config_logger),
+            "results": self.metrics_logger.metric_aggregated,
+            "versions": self.versions_logger.versions,
+            "config_tasks": self.task_config_logger.tasks_configs,
+            "summary_tasks": self.details_logger.compiled_details,
+            "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
+        }
+        dumped = json.dumps(to_dump, cls=EnhancedJSONEncoder, indent=2)
 
-            with open(output_results_file, "w") as f:
-                f.write(dumped)
+        with open(output_results_file, "w") as f:
+            f.write(dumped)
 
-            with open(output_results_in_details_file, "w") as f:
-                f.write(dumped)
+        with open(output_results_in_details_file, "w") as f:
+            f.write(dumped)
 
-            for task_name, task_details in self.details_logger.details.items():
-                output_file_details = output_dir_details_sub_folder / f"details_{task_name}_{date_id}.parquet"
-                # Create a dataset from the dictionary
-                try:
-                    dataset = Dataset.from_list([asdict(detail) for detail in task_details])
-                except Exception:
-                    # We force cast to str to avoid formatting problems for nested objects
-                    dataset = Dataset.from_list(
-                        [{k: str(v) for k, v in asdict(detail).items()} for detail in task_details]
-                    )
-
-                # We don't keep 'id' around if it's there
-                column_names = dataset.column_names
-                if "id" in dataset.column_names:
-                    column_names = [t for t in dataset.column_names if t != "id"]
-
-                # Sort column names to make it easier later
-                dataset = dataset.select_columns(sorted(column_names))
-                # Save the dataset to a Parquet file
-                dataset.to_parquet(output_file_details.as_posix())
-
-            if push_results_to_hub:
-                self.api.upload_folder(
-                    repo_id=self.hub_results_repo if public else self.hub_private_results_repo,
-                    folder_path=output_dir_results,
-                    path_in_repo=self.general_config_logger.model_name,
-                    repo_type="dataset",
-                    commit_message=f"Updating model {self.general_config_logger.model_name}",
+        for task_name, task_details in self.details_logger.details.items():
+            output_file_details = output_dir_details_sub_folder / f"details_{task_name}_{date_id}.parquet"
+            # Create a dataset from the dictionary
+            try:
+                dataset = Dataset.from_list([asdict(detail) for detail in task_details])
+            except Exception:
+                # We force cast to str to avoid formatting problems for nested objects
+                dataset = Dataset.from_list(
+                    [{k: str(v) for k, v in asdict(detail).items()} for detail in task_details]
                 )
 
-            if push_details_to_hub:
-                self.details_to_hub(
-                    model_name=self.general_config_logger.model_name,
-                    results_file_path=output_results_in_details_file,
-                    details_folder_path=output_dir_details_sub_folder,
-                    push_as_public=public,
-                )
+            # We don't keep 'id' around if it's there
+            column_names = dataset.column_names
+            if "id" in dataset.column_names:
+                column_names = [t for t in dataset.column_names if t != "id"]
 
-            if push_results_to_tensorboard:
-                self.push_results_to_tensorboard(
-                    results=self.metrics_logger.metric_aggregated, details=self.details_logger.details
-                )
-        except Exception as e:
-            hlog("WARNING: Could not save results")
-            hlog(repr(e))
+            # Sort column names to make it easier later
+            dataset = dataset.select_columns(sorted(column_names))
+            # Save the dataset to a Parquet file
+            dataset.to_parquet(output_file_details.as_posix())
+
+        if push_results_to_hub:
+            self.api.upload_folder(
+                repo_id=self.hub_results_repo if public else self.hub_private_results_repo,
+                folder_path=output_dir_results,
+                path_in_repo=self.general_config_logger.model_name,
+                repo_type="dataset",
+                commit_message=f"Updating model {self.general_config_logger.model_name}",
+            )
+
+        if push_details_to_hub:
+            self.details_to_hub(
+                model_name=self.general_config_logger.model_name,
+                results_file_path=output_results_in_details_file,
+                details_folder_path=output_dir_details_sub_folder,
+                push_as_public=public,
+            )
+
+        if push_results_to_tensorboard:
+            self.push_results_to_tensorboard(
+                results=self.metrics_logger.metric_aggregated, details=self.details_logger.details
+            )
+        # except Exception as e:
+        #     hlog("WARNING: Could not save results")
+        #     hlog(repr(e))
 
     def generate_final_dict(self) -> dict:
         """Aggregates and returns all the logger's experiment information in a dictionary.
@@ -487,7 +485,7 @@ class EvaluationTracker:
         if not is_nanotron_available():
             hlog_warn("You cannot push results to tensorboard with having nanotron installed. Skipping")
             return
-        config: BrrrConfig = get_config_from_dict(self.general_config_logger.config, config_class=BrrrConfig)
+        config: Config = get_config_from_dict(self.general_config_logger.config, config_class=Config)
         lighteval_config = config.lighteval
         try:
             global_step = config.general.step
