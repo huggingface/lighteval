@@ -75,14 +75,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-accelerate = ["accelerate@git+https://github.com/huggingface/accelerate@739b135f8367becb67ffaada12fe76e3aa60fefd"]
+accelerate = ["accelerate"]
 tgi = ["text-generation==0.6.0"]
 optimum = ["optimum==1.12.0"]
 # Quantization and adapter weights
 quantization = ["bitsandbytes>=0.41.0", "auto-gptq>=0.4.2"]
 adapters = ["peft==0.3.0"]
 nanotron = [
-  "nanotron@git+https://github.com/huggingface/nanotron",
+  "nanotron",
   "tensorboardX"
 ]
 
