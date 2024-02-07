@@ -36,7 +36,7 @@ CACHE_DIR = os.getenv("HF_HOME", "/scratch")
 
 @htrack()
 def main(
-    local_config_path: str,
+    checkpoint_config_path: str,
     lighteval_config_path: Optional[str] = None,
     cache_dir: str = None,
     config_cls: Type = Config,
@@ -51,11 +51,11 @@ def main(
     dist.initialize_torch_distributed()
 
     with htrack_block("get config"):
-        if not local_config_path.endswith(".yaml"):
+        if not checkpoint_config_path.endswith(".yaml"):
             raise ValueError("The checkpoint path should point to a YAML file")
 
         nanotron_config: config_cls = get_config_from_file(
-            local_config_path,
+            checkpoint_config_path,
             config_class=config_cls,
             model_config_class=model_config_cls,
             skip_unused_config_keys=True,
@@ -92,7 +92,7 @@ def main(
     with htrack_block("Model loading"):
         # We need to load the model in the main process first to avoid downloading the model multiple times
         model = NanotronLightevalModel(
-            checkpoint_path=os.path.dirname(local_config_path),
+            checkpoint_path=os.path.dirname(checkpoint_config_path),
             model_args=nanotron_config.model,
             tokenizer=nanotron_config.tokenizer,
             parallel_context=parallel_context,
