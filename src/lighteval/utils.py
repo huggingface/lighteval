@@ -21,6 +21,9 @@ import numpy as np
 def flatten_dict(nested: dict, sep="/") -> dict:
     """Flatten dictionary, list, tuple and concatenate nested keys with separator."""
 
+    def clean_markdown(v: str) -> str:
+        return v.replace("|", "_").replace("\n", "_") if isinstance(v, str) else v  # Need this for markdown
+
     def rec(nest: dict, prefix: str, into: dict):
         for k, v in sorted(nest.items()):
             # if sep in k:
@@ -39,12 +42,21 @@ def flatten_dict(nested: dict, sep="/") -> dict:
             elif isinstance(v, np.ndarray):
                 into[prefix + k + sep + str(i)] = v.tolist()
             else:
-                v = v.replace("|", "_").replace("\n", "_") if isinstance(v, str) else v  # Need this for markdown
+                v = clean_markdown(v)
                 into[prefix + k] = v
 
     flat = {}
     rec(nested, "", flat)
     return flat
+
+
+def clean_s3_links(key, value):
+    s3_bucket, s3_prefix = str(value).replace("s3://", "").split("/", maxsplit=1)
+    if not s3_prefix.endswith("/"):
+        s3_prefix += "/"
+    link_str = f"https://s3.console.aws.amazon.com/s3/buckets/{s3_bucket}?prefix={s3_prefix}"
+    value = f'<a href="{link_str}" target="_blank"> {value} </a>'
+    return key, value
 
 
 def obj_to_markdown(obj, convert_s3_links: bool = True) -> str:
@@ -55,11 +67,7 @@ def obj_to_markdown(obj, convert_s3_links: bool = True) -> str:
     config_markdown = "| Key | Value |\n| --- | --- |\n"
     for key, value in config_dict.items():
         if convert_s3_links and "s3://" in str(value):
-            s3_bucket, s3_prefix = str(value).replace("s3://", "").split("/", maxsplit=1)
-            if not s3_prefix.endswith("/"):
-                s3_prefix += "/"
-            link_str = f"https://s3.console.aws.amazon.com/s3/buckets/{s3_bucket}?prefix={s3_prefix}"
-            value = f'<a href="{link_str}" target="_blank"> {value} </a>'
+            key, value = clean_s3_links(key, value)
         config_markdown += f"| {key} | {value} |\n"
     return config_markdown
 
