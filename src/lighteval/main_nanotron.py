@@ -99,7 +99,6 @@ def main(
             parallel_config=lighteval_config.parallelism,
             lighteval_config=lighteval_config,
             batch_size=lighteval_config.batch_size,
-            cache_dir=os.environ.get("HF_HOME", "/scratch"),
             debug_one_layer_model=False,
             model_class=model_cls,
             env_config=env_config,
