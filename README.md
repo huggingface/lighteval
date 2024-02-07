@@ -1,41 +1,97 @@
 # LightEval 🌤️
+A lightweight LLM evaluation
 
 ## Context
-LightEval is an evaluation suite which gathers a selection of features from widely used benchmarks recently proposed:
-- from the [Eleuther AI Harness](https://github.com/EleutherAI/lm-evaluation-harness), we use the nice request management
-- from [HELM](https://crfm.stanford.edu/helm/latest/), we keep the qualitative and rich metrics
-- from our previous internal evaluation suite, we keep the easy edition, evaluation loading and speed.
+LightEval is a lightweight LLM evaluation suite that Hugging Face has been using internally with the recently released LLM data processing library [datatrove](https://github.com/huggingface/datatrove) and LLM training library [nanotron](https://github.com/huggingface/nanotron).
 
-It is still an early, internal version - it should be nice to use but don't expect 100% stability!
+We're releasing it with the community in the spirit of building in the open.
 
+Note that it is still very much early so don't expect 100% stability ^^'
 In case of problems or question, feel free to open an issue!
 
-## How to install and use
-### Installation
-0) Create your virtual environment using virtualenv or conda depending on your preferences. We require Python3.10
+## News
+- **Feb 08, 2024**: Release of `lighteval``
 
-1) Clone the package using `git clone`, then `cd lighteval-harness`, `pip install -e .` Once the dependencies are installed, `cd src`.
-Optional:
-- if you want to run your models using accelerate, tgi or optimum, do quantization, or use adapter weights, you will need to specify the optional dependencies group fitting your use case (`accelerate`,`tgi`,`optimum`,`quantization`,`adapters`,`nanotron`) at install time using the following command `pip install -e .[optional1,optional2]`.
+## Deep thanks
+`lighteval` was originally built on top of the great [Eleuther AI Harness](https://github.com/EleutherAI/lm-evaluation-harness) (which is powering the [Open LLM Leaderboard](https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard)). We also took a lot of inspiration from the amazing [HELM](https://crfm.stanford.edu/helm/latest/), notably for metrics.
+
+Through adding more and more logging functionalities, and making it compatible with increasingly different workflows and model codebases (including 3D parallelism) as well as allowing custom evaluation experiments, metrics and benchmarks, we ended up needing to change the code more and more deeply until `lighteval` became the small standalone library that it is now.
+
+However, we are very grateful to the Harness and HELM teams for their continued work on better evaluations.
+
+## How to navigate this project
+`lighteval` is supposed to be used as a standalone evaluation library.
+- To run the evaluations, you can use `run_evals_accelerate.py` or `run_evals_nanotron.py`.
+- [src/lighteval](https://github.com/huggingface/lighteval/tree/main/src/lighteval) contains the core of the lib itself
+    - [lighteval](https://github.com/huggingface/lighteval/tree/main/src/lighteval) contains the core of the library, divided in the following section
+        - [main_accelerate.py](https://github.com/huggingface/lighteval/blob/main/src/main_accelerate.py) and [main_accelerate.py](https://github.com/huggingface/lighteval/blob/main/src/main_nanotron.py) are our entry points to run evaluation
+        - [logging](https://github.com/huggingface/lighteval/tree/main/src/lighteval/logging): Our loggers, to display experiment information and push it to the hub after a run
+        - [metrics](https://github.com/huggingface/lighteval/tree/main/src/lighteval/metrics): All the available metrics you can use. They are described in metrics, and divided between sample metrics (applied at the sample level, such as a prediction accuracy) and corpus metrics (applied over the whole corpus). You'll also find available normalisation functions.
+        - [models](https://github.com/huggingface/lighteval/tree/main/src/lighteval/models): Possible models to use. We cover transformers (base_model), with adapter or delta weights, as well as TGI models locally deployed (it's likely the code here is out of date though), and brrr/nanotron models.
+        - [tasks](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks): Available tasks. The complete list is in `tasks_table.jsonl`, and you'll find all the prompts in `ŧasks_prompt_formatting.py`.
+- [tasks_examples](https://github.com/huggingface/lighteval/tree/main/tasks_examples) contains a list of available tasks you can launch. We advise using tasks in the `recommended_set`, as it's possible that some of the other tasks need double checking.
+- [tests](https://github.com/huggingface/lighteval/tree/main/tests) contains our test suite, that we run at each PR to prevent regressions in metrics/prompts/tasks, for a subset of important tasks.
+
+## How to install and use
+
+Note:
+- Use the Eleuther AI Harness (`lm_eval`) to share comparable numbers with everyone (e.g. on the Open LLM Leaderboard).
+- Use `lighteval` during training with the nanotron/datatrove LLM training stack and/or for quick eval/benchmark experimentations.
+
+### Installation
+Create your virtual environment using virtualenv or conda depending on your preferences. We require Python3.10 or above.
+```bash
+conda create -n lighteval python==3.10
+```
+
+Clone the package
+```bash
+git clone
+cd lighteval-harness
+```
+
+Install the dependencies. For the default installation, you just need:
+```bash
+pip install -e .
+```
+
+If you want to run your models using accelerate, tgi or optimum, do quantization, or use adapter weights, you will need to specify the optional dependencies group fitting your use case (`accelerate`,`tgi`,`optimum`,`quantization`,`adapters`,`nanotron`) at install time
+```bash
+pip install -e .[optional1,optional2]
+```
+
+The setup we tested most is:
+```bash
+pip install -e .[accelerate,quantization,adapters]
+```
+
+If you want to push your results to the hub, don't forget to add your user token to the environment variable `HUGGING_FACE_HUB_TOKEN`.
+
+Lastly, if you intend to push to the code base, you'll need to install the precommit hook for styling tests.
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+Optional steps.
 - to load and push big models/datasets, your machine likely needs Git LFS. You can install it with `sudo apt-get install git-lfs`
 - If you want to run bigbench evaluations, install bigbench `pip install "bigbench@https://storage.googleapis.com/public_research_data/bigbench/bigbench-0.0.1.tar.gz"`
 
-2) Add your user token to the environment variable `HUGGING_FACE_HUB_TOKEN` if you want to push your results to the hub
 
-For the linting:
+### Testing that everything was installed correctly
+If you want to test your install, you can run your first evaluation on GPUs (8GPU, single node), using
 ```bash
-pre-commit install
-pre-commit run --config .pre-commit-config.yaml --all-files
+mkdir tmp
+python -m accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py --model_args "pretrained=gpt2" --tasks tasks_examples/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir="tmp/"
 ```
-
 
 ### Usage
 - Launching on CPU
-    - `python src/main.py --model_args="pretrained=<path to your model on the hub>" <task parameters> --output_dir output_dir`
-- Using data parallelism on several GPUs
+    - `python run_evals_accelerate.py --model_args="pretrained=<path to your model on the hub>" <task parameters> --output_dir output_dir`
+- Using data parallelism on several GPUs (recommended)
     - If you want to use data parallelism, first configure accelerate (`accelerate config`).
-    - `accelerate launch <accelerate parameters> src/main.py --model_args="pretrained=<path to your model on the hub>" <task parameters>  --output_dir=<your output dir>`
-    for instance: `python -m accelerate launch --multi_gpu --num_processes=8 src/main.py --model_args "pretrained=gpt2" --tasks tasks_examples/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir=tmp/`
+    - `accelerate launch <accelerate parameters> run_evals_accelerate.py --model_args="pretrained=<path to your model on the hub>" <task parameters>  --output_dir=<your output dir>`
+    for instance: `python -m accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py --model_args "pretrained=gpt2" --tasks tasks_examples/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir=tmp/`
     - Note: if you use model_parallel, accelerate will use 2 processes for model parallel, num_processes for data parallel
 
 The task parameters indicate which tasks you want to launch. You can select:
@@ -44,14 +100,19 @@ The task parameters indicate which tasks you want to launch. You can select:
 
 Example
 If you want to compare hellaswag from helm and the harness on Gpt-6j, you can do
-`python src/main.py --model hf_causal --model_args="pretrained=EleutherAI/gpt-j-6b" --tasks helm|hellaswag|0|0,lighteval|hellaswag|0|0 --output_dir output_dir`
+`python run_evals_accelerate.py --model hf_causal --model_args="pretrained=EleutherAI/gpt-j-6b" --tasks helm|hellaswag|0|0,lighteval|hellaswag|0|0 --output_dir output_dir`
 
-## Adding a new task
+## Customisation
+### Adding a new metric
+If you want to add a new metric, first check if you can use one of the parametrized functions in `src.lighteval.metrics.metrics_corpus` or `src.lighteval.metrics.metrics_sample`. If not, add it to either of these files depending on the level at which it is applied.
+Then, follow the example in `src.lighteval.metrics.metrics` to register your metric.
+
+### Adding a new task
 To add a new task, first **add its dataset** on the hub.
 
-Then, **find a suitable prompt function** or **create a new prompt function** in `src/prompt_formatting.py`. This function must output a `Doc` object, which should contain `query`, your prompt, and either `gold`, the gold output, or `choices` and `gold_index`, the list of choices and index or indices of correct answers. If your query contains an instruction which should not be repeated in a few shot setup, add it to an `instruction` field.
+Then, **find a suitable prompt function** or **create a new prompt function** in `src.lighteval.tasks.task_prompt_formatting.py`. This function must output a `Doc` object, which should contain `query`, your prompt, and either `gold`, the gold output, or `choices` and `gold_index`, the list of choices and index or indices of correct answers. If your query contains an instruction which should not be repeated in a few shot setup, add it to an `instruction` field.
 
-Lastly, create a **line summary** of your evaluation, in `metadata_table.json`. This summary should contain the following fields:
+Lastly, create a **line summary** of your evaluation, in `src/lighteval/tasks/tasks_table.jsonl`. This summary should contain the following fields:
 - `name` (str), your evaluation name
 - `suite` (list), the suite(s) to which your evaluation should belong. This field allows us to compare different tasks implementation, and is used a task selection to differentiate the versions to launch. At the moment, you'll find the keywords ["helm", "bigbench", "original", "lighteval"]; you can add also add new ones (for test, we recommend using "custom").
 - `prompt_function` (str), the name of the prompt function you defined in the step above
@@ -146,9 +207,6 @@ To keep compatibility with the Harness for some specific tasks, we ported their 
 These metrics need both the generation and its logprob. They are not working at the moment, as this fn is not in the AI Harness.
 - `prediction_perplexity` (HELM): Measure of the logprob of a given input.
 
-## Adding a new metric
-If you want to add a new metric, first check if you can use one of the parametrized functions in `src.lighteval.metrics.metrics_corpus` or `metrics_sample`. If not, add it to either of these files depending on the level at which it is applied. Then, follow the example in `src.lighteval.metrics.metrics` to register your metric.
-
 ## Examples of scripts to launch lighteval on the cluster
 ### Evaluate a whole suite on one node, 8 GPUs
 1) Create a config file for accelerate
@@ -197,7 +255,7 @@ source <path_to_your_venv>/activate #or conda activate yourenv
 cd <path_to_your_lighteval>/lighteval
 
 export CUDA_LAUNCH_BLOCKING=1
-srun accelerate launch --multi_gpu --num_processes=8 src/main.py --model_args "pretrained=your model name" --tasks tasks_examples/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir=your output dir
+srun accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py --model_args "pretrained=your model name" --tasks tasks_examples/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir=your output dir
 ```
 
 ## Releases
