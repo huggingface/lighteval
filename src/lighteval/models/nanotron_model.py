@@ -1,17 +1,15 @@
-# flake8: noqa: C901
+# ruff: noqa: C901,E120
 import os
 import time
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Type, Union
 
 import torch
 import torch.nn.functional as F
 import transformers
-from brrr.config import LightEvalConfig, ModelArgs, ParallelismArgs
-from brrr.s3_checkpoints import S3Mover, check_path_is_local
 from datasets.download.streaming_download_manager import xPath
 from nanotron import distributed as dist
 from nanotron import logging
-from nanotron.config import TokenizerArgs
+from nanotron.config import LightEvalConfig, ModelArgs, ParallelismArgs, TokenizerArgs
 from nanotron.generation.decode import decode_tokenized
 from nanotron.logging import human_format, log_rank
 from nanotron.models import build_model
@@ -28,12 +26,23 @@ from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
 from transformers import AutoTokenizer, BatchEncoding
 
-from lighteval.data import GenDataset, GenDistributedSampler, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
+from lighteval.data import (
+    GenDistributedSampler,
+    GenerativeTaskDatasetNanotron,
+    LoglikelihoodDataset,
+    LoglikelihoodSingleTokenDataset,
+)
+from lighteval.models.base_model import LightevalModel
+from lighteval.models.model_config import EnvConfig
 from lighteval.models.model_output import Batch, GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
-from lighteval.utils import as_list, find_executable_batch_size
+from lighteval.tasks.requests import (
+    GreedyUntilRequest,
+    LoglikelihoodRequest,
+    LoglikelihoodRollingRequest,
+)
+from lighteval.utils import as_list
+from lighteval.utils_parallelism import find_executable_batch_size
 
-
-# from .brrr_generation import GenerationConfig, GenerationInputs, SamplerType, greedy_search_tokenized
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -44,7 +53,7 @@ TokenSequence = Union[List[int], torch.LongTensor, torch.Tensor, BatchEncoding]
 # _DeviceMapping = NewType("DeviceMapping", Mapping[str, Union[int, str, torch.device]])
 
 
-class BRRRModel:
+class NanotronLightevalModel(LightevalModel):
     # Default max sequence length setting for when no `max_length` is provided
     # or no max length config setting is found in the model or tokenizer.
     _DEFAULT_MAX_LENGTH: int = 2048
@@ -63,16 +72,13 @@ class BRRRModel:
         add_special_tokens: Optional[bool] = True,
         dtype: Optional[Union[str, torch.dtype]] = None,
         trust_remote_code: bool = False,
-        cache_dir: str = "/scratch",
         debug_one_layer_model: bool = False,
-        s5cmd_numworkers: int = 64,
-        s5cmd_concurrency: int = 10,
-        s5cmd_path: str = "/admin/home/thomwolf/miniconda/envs/b4r/bin/s5cmd",
+        model_class: Optional[Type] = None,
+        env_config: EnvConfig = None,
     ):
-        """Initializes a brrr model for evaluation.
+        """Initializes a nanotron model for evaluation.
         Args:
         """
-        super().__init__()
 
         self._batch_size = batch_size
         self._max_gen_toks = max_gen_toks
@@ -112,14 +118,16 @@ class BRRRModel:
             self.model_config.num_hidden_layers = 1
 
         self._add_special_tokens = add_special_tokens
-        self.tokenizer = self._create_auto_tokenizer(
+        self._tokenizer = self._create_auto_tokenizer(
             pretrained=tokenizer.tokenizer_name_or_path,
-            cache_dir=cache_dir,
+            env_config=env_config,
             trust_remote_code=trust_remote_code,
         )
-        self.tokenizer.model_max_length = self.max_length
+        self._tokenizer.model_max_length = self.max_length
 
         model_config_cls = self.model_config.__class__.__name__
+        if model_class is not None:
+            CONFIG_TO_MODEL_CLASS[model_config_cls] = model_class
         if model_config_cls not in CONFIG_TO_MODEL_CLASS:
             raise ValueError(
                 f"Unsupported model config {model_config_cls}. Only {CONFIG_TO_MODEL_CLASS.keys()} are supported"
@@ -160,7 +168,7 @@ class BRRRModel:
         )
 
         # Mark some parameters as tied
-        # TODO @nouamane: this is only needed for training, can we just mark params as BRRRParameter instead?
+        # TODO @nouamane: this is only needed for training, can we just mark params as NanotronParameter instead?
         mark_tied_parameters(model=model, parallel_context=parallel_context, parallel_config=parallel_config)
 
         log_rank(
@@ -179,49 +187,7 @@ class BRRRModel:
             level=logging.WARNING,
             rank=0,
         )
-        if check_path_is_local(checkpoint_path):
-            load_weights(model=model, parallel_context=parallel_context, root_folder=xPath(checkpoint_path))
-        else:
-            local_path = str(checkpoint_path).replace("s3:/", cache_dir)
-            loaded = False
-            if float(os.environ.get("WORLD_SIZE", 1)) // float(
-                os.environ.get("LOCAL_WORLD_SIZE", 1)
-            ) == 1 and os.path.exists(local_path):
-                # If we have only one node and the local folder already exists, we can try to load from there
-                # Sometimes the checkpoints is already here but since it may be on some nodes nd not others we still need to download everywhere
-                # so we can only use this pathway when we have a single node (WORLD_SIZE == LOCAL_WORLD_SIZE)
-                try:
-                    log_rank(
-                        f"Testing loading checkpoint from {local_path}:",
-                        logger=logger,
-                        level=logging.WARNING,
-                        rank=0,
-                    )
-                    load_weights(model=model, parallel_context=parallel_context, root_folder=xPath(local_path))
-                    loaded = True
-                except ValueError:
-                    loaded = False
-            if not loaded:
-                log_rank(
-                    f"Downloading checkpoint from S3 in {local_path}. ",
-                    logger=logger,
-                    level=logging.WARNING,
-                    rank=0,
-                )
-                # Download checkpoint from S3
-                s3_mover = S3Mover(
-                    os.path.join(local_path, "model"),
-                    os.path.join(checkpoint_path, "model"),
-                    s5cmd_numworkers=s5cmd_numworkers,
-                    s5cmd_concurrency=s5cmd_concurrency,
-                    s5cmd_path=s5cmd_path,
-                    dummy=bool(int(os.environ.get("LOCAL_RANK", None)) != 0),
-                )
-                s3_mover.distributed_wait_for_completion(self.parallel_context.world_pg)
-                s3_mover.start_downloading()
-                s3_mover.distributed_wait_for_completion(self.parallel_context.world_pg)
-                load_weights(model=model, parallel_context=parallel_context, root_folder=xPath(local_path))
-
+        load_weights(model=model, parallel_context=parallel_context, root_folder=xPath(checkpoint_path))
         model.eval()
 
         # We don't need the loss
@@ -232,12 +198,16 @@ class BRRRModel:
 
         self.multichoice_continuations_start_space = multichoice_continuations_start_space
 
+    @property
+    def tokenizer(self):
+        return self._tokenizer
+
     def _create_auto_tokenizer(
         self,
         *,
         pretrained: str,
         tokenizer: Optional[str] = None,
-        cache_dir: str = "/scratch",
+        env_config: EnvConfig = None,
         trust_remote_code: bool = False,
     ) -> transformers.PreTrainedTokenizer:
         """Returns a pre-trained tokenizer from a pre-trained tokenizer configuration."""
@@ -245,16 +215,16 @@ class BRRRModel:
         try:
             tokenizer = AutoTokenizer.from_pretrained(
                 pretrained if tokenizer is None else tokenizer,
-                cache_dir=cache_dir,
-                token=os.getenv("HUGGING_FACE_HUB_TOKEN"),
+                cache_dir=env_config.cache_dir,
+                token=env_config.token,
                 trust_remote_code=trust_remote_code,
             )
         except RecursionError:
             tokenizer = AutoTokenizer.from_pretrained(
                 pretrained if tokenizer is None else tokenizer,
-                cache_dir=cache_dir,
+                cache_dir=env_config.cache_dir,
+                token=env_config.token,
                 unk_token="<unk>",
-                token=os.getenv("HUGGING_FACE_HUB_TOKEN"),
                 trust_remote_code=trust_remote_code,
             )
         tokenizer.pad_token = tokenizer.eos_token
@@ -273,16 +243,6 @@ class BRRRModel:
             return self._add_special_tokens
         else:
             return False
-        # elif self.AUTO_MODEL_CLASS is transformers.AutoModelForCausalLM:
-        #     return False
-        # elif self.AUTO_MODEL_CLASS is transformers.AutoModelForSeq2SeqLM:
-        #     return True
-        # else:
-        #     raise ValueError(
-        #         "Could not determine `add_special_tokens` value from the model "
-        #         "class. Set to `True` or `False` depending on whether the model "
-        #         "was pre-trained with special tokens."
-        #     )
 
     @property
     def eot_token(self) -> str:
@@ -404,7 +364,7 @@ class BRRRModel:
         """
         max_tokens, stop_sequences = None, None
         # Filling with input values or default
-        if isinstance(ending_condition, tuple):
+        if isinstance(ending_condition, tuple) and len(ending_condition) == 2:
             stop_sequence_arg, max_gen_tokens_arg = ending_condition
             stop_sequences = as_list(stop_sequence_arg)
             max_tokens = max_gen_tokens_arg
@@ -459,19 +419,16 @@ class BRRRModel:
         Returns:
             List[Tuple[float, bool]]: _description_
         """
-        tokenized_reqs = []
-
-        for context, continuations in tqdm(
+        for request in tqdm(
             requests, desc="Tokenizing", disable=bool(dist.get_rank(self.parallel_context.world_pg) != 0)
         ):
-            if context == "":
-                # end of text as context
-                context_enc = [self.eot_token_id]
+            if request.context == "":
+                request.tokenized_context = [self.tokenizer.eos_token_id]
             else:
-                context_enc = self.tok_encode(context)
+                request.tokenized_context = self.tok_encode(request.context)
 
             # Some models tokenizer want a space at the beginning and other not
-            continuations = [self._check_continuations_start_space(c) for c in continuations]
+            continuations = [self._check_continuations_start_space(c) for c in request.choices]
 
             # We must not accidentally prepend a continuation with a start of sentence token.
             continuations_enc = [self.tok_encode(c, add_special_tokens=False) for c in continuations]
@@ -480,59 +437,48 @@ class BRRRModel:
                     f"Trying to do single token multiple choice but one choice has several tokens: {continuations_enc}. "
                     "If the additional pre-token is a space, try to set --no_multichoice_continuations_start_space "
                 )
-
-            tokenized_reqs.append(((context, continuations), context_enc, continuations_enc))
+            request.tokenized_continuation = continuations_enc
 
         return self._loglikelihood_single_token(
-            tokenized_reqs,
+            requests,
             override_bs=override_bs,
             disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
         )
 
-    def loglikelihood(self, requests: List[Tuple[str, str]], override_bs=None) -> List[LoglikelihoodReturn]:
+    def loglikelihood(self, requests: List[LoglikelihoodRequest], override_bs=None) -> List[LoglikelihoodReturn]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
-
-        Args:
-            requests (List[Tuple[str, dict]]): _description_
-
-        Returns:
-            List[Tuple[float, bool]]: _description_
         """
-        tokenized_reqs = []
-
-        for req in tqdm(requests, desc="Tokenizing", disable=bool(dist.get_rank(self.parallel_context.world_pg) != 0)):
-            context, continuation = req.context, req.choice
-            if context == "":
-                context_enc, continuation_enc = [self.eot_token_id], self.tok_encode(continuation)
+        for request in tqdm(
+            requests, desc="Tokenizing", disable=bool(dist.get_rank(self.parallel_context.world_pg) != 0)
+        ):
+            if request.context == "":
+                request.tokenized_context = [self.tokenizer.eos_token_id]
+                request.tokenized_continuation = self.tok_encode(request.choice)
             else:
-                # DO NOT CHANGE THE FOLLOWING LINE!
-                # It is mandatory for compatibility with the harness!!!
-                context_enc, continuation_enc = self._encode_pair(context, continuation)
-
-            tokenized_reqs.append(((context, continuation), context_enc, continuation_enc))
+                # The following line is mandatory for compatibility with the harness
+                request.tokenized_context, request.tokenized_continuation = self.tok_encode_pair(
+                    request.context, request.choice
+                )
 
         return self._loglikelihood_tokens(
-            tokenized_reqs,
+            requests,
             override_bs=override_bs,
             disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
         )
 
-    def loglikelihood_rolling(self, requests: List[Tuple[str, str]], override_bs=None) -> List[LoglikelihoodReturn]:
+    def loglikelihood_rolling(
+        self, requests: List[LoglikelihoodRollingRequest], override_bs=None
+    ) -> List[LoglikelihoodReturn]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
-        tokenized_reqs = []
-
-        for (context,) in tqdm(
+        for request in tqdm(
             requests, desc="Tokenizing", disable=bool(dist.get_rank(self.parallel_context.world_pg) != 0)
         ):  # tuple of one elem
-            if isinstance(context, dict):  # lm_eval.base.PerplexityTask passed the query as such
-                context = context["query"]
-            fake_context_enc, context_enc = [self.eot_token_id], self.tok_encode(context)
-
-            tokenized_reqs.append((("", context), fake_context_enc, context_enc))
+            request.tokenized_context = [self.tokenizer.eos_token_id]  # Fake context
+            request.tokenized_continuation = self.tok_encode(request.context)
 
         results = self._loglikelihood_tokens(
-            tokenized_reqs,
+            requests,
             override_bs=override_bs,
             disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
             return_bool_score=False,
@@ -724,7 +670,7 @@ class BRRRModel:
 
             # automatic (variable) batch size detection for vectorization
             # pull longest context sample from request
-            _, context_enc, _ = dataset[0]
+            context_enc = dataset[0].tokenized_context
             max_context = len(context_enc[-self.max_length :])
             batch_size = self._get_batch_size(
                 override_bs=override_bs, max_input_length=max_context, starting_batch_size=starting_batch_size
@@ -767,7 +713,7 @@ class BRRRModel:
                         rank=0,
                     )
                 iteration_start_time = time.time()
-                inputs = [context_enc for _, context_enc, _ in batch_data]
+                inputs = [item.tokenized_context for item in batch_data]
 
                 batch_model = self.prepare_batch(
                     inputs, padding_length=max_context, max_context=max_context, full_attention_masks=True
@@ -790,9 +736,9 @@ class BRRRModel:
 
                     batch_probs = []
                     batch_cont_tokens = []
-                    for i, ((context, _, cont_toks), logits, inplen) in enumerate(
-                        zip(batch_data, out, batch_model.input_lengths)
-                    ):
+                    for i, (batch, logits, inplen) in enumerate(zip(batch_data, out, batch_model.input_lengths)):
+                        context = batch.context
+                        cont_toks = batch.tokenized_continuation
                         # Get the last token
                         logits = logits[inplen - 1]  # [vocab]
 
@@ -921,7 +867,7 @@ class BRRRModel:
             # We are in a process which return no output (beginning/middle of the PP group)
             return []
 
-        return dataset.ordered.get_original(res)
+        return dataset.get_original_order(res)
 
     @torch.inference_mode()
     def _loglikelihood_tokens(
@@ -932,7 +878,7 @@ class BRRRModel:
         dataset_splits: int = 1,
         return_bool_score: bool = True,
     ) -> List[LoglikelihoodReturn]:
-        dataset = LoglikelihoodDataset(requests=requests)
+        dataset = LoglikelihoodDataset(requests=requests, dataset_splits=dataset_splits)
         res = []
 
         # Dataset is sorted in descending size.
@@ -954,7 +900,9 @@ class BRRRModel:
 
             # automatic (variable) batch size detection for vectorization
             # pull longest context sample from request
-            _, context_enc, continuation_enc = dataset[0]
+            context_enc = dataset[0].tokenized_context
+            continuation_enc = dataset[0].tokenized_continuation
+
             max_context = len((context_enc + continuation_enc)[-(self.max_length + 1) :][:-1])
 
             batch_size = self._get_batch_size(
@@ -997,7 +945,7 @@ class BRRRModel:
                     )
                 iteration_start_time = time.time()
                 inputs = [
-                    context_enc + continuation_enc[:-1] for _, context_enc, continuation_enc in batch_data
+                    item.tokenized_context + item.tokenized_continuation[:-1] for item in batch_data
                 ]  # The last token doesn't need to be input in the model
                 batch_model = self.prepare_batch(
                     inputs, padding_length=max_context, max_context=max_context, full_attention_masks=True
@@ -1020,17 +968,16 @@ class BRRRModel:
                     logits_sum = []
                     max_equals = []
                     batch_cont_tokens = []
-                    for (_, _, cont_toks), logits, inplen in zip(batch_data, multi_logits, batch_model.input_lengths):
+                    for cur_request, cur_logits, inplen in zip(batch_data, multi_logits, batch_model.input_lengths):
+                        cont_toks = torch.tensor(
+                            cur_request.tokenized_continuation, dtype=torch.long, device=self.device
+                        )
+                        contlen = cont_toks.shape[0]
                         # We only look at the continuation tokens
-                        contlen = len(cont_toks)
                         if contlen > inplen:
-                            # continuation is longer than the allowed context size, everything is a continuation
-                            logits = logits.unsqueeze(0).to(self.device)  # [1, seq, vocab]
-                            cont_toks = (
-                                torch.tensor(cont_toks, dtype=torch.long, device=self.device)[:inplen]
-                                .unsqueeze(0)
-                                .to(self.device)
-                            )  # [1, seq]
+                            # Continuation is longer than the input size, we are in rolling mode (only continuation)
+                            cur_logits = cur_logits.unsqueeze(0).to(self.device)  # [1, seq, vocab]
+                            cont_toks = cont_toks[:inplen].unsqueeze(0).to(self.device)  # [1, seq]
                         else:
                             # if contlen == 1:
                             #     top_k = torch.topk(logits, 20)[1].tolist()
@@ -1041,28 +988,21 @@ class BRRRModel:
                             #             f"Not all the solutions are in the top 20 most likely tokens on rank {dist.get_rank(self.parallel_context.world_pg)} "
                             #             f"top_tokens: {top_toks_str}\ncont_tokens: {cont_toks_str}")
 
-                            logits = (
-                                logits[inplen - contlen : inplen]
-                                .unsqueeze(0)
-                                .to(self.device)  # Here we remove the last one with our [...:inplen]
-                            )  # [1, contlen, vocab]
-                            cont_toks = (
-                                torch.tensor(cont_toks, dtype=torch.long, device=self.device)
-                                .unsqueeze(0)
-                                .to(self.device)
-                            )  # [1, contlen]
+                            cur_logits = (
+                                cur_logits[inplen - contlen : inplen].unsqueeze(0).to(self.device)
+                            )  # [1, seq, voc]
+                            cont_toks = cont_toks.unsqueeze(0).to(self.device)  # [1, seq]
 
                         # Check if per-token argmax is exactly equal to continuation
-                        greedy_tokens = logits.argmax(dim=-1).to(self.device)  # [1, contlen]
+                        greedy_tokens = cur_logits.argmax(dim=-1).to(self.device)
                         # Sometimes the continuation is longer than allowed by the model, we only look at the first tokens
                         max_equal = (greedy_tokens == cont_toks).all().squeeze(0).to(self.device)
 
                         # Obtain log-probs at the corresponding continuation token indices
-                        # last_token_slice = logits[:, -1, :].squeeze(0).tolist()
-                        logits = torch.gather(logits, 2, cont_toks.unsqueeze(-1)).squeeze(-1)  # [1, contlen]
+                        cur_logits = torch.gather(cur_logits, 2, cont_toks.unsqueeze(-1)).squeeze(-1)  # [1, seq]
 
                         # Answer: (log prob, is-exact-match)
-                        logits_sum.append(logits.sum())
+                        logits_sum.append(cur_logits.sum())
                         max_equals.append(max_equal)
                         batch_cont_tokens.append(cont_toks)
 
@@ -1161,13 +1101,12 @@ class BRRRModel:
             # We are in a process which return no output (beginning/middle of the PP group)
             return []
 
-        return dataset.ordered.get_original(res)
+        return dataset.get_original_order(res)
 
     @torch.inference_mode()
     def greedy_until(
         self,
-        requests: List[Tuple[str, dict]],
-        task_names: Optional[List[str]] = None,
+        requests: List[GreedyUntilRequest],
         returns_logits=False,
         disable_tqdm: bool = False,
         override_bs=None,
@@ -1176,17 +1115,11 @@ class BRRRModel:
         """Greedy generation until a stop token is generated."""
         # automatic (variable) batch size detection for vectorization
         # pull longest context sample from request
-        if task_names:
-            enc_inputs = [
-                (self.tok_encode(req[0]), self.homogeneize_ending_conditions(req[1]), task_name)
-                for req, task_name in zip(requests, task_names)
-            ]
-        else:
-            enc_inputs = [
-                (self.tok_encode(req[0]), self.homogeneize_ending_conditions(req[1]), None) for req in requests
-            ]
+        for request in requests:
+            request.stop_sequence = request.stop_sequence + (self.tokenizer.eos_token,)
+            request.tokenized_context = self.tok_encode(request.context)
 
-        dataset = GenDataset(requests=enc_inputs)
+        dataset = GenerativeTaskDatasetNanotron(requests=requests, dataset_splits=dataset_splits)
         res = []
 
         # Dataset is sorted in descending size.
@@ -1206,8 +1139,8 @@ class BRRRModel:
             dataset.split_start = subset_start
             dataset.split_end = min(subset_start + subset_length, total_length)
 
-            _, (context_enc, _, _) = dataset[0]
-            max_gen = max(d[1][1][1] for d in dataset)
+            context_enc = dataset[0][1].tokenized_context
+            max_gen = max(item[1].generation_size for item in dataset)
             max_input_length = min(len(context_enc) + max_gen, self.max_length)
             batch_size = self._get_batch_size(
                 override_bs=override_bs, max_input_length=max_input_length, starting_batch_size=starting_batch_size
@@ -1244,11 +1177,10 @@ class BRRRModel:
                     )
                 iteration_start_time = time.time()
                 example_index, batch_data = zip(*all_batch)
-                context = [c[0] for c in batch_data]
-                task_names = [c[2] for c in batch_data]
+                context = [c.tokenized_context for c in batch_data]
                 # we take the longest asked generation in the batch
                 # Multiple request may have different max generation length
-                max_tokens = max(d[1][1] for d in batch_data)
+                max_tokens = max(d.generation_size for d in batch_data)  # d[1][1]
                 if max_tokens <= 0:
                     raise ValueError("Greedy generation requires a positive value for max generation but we got -1")
 
@@ -1317,7 +1249,7 @@ class BRRRModel:
                     ):
                         # Ensure the generated responses do not contain the stop sequences.
                         decoded_response = self.tokenizer.decode(generation, skip_special_tokens=False)
-                        stop_terms = dataset[example_index][1][1][0]
+                        stop_terms = dataset[example_index][1].stop_sequence
                         for stop_term in stop_terms:
                             decoded_response = decoded_response.split(stop_term)[0]
                         # partial caching
@@ -1360,7 +1292,7 @@ class BRRRModel:
             # We are in a process which return no output (beginning/middle of the PP group)
             return []
 
-        return dataset.ordered.get_original(res)
+        return dataset.get_original_order(res)
 
 
 class MultiTokenEOSCriteria(transformers.StoppingCriteria):

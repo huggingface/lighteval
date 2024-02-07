@@ -5,10 +5,12 @@ import collections
 import copy
 from typing import Dict, Union
 
+from pytablewriter import LatexTableWriter, MarkdownTableWriter
+
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.base_model import BaseModel
-from lighteval.models.inference_client import ModelClient
+from lighteval.models.tgi_model import ModelClient
 from lighteval.tasks.lighteval_task import LightevalTask
 from lighteval.tasks.requests import Doc, Request, RequestType, TaskExampleId
 
@@ -99,8 +101,6 @@ def evaluate(  # noqa: C901
 
 def make_results_table(result_dict):
     """Generate table of results."""
-    from pytablewriter import LatexTableWriter, MarkdownTableWriter
-
     md_writer = MarkdownTableWriter()
     latex_writer = LatexTableWriter()
     md_writer.headers = ["Task", "Version", "Metric", "Value", "", "Stderr"]

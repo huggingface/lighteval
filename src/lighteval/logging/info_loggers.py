@@ -19,7 +19,7 @@ from lighteval.utils import as_list, is_nanotron_available, sanitize_numpy
 
 
 if is_nanotron_available():
-    from brrr.config import BrrrConfig
+    from nanotron.config import Config
 
 
 @dataclass(init=False)
@@ -64,8 +64,8 @@ class GeneralConfigLogger:
     model_dtype: str = None
     model_size: str = None
 
-    # Nanotron/Brrr config
-    config: "BrrrConfig" = None
+    # Nanotron config
+    config: "Config" = None
 
     def __init__(self) -> None:
         """Stores the current lighteval commit for reproducibility, and starts the evaluation timer."""
@@ -79,7 +79,7 @@ class GeneralConfigLogger:
         override_batch_size: Union[None, int],
         max_samples: Union[None, int],
         job_id: str,
-        config: "BrrrConfig" = None,
+        config: "Config" = None,
     ) -> None:
         """
         Logs the information about the arguments passed to the method.
@@ -91,7 +91,7 @@ class GeneralConfigLogger:
                 Else, the batch size is automatically inferred depending on what fits in memory.
             max_samples (Union[None, int]): maximum number of samples, if None, use all the samples available.
             job_id (str): job ID, used to retrieve logs.
-            config (optional): BrrrConfig
+            config (optional): Nanotron Config
 
         Returns:
             None

@@ -50,7 +50,7 @@ keywords = ["evaluation", "nlp", "llm"]
 dependencies = [
     # Base dependencies
     "transformers>=4.36.0",
-    "huggingface_hub==0.19.4",
+    "huggingface_hub==0.20.3",
     "torch>=2.0",
     "GitPython==3.1.31", # for logging
     "datasets>=2.14.0",
@@ -82,8 +82,7 @@ optimum = ["optimum==1.12.0"]
 quantization = ["bitsandbytes>=0.41.0", "auto-gptq>=0.4.2"]
 adapters = ["peft==0.3.0"]
 nanotron = [
-  "nanotron@git+https://github.com/huggingface/nanotron@8c1a49588d0745a6404644a86547c2dd6a63640e",
-  "brrr@git+https://github.com/huggingface/brrr@e8a503e2ec08b34eed7522d331aec3bee8cdd29b",
+  "nanotron@git+https://github.com/huggingface/nanotron",
   "tensorboardX"
 ]
 
