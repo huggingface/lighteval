@@ -46,6 +46,8 @@ class LoglikelihoodRequest(Request):
 
     choice: str
     request_type = RequestType.LOGLIKELIHOOD
+    tokenized_context: list[int] = None
+    tokenized_continuation: list[int] = None
 
 
 @dataclass
@@ -61,6 +63,8 @@ class LoglikelihoodSingleTokenRequest(Request):
 
     choices: list[str]
     request_type = RequestType.LOGLIKELIHOOD_SINGLE_TOKEN
+    tokenized_context: list[int] = None
+    tokenized_continuation: list[int] = None
 
 
 @dataclass
@@ -72,6 +76,8 @@ class LoglikelihoodRollingRequest(Request):
     """
 
     request_type = RequestType.LOGLIKELIHOOD_ROLLING
+    tokenized_context: list[int] = None
+    tokenized_continuation: list[int] = None
 
 
 @dataclass
@@ -88,6 +94,7 @@ class GreedyUntilRequest(Request):
     stop_sequence: str
     generation_size: int
     request_type = RequestType.GREEDY_UNTIL
+    tokenized_context: list[int] = None
 
 
 @dataclass
@@ -105,6 +112,7 @@ class GreedyUntilWithLogitsRequest(Request):
     stop_sequence: str
     generation_size: int
     request_type = RequestType.GREEDY_UNTIL_WITH_LOGITS
+    tokenized_context: list[int] = None
 
 
 class TaskExampleId(NamedTuple):

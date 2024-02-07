@@ -121,4 +121,6 @@ def main(args):
 
         print(make_results_table(final_dict))
 
+        model.cleanup()
+
         return final_dict

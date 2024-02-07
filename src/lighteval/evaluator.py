@@ -8,7 +8,7 @@ from typing import Dict, Union
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.base_model import BaseModel
-from lighteval.models.inference_client import ModelClient
+from lighteval.models.tgi_model import ModelClient
 from lighteval.tasks.lighteval_task import LightevalTask
 from lighteval.tasks.requests import Doc, Request, RequestType, TaskExampleId
 
