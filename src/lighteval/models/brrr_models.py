@@ -273,16 +273,6 @@ class BRRRModel:
             return self._add_special_tokens
         else:
             return False
-        # elif self.AUTO_MODEL_CLASS is transformers.AutoModelForCausalLM:
-        #     return False
-        # elif self.AUTO_MODEL_CLASS is transformers.AutoModelForSeq2SeqLM:
-        #     return True
-        # else:
-        #     raise ValueError(
-        #         "Could not determine `add_special_tokens` value from the model "
-        #         "class. Set to `True` or `False` depending on whether the model "
-        #         "was pre-trained with special tokens."
-        #     )
 
     @property
     def eot_token(self) -> str:
