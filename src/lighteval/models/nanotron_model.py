@@ -32,6 +32,7 @@ from lighteval.data import (
     LoglikelihoodDataset,
     LoglikelihoodSingleTokenDataset,
 )
+from lighteval.models.base_model import LightevalModel
 from lighteval.models.model_output import Batch, GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
@@ -51,7 +52,7 @@ TokenSequence = Union[List[int], torch.LongTensor, torch.Tensor, BatchEncoding]
 # _DeviceMapping = NewType("DeviceMapping", Mapping[str, Union[int, str, torch.device]])
 
 
-class NanotronLightevalModel:
+class NanotronLightevalModel(LightevalModel):
     # Default max sequence length setting for when no `max_length` is provided
     # or no max length config setting is found in the model or tokenizer.
     _DEFAULT_MAX_LENGTH: int = 2048
@@ -77,7 +78,6 @@ class NanotronLightevalModel:
         """Initializes a nanotron model for evaluation.
         Args:
         """
-        super().__init__()
 
         self._batch_size = batch_size
         self._max_gen_toks = max_gen_toks
@@ -117,12 +117,12 @@ class NanotronLightevalModel:
             self.model_config.num_hidden_layers = 1
 
         self._add_special_tokens = add_special_tokens
-        self.tokenizer = self._create_auto_tokenizer(
+        self._tokenizer = self._create_auto_tokenizer(
             pretrained=tokenizer.tokenizer_name_or_path,
             cache_dir=cache_dir,
             trust_remote_code=trust_remote_code,
         )
-        self.tokenizer.model_max_length = self.max_length
+        self._tokenizer.model_max_length = self.max_length
 
         model_config_cls = self.model_config.__class__.__name__
         if model_class is not None:
@@ -196,6 +196,10 @@ class NanotronLightevalModel:
         self.input_pp_rank, self.output_pp_rank = get_min_max_rank(module=self.model)
 
         self.multichoice_continuations_start_space = multichoice_continuations_start_space
+
+    @property
+    def tokenizer(self):
+        return self._tokenizer
 
     def _create_auto_tokenizer(
         self,
