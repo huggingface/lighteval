@@ -5,14 +5,17 @@ from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.adapter_model import AdapterModel
 from lighteval.models.base_model import BaseModel
 from lighteval.models.delta_model import DeltaModel
-from lighteval.models.inference_client import ModelClient
+from lighteval.models.endpoint_model import InferenceEndpointModel
 from lighteval.models.model_config import (
     AdapterModelConfig,
     BaseModelConfig,
     DeltaModelConfig,
     EnvConfig,
+    InferenceEndpointModelConfig,
+    InferenceModelConfig,
     TGIModelConfig,
 )
+from lighteval.models.tgi_model import ModelClient
 from lighteval.utils import NO_TGI_ERROR_MSG, is_accelerate_available, is_tgi_available
 
 
@@ -29,7 +32,8 @@ class ModelInfo:
 
 
 def load_model(  # noqa: C901
-    config: Union[BaseModelConfig, AdapterModelConfig, DeltaModelConfig, TGIModelConfig], env_config: EnvConfig
+    config: Union[BaseModelConfig, AdapterModelConfig, DeltaModelConfig, TGIModelConfig, InferenceEndpointModelConfig],
+    env_config: EnvConfig,
 ) -> Tuple[Union[BaseModel, AdapterModel, DeltaModel, ModelClient], ModelInfo]:
     """Will load either a model from an inference server or a model from a checkpoint. depending
     on the arguments passed to the program.
@@ -50,6 +54,9 @@ def load_model(  # noqa: C901
     if isinstance(config, TGIModelConfig):
         return load_model_with_tgi(config)
 
+    if isinstance(config, InferenceEndpointModelConfig) or isinstance(config, InferenceModelConfig):
+        return load_model_with_inference_endpoints(config, env_config=env_config)
+
     if isinstance(config, BaseModelConfig):
         return load_model_with_accelerate_or_default(config=config, env_config=env_config)
 
@@ -69,6 +76,18 @@ def load_model_with_tgi(config: TGIModelConfig):
         model_sha=model_sha,
         model_dtype=model_precision,
         model_size=model_size,
+    )
+    return model, model_info
+
+
+def load_model_with_inference_endpoints(config: InferenceEndpointModelConfig, env_config: EnvConfig):
+    hlog("Spin up model using inference endpoint.")
+    model = InferenceEndpointModel(config=config, env_config=env_config)
+    model_info = ModelInfo(
+        model_name=model.name,
+        model_sha=model.revision,
+        model_dtype="default",
+        model_size=-1,
     )
     return model, model_info
 
