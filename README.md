@@ -21,9 +21,10 @@ However, we are very grateful to the Harness and HELM teams for their continued 
 
 ## How to navigate this project
 `lighteval` is supposed to be used as a standalone evaluation library.
-- [src](https://github.com/huggingface/lighteval/tree/main/src) contains the lib itself
-    - [main.py](https://github.com/huggingface/lighteval/blob/main/src/main.py) is our launcher, that you should use to start evaluations
+- To run the evaluations, you can use `run_evals_accelerate.py` or `run_evals_nanotron.py`.
+- [src/lighteval](https://github.com/huggingface/lighteval/tree/main/src/lighteval) contains the core of the lib itself
     - [lighteval](https://github.com/huggingface/lighteval/tree/main/src/lighteval) contains the core of the library, divided in the following section
+        - [main_accelerate.py](https://github.com/huggingface/lighteval/blob/main/src/main_accelerate.py) and [main_accelerate.py](https://github.com/huggingface/lighteval/blob/main/src/main_nanotron.py) are our entry points to run evaluation
         - [logging](https://github.com/huggingface/lighteval/tree/main/src/lighteval/logging): Our loggers, to display experiment information and push it to the hub after a run
         - [metrics](https://github.com/huggingface/lighteval/tree/main/src/lighteval/metrics): All the available metrics you can use. They are described in metrics, and divided between sample metrics (applied at the sample level, such as a prediction accuracy) and corpus metrics (applied over the whole corpus). You'll also find available normalisation functions.
         - [models](https://github.com/huggingface/lighteval/tree/main/src/lighteval/models): Possible models to use. We cover transformers (base_model), with adapter or delta weights, as well as TGI models locally deployed (it's likely the code here is out of date though), and brrr/nanotron models.
@@ -80,16 +81,16 @@ Optional steps.
 If you want to test your install, you can run your first evaluation on GPUs (8GPU, single node), using
 ```bash
 mkdir tmp
-python -m accelerate launch --multi_gpu --num_processes=8 src/main.py --model_args "pretrained=gpt2" --tasks tasks_examples/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir="tmp/"
+python -m accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py --model_args "pretrained=gpt2" --tasks tasks_examples/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir="tmp/"
 ```
 
 ### Usage
 - Launching on CPU
-    - `python src/main.py --model_args="pretrained=<path to your model on the hub>" <task parameters> --output_dir output_dir`
+    - `python run_evals_accelerate.py --model_args="pretrained=<path to your model on the hub>" <task parameters> --output_dir output_dir`
 - Using data parallelism on several GPUs (recommended)
     - If you want to use data parallelism, first configure accelerate (`accelerate config`).
-    - `accelerate launch <accelerate parameters> src/main.py --model_args="pretrained=<path to your model on the hub>" <task parameters>  --output_dir=<your output dir>`
-    for instance: `python -m accelerate launch --multi_gpu --num_processes=8 src/main.py --model_args "pretrained=gpt2" --tasks tasks_examples/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir=tmp/`
+    - `accelerate launch <accelerate parameters> run_evals_accelerate.py --model_args="pretrained=<path to your model on the hub>" <task parameters>  --output_dir=<your output dir>`
+    for instance: `python -m accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py --model_args "pretrained=gpt2" --tasks tasks_examples/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir=tmp/`
     - Note: if you use model_parallel, accelerate will use 2 processes for model parallel, num_processes for data parallel
 
 The task parameters indicate which tasks you want to launch. You can select:
@@ -98,7 +99,7 @@ The task parameters indicate which tasks you want to launch. You can select:
 
 Example
 If you want to compare hellaswag from helm and the harness on Gpt-6j, you can do
-`python src/main.py --model hf_causal --model_args="pretrained=EleutherAI/gpt-j-6b" --tasks helm|hellaswag|0|0,lighteval|hellaswag|0|0 --output_dir output_dir`
+`python run_evals_accelerate.py --model hf_causal --model_args="pretrained=EleutherAI/gpt-j-6b" --tasks helm|hellaswag|0|0,lighteval|hellaswag|0|0 --output_dir output_dir`
 
 ## Customisation
 ### Adding a new metric
@@ -253,7 +254,7 @@ source <path_to_your_venv>/activate #or conda activate yourenv
 cd <path_to_your_lighteval>/lighteval
 
 export CUDA_LAUNCH_BLOCKING=1
-srun accelerate launch --multi_gpu --num_processes=8 src/main.py --model_args "pretrained=your model name" --tasks tasks_examples/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir=your output dir
+srun accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py --model_args "pretrained=your model name" --tasks tasks_examples/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir=your output dir
 ```
 
 ## Releases
