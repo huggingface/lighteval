@@ -1,11 +1,11 @@
 import asyncio
 from typing import Coroutine, List, Optional, Union
 
-import torch
 from huggingface_hub import (
     AsyncInferenceClient,
     InferenceClient,
     InferenceEndpoint,
+    InferenceEndpointTimeoutError,
     create_inference_endpoint,
     get_inference_endpoint,
 )
@@ -15,7 +15,7 @@ from tqdm import tqdm
 from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
-from lighteval.logging.hierarchical_logger import hlog, hlog_warn
+from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.model_config import EnvConfig, InferenceEndpointModelConfig, InferenceModelConfig
 from lighteval.models.model_output import GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
@@ -29,7 +29,6 @@ from lighteval.tasks.requests import (
 from lighteval.utils import as_list
 
 
-DATASET_SPLITS = 4
 BATCH_SIZE = 50
 
 
@@ -37,8 +36,6 @@ class InferenceEndpointModel(LightevalModel):
     """InferenceEndpointModels can be used both with the free inference client, or with inference
     endpoints, which will use text-generation-inference to deploy your model for the duration of the evaluation.
     """
-
-    _DEFAULT_MAX_LENGTH = 2048
 
     def __init__(
         self, config: Union[InferenceEndpointModelConfig, InferenceModelConfig], env_config: EnvConfig
@@ -62,16 +59,21 @@ class InferenceEndpointModel(LightevalModel):
                     custom_image={
                         "health_route": "/health",
                         "env": {
+                            # Documentaiton: https://huggingface.co/docs/text-generation-inference/en/basic_tutorials/launcher
                             "MAX_BATCH_PREFILL_TOKENS": "2048",
-                            "MAX_INPUT_LENGTH": "1024",
-                            "MAX_TOTAL_TOKENS": "1512",
+                            "MAX_INPUT_LENGTH": "2047",
+                            "MAX_TOTAL_TOKENS": "2048",
                             "MODEL_ID": "/repository",
                         },
                         "url": "ghcr.io/huggingface/text-generation-inference:1.1.0",
                     },
                 )
             hlog("Deploying your endpoint. Please wait.")
-            self.endpoint.wait(timeout=600)  # Waits for the endpoint to be deployed
+            try:
+                self.endpoint.wait(timeout=600)  # Waits for the endpoint to be deployed
+            except InferenceEndpointTimeoutError as e:
+                hlog_err("Endpoint did not start within 10 minutes, there was a timeout.")
+                raise e
             hlog("Endpoint successfully deployed!")
             self.name = config.repository
             self.revision = self.endpoint.revision
@@ -87,7 +89,11 @@ class InferenceEndpointModel(LightevalModel):
 
         self.use_async = False  # for debug - async use is faster
 
-        self.tokenizer = AutoTokenizer.from_pretrained(self.name)
+        self._tokenizer = AutoTokenizer.from_pretrained(self.name)
+
+    @property
+    def tokenizer(self):
+        return self._tokenizer
 
     def cleanup(self):
         if self.endpoint is not None:
@@ -103,23 +109,8 @@ class InferenceEndpointModel(LightevalModel):
         if hasattr(self.tokenizer, "model_max_length"):
             self._max_length = self.tokenizer.model_max_length
         else:
-            self._max_length = self._DEFAULT_MAX_LENGTH
+            self._max_length = 2048
         return self._max_length
-
-    def tok_encode(self, str_to_encode: str | list[str], add_special_tokens: Optional[bool] = None):
-        if add_special_tokens is None:
-            add_special_tokens = False
-        if isinstance(str_to_encode, str):
-            return self.tokenizer.encode(str_to_encode, add_special_tokens=add_special_tokens)
-        return self.tokenizer(
-            str_to_encode,
-            padding=True,
-            add_special_tokens=add_special_tokens,
-            return_tensors="pt",
-        )
-
-    def tok_decode(self, tokens: torch.LongTensor) -> list[str]:
-        return self.tokenizer.batch_decode(tokens, skip_special_tokens=True)
 
     def __async_process_request(
         self, context: str, stop_tokens: list[str], max_tokens: int
@@ -208,9 +199,7 @@ class InferenceEndpointModel(LightevalModel):
     def greedy_until_with_logits(
         self,
         requests: list[GreedyUntilWithLogitsRequest],
-        disable_tqdm: bool = False,
         override_bs: Optional[int] = None,
-        dataset_splits: int = 4,
     ) -> list[GenerateReturn]:
         """
         Generates sequences greedily until a stopping condition is met,
@@ -219,9 +208,7 @@ class InferenceEndpointModel(LightevalModel):
         Args:
             requests (list[tuple[str, dict]]): A list of input requests,
                 where each request is a tuple containing a prompt string and a dictionary of additional parameters.
-            disable_tqdm (bool, optional): Whether to disable the tqdm progress bar. Defaults to False.
             override_bs (Optional[int], optional): Overrides the batch size for generation. Defaults to None.
-            dataset_splits (int, optional): Number of splits to divide the dataset into for parallel generation. Defaults to 4.
 
         Returns:
             list[GenerateReturn]: A list of GenerateReturn objects,
@@ -231,31 +218,34 @@ class InferenceEndpointModel(LightevalModel):
         return self.greedy_until(
             requests,
             returns_logits=True,
-            disable_tqdm=disable_tqdm,
             override_bs=override_bs,
-            dataset_splits=dataset_splits,
         )
 
     def greedy_until(
         self,
         requests: List[GreedyUntilRequest],
         returns_logits: bool = False,
-        disable_tqdm: bool = False,
         override_bs: Optional[int] = None,
     ) -> List[GenerateReturn]:
         for request in requests:
             request.stop_sequence = request.stop_sequence + [self.tokenizer.eos_token]
 
-        dataset = GenerativeTaskDataset(requests=requests, dataset_splits=DATASET_SPLITS)
+        dataset = GenerativeTaskDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
         batch_size = override_bs if override_bs is not None else BATCH_SIZE
         results: List[str] = []
 
         for _, _ in tqdm(
-            dataset.splits_start_end_iterator(), total=DATASET_SPLITS, desc="Splits", position=0, disable=disable_tqdm
+            dataset.splits_start_end_iterator(),
+            total=self.DATASET_SPLITS,
+            desc="Splits",
+            position=0,
+            disable=self.disable_tqdm,
         ):
             dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda batch: batch)
 
-            for batch in tqdm(dataloader, desc="Greedy generation", position=1, leave=False, disable=disable_tqdm):
+            for batch in tqdm(
+                dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
+            ):
                 if self.use_async:
                     responses = asyncio.run(self.__async_process_batch_generate(batch, returns_logits))
                 else:
@@ -273,21 +263,25 @@ class InferenceEndpointModel(LightevalModel):
         return results
 
     def loglikelihood(
-        self, requests: list[LoglikelihoodRequest], disable_tqdm: bool = False, override_bs: Optional[int] = None
+        self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
     ) -> list[LoglikelihoodReturn]:
         for request in requests:
             request.tokenized_context = self.tok_encode(request.context)
             request.tokenized_continuation = self.tok_encode(request.choice)
-        dataset = LoglikelihoodDataset(requests=requests, dataset_splits=DATASET_SPLITS)
+        dataset = LoglikelihoodDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
         batch_size = override_bs if override_bs is not None else BATCH_SIZE
         results: List[str] = []
 
         for _, _ in tqdm(
-            dataset.splits_start_end_iterator(), total=DATASET_SPLITS, desc="Splits", position=0, disable=disable_tqdm
+            dataset.splits_start_end_iterator(),
+            total=self.DATASET_SPLITS,
+            desc="Splits",
+            position=0,
+            disable=self.disable_tqdm,
         ):
             dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda batch: batch)
 
-            for batch in tqdm(dataloader, desc="Loglikleihoods", position=1, leave=False, disable=disable_tqdm):
+            for batch in tqdm(dataloader, desc="Loglikleihoods", position=1, leave=False, disable=self.disable_tqdm):
                 if self.use_async:
                     responses = asyncio.run(self.__async_process_batch_logprob(batch))
                 else:
@@ -309,23 +303,27 @@ class InferenceEndpointModel(LightevalModel):
         return results
 
     def loglikelihood_rolling(
-        self, requests: list[LoglikelihoodRollingRequest], disable_tqdm: bool = False, override_bs=None
+        self, requests: list[LoglikelihoodRollingRequest], override_bs=None
     ) -> list[LoglikelihoodReturn]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         for request in requests:
             request.tokenized_context = [self.tokenizer.eos_token_id]
             request.tokenized_continuation = self.tok_encode(request.context)
 
-        dataset = LoglikelihoodDataset(requests=requests, dataset_splits=DATASET_SPLITS)
+        dataset = LoglikelihoodDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
         batch_size = override_bs if override_bs is not None else BATCH_SIZE
         results: List[str] = []
 
         for _, _ in tqdm(
-            dataset.splits_start_end_iterator(), total=DATASET_SPLITS, desc="Splits", position=0, disable=disable_tqdm
+            dataset.splits_start_end_iterator(),
+            total=self.DATASET_SPLITS,
+            desc="Splits",
+            position=0,
+            disable=self.disable_tqdm,
         ):
             dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda batch: batch)
 
-            for batch in tqdm(dataloader, desc="Loglikleihoods", position=1, leave=False, disable=disable_tqdm):
+            for batch in tqdm(dataloader, desc="Loglikleihoods", position=1, leave=False, disable=self.disable_tqdm):
                 if self.use_async:
                     responses = asyncio.run(self.__async_process_batch_logprob(batch, rolling=True))
                 else:
@@ -346,7 +344,6 @@ class InferenceEndpointModel(LightevalModel):
     def loglikelihood_single_token(
         self,
         requests: list[LoglikelihoodSingleTokenRequest],
-        disable_tqdm: bool = False,
         override_bs: Optional[int] = None,
     ) -> list[LoglikelihoodSingleTokenReturn]:
         raise ValueError("Endpoint models can't use single token metrics. Change the metric to the standard version")

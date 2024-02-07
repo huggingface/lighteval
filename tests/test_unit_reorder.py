@@ -1,9 +1,12 @@
+import pytest
+from transformers import AutoTokenizer
+
 from lighteval.data import GenerativeTaskDataset
 from lighteval.tasks.requests import GreedyUntilRequest
 
 
 # test data that will need to be sorted by length of the string
-data = [
+TEST_DATA = [
     GreedyUntilRequest(
         task_name="test",
         example_index=0,
@@ -50,7 +53,16 @@ DATASET_SPLITS = 1
 
 
 class TestReorderGenerativeTaskDataset:
+    def test_dataset_needs_tokenization(self):
+        with pytest.raises(ValueError):
+            GenerativeTaskDataset(requests=TEST_DATA, dataset_splits=DATASET_SPLITS)
+
     def test_reorder_dataset(self):
+        tokenizer = AutoTokenizer.from_pretrained("gpt2")
+        data = TEST_DATA.copy()
+        for request in data:
+            request.tokenized_context = tokenizer.encode(request.context)
+
         dataset = GenerativeTaskDataset(requests=data, dataset_splits=DATASET_SPLITS)
 
         sorted_data = dataset.sorted_data

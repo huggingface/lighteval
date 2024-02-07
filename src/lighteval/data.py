@@ -35,6 +35,9 @@ class DynamicBatchDataset(Dataset):
             requests (List): A list of requests.
             dataset_splits (int): The number of dataset splits.
         """
+        # We make sure the requests contain the tokenized versions of their values
+        if any(r.tokenized_context is None for r in requests):
+            raise ValueError("You passed a request for which tokenization had not happened yet.")
 
         # sort the requests using the collate function and save the original order
         enumerated_requests = list(enumerate(requests))
@@ -190,7 +193,7 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         Returns:
             Any: The collated data.
         """
-        toks = request.context
+        toks = request.tokenized_context
         gen_length = request.generation_size
         return -(len(toks) + gen_length)
 

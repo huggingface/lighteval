@@ -94,6 +94,7 @@ class GreedyUntilRequest(Request):
     stop_sequence: str
     generation_size: int
     request_type = RequestType.GREEDY_UNTIL
+    tokenized_context: list[int] = None
 
 
 @dataclass
@@ -111,6 +112,7 @@ class GreedyUntilWithLogitsRequest(Request):
     stop_sequence: str
     generation_size: int
     request_type = RequestType.GREEDY_UNTIL_WITH_LOGITS
+    tokenized_context: list[int] = None
 
 
 class TaskExampleId(NamedTuple):

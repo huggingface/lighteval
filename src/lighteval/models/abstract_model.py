@@ -1,5 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Union
+
+import torch
+from transformers import BatchEncoding
 
 from lighteval.models.model_config import EnvConfig
 from lighteval.models.model_output import GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
@@ -12,7 +15,12 @@ from lighteval.tasks.requests import (
 )
 
 
+TokenSequence = Union[list[int], torch.LongTensor, torch.Tensor, BatchEncoding]
+
+
 class LightevalModel(ABC):
+    DATASET_SPLITS = 4
+
     """Abstract model class defining the API that every model to plug into lighteval must follow."""
 
     @abstractmethod
@@ -21,11 +29,21 @@ class LightevalModel(ABC):
         config,
         env_config: EnvConfig,
     ):
-        self.tokenizer = None
         return NotImplemented
 
     def cleanup(self):
+        """Clean up operations if needed, such as closing an endpoint."""
         return
+
+    @property
+    @abstractmethod
+    def tokenizer(self):
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def add_special_tokens(self):
+        raise NotImplementedError
 
     @property
     @abstractmethod
@@ -33,12 +51,14 @@ class LightevalModel(ABC):
         """Return the maximum sequence length of the model."""
         raise NotImplementedError
 
+    @property
+    def disable_tqdm(self) -> bool:
+        raise NotImplementedError
+
     def greedy_until_with_logits(
         self,
         requests: list[GreedyUntilWithLogitsRequest],
-        disable_tqdm: bool = False,
         override_bs: Optional[int] = None,
-        dataset_splits: int = 4,
     ) -> list[GenerateReturn]:
         """
         Generates sequences greedily until a stopping condition is met,
@@ -49,7 +69,6 @@ class LightevalModel(ABC):
                 where each request is a tuple containing a prompt string and a dictionary of additional parameters.
             disable_tqdm (bool, optional): Whether to disable the tqdm progress bar. Defaults to False.
             override_bs (Optional[int], optional): Overrides the batch size for generation. Defaults to None.
-            dataset_splits (int, optional): Number of splits to divide the dataset into for parallel generation. Defaults to 4.
 
         Returns:
             list[GenerateReturn]: A list of GenerateReturn objects,
@@ -57,9 +76,7 @@ class LightevalModel(ABC):
         """
         return self.greedy_until(
             requests=requests,
-            disable_tqdm=disable_tqdm,
             override_bs=override_bs,
-            dataset_splits=dataset_splits,
             returns_logits=True,
         )
 
@@ -68,9 +85,7 @@ class LightevalModel(ABC):
         self,
         requests: list[GreedyUntilRequest],
         returns_logits: bool = False,
-        disable_tqdm: bool = False,
         override_bs: Optional[int] = None,
-        dataset_splits: int = 4,
     ) -> list[GenerateReturn]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
@@ -80,7 +95,6 @@ class LightevalModel(ABC):
             returns_logits (bool, optional): Whether to return the logits of the generated responses. Defaults to False.
             disable_tqdm (bool, optional): Whether to disable the progress bar. Defaults to False.
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
-            dataset_splits (int, optional): Number of splits to divide the dataset into. Defaults to 4.
 
         Returns:
             list[GenerateReturn]: list of generated responses.
@@ -111,3 +125,31 @@ class LightevalModel(ABC):
         tokenized sequences.
         """
         return NotImplemented
+
+    # Tokenization utils
+    def tok_encode(self, str_to_encode: str | list[str], add_special_tokens: Optional[bool] = None) -> TokenSequence:
+        if add_special_tokens is None:
+            add_special_tokens = self.add_special_tokens
+        if isinstance(str_to_encode, str):
+            return self.tokenizer.encode(str_to_encode, add_special_tokens=add_special_tokens)
+        return self.tokenizer(
+            str_to_encode,
+            padding=True,
+            add_special_tokens=add_special_tokens,
+            return_tensors="pt",
+        )
+
+    def tok_encode_pair(self, context, continuation):
+        """Encodes a context, continuation pair by taking care of the spaces in between."""
+        n_spaces = len(context) - len(context.rstrip())
+        if n_spaces > 0:
+            continuation = context[-n_spaces:] + continuation
+            context = context[:-n_spaces]
+        whole_enc = self.tok_encode(context + continuation)
+        context_enc = self.tok_encode(context)
+        context_enc_len = len(context_enc)
+        continuation_enc = whole_enc[context_enc_len:]
+        return context_enc, continuation_enc
+
+    def tok_decode(self, tokens: torch.LongTensor) -> list[str]:
+        return self.tokenizer.batch_decode(tokens, skip_special_tokens=True)

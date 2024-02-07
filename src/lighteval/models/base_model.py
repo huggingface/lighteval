@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import transformers
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer, BatchEncoding
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
 from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
@@ -32,9 +32,6 @@ if is_accelerate_available():
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-TokenSequence = Union[list[int], torch.LongTensor, torch.Tensor, BatchEncoding]
-
-DATASET_SPLITS = 4
 STARTING_BATCH_SIZE = 512
 
 
@@ -50,8 +47,8 @@ class BaseModel(LightevalModel):
         self._batch_size = config.batch_size
         self._max_length = self._init_max_length(config.max_length)
 
-        self.add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
-        self.tokenizer = self._create_auto_tokenizer(config, env_config)
+        self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
+        self._tokenizer = self._create_auto_tokenizer(config, env_config)
 
         # If model_parallel is not set we compare the number of process with the number of GPUs
         self.model = self._create_auto_model(config, env_config)
@@ -72,6 +69,18 @@ class BaseModel(LightevalModel):
         self.model_sha = config.get_model_sha()
 
         self.precision = _get_precision(config, model_auto_config=self._config)
+
+    @property
+    def tokenizer(self):
+        return self._tokenizer
+
+    @property
+    def add_special_tokens(self):
+        return self._add_special_tokens
+
+    @property
+    def max_length(self) -> int:
+        return self._max_length
 
     def init_model_parallel(self, model_parallel: bool = None) -> Tuple[bool, Optional[dict], Optional[str]]:
         """Compute all the parameters related to model_parallel"""
@@ -203,10 +212,6 @@ class BaseModel(LightevalModel):
 
         return tokenizer
 
-    @property
-    def max_length(self) -> int:
-        return self._max_length
-
     def _init_max_length(self, max_length) -> int:
         """Return the maximum sequence length of the model.
         NOTE: Different model configurations have different max sequence length
@@ -256,33 +261,6 @@ class BaseModel(LightevalModel):
             disable_tqdm = bool(not self.accelerator.is_main_process)
         return disable_tqdm
 
-    # Tokenization helpers
-    def tok_encode_pair(self, context, continuation):
-        n_spaces = len(context) - len(context.rstrip())
-        if n_spaces > 0:
-            continuation = context[-n_spaces:] + continuation
-            context = context[:-n_spaces]
-        whole_enc = self.tok_encode(context + continuation)
-        context_enc = self.tok_encode(context)
-        context_enc_len = len(context_enc)
-        continuation_enc = whole_enc[context_enc_len:]
-        return context_enc, continuation_enc
-
-    def tok_encode(self, str_to_encode: str | list[str], add_special_tokens: Optional[bool] = None) -> TokenSequence:
-        if add_special_tokens is None:
-            add_special_tokens = self.add_special_tokens
-        if isinstance(str_to_encode, str):
-            return self.tokenizer.encode(str_to_encode, add_special_tokens=add_special_tokens)
-        return self.tokenizer(
-            str_to_encode,
-            padding=True,
-            add_special_tokens=add_special_tokens,
-            return_tensors="pt",
-        )
-
-    def tok_decode(self, tokens: torch.LongTensor) -> list[str]:
-        return self.tokenizer.batch_decode(tokens, skip_special_tokens=True)
-
     def _check_continuations_start_space(self, continuation: str) -> str:
         """Some models tokenizer want a space at the beginning and other not. We update this if needed here.
         multichoice_continuations_start_space can be:
@@ -323,7 +301,6 @@ class BaseModel(LightevalModel):
         self,
         requests: list[GreedyUntilWithLogitsRequest],
         override_bs: Optional[int] = None,
-        dataset_splits: int = 4,
     ) -> list[GenerateReturn]:
         """
         Generates sequences greedily until a stopping condition is met,
@@ -333,7 +310,6 @@ class BaseModel(LightevalModel):
             requests (list[tuple[str, dict]]): A list of input requests,
                 where each request is a tuple containing a prompt string and a dictionary of additional parameters.
             override_bs (Optional[int], optional): Overrides the batch size for generation. Defaults to None.
-            dataset_splits (int, optional): Number of splits to divide the dataset into for parallel generation. Defaults to 4.
 
         Returns:
             list[GenerateReturn]: A list of GenerateReturn objects,
@@ -345,7 +321,6 @@ class BaseModel(LightevalModel):
             returns_logits=True,
             disable_tqdm=self.disable_tqdm,
             override_bs=override_bs,
-            dataset_splits=dataset_splits,
         )
 
     def greedy_until(
@@ -353,7 +328,6 @@ class BaseModel(LightevalModel):
         requests: list[GreedyUntilRequest],
         returns_logits: bool = False,
         override_bs: Optional[int] = None,
-        dataset_splits: int = 4,
     ) -> list[GenerateReturn]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
@@ -362,34 +336,33 @@ class BaseModel(LightevalModel):
             requests (list[Request]): list of requests containing the context and ending conditions.
             returns_logits (bool, optional): Whether to return the logits of the generated responses. Defaults to False.
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
-            dataset_splits (int, optional): Number of splits to divide the dataset into. Defaults to 4.
 
         Returns:
             list[GenerateReturn]: list of generated responses.
         """
         for request in requests:
             request.stop_sequence = request.stop_sequence + [self.tokenizer.eos_token]
-        dataset = GenerativeTaskDataset(requests=requests, dataset_splits=dataset_splits)
+            request.tokenized_context = self.tok_encode(request.context)
+
+        dataset = GenerativeTaskDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
         results = []
 
         for split_start, split_end in tqdm(
             dataset.splits_start_end_iterator(),
-            total=DATASET_SPLITS,
+            total=self.DATASET_SPLITS,
             desc="Splits",
             position=0,
             disable=self.disable_tqdm,
         ):
             # Longest context in the current split is the first item (since we sort reversed)
-            longest_context_continuation_size_in_split = len(dataset[0].context) + dataset[0].generation_size
+            longest_context_continuation_size_in_split = len(dataset[0].tokenized_context) + dataset[0].generation_size
             max_continuation_size_allowed = min(longest_context_continuation_size_in_split, self.max_length)
             batch_size = self._get_batch_size(
                 override_bs=override_bs,
                 max_input_length=max_continuation_size_allowed,
                 starting_batch_size=starting_batch_size,
             )
-            # For next iteration, since the batch will be smaller, we'll test a bigger batch size
-            starting_batch_size = batch_size * 2
 
             dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda batch: batch)
             if self.accelerator:
@@ -500,7 +473,9 @@ class BaseModel(LightevalModel):
         return all_responses
 
     def loglikelihood(
-        self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
+        self,
+        requests: list[LoglikelihoodRequest],
+        override_bs: Optional[int] = None,
     ) -> list[LoglikelihoodReturn]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
@@ -516,16 +491,17 @@ class BaseModel(LightevalModel):
                 request.tokenized_context = [self.tokenizer.eos_token_id]
                 request.tokenized_continuation = self.tok_encode(request.choice)
             else:
-                # DO NOT CHANGE THE FOLLOWING LINE!
-                # It is mandatory for compatibility with the harness!!!
+                # The following line is mandatory for compatibility with the harness
                 request.tokenized_context, request.tokenized_continuation = self.tok_encode_pair(
                     request.context, request.choice
                 )
 
-        return self._loglikelihood_tokens(requests, override_bs=override_bs, dataset_splits=DATASET_SPLITS)
+        return self._loglikelihood_tokens(requests, override_bs=override_bs)
 
     def loglikelihood_rolling(
-        self, requests: list[LoglikelihoodRollingRequest], override_bs=None
+        self,
+        requests: list[LoglikelihoodRollingRequest],
+        override_bs=None,
     ) -> list[LoglikelihoodReturn]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
 
@@ -537,7 +513,6 @@ class BaseModel(LightevalModel):
             requests,
             override_bs=override_bs,
             return_bool_score=False,
-            dataset_splits=DATASET_SPLITS,
         )
         return results
 
@@ -545,10 +520,9 @@ class BaseModel(LightevalModel):
         self,
         requests: list[LoglikelihoodRequest],
         override_bs: int = -1,
-        dataset_splits: int = 4,
         return_bool_score: bool = True,
     ) -> list[LoglikelihoodReturn]:
-        dataset = LoglikelihoodDataset(requests=requests, dataset_splits=dataset_splits)
+        dataset = LoglikelihoodDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
         res = []
 
@@ -758,9 +732,9 @@ class BaseModel(LightevalModel):
         return self._loglikelihood_single_token(requests, override_bs=override_bs)
 
     def _loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: int = -1, dataset_splits: int = 4
+        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: int = -1
     ) -> list[LoglikelihoodSingleTokenReturn]:
-        dataset = LoglikelihoodSingleTokenDataset(requests=requests, dataset_splits=dataset_splits)
+        dataset = LoglikelihoodSingleTokenDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
         res = []
 
