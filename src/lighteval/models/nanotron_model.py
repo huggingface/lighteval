@@ -33,6 +33,7 @@ from lighteval.data import (
     LoglikelihoodSingleTokenDataset,
 )
 from lighteval.models.base_model import LightevalModel
+from lighteval.models.model_config import EnvConfig
 from lighteval.models.model_output import Batch, GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
@@ -71,9 +72,9 @@ class NanotronLightevalModel(LightevalModel):
         add_special_tokens: Optional[bool] = True,
         dtype: Optional[Union[str, torch.dtype]] = None,
         trust_remote_code: bool = False,
-        cache_dir: str = "/scratch",
         debug_one_layer_model: bool = False,
         model_class: Optional[Type] = None,
+        env_config: EnvConfig = None,
     ):
         """Initializes a nanotron model for evaluation.
         Args:
@@ -119,7 +120,7 @@ class NanotronLightevalModel(LightevalModel):
         self._add_special_tokens = add_special_tokens
         self._tokenizer = self._create_auto_tokenizer(
             pretrained=tokenizer.tokenizer_name_or_path,
-            cache_dir=cache_dir,
+            env_config=env_config,
             trust_remote_code=trust_remote_code,
         )
         self._tokenizer.model_max_length = self.max_length
@@ -206,7 +207,7 @@ class NanotronLightevalModel(LightevalModel):
         *,
         pretrained: str,
         tokenizer: Optional[str] = None,
-        cache_dir: str = "/scratch",
+        env_config: EnvConfig = None,
         trust_remote_code: bool = False,
     ) -> transformers.PreTrainedTokenizer:
         """Returns a pre-trained tokenizer from a pre-trained tokenizer configuration."""
@@ -214,16 +215,16 @@ class NanotronLightevalModel(LightevalModel):
         try:
             tokenizer = AutoTokenizer.from_pretrained(
                 pretrained if tokenizer is None else tokenizer,
-                cache_dir=cache_dir,
-                token=os.getenv("HUGGING_FACE_HUB_TOKEN"),
+                cache_dir=env_config.cache_dir,
+                token=env_config.token,
                 trust_remote_code=trust_remote_code,
             )
         except RecursionError:
             tokenizer = AutoTokenizer.from_pretrained(
                 pretrained if tokenizer is None else tokenizer,
-                cache_dir=cache_dir,
+                cache_dir=env_config.cache_dir,
+                token=env_config.token,
                 unk_token="<unk>",
-                token=os.getenv("HUGGING_FACE_HUB_TOKEN"),
                 trust_remote_code=trust_remote_code,
             )
         tokenizer.pad_token = tokenizer.eos_token
