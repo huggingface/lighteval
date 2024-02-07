@@ -4,7 +4,8 @@ import os
 import pytest
 from pytest import approx
 
-from lighteval.main import get_parser, main  # noqa: E402
+from lighteval.main_accelerate import main  # noqa: E402
+from run_evals_accelerate import get_parser
 from tests.reference_scores.reference_task_scores import RESULTS_FULL, RESULTS_LITE  # noqa: E402
 from tests.reference_scores.reference_tasks import (  # noqa: E402
     HELM_SUBSET,
