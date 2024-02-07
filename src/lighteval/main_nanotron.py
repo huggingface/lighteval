@@ -8,6 +8,7 @@ import numpy as np
 from lighteval.evaluator import evaluate, make_results_table
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog, htrack, htrack_block
+from lighteval.models.model_config import EnvConfig
 from lighteval.models.model_loader import ModelInfo
 from lighteval.models.nanotron_model import NanotronLightevalModel
 from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_tasks
@@ -35,7 +36,7 @@ CACHE_DIR = os.getenv("HF_HOME", "/scratch")
 
 @htrack()
 def main(
-    local_config_path: str,
+    checkpoint_config_path: str,
     lighteval_config_path: Optional[str] = None,
     cache_dir: str = None,
     config_cls: Type = Config,
@@ -45,16 +46,16 @@ def main(
     if cache_dir is None:
         cache_dir = CACHE_DIR
 
-    # env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
+    env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
 
     dist.initialize_torch_distributed()
 
     with htrack_block("get config"):
-        if not local_config_path.endswith(".yaml"):
+        if not checkpoint_config_path.endswith(".yaml"):
             raise ValueError("The checkpoint path should point to a YAML file")
 
         nanotron_config: config_cls = get_config_from_file(
-            local_config_path,
+            checkpoint_config_path,
             config_class=config_cls,
             model_config_class=model_config_cls,
             skip_unused_config_keys=True,
@@ -91,7 +92,7 @@ def main(
     with htrack_block("Model loading"):
         # We need to load the model in the main process first to avoid downloading the model multiple times
         model = NanotronLightevalModel(
-            checkpoint_path=os.path.dirname(local_config_path),
+            checkpoint_path=os.path.dirname(checkpoint_config_path),
             model_args=nanotron_config.model,
             tokenizer=nanotron_config.tokenizer,
             parallel_context=parallel_context,
@@ -101,6 +102,7 @@ def main(
             cache_dir=os.environ.get("HF_HOME", "/scratch"),
             debug_one_layer_model=False,
             model_class=model_cls,
+            env_config=env_config,
         )
         model_info = ModelInfo(model_name=f"{nanotron_config.general.run}/{nanotron_config.general.step}")
         evaluation_tracker.general_config_logger.log_model_info(model_info)

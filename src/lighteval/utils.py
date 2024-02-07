@@ -50,26 +50,42 @@ def flatten_dict(nested: dict, sep="/") -> dict:
     return flat
 
 
-def clean_s3_links(key, value):
+def clean_s3_links(value: str) -> str:
+    """Cleans and formats s3 bucket links for better display in the result table (nanotron models)
+
+    Args:
+        value (str): path to clean
+
+    Returns:
+        str : cleaned path
+    """
     s3_bucket, s3_prefix = str(value).replace("s3://", "").split("/", maxsplit=1)
     if not s3_prefix.endswith("/"):
         s3_prefix += "/"
     link_str = f"https://s3.console.aws.amazon.com/s3/buckets/{s3_bucket}?prefix={s3_prefix}"
     value = f'<a href="{link_str}" target="_blank"> {value} </a>'
-    return key, value
+    return value
 
 
 def obj_to_markdown(obj, convert_s3_links: bool = True) -> str:
     """Convert a (potentially nested) dataclass object or a dict in a readable markdown string for logging"""
+    from pytablewriter import MarkdownTableWriter
+
     if is_dataclass(obj):
         obj = asdict(obj)
     config_dict = flatten_dict(obj)
-    config_markdown = "| Key | Value |\n| --- | --- |\n"
+
+    md_writer = MarkdownTableWriter()
+    md_writer.headers = ["Key", "Value"]
+
+    values = []
     for key, value in config_dict.items():
         if convert_s3_links and "s3://" in str(value):
-            key, value = clean_s3_links(key, value)
-        config_markdown += f"| {key} | {value} |\n"
-    return config_markdown
+            value = clean_s3_links(value)
+        values.append([key, value])
+    md_writer.value_matrix = values
+
+    return md_writer.dumps()
 
 
 def sanitize_numpy(example_dict: dict) -> dict:
