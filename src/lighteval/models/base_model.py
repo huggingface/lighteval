@@ -364,6 +364,8 @@ class BaseModel(LightevalModel):
                 max_input_length=max_context_continuation_size_allowed,
                 starting_batch_size=starting_batch_size,
             )
+            # For next iteration, since the batch will be smaller, we'll test a bigger batch size
+            starting_batch_size = batch_size * 2
 
             dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda batch: batch)
             if self.accelerator:
