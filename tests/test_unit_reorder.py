@@ -1,13 +1,49 @@
 from lighteval.data import GenerativeTaskDataset
+from lighteval.tasks.requests import GreedyUntilRequest
 
 
 # test data that will need to be sorted by length of the string
 data = [
-    ("1 The quick brown fox jumps over the lazy dog", ([":", "stop"], 10)),
-    ("2 The quick brown fox jumps over the lazy dog njsa", ([":", "stop"], 10)),
-    ("Some text", ([":", "stop"], 10)),
-    ("some more text", ([":", "stop"], 10)),
-    ("not sure what to write here", ([":", "stop"], 10)),
+    GreedyUntilRequest(
+        task_name="test",
+        example_index=0,
+        request_index=0,
+        context="1 The quick brown fox jumps over the lazy dog",
+        stop_sequence=[":", "stop"],
+        generation_size=10,
+    ),
+    GreedyUntilRequest(
+        task_name="test",
+        example_index=2,
+        request_index=0,
+        context="2 The quick brown fox jumps over the lazy dog njsa",
+        stop_sequence=[":", "stop"],
+        generation_size=10,
+    ),
+    GreedyUntilRequest(
+        task_name="test",
+        example_index=5,
+        request_index=0,
+        context="Some text",
+        stop_sequence=[":", "stop"],
+        generation_size=10,
+    ),
+    GreedyUntilRequest(
+        task_name="test",
+        example_index=21,
+        request_index=0,
+        context="some more text",
+        stop_sequence=[":", "stop"],
+        generation_size=10,
+    ),
+    GreedyUntilRequest(
+        task_name="test",
+        example_index=1,
+        request_index=0,
+        context="not sure what to write here",
+        stop_sequence=[":", "stop"],
+        generation_size=10,
+    ),
 ]
 
 DATASET_SPLITS = 1
@@ -21,9 +57,9 @@ class TestReorderGenerativeTaskDataset:
         original_data = dataset.get_original_order(sorted_data)
 
         for i in range(len(sorted_data) - 1):
-            assert len(sorted_data[i][0]) >= len(
-                sorted_data[i + 1][0]
-            ), f"dataset[{i}][0] = {sorted_data[i][0]} is shorter than dataset[{i+1}][0] = {sorted_data[i+1][0]}"
+            assert (
+                len(sorted_data[i].context) >= len(sorted_data[i + 1].context)
+            ), f"dataset[{i}][0] = {sorted_data[i].context} is shorter than dataset[{i+1}][0] = {sorted_data[i+1].context}"
 
         assert len(sorted_data) == len(
             original_data

@@ -39,10 +39,6 @@ STARTING_BATCH_SIZE = 512
 
 
 class BaseModel(LightevalModel):
-    # Default max sequence length setting for when no `max_length` is provided
-    # or no max length config setting is found in the model or tokenizer.
-    _DEFAULT_MAX_LENGTH: int = 2048
-
     def __init__(
         self,
         config: BaseModelConfig,
@@ -239,7 +235,9 @@ class BaseModel(LightevalModel):
 
         if hasattr(self.tokenizer, "model_max_length"):
             return self.tokenizer.model_max_length
-        return self._DEFAULT_MAX_LENGTH
+        # Default max sequence length setting for when no `max_length` is provided
+        # or no max length config setting is found in the model or tokenizer.
+        return 2048
 
     @property
     def batch_size(self) -> int:
@@ -696,7 +694,8 @@ class BaseModel(LightevalModel):
                 raise ValueError("Negative padding")
 
             padded.append(padding_length - sequence_len)
-            tokens = F.pad(tokens, (padding_length - sequence_len), value=0)
+            # Right padding - it likely would be better to do left padding
+            tokens = F.pad(tokens, (0, padding_length - sequence_len), value=0)
 
             # We create the attention mask to ignore padding
             mask = tokens == 0
@@ -782,10 +781,11 @@ class BaseModel(LightevalModel):
                 dataloader = self.accelerator.prepare(dataloader)
 
             for batch in tqdm(dataloader, disable=self.disable_tqdm, position=1):
-                prepared_batch = self.prepare_batch(batch, padding_length=max_context, max_context=max_context)
+                prepared_batch = self.prepare_batch(
+                    batch, padding_length=max_context, max_context=max_context, single_token=True
+                )
 
                 out = self._model_call(prepared_batch.input_ids)  # [batch, padding_length, vocab]
-
                 out = F.log_softmax(out, dim=-1)  # we do a softmax over the options, no the vocab
 
                 batch_probs = []

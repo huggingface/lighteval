@@ -174,9 +174,8 @@ class LoglikelihoodSingleTokenDataset(DynamicBatchDataset):
         automatic adaptive batches much much easier to implement
         - any OOMs will happen right away rather than near the end
         """
-        toks = (
-            request.tokenized_context
-        )  # We take only the prompt, no need for the continuation (since it's a list of single tokens)
+        # We take only the prompt, no need for the continuation (since it's a list of single tokens)
+        toks = request.tokenized_context
         return -len(toks)
 
 
@@ -191,7 +190,7 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         Returns:
             Any: The collated data.
         """
-        toks = (request.context,)
+        toks = request.context
         gen_length = request.generation_size
         return -(len(toks) + gen_length)
 
