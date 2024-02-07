@@ -6,16 +6,13 @@ This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then im
 """
 import re
 from dataclasses import asdict
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
+from lighteval.metrics import Metrics
+from lighteval.tasks.lighteval_task import CustomEvaluationTask
 from lighteval.tasks.requests import Doc
+from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 
-from .custom_evaluation_utils import *
-
-
-# fmt: off
-LETTER_INDICES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
-# fmt: on
 
 _TASKS_STRINGS: List[Tuple[CustomEvaluationTask, str]] = []
 _TASKS: List[CustomEvaluationTask] = []
@@ -628,13 +625,6 @@ _TASKS += AGIEVAL_TASKS
 #     ),
 
 
-def has_generative_metrics(task: CustomEvaluationTask) -> bool:
-    for metric in task.metric:
-        if metric in NEEDS_GENERATION_ONLY:
-            return True
-    return False
-
-
 EARLY_SIGNAL_TASKS = ",".join([t[1] for t in COMMON_SENSE_REASONING_STRING] + [t[1] for t in MMLU_STRING])
 
 # Convert to dict for lighteval
@@ -643,8 +633,6 @@ TASKS_TABLE = [asdict(task) for task in _TASKS]
 TASKS_GROUPS = {
     "all": ",".join(t[1] for t in _TASKS_STRINGS),
     "early-signal": EARLY_SIGNAL_TASKS,
-    "non-generatives": ",".join(t for k, t in _TASKS_STRINGS if not has_generative_metrics(k)),
-    "generatives": ",".join(t for k, t in _TASKS_STRINGS if has_generative_metrics(k)),
 }
 
 if __name__ == "__main__":
