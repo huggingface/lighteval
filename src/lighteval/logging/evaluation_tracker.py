@@ -556,7 +556,7 @@ class EvaluationTracker:
 
         tb_context.close()  # flushes the unfinished write operations
         time.sleep(5)
-        files = os.listdir(output_dir_tb)
+        files = os.listdir(str(output_dir_tb))
         for file in files:
             os.rename(os.path.join(output_dir_tb, file), os.path.join(output_dir_tb, f"{global_step:07d}_{file}"))
 
@@ -566,5 +566,3 @@ class EvaluationTracker:
             f"Pushed to tensorboard at https://huggingface.co/tensorboard/{lighteval_config.logging.hub_repo_tensorboard}/"
             f" at {output_dir_tb} and global_step {global_step}"
         )
-        # except Exception as e:
-        #     logger.warning(f"Could not push to tensorboard\n{e}")
