@@ -54,7 +54,7 @@ def main(
             raise ValueError("The checkpoint path should point to a YAML file")
 
         nanotron_config: config_cls = get_config_from_file(
-            local_config_path, config_class=config_cls, model_config_class=model_config_cls, strict=False
+            local_config_path, config_class=config_cls, model_config_class=model_config_cls
         )
 
         if lighteval_config_path:
