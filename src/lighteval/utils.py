@@ -139,7 +139,7 @@ def is_nanotron_available() -> bool:
     return importlib.util.find_spec("nanotron") is not None
 
 
-NO_NANOTRON_ERROR_MSG = "YYou requested the use of nanotron for this evaluation, but it is not available in your current environement. Please install it using pip."
+NO_NANOTRON_ERROR_MSG = "You requested the use of nanotron for this evaluation, but it is not available in your current environement. Please install it using pip."
 
 
 def is_optimum_available() -> bool:

@@ -1,17 +1,10 @@
 # flake8: noqa: C901
-import argparse
 import os
 import random
 from typing import Optional, Type
 
 import numpy as np
 import torch
-from nanotron import distributed as dist
-from nanotron import logging
-from nanotron.config import Config, get_config_from_file
-from nanotron.logging import get_logger, log_rank
-from nanotron.parallel.context import ParallelContext
-from nanotron.utils import local_ranks_zero_first
 
 from lighteval.evaluator import evaluate, make_results_table
 from lighteval.logging.evaluation_tracker import EvaluationTracker
@@ -20,6 +13,19 @@ from lighteval.models.model_loader import ModelInfo
 from lighteval.models.nanotron_model import NanotronLightevalModel
 from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_tasks
 from lighteval.tasks.registry import Registry, get_custom_tasks, taskinfo_selector
+from lighteval.utils import is_nanotron_available
+
+
+if is_nanotron_available():
+    from nanotron import distributed as dist
+    from nanotron import logging
+    from nanotron.config import Config, get_config_from_file
+    from nanotron.logging import get_logger, log_rank
+    from nanotron.parallel.context import ParallelContext
+    from nanotron.utils import local_ranks_zero_first
+
+else:
+    dist = None
 
 
 logger = get_logger(__name__)
@@ -29,54 +35,8 @@ TOKEN = os.getenv("HF_TOKEN")
 CACHE_DIR = os.getenv("HF_HOME", "/scratch")
 
 
-def get_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--checkpoint-config-path",
-        type=str,
-        required=True,
-        help="Path to the brr checkpoint YAML or python config file, potentially on S3",
-    )
-    parser.add_argument(
-        "--lighteval-override",
-        type=str,
-        help="Path to an optional YAML or python Lighteval config to override part of the checkpoint Lighteval config",
-    )
-    parser.add_argument(
-        "--tokenizer",
-        type=str,
-        help="Local or hub path of an optional tokenizer (if not indicated in the checkpoint)",
-    )
-    parser.add_argument(
-        "--s5cmd-path",
-        type=str,
-        default="/admin/home/thomwolf/miniconda3/envs/b4r/bin/s5cmd",
-        help="Path to s5cmd install",
-    )
-    parser.add_argument(
-        "--s5cmd-numworkers",
-        type=int,
-        default=64,
-        help="s5cmd num workers (optional)",
-    )
-    parser.add_argument(
-        "--s5cmd-concurrency",
-        type=int,
-        default=10,
-        help="s5cmd concurrency (optional)",
-    )
-    parser.add_argument(
-        "--cache-dir",
-        type=str,
-        default="",
-        help="Cache directory",
-    )
-
-    return parser
-
-
 @htrack()
-def eval(
+def main(
     local_config_path: str,
     lighteval_config_path: Optional[str] = None,
     cache_dir: str = None,
@@ -90,7 +50,7 @@ def eval(
     dist.initialize_torch_distributed()
 
     with htrack_block("get config"):
-        if not args.checkpoint_config_path.endswith(".yaml"):
+        if not local_config_path.endswith(".yaml"):
             raise ValueError("The checkpoint path should point to a YAML file")
 
         nanotron_config: config_cls = get_config_from_file(
@@ -228,9 +188,3 @@ def eval(
         hlog(make_results_table(final_dict))
 
         return final_dict
-
-
-if __name__ == "__main__":
-    parser = get_parser()
-    args, unknowns = parser.parse_known_args()
-    eval(args.checkpoint_config_path, args.lighteval_override, args.cache_dir)
