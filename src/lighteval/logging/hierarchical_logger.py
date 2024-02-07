@@ -6,12 +6,12 @@ from typing import Any, Callable
 from lighteval.utils import is_accelerate_available, is_nanotron_available
 
 
-if is_accelerate_available():
-    from accelerate.logging import get_logger
+if is_nanotron_available():
+    from nanotron.logging import get_logger
 
     logger = get_logger(__name__, log_level="INFO")
-elif is_nanotron_available():
-    from nanotron.logging import get_logger
+elif is_accelerate_available():
+    from accelerate.logging import get_logger
 
     logger = get_logger(__name__, log_level="INFO")
 else:

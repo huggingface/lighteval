@@ -33,6 +33,7 @@ However, we are very grateful to the Harness and HELM teams for their continued 
 - [tests](https://github.com/huggingface/lighteval/tree/main/tests) contains our test suite, that we run at each PR to prevent regressions in metrics/prompts/tasks, for a subset of important tasks.
 
 ## How to install and use
+
 Note:
 - Use the Eleuther AI Harness (`lm_eval`) to share comparable numbers with everyone (e.g. on the Open LLM Leaderboard).
 - Use `lighteval` during training with the nanotron/datatrove LLM training stack and/or for quick eval/benchmark experimentations.
