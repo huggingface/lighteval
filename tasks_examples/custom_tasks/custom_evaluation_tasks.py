@@ -136,7 +136,7 @@ WORLD_KNOWLEDGE_TASKS = [
         prompt_function="triviaqa",
         hf_repo="trivia_qa",
         hf_subset="rc.nocontext",
-        metric=[Metrics.quasi_exact_match2],
+        metric=[Metrics.quasi_exact_match],
         generation_size=20,
         stop_sequence=["\n", ".", ","],
     ),
@@ -145,7 +145,7 @@ WORLD_KNOWLEDGE_TASKS = [
         prompt_function="natural_questions_prompt",
         hf_repo="lighteval/natural_questions_clean",
         hf_subset="default",
-        metric=[Metrics.quasi_exact_match2],
+        metric=[Metrics.quasi_exact_match],
         generation_size=20,
         stop_sequence=["\n", ".", ","],
     ),
@@ -182,7 +182,7 @@ READING_COMP_TASKS = [
         prompt_function="quac",
         hf_repo="lighteval/quac_helm",
         hf_subset="deault",
-        metric=[Metrics.quasi_exact_match2],
+        metric=[Metrics.quasi_exact_match],
         generation_size=20,
         stop_sequence=["\n", ".", ","],
     ),
@@ -213,7 +213,7 @@ class CustomMathEvaluationTask(CustomEvaluationTask):
         prompt_function="math",
         hf_repo="lighteval/MATH",
         hf_subset=None,
-        metric=[Metrics.math_quasi_exact_match],
+        metric=[Metrics.quasi_exact_match_math],
         hf_avail_splits=None,
         evaluation_splits=["test"],
         few_shots_split=None,
@@ -553,7 +553,7 @@ AGIEVAL_TASKS = [
         name="agi_eval:math",
         hf_subset="math",
         prompt_function="agi_eval_math_prompt",
-        metric=[Metrics.exact_match, Metrics.quasi_exact_match2],
+        metric=[Metrics.exact_match, Metrics.quasi_exact_match],
         generation_size=40,
     ),
     CustomAGIEvalEvaluationTask(name="agi_eval:sat-en", hf_subset="sat-en"),
@@ -628,7 +628,7 @@ _TASKS += AGIEVAL_TASKS
 EARLY_SIGNAL_TASKS = ",".join([t[1] for t in COMMON_SENSE_REASONING_STRING] + [t[1] for t in MMLU_STRING])
 
 # Convert to dict for lighteval
-TASKS_TABLE = [asdict(task) for task in _TASKS]
+TASKS_TABLE = [task.as_dict() for task in _TASKS]
 # You can have a few pre-organised groups of tasks
 TASKS_GROUPS = {
     "all": ",".join(t[1] for t in _TASKS_STRINGS),

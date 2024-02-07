@@ -20,7 +20,7 @@ def get_parser():
     parser.add_argument(
         "--cache-dir",
         type=str,
-        default="",
+        default=None,
         help="Cache directory",
     )
 

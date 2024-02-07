@@ -1,9 +1,10 @@
 import collections
 import importlib
 import os
+from pathlib import Path
 from pprint import pformat
 from types import ModuleType
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 from datasets import Dataset
 from datasets.load import dataset_module_factory
@@ -68,32 +69,38 @@ class Registry:
             )
 
     def get_task_dict(
-        self, task_name_list: List[str], custom_tasks_file: Optional[str] = None
+        self, task_name_list: List[str], custom_tasks: Optional[Union[str, ModuleType]] = None
     ) -> Dict[str, LightevalTask]:
         """
         Get a dictionary of tasks based on the task name list.
 
         Args:
             task_name_list (List[str]): A list of task names.
-            custom_tasks_file (Optional[str]): Path to the custom tasks file.
+            custom_tasks (Optional[Union[str, ModuleType]]): Path to the custom tasks file or name of a module to import containing custom tasks or the module it-self
 
         Returns:
             Dict[str, LightevalTask]: A dictionary containing the tasks.
 
         Notes:
-            - If custom_tasks_file is provided, it will import the custom tasks module and create a custom tasks registry.
+            - If custom_tasks is provided, it will import the custom tasks module and create a custom tasks registry.
             - Each task in the task_name_list will be instantiated with the corresponding task class.
         """
-        if custom_tasks_file is not None:
-            dataset_module = dataset_module_factory(str(custom_tasks_file))
-            custom_tasks_module = importlib.import_module(dataset_module.module_path)
+        custom_tasks_registry = None
+        if custom_tasks is not None:
+            if isinstance(custom_tasks, ModuleType):
+                custom_tasks_module = custom_tasks
+            elif isinstance(custom_tasks, (str, Path)) and os.path.exists(custom_tasks):
+                dataset_module = dataset_module_factory(str(custom_tasks))
+                custom_tasks_module = importlib.import_module(dataset_module.module_path)
+            elif isinstance(custom_tasks, (str, Path)):
+                custom_tasks_module = importlib.import_module(custom_tasks)
+            else:
+                raise ValueError(f"Cannot import custom tasks from {custom_tasks}")
+        if custom_tasks_module is not None:
             custom_tasks_registry = create_config_tasks(
                 meta_table=custom_tasks_module.TASKS_TABLE, cache_dir=self.cache_dir
             )
             hlog(custom_tasks_registry)
-        else:
-            custom_tasks_module = None
-            custom_tasks_registry = None
 
         tasks_dict = {}
         for task_name in task_name_list:
@@ -103,9 +110,22 @@ class Registry:
         return tasks_dict
 
 
-def get_custom_tasks(custom_tasks_file: str) -> Tuple[ModuleType, str]:
-    dataset_module = dataset_module_factory(str(custom_tasks_file))
-    custom_tasks_module = importlib.import_module(dataset_module.module_path)
+def get_custom_tasks(custom_tasks: Optional[Union[str, ModuleType]] = None) -> Tuple[ModuleType, str]:
+    """Get custom tasks from the given custom tasks file or module.
+
+    Args:
+        custom_tasks (Optional[Union[str, ModuleType]]): Path to the custom tasks file or name of a module to import containing custom tasks or the module it-self
+    """
+    if custom_tasks is not None:
+        if isinstance(custom_tasks, ModuleType):
+            custom_tasks_module = custom_tasks
+        elif isinstance(custom_tasks, (str, Path)) and os.path.exists(custom_tasks):
+            dataset_module = dataset_module_factory(str(custom_tasks))
+            custom_tasks_module = importlib.import_module(dataset_module.module_path)
+        elif isinstance(custom_tasks, (str, Path)):
+            custom_tasks_module = importlib.import_module(custom_tasks)
+        else:
+            raise ValueError(f"Cannot import custom tasks from {custom_tasks}")
     tasks_string = ""
     if hasattr(custom_tasks_module, "TASKS_GROUPS"):
         tasks_string = custom_tasks_module.TASKS_GROUPS

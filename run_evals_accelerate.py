@@ -71,7 +71,7 @@ def get_parser():
     parser.add_argument("--override_batch_size", type=int, default=-1)
     parser.add_argument("--dataset_loading_processes", type=int, default=1)
     parser.add_argument(
-        "--custom_tasks_file",
+        "--custom_tasks",
         type=str,
         default=None,
         help="Path to a file with custom tasks (a TASK list of dict and potentially prompt formating functions)",

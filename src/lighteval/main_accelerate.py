@@ -60,7 +60,7 @@ def main(args):
         with accelerator.main_process_first() if accelerator is not None else nullcontext():
             task_names_list, few_shots_dict = taskinfo_selector(args.tasks)
             task_dict = Registry(cache_dir=env_config.cache_dir).get_task_dict(
-                task_names_list, custom_tasks_file=args.custom_tasks_file
+                task_names_list, custom_tasks=args.custom_tasks
             )
             # Loading all the dataset in a distributed manner
             LightevalTask.load_datasets(task_dict.values(), args.dataset_loading_processes)
