@@ -1,4 +1,4 @@
-# ruff: noqa: C901,E1120
+# ruff: noqa: C901,E120
 import os
 import time
 from typing import List, Optional, Tuple, Type, Union
@@ -35,6 +35,8 @@ from lighteval.data import (
 from lighteval.models.model_output import Batch, GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
+    LoglikelihoodRequest,
+    LoglikelihoodRollingRequest,
 )
 from lighteval.utils import as_list
 from lighteval.utils_parallelism import find_executable_batch_size
@@ -412,19 +414,16 @@ class NanotronLightevalModel:
         Returns:
             List[Tuple[float, bool]]: _description_
         """
-        tokenized_reqs = []
-
-        for context, continuations in tqdm(
+        for request in tqdm(
             requests, desc="Tokenizing", disable=bool(dist.get_rank(self.parallel_context.world_pg) != 0)
         ):
-            if context == "":
-                # end of text as context
-                context_enc = [self.eot_token_id]
+            if request.context == "":
+                request.tokenized_context = [self.tokenizer.eos_token_id]
             else:
-                context_enc = self.tok_encode(context)
+                request.tokenized_context = self.tok_encode(request.context)
 
             # Some models tokenizer want a space at the beginning and other not
-            continuations = [self._check_continuations_start_space(c) for c in continuations]
+            continuations = [self._check_continuations_start_space(c) for c in request.choices]
 
             # We must not accidentally prepend a continuation with a start of sentence token.
             continuations_enc = [self.tok_encode(c, add_special_tokens=False) for c in continuations]
@@ -433,59 +432,48 @@ class NanotronLightevalModel:
                     f"Trying to do single token multiple choice but one choice has several tokens: {continuations_enc}. "
                     "If the additional pre-token is a space, try to set --no_multichoice_continuations_start_space "
                 )
-
-            tokenized_reqs.append(((context, continuations), context_enc, continuations_enc))
+            request.tokenized_continuation = continuations_enc
 
         return self._loglikelihood_single_token(
-            tokenized_reqs,
+            requests,
             override_bs=override_bs,
             disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
         )
 
-    def loglikelihood(self, requests: List[Tuple[str, str]], override_bs=None) -> List[LoglikelihoodReturn]:
+    def loglikelihood(self, requests: List[LoglikelihoodRequest], override_bs=None) -> List[LoglikelihoodReturn]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
-
-        Args:
-            requests (List[Tuple[str, dict]]): _description_
-
-        Returns:
-            List[Tuple[float, bool]]: _description_
         """
-        tokenized_reqs = []
-
-        for req in tqdm(requests, desc="Tokenizing", disable=bool(dist.get_rank(self.parallel_context.world_pg) != 0)):
-            context, continuation = req.context, req.choice
-            if context == "":
-                context_enc, continuation_enc = [self.eot_token_id], self.tok_encode(continuation)
+        for request in tqdm(
+            requests, desc="Tokenizing", disable=bool(dist.get_rank(self.parallel_context.world_pg) != 0)
+        ):
+            if request.context == "":
+                request.tokenized_context = [self.tokenizer.eos_token_id]
+                request.tokenized_continuation = self.tok_encode(request.choice)
             else:
-                # DO NOT CHANGE THE FOLLOWING LINE!
-                # It is mandatory for compatibility with the harness!!!
-                context_enc, continuation_enc = self._encode_pair(context, continuation)
-
-            tokenized_reqs.append(((context, continuation), context_enc, continuation_enc))
+                # The following line is mandatory for compatibility with the harness
+                request.tokenized_context, request.tokenized_continuation = self.tok_encode_pair(
+                    request.context, request.choice
+                )
 
         return self._loglikelihood_tokens(
-            tokenized_reqs,
+            requests,
             override_bs=override_bs,
             disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
         )
 
-    def loglikelihood_rolling(self, requests: List[Tuple[str, str]], override_bs=None) -> List[LoglikelihoodReturn]:
+    def loglikelihood_rolling(
+        self, requests: List[LoglikelihoodRollingRequest], override_bs=None
+    ) -> List[LoglikelihoodReturn]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
-        tokenized_reqs = []
-
-        for (context,) in tqdm(
+        for request in tqdm(
             requests, desc="Tokenizing", disable=bool(dist.get_rank(self.parallel_context.world_pg) != 0)
         ):  # tuple of one elem
-            if isinstance(context, dict):  # lm_eval.base.PerplexityTask passed the query as such
-                context = context["query"]
-            fake_context_enc, context_enc = [self.eot_token_id], self.tok_encode(context)
-
-            tokenized_reqs.append((("", context), fake_context_enc, context_enc))
+            request.tokenized_context = [self.tokenizer.eos_token_id]  # Fake context
+            request.tokenized_continuation = self.tok_encode(request.context)
 
         results = self._loglikelihood_tokens(
-            tokenized_reqs,
+            requests,
             override_bs=override_bs,
             disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
             return_bool_score=False,
@@ -677,7 +665,7 @@ class NanotronLightevalModel:
 
             # automatic (variable) batch size detection for vectorization
             # pull longest context sample from request
-            _, context_enc, _ = dataset[0]
+            context_enc = dataset[0].tokenized_context
             max_context = len(context_enc[-self.max_length :])
             batch_size = self._get_batch_size(
                 override_bs=override_bs, max_input_length=max_context, starting_batch_size=starting_batch_size
@@ -720,7 +708,7 @@ class NanotronLightevalModel:
                         rank=0,
                     )
                 iteration_start_time = time.time()
-                inputs = [context_enc for _, context_enc, _ in batch_data]
+                inputs = [item.tokenized_context for item in batch_data]
 
                 batch_model = self.prepare_batch(
                     inputs, padding_length=max_context, max_context=max_context, full_attention_masks=True
@@ -743,9 +731,9 @@ class NanotronLightevalModel:
 
                     batch_probs = []
                     batch_cont_tokens = []
-                    for i, ((context, _, cont_toks), logits, inplen) in enumerate(
-                        zip(batch_data, out, batch_model.input_lengths)
-                    ):
+                    for i, (batch, logits, inplen) in enumerate(zip(batch_data, out, batch_model.input_lengths)):
+                        context = batch.context
+                        cont_toks = batch.tokenized_continuation
                         # Get the last token
                         logits = logits[inplen - 1]  # [vocab]
 
@@ -907,7 +895,9 @@ class NanotronLightevalModel:
 
             # automatic (variable) batch size detection for vectorization
             # pull longest context sample from request
-            _, context_enc, continuation_enc = dataset[0]
+            context_enc = dataset[0].tokenized_context
+            continuation_enc = dataset[0].tokenized_continuation
+
             max_context = len((context_enc + continuation_enc)[-(self.max_length + 1) :][:-1])
 
             batch_size = self._get_batch_size(
@@ -950,7 +940,7 @@ class NanotronLightevalModel:
                     )
                 iteration_start_time = time.time()
                 inputs = [
-                    context_enc + continuation_enc[:-1] for _, context_enc, continuation_enc in batch_data
+                    item.tokenized_context + item.tokenized_continuation[:-1] for item in batch_data
                 ]  # The last token doesn't need to be input in the model
                 batch_model = self.prepare_batch(
                     inputs, padding_length=max_context, max_context=max_context, full_attention_masks=True
@@ -973,17 +963,16 @@ class NanotronLightevalModel:
                     logits_sum = []
                     max_equals = []
                     batch_cont_tokens = []
-                    for (_, _, cont_toks), logits, inplen in zip(batch_data, multi_logits, batch_model.input_lengths):
+                    for cur_request, cur_logits, inplen in zip(batch_data, multi_logits, batch_model.input_lengths):
+                        cont_toks = torch.tensor(
+                            cur_request.tokenized_continuation, dtype=torch.long, device=self.device
+                        )
+                        contlen = cont_toks.shape[0]
                         # We only look at the continuation tokens
-                        contlen = len(cont_toks)
                         if contlen > inplen:
-                            # continuation is longer than the allowed context size, everything is a continuation
-                            logits = logits.unsqueeze(0).to(self.device)  # [1, seq, vocab]
-                            cont_toks = (
-                                torch.tensor(cont_toks, dtype=torch.long, device=self.device)[:inplen]
-                                .unsqueeze(0)
-                                .to(self.device)
-                            )  # [1, seq]
+                            # Continuation is longer than the input size, we are in rolling mode (only continuation)
+                            cur_logits = cur_logits.unsqueeze(0).to(self.device)  # [1, seq, vocab]
+                            cont_toks = cont_toks[:inplen].unsqueeze(0).to(self.device)  # [1, seq]
                         else:
                             # if contlen == 1:
                             #     top_k = torch.topk(logits, 20)[1].tolist()
@@ -994,28 +983,21 @@ class NanotronLightevalModel:
                             #             f"Not all the solutions are in the top 20 most likely tokens on rank {dist.get_rank(self.parallel_context.world_pg)} "
                             #             f"top_tokens: {top_toks_str}\ncont_tokens: {cont_toks_str}")
 
-                            logits = (
-                                logits[inplen - contlen : inplen]
-                                .unsqueeze(0)
-                                .to(self.device)  # Here we remove the last one with our [...:inplen]
-                            )  # [1, contlen, vocab]
-                            cont_toks = (
-                                torch.tensor(cont_toks, dtype=torch.long, device=self.device)
-                                .unsqueeze(0)
-                                .to(self.device)
-                            )  # [1, contlen]
+                            cur_logits = (
+                                cur_logits[inplen - contlen : inplen].unsqueeze(0).to(self.device)
+                            )  # [1, seq, voc]
+                            cont_toks = cont_toks.unsqueeze(0).to(self.device)  # [1, seq]
 
                         # Check if per-token argmax is exactly equal to continuation
-                        greedy_tokens = logits.argmax(dim=-1).to(self.device)  # [1, contlen]
+                        greedy_tokens = cur_logits.argmax(dim=-1).to(self.device)
                         # Sometimes the continuation is longer than allowed by the model, we only look at the first tokens
                         max_equal = (greedy_tokens == cont_toks).all().squeeze(0).to(self.device)
 
                         # Obtain log-probs at the corresponding continuation token indices
-                        # last_token_slice = logits[:, -1, :].squeeze(0).tolist()
-                        logits = torch.gather(logits, 2, cont_toks.unsqueeze(-1)).squeeze(-1)  # [1, contlen]
+                        cur_logits = torch.gather(cur_logits, 2, cont_toks.unsqueeze(-1)).squeeze(-1)  # [1, seq]
 
                         # Answer: (log prob, is-exact-match)
-                        logits_sum.append(logits.sum())
+                        logits_sum.append(cur_logits.sum())
                         max_equals.append(max_equal)
                         batch_cont_tokens.append(cont_toks)
 
@@ -1120,7 +1102,6 @@ class NanotronLightevalModel:
     def greedy_until(
         self,
         requests: List[GreedyUntilRequest],
-        task_names: Optional[List[str]] = None,
         returns_logits=False,
         disable_tqdm: bool = False,
         override_bs=None,
@@ -1129,18 +1110,11 @@ class NanotronLightevalModel:
         """Greedy generation until a stop token is generated."""
         # automatic (variable) batch size detection for vectorization
         # pull longest context sample from request
-        if task_names:
-            enc_inputs = [
-                (self.tok_encode(req.context), self.homogeneize_ending_conditions(req.stop_sequence), task_name)
-                for req, task_name in zip(requests, task_names)
-            ]
-        else:
-            enc_inputs = [
-                (self.tok_encode(req.context), self.homogeneize_ending_conditions(req.stop_sequence), None)
-                for req in requests
-            ]
+        for request in requests:
+            request.stop_sequence = request.stop_sequence + [self.tokenizer.eos_token]
+            request.tokenized_context = self.tok_encode(request.context)
 
-        dataset = GenerativeTaskDatasetNanotron(requests=enc_inputs, dataset_splits=dataset_splits)
+        dataset = GenerativeTaskDatasetNanotron(requests=requests, dataset_splits=dataset_splits)
         res = []
 
         # Dataset is sorted in descending size.
@@ -1160,8 +1134,8 @@ class NanotronLightevalModel:
             dataset.split_start = subset_start
             dataset.split_end = min(subset_start + subset_length, total_length)
 
-            _, (context_enc, _, _) = dataset[0]
-            max_gen = max(d[1][1][1] for d in dataset)
+            context_enc = dataset[0].tokenized_context
+            max_gen = max(item.generation_size for item in dataset)
             max_input_length = min(len(context_enc) + max_gen, self.max_length)
             batch_size = self._get_batch_size(
                 override_bs=override_bs, max_input_length=max_input_length, starting_batch_size=starting_batch_size
@@ -1198,11 +1172,10 @@ class NanotronLightevalModel:
                     )
                 iteration_start_time = time.time()
                 example_index, batch_data = zip(*all_batch)
-                context = [c[0] for c in batch_data]
-                task_names = [c[2] for c in batch_data]
+                context = [c.context for c in batch_data]
                 # we take the longest asked generation in the batch
                 # Multiple request may have different max generation length
-                max_tokens = max(d[1][1] for d in batch_data)
+                max_tokens = max(d.generation_size for d in batch_data)  # d[1][1]
                 if max_tokens <= 0:
                     raise ValueError("Greedy generation requires a positive value for max generation but we got -1")
 

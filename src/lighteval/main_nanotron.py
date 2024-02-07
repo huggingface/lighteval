@@ -4,7 +4,6 @@ import random
 from typing import Optional, Type
 
 import numpy as np
-import torch
 
 from lighteval.evaluator import evaluate, make_results_table
 from lighteval.logging.evaluation_tracker import EvaluationTracker
@@ -13,19 +12,18 @@ from lighteval.models.model_loader import ModelInfo
 from lighteval.models.nanotron_model import NanotronLightevalModel
 from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_tasks
 from lighteval.tasks.registry import Registry, get_custom_tasks, taskinfo_selector
-from lighteval.utils import is_nanotron_available
+from lighteval.utils import NO_NANOTRON_ERROR_MSG, is_nanotron_available
+from lighteval.utils_parallelism import test_all_gather
 
 
-if is_nanotron_available():
-    from nanotron import distributed as dist
-    from nanotron import logging
-    from nanotron.config import Config, get_config_from_file
-    from nanotron.logging import get_logger, log_rank
-    from nanotron.parallel.context import ParallelContext
-    from nanotron.utils import local_ranks_zero_first
+if not is_nanotron_available():
+    raise ImportError(NO_NANOTRON_ERROR_MSG)
 
-else:
-    dist = None
+from nanotron import distributed as dist
+from nanotron.config import Config, get_config_from_file
+from nanotron.logging import get_logger
+from nanotron.parallel.context import ParallelContext
+from nanotron.utils import local_ranks_zero_first
 
 
 logger = get_logger(__name__)
@@ -46,6 +44,8 @@ def main(
 ):
     if cache_dir is None:
         cache_dir = CACHE_DIR
+
+    # env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
 
     dist.initialize_torch_distributed()
 
@@ -82,29 +82,7 @@ def main(
         )
 
     with htrack_block("Test all gather"):
-        hlog("Test gather tensor")
-        # Do a first NCCL sync to warmup and try to avoid Timeout after model/data loading
-        log_rank(
-            f"[TEST] Running NCCL sync for ranks {list(range(parallel_context.world_pg.size()))}",
-            logger=logger,
-            level=logging.WARNING,
-            group=parallel_context.dp_pg,
-            rank=0,
-        )
-        test_tensor = torch.tensor([dist.get_rank(parallel_context.world_pg)], device=torch.device("cuda"))
-        test_tensor_list = [torch.zeros_like(test_tensor) for _ in range(parallel_context.world_pg.size())]
-        dist.all_gather(test_tensor_list, test_tensor, group=parallel_context.world_pg, async_op=False)
-        dist.barrier()
-        log_rank(
-            f"[TEST] NCCL sync for ranks {[t.item() for t in test_tensor_list]}",
-            logger=logger,
-            level=logging.WARNING,
-            group=parallel_context.dp_pg,
-            rank=0,
-        )
-
-        del test_tensor_list
-        del test_tensor
+        test_all_gather(parallel_context=parallel_context)
 
     with htrack_block("Model loading"):
         # We need to load the model in the main process first to avoid downloading the model multiple times
