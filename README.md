@@ -2,7 +2,7 @@
 A lightweight LLM evaluation
 
 ## Context
-LightEval is a lightweight LLM evaluation suite that Hugging Face has been using internally with the recently released LLM data processing library [datatrove](https://github.com/huggingface/datatrove), LLM training library [nanotron](https://github.com/huggingface/nanotron) and logging/experimentation code base [brrr](https://github.com/huggingface/brrr).
+LightEval is a lightweight LLM evaluation suite that Hugging Face has been using internally with the recently released LLM data processing library [datatrove](https://github.com/huggingface/datatrove) and LLM training library [nanotron](https://github.com/huggingface/nanotron).
 
 We're releasing it with the community in the spirit of building in the open.
 
@@ -37,7 +37,7 @@ Note:
 - Use `lighteval` during training with the nanotron/datatrove LLM training stack and/or for quick eval/benchmark experimentations.
 
 ### Installation
-Create your virtual environment using virtualenv or conda depending on your preferences. We require Python3.10
+Create your virtual environment using virtualenv or conda depending on your preferences. We require Python3.10 or above.
 ```bash
 conda create -n lighteval python==3.10
 ```
