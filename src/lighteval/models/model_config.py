@@ -196,6 +196,25 @@ class TGIModelConfig:
     inference_server_auth: str
 
 
+@dataclass
+class InferenceModelConfig:
+    model: str
+
+
+@dataclass
+class InferenceEndpointModelConfig:
+    name: str
+    repository: str
+    accelerator: str
+    vendor: str
+    region: str
+    instance_size: str
+    instance_type: str
+    framework: str = "pytorch"
+    endpoint_type: str = "protected"
+    should_reuse_existing: bool = False
+
+
 def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]) -> BaseModelConfig:  # noqa: C901
     """
     Create a model configuration based on the provided arguments.
@@ -215,7 +234,34 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
     """
     if args.inference_server_address is not None and args.model_args is not None:
         raise ValueError("You cannot both use an inference server and load a model from its checkpoint.")
+    if args.inference_server_address is not None and args.endpoint_model_name is not None:
+        raise ValueError("You cannot both use a local inference server and load a model from an inference endpoint.")
+    if args.endpoint_model_name is not None and args.model_args is not None:
+        raise ValueError("You cannot both load a model from its checkpoint and from an inference endpoint.")
 
+    # TGI
+    if args.inference_server_address is not None:
+        return TGIModelConfig(
+            inference_server_address=args.inference_server_address, inference_server_auth=args.inference_server_auth
+        )
+
+    # Endpoint
+    if args.endpoint_model_name:
+        if args.reuse_existing or args.vendor is not None:
+            model = args.endpoint_model_name.split("/")[1].lower()
+            return InferenceEndpointModelConfig(
+                name=f"{model}-lighteval",
+                repository=args.endpoint_model_name,
+                accelerator=args.accelerator,
+                region=args.region,
+                vendor=args.vendor,
+                instance_size=args.instance_size,
+                instance_type=args.instance_type,
+                should_reuse_existing=args.reuse_existing,
+            )
+        return InferenceModelConfig(model=args.endpoint_model_name)
+
+    # Base
     multichoice_continuations_start_space = args.multichoice_continuations_start_space
     if not multichoice_continuations_start_space and not args.no_multichoice_continuations_start_space:
         multichoice_continuations_start_space = None
