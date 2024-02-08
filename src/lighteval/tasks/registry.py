@@ -10,7 +10,7 @@ from datasets import Dataset
 from datasets.load import dataset_module_factory
 
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
-from lighteval.tasks.lighteval_task import LightevalTask
+from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 
 
 # original is the reimplementation of original evals
@@ -202,7 +202,7 @@ def create_config_tasks(
         Dict[str, LightevalTask]: A dictionary of task names mapped to their corresponding LightevalTask classes.
     """
 
-    def create_task(name, cfg, cache_dir):
+    def create_task(name, cfg: LightevalTaskConfig, cache_dir: str):
         class LightevalTaskFromConfig(LightevalTask):
             def __init__(self, custom_tasks_module=None):
                 super().__init__(name, cfg, cache_dir=cache_dir, custom_tasks_module=custom_tasks_module)
@@ -222,6 +222,6 @@ def create_config_tasks(
             continue
         for suite in line["suite"]:
             if suite in DEFAULT_SUITES:
-                tasks_with_config[f"{suite}|{line['name']}"] = line
+                tasks_with_config[f"{suite}|{line['name']}"] = LightevalTaskConfig(**line)
 
     return {task: create_task(task, cfg, cache_dir=cache_dir) for task, cfg in tasks_with_config.items()}

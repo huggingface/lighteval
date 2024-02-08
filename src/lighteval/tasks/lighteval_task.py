@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class CustomEvaluationTask:
+class LightevalTaskConfig:
     name: str
     prompt_function: str
     hf_repo: str
@@ -95,7 +95,7 @@ class CustomEvaluationTask:
 
 
 class LightevalTask:
-    def __init__(self, name: str, cfg: dict, cache_dir: Optional[str] = None, custom_tasks_module=None):
+    def __init__(self, name: str, cfg: LightevalTaskConfig, cache_dir: Optional[str] = None, custom_tasks_module=None):
         """
         Initialize a LightEval task.
 
@@ -115,8 +115,8 @@ class LightevalTask:
         self._cfg = cfg
 
         # Dataset info
-        self.hf_repo = cfg["hf_repo"]
-        self.hf_subset = cfg["hf_subset"]
+        self.hf_repo = cfg.hf_repo
+        self.hf_subset = cfg.hf_subset
         self.dataset_path = self.hf_repo
         self.dataset_config_name = self.hf_subset
         self.dataset = None  # Delayed download
@@ -125,22 +125,22 @@ class LightevalTask:
         self._docs = None
 
         # Managing splits and few shot
-        self.all_available_splits = as_list(cfg["hf_avail_splits"])
+        self.all_available_splits = as_list(cfg.hf_avail_splits)
         if cfg.get("evaluation_splits", None) is None:
             raise ValueError(f"The evaluation split for task {self.name} is None. Please select a valid split.")
 
-        self.evaluation_split = as_list(cfg["evaluation_splits"])
+        self.evaluation_split = as_list(cfg.evaluation_splits)
         if cfg.get("few_shots_split", None) is not None:
-            self.fewshot_split = as_list(cfg["few_shots_split"])
+            self.fewshot_split = as_list(cfg.few_shots_split)
         else:
             self.fewshot_split = as_list(self.get_first_possible_fewshot_splits())
         self.fewshot_sampler = FewShotSampler(
-            few_shots_select=cfg["few_shots_select"], few_shots_split=self.fewshot_split
+            few_shots_select=cfg.few_shots_select, few_shots_split=self.fewshot_split
         )
 
         # Metrics
-        self.metrics = as_list(cfg["metric"])
-        self.suite = as_list(cfg["suite"])
+        self.metrics = as_list(cfg.metric)
+        self.suite = as_list(cfg.suite)
         ignored = [metric for metric in self.metrics if Metrics[metric].value.category == MetricCategory.IGNORED]
         if len(ignored) > 0:
             hlog_warn(f"[WARNING] Not implemented yet: ignoring the metric {' ,'.join(ignored)} for task {self.name}.")
@@ -150,20 +150,20 @@ class LightevalTask:
         # Data processing
         # to use once prompt formatting is managed as a module
         if custom_tasks_module is None:
-            self.formatter = getattr(tasks_prompt_formatting, cfg["prompt_function"])
-        elif hasattr(custom_tasks_module, cfg["prompt_function"]):
+            self.formatter = getattr(tasks_prompt_formatting, cfg.prompt_function)
+        elif hasattr(custom_tasks_module, cfg.prompt_function):
             # If we have a prompt in both the custom_tasks_module and our tasks_prompt_formatting
             # We take the prompt from the custom_tasks_module
-            if hasattr(tasks_prompt_formatting, cfg["prompt_function"]):
+            if hasattr(tasks_prompt_formatting, cfg.prompt_function):
                 hlog_warn(
-                    f"Be careful you are using custom prompt function {cfg['prompt_function']} and not the default one."
+                    f"Be careful you are using custom prompt function {cfg.prompt_function} and not the default one."
                 )
-            self.formatter = getattr(custom_tasks_module, cfg["prompt_function"])
+            self.formatter = getattr(custom_tasks_module, cfg.prompt_function)
         else:
-            self.formatter = getattr(tasks_prompt_formatting, cfg["prompt_function"])
-        self.generation_size = cfg["generation_size"]
-        self.stop_sequence = cfg["stop_sequence"]
-        self.output_regex = cfg["output_regex"]
+            self.formatter = getattr(tasks_prompt_formatting, cfg.prompt_function)
+        self.generation_size = cfg.generation_size
+        self.stop_sequence = cfg.stop_sequence
+        self.output_regex = cfg.output_regex
 
         # Save options
         self.save_queries: bool = False

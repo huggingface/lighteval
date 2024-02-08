@@ -9,38 +9,38 @@ from dataclasses import asdict
 from typing import Dict, List, Tuple
 
 from lighteval.metrics import Metrics
-from lighteval.tasks.lighteval_task import CustomEvaluationTask
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 
 
-_TASKS_STRINGS: List[Tuple[CustomEvaluationTask, str]] = []
-_TASKS: List[CustomEvaluationTask] = []
+_TASKS_STRINGS: List[Tuple[LightevalTaskConfig, str]] = []
+_TASKS: List[LightevalTaskConfig] = []
 
 ## COMMON_SENSE_REASONING_TASKS ##
 COMMON_SENSE_REASONING_TASKS = [
-    CustomEvaluationTask(
+    LightevalTaskConfig(
         name="hellaswag",
         prompt_function="hellaswag_prompt",
         hf_repo="hellaswag",
         hf_subset="default",
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
     ),
-    CustomEvaluationTask(
+    LightevalTaskConfig(
         name="winogrande",
         prompt_function="winogrande",
         hf_repo="winogrande",
         hf_subset="winogrande_xl",
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
     ),
-    CustomEvaluationTask(
+    LightevalTaskConfig(
         name="piqa",
         prompt_function="piqa_harness",
         hf_repo="piqa",
         hf_subset="plain_text",
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
     ),
-    CustomEvaluationTask(
+    LightevalTaskConfig(
         name="siqa",
         prompt_function="siqa_prompt",
         hf_repo="lighteval/siqa",
@@ -48,14 +48,14 @@ COMMON_SENSE_REASONING_TASKS = [
         hf_avail_splits=["train", "validation"],
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
     ),
-    CustomEvaluationTask(
+    LightevalTaskConfig(
         name="openbookqa",
         prompt_function="openbookqa",
         hf_repo="openbookqa",
         hf_subset="main",
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
     ),
-    CustomEvaluationTask(
+    LightevalTaskConfig(
         name="arc:easy",
         prompt_function="arc",
         hf_repo="ai2_arc",
@@ -64,7 +64,7 @@ COMMON_SENSE_REASONING_TASKS = [
         generation_size=1,
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
     ),
-    CustomEvaluationTask(
+    LightevalTaskConfig(
         name="arc:challenge",
         prompt_function="arc",
         hf_repo="ai2_arc",
@@ -73,7 +73,7 @@ COMMON_SENSE_REASONING_TASKS = [
         generation_size=1,
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
     ),
-    CustomEvaluationTask(
+    LightevalTaskConfig(
         name="commonsense_qa",
         prompt_function="commonsense_qa_prompt",
         hf_repo="commonsense_qa",
@@ -131,7 +131,7 @@ _TASKS += COMMON_SENSE_REASONING_TASKS
 ## WORLD_KNOWLEDGE_TASKS ##
 
 WORLD_KNOWLEDGE_TASKS = [
-    CustomEvaluationTask(
+    LightevalTaskConfig(
         name="trivia_qa",
         prompt_function="triviaqa",
         hf_repo="trivia_qa",
@@ -140,7 +140,7 @@ WORLD_KNOWLEDGE_TASKS = [
         generation_size=20,
         stop_sequence=["\n", ".", ","],
     ),
-    CustomEvaluationTask(
+    LightevalTaskConfig(
         name="natural_questions",
         prompt_function="natural_questions_prompt",
         hf_repo="lighteval/natural_questions_clean",
@@ -170,14 +170,14 @@ _TASKS += WORLD_KNOWLEDGE_TASKS
 ## Reading comprehension ##
 
 READING_COMP_TASKS = [
-    CustomEvaluationTask(
+    LightevalTaskConfig(
         name="super_glue:boolq",
         prompt_function="boolq_prompt",
         hf_repo="super_glue",
         hf_subset="boolq",
         metric=["target_perplexity"],
     ),
-    CustomEvaluationTask(
+    LightevalTaskConfig(
         name="quac",
         prompt_function="quac",
         hf_repo="lighteval/quac_helm",
@@ -204,7 +204,7 @@ _TASKS += READING_COMP_TASKS
 
 
 ## MATH ##
-class CustomMathEvaluationTask(CustomEvaluationTask):
+class CustomMathEvaluationTask(LightevalTaskConfig):
     """Custom class for math tasks with all the defaults set"""
 
     def __init__(
@@ -251,7 +251,7 @@ MATH_TASKS = [
     CustomMathEvaluationTask(name="math:prealgebra", hf_subset="prealgebra"),
     CustomMathEvaluationTask(name="math:precalculus", hf_subset="precalculus"),
 ]
-GSM8K = CustomEvaluationTask(
+GSM8K = LightevalTaskConfig(
     name="gsm8k",
     prompt_function="gsm8k",
     hf_repo="gsm8k",
@@ -272,7 +272,7 @@ _TASKS += MATH_TASKS + [GSM8K]
 
 
 ## MMLU ##
-class CustomMMLUEvaluationTask(CustomEvaluationTask):
+class CustomMMLUEvaluationTask(LightevalTaskConfig):
     def __init__(
         self,
         name,
@@ -415,7 +415,7 @@ _TASKS += MMLU_TASKS
 ## BBH ##
 
 
-class CustomBBHEvaluationTask(CustomEvaluationTask):
+class CustomBBHEvaluationTask(LightevalTaskConfig):
     def __init__(
         self,
         name,
@@ -506,7 +506,7 @@ _TASKS += BBH_TASKS
 
 
 ## AGI eval ##
-class CustomAGIEvalEvaluationTask(CustomEvaluationTask):
+class CustomAGIEvalEvaluationTask(LightevalTaskConfig):
     def __init__(
         self,
         name,
@@ -617,7 +617,7 @@ _TASKS += AGIEVAL_TASKS
 
 
 ## HUMAN EVAL ##
-# human_eval = CustomEvaluationTask(
+# human_eval = LightevalTaskConfig(
 #         name="human_eval",
 #         prompt_function="human_eval",
 #         hf_repo="lighteval/human_eval",
