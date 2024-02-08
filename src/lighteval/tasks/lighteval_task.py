@@ -88,10 +88,10 @@ class LightevalTaskConfig:
 
         # Convert list to tuple for hashing
         self.metric = tuple(self.metric)
-        self.hf_avail_splits = tuple(self.hf_avail_splits) if self.hf_avail_splits else None
-        self.evaluation_splits = tuple(self.evaluation_splits) if self.evaluation_splits else None
-        self.suite = tuple(self.suite) if self.suite else None
-        self.stop_sequence = tuple(self.stop_sequence) if self.stop_sequence else None
+        self.hf_avail_splits = tuple(self.hf_avail_splits) if self.hf_avail_splits is not None else None
+        self.evaluation_splits = tuple(self.evaluation_splits) if self.evaluation_splits is not None else None
+        self.suite = tuple(self.suite) if self.suite is not None else None
+        self.stop_sequence = tuple(self.stop_sequence) if self.stop_sequence is not None else None
 
 
 class LightevalTask:
