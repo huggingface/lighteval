@@ -22,9 +22,7 @@ from lighteval.tasks.requests import (
     LoglikelihoodSingleTokenRequest,
     Request,
 )
-from lighteval.utils import (
-    is_accelerate_available,
-)
+from lighteval.utils import as_list, is_accelerate_available
 from lighteval.utils_parallelism import find_executable_batch_size
 
 
@@ -342,7 +340,7 @@ class BaseModel(LightevalModel):
             list[GenerateReturn]: list of generated responses.
         """
         for request in requests:
-            request.stop_sequence = request.stop_sequence + [self.tokenizer.eos_token]
+            request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
             request.tokenized_context = self.tok_encode(request.context)
 
         dataset = GenerativeTaskDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
