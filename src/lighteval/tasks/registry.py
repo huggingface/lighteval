@@ -86,6 +86,7 @@ class Registry:
             - Each task in the task_name_list will be instantiated with the corresponding task class.
         """
         custom_tasks_registry = None
+        custom_tasks_module = None
         if custom_tasks is not None:
             if isinstance(custom_tasks, ModuleType):
                 custom_tasks_module = custom_tasks
@@ -110,7 +111,7 @@ class Registry:
         return tasks_dict
 
 
-def get_custom_tasks(custom_tasks: Optional[Union[str, ModuleType]] = None) -> Tuple[ModuleType, str]:
+def get_custom_tasks(custom_tasks: Union[str, ModuleType]) -> Tuple[ModuleType, str]:
     """Get custom tasks from the given custom tasks file or module.
 
     Args:
