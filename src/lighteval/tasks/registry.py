@@ -58,15 +58,18 @@ class Registry:
             ValueError: If the task is not found in the task registry or custom task registry.
         """
         if task_name in self.TASK_REGISTRY:
+            if custom_tasks_registry is not None and task_name in custom_tasks_registry:
+                hlog_warn(
+                    f"One of the tasks you requested ({task_name}) exists both in the default and custom tasks. Selecting the default task."
+                )
             return self.TASK_REGISTRY[task_name]
-        elif custom_tasks_registry is not None and task_name in custom_tasks_registry:
+        if custom_tasks_registry is not None and task_name in custom_tasks_registry:
             return custom_tasks_registry[task_name]
-        else:
-            hlog_warn(f"{task_name} not found in provided tasks")
-            hlog_warn(pformat(self.TASK_REGISTRY))
-            raise ValueError(
-                f"Cannot find tasks {task_name} in task list or in custom task registry ({custom_tasks_registry})"
-            )
+        hlog_warn(f"{task_name} not found in provided tasks")
+        hlog_warn(pformat(self.TASK_REGISTRY))
+        raise ValueError(
+            f"Cannot find tasks {task_name} in task list or in custom task registry ({custom_tasks_registry})"
+        )
 
     def get_task_dict(
         self, task_name_list: List[str], custom_tasks: Optional[Union[str, ModuleType]] = None
@@ -85,24 +88,18 @@ class Registry:
             - If custom_tasks is provided, it will import the custom tasks module and create a custom tasks registry.
             - Each task in the task_name_list will be instantiated with the corresponding task class.
         """
+        # Import custom tasks provided by the user
         custom_tasks_registry = None
         custom_tasks_module = None
         if custom_tasks is not None:
-            if isinstance(custom_tasks, ModuleType):
-                custom_tasks_module = custom_tasks
-            elif isinstance(custom_tasks, (str, Path)) and os.path.exists(custom_tasks):
-                dataset_module = dataset_module_factory(str(custom_tasks))
-                custom_tasks_module = importlib.import_module(dataset_module.module_path)
-            elif isinstance(custom_tasks, (str, Path)):
-                custom_tasks_module = importlib.import_module(custom_tasks)
-            else:
-                raise ValueError(f"Cannot import custom tasks from {custom_tasks}")
+            custom_tasks_module = create_custom_tasks_module(custom_tasks=custom_tasks)
         if custom_tasks_module is not None:
             custom_tasks_registry = create_config_tasks(
                 meta_table=custom_tasks_module.TASKS_TABLE, cache_dir=self.cache_dir
             )
             hlog(custom_tasks_registry)
 
+        # Select relevant tasks given the subset asked for by the user
         tasks_dict = {}
         for task_name in task_name_list:
             task_class = self.get_task_class(task_name, custom_tasks_registry=custom_tasks_registry)
@@ -111,22 +108,32 @@ class Registry:
         return tasks_dict
 
 
+def create_custom_tasks_module(custom_tasks: Union[str, ModuleType]) -> ModuleType:
+    """Creates a custom task module to load tasks defined by the user in their own file.
+
+    Args:
+        custom_tasks (Optional[Union[str, ModuleType]]): Path to the custom tasks file or name of a module to import containing custom tasks or the module it-self
+
+    Returns:
+        ModuleType: The newly imported/created custom tasks modules
+    """
+    if isinstance(custom_tasks, ModuleType):
+        return custom_tasks
+    if isinstance(custom_tasks, (str, Path)) and os.path.exists(custom_tasks):
+        dataset_module = dataset_module_factory(str(custom_tasks))
+        return importlib.import_module(dataset_module.module_path)
+    if isinstance(custom_tasks, (str, Path)):
+        return importlib.import_module(custom_tasks)
+    raise ValueError(f"Cannot import custom tasks from {custom_tasks}")
+
+
 def get_custom_tasks(custom_tasks: Union[str, ModuleType]) -> Tuple[ModuleType, str]:
     """Get custom tasks from the given custom tasks file or module.
 
     Args:
         custom_tasks (Optional[Union[str, ModuleType]]): Path to the custom tasks file or name of a module to import containing custom tasks or the module it-self
     """
-    if custom_tasks is not None:
-        if isinstance(custom_tasks, ModuleType):
-            custom_tasks_module = custom_tasks
-        elif isinstance(custom_tasks, (str, Path)) and os.path.exists(custom_tasks):
-            dataset_module = dataset_module_factory(str(custom_tasks))
-            custom_tasks_module = importlib.import_module(dataset_module.module_path)
-        elif isinstance(custom_tasks, (str, Path)):
-            custom_tasks_module = importlib.import_module(custom_tasks)
-        else:
-            raise ValueError(f"Cannot import custom tasks from {custom_tasks}")
+    custom_tasks_module = create_custom_tasks_module(custom_tasks=custom_tasks)
     tasks_string = ""
     if hasattr(custom_tasks_module, "TASKS_GROUPS"):
         tasks_string = custom_tasks_module.TASKS_GROUPS
@@ -137,7 +144,7 @@ def taskinfo_selector(
     tasks: str,
 ) -> tuple[list[str], dict[str, list[tuple[int, bool]]]]:
     """
-    Selects task information based on the given tasks and description dictionary path.
+    Converts a input string of tasks name to task information usable by lighteval.
 
     Args:
         tasks (str): A string containing a comma-separated list of tasks in the
@@ -218,15 +225,3 @@ def create_config_tasks(
                 tasks_with_config[f"{suite}|{line['name']}"] = line
 
     return {task: create_task(task, cfg, cache_dir=cache_dir) for task, cfg in tasks_with_config.items()}
-
-
-def task_to_suites(suites_selection: list = None):
-    task_to_suites = {}
-    meta_table = Dataset.from_json(TABLE_PATH)
-    for line in meta_table:
-        if suites_selection is None:
-            task_to_suites[line["name"]] = line["suite"]
-        else:
-            task_to_suites[line["name"]] = [suite for suite in line["suite"] if suite in suites_selection]
-
-    return task_to_suites
