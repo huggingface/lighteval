@@ -69,8 +69,12 @@ class GeneralConfigLogger:
 
     def __init__(self) -> None:
         """Stores the current lighteval commit for reproducibility, and starts the evaluation timer."""
-        repo = git.Repo(os.path.dirname(__file__).split("src")[0])
-        self.lighteval_sha = repo.git.rev_parse("HEAD")
+        try:
+            repo = git.Repo(os.path.dirname(__file__).split("src")[0])
+        except git.InvalidGitRepositoryError:
+            repo = None
+
+        self.lighteval_sha = repo.git.rev_parse("HEAD") if repo is not None else "?"
         self.start_time = time.perf_counter()
 
     def log_args_info(
