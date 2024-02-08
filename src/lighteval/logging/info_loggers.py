@@ -547,5 +547,5 @@ class TaskConfigLogger:
         self.tasks_configs = {name: task.cfg for name, task in task_dict.items()}
 
     def log_num_docs(self, task_name: str, original_num_docs: int, effective_num_docs: int) -> None:
-        self.tasks_configs[task_name]["original_num_docs"] = original_num_docs
-        self.tasks_configs[task_name]["effective_num_docs"] = effective_num_docs
+        self.tasks_configs[task_name].original_num_docs = original_num_docs
+        self.tasks_configs[task_name].effective_num_docs = effective_num_docs
