@@ -126,11 +126,11 @@ class LightevalTask:
 
         # Managing splits and few shot
         self.all_available_splits = as_list(cfg.hf_avail_splits)
-        if cfg.get("evaluation_splits", None) is None:
+        if cfg.evaluation_splits is None:
             raise ValueError(f"The evaluation split for task {self.name} is None. Please select a valid split.")
 
         self.evaluation_split = as_list(cfg.evaluation_splits)
-        if cfg.get("few_shots_split", None) is not None:
+        if cfg.few_shots_split is not None:
             self.fewshot_split = as_list(cfg.few_shots_split)
         else:
             self.fewshot_split = as_list(self.get_first_possible_fewshot_splits())
