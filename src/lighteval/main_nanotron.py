@@ -38,7 +38,7 @@ CACHE_DIR = os.getenv("HF_HOME", "/scratch")
 def main(
     checkpoint_config_path: str,
     lighteval_config_path: Optional[str] = None,
-    cache_dir: str = None,
+    cache_dir: Optional[str] = None,
     config_cls: Type = Config,
     model_config_cls: Optional[Type] = None,
     model_cls: Optional[Type] = None,
@@ -109,14 +109,14 @@ def main(
     with htrack_block("Tasks loading"):
         with local_ranks_zero_first():
             tasks_selection = lighteval_config.tasks.tasks
-            if lighteval_config.tasks.custom_tasks_file:
-                _, tasks_groups_dict = get_custom_tasks(lighteval_config.tasks.custom_tasks_file)
+            if lighteval_config.tasks.custom_tasks:
+                _, tasks_groups_dict = get_custom_tasks(lighteval_config.tasks.custom_tasks)
                 if tasks_groups_dict and lighteval_config.tasks.tasks in tasks_groups_dict:
                     tasks_selection = tasks_groups_dict[lighteval_config.tasks.tasks]
 
             task_names_list, few_shots_dict = taskinfo_selector(tasks_selection)
             task_dict = Registry(cache_dir=cache_dir).get_task_dict(
-                task_names_list, custom_tasks_file=lighteval_config.tasks.custom_tasks_file
+                task_names_list, custom_tasks=lighteval_config.tasks.custom_tasks
             )
             # Loading all the dataset in a distributed manner
             LightevalTask.load_datasets(task_dict.values(), lighteval_config.tasks.dataset_loading_processes)
