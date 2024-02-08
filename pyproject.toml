@@ -27,7 +27,7 @@ where = ["src"]
 
 [project]
 name = "lighteval"
-version = "0.0.1"
+version = "0.1.0"
 authors = [
   { name="Clémentine Fourrier", email="clementine@huggingface.com" },
   { name="Nathan Habib", email="nathan.habib@huggingface.com" },
