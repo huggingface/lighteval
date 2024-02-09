@@ -1,3 +1,7 @@
+""" Example run command:
+accelerate config
+accelerate launch run_evals_accelerate.py --tasks="lighteval|hellaswag|5|1" --output_dir "/scratch/evals" --model_args "pretrained=gpt2"
+"""
 import argparse
 
 from lighteval.main_accelerate import CACHE_DIR, main
