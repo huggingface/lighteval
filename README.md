@@ -10,7 +10,7 @@ Note that it is still very much early so don't expect 100% stability ^^'
 In case of problems or question, feel free to open an issue!
 
 ## News
-- **Feb 08, 2024**: Release of `lighteval``
+- **Feb 08, 2024**: Release of `lighteval`
 
 ## Deep thanks
 `lighteval` was originally built on top of the great [Eleuther AI Harness](https://github.com/EleutherAI/lm-evaluation-harness) (which is powering the [Open LLM Leaderboard](https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard)). We also took a lot of inspiration from the amazing [HELM](https://crfm.stanford.edu/helm/latest/), notably for metrics.
