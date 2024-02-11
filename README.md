@@ -46,8 +46,8 @@ conda create -n lighteval python==3.10
 
 Clone the package
 ```bash
-git clone
-cd lighteval-harness
+git clone https://github.com/huggingface/lighteval.git
+cd lighteval
 ```
 
 Install the dependencies. For the default installation, you just need:
