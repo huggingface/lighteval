@@ -232,10 +232,8 @@ class FewShotSampler:
             output = self.get_examples_with_chat_template(
                 task=task, tokenizer=tokenizer, example=example, instruction=instruction, fewshot_ex=fewshot_ex
             )
-            toks = tokenizer(output)["input_ids"]
         else:
             output = self.get_examples(task=task, example=example, instruction=instruction, fewshot_ex=fewshot_ex)
-            toks = tokenizer(output)["input_ids"]
 
         # If we need to truncate few-shots to fit in the context
         if truncate_few_shots and max_model_length is not None and tokenizer is not None:
@@ -244,6 +242,7 @@ class FewShotSampler:
             # but we probably should
             gen_size = task.generation_size if task.generation_size is not None else 0
 
+            toks = tokenizer(output)["input_ids"]
             while len(toks) + gen_size > max_model_length and num_effective_fewshots >= 0:
                 num_effective_fewshots -= 1
 
