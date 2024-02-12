@@ -24,7 +24,7 @@ However, we are very grateful to the Harness and HELM teams for their continued 
 - To run the evaluations, you can use `run_evals_accelerate.py` or `run_evals_nanotron.py`.
 - [src/lighteval](https://github.com/huggingface/lighteval/tree/main/src/lighteval) contains the core of the lib itself
     - [lighteval](https://github.com/huggingface/lighteval/tree/main/src/lighteval) contains the core of the library, divided in the following section
-        - [main_accelerate.py](https://github.com/huggingface/lighteval/blob/main/src/main_accelerate.py) and [main_accelerate.py](https://github.com/huggingface/lighteval/blob/main/src/main_nanotron.py) are our entry points to run evaluation
+        - [main_accelerate.py](https://github.com/huggingface/lighteval/blob/main/src/main_accelerate.py) and [main_nanotron.py](https://github.com/huggingface/lighteval/blob/main/src/main_nanotron.py) are our entry points to run evaluation
         - [logging](https://github.com/huggingface/lighteval/tree/main/src/lighteval/logging): Our loggers, to display experiment information and push it to the hub after a run
         - [metrics](https://github.com/huggingface/lighteval/tree/main/src/lighteval/metrics): All the available metrics you can use. They are described in metrics, and divided between sample metrics (applied at the sample level, such as a prediction accuracy) and corpus metrics (applied over the whole corpus). You'll also find available normalisation functions.
         - [models](https://github.com/huggingface/lighteval/tree/main/src/lighteval/models): Possible models to use. We cover transformers (base_model), with adapter or delta weights, as well as TGI models locally deployed (it's likely the code here is out of date though), and brrr/nanotron models.
