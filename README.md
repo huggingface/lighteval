@@ -95,7 +95,7 @@ python -m accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.p
     - Note: if you use model_parallel, accelerate will use 2 processes for model parallel, num_processes for data parallel
 
 The task parameters indicate which tasks you want to launch. You can select:
-- one or several tasks, with `--tasks task_names`, with task_names in the [metadata table](metadata_table.json), separated by commas. You must specify which version of the task you want (= in which suite it is), by prepending the suite name, as well as the number of training few_shots prompts for the given task, and whether you want to automatically reduce the number of few_shots if they make the prompt too long (`suite|task|few_shot|1 or 0 to automatically reduce the number of few_shots or not`).
+- one or several tasks, with `--tasks task_names`, with task_names in the [metadata table](src/lighteval/tasks/tasks_table.jsonl), separated by commas. You must specify which version of the task you want (= in which suite it is), by prepending the suite name, as well as the number of training few_shots prompts for the given task, and whether you want to automatically reduce the number of few_shots if they make the prompt too long (`suite|task|few_shot|1 or 0 to automatically reduce the number of few_shots or not`).
 - a file path, which contains tasks following the above format.
 
 Example
