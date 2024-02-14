@@ -4,7 +4,6 @@ import random
 from typing import Optional, Type
 
 import numpy as np
-from nanotron.config import LightEvalConfig
 
 from lighteval.evaluator import evaluate, make_results_table
 from lighteval.logging.evaluation_tracker import EvaluationTracker
@@ -22,7 +21,7 @@ if not is_nanotron_available():
     raise ImportError(NO_NANOTRON_ERROR_MSG)
 
 from nanotron import distributed as dist
-from nanotron.config import Config, get_config_from_file
+from nanotron.config import Config, LightEvalConfig, get_config_from_file
 from nanotron.logging import get_logger
 from nanotron.parallel.context import ParallelContext
 from nanotron.utils import local_ranks_zero_first
