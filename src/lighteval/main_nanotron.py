@@ -4,6 +4,7 @@ import random
 from typing import Optional, Type
 
 import numpy as np
+from nanotron.config import LightEvalConfig
 
 from lighteval.evaluator import evaluate, make_results_table
 from lighteval.logging.evaluation_tracker import EvaluationTracker
@@ -63,10 +64,7 @@ def main(
         )
 
         if lighteval_config_path:
-            lighteval_nanotron_config: config_cls = get_config_from_file(
-                lighteval_config_path, config_class=config_cls
-            )
-            lighteval_config = lighteval_nanotron_config.lighteval
+            lighteval_config: config_cls = get_config_from_file(lighteval_config_path, config_class=LightEvalConfig)
             nanotron_config.lighteval = lighteval_config
         else:
             lighteval_config = nanotron_config.lighteval
