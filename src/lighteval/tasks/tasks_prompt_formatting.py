@@ -1341,6 +1341,67 @@ def mmlu_harness(line, task_name: str = None):
     )
 
 
+def mmlu_harness_arabic(line, task_name: str = None):
+    # 'topic' is provided in Arabic
+    topic = line["subject"]
+    query = f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}. \n\n"
+    query += line["question"] + "\n"
+    # The choices are assumed to be in Arabic already
+    choices = [line["A"], line["B"], line["C"], line["D"]]
+    query += "".join([f"{key}. {choice}\n" for key, choice in zip(["أ", "ب", "ج", "د"], choices)])
+    query += "الإجابة:"
+
+    # Assuming 'answer' is one of 'A', 'B', 'C', 'D' and needs to be mapped to Arabic letters
+    letters_map = {"A": "أ", "B": "ب", "C": "ج", "D": "د"}
+    gold_ix = ["أ", "ب", "ج", "د"].index(letters_map[line["answer"]])
+
+    # return {
+    #     "task_name": task_name,
+    #     "query": query,
+    #     "choices": [" أ", " ب", " ج", " د"],  # Adding Arabic choices with space for consistency
+    #     "gold_index": gold_ix,
+    #     "instruction": f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}.\n\n",
+    # }
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=[" أ", " ب", " ج", " د"],
+        gold_index=gold_ix,
+        instruction=f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}.\n\n",
+        target_for_fewshot_sorting=[" أ", " ب", " ج", " د"][gold_ix],
+    )
+
+
+def exams_harness_arabic(line, task_name: str = None):
+    exam_id = line["id"]
+    question = line["question"]
+    choices = [line["A"], line["B"], line["C"], line["D"]]
+    answer = line["answer"]
+
+    # Convert the answer (e.g., 'A') to its index (e.g., 0)
+    answer_index = ["A", "B", "C", "D"].index(answer)
+
+    # Construct the query for the harness
+    query = f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}. \n\n"
+    query += f"السؤال: {question}\n"
+    choices_formatted = [f" أ) {choices[0]}\n", f" ب) {choices[1]}\n", f" ج) {choices[2]}\n", f" د) {choices[3]}\n"]
+    query += "\n".join(choices_formatted)
+    query += "\nالإجابة:"
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=["أ", "ب", "ج", "د"],  # Standard Arabic letters for choices
+        gold_index=answer_index,
+        instruction=f"الأسئلة التالية متعددة الاختيارات حول الموضوع رقم {exam_id}.\n\n",
+        target_for_fewshot_sorting=choices[answer_index],
+    )
+
+
+def acva(line, task_name: str = None):
+    pass
+
+
 def mmlu_helm(line, task_name: str = None):
     subject = line["subject"]
     query = f"The following are multiple choice questions (with answers) about {subject.replace('_', ' ')}.\n\nQuestion: {line['question']}"
