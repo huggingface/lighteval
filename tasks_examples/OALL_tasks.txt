@@ -114,3 +114,4 @@ lighteval|acva:communication|5|1
 lighteval|acva:computer_and_phone|5|1
 lighteval|acva:daily_life|5|1
 lighteval|acva:entertainment|5|1
+lighteval|xstory_cloze:ar|0|0
