@@ -529,6 +529,7 @@ def create_requests_from_tasks(  # noqa: C901
     max_samples: int,
     evaluation_tracker: "EvaluationTracker",
     use_chat_template: bool,
+    system_prompt: str,
 ) -> Tuple[dict[RequestType, list[Request]], dict[TaskExampleId, Doc]]:
     """
     Takes a task dict and a fewshot dict and returns a dict of requests, a dict
@@ -598,10 +599,16 @@ def create_requests_from_tasks(  # noqa: C901
                         sampler=rnd,
                         tokenizer=lm.tokenizer,
                         use_chat_template=use_chat_template,
+                        system_prompt=system_prompt,
                     )
                     doc.num_effective_few_shots = num_effective_few_shots
                     doc.num_asked_few_shots = num_fewshot
                     doc.ctx = ctx
+                    if use_chat_template:
+                        doc.choices = [
+                            lm.tokenizer.apply_chat_template([{"role": "assistant", "content": choice}])
+                            for choice in doc.choices
+                        ]
 
                     # Constructing the requests
                     docs[TaskExampleId(cur_task_name, doc_id_seed)] = doc
