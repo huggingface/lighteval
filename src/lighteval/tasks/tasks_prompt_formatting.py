@@ -1373,7 +1373,9 @@ def mmlu_harness_arabic(line, task_name: str = None):
 
 
 def exams_harness_arabic(line, task_name: str = None):
-    exam_id = line["id"]
+    # 'topic' is provided in Arabic
+    topic = line["subject"]
+    # exam_id = line["id"]
     question = line["question"]
     choices = [line["A"], line["B"], line["C"], line["D"]]
     answer = line["answer"]
@@ -1393,13 +1395,21 @@ def exams_harness_arabic(line, task_name: str = None):
         query=query,
         choices=["أ", "ب", "ج", "د"],  # Standard Arabic letters for choices
         gold_index=answer_index,
-        instruction=f"الأسئلة التالية متعددة الاختيارات حول الموضوع رقم {exam_id}.\n\n",
+        instruction=f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}. \n\n",
         target_for_fewshot_sorting=choices[answer_index],
     )
 
 
 def acva(line, task_name: str = None):
-    pass
+    question = line["question"]
+    answer = line["answer"]
+
+    return Doc(
+        task_name=task_name,
+        query=f"السؤال: {question}\nالإجابة:",
+        choices=["صح", "خطأ"],
+        gold_index=["صح", "خطأ"].index(answer),
+    )
 
 
 def mmlu_helm(line, task_name: str = None):
