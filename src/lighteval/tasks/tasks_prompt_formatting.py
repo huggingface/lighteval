@@ -447,7 +447,7 @@ def gpqa(line, task_name: str = None):
 
     instruction = "Select the correct answer to the following questions.\n\n"
 
-    query = line["Question"] + "\n"
+    query = f"Question: {line['Question']}\n"
     query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, choices)])
     query += "Answer: "
 
