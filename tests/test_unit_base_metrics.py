@@ -158,7 +158,7 @@ class TestBaseMetrics:
         res = em.compute_one_item("", "")
         assert res == 0
 
-    @pytest.mark.skip(reason="Need tp punderstand what it does.")
+    @pytest.mark.skip(reason="Need to understand what it does.")
     def test_pass_at_k_estimator(self):
         assert False
 
