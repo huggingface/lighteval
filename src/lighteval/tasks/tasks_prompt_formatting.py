@@ -440,6 +440,26 @@ def ethics_virtue(line, task_name: str = None):
     )
 
 
+def gpqa(line, task_name: str = None):
+    gold_index = random.randint(0, 3)
+    choices = [line["Incorrect Answer 1"], line["Incorrect Answer 2"], line["Incorrect Answer 3"]]
+    choices.insert(gold_index, line["Correct Answer"])
+
+    instruction = "Select the correct answer to the following questions.\n\n"
+
+    query = line["Question"] + "\n"
+    query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, choices)])
+    query += "Answer: "
+
+    return Doc(
+        task_name=task_name,
+        query=f"{instruction}{query}",
+        choices=LETTER_INDICES[:4],
+        gold_index=gold_index,
+        instruction=instruction,
+    )
+
+
 def gsm8k(line, task_name: str = None):
     # Has special analysis in metric for number decomposiition
     return Doc(
