@@ -14,6 +14,10 @@ from lighteval.utils import as_list
 LETTER_INDICES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
 # fmt: on
 
+# fmt: off
+LETTER_INDICES_AR = ["أ", "ب", "ج", "د", "هـ", "و", "ز", "ح", "ط", "ي", "ك", "ل", "م", "ن", "س", "ع", "ف", "ص", "ق", "ر", "ش", "ت", "ث", "خ", "ذ", "ض", "ظ", "غ"]
+# fmt: on
+
 
 def anli(line, task_name: str = None):
     return Doc(
@@ -1322,58 +1326,53 @@ def mmlu_harness(line, task_name: str = None):
 
 
 def mmlu_harness_arabic(line, task_name: str = None):
-    # 'topic' is provided in Arabic
+    # Internal mapping of English letters to Arabic
+    letters_map = {eng: ar for eng, ar in zip(LETTER_INDICES, LETTER_INDICES_AR)}
+    
     topic = line["subject"]
     query = f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}. \n\n"
     query += line["question"] + "\n"
-    # The choices are assumed to be in Arabic already
     choices = [line["A"], line["B"], line["C"], line["D"]]
-    query += "".join([f"{key}. {choice}\n" for key, choice in zip(["أ", "ب", "ج", "د"], choices)])
+    query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES_AR[:4], choices)])
     query += "الإجابة:"
+    
+    # Convert the answer from English to Arabic letter
+    arabic_answer = letters_map[line["answer"]]
+    gold_ix = LETTER_INDICES_AR.index(arabic_answer)
 
-    # Assuming 'answer' is one of 'A', 'B', 'C', 'D' and needs to be mapped to Arabic letters
-    letters_map = {"A": "أ", "B": "ب", "C": "ج", "D": "د"}
-    gold_ix = ["أ", "ب", "ج", "د"].index(letters_map[line["answer"]])
-
-    # return {
-    #     "task_name": task_name,
-    #     "query": query,
-    #     "choices": [" أ", " ب", " ج", " د"],  # Adding Arabic choices with space for consistency
-    #     "gold_index": gold_ix,
-    #     "instruction": f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}.\n\n",
-    # }
     return Doc(
         task_name=task_name,
         query=query,
-        choices=[" أ", " ب", " ج", " د"],
+        choices=LETTER_INDICES_AR[:4],
         gold_index=gold_ix,
-        instruction=f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}.\n\n",
-        target_for_fewshot_sorting=[" أ", " ب", " ج", " د"][gold_ix],
+        instruction=f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}. \n\n",
+        target_for_fewshot_sorting=LETTER_INDICES_AR[gold_ix],
     )
 
 
 def exams_harness_arabic(line, task_name: str = None):
-    # 'topic' is provided in Arabic
+    # Internal mapping of English letters to Arabic
+    letters_map = {eng: ar for eng, ar in zip(LETTER_INDICES, LETTER_INDICES_AR)}
+    
     topic = line["subject"]
-    # exam_id = line["id"]
     question = line["question"]
     choices = [line["A"], line["B"], line["C"], line["D"]]
     answer = line["answer"]
 
-    # Convert the answer (e.g., 'A') to its index (e.g., 0)
-    answer_index = ["A", "B", "C", "D"].index(answer)
+    # Convert the answer from English to Arabic letter
+    arabic_answer = letters_map[answer]
+    answer_index = LETTER_INDICES_AR.index(arabic_answer)
 
-    # Construct the query for the harness
     query = f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}. \n\n"
     query += f"السؤال: {question}\n"
-    choices_formatted = [f" أ) {choices[0]}\n", f" ب) {choices[1]}\n", f" ج) {choices[2]}\n", f" د) {choices[3]}\n"]
+    choices_formatted = [f" {LETTER_INDICES_AR[i]}) {choice}\n" for i, choice in enumerate(choices)]
     query += "\n".join(choices_formatted)
     query += "\nالإجابة:"
 
     return Doc(
         task_name=task_name,
         query=query,
-        choices=["أ", "ب", "ج", "د"],  # Standard Arabic letters for choices
+        choices=LETTER_INDICES_AR[:4],
         gold_index=answer_index,
         instruction=f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}. \n\n",
         target_for_fewshot_sorting=choices[answer_index],
