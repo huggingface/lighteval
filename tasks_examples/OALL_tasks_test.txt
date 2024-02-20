@@ -1,4 +1,3 @@
 lighteval|arabic_mmlu:abstract_algebra|5|1
 lighteval|arabic_exams|5|1
-lighteval|acva:entertainment|5|1
 lighteval|xstory_cloze:ar|0|0
