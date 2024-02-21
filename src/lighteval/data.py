@@ -100,7 +100,7 @@ class DynamicBatchDataset(Dataset):
         """
         Iterator that yields the start and end indices of each dataset split.
         Also updates the starting batch size for each split (trying to double
-        the batch everytime we move to a new split).
+        the batch every time we move to a new split).
 
         Yields:
             tuple: A tuple containing the start and end indices of a split.
