@@ -19,6 +19,18 @@ LETTER_INDICES_AR = ["أ", "ب", "ج", "د", "هـ", "و", "ز", "ح", "ط", "ي
 # fmt: on
 
 
+def acva(line, task_name: str = None):
+    question = line["question"]
+    answer = line["answer"]
+
+    return Doc(
+        task_name=task_name,
+        query=f"السؤال: {question}\nالإجابة:",
+        choices=["صح", "خطأ"],
+        gold_index=["صح", "خطأ"].index(answer),
+    )
+
+
 def anli(line, task_name: str = None):
     return Doc(
         task_name=task_name,
@@ -441,6 +453,29 @@ def ethics_virtue(line, task_name: str = None):
         query=f"Sentence: {line['scenario']}\nQuestion: Does the character in this sentence exhibit the trait \"{line['trait']}\"?\nAnswer:",
         choices=[" no", " yes"],
         gold_index=int(line["label"]),
+    )
+
+
+def exams_arabic(line, task_name: str = None):
+    topic = line["subject"]
+    question = line["question"]
+    choices = [line["A"], line["B"], line["C"], line["D"]]
+    choices_formatted = [f" {LETTER_INDICES_AR[i]}) {choice}\n" for i, choice in enumerate(choices)]
+    answer = line["answer"]
+    answer_index = LETTER_INDICES.index(answer)
+
+    instruction = f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}. \n\n"
+    query = f"{instruction}السؤال: {question}\n"
+    query += "\n".join(choices_formatted)
+    query += "\nالإجابة:"
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=LETTER_INDICES_AR[:4],
+        gold_index=answer_index,
+        instruction=instruction,
+        target_for_fewshot_sorting=choices[answer_index],
     )
 
 
@@ -1325,69 +1360,25 @@ def mmlu_harness(line, task_name: str = None):
     )
 
 
-def mmlu_harness_arabic(line, task_name: str = None):
-    # Internal mapping of English letters to Arabic
-    letters_map = {eng: ar for eng, ar in zip(LETTER_INDICES, LETTER_INDICES_AR)}
-    
+def mmlu_arabic(line, task_name: str = None):
     topic = line["subject"]
-    query = f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}. \n\n"
-    query += line["question"] + "\n"
+    instruction = f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}. \n\n"
     choices = [line["A"], line["B"], line["C"], line["D"]]
+    # Answers are provided with roman letters - we look for the correct index in LETTER_INDICES,
+    # it will then be applied to arabic letters
+    gold_ix = LETTER_INDICES.index(line["answer"])
+
+    query = f"{instruction}{line['question']}\n"
     query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES_AR[:4], choices)])
     query += "الإجابة:"
-    
-    # Convert the answer from English to Arabic letter
-    arabic_answer = letters_map[line["answer"]]
-    gold_ix = LETTER_INDICES_AR.index(arabic_answer)
 
     return Doc(
         task_name=task_name,
         query=query,
         choices=LETTER_INDICES_AR[:4],
         gold_index=gold_ix,
-        instruction=f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}. \n\n",
+        instruction=instruction,
         target_for_fewshot_sorting=LETTER_INDICES_AR[gold_ix],
-    )
-
-
-def exams_harness_arabic(line, task_name: str = None):
-    # Internal mapping of English letters to Arabic
-    letters_map = {eng: ar for eng, ar in zip(LETTER_INDICES, LETTER_INDICES_AR)}
-    
-    topic = line["subject"]
-    question = line["question"]
-    choices = [line["A"], line["B"], line["C"], line["D"]]
-    answer = line["answer"]
-
-    # Convert the answer from English to Arabic letter
-    arabic_answer = letters_map[answer]
-    answer_index = LETTER_INDICES_AR.index(arabic_answer)
-
-    query = f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}. \n\n"
-    query += f"السؤال: {question}\n"
-    choices_formatted = [f" {LETTER_INDICES_AR[i]}) {choice}\n" for i, choice in enumerate(choices)]
-    query += "\n".join(choices_formatted)
-    query += "\nالإجابة:"
-
-    return Doc(
-        task_name=task_name,
-        query=query,
-        choices=LETTER_INDICES_AR[:4],
-        gold_index=answer_index,
-        instruction=f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}. \n\n",
-        target_for_fewshot_sorting=choices[answer_index],
-    )
-
-
-def acva(line, task_name: str = None):
-    question = line["question"]
-    answer = line["answer"]
-
-    return Doc(
-        task_name=task_name,
-        query=f"السؤال: {question}\nالإجابة:",
-        choices=["صح", "خطأ"],
-        gold_index=["صح", "خطأ"].index(answer),
     )
 
 
