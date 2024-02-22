@@ -279,7 +279,7 @@ class LightevalTask:
             self._fewshot_docs = []
 
             # If we have no available few shot split, the few shot data is the eval data!
-            if self.fewshot_split is None:
+            if self.fewshot_split in [None, [None]]:
                 self._fewshot_docs = self._get_docs_from_split(self.evaluation_split, few_shots=True)
             else:  # Normal case
                 self._fewshot_docs = self._get_docs_from_split(self.fewshot_split, few_shots=True)
