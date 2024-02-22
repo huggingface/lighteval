@@ -69,13 +69,14 @@ def main(args):
 
             hlog("Loading documents, and requests")
             requests, docs = create_requests_from_tasks(
-                task_dict,
-                few_shots_dict,
-                args.num_fewshot_seeds,
-                model,
-                args.max_samples,
-                evaluation_tracker,
-                args.use_chat_template,
+                task_dict=task_dict,
+                fewshot_dict=few_shots_dict,
+                num_fewshot_seeds=args.num_fewshot_seeds,
+                lm=model,
+                max_samples=args.max_samples,
+                evaluation_tracker=evaluation_tracker,
+                use_chat_template=args.use_chat_template,
+                system_prompt=args.system_prompt,
             )
 
     with htrack_block("Setting seeds and waiting for all processes"):
