@@ -454,7 +454,7 @@ def gpqa(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"{instruction}{query}",
-        choices=LETTER_INDICES[:4],
+        choices=LETTER_INDICES[:len(choices)],
         gold_index=gold_index,
         instruction=instruction,
     )
