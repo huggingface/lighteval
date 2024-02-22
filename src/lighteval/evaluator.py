@@ -108,8 +108,9 @@ def make_results_table(result_dict):
 
     values = []
 
-    for k, dic in result_dict["results"].items():
-        version = result_dict["versions"][k]
+    for k in sorted(result_dict["results"].keys()):
+        dic = result_dict["results"][k]
+        version = result_dict["versions"][k] if k in result_dict["versions"] else ""
         for m, v in dic.items():
             if m.endswith("_stderr"):
                 continue
