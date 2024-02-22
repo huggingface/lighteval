@@ -459,18 +459,20 @@ class MetricsLogger:
                         self.metric_aggregated[task_name][f"{metric_name}_stderr"] = float("nan")
                         hlog_warn(f"{task_name}, {metric_name} got an OVERFLOW ERROR when computing stderr.")
 
-        suite_average = {}
-        suite_nb = {}
+        # We group subtasks which belong to the same parent task, like MMLU, to compute an average on them
+        grouped_tasks = collections.defaultdict(list)
+        for k in self.metric_aggregated.keys():
+            if "|" in k:
+                suite, task, fewshot = k.split("|")
+                grouped_tasks[f"{suite}|{task.split(':')[0]}:_average|{fewshot}"].append(k)
 
-        for _, metrics in self.metric_aggregated.items():
-            for metric, value in metrics.items():
-                suite_average[metric] = suite_average.get(metric, 0) + value
-                suite_nb[metric] = suite_nb.get(metric, 0) + 1
-
-        for metric, value in suite_average.items():
-            suite_average[metric] = value / suite_nb[metric]
-
-        self.metric_aggregated["all"] = suite_average
+        for average_task, list_of_subtasks in grouped_tasks.items():
+            if len(list_of_subtasks) > 1:
+                metrics = list(self.metric_aggregated[list_of_subtasks[0]].keys())
+                self.metric_aggregated[average_task] = {
+                    metric: sum([self.metric_aggregated[k][metric] for k in list_of_subtasks]) / len(list_of_subtasks)
+                    for metric in metrics
+                }
 
 
 class VersionsLogger:
@@ -485,7 +487,7 @@ class VersionsLogger:
 
     # the versions dict will be a dict of task_name: task_version
     # {"winogrande|winogrande_xl": 0}
-    versions: dict[str, int] = {"all": 0}
+    versions: dict[str, int] = {}
 
     def log(self, task_name: str, task_version: int) -> None:
         self.versions[task_name] = task_version
