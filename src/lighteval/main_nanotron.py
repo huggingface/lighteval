@@ -129,6 +129,7 @@ def main(
                 max_samples=lighteval_config.tasks.max_samples,
                 evaluation_tracker=evaluation_tracker,
                 use_chat_template=False,
+                system_prompt=None,
             )
 
     with htrack_block("Setting seeds and waiting for all processes"):
