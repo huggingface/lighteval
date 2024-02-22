@@ -163,10 +163,12 @@ class FewShotSampler:
         example: str,
         instruction: str,
         fewshot_ex: list[str],
+        system_prompt: str,
     ):
         examples = []
+        if system_prompt is not None:
+            examples.append({"role": "system", "content": system_prompt})
         for ex in fewshot_ex:
-            # many places to put these "\n" though
             examples.append({"role": "user", "content": task.doc_to_text_without_instructions(ex)})
             examples.append({"role": "assistant", "content": task.doc_to_target(ex)})
         # We add the actual example
@@ -202,6 +204,7 @@ class FewShotSampler:
         max_model_length: Optional[int] = None,
         tokenizer: Optional[AutoTokenizer] = None,
         use_chat_template=False,
+        system_prompt: str = None,
     ):
         """Returns a fewshot context string that is made up of a prepended description
         (if provided), the `num_fewshot` number of examples, and an appended prompt example.
@@ -230,7 +233,12 @@ class FewShotSampler:
 
         if use_chat_template:
             output = self.get_examples_with_chat_template(
-                task=task, tokenizer=tokenizer, example=example, instruction=instruction, fewshot_ex=fewshot_ex
+                task=task,
+                tokenizer=tokenizer,
+                example=example,
+                instruction=instruction,
+                fewshot_ex=fewshot_ex,
+                system_prompt=system_prompt,
             )
             toks = tokenizer(output)["input_ids"]
         else:
@@ -254,6 +262,7 @@ class FewShotSampler:
                         example=example,
                         instruction=instruction,
                         fewshot_ex=fewshot_ex[:num_effective_fewshots],
+                        system_prompt=system_prompt,
                     )
                     toks = tokenizer(output)["input_ids"]
                 else:

@@ -43,6 +43,7 @@ def get_parser():
         help="Whether to force multiple choice continuations to not start with a space",
     )
     parser.add_argument("--use_chat_template", default=False, action="store_true")
+    parser.add_argument("--system_prompt", type=str, default=None)
     # Model type 2) TGI
     task_type_group.add_argument("--inference_server_address", type=str)
     parser.add_argument("--inference_server_auth", type=str, default=None)
