@@ -190,8 +190,7 @@ These metrics need the model to generate an output. They are therefore slower.
     - `bleu_4` (HELM): Average sample BLEU score [(Papineni et al., 2002)](https://aclanthology.org/P02-1040/) based on 4-gram overlap - uses the nltk implementation.
     - `chrf` (Harness): Character n-gram matches f-score.
     - `ter` (Harness): Translation edit/error rate.
-- Bias, toxicity, copyright
-    - `bias` (HELM): Reports uneven association of test groups (race, gender, demographic) and target adjectives or professions, based on cooccurence statistics between the test terms (word list from [Bolukbasi et al., 2016](https://papers.nips.cc/paper/2016/hash/a486cd07e4ac3d270571622f4f316ec5-Abstract.html)) and the target adjectives (word list from [Bolukbasi et al., 2016](https://papers.nips.cc/paper/2016/hash/a486cd07e4ac3d270571622f4f316ec5-Abstract.html)).
+- Copyright
     - `copyright` (HELM): Reports:
         - `longest_common_prefix_length`: average length of longest common prefix between model generation and reference,
         - `edit_distance`: average Levenshtein edit distance between model generation and reference,
