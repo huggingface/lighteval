@@ -86,7 +86,7 @@ def test_model_prediction(prompt_inputs: tuple[str, str, list]):
                 cur_result_list = as_list(metric_result[key])
             cur_ref_list = as_list(metric_reference[key])
 
-            # itemwise comparision of lists
+            # item wise comparison of lists
             if isinstance(cur_result_list[0], list):
                 for res, ref in zip(cur_result_list, cur_ref_list):
                     try:
