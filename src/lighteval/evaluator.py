@@ -45,7 +45,7 @@ def evaluate(  # noqa: C901
     # A request output tupe is a Tuple where the first element is the index of
     # the request for one document of one task i.e.
     # task: "arc_easy", doc: "0"# request: "0" -> request_index = 0,
-    # We can have multiple request per doc for multichoice tasks for example.
+    # We can have multiple request per doc for multi choice tasks for example.
 
     # all responses for each (task, doc)
     RequestIndexModelResponseTuple = collections.namedtuple(
