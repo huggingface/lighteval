@@ -22,7 +22,8 @@ import string
 from typing import Dict, Optional, Sequence, Union
 
 import langdetect
-from lm_eval.tasks.ifeval import instructions_util
+
+import tasks_examples.custom_tasks_with_custom_metrics.ifeval.instructions_utils as instructions_util
 
 
 logger = logging.getLogger(__name__)

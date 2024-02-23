@@ -18,7 +18,6 @@ import functools
 import random
 import re
 
-import immutabledict
 import nltk
 
 
@@ -1561,40 +1560,38 @@ WORD_LIST = [
 ]  # pylint: disable=line-too-long
 
 # ISO 639-1 codes to language names.
-LANGUAGE_CODES = immutabledict.immutabledict(
-    {
-        "en": "English",
-        "es": "Spanish",
-        "pt": "Portuguese",
-        "ar": "Arabic",
-        "hi": "Hindi",
-        "fr": "French",
-        "ru": "Russian",
-        "de": "German",
-        "ja": "Japanese",
-        "it": "Italian",
-        "bn": "Bengali",
-        "uk": "Ukrainian",
-        "th": "Thai",
-        "ur": "Urdu",
-        "ta": "Tamil",
-        "te": "Telugu",
-        "bg": "Bulgarian",
-        "ko": "Korean",
-        "pl": "Polish",
-        "he": "Hebrew",
-        "fa": "Persian",
-        "vi": "Vietnamese",
-        "ne": "Nepali",
-        "sw": "Swahili",
-        "kn": "Kannada",
-        "mr": "Marathi",
-        "gu": "Gujarati",
-        "pa": "Punjabi",
-        "ml": "Malayalam",
-        "fi": "Finnish",
-    }
-)
+LANGUAGE_CODES = {
+    "en": "English",
+    "es": "Spanish",
+    "pt": "Portuguese",
+    "ar": "Arabic",
+    "hi": "Hindi",
+    "fr": "French",
+    "ru": "Russian",
+    "de": "German",
+    "ja": "Japanese",
+    "it": "Italian",
+    "bn": "Bengali",
+    "uk": "Ukrainian",
+    "th": "Thai",
+    "ur": "Urdu",
+    "ta": "Tamil",
+    "te": "Telugu",
+    "bg": "Bulgarian",
+    "ko": "Korean",
+    "pl": "Polish",
+    "he": "Hebrew",
+    "fa": "Persian",
+    "vi": "Vietnamese",
+    "ne": "Nepali",
+    "sw": "Swahili",
+    "kn": "Kannada",
+    "mr": "Marathi",
+    "gu": "Gujarati",
+    "pa": "Punjabi",
+    "ml": "Malayalam",
+    "fi": "Finnish",
+}
 
 _ALPHABETS = "([A-Za-z])"
 _PREFIXES = "(Mr|St|Mrs|Ms|Dr)[.]"

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """Registry of all instructions."""
-from lm_eval.tasks.ifeval import instructions
+import tasks_examples.custom_tasks_with_custom_metrics.ifeval.instructions as instructions
 
 
 _KEYWORD = "keywords:"

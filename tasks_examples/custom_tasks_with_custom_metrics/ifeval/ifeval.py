@@ -1,6 +1,8 @@
-import instructions_registry
 import numpy as np
+from aenum import extend_enum
 
+import tasks_examples.custom_tasks_with_custom_metrics.ifeval.instructions_registry as instructions_registry
+from lighteval.metrics import Metrics
 from lighteval.metrics.utils import (
     MetricCategory,
     MetricUseCase,
@@ -14,8 +16,9 @@ from lighteval.tasks.requests import Doc
 ifeval = LightevalTaskConfig(
     name="ifeval",
     prompt_function="ifeval_prompt",
+    suite=["custom"],
     hf_repo="wis-k/instruction-following-eval",
-    hf_subset="train",
+    hf_subset="default",
     metric=["ifeval_metric"],
     hf_avail_splits=["train"],
     evaluation_splits=["train"],
@@ -30,10 +33,12 @@ def ifeval_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=line["prompt"],
-        choices=[],  # very specific task where there are no precise outputs but instead we test if the format obeys rules
-        gold_index=-1,
+        choices=[
+            None
+        ],  # very specific task where there are no precise outputs but instead we test if the format obeys rules
+        gold_index=0,  # very specific task where there are no precise outputs but instead we test if the format obeys rules
         instruction="",
-        specific={"instruction_id_list": line["instruction_id_list"], "kwargs": line["kwargs"]},
+        specific={"instructions_id_list": line["instruction_id_list"], "kwargs": line["kwargs"]},
     )
 
 
@@ -50,7 +55,7 @@ def ifeval_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> float
 
     # Strict instructions
     instruction_list = formatted_doc.specific["instructions_id_list"]
-    kwargs = formatted_doc.specific["kwargs"]
+    all_kwargs = formatted_doc.specific["kwargs"]
     prompt = formatted_doc.query
 
     # Loose instructions
@@ -81,8 +86,8 @@ def ifeval_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> float
         instruction = instruction_cls(instruction_id)
 
         # Remove None values from kwargs to avoid unexpected keyword argument errors in build_description method.
-        kwargs = {k: v for k, v in kwargs[index].items() if v}
-        instruction.build_description(**kwargs)
+        task_kwargs = {k: v for k, v in all_kwargs[index].items() if v}
+        instruction.build_description(**task_kwargs)
         args = instruction.get_instruction_args()
         if args and "prompt" in args:
             instruction.build_description(prompt=prompt)
@@ -116,5 +121,17 @@ ifeval_metrics = SampleLevelMetricGrouping(
     category=MetricCategory.GENERATIVE,
     use_case=MetricUseCase.ACCURACY,
     sample_level_fn=ifeval_metric,
-    corpus_level_fn=np.mean,
+    corpus_level_fn={n: np.mean for n in submetric_names},
 )
+
+
+_TASKS = [ifeval]
+
+# Convert to dict for lighteval
+TASKS_TABLE = [task.as_dict() for task in _TASKS]
+# Adds the metric to the metric list!
+extend_enum(Metrics, "ifeval_metric", ifeval_metrics)
+
+if __name__ == "__main__":
+    print(t["name"] for t in TASKS_TABLE)
+    print(len(TASKS_TABLE))
