@@ -104,8 +104,30 @@ If you want to compare hellaswag from helm and the harness on Gpt-6j, you can do
 
 ## Customisation
 ### Adding a new metric
-If you want to add a new metric, first check if you can use one of the parametrized functions in `src.lighteval.metrics.metrics_corpus` or `src.lighteval.metrics.metrics_sample`. If not, add it to either of these files depending on the level at which it is applied.
-Then, follow the example in `src.lighteval.metrics.metrics` to register your metric.
+First check if you can use one of the parametrized functions in `src.lighteval.metrics.metrics_corpus` or `src.lighteval.metrics.metrics_sample`.
+
+If not, you can use the custom_task system to register your new metric:
+- create a new python file which should contain the full logic of your metric.
+- the file also needs to start with these imports
+```python
+from aenum import extend_enum
+from lighteval.metrics import Metrics
+
+# And any other class you might need to redefine your specific metric, depending on whether it's a sample or corpus metric.
+```
+
+- and to end with the following, so that it adds your metric to our metrics list when loaded as a module.
+
+```python
+# Adds the metric to the metric list!
+extend_enum(Metrics, "ifeval_metric", ifeval_metrics)
+if __name__ == "__main__":
+    print("Imported metric")
+```
+
+You can then give your custom metric to lighteval by using `--custom-tasks path_to_your_file` when launching it.
+
+To see an example of a custom metric added along with a custom task, look at `tasks_examples/custom_tasks_with_custom_metrics/ifeval/ifeval.py`.
 
 ### Adding a new task
 To add a new task, first **add its dataset** on the hub.
