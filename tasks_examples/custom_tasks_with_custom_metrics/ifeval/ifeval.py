@@ -25,7 +25,7 @@ ifeval = LightevalTaskConfig(
     few_shots_split="train",
     few_shots_select="random_sampling",
     generation_size=1280,  # to check
-    stop_sequence=["\n"],  # to check
+    stop_sequence=None,  # to check
 )
 
 
@@ -109,10 +109,16 @@ def ifeval_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> float
 
     return {
         "prompt_level_strict_acc": int(all(is_following_list_strict)),
-        "inst_level_strict_acc": np.mean(is_following_list_strict),
+        "inst_level_strict_acc": is_following_list_strict,
         "prompt_level_loose_acc": int(all(is_following_list_loose)),
-        "inst_level_loose_acc": np.mean(is_following_list_loose),
+        "inst_level_loose_acc": is_following_list_loose,
     }
+
+
+def agg_inst_level_acc(items):
+    flat_items = [item for sublist in items for item in sublist]
+    inst_level_acc = sum(flat_items) / len(flat_items)
+    return inst_level_acc
 
 
 ifeval_metrics = SampleLevelMetricGrouping(
@@ -121,7 +127,12 @@ ifeval_metrics = SampleLevelMetricGrouping(
     category=MetricCategory.GENERATIVE,
     use_case=MetricUseCase.ACCURACY,
     sample_level_fn=ifeval_metric,
-    corpus_level_fn={n: np.mean for n in submetric_names},
+    corpus_level_fn={
+        "prompt_level_strict_acc": np.mean,
+        "inst_level_strict_acc": agg_inst_level_acc,
+        "prompt_level_loose_acc": np.mean,
+        "inst_level_loose_acc": agg_inst_level_acc,
+    },
 )
 
 
