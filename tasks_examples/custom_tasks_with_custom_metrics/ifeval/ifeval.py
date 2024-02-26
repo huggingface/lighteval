@@ -24,8 +24,8 @@ ifeval = LightevalTaskConfig(
     evaluation_splits=["train"],
     few_shots_split="train",
     few_shots_select="random_sampling",
-    generation_size=1280,  # to check
-    stop_sequence=None,  # to check
+    generation_size=1280,
+    stop_sequence=[],  # no stop sequence
 )
 
 
