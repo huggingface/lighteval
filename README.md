@@ -130,13 +130,16 @@ You can then give your custom metric to lighteval by using `--custom-tasks path_
 To see an example of a custom metric added along with a custom task, look at `tasks_examples/custom_tasks_with_custom_metrics/ifeval/ifeval.py`.
 
 ### Adding a new task
-To add a new task, first **add its dataset** on the hub.
+To add a new task, first either open an issue, to determine whether it will be integrated in the core evaluations of lighteval, or in the community tasks, and **add its dataset** on the hub.
+Note: Core evaluations are evals we will add to our test suite to ensure non regression through time, and which already see a high usage in the community.
+A popular community evaluation can move to become a core evaluation through time.
 
-Then, **find a suitable prompt function** or **create a new prompt function** in `src.lighteval.tasks.task_prompt_formatting.py`. This function must output a `Doc` object, which should contain `query`, your prompt, and either `gold`, the gold output, or `choices` and `gold_index`, the list of choices and index or indices of correct answers. If your query contains an instruction which should not be repeated in a few shot setup, add it to an `instruction` field.
+#### Core evaluations
+Prompt function: **find a suitable prompt function** in `src.lighteval.tasks.task_prompt_formatting.py`, or code your own. This function must output a `Doc` object, which should contain `query`, your prompt, and either `gold`, the gold output, or `choices` and `gold_index`, the list of choices and index or indices of correct answers. If your query contains an instruction which should not be repeated in a few shot setup, add it to an `instruction` field.
 
-Lastly, create a **line summary** of your evaluation, in `src/lighteval/tasks/tasks_table.jsonl`. This summary should contain the following fields:
+Summary: create a **line summary** of your evaluation, in `src/lighteval/tasks/tasks_table.jsonl`. This summary should contain the following fields:
 - `name` (str), your evaluation name
-- `suite` (list), the suite(s) to which your evaluation should belong. This field allows us to compare different tasks implementation, and is used a task selection to differentiate the versions to launch. At the moment, you'll find the keywords ["helm", "bigbench", "original", "lighteval"]; you can add also add new ones (for test, we recommend using "custom").
+- `suite` (list), the suite(s) to which your evaluation should belong. This field allows us to compare different tasks implementation, and is used a task selection to differentiate the versions to launch. At the moment, you'll find the keywords ["helm", "bigbench", "original", "lighteval", "community", "custom"]; for core evals, please choose `lighteval`.
 - `prompt_function` (str), the name of the prompt function you defined in the step above
 - `hf_repo` (str), the path to your evaluation dataset on the hub
 - `hf_subset` (str), the specific subset you want to use for your evaluation (note: when the dataset has no subset, fill this field with `"default"`, not with `None` or `""`)
@@ -154,6 +157,13 @@ Lastly, create a **line summary** of your evaluation, in `src/lighteval/tasks/ta
 - `metric` (list), the metrics you want to use for your evaluation (see next section for a detailed explanation)
 - `output_regex` (str), A regex string that will be used to filter your generation. (Genrative metrics will only select tokens that are between the first and the second sequence matched by the regex. For example, for a regex matching `\n` and a generation `\nModel generation output\nSome other text` the metric will only be fed with `Model generation output`)
 - `frozen` (bool), for now is set to False, but we will steadily pass all stable tasks to True.
+
+Make sure you can launch your model with your new task using `--tasks lighteval|yournewtask|2|0`.
+
+#### Community evaluations
+Copy the `community_tasks/_template.yml` to `community_tasks/yourevalname.py` and edit it to add your custom tasks (the parameters you can use are explained above). It contains an interesting mechanism if the dataset you are adding contains a lot of subsets.
+
+Make sure you can launch your model with your new task using `--tasks community|yournewtask|2|0 --custom_tasks community_tasks/yourevalname.py`.
 
 ## Available metrics
 ### Metrics for multiple choice tasks

@@ -50,7 +50,7 @@ submetric_names = [
 ]
 
 
-def ifeval_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> float:
+def ifeval_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dict:
     response = predictions[0]
 
     # Strict instructions
