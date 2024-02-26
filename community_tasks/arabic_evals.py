@@ -52,7 +52,9 @@ class CustomArabicMMLUTask(LightevalTaskConfig):
         )
 
 
-ARABIC_MMLU_TASKS = [CustomArabicMMLUTask(name=f"arabic_mmlu:{subset}", hf_subset=subset) for subset in ARABIC_MMLU_SUBSETS]
+ARABIC_MMLU_TASKS = [
+    CustomArabicMMLUTask(name=f"arabic_mmlu:{subset}", hf_subset=subset) for subset in ARABIC_MMLU_SUBSETS
+]
 
 
 def mmlu_arabic(line, task_name: str = None):
