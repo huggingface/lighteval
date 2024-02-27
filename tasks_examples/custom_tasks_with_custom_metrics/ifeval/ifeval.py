@@ -25,18 +25,17 @@ ifeval = LightevalTaskConfig(
     few_shots_split="train",
     few_shots_select="random_sampling",
     generation_size=1280,
-    stop_sequence=[],  # no stop sequence
+    stop_sequence=[],  # no stop sequence, will use eot token
 )
 
 
+# very specific task where there are no precise outputs but instead we test if the format obeys rules
 def ifeval_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=line["prompt"],
-        choices=[
-            None
-        ],  # very specific task where there are no precise outputs but instead we test if the format obeys rules
-        gold_index=0,  # very specific task where there are no precise outputs but instead we test if the format obeys rules
+        choices=[""],
+        gold_index=0,
         instruction="",
         specific={"instructions_id_list": line["instruction_id_list"], "kwargs": line["kwargs"]},
     )
