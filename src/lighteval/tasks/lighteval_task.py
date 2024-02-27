@@ -83,8 +83,6 @@ class LightevalTaskConfig:
             self.hf_avail_splits = ["train", "validation", "test"]
         if self.evaluation_splits is None:
             self.evaluation_splits = ["validation"]
-        if self.stop_sequence is None:
-            self.stop_sequence = ["\n"]
 
         # Convert list to tuple for hashing
         self.metric = tuple(self.metric)
