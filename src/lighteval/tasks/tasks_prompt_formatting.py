@@ -2065,7 +2065,7 @@ def wikifact(line, task_name: str = None):
 
 
 def wikitext_103(line, task_name: str = None):
-    return Doc(task_name=task_name, query=line["text"])
+    return Doc(task_name=task_name, choices=[""], gold_index=0, query=line["text"])
 
 
 def winogrande(line, task_name: str = None):

@@ -5,7 +5,7 @@ import torch
 
 
 @dataclass
-class ModelReturn:  # @clefourrier: could probably an abstract class, but it might make the code too complex
+class ModelReturn:
     result: Union[tuple, list, str]
     input_tokens: list[int] = field(default_factory=list)  # model inputs
     generated_tokens: list[int] = field(default_factory=list)  # model generations

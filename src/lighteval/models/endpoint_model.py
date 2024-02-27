@@ -288,11 +288,10 @@ class InferenceEndpointModel(LightevalModel):
                     responses = self.__process_batch_logprob(batch)
                 for ix, response in enumerate(responses):
                     len_choice = len(batch[ix].tokenized_continuation)
+                    logits = [t.logprob for t in response.details.prefill[-len_choice:] if t.logprob is not None]
                     results.append(
                         LoglikelihoodReturn(
-                            result=[
-                                t.logprob for t in response.details.prefill[-len_choice:] if t.logprob is not None
-                            ],
+                            result=sum(logits),
                             input_tokens=[t.id for t in response.details.prefill[:-len_choice]],
                             generated_tokens=[t.id for t in response.details.prefill[-len_choice:]],
                             truncated_tokens_count=-1,
@@ -329,9 +328,10 @@ class InferenceEndpointModel(LightevalModel):
                 else:
                     responses = self.__process_batch_logprob(batch, rolling=True)
                 for response in responses:
+                    logits = [t.logprob for t in response.details.tokens[:-1]]
                     results.append(
                         LoglikelihoodReturn(
-                            result=[t.logprob for t in response.details.tokens[:-1]],
+                            result=sum(logits),
                             input_tokens=[t.id for t in response.details.prefill],
                             generated_tokens=[t.id for t in response.details.tokens[:-1]],
                             truncated_tokens_count=-1,

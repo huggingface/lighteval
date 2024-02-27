@@ -377,7 +377,9 @@ class LightevalTask:
             ]
         if self.has_metric_category[MetricCategory.PERPLEXITY]:
             requests[RequestType.LOGLIKELIHOOD_ROLLING] += [
-                LoglikelihoodRollingRequest(task_name=current_task_name, doc_id=document_id_seed, ctx=context)
+                LoglikelihoodRollingRequest(
+                    task_name=current_task_name, example_index=document_id_seed, request_index=0, context=context
+                )
             ]
         if self.has_metric_category[MetricCategory.GENERATIVE]:
             requests[RequestType.GREEDY_UNTIL] += [
