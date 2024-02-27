@@ -602,12 +602,6 @@ def create_requests_from_tasks(  # noqa: C901
                     doc.num_effective_few_shots = num_effective_few_shots
                     doc.num_asked_few_shots = num_fewshot
                     doc.ctx = ctx
-                    if use_chat_template:
-                        doc.choices = [
-                            lm.tokenizer.apply_chat_template([{"role": "assistant", "content": choice}])
-                            for choice in doc.choices
-                        ]
-
                     # Constructing the requests
                     docs[TaskExampleId(cur_task_name, doc_id_seed)] = doc
                     reqs = task.construct_requests(doc, ctx, doc_id_seed, cur_task_name)
