@@ -2017,7 +2017,17 @@ def wic(line, task_name: str = None):
     )
 
 
-def wikitext(line, task_name: str = None):  # perplexity metric
+def wikifact(line, task_name: str = None):
+    return Doc(task_name=task_name, query=f"{line['question']} ", gold_index=0, choices=[line["references"]])
+
+
+def wikitext(line, task_name: str = None):
+    if line["text"] == "" or line["text"][0] == "=":
+        return None
+    return Doc(task_name=task_name, query=f"{line['text']} ", gold_index=0, choices=None)
+
+
+def wikitext_harness(line, task_name: str = None):  # perplexity metric
     def wikitext_detokenizer(cur_string):
         # contractions
         cur_string = cur_string.replace("s '", "s'")
@@ -2060,12 +2070,8 @@ def wikitext(line, task_name: str = None):  # perplexity metric
     )
 
 
-def wikifact(line, task_name: str = None):
-    return Doc(task_name=task_name, query=f"{line['question']} ", gold_index=0, choices=[line["references"]])
-
-
-def wikitext_103(line, task_name: str = None):
-    return Doc(task_name=task_name, query=line["text"])
+def wikitext_helm(line, task_name: str = None):
+    return Doc(task_name=task_name, choices=[""], gold_index=0, query=line["page"])
 
 
 def winogrande(line, task_name: str = None):

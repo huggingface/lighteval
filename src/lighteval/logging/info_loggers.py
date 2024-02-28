@@ -8,7 +8,7 @@ import git
 import numpy as np
 import xxhash
 
-from lighteval.logging.hierarchical_logger import hlog, hlog_warn
+from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics import MetricCategory
 from lighteval.metrics.stderr import get_stderr_function
 from lighteval.models.model_loader import ModelInfo
@@ -440,7 +440,7 @@ class MetricsLogger:
                 try:
                     metric_result = task.aggregation()[metric_name](metric_values)
                 except OverflowError:
-                    hlog(f"{task_name} {metric_name} OVERFLOW ERROR")
+                    hlog_warn(f"{task_name}, {metric_name} got an OVERFLOW ERROR when aggregating.")
                     metric_result = float("nan")
 
                 if isinstance(metric_result, dict):  # in which cases do we get a dict here?
