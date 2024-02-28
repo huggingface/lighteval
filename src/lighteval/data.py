@@ -198,6 +198,22 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         return -(len(toks) + gen_length)
 
 
+class GenerativeTaskMultiTurnDataset(DynamicBatchDataset):
+    def _sorting_criteria(self, request: GreedyUntilRequest | GreedyUntilWithLogitsRequest) -> int:
+        """
+        Collate function for generating batches.
+
+        Args:
+            x (Any): The input data.
+
+        Returns:
+            Any: The collated data.
+        """
+        toks = sum([len(r) for r in request.tokenized_contexts])
+        gen_length = request.generation_size
+        return -(len(toks) + gen_length)
+
+
 class GenerativeTaskDatasetNanotron(DynamicBatchDataset):
     def __getitem__(self, index) -> Request:
         """
