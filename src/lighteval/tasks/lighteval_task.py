@@ -261,7 +261,10 @@ class LightevalTask:
                 # vs when it's used for the actual prompt. That's why we store whether we are currently using the
                 # doc for a fewshot sample (few_shots=True) or not, which then leads to the creation of a different Doc.
                 item["__few_shots"] = few_shots
-                docs.extend(as_list(self.formatter(item, self.name)))
+                cur_docs = self.formatter(item, self.name)
+                if cur_docs is None:
+                    continue
+                docs.extend(as_list(cur_docs))
         return docs
 
     def fewshot_docs(self) -> list[Doc]:
@@ -375,7 +378,9 @@ class LightevalTask:
             ]
         if self.has_metric_category[MetricCategory.PERPLEXITY]:
             requests[RequestType.LOGLIKELIHOOD_ROLLING] += [
-                LoglikelihoodRollingRequest(task_name=current_task_name, doc_id=document_id_seed, ctx=context)
+                LoglikelihoodRollingRequest(
+                    task_name=current_task_name, example_index=document_id_seed, request_index=0, context=context
+                )
             ]
         if self.has_metric_category[MetricCategory.GENERATIVE]:
             requests[RequestType.GREEDY_UNTIL] += [
