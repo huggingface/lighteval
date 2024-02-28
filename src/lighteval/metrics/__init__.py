@@ -58,7 +58,7 @@ def apply_generative_metric(results: list[ModelReturn], formatted_doc: Doc, metr
     # Extracting gold
     try:
         golds = formatted_doc.get_golds()
-    except KeyError:
+    except (KeyError, IndexError):
         golds = None
 
     # Specific process for HELM like evals # hrm
