@@ -80,7 +80,7 @@ def main(
             override_batch_size=None,
             max_samples=lighteval_config.tasks.max_samples,
             job_id=os.environ.get("SLURM_JOB_ID", None),
-            config=nanotron_config.as_dict(),
+            config=nanotron_config,
         )
 
     with htrack_block("Test all gather"):

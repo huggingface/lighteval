@@ -60,6 +60,9 @@ dependencies = [
     "termcolor==2.3.0",
     "pytablewriter",
     "colorama",
+
+    # Extension of metrics
+    "aenum==3.1.15",
     # Base metrics
     "nltk==3.8.1",
     "numpy",
