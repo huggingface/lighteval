@@ -15,7 +15,7 @@ from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 
 # original is the reimplementation of original evals
 # custom is to play around
-DEFAULT_SUITES = ["helm", "bigbench", "lighteval", "original", "custom", "community"]
+DEFAULT_SUITES = ["helm", "bigbench", "harness", "lighteval", "original", "custom", "community"]
 
 TRUNCATE_FEW_SHOTS_DEFAULTS = True
 
