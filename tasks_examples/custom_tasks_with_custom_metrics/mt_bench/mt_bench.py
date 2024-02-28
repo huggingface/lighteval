@@ -57,7 +57,7 @@ def prompt_fn(line, task_name: str = None):
         choices=None,
         instruction="",
         gold_index=[],
-        specific={"reference": line["reference"], "category": line["category"], "queries": line["prompt"]},
+        specific={"reference": line["reference"], "category": line["category"], "multi_turn_queries": line["prompt"][1:]},
     )
 
 
@@ -73,7 +73,7 @@ def mt_bench_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dic
     judge_prompts = load_judge_prompts(judge_file)
     judges = make_judge_single(judge_model, judge_prompts)
 
-    question = formatted_doc.specific["queries"]
+    question = [formatted_doc.query] + formatted_doc.specific["multi_turn_queries"]
     ref_answer = formatted_doc.specific["reference"]
     category = formatted_doc.specific["category"]
 

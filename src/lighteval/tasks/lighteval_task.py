@@ -432,9 +432,10 @@ class LightevalTask:
                     task_name=current_task_name,
                     example_index=document_id_seed,
                     request_index=0,
-                    context=formatted_doc.specific["queries"],
+                    context=context,
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
+                    contexts_multi_turn=formatted_doc.specific.get("multi_turn_queries", []),
                 )
             ]
 
@@ -624,7 +625,7 @@ def create_requests_from_tasks(  # noqa: C901
                     doc.num_effective_few_shots = num_effective_few_shots
                     doc.num_asked_few_shots = num_fewshot
                     doc.ctx = ctx
-                    if use_chat_template:
+                    if use_chat_template and doc.choices is not None:
                         doc.choices = [
                             lm.tokenizer.apply_chat_template([{"role": "assistant", "content": choice}])
                             for choice in doc.choices

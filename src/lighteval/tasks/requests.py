@@ -107,11 +107,10 @@ class GreedyUntilMultiTurnRequest(Request):
         generation_size (int): The maximum number of tokens to generate.
         request_type (RequestType): The type of the request, set to RequestType.GREEDY_UNTIL.
     """
-    context: list[str] # Multi-turn has a list of context
     stop_sequence: str
     generation_size: int
     request_type = RequestType.GREEDY_UNTIL_MULTI_TURN
-    tokenized_context: list[list[int]] = None
+    contexts_multi_turn: list[str]
 
 @dataclass
 class GreedyUntilWithLogitsRequest(Request):

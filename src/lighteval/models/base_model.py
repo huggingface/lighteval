@@ -338,31 +338,53 @@ class BaseModel(LightevalModel):
             dataloader = self.accelerator.prepare(dataloader)
 
         # Always batch size 1 for multi-turn
-        for batch in tqdm(
-            dataloader, desc="Greedy Multi Turn generation", position=1, leave=False, disable=self.disable_tqdm
+        for request in tqdm(
+            dataset, desc="Greedy Multi Turn generation", position=1, leave=False, disable=self.disable_tqdm
         ):
             # NOTE: we are assuming all items in a batch behave similarly (same
             # stop_tokens and max_tokens genrated) which is not necessarily
             # the case! Because of that we only use batch size of 1
-            stop_tokens = batch[0].stop_sequence
-            max_generated_tokens = batch[0].generation_size
-            contexts = [c.context for c in batch]
+            stop_tokens = request.stop_sequence
+            max_generated_tokens = request.generation_size
+            context = request.context
             max_context_size_allowed = self.max_length - max_generated_tokens
 
-            multi_turn_context = "" # contexts[0][0]
-            model_answers = []
-            for i, context in enumerate(contexts[0]):
-                if i > 0:
-                    multi_turn_context += f"\n\n{context}"
-                else:
-                    multi_turn_context += f"{context}"
+            tokenized = self.tokenizer(
+                context,
+                padding=True,
+                truncation=True,
+                return_tensors="pt",
+                max_length=max_context_size_allowed,
+                add_special_tokens=self.add_special_tokens,
+            ).to(self.device)
 
-                # print("multi_turn_context ====== ")
-                # pprint(multi_turn_context)
-                # print("multi_turn_context ====== ")
+            prepared_batch = Batch(
+                input_ids=tokenized["input_ids"],
+                input_lengths=[len(item == 1) for item in tokenized["attention_mask"]],
+                input_mask=tokenized["attention_mask"],
+                truncated=[0] * len(tokenized["input_ids"]),
+                padded=[0] * len(tokenized["input_ids"]),
+            )
+
+            cur_reponses = self._generate(
+                batch=prepared_batch,
+                max_tokens=max_generated_tokens,
+                stop_tokens=stop_tokens,
+                returns_logits=False,
+            )
+
+            model_answers = [cur_reponses[0].result]
+
+            for i, added_context in enumerate(request.contexts_multi_turn):
+                context += f"{cur_reponses[0].result}"
+                context += f"\n\n{added_context}"
+
+                print("multi_turn_context ====== ")
+                pprint(context)
+                print("multi_turn_context ====== ")
 
                 tokenized = self.tokenizer(
-                    multi_turn_context,
+                    context,
                     padding=True,
                     truncation=True,
                     return_tensors="pt",
@@ -386,10 +408,10 @@ class BaseModel(LightevalModel):
                 )
 
                 model_answers.append(cur_reponses[0].result)
-                multi_turn_context += f"{cur_reponses[0].result}"
 
             results.append(GenerateMultiTurnReturn(result=model_answers, input_tokens=[], generated_tokens=[], truncated_tokens_count=0, padded_tokens_count=0))
 
+        pprint(results)
         return results
 
     def greedy_until(
