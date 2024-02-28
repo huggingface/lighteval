@@ -24,7 +24,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install ruff==v0.1.2
+          python setup.py egg_info
+          python -m pip install ruff -c *.egg-info/requires.txt
+          rm -rf *.egg-info
       - name: Code quality
         run: |
           make quality
