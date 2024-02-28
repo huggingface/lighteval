@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import re
@@ -22,7 +23,7 @@ from lighteval.utils import is_nanotron_available, obj_to_markdown
 
 
 if is_nanotron_available():
-    from nanotron.config import Config, get_config_from_dict
+    from nanotron.config import Config
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
@@ -116,8 +117,14 @@ class EvaluationTracker:
 
         hlog(f"Saving results to {output_results_file} and {output_results_in_details_file}")
 
+        config_general = copy.deepcopy(self.general_config_logger)
+        config_general.config = (
+            config_general.config.as_dict() if is_dataclass(config_general.config) else config_general.config
+        )
+        config_general = asdict(config_general)
+
         to_dump = {
-            "config_general": asdict(self.general_config_logger),
+            "config_general": config_general,
             "results": self.metrics_logger.metric_aggregated,
             "versions": self.versions_logger.versions,
             "config_tasks": self.task_config_logger.tasks_configs,
@@ -485,7 +492,7 @@ class EvaluationTracker:
         if not is_nanotron_available():
             hlog_warn("You cannot push results to tensorboard with having nanotron installed. Skipping")
             return
-        config: Config = get_config_from_dict(self.general_config_logger.config, config_class=Config)
+        config: Config = self.general_config_logger.config
         lighteval_config = config.lighteval
         try:
             global_step = config.general.step

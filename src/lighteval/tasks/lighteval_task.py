@@ -83,8 +83,6 @@ class LightevalTaskConfig:
             self.hf_avail_splits = ["train", "validation", "test"]
         if self.evaluation_splits is None:
             self.evaluation_splits = ["validation"]
-        if self.stop_sequence is None:
-            self.stop_sequence = ["\n"]
 
         # Convert list to tuple for hashing
         self.metric = tuple(self.metric)
@@ -604,12 +602,6 @@ def create_requests_from_tasks(  # noqa: C901
                     doc.num_effective_few_shots = num_effective_few_shots
                     doc.num_asked_few_shots = num_fewshot
                     doc.ctx = ctx
-                    if use_chat_template:
-                        doc.choices = [
-                            lm.tokenizer.apply_chat_template([{"role": "assistant", "content": choice}])
-                            for choice in doc.choices
-                        ]
-
                     # Constructing the requests
                     docs[TaskExampleId(cur_task_name, doc_id_seed)] = doc
                     reqs = task.construct_requests(doc, ctx, doc_id_seed, cur_task_name)

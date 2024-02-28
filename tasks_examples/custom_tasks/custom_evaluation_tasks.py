@@ -25,6 +25,7 @@ COMMON_SENSE_REASONING_TASKS = [
         hf_repo="hellaswag",
         hf_subset="default",
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+        stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
         name="winogrande",
@@ -32,6 +33,7 @@ COMMON_SENSE_REASONING_TASKS = [
         hf_repo="winogrande",
         hf_subset="winogrande_xl",
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+        stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
         name="piqa",
@@ -39,6 +41,7 @@ COMMON_SENSE_REASONING_TASKS = [
         hf_repo="piqa",
         hf_subset="plain_text",
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+        stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
         name="siqa",
@@ -47,6 +50,7 @@ COMMON_SENSE_REASONING_TASKS = [
         hf_subset="default",
         hf_avail_splits=["train", "validation"],
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+        stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
         name="openbookqa",
@@ -54,6 +58,7 @@ COMMON_SENSE_REASONING_TASKS = [
         hf_repo="openbookqa",
         hf_subset="main",
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+        stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
         name="arc:easy",
@@ -63,6 +68,7 @@ COMMON_SENSE_REASONING_TASKS = [
         evaluation_splits=["test"],
         generation_size=1,
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+        stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
         name="arc:challenge",
@@ -72,6 +78,7 @@ COMMON_SENSE_REASONING_TASKS = [
         evaluation_splits=["test"],
         generation_size=1,
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+        stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
         name="commonsense_qa",
@@ -79,6 +86,7 @@ COMMON_SENSE_REASONING_TASKS = [
         hf_repo="commonsense_qa",
         hf_subset="default",
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+        stop_sequence=["\n"],
     ),
 ]
 
@@ -176,6 +184,7 @@ READING_COMP_TASKS = [
         hf_repo="super_glue",
         hf_subset="boolq",
         metric=["target_perplexity"],
+        stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
         name="quac",
@@ -236,9 +245,9 @@ class CustomMathEvaluationTask(LightevalTaskConfig):
             few_shots_select=few_shots_select,
             suite=suite,
             generation_size=generation_size,
-            stop_sequence=stop_sequence,
             output_regex=output_regex,
             frozen=frozen,
+            stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
         )
 
 
@@ -303,7 +312,7 @@ class CustomMMLUEvaluationTask(LightevalTaskConfig):
             few_shots_select=few_shots_select,
             suite=suite,
             generation_size=generation_size,
-            stop_sequence=stop_sequence,
+            stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
             output_regex=output_regex,
             frozen=frozen,
         )
@@ -445,7 +454,7 @@ class CustomBBHEvaluationTask(LightevalTaskConfig):
             few_shots_select=few_shots_select,
             suite=suite,
             generation_size=generation_size,
-            stop_sequence=stop_sequence,
+            stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
             output_regex=output_regex,
             frozen=frozen,
         )
@@ -537,7 +546,7 @@ class CustomAGIEvalEvaluationTask(LightevalTaskConfig):
             few_shots_select=few_shots_select,
             suite=suite,
             generation_size=generation_size,
-            stop_sequence=stop_sequence,
+            stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
             output_regex=output_regex,
             frozen=frozen,
         )
