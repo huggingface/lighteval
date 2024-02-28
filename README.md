@@ -262,7 +262,7 @@ from lighteval.metrics import Metrics
 
 ```python
 # Adds the metric to the metric list!
-extend_enum(Metrics, "ifeval_metric", ifeval_metrics)
+extend_enum(Metrics, "metric_name", metric_function)
 if __name__ == "__main__":
     print("Imported metric")
 ```
