@@ -6,6 +6,12 @@ This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then im
 
 Author:
 """
+import numpy as np
+from aenum import extend_enum
+
+from lighteval.metrics import Metrics
+from lighteval.metrics.metrics import SampleLevelMetric
+from lighteval.metrics.utils import MetricCategory, MetricUseCase
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
@@ -79,6 +85,19 @@ def prompt_fn(line, task_name: str = None):
 ## STORE YOUR EVALS
 SUBSET_TASKS = [CustomSubsetTask(name=f"mytask:{subset}", hf_subset=subset) for subset in SAMPLE_SUBSETS]
 _TASKS = SUBSET_TASKS + [task]
+
+
+## CUSTOM METRIC IF NEEDED
+custom_metric = SampleLevelMetric(
+    metric="my_custom_metric_name",
+    higher_is_better=True,
+    category=MetricCategory.IGNORED,
+    use_case=MetricUseCase.NONE,
+    sample_level_fn=lambda x: x,  # how to compute score for one sample
+    corpus_level_fn=np.mean,  # aggregation
+)
+
+extend_enum(Metrics, "my_custom_metric_name", custom_metric)
 
 ## MODULE LOGIC
 # You should not need to touch this

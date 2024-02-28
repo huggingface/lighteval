@@ -1,6 +1,5 @@
-from enum import Enum
-
 import numpy as np
+from aenum import Enum
 
 from lighteval.metrics.harness_compatibility.drop import drop_metrics
 from lighteval.metrics.harness_compatibility.truthful_qa import truthfulqa_mc_metrics
