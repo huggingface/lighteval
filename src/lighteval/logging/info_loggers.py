@@ -8,12 +8,12 @@ import git
 import numpy as np
 import xxhash
 
-from lighteval.logging.hierarchical_logger import hlog, hlog_warn
+from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics import MetricCategory
 from lighteval.metrics.stderr import get_stderr_function
 from lighteval.models.model_loader import ModelInfo
 from lighteval.models.model_output import ModelReturn
-from lighteval.tasks.lighteval_task import LightevalTask
+from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 from lighteval.utils import as_list, is_nanotron_available, sanitize_numpy
 
@@ -440,7 +440,7 @@ class MetricsLogger:
                 try:
                     metric_result = task.aggregation()[metric_name](metric_values)
                 except OverflowError:
-                    hlog(f"{task_name} {metric_name} OVERFLOW ERROR")
+                    hlog_warn(f"{task_name}, {metric_name} got an OVERFLOW ERROR when aggregating.")
                     metric_result = float("nan")
 
                 if isinstance(metric_result, dict):  # in which cases do we get a dict here?
@@ -497,53 +497,11 @@ class TaskConfigLogger:
     """Logs the different parameters of the current [`LightevalTask`] of interest.
 
     Attributes:
-        tasks_config (dict[str, TaskConfig]): Maps each task to its associated [`TaskConfig`]
+        tasks_config (dict[str, LightevalTaskConfig]): Maps each task to its associated [`LightevalTaskConfig`]
 
     """
 
-    @dataclass
-    class TaskConfig:
-        """Stored configuration of a given [`LightevalTask`].
-
-        Arguments:
-            name (str): Short name of the evaluation task.
-            suite (list[str]): Evaluation suites to which the task belongs.
-            prompt_function (str): Name of the function used to create the [`Doc`] samples from each line of the evaluation dataset.
-            hf_repo (str): Path of the hub dataset repository containing the evaluation information.
-            hf_subset (str): Subset used for the current task, will be default if none is selected.
-            hf_avail_splits (list[str]): All the available splits in the evaluation dataset
-            evaluation_splits (list[str]): List of the splits actually used for this evaluation
-            few_shots_split (str): Name of the split from which to sample few-shot examples
-            few_shots_select (str): Method with which to sample few-shot examples
-            generation_size (int): Maximum allowed size of the generation
-            metric (list[str]): List of all the metrics for the current task.
-            stop_sequence (list[str]): Stop sequence which interrupts the generation for generative metrics.
-            original_num_docs (int): Number of documents in the task
-            effective_num_docs (int): Number of documents used in a specific evaluation
-            truncated_num_docs (bool): Whether less than the total number of documents were used
-            output_regex (str)
-            frozen (bool)
-
-        """
-
-        name: str
-        suite: list[str]
-        prompt_function: str
-        hf_repo: str
-        hf_subset: str
-        hf_avail_splits: list[str]
-        evaluation_splits: list[str]
-        few_shots_split: str
-        few_shots_select: str
-        generation_size: int
-        metric: list[str]
-        stop_sequence: list[str]
-        output_regex: str
-        frozen: bool
-        original_num_docs: int = -1
-        effective_num_docs: int = -1
-
-    tasks_configs: dict[str, TaskConfig] = {}
+    tasks_configs: dict[str, LightevalTaskConfig] = {}
 
     def log(self, task_dict: dict[str, LightevalTask]) -> None:
         self.tasks_configs = {name: task.cfg for name, task in task_dict.items()}
