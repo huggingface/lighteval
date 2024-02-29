@@ -195,6 +195,9 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         """
         toks = request.tokenized_context
         gen_length = request.generation_size
+        # The generative task has no limit except the model context
+        if gen_length is None:
+            gen_length = 0
         return -(len(toks) + gen_length)
 
 
