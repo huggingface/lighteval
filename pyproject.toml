@@ -73,7 +73,7 @@ dependencies = [
     "protobuf==3.20.*", # pinned for sentencepiece compat
     "pycountry",
     # Code style
-    "ruff==v0.1.2",
+    "ruff==v0.2.2",
 ]
 
 [project.optional-dependencies]
