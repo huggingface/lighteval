@@ -42,6 +42,29 @@ if TYPE_CHECKING:
 
 @dataclass
 class LightevalTaskConfig:
+    """Stored configuration of a given [`LightevalTask`].
+
+    Arguments:
+        name (str): Short name of the evaluation task.
+        suite (list[str]): Evaluation suites to which the task belongs.
+        prompt_function (str): Name of the function used to create the [`Doc`] samples from each line of the evaluation dataset.
+        hf_repo (str): Path of the hub dataset repository containing the evaluation information.
+        hf_subset (str): Subset used for the current task, will be default if none is selected.
+        hf_avail_splits (list[str]): All the available splits in the evaluation dataset
+        evaluation_splits (list[str]): List of the splits actually used for this evaluation
+        few_shots_split (str): Name of the split from which to sample few-shot examples
+        few_shots_select (str): Method with which to sample few-shot examples
+        generation_size (int): Maximum allowed size of the generation
+        metric (list[str]): List of all the metrics for the current task.
+        stop_sequence (list[str]): Stop sequence which interrupts the generation for generative metrics.
+        original_num_docs (int): Number of documents in the task
+        effective_num_docs (int): Number of documents used in a specific evaluation
+        truncated_num_docs (bool): Whether less than the total number of documents were used
+        output_regex (str)
+        frozen (bool)
+
+    """
+
     name: str
     prompt_function: str
     hf_repo: str
@@ -51,12 +74,15 @@ class LightevalTaskConfig:
     evaluation_splits: Optional[Tuple[str]] = None
     few_shots_split: Optional[str] = None
     few_shots_select: Optional[str] = None
-    generation_size: int = -1
+    generation_size: int = None
     stop_sequence: Optional[Tuple[str]] = None
     output_regex: Optional[str] = None
 
     frozen: bool = False
-    suite: Optional[Tuple[str]] = None  # we use this to know if we should use a custom lighteval or bigcode task
+    suite: Optional[Tuple[str]] = None
+
+    original_num_docs: int = -1
+    effective_num_docs: int = -1
 
     def as_dict(self):
         return {
