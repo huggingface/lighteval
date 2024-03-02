@@ -50,12 +50,10 @@ keywords = ["evaluation", "nlp", "llm"]
 dependencies = [
     # Base dependencies
     "transformers>=4.38.0",
-    "huggingface_hub==0.20.3",
+    "huggingface_hub>=0.20.3",
     "torch>=2.0",
     "GitPython==3.1.31", # for logging
     "datasets>=2.14.0",
-    # Test
-    "pytest==7.4.0",
     # Prettiness
     "termcolor==2.3.0",
     "pytablewriter",
@@ -72,8 +70,6 @@ dependencies = [
     "sentencepiece>=0.1.99",
     "protobuf==3.20.*", # pinned for sentencepiece compat
     "pycountry",
-    # Code style
-    "ruff==v0.2.2",
 ]
 
 [project.optional-dependencies]
@@ -87,6 +83,9 @@ nanotron = [
   "nanotron",
   "tensorboardX"
 ]
+quality = ["ruff==v0.2.2"]
+tests = ["pytest==7.4.0"]
+dev = ["lighteval[accelerate,quality,tests]"]
 
 
 [project.urls]
