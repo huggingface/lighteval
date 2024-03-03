@@ -209,13 +209,14 @@ ALGHAFA_TASKS = [CustomALGHAFATask(name=f"Alghafa:{subset}", hf_subset=subset) f
 
 
 def Alghafa(line, task_name: str = None):
-    # Exclude 'query' and 'label' to dynamically determine the choices
     question = line["query"]
     answer_index = int(line["label"])
+    # Dynamically determining the choices by excluding 'query' and 'label'
     choices_keys = [key for key in line.keys() if key not in ["query", "label"]]
     choices = [line[key] for key in choices_keys]
 
-    query = f"السؤال التالي هو سؤال متعدد الإختيارات مع الجواب الصحيح : {question}\n"
+    instruction = "الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح\n\n"
+    query = f"{instruction}السؤال: {question}\n"
     for index, choice in enumerate(choices):
         query += f"{index}) {choice}\n"
     query += "الإجابة:"
@@ -225,7 +226,7 @@ def Alghafa(line, task_name: str = None):
         query=query,
         choices=choices,
         gold_index=answer_index,
-        instruction="أجب عن السؤال التالي:",
+        instruction=instruction,
         target_for_fewshot_sorting=choices[answer_index],
     )
 
