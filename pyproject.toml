@@ -62,9 +62,9 @@ dependencies = [
     "aenum==3.1.15",
     # Base metrics
     "nltk==3.8.1",
-    "sacrebleu",
     "scikit-learn",
     "spacy==3.7.2",
+    "sacrebleu",
     "rouge_score==0.1.2",
     "sentencepiece>=0.1.99",
     "protobuf==3.20.*", # pinned for sentencepiece compat
