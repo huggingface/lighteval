@@ -62,7 +62,7 @@ and pasting your access token.
 Lastly, if you intend to push to the code base, you'll need to install the precommit hook for styling tests:
 
 ```bash
-pip install pre-commit
+pip install .[dev]
 pre-commit install
 ```
 
