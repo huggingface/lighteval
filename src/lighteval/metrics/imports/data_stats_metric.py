@@ -1,6 +1,8 @@
 # MIT License
 
-# Copyright (c) 2024 The HuggingFace Team
+# Copyright (c) 2021 Alex Fabbri, Wojciech Kryściński, Bryan
+# McCann, Caiming Xiong, Richard Socher, and Dragomir Radev and The HuggingFace
+# Team
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
