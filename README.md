@@ -103,7 +103,7 @@ or a file path like [`tasks_examples/recommended_set.txt`](./tasks_examples/reco
 ```shell
 accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py \
     --model_args "pretrained=gpt2" \
-    --tasks "lighteval|truthfulqa:mc|0|0" \
+    --tasks "leaderboard|truthfulqa:mc|0|0" \
     --override_batch_size 1 \
     --output_dir="./evals/"
 ```
@@ -113,7 +113,7 @@ Here, `--override_batch_size` defines the _batch size per device_, so the effect
 ```shell
 accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py \
     --model_args "pretrained=gpt2" \
-    --tasks "lighteval|truthfulqa:mc|0|0,lighteval|gsm8k|0|0" \
+    --tasks "leaderboard|truthfulqa:mc|0|0,leaderboard|gsm8k|0|0" \
     --override_batch_size 1 \
     --output_dir="./evals/"
 ```

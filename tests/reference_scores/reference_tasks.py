@@ -1,28 +1,28 @@
 # todo: add original once we are sure of the results
 MMLU_SUBSET = [
-    "lighteval|mmlu:abstract_algebra|5|0",
+    "leaderboard|mmlu:abstract_algebra|5|0",
     "helm|mmlu:abstract_algebra|5|0",
     # "original|mmlu:abstract_algebra|5",
-    "lighteval|mmlu:college_chemistry|5|0",
+    "leaderboard|mmlu:college_chemistry|5|0",
     "helm|mmlu:college_chemistry|5|0",
     # "original|mmlu:college_chemistry|5",
-    "lighteval|mmlu:computer_security|5|0",
+    "leaderboard|mmlu:computer_security|5|0",
     "helm|mmlu:computer_security|5|0",
     # "original|mmlu:computer_security|5",
-    "lighteval|mmlu:us_foreign_policy|5|0",
+    "leaderboard|mmlu:us_foreign_policy|5|0",
     "helm|mmlu:us_foreign_policy|5|0",
     # "original|mmlu:us_foreign_policy|5",
 ]
 
 LEADERBOARD_SUBSET = [
-    "lighteval|arc:challenge|25|0",
-    "lighteval|truthfulqa:mc|0|0",
-    "lighteval|hellaswag|10|0",
-    "lighteval|mmlu:abstract_algebra|5|0",
-    "lighteval|mmlu:college_chemistry|5|0",
-    "lighteval|mmlu:computer_security|5|0",
-    "lighteval|mmlu:us_foreign_policy|5|0",
-    "lighteval|gsm8k|5|0",
+    "leaderboard|arc:challenge|25|0",
+    "leaderboard|truthfulqa:mc|0|0",
+    "leaderboard|hellaswag|10|0",
+    "leaderboard|mmlu:abstract_algebra|5|0",
+    "leaderboard|mmlu:college_chemistry|5|0",
+    "leaderboard|mmlu:computer_security|5|0",
+    "leaderboard|mmlu:us_foreign_policy|5|0",
+    "leaderboard|gsm8k|5|0",
 ]
 
 STABLE_SUBSET = [

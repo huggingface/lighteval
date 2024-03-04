@@ -4,35 +4,35 @@ RESULTS_FULL = {
         "lighteval|anli:r1|0|0": {"acc": 0.337, "acc_stderr": 0.014955087918653605},
         "lighteval|blimp:adjunct_island|0|0": {"acc": 0.893, "acc_stderr": 0.009779910359847165},
         "lighteval|blimp:ellipsis_n_bar_1|0|0": {"acc": 0.909, "acc_stderr": 0.009099549538400246},
-        "lighteval|arc:challenge|25|0": {
+        "leaderboard|arc:challenge|25|0": {
             "acc": 0.257679180887372,
             "acc_stderr": 0.0127807705627684,
             "acc_norm": 0.302901023890785,
             "acc_norm_stderr": 0.013428241573185347,
         },
-        "lighteval|hellaswag|10|0": {
+        "leaderboard|hellaswag|10|0": {
             "acc": 0.3981278629755029,
             "acc_stderr": 0.004885116465550274,
             "acc_norm": 0.5139414459271061,
             "acc_norm_stderr": 0.004987841367402517,
         },
-        "lighteval|mmlu:abstract_algebra|5|0": {
+        "leaderboard|mmlu:abstract_algebra|5|0": {
             "acc": 0.26,
             "acc_stderr": 0.04408440022768081,
         },
-        "lighteval|mmlu:college_chemistry|5|0": {
+        "leaderboard|mmlu:college_chemistry|5|0": {
             "acc": 0.24,
             "acc_stderr": 0.04292346959909284,
         },
-        "lighteval|mmlu:computer_security|5|0": {
+        "leaderboard|mmlu:computer_security|5|0": {
             "acc": 0.29,
             "acc_stderr": 0.04560480215720684,
         },
-        "lighteval|mmlu:us_foreign_policy|5|0": {
+        "leaderboard|mmlu:us_foreign_policy|5|0": {
             "acc": 0.22,
             "acc_stderr": 0.041633319989322695,
         },
-        "lighteval|truthfulqa:mc|0|0": {
+        "leaderboard|truthfulqa:mc|0|0": {
             "truthfulqa_mc1": 0.22031823745410037,
             "truthfulqa_mc1_stderr": 0.0145090451714873,
             "truthfulqa_mc2": 0.3853407807086726,
@@ -82,42 +82,42 @@ RESULTS_FULL = {
             "pqem": 0.2526389165504879,
             "pqem_stderr": 0.004336375492801806,
         },
-        "lighteval|gsm8k|5|0": {"qem": 0.009097801364670205, "qem_stderr": 0.002615326510775673},
+        "leaderboard|gsm8k|5|0": {"qem": 0.009097801364670205, "qem_stderr": 0.002615326510775673},
         # "gsm8k": {"acc": 0.009097801364670205, "acc_stderr": 0.002615326510775673}, Actual harness results
     },
     "gpt2": {
         "lighteval|anli:r1|0|0": {"acc": 0.341, "acc_stderr": 0.014998131348402704},
         "lighteval|blimp:adjunct_island|0|0": {"acc": 0.913, "acc_stderr": 0.00891686663074591},
         "lighteval|blimp:ellipsis_n_bar_1|0|0": {"acc": 0.842, "acc_stderr": 0.011539894677559568},
-        "lighteval|arc:challenge|25|0": {
+        "leaderboard|arc:challenge|25|0": {
             "acc": 0.20051194539249148,
             "acc_stderr": 0.011700318050499373,
             "acc_norm": 0.21928327645051193,
             "acc_norm_stderr": 0.012091245787615723,
         },
-        "lighteval|hellaswag|10|0": {
+        "leaderboard|hellaswag|10|0": {
             "acc": 0.29267078271260705,
             "acc_stderr": 0.004540586983229992,
             "acc_norm": 0.3157737502489544,
             "acc_norm_stderr": 0.0046387332023738815,
         },
-        "lighteval|mmlu:abstract_algebra|5|0": {
+        "leaderboard|mmlu:abstract_algebra|5|0": {
             "acc": 0.21,
             "acc_stderr": 0.040936018074033256,
         },
-        "lighteval|mmlu:college_chemistry|5|0": {
+        "leaderboard|mmlu:college_chemistry|5|0": {
             "acc": 0.2,
             "acc_stderr": 0.04020151261036846,
         },
-        "lighteval|mmlu:computer_security|5|0": {
+        "leaderboard|mmlu:computer_security|5|0": {
             "acc": 0.16,
             "acc_stderr": 0.03684529491774709,
         },
-        "lighteval|mmlu:us_foreign_policy|5|0": {
+        "leaderboard|mmlu:us_foreign_policy|5|0": {
             "acc": 0.27,
             "acc_stderr": 0.04461960433384739,
         },
-        "lighteval|truthfulqa:mc|0|0": {
+        "leaderboard|truthfulqa:mc|0|0": {
             "truthfulqa_mc1": 0.22766217870257038,
             "truthfulqa_mc1_stderr": 0.01467925503211107,
             "truthfulqa_mc2": 0.40693581786045147,
@@ -167,8 +167,7 @@ RESULTS_FULL = {
             "pqem": 0.24427404899422425,
             "pqem_stderr": 0.00428777857558616,
         },
-        "lighteval|gsm8k|5|0": {"qem": 0.006065200909780136, "qem_stderr": 0.0021386703014604626},
-        # "harness|gsm8k|5|0": {"acc": 0.004548900682335102, "acc_stderr": 0.0018535550440036204}, Actual harness results
+        "leaderboard|gsm8k|5|0": {"qem": 0.006065200909780136, "qem_stderr": 0.0021386703014604626},
     },
 }
 
@@ -178,35 +177,35 @@ RESULTS_LITE = {
         "lighteval|anli:r1|0|0": {"acc": 0.4, "acc_stderr": 0.16329931618554522},
         "lighteval|blimp:adjunct_island|0|0": {"acc": 0.9, "acc_stderr": 0.09999999999999999},
         "lighteval|blimp:ellipsis_n_bar_1|0|0": {"acc": 0.8, "acc_stderr": 0.13333333333333333},
-        "lighteval|arc:challenge|25|0": {
+        "leaderboard|arc:challenge|25|0": {
             "acc": 0.2,
             "acc_stderr": 0.13333333333333333,
             "acc_norm": 0.1,
             "acc_norm_stderr": 0.09999999999999999,
         },
-        "lighteval|hellaswag|10|0": {
+        "leaderboard|hellaswag|10|0": {
             "acc": 0.4,
             "acc_stderr": 0.16329931618554522,
             "acc_norm": 0.8,
             "acc_norm_stderr": 0.13333333333333333,
         },
-        "lighteval|mmlu:abstract_algebra|5|0": {
+        "leaderboard|mmlu:abstract_algebra|5|0": {
             "acc": 0.3,
             "acc_stderr": 0.15275252316519466,
         },
-        "lighteval|mmlu:college_chemistry|5|0": {
+        "leaderboard|mmlu:college_chemistry|5|0": {
             "acc": 0.2,
             "acc_stderr": 0.13333333333333333,
         },
-        "lighteval|mmlu:computer_security|5|0": {
+        "leaderboard|mmlu:computer_security|5|0": {
             "acc": 0.4,
             "acc_stderr": 0.1632993161855452,
         },
-        "lighteval|mmlu:us_foreign_policy|5|0": {
+        "leaderboard|mmlu:us_foreign_policy|5|0": {
             "acc": 0.3,
             "acc_stderr": 0.15275252316519466,
         },
-        "lighteval|truthfulqa:mc|0|0": {
+        "leaderboard|truthfulqa:mc|0|0": {
             "truthfulqa_mc1": 0.3,
             "truthfulqa_mc1_stderr": 0.15275252316519466,
             "truthfulqa_mc2": 0.4528717362471066,
@@ -256,41 +255,41 @@ RESULTS_LITE = {
             "pqem": 0.2,
             "pqem_stderr": 0.13333333333333333,
         },
-        "lighteval|gsm8k|5|0": {"qem": 0.1, "qem_stderr": 0.09999999999999999},
+        "leaderboard|gsm8k|5|0": {"qem": 0.1, "qem_stderr": 0.09999999999999999},
     },
     "gpt2": {
         "lighteval|anli:r1|0|0": {"acc": 0.5, "acc_stderr": 0.16666666666666666},
         "lighteval|blimp:adjunct_island|0|0": {"acc": 0.8, "acc_stderr": 0.13333333333333333},
         "lighteval|blimp:ellipsis_n_bar_1|0|0": {"acc": 0.7, "acc_stderr": 0.15275252316519466},
-        "lighteval|arc:challenge|25|0": {
+        "leaderboard|arc:challenge|25|0": {
             "acc": 0.3,
             "acc_stderr": 0.15275252316519466,
             "acc_norm": 0.0,
             "acc_norm_stderr": 0.0,
         },
-        "lighteval|hellaswag|10|0": {
+        "leaderboard|hellaswag|10|0": {
             "acc": 0.4,
             "acc_stderr": 0.16329931618554522,
             "acc_norm": 0.6,
             "acc_norm_stderr": 0.16329931618554522,
         },
-        "lighteval|mmlu:abstract_algebra|5|0": {
+        "leaderboard|mmlu:abstract_algebra|5|0": {
             "acc": 0.4,
             "acc_stderr": 0.16329931618554522,
         },
-        "lighteval|mmlu:college_chemistry|5|0": {
+        "leaderboard|mmlu:college_chemistry|5|0": {
             "acc": 0.1,
             "acc_stderr": 0.09999999999999999,
         },
-        "lighteval|mmlu:computer_security|5|0": {
+        "leaderboard|mmlu:computer_security|5|0": {
             "acc": 0.1,
             "acc_stderr": 0.09999999999999999,
         },
-        "lighteval|mmlu:us_foreign_policy|5|0": {
+        "leaderboard|mmlu:us_foreign_policy|5|0": {
             "acc": 0.3,
             "acc_stderr": 0.15275252316519466,
         },
-        "lighteval|truthfulqa:mc|0|0": {
+        "leaderboard|truthfulqa:mc|0|0": {
             "truthfulqa_mc1": 0.3,
             "truthfulqa_mc1_stderr": 0.15275252316519466,
             "truthfulqa_mc2": 0.4175889390166028,
@@ -340,6 +339,6 @@ RESULTS_LITE = {
             "pqem": 0.1,
             "pqem_stderr": 0.09999999999999999,
         },
-        "lighteval|gsm8k|5|0": {"qem": 0.0, "qem_stderr": 0.0},
+        "leaderboard|gsm8k|5|0": {"qem": 0.0, "qem_stderr": 0.0},
     },
 }

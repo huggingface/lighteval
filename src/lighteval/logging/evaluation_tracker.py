@@ -290,7 +290,7 @@ class EvaluationTracker:
             # in the iso date, the `:` are replaced by `-` because windows does not allow `:` in their filenames
 
             task_name = os.path.basename(sub_file).replace("details_", "").split("_2023")[0].split("_2024")[0]
-            # task_name is then equal to `lighteval|mmlu:us_foreign_policy|5`
+            # task_name is then equal to `leaderboard|mmlu:us_foreign_policy|5`
 
             iso_date = os.path.dirname(sub_file)
             # to be able to parse the filename as iso dates, we need to re-replace the `-` with `:`
