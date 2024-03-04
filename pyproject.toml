@@ -49,7 +49,7 @@ classifiers = [
 keywords = ["evaluation", "nlp", "llm"]
 dependencies = [
     # Base dependencies
-    "transformers[sentencepiece,sklearn,sacrebleu]>=4.38.0",
+    "transformers[sklearn,sacrebleu]>=4.38.0",
     "huggingface_hub>=0.20.3",
     "torch>=2.0",
     "GitPython==3.1.31", # for logging
@@ -64,6 +64,7 @@ dependencies = [
     "nltk==3.8.1",
     "spacy==3.7.2",
     "rouge_score==0.1.2",
+    "sentencepiece>=0.1.99",
     "protobuf==3.20.*", # pinned for sentencepiece compat
     "pycountry",
 ]
