@@ -5,7 +5,7 @@ from multiprocessing import Pool
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
-from datasets import load_dataset
+from datasets import DownloadMode, load_dataset
 
 from lighteval.few_shot_manager import FewShotSampler
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
@@ -62,7 +62,7 @@ class LightevalTaskConfig:
         truncated_num_docs (bool): Whether less than the total number of documents were used
         output_regex (str)
         frozen (bool)
-
+        trust_dataset (bool): Whether to trust the dataset at execution or not
     """
 
     name: str
@@ -83,6 +83,8 @@ class LightevalTaskConfig:
 
     original_num_docs: int = -1
     effective_num_docs: int = -1
+
+    trust_dataset: bool = None
 
     def as_dict(self):
         return {
@@ -144,6 +146,7 @@ class LightevalTask:
         self.dataset_path = self.hf_repo
         self.dataset_config_name = self.hf_subset
         self.dataset = None  # Delayed download
+        self.trust_dataset = cfg.trust_dataset
         hlog(f"{self.dataset_path} {self.dataset_config_name}")
         self._fewshot_docs = None
         self._docs = None
@@ -521,14 +524,10 @@ class LightevalTask:
         """
 
         if dataset_loading_processes <= 1:
-            datasets = [
-                download_dataset_worker((task.dataset_path, task.dataset_config_name)) for task in tasks
-            ]  # Also help us with gdb
+            datasets = [download_dataset_worker(task) for task in tasks]  # Also help us with gdb
         else:
             with Pool(processes=dataset_loading_processes) as pool:
-                datasets = pool.map(
-                    download_dataset_worker, [(task.dataset_path, task.dataset_config_name) for task in tasks]
-                )
+                datasets = pool.map(download_dataset_worker, tasks)
 
         for task, dataset in zip(tasks, datasets):
             task.dataset = dataset
@@ -539,13 +538,14 @@ def download_dataset_worker(args):
     Worker function to download a dataset from the HuggingFace Hub.
     Used for parallel dataset loading.
     """
-    dataset_path, dataset_config_name = args
+    task: LightevalTask = args
     dataset = load_dataset(
-        path=dataset_path,
-        name=dataset_config_name,
+        path=task.dataset_path,
+        name=task.dataset_config_name,
         data_dir=None,
         cache_dir=None,
-        download_mode=None,
+        download_mode=DownloadMode.FORCE_REDOWNLOAD,  # None
+        trust_remote_code=task.trust_dataset,
     )
     return dataset
 
