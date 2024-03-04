@@ -86,6 +86,8 @@ class LightevalTaskConfig:
 
     trust_dataset: bool = None
 
+    must_remove_duplicate_docs: bool = None
+
     def as_dict(self):
         return {
             "name": self.name,
@@ -351,12 +353,8 @@ class LightevalTask:
         Returns:
             str: Target of the document, which is the correct answer for a document.
         """
-        if few_shot:
-            if formatted_doc.target_for_fewshot_sorting is not None:
-                return formatted_doc.target_for_fewshot_sorting
-
         # likely we mostly need one example not all
-        return formatted_doc.get_golds()[0]
+        return formatted_doc.get_golds(few_shot=few_shot)[0]
 
     # Requests
     def get_request_type(self) -> list[RequestType]:

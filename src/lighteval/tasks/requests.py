@@ -154,12 +154,16 @@ class Doc:
     num_asked_few_shots: int = -1
     num_effective_few_shots: int = -1
 
-    def get_golds(self):
+    def get_golds(self, few_shot: bool = False):
         """Return gold targets extracted from the target dict"""
         gold_indices = as_list(self.gold_index)
+        if few_shot and self.target_for_fewshot_sorting is not None:
+            choices = self.target_for_fewshot_sorting
+        else:
+            choices = self.choices
         golds = []
         for gold_ix in gold_indices:
-            local_golds = as_list(self.choices[gold_ix])
+            local_golds = as_list(choices[gold_ix])
             for local_gold in local_golds:
                 golds.append(local_gold)
         return golds
