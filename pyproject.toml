@@ -2,10 +2,11 @@
 [tool.ruff]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
 # Never enforce `E501` (line length violations).
-ignore = ["E501"]
-select = ["C", "E", "F", "I", "W"]
+ignore = ["E501", "E266", "E203"]
+select = ["C", "E", "F", "I", "W", "CPY001"]
 line-length = 119
 fixable = ["A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W", "ANN", "ARG", "BLE", "COM", "DJ", "DTZ", "EM", "ERA", "EXE", "FBT", "ICN", "INP", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP", "YTT"]
+preview = true
 
 [tool.ruff.isort]
 lines-after-imports = 2
