@@ -5,7 +5,7 @@ from multiprocessing import Pool
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
-from datasets import load_dataset
+from datasets import DownloadMode, load_dataset
 
 from lighteval.few_shot_manager import FewShotSampler
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
@@ -544,7 +544,7 @@ def download_dataset_worker(args):
         name=task.dataset_config_name,
         data_dir=None,
         cache_dir=None,
-        download_mode=None,
+        download_mode=DownloadMode.FORCE_REDOWNLOAD,  # None
         trust_remote_code=task.trust_dataset,
     )
     return dataset
