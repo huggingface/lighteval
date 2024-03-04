@@ -93,7 +93,7 @@ class TestReorderGenerativeTaskDataset:
         for i in range(len(sorted_data) - 1):
             assert (
                 len(sorted_data[i].context) >= len(sorted_data[i + 1].context)
-            ), f"dataset[{i}][0] = {sorted_data[i].context} is shorter than dataset[{i+1}][0] = {sorted_data[i+1].context}"
+            ), f"dataset[{i}][0] = {sorted_data[i].context} is shorter than dataset[{i + 1}][0] = {sorted_data[i + 1].context}"
 
         assert len(sorted_data) == len(
             original_data

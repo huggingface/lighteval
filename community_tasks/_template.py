@@ -60,7 +60,7 @@ task = LightevalTaskConfig(
 # each being its own evaluation task.
 
 # fmt: off
-SAMPLE_SUBSETS = [] # list of all the subsets to use for this eval
+SAMPLE_SUBSETS = []  # list of all the subsets to use for this eval
 # fmt: on
 
 
