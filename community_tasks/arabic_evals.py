@@ -49,6 +49,7 @@ class CustomArabicMMLUTask(LightevalTaskConfig):
             stop_sequence=None,
             output_regex=None,
             frozen=False,
+            trust_dataset=True,
         )
 
 
@@ -115,6 +116,7 @@ class CustomACVATask(LightevalTaskConfig):
             stop_sequence=None,
             output_regex=None,
             frozen=False,
+            trust_dataset=True,
         )
 
 
@@ -145,6 +147,7 @@ arabic_exams_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metric=["loglikelihood_acc"],
+    trust_dataset=True,
 )
 
 
