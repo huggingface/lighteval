@@ -798,7 +798,7 @@ class NanotronLightevalModel(LightevalModel):
                         batch_cont_tokens.append(cont_toks)
 
                     # Sync all
-                    ## Need reshape/padding both locally (on each node) and generally accross nodes
+                    # Need reshape/padding both locally (on each node) and generally accross nodes
                     batched_inputs, _ = self.pad_and_gather(batch_model.input_ids)
                     lengths = torch.tensor(batch_model.input_lengths, device=self.device)
                     batched_lengths = self.gather(lengths)
@@ -821,7 +821,7 @@ class NanotronLightevalModel(LightevalModel):
                     )
                     batch_cont_tokens, _ = self.pad_and_gather(batch_cont_tokens)
 
-                    ## No reshape
+                    # No reshape
                     batch_truncated = torch.tensor(batch_model.truncated, device=self.device)
                     batch_truncated = self.gather(batch_truncated)
                     batch_padded = torch.tensor(batch_model.padded, device=self.device)
@@ -1029,7 +1029,7 @@ class NanotronLightevalModel(LightevalModel):
                         batch_cont_tokens.append(cont_toks)
 
                     # Sync all
-                    ## Need reshaping before gather
+                    # Need reshaping before gather
                     batched_inputs, _ = self.pad_and_gather(batch_model.input_ids)
                     lengths = torch.tensor(batch_model.input_lengths, device=self.device)
                     batched_lengths = self.gather(lengths)
@@ -1044,7 +1044,7 @@ class NanotronLightevalModel(LightevalModel):
                         dim=0,
                     )
                     batch_cont_tokens, _ = self.pad_and_gather(batch_cont_tokens)
-                    ## Can be gathered as such
+                    # Can be gathered as such
                     logits = torch.tensor(logits_sum, device=self.device)
                     logits = self.gather(logits)
                     max_equal = torch.tensor(max_equals, device=self.device)

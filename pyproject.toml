@@ -1,14 +1,16 @@
 # Code style
 [tool.ruff]
+line-length = 119
+
+[tool.ruff.lint]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
 # Never enforce `E501` (line length violations).
-ignore = ["E501", "E266", "E203"]
-select = ["C", "E", "F", "I", "W", "CPY001"]
-line-length = 119
+ignore = ["E501"]
+select = ["C", "E", "F", "I", "W"]
 fixable = ["A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W", "ANN", "ARG", "BLE", "COM", "DJ", "DTZ", "EM", "ERA", "EXE", "FBT", "ICN", "INP", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP", "YTT"]
 preview = true
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 lines-after-imports = 2
 known-first-party = ["lighteval"]
 
@@ -55,8 +57,6 @@ dependencies = [
     "torch>=2.0",
     "GitPython==3.1.31", # for logging
     "datasets>=2.14.0",
-    # Test
-    "pytest==7.4.0",
     # Prettiness
     "termcolor==2.3.0",
     "pytablewriter",
@@ -65,7 +65,6 @@ dependencies = [
     "aenum==3.1.15",
     # Base metrics
     "nltk==3.8.1",
-    "numpy",
     "scikit-learn",
     "spacy==3.7.2",
     "sacrebleu",
@@ -73,8 +72,6 @@ dependencies = [
     "sentencepiece>=0.1.99",
     "protobuf==3.20.*", # pinned for sentencepiece compat
     "pycountry",
-    # Code style
-    "ruff==v0.2.2",
 ]
 
 [project.optional-dependencies]
@@ -88,6 +85,9 @@ nanotron = [
   "nanotron",
   "tensorboardX"
 ]
+quality = ["ruff==v0.2.2","pre-commit"]
+tests = ["pytest==7.4.0"]
+dev = ["lighteval[accelerate,quality,tests]"]
 
 
 [project.urls]

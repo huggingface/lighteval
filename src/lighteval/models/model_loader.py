@@ -72,7 +72,7 @@ def load_model(  # noqa: C901
     Returns:
         Union[BaseModel, AdapterModel, DeltaModel, ModelClient]: The model that will be evaluated
     """
-    ## Inference server loading
+    # Inference server loading
     if isinstance(config, TGIModelConfig):
         return load_model_with_tgi(config)
 

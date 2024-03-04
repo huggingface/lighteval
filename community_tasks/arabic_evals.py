@@ -35,7 +35,7 @@ from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 LETTER_INDICES_AR = ["أ", "ب", "ج", "د", "هـ", "و", "ز", "ح", "ط", "ي", "ك", "ل", "م", "ن", "س", "ع", "ف", "ص", "ق", "ر", "ش", "ت", "ث", "خ", "ذ", "ض", "ظ", "غ"]
 # fmt: on
 
-## ARABIC MMLU ##
+# ARABIC MMLU ##
 # fmt: off
 ARABIC_MMLU_SUBSETS = [
     "abstract_algebra", "anatomy", "astronomy", "business_ethics", "clinical_knowledge", "college_biology", "college_chemistry", "college_computer_science",
@@ -102,7 +102,7 @@ def mmlu_arabic(line, task_name: str = None):
     )
 
 
-## ACVA ##
+# ACVA ##
 # fmt: off
 ACVA_SUBSETS = [
     "Algeria", "Ancient_Egypt", "Arab_Empire", "Arabic_Architecture", "Arabic_Art", "Arabic_Astronomy", "Arabic_Calligraphy", "Arabic_Ceremony",
@@ -157,7 +157,7 @@ def acva(line, task_name: str = None):
     )
 
 
-## ARABIC EXAMS ##
+# ARABIC EXAMS ##
 arabic_exams_task = LightevalTaskConfig(
     name="arabic_exams",
     prompt_function="arabic_exams",

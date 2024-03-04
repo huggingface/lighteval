@@ -39,7 +39,7 @@ from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 _TASKS_STRINGS: List[Tuple[LightevalTaskConfig, str]] = []
 _TASKS: List[LightevalTaskConfig] = []
 
-## COMMON_SENSE_REASONING_TASKS ##
+# COMMON_SENSE_REASONING_TASKS ##
 COMMON_SENSE_REASONING_TASKS = [
     LightevalTaskConfig(
         name="hellaswag",
@@ -166,7 +166,7 @@ COMMON_SENSE_REASONING_STRING = [(t, f"custom|{t.name}|0|1") for t in COMMON_SEN
 _TASKS_STRINGS.extend(COMMON_SENSE_REASONING_STRING)
 _TASKS += COMMON_SENSE_REASONING_TASKS
 
-## WORLD_KNOWLEDGE_TASKS ##
+# WORLD_KNOWLEDGE_TASKS ##
 
 WORLD_KNOWLEDGE_TASKS = [
     LightevalTaskConfig(
@@ -207,7 +207,7 @@ WORLD_KNOWLEDGE_STRING = [(t, f"custom|{t.name}|5|1") for t in WORLD_KNOWLEDGE_T
 _TASKS_STRINGS.extend(WORLD_KNOWLEDGE_STRING)
 _TASKS += WORLD_KNOWLEDGE_TASKS
 
-## Reading comprehension ##
+# Reading comprehension ##
 
 READING_COMP_TASKS = [
     LightevalTaskConfig(
@@ -246,7 +246,7 @@ _TASKS_STRINGS.extend(READING_COMP_STRING)
 _TASKS += READING_COMP_TASKS
 
 
-## MATH ##
+# MATH ##
 class CustomMathEvaluationTask(LightevalTaskConfig):
     """Custom class for math tasks with all the defaults set"""
 
@@ -316,7 +316,7 @@ _TASKS_STRINGS.extend(GSM8K_STRING)
 _TASKS += MATH_TASKS + [GSM8K]
 
 
-## MMLU ##
+# MMLU ##
 class CustomMMLUEvaluationTask(LightevalTaskConfig):
     def __init__(
         self,
@@ -459,7 +459,7 @@ MMLU_STRING = [(t, f"custom|{t.name}|0|1") for t in MMLU_TASKS]
 _TASKS_STRINGS.extend(MMLU_STRING)
 _TASKS += MMLU_TASKS
 
-## BBH ##
+# BBH ##
 
 
 class CustomBBHEvaluationTask(LightevalTaskConfig):
@@ -554,7 +554,7 @@ _TASKS_STRINGS.extend(BBH_STRING)
 _TASKS += BBH_TASKS
 
 
-## AGI eval ##
+# AGI eval ##
 class CustomAGIEvalEvaluationTask(LightevalTaskConfig):
     def __init__(
         self,
@@ -667,7 +667,7 @@ _TASKS_STRINGS.extend(AGIEVAL_STRING)
 _TASKS += AGIEVAL_TASKS
 
 
-## HUMAN EVAL ##
+# HUMAN EVAL ##
 # human_eval = LightevalTaskConfig(
 #         name="human_eval",
 #         prompt_function="human_eval",

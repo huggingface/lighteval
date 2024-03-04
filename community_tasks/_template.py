@@ -39,7 +39,7 @@ from lighteval.tasks.requests import Doc
 from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 
 
-## EVAL WITH NO SUBSET ##
+# EVAL WITH NO SUBSET ##
 # This is how you create a simple tasks (like hellaswag) which has one single subset
 # attached to it, and one evaluation possible.
 task = LightevalTaskConfig(
@@ -55,7 +55,7 @@ task = LightevalTaskConfig(
     metric=[""],
 )
 
-## EVALS WITH SUBSET
+# EVALS WITH SUBSET
 # This is how you create a subset task (like MMLU), which has several subset
 # each being its own evaluation task.
 
@@ -88,7 +88,7 @@ class CustomSubsetTask(LightevalTaskConfig):
         )
 
 
-## DEFINE YOUR PROMPT FUNCTIONS
+# DEFINE YOUR PROMPT FUNCTIONS
 # Define as many as you need for your different tasks
 def prompt_fn(line, task_name: str = None):
     """Defines how to go from a dataset line to a doc object.
@@ -104,12 +104,12 @@ def prompt_fn(line, task_name: str = None):
     )
 
 
-## STORE YOUR EVALS
+# STORE YOUR EVALS
 SUBSET_TASKS = [CustomSubsetTask(name=f"mytask:{subset}", hf_subset=subset) for subset in SAMPLE_SUBSETS]
 _TASKS = SUBSET_TASKS + [task]
 
 
-## CUSTOM METRIC IF NEEDED
+# CUSTOM METRIC IF NEEDED
 custom_metric = SampleLevelMetric(
     metric="my_custom_metric_name",
     higher_is_better=True,
@@ -121,7 +121,7 @@ custom_metric = SampleLevelMetric(
 
 extend_enum(Metrics, "my_custom_metric_name", custom_metric)
 
-## MODULE LOGIC
+# MODULE LOGIC
 # You should not need to touch this
 # Convert to dict for lighteval
 TASKS_TABLE = [task.as_dict() for task in _TASKS]
