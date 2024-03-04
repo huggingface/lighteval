@@ -1235,7 +1235,7 @@ class NanotronLightevalModel(LightevalModel):
 
                 generations = torch.stack([o.generation_ids[o.input_ids.shape[0] :] for o in outputs])
                 batch_input_ids, len_ids = self.pad_and_gather(batch_model.input_ids)
-                batch_generations, len_resps = self.pad_and_gather(generations)
+                batch_generations, _ = self.pad_and_gather(generations)
 
                 if returns_logits:
                     logits = torch.stack([o.logits for o in outputs])

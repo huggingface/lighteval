@@ -120,7 +120,7 @@ def get_bert_embedding(
         - :param: `device` (str): device to use, e.g. 'cpu' or 'cuda'
     """
 
-    padded_sens, padded_idf, lens, mask = collate_idf(all_sens, tokenizer, idf_dict, device=device)
+    padded_sens, padded_idf, _, mask = collate_idf(all_sens, tokenizer, idf_dict, device=device)
 
     if batch_size == -1:
         batch_size = len(all_sens)
