@@ -53,7 +53,7 @@ dependencies = [
     "huggingface_hub==0.20.3",
     "torch>=2.0",
     "GitPython==3.1.31", # for logging
-    "datasets>=2.14.0",
+    "datasets>=2.14.0,<2.18.0",
     # Test
     "pytest==7.4.0",
     # Prettiness
