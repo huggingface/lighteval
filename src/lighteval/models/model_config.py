@@ -10,10 +10,12 @@ from lighteval.models.utils import _get_model_sha
 from lighteval.utils import (
     NO_AUTOGPTQ_ERROR_MSG,
     NO_BNB_ERROR_MSG,
+    NO_OPTIMUM_ERROR_MSG,
     NO_PEFT_ERROR_MSG,
     is_accelerate_available,
     is_autogptq_available,
     is_bnb_available,
+    is_optimum_available,
     is_peft_available,
 )
 
@@ -191,6 +193,15 @@ class AdapterModelConfig(BaseModelConfig):
 
 
 @dataclass
+class OptimumModelConfig(BaseModelConfig):
+    def __post_init__(self):
+        if not is_optimum_available():
+            raise ImportError(NO_OPTIMUM_ERROR_MSG)
+
+        return super().__post_init__()
+
+
+@dataclass
 class TGIModelConfig:
     inference_server_address: str
     inference_server_auth: str
@@ -298,6 +309,8 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
         if args.base_model is None:
             raise ValueError("You need to specify a base model when using adapter weights")
         return AdapterModelConfig(**args_dict)
+    if args.optimum_weights:
+        return OptimumModelConfig(**args_dict)
     if args.base_model is not None:
         raise ValueError("You can't specifify a base model if you are not using delta/adapter weights")
     return BaseModelConfig(**args_dict)

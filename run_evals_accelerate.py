@@ -26,10 +26,15 @@ def get_parser():
         default=False,
         help="set to True of your model has been trained with peft, also need to provide the base model name",
     )
+    weight_type_group.add_argument(
+        "--optimum_weights",
+        action="store_true",
+        default=False,
+        help="set to True of your model needs to be loadded with optimum",
+    )
     parser.add_argument(
         "--base_model", type=str, default=None, help="name of the base model to be used for delta or adapter weights"
     )
-
     task_type_group.add_argument("--model_args")
     parser.add_argument("--model_dtype", type=str, default=None)
     parser.add_argument(

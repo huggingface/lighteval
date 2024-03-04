@@ -13,8 +13,10 @@ from lighteval.models.model_config import (
     EnvConfig,
     InferenceEndpointModelConfig,
     InferenceModelConfig,
+    OptimumModelConfig,
     TGIModelConfig,
 )
+from lighteval.models.optimum_model import OptimumModel
 from lighteval.models.tgi_model import ModelClient
 from lighteval.utils import NO_TGI_ERROR_MSG, is_accelerate_available, is_tgi_available
 
@@ -32,9 +34,16 @@ class ModelInfo:
 
 
 def load_model(  # noqa: C901
-    config: Union[BaseModelConfig, AdapterModelConfig, DeltaModelConfig, TGIModelConfig, InferenceEndpointModelConfig],
+    config: Union[
+        BaseModelConfig,
+        AdapterModelConfig,
+        DeltaModelConfig,
+        TGIModelConfig,
+        InferenceEndpointModelConfig,
+        OptimumModelConfig,
+    ],
     env_config: EnvConfig,
-) -> Tuple[Union[BaseModel, AdapterModel, DeltaModel, ModelClient], ModelInfo]:
+) -> Tuple[Union[BaseModel, AdapterModel, DeltaModel, ModelClient, OptimumModel], ModelInfo]:
     """Will load either a model from an inference server or a model from a checkpoint. depending
     on the arguments passed to the program.
 
@@ -93,12 +102,14 @@ def load_model_with_inference_endpoints(config: InferenceEndpointModelConfig, en
 
 
 def load_model_with_accelerate_or_default(
-    config: Union[AdapterModelConfig, BaseModelConfig, DeltaModelConfig], env_config: EnvConfig
+    config: Union[AdapterModelConfig, BaseModelConfig, DeltaModelConfig, OptimumModelConfig], env_config: EnvConfig
 ):
     if isinstance(config, AdapterModelConfig):
         model = AdapterModel(config=config, env_config=env_config)
     elif isinstance(config, DeltaModelConfig):
         model = DeltaModel(config=config, env_config=env_config)
+    elif isinstance(config, OptimumModelConfig):
+        model = OptimumModel(config=config, env_config=env_config)
     else:
         model = BaseModel(config=config, env_config=env_config)
 
