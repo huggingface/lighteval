@@ -5,7 +5,14 @@ from torch.utils.data import Dataset
 from torch.utils.data.distributed import DistributedSampler, T_co
 
 from lighteval.logging.hierarchical_logger import hlog_warn
-from lighteval.tasks.requests import Request
+from lighteval.tasks.requests import (
+    GreedyUntilRequest,
+    GreedyUntilWithLogitsRequest,
+    LoglikelihoodRequest,
+    LoglikelihoodRollingRequest,
+    LoglikelihoodSingleTokenRequest,
+    Request,
+)
 
 
 class DynamicBatchDataset(Dataset):
@@ -28,6 +35,9 @@ class DynamicBatchDataset(Dataset):
             requests (List): A list of requests.
             dataset_splits (int): The number of dataset splits.
         """
+        # We make sure the requests contain the tokenized versions of their values
+        if any(r.tokenized_context is None for r in requests):
+            raise ValueError("You passed a request for which tokenization had not happened yet.")
 
         # sort the requests using the collate function and save the original order
         enumerated_requests = list(enumerate(requests))
@@ -90,7 +100,7 @@ class DynamicBatchDataset(Dataset):
         """
         Iterator that yields the start and end indices of each dataset split.
         Also updates the starting batch size for each split (trying to double
-        the batch everytime we move to a new split).
+        the batch every time we move to a new split).
 
         Yields:
             tuple: A tuple containing the start and end indices of a split.
@@ -124,12 +134,12 @@ class DynamicBatchDataset(Dataset):
         """
         return self.split_end - self.split_start
 
-    def _sorting_criteria(self, x) -> int:
+    def _sorting_criteria(self, request) -> int:
         raise NotImplementedError()
 
 
 class LoglikelihoodDataset(DynamicBatchDataset):
-    def _sorting_criteria(self, x) -> int:
+    def _sorting_criteria(self, request: LoglikelihoodRequest | LoglikelihoodRollingRequest) -> int:
         """
         Collates the input data for batching.
 
@@ -149,13 +159,12 @@ class LoglikelihoodDataset(DynamicBatchDataset):
         Returns:
             tuple: A tuple containing the sorted input data.
         """
-
-        toks = x[1] + x[2]
+        toks = request.tokenized_context + request.tokenized_continuation
         return -len(toks)
 
 
 class LoglikelihoodSingleTokenDataset(DynamicBatchDataset):
-    def _sorting_criteria(self, x) -> int:
+    def _sorting_criteria(self, request: LoglikelihoodSingleTokenRequest) -> int:
         """
         Collates the input data for batching.
 
@@ -167,19 +176,14 @@ class LoglikelihoodSingleTokenDataset(DynamicBatchDataset):
         is useful to simplify the batching logic and more importantly to make
         automatic adaptive batches much much easier to implement
         - any OOMs will happen right away rather than near the end
-
-        Args:
-            x (tuple): A tuple containing the input data.
-
-        Returns:
-            tuple: A tuple containing the collated data.
         """
-        toks = x[1]  # We take only the prompt, no need for the continuation (since it's a list of single tokens)
+        # We take only the prompt, no need for the continuation (since it's a list of single tokens)
+        toks = request.tokenized_context
         return -len(toks)
 
 
 class GenerativeTaskDataset(DynamicBatchDataset):
-    def _sorting_criteria(self, x) -> int:
+    def _sorting_criteria(self, request: GreedyUntilRequest | GreedyUntilWithLogitsRequest) -> int:
         """
         Collate function for generating batches.
 
@@ -189,7 +193,42 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         Returns:
             Any: The collated data.
         """
-        toks, (stop_tokens, gen_length) = x
+        toks = request.tokenized_context
+        gen_length = request.generation_size
+        # The generative task has no limit except the model context
+        if gen_length is None:
+            gen_length = 0
+        return -(len(toks) + gen_length)
+
+
+class GenerativeTaskDatasetNanotron(DynamicBatchDataset):
+    def __getitem__(self, index) -> Request:
+        """
+        Get an item from the dataset depending on the split we are currently in.
+        For instance, if we are in split 0, we will get the item at index 0, if
+        we are in split 1, we will get the item at index self.split_size, etc.
+        Used for dynamic batching.
+
+        Args:
+            index (int): The index of the item.
+
+        Returns:
+            Any: The item at the specified index.
+        """
+        return index, self.sorted_data[index + self.split_start]
+
+    def _sorting_criteria(self, request) -> int:
+        """
+        Collate function for generating batches.
+
+        Args:
+            x (Any): The input data.
+
+        Returns:
+            Any: The collated data.
+        """
+        toks = request.tokenized_context
+        gen_length = request.generation_size
         return -(len(toks) + gen_length)
 
 

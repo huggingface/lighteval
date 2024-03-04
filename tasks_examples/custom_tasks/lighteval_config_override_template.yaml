@@ -12,7 +12,7 @@ lighteval:
     push_results_to_tensorboard: true
     tensorboard_metric_prefix: e
   parallelism:
-    dp: 8
+    dp: 1
     pp: 1
     pp_engine: 1f1b
     recompute_granularity: null
@@ -20,9 +20,9 @@ lighteval:
     tp_linear_async_communication: false
     tp_mode: ALL_REDUCE
   tasks:
-    custom_tasks_file: /fsx/thomwolf/github/lighteval-harness/tasks_examples/custom_evaluation_tasks.py
+    custom_tasks: /fsx/thomwolf/github/lighteval/tasks_examples/custom_tasks/custom_evaluation_tasks.py
     dataset_loading_processes: 8
-    max_samples: 1000
+    max_samples: 10
     multichoice_continuations_start_space: null
     no_multichoice_continuations_start_space: null
     num_fewshot_seeds: null

@@ -116,6 +116,7 @@ def babi_qa(line, task_name: str = None):  # HELM
             story.append(text)
     return queries
 
+
 def bbh_harness(line, task_name: str = None):
     line = {k: v for k, v in line.items() if v not in [None, ""]}
 
@@ -147,11 +148,12 @@ def bbh_harness(line, task_name: str = None):
         instruction=line.get("task_prefix", None),
     )
 
+
 def bbh_lighteval(line, task_name: str = None):
     line = {k: v for k, v in line.items() if v is not None}
 
     query = line.get("task_prefix", "")
-    query +=line.get("example_input_prefix", "\nQuestion: ")
+    query += line.get("example_input_prefix", "\nQuestion: ")
     query += line["input"]
     query += line.get("choice_prefix", "\n  Choices: ")
     query += "".join([f"\n{key}. {choice}" for key, choice in zip(LETTER_INDICES, line["choices"])])
@@ -670,6 +672,26 @@ def ethics_virtue(line, task_name: str = None):
         query=f"Sentence: {line['scenario']}\nQuestion: Does the character in this sentence exhibit the trait \"{line['trait']}\"?\nAnswer:",
         choices=[" no", " yes"],
         gold_index=int(line["label"]),
+    )
+
+
+def gpqa(line, task_name: str = None):
+    gold_index = random.randint(0, 3)
+    choices = [line["Incorrect Answer 1"], line["Incorrect Answer 2"], line["Incorrect Answer 3"]]
+    choices.insert(gold_index, line["Correct Answer"])
+
+    instruction = "Select the correct answer to the following questions.\n\n"
+
+    query = f"Question: {line['Question']}\n"
+    query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, choices)])
+    query += "Answer: "
+
+    return Doc(
+        task_name=task_name,
+        query=f"{instruction}{query}",
+        choices=LETTER_INDICES[: len(choices)],
+        gold_index=gold_index,
+        instruction=instruction,
     )
 
 
@@ -2230,7 +2252,17 @@ def wic(line, task_name: str = None):
     )
 
 
-def wikitext(line, task_name: str = None):  # perplexity metric
+def wikifact(line, task_name: str = None):
+    return Doc(task_name=task_name, query=f"{line['question']} ", gold_index=0, choices=[line["references"]])
+
+
+def wikitext(line, task_name: str = None):
+    if line["text"] == "" or line["text"][0] == "=":
+        return None
+    return Doc(task_name=task_name, query=f"{line['text']} ", gold_index=0, choices=None)
+
+
+def wikitext_harness(line, task_name: str = None):  # perplexity metric
     def wikitext_detokenizer(cur_string):
         # contractions
         cur_string = cur_string.replace("s '", "s'")
@@ -2273,12 +2305,8 @@ def wikitext(line, task_name: str = None):  # perplexity metric
     )
 
 
-def wikifact(line, task_name: str = None):
-    return Doc(task_name=task_name, query=f"{line['question']} ", gold_index=0, choices=[line["references"]])
-
-
-def wikitext_103(line, task_name: str = None):
-    return Doc(task_name=task_name, query=line["text"])
+def wikitext_helm(line, task_name: str = None):
+    return Doc(task_name=task_name, choices=[""], gold_index=0, query=line["page"])
 
 
 def winogrande(line, task_name: str = None):

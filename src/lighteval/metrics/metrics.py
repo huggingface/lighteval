@@ -1,6 +1,5 @@
-from enum import Enum
-
 import numpy as np
+from aenum import Enum
 
 from lighteval.metrics.harness_compatibility.drop import drop_metrics
 from lighteval.metrics.harness_compatibility.truthful_qa import truthfulqa_mc_metrics
@@ -501,7 +500,7 @@ class Metrics(Enum):
         return res
 
     @staticmethod
-    def corpus_level_fns():
+    def corpus_level_fns() -> dict[str, callable]:
         res = {}
         for metric in Metrics:
             if metric.value.category == MetricCategory.IGNORED:

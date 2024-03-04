@@ -7,10 +7,11 @@ import transformers
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import AutoTokenizer, BatchEncoding
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
 from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
+from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.model_config import BaseModelConfig, EnvConfig
 from lighteval.models.model_output import Batch, GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
 from lighteval.models.utils import _get_dtype, _get_precision, _simplify_name
@@ -20,10 +21,9 @@ from lighteval.tasks.requests import (
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
     LoglikelihoodSingleTokenRequest,
+    Request,
 )
-from lighteval.utils import (
-    is_accelerate_available,
-)
+from lighteval.utils import as_list, is_accelerate_available
 from lighteval.utils_parallelism import find_executable_batch_size
 
 
@@ -32,35 +32,23 @@ if is_accelerate_available():
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-TokenSequence = Union[list[int], torch.LongTensor, torch.Tensor, BatchEncoding]
-
-DATASET_SPLITS = 4
 STARTING_BATCH_SIZE = 512
 
 
-class BaseModel:
-    AUTO_CONFIG_CLASS: transformers.AutoConfig = transformers.AutoConfig
-    AUTO_TOKENIZER_CLASS: transformers.AutoTokenizer = transformers.AutoTokenizer
-    AUTO_MODEL_CLASS: transformers.AutoModel = transformers.AutoModelForCausalLM
-
-    # Default max sequence length setting for when no `max_length` is provided
-    # or no max length config setting is found in the model or tokenizer.
-    _DEFAULT_MAX_LENGTH: int = 2048
-
+class BaseModel(LightevalModel):
     def __init__(
         self,
         config: BaseModelConfig,
         env_config: EnvConfig,
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
+        self._config = config.init_configs(env_config)
         self.accelerator = config.accelerator
         self._batch_size = config.batch_size
-        self._max_gen_toks = config.max_gen_toks
-        self._max_length = config.max_length
-        self._config = config.init_configs(env_config)
+        self._max_length = self._init_max_length(config.max_length)
 
-        self._add_special_tokens = config.add_special_tokens
-        self.tokenizer = self._create_auto_tokenizer(config, env_config)
+        self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
+        self._tokenizer = self._create_auto_tokenizer(config, env_config)
 
         # If model_parallel is not set we compare the number of process with the number of GPUs
         self.model = self._create_auto_model(config, env_config)
@@ -82,16 +70,17 @@ class BaseModel:
 
         self.precision = _get_precision(config, model_auto_config=self._config)
 
-    def _encode_pair(self, context, continuation):
-        n_spaces = len(context) - len(context.rstrip())
-        if n_spaces > 0:
-            continuation = context[-n_spaces:] + continuation
-            context = context[:-n_spaces]
-        whole_enc = self.tok_encode(context + continuation)
-        context_enc = self.tok_encode(context)
-        context_enc_len = len(context_enc)
-        continuation_enc = whole_enc[context_enc_len:]
-        return context_enc, continuation_enc
+    @property
+    def tokenizer(self):
+        return self._tokenizer
+
+    @property
+    def add_special_tokens(self):
+        return self._add_special_tokens
+
+    @property
+    def max_length(self) -> int:
+        return self._max_length
 
     def init_model_parallel(self, model_parallel: bool = None) -> Tuple[bool, Optional[dict], Optional[str]]:
         """Compute all the parameters related to model_parallel"""
@@ -156,7 +145,7 @@ class BaseModel:
         config.model_parallel, max_memory, device_map = self.init_model_parallel(config.model_parallel)
         torch_dtype = _get_dtype(config.dtype, self._config)
 
-        model = self.AUTO_MODEL_CLASS.from_pretrained(
+        model = AutoModelForCausalLM.from_pretrained(
             config.pretrained,
             revision=config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
             max_memory=max_memory,
@@ -223,46 +212,7 @@ class BaseModel:
 
         return tokenizer
 
-    @property
-    def add_special_tokens(self) -> bool:
-        """
-        Determines whether to include special tokens in encoded text.
-        TODO: Remove these conditionals once HuggingFace supports a way to
-        check whether or not an arbitrary model was trained with special tokens.
-
-        Returns:
-            bool: True if special tokens should be included, False otherwise.
-
-        Raises:
-            ValueError: If the `add_special_tokens` value cannot be determined from the model class.
-        """
-        if self._add_special_tokens is not None:
-            return self._add_special_tokens
-        elif self.AUTO_MODEL_CLASS is transformers.AutoModelForCausalLM:
-            return False
-        elif self.AUTO_MODEL_CLASS is transformers.AutoModelForSeq2SeqLM:
-            return True
-        else:
-            raise ValueError(
-                "Could not determine `add_special_tokens` value from the model "
-                "class. Set to `True` or `False` depending on whether the model "
-                "was pre-trained with special tokens."
-            )
-
-    @property
-    def eot_token(self) -> str:
-        return self.tokenizer.eos_token
-
-    @property
-    def eot_token_id(self) -> int:
-        return self.tokenizer.eos_token_id
-
-    @property
-    def max_gen_toks(self) -> int:
-        return self._max_gen_toks
-
-    @property
-    def max_length(self) -> int:
+    def _init_max_length(self, max_length) -> int:
         """Return the maximum sequence length of the model.
         NOTE: Different model configurations have different max sequence length
         attribute names.
@@ -277,10 +227,10 @@ class BaseModel:
                 based on the model's configuration or tokenizer's model_max_length attribute.
 
         Returns:
-            None
+            int: Max length to use depending on the available args and config
         """
-        if self._max_length is not None:
-            return self._max_length
+        if max_length is not None:
+            return max_length
         # Try to get the sequence length from the model config.
         seqlen_config_attrs = ("n_positions", "max_position_embeddings", "n_ctx")
 
@@ -290,7 +240,9 @@ class BaseModel:
 
         if hasattr(self.tokenizer, "model_max_length"):
             return self.tokenizer.model_max_length
-        return self._DEFAULT_MAX_LENGTH
+        # Default max sequence length setting for when no `max_length` is provided
+        # or no max length config setting is found in the model or tokenizer.
+        return 2048
 
     @property
     def batch_size(self) -> int:
@@ -302,22 +254,26 @@ class BaseModel:
     def device(self) -> Union[int, str, torch.device]:
         return self._device
 
-    def tok_encode(self, string: str, add_special_tokens: Optional[bool] = None) -> TokenSequence:
-        # TODO: Merge `tok_encode_batch` here.
-        if add_special_tokens is None:
-            add_special_tokens = self.add_special_tokens
-        return self.tokenizer.encode(string, add_special_tokens=add_special_tokens)
+    @property
+    def disable_tqdm(self) -> bool:
+        disable_tqdm = False
+        if self.accelerator:
+            disable_tqdm = bool(not self.accelerator.is_main_process)
+        return disable_tqdm
 
-    def tok_encode_batch(self, strings: list[str]) -> TokenSequence:
-        return self.tokenizer(
-            strings,
-            padding=True,
-            add_special_tokens=self.add_special_tokens,
-            return_tensors="pt",
-        )
-
-    def tok_decode(self, tokens: torch.LongTensor) -> list[str]:
-        return self.tokenizer.batch_decode(tokens, skip_special_tokens=True)
+    def _check_continuations_start_space(self, continuation: str) -> str:
+        """Some models tokenizer want a space at the beginning and other not. We update this if needed here.
+        multichoice_continuations_start_space can be:
+        - True (add a space if these isn't one)
+        - False (remove a space if there is one)
+        - None (Don't touch - default)
+        Todo: find a way to add this back WITHOUT breaking compatibility with the harness
+        """
+        if self.multichoice_continuations_start_space is True and continuation[0] != " ":
+            continuation = " " + continuation
+        if self.multichoice_continuations_start_space is False and continuation[0] == " ":
+            continuation = continuation.lstrip()
+        return continuation
 
     def _model_call(self, inputs: torch.Tensor) -> torch.Tensor:
         return self.model(inputs).logits
@@ -344,9 +300,7 @@ class BaseModel:
     def greedy_until_with_logits(
         self,
         requests: list[GreedyUntilWithLogitsRequest],
-        disable_tqdm: bool = False,
         override_bs: Optional[int] = None,
-        dataset_splits: int = 4,
     ) -> list[GenerateReturn]:
         """
         Generates sequences greedily until a stopping condition is met,
@@ -355,9 +309,7 @@ class BaseModel:
         Args:
             requests (list[tuple[str, dict]]): A list of input requests,
                 where each request is a tuple containing a prompt string and a dictionary of additional parameters.
-            disable_tqdm (bool, optional): Whether to disable the tqdm progress bar. Defaults to False.
             override_bs (Optional[int], optional): Overrides the batch size for generation. Defaults to None.
-            dataset_splits (int, optional): Number of splits to divide the dataset into for parallel generation. Defaults to 4.
 
         Returns:
             list[GenerateReturn]: A list of GenerateReturn objects,
@@ -367,16 +319,14 @@ class BaseModel:
         return self.greedy_until(
             requests,
             returns_logits=True,
-            disable_tqdm=disable_tqdm,
+            disable_tqdm=self.disable_tqdm,
             override_bs=override_bs,
-            dataset_splits=dataset_splits,
         )
 
     def greedy_until(
         self,
         requests: list[GreedyUntilRequest],
         returns_logits: bool = False,
-        disable_tqdm: bool = False,
         override_bs: Optional[int] = None,
     ) -> list[GenerateReturn]:
         """
@@ -385,56 +335,82 @@ class BaseModel:
         Args:
             requests (list[Request]): list of requests containing the context and ending conditions.
             returns_logits (bool, optional): Whether to return the logits of the generated responses. Defaults to False.
-            disable_tqdm (bool, optional): Whether to disable the progress bar. Defaults to False.
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
-            dataset_splits (int, optional): Number of splits to divide the dataset into. Defaults to 4.
 
         Returns:
             list[GenerateReturn]: list of generated responses.
         """
-        inputs = [
-            (
-                request.context,
-                (request.stop_sequence + [self.eot_token], request.generation_size),
-            )
-            for request in requests
-        ]
-        dataset = GenerativeTaskDataset(requests=inputs, dataset_splits=DATASET_SPLITS)
+        for request in requests:
+            request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
+            request.tokenized_context = self.tok_encode(request.context)
+
+        dataset = GenerativeTaskDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
         results = []
 
         for split_start, split_end in tqdm(
-            dataset.splits_start_end_iterator(), total=DATASET_SPLITS, desc="Splits", position=0, disable=disable_tqdm
+            dataset.splits_start_end_iterator(),
+            total=self.DATASET_SPLITS,
+            desc="Splits",
+            position=0,
+            disable=self.disable_tqdm,
         ):
-            # longest context in the current split
-            context, (_, max_gen) = dataset[0]
-            longest_context_continuation_size_in_split = len(context) + max_gen
-            max_context_continuation_size_allowed = min(longest_context_continuation_size_in_split, self.max_length)
+            if dataset[0].generation_size is None:
+                # No constraints on the generation size: max length allowed is the max model context
+                max_context_continuation_size_allowed = self.max_length
+            else:
+                # Longest context in the current split is the first item (since we sort reversed)
+                longest_context_continuation_size_in_split = (
+                    len(dataset[0].tokenized_context) + dataset[0].generation_size
+                )
+                max_context_continuation_size_allowed = min(
+                    longest_context_continuation_size_in_split, self.max_length
+                )
             batch_size = self._get_batch_size(
                 override_bs=override_bs,
                 max_input_length=max_context_continuation_size_allowed,
                 starting_batch_size=starting_batch_size,
             )
+            # For next iteration, since the batch will be smaller, we'll test a bigger batch size
             starting_batch_size = batch_size * 2
 
             dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda batch: batch)
             if self.accelerator:
                 dataloader = self.accelerator.prepare(dataloader)
 
-            for batch in tqdm(dataloader, desc="Greedy generation", position=1, leave=False, disable=disable_tqdm):
+            for batch in tqdm(
+                dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
+            ):
                 # NOTE: we are assuming all items in a batch behave similarly (same
                 # stop_tokens and max_tokens genrated) which is not necessarily
                 # the case! Because of that we only use batch size of 1
-                stop_tokens, max_generated_tokens = batch[0][1]
-                context = [c[0] for c in batch]
-                max_context_allowed_by_model = self.max_length - max_generated_tokens
+                stop_tokens = batch[0].stop_sequence
+                context = [c.context for c in batch]
+                max_context_size_allowed = self.max_length
+                if batch[0].generation_size is None:
+                    # No constraints on max tokens except the model and data
+                    # Max generation possible is the max_length - the smallest context
+                    smallest_context = min([len(c) for c in context])
+                    if smallest_context < self.max_length:
+                        max_generated_tokens = self.max_length - smallest_context
+                        max_context_size_allowed = self.max_length
+                    else:
+                        # The max context size is smaller than the smallest context
+                        max_generated_tokens = 1
+                        max_context_size_allowed = self.max_length - 1
+                        hlog_warn(
+                            f"The smallest context of your batch ({smallest_context}) is bigger than the maximum context size allowed by the model ({self.max_length}) for a task in {[i.task_name for i in batch]}. This is likely to lead to some errors."
+                        )
+                else:
+                    max_generated_tokens = batch[0].generation_size
+                    max_context_size_allowed = self.max_length - max_generated_tokens
 
                 tokenized = self.tokenizer(
                     context,
                     padding=True,
                     truncation=True,
                     return_tensors="pt",
-                    max_length=max_context_allowed_by_model,
+                    max_length=max_context_size_allowed,
                     add_special_tokens=self.add_special_tokens,
                 ).to(self.device)
 
@@ -446,65 +422,86 @@ class BaseModel:
                     padded=[0] * len(tokenized["input_ids"]),
                 )
 
-                # responses, logits and input_ids have all been gathered accross GPUs already
-                # but we also grab the original length of these vectors, which have been padded
-                # while being gathered - the added info
-                responses, logits, input_ids, len_resps, len_logits, len_ids = self._model_generate(
-                    input_ids=prepared_batch.input_ids,
-                    attention_mask=prepared_batch.input_mask,
+                cur_reponses = self._generate(
+                    batch=prepared_batch,
                     max_tokens=max_generated_tokens,
-                    stop=stop_tokens,
+                    stop_tokens=stop_tokens,
                     returns_logits=returns_logits,
                 )
-
-                if returns_logits:
-                    logits = logits.cpu().numpy()
-
-                batch_truncated = torch.tensor(prepared_batch.truncated, device=self.device)
-                if self.accelerator:
-                    batch_truncated = self.accelerator.gather_for_metrics(batch_truncated)
-                batch_padded = torch.tensor(prepared_batch.padded, device=self.device)
-                if self.accelerator:
-                    batch_padded = self.accelerator.gather_for_metrics(batch_padded)
-
-                for ix, (response, batched_input, trunc, padded) in enumerate(
-                    zip(responses, input_ids, batch_truncated, batch_padded)
-                ):
-                    # Ensure the generated responses do not contain the stop sequences.
-                    response = response[: len_resps[ix]]
-                    decoded_response = self.tok_decode([response])[0]
-
-                    for term in stop_tokens:
-                        decoded_response = decoded_response.split(term)[0]
-
-                    cur_response = GenerateReturn(
-                        result=decoded_response,
-                        logits=logits[ix][: len_logits[ix]] if returns_logits else None,
-                        generated_tokens=response,
-                        input_tokens=batched_input[: len_ids[ix]],
-                        truncated_tokens_count=trunc.cpu().item(),
-                        padded_tokens_count=padded.cpu().item(),
-                    )
-                    results.append(cur_response)
+                results.extend(cur_reponses)
 
         return dataset.get_original_order(results)
 
-    def _check_continuations_start_space(self, continuation: str) -> str:
-        """Some models tokenizer want a space at the beginning and other not. We update this if needed here.
-        multichoice_continuations_start_space can be:
-        - True (add a space if these isn't one)
-        - False (remove a space if there is one)
-        - None (Don't touch - default)
-        Todo: find a way to add this back WITHOUT breaking compatibility with the harness
+    def _generate(
+        self,
+        batch: Batch,
+        max_tokens: int,
+        stop_tokens: list[str],
+        returns_logits: Optional[bool] = False,
+    ) -> list[GenerateReturn]:
+        """Contains the actual logic of the generation.
+        First computes the stop sequences, then generates the predictions, then converts the outputs to GenerateReturn.
         """
-        if self.multichoice_continuations_start_space is True and continuation[0] != " ":
-            continuation = " " + continuation
-        if self.multichoice_continuations_start_space is False and continuation[0] == " ":
-            continuation = continuation.lstrip()
-        return continuation
+        stopping_criteria = stop_sequences_criteria(self.tokenizer, stop_sequences=stop_tokens, batch=batch)
+
+        # Compute model generation
+        outputs = self.model.generate(
+            input_ids=batch.input_ids,
+            attention_mask=batch.input_mask,
+            max_new_tokens=max_tokens,
+            stopping_criteria=stopping_criteria,
+            do_sample=False,
+            pad_token_id=self.tokenizer.pad_token_id if self.tokenizer.pad_token_id else self.tokenizer.eos_token_id,
+            return_dict_in_generate=True,
+            output_scores=True,
+        )
+        if returns_logits:
+            logits = self.model.compute_transition_scores(outputs.sequences, outputs.scores, normalize_logits=True)
+        generations = outputs.sequences[:, batch.input_ids.size(1) :]
+        generations, len_gens = self.pad_and_gather(generations)
+        batch.input_ids, len_ids = self.pad_and_gather(batch.input_ids)
+
+        logits, len_logits = None, None
+        if returns_logits:
+            logits, len_logits = self.pad_and_gather(logits)
+            logits = logits.cpu().numpy()
+
+        # We gather remaining info
+        batch.truncated = torch.tensor(batch.truncated, device=self.device)
+        if self.accelerator:
+            batch.truncated = self.accelerator.gather_for_metrics(batch.truncated)
+        batch.padded = torch.tensor(batch.padded, device=self.device)
+        if self.accelerator:
+            batch.padded = self.accelerator.gather_for_metrics(batch.padded)
+
+        # We convert to GenerateReturn outputs
+        all_responses = []
+        for ix, (generation, batched_input, trunc, padded) in enumerate(
+            zip(generations, batch.input_ids, batch.truncated, batch.padded)
+        ):
+            # Ensure the generated responses do not contain the stop sequences.
+            generation = generation[: len_gens[ix]]
+            decoded_generation = self.tok_decode([generation])[0]
+
+            for term in stop_tokens:
+                decoded_generation = decoded_generation.split(term)[0]
+
+            cur_response = GenerateReturn(
+                result=decoded_generation,
+                logits=logits[ix][: len_logits[ix]] if returns_logits else None,
+                generated_tokens=generation,
+                input_tokens=batched_input[: len_ids[ix]],
+                truncated_tokens_count=trunc.cpu().item(),
+                padded_tokens_count=padded.cpu().item(),
+            )
+            all_responses.append(cur_response)
+
+        return all_responses
 
     def loglikelihood(
-        self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
+        self,
+        requests: list[LoglikelihoodRequest],
+        override_bs: Optional[int] = None,
     ) -> list[LoglikelihoodReturn]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
@@ -515,111 +512,101 @@ class BaseModel:
         Returns:
             list[Tuple[float, bool]]: _description_
         """
-        tokenized_reqs = []
-
         for request in requests:
-            context, continuation = request.context, request.choice
-
-            if context == "":
-                context_enc, continuation_enc = [self.eot_token_id], self.tok_encode(continuation)
+            if request.context == "":
+                request.tokenized_context = [self.tokenizer.eos_token_id]
+                request.tokenized_continuation = self.tok_encode(request.choice)
             else:
-                # DO NOT CHANGE THE FOLLOWING LINE!
-                # It is mandatory for compatibility with the harness!!!
-                context_enc, continuation_enc = self._encode_pair(context, continuation)
+                # The following line is mandatory for compatibility with the harness
+                request.tokenized_context, request.tokenized_continuation = self.tok_encode_pair(
+                    request.context, request.choice
+                )
 
-            tokenized_reqs.append(((context, continuation), context_enc, continuation_enc))
-
-        return self._loglikelihood_tokens(tokenized_reqs, override_bs=override_bs, dataset_splits=DATASET_SPLITS)
+        return self._loglikelihood_tokens(requests, override_bs=override_bs)
 
     def loglikelihood_rolling(
-        self, requests: list[LoglikelihoodRollingRequest], override_bs=None
+        self,
+        requests: list[LoglikelihoodRollingRequest],
+        override_bs=None,
     ) -> list[LoglikelihoodReturn]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
-        tokenized_reqs = []
 
         for request in requests:  # tuple of one elem
-            context = request.context
-            fake_context_enc, context_enc = [self.eot_token_id], self.tok_encode(context)
+            request.tokenized_context = [self.tokenizer.eos_token_id]  # Fake context
+            request.tokenized_continuation = self.tok_encode(request.context)
 
-            tokenized_reqs.append((("", context), fake_context_enc, context_enc))
-
-        disable_tqdm = False
-        if self.accelerator:
-            disable_tqdm = bool(not self.accelerator.is_main_process)
         results = self._loglikelihood_tokens(
-            tokenized_reqs,
+            requests,
             override_bs=override_bs,
-            disable_tqdm=disable_tqdm,
             return_bool_score=False,
-            dataset_splits=DATASET_SPLITS,
         )
         return results
 
     def _loglikelihood_tokens(
         self,
-        requests,
-        disable_tqdm: bool = False,
+        requests: list[LoglikelihoodRequest],
         override_bs: int = -1,
-        dataset_splits: int = 4,
         return_bool_score: bool = True,
     ) -> list[LoglikelihoodReturn]:
-        dataset = LoglikelihoodDataset(requests=requests, dataset_splits=dataset_splits)
+        dataset = LoglikelihoodDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
         res = []
 
         for split_start, split_end in tqdm(dataset.splits_start_end_iterator()):
-            _, context_enc, continuation_enc = dataset[0]
-            max_context = len((context_enc + continuation_enc)[-(self.max_length + 1) :][:-1])
+            context_enc = dataset[0].tokenized_context
+            continuation_enc = dataset[0].tokenized_continuation
+            max_context_continuation_size_allowed = len(
+                (context_enc + continuation_enc)[-(self.max_length + 1) :][:-1]
+            )
 
             batch_size = self._get_batch_size(
-                override_bs=override_bs, max_input_length=max_context, starting_batch_size=starting_batch_size
+                override_bs=override_bs,
+                max_input_length=max_context_continuation_size_allowed,
+                starting_batch_size=starting_batch_size,
             )
-            dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda batch: batch)
             starting_batch_size = batch_size * 2
 
+            dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda batch: batch)
             if self.accelerator:
                 dataloader = self.accelerator.prepare(dataloader)
 
-            for batch in tqdm(dataloader, disable=disable_tqdm):
-                inputs = [
-                    context_enc + continuation_enc[:-1] for _, context_enc, continuation_enc in batch
-                ]  # The last token doesn't need to be input in the model
-                prepared_batch = self.prepare_batch(inputs, padding_length=max_context, max_context=max_context)
+            for batch in tqdm(dataloader, disable=self.disable_tqdm):
+                prepared_batch = self.prepare_batch(
+                    batch,
+                    padding_length=max_context_continuation_size_allowed,
+                    max_context=max_context_continuation_size_allowed,
+                )
 
-                out = self._model_call(prepared_batch.input_ids)
-                multi_logits = F.log_softmax(out, dim=-1)  # [batch, padding_length, vocab]
+                model_output = self._model_call(prepared_batch.input_ids)
+                logits = F.log_softmax(model_output, dim=-1)  # [batch, padding_length, vocab]
 
                 logits_sum = []
                 max_equals = []
                 batch_cont_tokens = []
-                for (_, _, cont_toks), logits, inplen in zip(batch, multi_logits, prepared_batch.input_lengths):
+                for cur_request, cur_logits, inplen in zip(batch, logits, prepared_batch.input_lengths):
+                    cont_toks = torch.tensor(cur_request.tokenized_continuation, dtype=torch.long, device=self.device)
+                    contlen = cont_toks.shape[0]
                     # We only look at the continuation tokens
-                    contlen = len(cont_toks)
                     if contlen > inplen:
-                        # continuation is longer than the allowed context size, everything is a continuation
-                        logits = logits.unsqueeze(0).to(self.device)  # [1, seq, vocab]
-                        cont_toks = (
-                            torch.tensor(cont_toks, dtype=torch.long, device=self.device)[:inplen]
-                            .unsqueeze(0)
-                            .to(self.device)
-                        )  # [1, seq]
+                        # Continuation is longer than the input size, we are in rolling mode (only continuation)
+                        cur_logits = cur_logits.unsqueeze(0).to(self.device)  # [1, seq, vocab]
+                        cont_toks = cont_toks[:inplen].unsqueeze(0).to(self.device)  # [1, seq]
                     else:
-                        logits = logits[inplen - contlen : inplen].unsqueeze(0).to(self.device)  # [1, seq, vocab]
-                        cont_toks = (
-                            torch.tensor(cont_toks, dtype=torch.long, device=self.device).unsqueeze(0).to(self.device)
-                        )  # [1, seq]
+                        cur_logits = (
+                            cur_logits[inplen - contlen : inplen].unsqueeze(0).to(self.device)
+                        )  # [1, seq, voc]
+                        cont_toks = cont_toks.unsqueeze(0).to(self.device)  # [1, seq]
 
                     # Check if per-token argmax is exactly equal to continuation
-                    greedy_tokens = logits.argmax(dim=-1).to(self.device)
+                    greedy_tokens = cur_logits.argmax(dim=-1).to(self.device)
                     # Sometimes the continuation is longer than allowed by the model, we only look at the first tokens
                     max_equal = (greedy_tokens == cont_toks).all().squeeze(0).to(self.device)
 
                     # Obtain log-probs at the corresponding continuation token indices
-                    # last_token_slice = logits[:, -1, :].squeeze(0).tolist()
-                    logits = torch.gather(logits, 2, cont_toks.unsqueeze(-1)).squeeze(-1)  # [1, seq]
+                    cur_logits = torch.gather(cur_logits, 2, cont_toks.unsqueeze(-1)).squeeze(-1)  # [1, seq]
 
                     # Answer: (log prob, is-exact-match)
-                    logits_sum.append(logits.sum())
+                    logits_sum.append(cur_logits.sum())
                     max_equals.append(max_equal)
                     batch_cont_tokens.append(cont_toks)
 
@@ -650,6 +637,7 @@ class BaseModel:
                     zip(logits, batch_cont_tokens, max_equal, batched_inputs, batch_truncated, batch_padded)
                 ):
                     answer = LoglikelihoodReturn(
+                        # todo: we might want to store the logits unsummed
                         result=(float(logit.sum()), bool(maxe)) if return_bool_score else float(logit.sum()),
                         input_tokens=batched_input[: len_inputs[ix]].cpu().tolist(),
                         generated_tokens=cont_tokens[: len_tokens[ix]].cpu().tolist(),
@@ -659,7 +647,7 @@ class BaseModel:
                     res.append(answer)
 
                 # Clean up GPUS
-                del out
+                del model_output
                 del logits
                 del batched_inputs
                 del batch_truncated
@@ -667,9 +655,18 @@ class BaseModel:
 
         return dataset.get_original_order(res)
 
-    def prepare_batch(self, batch: list[str], padding_length: int, max_context: Optional[int] = None):
+    def prepare_batch(
+        self, batch: list[Request], padding_length: int, max_context: Optional[int] = None, single_token: bool = False
+    ):
         """Tokenize a batch of inputs and return also the length, truncations and padding"""
-        inputs = []
+        if single_token:
+            inputs = [request.tokenized_context for request in batch]
+        else:
+            inputs = [
+                request.tokenized_context + request.tokenized_continuation[:-1] for request in batch
+            ]  # The last token (an eos) doesn't need to be given to the model
+
+        input_tokens = []
         attention_masks = []
         input_lengths = []
         truncated = []
@@ -679,57 +676,33 @@ class BaseModel:
             hlog_warn("max_context is None, using max_length")
             max_context = self.max_length
 
-        # because vectorizing is annoying, we first convert each (context, continuation) pair to padded
-        # tensors, then we pack them together into a batch, call the model, and then pick it all apart
-        # again because vectorizing is annoying
-
         # Each sample is concatenated and cut to lenght or padded to max_length
-        for tokens in batch:
-            truncated.append(max(len(tokens) - max_context, 0))
+        for orig_tokens in inputs:
+            truncated.append(max(len(orig_tokens) - max_context, 0))
 
-            # how this all works:
-            #          CTX      CONT
-            # inp    0 1 2 3|4 5 6 7 8 9   <- last token is deleted by inp[:, :-1]
-            # gpt2    \               \
-            # logits   1 2 3|4 5 6 7 8 9   <- the ctx half gets tossed out by the
-            # cont_toks      4 5 6 7 8 9      [:, -len(continuation_enc):, :self.vocab_size] slice
+            # Truncate from the left if needed to fit in the model's context
+            tokens = torch.tensor((orig_tokens)[-max_context:], dtype=torch.long).to(self.device)
+            sequence_len = tokens.shape[0]
 
-            # when too long to fit in context, truncate from the left
-            inp = torch.tensor(
-                (tokens)[-max_context:],  # [:-1],
-                dtype=torch.long,
-            ).to(self.device)
+            # We add padding, if needed
+            padding_length = padding_length if padding_length is not None else sequence_len
 
-            (inplen,) = inp.shape
-
-            # since in _collate we make sure length is descending, the longest is always the first one.
-            padding_length = padding_length if padding_length is not None else inplen
-
-            if padding_length - inplen < 0:
-                hlog_err(f"{tokens=}")
-                hlog_err(f"{max_context=}")
-                hlog_err(f"{padding_length=}")
-                hlog_err(f"{inp.shape=}")
-                hlog_err(f"Padding length {padding_length} is smaller than input length {inplen}")
+            if padding_length - sequence_len < 0:
+                hlog_err(f"Padding length {padding_length} is smaller than input length {sequence_len}")
                 raise ValueError("Negative padding")
 
-            padded.append(padding_length - inplen)
+            padded.append(padding_length - sequence_len)
+            # Right padding - it likely would be better to do left padding
+            tokens = F.pad(tokens, (0, padding_length - sequence_len), value=self.tokenizer.pad_token_id)
 
-            # pad length from seq to padding_length
-            att = torch.tensor([1] * len(inp) + [0] * (padding_length - inplen), dtype=torch.long).to(self.device)
-            inp = torch.cat(
-                [
-                    inp,  # [seq]
-                    torch.zeros(padding_length - inplen, dtype=torch.long).to(inp.device),  # [padding_length - seq]
-                ],
-                dim=0,
-            )
-            attention_masks.append(att.unsqueeze(0))
+            # We create the attention mask to ignore padding
+            mask = tokens == self.tokenizer.pad_token_id
+            attention_masks.append(mask)
 
-            inputs.append(inp.unsqueeze(0))  # [1, padding_length]
-            input_lengths.append(inplen)
+            input_tokens.append(tokens.unsqueeze(0))  # [1, padding_length]
+            input_lengths.append(sequence_len)
 
-        batched_inputs = torch.cat(inputs, dim=0)  # [batch, padding_length]
+        batched_inputs = torch.cat(input_tokens, dim=0)  # [batch, padding_length]
         attention_masks = torch.cat(attention_masks, dim=0)
 
         return Batch(
@@ -768,20 +741,14 @@ class BaseModel:
         Returns:
             list[Tuple[float, bool]]: _description_
         """
-        tokenized_reqs = []
-
         for request in requests:
-            context = request.context
-            continuations = request.choices
-
-            if context == "":
-                # end of text as context
-                context_enc = [self.eot_token_id]
+            if request.context == "":
+                request.tokenized_context = [self.tokenizer.eos_token_id]
             else:
-                context_enc = self.tok_encode(context)
+                request.tokenized_context = self.tok_encode(request.context)
 
             # Some models tokenizer want a space at the beginning and other not
-            continuations = [self._check_continuations_start_space(c) for c in continuations]
+            continuations = [self._check_continuations_start_space(c) for c in request.choices]
 
             # We must not accidentally prepend a continuation with a start of sentence token.
             continuations_enc = [self.tok_encode(c, add_special_tokens=False) for c in continuations]
@@ -790,23 +757,19 @@ class BaseModel:
                     f"Trying to do single token multiple choice but one choice has several tokens: {continuations_enc}. "
                     "If the additional pre-token is a space, try to set --no_multichoice_continuations_start_space "
                 )
+            request.tokenized_continuation = continuations_enc
 
-            tokenized_reqs.append(((context, continuations), context_enc, continuations_enc))
-        disable_tqdm = False
-        if self.accelerator:
-            disable_tqdm = bool(not self.accelerator.is_main_process)
-
-        return self._loglikelihood_single_token(tokenized_reqs, override_bs=override_bs, disable_tqdm=disable_tqdm)
+        return self._loglikelihood_single_token(requests, override_bs=override_bs)
 
     def _loglikelihood_single_token(
-        self, requests, disable_tqdm: bool = False, override_bs: int = -1, dataset_splits: int = 4
+        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: int = -1
     ) -> list[LoglikelihoodSingleTokenReturn]:
-        dataset = LoglikelihoodSingleTokenDataset(requests=requests, dataset_splits=dataset_splits)
+        dataset = LoglikelihoodSingleTokenDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
         res = []
 
         for split_start, split_end in tqdm(dataset.splits_start_end_iterator()):
-            _, context_enc, _ = dataset[0]
+            context_enc = dataset[0].tokenized_context
             max_context = len(context_enc[-self.max_length :])
             batch_size = self._get_batch_size(override_bs=override_bs, max_input_length=max_context)
             starting_batch_size = batch_size * 2
@@ -815,24 +778,23 @@ class BaseModel:
             if self.accelerator is not None:
                 dataloader = self.accelerator.prepare(dataloader)
 
-            for batch in tqdm(dataloader, disable=disable_tqdm, position=1):
-                inputs = [context_enc for _, context_enc, _ in batch]
-
-                prepared_batch = self.prepare_batch(inputs, padding_length=max_context, max_context=max_context)
+            for batch in tqdm(dataloader, disable=self.disable_tqdm, position=1):
+                prepared_batch = self.prepare_batch(
+                    batch, padding_length=max_context, max_context=max_context, single_token=True
+                )
 
                 out = self._model_call(prepared_batch.input_ids)  # [batch, padding_length, vocab]
-
                 out = F.log_softmax(out, dim=-1)  # we do a softmax over the options, no the vocab
 
                 batch_probs = []
                 batch_cont_tokens = []
-                for (_, _, cont_toks), logits, inplen in zip(batch, out, prepared_batch.input_lengths):
+                for cur_request, logits, inplen in zip(batch, out, prepared_batch.input_lengths):
                     # Get the last token
                     logits = logits[inplen - 1]  # [vocab]
 
-                    cont_toks = torch.tensor(cont_toks, dtype=torch.long, device=self.device).squeeze(
-                        -1
-                    )  # [num_choices]
+                    cont_toks = torch.tensor(
+                        cur_request.tokenized_continuation, dtype=torch.long, device=self.device
+                    ).squeeze(-1)  # [num_choices]
 
                     # Obtain log-probs at the corresponding continuation token indices
                     # last_token_slice = logits[:, -1, :].squeeze(0).tolist()
@@ -881,57 +843,6 @@ class BaseModel:
 
         return dataset.get_original_order(res)
 
-    def _model_generate(
-        self,
-        input_ids: torch.Tensor,
-        attention_mask: torch.Tensor,
-        max_tokens: int,
-        stop: Optional[list[str]] = None,
-        returns_logits: Optional[bool] = False,
-    ) -> TokenSequence:
-        # max_tokens is the maximum number of *new* tokens
-        # Ensure that the context does not encroach into the `space` for the generation.`
-        # input_ids = inputs["input_ids"][:, max_tokens - self.max_length :].to(self.device)
-        # if inputs["input_ids"].shape != input_ids.shape:
-        #     hlog_warn(
-        #         f"The input was truncated from {inputs['input_ids'].shape} to {input_ids.shape}, with a model maximum context length of {self.max_length} and max {max_tokens} to generate."
-        #     )
-        # attention_mask = inputs["attention_mask"][:, max_tokens - self.max_length :].to(self.device)
-
-        stopping_criteria = stop_sequences_criteria(
-            self.tokenizer,
-            stop_sequences=stop,
-            initial_decoder_input_length=input_ids.shape[1],
-            batch_size=input_ids.shape[0],
-        )
-
-        # Depending on whether accelerate is used or not
-        outputs = self.model.generate(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            max_new_tokens=max_tokens,
-            stopping_criteria=stopping_criteria,
-            do_sample=False,
-            pad_token_id=self.tokenizer.pad_token_id if self.tokenizer.pad_token_id else self.tokenizer.eos_token_id,
-            return_dict_in_generate=True,
-            output_scores=returns_logits,
-        )
-        if returns_logits:
-            transition_scores = self.model.compute_transition_scores(
-                outputs.sequences, outputs.scores, normalize_logits=True
-            )
-        generations = outputs.sequences[:, input_ids.size(1) :]
-        generations, len_gens = self.pad_and_gather(generations)
-        input_ids, len_ids = self.pad_and_gather(input_ids)
-
-        if returns_logits:
-            # Used input_ids to get its max_length
-            transition_scores, len_logits = self.pad_and_gather(transition_scores)
-        else:
-            transition_scores, len_logits = None, None
-
-        return generations, transition_scores, input_ids, len_gens, len_logits, len_ids
-
 
 class MultiTokenEOSCriteria(transformers.StoppingCriteria):
     """Criteria to stop on the specified multi-token sequence."""
@@ -940,9 +851,11 @@ class MultiTokenEOSCriteria(transformers.StoppingCriteria):
         self,
         sequence: str,
         tokenizer: transformers.PreTrainedTokenizer,
-        initial_decoder_input_length: int,
-        batch_size: int,
+        batch: Batch,
     ):
+        initial_decoder_input_length = batch.input_ids.shape[1]
+        batch_size = batch.input_ids.shape[0]
+
         self.initial_decoder_input_length = initial_decoder_input_length
         self.done_tracker = [False] * batch_size
         self.sequence = sequence
@@ -965,14 +878,10 @@ class MultiTokenEOSCriteria(transformers.StoppingCriteria):
 def stop_sequences_criteria(
     tokenizer: transformers.PreTrainedTokenizer,
     stop_sequences: list[str],
-    initial_decoder_input_length: int,
-    batch_size: int,
+    batch: Batch,
 ) -> transformers.StoppingCriteriaList:
     return transformers.StoppingCriteriaList(
         [
-            *[
-                MultiTokenEOSCriteria(sequence, tokenizer, initial_decoder_input_length, batch_size)
-                for sequence in stop_sequences
-            ],
+            *[MultiTokenEOSCriteria(sequence, tokenizer, batch) for sequence in stop_sequences],
         ]
     )

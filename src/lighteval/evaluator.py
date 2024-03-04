@@ -5,10 +5,12 @@ import collections
 import copy
 from typing import Dict, Union
 
+from pytablewriter import LatexTableWriter, MarkdownTableWriter
+
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.base_model import BaseModel
-from lighteval.models.inference_client import ModelClient
+from lighteval.models.tgi_model import ModelClient
 from lighteval.tasks.lighteval_task import LightevalTask
 from lighteval.tasks.requests import Doc, Request, RequestType, TaskExampleId
 
@@ -43,7 +45,7 @@ def evaluate(  # noqa: C901
     # A request output tupe is a Tuple where the first element is the index of
     # the request for one document of one task i.e.
     # task: "arc_easy", doc: "0"# request: "0" -> request_index = 0,
-    # We can have multiple request per doc for multichoice tasks for example.
+    # We can have multiple request per doc for multi choice tasks for example.
 
     # all responses for each (task, doc)
     RequestIndexModelResponseTuple = collections.namedtuple(
@@ -99,8 +101,6 @@ def evaluate(  # noqa: C901
 
 def make_results_table(result_dict):
     """Generate table of results."""
-    from pytablewriter import LatexTableWriter, MarkdownTableWriter
-
     md_writer = MarkdownTableWriter()
     latex_writer = LatexTableWriter()
     md_writer.headers = ["Task", "Version", "Metric", "Value", "", "Stderr"]
@@ -108,8 +108,9 @@ def make_results_table(result_dict):
 
     values = []
 
-    for k, dic in result_dict["results"].items():
-        version = result_dict["versions"][k]
+    for k in sorted(result_dict["results"].keys()):
+        dic = result_dict["results"][k]
+        version = result_dict["versions"][k] if k in result_dict["versions"] else ""
         for m, v in dic.items():
             if m.endswith("_stderr"):
                 continue

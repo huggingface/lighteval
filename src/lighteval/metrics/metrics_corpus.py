@@ -111,6 +111,6 @@ class CorpusLevelPerplexityMetric:
         if self.metric_type == "perplexity":
             return math.exp(-np.mean(logprobs))
         if self.metric_type == "weighted_perplexity":
-            return math.exp(-np.average(logprobs, weights=weights))
+            return math.exp(-sum(logprobs) / sum(weights))
         if self.metric_type == "bits_per_byte":
-            return -np.average(logprobs, weights=weights) / math.log(2)
+            return -sum(logprobs) / sum(weights) * 1 / math.log(2)
