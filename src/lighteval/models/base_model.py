@@ -354,9 +354,17 @@ class BaseModel(LightevalModel):
             position=0,
             disable=self.disable_tqdm,
         ):
-            # Longest context in the current split is the first item (since we sort reversed)
-            longest_context_continuation_size_in_split = len(dataset[0].tokenized_context) + dataset[0].generation_size
-            max_context_continuation_size_allowed = min(longest_context_continuation_size_in_split, self.max_length)
+            if dataset[0].generation_size is None:
+                # No constraints on the generation size: max length allowed is the max model context
+                max_context_continuation_size_allowed = self.max_length
+            else:
+                # Longest context in the current split is the first item (since we sort reversed)
+                longest_context_continuation_size_in_split = (
+                    len(dataset[0].tokenized_context) + dataset[0].generation_size
+                )
+                max_context_continuation_size_allowed = min(
+                    longest_context_continuation_size_in_split, self.max_length
+                )
             batch_size = self._get_batch_size(
                 override_bs=override_bs,
                 max_input_length=max_context_continuation_size_allowed,
@@ -376,9 +384,25 @@ class BaseModel(LightevalModel):
                 # stop_tokens and max_tokens genrated) which is not necessarily
                 # the case! Because of that we only use batch size of 1
                 stop_tokens = batch[0].stop_sequence
-                max_generated_tokens = batch[0].generation_size
                 context = [c.context for c in batch]
-                max_context_size_allowed = self.max_length - max_generated_tokens
+                max_context_size_allowed = self.max_length
+                if batch[0].generation_size is None:
+                    # No constraints on max tokens except the model and data
+                    # Max generation possible is the max_length - the smallest context
+                    smallest_context = min([len(c) for c in context])
+                    if smallest_context < self.max_length:
+                        max_generated_tokens = self.max_length - smallest_context
+                        max_context_size_allowed = self.max_length
+                    else:
+                        # The max context size is smaller than the smallest context
+                        max_generated_tokens = 1
+                        max_context_size_allowed = self.max_length - 1
+                        hlog_warn(
+                            f"The smallest context of your batch ({smallest_context}) is bigger than the maximum context size allowed by the model ({self.max_length}) for a task in {[i.task_name for i in batch]}. This is likely to lead to some errors."
+                        )
+                else:
+                    max_generated_tokens = batch[0].generation_size
+                    max_context_size_allowed = self.max_length - max_generated_tokens
 
                 tokenized = self.tokenizer(
                     context,
