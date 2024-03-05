@@ -19,7 +19,7 @@ from lighteval.logging.info_loggers import (
     TaskConfigLogger,
     VersionsLogger,
 )
-from lighteval.utils import is_nanotron_available, obj_to_markdown
+from lighteval.utils import is_nanotron_available, is_wandb_available, obj_to_markdown
 
 
 if is_nanotron_available():
@@ -100,6 +100,7 @@ class EvaluationTracker:
                 Results are pushed to `{hub_results_org}/details__{sanitized model_name}` for the model `model_name`, a public dataset,
                 if `public` is True else `{hub_results_org}/details__{sanitized model_name}_private`, a private dataset.
             public (bool): If True, results and details are pushed in private orgs
+            push_results_to_tensorboard (bool): If True, results are pushed to tensorboard/wandb
 
         """
         hlog("Saving experiment tracker")
@@ -511,6 +512,23 @@ class EvaluationTracker:
             path_in_repo="tb",
             commit_every=6000,  # Very long time so that we can change our files names and trigger push ourselves (see below)
         )
+        if is_wandb_available and config.experiment_logger.wandb_logger is not None:
+            import wandb
+
+            wandb.tensorboard.patch(root_logdir=str(output_dir_tb))
+            run = wandb.init(
+                project=config.experiment_logger.wandb_logger.wandb_project,
+                entity=config.experiment_logger.wandb_logger.wandb_entity,
+                name=config.general.run,  #  + "_" + str(config.general.step) + "_" + prefix,
+                job_type="eval" + "_" + str(config.general.step),
+                group=config.general.run,
+                config=config.as_dict(),
+                resume="allow",
+                # id=(config.general.run)[-64:],  #   + "_" + prefix
+            )
+        else:
+            run = None
+        wandb_dict = {}
         bench_averages = {}
         for name, values in results.items():
             splited_name = name.split("|")
@@ -532,33 +550,43 @@ class EvaluationTracker:
             for metric, value in values.items():
                 if "stderr" in metric:
                     tb_context.add_scalar(f"stderr_{prefix}/{task_name}/{metric}", value, global_step=global_step)
+                    wandb_dict[f"stderr/{task_name}/{metric}"] = value
                 elif bench_suite is not None:
                     tb_context.add_scalar(
                         f"{prefix}_{bench_suite}/{task_name}/{metric}", value, global_step=global_step
                     )
+                    wandb_dict[f"{bench_suite}/{task_name}/{metric}"] = value
                 else:
                     tb_context.add_scalar(f"{prefix}/{task_name}/{metric}", value, global_step=global_step)
+                    wandb_dict[f"{task_name}/{metric}"] = value
         # e.g. MMLU
         for name, values in bench_averages.items():
             for metric, values in values.items():
                 hlog(f"Pushing average {name} {metric} {sum(values) / len(values)} to tensorboard")
                 tb_context.add_scalar(f"{prefix}/{name}/{metric}", sum(values) / len(values), global_step=global_step)
+                wandb_dict[f"{name}/{metric}"] = sum(values) / len(values)
 
         tb_context.add_text("eval_config", obj_to_markdown(results), global_step=global_step)
+        # wandb_dict["eval_config"] = obj_to_markdown(results)
         # tb_context.add_text("eval_sizes", obj_to_markdown(sizes), global_step=global_step)
 
         for task_name, task_details in details.items():
-            tb_context.add_text(
-                f"eval_details_{task_name}",
-                obj_to_markdown({"0": task_details[0], "1": task_details[1] if len(task_details) > 1 else {}}),
-                global_step=global_step,
-            )
+            if len(task_details) > 1:
+                tb_context.add_text(
+                    f"eval_details_{task_name}",
+                    obj_to_markdown({"0": task_details[0], "1": task_details[1]}),
+                    global_step=global_step,
+                )
+                # wandb_dict[f"eval_details_{task_name}"] = {"0": asdict(task_details[0]), "1": asdict(task_details[1])}
 
         # We are doing parallel evaluations of multiple checkpoints and recording the steps not in order
         # This messes up with tensorboard, so the easiest is to rename files in the order of the checkpoints
         # See: https://github.com/tensorflow/tensorboard/issues/5958
         # But tensorboardX don't let us control the prefix of the files (only the suffix), so we need to do it ourselves before commiting the files
-
+        if run is not None:
+            wandb_dict["global_step"] = global_step
+            run.summary.update(wandb_dict)
+            run.log(wandb_dict, step=global_step)
         tb_context.close()  # flushes the unfinished write operations
         time.sleep(5)
         files = os.listdir(output_dir_tb)

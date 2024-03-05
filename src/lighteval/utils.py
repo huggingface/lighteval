@@ -189,3 +189,7 @@ def is_peft_available() -> bool:
 
 
 NO_PEFT_ERROR_MSG = "You are trying to use adapter weights models, for which you need `peft`, which is not available in your environment. Please install it using pip."
+
+
+def is_wandb_available() -> bool:
+    return importlib.util.find_spec("wandb") is not None
