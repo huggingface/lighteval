@@ -159,7 +159,7 @@ class Doc:
         gold_indices = as_list(self.gold_index)
         if few_shot and self.target_for_fewshot_sorting is not None:
             choices = self.target_for_fewshot_sorting
-            if isinstance(choices, str):
+            if isinstance(choices, str):  # correct choice is already selected
                 return choices
         else:
             choices = self.choices
