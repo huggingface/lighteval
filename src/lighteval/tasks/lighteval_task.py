@@ -281,7 +281,7 @@ class LightevalTask:
             list[Doc]: List of documents.
         """
         if self.dataset is None:
-            self.dataset = download_dataset_worker((self.dataset_path, self.dataset_config_name))
+            self.dataset = download_dataset_worker((self.dataset_path, self.dataset_config_name, self.trust_dataset))
 
         docs = []
         for split in splits:
