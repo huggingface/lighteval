@@ -174,7 +174,68 @@ def arabic_exams(line, task_name: str = None):
     )
 
 
-_TASKS = ARABIC_MMLU_TASKS + ACVA_TASKS + [arabic_exams_task]
+## ALGHAFA ##
+# fmt: off
+ALGHAFA_SUBSETS = [
+    "mcq_exams_test_ar", "meta_ar_dialects", "meta_ar_msa", "multiple_choice_copa_translated_task", "multiple_choice_facts_truefalse_balanced_task",
+    "multiple_choice_grounded_statement_soqal_task", "multiple_choice_grounded_statement_xglue_mlqa_task", "multiple_choice_openbookqa_translated_task", "multiple_choice_rating_sentiment_no_neutral_task", "multiple_choice_rating_sentiment_task",
+    "multiple_choice_sentiment_task"
+]
+# fmt: on
+
+
+class CustomALGHAFATask(LightevalTaskConfig):
+    def __init__(
+        self,
+        name,
+        hf_subset,
+    ):
+        super().__init__(
+            name=name,
+            hf_subset=hf_subset,
+            prompt_function="Alghafa",
+            hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark",
+            # metric=["loglikelihood_acc_norm"],
+            metric=["loglikelihood_acc"],
+            hf_avail_splits=["test", "validation"],
+            evaluation_splits=["test"],
+            few_shots_split="validation",
+            few_shots_select="sequential",
+            suite=["community"],
+            generation_size=-1,
+            stop_sequence=None,
+            output_regex=None,
+            frozen=False,
+        )
+
+
+ALGHAFA_TASKS = [CustomALGHAFATask(name=f"Alghafa:{subset}", hf_subset=subset) for subset in ALGHAFA_SUBSETS]
+
+
+def Alghafa(line, task_name: str = None):
+    question = line["query"]
+    answer_index = int(line["label"])
+    # Dynamically determining the choices by excluding 'query' and 'label'
+    choices_keys = [key for key in line.keys() if key not in ["query", "label", "__few_shots"]]
+    choices = [line[key] for key in choices_keys]
+
+    instruction = "الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح\n\n"
+    query = f"{instruction}السؤال: {question}\n"
+    for index, choice in enumerate(choices):
+        query += f"{index}) {choice}\n"
+    query += "الإجابة:"
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=choices,
+        gold_index=answer_index,
+        instruction=instruction,
+        target_for_fewshot_sorting=choices[answer_index],
+    )
+
+
+_TASKS = ARABIC_MMLU_TASKS + ACVA_TASKS + ALGHAFA_TASKS + [arabic_exams_task]
 
 # Convert to dict for lighteval
 TASKS_TABLE = [task.as_dict() for task in _TASKS]
