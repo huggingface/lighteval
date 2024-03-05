@@ -62,7 +62,7 @@ and pasting your access token.
 Lastly, if you intend to push to the code base, you'll need to install the precommit hook for styling tests:
 
 ```bash
-pip install pre-commit
+pip install .[dev]
 pre-commit install
 ```
 
@@ -237,6 +237,7 @@ Summary: create a **line summary** of your evaluation, in `src/lighteval/tasks/t
 - `metric` (list), the metrics you want to use for your evaluation (see next section for a detailed explanation)
 - `output_regex` (str), A regex string that will be used to filter your generation. (Genrative metrics will only select tokens that are between the first and the second sequence matched by the regex. For example, for a regex matching `\n` and a generation `\nModel generation output\nSome other text` the metric will only be fed with `Model generation output`)
 - `frozen` (bool), for now is set to False, but we will steadily pass all stable tasks to True.
+- `trust_dataset` (bool), set to True if you trust the dataset.
 
 Make sure you can launch your model with your new task using `--tasks lighteval|yournewtask|2|0`.
 
