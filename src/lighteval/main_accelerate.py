@@ -51,7 +51,6 @@ def main(args):
         model_config = create_model_config(args=args, accelerator=accelerator)
 
     with htrack_block("Model loading"):
-        # We need to load the model in the main process first to avoid downloading the model multiple times
         with accelerator.main_process_first() if accelerator is not None else nullcontext():
             model, model_info = load_model(config=model_config, env_config=env_config)
             evaluation_tracker.general_config_logger.log_model_info(model_info)
