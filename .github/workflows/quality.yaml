@@ -24,10 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python setup.py egg_info
-          sed '/^$/q' src/lighteval.egg-info/requires.txt > src/lighteval.egg-info/requires_lite.txt
-          python -m pip install ruff -c src/lighteval.egg-info/requires_lite.txt
-          rm -rf src/lighteval.egg-info
+          python -m pip install ".[quality]"
       - name: Code quality
         run: |
           make quality
