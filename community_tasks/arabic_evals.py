@@ -216,7 +216,7 @@ def Alghafa(line, task_name: str = None):
     question = line["query"]
     answer_index = int(line["label"])
     # Dynamically determining the choices by excluding 'query' and 'label'
-    choices_keys = [key for key in line.keys() if key not in ["query", "label"]]
+    choices_keys = [key for key in line.keys() if key not in ["query", "label", "__few_shots"]]
     choices = [line[key] for key in choices_keys]
 
     instruction = "الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح\n\n"
