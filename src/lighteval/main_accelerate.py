@@ -61,7 +61,6 @@ def main(args):
             task_dict = Registry(cache_dir=env_config.cache_dir).get_task_dict(
                 task_names_list, custom_tasks=args.custom_tasks
             )
-            # Loading all the dataset in a distributed manner
             LightevalTask.load_datasets(task_dict.values(), args.dataset_loading_processes)
 
             evaluation_tracker.task_config_logger.log(task_dict)
