@@ -354,7 +354,7 @@ class LightevalTask:
             str: Target of the document, which is the correct answer for a document.
         """
         # likely we mostly need one example not all
-        return formatted_doc.get_golds(few_shot=few_shot)[0]
+        return as_list(formatted_doc.get_golds(few_shot=few_shot))[0]
 
     # Requests
     def get_request_type(self) -> list[RequestType]:
