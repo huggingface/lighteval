@@ -525,7 +525,7 @@ class LightevalTask:
 
         if dataset_loading_processes <= 1:
             datasets = [
-                download_dataset_worker(task.dataset_path, task.dataset_config_name, task.trust_dataset)
+                download_dataset_worker((task.dataset_path, task.dataset_config_name, task.trust_dataset))
                 for task in tasks
             ]
         else:
