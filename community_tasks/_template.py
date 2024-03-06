@@ -1,3 +1,25 @@
+# MIT License
+
+# Copyright (c) 2024 The HuggingFace Team
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 # ruff: noqa: F405, F403, F401
 """
 Custom evaluation tasks for lighteval. Copy this file and complete it with the info for your task.
@@ -17,7 +39,7 @@ from lighteval.tasks.requests import Doc
 from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 
 
-## EVAL WITH NO SUBSET ##
+# EVAL WITH NO SUBSET ##
 # This is how you create a simple tasks (like hellaswag) which has one single subset
 # attached to it, and one evaluation possible.
 task = LightevalTaskConfig(
@@ -33,12 +55,12 @@ task = LightevalTaskConfig(
     metric=[""],
 )
 
-## EVALS WITH SUBSET
+# EVALS WITH SUBSET
 # This is how you create a subset task (like MMLU), which has several subset
 # each being its own evaluation task.
 
 # fmt: off
-SAMPLE_SUBSETS = [] # list of all the subsets to use for this eval
+SAMPLE_SUBSETS = []  # list of all the subsets to use for this eval
 # fmt: on
 
 
@@ -66,7 +88,7 @@ class CustomSubsetTask(LightevalTaskConfig):
         )
 
 
-## DEFINE YOUR PROMPT FUNCTIONS
+# DEFINE YOUR PROMPT FUNCTIONS
 # Define as many as you need for your different tasks
 def prompt_fn(line, task_name: str = None):
     """Defines how to go from a dataset line to a doc object.
@@ -82,12 +104,12 @@ def prompt_fn(line, task_name: str = None):
     )
 
 
-## STORE YOUR EVALS
+# STORE YOUR EVALS
 SUBSET_TASKS = [CustomSubsetTask(name=f"mytask:{subset}", hf_subset=subset) for subset in SAMPLE_SUBSETS]
 _TASKS = SUBSET_TASKS + [task]
 
 
-## CUSTOM METRIC IF NEEDED
+# CUSTOM METRIC IF NEEDED
 custom_metric = SampleLevelMetric(
     metric="my_custom_metric_name",
     higher_is_better=True,
@@ -99,7 +121,7 @@ custom_metric = SampleLevelMetric(
 
 extend_enum(Metrics, "my_custom_metric_name", custom_metric)
 
-## MODULE LOGIC
+# MODULE LOGIC
 # You should not need to touch this
 # Convert to dict for lighteval
 TASKS_TABLE = [task.as_dict() for task in _TASKS]

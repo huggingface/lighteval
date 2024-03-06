@@ -1,3 +1,25 @@
+# MIT License
+
+# Copyright (c) 2024 The HuggingFace Team
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 # ruff: noqa: F405, F403, F401
 """
 Custom evaluation tasks for lighteval
@@ -17,7 +39,7 @@ from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 _TASKS_STRINGS: List[Tuple[LightevalTaskConfig, str]] = []
 _TASKS: List[LightevalTaskConfig] = []
 
-## COMMON_SENSE_REASONING_TASKS ##
+# COMMON_SENSE_REASONING_TASKS ##
 COMMON_SENSE_REASONING_TASKS = [
     LightevalTaskConfig(
         name="hellaswag",
@@ -144,7 +166,7 @@ COMMON_SENSE_REASONING_STRING = [(t, f"custom|{t.name}|0|1") for t in COMMON_SEN
 _TASKS_STRINGS.extend(COMMON_SENSE_REASONING_STRING)
 _TASKS += COMMON_SENSE_REASONING_TASKS
 
-## WORLD_KNOWLEDGE_TASKS ##
+# WORLD_KNOWLEDGE_TASKS ##
 
 WORLD_KNOWLEDGE_TASKS = [
     LightevalTaskConfig(
@@ -185,7 +207,7 @@ WORLD_KNOWLEDGE_STRING = [(t, f"custom|{t.name}|5|1") for t in WORLD_KNOWLEDGE_T
 _TASKS_STRINGS.extend(WORLD_KNOWLEDGE_STRING)
 _TASKS += WORLD_KNOWLEDGE_TASKS
 
-## Reading comprehension ##
+# Reading comprehension ##
 
 READING_COMP_TASKS = [
     LightevalTaskConfig(
@@ -224,7 +246,7 @@ _TASKS_STRINGS.extend(READING_COMP_STRING)
 _TASKS += READING_COMP_TASKS
 
 
-## MATH ##
+# MATH ##
 class CustomMathEvaluationTask(LightevalTaskConfig):
     """Custom class for math tasks with all the defaults set"""
 
@@ -294,7 +316,7 @@ _TASKS_STRINGS.extend(GSM8K_STRING)
 _TASKS += MATH_TASKS + [GSM8K]
 
 
-## MMLU ##
+# MMLU ##
 class CustomMMLUEvaluationTask(LightevalTaskConfig):
     def __init__(
         self,
@@ -437,7 +459,7 @@ MMLU_STRING = [(t, f"custom|{t.name}|0|1") for t in MMLU_TASKS]
 _TASKS_STRINGS.extend(MMLU_STRING)
 _TASKS += MMLU_TASKS
 
-## BBH ##
+# BBH ##
 
 
 class CustomBBHEvaluationTask(LightevalTaskConfig):
@@ -532,7 +554,7 @@ _TASKS_STRINGS.extend(BBH_STRING)
 _TASKS += BBH_TASKS
 
 
-## AGI eval ##
+# AGI eval ##
 class CustomAGIEvalEvaluationTask(LightevalTaskConfig):
     def __init__(
         self,
@@ -645,7 +667,7 @@ _TASKS_STRINGS.extend(AGIEVAL_STRING)
 _TASKS += AGIEVAL_TASKS
 
 
-## HUMAN EVAL ##
+# HUMAN EVAL ##
 # human_eval = LightevalTaskConfig(
 #         name="human_eval",
 #         prompt_function="human_eval",
