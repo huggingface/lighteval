@@ -202,9 +202,9 @@ def arabic_exams(line, task_name: str = None):
 ## ALGHAFA ##
 # fmt: off
 ALGHAFA_SUBSETS = [
-    "mcq_exams_test_ar", "meta_ar_dialects", "meta_ar_msa", "multiple_choice_copa_translated_task", "multiple_choice_facts_truefalse_balanced_task",
-    "multiple_choice_grounded_statement_soqal_task", "multiple_choice_grounded_statement_xglue_mlqa_task", "multiple_choice_openbookqa_translated_task", "multiple_choice_rating_sentiment_no_neutral_task", "multiple_choice_rating_sentiment_task",
-    "multiple_choice_sentiment_task"
+    "mcq_exams_test_ar", "meta_ar_dialects", "meta_ar_msa", "multiple_choice_facts_truefalse_balanced_task", "multiple_choice_grounded_statement_soqal_task", 
+    "multiple_choice_grounded_statement_xglue_mlqa_task", "multiple_choice_rating_sentiment_no_neutral_task", "multiple_choice_rating_sentiment_task", 
+    "multiple_choice_sentiment_task", # "multiple_choice_openbookqa_translated_task", "multiple_choice_copa_translated_task" ### TODO : clean up this later !
 ]
 # fmt: on
 
@@ -219,7 +219,7 @@ class CustomALGHAFATask(LightevalTaskConfig):
             name=name,
             hf_subset=hf_subset,
             prompt_function="Alghafa",
-            hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark",
+            hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Native",
             metric=["loglikelihood_acc_norm"],
             # metric=["loglikelihood_acc"],
             hf_avail_splits=["test", "validation"],
