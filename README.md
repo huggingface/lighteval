@@ -103,7 +103,7 @@ or a file path like [`tasks_examples/recommended_set.txt`](./tasks_examples/reco
 ```shell
 accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py \
     --model_args "pretrained=gpt2" \
-    --tasks "leaderboard|truthfulqa:mc|0|0" \
+    --tasks "lighteval|truthfulqa:mc|0|0" \
     --override_batch_size 1 \
     --output_dir="./evals/"
 ```
