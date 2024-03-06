@@ -1,3 +1,25 @@
+# MIT License
+
+# Copyright (c) 2024 The HuggingFace Team
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import collections
 import random
 from dataclasses import dataclass
@@ -5,7 +27,7 @@ from multiprocessing import Pool
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
-from datasets import load_dataset
+from datasets import DownloadMode, load_dataset
 
 from lighteval.few_shot_manager import FewShotSampler
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
@@ -44,6 +66,29 @@ if TYPE_CHECKING:
 
 @dataclass
 class LightevalTaskConfig:
+    """Stored configuration of a given [`LightevalTask`].
+
+    Arguments:
+        name (str): Short name of the evaluation task.
+        suite (list[str]): Evaluation suites to which the task belongs.
+        prompt_function (str): Name of the function used to create the [`Doc`] samples from each line of the evaluation dataset.
+        hf_repo (str): Path of the hub dataset repository containing the evaluation information.
+        hf_subset (str): Subset used for the current task, will be default if none is selected.
+        hf_avail_splits (list[str]): All the available splits in the evaluation dataset
+        evaluation_splits (list[str]): List of the splits actually used for this evaluation
+        few_shots_split (str): Name of the split from which to sample few-shot examples
+        few_shots_select (str): Method with which to sample few-shot examples
+        generation_size (int): Maximum allowed size of the generation
+        metric (list[str]): List of all the metrics for the current task.
+        stop_sequence (list[str]): Stop sequence which interrupts the generation for generative metrics.
+        original_num_docs (int): Number of documents in the task
+        effective_num_docs (int): Number of documents used in a specific evaluation
+        truncated_num_docs (bool): Whether less than the total number of documents were used
+        output_regex (str)
+        frozen (bool)
+        trust_dataset (bool): Whether to trust the dataset at execution or not
+    """
+
     name: str
     prompt_function: str
     hf_repo: str
@@ -53,12 +98,17 @@ class LightevalTaskConfig:
     evaluation_splits: Optional[Tuple[str]] = None
     few_shots_split: Optional[str] = None
     few_shots_select: Optional[str] = None
-    generation_size: int = -1
+    generation_size: int = None
     stop_sequence: Optional[Tuple[str]] = None
     output_regex: Optional[str] = None
 
     frozen: bool = False
-    suite: Optional[Tuple[str]] = None  # we use this to know if we should use a custom lighteval or bigcode task
+    suite: Optional[Tuple[str]] = None
+
+    original_num_docs: int = -1
+    effective_num_docs: int = -1
+
+    trust_dataset: bool = None
 
     def as_dict(self):
         return {
@@ -85,8 +135,6 @@ class LightevalTaskConfig:
             self.hf_avail_splits = ["train", "validation", "test"]
         if self.evaluation_splits is None:
             self.evaluation_splits = ["validation"]
-        if self.stop_sequence is None:
-            self.stop_sequence = ["\n"]
 
         # Convert list to tuple for hashing
         self.metric = tuple(self.metric)
@@ -122,6 +170,7 @@ class LightevalTask:
         self.dataset_path = self.hf_repo
         self.dataset_config_name = self.hf_subset
         self.dataset = None  # Delayed download
+        self.trust_dataset = cfg.trust_dataset
         hlog(f"{self.dataset_path} {self.dataset_config_name}")
         self._fewshot_docs = None
         self._docs = None
@@ -256,7 +305,7 @@ class LightevalTask:
             list[Doc]: List of documents.
         """
         if self.dataset is None:
-            self.dataset = download_dataset_worker((self.dataset_path, self.dataset_config_name))
+            self.dataset = download_dataset_worker((self.dataset_path, self.dataset_config_name, self.trust_dataset))
 
         docs = []
         for split in splits:
@@ -265,7 +314,10 @@ class LightevalTask:
                 # vs when it's used for the actual prompt. That's why we store whether we are currently using the
                 # doc for a fewshot sample (few_shots=True) or not, which then leads to the creation of a different Doc.
                 item["__few_shots"] = few_shots
-                docs.extend(as_list(self.formatter(item, self.name)))
+                cur_docs = self.formatter(item, self.name)
+                if cur_docs is None:
+                    continue
+                docs.extend(as_list(cur_docs))
         return docs
 
     def fewshot_docs(self) -> list[Doc]:
@@ -381,7 +433,9 @@ class LightevalTask:
             ]
         if self.has_metric_category[MetricCategory.PERPLEXITY]:
             requests[RequestType.LOGLIKELIHOOD_ROLLING] += [
-                LoglikelihoodRollingRequest(task_name=current_task_name, doc_id=document_id_seed, ctx=context)
+                LoglikelihoodRollingRequest(
+                    task_name=current_task_name, example_index=document_id_seed, request_index=0, context=context
+                )
             ]
         if self.has_metric_category[MetricCategory.GENERATIVE]:
             requests[RequestType.GREEDY_UNTIL] += [
@@ -514,12 +568,14 @@ class LightevalTask:
 
         if dataset_loading_processes <= 1:
             datasets = [
-                download_dataset_worker((task.dataset_path, task.dataset_config_name)) for task in tasks
-            ]  # Also help us with gdb
+                download_dataset_worker((task.dataset_path, task.dataset_config_name, task.trust_dataset))
+                for task in tasks
+            ]
         else:
             with Pool(processes=dataset_loading_processes) as pool:
                 datasets = pool.map(
-                    download_dataset_worker, [(task.dataset_path, task.dataset_config_name) for task in tasks]
+                    download_dataset_worker,
+                    [(task.dataset_path, task.dataset_config_name, task.trust_dataset) for task in tasks],
                 )
 
         for task, dataset in zip(tasks, datasets):
@@ -531,13 +587,14 @@ def download_dataset_worker(args):
     Worker function to download a dataset from the HuggingFace Hub.
     Used for parallel dataset loading.
     """
-    dataset_path, dataset_config_name = args
+    dataset_path, dataset_config_name, trust_dataset = args
     dataset = load_dataset(
         path=dataset_path,
         name=dataset_config_name,
         data_dir=None,
         cache_dir=None,
-        download_mode=None,
+        download_mode=DownloadMode.FORCE_REDOWNLOAD,  # None
+        trust_remote_code=trust_dataset,
     )
     return dataset
 

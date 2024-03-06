@@ -1,3 +1,25 @@
+# MIT License
+
+# Copyright (c) 2024 The HuggingFace Team
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import ast
 import json
 import random
@@ -2017,7 +2039,17 @@ def wic(line, task_name: str = None):
     )
 
 
-def wikitext(line, task_name: str = None):  # perplexity metric
+def wikifact(line, task_name: str = None):
+    return Doc(task_name=task_name, query=f"{line['question']} ", gold_index=0, choices=[line["references"]])
+
+
+def wikitext(line, task_name: str = None):
+    if line["text"] == "" or line["text"][0] == "=":
+        return None
+    return Doc(task_name=task_name, query=f"{line['text']} ", gold_index=0, choices=None)
+
+
+def wikitext_harness(line, task_name: str = None):  # perplexity metric
     def wikitext_detokenizer(cur_string):
         # contractions
         cur_string = cur_string.replace("s '", "s'")
@@ -2060,12 +2092,8 @@ def wikitext(line, task_name: str = None):  # perplexity metric
     )
 
 
-def wikifact(line, task_name: str = None):
-    return Doc(task_name=task_name, query=f"{line['question']} ", gold_index=0, choices=[line["references"]])
-
-
-def wikitext_103(line, task_name: str = None):
-    return Doc(task_name=task_name, query=line["text"])
+def wikitext_helm(line, task_name: str = None):
+    return Doc(task_name=task_name, choices=[""], gold_index=0, query=line["page"])
 
 
 def winogrande(line, task_name: str = None):

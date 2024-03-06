@@ -62,7 +62,7 @@ and pasting your access token.
 Lastly, if you intend to push to the code base, you'll need to install the precommit hook for styling tests:
 
 ```bash
-pip install pre-commit
+pip install .[dev]
 pre-commit install
 ```
 
@@ -113,7 +113,7 @@ Here, `--override_batch_size` defines the _batch size per device_, so the effect
 ```shell
 accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py \
     --model_args "pretrained=gpt2" \
-    --tasks "lighteval|truthfulqa:mc|0|0,lighteval|gsm8k|0|0" \
+    --tasks "leaderboard|truthfulqa:mc|0|0,leaderboard|gsm8k|0|0" \
     --override_batch_size 1 \
     --output_dir="./evals/"
 ```
@@ -163,8 +163,31 @@ python run_evals_accelerate.py \
     --output_dir output_dir
 ```
 
+### Evaluate a model on community submitted/custom tasks.
+
+You can use `lighteval` to evaluate models on custom or community submitted tasks. Select your task of interest (which might have its own requirements to install first), and run:
+
+```shell
+python run_evals_accelerate.py \
+    --model_args="pretrained=<path to model on the hub>"\
+    --tasks <task parameters> \
+    --custom_tasks <path to the main file containing the custom task>
+    --output_dir output_dir
+```
+
+For example, to launch `lighteval` on `ifeval` for `HuggingFaceH4/zephyr-7b-beta`, do
+```shell
+python run_evals_accelerate.py \
+    --model_args "pretrained=HuggingFaceH4/zephyr-7b-beta" \
+    --use_chat_template \ # optional, if you want to run the evaluation with the chat template
+    --tasks "custom|ifeval|0|0" \
+    --custom_tasks "tasks_examples/custom_tasks_with_custom_metrics/ifeval/ifeval.py" \
+    --output_dir output_dir
+```
+
+
 ## Deep thanks
-`lighteval` was originally built on top of the great [Eleuther AI Harness](https://github.com/EleutherAI/lm-evaluation-harness) (which is powering the [Open LLM Leaderboard](https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard)). We also took a lot of inspiration from the amazing [HELM](https://crfm.stanford.edu/helm/latest/), notably for metrics.
+`lighteval` was originally built on top of the great [Eleuther AI Harness](https://github.com/EleutherAI/lm-evaluation-harness) (we use the latter to power the [Open LLM Leaderboard](https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard)). We also took a lot of inspiration from the amazing [HELM](https://crfm.stanford.edu/helm/latest/), notably for metrics.
 
 Through adding more and more logging functionalities, and making it compatible with increasingly different workflows and model codebases (including 3D parallelism) as well as allowing custom evaluation experiments, metrics and benchmarks, we ended up needing to change the code more and more deeply until `lighteval` became the small standalone library that it is now.
 
@@ -184,29 +207,7 @@ However, we are very grateful to the Harness and HELM teams for their continued 
 - [tests](https://github.com/huggingface/lighteval/tree/main/tests) contains our test suite, that we run at each PR to prevent regressions in metrics/prompts/tasks, for a subset of important tasks.
 
 ## Customisation
-### Adding a new metric
-First check if you can use one of the parametrized functions in `src.lighteval.metrics.metrics_corpus` or `src.lighteval.metrics.metrics_sample`.
-
-If not, you can use the custom_task system to register your new metric:
-- create a new python file which should contain the full logic of your metric.
-- the file also needs to start with these imports
-```python
-from aenum import extend_enum
-from lighteval.metrics import Metrics
-
-# And any other class you might need to redefine your specific metric, depending on whether it's a sample or corpus metric.
-```
-
-- and to end with the following, so that it adds your metric to our metrics list when loaded as a module.
-
-```python
-# Adds the metric to the metric list!
-extend_enum(Metrics, "ifeval_metric", ifeval_metrics)
-if __name__ == "__main__":
-    print("Imported metric")
-```
-
-You can then give your custom metric to lighteval by using `--custom-tasks path_to_your_file` when launching it.
+If your new task or metric has requirements, add a specific `requirements.txt` file with your evaluation.
 
 ### Adding a new task
 To add a new task, first either open an issue, to determine whether it will be integrated in the core evaluations of lighteval, or in the community tasks, and **add its dataset** on the hub.
@@ -236,6 +237,40 @@ Summary: create a **line summary** of your evaluation, in `src/lighteval/tasks/t
 - `metric` (list), the metrics you want to use for your evaluation (see next section for a detailed explanation)
 - `output_regex` (str), A regex string that will be used to filter your generation. (Genrative metrics will only select tokens that are between the first and the second sequence matched by the regex. For example, for a regex matching `\n` and a generation `\nModel generation output\nSome other text` the metric will only be fed with `Model generation output`)
 - `frozen` (bool), for now is set to False, but we will steadily pass all stable tasks to True.
+- `trust_dataset` (bool), set to True if you trust the dataset.
+
+Make sure you can launch your model with your new task using `--tasks lighteval|yournewtask|2|0`.
+
+#### Community evaluations
+Copy the `community_tasks/_template.yml` to `community_tasks/yourevalname.py` and edit it to add your custom tasks (the parameters you can use are explained above). It contains an interesting mechanism if the dataset you are adding contains a lot of subsets.
+
+Make sure you can launch your model with your new task using `--tasks community|yournewtask|2|0 --custom_tasks community_tasks/yourevalname.py`.
+
+### Adding a new metric
+First check if you can use one of the parametrized functions in `src.lighteval.metrics.metrics_corpus` or `src.lighteval.metrics.metrics_sample`.
+
+If not, you can use the custom_task system to register your new metric:
+- create a new python file which should contain the full logic of your metric.
+- the file also needs to start with these imports
+```python
+from aenum import extend_enum
+from lighteval.metrics import Metrics
+
+# And any other class you might need to redefine your specific metric, depending on whether it's a sample or corpus metric.
+```
+
+- and to end with the following, so that it adds your metric to our metrics list when loaded as a module.
+
+```python
+# Adds the metric to the metric list!
+extend_enum(Metrics, "metric_name", metric_function)
+if __name__ == "__main__":
+    print("Imported metric")
+```
+
+You can then give your custom metric to lighteval by using `--custom-tasks path_to_your_file` when launching it.
+
+To see an example of a custom metric added along with a custom task, look at `tasks_examples/custom_tasks_with_custom_metrics/ifeval/ifeval.py`.
 
 Make sure you can launch your model with your new task using `--tasks lighteval|yournewtask|2|0`.
 

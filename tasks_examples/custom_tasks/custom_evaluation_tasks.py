@@ -1,3 +1,25 @@
+# MIT License
+
+# Copyright (c) 2024 The HuggingFace Team
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 # ruff: noqa: F405, F403, F401
 """
 Custom evaluation tasks for lighteval
@@ -17,7 +39,7 @@ from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 _TASKS_STRINGS: List[Tuple[LightevalTaskConfig, str]] = []
 _TASKS: List[LightevalTaskConfig] = []
 
-## COMMON_SENSE_REASONING_TASKS ##
+# COMMON_SENSE_REASONING_TASKS ##
 COMMON_SENSE_REASONING_TASKS = [
     LightevalTaskConfig(
         name="hellaswag",
@@ -25,6 +47,8 @@ COMMON_SENSE_REASONING_TASKS = [
         hf_repo="hellaswag",
         hf_subset="default",
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+        trust_dataset=True,
+        stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
         name="winogrande",
@@ -32,6 +56,8 @@ COMMON_SENSE_REASONING_TASKS = [
         hf_repo="winogrande",
         hf_subset="winogrande_xl",
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+        trust_dataset=True,
+        stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
         name="piqa",
@@ -39,6 +65,8 @@ COMMON_SENSE_REASONING_TASKS = [
         hf_repo="piqa",
         hf_subset="plain_text",
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+        trust_dataset=True,
+        stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
         name="siqa",
@@ -47,6 +75,8 @@ COMMON_SENSE_REASONING_TASKS = [
         hf_subset="default",
         hf_avail_splits=["train", "validation"],
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+        trust_dataset=True,
+        stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
         name="openbookqa",
@@ -54,6 +84,8 @@ COMMON_SENSE_REASONING_TASKS = [
         hf_repo="openbookqa",
         hf_subset="main",
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+        trust_dataset=True,
+        stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
         name="arc:easy",
@@ -63,6 +95,8 @@ COMMON_SENSE_REASONING_TASKS = [
         evaluation_splits=["test"],
         generation_size=1,
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+        trust_dataset=True,
+        stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
         name="arc:challenge",
@@ -72,6 +106,8 @@ COMMON_SENSE_REASONING_TASKS = [
         evaluation_splits=["test"],
         generation_size=1,
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+        trust_dataset=True,
+        stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
         name="commonsense_qa",
@@ -79,6 +115,8 @@ COMMON_SENSE_REASONING_TASKS = [
         hf_repo="commonsense_qa",
         hf_subset="default",
         metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+        trust_dataset=True,
+        stop_sequence=["\n"],
     ),
 ]
 
@@ -128,7 +166,7 @@ COMMON_SENSE_REASONING_STRING = [(t, f"custom|{t.name}|0|1") for t in COMMON_SEN
 _TASKS_STRINGS.extend(COMMON_SENSE_REASONING_STRING)
 _TASKS += COMMON_SENSE_REASONING_TASKS
 
-## WORLD_KNOWLEDGE_TASKS ##
+# WORLD_KNOWLEDGE_TASKS ##
 
 WORLD_KNOWLEDGE_TASKS = [
     LightevalTaskConfig(
@@ -138,6 +176,7 @@ WORLD_KNOWLEDGE_TASKS = [
         hf_subset="rc.nocontext",
         metric=[Metrics.quasi_exact_match],
         generation_size=20,
+        trust_dataset=True,
         stop_sequence=["\n", ".", ","],
     ),
     LightevalTaskConfig(
@@ -147,6 +186,7 @@ WORLD_KNOWLEDGE_TASKS = [
         hf_subset="default",
         metric=[Metrics.quasi_exact_match],
         generation_size=20,
+        trust_dataset=True,
         stop_sequence=["\n", ".", ","],
     ),
 ]
@@ -167,7 +207,7 @@ WORLD_KNOWLEDGE_STRING = [(t, f"custom|{t.name}|5|1") for t in WORLD_KNOWLEDGE_T
 _TASKS_STRINGS.extend(WORLD_KNOWLEDGE_STRING)
 _TASKS += WORLD_KNOWLEDGE_TASKS
 
-## Reading comprehension ##
+# Reading comprehension ##
 
 READING_COMP_TASKS = [
     LightevalTaskConfig(
@@ -176,6 +216,8 @@ READING_COMP_TASKS = [
         hf_repo="super_glue",
         hf_subset="boolq",
         metric=["target_perplexity"],
+        trust_dataset=True,
+        stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
         name="quac",
@@ -184,6 +226,7 @@ READING_COMP_TASKS = [
         hf_subset="deault",
         metric=[Metrics.quasi_exact_match],
         generation_size=20,
+        trust_dataset=True,
         stop_sequence=["\n", ".", ","],
     ),
 ]
@@ -203,7 +246,7 @@ _TASKS_STRINGS.extend(READING_COMP_STRING)
 _TASKS += READING_COMP_TASKS
 
 
-## MATH ##
+# MATH ##
 class CustomMathEvaluationTask(LightevalTaskConfig):
     """Custom class for math tasks with all the defaults set"""
 
@@ -220,6 +263,7 @@ class CustomMathEvaluationTask(LightevalTaskConfig):
         few_shots_select=None,
         suite=["custom"],
         generation_size=40,
+        trust_dataset=True,
         stop_sequence=None,
         output_regex=None,
         frozen=False,
@@ -236,9 +280,10 @@ class CustomMathEvaluationTask(LightevalTaskConfig):
             few_shots_select=few_shots_select,
             suite=suite,
             generation_size=generation_size,
-            stop_sequence=stop_sequence,
             output_regex=output_regex,
             frozen=frozen,
+            trust_dataset=trust_dataset,
+            stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
         )
 
 
@@ -271,7 +316,7 @@ _TASKS_STRINGS.extend(GSM8K_STRING)
 _TASKS += MATH_TASKS + [GSM8K]
 
 
-## MMLU ##
+# MMLU ##
 class CustomMMLUEvaluationTask(LightevalTaskConfig):
     def __init__(
         self,
@@ -287,6 +332,7 @@ class CustomMMLUEvaluationTask(LightevalTaskConfig):
         few_shots_select=None,
         suite=None,
         generation_size=-1,
+        trust_dataset=True,
         stop_sequence=None,
         output_regex=None,
         frozen=False,
@@ -303,7 +349,8 @@ class CustomMMLUEvaluationTask(LightevalTaskConfig):
             few_shots_select=few_shots_select,
             suite=suite,
             generation_size=generation_size,
-            stop_sequence=stop_sequence,
+            trust_dataset=trust_dataset,
+            stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
             output_regex=output_regex,
             frozen=frozen,
         )
@@ -412,7 +459,7 @@ MMLU_STRING = [(t, f"custom|{t.name}|0|1") for t in MMLU_TASKS]
 _TASKS_STRINGS.extend(MMLU_STRING)
 _TASKS += MMLU_TASKS
 
-## BBH ##
+# BBH ##
 
 
 class CustomBBHEvaluationTask(LightevalTaskConfig):
@@ -429,6 +476,7 @@ class CustomBBHEvaluationTask(LightevalTaskConfig):
         few_shots_select=None,
         suite=None,
         generation_size=4,
+        trust_dataset=True,
         stop_sequence=None,
         output_regex=None,
         frozen=False,
@@ -445,7 +493,8 @@ class CustomBBHEvaluationTask(LightevalTaskConfig):
             few_shots_select=few_shots_select,
             suite=suite,
             generation_size=generation_size,
-            stop_sequence=stop_sequence,
+            trust_dataset=trust_dataset,
+            stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
             output_regex=output_regex,
             frozen=frozen,
         )
@@ -505,7 +554,7 @@ _TASKS_STRINGS.extend(BBH_STRING)
 _TASKS += BBH_TASKS
 
 
-## AGI eval ##
+# AGI eval ##
 class CustomAGIEvalEvaluationTask(LightevalTaskConfig):
     def __init__(
         self,
@@ -521,6 +570,7 @@ class CustomAGIEvalEvaluationTask(LightevalTaskConfig):
         few_shots_select=None,
         suite=None,
         generation_size=-1,
+        trust_dataset=True,
         stop_sequence=None,
         output_regex=None,
         frozen=False,
@@ -537,7 +587,8 @@ class CustomAGIEvalEvaluationTask(LightevalTaskConfig):
             few_shots_select=few_shots_select,
             suite=suite,
             generation_size=generation_size,
-            stop_sequence=stop_sequence,
+            trust_dataset=trust_dataset,
+            stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
             output_regex=output_regex,
             frozen=frozen,
         )
@@ -616,7 +667,7 @@ _TASKS_STRINGS.extend(AGIEVAL_STRING)
 _TASKS += AGIEVAL_TASKS
 
 
-## HUMAN EVAL ##
+# HUMAN EVAL ##
 # human_eval = LightevalTaskConfig(
 #         name="human_eval",
 #         prompt_function="human_eval",

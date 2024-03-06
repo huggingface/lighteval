@@ -1,3 +1,25 @@
+# MIT License
+
+# Copyright (c) 2024 The HuggingFace Team
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import os
 from pprint import pprint
 from typing import Optional, Tuple, Union
@@ -445,9 +467,17 @@ class BaseModel(LightevalModel):
             position=0,
             disable=self.disable_tqdm,
         ):
-            # Longest context in the current split is the first item (since we sort reversed)
-            longest_context_continuation_size_in_split = len(dataset[0].tokenized_context) + dataset[0].generation_size
-            max_context_continuation_size_allowed = min(longest_context_continuation_size_in_split, self.max_length)
+            if dataset[0].generation_size is None:
+                # No constraints on the generation size: max length allowed is the max model context
+                max_context_continuation_size_allowed = self.max_length
+            else:
+                # Longest context in the current split is the first item (since we sort reversed)
+                longest_context_continuation_size_in_split = (
+                    len(dataset[0].tokenized_context) + dataset[0].generation_size
+                )
+                max_context_continuation_size_allowed = min(
+                    longest_context_continuation_size_in_split, self.max_length
+                )
             batch_size = self._get_batch_size(
                 override_bs=override_bs,
                 max_input_length=max_context_continuation_size_allowed,
@@ -467,9 +497,25 @@ class BaseModel(LightevalModel):
                 # stop_tokens and max_tokens genrated) which is not necessarily
                 # the case! Because of that we only use batch size of 1
                 stop_tokens = batch[0].stop_sequence
-                max_generated_tokens = batch[0].generation_size
                 context = [c.context for c in batch]
-                max_context_size_allowed = self.max_length - max_generated_tokens
+                max_context_size_allowed = self.max_length
+                if batch[0].generation_size is None:
+                    # No constraints on max tokens except the model and data
+                    # Max generation possible is the max_length - the smallest context
+                    smallest_context = min([len(c) for c in context])
+                    if smallest_context < self.max_length:
+                        max_generated_tokens = self.max_length - smallest_context
+                        max_context_size_allowed = self.max_length
+                    else:
+                        # The max context size is smaller than the smallest context
+                        max_generated_tokens = 1
+                        max_context_size_allowed = self.max_length - 1
+                        hlog_warn(
+                            f"The smallest context of your batch ({smallest_context}) is bigger than the maximum context size allowed by the model ({self.max_length}) for a task in {[i.task_name for i in batch]}. This is likely to lead to some errors."
+                        )
+                else:
+                    max_generated_tokens = batch[0].generation_size
+                    max_context_size_allowed = self.max_length - max_generated_tokens
 
                 tokenized = self.tokenizer(
                     context,
@@ -677,7 +723,7 @@ class BaseModel(LightevalModel):
                     batch_cont_tokens.append(cont_toks)
 
                 # Sync all
-                ## Need reshaping before gather
+                # Need reshaping before gather
                 batched_inputs, len_inputs = self.pad_and_gather(prepared_batch.input_ids)
                 max_cont_tokens_length = max(len(c[0]) for c in batch_cont_tokens)
                 batch_cont_tokens = torch.cat(
@@ -688,7 +734,7 @@ class BaseModel(LightevalModel):
                     dim=0,
                 )
                 batch_cont_tokens, len_tokens = self.pad_and_gather(batch_cont_tokens)
-                ## Can be gathered as such
+                # Can be gathered as such
                 logits = torch.tensor(logits_sum, device=self.device)
                 max_equal = torch.tensor(max_equals, device=self.device)
                 batch_truncated = torch.tensor(prepared_batch.truncated, device=self.device)
@@ -872,14 +918,14 @@ class BaseModel(LightevalModel):
                     batch_cont_tokens.append(cont_toks)
 
                 # Sync all
-                ## Need reshape before gather
+                # Need reshape before gather
                 batched_inputs, len_inputs = self.pad_and_gather(prepared_batch.input_ids)
                 batch_probs = torch.stack(batch_probs)
                 batch_probs, len_probs = self.pad_and_gather(batch_probs)
                 batch_cont_tokens = torch.stack(batch_cont_tokens)
                 batch_cont_tokens, len_cont = self.pad_and_gather(batch_cont_tokens)
 
-                ## No reshape
+                # No reshape
                 batch_truncated = torch.tensor(prepared_batch.truncated, device=self.device)
                 batch_padded = torch.tensor(prepared_batch.padded, device=self.device)
                 if self.accelerator:
