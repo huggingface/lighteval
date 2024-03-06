@@ -10,10 +10,7 @@ if is_optimum_available():
 
 
 class OptimumModel(BaseModel):
-
-
     def _create_auto_model(self, config: OptimumModelConfig, env_config: EnvConfig):
-
         # TODO : Get loading class from optimum config (add support for ORTModelForCausalLM / INCModelForCausalLM / IPEXModelForCausalLM)
         # optimum_config = OptimumConfig.from_pretrained(config.pretrained)
 
