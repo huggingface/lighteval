@@ -560,7 +560,7 @@ class LightevalTask:
             datasets = [
                 download_dataset_worker((task.dataset_path, task.dataset_config_name, task.trust_dataset))
                 for task in tasks
-            ]  # Also help us with gdb
+            ]
         else:
             with Pool(processes=dataset_loading_processes) as pool:
                 datasets = pool.map(
