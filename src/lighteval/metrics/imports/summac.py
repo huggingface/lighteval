@@ -1,4 +1,4 @@
-###############################################
+# noqa: CPY001
 # Source: https://github.com/tingofurro/summac
 # Apache 2 license
 ###############################################
