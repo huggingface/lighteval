@@ -610,6 +610,7 @@ def create_requests_from_tasks(  # noqa: C901
                     # to fix!!
                     cur_task_name = f"{task_name}|{num_fewshot}"
                     doc = task_docs[doc_id]
+                    is_multi_turn = len(doc.specific.get("multi_turn_queries", [])) > 0
                     ctx, num_effective_few_shots = task.fewshot_sampler.fewshot_context(
                         task=task,
                         doc=doc,
@@ -622,6 +623,31 @@ def create_requests_from_tasks(  # noqa: C901
                         use_chat_template=use_chat_template,
                         system_prompt=system_prompt,
                     )
+                    if is_multi_turn:
+                        if use_chat_template:
+                            multiturn_context = lm.tokenizer.apply_chat_template(
+                                [
+                                    {"role": "assistant", "content": "{model_response}"},
+                                    {"role": "user", "content": doc.specific["multi_turn_queries"][0]},
+                                ],
+                                add_generation_prompt=True,
+                                tokenize=False,
+                            )
+                            generation_prompt = lm.tokenizer.apply_chat_template(
+                                [
+                                    {"role": "assistant", "content": ""},
+                                ],
+                                add_generation_prompt=False,
+                                tokenize=False,
+                            )
+                            for i in range(len(generation_prompt)):
+                                if generation_prompt[i] != multiturn_context[i]:
+                                    multiturn_context = multiturn_context[i:]
+                                    break
+                            multiturn_context = f"{ctx}{multiturn_context}"
+                        else:
+                            multiturn_context = f"{ctx}{{model_response}}\n"
+                        doc.specific["multi_turn_queries"] = [multiturn_context]
                     doc.num_effective_few_shots = num_effective_few_shots
                     doc.num_asked_few_shots = num_fewshot
                     doc.ctx = ctx

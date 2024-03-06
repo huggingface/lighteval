@@ -375,16 +375,15 @@ class BaseModel(LightevalModel):
 
             model_answers = [cur_reponses[0].result]
 
-            for i, added_context in enumerate(request.contexts_multi_turn):
-                context += f"{cur_reponses[0].result}"
-                context += f"\n\n{added_context}"
+            for i, multi_turn_context in enumerate(request.contexts_multi_turn):
+                multi_turn_context = multi_turn_context.format(model_response=model_answers[0])
 
                 print("multi_turn_context ====== ")
-                pprint(context)
+                pprint(multi_turn_context)
                 print("multi_turn_context ====== ")
 
                 tokenized = self.tokenizer(
-                    context,
+                    multi_turn_context,
                     padding=True,
                     truncation=True,
                     return_tensors="pt",
