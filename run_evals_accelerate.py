@@ -22,7 +22,7 @@
 
 """ Example run command:
 accelerate config
-accelerate launch run_evals_accelerate.py --tasks="lighteval|hellaswag|5|1" --output_dir "/scratch/evals" --model_args "pretrained=gpt2"
+accelerate launch run_evals_accelerate.py --tasks="leaderboard|hellaswag|5|1" --output_dir "/scratch/evals" --model_args "pretrained=gpt2"
 """
 import argparse
 

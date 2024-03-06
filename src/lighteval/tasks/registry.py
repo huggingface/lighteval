@@ -35,9 +35,12 @@ from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 
 
-# original is the reimplementation of original evals
-# custom is to play around
-DEFAULT_SUITES = ["helm", "bigbench", "harness", "lighteval", "original", "custom", "community"]
+# Helm, Bigbench, Harness are implementations following an evaluation suite setup
+# Original follows the original implementation as closely as possible
+# Leaderboard are the evaluations we fixed on the open llm leaderboard - you should get similar results
+# Community are for community added evaluations
+# Custom is for all the experiments you might want to do!
+DEFAULT_SUITES = ["helm", "bigbench", "harness", "leaderboard", "lighteval", "original", "custom", "community"]
 
 TRUNCATE_FEW_SHOTS_DEFAULTS = True
 
