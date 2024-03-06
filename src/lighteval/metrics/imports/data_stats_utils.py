@@ -1,4 +1,4 @@
-# pylint: disable=C0103
+# pylint: disable=C0103  # noqa: CPY001
 ################################################################################
 # Taken from https://github.com/lil-lab/newsroom/blob/master/newsroom/analyze/fragments.py
 

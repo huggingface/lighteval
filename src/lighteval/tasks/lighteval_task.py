@@ -1,3 +1,25 @@
+# MIT License
+
+# Copyright (c) 2024 The HuggingFace Team
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import collections
 import random
 from dataclasses import dataclass
@@ -281,7 +303,7 @@ class LightevalTask:
             list[Doc]: List of documents.
         """
         if self.dataset is None:
-            self.dataset = download_dataset_worker((self.dataset_path, self.dataset_config_name))
+            self.dataset = download_dataset_worker((self.dataset_path, self.dataset_config_name, self.trust_dataset))
 
         docs = []
         for split in splits:
@@ -524,10 +546,16 @@ class LightevalTask:
         """
 
         if dataset_loading_processes <= 1:
-            datasets = [download_dataset_worker(task) for task in tasks]  # Also help us with gdb
+            datasets = [
+                download_dataset_worker((task.dataset_path, task.dataset_config_name, task.trust_dataset))
+                for task in tasks
+            ]
         else:
             with Pool(processes=dataset_loading_processes) as pool:
-                datasets = pool.map(download_dataset_worker, tasks)
+                datasets = pool.map(
+                    download_dataset_worker,
+                    [(task.dataset_path, task.dataset_config_name, task.trust_dataset) for task in tasks],
+                )
 
         for task, dataset in zip(tasks, datasets):
             task.dataset = dataset
@@ -538,14 +566,14 @@ def download_dataset_worker(args):
     Worker function to download a dataset from the HuggingFace Hub.
     Used for parallel dataset loading.
     """
-    task: LightevalTask = args
+    dataset_path, dataset_config_name, trust_dataset = args
     dataset = load_dataset(
-        path=task.dataset_path,
-        name=task.dataset_config_name,
+        path=dataset_path,
+        name=dataset_config_name,
         data_dir=None,
         cache_dir=None,
         download_mode=DownloadMode.FORCE_REDOWNLOAD,  # None
-        trust_remote_code=task.trust_dataset,
+        trust_remote_code=trust_dataset,
     )
     return dataset
 

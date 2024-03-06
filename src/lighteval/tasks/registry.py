@@ -1,3 +1,25 @@
+# MIT License
+
+# Copyright (c) 2024 The HuggingFace Team
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import collections
 import importlib
 import os
@@ -13,9 +35,12 @@ from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 
 
-# original is the reimplementation of original evals
-# custom is to play around
-DEFAULT_SUITES = ["helm", "bigbench", "harness", "lighteval", "original", "custom", "community"]
+# Helm, Bigbench, Harness are implementations following an evaluation suite setup
+# Original follows the original implementation as closely as possible
+# Leaderboard are the evaluations we fixed on the open llm leaderboard - you should get similar results
+# Community are for community added evaluations
+# Custom is for all the experiments you might want to do!
+DEFAULT_SUITES = ["helm", "bigbench", "harness", "leaderboard", "lighteval", "original", "custom", "community"]
 
 TRUNCATE_FEW_SHOTS_DEFAULTS = True
 

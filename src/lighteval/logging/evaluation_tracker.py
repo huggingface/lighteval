@@ -1,3 +1,25 @@
+# MIT License
+
+# Copyright (c) 2024 The HuggingFace Team
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import copy
 import json
 import os
@@ -290,7 +312,7 @@ class EvaluationTracker:
             # in the iso date, the `:` are replaced by `-` because windows does not allow `:` in their filenames
 
             task_name = os.path.basename(sub_file).replace("details_", "").split("_2023")[0].split("_2024")[0]
-            # task_name is then equal to `lighteval|mmlu:us_foreign_policy|5`
+            # task_name is then equal to `leaderboard|mmlu:us_foreign_policy|5`
 
             iso_date = os.path.dirname(sub_file)
             # to be able to parse the filename as iso dates, we need to re-replace the `-` with `:`
@@ -462,7 +484,7 @@ class EvaluationTracker:
             dataset_summary=f"Dataset automatically created during the evaluation run of model "
             f"[{model_name}](https://huggingface.co/{model_name})"
             f"{org_string}.\n\n"
-            f"The dataset is composed of {len(card_metadata)-1} configuration, each one coresponding to one of the evaluated task.\n\n"
+            f"The dataset is composed of {len(card_metadata) - 1} configuration, each one coresponding to one of the evaluated task.\n\n"
             f"The dataset has been created from {len(results_files)} run(s). Each run can be found as a specific split in each "
             f'configuration, the split being named using the timestamp of the run.The "train" split is always pointing to the latest results.\n\n'
             f'An additional configuration "results" store all the aggregated results of the run.\n\n'
