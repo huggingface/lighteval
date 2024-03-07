@@ -130,18 +130,17 @@ class Registry:
         """
         # Import custom tasks provided by the user
         custom_tasks_registry = None
-        custom_tasks_module = None
+        custom_tasks_module = []
         TASKS_TABLE = []
         if custom_tasks is not None:
-            custom_tasks_module = create_custom_tasks_module(custom_tasks=custom_tasks)
-            TASKS_TABLE.extend(custom_tasks_module.TASKS_TABLE)
+            custom_tasks_module.append(create_custom_tasks_module(custom_tasks=custom_tasks))
         if extended_tasks is not None:
             hlog_warn(
-                "Did you make sure to install the extended_tasks dependencies, using `pip install -e .[extended_tasks]`?"
+                "You are using extended_tasks. Make sure you installed their dependencies using `pip install -e .[extended_tasks]`."
             )
-            extended_tasks_modules = load_extended_tasks_modules(extended_tasks_path=extended_tasks)
-            for module in extended_tasks_modules:
-                TASKS_TABLE.extend(module.TASKS_TABLE)
+            custom_tasks_module.extend(load_extended_tasks_modules(extended_tasks_path=extended_tasks))
+        for module in custom_tasks_module:
+            TASKS_TABLE.extend(module.TASKS_TABLE)
 
         if len(TASKS_TABLE) > 0:
             custom_tasks_registry = create_config_tasks(meta_table=TASKS_TABLE, cache_dir=self.cache_dir)

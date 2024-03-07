@@ -143,7 +143,9 @@ class LightevalTaskConfig:
 
 
 class LightevalTask:
-    def __init__(self, name: str, cfg: LightevalTaskConfig, cache_dir: Optional[str] = None, custom_tasks_module=None):
+    def __init__(
+        self, name: str, cfg: LightevalTaskConfig, cache_dir: Optional[str] = None, custom_tasks_module: list = None
+    ):
         """
         Initialize a LightEval task.
 
@@ -200,16 +202,26 @@ class LightevalTask:
         # to use once prompt formatting is managed as a module
         if custom_tasks_module is None:
             self.formatter = getattr(tasks_prompt_formatting, cfg.prompt_function)
-        elif hasattr(custom_tasks_module, cfg.prompt_function):
-            # If we have a prompt in both the custom_tasks_module and our tasks_prompt_formatting
-            # We take the prompt from the custom_tasks_module
-            if hasattr(tasks_prompt_formatting, cfg.prompt_function):
-                hlog_warn(
-                    f"Be careful you are using custom prompt function {cfg.prompt_function} and not the default one."
-                )
-            self.formatter = getattr(custom_tasks_module, cfg.prompt_function)
         else:
-            self.formatter = getattr(tasks_prompt_formatting, cfg.prompt_function)
+            formatter = []
+            for module in custom_tasks_module:
+                if hasattr(module, cfg.prompt_function):
+                    formatter.append(getattr(module, cfg.prompt_function))
+
+            if len(formatter) == 0:  # Default version
+                self.formatter = getattr(tasks_prompt_formatting, cfg.prompt_function)
+            elif len(formatter) == 1:
+                # If we have a prompt in both the module and our tasks_prompt_formatting
+                # We take the prompt from the module
+                if hasattr(tasks_prompt_formatting, cfg.prompt_function):
+                    hlog_warn(
+                        f"Be careful you are using custom prompt function {cfg.prompt_function} and not the default one."
+                    )
+                self.formatter = getattr(module, cfg.prompt_function)
+            else:
+                raise Exception(
+                    f"You defined the prompt function {cfg.prompt_function} several times in the different custom modules you are loading."
+                )
         self.generation_size = cfg.generation_size
         self.stop_sequence = cfg.stop_sequence
         self.output_regex = cfg.output_regex
