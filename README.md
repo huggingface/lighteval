@@ -175,7 +175,7 @@ python run_evals_accelerate.py \
     --output_dir output_dir
 ```
 
-For example, to launch `lighteval` on `ifeval` for `HuggingFaceH4/zephyr-7b-beta`, do
+For example, to launch `lighteval` on `ifeval` for `HuggingFaceH4/zephyr-7b-beta`, do (you need install `langdetect` first)
 ```shell
 python run_evals_accelerate.py \
     --model_args "pretrained=HuggingFaceH4/zephyr-7b-beta" \
