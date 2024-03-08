@@ -113,7 +113,7 @@ Here, `--override_batch_size` defines the _batch size per device_, so the effect
 ```shell
 accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py \
     --model_args "pretrained=gpt2" \
-    --tasks "lighteval|truthfulqa:mc|0|0,lighteval|gsm8k|0|0" \
+    --tasks "leaderboard|truthfulqa:mc|0|0,leaderboard|gsm8k|0|0" \
     --override_batch_size 1 \
     --output_dir="./evals/"
 ```
@@ -187,7 +187,7 @@ python run_evals_accelerate.py \
 
 
 ## Deep thanks
-`lighteval` was originally built on top of the great [Eleuther AI Harness](https://github.com/EleutherAI/lm-evaluation-harness) (which is powering the [Open LLM Leaderboard](https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard)). We also took a lot of inspiration from the amazing [HELM](https://crfm.stanford.edu/helm/latest/), notably for metrics.
+`lighteval` was originally built on top of the great [Eleuther AI Harness](https://github.com/EleutherAI/lm-evaluation-harness) (we use the latter to power the [Open LLM Leaderboard](https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard)). We also took a lot of inspiration from the amazing [HELM](https://crfm.stanford.edu/helm/latest/), notably for metrics.
 
 Through adding more and more logging functionalities, and making it compatible with increasingly different workflows and model codebases (including 3D parallelism) as well as allowing custom evaluation experiments, metrics and benchmarks, we ended up needing to change the code more and more deeply until `lighteval` became the small standalone library that it is now.
 

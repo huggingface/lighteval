@@ -561,6 +561,7 @@ class BaseModel(LightevalModel):
             requests,
             override_bs=override_bs,
             return_bool_score=False,
+            rolling=True,
         )
         return results
 
@@ -569,6 +570,7 @@ class BaseModel(LightevalModel):
         requests: list[LoglikelihoodRequest],
         override_bs: int = -1,
         return_bool_score: bool = True,
+        rolling: bool = False,
     ) -> list[LoglikelihoodReturn]:
         dataset = LoglikelihoodDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
@@ -577,9 +579,12 @@ class BaseModel(LightevalModel):
         for split_start, split_end in tqdm(dataset.splits_start_end_iterator()):
             context_enc = dataset[0].tokenized_context
             continuation_enc = dataset[0].tokenized_continuation
-            max_context_continuation_size_allowed = len(
-                (context_enc + continuation_enc)[-(self.max_length + 1) :][:-1]
-            )
+            if rolling:  # we take all the sequence in rolling mode
+                max_context_continuation_size_allowed = len(context_enc + continuation_enc)
+            else:  # in normal mode, we left cut the context if needed
+                max_context_continuation_size_allowed = len(
+                    (context_enc + continuation_enc)[-(self.max_length + 1) :][:-1]
+                )
 
             batch_size = self._get_batch_size(
                 override_bs=override_bs,
