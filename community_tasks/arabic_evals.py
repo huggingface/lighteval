@@ -200,7 +200,7 @@ def arabic_exams(line, task_name: str = None):
     )
 
 
-## ALGHAFA NATIVE ##
+# ALGHAFA NATIVE ##
 # fmt: off
 ALGHAFA_SUBSETS = [
     "mcq_exams_test_ar", "meta_ar_dialects", "meta_ar_msa", "multiple_choice_facts_truefalse_balanced_task", "multiple_choice_grounded_statement_soqal_task", 
@@ -261,8 +261,8 @@ def Alghafa(line, task_name: str = None):
     )
 
 
-## ALGHAFA TRANSLATED ##
-# race_ar ##
+# ALGHAFA TRANSLATED ##
+# race_ar 
 race_ar_task = LightevalTaskConfig(
     name="race_ar",
     prompt_function="Alghafa",
@@ -279,7 +279,7 @@ race_ar_task = LightevalTaskConfig(
 )
 
 
-# piqa_ar ##
+# piqa_ar 
 piqa_ar_task = LightevalTaskConfig(
     name="piqa_ar",
     prompt_function="Alghafa",
@@ -296,7 +296,7 @@ piqa_ar_task = LightevalTaskConfig(
 )
 
 
-# arc_easy_ar ##
+# arc_easy_ar 
 arc_easy_ar_task = LightevalTaskConfig(
     name="arc_easy_ar",
     prompt_function="Alghafa",
@@ -313,7 +313,7 @@ arc_easy_ar_task = LightevalTaskConfig(
 )
 
 
-# arc_challenge_okapi_ar ##
+# arc_challenge_okapi_ar
 arc_challenge_okapi_ar_task = LightevalTaskConfig(
     name="arc_challenge_okapi_ar",
     prompt_function="Alghafa",
@@ -330,7 +330,7 @@ arc_challenge_okapi_ar_task = LightevalTaskConfig(
 )
 
 
-# mmlu_okapi_ar ##
+# mmlu_okapi_ar 
 mmlu_okapi_ar_task = LightevalTaskConfig(
     name="mmlu_okapi_ar",
     prompt_function="Alghafa",
@@ -347,7 +347,7 @@ mmlu_okapi_ar_task = LightevalTaskConfig(
 )
 
 
-# openbook_qa_ext_ar ##
+# openbook_qa_ext_ar 
 openbook_qa_ext_ar_task = LightevalTaskConfig(
     name="openbook_qa_ext_ar",
     prompt_function="Alghafa",
@@ -364,7 +364,7 @@ openbook_qa_ext_ar_task = LightevalTaskConfig(
 )
 
 
-# boolq_ar ##
+# boolq_ar 
 boolq_ar_task = LightevalTaskConfig(
     name="boolq_ar",
     prompt_function="boolq_function",
@@ -397,7 +397,7 @@ def boolq_function(line, task_name: str = None):
     )
 
 
-# copa_ext_ar ##
+# copa_ext_ar 
 copa_ext_ar_task = LightevalTaskConfig(
     name="copa_ext_ar",
     prompt_function="copa_function",
@@ -432,7 +432,7 @@ def copa_function(line, task_name: str = None):
     )
 
 
-# hellaswag_okapi_ar ##
+# hellaswag_okapi_ar 
 hellaswag_okapi_ar_task = LightevalTaskConfig(
     name="hellaswag_okapi_ar",
     prompt_function="hellaswag_function",
@@ -468,6 +468,7 @@ def hellaswag_function(line, task_name: str = None):
     )
 
 
+# toxigen_ar 
 toxigen_ar_task = LightevalTaskConfig(
     name="toxigen_ar",
     prompt_function="toxigen_function",
@@ -498,6 +499,7 @@ def toxigen_function(line, task_name: str = None):
     )
 
 
+# sciq_ar
 sciq_ar_task = LightevalTaskConfig(
     name="sciq_ar",
     prompt_function="sciq_function",
@@ -519,10 +521,10 @@ def sciq_function(line, task_name: str = None):
     choices = [line["distractor1"], line["distractor2"], line["distractor3"], line["correct_answer"]]
     answer_index = 3  # The label is always 3 for the correct answer
 
-    query = "بناءً على السياق التالي:\n{}\n اختر الإجابة الصحيحة من الاقتراحات التالية:\n".format(support)
+    query = "بناءً على السياق أدناه، اختر الإجابة الصحيحة للسؤال أدناه من قائمة الاقتراحات:\n\nالسياق:\n{}\n\nالسؤال:{}\n\nالإجابات المحتملة:".format(support, question)
     for i, choice in enumerate(choices):
-        query += "{}) {}\n".format(i, choice)
-    query += "الإجابة:"
+        query += "\n{}) {}".format(i, choice)
+    query += "\nالإجابة:"
 
     return Doc(
         task_name=task_name,
