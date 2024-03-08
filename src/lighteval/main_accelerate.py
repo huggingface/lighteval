@@ -73,7 +73,6 @@ def main(args):
         model_config = create_model_config(args=args, accelerator=accelerator)
 
     with htrack_block("Model loading"):
-        # We need to load the model in the main process first to avoid downloading the model multiple times
         with accelerator.main_process_first() if accelerator is not None else nullcontext():
             model, model_info = load_model(config=model_config, env_config=env_config)
             evaluation_tracker.general_config_logger.log_model_info(model_info)
@@ -84,7 +83,6 @@ def main(args):
             task_dict = Registry(cache_dir=env_config.cache_dir).get_task_dict(
                 task_names_list, custom_tasks=args.custom_tasks
             )
-            # Loading all the dataset in a distributed manner
             LightevalTask.load_datasets(task_dict.values(), args.dataset_loading_processes)
 
             evaluation_tracker.task_config_logger.log(task_dict)
