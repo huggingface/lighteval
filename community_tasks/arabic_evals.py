@@ -26,10 +26,11 @@ Custom evaluation tasks for lighteval
 
 This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
 """
+import re
+
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
-import re
 
 
 # fmt: off
@@ -203,8 +204,8 @@ def arabic_exams(line, task_name: str = None):
 # ALGHAFA NATIVE ##
 # fmt: off
 ALGHAFA_SUBSETS = [
-    "mcq_exams_test_ar", "meta_ar_dialects", "meta_ar_msa", "multiple_choice_facts_truefalse_balanced_task", "multiple_choice_grounded_statement_soqal_task", 
-    "multiple_choice_grounded_statement_xglue_mlqa_task", "multiple_choice_rating_sentiment_no_neutral_task", "multiple_choice_rating_sentiment_task", 
+    "mcq_exams_test_ar", "meta_ar_dialects", "meta_ar_msa", "multiple_choice_facts_truefalse_balanced_task", "multiple_choice_grounded_statement_soqal_task",
+    "multiple_choice_grounded_statement_xglue_mlqa_task", "multiple_choice_rating_sentiment_no_neutral_task", "multiple_choice_rating_sentiment_task",
     "multiple_choice_sentiment_task"
 ]
 # fmt: on
@@ -262,7 +263,7 @@ def Alghafa(line, task_name: str = None):
 
 
 # ALGHAFA TRANSLATED ##
-# race_ar 
+# race_ar
 race_ar_task = LightevalTaskConfig(
     name="race_ar",
     prompt_function="Alghafa",
@@ -279,7 +280,7 @@ race_ar_task = LightevalTaskConfig(
 )
 
 
-# piqa_ar 
+# piqa_ar
 piqa_ar_task = LightevalTaskConfig(
     name="piqa_ar",
     prompt_function="Alghafa",
@@ -296,7 +297,7 @@ piqa_ar_task = LightevalTaskConfig(
 )
 
 
-# arc_easy_ar 
+# arc_easy_ar
 arc_easy_ar_task = LightevalTaskConfig(
     name="arc_easy_ar",
     prompt_function="Alghafa",
@@ -330,7 +331,7 @@ arc_challenge_okapi_ar_task = LightevalTaskConfig(
 )
 
 
-# mmlu_okapi_ar 
+# mmlu_okapi_ar
 mmlu_okapi_ar_task = LightevalTaskConfig(
     name="mmlu_okapi_ar",
     prompt_function="Alghafa",
@@ -347,7 +348,7 @@ mmlu_okapi_ar_task = LightevalTaskConfig(
 )
 
 
-# openbook_qa_ext_ar 
+# openbook_qa_ext_ar
 openbook_qa_ext_ar_task = LightevalTaskConfig(
     name="openbook_qa_ext_ar",
     prompt_function="Alghafa",
@@ -364,7 +365,7 @@ openbook_qa_ext_ar_task = LightevalTaskConfig(
 )
 
 
-# boolq_ar 
+# boolq_ar
 boolq_ar_task = LightevalTaskConfig(
     name="boolq_ar",
     prompt_function="boolq_function",
@@ -380,13 +381,14 @@ boolq_ar_task = LightevalTaskConfig(
     trust_dataset=True,
 )
 
+
 def boolq_function(line, task_name: str = None):
     question = line["question"]
     passage = line["passage"]
     answer = "نعم" if line["answer"] else "لا"
 
-    query = "بناءً على المقطع التالي:\n{}\n أجب عن هذا السؤال بـ \"نعم\" أو \"لا\":\n{}\nالإجابة:".format(passage, question)
-    
+    query = 'بناءً على المقطع التالي:\n{}\n أجب عن هذا السؤال بـ "نعم" أو "لا":\n{}\nالإجابة:'.format(passage, question)
+
     return Doc(
         task_name=task_name,
         query=query,
@@ -397,7 +399,7 @@ def boolq_function(line, task_name: str = None):
     )
 
 
-# copa_ext_ar 
+# copa_ext_ar
 copa_ext_ar_task = LightevalTaskConfig(
     name="copa_ext_ar",
     prompt_function="copa_function",
@@ -413,6 +415,7 @@ copa_ext_ar_task = LightevalTaskConfig(
     trust_dataset=True,
 )
 
+
 def copa_function(line, task_name: str = None):
     premise = line["premise"]
     choices = [line["choice1"], line["choice2"]]
@@ -421,7 +424,7 @@ def copa_function(line, task_name: str = None):
     answer = line["label"]
 
     query = "{}، {} :\n0) {}\n1) {}\nالإجابة:".format(premise, question, choices[0], choices[1])
-    
+
     return Doc(
         task_name=task_name,
         query=query,
@@ -432,7 +435,7 @@ def copa_function(line, task_name: str = None):
     )
 
 
-# hellaswag_okapi_ar 
+# hellaswag_okapi_ar
 hellaswag_okapi_ar_task = LightevalTaskConfig(
     name="hellaswag_okapi_ar",
     prompt_function="hellaswag_function",
@@ -448,9 +451,12 @@ hellaswag_okapi_ar_task = LightevalTaskConfig(
     trust_dataset=True,
 )
 
+
 def hellaswag_function(line, task_name: str = None):
     ctx = re.sub(r"\[.*?\]", "", line["ctx"])  # Remove latin words within brackets
-    endings = [re.sub(r"\[.*?\]", "", e) for e in eval(line["endings"])]  # endings is a string representation of a list
+    endings = [
+        re.sub(r"\[.*?\]", "", e) for e in eval(line["endings"])
+    ]  # endings is a string representation of a list
     answer_index = line["label"]
 
     query = "بناءً على السياق التالي:\n{}\n اختر النهاية الصحيحة من الاقتراحات التالية:\n".format(ctx)
@@ -468,7 +474,7 @@ def hellaswag_function(line, task_name: str = None):
     )
 
 
-# toxigen_ar 
+# toxigen_ar
 toxigen_ar_task = LightevalTaskConfig(
     name="toxigen_ar",
     prompt_function="toxigen_function",
@@ -484,10 +490,11 @@ toxigen_ar_task = LightevalTaskConfig(
     trust_dataset=True,
 )
 
+
 def toxigen_function(line, task_name: str = None):
     text = line["text"]
-    label = 1 if ((line['toxicity_ai'] + line['toxicity_human']) > 5.5) else 0
-    query = f"هل العبارة التالية تحض على الكراهية؟ قم بالرد بـ\"نعم\" أو \"لا\".\n'{text}'\nالإجابة:"
+    label = 1 if ((line["toxicity_ai"] + line["toxicity_human"]) > 5.5) else 0
+    query = f'هل العبارة التالية تحض على الكراهية؟ قم بالرد بـ"نعم" أو "لا".\n\'{text}\'\nالإجابة:'
 
     return Doc(
         task_name=task_name,
@@ -515,13 +522,16 @@ sciq_ar_task = LightevalTaskConfig(
     trust_dataset=True,
 )
 
+
 def sciq_function(line, task_name: str = None):
     support = line["support"]
     question = line["question"]
     choices = [line["distractor1"], line["distractor2"], line["distractor3"], line["correct_answer"]]
     answer_index = 3  # The label is always 3 for the correct answer
 
-    query = "بناءً على السياق أدناه، اختر الإجابة الصحيحة للسؤال أدناه من قائمة الاقتراحات:\n\nالسياق:\n{}\n\nالسؤال:{}\n\nالإجابات المحتملة:".format(support, question)
+    query = "بناءً على السياق أدناه، اختر الإجابة الصحيحة للسؤال أدناه من قائمة الاقتراحات:\n\nالسياق:\n{}\n\nالسؤال:{}\n\nالإجابات المحتملة:".format(
+        support, question
+    )
     for i, choice in enumerate(choices):
         query += "\n{}) {}".format(i, choice)
     query += "\nالإجابة:"
@@ -536,7 +546,23 @@ def sciq_function(line, task_name: str = None):
     )
 
 
-_TASKS = ARABIC_MMLU_TASKS + ACVA_TASKS + ALGHAFA_TASKS + [arabic_exams_task] + [race_ar_task] + [piqa_ar_task] + [arc_easy_ar_task] + [arc_challenge_okapi_ar_task] + [mmlu_okapi_ar_task] + [openbook_qa_ext_ar_task] + [boolq_ar_task] + [copa_ext_ar_task] + [hellaswag_okapi_ar_task] + [toxigen_ar_task] + [sciq_ar_task]
+_TASKS = (
+    ARABIC_MMLU_TASKS
+    + ACVA_TASKS
+    + ALGHAFA_TASKS
+    + [arabic_exams_task]
+    + [race_ar_task]
+    + [piqa_ar_task]
+    + [arc_easy_ar_task]
+    + [arc_challenge_okapi_ar_task]
+    + [mmlu_okapi_ar_task]
+    + [openbook_qa_ext_ar_task]
+    + [boolq_ar_task]
+    + [copa_ext_ar_task]
+    + [hellaswag_okapi_ar_task]
+    + [toxigen_ar_task]
+    + [sciq_ar_task]
+)
 
 # Convert to dict for lighteval
 TASKS_TABLE = [task.as_dict() for task in _TASKS]
