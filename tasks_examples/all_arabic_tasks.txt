@@ -118,11 +118,9 @@ community|acva:entertainment|5|1
 community|Alghafa:mcq_exams_test_ar|5|1
 community|Alghafa:meta_ar_dialects|5|1
 community|Alghafa:meta_ar_msa|5|1
-community|Alghafa:multiple_choice_copa_translated_task|5|1
 community|Alghafa:multiple_choice_facts_truefalse_balanced_task|5|1
 community|Alghafa:multiple_choice_grounded_statement_soqal_task|5|1
 community|Alghafa:multiple_choice_grounded_statement_xglue_mlqa_task|5|1
-community|Alghafa:multiple_choice_openbookqa_translated_task|5|1
 community|Alghafa:multiple_choice_rating_sentiment_no_neutral_task|5|1
 community|Alghafa:multiple_choice_rating_sentiment_task|5|1
 community|Alghafa:multiple_choice_sentiment_task|5|1
