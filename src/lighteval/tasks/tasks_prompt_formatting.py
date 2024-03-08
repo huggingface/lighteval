@@ -26,8 +26,10 @@ import random
 import re
 import string
 
+import numpy as np
 import pycountry
 
+from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.tasks.requests import Doc
 from lighteval.utils import as_list
 
@@ -135,6 +137,239 @@ def babi_qa(line, task_name: str = None):  # HELM
         else:
             story.append(text)
     return queries
+
+
+def bbh_harness(line, task_name: str = None):
+    line = {k: v for k, v in line.items() if v not in [None, ""]}
+
+    task_prefix = line.get("task_prefix", "")
+    example_input_prefix = line.get("example_input_prefix", "\nQ: ")
+    query = f"{task_prefix}{example_input_prefix}{line['input']}"
+
+    rng = np.random.RandomState(seed=42)
+    choice_prefix = line.get("choice_prefix", "\n  choice: ")
+    append_choices = bool(line.get("append_choices", True))
+    # default
+    correct_index = line["target_idx"]
+    choices = line["choices"]
+    if append_choices:
+        choices = list(rng.permutation(sorted(line["choices"])))
+        query = f"{query}{choice_prefix}{choice_prefix.join(choices)}"
+        gold_item = line["choices"][line["target_idx"]]
+        correct_index = choices.index(gold_item)
+
+    example_output_prefix = line.get("example_output_prefix", "\nA: ")
+    query = f"{query}{example_output_prefix}"
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=choices,
+        gold_index=correct_index,
+        target_for_fewshot_sorting=choices,
+        instruction=line.get("task_prefix", None),
+    )
+
+
+def bbh_lighteval(line, task_name: str = None):
+    line = {k: v for k, v in line.items() if v is not None}
+
+    query = line.get("task_prefix", "")
+    query += line.get("example_input_prefix", "\nQuestion: ")
+    query += line["input"]
+    query += line.get("choice_prefix", "\n  Choices: ")
+    query += "".join([f"\n{key}. {choice}" for key, choice in zip(LETTER_INDICES, line["choices"])])
+    query += line.get("example_output_prefix", "\nAnswer: ")
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=LETTER_INDICES[: len(line["choices"])],
+        gold_index=line["target_idx"],
+        target_for_fewshot_sorting=LETTER_INDICES[: len(line["choices"])],
+        instruction=line.get("task_prefix", None),
+    )
+
+
+def bbh(line, instruction, choices, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=f"{instruction}Q: {line['input']}\nA:",
+        choices=choices,
+        gold_index=choices.index(line["target"]),
+        target_for_fewshot_sorting=[f" {c}" for c in choices],
+        instruction=instruction,
+    )
+
+
+def bbh_boolean_expressions(line, task_name: str = None):
+    instruction = "Evaluate the result of a random Boolean expression.\n\n"
+    choices = ["False", "True"]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_causal_judgment(line, task_name: str = None):
+    instruction = "Answer questions about causal attribution.\n\n"
+    choices = ["Yes", "No"]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_date_understanding(line, task_name: str = None):
+    instruction = "Infer the date from context.\n\n"
+    choices = [f"({c})" for c in LETTER_INDICES[:6]]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_disambiguation_qa(line, task_name: str = None):
+    instruction = "Clarify the meaning of sentences with ambiguous pronouns.\n\n"
+    choices = [f"({c})" for c in LETTER_INDICES[:3]]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_dyck_languages(line, task_name: str = None):  # Can only be done in generative
+    instruction = "Correctly close a Dyck-n word.\n\n"
+    choices = [line["target"]]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_formal_fallacies(line, task_name: str = None):
+    instruction = "Distinguish deductively valid arguments from formal fallacies.\n\n"
+    choices = ["valid", "invalid"]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_geometric_shapes(line, task_name: str = None):
+    instruction = "Name geometric shapes from their SVG paths.\n\n"
+    choices = [f"({c})" for c in LETTER_INDICES[:11]]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_hyperbaton(line, task_name: str = None):
+    instruction = "Order adjectives correctly in English sentences.\n\n"
+    choices = [f"({c})" for c in LETTER_INDICES[:2]]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_logical_deduction_five_objects(line, task_name: str = None):
+    instruction = "A logical deduction task which requires deducing the order of a sequence of objects.\n\n"
+    choices = [f"({c})" for c in LETTER_INDICES[:5]]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_logical_deduction_seven_objects(line, task_name: str = None):
+    instruction = "A logical deduction task which requires deducing the order of a sequence of objects.\n\n"
+    choices = [f"({c})" for c in LETTER_INDICES[:7]]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_logical_deduction_three_objects(line, task_name: str = None):
+    instruction = "A logical deduction task which requires deducing the order of a sequence of objects.\n\n"
+    choices = [f"({c})" for c in LETTER_INDICES[:3]]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_movie_recommendation(line, task_name: str = None):
+    if line["target"] == "Monsters, Inc":  # this line is not correctly formatted
+        hlog_warn("One sample removed from task bbh:movie_recommentation because its line is incorrectly formatted.")
+        return []
+    instruction = "Recommend movies similar to the given list of movies.\n\n"
+    choices = [f"({c})" for c in LETTER_INDICES[:6]]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_multistep_arithmetic_two(line, task_name: str = None):
+    instruction = "Solve multi-step arithmetic problems.\n\n"  # Can only be done in generative
+    choices = [line["target"]]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_navigate(line, task_name: str = None):
+    instruction = (
+        "Given a series of navigation instructions, determine whether one would end up back at the starting point.\n\n"
+    )
+    choices = ["Yes", "No"]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_object_counting(line, task_name: str = None):
+    instruction = "Questions that involve enumerating objects and asking the model to count them.\n\n"
+    choices = [str(i) for i in range(1, 19)]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_penguins_in_a_table(line, task_name: str = None):
+    instruction = "Answer questions about a table of penguins and their attributes.\n\n"
+    choices = [f"({c})" for c in LETTER_INDICES[:5]]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_reasoning_about_colored_objects(line, task_name: str = None):
+    instruction = "Answer extremely simple questions about the colors of objects on a surface.\n\n"
+    choices = [f"({c})" for c in LETTER_INDICES[:18]]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_ruin_names(line, task_name: str = None):
+    if line["target"] in ["dearth, wind, & fire", "rita, sue and bob poo"]:  # line not correctly formatted
+        hlog_warn("One sample removed from task bbh:ruin_names because its line is incorrectly formatted.")
+        return []
+    instruction = "Select the humorous edit that 'ruins' the input movie or musical artist name.\n\n"
+    choices = [f"({c})" for c in LETTER_INDICES[:6]]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_salient_translation_error_detection(line, task_name: str = None):
+    instruction = "Detect the type of error in an English translation of a German source sentence.\n\n"
+    choices = [f"({c})" for c in LETTER_INDICES[:6]]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_snarks(line, task_name: str = None):
+    instruction = 'Determine which of two sentences is sarcastic.\n\nAccording to Cambridge University Dictionary, sarcasm is "the use of remarks that clearly mean the opposite of what they say, made in order to hurt someone\'s feelings or to criticize something in a humorous way." Sarcastic sentences often contain satirical or ironic utterances, hyperboles, ambivalent or witty remarks.\n\n'
+    choices = [f"({c})" for c in LETTER_INDICES[:2]]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_sports_understanding(line, task_name: str = None):
+    instruction = "Determine whether an artificially constructed sentence relating to sports is plausible or not.\n\n"
+    choices = ["yes", "no"]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_temporal_sequences(line, task_name: str = None):
+    instruction = "Task description: Answer questions about which times certain events could have occurred.\n\n"
+    choices = [f"({c})" for c in LETTER_INDICES[:4]]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_tracking_shuffled_objects_five_objects(line, task_name: str = None):
+    instruction = "A task requiring determining the final positions of a set of objects given their initial positions and a description of a sequence of swaps.\n\n"
+    choices = [f"({c})" for c in LETTER_INDICES[:5]]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_tracking_shuffled_objects_seven_objects(line, task_name: str = None):
+    instruction = "A task requiring determining the final positions of a set of objects given their initial positions and a description of a sequence of swaps.\n\n"
+    choices = [f"({c})" for c in LETTER_INDICES[:7]]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_tracking_shuffled_objects_three_objects(line, task_name: str = None):
+    instruction = "A task requiring determining the final positions of a set of objects given their initial positions and a description of a sequence of swaps.\n\n"
+    choices = [f"({c})" for c in LETTER_INDICES[:3]]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_web_of_lies(line, task_name: str = None):
+    instruction = "Evaluate a random boolean function expressed as a word problem.\n\n"
+    choices = ["Yes", "No"]
+    return bbh(line, instruction, choices, task_name)
+
+
+def bbh_word_sorting(line, task_name: str = None):
+    instruction = "Sort a list of words.\n\n"  # Can only be done in generative
+    choices = [line["target"]]
+    return bbh(line, instruction, choices, task_name)
 
 
 def bbq(line, task_name: str = None):  # HELM
