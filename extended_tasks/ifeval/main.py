@@ -23,7 +23,7 @@
 import numpy as np
 from aenum import extend_enum
 
-import tasks_examples.custom_tasks_with_custom_metrics.ifeval.instructions_registry as instructions_registry
+import extended_tasks.ifeval.instructions_registry as instructions_registry
 from lighteval.metrics import Metrics
 from lighteval.metrics.utils import (
     MetricCategory,
@@ -38,7 +38,7 @@ from lighteval.tasks.requests import Doc
 ifeval = LightevalTaskConfig(
     name="ifeval",
     prompt_function="ifeval_prompt",
-    suite=["custom"],
+    suite=["extended"],
     hf_repo="wis-k/instruction-following-eval",
     hf_subset="default",
     metric=["ifeval_metric"],
