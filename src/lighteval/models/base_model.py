@@ -420,7 +420,7 @@ class BaseModel(LightevalModel):
                     hlog_warn(
                         f"The smallest context of your batch ({smallest_context}) is bigger than the maximum context size allowed by the model ({self.max_length}) for a task in"
                         + str({i.task_name for i in batch})
-                        + f". This is likely to lead to some errors."  # noqa C401
+                        + ". This is likely to lead to some errors."  # noqa C401
                     )
 
                 if (
