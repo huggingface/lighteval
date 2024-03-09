@@ -145,7 +145,7 @@ class LightevalTaskConfig:
 
 
 class LightevalTask:
-    def __init__(
+    def __init__(  # noqa: C901
         self, name: str, cfg: LightevalTaskConfig, cache_dir: Optional[str] = None, custom_tasks_module: list = None
     ):
         """
