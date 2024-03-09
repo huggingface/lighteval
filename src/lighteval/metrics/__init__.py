@@ -148,7 +148,7 @@ def apply_multichoice_metric_one_token(results: list[ModelReturn], formatted_doc
     return results, outputs
 
 
-def apply_generative_multi_turn_metric(results: list[ModelReturn], formatted_doc: Doc, metrics: list[str]):
+def apply_generative_multi_turn_metric(results: list[ModelReturn], formatted_doc: Doc, metrics: list[str], eval_tracker=None):
     outputs = {}
     predictions = results.pop(0).result
 

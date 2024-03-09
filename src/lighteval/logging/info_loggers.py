@@ -205,6 +205,9 @@ class DetailsLogger:
         choices: list = field(default_factory=list)
         gold_index: list = field(default_factory=list)
         metrics: dict = field(default_factory=dict)
+        multi_turn_prompts: list = field(default_factory=list)
+        judement_prompt: str = None
+        judgement: str = None
 
     @dataclass
     class CompiledDetail:
@@ -302,7 +305,7 @@ class DetailsLogger:
     compiled_details: dict[str, CompiledDetail] = collections.defaultdict(CompiledDetail)
     compiled_details_over_all_tasks: CompiledDetailOverAllTasks = CompiledDetailOverAllTasks()
 
-    def log(self, task_name: str, task: LightevalTask, doc: Doc, outputs: list[ModelReturn], metrics: dict) -> None:
+    def log(self, task_name: str, task: LightevalTask, doc: Doc, outputs: list[ModelReturn], metrics: dict, llm_as_prompt_judgement: tuple[str, str]) -> None:
         """Stores the relevant information for one sample of one task to the total list of samples stored in the DetailsLogger.
 
         Args:
@@ -356,6 +359,9 @@ class DetailsLogger:
             pred_saved = True
         if task.has_metric_category[MetricCategory.GENERATIVE_MULTI_TURN]:
             pred_saved = True
+            detail.multi_turn_prompts = doc.specific["multi_turn_queries"]
+            detail.judement_prompt = llm_as_prompt_judgement[0]
+            detail.judgement = llm_as_prompt_judgement[1]
         if not pred_saved:
             raise NotImplementedError(
                 "No metric prediction saved."
@@ -440,10 +446,21 @@ class MetricsLogger:
 
     metrics_values: dict[str, dict[str, list[float]]] = collections.defaultdict(lambda: collections.defaultdict(list))
     metric_aggregated: dict[str, dict[str, float]] = collections.defaultdict(lambda: collections.defaultdict(dict))
+    llm_as_judge_prompts: dict[str, dict[str, list[str]]] = collections.defaultdict(lambda: collections.defaultdict(list))
 
     def log(self, task_name: str, metrics: dict) -> None:
         for metric_name, metric_value in metrics.items():
             self.metrics_values[task_name][metric_name].append(metric_value)
+
+    def log_llm_as_judge(self, task_name: str, user_prompt: str, judgement: str) -> None:
+        """Logs the user prompt and the judgement of the model as a judge.
+
+        Args:
+            user_prompt (str): User prompt used to judge the model response.
+            judgement (str): Judgement of the model response.
+
+        """
+        self.llm_as_judge_prompts[task_name].append({"judgement": judgement, "user_prompt": user_prompt})
 
     def aggregate(self, task_dict: dict[str, LightevalTask], bootstrap_iters: int = 1000):  # noqa: C901
         """

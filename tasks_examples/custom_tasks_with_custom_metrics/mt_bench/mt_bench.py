@@ -39,7 +39,7 @@ task = LightevalTaskConfig(
     few_shots_split="",
     few_shots_select="random",
     metric=["mt_bench_metric"],
-    generation_size=1024,
+    generation_size=10,
     stop_sequence=[],
 )
 
@@ -81,29 +81,31 @@ def mt_bench_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dic
     category = formatted_doc.specific["category"]
 
     if category not in NEED_REF_CATS:
-        score = play_a_match_single(question, predictions, ref_answer, judges["default"], multi_turn=False, output_file=None)
-        score_mt = play_a_match_single(question, predictions, ref_answer, judges["default-mt"], multi_turn=True, output_file=None)
+        score, user_prompt_1, judgement_1 = play_a_match_single(question, predictions, ref_answer, judges["default"], multi_turn=False, output_file=None)
+        score_mt, user_prompt_2, judgement_2 = play_a_match_single(question, predictions, ref_answer, judges["default-mt"], multi_turn=True, output_file=None)
     else:
         try:
-            score = play_a_match_single(question, predictions, ref_answer, judges["math"], multi_turn=False, output_file=None)
-            score_mt = play_a_match_single(question, predictions, ref_answer, judges["math-mt"], multi_turn=True, output_file=None)
+            score, user_prompt_1, judgement_1 = play_a_match_single(question, predictions, ref_answer, judges["math"], multi_turn=False, output_file=None)
+            score_mt, user_prompt_2, judgement_2 = play_a_match_single(question, predictions, ref_answer, judges["math-mt"], multi_turn=True, output_file=None)
         except KeyError:
             print(f"Category {category} not found in judge prompts, using default judge")
-            score = play_a_match_single(question, predictions, ref_answer, judges["default"], multi_turn=False, output_file=None)
-            score_mt = play_a_match_single(question, predictions, ref_answer, judges["default-mt"], multi_turn=True, output_file=None)
+            score, user_prompt_1, judgement_1 = play_a_match_single(question, predictions, ref_answer, judges["default"], multi_turn=False, output_file=None)
+            score_mt, user_prompt_2, judgement_2 = play_a_match_single(question, predictions, ref_answer, judges["default-mt"], multi_turn=True, output_file=None)
 
-    return score
+    return {"single_turn": score, "multi_turn": score_mt, "user_prompt": [user_prompt_1, user_prompt_2], "judgement": [judgement_1, judgement_2]}
 
 
-mt_bench_metric = SampleLevelMetric(
+mt_bench_metric = SampleLevelMetricGrouping(
     metric="mt_bench_metric",
     higher_is_better=True,
     category=MetricCategory.GENERATIVE_MULTI_TURN,
     use_case=MetricUseCase.SUMMARIZATION,
     sample_level_fn=mt_bench_metric,
-    corpus_level_fn=np.mean,
+    corpus_level_fn={
+        "single_turn": np.mean,
+        "multi_turn": np.mean,
+    }
 )
-
 
 ## STORE YOUR EVALS
 _TASKS = [task]

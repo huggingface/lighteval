@@ -489,13 +489,13 @@ class LightevalTask:
                     context=context,
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
-                    contexts_multi_turn=formatted_doc.specific.get("multi_turn_queries", []),
+                    contexts_multi_turn=formatted_doc.specific.get("multi_turn_queries_context", []),
                 )
             ]
 
         return requests
 
-    def process_results(self, formatted_doc: Doc, results: list[ModelReturn]) -> dict[str, float]:
+    def process_results(self, formatted_doc: Doc, results: list[ModelReturn], evaluation_tracker) -> dict[str, float]:
         """
         Processes the results of the task, and stores them in the output dict.
 
@@ -540,7 +540,7 @@ class LightevalTask:
             outputs.update(cur_outputs)
         if self.has_metric_category[MetricCategory.GENERATIVE_MULTI_TURN]:
             results, cur_outputs = apply_generative_multi_turn_metric(
-                results=results, formatted_doc=formatted_doc, metrics=self.metrics
+                results=results, formatted_doc=formatted_doc, metrics=self.metrics, eval_tracker=evaluation_tracker
             )
             outputs.update(cur_outputs)
 
@@ -704,7 +704,7 @@ def create_requests_from_tasks(  # noqa: C901
                             multiturn_context = f"{ctx}{multiturn_context}"
                         else:
                             multiturn_context = f"{ctx}{{model_response}}\n"
-                        doc.specific["multi_turn_queries"] = [multiturn_context]
+                        doc.specific["multi_turn_queries_context"] = [multiturn_context]
                     doc.num_effective_few_shots = num_effective_few_shots
                     doc.num_asked_few_shots = num_fewshot
                     doc.ctx = ctx

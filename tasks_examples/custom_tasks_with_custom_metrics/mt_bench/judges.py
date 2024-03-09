@@ -185,4 +185,4 @@ def play_a_match_single(question, answer, ref_answer, judge, multi_turn, output_
         score, user_prompt, judgment = run_judge_single(
             question, answer, judge, ref_answer, multi_turn=multi_turn
         )
-        return score
+        return score, user_prompt, judgment

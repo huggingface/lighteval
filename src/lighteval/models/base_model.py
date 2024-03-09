@@ -351,17 +351,17 @@ class BaseModel(LightevalModel):
             request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
             request.tokenized_context = self.tok_encode(request.context)
 
-        dataset = GenerativeTaskDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
-        dataloader = DataLoader(dataset, batch_size=1, collate_fn=lambda batch: batch)
+        #dataset = GenerativeTaskDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
+        #dataloader = DataLoader(dataset, batch_size=1, collate_fn=lambda batch: batch)
 
         results = []
 
-        if self.accelerator:
-            dataloader = self.accelerator.prepare(dataloader)
+        # if self.accelerator:
+        #     dataloader = self.accelerator.prepare(dataloader)
 
         # Always batch size 1 for multi-turn
         for request in tqdm(
-            dataset, desc="Greedy Multi Turn generation", position=1, leave=False, disable=self.disable_tqdm
+            requests, desc="Greedy Multi Turn generation", position=1, leave=False, disable=self.disable_tqdm
         ):
             # NOTE: we are assuming all items in a batch behave similarly (same
             # stop_tokens and max_tokens genrated) which is not necessarily
@@ -400,9 +400,9 @@ class BaseModel(LightevalModel):
             for i, multi_turn_context in enumerate(request.contexts_multi_turn):
                 multi_turn_context = multi_turn_context.format(model_response=model_answers[0])
 
-                print("multi_turn_context ====== ")
-                pprint(multi_turn_context)
-                print("multi_turn_context ====== ")
+                # print("multi_turn_context ====== ")
+                # pprint(multi_turn_context)
+                # print("multi_turn_context ====== ")
 
                 tokenized = self.tokenizer(
                     multi_turn_context,
@@ -432,7 +432,6 @@ class BaseModel(LightevalModel):
 
             results.append(GenerateMultiTurnReturn(result=model_answers, input_tokens=[], generated_tokens=[], truncated_tokens_count=0, padded_tokens_count=0))
 
-        pprint(results)
         return results
 
     def greedy_until(
