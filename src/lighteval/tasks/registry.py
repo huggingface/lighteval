@@ -39,8 +39,19 @@ from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 # Original follows the original implementation as closely as possible
 # Leaderboard are the evaluations we fixed on the open llm leaderboard - you should get similar results
 # Community are for community added evaluations
+# Extended are for evaluations with custom logic
 # Custom is for all the experiments you might want to do!
-DEFAULT_SUITES = ["helm", "bigbench", "harness", "leaderboard", "lighteval", "original", "custom", "community"]
+DEFAULT_SUITES = [
+    "helm",
+    "bigbench",
+    "harness",
+    "leaderboard",
+    "lighteval",
+    "original",
+    "extended",
+    "custom",
+    "community",
+]
 
 TRUNCATE_FEW_SHOTS_DEFAULTS = True
 
@@ -97,7 +108,10 @@ class Registry:
         )
 
     def get_task_dict(
-        self, task_name_list: List[str], custom_tasks: Optional[Union[str, ModuleType]] = None
+        self,
+        task_name_list: List[str],
+        custom_tasks: Optional[Union[str, ModuleType]] = None,
+        extended_tasks: str = None,
     ) -> Dict[str, LightevalTask]:
         """
         Get a dictionary of tasks based on the task name list.
@@ -105,6 +119,7 @@ class Registry:
         Args:
             task_name_list (List[str]): A list of task names.
             custom_tasks (Optional[Union[str, ModuleType]]): Path to the custom tasks file or name of a module to import containing custom tasks or the module it-self
+            extended_tasks (Optional[str]): The path to the extended tasks group of submodules
 
         Returns:
             Dict[str, LightevalTask]: A dictionary containing the tasks.
@@ -115,13 +130,20 @@ class Registry:
         """
         # Import custom tasks provided by the user
         custom_tasks_registry = None
-        custom_tasks_module = None
+        custom_tasks_module = []
+        TASKS_TABLE = []
         if custom_tasks is not None:
-            custom_tasks_module = create_custom_tasks_module(custom_tasks=custom_tasks)
-        if custom_tasks_module is not None:
-            custom_tasks_registry = create_config_tasks(
-                meta_table=custom_tasks_module.TASKS_TABLE, cache_dir=self.cache_dir
+            custom_tasks_module.append(create_custom_tasks_module(custom_tasks=custom_tasks))
+        if extended_tasks is not None:
+            hlog_warn(
+                "You are using extended_tasks. Make sure you installed their dependencies using `pip install -e .[extended_tasks]`."
             )
+            custom_tasks_module.extend(load_extended_tasks_modules(extended_tasks_path=extended_tasks))
+        for module in custom_tasks_module:
+            TASKS_TABLE.extend(module.TASKS_TABLE)
+
+        if len(TASKS_TABLE) > 0:
+            custom_tasks_registry = create_config_tasks(meta_table=TASKS_TABLE, cache_dir=self.cache_dir)
             hlog(custom_tasks_registry)
 
         # Select relevant tasks given the subset asked for by the user
@@ -131,6 +153,16 @@ class Registry:
             tasks_dict[task_name] = task_class(custom_tasks_module=custom_tasks_module)
 
         return tasks_dict
+
+
+def load_extended_tasks_modules(extended_tasks_path: str):
+    all_modules = []
+    for folder in os.listdir(extended_tasks_path):
+        cur_module = create_custom_tasks_module(os.path.join(extended_tasks_path, folder, "main.py"))
+        hlog(f"Successfully loaded extended task: {folder}.")
+        all_modules.append(cur_module)
+
+    return all_modules
 
 
 def create_custom_tasks_module(custom_tasks: Union[str, ModuleType]) -> ModuleType:
@@ -153,7 +185,7 @@ def create_custom_tasks_module(custom_tasks: Union[str, ModuleType]) -> ModuleTy
 
 
 def get_custom_tasks(custom_tasks: Union[str, ModuleType]) -> Tuple[ModuleType, str]:
-    """Get custom tasks from the given custom tasks file or module.
+    """Get all the custom tasks available from the given custom tasks file or module.
 
     Args:
         custom_tasks (Optional[Union[str, ModuleType]]): Path to the custom tasks file or name of a module to import containing custom tasks or the module it-self
