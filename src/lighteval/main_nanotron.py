@@ -135,7 +135,8 @@ def main(
 
             task_names_list, few_shots_dict = taskinfo_selector(tasks_selection)
             task_dict = Registry(cache_dir=cache_dir).get_task_dict(
-                task_names_list, custom_tasks=lighteval_config.tasks.custom_tasks
+                task_names_list,
+                custom_tasks=lighteval_config.tasks.custom_tasks,
             )
             # Loading all the dataset in a distributed manner
             LightevalTask.load_datasets(task_dict.values(), lighteval_config.tasks.dataset_loading_processes)
