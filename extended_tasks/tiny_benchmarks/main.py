@@ -1,6 +1,8 @@
 # MIT License
 
-# Copyright (c) 2024 The HuggingFace Team
+# Copyright (c) 2024 The HuggingFace Team & Felipe Maia Polo
+
+# See https://github.com/felipemaiapolo/tinyBenchmarks/ for the original code
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,8 +38,9 @@ import requests
 from aenum import extend_enum
 from scipy.optimize import minimize
 
-from lighteval.metrics import LoglikelihoodAcc, Metrics
+from lighteval.metrics import Metrics
 from lighteval.metrics.metrics import CorpusLevelMetricGrouping
+from lighteval.metrics.metrics_sample import LoglikelihoodAcc
 from lighteval.metrics.utils import MetricCategory, MetricUseCase
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -72,15 +75,21 @@ def fit_theta(responses_test, seen_items, A, B, theta_init=None, eps=1e-10, opti
 # Evaluation function
 class TinyCorpusAggregator:
     LEADEBRBOARD_SCENARIOS = ["truthfulqa", "gsm8k", "winogrande", "arc", "hellaswag"]
-    BENCHS = ["lb", "mmlu", "helm_lite", "alpaca"]
+    BENCHS = ["lb", "mmlu"]
+    # Not included yet:
+    # - helm_lite (not avail on datasets)
+    # - alpaca (needs to be added to lighteval first)
 
-    def __init__(self, bench_name: str):
+    def __init__(self, task: str, metric: str):
         self.number_of_examples = 100
-        if bench_name not in self.LEADEBRBOARD_SCENARIOS + self.BENCHS:
+        if task not in self.LEADEBRBOARD_SCENARIOS + self.BENCHS:
             raise ValueError(f"Bench name must be one of {','.join(self.LEADEBRBOARD_SCENARIOS + self.BENCHS)}.")
-        self.bench = bench_name
-        self.scenario = "lb" if bench_name in self.LEADEBRBOARD_SCENARIOS else bench_name
+        self.task = task
+        self.scenario = "lb" if task in self.LEADEBRBOARD_SCENARIOS else task
         self.download()
+        self.estimates = None
+        self.num_samples = 0
+        self.metric = metric
 
     def download(self):
         # Downloading files
@@ -93,7 +102,8 @@ class TinyCorpusAggregator:
                     file.write(response.content)
 
     def aggregate(self, y_input):
-        assert len(y_input.shape) == 1, "y_input must be a unidimensional numpy array."
+        if len(y_input) == self.num_samples and self.estimates is not None:
+            return self.estimates[self.task][self.metric]
 
         # We load the weights for the relevant examples
         with open("extended_tasks/tiny_benchmarks/tinyBenchmarks.pkl", "rb") as handle:
@@ -117,10 +127,10 @@ class TinyCorpusAggregator:
                 balance_weights[subscenarios_position[scenario][sub]] = N_sce / (n_sub * n_i)
 
         # In case we use the big IRT model to estimate the performance of individual scenarios
-        if self.bench not in self.BENCHS:
-            scenarios = [self.bench]
+        if self.task not in self.BENCHS:
+            scenarios = [self.task]
             ind_scenario = (
-                self.number_of_examples * ([i for i, s in enumerate(scenarios_position.keys()) if s == self.bench][0])
+                self.number_of_examples * ([i for i, s in enumerate(scenarios_position.keys()) if s == self.task][0])
             )
             seen_examples = seen_examples[ind_scenario : ind_scenario + self.number_of_examples]
         else:
@@ -155,37 +165,90 @@ class TinyCorpusAggregator:
             estimates[scenario]["pirt"] = IRTp
             estimates[scenario]["gpirt"] = IRTpp
 
-        return estimates
+        self.num_samples = len(y_input)
+        self.estimates = estimates
+
+        return estimates[self.task][self.metric]
 
 
-task = LightevalTaskConfig(
-    name="tinyWinogrande",
-    prompt_function="winogrande",  # must be defined in the file or defined in src/lighteval/tasks/tasks_prompt_formatting.py
-    suite=["extended"],
-    hf_repo="tinyBenchmarks/tinyWinogrande",
-    hf_subset="winogrande_xl",
-    hf_avail_splits=["train", "validation", "test"],
-    evaluation_splits=["validation"],
-    few_shots_split=None,
-    few_shots_select="random_sampling",
-    metric=["custom_metric_winogrande"],
-)
+task_params = [
+    {
+        "name": "winogrande",
+        "dataset": "tinyBenchmarks/tinyWinogrande",
+        "subset": "winogrande_xl",
+        "prompt": "winogrande",
+    },
+    {"name": "arc", "dataset": "tinyBenchmarks/tinyAI2_arc", "subset": "ARC-Challenge", "prompt": "arc"},
+    {
+        "name": "hellaswag",
+        "dataset": "tinyBenchmarks/tinyHellaswag",
+        "subset": "default",
+        "prompt": "hellaswag_harness",
+    },
+    {
+        "name": "gsm8k",
+        "dataset": "tinyBenchmarks/tinyGSM8k",
+        "subset": "main",
+        "prompt": "gsm8k",
+    },
+    {"name": "mmlu", "dataset": "tinyBenchmarks/tinyMMLU", "subset": "all", "prompt": "mmlu_harness"},
+    {
+        "name": "truthfulqa",
+        "dataset": "tinyBenchmarks/tinyTruthfulQA",
+        "subset": "multiple_choice",
+        "prompt": "truthful_qa_multiple_choice",
+    },
+    #    {
+    #        "name": "alpacaeval",
+    #        "dataset": "tinyBenchmarks/tinyAlpacaEval",
+    #        "subset": "default"
+    #    },
+]
 
-# STORE YOUR EVALS
-_TASKS = [task]
+_TASKS = []
+for task_param in task_params:
+    name, dataset, subset, prompt = (
+        task_param["name"],
+        task_param["dataset"],
+        task_param["subset"],
+        task_params["prompt"],
+    )
+    task = LightevalTaskConfig(
+        name="tiny:{name}",
+        prompt_function=prompt,
+        suite=["extended"],
+        hf_repo=dataset,
+        hf_subset=subset,
+        hf_avail_splits=["train", "validation", "test"],
+        evaluation_splits=["validation"],
+        few_shots_split=None,
+        few_shots_select="random_sampling",
+        metric=[f"custom_metric_{name}"],
+    )
+    _TASKS.append(task)
+
+# CUSTOM METRIC
+metrics = ["irt", "pirt", "gpirt"]
 
 
-# CUSTOM METRIC IF NEEDED
-custom_metric_winogrande = CorpusLevelMetricGrouping(
-    metric=["irt", "pirt", "gpirt"],
-    higher_is_better={"irt": True, "pirt": True, "gpirt": True},
-    sample_level_fn=LoglikelihoodAcc().compute,
-    category=MetricCategory.MULTICHOICE,
-    use_case=MetricUseCase.ACCURACY,
-    corpus_level_fn=TinyCorpusAggregator("winogrande").aggregate,
-)
+def sample_level(**args):
+    result = LoglikelihoodAcc().compute(**args)
+    return {m: result for m in metrics}
 
-extend_enum(Metrics, "custom_metric_winogrande", custom_metric_winogrande)
+
+def custom_metric(name):
+    return CorpusLevelMetricGrouping(
+        metric=metrics,
+        higher_is_better={m: True for m in metrics},
+        sample_level_fn=sample_level,
+        category=MetricCategory.MULTICHOICE,
+        use_case=MetricUseCase.ACCURACY,
+        corpus_level_fn={m: TinyCorpusAggregator(name, m).aggregate for m in metrics},
+    )
+
+
+for task_param in task_params:
+    extend_enum(Metrics, "custom_metric_{name}", custom_metric(name))
 
 # MODULE LOGIC
 # You should not need to touch this
