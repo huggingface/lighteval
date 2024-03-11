@@ -205,9 +205,9 @@ class DetailsLogger:
         choices: list = field(default_factory=list)
         gold_index: list = field(default_factory=list)
         metrics: dict = field(default_factory=dict)
-        multi_turn_prompts: list = field(default_factory=list)
         judement_prompt: str = None
         judgement: str = None
+        specifics: dict = field(default_factory=dict)
 
     @dataclass
     class CompiledDetail:
@@ -359,9 +359,9 @@ class DetailsLogger:
             pred_saved = True
         if task.has_metric_category[MetricCategory.GENERATIVE_MULTI_TURN]:
             pred_saved = True
-            detail.multi_turn_prompts = doc.specific["multi_turn_queries"]
             detail.judement_prompt = llm_as_prompt_judgement[0]
             detail.judgement = llm_as_prompt_judgement[1]
+        detail.specifics = doc.specific
         if not pred_saved:
             raise NotImplementedError(
                 "No metric prediction saved."

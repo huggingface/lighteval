@@ -35,7 +35,13 @@ from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, Loglikel
 from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.model_config import BaseModelConfig, EnvConfig
-from lighteval.models.model_output import Batch, GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn, GenerateMultiTurnReturn
+from lighteval.models.model_output import (
+    Batch,
+    GenerateMultiTurnReturn,
+    GenerateReturn,
+    LoglikelihoodReturn,
+    LoglikelihoodSingleTokenReturn,
+)
 from lighteval.models.utils import _get_dtype, _get_precision, _simplify_name
 from lighteval.tasks.requests import (
     GreedyUntilMultiTurnRequest,
@@ -350,9 +356,6 @@ class BaseModel(LightevalModel):
         for request in requests:
             request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
             request.tokenized_context = self.tok_encode(request.context)
-
-        #dataset = GenerativeTaskDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
-        #dataloader = DataLoader(dataset, batch_size=1, collate_fn=lambda batch: batch)
 
         results = []
 

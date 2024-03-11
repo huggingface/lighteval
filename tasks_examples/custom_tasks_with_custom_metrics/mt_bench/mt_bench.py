@@ -39,7 +39,7 @@ task = LightevalTaskConfig(
     few_shots_split="",
     few_shots_select="random",
     metric=["mt_bench_metric"],
-    generation_size=10,
+    generation_size=1024,
     stop_sequence=[],
 )
 
@@ -51,9 +51,6 @@ def prompt_fn(line, task_name: str = None):
     Follow examples in src/lighteval/tasks/tasks_prompt_formatting.py, or get more info
     about what this function should do in the README.
     """
-    instruction = "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions."
-    fake = "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. USER: Implement a program to find the common elements in two arrays without using any extra data structures. ASSISTANT:"
-
     return Doc(
         task_name=task_name,
         query=f"{line['prompt'][0]}",
