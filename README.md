@@ -210,9 +210,13 @@ However, we are very grateful to the Harness and HELM teams for their continued 
 If your new task or metric has requirements, add a specific `requirements.txt` file with your evaluation.
 
 ### Adding a new task
-To add a new task, first either open an issue, to determine whether it will be integrated in the core evaluations of lighteval, or in the community tasks, and **add its dataset** on the hub.
-Note: Core evaluations are evals we will add to our test suite to ensure non regression through time, and which already see a high usage in the community.
-A popular community evaluation can move to become a core evaluation through time.
+To add a new task, first either open an issue, to determine whether it will be integrated in the core evaluations of lighteval, in the extended tasks, or in the community tasks, and **add its dataset** on the hub.
+
+- Core evaluations are evaluation which only require standard logic in their metrics and processing, and that we will add to our test suite to ensure non regression through time. They already see a high usage in the community.
+- Extended evaluations are evaluations which require custom logic in their metrics (complex normalisation, an LLM as a judge, ...), that we added to facilitate the life of users. They already see a high usage in the community.
+- Community evaluations are submissions by the community of new tasks.
+
+A popular community evaluation can move to becoming an extended or core evaluation through time.
 
 #### Core evaluations
 Prompt function: **find a suitable prompt function** in `src.lighteval.tasks.task_prompt_formatting.py`, or code your own. This function must output a `Doc` object, which should contain `query`, your prompt, and either `gold`, the gold output, or `choices` and `gold_index`, the list of choices and index or indices of correct answers. If your query contains an instruction which should not be repeated in a few shot setup, add it to an `instruction` field.
@@ -240,6 +244,9 @@ Summary: create a **line summary** of your evaluation, in `src/lighteval/tasks/t
 - `trust_dataset` (bool), set to True if you trust the dataset.
 
 Make sure you can launch your model with your new task using `--tasks lighteval|yournewtask|2|0`.
+
+### Extended evaluations
+Proceed as for community evaluations, but in the `extended_tasks` folder.
 
 #### Community evaluations
 Copy the `community_tasks/_template.yml` to `community_tasks/yourevalname.py` and edit it to add your custom tasks (the parameters you can use are explained above). It contains an interesting mechanism if the dataset you are adding contains a lot of subsets.
