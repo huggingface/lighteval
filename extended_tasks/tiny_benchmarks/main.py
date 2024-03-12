@@ -2,8 +2,6 @@
 
 # Copyright (c) 2024 The HuggingFace Team & Felipe Maia Polo
 
-# See https://github.com/felipemaiapolo/tinyBenchmarks/ for the original code
-
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -24,11 +22,9 @@
 
 # ruff: noqa: F405, F403, F401
 """
-Custom evaluation tasks for lighteval. Copy this file and complete it with the info for your task.
+See https://github.com/felipemaiapolo/tinyBenchmarks/ for the original code.
 
-This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
-
-Author:
+Test with `python run_evals_accelerate.py --model_args "pretrained=EleutherAI/pythia-70m" --tasks "extended|tiny:winogrande|0|0,extended|tiny:gsm8k|0|0,extended|tiny:hellaswag|0|0,extended|tiny:arc|0|0,extended|tiny:truthfulqa|0|0" --extended_tasks extended_tasks --output_dir "./evals"`
 """
 import os
 import pickle
@@ -40,7 +36,8 @@ from scipy.optimize import minimize
 
 from lighteval.metrics import Metrics
 from lighteval.metrics.metrics import CorpusLevelMetricGrouping
-from lighteval.metrics.metrics_sample import LoglikelihoodAcc
+from lighteval.metrics.metrics_sample import ExactMatches, LoglikelihoodAcc
+from lighteval.metrics.normalizations import gsm8k_normalizer
 from lighteval.metrics.utils import MetricCategory, MetricUseCase
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -76,11 +73,12 @@ def fit_theta(responses_test, seen_items, A, B, theta_init=None, eps=1e-10, opti
 class TinyCorpusAggregator:
     LEADEBRBOARD_SCENARIOS = ["truthfulqa", "gsm8k", "winogrande", "arc", "hellaswag"]
     BENCHS = ["lb", "mmlu"]
+    METRICS = ["irt", "pirt", "gpirt"]
     # Not included yet:
     # - helm_lite (not avail on datasets)
     # - alpaca (needs to be added to lighteval first)
 
-    def __init__(self, task: str, metric: str):
+    def __init__(self, task: str):
         self.number_of_examples = 100
         if task not in self.LEADEBRBOARD_SCENARIOS + self.BENCHS:
             raise ValueError(f"Bench name must be one of {','.join(self.LEADEBRBOARD_SCENARIOS + self.BENCHS)}.")
@@ -89,7 +87,6 @@ class TinyCorpusAggregator:
         self.download()
         self.estimates = None
         self.num_samples = 0
-        self.metric = metric
 
     def download(self):
         # Downloading files
@@ -101,9 +98,19 @@ class TinyCorpusAggregator:
                 with open("extended_tasks/tiny_benchmarks/tinyBenchmarks.pkl", "wb") as file:
                     file.write(response.content)
 
+    def compute(self, **args):
+        if self.task == "gsm8k":
+            res = ExactMatches(
+                strip_strings=True, normalize_pred=gsm8k_normalizer, normalize_gold=gsm8k_normalizer
+            ).compute(**args)
+            return {m: res for m in self.METRICS}
+        else:
+            res = LoglikelihoodAcc().compute(**args)
+            return {m: res for m in self.METRICS}
+
     def aggregate(self, y_input):
         if len(y_input) == self.num_samples and self.estimates is not None:
-            return self.estimates[self.task][self.metric]
+            return self.estimates[self.task]
 
         # We load the weights for the relevant examples
         with open("extended_tasks/tiny_benchmarks/tinyBenchmarks.pkl", "rb") as handle:
@@ -168,35 +175,58 @@ class TinyCorpusAggregator:
         self.num_samples = len(y_input)
         self.estimates = estimates
 
-        return estimates[self.task][self.metric]
+        return estimates[self.task]
 
 
+# TASK CREATION
 task_params = [
     {
         "name": "winogrande",
         "dataset": "tinyBenchmarks/tinyWinogrande",
         "subset": "winogrande_xl",
         "prompt": "winogrande",
+        "splits": ["train", "validation", "test"],
+        "evaluation_split": ["validation"],
     },
-    {"name": "arc", "dataset": "tinyBenchmarks/tinyAI2_arc", "subset": "ARC-Challenge", "prompt": "arc"},
+    {
+        "name": "arc",
+        "dataset": "tinyBenchmarks/tinyAI2_arc",
+        "subset": "ARC-Challenge",
+        "prompt": "arc",
+        "splits": ["train", "validation", "test"],
+        "evaluation_split": ["validation"],
+    },
     {
         "name": "hellaswag",
         "dataset": "tinyBenchmarks/tinyHellaswag",
         "subset": "default",
         "prompt": "hellaswag_harness",
+        "splits": ["train", "validation", "test"],
+        "evaluation_split": ["validation"],
+    },
+    {
+        "name": "mmlu",
+        "dataset": "tinyBenchmarks/tinyMMLU",
+        "subset": "all",
+        "prompt": "mmlu_harness",
+        "splits": ["validation", "dev", "test"],
+        "evaluation_split": ["test"],
+    },
+    {
+        "name": "truthfulqa",
+        "dataset": "tinyBenchmarks/tinyTruthfulQA",
+        "subset": "multiple_choice",
+        "prompt": "truthful_qa_multiple_choice",
+        "splits": ["validation"],
+        "evaluation_split": ["validation"],
     },
     {
         "name": "gsm8k",
         "dataset": "tinyBenchmarks/tinyGSM8k",
         "subset": "main",
         "prompt": "gsm8k",
-    },
-    {"name": "mmlu", "dataset": "tinyBenchmarks/tinyMMLU", "subset": "all", "prompt": "mmlu_harness"},
-    {
-        "name": "truthfulqa",
-        "dataset": "tinyBenchmarks/tinyTruthfulQA",
-        "subset": "multiple_choice",
-        "prompt": "truthful_qa_multiple_choice",
+        "splits": ["train", "test"],
+        "evaluation_split": ["test"],
     },
     #    {
     #        "name": "alpacaeval",
@@ -206,49 +236,52 @@ task_params = [
 ]
 
 _TASKS = []
-for task_param in task_params:
-    name, dataset, subset, prompt = (
-        task_param["name"],
-        task_param["dataset"],
-        task_param["subset"],
-        task_params["prompt"],
-    )
+for task in task_params:
+    name = task["name"]
+    generation_size = None
+    stop_sequence = None
+    if name == "gsm8k":
+        generation_size = 256
+        stop_sequence = ["Question:", "Question"]
     task = LightevalTaskConfig(
-        name="tiny:{name}",
-        prompt_function=prompt,
+        name=f"tiny:{name}",
+        prompt_function=task["prompt"],
         suite=["extended"],
-        hf_repo=dataset,
-        hf_subset=subset,
-        hf_avail_splits=["train", "validation", "test"],
-        evaluation_splits=["validation"],
+        hf_repo=task["dataset"],
+        hf_subset=task["subset"],
+        hf_avail_splits=task["splits"],
+        evaluation_splits=task["evaluation_split"],
         few_shots_split=None,
         few_shots_select="random_sampling",
-        metric=[f"custom_metric_{name}"],
+        metric=[f"tinybench_metric_{name}"],
+        generation_size=generation_size,
+        stop_sequence=stop_sequence,
     )
     _TASKS.append(task)
 
 # CUSTOM METRIC
-metrics = ["irt", "pirt", "gpirt"]
+for task_param in task_params:
+    name = task_param["name"]
+    if name == "gsm8k":
+        category = MetricCategory.GENERATIVE
+        use_case = MetricUseCase.MATH
+    else:
+        category = MetricCategory.MULTICHOICE
+        use_case = MetricUseCase.ACCURACY
 
-
-def sample_level(**args):
-    result = LoglikelihoodAcc().compute(**args)
-    return {m: result for m in metrics}
-
-
-def custom_metric(name):
-    return CorpusLevelMetricGrouping(
-        metric=metrics,
-        higher_is_better={m: True for m in metrics},
-        sample_level_fn=sample_level,
-        category=MetricCategory.MULTICHOICE,
-        use_case=MetricUseCase.ACCURACY,
-        corpus_level_fn={m: TinyCorpusAggregator(name, m).aggregate for m in metrics},
+    extend_enum(
+        Metrics,
+        f"tinybench_metric_{name}",
+        CorpusLevelMetricGrouping(
+            metric=TinyCorpusAggregator.METRICS,
+            higher_is_better={m: True for m in TinyCorpusAggregator.METRICS},
+            sample_level_fn=TinyCorpusAggregator(name).compute,
+            category=category,
+            use_case=use_case,
+            corpus_level_fn=TinyCorpusAggregator(name).aggregate,
+        ),
     )
 
-
-for task_param in task_params:
-    extend_enum(Metrics, "custom_metric_{name}", custom_metric(name))
 
 # MODULE LOGIC
 # You should not need to touch this
