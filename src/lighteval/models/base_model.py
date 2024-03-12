@@ -26,6 +26,7 @@ from typing import Optional, Tuple, Union
 import torch
 import torch.nn.functional as F
 import transformers
+from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -406,32 +407,38 @@ class BaseModel(LightevalModel):
                 # stop_tokens and max_tokens genrated) which is not necessarily
                 # the case! Because of that we only use batch size of 1
                 stop_tokens = batch[0].stop_sequence
-                context = [c.context for c in batch]
-                max_context_size_allowed = self.max_length
-                if batch[0].generation_size is None:
-                    # No constraints on max tokens except the model and data
-                    # Max generation possible is the max_length - the smallest context
-                    smallest_context = min([len(c) for c in context])
-                    if smallest_context < self.max_length:
-                        max_generated_tokens = self.max_length - smallest_context
-                        max_context_size_allowed = self.max_length
-                    else:
-                        # The max context size is smaller than the smallest context
-                        max_generated_tokens = 1
-                        max_context_size_allowed = self.max_length - 1
-                        hlog_warn(
-                            f"The smallest context of your batch ({smallest_context}) is bigger than the maximum context size allowed by the model ({self.max_length}) for a task in {[i.task_name for i in batch]}. This is likely to lead to some errors."
-                        )
-                else:
-                    max_generated_tokens = batch[0].generation_size
-                    max_context_size_allowed = self.max_length - max_generated_tokens
+                max_new_tokens = batch[0].generation_size
 
+                # The main question for this step is the following:
+                # Would we rather truncate the prompt to allow generation to go to max_new_tokens, at the risk
+                # of loosing some meaning, or have some generations that are exceedingly short?
+                # The choice we go for here is to avoid truncating the prompt if we can, since it
+                # should have been managed by the prompt creator/few shot manager if requested by the user.
+                context = [c.context for c in batch]
+                smallest_context = min(len(c) for c in context)
+                biggest_context = max(len(c) for c in context)
+                if smallest_context > self.max_length:
+                    hlog_warn(
+                        f"The smallest context of your batch ({smallest_context}) is bigger than the maximum context size allowed by the model ({self.max_length}) for a task in"
+                        + str({i.task_name for i in batch})
+                        + ". This is likely to lead to some errors."  # noqa C401
+                    )
+
+                if (
+                    biggest_context > self.max_length
+                ):  # There will be truncation of at least one sample, maximum generation size will be one
+                    max_new_tokens = 1
+                else:  # We can't allow generation of more than max_length
+                    max_new_tokens = min(self.max_length - biggest_context, max_new_tokens)
+
+                # See doc https://huggingface.co/docs/transformers/v4.38.2/en/pad_truncation#padding-and-truncation
+                # Will do left truncation and padding, as defined when creating the tokenizer
                 tokenized = self.tokenizer(
                     context,
-                    padding=True,
-                    truncation=True,
+                    truncation="longest_first",  # we truncate to the model max length if needed
+                    padding="longest",  # we pad to the longest sequence
                     return_tensors="pt",
-                    max_length=max_context_size_allowed,
+                    max_length=self.max_length - 1,  # we always allow minimum one token of generation
                     add_special_tokens=self.add_special_tokens,
                 ).to(self.device)
 
@@ -439,13 +446,16 @@ class BaseModel(LightevalModel):
                     input_ids=tokenized["input_ids"],
                     input_lengths=[len(item == 1) for item in tokenized["attention_mask"]],
                     input_mask=tokenized["attention_mask"],
-                    truncated=[0] * len(tokenized["input_ids"]),
-                    padded=[0] * len(tokenized["input_ids"]),
+                    truncated=[
+                        len(c) - tokenized["input_ids"].shape[1] if len(c) > tokenized["input_ids"].shape[1] else 0
+                        for c in context
+                    ],
+                    padded=[sum(mask == 0) for mask in tokenized["attention_mask"]],
                 )
 
                 cur_reponses = self._generate(
                     batch=prepared_batch,
-                    max_tokens=max_generated_tokens,
+                    max_new_tokens=max_new_tokens,
                     stop_tokens=stop_tokens,
                     returns_logits=returns_logits,
                 )
@@ -456,7 +466,7 @@ class BaseModel(LightevalModel):
     def _generate(
         self,
         batch: Batch,
-        max_tokens: int,
+        max_new_tokens: int,
         stop_tokens: list[str],
         returns_logits: Optional[bool] = False,
     ) -> list[GenerateReturn]:
@@ -469,7 +479,7 @@ class BaseModel(LightevalModel):
         outputs = self.model.generate(
             input_ids=batch.input_ids,
             attention_mask=batch.input_mask,
-            max_new_tokens=max_tokens,
+            max_new_tokens=max_new_tokens,
             stopping_criteria=stopping_criteria,
             do_sample=False,
             pad_token_id=self.tokenizer.pad_token_id if self.tokenizer.pad_token_id else self.tokenizer.eos_token_id,
@@ -560,6 +570,7 @@ class BaseModel(LightevalModel):
             requests,
             override_bs=override_bs,
             return_bool_score=False,
+            rolling=True,
         )
         return results
 
@@ -568,6 +579,7 @@ class BaseModel(LightevalModel):
         requests: list[LoglikelihoodRequest],
         override_bs: int = -1,
         return_bool_score: bool = True,
+        rolling: bool = False,
     ) -> list[LoglikelihoodReturn]:
         dataset = LoglikelihoodDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
@@ -576,9 +588,12 @@ class BaseModel(LightevalModel):
         for split_start, split_end in tqdm(dataset.splits_start_end_iterator()):
             context_enc = dataset[0].tokenized_context
             continuation_enc = dataset[0].tokenized_continuation
-            max_context_continuation_size_allowed = len(
-                (context_enc + continuation_enc)[-(self.max_length + 1) :][:-1]
-            )
+            if rolling:  # we take all the sequence in rolling mode
+                max_context_continuation_size_allowed = len(context_enc + continuation_enc)
+            else:  # in normal mode, we left cut the context if needed
+                max_context_continuation_size_allowed = len(
+                    (context_enc + continuation_enc)[-(self.max_length + 1) :][:-1]
+                )
 
             batch_size = self._get_batch_size(
                 override_bs=override_bs,
@@ -592,7 +607,7 @@ class BaseModel(LightevalModel):
                 dataloader = self.accelerator.prepare(dataloader)
 
             for batch in tqdm(dataloader, disable=self.disable_tqdm):
-                prepared_batch = self.prepare_batch(
+                prepared_batch = self.prepare_batch_logprob(
                     batch,
                     padding_length=max_context_continuation_size_allowed,
                     max_context=max_context_continuation_size_allowed,
@@ -676,10 +691,13 @@ class BaseModel(LightevalModel):
 
         return dataset.get_original_order(res)
 
-    def prepare_batch(
+    def prepare_batch_logprob(
         self, batch: list[Request], padding_length: int, max_context: Optional[int] = None, single_token: bool = False
     ):
-        """Tokenize a batch of inputs and return also the length, truncations and padding"""
+        """Tokenize a batch of inputs and return also the length, truncations and padding.
+        This step is done manually since we tokenize log probability inputs together with their continuation,
+        to manage possible extra spaces added at the start by tokenizers, see tok_encode_pair.
+        """
         if single_token:
             inputs = [request.tokenized_context for request in batch]
         else:
@@ -713,7 +731,7 @@ class BaseModel(LightevalModel):
                 raise ValueError("Negative padding")
 
             padded.append(padding_length - sequence_len)
-            # Right padding - it likely would be better to do left padding
+            # Right padding, since we ignore these logprobs in the end
             tokens = F.pad(tokens, (0, padding_length - sequence_len), value=self.tokenizer.pad_token_id)
 
             # We create the attention mask to ignore padding
@@ -800,7 +818,7 @@ class BaseModel(LightevalModel):
                 dataloader = self.accelerator.prepare(dataloader)
 
             for batch in tqdm(dataloader, disable=self.disable_tqdm, position=1):
-                prepared_batch = self.prepare_batch(
+                prepared_batch = self.prepare_batch_logprob(
                     batch, padding_length=max_context, max_context=max_context, single_token=True
                 )
 
@@ -829,9 +847,11 @@ class BaseModel(LightevalModel):
                 # Sync all
                 # Need reshape before gather
                 batched_inputs, len_inputs = self.pad_and_gather(prepared_batch.input_ids)
-                batch_probs = torch.stack(batch_probs)
+                # We sometimes have different tasks with a different number of choices.
+                # Padding to -10000 makes sure that we won't reach index problems later as all log probs will be smaller than that
+                batch_probs = pad_sequence(batch_probs, batch_first=True, padding_value=-10000000)
                 batch_probs, len_probs = self.pad_and_gather(batch_probs)
-                batch_cont_tokens = torch.stack(batch_cont_tokens)
+                batch_cont_tokens = pad_sequence(batch_cont_tokens, batch_first=True, padding_value=-10000000)
                 batch_cont_tokens, len_cont = self.pad_and_gather(batch_cont_tokens)
 
                 # No reshape
