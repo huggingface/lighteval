@@ -528,7 +528,11 @@ class Metrics(Enum):
             if metric.value.category == MetricCategory.IGNORED:
                 continue
             if isinstance(metric.value, MetricGrouping):
-                res.update(metric.value.corpus_level_fn)
+                if isinstance(metric.value.corpus_level_fn, dict):
+                    res.update(metric.value.corpus_level_fn)
+                else:
+                    for m in metric.value.metric:
+                        res[m] = metric.value.corpus_level_fn
             else:
                 res[metric.value.metric] = metric.value.corpus_level_fn
         return res
