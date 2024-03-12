@@ -173,7 +173,6 @@ arabic_exams_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
-    # metric=["loglikelihood_acc"],
     trust_dataset=True,
 )
 
