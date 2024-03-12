@@ -64,7 +64,6 @@ class CustomArabicMMLUTask(LightevalTaskConfig):
             prompt_function="mmlu_arabic",
             hf_repo="OALL/Arabic_MMLU",
             metric=["loglikelihood_acc_norm"],
-            # metric=["loglikelihood_acc"],
             hf_avail_splits=["test", "dev"],
             evaluation_splits=["test"],
             few_shots_split="dev",
