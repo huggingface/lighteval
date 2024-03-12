@@ -255,7 +255,7 @@ class LightevalTask:
         if doc.instruction is not None:
             if not doc.query.startswith(doc.instruction):
                 raise ValueError(f"Prompt query {doc.query} is not starting with instruction {doc.instruction}")
-            return doc.query[len(doc.instruction):]
+            return doc.query[len(doc.instruction) :]
         return doc.query
 
     def doc_to_text_and_instructions(self, doc: Doc) -> Tuple[str, str]:
@@ -274,7 +274,7 @@ class LightevalTask:
         if doc.instruction is not None:
             if not doc.query.startswith(doc.instruction):
                 raise ValueError(f"Prompt query {doc.query} is not starting with instruction {doc.instruction}")
-            return (doc.query[len(doc.instruction):], doc.instruction)
+            return (doc.query[len(doc.instruction) :], doc.instruction)
         return (doc.query, "")
 
     def get_first_possible_fewshot_splits(self, number_of_splits: int = 1) -> list[str]:
