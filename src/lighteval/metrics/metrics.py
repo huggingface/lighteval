@@ -522,15 +522,18 @@ class Metrics(Enum):
         return res
 
     @staticmethod
-    def corpus_level_fns() -> dict[str, callable]:
+    def corpus_level_fns(metrics: list[str]) -> dict[str, callable]:
         res = {}
         for metric in Metrics:
+            if metric.name not in metrics:
+                continue
             if metric.value.category == MetricCategory.IGNORED:
                 continue
             if isinstance(metric.value, MetricGrouping):
                 if isinstance(metric.value.corpus_level_fn, dict):
                     res.update(metric.value.corpus_level_fn)
                 else:
+                    # Must make sure there is a caching implementation here
                     for m in metric.value.metric:
                         res[m] = metric.value.corpus_level_fn
             else:

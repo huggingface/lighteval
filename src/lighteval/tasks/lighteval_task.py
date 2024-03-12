@@ -554,7 +554,7 @@ class LightevalTask:
         Return a dict with metric name and its aggregation function for all
         metrics
         """
-        return Metrics.corpus_level_fns()
+        return Metrics.corpus_level_fns(self.metrics)
 
     @staticmethod
     def load_datasets(tasks: list["LightevalTask"], dataset_loading_processes: int = 1) -> None:
