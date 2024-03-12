@@ -223,7 +223,6 @@ class CustomALGHAFATask(LightevalTaskConfig):
             prompt_function="alghafa_prompt",
             hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Native",
             metric=["loglikelihood_acc_norm"],
-            # metric=["loglikelihood_acc"],
             hf_avail_splits=["test", "validation"],
             evaluation_splits=["test"],
             few_shots_split="validation",
