@@ -131,7 +131,6 @@ class CustomACVATask(LightevalTaskConfig):
             prompt_function="acva",
             hf_repo="OALL/ACVA",
             metric=["loglikelihood_acc_norm"],
-            # metric=["loglikelihood_acc"],
             hf_avail_splits=["test", "validation"],
             evaluation_splits=["test"],
             few_shots_split="validation",
