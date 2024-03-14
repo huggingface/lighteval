@@ -208,7 +208,7 @@ ALGHAFA_SUBSETS = [
 # fmt: on
 
 
-class CustomALGHAFATask(LightevalTaskConfig):
+class CustomAlGhafaTask(LightevalTaskConfig):
     def __init__(
         self,
         name,
