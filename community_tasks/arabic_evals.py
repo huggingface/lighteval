@@ -27,6 +27,7 @@ Custom evaluation tasks for lighteval
 This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
 """
 import re
+import random
 
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -208,7 +209,7 @@ ALGHAFA_SUBSETS = [
 # fmt: on
 
 
-class CustomAlGhafaTask(LightevalTaskConfig):
+class CustomAlGhafaNativeTask(LightevalTaskConfig):
     def __init__(
         self,
         name,
@@ -232,7 +233,7 @@ class CustomAlGhafaTask(LightevalTaskConfig):
         )
 
 
-ALGHAFA_TASKS = [CustomALGHAFATask(name=f"alghafa:{subset}", hf_subset=subset) for subset in ALGHAFA_SUBSETS]
+ALGHAFA_TASKS = [CustomAlGhafaNativeTask(name=f"alghafa:{subset}", hf_subset=subset) for subset in ALGHAFA_SUBSETS]
 
 
 def alghafa_prompt(line, task_name: str = None):
@@ -271,7 +272,6 @@ race_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
-    # metric=["loglikelihood_acc"],
     trust_dataset=True,
 )
 
@@ -288,7 +288,6 @@ piqa_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
-    # metric=["loglikelihood_acc"],
     trust_dataset=True,
 )
 
@@ -305,7 +304,6 @@ arc_easy_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
-    # metric=["loglikelihood_acc"],
     trust_dataset=True,
 )
 
@@ -322,7 +320,6 @@ arc_challenge_okapi_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
-    # metric=["loglikelihood_acc"],
     trust_dataset=True,
 )
 
@@ -339,7 +336,6 @@ mmlu_okapi_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
-    # metric=["loglikelihood_acc"],
     trust_dataset=True,
 )
 
@@ -356,7 +352,6 @@ openbook_qa_ext_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
-    # metric=["loglikelihood_acc"],
     trust_dataset=True,
 )
 
@@ -373,7 +368,6 @@ boolq_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
-    # metric=["loglikelihood_acc"],
     trust_dataset=True,
 )
 
@@ -382,15 +376,22 @@ def boolq_prompt_arabic(line, task_name: str = None):
     question = line["question"]
     passage = line["passage"]
     answer = "نعم" if line["answer"] else "لا"
-
-    query = 'بناءً على المقطع التالي:\n{}\n أجب عن هذا السؤال بـ "نعم" أو "لا":\n{}\nالإجابة:'.format(passage, question)
+    instruction = "بناء على المقطع التالي، أجب عن السؤال ب \"نعم\" أو \"لا\""
+    query = f"""
+    {instruction}
+    المقطع :
+    {passage}
+    السؤال:
+    {question}
+    الإجابة:
+    """
 
     return Doc(
         task_name=task_name,
         query=query,
         choices=["نعم", "لا"],
         gold_index=0 if line["answer"] else 1,
-        instruction="",
+        instruction=instruction,
         target_for_fewshot_sorting=answer,
     )
 
@@ -407,7 +408,6 @@ copa_ext_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
-    # metric=["loglikelihood_acc"],
     trust_dataset=True,
 )
 
@@ -443,21 +443,25 @@ hellaswag_okapi_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
-    # metric=["loglikelihood_acc"],
     trust_dataset=True,
 )
 
 
 def hellaswag_prompt_arabic(line, task_name: str = None):
     ctx = re.sub(r"\[.*?\]", "", line["ctx"])  # Remove latin words within brackets
-    endings = [
-        re.sub(r"\[.*?\]", "", e) for e in eval(line["endings"])
-    ]  # endings is a string representation of a list
+    endings = [re.sub(r"\[.*?\]", "", e) for e in eval(line["endings"])]  # endings is a string representation of a list
     answer_index = line["label"]
+    instruction = "بناء على السياق التالي، اختر النهاية الصحيحة من الاقتراحات التالية"
 
-    query = "بناءً على السياق التالي:\n{}\n اختر النهاية الصحيحة من الاقتراحات التالية:\n".format(ctx)
+    query = f"""
+    {instruction}
+    السياق:
+    {ctx}
+    الاقتراحات:
+    
+    """
     for i, ending in enumerate(endings):
-        query += "{}) {}\n".format(i, ending)
+        query += f"{i}) {ending}\n"
     query += "الإجابة:"
 
     return Doc(
@@ -465,7 +469,7 @@ def hellaswag_prompt_arabic(line, task_name: str = None):
         query=query,
         choices=endings,
         gold_index=answer_index,
-        instruction="",
+        instruction=instruction,
         target_for_fewshot_sorting=endings[answer_index],
     )
 
@@ -482,7 +486,6 @@ toxigen_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
-    # metric=["loglikelihood_acc"],
     trust_dataset=True,
 )
 
@@ -490,14 +493,21 @@ toxigen_ar_task = LightevalTaskConfig(
 def toxigen_prompt_arabic(line, task_name: str = None):
     text = line["text"]
     label = 1 if ((line["toxicity_ai"] + line["toxicity_human"]) > 5.5) else 0
-    query = f'هل العبارة التالية تحض على الكراهية؟ قم بالرد بـ"نعم" أو "لا".\n\'{text}\'\nالإجابة:'
+    instruction = "هل العبارة التالية تحض على الكراهية؟ قم بالرد بـ\"نعم\" أو \"لا\"."
+
+    query = f"""
+    {instruction}
+    العبارة:
+    '{text}'
+    الإجابة:
+    """
 
     return Doc(
         task_name=task_name,
         query=query,
         choices=["لا", "نعم"],
         gold_index=label,
-        instruction="",
+        instruction=instruction,
         target_for_fewshot_sorting="نعم" if label == 1 else "لا",
     )
 
@@ -514,7 +524,6 @@ sciq_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
-    # metric=["loglikelihood_acc"],
     trust_dataset=True,
 )
 
@@ -522,22 +531,40 @@ sciq_ar_task = LightevalTaskConfig(
 def sciq_prompt_arabic(line, task_name: str = None):
     support = line["support"]
     question = line["question"]
-    choices = [line["distractor1"], line["distractor2"], line["distractor3"], line["correct_answer"]]
-    answer_index = 3  # The label is always 3 for the correct answer
+    correct_answer = line["correct_answer"]
+    choices = [
+        line["distractor1"],
+        line["distractor2"],
+        line["distractor3"],
+        correct_answer
+    ]
+    
+    # Shuffle the choices
+    random.shuffle(choices)
+    
+    answer_index = choices.index(correct_answer)
+    
+    instruction = "بناءً على السياق أدناه، اختر الإجابة الصحيحة للسؤال التالي من قائمة الاقتراحات"
 
-    query = "بناءً على السياق أدناه، اختر الإجابة الصحيحة للسؤال أدناه من قائمة الاقتراحات:\n\nالسياق:\n{}\n\nالسؤال:{}\n\nالإجابات المحتملة:".format(
-        support, question
-    )
+    query = f"""
+    {instruction}
+    السياق:
+    {support}
+    السؤال:
+    {question}
+    الإجابات المحتملة:
+    
+    """
     for i, choice in enumerate(choices):
-        query += "\n{}) {}".format(i, choice)
-    query += "\nالإجابة:"
+        query += f"{i}) {choice}\n"
+    query += "الإجابة:"
 
     return Doc(
         task_name=task_name,
         query=query,
         choices=choices,
         gold_index=answer_index,
-        instruction="",
+        instruction=instruction,
         target_for_fewshot_sorting=choices[answer_index],
     )
 
