@@ -163,26 +163,27 @@ python run_evals_accelerate.py \
     --output_dir output_dir
 ```
 
-### Evaluate a model on community submitted/custom tasks.
+### Evaluate a model on extended or community submitted tasks.
 
-You can use `lighteval` to evaluate models on custom or community submitted tasks. Select your task of interest (which might have its own requirements to install first), and run:
+You can use `lighteval` to evaluate models on extended or community submitted tasks. Select your task of interest (which might have its own requirements to install first), and run:
 
 ```shell
 python run_evals_accelerate.py \
     --model_args="pretrained=<path to model on the hub>"\
     --tasks <task parameters> \
-    --custom_tasks <path to the main file containing the custom task>
+    --extended_tasks "extended_tasks" \
     --output_dir output_dir
 ```
 
-For example, to launch `lighteval` on `ifeval` for `HuggingFaceH4/zephyr-7b-beta`, do
+For example, to launch `lighteval` on `ifeval` for `HuggingFaceH4/zephyr-7b-beta`, run:
+
 ```shell
 python run_evals_accelerate.py \
     --model_args "pretrained=HuggingFaceH4/zephyr-7b-beta" \
     --use_chat_template \ # optional, if you want to run the evaluation with the chat template
-    --tasks "custom|ifeval|0|0" \
-    --custom_tasks "tasks_examples/custom_tasks_with_custom_metrics/ifeval/ifeval.py" \
-    --output_dir output_dir
+    --tasks "extended|ifeval|0|0" \
+    --extended_tasks "extended_tasks" \
+    --output_dir "./evals"
 ```
 
 
