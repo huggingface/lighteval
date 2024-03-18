@@ -272,7 +272,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
     # Endpoint
     if args.endpoint_model_name:
         if args.reuse_existing or args.vendor is not None:
-            model = args.endpoint_model_name.split("/")[1].replace('.', '-').lower()
+            model = args.endpoint_model_name.split("/")[1].replace(".", "-").lower()
             return InferenceEndpointModelConfig(
                 name=f"{model}-lighteval",
                 repository=args.endpoint_model_name,
