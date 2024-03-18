@@ -293,7 +293,7 @@ class InferenceEndpointModel(LightevalModel):
                         )
                     )
 
-        return results
+        return dataset.get_original_order(results)
 
     def loglikelihood(
         self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
@@ -332,7 +332,7 @@ class InferenceEndpointModel(LightevalModel):
                         )
                     )
 
-        return results
+        return dataset.get_original_order(results)
 
     def loglikelihood_rolling(
         self, requests: list[LoglikelihoodRollingRequest], override_bs=None
@@ -372,7 +372,7 @@ class InferenceEndpointModel(LightevalModel):
                         )
                     )
 
-        return results
+        return dataset.get_original_order(results)
 
     def loglikelihood_single_token(
         self,
