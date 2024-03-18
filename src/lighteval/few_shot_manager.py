@@ -195,8 +195,12 @@ class FewShotSampler:
             examples.append({"role": "assistant", "content": task.doc_to_target(ex)})
         # We add the actual example
         examples.append({"role": "user", "content": example})
-        # We add the initial instruction if present
-        examples[0]["content"] = instruction + examples[0]["content"]
+        # We add the initial instruction if present, after the system prompt of before the task
+        if examples[0]["role"] == "system":
+            examples[0]["content"] = examples[0]["content"] + instruction
+        else:
+            examples[0]["content"] = instruction + examples[0]["content"]
+
         return tokenizer.apply_chat_template(examples, tokenize=False, add_generation_prompt=True)
 
     def get_examples(

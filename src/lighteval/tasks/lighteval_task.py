@@ -321,6 +321,7 @@ class LightevalTask:
         """
         if self.dataset is None:
             self.dataset = download_dataset_worker((self.dataset_path, self.dataset_config_name, self.trust_dataset))
+        splits = as_list(splits)
 
         docs = []
         for split in splits:
@@ -553,7 +554,7 @@ class LightevalTask:
         Return a dict with metric name and its aggregation function for all
         metrics
         """
-        return Metrics.corpus_level_fns()
+        return Metrics.corpus_level_fns(self.metrics)
 
     @staticmethod
     def load_datasets(tasks: list["LightevalTask"], dataset_loading_processes: int = 1) -> None:
