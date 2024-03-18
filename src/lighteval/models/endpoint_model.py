@@ -112,10 +112,22 @@ class InferenceEndpointModel(LightevalModel):
         self.use_async = False  # for debug - async use is faster
 
         self._tokenizer = AutoTokenizer.from_pretrained(self.name)
+        self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
 
     @property
     def tokenizer(self):
         return self._tokenizer
+
+    @property
+    def add_special_tokens(self):
+        return self._add_special_tokens
+
+    @property
+    def disable_tqdm(self) -> bool:
+        disable_tqdm = False
+        if self.accelerator:
+            disable_tqdm = bool(not self.accelerator.is_main_process)
+        return disable_tqdm
 
     def cleanup(self):
         if self.endpoint is not None:
