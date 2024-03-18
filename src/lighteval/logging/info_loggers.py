@@ -458,21 +458,29 @@ class MetricsLogger:
             # fix the fact that we need the task_dict
             task = task_dict[cur_task_name]
 
+            skip_metric = []
             for metric_name, metric_values in metrics.items():
+                if metric_name in skip_metric:
+                    # The metric is in a subset which has already been computed and saved
+                    continue
+
                 try:
                     metric_result = task.aggregation()[metric_name](metric_values)
                 except OverflowError:
                     hlog_warn(f"{task_name}, {metric_name} got an OVERFLOW ERROR when aggregating.")
                     metric_result = float("nan")
 
-                if isinstance(metric_result, dict):  # in which cases do we get a dict here?
+                if isinstance(metric_result, dict):  # For some corpus level grouping metrics
                     self.metric_aggregated[task_name].update(metric_result)
+                    skip_metric.extend(list(metric_result.keys()))  # no need to recompute them later
                 else:
                     self.metric_aggregated[task_name][metric_name] = metric_result
 
-                aggregation = task.aggregation()[metric_name]
-
-                stderr = get_stderr_function(aggregation=aggregation, number_experiments=1000)
+                if isinstance(metric_result, dict):
+                    stderr = None  # We skip stderr for some corpus metrics that return dicts
+                else:
+                    aggregation = task.aggregation()[metric_name]
+                    stderr = get_stderr_function(aggregation=aggregation, number_experiments=1000)
                 if stderr is not None and len(metric_values) > 1:
                     try:
                         self.metric_aggregated[task_name][f"{metric_name}_stderr"] = stderr(metric_values)
