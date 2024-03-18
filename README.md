@@ -163,26 +163,33 @@ python run_evals_accelerate.py \
     --output_dir output_dir
 ```
 
-### Evaluate a model on community submitted/custom tasks.
+### Evaluate a model on extended, community, or custom tasks.
 
-You can use `lighteval` to evaluate models on custom or community submitted tasks. Select your task of interest (which might have its own requirements to install first), and run:
+Independently of the default tasks provided in `lighteval` that you will find in the `tasks_table.jsonl` file, you can use `lighteval` to evaluate models on tasks that require special processing (or have been added by the community). These tasks have their own evaluation suites and are defined as follows:
+
+* `extended`: tasks which have complex pre- or post-processing and are added by the `lighteval` maintainers. See the [`extended_tasks`](./extended_tasks) folder for examples.
+* `community`: tasks which have been added by the community. See the [`community_tasks`](./community_tasks) folder for examples.
+* `custom`: tasks which are defined locally and not present in the core library. Use this suite if you want to experiment with designing a special metric or task.
+
+For example, to run an extended task you can run:
 
 ```shell
 python run_evals_accelerate.py \
     --model_args="pretrained=<path to model on the hub>"\
     --tasks <task parameters> \
-    --custom_tasks <path to the main file containing the custom task>
+    --extended_tasks "extended_tasks" \
     --output_dir output_dir
 ```
 
-For example, to launch `lighteval` on `ifeval` for `HuggingFaceH4/zephyr-7b-beta`, do
+For example, to launch `lighteval` on `ifeval` for `HuggingFaceH4/zephyr-7b-beta`, run:
+
 ```shell
 python run_evals_accelerate.py \
     --model_args "pretrained=HuggingFaceH4/zephyr-7b-beta" \
     --use_chat_template \ # optional, if you want to run the evaluation with the chat template
-    --tasks "custom|ifeval|0|0" \
-    --custom_tasks "tasks_examples/custom_tasks_with_custom_metrics/ifeval/ifeval.py" \
-    --output_dir output_dir
+    --tasks "extended|ifeval|0|0" \
+    --extended_tasks "extended_tasks" \
+    --output_dir "./evals"
 ```
 
 
