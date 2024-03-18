@@ -124,10 +124,7 @@ class InferenceEndpointModel(LightevalModel):
 
     @property
     def disable_tqdm(self) -> bool:
-        disable_tqdm = False
-        if self.accelerator:
-            disable_tqdm = bool(not self.accelerator.is_main_process)
-        return disable_tqdm
+        False # no accelerator = this is the main process
 
     def cleanup(self):
         if self.endpoint is not None:
@@ -281,10 +278,11 @@ class InferenceEndpointModel(LightevalModel):
             for batch in tqdm(
                 dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
             ):
+                # the `returns_logits` flag is only used to filter the results, we always request the full details. 
                 if self.use_async:
-                    responses = asyncio.run(self.__async_process_batch_generate(batch, returns_logits))
+                    responses = asyncio.run(self.__async_process_batch_generate(batch))
                 else:
-                    responses = self.__process_batch_generate(batch, returns_logits)
+                    responses = self.__process_batch_generate(batch)
                 for response in responses:
                     results.append(
                         GenerateReturn(
