@@ -109,8 +109,6 @@ class InferenceEndpointModel(LightevalModel):
             self.async_client = AsyncInferenceClient(model=config.model, token=env_config.token)
             self.client = InferenceClient(model=config.model, token=env_config.token)
 
-        self.use_async = False  # for debug - async use is faster
-
         self._tokenizer = AutoTokenizer.from_pretrained(self.name)
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
 
