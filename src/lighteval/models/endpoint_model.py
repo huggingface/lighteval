@@ -262,7 +262,8 @@ class InferenceEndpointModel(LightevalModel):
         override_bs: Optional[int] = None,
     ) -> List[GenerateReturn]:
         for request in requests:
-            request.stop_sequence = request.stop_sequence + [self.tokenizer.eos_token]
+            request.tokenized_context = self.tok_encode(request.context)
+            request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
 
         dataset = GenerativeTaskDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
         batch_size = override_bs if override_bs is not None else BATCH_SIZE
