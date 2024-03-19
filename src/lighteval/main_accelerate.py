@@ -75,7 +75,7 @@ def main(args):
     with htrack_block("Model loading"):
         with accelerator.main_process_first() if accelerator is not None else nullcontext():
             model, model_info = load_model(config=model_config, env_config=env_config)
-            evaluation_tracker.general_config_logger.log_model_info(model_info)
+            evaluation_tracker.general_config_logger.log_model_info(model_info if args.model_info is None else args.model_info)
 
     with htrack_block("Tasks loading"):
         with accelerator.main_process_first() if accelerator is not None else nullcontext():
