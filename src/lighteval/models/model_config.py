@@ -221,6 +221,7 @@ class TGIModelConfig:
 @dataclass
 class InferenceModelConfig:
     model: str
+    add_special_tokens: bool = True
 
 
 @dataclass
@@ -235,6 +236,7 @@ class InferenceEndpointModelConfig:
     framework: str = "pytorch"
     endpoint_type: str = "protected"
     should_reuse_existing: bool = False
+    add_special_tokens: bool = True
 
 
 def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]) -> BaseModelConfig:  # noqa: C901
@@ -270,7 +272,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
     # Endpoint
     if args.endpoint_model_name:
         if args.reuse_existing or args.vendor is not None:
-            model = args.endpoint_model_name.split("/")[1].lower()
+            model = args.endpoint_model_name.split("/")[1].replace(".", "-").lower()
             return InferenceEndpointModelConfig(
                 name=f"{model}-lighteval",
                 repository=args.endpoint_model_name,

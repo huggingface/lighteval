@@ -114,7 +114,7 @@ class GreedyUntilRequest(Request):
         request_type (RequestType): The type of the request, set to RequestType.GREEDY_UNTIL.
     """
 
-    stop_sequence: str
+    stop_sequence: Union[str, tuple[str], list[str]]
     generation_size: int
     request_type = RequestType.GREEDY_UNTIL
     tokenized_context: list[int] = None
@@ -132,7 +132,7 @@ class GreedyUntilWithLogitsRequest(Request):
         request_type (RequestType): The type of the request (GREEDY_UNTIL_WITH_LOGITS).
     """
 
-    stop_sequence: str
+    stop_sequence: Union[str, tuple[str], list[str]]
     generation_size: int
     request_type = RequestType.GREEDY_UNTIL_WITH_LOGITS
     tokenized_context: list[int] = None
