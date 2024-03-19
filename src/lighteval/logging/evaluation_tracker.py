@@ -462,8 +462,7 @@ class EvaluationTracker:
         last_results_file_path = hf_hub_url(repo_id=repo_id, filename=last_results_file, repo_type="dataset")
         f = load_dataset("json", data_files=last_results_file_path, split="train")
         results_dict = f["results"][0]
-        value = results_dict.pop("all")
-        new_dictionary = {"all": value}
+        new_dictionary = {"all": results_dict}
         new_dictionary.update(results_dict)
         results_string = json.dumps(new_dictionary, indent=4)
 
