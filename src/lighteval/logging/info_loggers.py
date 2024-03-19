@@ -490,12 +490,21 @@ class MetricsLogger:
                         hlog_warn(f"{task_name}, {metric_name} got an OVERFLOW ERROR when computing stderr.")
 
         # We group subtasks which belong to the same parent task, like MMLU, to compute an average on them
+        # and compute an average of all metrics
         grouped_tasks = collections.defaultdict(list)
-        for k in self.metric_aggregated.keys():
+        suite_average = {}
+        suite_nb = {}
+
+        # Build aggregation
+        for k, metrics in self.metric_aggregated.items():
             if "|" in k:
                 suite, task, fewshot = k.split("|")
                 grouped_tasks[f"{suite}|{task.split(':')[0]}:_average|{fewshot}"].append(k)
+            for metric, value in metrics.items():
+                suite_average[metric] = suite_average.get(metric, 0) + value
+                suite_nb[metric] = suite_nb.get(metric, 0) + 1
 
+        # Compute average for sub groups
         for average_task, list_of_subtasks in grouped_tasks.items():
             if len(list_of_subtasks) > 1:
                 metrics = list(self.metric_aggregated[list_of_subtasks[0]].keys())
@@ -503,6 +512,12 @@ class MetricsLogger:
                     metric: sum([self.metric_aggregated[k][metric] for k in list_of_subtasks]) / len(list_of_subtasks)
                     for metric in metrics
                 }
+
+        # Compute average for all
+        for metric, value in suite_average.items():
+            suite_average[metric] = value / suite_nb[metric]
+
+        self.metric_aggregated["all"] = suite_average
 
 
 class VersionsLogger:
