@@ -227,6 +227,7 @@ class InferenceModelConfig:
 @dataclass
 class InferenceEndpointModelConfig:
     name: str
+    model_dtype: str
     repository: str
     accelerator: str
     vendor: str
@@ -275,6 +276,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
             model = args.endpoint_model_name.split("/")[1].replace(".", "-").lower()
             return InferenceEndpointModelConfig(
                 name=f"{model}-lighteval",
+                model_dtype=args.model_dtype,
                 repository=args.endpoint_model_name,
                 accelerator=args.accelerator,
                 region=args.region,
