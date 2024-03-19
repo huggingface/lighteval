@@ -1,3 +1,25 @@
+# MIT License
+
+# Copyright (c) 2024 The HuggingFace Team
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import asyncio
 from typing import Coroutine, List, Optional, Union
 
@@ -87,13 +109,22 @@ class InferenceEndpointModel(LightevalModel):
             self.async_client = AsyncInferenceClient(model=config.model, token=env_config.token)
             self.client = InferenceClient(model=config.model, token=env_config.token)
 
-        self.use_async = False  # for debug - async use is faster
+        self.use_async = True  # set to False for debug - async use is faster
 
         self._tokenizer = AutoTokenizer.from_pretrained(self.name)
+        self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
 
     @property
     def tokenizer(self):
         return self._tokenizer
+
+    @property
+    def add_special_tokens(self):
+        return self._add_special_tokens
+
+    @property
+    def disable_tqdm(self) -> bool:
+        False  # no accelerator = this is the main process
 
     def cleanup(self):
         if self.endpoint is not None:
@@ -228,7 +259,8 @@ class InferenceEndpointModel(LightevalModel):
         override_bs: Optional[int] = None,
     ) -> List[GenerateReturn]:
         for request in requests:
-            request.stop_sequence = request.stop_sequence + [self.tokenizer.eos_token]
+            request.tokenized_context = self.tok_encode(request.context)
+            request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
 
         dataset = GenerativeTaskDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
         batch_size = override_bs if override_bs is not None else BATCH_SIZE
@@ -246,10 +278,11 @@ class InferenceEndpointModel(LightevalModel):
             for batch in tqdm(
                 dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
             ):
+                # the `returns_logits` flag is only used to filter the results, we always request the full details.
                 if self.use_async:
-                    responses = asyncio.run(self.__async_process_batch_generate(batch, returns_logits))
+                    responses = asyncio.run(self.__async_process_batch_generate(batch))
                 else:
-                    responses = self.__process_batch_generate(batch, returns_logits)
+                    responses = self.__process_batch_generate(batch)
                 for response in responses:
                     results.append(
                         GenerateReturn(
@@ -260,7 +293,7 @@ class InferenceEndpointModel(LightevalModel):
                         )
                     )
 
-        return results
+        return dataset.get_original_order(results)
 
     def loglikelihood(
         self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
@@ -288,11 +321,10 @@ class InferenceEndpointModel(LightevalModel):
                     responses = self.__process_batch_logprob(batch)
                 for ix, response in enumerate(responses):
                     len_choice = len(batch[ix].tokenized_continuation)
+                    logits = [t.logprob for t in response.details.prefill[-len_choice:] if t.logprob is not None]
                     results.append(
                         LoglikelihoodReturn(
-                            result=[
-                                t.logprob for t in response.details.prefill[-len_choice:] if t.logprob is not None
-                            ],
+                            result=sum(logits),
                             input_tokens=[t.id for t in response.details.prefill[:-len_choice]],
                             generated_tokens=[t.id for t in response.details.prefill[-len_choice:]],
                             truncated_tokens_count=-1,
@@ -300,7 +332,7 @@ class InferenceEndpointModel(LightevalModel):
                         )
                     )
 
-        return results
+        return dataset.get_original_order(results)
 
     def loglikelihood_rolling(
         self, requests: list[LoglikelihoodRollingRequest], override_bs=None
@@ -329,9 +361,10 @@ class InferenceEndpointModel(LightevalModel):
                 else:
                     responses = self.__process_batch_logprob(batch, rolling=True)
                 for response in responses:
+                    logits = [t.logprob for t in response.details.tokens[:-1]]
                     results.append(
                         LoglikelihoodReturn(
-                            result=[t.logprob for t in response.details.tokens[:-1]],
+                            result=sum(logits),
                             input_tokens=[t.id for t in response.details.prefill],
                             generated_tokens=[t.id for t in response.details.tokens[:-1]],
                             truncated_tokens_count=-1,
@@ -339,7 +372,7 @@ class InferenceEndpointModel(LightevalModel):
                         )
                     )
 
-        return results
+        return dataset.get_original_order(results)
 
     def loglikelihood_single_token(
         self,

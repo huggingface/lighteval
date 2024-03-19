@@ -1,3 +1,26 @@
+# MIT License
+
+# Copyright (c) 2024 The HuggingFace Team
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+import copy
 import json
 import os
 import re
@@ -22,7 +45,7 @@ from lighteval.utils import is_nanotron_available, obj_to_markdown
 
 
 if is_nanotron_available():
-    from nanotron.config import Config, get_config_from_dict
+    from nanotron.config import Config
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
@@ -116,8 +139,14 @@ class EvaluationTracker:
 
         hlog(f"Saving results to {output_results_file} and {output_results_in_details_file}")
 
+        config_general = copy.deepcopy(self.general_config_logger)
+        config_general.config = (
+            config_general.config.as_dict() if is_dataclass(config_general.config) else config_general.config
+        )
+        config_general = asdict(config_general)
+
         to_dump = {
-            "config_general": asdict(self.general_config_logger),
+            "config_general": config_general,
             "results": self.metrics_logger.metric_aggregated,
             "versions": self.versions_logger.versions,
             "config_tasks": self.task_config_logger.tasks_configs,
@@ -283,7 +312,7 @@ class EvaluationTracker:
             # in the iso date, the `:` are replaced by `-` because windows does not allow `:` in their filenames
 
             task_name = os.path.basename(sub_file).replace("details_", "").split("_2023")[0].split("_2024")[0]
-            # task_name is then equal to `lighteval|mmlu:us_foreign_policy|5`
+            # task_name is then equal to `leaderboard|mmlu:us_foreign_policy|5`
 
             iso_date = os.path.dirname(sub_file)
             # to be able to parse the filename as iso dates, we need to re-replace the `-` with `:`
@@ -433,8 +462,7 @@ class EvaluationTracker:
         last_results_file_path = hf_hub_url(repo_id=repo_id, filename=last_results_file, repo_type="dataset")
         f = load_dataset("json", data_files=last_results_file_path, split="train")
         results_dict = f["results"][0]
-        value = results_dict.pop("all")
-        new_dictionary = {"all": value}
+        new_dictionary = {"all": results_dict}
         new_dictionary.update(results_dict)
         results_string = json.dumps(new_dictionary, indent=4)
 
@@ -455,7 +483,7 @@ class EvaluationTracker:
             dataset_summary=f"Dataset automatically created during the evaluation run of model "
             f"[{model_name}](https://huggingface.co/{model_name})"
             f"{org_string}.\n\n"
-            f"The dataset is composed of {len(card_metadata)-1} configuration, each one coresponding to one of the evaluated task.\n\n"
+            f"The dataset is composed of {len(card_metadata) - 1} configuration, each one coresponding to one of the evaluated task.\n\n"
             f"The dataset has been created from {len(results_files)} run(s). Each run can be found as a specific split in each "
             f'configuration, the split being named using the timestamp of the run.The "train" split is always pointing to the latest results.\n\n'
             f'An additional configuration "results" store all the aggregated results of the run.\n\n'
@@ -485,7 +513,7 @@ class EvaluationTracker:
         if not is_nanotron_available():
             hlog_warn("You cannot push results to tensorboard with having nanotron installed. Skipping")
             return
-        config: Config = get_config_from_dict(self.general_config_logger.config, config_class=Config)
+        config: Config = self.general_config_logger.config
         lighteval_config = config.lighteval
         try:
             global_step = config.general.step

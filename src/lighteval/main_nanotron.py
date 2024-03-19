@@ -1,3 +1,25 @@
+# MIT License
+
+# Copyright (c) 2024 The HuggingFace Team
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 # flake8: noqa: C901
 import os
 import random
@@ -21,7 +43,7 @@ if not is_nanotron_available():
     raise ImportError(NO_NANOTRON_ERROR_MSG)
 
 from nanotron import distributed as dist
-from nanotron.config import Config, get_config_from_file
+from nanotron.config import Config, LightEvalConfig, get_config_from_file
 from nanotron.logging import get_logger
 from nanotron.parallel.context import ParallelContext
 from nanotron.utils import local_ranks_zero_first
@@ -63,10 +85,7 @@ def main(
         )
 
         if lighteval_config_path:
-            lighteval_nanotron_config: config_cls = get_config_from_file(
-                lighteval_config_path, config_class=config_cls
-            )
-            lighteval_config = lighteval_nanotron_config.lighteval
+            lighteval_config: config_cls = get_config_from_file(lighteval_config_path, config_class=LightEvalConfig)
             nanotron_config.lighteval = lighteval_config
         else:
             lighteval_config = nanotron_config.lighteval
@@ -83,7 +102,7 @@ def main(
             override_batch_size=None,
             max_samples=lighteval_config.tasks.max_samples,
             job_id=os.environ.get("SLURM_JOB_ID", None),
-            config=nanotron_config.as_dict(),
+            config=nanotron_config,
         )
 
     with htrack_block("Test all gather"):
@@ -116,7 +135,8 @@ def main(
 
             task_names_list, few_shots_dict = taskinfo_selector(tasks_selection)
             task_dict = Registry(cache_dir=cache_dir).get_task_dict(
-                task_names_list, custom_tasks=lighteval_config.tasks.custom_tasks
+                task_names_list,
+                custom_tasks=lighteval_config.tasks.custom_tasks,
             )
             # Loading all the dataset in a distributed manner
             LightevalTask.load_datasets(task_dict.values(), lighteval_config.tasks.dataset_loading_processes)
@@ -132,6 +152,7 @@ def main(
                 max_samples=lighteval_config.tasks.max_samples,
                 evaluation_tracker=evaluation_tracker,
                 use_chat_template=False,
+                system_prompt=None,
             )
 
     with htrack_block("Setting seeds and waiting for all processes"):

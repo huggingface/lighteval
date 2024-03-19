@@ -1,6 +1,27 @@
-from enum import Enum
+# MIT License
+
+# Copyright (c) 2024 The HuggingFace Team
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
 import numpy as np
+from aenum import Enum
 
 from lighteval.metrics.harness_compatibility.drop import drop_metrics
 from lighteval.metrics.harness_compatibility.truthful_qa import truthfulqa_mc_metrics
@@ -501,13 +522,20 @@ class Metrics(Enum):
         return res
 
     @staticmethod
-    def corpus_level_fns() -> dict[str, callable]:
+    def corpus_level_fns(metrics: list[str]) -> dict[str, callable]:
         res = {}
         for metric in Metrics:
+            if metric.name not in metrics:
+                continue
             if metric.value.category == MetricCategory.IGNORED:
                 continue
             if isinstance(metric.value, MetricGrouping):
-                res.update(metric.value.corpus_level_fn)
+                if isinstance(metric.value.corpus_level_fn, dict):
+                    res.update(metric.value.corpus_level_fn)
+                else:
+                    # Must make sure there is a caching implementation here
+                    for m in metric.value.metric:
+                        res[m] = metric.value.corpus_level_fn
             else:
                 res[metric.value.metric] = metric.value.corpus_level_fn
         return res

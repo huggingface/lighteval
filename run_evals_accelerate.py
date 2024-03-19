@@ -1,6 +1,28 @@
+# MIT License
+
+# Copyright (c) 2024 The HuggingFace Team
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 """ Example run command:
 accelerate config
-accelerate launch run_evals_accelerate.py --tasks="lighteval|hellaswag|5|1" --output_dir "/scratch/evals" --model_args "pretrained=gpt2"
+accelerate launch run_evals_accelerate.py --tasks="leaderboard|hellaswag|5|1" --output_dir "/scratch/evals" --model_args "pretrained=gpt2"
 """
 import argparse
 
@@ -43,6 +65,7 @@ def get_parser():
         help="Whether to force multiple choice continuations to not start with a space",
     )
     parser.add_argument("--use_chat_template", default=False, action="store_true")
+    parser.add_argument("--system_prompt", type=str, default=None)
     # Model type 2) TGI
     task_type_group.add_argument("--inference_server_address", type=str)
     parser.add_argument("--inference_server_auth", type=str, default=None)
@@ -79,6 +102,12 @@ def get_parser():
         type=str,
         default=None,
         help="Path to a file with custom tasks (a TASK list of dict and potentially prompt formating functions)",
+    )
+    parser.add_argument(
+        "--extended_tasks",
+        type=str,
+        default=None,
+        help="Path to the folder which contains all extended tasks",
     )
     group.add_argument(
         "--tasks",

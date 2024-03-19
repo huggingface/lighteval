@@ -1,4 +1,27 @@
-from dataclasses import dataclass
+# MIT License
+
+# Copyright (c) 2024 The HuggingFace Team
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+import json
+from dataclasses import asdict, dataclass
 from enum import Enum, auto
 from typing import NamedTuple, Optional, Union
 
@@ -91,7 +114,7 @@ class GreedyUntilRequest(Request):
         request_type (RequestType): The type of the request, set to RequestType.GREEDY_UNTIL.
     """
 
-    stop_sequence: str
+    stop_sequence: Union[str, tuple[str], list[str]]
     generation_size: int
     request_type = RequestType.GREEDY_UNTIL
     tokenized_context: list[int] = None
@@ -109,7 +132,7 @@ class GreedyUntilWithLogitsRequest(Request):
         request_type (RequestType): The type of the request (GREEDY_UNTIL_WITH_LOGITS).
     """
 
-    stop_sequence: str
+    stop_sequence: Union[str, tuple[str], list[str]]
     generation_size: int
     request_type = RequestType.GREEDY_UNTIL_WITH_LOGITS
     tokenized_context: list[int] = None
@@ -153,12 +176,22 @@ class Doc:
     num_asked_few_shots: int = -1
     num_effective_few_shots: int = -1
 
-    def get_golds(self):
+    def get_golds(self, few_shot: bool = False):
         """Return gold targets extracted from the target dict"""
         gold_indices = as_list(self.gold_index)
+        if few_shot and self.target_for_fewshot_sorting is not None:
+            choices = self.target_for_fewshot_sorting
+            if isinstance(choices, str):  # correct choice is already selected
+                return choices
+        else:
+            choices = self.choices
         golds = []
         for gold_ix in gold_indices:
-            local_golds = as_list(self.choices[gold_ix])
+            local_golds = as_list(choices[gold_ix])
             for local_gold in local_golds:
                 golds.append(local_gold)
         return golds
+
+    def __repr__(self):
+        doc_dict = asdict(self)
+        return json.dumps(doc_dict)

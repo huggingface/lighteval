@@ -1,3 +1,25 @@
+# MIT License
+
+# Copyright (c) 2024 The HuggingFace Team
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import collections
 import os
 import time
@@ -8,12 +30,12 @@ import git
 import numpy as np
 import xxhash
 
-from lighteval.logging.hierarchical_logger import hlog, hlog_warn
+from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics import MetricCategory
 from lighteval.metrics.stderr import get_stderr_function
 from lighteval.models.model_loader import ModelInfo
 from lighteval.models.model_output import ModelReturn
-from lighteval.tasks.lighteval_task import LightevalTask
+from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 from lighteval.utils import as_list, is_nanotron_available, sanitize_numpy
 
@@ -436,21 +458,29 @@ class MetricsLogger:
             # fix the fact that we need the task_dict
             task = task_dict[cur_task_name]
 
+            skip_metric = []
             for metric_name, metric_values in metrics.items():
+                if metric_name in skip_metric:
+                    # The metric is in a subset which has already been computed and saved
+                    continue
+
                 try:
                     metric_result = task.aggregation()[metric_name](metric_values)
                 except OverflowError:
-                    hlog(f"{task_name} {metric_name} OVERFLOW ERROR")
+                    hlog_warn(f"{task_name}, {metric_name} got an OVERFLOW ERROR when aggregating.")
                     metric_result = float("nan")
 
-                if isinstance(metric_result, dict):  # in which cases do we get a dict here?
+                if isinstance(metric_result, dict):  # For some corpus level grouping metrics
                     self.metric_aggregated[task_name].update(metric_result)
+                    skip_metric.extend(list(metric_result.keys()))  # no need to recompute them later
                 else:
                     self.metric_aggregated[task_name][metric_name] = metric_result
 
-                aggregation = task.aggregation()[metric_name]
-
-                stderr = get_stderr_function(aggregation=aggregation, number_experiments=1000)
+                if isinstance(metric_result, dict):
+                    stderr = None  # We skip stderr for some corpus metrics that return dicts
+                else:
+                    aggregation = task.aggregation()[metric_name]
+                    stderr = get_stderr_function(aggregation=aggregation, number_experiments=1000)
                 if stderr is not None and len(metric_values) > 1:
                     try:
                         self.metric_aggregated[task_name][f"{metric_name}_stderr"] = stderr(metric_values)
@@ -459,14 +489,31 @@ class MetricsLogger:
                         self.metric_aggregated[task_name][f"{metric_name}_stderr"] = float("nan")
                         hlog_warn(f"{task_name}, {metric_name} got an OVERFLOW ERROR when computing stderr.")
 
+        # We group subtasks which belong to the same parent task, like MMLU, to compute an average on them
+        # and compute an average of all metrics
+        grouped_tasks = collections.defaultdict(list)
         suite_average = {}
         suite_nb = {}
 
-        for _, metrics in self.metric_aggregated.items():
+        # Build aggregation
+        for k, metrics in self.metric_aggregated.items():
+            if "|" in k:
+                suite, task, fewshot = k.split("|")
+                grouped_tasks[f"{suite}|{task.split(':')[0]}:_average|{fewshot}"].append(k)
             for metric, value in metrics.items():
                 suite_average[metric] = suite_average.get(metric, 0) + value
                 suite_nb[metric] = suite_nb.get(metric, 0) + 1
 
+        # Compute average for sub groups
+        for average_task, list_of_subtasks in grouped_tasks.items():
+            if len(list_of_subtasks) > 1:
+                metrics = list(self.metric_aggregated[list_of_subtasks[0]].keys())
+                self.metric_aggregated[average_task] = {
+                    metric: sum([self.metric_aggregated[k][metric] for k in list_of_subtasks]) / len(list_of_subtasks)
+                    for metric in metrics
+                }
+
+        # Compute average for all
         for metric, value in suite_average.items():
             suite_average[metric] = value / suite_nb[metric]
 
@@ -485,7 +532,7 @@ class VersionsLogger:
 
     # the versions dict will be a dict of task_name: task_version
     # {"winogrande|winogrande_xl": 0}
-    versions: dict[str, int] = {"all": 0}
+    versions: dict[str, int] = {}
 
     def log(self, task_name: str, task_version: int) -> None:
         self.versions[task_name] = task_version
@@ -495,53 +542,11 @@ class TaskConfigLogger:
     """Logs the different parameters of the current [`LightevalTask`] of interest.
 
     Attributes:
-        tasks_config (dict[str, TaskConfig]): Maps each task to its associated [`TaskConfig`]
+        tasks_config (dict[str, LightevalTaskConfig]): Maps each task to its associated [`LightevalTaskConfig`]
 
     """
 
-    @dataclass
-    class TaskConfig:
-        """Stored configuration of a given [`LightevalTask`].
-
-        Arguments:
-            name (str): Short name of the evaluation task.
-            suite (list[str]): Evaluation suites to which the task belongs.
-            prompt_function (str): Name of the function used to create the [`Doc`] samples from each line of the evaluation dataset.
-            hf_repo (str): Path of the hub dataset repository containing the evaluation information.
-            hf_subset (str): Subset used for the current task, will be default if none is selected.
-            hf_avail_splits (list[str]): All the available splits in the evaluation dataset
-            evaluation_splits (list[str]): List of the splits actually used for this evaluation
-            few_shots_split (str): Name of the split from which to sample few-shot examples
-            few_shots_select (str): Method with which to sample few-shot examples
-            generation_size (int): Maximum allowed size of the generation
-            metric (list[str]): List of all the metrics for the current task.
-            stop_sequence (list[str]): Stop sequence which interrupts the generation for generative metrics.
-            original_num_docs (int): Number of documents in the task
-            effective_num_docs (int): Number of documents used in a specific evaluation
-            truncated_num_docs (bool): Whether less than the total number of documents were used
-            output_regex (str)
-            frozen (bool)
-
-        """
-
-        name: str
-        suite: list[str]
-        prompt_function: str
-        hf_repo: str
-        hf_subset: str
-        hf_avail_splits: list[str]
-        evaluation_splits: list[str]
-        few_shots_split: str
-        few_shots_select: str
-        generation_size: int
-        metric: list[str]
-        stop_sequence: list[str]
-        output_regex: str
-        frozen: bool
-        original_num_docs: int = -1
-        effective_num_docs: int = -1
-
-    tasks_configs: dict[str, TaskConfig] = {}
+    tasks_configs: dict[str, LightevalTaskConfig] = {}
 
     def log(self, task_dict: dict[str, LightevalTask]) -> None:
         self.tasks_configs = {name: task.cfg for name, task in task_dict.items()}
