@@ -237,6 +237,7 @@ class InferenceEndpointModelConfig:
     endpoint_type: str = "protected"
     should_reuse_existing: bool = False
     add_special_tokens: bool = True
+    dtype_args: dict[str] = dict()
 
 
 def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]) -> BaseModelConfig:  # noqa: C901
@@ -282,6 +283,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
                 instance_size=args.instance_size,
                 instance_type=args.instance_type,
                 should_reuse_existing=args.reuse_existing,
+                dtype_args=get_endpoint_dtype_args(args.model_dtype)
             )
         return InferenceModelConfig(model=args.endpoint_model_name)
 
@@ -325,3 +327,17 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
     if args.base_model is not None:
         raise ValueError("You can't specifify a base model if you are not using delta/adapter weights")
     return BaseModelConfig(**args_dict)
+
+def get_endpoint_dtype_args(model_dtype: str):
+    model_dtype = model_dtype.lower()
+
+    if model_dtype in ['awq', 'eetq', 'gptq']:
+        return dict(QUANTIZE=model_dtype)
+    if model_dtype == '8bit':
+        return dict(QUANTIZE='bitsandbytes')
+    if model_dtype == '4bit':
+        return dict(QUANTIZE='bitsandbytes-nf4')
+    if model_dtype in ['bfloat16', 'float16']:
+        return dict(DTYPE=model_dtype)
+    return None
+    
