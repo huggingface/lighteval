@@ -23,7 +23,7 @@
 import numpy as np
 from aenum import extend_enum
 
-import extended_tasks.ifeval.instructions_registry as instructions_registry
+import lighteval.tasks.extended.ifeval.instructions_registry as instructions_registry
 from lighteval.metrics import Metrics
 from lighteval.metrics.utils import (
     MetricCategory,

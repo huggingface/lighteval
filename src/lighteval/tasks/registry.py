@@ -32,7 +32,9 @@ from datasets import Dataset
 from datasets.load import dataset_module_factory
 
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
+from lighteval.tasks.extended import AVAILABLE_EXTENDED_TASKS_MODULES
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
+from lighteval.utils import can_load_extended_tasks
 
 
 # Helm, Bigbench, Harness are implementations following an evaluation suite setup
@@ -108,10 +110,7 @@ class Registry:
         )
 
     def get_task_dict(
-        self,
-        task_name_list: List[str],
-        custom_tasks: Optional[Union[str, ModuleType]] = None,
-        extended_tasks: str = None,
+        self, task_name_list: List[str], custom_tasks: Optional[Union[str, ModuleType]] = None
     ) -> Dict[str, LightevalTask]:
         """
         Get a dictionary of tasks based on the task name list.
@@ -134,11 +133,10 @@ class Registry:
         TASKS_TABLE = []
         if custom_tasks is not None:
             custom_tasks_module.append(create_custom_tasks_module(custom_tasks=custom_tasks))
-        if extended_tasks is not None:
-            hlog_warn(
-                "You are using extended_tasks. Make sure you installed their dependencies using `pip install -e .[extended_tasks]`."
-            )
-            custom_tasks_module.extend(load_extended_tasks_modules(extended_tasks_path=extended_tasks))
+        if can_load_extended_tasks():
+            for extended_task_module in AVAILABLE_EXTENDED_TASKS_MODULES:
+                custom_tasks_module.append(extended_task_module)
+
         for module in custom_tasks_module:
             TASKS_TABLE.extend(module.TASKS_TABLE)
 
@@ -153,16 +151,6 @@ class Registry:
             tasks_dict[task_name] = task_class(custom_tasks_module=custom_tasks_module)
 
         return tasks_dict
-
-
-def load_extended_tasks_modules(extended_tasks_path: str):
-    all_modules = []
-    for folder in os.listdir(extended_tasks_path):
-        cur_module = create_custom_tasks_module(os.path.join(extended_tasks_path, folder, "main.py"))
-        hlog(f"Successfully loaded extended task: {folder}.")
-        all_modules.append(cur_module)
-
-    return all_modules
 
 
 def create_custom_tasks_module(custom_tasks: Union[str, ModuleType]) -> ModuleType:
