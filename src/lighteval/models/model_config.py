@@ -237,7 +237,7 @@ class InferenceEndpointModelConfig:
     endpoint_type: str = "protected"
     should_reuse_existing: bool = False
     add_special_tokens: bool = True
-    dtype_args: dict[str] = dict()
+    dtype_args: dict[str] = None
 
 
 def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]) -> BaseModelConfig:  # noqa: C901
