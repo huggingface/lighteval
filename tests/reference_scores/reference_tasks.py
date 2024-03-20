@@ -61,3 +61,17 @@ HELM_SUBSET = [
     "helm|boolq|5|0",
     "helm|hellaswag|5|0",
 ]
+
+AGIEVAL_SUBSET = [
+    "lighteval|agieval:_average|0|0",
+    "lighteval|agieval:aqua-rat|0|0",
+    "lighteval|agieval:logiqa-en|0|0",
+    "lighteval|agieval:lsat-ar|0|0",
+    "lighteval|agieval:lsat-lr|0|0",
+    "lighteval|agieval:lsat-rc|0|0",
+    "lighteval|agieval:sat-en-without-passage|0|0",
+    "lighteval|agieval:sat-en|0|0",
+    "lighteval|agieval:sat-math|0|0",
+]
+
+ALL_SUBSETS = LEADERBOARD_SUBSET + STABLE_SUBSET + HELM_SUBSET + AGIEVAL_SUBSET
