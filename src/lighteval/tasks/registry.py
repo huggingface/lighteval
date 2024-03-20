@@ -177,7 +177,6 @@ def create_custom_tasks_module(custom_tasks: Union[str, ModuleType]) -> ModuleTy
     if isinstance(custom_tasks, ModuleType):
         return custom_tasks
     if isinstance(custom_tasks, (str, Path)) and os.path.exists(custom_tasks):
-        print(f"{custom_tasks=}")
         dataset_module = dataset_module_factory(str(custom_tasks))
         return importlib.import_module(dataset_module.module_path)
     if isinstance(custom_tasks, (str, Path)):

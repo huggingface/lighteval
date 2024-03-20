@@ -25,7 +25,6 @@
 
 import collections
 import copy
-from pprint import pprint
 from typing import Dict, Union
 
 from pytablewriter import LatexTableWriter, MarkdownTableWriter
@@ -129,11 +128,6 @@ def evaluate(  # noqa: C901
             del metrics["judgement"]
         else:
             judgement = None
-
-        # pprint(doc)
-        # pprint(metrics)
-        # pprint(model_responses)
-        # print("===========")
 
         evaluation_tracker.metrics_logger.log(task_example_id.task_name, metrics)
         evaluation_tracker.details_logger.log(task_example_id.task_name, task, doc, model_responses, metrics, (user_prompt, judgement))

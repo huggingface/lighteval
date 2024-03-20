@@ -446,21 +446,10 @@ class MetricsLogger:
 
     metrics_values: dict[str, dict[str, list[float]]] = collections.defaultdict(lambda: collections.defaultdict(list))
     metric_aggregated: dict[str, dict[str, float]] = collections.defaultdict(lambda: collections.defaultdict(dict))
-    llm_as_judge_prompts: dict[str, dict[str, list[str]]] = collections.defaultdict(lambda: collections.defaultdict(list))
 
     def log(self, task_name: str, metrics: dict) -> None:
         for metric_name, metric_value in metrics.items():
             self.metrics_values[task_name][metric_name].append(metric_value)
-
-    def log_llm_as_judge(self, task_name: str, user_prompt: str, judgement: str) -> None:
-        """Logs the user prompt and the judgement of the model as a judge.
-
-        Args:
-            user_prompt (str): User prompt used to judge the model response.
-            judgement (str): Judgement of the model response.
-
-        """
-        self.llm_as_judge_prompts[task_name].append({"judgement": judgement, "user_prompt": user_prompt})
 
     def aggregate(self, task_dict: dict[str, LightevalTask], bootstrap_iters: int = 1000):  # noqa: C901
         """

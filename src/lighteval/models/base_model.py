@@ -21,7 +21,6 @@
 # SOFTWARE.
 
 import os
-from pprint import pprint
 from typing import Optional, Tuple, Union
 
 import torch
@@ -394,7 +393,7 @@ class BaseModel(LightevalModel):
 
             cur_reponses = self._generate(
                 batch=prepared_batch,
-                max_tokens=max_generated_tokens,
+                max_new_tokens=max_generated_tokens,
                 stop_tokens=stop_tokens,
                 returns_logits=False,
             )
@@ -427,7 +426,7 @@ class BaseModel(LightevalModel):
 
                 cur_reponses = self._generate(
                     batch=prepared_batch,
-                    max_tokens=max_generated_tokens,
+                    max_new_tokens=max_generated_tokens,
                     stop_tokens=stop_tokens,
                     returns_logits=False,
                 )

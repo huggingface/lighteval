@@ -69,7 +69,7 @@ def mt_bench_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dic
     about what this function should do in the README.
     """
     judge_model = "gpt-3.5-turbo"
-    judge_file = "tasks_examples/custom_tasks_with_custom_metrics/mt_bench/judge_prompts.jsonl"
+    judge_file = "extended_tasks/mt_bench/judge_prompts.jsonl"
     judge_prompts = load_judge_prompts(judge_file)
     judges = make_judge_single(judge_model, judge_prompts)
 

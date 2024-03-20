@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 from datasets import load_dataset
+from transformers import PreTrainedTokenizer
 
 from lighteval.few_shot_manager import FewShotSampler
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
@@ -221,7 +222,7 @@ class LightevalTask:
                     hlog_warn(
                         f"Be careful you are using custom prompt function {cfg.prompt_function} and not the default one."
                     )
-                self.formatter = getattr(module, cfg.prompt_function)
+                self.formatter = formatter[0]
             else:
                 raise Exception(
                     f"You defined the prompt function {cfg.prompt_function} several times in the different custom modules you are loading."
@@ -518,7 +519,7 @@ class LightevalTask:
 
         return requests
 
-    def process_results(self, formatted_doc: Doc, results: list[ModelReturn], evaluation_tracker) -> dict[str, float]:
+    def process_results(self, formatted_doc: Doc, results: list[ModelReturn]) -> dict[str, float]:
         """
         Processes the results of the task, and stores them in the output dict.
 
@@ -563,7 +564,7 @@ class LightevalTask:
             outputs.update(cur_outputs)
         if self.has_metric_category[MetricCategory.GENERATIVE_MULTI_TURN]:
             results, cur_outputs = apply_generative_multi_turn_metric(
-                results=results, formatted_doc=formatted_doc, metrics=self.metrics, eval_tracker=evaluation_tracker
+                results=results, formatted_doc=formatted_doc, metrics=self.metrics
             )
             outputs.update(cur_outputs)
 
@@ -620,6 +621,47 @@ def download_dataset_worker(args):
         trust_remote_code=trust_dataset,
     )
     return dataset
+
+
+def create_multi_turn_contexts(
+    doc: Doc, use_chat_template: bool, system_prompt: Optional[str], tokenizer: PreTrainedTokenizer
+) -> list[str]:
+    """Creates N contexts (depending on the number of turn) for a tasks.
+    Multi turn tasks need use chat templating.
+
+    Args:
+        doc (Doc): Formated document.
+        use_chat_template (bool): wether or not to use chat template. Will fail if false.
+        system_prompt (Optional[str]): The system prompt to use
+        tokenizer (PreTrainedTokenizer): The tokenizer used for the chat template
+
+    Raises:
+        ValueError: If use_chat_template is set to false.
+
+    Returns:
+        list[str]: contexts for every turn
+    """
+    if not use_chat_template:
+        raise ValueError("You need to use the chat template to create multi turn contexts")
+
+    role_content_list = []
+    if system_prompt is not None:
+        role_content_list.append({"role": "system", "content": system_prompt})
+
+    for i in doc.specific["multi_turn_queries"]:
+        role_content_list.append({"role": "user", "content": i})
+        role_content_list.append({"role": "assistant", "content": "{model_response}"})
+    role_content_list.pop(-1)
+
+    contexts = []
+    offset = 2 if system_prompt is not None else 1
+    for i in range(0, len(role_content_list), offset + 1):
+        c = tokenizer.apply_chat_template(
+            role_content_list[: i + offset], add_generation_prompt=True, tokenize=False, add_special_tokens=False
+        )
+        contexts.append(c)
+
+    return contexts, 0
 
 
 def create_requests_from_tasks(  # noqa: C901
@@ -705,34 +747,14 @@ def create_requests_from_tasks(  # noqa: C901
                             use_chat_template=use_chat_template,
                             system_prompt=system_prompt,
                         )
-                        doc.num_effective_few_shots = num_effective_few_shots
-                        doc.num_asked_few_shots = num_fewshot
                     else:
-                        if use_chat_template:
-                            k = []
-                            if system_prompt is not None:
-                                k.append({"role": "system", "content": system_prompt})
+                        doc.ctx, num_effective_few_shots = create_multi_turn_contexts(
+                            doc, use_chat_template, system_prompt, lm.tokenizer
+                        )
+                        doc.specific["multi_turn_queries_context"] = doc.ctx
 
-                            for i in doc.specific["multi_turn_queries"]:
-                                k.append(
-                                    {"role": "user", "content": i}
-                                )
-                                k.append({"role": "assistant", "content": "{model_response}"})
-                            k.pop(-1)
-
-                            from pprint import pprint
-                            ctx = []
-
-                            offset = 2 if system_prompt is not None else 1
-
-                            for i in range(0, len(k), offset+1):
-                                c = lm.tokenizer.apply_chat_template(k[:i+offset], add_generation_prompt=True, tokenize=False, add_special_tokens=False)
-                                ctx.append(c)
-
-                        doc.specific["multi_turn_queries_context"] = ctx
-                        doc.num_effective_few_shots = 0
-                        doc.num_asked_few_shots = 0
-                    doc.ctx = ctx
+                    doc.num_effective_few_shots = num_effective_few_shots
+                    doc.num_asked_few_shots = num_fewshot
 
                     # Constructing the requests
                     docs[TaskExampleId(cur_task_name, doc_id_seed)] = doc
