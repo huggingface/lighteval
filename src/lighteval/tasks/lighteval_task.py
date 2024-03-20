@@ -748,13 +748,14 @@ def create_requests_from_tasks(  # noqa: C901
                             system_prompt=system_prompt,
                         )
                     else:
-                        doc.ctx, num_effective_few_shots = create_multi_turn_contexts(
+                        ctx, num_effective_few_shots = create_multi_turn_contexts(
                             doc, use_chat_template, system_prompt, lm.tokenizer
                         )
                         doc.specific["multi_turn_queries_context"] = doc.ctx
 
                     doc.num_effective_few_shots = num_effective_few_shots
                     doc.num_asked_few_shots = num_fewshot
+                    doc.ctx = ctx
 
                     # Constructing the requests
                     docs[TaskExampleId(cur_task_name, doc_id_seed)] = doc
