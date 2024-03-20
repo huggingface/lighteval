@@ -5,8 +5,8 @@ import os
 import re
 import sys
 import warnings
-from enum import IntEnum, auto
 from dataclasses import field
+from enum import IntEnum, auto
 from io import BytesIO
 from typing import Dict, List, Optional, Tuple, Union
 

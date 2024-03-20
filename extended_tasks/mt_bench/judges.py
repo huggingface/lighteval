@@ -8,7 +8,7 @@ import time
 
 import openai
 
-from tasks_examples.custom_tasks_with_custom_metrics.mt_bench.model_adapter import conv_templates
+from extended_tasks.mt_bench.model_adapter import conv_templates
 
 
 openai.api_key = os.environ["OPENAI_API_KEY"]
