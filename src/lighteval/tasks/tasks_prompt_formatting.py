@@ -52,7 +52,7 @@ def agieval(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=line["query"],
-        choices=line["choices"],
+        choices=[f" {c}" for c in line["choices"]],
         gold_index=line["gold"],
     )
 
