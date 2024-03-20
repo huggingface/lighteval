@@ -489,7 +489,6 @@ class LightevalTask:
                     context=context,
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
-                    contexts_multi_turn=formatted_doc.specific.get("multi_turn_queries_context", []),
                 )
             ]
 
@@ -668,51 +667,48 @@ def create_requests_from_tasks(  # noqa: C901
                     cur_task_name = f"{task_name}|{num_fewshot}"
                     doc = task_docs[doc_id]
                     is_multi_turn = len(doc.specific.get("multi_turn_queries", [])) > 0
-                    ctx, num_effective_few_shots = task.fewshot_sampler.fewshot_context(
-                        task=task,
-                        doc=doc,
-                        num_fewshot=num_fewshot,
-                        seed=seed,
-                        truncate_few_shots=truncate_few_shots,
-                        max_model_length=lm.max_length,
-                        sampler=rnd,
-                        tokenizer=lm.tokenizer,
-                        use_chat_template=use_chat_template,
-                        system_prompt=system_prompt,
-                    )
-                    if is_multi_turn:
+
+                    if not is_multi_turn:
+                        ctx, num_effective_few_shots = task.fewshot_sampler.fewshot_context(
+                            task=task,
+                            doc=doc,
+                            num_fewshot=num_fewshot,
+                            seed=seed,
+                            truncate_few_shots=truncate_few_shots,
+                            max_model_length=lm.max_length,
+                            sampler=rnd,
+                            tokenizer=lm.tokenizer,
+                            use_chat_template=use_chat_template,
+                            system_prompt=system_prompt,
+                        )
+                        doc.num_effective_few_shots = num_effective_few_shots
+                        doc.num_asked_few_shots = num_fewshot
+                    else:
                         if use_chat_template:
-                            multiturn_context = lm.tokenizer.apply_chat_template(
-                                [
-                                    {"role": "assistant", "content": "{model_response}"},
-                                    {"role": "user", "content": doc.specific["multi_turn_queries"][0]},
-                                ],
-                                add_generation_prompt=True,
-                                tokenize=False,
-                            )
-                            generation_prompt = lm.tokenizer.apply_chat_template(
-                                [
-                                    {"role": "assistant", "content": ""},
-                                ],
-                                add_generation_prompt=False,
-                                tokenize=False,
-                            )
-                            for i in range(len(generation_prompt)):
-                                if generation_prompt[i] != multiturn_context[i]:
-                                    multiturn_context = multiturn_context[i:]
-                                    break
-                            multiturn_context = f"{ctx}{multiturn_context}"
-                        else:
-                            multiturn_context = f"{ctx}{{model_response}}\n"
-                        doc.specific["multi_turn_queries_context"] = [multiturn_context]
-                    doc.num_effective_few_shots = num_effective_few_shots
-                    doc.num_asked_few_shots = num_fewshot
+                            k = []
+                            if system_prompt is not None:
+                                k.append({"role": "system", "content": system_prompt})
+
+                            for i in doc.specific["multi_turn_queries"]:
+                                k.append(
+                                    {"role": "user", "content": i}
+                                )
+                                k.append({"role": "assistant", "content": "{model_response}"})
+                            k.pop(-1)
+
+                            from pprint import pprint
+                            ctx = []
+
+                            offset = 2 if system_prompt is not None else 1
+
+                            for i in range(0, len(k), offset+1):
+                                c = lm.tokenizer.apply_chat_template(k[:i+offset], add_generation_prompt=True, tokenize=False, add_special_tokens=False)
+                                ctx.append(c)
+
+                        doc.specific["multi_turn_queries_context"] = ctx
+                        doc.num_effective_few_shots = 0
+                        doc.num_asked_few_shots = 0
                     doc.ctx = ctx
-                    if use_chat_template and doc.choices is not None:
-                        doc.choices = [
-                            lm.tokenizer.apply_chat_template([{"role": "assistant", "content": choice}])
-                            for choice in doc.choices
-                        ]
 
                     # Constructing the requests
                     docs[TaskExampleId(cur_task_name, doc_id_seed)] = doc

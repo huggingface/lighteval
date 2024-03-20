@@ -371,7 +371,7 @@ class BaseModel(LightevalModel):
             # the case! Because of that we only use batch size of 1
             stop_tokens = request.stop_sequence
             max_generated_tokens = request.generation_size
-            context = request.context
+            context = request.context[0]
             max_context_size_allowed = self.max_length - max_generated_tokens
 
             tokenized = self.tokenizer(
@@ -400,7 +400,7 @@ class BaseModel(LightevalModel):
 
             model_answers = [cur_reponses[0].result]
 
-            for i, multi_turn_context in enumerate(request.contexts_multi_turn):
+            for i, multi_turn_context in enumerate(request.context[1:]):
                 multi_turn_context = multi_turn_context.format(model_response=model_answers[0])
 
                 # print("multi_turn_context ====== ")
@@ -568,6 +568,7 @@ class BaseModel(LightevalModel):
             pad_token_id=self.tokenizer.pad_token_id if self.tokenizer.pad_token_id else self.tokenizer.eos_token_id,
             return_dict_in_generate=True,
             output_scores=True,
+            eos_token_id=self.tokenizer.eos_token_id
         )
         if returns_logits:
             logits = self.model.compute_transition_scores(outputs.sequences, outputs.scores, normalize_logits=True)

@@ -132,7 +132,7 @@ class GreedyUntilMultiTurnRequest(Request):
     stop_sequence: str
     generation_size: int
     request_type = RequestType.GREEDY_UNTIL_MULTI_TURN
-    contexts_multi_turn: list[str]
+
 
 @dataclass
 class GreedyUntilWithLogitsRequest(Request):

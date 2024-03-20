@@ -5,8 +5,6 @@ import json
 import os
 import re
 import time
-from pprint import pprint
-from random import randrange
 
 import openai
 
@@ -81,7 +79,6 @@ def chat_completion_openai(model, conv, temperature, max_tokens, api_dict=None):
         openai.api_base = api_dict["api_base"]
         openai.api_key = api_dict["api_key"]
     output = API_ERROR_OUTPUT
-    # return "[[1]]"
     for _ in range(API_MAX_RETRY):
         try:
             messages = conv.to_openai_api_messages()
@@ -124,13 +121,6 @@ def run_judge_single(question, answer, judge, ref_answer, multi_turn=False):
             kwargs["ref_answer_2"] = ref_answer[1]
 
     if multi_turn:
-        # pprint(question[0])
-        # pprint(question[1])
-        # pprint(answer[0])
-        # pprint(answer[1])
-        # pprint(kwargs)
-        # pprint(judge.prompt_template["prompt_template"])
-        # print("========")
         user_prompt = judge.prompt_template["prompt_template"].format(
             question_1=question[0],
             question_2=question[1],
@@ -139,11 +129,6 @@ def run_judge_single(question, answer, judge, ref_answer, multi_turn=False):
             **kwargs,
         )
     else:
-        # pprint(question[0])
-        # pprint(answer[0])
-        # pprint(kwargs)
-        # pprint(judge.prompt_template["prompt_template"])
-        # pprint("========")
         user_prompt = judge.prompt_template["prompt_template"].format(
             question=question[0],
             answer=answer[0],

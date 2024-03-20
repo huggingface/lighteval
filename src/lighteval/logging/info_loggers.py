@@ -372,7 +372,7 @@ class DetailsLogger:
 
         hash = self.Hash()
         hash.example = xxhash.xxh64(doc.query).hexdigest()
-        hash.full_prompt = xxhash.xxh64(doc.ctx).hexdigest()
+        hash.full_prompt = xxhash.xxh64(str(doc.ctx)).hexdigest()
         hash.input_tokens = xxhash.xxh64(str([o.input_tokens for o in outputs])).hexdigest()
         hash.cont_tokens = xxhash.xxh64(str([o.generated_tokens for o in outputs])).hexdigest()
         self.hashes[task_name].append(hash)

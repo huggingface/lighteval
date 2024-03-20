@@ -32,7 +32,7 @@ task = LightevalTaskConfig(
     name="mt_bench",
     prompt_function="prompt_fn",  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
     suite=["custom"],
-    hf_repo="HuggingFaceH4/mt_bench_prompts",
+    hf_repo="SaylorTwift/mt-bench",
     hf_subset="default",
     hf_avail_splits=["train"],
     evaluation_splits=["train"],
@@ -53,11 +53,11 @@ def prompt_fn(line, task_name: str = None):
     """
     return Doc(
         task_name=task_name,
-        query=f"{line['prompt'][0]}",
+        query=f"{line['turns'][0]}",
         choices=None,
         instruction=None,
         gold_index=[],
-        specific={"reference": line["reference"], "category": line["category"], "multi_turn_queries": line["prompt"][1:]},
+        specific={"reference": line["reference"], "category": line["category"], "multi_turn_queries": line["turns"], "id": line["question_id"]},
     )
 
 
@@ -73,7 +73,7 @@ def mt_bench_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dic
     judge_prompts = load_judge_prompts(judge_file)
     judges = make_judge_single(judge_model, judge_prompts)
 
-    question = [formatted_doc.query] + formatted_doc.specific["multi_turn_queries"]
+    question = formatted_doc.specific["multi_turn_queries"]
     ref_answer = formatted_doc.specific["reference"]
     category = formatted_doc.specific["category"]
 
