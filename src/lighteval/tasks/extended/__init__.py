@@ -28,3 +28,6 @@ if can_load_extended_tasks():
     import lighteval.tasks.extended.tiny_benchmarks.main as tiny_benchmarks
 
     AVAILABLE_EXTENDED_TASKS_MODULES = [ifeval, tiny_benchmarks]
+
+else:
+    AVAILABLE_EXTENDED_TASKS_MODULES = []
