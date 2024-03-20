@@ -22,7 +22,7 @@
 
 from argparse import Namespace
 from dataclasses import dataclass
-from typing import Optional, Union, Dict
+from typing import Dict, Optional, Union
 
 import torch
 from transformers import AutoConfig, BitsAndBytesConfig, GPTQConfig, PretrainedConfig
@@ -237,7 +237,7 @@ class InferenceEndpointModelConfig:
     endpoint_type: str = "protected"
     should_reuse_existing: bool = False
     add_special_tokens: bool = True
-    dtype_args: Dict[str] = None
+    dtype_args: Dict[str, str] = None
 
 
 def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]) -> BaseModelConfig:  # noqa: C901
