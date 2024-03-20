@@ -239,13 +239,6 @@ Summary: create a **line summary** of your evaluation, in `src/lighteval/tasks/t
 - `frozen` (bool), for now is set to False, but we will steadily pass all stable tasks to True.
 - `trust_dataset` (bool), set to True if you trust the dataset.
 
-Make sure you can launch your model with your new task using `--tasks lighteval|yournewtask|2|0`.
-
-#### Community evaluations
-Copy the `community_tasks/_template.yml` to `community_tasks/yourevalname.py` and edit it to add your custom tasks (the parameters you can use are explained above). It contains an interesting mechanism if the dataset you are adding contains a lot of subsets.
-
-Make sure you can launch your model with your new task using `--tasks community|yournewtask|2|0 --custom_tasks community_tasks/yourevalname.py`.
-
 ### Adding a new metric
 First check if you can use one of the parametrized functions in `src.lighteval.metrics.metrics_corpus` or `src.lighteval.metrics.metrics_sample`.
 
