@@ -67,16 +67,17 @@ class InferenceEndpointModel(LightevalModel):
                 self.endpoint = get_inference_endpoint(name=config.name, token=env_config.token)
             else:
                 custom_image = {
-                        "health_route": "/health",
-                        "env": {
-                            # Documentaiton: https://huggingface.co/docs/text-generation-inference/en/basic_tutorials/launcher
-                            "MAX_BATCH_PREFILL_TOKENS": "2048",
-                            "MAX_INPUT_LENGTH": "2047",
-                            "MAX_TOTAL_TOKENS": "2048",
-                            "MODEL_ID": "/repository",
-                        },
-                        "url": "ghcr.io/huggingface/text-generation-inference:1.1.0",
+                    "health_route": "/health",
+                    "env": {
+                        # Documentation: https://huggingface.co/docs/text-generation-inference/en/basic_tutorials/launcher
+                        "MAX_BATCH_PREFILL_TOKENS": "2048",
+                        "MAX_INPUT_LENGTH": "2047",
+                        "MAX_TOTAL_TOKENS": "2048",
+                        "MODEL_ID": "/repository",
+                    },
+                    "url": "ghcr.io/huggingface/text-generation-inference:1.1.0",
                 }
+
                 if config.model_dtype is not None:
                     custom_image["env"]["DTYPE"] = str(config.model_dtype)
 
