@@ -48,6 +48,15 @@ def anli(line, task_name: str = None):
     )
 
 
+def agieval(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=line["query"],
+        choices=line["choices"],
+        gold_index=line["gold"],
+    )
+
+
 def apps(line, task_name: str = None):
     answer_type = "\nUse Call-Based format\n" if line["starter_code"] != "" else "\nUse Standard Input format\n"
     return Doc(
