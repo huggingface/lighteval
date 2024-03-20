@@ -34,7 +34,7 @@ from datasets.load import dataset_module_factory
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.tasks.extended import AVAILABLE_EXTENDED_TASKS_MODULES
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
-from lighteval.utils import can_load_extended_tasks
+from lighteval.utils import CANNOT_USE_EXTENDED_TASKS_MSG, can_load_extended_tasks
 
 
 # Helm, Bigbench, Harness are implementations following an evaluation suite setup
@@ -136,6 +136,8 @@ class Registry:
         if can_load_extended_tasks():
             for extended_task_module in AVAILABLE_EXTENDED_TASKS_MODULES:
                 custom_tasks_module.append(extended_task_module)
+        else:
+            hlog_warn(CANNOT_USE_EXTENDED_TASKS_MSG)
 
         for module in custom_tasks_module:
             TASKS_TABLE.extend(module.TASKS_TABLE)

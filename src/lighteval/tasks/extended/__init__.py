@@ -20,14 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from lighteval.logging.info_loggers import hlog_warn
-from lighteval.utils import CANNOT_USE_EXTENDED_TASKS_MSG, can_load_extended_tasks
+from lighteval.utils import can_load_extended_tasks
 
 
-if not can_load_extended_tasks():
-    hlog_warn(CANNOT_USE_EXTENDED_TASKS_MSG)
-
-else:
+if can_load_extended_tasks():
     import lighteval.tasks.extended.ifeval.main as ifeval
     import lighteval.tasks.extended.tiny_benchmarks.main as tiny_benchmarks
 
