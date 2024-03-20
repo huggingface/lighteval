@@ -50,8 +50,6 @@ ifeval = LightevalTaskConfig(
     stop_sequence=[],  # no stop sequence, will use eot token
 )
 
-def tmp():
-    pass
 
 # very specific task where there are no precise outputs but instead we test if the format obeys rules
 def ifeval_prompt(line, task_name: str = None):
