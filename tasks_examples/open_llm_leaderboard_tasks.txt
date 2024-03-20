@@ -1,0 +1,68 @@
+# ARC
+leaderboard|arc:challenge|25|0
+# HellaSwag
+leaderboard|hellaswag|10|0
+# TruthfulQA
+leaderboard|truthfulqa:mc|0|0
+# MMLU
+leaderboard|mmlu:abstract_algebra|5|0
+leaderboard|mmlu:anatomy|5|0
+leaderboard|mmlu:astronomy|5|0
+leaderboard|mmlu:business_ethics|5|0
+leaderboard|mmlu:clinical_knowledge|5|0
+leaderboard|mmlu:college_biology|5|0
+leaderboard|mmlu:college_chemistry|5|0
+leaderboard|mmlu:college_computer_science|5|0
+leaderboard|mmlu:college_mathematics|5|0
+leaderboard|mmlu:college_medicine|5|0
+leaderboard|mmlu:college_physics|5|0
+leaderboard|mmlu:computer_security|5|0
+leaderboard|mmlu:conceptual_physics|5|0
+leaderboard|mmlu:econometrics|5|0
+leaderboard|mmlu:electrical_engineering|5|0
+leaderboard|mmlu:elementary_mathematics|5|0
+leaderboard|mmlu:formal_logic|5|0
+leaderboard|mmlu:global_facts|5|0
+leaderboard|mmlu:high_school_biology|5|0
+leaderboard|mmlu:high_school_chemistry|5|0
+leaderboard|mmlu:high_school_computer_science|5|0
+leaderboard|mmlu:high_school_european_history|5|0
+leaderboard|mmlu:high_school_geography|5|0
+leaderboard|mmlu:high_school_government_and_politics|5|0
+leaderboard|mmlu:high_school_macroeconomics|5|0
+leaderboard|mmlu:high_school_mathematics|5|0
+leaderboard|mmlu:high_school_microeconomics|5|0
+leaderboard|mmlu:high_school_physics|5|0
+leaderboard|mmlu:high_school_psychology|5|0
+leaderboard|mmlu:high_school_statistics|5|0
+leaderboard|mmlu:high_school_us_history|5|0
+leaderboard|mmlu:high_school_world_history|5|0
+leaderboard|mmlu:human_aging|5|0
+leaderboard|mmlu:human_sexuality|5|0
+leaderboard|mmlu:international_law|5|0
+leaderboard|mmlu:jurisprudence|5|0
+leaderboard|mmlu:logical_fallacies|5|0
+leaderboard|mmlu:machine_learning|5|0
+leaderboard|mmlu:management|5|0
+leaderboard|mmlu:marketing|5|0
+leaderboard|mmlu:medical_genetics|5|0
+leaderboard|mmlu:miscellaneous|5|0
+leaderboard|mmlu:moral_disputes|5|0
+leaderboard|mmlu:moral_scenarios|5|0
+leaderboard|mmlu:nutrition|5|0
+leaderboard|mmlu:philosophy|5|0
+leaderboard|mmlu:prehistory|5|0
+leaderboard|mmlu:professional_accounting|5|0
+leaderboard|mmlu:professional_law|5|0
+leaderboard|mmlu:professional_medicine|5|0
+leaderboard|mmlu:professional_psychology|5|0
+leaderboard|mmlu:public_relations|5|0
+leaderboard|mmlu:security_studies|5|0
+leaderboard|mmlu:sociology|5|0
+leaderboard|mmlu:us_foreign_policy|5|0
+leaderboard|mmlu:virology|5|0
+leaderboard|mmlu:world_religions|5|0
+# WinoGrande
+leaderboard|winogrande|5|0
+# GSM8K
+leaderboard|gsm8k|5|0
