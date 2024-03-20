@@ -109,13 +109,22 @@ class InferenceEndpointModel(LightevalModel):
             self.async_client = AsyncInferenceClient(model=config.model, token=env_config.token)
             self.client = InferenceClient(model=config.model, token=env_config.token)
 
-        self.use_async = False  # for debug - async use is faster
+        self.use_async = True  # set to False for debug - async use is faster
 
         self._tokenizer = AutoTokenizer.from_pretrained(self.name)
+        self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
 
     @property
     def tokenizer(self):
         return self._tokenizer
+
+    @property
+    def add_special_tokens(self):
+        return self._add_special_tokens
+
+    @property
+    def disable_tqdm(self) -> bool:
+        False  # no accelerator = this is the main process
 
     def cleanup(self):
         if self.endpoint is not None:
@@ -250,7 +259,8 @@ class InferenceEndpointModel(LightevalModel):
         override_bs: Optional[int] = None,
     ) -> List[GenerateReturn]:
         for request in requests:
-            request.stop_sequence = request.stop_sequence + [self.tokenizer.eos_token]
+            request.tokenized_context = self.tok_encode(request.context)
+            request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
 
         dataset = GenerativeTaskDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
         batch_size = override_bs if override_bs is not None else BATCH_SIZE
@@ -268,10 +278,11 @@ class InferenceEndpointModel(LightevalModel):
             for batch in tqdm(
                 dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
             ):
+                # the `returns_logits` flag is only used to filter the results, we always request the full details.
                 if self.use_async:
-                    responses = asyncio.run(self.__async_process_batch_generate(batch, returns_logits))
+                    responses = asyncio.run(self.__async_process_batch_generate(batch))
                 else:
-                    responses = self.__process_batch_generate(batch, returns_logits)
+                    responses = self.__process_batch_generate(batch)
                 for response in responses:
                     results.append(
                         GenerateReturn(
@@ -282,7 +293,7 @@ class InferenceEndpointModel(LightevalModel):
                         )
                     )
 
-        return results
+        return dataset.get_original_order(results)
 
     def loglikelihood(
         self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
@@ -321,7 +332,7 @@ class InferenceEndpointModel(LightevalModel):
                         )
                     )
 
-        return results
+        return dataset.get_original_order(results)
 
     def loglikelihood_rolling(
         self, requests: list[LoglikelihoodRollingRequest], override_bs=None
@@ -361,7 +372,7 @@ class InferenceEndpointModel(LightevalModel):
                         )
                     )
 
-        return results
+        return dataset.get_original_order(results)
 
     def loglikelihood_single_token(
         self,

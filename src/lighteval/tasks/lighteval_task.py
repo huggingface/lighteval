@@ -27,7 +27,7 @@ from multiprocessing import Pool
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
-from datasets import DownloadMode, load_dataset
+from datasets import load_dataset
 
 from lighteval.few_shot_manager import FewShotSampler
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
@@ -110,6 +110,8 @@ class LightevalTaskConfig:
 
     trust_dataset: bool = None
 
+    must_remove_duplicate_docs: bool = None
+
     def as_dict(self):
         return {
             "name": self.name,
@@ -145,7 +147,9 @@ class LightevalTaskConfig:
 
 
 class LightevalTask:
-    def __init__(self, name: str, cfg: LightevalTaskConfig, cache_dir: Optional[str] = None, custom_tasks_module=None):
+    def __init__(  # noqa: C901
+        self, name: str, cfg: LightevalTaskConfig, cache_dir: Optional[str] = None, custom_tasks_module: list = None
+    ):
         """
         Initialize a LightEval task.
 
@@ -202,19 +206,32 @@ class LightevalTask:
         # to use once prompt formatting is managed as a module
         if custom_tasks_module is None:
             self.formatter = getattr(tasks_prompt_formatting, cfg.prompt_function)
-        elif hasattr(custom_tasks_module, cfg.prompt_function):
-            # If we have a prompt in both the custom_tasks_module and our tasks_prompt_formatting
-            # We take the prompt from the custom_tasks_module
-            if hasattr(tasks_prompt_formatting, cfg.prompt_function):
-                hlog_warn(
-                    f"Be careful you are using custom prompt function {cfg.prompt_function} and not the default one."
-                )
-            self.formatter = getattr(custom_tasks_module, cfg.prompt_function)
         else:
-            self.formatter = getattr(tasks_prompt_formatting, cfg.prompt_function)
+            formatter = []
+            for module in custom_tasks_module:
+                if hasattr(module, cfg.prompt_function):
+                    formatter.append(getattr(module, cfg.prompt_function))
+
+            if len(formatter) == 0:  # Default version
+                self.formatter = getattr(tasks_prompt_formatting, cfg.prompt_function)
+            elif len(formatter) == 1:
+                # If we have a prompt in both the module and our tasks_prompt_formatting
+                # We take the prompt from the module
+                if hasattr(tasks_prompt_formatting, cfg.prompt_function):
+                    hlog_warn(
+                        f"Be careful you are using custom prompt function {cfg.prompt_function} and not the default one."
+                    )
+                self.formatter = getattr(module, cfg.prompt_function)
+            else:
+                raise Exception(
+                    f"You defined the prompt function {cfg.prompt_function} several times in the different custom modules you are loading."
+                )
         self.generation_size = cfg.generation_size
         self.stop_sequence = cfg.stop_sequence
         self.output_regex = cfg.output_regex
+        self.must_remove_duplicate_docs = cfg.must_remove_duplicate_docs
+        if self.must_remove_duplicate_docs is None:
+            self.must_remove_duplicate_docs = False
 
         # Save options
         self.save_queries: bool = False
@@ -306,6 +323,7 @@ class LightevalTask:
         """
         if self.dataset is None:
             self.dataset = download_dataset_worker((self.dataset_path, self.dataset_config_name, self.trust_dataset))
+        splits = as_list(splits)
 
         docs = []
         for split in splits:
@@ -319,6 +337,14 @@ class LightevalTask:
                     continue
                 docs.extend(as_list(cur_docs))
         return docs
+
+    def remove_duplicate_docs(self, docs: list[Doc]) -> list[Doc]:
+        seen_examples, res = set(), []
+        for doc in docs:
+            if str(doc) not in seen_examples:
+                res.append(doc)
+                seen_examples.add(str(doc))
+        return res
 
     def fewshot_docs(self) -> list[Doc]:
         """
@@ -348,6 +374,8 @@ class LightevalTask:
         """
         if self._docs is None:
             self._docs = self._get_docs_from_split(self.evaluation_split)
+            if self.must_remove_duplicate_docs:
+                self._docs = self.remove_duplicate_docs(self._docs)
         return self._docs
 
     def doc_to_target(self, formatted_doc: Doc, few_shot: bool = False) -> str:
@@ -362,12 +390,8 @@ class LightevalTask:
         Returns:
             str: Target of the document, which is the correct answer for a document.
         """
-        if few_shot:
-            if formatted_doc.target_for_fewshot_sorting is not None:
-                return formatted_doc.target_for_fewshot_sorting
-
         # likely we mostly need one example not all
-        return formatted_doc.get_golds()[0]
+        return as_list(formatted_doc.get_golds(few_shot=few_shot))[0]
 
     # Requests
     def get_request_type(self) -> list[RequestType]:
@@ -550,7 +574,7 @@ class LightevalTask:
         Return a dict with metric name and its aggregation function for all
         metrics
         """
-        return Metrics.corpus_level_fns()
+        return Metrics.corpus_level_fns(self.metrics)
 
     @staticmethod
     def load_datasets(tasks: list["LightevalTask"], dataset_loading_processes: int = 1) -> None:
@@ -592,7 +616,7 @@ def download_dataset_worker(args):
         name=dataset_config_name,
         data_dir=None,
         cache_dir=None,
-        download_mode=DownloadMode.FORCE_REDOWNLOAD,  # None
+        download_mode=None,
         trust_remote_code=trust_dataset,
     )
     return dataset

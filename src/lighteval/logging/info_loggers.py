@@ -477,21 +477,29 @@ class MetricsLogger:
             # fix the fact that we need the task_dict
             task = task_dict[cur_task_name]
 
+            skip_metric = []
             for metric_name, metric_values in metrics.items():
+                if metric_name in skip_metric:
+                    # The metric is in a subset which has already been computed and saved
+                    continue
+
                 try:
                     metric_result = task.aggregation()[metric_name](metric_values)
                 except OverflowError:
                     hlog_warn(f"{task_name}, {metric_name} got an OVERFLOW ERROR when aggregating.")
                     metric_result = float("nan")
 
-                if isinstance(metric_result, dict):  # in which cases do we get a dict here?
+                if isinstance(metric_result, dict):  # For some corpus level grouping metrics
                     self.metric_aggregated[task_name].update(metric_result)
+                    skip_metric.extend(list(metric_result.keys()))  # no need to recompute them later
                 else:
                     self.metric_aggregated[task_name][metric_name] = metric_result
 
-                aggregation = task.aggregation()[metric_name]
-
-                stderr = get_stderr_function(aggregation=aggregation, number_experiments=1000)
+                if isinstance(metric_result, dict):
+                    stderr = None  # We skip stderr for some corpus metrics that return dicts
+                else:
+                    aggregation = task.aggregation()[metric_name]
+                    stderr = get_stderr_function(aggregation=aggregation, number_experiments=1000)
                 if stderr is not None and len(metric_values) > 1:
                     try:
                         self.metric_aggregated[task_name][f"{metric_name}_stderr"] = stderr(metric_values)
@@ -501,12 +509,21 @@ class MetricsLogger:
                         hlog_warn(f"{task_name}, {metric_name} got an OVERFLOW ERROR when computing stderr.")
 
         # We group subtasks which belong to the same parent task, like MMLU, to compute an average on them
+        # and compute an average of all metrics
         grouped_tasks = collections.defaultdict(list)
-        for k in self.metric_aggregated.keys():
+        suite_average = {}
+        suite_nb = {}
+
+        # Build aggregation
+        for k, metrics in self.metric_aggregated.items():
             if "|" in k:
                 suite, task, fewshot = k.split("|")
                 grouped_tasks[f"{suite}|{task.split(':')[0]}:_average|{fewshot}"].append(k)
+            for metric, value in metrics.items():
+                suite_average[metric] = suite_average.get(metric, 0) + value
+                suite_nb[metric] = suite_nb.get(metric, 0) + 1
 
+        # Compute average for sub groups
         for average_task, list_of_subtasks in grouped_tasks.items():
             if len(list_of_subtasks) > 1:
                 metrics = list(self.metric_aggregated[list_of_subtasks[0]].keys())
@@ -514,6 +531,12 @@ class MetricsLogger:
                     metric: sum([self.metric_aggregated[k][metric] for k in list_of_subtasks]) / len(list_of_subtasks)
                     for metric in metrics
                 }
+
+        # Compute average for all
+        for metric, value in suite_average.items():
+            suite_average[metric] = value / suite_nb[metric]
+
+        self.metric_aggregated["all"] = suite_average
 
 
 class VersionsLogger:

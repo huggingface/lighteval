@@ -163,26 +163,33 @@ python run_evals_accelerate.py \
     --output_dir output_dir
 ```
 
-### Evaluate a model on community submitted/custom tasks.
+### Evaluate a model on extended, community, or custom tasks.
 
-You can use `lighteval` to evaluate models on custom or community submitted tasks. Select your task of interest (which might have its own requirements to install first), and run:
+Independently of the default tasks provided in `lighteval` that you will find in the `tasks_table.jsonl` file, you can use `lighteval` to evaluate models on tasks that require special processing (or have been added by the community). These tasks have their own evaluation suites and are defined as follows:
+
+* `extended`: tasks which have complex pre- or post-processing and are added by the `lighteval` maintainers. See the [`extended_tasks`](./extended_tasks) folder for examples.
+* `community`: tasks which have been added by the community. See the [`community_tasks`](./community_tasks) folder for examples.
+* `custom`: tasks which are defined locally and not present in the core library. Use this suite if you want to experiment with designing a special metric or task.
+
+For example, to run an extended task you can run:
 
 ```shell
 python run_evals_accelerate.py \
     --model_args="pretrained=<path to model on the hub>"\
     --tasks <task parameters> \
-    --custom_tasks <path to the main file containing the custom task>
+    --extended_tasks "extended_tasks" \
     --output_dir output_dir
 ```
 
-For example, to launch `lighteval` on `ifeval` for `HuggingFaceH4/zephyr-7b-beta`, do
+For example, to launch `lighteval` on `ifeval` for `HuggingFaceH4/zephyr-7b-beta`, run:
+
 ```shell
 python run_evals_accelerate.py \
     --model_args "pretrained=HuggingFaceH4/zephyr-7b-beta" \
     --use_chat_template \ # optional, if you want to run the evaluation with the chat template
-    --tasks "custom|ifeval|0|0" \
-    --custom_tasks "tasks_examples/custom_tasks_with_custom_metrics/ifeval/ifeval.py" \
-    --output_dir output_dir
+    --tasks "extended|ifeval|0|0" \
+    --extended_tasks "extended_tasks" \
+    --output_dir "./evals"
 ```
 
 
@@ -210,9 +217,13 @@ However, we are very grateful to the Harness and HELM teams for their continued 
 If your new task or metric has requirements, add a specific `requirements.txt` file with your evaluation.
 
 ### Adding a new task
-To add a new task, first either open an issue, to determine whether it will be integrated in the core evaluations of lighteval, or in the community tasks, and **add its dataset** on the hub.
-Note: Core evaluations are evals we will add to our test suite to ensure non regression through time, and which already see a high usage in the community.
-A popular community evaluation can move to become a core evaluation through time.
+To add a new task, first either open an issue, to determine whether it will be integrated in the core evaluations of lighteval, in the extended tasks, or in the community tasks, and **add its dataset** on the hub.
+
+- Core evaluations are evaluation which only require standard logic in their metrics and processing, and that we will add to our test suite to ensure non regression through time. They already see a high usage in the community.
+- Extended evaluations are evaluations which require custom logic in their metrics (complex normalisation, an LLM as a judge, ...), that we added to facilitate the life of users. They already see a high usage in the community.
+- Community evaluations are submissions by the community of new tasks.
+
+A popular community evaluation can move to becoming an extended or core evaluation through time.
 
 #### Core evaluations
 Prompt function: **find a suitable prompt function** in `src.lighteval.tasks.task_prompt_formatting.py`, or code your own. This function must output a `Doc` object, which should contain `query`, your prompt, and either `gold`, the gold output, or `choices` and `gold_index`, the list of choices and index or indices of correct answers. If your query contains an instruction which should not be repeated in a few shot setup, add it to an `instruction` field.
@@ -240,6 +251,9 @@ Summary: create a **line summary** of your evaluation, in `src/lighteval/tasks/t
 - `trust_dataset` (bool), set to True if you trust the dataset.
 
 Make sure you can launch your model with your new task using `--tasks lighteval|yournewtask|2|0`.
+
+### Extended evaluations
+Proceed as for community evaluations, but in the `extended_tasks` folder.
 
 #### Community evaluations
 Copy the `community_tasks/_template.yml` to `community_tasks/yourevalname.py` and edit it to add your custom tasks (the parameters you can use are explained above). It contains an interesting mechanism if the dataset you are adding contains a lot of subsets.
