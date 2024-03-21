@@ -178,7 +178,7 @@ NO_BNB_ERROR_MSG = "You are trying to load a model quantized with `bitsandbytes`
 
 
 def is_autogptq_available() -> bool:
-    return importlib.util.find_spec("auto-gptq") is not None
+    return importlib.util.find_spec("auto_gptq") is not None
 
 
 NO_AUTOGPTQ_ERROR_MSG = "You are trying to load a model quantized with `auto-gptq`, which is not available in your local environement. Please install it using pip."
