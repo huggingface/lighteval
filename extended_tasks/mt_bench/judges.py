@@ -1,12 +1,14 @@
 import ast
 import json
 import re
+from abc import ABC
 
 from openai import OpenAI
 
 
-class Judge:
-    def evaluate_answer(answer, question, reference) -> tuple[str, list[dict[str, str]], str]:
+# Abstract class for a judge
+class Judge(ABC):
+    def evaluate_answer(answers, questions, references) -> tuple[str, list[dict[str, str]], str]:
         pass
 
 
