@@ -11,11 +11,7 @@ import numpy as np
 from aenum import extend_enum
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from extended_tasks.mt_bench.judges import (
-    load_judge_prompts,
-    make_judge_single,
-    play_a_match_single,
-)
+from extended_tasks.mt_bench.judges import Judge_OpenAI
 from lighteval.metrics import Metrics
 from lighteval.metrics.utils import MetricCategory, MetricUseCase, SampleLevelMetric, SampleLevelMetricGrouping
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
@@ -23,9 +19,7 @@ from lighteval.tasks.requests import Doc
 from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 
 
-NEED_REF_CATS = ["math", "reasoning", "coding", "arena-hard-200"]
-
-## EVAL WITH NO SUBSET ##
+# EVAL WITH NO SUBSET ##
 # This is how you create a simple tasks (like hellaswag) which has one single subset
 # attached to it, and one evaluation possible.
 task = LightevalTaskConfig(
@@ -44,7 +38,7 @@ task = LightevalTaskConfig(
 )
 
 
-## DEFINE YOUR PROMPT FUNCTIONS
+# DEFINE YOUR PROMPT FUNCTIONS
 # Define as many as you need for your different tasks
 def prompt_fn(line, task_name: str = None):
     """Defines how to go from a dataset line to a doc object.
@@ -57,10 +51,13 @@ def prompt_fn(line, task_name: str = None):
         choices=None,
         instruction=None,
         gold_index=[],
-        specific={"reference": line["reference"], "category": line["category"], "multi_turn_queries": line["turns"], "id": line["question_id"]},
+        specific={
+            "reference": line["reference"],
+            "category": line["category"],
+            "multi_turn_queries": line["turns"],
+            "id": line["question_id"],
+        },
     )
-
-
 
 
 def mt_bench_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
@@ -68,28 +65,30 @@ def mt_bench_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dic
     Follow examples in src/lighteval/metrics/metrics.py, or get more info
     about what this function should do in the README.
     """
-    judge_model = "gpt-3.5-turbo"
-    judge_file = "extended_tasks/mt_bench/judge_prompts.jsonl"
-    judge_prompts = load_judge_prompts(judge_file)
-    judges = make_judge_single(judge_model, judge_prompts)
 
-    question = formatted_doc.specific["multi_turn_queries"]
-    ref_answer = formatted_doc.specific["reference"]
-    category = formatted_doc.specific["category"]
+    judge = Judge_OpenAI(
+        model="gpt-3.5-turbo",
+        seed=42,
+        temperature=0.0,
+        templates_path="extended_tasks/mt_bench/judge_prompts.jsonl",
+    )
 
-    if category not in NEED_REF_CATS:
-        score, user_prompt_1, judgement_1 = play_a_match_single(question, predictions, ref_answer, judges["default"], multi_turn=False, output_file=None)
-        score_mt, user_prompt_2, judgement_2 = play_a_match_single(question, predictions, ref_answer, judges["default-mt"], multi_turn=True, output_file=None)
-    else:
-        try:
-            score, user_prompt_1, judgement_1 = play_a_match_single(question, predictions, ref_answer, judges["math"], multi_turn=False, output_file=None)
-            score_mt, user_prompt_2, judgement_2 = play_a_match_single(question, predictions, ref_answer, judges["math-mt"], multi_turn=True, output_file=None)
-        except KeyError:
-            print(f"Category {category} not found in judge prompts, using default judge")
-            score, user_prompt_1, judgement_1 = play_a_match_single(question, predictions, ref_answer, judges["default"], multi_turn=False, output_file=None)
-            score_mt, user_prompt_2, judgement_2 = play_a_match_single(question, predictions, ref_answer, judges["default-mt"], multi_turn=True, output_file=None)
+    questions = formatted_doc.specific["multi_turn_queries"]
+    ref_answers = formatted_doc.specific["reference"]
 
-    return {"single_turn": score, "multi_turn": score_mt, "user_prompt": [user_prompt_1, user_prompt_2], "judgement": [judgement_1, judgement_2]}
+    score, messages, judgement = judge.evaluate_answer(questions, predictions, ref_answers, single_turn=True)
+    score_mt, messages_mt, judgement_mt = judge.evaluate_answer(questions, predictions, ref_answers, single_turn=False)
+
+    pprint(score)
+    pprint(messages)
+    pprint(judgement)
+
+    return {
+        "single_turn": score,
+        "multi_turn": score_mt,
+        "user_prompt": [messages, messages_mt],
+        "judgement": [judgement, judgement_mt],
+    }
 
 
 mt_bench_metric = SampleLevelMetricGrouping(
@@ -101,13 +100,13 @@ mt_bench_metric = SampleLevelMetricGrouping(
     corpus_level_fn={
         "single_turn": np.mean,
         "multi_turn": np.mean,
-    }
+    },
 )
 
-## STORE YOUR EVALS
+# STORE YOUR EVALS
 _TASKS = [task]
 
-## MODULE LOGIC
+# MODULE LOGIC
 # You should not need to touch this
 # Convert to dict for lighteval
 TASKS_TABLE = [task.as_dict() for task in _TASKS]
