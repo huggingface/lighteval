@@ -1,173 +1,97 @@
 import ast
-import copy
-import dataclasses
 import json
-import os
 import re
-import time
 
-import openai
-
-from extended_tasks.mt_bench.model_adapter import conv_templates
+from openai import OpenAI
 
 
-openai.api_key = os.environ["OPENAI_API_KEY"]
-
-
-# Extract scores from judgments
-two_score_pattern = re.compile("\[\[(\d+\.?\d*),\s?(\d+\.?\d*)\]\]")
-two_score_pattern_backup = re.compile("\[(\d+\.?\d*),\s?(\d+\.?\d*)\]")
-one_score_pattern = re.compile("\[\[(\d+\.?\d*)\]\]")
-one_score_pattern_backup = re.compile("\[(\d+\.?\d*)\]")
-
-OPENAI_MODEL_LIST = (
-    "gpt-3.5-turbo",
-    "gpt-3.5-turbo-0301",
-    "gpt-3.5-turbo-0613",
-    "gpt-3.5-turbo-1106",
-    "gpt-3.5-turbo-0125",
-    "gpt-4",
-    "gpt-4-0314",
-    "gpt-4-0613",
-    "gpt-4-turbo",
-    "gpt-4-1106-preview",
-    "gpt-4-0125-preview",
-)
-
-# API setting constants
-API_MAX_RETRY = 16
-API_RETRY_SLEEP = 10
-API_ERROR_OUTPUT = "$ERROR$"
-
-# Categories that need reference answers
-NEED_REF_CATS = ["math", "reasoning", "coding", "arena-hard-200"]
-
-@dataclasses.dataclass
 class Judge:
-    model_name: str
-    prompt_template: dict
-    ref_based: bool = False
-    multi_turn: bool = False
-
-@dataclasses.dataclass
-class MatchSingle:
-    question: dict
-    model: str
-    answer: dict
-    judge: Judge
-    ref_answer: dict = None
-    multi_turn: bool = False
-
-def make_judge_single(judge_model, judge_prompts):
-    judges = {}
-    judges["default"] = Judge(judge_model, judge_prompts["single-v1"])
-    judges["math"] = Judge(judge_model, judge_prompts["single-math-v1"], ref_based=True)
-    judges["default-mt"] = Judge(
-        judge_model, judge_prompts["single-v1-multi-turn"], multi_turn=True
-    )
-    judges["math-mt"] = Judge(
-        judge_model,
-        judge_prompts["single-math-v1-multi-turn"],
-        ref_based=True,
-        multi_turn=True,
-    )
-    return judges
+    def evaluate_answer(answer, question, reference) -> tuple[str, list[dict[str, str]], str]:
+        pass
 
 
-def chat_completion_openai(model, conv, temperature, max_tokens, api_dict=None):
-    if api_dict is not None:
-        openai.api_base = api_dict["api_base"]
-        openai.api_key = api_dict["api_key"]
-    output = API_ERROR_OUTPUT
-    for _ in range(API_MAX_RETRY):
-        try:
-            messages = conv.to_openai_api_messages()
-            response = openai.ChatCompletion.create(
-                model=model,
-                messages=messages,
-                n=1,
-                temperature=temperature,
-                max_tokens=max_tokens,
+class Judge_OpenAI(Judge):
+    def __init__(self, model: str, seed: int, temperature: float, templates_path: str):
+        self.client = OpenAI()
+        self.model = model
+        self.seed = seed
+        self.temperature = temperature
+
+        data = []
+        with open(templates_path, "r") as f:
+            for line in f:
+                tmp = json.loads(line)
+                data.append(tmp)
+
+        self.templates = {d["name"]: d for d in data}
+
+        self.one_score_pattern = re.compile(r"\[\[(\d+\.?\d*)\]\]")
+        self.one_score_pattern_backup = re.compile(r"\[(\d+\.?\d*)\]")
+
+    def evaluate_answer(self, questions, answers, references, single_turn: bool):
+        if single_turn:
+            score, messages, answer = self.__single_turn_evaluate(
+                questions[0], answers[0], references[0] if len(references) > 0 else None
             )
-            output = response["choices"][0]["message"]["content"]
-            break
-        except openai.error.OpenAIError as e:
-            print(type(e), e)
-            time.sleep(API_RETRY_SLEEP)
+        else:
+            score, messages, answer = self.__multi_turn_evaluate(questions, answers, references)
+        return score, messages, answer
 
-    return output
+    def __single_turn_evaluate(self, question, answer, reference):
+        if reference is None or len(reference) == 0:
+            system_prompt = {"role": "system", "content": self.templates["single-v1"]["system_prompt"]}
+            user_prompt_str = self.templates["single-v1"]["prompt_template"].format(question=question, answer=answer)
+        else:
+            system_prompt = {"role": "system", "content": self.templates["single-math-v1"]["system_prompt"]}
+            user_prompt_str = self.templates["single-math-v1"]["prompt_template"].format(
+                question=question, answer=answer, ref_answer_1=reference
+            )
 
-
-def load_judge_prompts(prompt_file: str):
-    """Load judge prompts.
-
-    The return value is a python dict of type:
-    Dict[judge_name: str -> dict]
-    """
-    prompts = {}
-    with open(prompt_file) as fin:
-        for line in fin:
-            line = json.loads(line)
-            prompts[line["name"]] = line
-    return prompts
-
-
-def run_judge_single(question, answer, judge, ref_answer, multi_turn=False):
-    kwargs = {}
-    model = judge.model_name
-    if ref_answer is not None and len(ref_answer) > 0:
-        kwargs["ref_answer_1"] = ref_answer[0]
-        if multi_turn:
-            kwargs["ref_answer_2"] = ref_answer[1]
-
-    if multi_turn:
-        user_prompt = judge.prompt_template["prompt_template"].format(
-            question_1=question[0],
-            question_2=question[1],
-            answer_1=answer[0],
-            answer_2=answer[1],
-            **kwargs,
+        user_prompt = {"role": "user", "content": user_prompt_str}
+        messages = [system_prompt, user_prompt]
+        response = self.client.chat.completions.create(
+            model=self.model,
+            seed=self.seed,
+            temperature=self.temperature,
+            messages=messages,
         )
-    else:
-        user_prompt = judge.prompt_template["prompt_template"].format(
-            question=question[0],
-            answer=answer[0],
-            **kwargs,
+        judgment = response.choices[0].message.content
+        return self.__process_judge_response(judgment), messages, judgment
+
+    def __multi_turn_evaluate(self, questions, answers, references):
+        if references is None or len(references) == 0:
+            system_prompt = {"role": "system", "content": self.templates["single-v1-multi-turn"]["system_prompt"]}
+            user_prompt_str = self.templates["single-v1-multi-turn"]["prompt_template"].format(
+                question_1=questions[0], answer_1=answers[0], question_2=questions[1], answer_2=answers[1]
+            )
+        else:
+            system_prompt = {"role": "system", "content": self.templates["single-math-v1-multi-turn"]["system_prompt"]}
+            user_prompt_str = self.templates["single-math-v1-multi-turn"]["prompt_template"].format(
+                question_1=questions[0],
+                answer_1=answers[0],
+                ref_answer_1=references[0],
+                question_2=questions[1],
+                answer_2=answers[1],
+                ref_answer_2=references[1],
+            )
+        user_prompt = {"role": "user", "content": user_prompt_str}
+        messages = [system_prompt, user_prompt]
+        response = self.client.chat.completions.create(
+            model=self.model,
+            seed=self.seed,
+            temperature=self.temperature,
+            messages=messages,
         )
+        judgment = response.choices[0].message.content
+        return self.__process_judge_response(judgment), messages, judgment
 
-    rating = -1
-
-    system_prompt = judge.prompt_template["system_prompt"]
-    conv = copy.deepcopy(conv_templates["chatgpt"])
-    conv.set_system_message(system_prompt)
-    conv.append_message(conv.roles[0], user_prompt)
-    conv.append_message(conv.roles[1], None)
-
-    if model in OPENAI_MODEL_LIST:
-        judgment = chat_completion_openai(model, conv, temperature=0, max_tokens=2048)
-    else:
-        raise ValueError(f"Invalid judge model name: {model}")
-
-    if judge.prompt_template["output_format"] == "[[rating]]":
-        match = re.search(one_score_pattern, judgment)
+    def __process_judge_response(self, judgment: str) -> int:
+        match = re.search(self.one_score_pattern, judgment)
         if not match:
-            match = re.search(one_score_pattern_backup, judgment)
-
+            match = re.search(self.one_score_pattern_backup, judgment)
         if match:
             rating = ast.literal_eval(match.groups()[0])
         else:
             rating = -1
-    else:
-        raise ValueError(
-            f"invalid output format: {judge.prompt_template['output_format']}"
-        )
 
-    return rating, user_prompt, judgment
-
-
-def play_a_match_single(question, answer, ref_answer, judge, multi_turn, output_file: str):
-    if judge.prompt_template["type"] == "single":
-        score, user_prompt, judgment = run_judge_single(
-            question, answer, judge, ref_answer, multi_turn=multi_turn
-        )
-        return score, user_prompt, judgment
+        return rating

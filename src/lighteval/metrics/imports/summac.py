@@ -146,7 +146,7 @@ class SummaCImager:
     def split_2sents(self, text):
         sentences = nltk.tokenize.sent_tokenize(text)
         sentences = [sent for sent in sentences if len(sent) > 10]
-        two_sents = [" ".join(sentences[i : (i + 2)]) for i in range(len(sentences))]
+        two_sents = [" ".join(sentences[i: (i + 2)]) for i in range(len(sentences))]
         return two_sents
 
     def split_paragraphs(self, text):

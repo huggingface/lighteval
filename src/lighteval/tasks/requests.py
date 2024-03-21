@@ -120,6 +120,7 @@ class GreedyUntilRequest(Request):
     request_type = RequestType.GREEDY_UNTIL
     tokenized_context: list[int] = None
 
+
 @dataclass
 class GreedyUntilMultiTurnRequest(Request):
     """
@@ -130,6 +131,7 @@ class GreedyUntilMultiTurnRequest(Request):
         generation_size (int): The maximum number of tokens to generate.
         request_type (RequestType): The type of the request, set to RequestType.GREEDY_UNTIL.
     """
+
     stop_sequence: str
     generation_size: int
     request_type = RequestType.GREEDY_UNTIL_MULTI_TURN

@@ -352,7 +352,9 @@ class BaseModel(LightevalModel):
             override_bs=override_bs,
         )
 
-    def greedy_until_multi_turn(self, requests: list[GreedyUntilMultiTurnRequest], override_bs: Optional[int] = None) -> GenerateMultiTurnReturn:
+    def greedy_until_multi_turn(
+        self, requests: list[GreedyUntilMultiTurnRequest], override_bs: Optional[int] = None
+    ) -> GenerateMultiTurnReturn:
         for request in requests:
             request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
             request.tokenized_context = self.tok_encode(request.context)
@@ -433,7 +435,15 @@ class BaseModel(LightevalModel):
 
                 model_answers.append(cur_reponses[0].result)
 
-            results.append(GenerateMultiTurnReturn(result=model_answers, input_tokens=[], generated_tokens=[], truncated_tokens_count=0, padded_tokens_count=0))
+            results.append(
+                GenerateMultiTurnReturn(
+                    result=model_answers,
+                    input_tokens=[],
+                    generated_tokens=[],
+                    truncated_tokens_count=0,
+                    padded_tokens_count=0,
+                )
+            )
 
         return results
 
@@ -581,7 +591,7 @@ class BaseModel(LightevalModel):
         )
         if returns_logits:
             logits = self.model.compute_transition_scores(outputs.sequences, outputs.scores, normalize_logits=True)
-        generations = outputs.sequences[:, batch.input_ids.size(1) :]
+        generations = outputs.sequences[:, batch.input_ids.size(1):]
         generations, len_gens = self.pad_and_gather(generations)
         batch.input_ids, len_ids = self.pad_and_gather(batch.input_ids)
 
@@ -685,7 +695,7 @@ class BaseModel(LightevalModel):
                 max_context_continuation_size_allowed = len(context_enc + continuation_enc)
             else:  # in normal mode, we left cut the context if needed
                 max_context_continuation_size_allowed = len(
-                    (context_enc + continuation_enc)[-(self.max_length + 1) :][:-1]
+                    (context_enc + continuation_enc)[-(self.max_length + 1):][:-1]
                 )
 
             batch_size = self._get_batch_size(
@@ -722,7 +732,7 @@ class BaseModel(LightevalModel):
                         cont_toks = cont_toks[:inplen].unsqueeze(0).to(self.device)  # [1, seq]
                     else:
                         cur_logits = (
-                            cur_logits[inplen - contlen : inplen].unsqueeze(0).to(self.device)
+                            cur_logits[inplen - contlen: inplen].unsqueeze(0).to(self.device)
                         )  # [1, seq, voc]
                         cont_toks = cont_toks.unsqueeze(0).to(self.device)  # [1, seq]
 
@@ -902,7 +912,7 @@ class BaseModel(LightevalModel):
 
         for split_start, split_end in tqdm(dataset.splits_start_end_iterator()):
             context_enc = dataset[0].tokenized_context
-            max_context = len(context_enc[-self.max_length :])
+            max_context = len(context_enc[-self.max_length:])
             batch_size = self._get_batch_size(override_bs=override_bs, max_input_length=max_context)
             starting_batch_size = batch_size * 2
 
@@ -997,7 +1007,7 @@ class MultiTokenEOSCriteria(transformers.StoppingCriteria):
 
     def __call__(self, input_ids, scores, **kwargs) -> bool:
         # For efficiency, we compare the last n tokens where n is the number of tokens in the stop_sequence
-        lookback_ids_batch = input_ids[:, self.initial_decoder_input_length :][:, -self.sequence_id_len :]
+        lookback_ids_batch = input_ids[:, self.initial_decoder_input_length:][:, -self.sequence_id_len:]
 
         lookback_tokens_batch = self.tokenizer.batch_decode(lookback_ids_batch)
 

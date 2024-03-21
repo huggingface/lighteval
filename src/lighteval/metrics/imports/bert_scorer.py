@@ -131,8 +131,8 @@ def get_bert_embedding(
         for i in range(0, len(all_sens), batch_size):
             batch_embedding = bert_encode(
                 model,
-                padded_sens[i : i + batch_size],
-                attention_mask=mask[i : i + batch_size],
+                padded_sens[i: i + batch_size],
+                attention_mask=mask[i: i + batch_size],
                 all_layers=all_layers,
             )
             embeddings.append(batch_embedding)
@@ -269,7 +269,7 @@ def bert_cos_score_idf(
     iter_range = range(0, len(sentences), batch_size)
     stats_dict = {}
     for batch_start in iter_range:
-        sen_batch = sentences[batch_start : batch_start + batch_size]
+        sen_batch = sentences[batch_start: batch_start + batch_size]
         embs, masks, padded_idf = get_bert_embedding(
             sen_batch, model, tokenizer, idf_dict, device=device, all_layers=all_layers
         )
@@ -305,8 +305,8 @@ def bert_cos_score_idf(
 
     with torch.no_grad():
         for batch_start in iter_range:
-            batch_refs = refs[batch_start : batch_start + batch_size]
-            batch_hyps = hyps[batch_start : batch_start + batch_size]
+            batch_refs = refs[batch_start: batch_start + batch_size]
+            batch_hyps = hyps[batch_start: batch_start + batch_size]
             ref_stats = pad_batch_stats(batch_refs, stats_dict, device)
             hyp_stats = pad_batch_stats(batch_hyps, stats_dict, device)
 

@@ -42,7 +42,7 @@ BATCH_SIZE = 50
 def divide_chunks(array, n):
     # looping till length array
     for i in range(0, len(array), n):
-        yield array[i : i + n]
+        yield array[i: i + n]
 
 
 class ModelClient:

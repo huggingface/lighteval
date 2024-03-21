@@ -80,7 +80,7 @@ class Fragments:
 
         # Generate strings, filtering out strings below the minimum length.
 
-        strings = [base[i : i + length] for i, j, length in self.overlaps() if length > min_length]
+        strings = [base[i: i + length] for i, j, length in self.overlaps() if length > min_length]
 
         # By default, we just return the tokenization being used.
         # But if they user wants a raw string, then we convert.
