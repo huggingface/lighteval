@@ -286,13 +286,6 @@ You can then give your custom metric to lighteval by using `--custom-tasks path_
 
 To see an example of a custom metric added along with a custom task, look at `tasks_examples/custom_tasks_with_custom_metrics/ifeval/ifeval.py`.
 
-Make sure you can launch your model with your new task using `--tasks lighteval|yournewtask|2|0`.
-
-#### Community evaluations
-Copy the `community_tasks/_template.yml` to `community_tasks/yourevalname.py` and edit it to add your custom tasks (the parameters you can use are explained above). It contains an interesting mechanism if the dataset you are adding contains a lot of subsets.
-
-Make sure you can launch your model with your new task using `--tasks community|yournewtask|2|0 --custom_tasks community_tasks/yourevalname.py`.
-
 ## Available metrics
 ### Metrics for multiple choice tasks
 These metrics use log-likelihood of the different possible targets.
