@@ -219,7 +219,7 @@ class LightevalTask:
                     hlog_warn(
                         f"Be careful you are using custom prompt function {cfg.prompt_function} and not the default one."
                     )
-                self.formatter = getattr(module, cfg.prompt_function)
+                self.formatter = formatter[0]
             else:
                 raise Exception(
                     f"You defined the prompt function {cfg.prompt_function} several times in the different custom modules you are loading."
