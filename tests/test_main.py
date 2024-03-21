@@ -29,11 +29,7 @@ from pytest import approx
 from lighteval.main_accelerate import main  # noqa: E402
 from run_evals_accelerate import get_parser
 from tests.reference_scores.reference_task_scores import RESULTS_FULL, RESULTS_LITE  # noqa: E402
-from tests.reference_scores.reference_tasks import (  # noqa: E402
-    HELM_SUBSET,
-    LEADERBOARD_SUBSET,
-    STABLE_SUBSET,
-)
+from tests.reference_scores.reference_tasks import ALL_SUBSETS
 
 
 # Set env var for deterministic run of models
@@ -46,7 +42,7 @@ os.environ["HF_HOME"] = "cache/models/"
 # To add new models or tasks, change here
 # ! The correct results must be present in reference_task_scores
 MODELS = ["gpt2"]
-TASKS = LEADERBOARD_SUBSET + STABLE_SUBSET + HELM_SUBSET
+TASKS = ALL_SUBSETS
 FULL_TEST = os.environ.get("LIGHTEVAL_FULL_TEST", False)
 
 
