@@ -403,10 +403,6 @@ class BaseModel(LightevalModel):
             for i, multi_turn_context in enumerate(request.context[1:]):
                 multi_turn_context = multi_turn_context.format(model_response=model_answers[0])
 
-                # print("multi_turn_context ====== ")
-                # pprint(multi_turn_context)
-                # print("multi_turn_context ====== ")
-
                 tokenized = self.tokenizer(
                     multi_turn_context,
                     padding=True,

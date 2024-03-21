@@ -5,8 +5,6 @@ This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then im
 Author:
 """
 
-from pprint import pprint
-
 import numpy as np
 from aenum import extend_enum
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -78,10 +76,6 @@ def mt_bench_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dic
 
     score, messages, judgement = judge.evaluate_answer(questions, predictions, ref_answers, single_turn=True)
     score_mt, messages_mt, judgement_mt = judge.evaluate_answer(questions, predictions, ref_answers, single_turn=False)
-
-    pprint(score)
-    pprint(messages)
-    pprint(judgement)
 
     return {
         "single_turn": score,
