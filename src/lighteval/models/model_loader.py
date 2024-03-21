@@ -108,7 +108,7 @@ def load_model_with_inference_endpoints(config: InferenceEndpointModelConfig, en
     model_info = ModelInfo(
         model_name=model.name,
         model_sha=model.revision,
-        model_dtype="default",
+        model_dtype=config.model_dtype or "default",
         model_size=-1,
     )
     return model, model_info
