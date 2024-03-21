@@ -113,4 +113,3 @@ BBH_SUBSET = [
 ]
 
 ALL_SUBSETS = LEADERBOARD_SUBSET + STABLE_SUBSET + HELM_SUBSET + AGIEVAL_SUBSET + BBH_SUBSET
-# + BBH_SUBSET - has a problem, to fix!, removed in this commit https://github.com/huggingface/lighteval/pull/7/commits/c136ad59fc74bb3eee6546dcf0802eb8c2f3bcbe
