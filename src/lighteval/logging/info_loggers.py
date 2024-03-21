@@ -305,15 +305,7 @@ class DetailsLogger:
     compiled_details: dict[str, CompiledDetail] = collections.defaultdict(CompiledDetail)
     compiled_details_over_all_tasks: CompiledDetailOverAllTasks = CompiledDetailOverAllTasks()
 
-    def log(
-        self,
-        task_name: str,
-        task: LightevalTask,
-        doc: Doc,
-        outputs: list[ModelReturn],
-        metrics: dict,
-        llm_as_prompt_judgement: tuple[str, str],
-    ) -> None:
+    def log(self, task_name: str, task: LightevalTask, doc: Doc, outputs: list[ModelReturn], metrics: dict, llm_as_prompt_judgement: tuple[str, str]) -> None:
         """Stores the relevant information for one sample of one task to the total list of samples stored in the DetailsLogger.
 
         Args:

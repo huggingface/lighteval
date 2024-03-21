@@ -693,7 +693,7 @@ class NanotronLightevalModel(LightevalModel):
             # automatic (variable) batch size detection for vectorization
             # pull longest context sample from request
             context_enc = dataset[0].tokenized_context
-            max_context = len(context_enc[-self.max_length:])
+            max_context = len(context_enc[-self.max_length :])
             batch_size = self._get_batch_size(
                 override_bs=override_bs, max_input_length=max_context, starting_batch_size=starting_batch_size
             )
@@ -925,7 +925,7 @@ class NanotronLightevalModel(LightevalModel):
             context_enc = dataset[0].tokenized_context
             continuation_enc = dataset[0].tokenized_continuation
 
-            max_context = len((context_enc + continuation_enc)[-(self.max_length + 1):][:-1])
+            max_context = len((context_enc + continuation_enc)[-(self.max_length + 1) :][:-1])
 
             batch_size = self._get_batch_size(
                 override_bs=override_bs, max_input_length=max_context, starting_batch_size=starting_batch_size
@@ -1011,7 +1011,7 @@ class NanotronLightevalModel(LightevalModel):
                             #             f"top_tokens: {top_toks_str}\ncont_tokens: {cont_toks_str}")
 
                             cur_logits = (
-                                cur_logits[inplen - contlen: inplen].unsqueeze(0).to(self.device)
+                                cur_logits[inplen - contlen : inplen].unsqueeze(0).to(self.device)
                             )  # [1, seq, voc]
                             cont_toks = cont_toks.unsqueeze(0).to(self.device)  # [1, seq]
 
@@ -1233,7 +1233,7 @@ class NanotronLightevalModel(LightevalModel):
                 dist.barrier()  # Got everyone to send their stuff
                 outputs = list(outputs)
 
-                generations = torch.stack([o.generation_ids[o.input_ids.shape[0]:] for o in outputs])
+                generations = torch.stack([o.generation_ids[o.input_ids.shape[0] :] for o in outputs])
                 batch_input_ids, len_ids = self.pad_and_gather(batch_model.input_ids)
                 batch_generations, _ = self.pad_and_gather(generations)
 
@@ -1336,7 +1336,7 @@ class MultiTokenEOSCriteria(transformers.StoppingCriteria):
 
     def __call__(self, input_ids, scores, **kwargs) -> bool:
         # For efficiency, we compare the last n tokens where n is the number of tokens in the stop_sequence
-        lookback_ids_batch = input_ids[:, self.initial_decoder_input_length:][:, -self.sequence_id_len:]
+        lookback_ids_batch = input_ids[:, self.initial_decoder_input_length :][:, -self.sequence_id_len :]
 
         lookback_tokens_batch = self.tokenizer.batch_decode(lookback_ids_batch)
 

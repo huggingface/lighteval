@@ -65,7 +65,6 @@ class GenerateReturn(ModelReturn):
     def get_result_for_eval(self):
         return self.result if self.logits is None else (self.result, self.logits)
 
-
 @dataclass
 class GenerateMultiTurnReturn(ModelReturn):
     result: list[str] = field(default_factory=list)

@@ -2452,7 +2452,7 @@ def wsc273(line, task_name: str = None):
             return option.replace(pronoun, pronoun.lower())
         return option
 
-    context, eos = line["text"][: line["pronoun_loc"]], line["text"][line["pronoun_loc"] + len(line["pronoun"]):]
+    context, eos = line["text"][: line["pronoun_loc"]], line["text"][line["pronoun_loc"] + len(line["pronoun"]) :]
 
     return Doc(
         task_name=task_name,

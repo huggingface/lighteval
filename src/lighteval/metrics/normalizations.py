@@ -98,14 +98,14 @@ def math_normalizer(text: str, is_gold: bool = False) -> str:  # noqa C901
         if "\\boxed " in text:
             left = "\\boxed "
             assert text[: len(left)] == left
-            return text[len(left):]
+            return text[len(left) :]
 
         left = "\\boxed{"
 
         assert text[: len(left)] == left
         assert text[-1] == "}"
 
-        return text[len(left): -1]
+        return text[len(left) : -1]
 
     def _last_boxed_only_string(text: str) -> str | None:
         """Extract the last \\boxed{...} or \\fbox{...} element from a string."""
@@ -131,7 +131,7 @@ def math_normalizer(text: str, is_gold: bool = False) -> str:  # noqa C901
         if right_brace_idx is None:
             retval = None
         else:
-            retval = text[idx: right_brace_idx + 1]
+            retval = text[idx : right_brace_idx + 1]
 
         return retval
 
@@ -222,7 +222,7 @@ def math_normalizer(text: str, is_gold: bool = False) -> str:  # noqa C901
     else:
         indices = [pos for pos, char in enumerate(text) if char == "$"]
         if len(indices) > 1:
-            text = text[indices[0] + 1: indices[-1]]
+            text = text[indices[0] + 1 : indices[-1]]
 
     to_replace_1 = [
         ("\n", ""),  # linebreaks

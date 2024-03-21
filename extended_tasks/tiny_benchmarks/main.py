@@ -139,7 +139,7 @@ class TinyCorpusAggregator:
             ind_scenario = (
                 self.number_of_examples * ([i for i, s in enumerate(scenarios_position.keys()) if s == self.task][0])
             )
-            seen_examples = seen_examples[ind_scenario: ind_scenario + self.number_of_examples]
+            seen_examples = seen_examples[ind_scenario : ind_scenario + self.number_of_examples]
         else:
             scenarios = list(scenarios_position.keys())
 
