@@ -26,6 +26,7 @@ import json
 import re
 import time
 from abc import ABC
+from typing import Optional
 
 from openai import OpenAI
 
@@ -68,9 +69,7 @@ class JudgeOpenAI(Judge):
                 questions[0], answers[0], references[0] if len(references) > 0 else None
             )
         else:
-            prompts = self.__get_prompts_multi_turn(
-                questions[0], answers[0], references[0] if len(references) > 0 else None
-            )
+            prompts = self.__get_prompts_multi_turn(questions, answers, references if len(references) > 0 else None)
 
         for _ in range(self.API_MAX_RETRY):
             try:
@@ -92,8 +91,10 @@ class JudgeOpenAI(Judge):
 
         return score, prompts, judgment
 
-    def __get_prompts_multi_turn(self, questions, answers, references):
-        if references is None or len(references) == 0:
+    def __get_prompts_multi_turn(
+        self, questions: list[str], answers: list[str], references: Optional[list[str]]
+    ) -> list[dict[str, str]]:
+        if references is None:
             system_prompt = {"role": "system", "content": self.templates["single-v1-multi-turn"]["system_prompt"]}
             user_prompt_str = self.templates["single-v1-multi-turn"]["prompt_template"].format(
                 question_1=questions[0], answer_1=answers[0], question_2=questions[1], answer_2=answers[1]
@@ -111,8 +112,8 @@ class JudgeOpenAI(Judge):
         user_prompt = {"role": "user", "content": user_prompt_str}
         return [system_prompt, user_prompt]
 
-    def __get_prompts_single_turn(self, question, answer, reference):
-        if reference is None or len(reference) == 0:
+    def __get_prompts_single_turn(self, question: str, answer: str, reference: Optional[str]) -> list[dict[str, str]]:
+        if reference is None:
             system_prompt = {"role": "system", "content": self.templates["single-v1"]["system_prompt"]}
             user_prompt_str = self.templates["single-v1"]["prompt_template"].format(question=question, answer=answer)
         else:
