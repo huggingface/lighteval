@@ -352,7 +352,9 @@ class BaseModel(LightevalModel):
             override_bs=override_bs,
         )
 
-    def greedy_until_multi_turn(self, requests: list[GreedyUntilMultiTurnRequest], override_bs: Optional[int] = None) -> GenerateMultiTurnReturn:
+    def greedy_until_multi_turn(
+        self, requests: list[GreedyUntilMultiTurnRequest], override_bs: Optional[int] = None
+    ) -> GenerateMultiTurnReturn:
         for request in requests:
             request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
             request.tokenized_context = self.tok_encode(request.context)
@@ -429,7 +431,15 @@ class BaseModel(LightevalModel):
 
                 model_answers.append(cur_reponses[0].result)
 
-            results.append(GenerateMultiTurnReturn(result=model_answers, input_tokens=[], generated_tokens=[], truncated_tokens_count=0, padded_tokens_count=0))
+            results.append(
+                GenerateMultiTurnReturn(
+                    result=model_answers,
+                    input_tokens=[],
+                    generated_tokens=[],
+                    truncated_tokens_count=0,
+                    padded_tokens_count=0,
+                )
+            )
 
         return results
 
