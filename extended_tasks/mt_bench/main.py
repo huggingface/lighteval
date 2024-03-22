@@ -9,7 +9,7 @@ import numpy as np
 from aenum import extend_enum
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from extended_tasks.mt_bench.judges import Judge_OpenAI
+from extended_tasks.mt_bench.judges import JudgeOpenAI
 from lighteval.metrics import Metrics
 from lighteval.metrics.utils import MetricCategory, MetricUseCase, SampleLevelMetric, SampleLevelMetricGrouping
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
@@ -64,7 +64,7 @@ def mt_bench_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dic
     about what this function should do in the README.
     """
 
-    judge = Judge_OpenAI(
+    judge = JudgeOpenAI(
         model="gpt-3.5-turbo",
         seed=42,
         temperature=0.0,
