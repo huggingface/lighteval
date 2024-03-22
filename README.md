@@ -171,7 +171,17 @@ Independently of the default tasks provided in `lighteval` that you will find in
 * `community`: tasks which have been added by the community. See the [`community_tasks`](./community_tasks) folder for examples.
 * `custom`: tasks which are defined locally and not present in the core library. Use this suite if you want to experiment with designing a special metric or task.
 
-For example, to run an community task you can run:
+
+For example, to run an extended task like ifeval, you can run:
+```shell
+python run_evals_accelerate.py \
+    --model_args "pretrained=HuggingFaceH4/zephyr-7b-beta" \
+    --use_chat_template \ # optional, if you want to run the evaluation with the chat template
+    --tasks "extended|ifeval|0|0" \
+    --output_dir "./evals"
+```
+
+To run a community or custom task, you can use (note the custom_tasks flag):
 
 ```shell
 python run_evals_accelerate.py \
