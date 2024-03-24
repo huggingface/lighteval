@@ -71,7 +71,7 @@ def get_parser():
     parser.add_argument("--inference_server_auth", type=str, default=None)
     # Model type 3) Inference endpoints
     task_type_group.add_argument("--endpoint_model_name", type=str)
-    task_type_group.add_argument("--revision", type=str)
+    parser.add_argument("--revision", type=str)
     parser.add_argument("--accelerator", type=str, default=None)
     parser.add_argument("--vendor", type=str, default=None)
     parser.add_argument("--region", type=str, default=None)
