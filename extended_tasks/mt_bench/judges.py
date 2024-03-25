@@ -69,7 +69,7 @@ class JudgeOpenAI(Judge):
                 questions[0], answers[0], references[0] if len(references) > 0 else None
             )
         else:
-            prompts = self.__get_prompts_multi_turn(questions, answers, references if len(references) > 0 else None)
+            prompts = self.__get_prompts_multi_turn(questions, answers, references if len(references) > 1 else None)
 
         for _ in range(self.API_MAX_RETRY):
             try:

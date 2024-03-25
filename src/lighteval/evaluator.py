@@ -115,7 +115,7 @@ def evaluate(  # noqa: C901
             doc.instruction = ""
 
         # using a deep copy here because process results pops from the model responses
-        metrics = task.process_results(doc, copy.deepcopy(model_responses), evaluation_tracker=evaluation_tracker)
+        metrics = task.process_results(doc, copy.deepcopy(model_responses))
 
         # Remove the user_prompt from the metrics in case of llm-as-judge metric
         if "user_prompt" in metrics:
