@@ -70,6 +70,7 @@ class InferenceEndpointModel(LightevalModel):
                 self.endpoint: InferenceEndpoint = create_inference_endpoint(
                     name=config.name,
                     repository=config.repository,
+                    revision=config.revision,
                     framework=config.framework,
                     task="text-generation",
                     accelerator=config.accelerator,

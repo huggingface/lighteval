@@ -238,6 +238,7 @@ class InferenceEndpointModelConfig:
     endpoint_type: str = "protected"
     should_reuse_existing: bool = False
     add_special_tokens: bool = True
+    revision: str = "main"
 
     def get_dtype_args(self) -> Dict[str, str]:
         model_dtype = self.model_dtype.lower()
@@ -296,6 +297,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
                 instance_type=args.instance_type,
                 should_reuse_existing=args.reuse_existing,
                 model_dtype=args.model_dtype,
+                revision=args.revision or "main",
             )
         return InferenceModelConfig(model=args.endpoint_model_name)
 
