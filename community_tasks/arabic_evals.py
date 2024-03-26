@@ -376,7 +376,7 @@ def boolq_prompt_arabic(line, task_name: str = None):
     question = line["question"]
     passage = line["passage"]
     answer = "نعم" if line["answer"] else "لا"
-    instruction = 'بناء على المقطع التالي، أجب عن السؤال ب نعم أو لا'
+    instruction = "بناء على المقطع التالي، أجب عن السؤال ب نعم أو لا"
     query = f"""{instruction}
     المقطع :
     {passage}
