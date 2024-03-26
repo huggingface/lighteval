@@ -376,9 +376,8 @@ def boolq_prompt_arabic(line, task_name: str = None):
     question = line["question"]
     passage = line["passage"]
     answer = "نعم" if line["answer"] else "لا"
-    instruction = 'بناء على المقطع التالي، أجب عن السؤال ب "نعم" أو "لا"'
-    query = f"""
-    {instruction}
+    instruction = 'بناء على المقطع التالي، أجب عن السؤال ب نعم أو لا'
+    query = f"""{instruction}
     المقطع :
     {passage}
     السؤال:
@@ -455,8 +454,7 @@ def hellaswag_prompt_arabic(line, task_name: str = None):
     answer_index = line["label"]
     instruction = "بناء على السياق التالي، اختر النهاية الصحيحة من الاقتراحات التالية"
 
-    query = f"""
-    {instruction}
+    query = f"""{instruction}
     السياق:
     {ctx}
     الاقتراحات:
@@ -497,8 +495,7 @@ def toxigen_prompt_arabic(line, task_name: str = None):
     label = 1 if ((line["toxicity_ai"] + line["toxicity_human"]) > 5.5) else 0
     instruction = 'هل العبارة التالية تحض على الكراهية؟ قم بالرد بـ"نعم" أو "لا".'
 
-    query = f"""
-    {instruction}
+    query = f"""{instruction}
     العبارة:
     '{text}'
     الإجابة:
@@ -543,8 +540,7 @@ def sciq_prompt_arabic(line, task_name: str = None):
 
     instruction = "بناءً على السياق أدناه، اختر الإجابة الصحيحة للسؤال التالي من قائمة الاقتراحات"
 
-    query = f"""
-    {instruction}
+    query = f"""{instruction}
     السياق:
     {support}
     السؤال:
