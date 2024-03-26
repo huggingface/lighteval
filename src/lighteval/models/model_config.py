@@ -22,7 +22,7 @@
 
 from argparse import Namespace
 from dataclasses import dataclass
-from typing import Optional, Union
+from typing import Dict, Optional, Union
 
 import torch
 from transformers import AutoConfig, BitsAndBytesConfig, GPTQConfig, PretrainedConfig
@@ -221,6 +221,7 @@ class TGIModelConfig:
 @dataclass
 class InferenceModelConfig:
     model: str
+    add_special_tokens: bool = True
 
 
 @dataclass
@@ -232,9 +233,24 @@ class InferenceEndpointModelConfig:
     region: str
     instance_size: str
     instance_type: str
+    model_dtype: str
     framework: str = "pytorch"
     endpoint_type: str = "protected"
     should_reuse_existing: bool = False
+    add_special_tokens: bool = True
+    revision: str = "main"
+
+    def get_dtype_args(self) -> Dict[str, str]:
+        model_dtype = self.model_dtype.lower()
+        if model_dtype in ["awq", "eetq", "gptq"]:
+            return {"QUANTIZE": model_dtype}
+        if model_dtype == "8bit":
+            return {"QUANTIZE": "bitsandbytes"}
+        if model_dtype == "4bit":
+            return {"QUANTIZE": "bitsandbytes-nf4"}
+        if model_dtype in ["bfloat16", "float16"]:
+            return {"DTYPE": model_dtype}
+        return {}
 
 
 def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]) -> BaseModelConfig:  # noqa: C901
@@ -270,7 +286,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
     # Endpoint
     if args.endpoint_model_name:
         if args.reuse_existing or args.vendor is not None:
-            model = args.endpoint_model_name.split("/")[1].lower()
+            model = args.endpoint_model_name.split("/")[1].replace(".", "-").lower()
             return InferenceEndpointModelConfig(
                 name=f"{model}-lighteval",
                 repository=args.endpoint_model_name,
@@ -280,6 +296,8 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
                 instance_size=args.instance_size,
                 instance_type=args.instance_type,
                 should_reuse_existing=args.reuse_existing,
+                model_dtype=args.model_dtype,
+                revision=args.revision or "main",
             )
         return InferenceModelConfig(model=args.endpoint_model_name)
 
