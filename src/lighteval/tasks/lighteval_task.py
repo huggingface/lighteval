@@ -690,7 +690,7 @@ def create_requests_from_tasks(  # noqa: C901
                     # to fix!!
                     cur_task_name = f"{task_name}|{num_fewshot}"
                     doc = task_docs[doc_id]
-                    is_multi_turn = len(doc.specific.get("multi_turn_queries", [])) > 0
+                    is_multi_turn = doc.specific is not None and len(doc.specific.get("multi_turn_queries", [])) > 0
 
                     if not is_multi_turn:
                         ctx, num_effective_few_shots = task.fewshot_sampler.fewshot_context(
