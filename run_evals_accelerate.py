@@ -104,12 +104,6 @@ def get_parser():
         default=None,
         help="Path to a file with custom tasks (a TASK list of dict and potentially prompt formating functions)",
     )
-    parser.add_argument(
-        "--extended_tasks",
-        type=str,
-        default=None,
-        help="Path to the folder which contains all extended tasks",
-    )
     group.add_argument(
         "--tasks",
         type=str,
