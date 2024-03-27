@@ -215,28 +215,11 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         Returns:
             Any: The collated data.
         """
-        print(request.tokenized_context)
-        toks = sum([len(context) for context in request.tokenized_context])
+        toks = request.tokenized_context
         gen_length = request.generation_size
         # The generative task has no limit except the model context
         if gen_length is None:
             gen_length = 0
-        return -(len(toks) + gen_length)
-
-
-class GenerativeTaskMultiTurnDataset(DynamicBatchDataset):
-    def _sorting_criteria(self, request: GreedyUntilRequest | GreedyUntilWithLogitsRequest) -> int:
-        """
-        Collate function for generating batches.
-
-        Args:
-            x (Any): The input data.
-
-        Returns:
-            Any: The collated data.
-        """
-        toks = sum([len(r) for r in request.tokenized_contexts])
-        gen_length = request.generation_size
         return -(len(toks) + gen_length)
 
 

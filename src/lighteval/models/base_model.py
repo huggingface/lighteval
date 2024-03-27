@@ -366,7 +366,7 @@ class BaseModel(LightevalModel):
     ) -> GenerateMultiTurnReturn:
         for request in requests:
             request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
-            request.tokenized_context = self.tok_encode(request.context)
+            request.tokenized_context = self.tok_encode(request.context)["input_ids"]
 
         results = []
 
