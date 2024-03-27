@@ -131,14 +131,13 @@ def main(args):
             final_dict = evaluation_tracker.generate_final_dict()
 
         with htrack_block("Cleaninp up"):
-            if args.delta_weights:
-                tmp_weights_dir = f"{evaluation_tracker.general_config_logger.model_name}-delta-applied"
-                hlog(f"Removing {tmp_weights_dir}")
-                shutil.rmtree(tmp_weights_dir)
-            if args.adapter_weights:
-                tmp_weights_dir = f"{evaluation_tracker.general_config_logger.model_name}-adapter-applied"
-                hlog(f"Removing {tmp_weights_dir}")
-                shutil.rmtree(tmp_weights_dir)
+            for weights in ["delta", "adapter"]:
+                try:
+                    tmp_weights_dir = f"{evaluation_tracker.general_config_logger.model_name}-{weights}-applied"
+                    hlog(f"Removing {tmp_weights_dir}")
+                    shutil.rmtree(tmp_weights_dir)
+                except OSError:
+                    pass
 
         print(make_results_table(final_dict))
 

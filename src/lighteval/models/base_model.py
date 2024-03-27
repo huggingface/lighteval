@@ -90,7 +90,7 @@ class BaseModel(LightevalModel):
         self.model_name = _simplify_name(config.pretrained)
         self.model_sha = config.get_model_sha()
 
-        self.precision = _get_dtype(config.dtype, model_auto_config=self._config)
+        self.precision = _get_dtype(config.dtype, config=self._config)
 
     @property
     def tokenizer(self):
