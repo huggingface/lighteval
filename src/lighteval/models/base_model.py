@@ -376,13 +376,11 @@ class BaseModel(LightevalModel):
         if self.accelerator:
             dataloader = self.accelerator.prepare(dataloader)
 
-        # Always batch size 1 for multi-turn
+        hlog_warn("Running greedy multi turn generation, the batch size is set to 1 for this task.")
+
         for request_batch in tqdm(
             dataloader, desc="Greedy Multi Turn generation", position=1, leave=False, disable=self.disable_tqdm
         ):
-            # NOTE: we are assuming all items in a batch behave similarly (same
-            # stop_tokens and max_tokens genrated) which is not necessarily
-            # the case! Because of that we only use batch size of 1
             request = request_batch[0]
             stop_tokens = request.stop_sequence
             max_generated_tokens = request.generation_size
@@ -401,9 +399,7 @@ class BaseModel(LightevalModel):
             stopping_criteria = transformers.StoppingCriteriaList(
                 [
                     *[
-                        MultiTokenEOSCriteria(
-                            sequence, self.tokenizer, input_ids_shape=model_inputs["input_ids"].shape
-                        )
+                        MultiTokenEOSCriteria(sequence, self.tokenizer, input_ids_shape=model_inputs["input_ids"].shape)
                         for sequence in stop_tokens
                     ],
                 ]
@@ -438,9 +434,7 @@ class BaseModel(LightevalModel):
                 stopping_criteria = transformers.StoppingCriteriaList(
                     [
                         *[
-                            MultiTokenEOSCriteria(
-                                sequence, self.tokenizer, input_ids_shape=model_inputs["input_ids"].shape
-                            )
+                            MultiTokenEOSCriteria(sequence, self.tokenizer, input_ids_shape=model_inputs["input_ids"].shape)
                             for sequence in stop_tokens
                         ],
                     ]
@@ -456,7 +450,7 @@ class BaseModel(LightevalModel):
                     if self.tokenizer.pad_token_id
                     else self.tokenizer.eos_token_id,
                 )
-                model_outputs = model_outputs[0, model_inputs["input_ids"].size(1):]  # batch size 1
+                model_outputs = model_outputs[0, model_inputs["input_ids"].size(1):]
                 model_generations.append(model_outputs)
                 decoded_generation = self.tokenizer.decode(model_outputs, skip_special_tokens=True)
 
@@ -635,7 +629,7 @@ class BaseModel(LightevalModel):
         )
         if returns_logits:
             logits = self.model.compute_transition_scores(outputs.sequences, outputs.scores, normalize_logits=True)
-        generations = outputs.sequences[:, batch.input_ids.size(1):]
+        generations = outputs.sequences[:, batch.input_ids.size(1) :]
         generations, len_gens = self.pad_and_gather(generations)
         batch.input_ids, len_ids = self.pad_and_gather(batch.input_ids)
 
@@ -739,7 +733,7 @@ class BaseModel(LightevalModel):
                 max_context_continuation_size_allowed = len(context_enc + continuation_enc)
             else:  # in normal mode, we left cut the context if needed
                 max_context_continuation_size_allowed = len(
-                    (context_enc + continuation_enc)[-(self.max_length + 1):][:-1]
+                    (context_enc + continuation_enc)[-(self.max_length + 1) :][:-1]
                 )
 
             batch_size = self._get_batch_size(
@@ -776,7 +770,7 @@ class BaseModel(LightevalModel):
                         cont_toks = cont_toks[:inplen].unsqueeze(0).to(self.device)  # [1, seq]
                     else:
                         cur_logits = (
-                            cur_logits[inplen - contlen: inplen].unsqueeze(0).to(self.device)
+                            cur_logits[inplen - contlen : inplen].unsqueeze(0).to(self.device)
                         )  # [1, seq, voc]
                         cont_toks = cont_toks.unsqueeze(0).to(self.device)  # [1, seq]
 
@@ -959,7 +953,7 @@ class BaseModel(LightevalModel):
 
         for split_start, split_end in tqdm(dataset.splits_start_end_iterator()):
             context_enc = dataset[0].tokenized_context
-            max_context = len(context_enc[-self.max_length:])
+            max_context = len(context_enc[-self.max_length :])
             batch_size = self._get_batch_size(override_bs=override_bs, max_input_length=max_context)
             starting_batch_size = batch_size * 2
 
@@ -1059,7 +1053,7 @@ class MultiTokenEOSCriteria(transformers.StoppingCriteria):
 
     def __call__(self, input_ids, scores, **kwargs) -> bool:
         # For efficiency, we compare the last n tokens where n is the number of tokens in the stop_sequence
-        lookback_ids_batch = input_ids[:, self.initial_decoder_input_length:][:, -self.sequence_id_len:]
+        lookback_ids_batch = input_ids[:, self.initial_decoder_input_length :][:, -self.sequence_id_len :]
 
         lookback_tokens_batch = self.tokenizer.batch_decode(lookback_ids_batch)
 

@@ -623,47 +623,6 @@ def download_dataset_worker(args):
     return dataset
 
 
-def create_multi_turn_contexts(
-    doc: Doc, use_chat_template: bool, system_prompt: Optional[str], tokenizer: PreTrainedTokenizer
-) -> list[str]:
-    """Creates N contexts (depending on the number of turn) for a tasks.
-    Multi turn tasks need use chat templating.
-
-    Args:
-        doc (Doc): Formated document.
-        use_chat_template (bool): wether or not to use chat template. Will fail if false.
-        system_prompt (Optional[str]): The system prompt to use
-        tokenizer (PreTrainedTokenizer): The tokenizer used for the chat template
-
-    Raises:
-        ValueError: If use_chat_template is set to false.
-
-    Returns:
-        list[str]: contexts for every turn
-    """
-    if not use_chat_template:
-        raise ValueError("You need to use the chat template to create multi turn contexts")
-
-    role_content_list = []
-    if system_prompt is not None:
-        role_content_list.append({"role": "system", "content": system_prompt})
-
-    for i in doc.specific["multi_turn_queries"]:
-        role_content_list.append({"role": "user", "content": i})
-        role_content_list.append({"role": "assistant", "content": "{model_response}"})
-    role_content_list.pop(-1)
-
-    contexts = []
-    offset = 2 if system_prompt is not None else 1
-    for i in range(0, len(role_content_list), offset + 1):
-        c = tokenizer.apply_chat_template(
-            role_content_list[: i + offset], add_generation_prompt=True, tokenize=False, add_special_tokens=False
-        )
-        contexts.append(c)
-
-    return contexts, 0
-
-
 def create_requests_from_tasks(  # noqa: C901
     task_dict: dict[str, LightevalTask],
     fewshot_dict: dict[str, list[Tuple[int, bool]]],
@@ -748,7 +707,7 @@ def create_requests_from_tasks(  # noqa: C901
                             system_prompt=system_prompt,
                         )
                     else:
-                        ctx, num_effective_few_shots = create_multi_turn_contexts(
+                        ctx, num_effective_few_shots = task.fewshot_sampler.create_multi_turn_contexts(
                             doc, use_chat_template, system_prompt, lm.tokenizer
                         )
                         doc.specific["multi_turn_queries_context"] = ctx

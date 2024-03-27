@@ -215,7 +215,8 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         Returns:
             Any: The collated data.
         """
-        toks = request.tokenized_context
+        print(request.tokenized_context)
+        toks = sum([len(context) for context in request.tokenized_context])
         gen_length = request.generation_size
         # The generative task has no limit except the model context
         if gen_length is None:

@@ -322,6 +322,8 @@ class DetailsLogger:
             doc (Doc): Current sample that we want to store.
             outputs (list[ModelReturn]): Model outputs for the current sample
             metrics (_type_): Model scores for said sample on the current task's metrics.
+            llm_as_prompt_judgement (tuple[str, str]): Tuple containing the
+                prompt passed to the judge and the judgement for the current sample when using llm-as-judge metric.
         """
         detail = self.Detail()
         detail.example = doc.query
