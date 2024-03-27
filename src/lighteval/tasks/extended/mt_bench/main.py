@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 
-# ruff: noqa: F405, F403, F401
+# ruff: noqa: F405, F403, F401, I001
 """
 Custom evaluation tasks for lighteval. Copy this file and complete it with the info for your task.
 This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
