@@ -71,6 +71,7 @@ def get_parser():
     parser.add_argument("--inference_server_auth", type=str, default=None)
     # Model type 3) Inference endpoints
     task_type_group.add_argument("--endpoint_model_name", type=str)
+    parser.add_argument("--revision", type=str)
     parser.add_argument("--accelerator", type=str, default=None)
     parser.add_argument("--vendor", type=str, default=None)
     parser.add_argument("--region", type=str, default=None)
@@ -102,12 +103,6 @@ def get_parser():
         type=str,
         default=None,
         help="Path to a file with custom tasks (a TASK list of dict and potentially prompt formating functions)",
-    )
-    parser.add_argument(
-        "--extended_tasks",
-        type=str,
-        default=None,
-        help="Path to the folder which contains all extended tasks",
     )
     group.add_argument(
         "--tasks",

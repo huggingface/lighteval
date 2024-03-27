@@ -19,3 +19,15 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
+from lighteval.utils import can_load_extended_tasks
+
+
+if can_load_extended_tasks():
+    import lighteval.tasks.extended.ifeval.main as ifeval
+    import lighteval.tasks.extended.tiny_benchmarks.main as tiny_benchmarks
+
+    AVAILABLE_EXTENDED_TASKS_MODULES = [ifeval, tiny_benchmarks]
+
+else:
+    AVAILABLE_EXTENDED_TASKS_MODULES = []

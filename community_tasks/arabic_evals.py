@@ -26,6 +26,9 @@ Custom evaluation tasks for lighteval
 
 This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
 """
+import random
+import re
+
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
@@ -61,7 +64,7 @@ class CustomArabicMMLUTask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function="mmlu_arabic",
             hf_repo="OALL/Arabic_MMLU",
-            metric=["loglikelihood_acc"],
+            metric=["loglikelihood_acc_norm"],
             hf_avail_splits=["test", "dev"],
             evaluation_splits=["test"],
             few_shots_split="dev",
@@ -128,7 +131,7 @@ class CustomACVATask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function="acva",
             hf_repo="OALL/ACVA",
-            metric=["loglikelihood_acc"],
+            metric=["loglikelihood_acc_norm"],
             hf_avail_splits=["test", "validation"],
             evaluation_splits=["test"],
             few_shots_split="validation",
@@ -168,7 +171,7 @@ arabic_exams_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc"],
+    metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
 )
 
@@ -196,7 +199,386 @@ def arabic_exams(line, task_name: str = None):
     )
 
 
-_TASKS = ARABIC_MMLU_TASKS + ACVA_TASKS + [arabic_exams_task]
+# ALGHAFA NATIVE ##
+# fmt: off
+ALGHAFA_SUBSETS = [
+    "mcq_exams_test_ar", "meta_ar_dialects", "meta_ar_msa", "multiple_choice_facts_truefalse_balanced_task", "multiple_choice_grounded_statement_soqal_task",
+    "multiple_choice_grounded_statement_xglue_mlqa_task", "multiple_choice_rating_sentiment_no_neutral_task", "multiple_choice_rating_sentiment_task",
+    "multiple_choice_sentiment_task"
+]
+# fmt: on
+
+
+class CustomAlGhafaNativeTask(LightevalTaskConfig):
+    def __init__(
+        self,
+        name,
+        hf_subset,
+    ):
+        super().__init__(
+            name=name,
+            hf_subset=hf_subset,
+            prompt_function="alghafa_prompt",
+            hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Native",
+            metric=["loglikelihood_acc_norm"],
+            hf_avail_splits=["test", "validation"],
+            evaluation_splits=["test"],
+            few_shots_split="validation",
+            few_shots_select="sequential",
+            suite=["community"],
+            generation_size=-1,
+            stop_sequence=None,
+            output_regex=None,
+            frozen=False,
+        )
+
+
+ALGHAFA_TASKS = [CustomAlGhafaNativeTask(name=f"alghafa:{subset}", hf_subset=subset) for subset in ALGHAFA_SUBSETS]
+
+
+def alghafa_prompt(line, task_name: str = None):
+    question = line["query"]
+    answer_index = int(line["label"])
+    # Dynamically determining the choices by excluding '__few_shots', 'query' and 'label'
+    choices_keys = [key for key in line.keys() if key not in ["query", "label", "__few_shots"]]
+    choices = [line[key] for key in choices_keys]
+
+    instruction = "الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح\n\n"
+    query = f"{instruction}السؤال: {question}\n"
+    for index, choice in enumerate(choices):
+        query += f"{index}) {choice}\n"
+    query += "الإجابة:"
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=choices,
+        gold_index=answer_index,
+        instruction=instruction,
+        target_for_fewshot_sorting=choices[answer_index],
+    )
+
+
+# ALGHAFA TRANSLATED ##
+# race_ar
+race_ar_task = LightevalTaskConfig(
+    name="race_ar",
+    prompt_function="alghafa_prompt",
+    suite=["community"],
+    hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
+    hf_subset="race_ar",
+    hf_avail_splits=["test", "validation"],
+    evaluation_splits=["test"],
+    few_shots_split="validation",
+    few_shots_select="sequential",
+    metric=["loglikelihood_acc_norm"],
+    trust_dataset=True,
+)
+
+
+# piqa_ar
+piqa_ar_task = LightevalTaskConfig(
+    name="piqa_ar",
+    prompt_function="alghafa_prompt",
+    suite=["community"],
+    hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
+    hf_subset="piqa_ar",
+    hf_avail_splits=["test", "validation"],
+    evaluation_splits=["test"],
+    few_shots_split="validation",
+    few_shots_select="sequential",
+    metric=["loglikelihood_acc_norm"],
+    trust_dataset=True,
+)
+
+
+# arc_easy_ar
+arc_easy_ar_task = LightevalTaskConfig(
+    name="arc_easy_ar",
+    prompt_function="alghafa_prompt",
+    suite=["community"],
+    hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
+    hf_subset="arc_easy_ar",
+    hf_avail_splits=["test", "validation"],
+    evaluation_splits=["test"],
+    few_shots_split="validation",
+    few_shots_select="sequential",
+    metric=["loglikelihood_acc_norm"],
+    trust_dataset=True,
+)
+
+
+# arc_challenge_okapi_ar
+arc_challenge_okapi_ar_task = LightevalTaskConfig(
+    name="arc_challenge_okapi_ar",
+    prompt_function="alghafa_prompt",
+    suite=["community"],
+    hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
+    hf_subset="arc_challenge_okapi_ar",
+    hf_avail_splits=["test", "validation"],
+    evaluation_splits=["test"],
+    few_shots_split="validation",
+    few_shots_select="sequential",
+    metric=["loglikelihood_acc_norm"],
+    trust_dataset=True,
+)
+
+
+# mmlu_okapi_ar
+mmlu_okapi_ar_task = LightevalTaskConfig(
+    name="mmlu_okapi_ar",
+    prompt_function="alghafa_prompt",
+    suite=["community"],
+    hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
+    hf_subset="mmlu_okapi_ar",
+    hf_avail_splits=["test", "validation"],
+    evaluation_splits=["test"],
+    few_shots_split="validation",
+    few_shots_select="sequential",
+    metric=["loglikelihood_acc_norm"],
+    trust_dataset=True,
+)
+
+
+# openbook_qa_ext_ar
+openbook_qa_ext_ar_task = LightevalTaskConfig(
+    name="openbook_qa_ext_ar",
+    prompt_function="alghafa_prompt",
+    suite=["community"],
+    hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
+    hf_subset="openbook_qa_ext_ar",
+    hf_avail_splits=["test", "validation"],
+    evaluation_splits=["test"],
+    few_shots_split="validation",
+    few_shots_select="sequential",
+    metric=["loglikelihood_acc_norm"],
+    trust_dataset=True,
+)
+
+
+# boolq_ar
+boolq_ar_task = LightevalTaskConfig(
+    name="boolq_ar",
+    prompt_function="boolq_prompt_arabic",
+    suite=["community"],
+    hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
+    hf_subset="boolq_ar",
+    hf_avail_splits=["test", "validation"],
+    evaluation_splits=["test"],
+    few_shots_split="validation",
+    few_shots_select="sequential",
+    metric=["loglikelihood_acc_norm"],
+    trust_dataset=True,
+)
+
+
+def boolq_prompt_arabic(line, task_name: str = None):
+    question = line["question"]
+    passage = line["passage"]
+    answer = "نعم" if line["answer"] else "لا"
+    instruction = "بناء على المقطع التالي، أجب عن السؤال ب نعم أو لا"
+    query = f"""{instruction}
+    المقطع :
+    {passage}
+    السؤال:
+    {question}
+    الإجابة:
+    """
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=["نعم", "لا"],
+        gold_index=0 if line["answer"] else 1,
+        instruction=instruction,
+        target_for_fewshot_sorting=answer,
+    )
+
+
+# copa_ext_ar
+copa_ext_ar_task = LightevalTaskConfig(
+    name="copa_ext_ar",
+    prompt_function="copa_prompt_arabic",
+    suite=["community"],
+    hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
+    hf_subset="copa_ext_ar",
+    hf_avail_splits=["test", "validation"],
+    evaluation_splits=["test"],
+    few_shots_split="validation",
+    few_shots_select="sequential",
+    metric=["loglikelihood_acc_norm"],
+    trust_dataset=True,
+)
+
+
+def copa_prompt_arabic(line, task_name: str = None):
+    premise = line["premise"]
+    choices = [line["choice1"], line["choice2"]]
+    question_map = {"cause": "لأن", "effect": "لذلك"}
+    question = question_map[line["question"]]
+    answer = line["label"]
+
+    query = "{}، {} :\n0) {}\n1) {}\nالإجابة:".format(premise, question, choices[0], choices[1])
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=choices,
+        gold_index=answer,
+        instruction="",
+        target_for_fewshot_sorting=choices[answer],
+    )
+
+
+# hellaswag_okapi_ar
+hellaswag_okapi_ar_task = LightevalTaskConfig(
+    name="hellaswag_okapi_ar",
+    prompt_function="hellaswag_prompt_arabic",
+    suite=["community"],
+    hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
+    hf_subset="hellaswag_okapi_ar",
+    hf_avail_splits=["test", "validation"],
+    evaluation_splits=["test"],
+    few_shots_split="validation",
+    few_shots_select="sequential",
+    metric=["loglikelihood_acc_norm"],
+    trust_dataset=True,
+)
+
+
+def hellaswag_prompt_arabic(line, task_name: str = None):
+    ctx = re.sub(r"\[.*?\]", "", line["ctx"])  # Remove latin words within brackets
+    endings = [
+        re.sub(r"\[.*?\]", "", e) for e in eval(line["endings"])
+    ]  # endings is a string representation of a list
+    answer_index = line["label"]
+    instruction = "بناء على السياق التالي، اختر النهاية الصحيحة من الاقتراحات التالية"
+
+    query = f"""{instruction}
+    السياق:
+    {ctx}
+    الاقتراحات:
+
+    """
+    for i, ending in enumerate(endings):
+        query += f"{i}) {ending}\n"
+    query += "الإجابة:"
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=endings,
+        gold_index=answer_index,
+        instruction=instruction,
+        target_for_fewshot_sorting=endings[answer_index],
+    )
+
+
+# toxigen_ar
+toxigen_ar_task = LightevalTaskConfig(
+    name="toxigen_ar",
+    prompt_function="toxigen_prompt_arabic",
+    suite=["community"],
+    hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
+    hf_subset="toxigen_ar",
+    hf_avail_splits=["test", "validation"],
+    evaluation_splits=["test"],
+    few_shots_split="validation",
+    few_shots_select="sequential",
+    metric=["loglikelihood_acc_norm"],
+    trust_dataset=True,
+)
+
+
+def toxigen_prompt_arabic(line, task_name: str = None):
+    text = line["text"]
+    label = 1 if ((line["toxicity_ai"] + line["toxicity_human"]) > 5.5) else 0
+    instruction = 'هل العبارة التالية تحض على الكراهية؟ قم بالرد بـ"نعم" أو "لا".'
+
+    query = f"""{instruction}
+    العبارة:
+    '{text}'
+    الإجابة:
+    """
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=["لا", "نعم"],
+        gold_index=label,
+        instruction=instruction,
+        target_for_fewshot_sorting="نعم" if label == 1 else "لا",
+    )
+
+
+# sciq_ar
+sciq_ar_task = LightevalTaskConfig(
+    name="sciq_ar",
+    prompt_function="sciq_prompt_arabic",
+    suite=["community"],
+    hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
+    hf_subset="sciq_ar",
+    hf_avail_splits=["test", "validation"],
+    evaluation_splits=["test"],
+    few_shots_split="validation",
+    few_shots_select="sequential",
+    metric=["loglikelihood_acc_norm"],
+    trust_dataset=True,
+)
+
+
+def sciq_prompt_arabic(line, task_name: str = None):
+    support = line["support"]
+    question = line["question"]
+    correct_answer = line["correct_answer"]
+    choices = [line["distractor1"], line["distractor2"], line["distractor3"], correct_answer]
+
+    # Shuffle the choices
+    random.shuffle(choices)
+
+    answer_index = choices.index(correct_answer)
+
+    instruction = "بناءً على السياق أدناه، اختر الإجابة الصحيحة للسؤال التالي من قائمة الاقتراحات"
+
+    query = f"""{instruction}
+    السياق:
+    {support}
+    السؤال:
+    {question}
+    الإجابات المحتملة:
+
+    """
+    for i, choice in enumerate(choices):
+        query += f"{i}) {choice}\n"
+    query += "الإجابة:"
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=choices,
+        gold_index=answer_index,
+        instruction=instruction,
+        target_for_fewshot_sorting=choices[answer_index],
+    )
+
+
+_TASKS = (
+    ARABIC_MMLU_TASKS
+    + ACVA_TASKS
+    + ALGHAFA_TASKS
+    + [arabic_exams_task]
+    + [race_ar_task]
+    + [piqa_ar_task]
+    + [arc_easy_ar_task]
+    + [arc_challenge_okapi_ar_task]
+    + [mmlu_okapi_ar_task]
+    + [openbook_qa_ext_ar_task]
+    + [boolq_ar_task]
+    + [copa_ext_ar_task]
+    + [hellaswag_okapi_ar_task]
+    + [toxigen_ar_task]
+    + [sciq_ar_task]
+)
 
 # Convert to dict for lighteval
 TASKS_TABLE = [task.as_dict() for task in _TASKS]
