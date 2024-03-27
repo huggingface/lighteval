@@ -337,15 +337,15 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
             # Keeping only non null params
             args_dict = {k: v for k, v in args_dict.items() if v is not None}
 
-            if args.delta_weights:
-                if args.base_model is None:
+            if config["merged_weights"]["delta_weights"]:
+                if config["merged_weights"]["base_model"] is None:
                     raise ValueError("You need to specify a base model when using delta weights")
                 return DeltaModelConfig(**args_dict)
-            if args.adapter_weights:
-                if args.base_model is None:
+            if config["merged_weights"]["adapter_weights"]:
+                if config["merged_weights"]["base_model"] is None:
                     raise ValueError("You need to specify a base model when using adapter weights")
                 return AdapterModelConfig(**args_dict)
-            if args.base_model is not None:
+            if config["merged_weights"]["base_model"] is not None:
                 raise ValueError("You can't specifify a base model if you are not using delta/adapter weights")
             return BaseModelConfig(**args_dict)
 
