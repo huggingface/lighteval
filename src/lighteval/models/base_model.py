@@ -629,7 +629,7 @@ class BaseModel(LightevalModel):
             pad_token_id=self.tokenizer.pad_token_id if self.tokenizer.pad_token_id else self.tokenizer.eos_token_id,
             return_dict_in_generate=True,
             output_scores=True,
-            # eos_token_id=self.tokenizer.eos_token_id,
+            eos_token_id=self.tokenizer.eos_token_id,
         )
         if returns_logits:
             logits = self.model.compute_transition_scores(outputs.sequences, outputs.scores, normalize_logits=True)
