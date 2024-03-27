@@ -128,6 +128,7 @@ community|race_ar|5|1
 community|piqa_ar|5|1
 community|arc_easy_ar|5|1
 community|arc_challenge_okapi_ar|5|1
+community|mmlu_okapi_ar|5|1
 community|openbook_qa_ext_ar|5|1
 community|boolq_ar|5|1
 community|copa_ext_ar|5|1
