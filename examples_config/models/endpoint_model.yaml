@@ -1,0 +1,18 @@
+model:
+  type: "endpoint" # can be base, tgi, or endpoint
+  base_params:
+    endpoint_name: ""
+    model: ""
+    revision: "main"
+    dtype: "" # can be any of "awq", "eetq", "gptq", "4bit' or "8bit" (will use bitsandbytes), "bfloat16" or "float16"
+    reuse_existing: false # if true, ignore all params in instance
+  instance:
+    accelerator: ""
+    region: ""
+    vendor: ""
+    instance_size: ""
+    instance_type: ""
+    framework: "pytorch"
+    endpoint_type: "protected"
+  generation:
+    add_special_tokens: true

@@ -25,6 +25,7 @@ from dataclasses import dataclass
 from typing import Dict, Optional, Union
 
 import torch
+import yaml
 from transformers import AutoConfig, BitsAndBytesConfig, GPTQConfig, PretrainedConfig
 
 from lighteval.logging.hierarchical_logger import hlog
@@ -270,74 +271,82 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
         ValueError: If a base model is not specified when using delta weights or adapter weights.
         ValueError: If a base model is specified when not using delta weights or adapter weights.
     """
-    if args.inference_server_address is not None and args.model_args is not None:
-        raise ValueError("You cannot both use an inference server and load a model from its checkpoint.")
-    if args.inference_server_address is not None and args.endpoint_model_name is not None:
-        raise ValueError("You cannot both use a local inference server and load a model from an inference endpoint.")
-    if args.endpoint_model_name is not None and args.model_args is not None:
-        raise ValueError("You cannot both load a model from its checkpoint and from an inference endpoint.")
+    if args.model_args:
+        args_dict = {k.split("=")[0]: k.split("=")[1] for k in args.model_args.split(",")}
+        args_dict["accelerator"] = accelerator
 
-    # TGI
-    if args.inference_server_address is not None:
-        return TGIModelConfig(
-            inference_server_address=args.inference_server_address, inference_server_auth=args.inference_server_auth
-        )
+        return BaseModelConfig(**args_dict)
 
-    # Endpoint
-    if args.endpoint_model_name:
-        if args.reuse_existing or args.vendor is not None:
-            model = args.endpoint_model_name.split("/")[1].replace(".", "-").lower()
-            return InferenceEndpointModelConfig(
-                name=f"{model}-lighteval",
-                repository=args.endpoint_model_name,
-                accelerator=args.accelerator,
-                region=args.region,
-                vendor=args.vendor,
-                instance_size=args.instance_size,
-                instance_type=args.instance_type,
-                should_reuse_existing=args.reuse_existing,
-                model_dtype=args.model_dtype,
-                revision=args.revision or "main",
+    with open(args.model_config_path, "r") as f:
+        config = yaml.safe_load(f)["model"]
+
+        if config["type"] == "tgi":
+            return TGIModelConfig(
+                inference_server_address=args["instance"]["inference_server_address"],
+                inference_server_auth=args["instance"]["inference_server_auth"],
             )
-        return InferenceModelConfig(model=args.endpoint_model_name)
 
-    # Base
-    multichoice_continuations_start_space = args.multichoice_continuations_start_space
-    if not multichoice_continuations_start_space and not args.no_multichoice_continuations_start_space:
-        multichoice_continuations_start_space = None
-    if args.multichoice_continuations_start_space and args.no_multichoice_continuations_start_space:
-        raise ValueError(
-            "You cannot force both the multichoice continuations to start with a space and not to start with a space"
-        )
+        if config["type"] == "endpoint":
+            reuse_existing_endpoint = config["base_params"]["reuse_existing"]
+            complete_config_endpoint = all(val not in [None, ""] for val in config["instance"].values())
+            if reuse_existing_endpoint or complete_config_endpoint:
+                return InferenceEndpointModelConfig(
+                    name=config["base_params"]["endpoint_name"].replace(".", "-").lower(),
+                    repository=config["base_params"]["model"],
+                    model_dtype=config["base_params"]["dtype"],
+                    revision=config["base_params"]["revision"] or "main",
+                    should_reuse_existing=reuse_existing_endpoint,
+                    accelerator=config["instance"]["accelerator"],
+                    region=config["instance"]["region"],
+                    vendor=config["instance"]["vendor"],
+                    instance_size=config["instance"]["instance_size"],
+                    instance_type=config["instance"]["instance_type"],
+                )
+            return InferenceModelConfig(model=config["base_params"]["endpoint_name"])
 
-    if "load_in_4bit=True" in args.model_args:
-        quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.float16)
-    elif "load_in_8bit=True" in args.model_args:
-        quantization_config = BitsAndBytesConfig(load_in_8bit=True)
-    else:
-        quantization_config = None
+        if config["type"] == "base":
+            # Tests on the multichoice space parameters
+            multichoice_continuations_start_space = config["generation"]["multichoice_continuations_start_space"]
+            no_multichoice_continuations_start_space = config["generation"]["no_multichoice_continuations_start_space"]
+            if not multichoice_continuations_start_space and not no_multichoice_continuations_start_space:
+                multichoice_continuations_start_space = None
+            if multichoice_continuations_start_space and no_multichoice_continuations_start_space:
+                raise ValueError(
+                    "You cannot force both the multichoice continuations to start with a space and not to start with a space"
+                )
 
-    # We extract the model args
-    args_dict = {k.split("=")[0]: k.split("=")[1] for k in args.model_args.split(",")}
-    # We store the relevant other args
-    args_dict["base_model"] = args.base_model
-    args_dict["batch_size"] = args.override_batch_size
-    args_dict["accelerator"] = accelerator
-    args_dict["quantization_config"] = quantization_config
-    args_dict["dtype"] = args.model_dtype
-    args_dict["multichoice_continuations_start_space"] = multichoice_continuations_start_space
+            # Creating optional quantization configuration
+            if config["base_params"]["dtype"] == "4bit":
+                quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.float16)
+            elif config["base_params"]["dtype"] == "8bit":
+                quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+            else:
+                quantization_config = None
 
-    # Keeping only non null params
-    args_dict = {k: v for k, v in args_dict.items() if v is not None}
+            # We extract the model args
+            args_dict = {k.split("=")[0]: k.split("=")[1] for k in config["base_params"]["model_args"].split(",")}
 
-    if args.delta_weights:
-        if args.base_model is None:
-            raise ValueError("You need to specify a base model when using delta weights")
-        return DeltaModelConfig(**args_dict)
-    if args.adapter_weights:
-        if args.base_model is None:
-            raise ValueError("You need to specify a base model when using adapter weights")
-        return AdapterModelConfig(**args_dict)
-    if args.base_model is not None:
-        raise ValueError("You can't specifify a base model if you are not using delta/adapter weights")
-    return BaseModelConfig(**args_dict)
+            # We store the relevant other args
+            args_dict["base_model"] = config["merged_weights"]["base_model"]
+            args_dict["dtype"] = config["base_params"]["model_dtype"]
+            args_dict["accelerator"] = accelerator
+            args_dict["quantization_config"] = quantization_config
+            args_dict["batch_size"] = args.override_batch_size
+            args_dict["multichoice_continuations_start_space"] = multichoice_continuations_start_space
+
+            # Keeping only non null params
+            args_dict = {k: v for k, v in args_dict.items() if v is not None}
+
+            if args.delta_weights:
+                if args.base_model is None:
+                    raise ValueError("You need to specify a base model when using delta weights")
+                return DeltaModelConfig(**args_dict)
+            if args.adapter_weights:
+                if args.base_model is None:
+                    raise ValueError("You need to specify a base model when using adapter weights")
+                return AdapterModelConfig(**args_dict)
+            if args.base_model is not None:
+                raise ValueError("You can't specifify a base model if you are not using delta/adapter weights")
+            return BaseModelConfig(**args_dict)
+
+        raise ValueError(f"Unknown model type in your model config file: {config['type']}")
