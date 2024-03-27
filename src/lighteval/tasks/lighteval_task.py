@@ -28,7 +28,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 from datasets import load_dataset
-from transformers import PreTrainedTokenizer
 
 from lighteval.few_shot_manager import FewShotSampler
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn

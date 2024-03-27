@@ -399,7 +399,9 @@ class BaseModel(LightevalModel):
             stopping_criteria = transformers.StoppingCriteriaList(
                 [
                     *[
-                        MultiTokenEOSCriteria(sequence, self.tokenizer, input_ids_shape=model_inputs["input_ids"].shape)
+                        MultiTokenEOSCriteria(
+                            sequence, self.tokenizer, input_ids_shape=model_inputs["input_ids"].shape
+                        )
                         for sequence in stop_tokens
                     ],
                 ]
@@ -413,7 +415,7 @@ class BaseModel(LightevalModel):
                 if self.tokenizer.pad_token_id
                 else self.tokenizer.eos_token_id,
             )
-            model_outputs = model_outputs[0, model_inputs["input_ids"].size(1):]
+            model_outputs = model_outputs[0, model_inputs["input_ids"].size(1) :]
             model_generations = [model_outputs]
             decoded_generation = self.tokenizer.decode(model_outputs)
             for term in stop_tokens:
@@ -434,7 +436,9 @@ class BaseModel(LightevalModel):
                 stopping_criteria = transformers.StoppingCriteriaList(
                     [
                         *[
-                            MultiTokenEOSCriteria(sequence, self.tokenizer, input_ids_shape=model_inputs["input_ids"].shape)
+                            MultiTokenEOSCriteria(
+                                sequence, self.tokenizer, input_ids_shape=model_inputs["input_ids"].shape
+                            )
                             for sequence in stop_tokens
                         ],
                     ]
@@ -450,7 +454,7 @@ class BaseModel(LightevalModel):
                     if self.tokenizer.pad_token_id
                     else self.tokenizer.eos_token_id,
                 )
-                model_outputs = model_outputs[0, model_inputs["input_ids"].size(1):]
+                model_outputs = model_outputs[0, model_inputs["input_ids"].size(1) :]
                 model_generations.append(model_outputs)
                 decoded_generation = self.tokenizer.decode(model_outputs, skip_special_tokens=True)
 

@@ -219,9 +219,8 @@ class FewShotSampler:
         )
         return instruction + labeled_examples + example
 
-    
-    def create_multi_turn_contexts(self,
-        doc: Doc, use_chat_template: bool, system_prompt: Optional[str], tokenizer: PreTrainedTokenizer
+    def create_multi_turn_contexts(
+        self, doc: Doc, use_chat_template: bool, system_prompt: Optional[str], tokenizer: PreTrainedTokenizer
     ) -> list[str]:
         """Creates N contexts (depending on the number of turn) for a tasks.
         Multi turn tasks need use chat templating.
