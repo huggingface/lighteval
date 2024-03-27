@@ -110,8 +110,6 @@ class BaseModelConfig:
         device (Union[int, str]): device to use for model training.
         quantization_config (Optional[BitsAndBytesConfig]): quantization
             configuration for the model. Needed for 4-bit and 8-bit precision.
-        load_in_8bit (bool): Whether to load the model in 8-bit precision.
-        load_in_4bit (bool): Whether to load the model in 4-bit precision.
         trust_remote_code (bool): Whether to trust remote code during model
             loading.
 
@@ -137,8 +135,6 @@ class BaseModelConfig:
     dtype: Optional[Union[str, torch.dtype]] = None
     device: Union[int, str] = "cuda"
     quantization_config: Optional[BitsAndBytesConfig] = None
-    load_in_8bit: bool = None
-    load_in_4bit: bool = None
     trust_remote_code: bool = False
 
     def __post_init__(self):
