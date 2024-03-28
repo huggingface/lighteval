@@ -21,15 +21,11 @@
 # SOFTWARE.
 
 import os
-from typing import TYPE_CHECKING, Optional, Union
+from typing import Optional, Union
 
 import torch
 from huggingface_hub import HfApi
 from transformers import AutoConfig
-
-
-if TYPE_CHECKING:
-    pass
 
 
 def _get_dtype(dtype: Union[str, torch.dtype], config: Optional[AutoConfig] = None) -> torch.dtype:
