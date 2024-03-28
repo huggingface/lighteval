@@ -141,7 +141,5 @@ def main(args):
 
         print(make_results_table(final_dict))
 
-        if not args.reuse_existing:
-            model.cleanup()
-
+        model.cleanup()
         return final_dict
