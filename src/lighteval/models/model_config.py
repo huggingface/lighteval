@@ -324,7 +324,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
 
             # We store the relevant other args
             args_dict["base_model"] = config["merged_weights"]["base_model"]
-            args_dict["dtype"] = config["base_params"]["model_dtype"]
+            args_dict["dtype"] = config["base_params"]["dtype"]
             args_dict["accelerator"] = accelerator
             args_dict["quantization_config"] = quantization_config
             args_dict["batch_size"] = args.override_batch_size
@@ -341,7 +341,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
                 if config["merged_weights"]["base_model"] is None:
                     raise ValueError("You need to specify a base model when using adapter weights")
                 return AdapterModelConfig(**args_dict)
-            if config["merged_weights"]["base_model"] is not None:
+            if config["merged_weights"]["base_model"] not in ["", None]:
                 raise ValueError("You can't specifify a base model if you are not using delta/adapter weights")
             return BaseModelConfig(**args_dict)
 
