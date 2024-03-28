@@ -23,7 +23,7 @@ from typing import Dict, Optional, Sequence, Union
 
 import langdetect
 
-import extended_tasks.ifeval.instructions_utils as instructions_util
+import lighteval.tasks.extended.ifeval.instructions_utils as instructions_util
 
 
 logger = logging.getLogger(__name__)

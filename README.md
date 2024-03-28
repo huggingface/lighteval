@@ -175,28 +175,38 @@ python run_evals_accelerate.py \
 
 Independently of the default tasks provided in `lighteval` that you will find in the `tasks_table.jsonl` file, you can use `lighteval` to evaluate models on tasks that require special processing (or have been added by the community). These tasks have their own evaluation suites and are defined as follows:
 
-* `extended`: tasks which have complex pre- or post-processing and are added by the `lighteval` maintainers. See the [`extended_tasks`](./extended_tasks) folder for examples.
+* `extended`: tasks which have complex pre- or post-processing and are added by the `lighteval` maintainers. See the [`extended_tasks`](./src/lighteval/tasks/extended_tasks) folder for examples.
 * `community`: tasks which have been added by the community. See the [`community_tasks`](./community_tasks) folder for examples.
 * `custom`: tasks which are defined locally and not present in the core library. Use this suite if you want to experiment with designing a special metric or task.
 
-For example, to run an extended task you can run:
 
-```shell
-python run_evals_accelerate.py \
-    --model_args="pretrained=<path to model on the hub>"\
-    --tasks <task parameters> \
-    --extended_tasks "extended_tasks" \
-    --output_dir output_dir
-```
-
-For example, to launch `lighteval` on `ifeval` for `HuggingFaceH4/zephyr-7b-beta`, run:
-
+For example, to run an extended task like ifeval, you can run:
 ```shell
 python run_evals_accelerate.py \
     --model_args "pretrained=HuggingFaceH4/zephyr-7b-beta" \
     --use_chat_template \ # optional, if you want to run the evaluation with the chat template
     --tasks "extended|ifeval|0|0" \
-    --extended_tasks "extended_tasks" \
+    --output_dir "./evals"
+```
+
+To run a community or custom task, you can use (note the custom_tasks flag):
+
+```shell
+python run_evals_accelerate.py \
+    --model_args="pretrained=<path to model on the hub>"\
+    --tasks <task parameters> \
+    --custom_tasks <path to your custom or community task> \
+    --output_dir output_dir
+```
+
+For example, to launch `lighteval` on `arabic_mmlu:abstract_algebra` for `HuggingFaceH4/zephyr-7b-beta`, run:
+
+```shell
+python run_evals_accelerate.py \
+    --model_args "pretrained=HuggingFaceH4/zephyr-7b-beta" \
+    --use_chat_template \ # optional, if you want to run the evaluation with the chat template
+    --tasks "community|arabic_mmlu:abstract_algebra|5|1" \
+    --custom_tasks "community_tasks/arabic_evals" \
     --output_dir "./evals"
 ```
 
@@ -217,7 +227,7 @@ However, we are very grateful to the Harness and HELM teams for their continued 
         - [logging](https://github.com/huggingface/lighteval/tree/main/src/lighteval/logging): Our loggers, to display experiment information and push it to the hub after a run
         - [metrics](https://github.com/huggingface/lighteval/tree/main/src/lighteval/metrics): All the available metrics you can use. They are described in metrics, and divided between sample metrics (applied at the sample level, such as a prediction accuracy) and corpus metrics (applied over the whole corpus). You'll also find available normalisation functions.
         - [models](https://github.com/huggingface/lighteval/tree/main/src/lighteval/models): Possible models to use. We cover transformers (base_model), with adapter or delta weights, as well as TGI models locally deployed (it's likely the code here is out of date though), and brrr/nanotron models.
-        - [tasks](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks): Available tasks. The complete list is in `tasks_table.jsonl`, and you'll find all the prompts in `tasks_prompt_formatting.py`.
+        - [tasks](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks): Available tasks. The complete list is in `tasks_table.jsonl`, and you'll find all the prompts in `tasks_prompt_formatting.py`. Popular tasks requiring custom logic are exceptionally added in the [extended tasks](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/extended).
 - [tasks_examples](https://github.com/huggingface/lighteval/tree/main/tasks_examples) contains a list of available tasks you can launch. We advise using tasks in the `recommended_set`, as it's possible that some of the other tasks need double checking.
 - [tests](https://github.com/huggingface/lighteval/tree/main/tests) contains our test suite, that we run at each PR to prevent regressions in metrics/prompts/tasks, for a subset of important tasks.
 
@@ -259,9 +269,6 @@ Summary: create a **line summary** of your evaluation, in `src/lighteval/tasks/t
 - `trust_dataset` (bool), set to True if you trust the dataset.
 
 Make sure you can launch your model with your new task using `--tasks lighteval|yournewtask|2|0`.
-
-### Extended evaluations
-Proceed as for community evaluations, but in the `extended_tasks` folder.
 
 #### Community evaluations
 Copy the `community_tasks/_template.yml` to `community_tasks/yourevalname.py` and edit it to add your custom tasks (the parameters you can use are explained above). It contains an interesting mechanism if the dataset you are adding contains a lot of subsets.

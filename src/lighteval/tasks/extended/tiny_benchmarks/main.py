@@ -27,6 +27,7 @@ See https://github.com/felipemaiapolo/tinyBenchmarks/ for the original code.
 Test with `python run_evals_accelerate.py --model_args "pretrained=EleutherAI/pythia-70m" --tasks "extended|tiny:winogrande|0|0,extended|tiny:gsm8k|0|0,extended|tiny:hellaswag|0|0,extended|tiny:arc|0|0,extended|tiny:truthfulqa|0|0" --extended_tasks extended_tasks --output_dir "./evals"`
 """
 import os
+import pathlib
 import pickle
 
 import numpy as np
@@ -40,7 +41,6 @@ from lighteval.metrics.metrics_sample import ExactMatches, LoglikelihoodAcc
 from lighteval.metrics.normalizations import gsm8k_normalizer
 from lighteval.metrics.utils import MetricCategory, MetricUseCase
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc
 
 
 # Utility functions
@@ -89,13 +89,15 @@ class TinyCorpusAggregator:
         self.num_samples = 0
 
     def download(self):
+        # Likely to crash in // processes if we don't include the pkl
+        path_dld = os.path.join(pathlib.Path(__file__).parent.resolve(), "tinyBenchmarks.pkl")
         # Downloading files
-        if not os.path.isfile("extended_tasks/tiny_benchmarks/tinyBenchmarks.pkl"):
+        if not os.path.isfile(path_dld):
             url = "https://raw.githubusercontent.com/felipemaiapolo/tinyBenchmarks/main/tinyBenchmarks/tinyBenchmarks.pkl"
             response = requests.get(url)
             if response.status_code == 200:
                 # Write the content to a file
-                with open("extended_tasks/tiny_benchmarks/tinyBenchmarks.pkl", "wb") as file:
+                with open(path_dld, "wb") as file:
                     file.write(response.content)
 
     def compute(self, **args):

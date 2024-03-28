@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """Registry of all instructions."""
-import extended_tasks.ifeval.instructions as instructions
+import lighteval.tasks.extended.ifeval.instructions as instructions
 
 
 _KEYWORD = "keywords:"
