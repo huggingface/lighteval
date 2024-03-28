@@ -259,7 +259,7 @@ class EvaluationTracker:
 
         paths_to_check = [os.path.basename(results_file_path)]
         try:
-            checked_paths = list(self.api.list_files_info(repo_id=repo_id, paths=paths_to_check, repo_type="dataset"))
+            checked_paths = list(self.api.get_paths_info(repo_id=repo_id, paths=paths_to_check, repo_type="dataset"))
         except Exception:
             checked_paths = []
 
