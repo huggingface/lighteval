@@ -58,27 +58,6 @@ class EnvConfig:
     cache_dir: str = None
     token: str = None
 
-    """Args:
-    pretrained (str):
-        HuggingFace Hub model ID name or the path to a pre-trained
-        model to load. This is effectively the `pretrained_model_name_or_path`
-        argument of `from_pretrained` in the HuggingFace `transformers` API.
-    add_special_tokens (bool, optional, defaults to True):
-        Whether to add special tokens to the input sequences. If `None`, the
-        default value will be set to `True` for seq2seq models (e.g. T5) and
-        `False` for causal models.
-    > Large model loading `accelerate` arguments
-    model_parallel (bool, optional, defaults to False):
-        True/False: force to uses or not the `accelerate` library to load a large
-        model across multiple devices.
-        Default: None which correspond to comparing the number of process with
-            the number of GPUs. If it's smaller => model-parallelism, else not.
-    dtype (Union[str, torch.dtype], optional, defaults to None):):
-        Converts the model weights to `dtype`, if specified. Strings get
-        converted to `torch.dtype` objects (e.g. `float16` -> `torch.float16`).
-        Use `dtype="auto"` to derive the type from the model's weights.
-    """
-
 
 @dataclass
 class BaseModelConfig:
@@ -86,10 +65,10 @@ class BaseModelConfig:
     Base configuration class for models.
 
     Attributes:
-        pretrained (str): HuggingFace Hub model ID name or the path to a
-            pre-trained model to load. This is effectively the
-            `pretrained_model_name_or_path` argument of `from_pretrained` in the
-            HuggingFace `transformers` API.
+        pretrained (str):
+            HuggingFace Hub model ID name or the path to a pre-trained
+            model to load. This is effectively the `pretrained_model_name_or_path`
+            argument of `from_pretrained` in the HuggingFace `transformers` API.
         accelerator (Accelerator): accelerator to use for model training.
         tokenizer (Optional[str]): HuggingFace Hub tokenizer ID that will be
             used for tokenization.
@@ -105,8 +84,15 @@ class BaseModelConfig:
         add_special_tokens (bool, optional, defaults to True): Whether to add special tokens to the input sequences.
            If `None`, the default value will be set to `True` for seq2seq models (e.g. T5) and
             `False` for causal models.
-        model_parallel (Optional[bool]): Whether to use model parallelism.
-        dtype (Optional[Union[str, torch.dtype]]): data type of the model.
+        model_parallel (bool, optional, defaults to False):
+            True/False: force to uses or not the `accelerate` library to load a large
+            model across multiple devices.
+            Default: None which correspond to comparing the number of process with
+                the number of GPUs. If it's smaller => model-parallelism, else not.
+        dtype (Union[str, torch.dtype], optional, defaults to None):):
+            Converts the model weights to `dtype`, if specified. Strings get
+            converted to `torch.dtype` objects (e.g. `float16` -> `torch.float16`).
+            Use `dtype="auto"` to derive the type from the model's weights.
         device (Union[int, str]): device to use for model training.
         quantization_config (Optional[BitsAndBytesConfig]): quantization
             configuration for the model. Needed for 4-bit and 8-bit precision.
