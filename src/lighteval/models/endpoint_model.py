@@ -63,6 +63,7 @@ class InferenceEndpointModel(LightevalModel):
     def __init__(
         self, config: Union[InferenceEndpointModelConfig, InferenceModelConfig], env_config: EnvConfig
     ) -> None:
+        self.reuse_existing = getattr(config, "should_reuse_existing", True)
         if isinstance(config, InferenceEndpointModelConfig):
             if config.should_reuse_existing:
                 self.endpoint = get_inference_endpoint(name=config.name, token=env_config.token)
@@ -130,7 +131,7 @@ class InferenceEndpointModel(LightevalModel):
         False  # no accelerator = this is the main process
 
     def cleanup(self):
-        if self.endpoint is not None:
+        if self.endpoint is not None and not self.reuse_existing:
             self.endpoint.delete()
             hlog_warn(
                 "You deleted your endpoint after using it. You'll need to create it again if you need to reuse it."

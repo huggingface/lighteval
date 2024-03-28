@@ -1,0 +1,5 @@
+model:
+  type: "tgi" # can be base, tgi, or endpoint
+  instance:
+    inference_server_address: ""
+    inference_server_auth: null

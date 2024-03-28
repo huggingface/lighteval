@@ -1,0 +1,18 @@
+model:
+  type: "endpoint" # can be base, tgi, or endpoint
+  base_params:
+    endpoint_name: "llama-2-7B-lighteval" # needs to be lower case without special characters
+    model: "meta-llama/Llama-2-7b-hf"
+    revision: "main"
+    dtype: "float16" # can be any of "awq", "eetq", "gptq", "4bit' or "8bit" (will use bitsandbytes), "bfloat16" or "float16"
+    reuse_existing: false # if true, ignore all params in instance
+  instance:
+    accelerator: "gpu"
+    region: "eu-west-1"
+    vendor: "aws"
+    instance_size: "medium"
+    instance_type: "g5.2xlarge"
+    framework: "pytorch"
+    endpoint_type: "protected"
+  generation:
+    add_special_tokens: true

@@ -10,9 +10,6 @@ We're releasing it with the community in the spirit of building in the open.
 Note that it is still very much early so don't expect 100% stability ^^'
 In case of problems or question, feel free to open an issue!
 
-## News
-- **Feb 08, 2024**: Release of `lighteval`
-
 ## Installation
 
 Clone the repo:
@@ -120,6 +117,19 @@ accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py \
 
 See the [`tasks_examples/recommended_set.txt`](./tasks_examples/recommended_set.txt) file for a list of recommended task configurations.
 
+### Evaluating a model with a complex configuration
+
+If you want to evaluate a model by spinning up inference endpoints, or use adapter/delta weights, or more complex configuration options, you can load models using a configuration file. This is done as follows:
+
+```shell
+accelerate launch --multi_gpu --num_processes=<num_gpus> run_evals_accelerate.py \
+    --model_config_path="<path to your model configuration>" \
+    --tasks <task parameters> \
+    --output_dir output_dir
+```
+
+Examples of possible configuration files are provided in `examples/model_configs`.
+
 ### Evaluating a large model with pipeline parallelism
 
 To evaluate models larger that ~40B parameters in 16-bit precision, you will need to shard the model across multiple GPUs to fit it in VRAM. You can do this by passing `model_parallel=True` and adapting `--num_processes` to be the number of processes to use for data parallel. For example, on a single node of 8 GPUs, you can run:
@@ -127,15 +137,13 @@ To evaluate models larger that ~40B parameters in 16-bit precision, you will nee
 ```shell
 # PP=2, DP=4 - good for models < 70B params
 accelerate launch --multi_gpu --num_processes=4 run_evals_accelerate.py \
-    --model_args="pretrained=<path to model on the hub>" \
-    --model_parallel \
+    --model_args="pretrained=<path to model on the hub>,model_parallel=True" \
     --tasks <task parameters> \
     --output_dir output_dir
 
 # PP=4, DP=2 - good for huge models >= 70B params
 accelerate launch --multi_gpu --num_processes=2 run_evals_accelerate.py \
-    --model_args="pretrained=<path to model on the hub>" \
-    --model_parallel \
+    --model_args="pretrained=<path to model on the hub>,model_parallel=True" \
     --tasks <task parameters> \
     --output_dir output_dir
 ```
