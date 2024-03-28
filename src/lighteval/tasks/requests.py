@@ -33,6 +33,7 @@ class RequestType(Enum):
     LOGLIKELIHOOD_SINGLE_TOKEN = auto()
     LOGLIKELIHOOD_ROLLING = auto()
     GREEDY_UNTIL = auto()
+    GREEDY_UNTIL_MULTI_TURN = auto()
     GREEDY_UNTIL_WITH_LOGITS = auto()
 
 
@@ -118,6 +119,22 @@ class GreedyUntilRequest(Request):
     generation_size: int
     request_type = RequestType.GREEDY_UNTIL
     tokenized_context: list[int] = None
+
+
+@dataclass
+class GreedyUntilMultiTurnRequest(Request):
+    """
+    Represents a request for generating text using the Greedy-Until algorithm.
+
+    Attributes:
+        stop_sequence (str): The sequence of tokens that indicates when to stop generating text.
+        generation_size (int): The maximum number of tokens to generate.
+        request_type (RequestType): The type of the request, set to RequestType.GREEDY_UNTIL.
+    """
+
+    stop_sequence: str
+    generation_size: int
+    request_type = RequestType.GREEDY_UNTIL_MULTI_TURN
 
 
 @dataclass

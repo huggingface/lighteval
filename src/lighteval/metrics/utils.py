@@ -28,6 +28,7 @@ class MetricCategory(Enum):
     TARGET_PERPLEXITY = auto()
     PERPLEXITY = auto()
     GENERATIVE = auto()
+    GENERATIVE_MULTI_TURN = auto()
     GENERATIVE_LOGPROB = auto()
     MULTICHOICE = auto()
     MULTICHOICE_ONE_TOKEN = auto()
