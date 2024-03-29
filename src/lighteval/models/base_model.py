@@ -421,6 +421,8 @@ class BaseModel(LightevalModel):
             for term in stop_tokens:
                 decoded_generation = decoded_generation.split(term)[0]
 
+            input_tokens = [model_inputs["input_ids"]]
+
             for i, multi_turn_context in enumerate(request.context[1:]):
                 multi_turn_context = multi_turn_context.format(model_response=decoded_generation)
 
@@ -457,6 +459,7 @@ class BaseModel(LightevalModel):
                 model_outputs = model_outputs[0, model_inputs["input_ids"].size(1) :]
                 model_generations.append(model_outputs)
                 decoded_generation = self.tokenizer.decode(model_outputs, skip_special_tokens=True)
+                input_tokens.append(model_inputs["input_ids"])
 
                 for term in stop_tokens:
                     decoded_generation = decoded_generation.split(term)[0]
@@ -898,8 +901,19 @@ class BaseModel(LightevalModel):
         )
 
     def pad_and_gather(self, output_tensor: torch.Tensor, drop_last_samples: bool = True) -> torch.Tensor:
-        """Gather together tensors of (possibly) various size spread on separate GPUs (first exchange the lengths and then pad and gather)"""
-        # Create a tensor of size batch_size, [output_length] * batch_size, for each each process
+        """
+        Pads the `output_tensor` to the maximum length and gathers the lengths across processes.
+
+        Args:
+            output_tensor (torch.Tensor): The output tensor to be padded.
+            drop_last_samples (bool, optional): Whether to drop the last samples during gathering.
+            Last samples are dropped when the number of samples is not divisible by the number of processes.
+                Defaults to True.
+
+        Returns:
+            torch.Tensor: The padded output tensor and the gathered length tensor.
+        """
+        # Create a tensor of size batch_size, [output_length] * batch_size, for each process
         length_tensor = torch.tensor([output_tensor.shape[1]] * output_tensor.shape[0], device=self.device)
         if self.accelerator is not None:
             # Gather all the lengths, we end up with a tensor of size num_processes [output_length_1, output_length_2, ...]

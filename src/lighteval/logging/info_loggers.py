@@ -24,7 +24,7 @@ import collections
 import os
 import time
 from dataclasses import asdict, dataclass, field
-from typing import Union
+from typing import Optional, Union
 
 import git
 import numpy as np
@@ -312,7 +312,7 @@ class DetailsLogger:
         doc: Doc,
         outputs: list[ModelReturn],
         metrics: dict,
-        llm_as_prompt_judgement: tuple[str, str],
+        llm_as_prompt_judgement: Optional[tuple[str, str]] = None,
     ) -> None:
         """Stores the relevant information for one sample of one task to the total list of samples stored in the DetailsLogger.
 

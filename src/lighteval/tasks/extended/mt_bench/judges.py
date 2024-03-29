@@ -70,8 +70,8 @@ class JudgeOpenAI(Judge):
         __process_judge_response: Processes the judge's response and extracts the score.
     """
 
-    def __init__(self, model: str, seed: int, temperature: float, templates_path: str):
-        self.client = OpenAI()
+    def __init__(self, model: str, seed: int, temperature: float, templates_path: str, openai_api_key: str):
+        self.client = OpenAI(api_key=openai_api_key)
         self.model = model
         self.seed = seed
         self.temperature = temperature

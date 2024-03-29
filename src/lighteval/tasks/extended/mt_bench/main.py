@@ -32,13 +32,20 @@ import numpy as np
 from aenum import extend_enum
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from extended_tasks.mt_bench.judges import JudgeOpenAI
+from lighteval.tasks.extended.mt_bench.judges import JudgeOpenAI
 from lighteval.metrics import Metrics
 from lighteval.metrics.utils import MetricCategory, MetricUseCase, SampleLevelMetric, SampleLevelMetricGrouping
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
+from colorama import Fore, Style
+import os
 
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+if OPENAI_API_KEY is None:
+    # Using print here because hlog_warn is not yet available in this context
+    print(Fore.YELLOW + "No OpenAI API key found. If you are using the OpenAI judge, please set the OPENAI_API_KEY environment variable." + Style.RESET_ALL)
 
 # EVAL WITH NO SUBSET ##
 # This is how you create a simple tasks (like hellaswag) which has one single subset
@@ -91,7 +98,8 @@ def mt_bench_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dic
         model="gpt-3.5-turbo",
         seed=42,
         temperature=0.0,
-        templates_path="extended_tasks/mt_bench/judge_prompts.jsonl",
+        templates_path="src/lighteval/tasks/extended/mt_bench/judge_prompts.jsonl",
+        openai_api_key=OPENAI_API_KEY
     )
 
     questions = formatted_doc.specific["multi_turn_queries"]
