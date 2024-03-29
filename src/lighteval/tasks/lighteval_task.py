@@ -692,7 +692,12 @@ def create_requests_from_tasks(  # noqa: C901
                     doc = task_docs[doc_id]
                     is_multi_turn = doc.specific is not None and len(doc.specific.get("multi_turn_queries", [])) > 0
 
-                    if not is_multi_turn:
+                    if is_multi_turn:
+                        ctx, num_effective_few_shots = task.fewshot_sampler.create_multi_turn_contexts(
+                            doc, use_chat_template, system_prompt, lm.tokenizer
+                        )
+                        doc.specific["multi_turn_queries_context"] = ctx
+                    else:
                         ctx, num_effective_few_shots = task.fewshot_sampler.fewshot_context(
                             task=task,
                             doc=doc,
@@ -705,11 +710,6 @@ def create_requests_from_tasks(  # noqa: C901
                             use_chat_template=use_chat_template,
                             system_prompt=system_prompt,
                         )
-                    else:
-                        ctx, num_effective_few_shots = task.fewshot_sampler.create_multi_turn_contexts(
-                            doc, use_chat_template, system_prompt, lm.tokenizer
-                        )
-                        doc.specific["multi_turn_queries_context"] = ctx
 
                     doc.num_effective_few_shots = num_effective_few_shots
                     doc.num_asked_few_shots = num_fewshot

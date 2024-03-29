@@ -20,13 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-
 # ruff: noqa: F405, F403, F401, I001
-"""
-Custom evaluation tasks for lighteval. Copy this file and complete it with the info for your task.
-This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
-Author:
-"""
 
 import numpy as np
 from aenum import extend_enum
@@ -51,9 +45,6 @@ if OPENAI_API_KEY is None:
         + Style.RESET_ALL
     )
 
-# EVAL WITH NO SUBSET ##
-# This is how you create a simple tasks (like hellaswag) which has one single subset
-# attached to it, and one evaluation possible.
 task = LightevalTaskConfig(
     name="mt_bench",
     prompt_function="prompt_fn",  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
@@ -70,8 +61,6 @@ task = LightevalTaskConfig(
 )
 
 
-# DEFINE YOUR PROMPT FUNCTIONS
-# Define as many as you need for your different tasks
 def prompt_fn(line, task_name: str = None):
     """Defines how to go from a dataset line to a doc object.
     Follow examples in src/lighteval/tasks/tasks_prompt_formatting.py, or get more info
@@ -132,12 +121,8 @@ mt_bench_metric = SampleLevelMetricGrouping(
     },
 )
 
-# STORE YOUR EVALS
 _TASKS = [task]
 
-# MODULE LOGIC
-# You should not need to touch this
-# Convert to dict for lighteval
 TASKS_TABLE = [task.as_dict() for task in _TASKS]
 extend_enum(
     Metrics,

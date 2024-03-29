@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import os
+from itertools import islice
 from typing import TYPE_CHECKING, Optional, Union
 
 import torch
@@ -113,3 +114,12 @@ def _get_model_sha(repo_id: str, revision: str):
         return model_info.sha
     except Exception:
         return ""
+
+
+def batched(self, iterable, n):
+    # batched('ABCDEFG', 3) → ABC DEF G
+    if n < 1:
+        raise ValueError("n must be at least one")
+    it = iter(iterable)
+    while batch := tuple(islice(it, n)):
+        yield batch

@@ -21,7 +21,6 @@
 # SOFTWARE.
 
 import os
-from itertools import islice
 from typing import Optional, Tuple, Union
 
 import torch
@@ -43,7 +42,7 @@ from lighteval.models.model_output import (
     LoglikelihoodReturn,
     LoglikelihoodSingleTokenReturn,
 )
-from lighteval.models.utils import _get_dtype, _get_precision, _simplify_name
+from lighteval.models.utils import _get_dtype, _get_precision, _simplify_name, batched
 from lighteval.tasks.requests import (
     GreedyUntilMultiTurnRequest,
     GreedyUntilRequest,
@@ -353,14 +352,6 @@ class BaseModel(LightevalModel):
             override_bs=override_bs,
         )
 
-    def batched(self, iterable, n):
-        # batched('ABCDEFG', 3) → ABC DEF G
-        if n < 1:
-            raise ValueError("n must be at least one")
-        it = iter(iterable)
-        while batch := tuple(islice(it, n)):
-            yield batch
-
     def greedy_until_multi_turn(  # noqa: C901
         self, requests: list[GreedyUntilMultiTurnRequest], override_bs: Optional[int] = None
     ) -> GenerateMultiTurnReturn:
@@ -479,7 +470,7 @@ class BaseModel(LightevalModel):
                 decoded = self.tokenizer.decode(generation, skip_special_tokens=True)
                 model_answers.append(decoded)
 
-            for answers in self.batched(model_answers, len(request.context)):
+            for answers in batched(model_answers, len(request.context)):
                 results.append(
                     GenerateMultiTurnReturn(
                         result=answers,
