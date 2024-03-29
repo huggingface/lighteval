@@ -27,8 +27,14 @@ import torch
 from transformers import BatchEncoding
 
 from lighteval.models.model_config import EnvConfig
-from lighteval.models.model_output import GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
+from lighteval.models.model_output import (
+    GenerateMultiTurnReturn,
+    GenerateReturn,
+    LoglikelihoodReturn,
+    LoglikelihoodSingleTokenReturn,
+)
 from lighteval.tasks.requests import (
+    GreedyUntilMultiTurnRequest,
     GreedyUntilRequest,
     GreedyUntilWithLogitsRequest,
     LoglikelihoodRequest,
@@ -101,6 +107,12 @@ class LightevalModel(ABC):
             override_bs=override_bs,
             returns_logits=True,
         )
+
+    def greedy_until_multi_turn(  # noqa: C901
+        self, requests: list[GreedyUntilMultiTurnRequest], override_bs: Optional[int] = None
+    ) -> GenerateMultiTurnReturn:
+        """Generates responses using a greedy decoding strategy until certain ending conditions are met."""
+        return NotImplemented
 
     @abstractmethod
     def greedy_until(
