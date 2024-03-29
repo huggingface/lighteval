@@ -116,7 +116,7 @@ def _get_model_sha(repo_id: str, revision: str):
         return ""
 
 
-def batched(self, iterable, n):
+def batched(iterable, n):
     # batched('ABCDEFG', 3) → ABC DEF G
     if n < 1:
         raise ValueError("n must be at least one")
