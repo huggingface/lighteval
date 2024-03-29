@@ -259,7 +259,7 @@ class BaseModel(LightevalModel):
             int: Max length to use depending on the available args and config
         """
         if max_length is not None:
-            return max_length
+            return int(max_length)
         # Try to get the sequence length from the model config.
         seqlen_config_attrs = ("n_positions", "max_position_embeddings", "n_ctx")
 
