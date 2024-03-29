@@ -67,6 +67,14 @@ class GenerateReturn(ModelReturn):
 
 
 @dataclass
+class GenerateMultiTurnReturn(ModelReturn):
+    result: list[str] = field(default_factory=list)
+
+    def get_result_for_eval(self):
+        return self.result
+
+
+@dataclass
 class Batch:
     input_ids: torch.Tensor
     input_mask: torch.Tensor
