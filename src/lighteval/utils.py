@@ -170,6 +170,9 @@ def is_optimum_available() -> bool:
     return importlib.util.find_spec("optimum") is not None
 
 
+NO_OPTIMUM_ERROR_MSG = "You are trying to load a model with `optimum`, which is not available in your local environement. Please install it using pip."
+
+
 def is_bnb_available() -> bool:
     return importlib.util.find_spec("bitsandbytes") is not None
 
