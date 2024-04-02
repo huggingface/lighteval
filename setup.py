@@ -23,4 +23,13 @@
 from setuptools import setup
 
 
-setup()
+setup(
+    name='lighteval',
+    version='0.3.0.dev0',
+    py_modules=['lighteval'],
+    entry_points={
+        'console_scripts': [
+            'lighteval=lighteval:main',
+        ],
+    },
+)
