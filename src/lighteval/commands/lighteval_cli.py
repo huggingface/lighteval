@@ -42,7 +42,8 @@ def list_tasks_command():
         print(tasks_table_path)
         #with open('./src/lighteval/tasks/tasks_table.jsonl') as jsonl_tasks_table:
         with open(tasks_table_path) as jsonl_tasks_table:
-            for jline in jsonl_tasks_table.splitlines():
+            jsonl_tasks_table_content = jsonl_tasks_table.read()
+            for jline in jsonl_tasks_table_content.splitlines():
                 tasks.append(json.loads(jline))
         
         # Handling extend tasks
