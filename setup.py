@@ -28,7 +28,7 @@ setup(
     packages= find_packages("src"),
     entry_points={
         'console_scripts': [
-            'lighteval=lighteval.commands.lighteval_cli:main',
+            'lighteval = lighteval.commands.lighteval_cli:main',
         ],
     },
 )

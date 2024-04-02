@@ -26,6 +26,7 @@ import argparse
 import importlib
 import json
 import os
+import pkg_resources
 
 def list_tasks_command():
     """
@@ -36,25 +37,27 @@ def list_tasks_command():
     try:
         tasks = []
         # Handling tasks_table.jsonl
-        print(os.getcwd())
-        with open('./src/lighteval/tasks/tasks_table.jsonl') as jsonl_tasks_table:
+        # Get the path to the resource file
+        tasks_table_path = pkg_resources.resource_filename('lighteval', 'tasks/tasks_table.jsonl')
+        #with open('./src/lighteval/tasks/tasks_table.jsonl') as jsonl_tasks_table:
+        with open(tasks_table_path) as jsonl_tasks_table:
             for jline in jsonl_tasks_table.splitlines():
                 tasks.append(json.loads(jline))
         
         # Handling extend tasks
-        root_dir = "./src/lighteval/tasks/extended"
-        tasks_extended = []
-        for root, dirs, files in os.walk(root_dir):
-            for file in files:
-                if file == 'main.py':
-                    main_path = os.path.join(root, file)
-                    module_name = os.path.basename(root)
-                    spec = importlib.util.spec_from_file_location(module_name, main_path)
-                    module = importlib.util.module_from_spec(spec)
-                    spec.loader.exec_module(module)
-                    if hasattr(module, 'TASKS_TABLE'):
-                        tasks_extended += module.TASKS_TABLE
-        tasks += tasks_extended
+        #root_dir = "./src/lighteval/tasks/extended"
+        #tasks_extended = []
+        #for root, dirs, files in os.walk(root_dir):
+            #for file in files:
+                #if file == 'main.py':
+                    #main_path = os.path.join(root, file)
+                    #module_name = os.path.basename(root)
+                    #spec = importlib.util.spec_from_file_location(module_name, main_path)
+                    #module = importlib.util.module_from_spec(spec)
+                    #spec.loader.exec_module(module)
+                    #if hasattr(module, 'TASKS_TABLE'):
+                        #tasks_extended += module.TASKS_TABLE
+        #tasks += tasks_extended
         if len(tasks) > 0:
             print("Avalaible tasks: ")
             for task in tasks:
@@ -65,7 +68,7 @@ def list_tasks_command():
 
 
 def main():
-    parser = argparse.ArgumentParser(description='CLI tool for lighteval, a lightweight framework LLM evaluation')
+    parser = argparse.ArgumentParser(description='CLI tool for lighteval, a lightweight framework for LLM evaluation')
     parser.add_argument('--list-tasks', action='store_true', help='List available tasks')
     args = parser.parse_args()
 
