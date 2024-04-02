@@ -39,6 +39,7 @@ def list_tasks_command():
         # Handling tasks_table.jsonl
         # Get the path to the resource file
         tasks_table_path = pkg_resources.resource_filename('lighteval', 'tasks/tasks_table.jsonl')
+        pirnt(tasks_table_path)
         #with open('./src/lighteval/tasks/tasks_table.jsonl') as jsonl_tasks_table:
         with open(tasks_table_path) as jsonl_tasks_table:
             for jline in jsonl_tasks_table.splitlines():
@@ -63,8 +64,9 @@ def list_tasks_command():
             for task in tasks:
                 print("- " + task["name"])
 
-    except FileNotFoundError:
-        print('Error: tasks_table.jsonl file not found.')
+    #except FileNotFoundError:
+    except Exception as e:
+        print('Error: tasks_table.jsonl file not found. ', e)
 
 
 def main():
