@@ -39,35 +39,33 @@ def list_tasks_command():
         # Handling tasks_table.jsonl
         # Get the path to the resource file
         tasks_table_path = pkg_resources.resource_filename('lighteval', 'tasks/tasks_table.jsonl')
-        print(tasks_table_path)
-        #with open('./src/lighteval/tasks/tasks_table.jsonl') as jsonl_tasks_table:
         with open(tasks_table_path) as jsonl_tasks_table:
             jsonl_tasks_table_content = jsonl_tasks_table.read()
             for jline in jsonl_tasks_table_content.splitlines():
                 tasks.append(json.loads(jline))
         
         # Handling extend tasks
-        #root_dir = "./src/lighteval/tasks/extended"
-        #tasks_extended = []
-        #for root, dirs, files in os.walk(root_dir):
-            #for file in files:
-                #if file == 'main.py':
-                    #main_path = os.path.join(root, file)
-                    #module_name = os.path.basename(root)
-                    #spec = importlib.util.spec_from_file_location(module_name, main_path)
-                    #module = importlib.util.module_from_spec(spec)
-                    #spec.loader.exec_module(module)
-                    #if hasattr(module, 'TASKS_TABLE'):
-                        #tasks_extended += module.TASKS_TABLE
-        #tasks += tasks_extended
+        extended_tasks_dir = pkg_resources.resource_filename('lighteval', 'tasks/extended')
+        tasks_extended = []
+        for root, dirs, files in os.walk(extended_tasks_dir):
+            for file in files:
+                if file == 'main.py':
+                    main_path = os.path.join(root, file)
+                    module_name = os.path.basename(root)
+                    spec = importlib.util.spec_from_file_location(module_name, main_path)
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    if hasattr(module, 'TASKS_TABLE'):
+                        tasks_extended += module.TASKS_TABLE
+        tasks += tasks_extended
         if len(tasks) > 0:
-            print("Avalaible tasks: ")
+            print("Available tasks: ")
             for task in tasks:
                 print("- " + task["name"])
 
     #except FileNotFoundError:
     except Exception as e:
-        print('Error: tasks_table.jsonl file not found. ', e)
+        print('Error: ', e)
 
 
 def main():
