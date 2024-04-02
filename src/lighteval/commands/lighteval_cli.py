@@ -65,7 +65,7 @@ def list_tasks_command():
         # Handling extended tasks
         tasks_extended = []
         extended_tasks_dir = pkg_resources.resource_filename("lighteval", "tasks/extended")
-        for module_name in pkg_resources.resource_listdir("lighteval", extended_tasks_dir):
+        for module_name in pkg_resources.resource_listdir("lighteval", "tasks/extended"):
             tasks_table = load_tasks_table_extended(module_name)
             tasks_extended += tasks_table
         tasks += tasks_extended
