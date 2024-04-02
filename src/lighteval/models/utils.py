@@ -22,7 +22,7 @@
 
 import os
 from itertools import islice
-from typing import TYPE_CHECKING, Optional, Union
+from typing import Optional, Union
 
 import torch
 from huggingface_hub import HfApi

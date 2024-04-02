@@ -42,7 +42,7 @@ from lighteval.models.model_output import (
     LoglikelihoodReturn,
     LoglikelihoodSingleTokenReturn,
 )
-from lighteval.models.utils import _get_dtype, _get_precision, _simplify_name, batched
+from lighteval.models.utils import _get_dtype, _simplify_name, batched
 from lighteval.tasks.requests import (
     GreedyUntilMultiTurnRequest,
     GreedyUntilRequest,
