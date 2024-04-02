@@ -36,6 +36,7 @@ def list_tasks_command():
     try:
         tasks = []
         # Handling tasks_table.jsonl
+        print(os.getcwd())
         with open('./src/lighteval/tasks/tasks_table.jsonl') as jsonl_tasks_table:
             for jline in jsonl_tasks_table.splitlines():
                 tasks.append(json.loads(jline))
