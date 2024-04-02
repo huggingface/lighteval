@@ -36,12 +36,12 @@ def list_tasks_command():
     try:
         tasks = []
         # Handling tasks_table.jsonl
-        with open('src/lighteval/tasks/tasks_table.jsonl') as jsonl_tasks_table:
+        with open('./src/lighteval/tasks/tasks_table.jsonl') as jsonl_tasks_table:
             for jline in jsonl_tasks_table.splitlines():
                 tasks.append(json.loads(jline))
         
         # Handling extend tasks
-        root_dir = "tasks/extended"
+        root_dir = "./src/lighteval/tasks/extended"
         tasks_extended = []
         for root, dirs, files in os.walk(root_dir):
             for file in files:
