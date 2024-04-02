@@ -29,7 +29,7 @@ setup(
     py_modules=['lighteval'],
     entry_points={
         'console_scripts': [
-            'lighteval=lighteval:main',
+            'lighteval=lighteval_cli:main',
         ],
     },
 )
