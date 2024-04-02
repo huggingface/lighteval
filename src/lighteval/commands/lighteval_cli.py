@@ -52,11 +52,15 @@ def list_tasks_command():
             for file in files:
                 if file == 'main.py':
                     main_path = os.path.join(root, file)
-                    print(main_path)
+                    print("main path ", main_path)
                     module_name = os.path.basename(root)
+                    print("module name ", module_name)
                     spec = importlib.util.spec_from_file_location(module_name, main_path)
+                    print('spec ', spec)
                     module = importlib.util.module_from_spec(spec)
+                    print("module ", module)
                     spec.loader.exec_module(module)
+                    print("execution")
                     if hasattr(module, 'TASKS_TABLE'):
                         tasks_extended += module.TASKS_TABLE
         tasks += tasks_extended
