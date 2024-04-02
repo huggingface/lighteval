@@ -46,11 +46,13 @@ def list_tasks_command():
         
         # Handling extend tasks
         extended_tasks_dir = pkg_resources.resource_filename('lighteval', 'tasks/extended')
+        print(extended_tasks_dir)
         tasks_extended = []
         for root, dirs, files in os.walk(extended_tasks_dir):
             for file in files:
                 if file == 'main.py':
                     main_path = os.path.join(root, file)
+                    print(main_path)
                     module_name = os.path.basename(root)
                     spec = importlib.util.spec_from_file_location(module_name, main_path)
                     module = importlib.util.module_from_spec(spec)
