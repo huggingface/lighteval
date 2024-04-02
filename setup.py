@@ -20,11 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from setuptools import setup
+from setuptools import find_packages,setup
 
 
 setup(
     package_dir= {"": "src"},
+    packages= find_packages("src"),
     entry_points={
         'console_scripts': [
             'lighteval=lighteval_cli:main',
