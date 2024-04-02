@@ -34,6 +34,7 @@ from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.metrics import (
     apply_generative_logprob_metric,
     apply_generative_metric,
+    apply_generative_multi_turn_metric,
     apply_multichoice_metric,
     apply_multichoice_metric_one_token,
     apply_perplexity_metric,
@@ -44,6 +45,7 @@ from lighteval.models.base_model import BaseModel
 from lighteval.models.model_output import ModelReturn
 from lighteval.tasks.requests import (
     Doc,
+    GreedyUntilMultiTurnRequest,
     GreedyUntilRequest,
     GreedyUntilWithLogitsRequest,
     LoglikelihoodRequest,
@@ -410,6 +412,8 @@ class LightevalTask:
             request_types.append(RequestType.LOGLIKELIHOOD_ROLLING)
         if self.has_metric_category[MetricCategory.GENERATIVE]:
             request_types.append(RequestType.GREEDY_UNTIL)
+        if self.has_metric_category[MetricCategory.GENERATIVE_MULTI_TURN]:
+            request_types.append(RequestType.GREEDY_UNTIL_MULTI_TURN)
         if self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]:
             request_types.append(RequestType.GREEDY_UNTIL_WITH_LOGITS)
         if self.has_metric_category[MetricCategory.MULTICHOICE]:
@@ -500,6 +504,17 @@ class LightevalTask:
                     choices=formatted_doc.choices,
                 )
             ]
+        if self.has_metric_category[MetricCategory.GENERATIVE_MULTI_TURN]:
+            requests[RequestType.GREEDY_UNTIL_MULTI_TURN] += [
+                GreedyUntilMultiTurnRequest(
+                    task_name=current_task_name,
+                    example_index=document_id_seed,
+                    request_index=0,
+                    context=context,
+                    stop_sequence=self.stop_sequence,
+                    generation_size=self.generation_size,
+                )
+            ]
 
         return requests
 
@@ -543,6 +558,11 @@ class LightevalTask:
             outputs.update(cur_outputs)
         if self.has_metric_category[MetricCategory.MULTICHOICE_ONE_TOKEN]:
             results, cur_outputs = apply_multichoice_metric_one_token(
+                results=results, formatted_doc=formatted_doc, metrics=self.metrics
+            )
+            outputs.update(cur_outputs)
+        if self.has_metric_category[MetricCategory.GENERATIVE_MULTI_TURN]:
+            results, cur_outputs = apply_generative_multi_turn_metric(
                 results=results, formatted_doc=formatted_doc, metrics=self.metrics
             )
             outputs.update(cur_outputs)
@@ -670,21 +690,31 @@ def create_requests_from_tasks(  # noqa: C901
                     # to fix!!
                     cur_task_name = f"{task_name}|{num_fewshot}"
                     doc = task_docs[doc_id]
-                    ctx, num_effective_few_shots = task.fewshot_sampler.fewshot_context(
-                        task=task,
-                        doc=doc,
-                        num_fewshot=num_fewshot,
-                        seed=seed,
-                        truncate_few_shots=truncate_few_shots,
-                        max_model_length=lm.max_length,
-                        sampler=rnd,
-                        tokenizer=lm.tokenizer,
-                        use_chat_template=use_chat_template,
-                        system_prompt=system_prompt,
-                    )
+                    is_multi_turn = doc.specific is not None and len(doc.specific.get("multi_turn_queries", [])) > 0
+
+                    if is_multi_turn:
+                        ctx, num_effective_few_shots = task.fewshot_sampler.create_multi_turn_contexts(
+                            doc, use_chat_template, system_prompt, lm.tokenizer
+                        )
+                        doc.specific["multi_turn_queries_context"] = ctx
+                    else:
+                        ctx, num_effective_few_shots = task.fewshot_sampler.fewshot_context(
+                            task=task,
+                            doc=doc,
+                            num_fewshot=num_fewshot,
+                            seed=seed,
+                            truncate_few_shots=truncate_few_shots,
+                            max_model_length=lm.max_length,
+                            sampler=rnd,
+                            tokenizer=lm.tokenizer,
+                            use_chat_template=use_chat_template,
+                            system_prompt=system_prompt,
+                        )
+
                     doc.num_effective_few_shots = num_effective_few_shots
                     doc.num_asked_few_shots = num_fewshot
                     doc.ctx = ctx
+
                     # Constructing the requests
                     docs[TaskExampleId(cur_task_name, doc_id_seed)] = doc
                     reqs = task.construct_requests(doc, ctx, doc_id_seed, cur_task_name)

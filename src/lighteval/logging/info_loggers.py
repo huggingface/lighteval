@@ -24,7 +24,7 @@ import collections
 import os
 import time
 from dataclasses import asdict, dataclass, field
-from typing import Union
+from typing import Optional, Union
 
 import git
 import numpy as np
@@ -205,6 +205,9 @@ class DetailsLogger:
         choices: list = field(default_factory=list)
         gold_index: list = field(default_factory=list)
         metrics: dict = field(default_factory=dict)
+        judement_prompt: str = None
+        judgement: str = None
+        specifics: dict = field(default_factory=dict)
 
     @dataclass
     class CompiledDetail:
@@ -302,7 +305,15 @@ class DetailsLogger:
     compiled_details: dict[str, CompiledDetail] = collections.defaultdict(CompiledDetail)
     compiled_details_over_all_tasks: CompiledDetailOverAllTasks = CompiledDetailOverAllTasks()
 
-    def log(self, task_name: str, task: LightevalTask, doc: Doc, outputs: list[ModelReturn], metrics: dict) -> None:
+    def log(
+        self,
+        task_name: str,
+        task: LightevalTask,
+        doc: Doc,
+        outputs: list[ModelReturn],
+        metrics: dict,
+        llm_as_prompt_judgement: Optional[tuple[str, str]] = None,
+    ) -> None:
         """Stores the relevant information for one sample of one task to the total list of samples stored in the DetailsLogger.
 
         Args:
@@ -311,6 +322,8 @@ class DetailsLogger:
             doc (Doc): Current sample that we want to store.
             outputs (list[ModelReturn]): Model outputs for the current sample
             metrics (_type_): Model scores for said sample on the current task's metrics.
+            llm_as_prompt_judgement (tuple[str, str]): Tuple containing the
+                prompt passed to the judge and the judgement for the current sample when using llm-as-judge metric.
         """
         detail = self.Detail()
         detail.example = doc.query
@@ -354,6 +367,11 @@ class DetailsLogger:
             detail.choices = doc.choices
             detail.gold_index = as_list(doc.gold_index)
             pred_saved = True
+        if task.has_metric_category[MetricCategory.GENERATIVE_MULTI_TURN]:
+            pred_saved = True
+            detail.judement_prompt = llm_as_prompt_judgement[0]
+            detail.judgement = llm_as_prompt_judgement[1]
+        detail.specifics = doc.specific
         if not pred_saved:
             raise NotImplementedError(
                 "No metric prediction saved."
@@ -364,7 +382,7 @@ class DetailsLogger:
 
         hash = self.Hash()
         hash.example = xxhash.xxh64(doc.query).hexdigest()
-        hash.full_prompt = xxhash.xxh64(doc.ctx).hexdigest()
+        hash.full_prompt = xxhash.xxh64(str(doc.ctx)).hexdigest()
         hash.input_tokens = xxhash.xxh64(str([o.input_tokens for o in outputs])).hexdigest()
         hash.cont_tokens = xxhash.xxh64(str([o.generated_tokens for o in outputs])).hexdigest()
         self.hashes[task_name].append(hash)
