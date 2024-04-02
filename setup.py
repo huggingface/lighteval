@@ -24,9 +24,7 @@ from setuptools import setup
 
 
 setup(
-    name='lighteval',
-    version='0.3.0.dev0',
-    py_modules=['lighteval'],
+    package_dir= {"": "src"},
     entry_points={
         'console_scripts': [
             'lighteval=lighteval_cli:main',
