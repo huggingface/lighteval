@@ -37,14 +37,17 @@ def load_tasks_table_extended(module_name: any) -> list:
     Returns:
     - TASKS_TABLE: a list of the task in the module
     """
-    module_path = f"lighteval.tasks.extended.{module_name}.TASKS_TABLE"
-    module_spec = importlib.util.find_spec(module_path)
-    if module_spec:
-        module = importlib.util.module_from_spec(module_spec)
+    module_path = f"lighteval.tasks.extended.{module_name}.main"
+    #module_spec = importlib.util.find_spec(module_path)
+    print(module_path)
+    module_spec = importlib.import_module("TASKS_TABLE", module_path)
+    print(module_spec)
+    #if module_spec:
+        #module = importlib.util.module_from_spec(module_spec)
         #module_spec.loader.exec_module(module)
-        print(module)
-        if hasattr(module, "TASKS_TABLE"):
-            return module.TASKS_TABLE
+        #print(module)
+        #if hasattr(module, "TASKS_TABLE"):
+            #return module.TASKS_TABLE
     return []
 
 def list_tasks_command():
