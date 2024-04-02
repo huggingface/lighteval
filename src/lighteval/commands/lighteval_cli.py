@@ -28,6 +28,24 @@ import json
 import os
 import pkg_resources
 
+def load_tasks_table_extended(module_name: any) -> list:
+    """
+    load the module module_name
+
+    Args:
+    - module_name the name of the module we want to load
+    Returns:
+    - TASKS_TABLE: a list of the task in the module
+    """
+    module_path = f"lighteval.tasks.extended.{module_name}.main"
+    module_spec = importlib.util.find_spec(module_path)
+    if module_spec:
+        module = importlib.util.module_from_spec(module_spec)
+        module_spec.loader.exec_module(module)
+        if hasattr(module, "TASKS_TABLE"):
+            return module.TASKS_TABLE
+    return []
+
 def list_tasks_command():
     """
     List all the avalaible tasks in tasks_table.jsonl and the extended directory
@@ -44,25 +62,12 @@ def list_tasks_command():
             for jline in jsonl_tasks_table_content.splitlines():
                 tasks.append(json.loads(jline))
         
-        # Handling extend tasks
-        extended_tasks_dir = pkg_resources.resource_filename('lighteval', 'tasks/extended')
-        print(extended_tasks_dir)
+        # Handling extended tasks
         tasks_extended = []
-        for root, dirs, files in os.walk(extended_tasks_dir):
-            for file in files:
-                if file == 'main.py':
-                    main_path = os.path.join(root, file)
-                    print("main path ", main_path)
-                    module_name = os.path.basename(root)
-                    print("module name ", module_name)
-                    spec = importlib.util.spec_from_file_location(module_name, main_path)
-                    print('spec ', spec)
-                    module = importlib.util.module_from_spec(spec)
-                    print("module ", module)
-                    spec.loader.exec_module(module)
-                    print("execution")
-                    if hasattr(module, 'TASKS_TABLE'):
-                        tasks_extended += module.TASKS_TABLE
+        extended_tasks_dir = pkg_resources.resource_filename("lighteval", "tasks/extended")
+        for module_name in pkg_resources.listdir(extended_tasks_dir):
+            tasks_table = load_tasks_table_extended(module_name)
+            tasks_extended += tasks_table
         tasks += tasks_extended
         if len(tasks) > 0:
             print("Available tasks: ")
