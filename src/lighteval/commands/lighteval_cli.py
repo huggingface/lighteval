@@ -87,7 +87,7 @@ def list_tasks_command():
         grouped_by_suite["extended"] = []
         # Adding extended suite
         for task in tasks_extended:
-            grouped_by_suite.append(task["name"])
+            grouped_by_suite["extended"].append(task["name"])
         grouped_by_suite["extended"].sort()
         print("Available tasks: (Grouped by suite)\n")
         for suite,task_list in grouped_by_suite.items():
