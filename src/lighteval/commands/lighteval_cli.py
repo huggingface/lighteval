@@ -40,15 +40,13 @@ def load_tasks_table_extended(module_name: any) -> list:
     module_path = f"lighteval.tasks.extended.{module_name}.main"
     #module_spec = importlib.util.find_spec(module_path)
     print(module_path)
-    module_spec = importlib.import_module(module_path)
-    print(module_spec.TASKS_TABLE)
-    #if module_spec:
-        #module = importlib.util.module_from_spec(module_spec)
-        #module_spec.loader.exec_module(module)
-        #print(module)
-        #if hasattr(module, "TASKS_TABLE"):
-            #return module.TASKS_TABLE
-    return []
+    module_loaded = importlib.import_module(module_path)
+    tasks_list = None
+    try:
+        tasks_list = module_loaded.TASKS_TABLE
+    except Exception as e:
+        print(e)
+    return tasks_list if tasks_list is not None else []
 
 def list_tasks_command():
     """
@@ -75,11 +73,27 @@ def list_tasks_command():
                     module_name = os.path.basename(root)
                     tasks_table = load_tasks_table_extended(module_name)
                     tasks_extended += tasks_table
-        tasks += tasks_extended
-        if len(tasks) > 0:
-            print("Available tasks: ")
-            for task in tasks:
-                print("- " + task["name"])
+        
+        grouped_by_suite = dict()
+        # Grouping by suite the tasks
+        for task in tasks:
+            for suite in task["suite"]:
+                if suite not in grouped_by_suite.keys():
+                    grouped_by_suite[suite] = [task["name"]]
+                else:
+                    grouped_by_suite[suite].append(task["name"])
+                    grouped_by_suite[suite].sort()
+        
+        grouped_by_suite["extended"] = []
+        # Adding extended suite
+        for task in tasks_extended:
+            grouped_by_suite.append(task["name"])
+        grouped_by_suite["extended"].sort()
+        print("Available tasks: (Grouped by suite)\n")
+        for suite,task_list in grouped_by_suite.items():
+            print("- " + suite + " :\n")
+            for task in task_list:
+                print("\t - " + task +"\n")
 
     #except FileNotFoundError:
     except Exception as e:
