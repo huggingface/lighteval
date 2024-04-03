@@ -38,8 +38,6 @@ def load_tasks_table_extended(module_name: any) -> list:
     - TASKS_TABLE: a list of the task in the module
     """
     module_path = f"lighteval.tasks.extended.{module_name}.main"
-    #module_spec = importlib.util.find_spec(module_path)
-    print(module_path)
     module_loaded = importlib.import_module(module_path)
     tasks_list = None
     try:
