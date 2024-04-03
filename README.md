@@ -95,7 +95,7 @@ Here, `--tasks` refers to either a _comma-separated_ list of supported tasks fro
 suite|task|num_few_shot|{0 or 1 to automatically reduce `num_few_shot` if prompt is too long}
 ```
 
-or a file path like [`tasks_examples/recommended_set.txt`](./tasks_examples/recommended_set.txt) which specifies multiple task configurations. For example, to evaluate GPT-2 on the Truthful QA benchmark run:
+or a file path like [`examples/tasks/recommended_set.txt`](./examples/tasks/recommended_set.txt) which specifies multiple task configurations. For example, to evaluate GPT-2 on the Truthful QA benchmark run:
 
 ```shell
 accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py \
@@ -115,7 +115,7 @@ accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py \
     --output_dir="./evals/"
 ```
 
-See the [`tasks_examples/recommended_set.txt`](./tasks_examples/recommended_set.txt) file for a list of recommended task configurations.
+See the [`examples/tasks/recommended_set.txt`](./examples/tasks/recommended_set.txt) file for a list of recommended task configurations.
 
 ### Evaluating a model with a complex configuration
 
@@ -155,7 +155,7 @@ To evaluate a model on all the benchmarks of the [Open LLM Leaderboard](https://
 ```shell
 accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py \
     --model_args "pretrained=<model name>" \
-    --tasks tasks_examples/open_llm_leaderboard_tasks.txt \
+    --tasks examples/tasks/open_llm_leaderboard_tasks.txt \
     --override_batch_size 1 \
     --output_dir="./evals/"
 ```
@@ -228,7 +228,7 @@ However, we are very grateful to the Harness and HELM teams for their continued 
         - [metrics](https://github.com/huggingface/lighteval/tree/main/src/lighteval/metrics): All the available metrics you can use. They are described in metrics, and divided between sample metrics (applied at the sample level, such as a prediction accuracy) and corpus metrics (applied over the whole corpus). You'll also find available normalisation functions.
         - [models](https://github.com/huggingface/lighteval/tree/main/src/lighteval/models): Possible models to use. We cover transformers (base_model), with adapter or delta weights, as well as TGI models locally deployed (it's likely the code here is out of date though), and brrr/nanotron models.
         - [tasks](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks): Available tasks. The complete list is in `tasks_table.jsonl`, and you'll find all the prompts in `tasks_prompt_formatting.py`. Popular tasks requiring custom logic are exceptionally added in the [extended tasks](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/extended).
-- [tasks_examples](https://github.com/huggingface/lighteval/tree/main/tasks_examples) contains a list of available tasks you can launch. We advise using tasks in the `recommended_set`, as it's possible that some of the other tasks need double checking.
+- [examples/tasks](https://github.com/huggingface/lighteval/tree/main/examples/tasks) contains a list of available tasks you can launch. We advise using tasks in the `recommended_set`, as it's possible that some of the other tasks need double checking.
 - [tests](https://github.com/huggingface/lighteval/tree/main/tests) contains our test suite, that we run at each PR to prevent regressions in metrics/prompts/tasks, for a subset of important tasks.
 
 ## Customisation
@@ -299,7 +299,7 @@ if __name__ == "__main__":
 
 You can then give your custom metric to lighteval by using `--custom-tasks path_to_your_file` when launching it.
 
-To see an example of a custom metric added along with a custom task, look at `tasks_examples/custom_tasks_with_custom_metrics/ifeval/ifeval.py`.
+To see an example of a custom metric added along with a custom task, look at `examples/tasks/custom_tasks_with_custom_metrics/ifeval/ifeval.py`.
 
 ## Available metrics
 ### Metrics for multiple choice tasks
@@ -422,7 +422,7 @@ source <path_to_your_venv>/activate #or conda activate yourenv
 cd <path_to_your_lighteval>/lighteval
 
 export CUDA_LAUNCH_BLOCKING=1
-srun accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py --model_args "pretrained=your model name" --tasks tasks_examples/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir=your output dir
+srun accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py --model_args "pretrained=your model name" --tasks examples/tasks/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir=your output dir
 ```
 
 ## Releases
