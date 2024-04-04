@@ -39,6 +39,7 @@ from lighteval.metrics.metrics_sample import (
     BertScore,
     ExactMatches,
     F1_score,
+    LlmAsJudge,
     LoglikelihoodAcc,
     Recall,
     StringDistance,
@@ -223,6 +224,19 @@ class Metrics(Enum):
         use_case=MetricUseCase.SUMMARIZATION,
         corpus_level_fn=np.mean,
         higher_is_better=True,
+    )
+    mt_bench_metric = SampleLevelMetricGrouping(
+        metric=["single_turn", "multi_turn"],
+        higher_is_better=True,
+        category=MetricCategory.GENERATIVE_MULTI_TURN,
+        use_case=MetricUseCase.SUMMARIZATION,
+        sample_level_fn=LlmAsJudge(
+            judge_model_name="gpt-3.5-turbo", template_path="src/lighteval/tasks/extended/mt_bench/judge_prompts.jsonl"
+        ).compute_multi_turn,
+        corpus_level_fn={
+            "single_turn": np.mean,
+            "multi_turn": np.mean,
+        },
     )
     loglikelihood_acc = SampleLevelMetric(
         metric="acc",

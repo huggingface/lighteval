@@ -23,10 +23,12 @@
 """This module manages all the metrics occurring at the sample level. The results of said metrics are then aggregated
 using simple function (min, mean, max, ...) at the corpus level. Most metrics fall under this category.
 """
+import os
 from typing import Union
 
 import nltk
 import numpy as np
+from colorama import Fore, Style
 from nltk.metrics.distance import edit_distance
 from nltk.tokenize import word_tokenize
 from nltk.tokenize.treebank import TreebankWordTokenizer
@@ -38,6 +40,7 @@ from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.imports.bert_scorer import BERTScorer
 from lighteval.metrics.imports.data_stats_metric import DataStatsMetric
 from lighteval.metrics.imports.summac import SummaCZS
+from lighteval.metrics.llm_as_judge import JudgeOpenAI
 from lighteval.metrics.normalizations import remove_braces, remove_braces_and_strip
 from lighteval.tasks.requests import Doc
 from lighteval.utils import as_list
@@ -616,3 +619,42 @@ class StringDistance:
         """
         edist = edit_distance(s1, s2)
         return 1.0 - edist / max(len(s1), len(s2)) if len(s1) > 0 and len(s2) > 0 else 0
+
+class LlmAsJudge:
+    available_models = ["gpt-3.5-turbo"]
+
+    def __init__(self, judge_model_name: str, template_path: str):
+        if judge_model_name not in self.available_models:
+            raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
+
+        self.template_path = "src/lighteval/tasks/extended/mt_bench/judge_prompts.jsonl"
+        OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+        try:
+            self.judge = JudgeOpenAI(
+                model=judge_model_name,
+                seed=42,
+                temperature=0.0,
+                templates_path=self.template_path,
+                openai_api_key=OPENAI_API_KEY,
+            )
+        except Exception as e:
+            print(f"Could not initialize the JudgeOpenAI model:\n{e}")
+
+    def compute_multi_turn(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
+        """Defines how to go from a list of predictions to a score.
+        Follow examples in src/lighteval/metrics/metrics.py, or get more info
+        about what this function should do in the README.
+        """
+        questions = formatted_doc.specific["multi_turn_queries"]
+        ref_answers = formatted_doc.specific["reference"]
+
+        score, messages, judgement = self.judge.evaluate_answer(questions, predictions, ref_answers, single_turn=True)
+        score_mt, messages_mt, judgement_mt = self.judge.evaluate_answer(questions, predictions, ref_answers, single_turn=False)
+
+        return {
+            "single_turn": score,
+            "multi_turn": score_mt,
+            "user_prompt": [messages, messages_mt],
+            "judgement": [judgement, judgement_mt],
+        }
