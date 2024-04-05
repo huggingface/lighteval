@@ -22,15 +22,11 @@
 
 import os
 from itertools import islice
-from typing import TYPE_CHECKING, Optional, Union
+from typing import Optional, Union
 
 import torch
 from huggingface_hub import HfApi
 from transformers import AutoConfig
-
-
-if TYPE_CHECKING:
-    from lighteval.models.model_config import BaseModelConfig
 
 
 def _get_dtype(dtype: Union[str, torch.dtype], config: Optional[AutoConfig] = None) -> torch.dtype:
@@ -45,13 +41,12 @@ def _get_dtype(dtype: Union[str, torch.dtype], config: Optional[AutoConfig] = No
         torch.dtype: The torch dtype based on the input arguments.
     """
 
-    if dtype is None and config is not None:
-        # For quantized models
+    if config is not None:  # For quantized models
         if hasattr(config, "quantization_config"):
             _torch_dtype = None  # must be inferred
         else:
             _torch_dtype = config.torch_dtype
-    elif isinstance(dtype, str) and dtype != "auto":
+    elif isinstance(dtype, str) and dtype not in ["auto", "4bit", "8bit"]:
         # Convert `str` args torch dtype: `float16` -> `torch.float16`
         _torch_dtype = getattr(torch, dtype)
     else:
@@ -85,26 +80,6 @@ def _simplify_name(name_or_path: str) -> str:
             return name_or_path.replace("/", "_")
 
     return name_or_path
-
-
-def _get_precision(config: "BaseModelConfig", model_auto_config: AutoConfig):
-    """
-    Returns the precision of the model.
-
-    Args:
-        dtype (Union[str, torch.dtype]): The data type of the model.
-        load_in_8bit (bool): Whether to load the weights in 8-bit precision.
-        load_in_4bit (bool): Whether to load the weights in 4-bit precision.
-
-    Returns:
-        str: The selected precision for loading the model weights.
-    """
-    if config.load_in_8bit:
-        return "8bit"
-    elif config.load_in_4bit:
-        return "4bit"
-    else:
-        return _get_dtype(config.dtype, model_auto_config)
 
 
 def _get_model_sha(repo_id: str, revision: str):
