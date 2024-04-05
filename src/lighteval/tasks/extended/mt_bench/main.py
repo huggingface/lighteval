@@ -109,7 +109,7 @@ def mt_bench_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dic
     }
 
 
-mt_bench_metrics = SampleLevelMetricGrouping(
+mt_bench_metric = SampleLevelMetricGrouping(
     metric="mt_bench_metric",
     higher_is_better=True,
     category=MetricCategory.GENERATIVE_MULTI_TURN,
@@ -127,7 +127,7 @@ TASKS_TABLE = [task.as_dict() for task in _TASKS]
 extend_enum(
     Metrics,
     "mt_bench_metric",
-    mt_bench_metrics,
+    mt_bench_metric,
 )
 
 if __name__ == "__main__":
