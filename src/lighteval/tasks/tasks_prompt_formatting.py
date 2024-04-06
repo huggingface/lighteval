@@ -2224,10 +2224,9 @@ def truthful_qa_generative(line, task_name: str = None):  # BLEU and combination
         task_name=task_name,
         query=line["question"].strip(),
         choices=correct_answers + incorrect_answers,
-        gold_index=list(range(len(correct_answers))),
-        specific={"len_mc1": len(line["mc1_targets"]["choices"])},
+        gold_index=list(range(len(correct_answers)))
     )
-
+    
 
 def truthful_qa_helm(line, task_name: str = None):
     query = f"Question: {line['question']}\n"
