@@ -1,6 +1,7 @@
 # MIT License
 
 # Copyright (c) 2024 The HuggingFace Team
+# Copyright (c) 2024 Philip May, Deutsche Telekom AG
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
