@@ -2,7 +2,7 @@
 
 # MIT License
 
-# Copyright (c) 2024 The HuggingFace Team
+# Copyright (c) 2024 Taratra D. RAHARISON and The HuggingFace Team
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -92,8 +92,6 @@ def list_tasks_command():
             print("- " + suite + " :\n")
             for task in task_list:
                 print("\t - " + task +"\n")
-
-    #except FileNotFoundError:
     except Exception as e:
         print('Error: ', e)
 
