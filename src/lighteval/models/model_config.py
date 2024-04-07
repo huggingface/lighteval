@@ -222,6 +222,7 @@ class InferenceEndpointModelConfig:
     should_reuse_existing: bool = False
     add_special_tokens: bool = True
     revision: str = "main"
+    namespace: str = None
 
     def get_dtype_args(self) -> Dict[str, str]:
         model_dtype = self.model_dtype.lower()
@@ -283,6 +284,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
                     vendor=config["instance"]["vendor"],
                     instance_size=config["instance"]["instance_size"],
                     instance_type=config["instance"]["instance_type"],
+                    namespace=config["instance"]["namespace"]
                 )
             return InferenceModelConfig(model=config["base_params"]["endpoint_name"])
 
