@@ -40,87 +40,57 @@ from lighteval.tasks.requests import Doc
 from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 
 
-# EVAL WITH NO SUBSET ##
-# This is how you create a simple tasks (like hellaswag) which has one single subset
-# attached to it, and one evaluation possible.
-task = LightevalTaskConfig(
-    name="myothertask",
-    prompt_function="prompt_fn",  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
-    suite=["community"],
-    hf_repo="",
-    hf_subset="default",
-    hf_avail_splits=[],
-    evaluation_splits=[],
-    few_shots_split="",
-    few_shots_select="",
-    metric=[""],
+task1 = LightevalTaskConfig(
+    name="ger_rag_eval_task1",  # ok
+    prompt_function="prompt_fn_task1",  # ok
+    suite=["community"],  # ok
+    hf_repo="deutsche-telekom/Ger-RAG-eval",  # ok
+    hf_subset="task1",  # ok
+    hf_avail_splits=["test"],  # ok
+    evaluation_splits=["test"],  # ok
+    few_shots_split="",  # ???
+    few_shots_select="",  # ???
+    metric=["loglikelihood_acc"],  # ok
 )
 
-# EVALS WITH SUBSET
-# This is how you create a subset task (like MMLU), which has several subset
-# each being its own evaluation task.
+QUERY_TASK1: str = """\
+Welche der folgenden Fragen (A oder B oder C oder D) lässt sich anhand des Kontext beantworten?
 
-# fmt: off
-SAMPLE_SUBSETS = []  # list of all the subsets to use for this eval
-# fmt: on
+Kontext:
+{context}
 
-
-class CustomSubsetTask(LightevalTaskConfig):
-    def __init__(
-        self,
-        name,
-        hf_subset,
-    ):
-        super().__init__(
-            name=name,
-            hf_subset=hf_subset,
-            prompt_function="prompt_fn",  # must be defined in the file
-            hf_repo="",
-            metric=[""],
-            hf_avail_splits=[],
-            evaluation_splits=[],
-            few_shots_split="",
-            few_shots_select="",
-            suite=["community"],
-            generation_size=-1,
-            stop_sequence=None,
-            output_regex=None,
-            frozen=False,
-        )
+Fragen:
+A: {choice_a}
+B: {choice_b}
+C: {choice_c}
+D: {choice_d}
+"""
 
 
-# DEFINE YOUR PROMPT FUNCTIONS
-# Define as many as you need for your different tasks
-def prompt_fn(line, task_name: str = None):
+def prompt_fn_task1(line, task_name: str = None):
     """Defines how to go from a dataset line to a doc object.
     Follow examples in src/lighteval/tasks/tasks_prompt_formatting.py, or get more info
     about what this function should do in the README.
     """
+    query = QUERY_TASK1.format(
+        context=line["context"],
+        choice_a=line["choice_a"],
+        choice_b=line["choice_b"],
+        choice_c=line["choice_c"],
+        choice_d=line["choice_d"],
+    )
+    choices = ["A", "B", "C", "D"]
     return Doc(
         task_name=task_name,
-        query="",
-        choices="",
-        gold_index=0,
-        instruction="",
+        query=query,
+        choices=choices,
+        gold_index=choices.index(line["target"]),
     )
 
 
 # STORE YOUR EVALS
-SUBSET_TASKS = [CustomSubsetTask(name=f"mytask:{subset}", hf_subset=subset) for subset in SAMPLE_SUBSETS]
-_TASKS = SUBSET_TASKS + [task]
+_TASKS = [task1]
 
-
-# CUSTOM METRIC IF NEEDED
-custom_metric = SampleLevelMetric(
-    metric="my_custom_metric_name",
-    higher_is_better=True,
-    category=MetricCategory.IGNORED,
-    use_case=MetricUseCase.NONE,
-    sample_level_fn=lambda x: x,  # how to compute score for one sample
-    corpus_level_fn=np.mean,  # aggregation
-)
-
-extend_enum(Metrics, "my_custom_metric_name", custom_metric)
 
 # MODULE LOGIC
 # You should not need to touch this
