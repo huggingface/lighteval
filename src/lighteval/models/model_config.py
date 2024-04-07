@@ -235,11 +235,10 @@ class InferenceEndpointModelConfig:
         if model_dtype in ["bfloat16", "float16"]:
             return {"DTYPE": model_dtype}
         return {}
-    
+
     @staticmethod
     def nullable_keys() -> list[str]:
-        return ['namespace']
-    
+        return ["namespace"]
 
 
 def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]) -> BaseModelConfig:  # noqa: C901
@@ -279,7 +278,11 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
 
     if config["type"] == "endpoint":
         reuse_existing_endpoint = config["base_params"]["reuse_existing"]
-        complete_config_endpoint = all(val not in [None, ""] for key,val in config["instance"].items() if key not in InferenceEndpointModelConfig.nullable_keys())
+        complete_config_endpoint = all(
+            val not in [None, ""]
+            for key, val in config["instance"].items()
+            if key not in InferenceEndpointModelConfig.nullable_keys()
+        )
         if reuse_existing_endpoint or complete_config_endpoint:
             return InferenceEndpointModelConfig(
                 name=config["base_params"]["endpoint_name"].replace(".", "-").lower(),
@@ -292,7 +295,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
                 vendor=config["instance"]["vendor"],
                 instance_size=config["instance"]["instance_size"],
                 instance_type=config["instance"]["instance_type"],
-                namespace=config["instance"]["namespace"]
+                namespace=config["instance"]["namespace"],
             )
         return InferenceModelConfig(model=config["base_params"]["endpoint_name"])
 
