@@ -28,7 +28,6 @@ from typing import Union
 
 import nltk
 import numpy as np
-from colorama import Fore, Style
 from nltk.metrics.distance import edit_distance
 from nltk.tokenize import word_tokenize
 from nltk.tokenize.treebank import TreebankWordTokenizer
@@ -620,6 +619,7 @@ class StringDistance:
         edist = edit_distance(s1, s2)
         return 1.0 - edist / max(len(s1), len(s2)) if len(s1) > 0 and len(s2) > 0 else 0
 
+
 class LlmAsJudge:
     available_models = ["gpt-3.5-turbo"]
 
@@ -650,7 +650,9 @@ class LlmAsJudge:
         ref_answers = formatted_doc.specific["reference"]
 
         score, messages, judgement = self.judge.evaluate_answer(questions, predictions, ref_answers, single_turn=True)
-        score_mt, messages_mt, judgement_mt = self.judge.evaluate_answer(questions, predictions, ref_answers, single_turn=False)
+        score_mt, messages_mt, judgement_mt = self.judge.evaluate_answer(
+            questions, predictions, ref_answers, single_turn=False
+        )
 
         return {
             "single_turn": score,
