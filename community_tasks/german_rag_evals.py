@@ -130,7 +130,9 @@ D: {choice_d}
 
 
 def prompt_fn_choose_context_by_question(line, task_name: str = None):
-    instruction = "Auf Basis welcher der folgenden Kontexte (A oder B oder C oder D) lässt sich die Frage beantworten?\n\n"
+    instruction = (
+        "Auf Basis welcher der folgenden Kontexte (A oder B oder C oder D) lässt sich die Frage beantworten?\n\n"
+    )
     query_template = """\
 Frage: {question}
 
