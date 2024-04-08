@@ -112,7 +112,7 @@ B: {choice_b}
 C: {choice_c}
 D: {choice_d}
     """
-    query = query_template.format(
+    query = instruction + query_template.format(
         context=line["context"],
         choice_a=line["choice_a"],
         choice_b=line["choice_b"],
@@ -150,7 +150,7 @@ C:
 D:
 {choice_d}
     """
-    query = query_template.format(
+    query = instruction + query_template.format(
         question=line["question"],
         choice_a=line["choice_a"],
         choice_b=line["choice_b"],
@@ -174,7 +174,7 @@ Die Frage: {question}
 
 Die Antwort: {answer}
     """
-    query = query_template.format(
+    query = instruction + query_template.format(
         question=line["question"],
         answer=line["answer"],
     )
@@ -196,7 +196,7 @@ Kontext:
 
 Die Frage: {question}
     """
-    query = query_template.format(
+    query = instruction + query_template.format(
         question=line["question"],
         context=line["context"],
     )
