@@ -66,6 +66,19 @@ task2 = LightevalTaskConfig(
     metric=["loglikelihood_acc"],
 )
 
+task3 = LightevalTaskConfig(
+    name="ger_rag_eval_task3",
+    prompt_function="prompt_fn_task3",
+    suite=["community"],
+    hf_repo="deutsche-telekom/Ger-RAG-eval",
+    hf_subset="task3",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split="test",
+    few_shots_select="sequential",
+    metric=["loglikelihood_acc"],
+)
+
 QUERY_TASK1: str = """\
 Welche der folgenden Fragen (A oder B oder C oder D) lässt sich anhand des Kontext beantworten?
 
@@ -98,6 +111,16 @@ C:
 
 D:
 {{choice_d}}
+"""
+
+
+QUERY_TASK3: str = """\
+Beantwortet die Antwort wirklich die Frage?
+Antworte mit J für ja oder N für nein.
+
+Die Frage: {{question}}
+
+Die Antwort: {{answer}}
 """
 
 
@@ -135,8 +158,22 @@ def prompt_fn_task2(line, task_name: str = None):
     )
 
 
+def prompt_fn_task3(line, task_name: str = None):
+    query = QUERY_TASK3.format(
+        question=line["question"],
+        answer=line["answer"],
+    )
+    choices = ["J", "N"]
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=choices,
+        gold_index=choices.index(line["target"]),
+    )
+
+
 # STORE YOUR EVALS
-_TASKS = [task1, task2]
+_TASKS = [task1, task2, task3]
 
 
 # MODULE LOGIC
