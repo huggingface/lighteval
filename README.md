@@ -1,3 +1,14 @@
+<div align="center">
+
+[![Tests](https://github.com/huggingface/lighteval/actions/workflows/tests.yaml/badge.svg?branch=main)](https://github.com/huggingface/lighteval/actions/workflows/tests.yaml?query=branch%3Amain)
+[![Quality](https://github.com/huggingface/lighteval/actions/workflows/quality.yaml/badge.svg?branch=main)](https://github.com/huggingface/lighteval/actions/workflows/quality.yaml?query=branch%3Amain)
+[![Python versions](https://img.shields.io/pypi/pyversions/lighteval)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/huggingface/lighteval/blob/main/LICENSE)
+[![Status](https://img.shields.io/pypi/status/lighteval)](https://pypi.org/project/lighteval/)
+[![Version](https://img.shields.io/pypi/v/lighteval)](https://pypi.org/project/lighteval/)
+
+</div>
+
 # LightEval 🌤️
 
 A lightweight framework for LLM evaluation
