@@ -111,7 +111,7 @@ A: {choice_a}
 B: {choice_b}
 C: {choice_c}
 D: {choice_d}
-    """
+"""
     query = instruction + query_template.format(
         context=line["context"],
         choice_a=line["choice_a"],
@@ -149,7 +149,7 @@ C:
 
 D:
 {choice_d}
-    """
+"""
     query = instruction + query_template.format(
         question=line["question"],
         choice_a=line["choice_a"],
@@ -173,7 +173,7 @@ def prompt_fn_question_answer_match(line, task_name: str = None):
 Die Frage: {question}
 
 Die Antwort: {answer}
-    """
+"""
     query = instruction + query_template.format(
         question=line["question"],
         answer=line["answer"],
@@ -195,7 +195,7 @@ Kontext:
 {context}
 
 Die Frage: {question}
-    """
+"""
     query = instruction + query_template.format(
         question=line["question"],
         context=line["context"],
