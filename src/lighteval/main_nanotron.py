@@ -96,7 +96,12 @@ def main(
             data_parallel_size=lighteval_config.parallelism.dp,
         )
 
-        evaluation_tracker = EvaluationTracker(token=TOKEN)
+        evaluation_tracker = EvaluationTracker(
+            token=TOKEN,
+            output_dir=lighteval_config.logging.local_output_path,
+            tensorboard_org=lighteval_config.logging.hub_repo_tensorboard,
+            nanotron_run_info=nanotron_config.general,
+        )
         evaluation_tracker.general_config_logger.log_args_info(
             num_fewshot_seeds=1,
             override_batch_size=None,
