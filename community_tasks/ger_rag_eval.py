@@ -23,21 +23,15 @@
 
 # ruff: noqa: F405, F403, F401
 """
-Custom evaluation tasks for lighteval. Copy this file and complete it with the info for your task.
+Custom evaluation tasks for lighteval.
 
 This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
-
-Author:
+This module implements the 4 tasks of deutsche-telekom/Ger-RAG-eval.
+See: https://huggingface.co/datasets/deutsche-telekom/Ger-RAG-eval
 """
-import numpy as np
-from aenum import extend_enum
 
-from lighteval.metrics import Metrics
-from lighteval.metrics.metrics import SampleLevelMetric
-from lighteval.metrics.utils import MetricCategory, MetricUseCase
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
-from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 
 
 task1 = LightevalTaskConfig(
