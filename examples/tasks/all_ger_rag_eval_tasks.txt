@@ -1,0 +1,4 @@
+community|ger_rag_eval_task1|0|0
+community|ger_rag_eval_task2|0|0
+community|ger_rag_eval_task3|0|0
+community|ger_rag_eval_task4|0|0
