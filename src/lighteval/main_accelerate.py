@@ -62,7 +62,7 @@ def main(args):
         push_results_to_hub=args.push_results_to_hub,
         push_details_to_hub=args.push_details_to_hub,
         push_results_to_tensorboard=args.push_results_to_tensorboard,
-        public_run=args.public_run,
+        public=args.public_run,
         token=TOKEN,
     )
     evaluation_tracker.general_config_logger.log_args_info(

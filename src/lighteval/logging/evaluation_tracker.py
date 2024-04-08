@@ -41,7 +41,7 @@ from lighteval.logging.info_loggers import (
     TaskConfigLogger,
     VersionsLogger,
 )
-from lighteval.utils import is_nanotron_available, obj_to_markdown
+from lighteval.utils import NO_TENSORBOARDX_WARN_MSG, is_nanotron_available, is_tensorboardX_available, obj_to_markdown
 
 
 if is_nanotron_available():
@@ -90,9 +90,9 @@ class EvaluationTracker:
         tensorboard_metric_prefix: str = "eval",
         public: bool = False,
         token: str = "",
-        nanotron_run_info: GeneralArgs = None,
+        nanotron_run_info: "GeneralArgs" = None,
     ) -> None:
-        """
+        """)
         Creates all the necessary loggers for evaluation tracking.
 
         Args:
@@ -151,9 +151,6 @@ class EvaluationTracker:
         hlog(f"Saving results to {output_results_file} and {output_results_in_details_file}")
 
         config_general = copy.deepcopy(self.general_config_logger)
-        config_general.config = (
-            config_general.config.as_dict() if is_dataclass(config_general.config) else config_general.config
-        )
         config_general = asdict(config_general)
 
         to_dump = {
@@ -488,8 +485,8 @@ class EvaluationTracker:
     def push_to_tensorboard(  # noqa: C901
         self, results: dict[str, dict[str, float]], details: dict[str, DetailsLogger.CompiledDetail]
     ):
-        if not is_nanotron_available():
-            hlog_warn("You cannot push results to tensorboard with having nanotron installed. Skipping")
+        if not is_tensorboardX_available:
+            hlog_warn(NO_TENSORBOARDX_WARN_MSG)
             return
         prefix = self.tensorboard_metric_prefix
 

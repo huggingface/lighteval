@@ -31,7 +31,7 @@ Install the dependencies. For the default installation, you just need:
 pip install .
 ```
 
-If you want to evaluate models with frameworks like `accelerate` or `peft`, you will need to specify the optional dependencies group that fits your use case (`accelerate`,`tgi`,`optimum`,`quantization`,`adapters`,`nanotron`):
+If you want to evaluate models with frameworks like `accelerate` or `peft`, you will need to specify the optional dependencies group that fits your use case (`accelerate`,`tgi`,`optimum`,`quantization`,`adapters`,`nanotron`,`tensorboardX`):
 
 ```bash
 pip install '.[optional1,optional2]'
