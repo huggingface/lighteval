@@ -99,7 +99,8 @@ def main(
         evaluation_tracker = EvaluationTracker(
             token=TOKEN,
             output_dir=lighteval_config.logging.local_output_path,
-            tensorboard_org=lighteval_config.logging.hub_repo_tensorboard,
+            hub_results_org=lighteval_config.logging.hub_repo_tensorboard,
+            tensorboard_metric_prefix=lighteval_config.logging.tensorboard_metric_prefix,
             nanotron_run_info=nanotron_config.general,
         )
         evaluation_tracker.general_config_logger.log_args_info(

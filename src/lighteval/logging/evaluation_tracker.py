@@ -88,7 +88,6 @@ class EvaluationTracker:
         push_details_to_hub: bool = False,
         push_results_to_tensorboard: bool = False,
         tensorboard_metric_prefix: str = "eval",
-        tensorboard_org: str = "",
         public: bool = False,
         token: str = "",
         nanotron_run_info: GeneralArgs = None,
@@ -117,18 +116,22 @@ class EvaluationTracker:
         self.versions_logger = VersionsLogger()
         self.general_config_logger = GeneralConfigLogger()
         self.task_config_logger = TaskConfigLogger()
-        self.hub_results_org = hub_results_org
-        self.hub_results_repo = f"{hub_results_org}/results"
-        self.hub_private_results_repo = f"{hub_results_org}/private-results"
+
         self.api = HfApi(token=token)
 
         self.output_dir = output_dir
+
+        self.hub_results_org = hub_results_org  # will also contain tensorboard results
+
+        self.hub_results_repo = f"{hub_results_org}/results"
+        self.hub_private_results_repo = f"{hub_results_org}/private-results"
         self.push_results_to_hub = push_results_to_hub
         self.push_details_to_hub = push_details_to_hub
-        self.tensorboard_metric_prefix = tensorboard_metric_prefix
-        self.tensorboard_org = tensorboard_org
+
         self.push_results_to_tensorboard = push_results_to_tensorboard
+        self.tensorboard_metric_prefix = tensorboard_metric_prefix
         self.nanotron_run_info = nanotron_run_info
+
         self.public = public
 
     def save(self) -> None:
@@ -501,7 +504,7 @@ class EvaluationTracker:
         output_dir_tb.mkdir(parents=True, exist_ok=True)
         tb_context = HFSummaryWriter(
             logdir=str(output_dir_tb),
-            repo_id=self.tensorboard_org,
+            repo_id=self.hub_results_org,
             repo_private=True,
             path_in_repo="tb",
             commit_every=6000,  # Very long time so that we can change our files names and trigger push ourselves (see below)
@@ -562,6 +565,6 @@ class EvaluationTracker:
         # Now we can push to the hub
         tb_context.scheduler.trigger()
         hlog(
-            f"Pushed to tensorboard at https://huggingface.co/{self.tensorboard_org}/{output_dir_tb}/tensorboard"
+            f"Pushed to tensorboard at https://huggingface.co/{self.hub_results_org}/{output_dir_tb}/tensorboard"
             f"at global_step {global_step}"
         )
