@@ -42,15 +42,28 @@ from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 
 task1 = LightevalTaskConfig(
     name="ger_rag_eval_task1",
-    prompt_function="prompt_fn_task1", 
-    suite=["community"], 
-    hf_repo="deutsche-telekom/Ger-RAG-eval", 
-    hf_subset="task1", 
-    hf_avail_splits=["test"], 
-    evaluation_splits=["test"], 
+    prompt_function="prompt_fn_task1",
+    suite=["community"],
+    hf_repo="deutsche-telekom/Ger-RAG-eval",
+    hf_subset="task1",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
     few_shots_split="test",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc"],  
+    metric=["loglikelihood_acc"],
+)
+
+task2 = LightevalTaskConfig(
+    name="ger_rag_eval_task2",
+    prompt_function="prompt_fn_task2",
+    suite=["community"],
+    hf_repo="deutsche-telekom/Ger-RAG-eval",
+    hf_subset="task2",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split="test",
+    few_shots_select="sequential",
+    metric=["loglikelihood_acc"],
 )
 
 QUERY_TASK1: str = """\
@@ -67,11 +80,28 @@ D: {choice_d}
 """
 
 
+QUERY_TASK2: str = """\
+Auf Basis welcher der folgenden Kontexte (A oder B oder C oder D) lässt sich die Frage beantworten?
+
+Frage: {{question}}
+
+Kontexte:
+
+A:
+{{choice_a}}
+
+B:
+{{choice_b}}
+
+C:
+{{choice_c}}
+
+D:
+{{choice_d}}
+"""
+
+
 def prompt_fn_task1(line, task_name: str = None):
-    """Defines how to go from a dataset line to a doc object.
-    Follow examples in src/lighteval/tasks/tasks_prompt_formatting.py, or get more info
-    about what this function should do in the README.
-    """
     query = QUERY_TASK1.format(
         context=line["context"],
         choice_a=line["choice_a"],
@@ -88,8 +118,25 @@ def prompt_fn_task1(line, task_name: str = None):
     )
 
 
+def prompt_fn_task2(line, task_name: str = None):
+    query = QUERY_TASK2.format(
+        question=line["question"],
+        choice_a=line["choice_a"],
+        choice_b=line["choice_b"],
+        choice_c=line["choice_c"],
+        choice_d=line["choice_d"],
+    )
+    choices = ["A", "B", "C", "D"]
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=choices,
+        gold_index=choices.index(line["target"]),
+    )
+
+
 # STORE YOUR EVALS
-_TASKS = [task1]
+_TASKS = [task1, task2]
 
 
 # MODULE LOGIC
