@@ -86,7 +86,9 @@ task4 = LightevalTaskConfig(
     metric=["loglikelihood_acc"],
 )
 
-QUERY_TASK1: str = """\
+
+def prompt_fn_task1(line, task_name: str = None):
+    QUERY_TASK1: str = """\
 Welche der folgenden Fragen (A oder B oder C oder D) lässt sich anhand des Kontext beantworten?
 
 Kontext:
@@ -97,52 +99,7 @@ A: {choice_a}
 B: {choice_b}
 C: {choice_c}
 D: {choice_d}
-"""
-
-
-QUERY_TASK2: str = """\
-Auf Basis welcher der folgenden Kontexte (A oder B oder C oder D) lässt sich die Frage beantworten?
-
-Frage: {question}
-
-Kontexte:
-
-A:
-{choice_a}
-
-B:
-{choice_b}
-
-C:
-{choice_c}
-
-D:
-{choice_d}
-"""
-
-
-QUERY_TASK3: str = """\
-Beantwortet die Antwort wirklich die Frage?
-Antworte mit J für ja oder N für nein.
-
-Die Frage: {question}
-
-Die Antwort: {answer}
-"""
-
-
-QUERY_TASK4: str = """\
-Lässt sich die Frage mithilfe der Informationen aus dem Kontext beantworten?
-Antworte mit J für ja oder N für nein.
-
-Kontext:
-{context}
-
-Die Frage: {question}
-"""
-
-
-def prompt_fn_task1(line, task_name: str = None):
+    """
     query = QUERY_TASK1.format(
         context=line["context"],
         choice_a=line["choice_a"],
@@ -160,6 +117,25 @@ def prompt_fn_task1(line, task_name: str = None):
 
 
 def prompt_fn_task2(line, task_name: str = None):
+    QUERY_TASK2: str = """\
+Auf Basis welcher der folgenden Kontexte (A oder B oder C oder D) lässt sich die Frage beantworten?
+
+Frage: {question}
+
+Kontexte:
+
+A:
+{choice_a}
+
+B:
+{choice_b}
+
+C:
+{choice_c}
+
+D:
+{choice_d}
+    """
     query = QUERY_TASK2.format(
         question=line["question"],
         choice_a=line["choice_a"],
@@ -177,6 +153,14 @@ def prompt_fn_task2(line, task_name: str = None):
 
 
 def prompt_fn_task3(line, task_name: str = None):
+    QUERY_TASK3: str = """\
+Beantwortet die Antwort wirklich die Frage?
+Antworte mit J für ja oder N für nein.
+
+Die Frage: {question}
+
+Die Antwort: {answer}
+    """
     query = QUERY_TASK3.format(
         question=line["question"],
         answer=line["answer"],
@@ -191,6 +175,15 @@ def prompt_fn_task3(line, task_name: str = None):
 
 
 def prompt_fn_task4(line, task_name: str = None):
+    QUERY_TASK4: str = """\
+Lässt sich die Frage mithilfe der Informationen aus dem Kontext beantworten?
+Antworte mit J für ja oder N für nein.
+
+Kontext:
+{context}
+
+Die Frage: {question}
+    """
     query = QUERY_TASK4.format(
         question=line["question"],
         context=line["context"],
