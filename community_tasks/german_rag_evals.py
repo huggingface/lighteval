@@ -101,9 +101,8 @@ task4 = LightevalTaskConfig(
 
 
 def prompt_fn_choose_question_by_context(line, task_name: str = None):
-    QUERY_TASK1: str = """\
-Welche der folgenden Fragen (A oder B oder C oder D) lässt sich anhand des Kontext beantworten?
-
+    instruction = "Welche der folgenden Fragen (A oder B oder C oder D) lässt sich anhand des Kontext beantworten?\n\n"
+    query_template = """\
 Kontext:
 {context}
 
@@ -113,7 +112,7 @@ B: {choice_b}
 C: {choice_c}
 D: {choice_d}
     """
-    query = QUERY_TASK1.format(
+    query = query_template.format(
         context=line["context"],
         choice_a=line["choice_a"],
         choice_b=line["choice_b"],
@@ -123,6 +122,7 @@ D: {choice_d}
     choices = ["A", "B", "C", "D"]
     return Doc(
         task_name=task_name,
+        instruction=instruction,
         query=query,
         choices=choices,
         gold_index=choices.index(line["target"]),
@@ -130,9 +130,8 @@ D: {choice_d}
 
 
 def prompt_fn_choose_context_by_question(line, task_name: str = None):
-    QUERY_TASK2: str = """\
-Auf Basis welcher der folgenden Kontexte (A oder B oder C oder D) lässt sich die Frage beantworten?
-
+    instruction = "Auf Basis welcher der folgenden Kontexte (A oder B oder C oder D) lässt sich die Frage beantworten?\n\n"
+    query_template = """\
 Frage: {question}
 
 Kontexte:
@@ -149,7 +148,7 @@ C:
 D:
 {choice_d}
     """
-    query = QUERY_TASK2.format(
+    query = query_template.format(
         question=line["question"],
         choice_a=line["choice_a"],
         choice_b=line["choice_b"],
@@ -159,6 +158,7 @@ D:
     choices = ["A", "B", "C", "D"]
     return Doc(
         task_name=task_name,
+        instruction=instruction,
         query=query,
         choices=choices,
         gold_index=choices.index(line["target"]),
@@ -166,21 +166,20 @@ D:
 
 
 def prompt_fn_question_answer_match(line, task_name: str = None):
-    QUERY_TASK3: str = """\
-Beantwortet die Antwort wirklich die Frage?
-Antworte mit J für ja oder N für nein.
-
+    instruction = "Beantwortet die Antwort wirklich die Frage? Antworte mit J für ja oder N für nein.\n\n"
+    query_template = """\
 Die Frage: {question}
 
 Die Antwort: {answer}
     """
-    query = QUERY_TASK3.format(
+    query = query_template.format(
         question=line["question"],
         answer=line["answer"],
     )
     choices = ["J", "N"]
     return Doc(
         task_name=task_name,
+        instruction=instruction,
         query=query,
         choices=choices,
         gold_index=choices.index(line["target"]),
@@ -188,22 +187,21 @@ Die Antwort: {answer}
 
 
 def prompt_fn_context_question_match(line, task_name: str = None):
-    QUERY_TASK4: str = """\
-Lässt sich die Frage mithilfe der Informationen aus dem Kontext beantworten?
-Antworte mit J für ja oder N für nein.
-
+    instruction = "Lässt sich die Frage mithilfe der Informationen aus dem Kontext beantworten? Antworte mit J für ja oder N für nein.\n\n"
+    query_template = """\
 Kontext:
 {context}
 
 Die Frage: {question}
     """
-    query = QUERY_TASK4.format(
+    query = query_template.format(
         question=line["question"],
         context=line["context"],
     )
     choices = ["J", "N"]
     return Doc(
         task_name=task_name,
+        instruction=instruction,
         query=query,
         choices=choices,
         gold_index=choices.index(line["target"]),
