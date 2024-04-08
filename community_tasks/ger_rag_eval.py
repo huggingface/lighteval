@@ -48,7 +48,7 @@ task1 = LightevalTaskConfig(
     hf_subset="task1",  # ok
     hf_avail_splits=["test"],  # ok
     evaluation_splits=["test"],  # ok
-    few_shots_split="validation",
+    few_shots_split="test",
     few_shots_select="sequential",
     metric=["loglikelihood_acc"],  # ok
 )
