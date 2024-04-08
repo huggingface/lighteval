@@ -34,7 +34,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-# Task 1: Choose Question by Context.
+# Task 1: Choose question by context.
 # Given is a context and 4 questions.
 # The task is to decide which question can be answered by the context.
 task1 = LightevalTaskConfig(
@@ -50,7 +50,7 @@ task1 = LightevalTaskConfig(
     metric=["loglikelihood_acc"],
 )
 
-# Task 2: Choose Context by Question.
+# Task 2: Choose context by question.
 # Given is a question and 4 contexts.
 # The task is to decide which context can answer the question.
 task2 = LightevalTaskConfig(
@@ -67,7 +67,7 @@ task2 = LightevalTaskConfig(
 )
 
 
-# Task 3: Question-Answer Match.
+# Task 3: Question-answer match.
 # Given is a question and an answer.
 # The task is to decide whether the answer actualy answers the question.
 task3 = LightevalTaskConfig(
@@ -83,7 +83,7 @@ task3 = LightevalTaskConfig(
     metric=["loglikelihood_acc"],
 )
 
-# Task 4: Context-Question Match.
+# Task 4: Context-question match.
 # Given is a context and a question.
 # The task is to decide whether the question can be answered by the context or not.
 task4 = LightevalTaskConfig(
