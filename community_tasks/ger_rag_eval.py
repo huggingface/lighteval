@@ -197,7 +197,7 @@ def prompt_fn_task3(line, task_name: str = None):
 
 
 def prompt_fn_task4(line, task_name: str = None):
-    query = QUERY_TASK3.format(
+    query = QUERY_TASK4.format(
         question=line["question"],
         context=line["context"],
     )
