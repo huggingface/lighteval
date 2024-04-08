@@ -34,9 +34,12 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
+# Task 1: Choose Question by Context.
+# Given is a context and 4 questions.
+# The task is to decide which question can be answered by the context.
 task1 = LightevalTaskConfig(
-    name="ger_rag_eval_task1",
-    prompt_function="prompt_fn_task1",
+    name="german_rag_eval:choose_question_by_context",
+    prompt_function="prompt_fn_choose_question_by_context",
     suite=["community"],
     hf_repo="deutsche-telekom/Ger-RAG-eval",
     hf_subset="task1",
@@ -47,9 +50,12 @@ task1 = LightevalTaskConfig(
     metric=["loglikelihood_acc"],
 )
 
+# Task 2: Choose Context by Question.
+# Given is a question and 4 contexts.
+# The task is to decide which context can answer the question.
 task2 = LightevalTaskConfig(
-    name="ger_rag_eval_task2",
-    prompt_function="prompt_fn_task2",
+    name="german_rag_eval:choose_context_by_question",
+    prompt_function="prompt_fn_choose_context_by_question",
     suite=["community"],
     hf_repo="deutsche-telekom/Ger-RAG-eval",
     hf_subset="task2",
@@ -60,9 +66,13 @@ task2 = LightevalTaskConfig(
     metric=["loglikelihood_acc"],
 )
 
+
+# Task 3: Question-Answer Match.
+# Given is a question and an answer.
+# The task is to decide whether the answer actualy answers the question.
 task3 = LightevalTaskConfig(
-    name="ger_rag_eval_task3",
-    prompt_function="prompt_fn_task3",
+    name="german_rag_eval:question_answer_match",
+    prompt_function="prompt_fn_question_answer_match",
     suite=["community"],
     hf_repo="deutsche-telekom/Ger-RAG-eval",
     hf_subset="task3",
@@ -73,9 +83,12 @@ task3 = LightevalTaskConfig(
     metric=["loglikelihood_acc"],
 )
 
+# Task 4: Context-Question Match.
+# Given is a context and a question.
+# The task is to decide whether the question can be answered by the context or not.
 task4 = LightevalTaskConfig(
-    name="ger_rag_eval_task4",
-    prompt_function="prompt_fn_task4",
+    name="german_rag_eval:context_question_match",
+    prompt_function="prompt_fn_context_question_match",
     suite=["community"],
     hf_repo="deutsche-telekom/Ger-RAG-eval",
     hf_subset="task4",
@@ -87,7 +100,7 @@ task4 = LightevalTaskConfig(
 )
 
 
-def prompt_fn_task1(line, task_name: str = None):
+def prompt_fn_choose_question_by_context(line, task_name: str = None):
     QUERY_TASK1: str = """\
 Welche der folgenden Fragen (A oder B oder C oder D) lässt sich anhand des Kontext beantworten?
 
@@ -116,7 +129,7 @@ D: {choice_d}
     )
 
 
-def prompt_fn_task2(line, task_name: str = None):
+def prompt_fn_choose_context_by_question(line, task_name: str = None):
     QUERY_TASK2: str = """\
 Auf Basis welcher der folgenden Kontexte (A oder B oder C oder D) lässt sich die Frage beantworten?
 
@@ -152,7 +165,7 @@ D:
     )
 
 
-def prompt_fn_task3(line, task_name: str = None):
+def prompt_fn_question_answer_match(line, task_name: str = None):
     QUERY_TASK3: str = """\
 Beantwortet die Antwort wirklich die Frage?
 Antworte mit J für ja oder N für nein.
@@ -174,7 +187,7 @@ Die Antwort: {answer}
     )
 
 
-def prompt_fn_task4(line, task_name: str = None):
+def prompt_fn_context_question_match(line, task_name: str = None):
     QUERY_TASK4: str = """\
 Lässt sich die Frage mithilfe der Informationen aus dem Kontext beantworten?
 Antworte mit J für ja oder N für nein.
