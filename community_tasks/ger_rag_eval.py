@@ -41,16 +41,16 @@ from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 
 
 task1 = LightevalTaskConfig(
-    name="ger_rag_eval_task1",  # ok
-    prompt_function="prompt_fn_task1",  # ok
-    suite=["community"],  # ok
-    hf_repo="deutsche-telekom/Ger-RAG-eval",  # ok
-    hf_subset="task1",  # ok
-    hf_avail_splits=["test"],  # ok
-    evaluation_splits=["test"],  # ok
+    name="ger_rag_eval_task1",
+    prompt_function="prompt_fn_task1", 
+    suite=["community"], 
+    hf_repo="deutsche-telekom/Ger-RAG-eval", 
+    hf_subset="task1", 
+    hf_avail_splits=["test"], 
+    evaluation_splits=["test"], 
     few_shots_split="test",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc"],  # ok
+    metric=["loglikelihood_acc"],  
 )
 
 QUERY_TASK1: str = """\
