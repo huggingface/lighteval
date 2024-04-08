@@ -109,21 +109,21 @@ D: {choice_d}
 QUERY_TASK2: str = """\
 Auf Basis welcher der folgenden Kontexte (A oder B oder C oder D) lässt sich die Frage beantworten?
 
-Frage: {{question}}
+Frage: {question}
 
 Kontexte:
 
 A:
-{{choice_a}}
+{choice_a}
 
 B:
-{{choice_b}}
+{choice_b}
 
 C:
-{{choice_c}}
+{choice_c}
 
 D:
-{{choice_d}}
+{choice_d}
 """
 
 
@@ -131,9 +131,9 @@ QUERY_TASK3: str = """\
 Beantwortet die Antwort wirklich die Frage?
 Antworte mit J für ja oder N für nein.
 
-Die Frage: {{question}}
+Die Frage: {question}
 
-Die Antwort: {{answer}}
+Die Antwort: {answer}
 """
 
 
@@ -142,9 +142,9 @@ Lässt sich die Frage mithilfe der Informationen aus dem Kontext beantworten?
 Antworte mit J für ja oder N für nein.
 
 Kontext:
-{{context}}
+{context}
 
-Die Frage: {{question}}
+Die Frage: {question}
 """
 
 
