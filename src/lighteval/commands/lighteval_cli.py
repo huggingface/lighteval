@@ -89,9 +89,9 @@ def list_tasks_command():
         grouped_by_suite["extended"].sort()
         print("Available tasks: (Grouped by suite)\n")
         for suite,task_list in grouped_by_suite.items():
-            print("- " + suite + " :\n")
+            print("- " + suite)
             for task in task_list:
-                print("\t - " + task +"\n")
+                print("\t - " + task)
     except Exception as e:
         print('Error: ', e)
 
