@@ -143,7 +143,7 @@ ARC_EL_TASKS = [
 # TruthfulQA
 
 thruthfulqa_mc_el_task = LightevalTaskConfig(
-    name="truthfulqa:mc",
+    name="truthfulqa_el:mc",
     prompt_function="truthfulqa_mc_prompt_el",
     suite=["community"],
     hf_repo="ilsp/truthful_qa_greek",
@@ -187,7 +187,7 @@ def truthfulqa_mc_prompt_el(line, task_name: str = None):
 
 
 thruthfulqa_gen_el_task = LightevalTaskConfig(
-    name="truthfulqa:gen",
+    name="truthfulqa_el:gen",
     prompt_function="truthfulqa_gen_prompt_el",
     suite=["community"],
     hf_repo="ilsp/truthful_qa_greek",
@@ -225,7 +225,7 @@ def truthfulqa_gen_prompt_el(line, task_name: str = None):
     correct_answers = [
         answer.strip() + "" if answer[-1] == "." else "." for answer in line["correct_answers"] if answer != ""
     ]
-    # TODO change this to something it's actually trained to answer
+
     if "Δεν έχω σχόλιο." not in correct_answers:
         correct_answers.append("Δεν έχω σχόλιο.")
 
