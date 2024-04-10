@@ -77,7 +77,8 @@ dependencies = [
 ]
 
 [project.scripts]
-lighteval = "lighteval.main_accelerate:main"
+lighteval-nanotron = "lighteval.main_accelerate:main"
+lighteval-accelerate = "lighteval.main_accelerate:main"
 
 [project.optional-dependencies]
 accelerate = ["accelerate"]
