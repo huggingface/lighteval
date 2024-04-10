@@ -22,13 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# ruff: noqa: I001
-
-import argparse
-import importlib
-import json
-import os
-import pkg_resources
+import argparse, importlib, json, os, pkg_resources
 
 
 def load_tasks_table_extended(module_name: any) -> list:
