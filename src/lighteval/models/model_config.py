@@ -222,7 +222,7 @@ class InferenceEndpointModelConfig:
     should_reuse_existing: bool = False
     add_special_tokens: bool = True
     revision: str = "main"
-    namespace: str = None
+    namespace: str = None  # The namespace under which to launch the endopint. Defaults to the current user's namespace
 
     def get_dtype_args(self) -> Dict[str, str]:
         model_dtype = self.model_dtype.lower()
@@ -238,6 +238,11 @@ class InferenceEndpointModelConfig:
 
     @staticmethod
     def nullable_keys() -> list[str]:
+        """
+        Returns the list of optional keys in an endpoint model configuration. By default, the code requires that all the
+        keys be specified in the configuration in order to launch the endpoint. This function returns the list of keys
+        that are not required and can remain None.
+        """
         return ["namespace"]
 
 
