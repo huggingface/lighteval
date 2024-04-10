@@ -178,7 +178,7 @@ NO_BNB_ERROR_MSG = "You are trying to load a model quantized with `bitsandbytes`
 
 
 def is_autogptq_available() -> bool:
-    return importlib.util.find_spec("auto-gptq") is not None
+    return importlib.util.find_spec("auto_gptq") is not None
 
 
 NO_AUTOGPTQ_ERROR_MSG = "You are trying to load a model quantized with `auto-gptq`, which is not available in your local environement. Please install it using pip."
@@ -189,3 +189,14 @@ def is_peft_available() -> bool:
 
 
 NO_PEFT_ERROR_MSG = "You are trying to use adapter weights models, for which you need `peft`, which is not available in your environment. Please install it using pip."
+
+
+def can_load_extended_tasks() -> bool:
+    imports = []
+    for package in ["langdetect"]:
+        imports.append(importlib.util.find_spec(package))
+
+    return all(cur_import is not None for cur_import in imports)
+
+
+CANNOT_USE_EXTENDED_TASKS_MSG = "If you want to use extended_tasks, make sure you installed their dependencies using `pip install -e .[extended_tasks]`."

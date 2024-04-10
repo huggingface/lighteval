@@ -81,7 +81,7 @@ def main(args):
         with accelerator.main_process_first() if accelerator is not None else nullcontext():
             task_names_list, few_shots_dict = taskinfo_selector(args.tasks)
             task_dict = Registry(cache_dir=env_config.cache_dir).get_task_dict(
-                task_names_list, custom_tasks=args.custom_tasks, extended_tasks=args.extended_tasks
+                task_names_list, custom_tasks=args.custom_tasks
             )
             LightevalTask.load_datasets(task_dict.values(), args.dataset_loading_processes)
 
@@ -131,18 +131,15 @@ def main(args):
             final_dict = evaluation_tracker.generate_final_dict()
 
         with htrack_block("Cleaninp up"):
-            if args.delta_weights:
-                tmp_weights_dir = f"{evaluation_tracker.general_config_logger.model_name}-delta-applied"
-                hlog(f"Removing {tmp_weights_dir}")
-                shutil.rmtree(tmp_weights_dir)
-            if args.adapter_weights:
-                tmp_weights_dir = f"{evaluation_tracker.general_config_logger.model_name}-adapter-applied"
-                hlog(f"Removing {tmp_weights_dir}")
-                shutil.rmtree(tmp_weights_dir)
+            for weights in ["delta", "adapter"]:
+                try:
+                    tmp_weights_dir = f"{evaluation_tracker.general_config_logger.model_name}-{weights}-applied"
+                    hlog(f"Removing {tmp_weights_dir}")
+                    shutil.rmtree(tmp_weights_dir)
+                except OSError:
+                    pass
 
         print(make_results_table(final_dict))
 
-        if not args.reuse_existing:
-            model.cleanup()
-
+        model.cleanup()
         return final_dict

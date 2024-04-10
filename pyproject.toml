@@ -30,7 +30,7 @@ where = ["src"]
 
 [project]
 name = "lighteval"
-version = "0.3.0.dev0"
+version = "0.4.0.dev0"
 authors = [
   { name="Clémentine Fourrier", email="clementine@huggingface.com" },
   { name="Nathan Habib", email="nathan.habib@huggingface.com" },
@@ -45,7 +45,9 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT License"}
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.10",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
@@ -53,7 +55,7 @@ keywords = ["evaluation", "nlp", "llm"]
 dependencies = [
     # Base dependencies
     "transformers>=4.38.0",
-    "huggingface_hub>=0.21.2",
+    "huggingface_hub>=0.22.0",
     "torch>=2.0",
     "GitPython>=3.1.41", # for logging
     "datasets>=2.14.0",
@@ -88,7 +90,8 @@ quality = ["ruff==v0.2.2","pre-commit"]
 tests = ["pytest==7.4.0"]
 dev = ["lighteval[accelerate,quality,tests]"]
 extended_tasks = [
-  "langdetect", #ifeval
+  "langdetect", # ifeval
+  "openai", # mt-bench
 ]
 
 [project.urls]

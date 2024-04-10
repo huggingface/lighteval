@@ -23,15 +23,16 @@
 import asyncio
 from typing import Coroutine, List, Optional, Union
 
+import torch
 from huggingface_hub import (
     AsyncInferenceClient,
     InferenceClient,
     InferenceEndpoint,
     InferenceEndpointTimeoutError,
+    TextGenerationOutput,
     create_inference_endpoint,
     get_inference_endpoint,
 )
-from huggingface_hub.inference._text_generation import TextGenerationResponse
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoTokenizer
@@ -62,6 +63,7 @@ class InferenceEndpointModel(LightevalModel):
     def __init__(
         self, config: Union[InferenceEndpointModelConfig, InferenceModelConfig], env_config: EnvConfig
     ) -> None:
+        self.reuse_existing = getattr(config, "should_reuse_existing", True)
         if isinstance(config, InferenceEndpointModelConfig):
             if config.should_reuse_existing:
                 self.endpoint = get_inference_endpoint(name=config.name, token=env_config.token)
@@ -69,6 +71,7 @@ class InferenceEndpointModel(LightevalModel):
                 self.endpoint: InferenceEndpoint = create_inference_endpoint(
                     name=config.name,
                     repository=config.repository,
+                    revision=config.revision,
                     framework=config.framework,
                     task="text-generation",
                     accelerator=config.accelerator,
@@ -86,6 +89,7 @@ class InferenceEndpointModel(LightevalModel):
                             "MAX_INPUT_LENGTH": "2047",
                             "MAX_TOTAL_TOKENS": "2048",
                             "MODEL_ID": "/repository",
+                            **config.get_dtype_args(),
                         },
                         "url": "ghcr.io/huggingface/text-generation-inference:1.1.0",
                     },
@@ -127,7 +131,7 @@ class InferenceEndpointModel(LightevalModel):
         False  # no accelerator = this is the main process
 
     def cleanup(self):
-        if self.endpoint is not None:
+        if self.endpoint is not None and not self.reuse_existing:
             self.endpoint.delete()
             hlog_warn(
                 "You deleted your endpoint after using it. You'll need to create it again if you need to reuse it."
@@ -145,7 +149,7 @@ class InferenceEndpointModel(LightevalModel):
 
     def __async_process_request(
         self, context: str, stop_tokens: list[str], max_tokens: int
-    ) -> Coroutine[None, list[TextGenerationResponse], str]:
+    ) -> Coroutine[None, list[TextGenerationOutput], str]:
         # Todo: add an option to launch with conversational instead for chat prompts
         # https://huggingface.co/docs/huggingface_hub/v0.20.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.conversational
         generated_text = self.async_client.text_generation(
@@ -159,7 +163,7 @@ class InferenceEndpointModel(LightevalModel):
 
         return generated_text
 
-    def __process_request(self, context: str, stop_tokens: list[str], max_tokens: int) -> TextGenerationResponse:
+    def __process_request(self, context: str, stop_tokens: list[str], max_tokens: int) -> TextGenerationOutput:
         # Todo: add an option to launch with conversational instead for chat prompts
         # https://huggingface.co/docs/huggingface_hub/v0.20.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.conversational
         generated_text = self.client.text_generation(
@@ -176,7 +180,7 @@ class InferenceEndpointModel(LightevalModel):
     async def __async_process_batch_generate(
         self,
         requests: list[GreedyUntilRequest | GreedyUntilWithLogitsRequest],
-    ) -> list[TextGenerationResponse]:
+    ) -> list[TextGenerationOutput]:
         return await asyncio.gather(
             *[
                 self.__async_process_request(
@@ -191,7 +195,7 @@ class InferenceEndpointModel(LightevalModel):
     def __process_batch_generate(
         self,
         requests: list[GreedyUntilRequest | GreedyUntilWithLogitsRequest],
-    ) -> list[TextGenerationResponse]:
+    ) -> list[TextGenerationOutput]:
         return [
             self.__process_request(
                 context=request.context,
@@ -203,7 +207,7 @@ class InferenceEndpointModel(LightevalModel):
 
     async def __async_process_batch_logprob(
         self, requests: list[LoglikelihoodRequest], rolling: bool = False
-    ) -> list[TextGenerationResponse]:
+    ) -> list[TextGenerationOutput]:
         return await asyncio.gather(
             *[
                 self.__async_process_request(
@@ -217,7 +221,7 @@ class InferenceEndpointModel(LightevalModel):
 
     def __process_batch_logprob(
         self, requests: list[LoglikelihoodRequest], rolling: bool = False
-    ) -> list[TextGenerationResponse]:
+    ) -> list[TextGenerationOutput]:
         return [
             self.__process_request(
                 context=request.context if rolling else request.context + request.choice,
@@ -314,17 +318,22 @@ class InferenceEndpointModel(LightevalModel):
         ):
             dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda batch: batch)
 
-            for batch in tqdm(dataloader, desc="Loglikleihoods", position=1, leave=False, disable=self.disable_tqdm):
+            for batch in tqdm(dataloader, desc="Loglikelihoods", position=1, leave=False, disable=self.disable_tqdm):
                 if self.use_async:
                     responses = asyncio.run(self.__async_process_batch_logprob(batch))
                 else:
                     responses = self.__process_batch_logprob(batch)
-                for ix, response in enumerate(responses):
-                    len_choice = len(batch[ix].tokenized_continuation)
+                for cur_request, response in zip(batch, responses):
+                    cont_toks = torch.tensor(cur_request.tokenized_continuation)
+                    len_choice = len(cont_toks)
+
                     logits = [t.logprob for t in response.details.prefill[-len_choice:] if t.logprob is not None]
+
+                    greedy_tokens = torch.tensor(logits).argmax(dim=-1)
+                    max_equal = (greedy_tokens == cont_toks).all().squeeze(0)
                     results.append(
                         LoglikelihoodReturn(
-                            result=sum(logits),
+                            result=(sum(logits), bool(max_equal)),
                             input_tokens=[t.id for t in response.details.prefill[:-len_choice]],
                             generated_tokens=[t.id for t in response.details.prefill[-len_choice:]],
                             truncated_tokens_count=-1,
@@ -355,13 +364,16 @@ class InferenceEndpointModel(LightevalModel):
         ):
             dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda batch: batch)
 
-            for batch in tqdm(dataloader, desc="Loglikleihoods", position=1, leave=False, disable=self.disable_tqdm):
+            for batch in tqdm(
+                dataloader, desc="Loglikelihoods, rolling", position=1, leave=False, disable=self.disable_tqdm
+            ):
                 if self.use_async:
                     responses = asyncio.run(self.__async_process_batch_logprob(batch, rolling=True))
                 else:
                     responses = self.__process_batch_logprob(batch, rolling=True)
                 for response in responses:
                     logits = [t.logprob for t in response.details.tokens[:-1]]
+
                     results.append(
                         LoglikelihoodReturn(
                             result=sum(logits),

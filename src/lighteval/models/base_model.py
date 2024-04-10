@@ -35,9 +35,16 @@ from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, Loglikel
 from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.model_config import BaseModelConfig, EnvConfig
-from lighteval.models.model_output import Batch, GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
-from lighteval.models.utils import _get_dtype, _get_precision, _simplify_name
+from lighteval.models.model_output import (
+    Batch,
+    GenerateMultiTurnReturn,
+    GenerateReturn,
+    LoglikelihoodReturn,
+    LoglikelihoodSingleTokenReturn,
+)
+from lighteval.models.utils import _get_dtype, _simplify_name, batched
 from lighteval.tasks.requests import (
+    GreedyUntilMultiTurnRequest,
     GreedyUntilRequest,
     GreedyUntilWithLogitsRequest,
     LoglikelihoodRequest,
@@ -81,7 +88,7 @@ class BaseModel(LightevalModel):
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
 
         # We are in DP (and launch the script with `accelerate launch`)
-        if not config.model_parallel and not config.load_in_4bit and not config.load_in_8bit:
+        if not config.model_parallel and config.quantization_config is None:
             # might need to use accelerate instead
             # self.model = config.accelerator.prepare(self.model)
             hlog(f"Using Data Parallelism, putting model on device {self._device}")
@@ -90,7 +97,7 @@ class BaseModel(LightevalModel):
         self.model_name = _simplify_name(config.pretrained)
         self.model_sha = config.get_model_sha()
 
-        self.precision = _get_precision(config, model_auto_config=self._config)
+        self.precision = _get_dtype(config.dtype, config=self._config)
 
     @property
     def tokenizer(self):
@@ -252,7 +259,7 @@ class BaseModel(LightevalModel):
             int: Max length to use depending on the available args and config
         """
         if max_length is not None:
-            return max_length
+            return int(max_length)
         # Try to get the sequence length from the model config.
         seqlen_config_attrs = ("n_positions", "max_position_embeddings", "n_ctx")
 
@@ -344,6 +351,137 @@ class BaseModel(LightevalModel):
             disable_tqdm=self.disable_tqdm,
             override_bs=override_bs,
         )
+
+    def greedy_until_multi_turn(  # noqa: C901
+        self, requests: list[GreedyUntilMultiTurnRequest], override_bs: Optional[int] = None
+    ) -> GenerateMultiTurnReturn:
+        for request in requests:
+            request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
+            request.tokenized_context = self.tok_encode(request.context)["input_ids"]
+
+        results = []
+
+        dataset = GenerativeTaskDataset(requests=requests, dataset_splits=1)
+        dataloader = DataLoader(dataset, batch_size=1, collate_fn=lambda batch: batch)
+
+        if self.accelerator:
+            dataloader = self.accelerator.prepare(dataloader)
+
+        hlog_warn("Running greedy multi turn generation, the batch size is set to 1 for this task.")
+
+        for request_batch in tqdm(
+            dataloader, desc="Greedy Multi Turn generation", position=1, leave=False, disable=self.disable_tqdm
+        ):
+            request = request_batch[0]
+            stop_tokens = request.stop_sequence
+            max_generated_tokens = request.generation_size
+            context = request.context[0]
+            max_context_size_allowed = self.max_length - max_generated_tokens
+
+            model_inputs = self.tokenizer(
+                context,
+                padding=True,
+                truncation=True,
+                return_tensors="pt",
+                max_length=max_context_size_allowed,
+                add_special_tokens=self.add_special_tokens,
+            ).to(self.device)
+
+            stopping_criteria = transformers.StoppingCriteriaList(
+                [
+                    *[
+                        MultiTokenEOSCriteria(
+                            sequence, self.tokenizer, input_ids_shape=model_inputs["input_ids"].shape
+                        )
+                        for sequence in stop_tokens
+                    ],
+                ]
+            )
+            model_outputs = self.model.generate(
+                **model_inputs,
+                max_new_tokens=max_generated_tokens,
+                stopping_criteria=stopping_criteria,
+                do_sample=False,
+                pad_token_id=self.tokenizer.pad_token_id
+                if self.tokenizer.pad_token_id
+                else self.tokenizer.eos_token_id,
+            )
+            model_outputs = model_outputs[0, model_inputs["input_ids"].size(1) :]
+            model_generations = [model_outputs]
+            decoded_generation = self.tokenizer.decode(model_outputs)
+            for term in stop_tokens:
+                decoded_generation = decoded_generation.split(term)[0]
+
+            input_tokens = [model_inputs["input_ids"]]
+
+            for i, multi_turn_context in enumerate(request.context[1:]):
+                multi_turn_context = multi_turn_context.format(model_response=decoded_generation)
+
+                model_inputs = self.tokenizer(
+                    multi_turn_context,
+                    padding=True,
+                    truncation=True,
+                    return_tensors="pt",
+                    max_length=max_context_size_allowed,
+                    add_special_tokens=self.add_special_tokens,
+                ).to(self.device)
+
+                stopping_criteria = transformers.StoppingCriteriaList(
+                    [
+                        *[
+                            MultiTokenEOSCriteria(
+                                sequence, self.tokenizer, input_ids_shape=model_inputs["input_ids"].shape
+                            )
+                            for sequence in stop_tokens
+                        ],
+                    ]
+                )
+
+                model_outputs = self.model.generate(
+                    input_ids=model_inputs["input_ids"],
+                    attention_mask=model_inputs["attention_mask"],
+                    max_new_tokens=max_generated_tokens,
+                    stopping_criteria=stopping_criteria,
+                    do_sample=False,
+                    pad_token_id=self.tokenizer.pad_token_id
+                    if self.tokenizer.pad_token_id
+                    else self.tokenizer.eos_token_id,
+                )
+                model_outputs = model_outputs[0, model_inputs["input_ids"].size(1) :]
+                model_generations.append(model_outputs)
+                decoded_generation = self.tokenizer.decode(model_outputs, skip_special_tokens=True)
+                input_tokens.append(model_inputs["input_ids"])
+
+                for term in stop_tokens:
+                    decoded_generation = decoded_generation.split(term)[0]
+
+            if self.accelerator:
+                padding_size = max(gen.shape[0] for gen in model_generations)
+                for i, gen in enumerate(model_generations):
+                    model_generations[i] = F.pad(
+                        gen, (0, padding_size - gen.shape[0]), value=self.tokenizer.pad_token_id
+                    )
+                model_generations = torch.stack(model_generations, dim=0)
+                model_generations, lengths = self.pad_and_gather(model_generations, drop_last_samples=False)
+
+            model_answers = []
+            for generation, _ in zip(model_generations, lengths):
+                generation = generation.cpu().tolist()
+                decoded = self.tokenizer.decode(generation, skip_special_tokens=True)
+                model_answers.append(decoded)
+
+            for answers in batched(model_answers, len(request.context)):
+                results.append(
+                    GenerateMultiTurnReturn(
+                        result=answers,
+                        input_tokens=[],
+                        generated_tokens=[],
+                        truncated_tokens_count=0,
+                        padded_tokens_count=0,
+                    )
+                )
+
+        return results
 
     def greedy_until(
         self,
@@ -753,9 +891,20 @@ class BaseModel(LightevalModel):
             padded=padded,
         )
 
-    def pad_and_gather(self, output_tensor: torch.Tensor) -> torch.Tensor:
-        """Gather together tensors of (possibly) various size spread on separate GPUs (first exchange the lengths and then pad and gather)"""
-        # Create a tensor of size batch_size, [output_length] * batch_size, for each each process
+    def pad_and_gather(self, output_tensor: torch.Tensor, drop_last_samples: bool = True) -> torch.Tensor:
+        """
+        Pads the `output_tensor` to the maximum length and gathers the lengths across processes.
+
+        Args:
+            output_tensor (torch.Tensor): The output tensor to be padded.
+            drop_last_samples (bool, optional): Whether to drop the last samples during gathering.
+            Last samples are dropped when the number of samples is not divisible by the number of processes.
+                Defaults to True.
+
+        Returns:
+            torch.Tensor: The padded output tensor and the gathered length tensor.
+        """
+        # Create a tensor of size batch_size, [output_length] * batch_size, for each process
         length_tensor = torch.tensor([output_tensor.shape[1]] * output_tensor.shape[0], device=self.device)
         if self.accelerator is not None:
             # Gather all the lengths, we end up with a tensor of size num_processes [output_length_1, output_length_2, ...]
@@ -766,7 +915,10 @@ class BaseModel(LightevalModel):
             output_tensor, (0, max_length - output_tensor.shape[1], 0, 0), value=self.tokenizer.pad_token_id
         )
         if self.accelerator:
-            output_tensor = self.accelerator.gather_for_metrics(output_tensor)
+            if drop_last_samples:
+                output_tensor = self.accelerator.gather_for_metrics(output_tensor)
+            else:
+                output_tensor = self.accelerator.gather(output_tensor)
         return output_tensor, length_tensor
 
     def loglikelihood_single_token(
@@ -891,10 +1043,15 @@ class MultiTokenEOSCriteria(transformers.StoppingCriteria):
         self,
         sequence: str,
         tokenizer: transformers.PreTrainedTokenizer,
-        batch: Batch,
+        batch: Batch = None,
+        input_ids_shape: Tuple[int, int] = None,
     ):
-        initial_decoder_input_length = batch.input_ids.shape[1]
-        batch_size = batch.input_ids.shape[0]
+        if batch is not None:
+            initial_decoder_input_length = batch.input_ids.shape[1]
+            batch_size = batch.input_ids.shape[0]
+        else:
+            initial_decoder_input_length = input_ids_shape[1]
+            batch_size = input_ids_shape[0]
 
         self.initial_decoder_input_length = initial_decoder_input_length
         self.done_tracker = [False] * batch_size
