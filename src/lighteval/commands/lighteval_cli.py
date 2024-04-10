@@ -28,6 +28,7 @@ import json
 import os
 import pkg_resources
 
+
 def load_tasks_table_extended(module_name: any) -> list:
     """
     load the module module_name
@@ -56,7 +57,7 @@ def list_tasks_command():
         tasks = []
         # Handling tasks_table.jsonl
         # Get the path to the resource file
-        tasks_table_path = pkg_resources.resource_filename('lighteval', 'tasks/tasks_table.jsonl')
+        tasks_table_path = pkg_resources.resource_filename("lighteval", "tasks/tasks_table.jsonl")
         with open(tasks_table_path) as jsonl_tasks_table:
             jsonl_tasks_table_content = jsonl_tasks_table.read()
             for jline in jsonl_tasks_table_content.splitlines():
@@ -93,12 +94,12 @@ def list_tasks_command():
             for task in task_list:
                 print("\t - " + task)
     except Exception as e:
-        print('Error: ', e)
+        print("Error: ", e)
 
 
 def main():
-    parser = argparse.ArgumentParser(description='CLI tool for lighteval, a lightweight framework for LLM evaluation')
-    parser.add_argument('--list-tasks', action='store_true', help='List available tasks')
+    parser = argparse.ArgumentParser(description="CLI tool for lighteval, a lightweight framework for LLM evaluation")
+    parser.add_argument("--list-tasks", action="store_true", help="List available tasks")
     args = parser.parse_args()
 
     if args.list_tasks:
