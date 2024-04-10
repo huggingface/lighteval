@@ -22,11 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# ruff: noqa: C901
+# ruff: noqa: C901, E120, I001
 import argparse
 import importlib
 import json
-
 import os
 import pkg_resources
 
