@@ -641,6 +641,7 @@ class JudgeLLM:
             )
         except Exception as e:
             print(f"Could not initialize the JudgeOpenAI model:\n{e}")
+            self.judge = None
 
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
         """
