@@ -231,7 +231,9 @@ class Metrics(Enum):
         category=MetricCategory.GENERATIVE_MULTI_TURN,
         use_case=MetricUseCase.SUMMARIZATION,
         sample_level_fn=JudgeLLM(
-            judge_model_name="gpt-3.5-turbo", template_path="src/lighteval/tasks/extended/mt_bench/judge_prompts.jsonl", multi_turn=True
+            judge_model_name="gpt-3.5-turbo",
+            template_path="src/lighteval/tasks/extended/mt_bench/judge_prompts.jsonl",
+            multi_turn=True,
         ).compute,
         corpus_level_fn={
             "single_turn": np.mean,
@@ -244,11 +246,13 @@ class Metrics(Enum):
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.SUMMARIZATION,
         sample_level_fn=JudgeLLM(
-            judge_model_name="gpt-3.5-turbo", template_path="src/lighteval/tasks/extended/mt_bench/judge_prompts.jsonl", multi_turn=False
+            judge_model_name="gpt-3.5-turbo",
+            template_path="src/lighteval/tasks/extended/mt_bench/judge_prompts.jsonl",
+            multi_turn=False,
         ).compute,
         corpus_level_fn={
             "judge_score": np.mean,
-        }
+        },
     )
     loglikelihood_acc = SampleLevelMetric(
         metric="acc",

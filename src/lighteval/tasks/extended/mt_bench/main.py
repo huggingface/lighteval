@@ -26,7 +26,6 @@ import numpy as np
 from aenum import extend_enum
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from lighteval.tasks.extended.mt_bench.judges import JudgeOpenAI
 from lighteval.metrics import Metrics
 from lighteval.metrics.utils import MetricCategory, MetricUseCase, SampleLevelMetric, SampleLevelMetricGrouping
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
