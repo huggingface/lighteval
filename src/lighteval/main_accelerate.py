@@ -100,6 +100,7 @@ def get_parser():
     parser.add_argument("--num_fewshot_seeds", type=int, default=1, help="Number of trials the few shots")
     return parser
 
+
 @htrack()
 def main():
     parser = get_parser()
