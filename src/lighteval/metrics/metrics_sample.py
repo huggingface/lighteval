@@ -623,12 +623,13 @@ class StringDistance:
 class LlmAsJudge:
     available_models = ["gpt-3.5-turbo"]
 
-    def __init__(self, judge_model_name: str, template_path: str):
+    def __init__(self, judge_model_name: str, template_path: str, multi_turn: bool = False):
         if judge_model_name not in self.available_models:
             raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
 
         self.template_path = "src/lighteval/tasks/extended/mt_bench/judge_prompts.jsonl"
         OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+        self.multi_turn = multi_turn
 
         try:
             self.judge = JudgeOpenAI(
@@ -637,26 +638,43 @@ class LlmAsJudge:
                 temperature=0.0,
                 templates_path=self.template_path,
                 openai_api_key=OPENAI_API_KEY,
+                multi_turn=multi_turn,
             )
         except Exception as e:
             print(f"Could not initialize the JudgeOpenAI model:\n{e}")
 
-    def compute_multi_turn(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
+    def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
         """Defines how to go from a list of predictions to a score.
         Follow examples in src/lighteval/metrics/metrics.py, or get more info
         about what this function should do in the README.
         """
-        questions = formatted_doc.specific["multi_turn_queries"]
-        ref_answers = formatted_doc.specific["reference"]
 
-        score, messages, judgement = self.judge.evaluate_answer(questions, predictions, ref_answers, single_turn=True)
-        score_mt, messages_mt, judgement_mt = self.judge.evaluate_answer(
-            questions, predictions, ref_answers, single_turn=False
-        )
+        # If we are evaluating a multiturn task, we need to have specific field in the formated doc
+        if self.multi_turn:
+            questions = formatted_doc.specific["multi_turn_queries"]
+            ref_answers = formatted_doc.specific.get("reference", None) if formatted_doc.specific is not None else None
+        else:
+            questions = [formatted_doc.query]
+            ref_answers = [formatted_doc.choices[formatted_doc.gold_index]]
+
+        scores, messages, judgements = self.judge.evaluate_answer(questions, predictions, ref_answers)
+
+        # Multi turn only has 2 turns
+        if self.multi_turn:
+            return {
+                "single_turn": scores[0],
+                "multi_turn": scores[1],
+                "user_prompt": [messages[0], messages[1]],
+                "judgement": [judgements[0], judgements[1]],
+            }
+
+        from pprint import pprint
+        pprint(messages[0])
+        pprint(judgements[0])
 
         return {
-            "single_turn": score,
-            "multi_turn": score_mt,
-            "user_prompt": [messages, messages_mt],
-            "judgement": [judgement, judgement_mt],
+            "judge_score": scores[0],
+            "user_prompt": messages[0],
+            "judgement": judgements[0],
         }
+

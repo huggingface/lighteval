@@ -70,11 +70,12 @@ class JudgeOpenAI(Judge):
         __process_judge_response: Processes the judge's response and extracts the score.
     """
 
-    def __init__(self, model: str, seed: int, temperature: float, templates_path: str, openai_api_key: str):
+    def __init__(self, model: str, seed: int, temperature: float, templates_path: str, openai_api_key: str, multi_turn: bool = False):
         self.client = OpenAI(api_key=openai_api_key)
         self.model = model
         self.seed = seed
         self.temperature = temperature
+        self.multi_turn = multi_turn
 
         data = []
         with open(templates_path, "r") as f:
@@ -95,7 +96,7 @@ class JudgeOpenAI(Judge):
         self.max_tokens = 2048
 
     def evaluate_answer(
-        self, questions: list[str], answers: list[str], references: list[str], single_turn: bool
+        self, questions: list[str], answers: list[str], references: list[str]
     ) -> tuple[int, list[dict[str, str]], str]:
         """
         Evaluates an answer using the OpenAI API.
@@ -104,7 +105,6 @@ class JudgeOpenAI(Judge):
             questions (list[str]): A list of questions (can be a list because of multi-turn conversations)
             answers (list[str]): A list of answers, one for each question.
             references (list[str]): A list of reference answers, one for each question (sometimes not available)
-            single_turn (bool): Indicates whether the conversation is single-turn or multi-turn.
 
         Returns:
             A tuple containing the score, prompts, and judgment.
@@ -112,13 +112,15 @@ class JudgeOpenAI(Judge):
         Raises:
             Exception: If an error occurs during the API call.
         """
-        if single_turn:
-            prompts = self.__get_prompts_single_turn(
+        prompts = [self.__get_prompts_single_turn(
                 questions[0], answers[0], references[0] if len(references) > 0 else None
-            )
-        else:
-            prompts = self.__get_prompts_multi_turn(questions, answers, references if len(references) > 1 else None)
+            )]
 
+        if self.multi_turn:
+            prompts_multi_turn = self.__get_prompts_multi_turn(questions, answers, references if len(references) > 1 else None)
+            prompts.append(prompts_multi_turn)
+
+        print(prompts)
         for _ in range(self.API_MAX_RETRY):
             try:
                 response = self.client.chat.completions.create(

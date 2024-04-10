@@ -231,12 +231,24 @@ class Metrics(Enum):
         category=MetricCategory.GENERATIVE_MULTI_TURN,
         use_case=MetricUseCase.SUMMARIZATION,
         sample_level_fn=LlmAsJudge(
-            judge_model_name="gpt-3.5-turbo", template_path="src/lighteval/tasks/extended/mt_bench/judge_prompts.jsonl"
-        ).compute_multi_turn,
+            judge_model_name="gpt-3.5-turbo", template_path="src/lighteval/tasks/extended/mt_bench/judge_prompts.jsonl", multi_turn=True
+        ).compute,
         corpus_level_fn={
             "single_turn": np.mean,
             "multi_turn": np.mean,
         },
+    )
+    gsm8k_llm_as_judge = SampleLevelMetricGrouping(
+        metric=["judge_score"],
+        higher_is_better=True,
+        category=MetricCategory.GENERATIVE,
+        use_case=MetricUseCase.SUMMARIZATION,
+        sample_level_fn=LlmAsJudge(
+            judge_model_name="gpt-3.5-turbo", template_path="src/lighteval/tasks/extended/mt_bench/judge_prompts.jsonl", multi_turn=False
+        ).compute,
+        corpus_level_fn={
+            "judge_score": np.mean,
+        }
     )
     loglikelihood_acc = SampleLevelMetric(
         metric="acc",
