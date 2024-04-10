@@ -620,7 +620,7 @@ class StringDistance:
         return 1.0 - edist / max(len(s1), len(s2)) if len(s1) > 0 and len(s2) > 0 else 0
 
 
-class LlmAsJudge:
+class JudgeLLM:
     available_models = ["gpt-3.5-turbo"]
 
     def __init__(self, judge_model_name: str, template_path: str, multi_turn: bool = False):
@@ -671,6 +671,7 @@ class LlmAsJudge:
         from pprint import pprint
         pprint(messages[0])
         pprint(judgements[0])
+        
 
         return {
             "judge_score": scores[0],
