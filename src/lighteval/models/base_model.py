@@ -42,7 +42,7 @@ from lighteval.models.model_output import (
     LoglikelihoodReturn,
     LoglikelihoodSingleTokenReturn,
 )
-from lighteval.models.utils import _get_dtype, _get_precision, _simplify_name, batched
+from lighteval.models.utils import _get_dtype, _simplify_name, batched
 from lighteval.tasks.requests import (
     GreedyUntilMultiTurnRequest,
     GreedyUntilRequest,
@@ -88,7 +88,7 @@ class BaseModel(LightevalModel):
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
 
         # We are in DP (and launch the script with `accelerate launch`)
-        if not config.model_parallel and not config.load_in_4bit and not config.load_in_8bit:
+        if not config.model_parallel and config.quantization_config is None:
             # might need to use accelerate instead
             # self.model = config.accelerator.prepare(self.model)
             hlog(f"Using Data Parallelism, putting model on device {self._device}")
@@ -97,7 +97,7 @@ class BaseModel(LightevalModel):
         self.model_name = _simplify_name(config.pretrained)
         self.model_sha = config.get_model_sha()
 
-        self.precision = _get_precision(config, model_auto_config=self._config)
+        self.precision = _get_dtype(config.dtype, config=self._config)
 
     @property
     def tokenizer(self):
