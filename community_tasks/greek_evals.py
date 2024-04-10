@@ -259,7 +259,7 @@ hellaswag_el_task = LightevalTaskConfig(
     trust_dataset=True,
 )
 
-def hellaswag_el_prompt(line, task_name: str = None):
+def hellaswag_prompt_el(line, task_name: str = None):
     def preprocess(text):
         text = text.replace(" [τίτλος]", ". ")
         text = re.sub("\\[.*?\\]", "", text)
