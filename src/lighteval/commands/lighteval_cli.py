@@ -22,9 +22,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# ruff: noqa: C901
 import argparse
 import importlib
 import json
+
 import os
 import pkg_resources
 
@@ -73,7 +75,7 @@ def list_tasks_command():
                     tasks_table = load_tasks_table_extended(module_name)
                     tasks_extended += tasks_table
         
-        grouped_by_suite = dict()
+        grouped_by_suite = {}
         # Grouping by suite the tasks
         for task in tasks:
             for suite in task["suite"]:
