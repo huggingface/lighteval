@@ -22,7 +22,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import argparse, importlib, json, os, pkg_resources
+import argparse
+import importlib
+import json
+import os
+
+import pkg_resources
 
 
 def load_tasks_table_extended(module_name: any) -> list:
