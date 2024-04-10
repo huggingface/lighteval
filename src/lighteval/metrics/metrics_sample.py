@@ -627,7 +627,6 @@ class JudgeLLM:
         if judge_model_name not in self.available_models:
             raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
 
-        self.template_path = "src/lighteval/tasks/extended/mt_bench/judge_prompts.jsonl"
         OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
         self.multi_turn = multi_turn
 
@@ -636,7 +635,7 @@ class JudgeLLM:
                 model=judge_model_name,
                 seed=42,
                 temperature=0.0,
-                templates_path=self.template_path,
+                templates_path=template_path,
                 openai_api_key=OPENAI_API_KEY,
                 multi_turn=multi_turn,
             )
@@ -644,9 +643,11 @@ class JudgeLLM:
             print(f"Could not initialize the JudgeOpenAI model:\n{e}")
 
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
-        """Defines how to go from a list of predictions to a score.
-        Follow examples in src/lighteval/metrics/metrics.py, or get more info
-        about what this function should do in the README.
+        """
+        Compute the score of a generative taks using a llm as a judge.
+        The generative task can be multiturn with 2 turns max, in that case, we
+        return scores for turn 1 and 2. Also returns user_prompt and judgment
+        which are ignored later by the aggregator.
         """
 
         # If we are evaluating a multiturn task, we need to have specific field in the formated doc
