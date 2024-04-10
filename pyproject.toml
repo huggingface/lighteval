@@ -76,6 +76,9 @@ dependencies = [
     "pycountry",
 ]
 
+[project.scripts]
+lighteval = "lighteval.main_accelerate:main"
+
 [project.optional-dependencies]
 accelerate = ["accelerate"]
 tgi = ["text-generation==0.6.0"]
