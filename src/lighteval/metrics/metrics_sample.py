@@ -668,11 +668,6 @@ class JudgeLLM:
                 "judgement": [judgements[0], judgements[1]],
             }
 
-        from pprint import pprint
-
-        pprint(messages[0])
-        pprint(judgements[0])
-
         return {
             "judge_score": scores[0],
             "user_prompt": messages[0],
