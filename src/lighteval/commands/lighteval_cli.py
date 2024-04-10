@@ -22,7 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# ruff: noqa: C901, E120, I001
+# ruff: noqa: I001
+
 import argparse
 import importlib
 import json
@@ -48,6 +49,64 @@ def load_tasks_table_extended(module_name: any) -> list:
         print(e)
     return tasks_list if tasks_list is not None else []
 
+def getTasksTableJson()->list:
+    """
+    Fetch tasks/tasks_table.jsonl
+    Returns
+    - a list of all the tasks in tasks/tasks_table.jsonl
+    """
+    tasks = []
+    # Handling tasks_table.jsonl
+    # Get the path to the resource file
+    tasks_table_path = pkg_resources.resource_filename("lighteval", "tasks/tasks_table.jsonl")
+    with open(tasks_table_path) as jsonl_tasks_table:
+        jsonl_tasks_table_content = jsonl_tasks_table.read()
+        for jline in jsonl_tasks_table_content.splitlines():
+            tasks.append(json.loads(jline))
+    return tasks
+
+def getExtendedTasks()->list:
+    """
+    Fetch all the tasks in the extended suite
+    Returns
+    - a list of all the extended tasks
+    """
+    tasks_extended = []
+    extended_tasks_dir = pkg_resources.resource_filename("lighteval", "tasks/extended")
+    for root, dirs, files in os.walk(extended_tasks_dir):
+        for file in files:
+            if file == "main.py":
+                module_name = os.path.basename(root)
+                tasks_table = load_tasks_table_extended(module_name)
+                tasks_extended += tasks_table
+    return tasks_extended
+
+def groupBySuite(tasks: list, tasks_extended: list) -> dict:
+    """
+    Group tasks by suite and sort them alphabetically
+    Args:
+    - tasks: list of tasks in tasks/tasks_table.jsonl
+    - tasks_extended: list of extended tasks
+    Returns:
+    - a dict of tasks grouped by suite
+    """
+    grouped_by_suite = {}
+    for task in tasks:
+        for suite in task["suite"]:
+            if suite not in grouped_by_suite.keys():
+                grouped_by_suite[suite] = [task["name"]]
+            else:
+                grouped_by_suite[suite].append(task["name"])
+                grouped_by_suite[suite].sort()
+        
+    grouped_by_suite["extended"] = []
+    # Adding extended suite
+    for task in tasks_extended:
+        grouped_by_suite["extended"].append(task["name"])
+    grouped_by_suite["extended"].sort()
+    return grouped_by_suite
+
+
 def list_tasks_command():
     """
     List all the avalaible tasks in tasks_table.jsonl and the extended directory
@@ -55,40 +114,16 @@ def list_tasks_command():
     tasks in tasks/extended
     """
     try:
-        tasks = []
         # Handling tasks_table.jsonl
-        # Get the path to the resource file
-        tasks_table_path = pkg_resources.resource_filename("lighteval", "tasks/tasks_table.jsonl")
-        with open(tasks_table_path) as jsonl_tasks_table:
-            jsonl_tasks_table_content = jsonl_tasks_table.read()
-            for jline in jsonl_tasks_table_content.splitlines():
-                tasks.append(json.loads(jline))
+        tasks = getTasksTableJson()
         
         # Handling extended tasks
-        tasks_extended = []
-        extended_tasks_dir = pkg_resources.resource_filename("lighteval", "tasks/extended")
-        for root, dirs, files in os.walk(extended_tasks_dir):
-            for file in files:
-                if file == "main.py":
-                    module_name = os.path.basename(root)
-                    tasks_table = load_tasks_table_extended(module_name)
-                    tasks_extended += tasks_table
+        tasks_extended = getExtendedTasks()
         
-        grouped_by_suite = {}
         # Grouping by suite the tasks
-        for task in tasks:
-            for suite in task["suite"]:
-                if suite not in grouped_by_suite.keys():
-                    grouped_by_suite[suite] = [task["name"]]
-                else:
-                    grouped_by_suite[suite].append(task["name"])
-                    grouped_by_suite[suite].sort()
+        grouped_by_suite = groupBySuite(tasks, tasks_extended)
         
-        grouped_by_suite["extended"] = []
-        # Adding extended suite
-        for task in tasks_extended:
-            grouped_by_suite["extended"].append(task["name"])
-        grouped_by_suite["extended"].sort()
+        # Print tasks
         print("Available tasks: (Grouped by suite)\n")
         for suite,task_list in grouped_by_suite.items():
             print("- " + suite)
