@@ -66,10 +66,13 @@ class InferenceEndpointModel(LightevalModel):
         self.reuse_existing = getattr(config, "should_reuse_existing", True)
         if isinstance(config, InferenceEndpointModelConfig):
             if config.should_reuse_existing:
-                self.endpoint = get_inference_endpoint(name=config.name, token=env_config.token)
+                self.endpoint = get_inference_endpoint(
+                    name=config.name, token=env_config.token, namespace=config.namespace
+                )
             else:
                 self.endpoint: InferenceEndpoint = create_inference_endpoint(
                     name=config.name,
+                    namespace=config.namespace,
                     repository=config.repository,
                     revision=config.revision,
                     framework=config.framework,
