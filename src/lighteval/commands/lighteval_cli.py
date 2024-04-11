@@ -48,7 +48,8 @@ def load_tasks_table_extended(module_name: any) -> list:
         print(e)
     return tasks_list if tasks_list is not None else []
 
-def get_tasks_table_json()->list:
+
+def get_tasks_table_json( ) -> list:
     """
     Fetch tasks/tasks_table.jsonl
     Returns
@@ -64,7 +65,8 @@ def get_tasks_table_json()->list:
             tasks.append(json.loads(jline))
     return tasks
 
-def get_extended_tasks()->list:
+
+def get_extended_tasks() -> list:
     """
     Fetch all the tasks in the extended suite
     Returns
@@ -79,6 +81,7 @@ def get_extended_tasks()->list:
                 tasks_table = load_tasks_table_extended(module_name)
                 tasks_extended += tasks_table
     return tasks_extended
+
 
 def group_by_suite(tasks: list, tasks_extended: list) -> dict:
     """
@@ -115,13 +118,13 @@ def list_tasks_command():
     try:
         # Handling tasks_table.jsonl
         tasks = get_tasks_table_json()
-        
+
         # Handling extended tasks
         tasks_extended = get_extended_tasks()
-        
+
         # Grouping by suite the tasks
         grouped_by_suite = group_by_suite(tasks, tasks_extended)
-        
+
         # Print tasks
         print("Available tasks: (Grouped by suite)\n")
         for suite,task_list in grouped_by_suite.items():
@@ -144,3 +147,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
