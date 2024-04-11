@@ -112,7 +112,7 @@ def group_by_suite(tasks: list, tasks_extended: list) -> dict:
 def list_tasks_command():
     """
     List all the available tasks in tasks_table.jsonl and the extended directory
-    Assumes the existence of TASKS_TABLE in the main.py file for each extended 
+    Assumes the existence of TASKS_TABLE in the main.py file for each extended
     tasks in tasks/extended
     """
     try:
