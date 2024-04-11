@@ -49,7 +49,7 @@ def load_tasks_table_extended(module_name: any) -> list:
     return tasks_list if tasks_list is not None else []
 
 
-def get_tasks_table_json( ) -> list:
+def get_tasks_table_json() -> list:
     """
     Fetch tasks/tasks_table.jsonl
     Returns
@@ -100,7 +100,7 @@ def group_by_suite(tasks: list, tasks_extended: list) -> dict:
             else:
                 grouped_by_suite[suite].append(task["name"])
                 grouped_by_suite[suite].sort()
-        
+
     grouped_by_suite["extended"] = []
     # Adding extended suite
     for task in tasks_extended:
@@ -111,7 +111,7 @@ def group_by_suite(tasks: list, tasks_extended: list) -> dict:
 
 def list_tasks_command():
     """
-    List all the avalaible tasks in tasks_table.jsonl and the extended directory
+    List all the available tasks in tasks_table.jsonl and the extended directory
     Assumes the existence of TASKS_TABLE in the main.py file for each extended 
     tasks in tasks/extended
     """
@@ -127,7 +127,7 @@ def list_tasks_command():
 
         # Print tasks
         print("Available tasks: (Grouped by suite)\n")
-        for suite,task_list in grouped_by_suite.items():
+        for suite, task_list in grouped_by_suite.items():
             print("- " + suite)
             for task in task_list:
                 print("\t - " + task)
@@ -144,6 +144,7 @@ def main():
         list_tasks_command()
     else:
         parser.print_help()
+
 
 if __name__ == "__main__":
     main()
