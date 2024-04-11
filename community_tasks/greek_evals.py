@@ -73,11 +73,11 @@ class MMLUELTask(LightevalTaskConfig):
         )
 
 def mmlu_el_prompt(line, topic, task_name: str = None):
-    # TODO probably need to get translations of the tasks to create a better instruction
-    query = f"The following are multiple choice questions (with answers) about  {topic.replace('_', ' ')}.\n\n"
+    # TODO probably have to change choice labels.
+    query = f"Οι ακόλουθες ερωτήσεις πολλαπλής επιλογής (που παρουσιάζονται μαζί με της απαντήσεις τους) έχουν να κάνουν με {topic.replace('_', ' ')}.\n\n"
     query += line["question"] + "\n"
     query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, line["choices"])])
-    query += "Answer:"
+    query += "Απάντηση:"
 
     gold_ix = LETTER_INDICES.index(line["answer"]) if isinstance(line["answer"], str) else line["answer"]
     is_few_shots = line.get("__few_shots", False)  # They are adding few shots
@@ -87,7 +87,7 @@ def mmlu_el_prompt(line, topic, task_name: str = None):
         query=query,
         choices=[" A", " B", " C", " D"] if is_few_shots else ["A", "B", "C", "D"],
         gold_index=gold_ix,
-        instruction=f"The following are multiple choice questions (with answers) about  {topic.replace('_', ' ')}.\n\n",
+        instruction=f"Οι ακόλουθες ερωτήσεις πολλαπλής επιλογής (που παρουσιάζονται μαζί με της απαντήσεις τους) έχουν να κάνουν με {topic.replace('_', ' ')}.\n\n",
         target_for_fewshot_sorting=[" A", " B", " C", " D"][gold_ix],
     )
 
