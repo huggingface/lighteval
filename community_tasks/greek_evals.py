@@ -29,12 +29,14 @@ This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then im
 import re
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
-from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
+
 
 # MMLU
 
+GREEK_LETTER_INDICES = ['Α', 'Β', 'Γ', 'Δ', 'Ε', 'Ζ', 'Η', 'Θ', 'Ι', 'Κ', 'Λ', 'Μ', 'Ν', 'Ξ', 'Ο', 'Π', 'Ρ', 'Σ', 'Τ', 'Υ', 'Φ', 'Χ', 'Ψ', 'Ω']
+
 MMLU_EL_SUBSETS = [
-    "abstract_algebra", "anatomy", "astronomy", "business_ethics", "clinical_knowledge", "college_biology",
+    "all", "abstract_algebra", "anatomy", "astronomy", "business_ethics", "clinical_knowledge", "college_biology",
     "college_chemistry", "college_computer_science", "college_mathematics", "college_medicine", "college_physics",
     "computer_security", "conceptual_physics", "econometrics", "electrical_engineering", "elementary_mathematics",
     "formal_logic", "global_facts", "high_school_biology", "high_school_chemistry", "high_school_computer_science",
@@ -74,21 +76,21 @@ class MMLUELTask(LightevalTaskConfig):
 
 def mmlu_el_prompt(line, topic, task_name: str = None):
     # TODO probably have to change choice labels.
-    query = f"Οι ακόλουθες ερωτήσεις πολλαπλής επιλογής (που παρουσιάζονται μαζί με της απαντήσεις τους) έχουν να κάνουν με {topic.replace('_', ' ')}.\n\n"
+    query = f"Οι ακόλουθες ερωτήσεις πολλαπλής επιλογής (που παρουσιάζονται μαζί με της απαντήσεις τους) έχουν να κάνουν με {line['subject'].replace('_', ' ')}.\n\n"
     query += line["question"] + "\n"
-    query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, line["choices"])])
+    query += "".join([f"{key}. {choice}\n" for key, choice in zip(GREEK_LETTER_INDICES, line["choices"])])
     query += "Απάντηση:"
 
-    gold_ix = LETTER_INDICES.index(line["answer"]) if isinstance(line["answer"], str) else line["answer"]
+    gold_ix = GREEK_LETTER_INDICES.index(line["answer"]) if isinstance(line["answer"], str) else line["answer"]
     is_few_shots = line.get("__few_shots", False)  # They are adding few shots
 
     return Doc(
         task_name=task_name,
         query=query,
-        choices=[" A", " B", " C", " D"] if is_few_shots else ["A", "B", "C", "D"],
+        choices=[" Α", " Β", " Γ", " Δ"] if is_few_shots else ["Α", "Β", "Γ", "Δ"],
         gold_index=gold_ix,
-        instruction=f"Οι ακόλουθες ερωτήσεις πολλαπλής επιλογής (που παρουσιάζονται μαζί με της απαντήσεις τους) έχουν να κάνουν με {topic.replace('_', ' ')}.\n\n",
-        target_for_fewshot_sorting=[" A", " B", " C", " D"][gold_ix],
+        instruction=f"Οι ακόλουθες ερωτήσεις πολλαπλής επιλογής (που παρουσιάζονται μαζί με της απαντήσεις τους) έχουν να κάνουν με {line['subject'].replace('_', ' ')}.\n\n",
+        target_for_fewshot_sorting=[" Α", " Β", " Γ", " Δ"][gold_ix],
     )
 
 MMLU_EL_TASKS = [
