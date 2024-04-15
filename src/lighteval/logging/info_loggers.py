@@ -367,11 +367,13 @@ class DetailsLogger:
             detail.choices = doc.choices
             detail.gold_index = as_list(doc.gold_index)
             pred_saved = True
-        if task.has_metric_category[MetricCategory.GENERATIVE_MULTI_TURN]:
+        if task.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN] or task.has_metric_category[MetricCategory.LLM_AS_JUDGE]:
             pred_saved = True
-            detail.judement_prompt = llm_as_prompt_judgement[0]
-            detail.judgement = llm_as_prompt_judgement[1]
+            detail.judement_prompt = metrics.get("user_prompt", None)
+            detail.judgement = metrics.get("judgement", None)
+
         detail.specifics = doc.specific
+
         if not pred_saved:
             raise NotImplementedError(
                 "No metric prediction saved."

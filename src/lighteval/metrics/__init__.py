@@ -153,7 +153,7 @@ def apply_generative_multi_turn_metric(results: list[ModelReturn], formatted_doc
     predictions = results.pop(0).result
 
     for metric in metrics:
-        if Metrics[metric].value.category == MetricCategory.GENERATIVE_MULTI_TURN:
+        if Metrics[metric].value.category == MetricCategory.LLM_AS_JUDGE_MULTI_TURN:
             outputs.update(Metrics[metric].value.compute(predictions=predictions, formatted_doc=formatted_doc))
 
     return results, outputs

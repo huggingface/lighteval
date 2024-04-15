@@ -412,8 +412,10 @@ class LightevalTask:
             request_types.append(RequestType.LOGLIKELIHOOD_ROLLING)
         if self.has_metric_category[MetricCategory.GENERATIVE]:
             request_types.append(RequestType.GREEDY_UNTIL)
-        if self.has_metric_category[MetricCategory.GENERATIVE_MULTI_TURN]:
+        if self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]:
             request_types.append(RequestType.GREEDY_UNTIL_MULTI_TURN)
+        if self.has_metric_category[MetricCategory.LLM_AS_JUDGE]:
+            request_types.append(RequestType.GREEDY_UNTIL)
         if self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]:
             request_types.append(RequestType.GREEDY_UNTIL_WITH_LOGITS)
         if self.has_metric_category[MetricCategory.MULTICHOICE]:
@@ -504,7 +506,7 @@ class LightevalTask:
                     choices=formatted_doc.choices,
                 )
             ]
-        if self.has_metric_category[MetricCategory.GENERATIVE_MULTI_TURN]:
+        if self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]:
             requests[RequestType.GREEDY_UNTIL_MULTI_TURN] += [
                 GreedyUntilMultiTurnRequest(
                     task_name=current_task_name,
@@ -561,7 +563,7 @@ class LightevalTask:
                 results=results, formatted_doc=formatted_doc, metrics=self.metrics
             )
             outputs.update(cur_outputs)
-        if self.has_metric_category[MetricCategory.GENERATIVE_MULTI_TURN]:
+        if self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]:
             results, cur_outputs = apply_generative_multi_turn_metric(
                 results=results, formatted_doc=formatted_doc, metrics=self.metrics
             )

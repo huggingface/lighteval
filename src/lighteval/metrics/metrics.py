@@ -228,7 +228,7 @@ class Metrics(Enum):
     llm_judge_multi_turn = SampleLevelMetricGrouping(
         metric=["single_turn", "multi_turn"],
         higher_is_better=True,
-        category=MetricCategory.GENERATIVE_MULTI_TURN,
+        category=MetricCategory.LLM_AS_JUDGE_MULTI_TURN,
         use_case=MetricUseCase.SUMMARIZATION,
         sample_level_fn=JudgeLLM(
             judge_model_name="gpt-3.5-turbo",
