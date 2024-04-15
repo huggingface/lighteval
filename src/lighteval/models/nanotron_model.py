@@ -1162,7 +1162,7 @@ class NanotronLightevalModel(LightevalModel):
             dataset.split_start = subset_start
             dataset.split_end = min(subset_start + subset_length, total_length)
 
-            if dataset[0].generation_size is None:
+            if dataset[0][1].generation_size is None:
                 # No constraints on the generation size: max length allowed is the max model context
                 max_input_length = self.max_length
             else:
