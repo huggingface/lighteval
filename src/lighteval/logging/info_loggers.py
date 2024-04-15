@@ -205,8 +205,6 @@ class DetailsLogger:
         choices: list = field(default_factory=list)
         gold_index: list = field(default_factory=list)
         metrics: dict = field(default_factory=dict)
-        judement_prompt: str = None
-        judgement: str = None
         specifics: dict = field(default_factory=dict)
 
     @dataclass
@@ -368,9 +366,9 @@ class DetailsLogger:
             detail.gold_index = as_list(doc.gold_index)
             pred_saved = True
         if task.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN] or task.has_metric_category[MetricCategory.LLM_AS_JUDGE]:
+            detail.choices = doc.choices
+            detail.gold_index = as_list(doc.gold_index)
             pred_saved = True
-            detail.judement_prompt = metrics.get("user_prompt", None)
-            detail.judgement = metrics.get("judgement", None)
 
         detail.specifics = doc.specific
 
@@ -489,6 +487,8 @@ class MetricsLogger:
                 except OverflowError:
                     hlog_warn(f"{task_name}, {metric_name} got an OVERFLOW ERROR when aggregating.")
                     metric_result = float("nan")
+                except KeyError:
+                    return
 
                 if isinstance(metric_result, dict):  # For some corpus level grouping metrics
                     self.metric_aggregated[task_name].update(metric_result)
