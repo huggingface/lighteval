@@ -403,6 +403,67 @@ BELEBELE_TASKS = [
 ]
 
 
+# FLORES
+
+FLORES200_DIRECTIONS = ["en->el", "el->en"]
+
+class Flores200Task(LightevalTaskConfig):
+    def __init__(
+        self,
+        name,
+        prompt_fn
+    ):
+        super().__init__(
+            name=name,
+            prompt_function=prompt_fn,
+            suite=["community"],
+            hf_repo="ilsp/flores200_en-el",
+            hf_subset="default",
+            hf_avail_splits=["validation", "test"],
+            evaluation_splits=["test"],
+            few_shots_split="validation",
+            few_shots_select="sequential",
+            generation_size=100,
+            metric=["bleu"],
+            stop_sequence=["\n"],
+            output_regex=None,
+            frozen=False,
+            trust_dataset=True,
+        )
+
+def flores200_en_to_el_prompt(line, task_name: str = None):
+    query = "Μετάφρασε το κείμενο απο τα Αγγλικά στα Ελληνικά.\n\n"
+    query += f"Αγγλικα:\n{line['en']}\n\n"
+    query += "Ελληνικά:\n"
+    return Doc(
+        task_name=task_name,
+        query=query,
+        instruction="Μετάφρασε το κείμενο απο τα Αγγλικά στα Ελληνικά.\n\n",
+        choices=[line['el']],
+        gold_index=0
+    )
+
+def flores200_el_to_en_prompt(line, task_name: str = None):
+    query = "Μετάφρασε το κείμενο απο τα Ελληνικά στα Αγγλικά.\n\n"
+    query += f"Ελληνικά:\n{line['el']}\n\n"
+    query += "Αγγλικά:\n"
+    return Doc(
+        task_name=task_name,
+        query=query,
+        instruction="Μετάφρασε το κείμενο απο τα Ελληνικά στα Αγγλικά.\n\n",
+        choices=[line['en']],
+        gold_index=0
+    )
+
+FLORES200_PROMPT_FN_MAPPER = {
+    'en->el': 'flores200_en_to_el_prompt',
+    'el->en': 'flores200_el_to_en_prompt'
+}
+
+FLORES200_TASKS = [
+    Flores200Task(name=f"flores200:{direction}", prompt_fn=FLORES200_PROMPT_FN_MAPPER[direction]) for direction in FLORES200_DIRECTIONS
+]
+
 # Task registration
 
 _TASKS = (
@@ -410,6 +471,7 @@ _TASKS = (
     ARC_EL_TASKS +
     TRUTHFULQA_TASKS +
     BELEBELE_TASKS +
+    FLORES200_TASKS +
     [hellaswag_el_task] +
     [xnli_el_task] +
     [medical_mc_qa_el_task]
