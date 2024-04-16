@@ -89,7 +89,7 @@ def evaluate(  # noqa: C901
         elif request_type == RequestType.GREEDY_UNTIL_WITH_LOGITS:
             full_resps = lm.greedy_until_with_logits(requests, override_bs=override_bs)
         elif request_type == RequestType.GREEDY_UNTIL_WITH_SAMPLING:
-            full_resps = lm.greedy_until_with_sampling(requests, override_bs=override_bs)
+            full_resps = lm.greedy_until_with_sampling(requests, override_bs=override_bs)  # , num_samples=self)
         elif request_type == RequestType.GREEDY_UNTIL_MULTI_TURN:
             full_resps = lm.greedy_until_multi_turn(requests, override_bs=override_bs)
         else:

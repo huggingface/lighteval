@@ -517,7 +517,7 @@ class BaseModel(LightevalModel):
         requests: list[GreedyUntilRequest],
         returns_logits: bool = False,
         override_bs: Optional[int] = None,
-        num_samples: Optional[int] = None,
+        num_samples: Optional[int] = 1,
     ) -> list[GenerateReturn]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
@@ -638,7 +638,7 @@ class BaseModel(LightevalModel):
         max_new_tokens: int,
         stop_tokens: list[str],
         returns_logits: Optional[bool] = False,
-        num_samples: Optional[int] = None,
+        num_samples: Optional[int] = 1,
     ) -> list[GenerateReturn]:
         """Contains the actual logic of the generation.
         First computes the stop sequences, then generates the predictions, then converts the outputs to GenerateReturn.
@@ -655,7 +655,7 @@ class BaseModel(LightevalModel):
             return_dict_in_generate=True,
             output_scores=True,
             eos_token_id=self.tokenizer.eos_token_id,
-            do_sample=num_samples is not None,
+            do_sample=num_samples > 1,
             num_return_sequences=num_samples,
         )
         if returns_logits:

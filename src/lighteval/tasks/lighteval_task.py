@@ -204,7 +204,9 @@ class LightevalTask:
         current_categories = [Metrics[metric].value.category for metric in self.metrics]
         self.has_metric_category = {category: (category in current_categories) for category in MetricCategory}
         # Sub-optimal system - we might want to store metric parametrisation in a yaml conf for example
-        self.num_samples = [int(metric.split("_")[-1]) for metric in self.metrics if "maj_at_" in metric]
+        self.num_samples = [
+            int(metric.replace("maj_at_", "").split("_")[0]) for metric in self.metrics if "maj_at_" in metric
+        ]
 
         # Data processing
         # to use once prompt formatting is managed as a module

@@ -330,7 +330,7 @@ class Metrics(Enum):
     maj_at_5 = SampleLevelMetric(
         metric="maj@5",
         sample_level_fn=MajAtK(k=5).compute,
-        category=MetricCategory.GENERATIVE_,
+        category=MetricCategory.GENERATIVE_SAMPLING,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -338,8 +338,18 @@ class Metrics(Enum):
     maj_at_8 = SampleLevelMetric(
         metric="maj@8",
         sample_level_fn=MajAtK(k=8).compute,
-        category=MetricCategory.GENERATIVE_,
+        category=MetricCategory.GENERATIVE_SAMPLING,
         use_case=MetricUseCase.ACCURACY,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    maj_at_8_gsm8k = SampleLevelMetric(
+        metric="qem",
+        sample_level_fn=MajAtK(
+            k=8, strip_strings=True, normalize_pred=gsm8k_normalizer, normalize_gold=gsm8k_normalizer
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.MATH,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )

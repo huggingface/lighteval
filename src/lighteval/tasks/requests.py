@@ -170,7 +170,7 @@ class GreedyUntilWithSamplingRequest(Request):
 
     stop_sequence: Union[str, tuple[str], list[str]]
     generation_size: int
-    request_type = RequestType.GREEDY_UNTIL_WITH_SAMPLES
+    request_type = RequestType.GREEDY_UNTIL_WITH_SAMPLING
     tokenized_context: list[int] = None
     num_samples: int = None
 
