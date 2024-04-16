@@ -224,16 +224,16 @@ def truthfulqa_gen_prompt_el(line, task_name: str = None):
     # query = line["question"].strip()
 
     correct_answers = [
-        answer.strip() + "" if answer[-1] == "." else "." for answer in line["correct_answers"] if a>
+        answer.strip() + "" if answer[-1] == "." else "." for answer in line["correct_answers"] if answer != ""
     ]
     # TODO change this to something it's actually trained to answer
     if "Δεν έχω σχόλιο." not in correct_answers:
         correct_answers.append("Δεν έχω σχόλιο.")
 
     incorrect_answers = [
-        answer.strip() + "" if answer[-1] == "." else "." for answer in line["incorrect_answers"] if>
+        answer.strip() + "" if answer[-1] == "." else "." for answer in line["incorrect_answers"] if answer != ""
     ]
-
+    
     return Doc(
         task_name=task_name,
         query=query,
