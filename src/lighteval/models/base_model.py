@@ -359,7 +359,6 @@ class BaseModel(LightevalModel):
             request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
             request.tokenized_context = self.tok_encode(request.context)["input_ids"]
 
-        print(f"{requests=}")
         results = []
 
         dataset = GenerativeTaskDataset(requests=requests, dataset_splits=1)

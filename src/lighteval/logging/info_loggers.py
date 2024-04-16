@@ -491,7 +491,7 @@ class MetricsLogger:
                     hlog_warn(f"{task_name}, {metric_name} got an OVERFLOW ERROR when aggregating.")
                     metric_result = float("nan")
                 except KeyError:
-                    return
+                    continue
 
                 if isinstance(metric_result, dict):  # For some corpus level grouping metrics
                     self.metric_aggregated[task_name].update(metric_result)
