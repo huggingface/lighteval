@@ -371,7 +371,7 @@ class ROUGE:
             predictions = [self.normalize_pred(p) for p in predictions]
 
         if self.bootstrap:  # For t5 style rouge score
-            scores = self._rouge_score_with_bootsrap(golds=golds, predictions=predictions)
+            scores = self._rouge_score_with_bootsrap(golds=golds, preds=predictions)
         elif self.multiple_golds:
             scores = self._rouge_score_multi_golds(golds=golds, preds=predictions)
         else:
