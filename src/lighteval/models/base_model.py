@@ -356,11 +356,7 @@ class BaseModel(LightevalModel):
         self, requests: list[GreedyUntilMultiTurnRequest], override_bs: Optional[int] = None
     ) -> GenerateMultiTurnReturn:
         for request in requests:
-            request.stop_sequence = (
-                as_list(request.stop_sequence)
-                if request.stop_sequence is not None
-                else [] + [self.tokenizer.eos_token]
-            )
+            request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
             request.tokenized_context = self.tok_encode(request.context)["input_ids"]
 
         results = []
@@ -505,11 +501,7 @@ class BaseModel(LightevalModel):
             list[GenerateReturn]: list of generated responses.
         """
         for request in requests:
-            request.stop_sequence = (
-                as_list(request.stop_sequence)
-                if request.stop_sequence is not None
-                else [] + [self.tokenizer.eos_token]
-            )
+            request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
             request.tokenized_context = self.tok_encode(request.context)
 
         dataset = GenerativeTaskDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
