@@ -27,6 +27,8 @@ Custom evaluation tasks for lighteval
 This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
 """
 import re
+import numpy as np
+
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
@@ -310,6 +312,38 @@ def xnli_prompt_el(line, task_name: str = None):
         gold_index=int(line["label"]),
     )
 
+
+# MedicalMCQA
+
+medical_mc_qa_el_task = LightevalTaskConfig(
+    name="medicalmcqa",
+    prompt_function="medical_mc_qa_prompt_el",
+    suite=["community"],
+    hf_repo="ilsp/medical_mcqa_greek",
+    hf_subset="default",
+    hf_avail_splits=["train", "validation"],
+    evaluation_splits=["validation"],
+    few_shots_split=None,
+    few_shots_select="random_sampling_from_train",
+    generation_size=1,
+    metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+    stop_sequence=["\n"],
+    output_regex=None,
+    frozen=False,
+    trust_dataset=True,
+)
+
+
+def medical_mc_qa_prompt_el(line, task_name: str = None):
+    mcs = '\n'.join(line["multiple_choice_targets"])
+    return Doc(
+        task_name=task_name,
+        query=f"Ερώτηση: {line['inputs']}\n\nΕπιλογές:\n{mcs}\n\nΑπάντηση:",
+        choices=[f" {c}" for c in line["multiple_choice_targets"]],
+        gold_index=int(np.argmax(np.array(line["multiple_choice_scores"]))),
+    )
+
+
 # Task registration
 
 _TASKS = (
@@ -317,7 +351,8 @@ _TASKS = (
     ARC_EL_TASKS +
     TRUTHFULQA_TASKS +
     [hellaswag_el_task] + 
-    [xnli_el_task]
+    [xnli_el_task] + 
+    [medical_mc_qa_el_task]
 )
 
 TASKS_TABLE = [task.as_dict() for task in _TASKS]
