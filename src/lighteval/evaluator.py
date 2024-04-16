@@ -118,9 +118,7 @@ def evaluate(  # noqa: C901
         metrics = task.process_results(doc, copy.deepcopy(model_responses))
 
         evaluation_tracker.metrics_logger.log(task_example_id.task_name, metrics)
-        evaluation_tracker.details_logger.log(
-            task_example_id.task_name, task, doc, model_responses, metrics
-        )
+        evaluation_tracker.details_logger.log(task_example_id.task_name, task, doc, model_responses, metrics)
 
     return evaluation_tracker
 

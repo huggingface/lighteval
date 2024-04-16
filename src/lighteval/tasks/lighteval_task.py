@@ -34,7 +34,7 @@ from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.metrics import (
     apply_generative_logprob_metric,
     apply_generative_metric,
-    apply_generative_multi_turn_metric,
+    apply_llm_as_judge_metric,
     apply_multichoice_metric,
     apply_multichoice_metric_one_token,
     apply_perplexity_metric,
@@ -563,8 +563,11 @@ class LightevalTask:
                 results=results, formatted_doc=formatted_doc, metrics=self.metrics
             )
             outputs.update(cur_outputs)
-        if self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]:
-            results, cur_outputs = apply_generative_multi_turn_metric(
+        if (
+            self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]
+            or self.has_metric_category[MetricCategory.LLM_AS_JUDGE]
+        ):
+            results, cur_outputs = apply_llm_as_judge_metric(
                 results=results, formatted_doc=formatted_doc, metrics=self.metrics
             )
             outputs.update(cur_outputs)
