@@ -322,9 +322,9 @@ medical_mc_qa_el_task = LightevalTaskConfig(
     hf_repo="ilsp/medical_mcqa_greek",
     hf_subset="default",
     hf_avail_splits=["train", "validation"],
-    evaluation_splits=["validation"],
-    few_shots_split=None,
-    few_shots_select="random_sampling_from_train",
+    evaluation_splits=["train"],
+    few_shots_split="validation",
+    few_shots_select="sequential",
     generation_size=1,
     metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
     stop_sequence=["\n"],
@@ -344,14 +344,74 @@ def medical_mc_qa_prompt_el(line, task_name: str = None):
     )
 
 
+# BELEBELE el
+
+BELEBELE_SPLITS = ["ell_Grek", "eng_Latn"]
+
+class BELEBELETask(LightevalTaskConfig):
+    def __init__(
+        self,
+        name,
+        hf_split,
+        prompt_fn
+    ):
+        super().__init__(
+            name=name,
+            prompt_function=prompt_fn,
+            suite=["community"],
+            hf_repo="facebook/belebele",
+            hf_subset="default",
+            hf_avail_splits=BELEBELE_SPLITS,
+            evaluation_splits=[hf_split],
+            few_shots_split=hf_split,
+            few_shots_select="sequential",
+            generation_size=1,
+            metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+            stop_sequence=["\n"],
+            output_regex=None,
+            frozen=False,
+            trust_dataset=True,
+        )
+
+
+def belebele_prompt_el(line, task_name: str = None):
+    is_few_shots = line.get("__few_shots", False)
+    return Doc(
+        task_name=task_name,
+        query=f"Απόσπασμα: {line['flores_passage']}\n\nΕρώτηση:\n{line['question']}\n\nΑ: {line['mc_answer1']}\nΒ: {line['mc_answer2']}\nΓ: {line['mc_answer3']}\nΔ: {line['mc_answer4']}\n\nΑπάντηση:",
+        choices=[" Α", " Β", " Γ", " Δ"] if is_few_shots else ["Α", "Β", "Γ", "Δ"],
+        gold_index=int(line['correct_answer_num']) - 1,
+    )
+
+def belebele_prompt_en(line, task_name: str = None):
+    is_few_shots = line.get("__few_shots", False)
+    return Doc(
+        task_name=task_name,
+        query=f"P: {line['flores_passage']}\n\nQ:\n{line['question']}\n\nA: {line['mc_answer1']}\nB: {line['mc_answer2']}\nC: {line['mc_answer3']}\nD: {line['mc_answer4']}\n\nAnswer:",
+        choices=[" A", " B", " C", " D"] if is_few_shots else ["A", "B", "C", "D"],
+        gold_index=int(line['correct_answer_num']) - 1,
+    )
+
+
+BELEBELE_SPLIT_MAPPER = {
+    'ell_Grek': {'split': 'el', 'prompt_fn': "belebele_prompt_el"},
+    'eng_Latn': {'split': 'en', 'prompt_fn': "belebele_prompt_en"}
+}
+
+BELEBELE_TASKS = [
+    BELEBELETask(name=f"belebele:{BELEBELE_SPLIT_MAPPER[split]['split']}", hf_split=split, prompt_fn=BELEBELE_SPLIT_MAPPER[split]['prompt_fn']) for split in BELEBELE_SPLITS
+]
+
+
 # Task registration
 
 _TASKS = (
     MMLU_EL_TASKS +
     ARC_EL_TASKS +
     TRUTHFULQA_TASKS +
-    [hellaswag_el_task] + 
-    [xnli_el_task] + 
+    BELEBELE_TASKS +
+    [hellaswag_el_task] +
+    [xnli_el_task] +
     [medical_mc_qa_el_task]
 )
 
