@@ -55,7 +55,7 @@ class PerplexityCorpusMetricInput(CorpusMetricInput):
 
 
 class GenerativePreparator:
-    def prepare(golds: list[str], predictions: list[str], **kwargs):
+    def prepare(self, golds: list[str], predictions: list[str], **kwargs):
         """Prepares an individual generative example to the format expected by metrics computed at the corpus level (aggregated).
 
         Args:
