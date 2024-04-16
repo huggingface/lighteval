@@ -86,7 +86,6 @@ class BaseModel(LightevalModel):
 
         self._device = config.accelerator.device if config.accelerator is not None else "cpu"
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
-
         # We are in DP (and launch the script with `accelerate launch`)
         if not config.model_parallel and config.quantization_config is None:
             # might need to use accelerate instead
@@ -938,10 +937,8 @@ class BaseModel(LightevalModel):
                 request.tokenized_context = [self.tokenizer.eos_token_id]
             else:
                 request.tokenized_context = self.tok_encode(request.context)
-
             # Some models tokenizer want a space at the beginning and other not
             continuations = [self._check_continuations_start_space(c) for c in request.choices]
-
             # We must not accidentally prepend a continuation with a start of sentence token.
             continuations_enc = [self.tok_encode(c, add_special_tokens=False) for c in continuations]
             if any(len(c) > 1 for c in continuations_enc):

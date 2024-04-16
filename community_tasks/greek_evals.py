@@ -279,7 +279,36 @@ def hellaswag_prompt_el(line, task_name: str = None):
         gold_index=int(line["label"]) if line["label"] != "" else -1,
     )
 
+# XNLI EL
 
+xnli_el_task = LightevalTaskConfig(
+    name="xnli:el",
+    prompt_function="xnli_prompt_el",
+    suite=["community"],
+    hf_repo="xnli",
+    hf_subset="el",
+    hf_avail_splits=["train", "validation", "test"],
+    evaluation_splits=["test"],
+    few_shots_split="validation",
+    few_shots_select="sequential",
+    generation_size=1,
+    metric=["loglikelihood_acc_single_token"],
+    stop_sequence=["\n"],
+    output_regex=None,
+    frozen=False,
+    trust_dataset=True,
+)
+
+
+def xnli_prompt_el(line, task_name: str = None):
+
+    # XNLI implementation has Επίσης. Sounds mega bad, but here we are
+    return Doc(
+        task_name=task_name,
+        query=f"{line['premise']}\nΕρώτηση: {line['hypothesis']} Ναι, Όχι, ή Επίσης?\nΑπάντηση:",
+        choices=["Ναι", "Όχι", "Επίσης"],
+        gold_index=int(line["label"]),
+    )
 
 # Task registration
 
@@ -287,8 +316,10 @@ _TASKS = (
     MMLU_EL_TASKS +
     ARC_EL_TASKS +
     TRUTHFULQA_TASKS +
-    [hellaswag_el_task]
+    [hellaswag_el_task] + 
+    [xnli_el_task]
 )
+
 TASKS_TABLE = [task.as_dict() for task in _TASKS]
 
 if __name__ == "__main__":
