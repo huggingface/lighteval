@@ -91,7 +91,7 @@ def apply_generative_metric(results: list[ModelReturn], formatted_doc: Doc, metr
         golds = [formatted_doc.specific["label_to_choices"][g] for g in golds]
 
     for metric in metrics:
-        if Metrics[metric].value.category == MetricCategory.GENERATIVE:
+        if Metrics[metric].value.category in [MetricCategory.GENERATIVE, MetricCategory.GENERATIVE_SAMPLING]:
             outputs.update(Metrics[metric].value.compute(golds=golds, predictions=pred, formatted_doc=formatted_doc))
 
     return results, outputs
@@ -153,10 +153,7 @@ def apply_llm_as_judge_metric(results: list[ModelReturn], formatted_doc: Doc, me
     predictions = results.pop(0).result
 
     for metric in metrics:
-        if (
-            Metrics[metric].value.category == MetricCategory.LLM_AS_JUDGE_MULTI_TURN
-            or Metrics[metric].value.category == MetricCategory.LLM_AS_JUDGE
-        ):
+        if Metrics[metric].value.category in [MetricCategory.LLM_AS_JUDGE_MULTI_TURN, MetricCategory.LLM_AS_JUDGE]:
             outputs.update(Metrics[metric].value.compute(predictions=predictions, formatted_doc=formatted_doc))
 
     return results, outputs

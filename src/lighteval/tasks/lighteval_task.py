@@ -48,6 +48,7 @@ from lighteval.tasks.requests import (
     GreedyUntilMultiTurnRequest,
     GreedyUntilRequest,
     GreedyUntilWithLogitsRequest,
+    GreedyUntilWithSamplingRequest,
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
     LoglikelihoodSingleTokenRequest,
@@ -101,6 +102,7 @@ class LightevalTaskConfig:
     generation_size: int = None
     stop_sequence: Optional[Tuple[str]] = None
     output_regex: Optional[str] = None
+    num_samples: Optional[list[int]] = None
 
     frozen: bool = False
     suite: Optional[Tuple[str]] = None
@@ -201,6 +203,8 @@ class LightevalTask:
             hlog_warn(f"[WARNING] Not implemented yet: ignoring the metric {' ,'.join(ignored)} for task {self.name}.")
         current_categories = [Metrics[metric].value.category for metric in self.metrics]
         self.has_metric_category = {category: (category in current_categories) for category in MetricCategory}
+        # Sub-optimal system - we might want to store metric parametrisation in a yaml conf for example
+        self.num_samples = [int(metric.split("_")[-1]) for metric in self.metrics if "maj_at_" in metric]
 
         # Data processing
         # to use once prompt formatting is managed as a module
@@ -394,7 +398,7 @@ class LightevalTask:
         return as_list(formatted_doc.get_golds(few_shot=few_shot))[0]
 
     # Requests
-    def get_request_type(self) -> list[RequestType]:
+    def get_request_type(self) -> list[RequestType]:  # noqa C901
         """
         Returns the request types for the task.
 
@@ -418,6 +422,8 @@ class LightevalTask:
             request_types.append(RequestType.GREEDY_UNTIL)
         if self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]:
             request_types.append(RequestType.GREEDY_UNTIL_WITH_LOGITS)
+        if self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]:
+            request_types.append(RequestType.GREEDY_UNTIL_WITH_SAMPLING)
         if self.has_metric_category[MetricCategory.MULTICHOICE]:
             request_types.append(RequestType.LOGLIKELIHOOD)
         if self.has_metric_category[MetricCategory.MULTICHOICE_ONE_TOKEN]:
@@ -472,6 +478,18 @@ class LightevalTask:
                     context=context,
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
+                )
+            ]
+        if self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]:
+            requests[RequestType.GREEDY_UNTIL_WITH_SAMPLING] += [
+                GreedyUntilWithSamplingRequest(
+                    task_name=current_task_name,
+                    example_index=document_id_seed,
+                    request_index=0,
+                    context=context,
+                    stop_sequence=self.stop_sequence,
+                    generation_size=self.generation_size,
+                    num_samples=max(self.num_samples),  # If we have several samplings to apply, we use the max
                 )
             ]
         if self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]:
@@ -543,7 +561,10 @@ class LightevalTask:
                 results=results, formatted_doc=formatted_doc, metrics=self.metrics
             )
             outputs.update(cur_outputs)
-        if self.has_metric_category[MetricCategory.GENERATIVE]:
+        if (
+            self.has_metric_category[MetricCategory.GENERATIVE]
+            or self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]
+        ):
             results, cur_outputs = apply_generative_metric(
                 results=results, formatted_doc=formatted_doc, metrics=self.metrics, output_regex=self.output_regex
             )

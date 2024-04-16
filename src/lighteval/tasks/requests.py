@@ -35,6 +35,7 @@ class RequestType(Enum):
     GREEDY_UNTIL = auto()
     GREEDY_UNTIL_MULTI_TURN = auto()
     GREEDY_UNTIL_WITH_LOGITS = auto()
+    GREEDY_UNTIL_WITH_SAMPLING = auto()
 
 
 @dataclass
@@ -153,6 +154,25 @@ class GreedyUntilWithLogitsRequest(Request):
     generation_size: int
     request_type = RequestType.GREEDY_UNTIL_WITH_LOGITS
     tokenized_context: list[int] = None
+
+
+@dataclass
+class GreedyUntilWithSamplingRequest(Request):
+    """
+    Represents a request for generating text using the Greedy-Until strategy but
+    returning the logits.
+
+    Attributes:
+        stop_sequence (str): The sequence of tokens that indicates when to stop generating text.
+        generation_size (int): The maximum number of tokens to generate.
+        request_type (RequestType): The type of the request (GREEDY_UNTIL_WITH_LOGITS).
+    """
+
+    stop_sequence: Union[str, tuple[str], list[str]]
+    generation_size: int
+    request_type = RequestType.GREEDY_UNTIL_WITH_SAMPLES
+    tokenized_context: list[int] = None
+    num_samples: int = None
 
 
 class TaskExampleId(NamedTuple):

@@ -47,6 +47,7 @@ from lighteval.tasks.requests import (
     GreedyUntilMultiTurnRequest,
     GreedyUntilRequest,
     GreedyUntilWithLogitsRequest,
+    GreedyUntilWithSamplingRequest,
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
     LoglikelihoodSingleTokenRequest,
@@ -336,7 +337,7 @@ class BaseModel(LightevalModel):
         returning both the generated sequences and the logits.
 
         Args:
-            requests (list[tuple[str, dict]]): A list of input requests,
+            requests (list[GreedyUntilWithLogitsRequest]): A list of input requests,
                 where each request is a tuple containing a prompt string and a dictionary of additional parameters.
             override_bs (Optional[int], optional): Overrides the batch size for generation. Defaults to None.
 
@@ -350,6 +351,34 @@ class BaseModel(LightevalModel):
             returns_logits=True,
             disable_tqdm=self.disable_tqdm,
             override_bs=override_bs,
+        )
+
+    def greedy_until_with_sampling(
+        self,
+        requests: list[GreedyUntilWithSamplingRequest],
+        num_samples: int,
+        override_bs: Optional[int] = None,
+    ) -> list[GenerateReturn]:
+        """
+        Generates sequences greedily until a stopping condition is met,
+        returning both the generated sequences and the logits.
+
+        Args:
+            requests (list[GreedyUntilWithSamplingRequest]): A list of input requests,
+                where each request is a tuple containing a prompt string and a dictionary of additional parameters.
+            override_bs (Optional[int], optional): Overrides the batch size for generation. Defaults to None.
+
+        Returns:
+            list[GenerateReturn]: A list of GenerateReturn objects,
+                where each object contains the generated sequence and the corresponding logits.
+        """
+
+        return self.greedy_until(
+            requests,
+            returns_logits=False,
+            disable_tqdm=self.disable_tqdm,
+            override_bs=override_bs,
+            num_samples=num_samples,
         )
 
     def greedy_until_multi_turn(  # noqa: C901
@@ -488,6 +517,7 @@ class BaseModel(LightevalModel):
         requests: list[GreedyUntilRequest],
         returns_logits: bool = False,
         override_bs: Optional[int] = None,
+        num_samples: Optional[int] = None,
     ) -> list[GenerateReturn]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
@@ -596,6 +626,7 @@ class BaseModel(LightevalModel):
                     max_new_tokens=max_new_tokens,
                     stop_tokens=stop_tokens,
                     returns_logits=returns_logits,
+                    num_samples=num_samples,
                 )
                 results.extend(cur_reponses)
 
@@ -607,6 +638,7 @@ class BaseModel(LightevalModel):
         max_new_tokens: int,
         stop_tokens: list[str],
         returns_logits: Optional[bool] = False,
+        num_samples: Optional[int] = None,
     ) -> list[GenerateReturn]:
         """Contains the actual logic of the generation.
         First computes the stop sequences, then generates the predictions, then converts the outputs to GenerateReturn.
@@ -619,11 +651,12 @@ class BaseModel(LightevalModel):
             attention_mask=batch.input_mask,
             max_new_tokens=max_new_tokens,
             stopping_criteria=stopping_criteria,
-            do_sample=False,
             pad_token_id=self.tokenizer.pad_token_id if self.tokenizer.pad_token_id else self.tokenizer.eos_token_id,
             return_dict_in_generate=True,
             output_scores=True,
             eos_token_id=self.tokenizer.eos_token_id,
+            do_sample=num_samples is not None,
+            num_return_sequences=num_samples,
         )
         if returns_logits:
             logits = self.model.compute_transition_scores(outputs.sequences, outputs.scores, normalize_logits=True)

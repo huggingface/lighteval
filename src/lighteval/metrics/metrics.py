@@ -41,6 +41,7 @@ from lighteval.metrics.metrics_sample import (
     F1_score,
     JudgeLLM,
     LoglikelihoodAcc,
+    MajAtK,
     Recall,
     StringDistance,
     acc_golds_likelihood,
@@ -324,6 +325,22 @@ class Metrics(Enum):
         category=MetricCategory.MULTICHOICE_ONE_TOKEN,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=matthews_corrcoef,
+        higher_is_better=True,
+    )
+    maj_at_5 = SampleLevelMetric(
+        metric="maj@5",
+        sample_level_fn=MajAtK(k=5).compute,
+        category=MetricCategory.GENERATIVE_,
+        use_case=MetricUseCase.ACCURACY,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    maj_at_8 = SampleLevelMetric(
+        metric="maj@8",
+        sample_level_fn=MajAtK(k=8).compute,
+        category=MetricCategory.GENERATIVE_,
+        use_case=MetricUseCase.ACCURACY,
+        corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     mrr = SampleLevelMetric(
