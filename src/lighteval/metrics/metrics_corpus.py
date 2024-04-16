@@ -103,8 +103,9 @@ class CorpusLevelTranslationMetric:
     def compute(self, items: list[GenerativeCorpusMetricInput]) -> float:
         """Computes the metric score over all the corpus generated items, by using the sacrebleu implementation."""
         golds = [i.golds for i in items]
-        preds = [as_list(i.preds) for i in items]
-        return float(self.metric(hypotheses=preds, references=golds).score)
+        preds = [i.preds for i in items]
+        # is it correct to return 0? We only get one pred anyway
+        return float(self.metric(hypotheses=preds[0], references=golds).score)
 
 
 class CorpusLevelPerplexityMetric:
