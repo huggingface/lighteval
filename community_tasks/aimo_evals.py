@@ -44,15 +44,15 @@ task = LightevalTaskConfig(
     few_shots_split="train",
     few_shots_select="sequential",
     metric=["perfect_exact_match"],
-    generation_size=100,
-    stop_sequence=None
+    generation_size=5,
+    stop_sequence=None,
 )
 
 
 def prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
-        choices=[line["answer"]],
+        choices=[str(line["answer"])],
         gold_index=0,
         query=line["problem"],
     )
