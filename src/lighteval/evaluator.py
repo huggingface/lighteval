@@ -117,22 +117,8 @@ def evaluate(  # noqa: C901
         # using a deep copy here because process results pops from the model responses
         metrics = task.process_results(doc, copy.deepcopy(model_responses))
 
-        # Remove the user_prompt from the metrics in case of llm-as-judge metric
-        if "user_prompt" in metrics:
-            user_prompt = metrics["user_prompt"]
-            del metrics["user_prompt"]
-        else:
-            user_prompt = None
-        if "judgement" in metrics:
-            judgement = metrics["judgement"]
-            del metrics["judgement"]
-        else:
-            judgement = None
-
         evaluation_tracker.metrics_logger.log(task_example_id.task_name, metrics)
-        evaluation_tracker.details_logger.log(
-            task_example_id.task_name, task, doc, model_responses, metrics, (user_prompt, judgement)
-        )
+        evaluation_tracker.details_logger.log(task_example_id.task_name, task, doc, model_responses, metrics)
 
     return evaluation_tracker
 
