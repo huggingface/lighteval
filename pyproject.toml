@@ -45,7 +45,9 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT License"}
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.10",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
@@ -97,3 +99,6 @@ Homepage = "https://github.com/huggingface/lighteval"
 Issues = "https://github.com/huggingface/lighteval/issues"
 # Documentation = ""
 # Changelog = "https://github.com/huggingface/lighteval/blob/master/CHANGELOG.md"
+
+[project.scripts]
+lighteval = "lighteval.commands.lighteval_cli:main"

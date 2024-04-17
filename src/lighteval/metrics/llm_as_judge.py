@@ -20,14 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Inspired by the FastChat Codebase: https://github.com/lm-sys/FastChat/blob/main/fastchat/llm_judge/README.md
-
 
 import ast
 import json
 import re
 import time
-from abc import ABC
 from typing import Optional
 
 from openai import OpenAI
@@ -35,13 +32,7 @@ from openai import OpenAI
 from lighteval.logging.hierarchical_logger import hlog_warn
 
 
-# Abstract class for a judge
-class Judge(ABC):
-    def evaluate_answer(answers, questions, references) -> tuple[str, list[dict[str, str]], str]:
-        pass
-
-
-class JudgeOpenAI(Judge):
+class JudgeOpenAI:
     """
     A class representing a judge for evaluating answers using the OpenAI API.
 
@@ -70,11 +61,20 @@ class JudgeOpenAI(Judge):
         __process_judge_response: Processes the judge's response and extracts the score.
     """
 
-    def __init__(self, model: str, seed: int, temperature: float, templates_path: str, openai_api_key: str):
+    def __init__(
+        self,
+        model: str,
+        seed: int,
+        temperature: float,
+        templates_path: str,
+        openai_api_key: str,
+        multi_turn: bool = False,
+    ):
         self.client = OpenAI(api_key=openai_api_key)
         self.model = model
         self.seed = seed
         self.temperature = temperature
+        self.multi_turn = multi_turn
 
         data = []
         with open(templates_path, "r") as f:
@@ -95,7 +95,7 @@ class JudgeOpenAI(Judge):
         self.max_tokens = 2048
 
     def evaluate_answer(
-        self, questions: list[str], answers: list[str], references: list[str], single_turn: bool
+        self, questions: list[str], answers: list[str], references: list[str]
     ) -> tuple[int, list[dict[str, str]], str]:
         """
         Evaluates an answer using the OpenAI API.
@@ -112,36 +112,43 @@ class JudgeOpenAI(Judge):
         Raises:
             Exception: If an error occurs during the API call.
         """
-        if single_turn:
-            prompts = self.__get_prompts_single_turn(
-                questions[0], answers[0], references[0] if len(references) > 0 else None
+        prompts = [
+            self.__get_prompts_single_turn(
+                questions[0], answers[0], references[0] if references is not None and len(references) > 0 else None
             )
-        else:
-            prompts = self.__get_prompts_multi_turn(questions, answers, references if len(references) > 1 else None)
+        ]
 
-        for _ in range(self.API_MAX_RETRY):
-            try:
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    seed=self.seed,
-                    temperature=self.temperature,
-                    messages=prompts,
-                    max_tokens=self.max_tokens,
-                    n=1,
-                )
-                break
-            except Exception as e:
-                hlog_warn(f"{type(e), e}")
-                time.sleep(self.API_RETRY_SLEEP)
-                response = None
+        if self.multi_turn:
+            prompts_multi_turn = self.__get_prompts_multi_turn(
+                questions, answers, references if len(references) > 1 else None
+            )
+            prompts.append(prompts_multi_turn)
 
-        if response is None:
+        responses = []
+        for prompt in prompts:
+            for _ in range(self.API_MAX_RETRY):
+                try:
+                    response = self.client.chat.completions.create(
+                        model=self.model,
+                        seed=self.seed,
+                        temperature=self.temperature,
+                        messages=prompt,
+                        max_tokens=self.max_tokens,
+                        n=1,
+                    )
+                    responses.append(response)
+                    break
+                except Exception as e:
+                    hlog_warn(f"{type(e), e}")
+                    time.sleep(self.API_RETRY_SLEEP)
+
+        if len(responses) == 0:
             raise Exception("Failed to get response from the API")
 
-        judgment = response.choices[0].message.content
-        score = self.__process_judge_response(judgment)
+        judgments = [response.choices[0].message.content for response in responses]
+        scores = [self.__process_judge_response(judgment) for judgment in judgments]
 
-        return score, prompts, judgment
+        return scores, prompts, judgments
 
     def __get_prompts_multi_turn(
         self, questions: list[str], answers: list[str], references: Optional[list[str]]
