@@ -722,7 +722,7 @@ class MajAtK:
         Returns:
             float: Aggregated score over the current sample's items.
         """
-        if len(golds) > 0:
+        if len(golds) > 1:
             raise Exception("Cannot compute maj@k with several golds")
 
         gold = golds[0]

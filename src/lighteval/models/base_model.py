@@ -353,34 +353,6 @@ class BaseModel(LightevalModel):
             override_bs=override_bs,
         )
 
-    def greedy_until_with_sampling(
-        self,
-        requests: list[GreedyUntilWithSamplingRequest],
-        num_samples: int,
-        override_bs: Optional[int] = None,
-    ) -> list[GenerateReturn]:
-        """
-        Generates sequences greedily until a stopping condition is met,
-        returning both the generated sequences and the logits.
-
-        Args:
-            requests (list[GreedyUntilWithSamplingRequest]): A list of input requests,
-                where each request is a tuple containing a prompt string and a dictionary of additional parameters.
-            override_bs (Optional[int], optional): Overrides the batch size for generation. Defaults to None.
-
-        Returns:
-            list[GenerateReturn]: A list of GenerateReturn objects,
-                where each object contains the generated sequence and the corresponding logits.
-        """
-
-        return self.greedy_until(
-            requests,
-            returns_logits=False,
-            disable_tqdm=self.disable_tqdm,
-            override_bs=override_bs,
-            num_samples=num_samples,
-        )
-
     def greedy_until_multi_turn(  # noqa: C901
         self, requests: list[GreedyUntilMultiTurnRequest], override_bs: Optional[int] = None
     ) -> GenerateMultiTurnReturn:
@@ -517,7 +489,6 @@ class BaseModel(LightevalModel):
         requests: list[GreedyUntilRequest],
         returns_logits: bool = False,
         override_bs: Optional[int] = None,
-        num_samples: Optional[int] = 1,
     ) -> list[GenerateReturn]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
@@ -576,6 +547,7 @@ class BaseModel(LightevalModel):
                 # the case! Because of that we only use batch size of 1
                 stop_tokens = batch[0].stop_sequence
                 max_new_tokens = batch[0].generation_size
+                num_samples = batch[0].num_samples if isinstance(batch[0], GreedyUntilWithSamplingRequest) else 1
 
                 # The main question for this step is the following:
                 # Would we rather truncate the prompt to allow generation to go to max_new_tokens, at the risk
@@ -644,6 +616,7 @@ class BaseModel(LightevalModel):
         First computes the stop sequences, then generates the predictions, then converts the outputs to GenerateReturn.
         """
         stopping_criteria = stop_sequences_criteria(self.tokenizer, stop_sequences=stop_tokens, batch=batch)
+        batch_size, _ = batch.input_ids.shape
 
         # Compute model generation
         outputs = self.model.generate(
@@ -661,7 +634,8 @@ class BaseModel(LightevalModel):
         if returns_logits:
             logits = self.model.compute_transition_scores(outputs.sequences, outputs.scores, normalize_logits=True)
         generations = outputs.sequences[:, batch.input_ids.size(1) :]
-        generations, len_gens = self.pad_and_gather(generations)
+        generations = torch.reshape(generations, (batch_size, num_samples, -1))
+        generations, len_gens = self.pad_and_gather(generations, num_samples=num_samples)
         batch.input_ids, len_ids = self.pad_and_gather(batch.input_ids)
 
         logits, len_logits = None, None
@@ -679,20 +653,30 @@ class BaseModel(LightevalModel):
 
         # We convert to GenerateReturn outputs
         all_responses = []
-        for ix, (generation, batched_input, trunc, padded) in enumerate(
+        for ix, (batched_generations, batched_input, trunc, padded) in enumerate(
             zip(generations, batch.input_ids, batch.truncated, batch.padded)
         ):
+            result_generations = []
+            decoded_generations = []
             # Ensure the generated responses do not contain the stop sequences.
-            generation = generation[: len_gens[ix]]
-            decoded_generation = self.tok_decode([generation])[0]
+            for generation in batched_generations:
+                generation = generation[: len_gens[ix]]
+                result_generations.append(generation)
+                decoded_generation = self.tok_decode([generation])[0]
 
-            for term in stop_tokens:
-                decoded_generation = decoded_generation.split(term)[0]
+                for term in stop_tokens:
+                    decoded_generation = decoded_generation.split(term)[0]
+
+                decoded_generations.append(decoded_generation)
+
+            if num_samples == 1:  # We only return one item
+                result_generations = result_generations[0]
+                decoded_generations = decoded_generations[0]
 
             cur_response = GenerateReturn(
-                result=decoded_generation,
+                result=decoded_generations,
                 logits=logits[ix][: len_logits[ix]] if returns_logits else None,
-                generated_tokens=generation,
+                generated_tokens=result_generations,
                 input_tokens=batched_input[: len_ids[ix]],
                 truncated_tokens_count=trunc.cpu().item(),
                 padded_tokens_count=padded.cpu().item(),
@@ -924,7 +908,9 @@ class BaseModel(LightevalModel):
             padded=padded,
         )
 
-    def pad_and_gather(self, output_tensor: torch.Tensor, drop_last_samples: bool = True) -> torch.Tensor:
+    def pad_and_gather(
+        self, output_tensor: torch.Tensor, drop_last_samples: bool = True, num_samples: int = 1
+    ) -> torch.Tensor:
         """
         Pads the `output_tensor` to the maximum length and gathers the lengths across processes.
 
@@ -938,15 +924,21 @@ class BaseModel(LightevalModel):
             torch.Tensor: The padded output tensor and the gathered length tensor.
         """
         # Create a tensor of size batch_size, [output_length] * batch_size, for each process
-        length_tensor = torch.tensor([output_tensor.shape[1]] * output_tensor.shape[0], device=self.device)
+        # length_tensor = torch.tensor([output_tensor.shape[1]] * output_tensor.shape[0], device=self.device)
+        length_tensor = torch.zeros(
+            [output_tensor.shape[-1]] * num_samples * output_tensor.shape[0], device=self.device
+        )
         if self.accelerator is not None:
             # Gather all the lengths, we end up with a tensor of size num_processes [output_length_1, output_length_2, ...]
             length_tensor = self.accelerator.gather(length_tensor)
         # We pad the output_tensor to the max length
         max_length = length_tensor.max().item()
-        output_tensor = F.pad(
-            output_tensor, (0, max_length - output_tensor.shape[1], 0, 0), value=self.tokenizer.pad_token_id
+        padding = (
+            (0, max_length - output_tensor.shape[1], 0, 0, 0, 0)
+            if num_samples > 1
+            else (0, max_length - output_tensor.shape[1], 0, 0)
         )
+        output_tensor = F.pad(output_tensor, padding, value=self.tokenizer.pad_token_id)
         if self.accelerator:
             if drop_last_samples:
                 output_tensor = self.accelerator.gather_for_metrics(output_tensor)
