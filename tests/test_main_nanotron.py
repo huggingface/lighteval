@@ -47,7 +47,7 @@ MODELS=[{"name":'LLama-119M', "config_path":'/fsx/haojun/lighteval_evaluation_mo
 LIGHTEVAL_CONFIG_PATH="/fsx/haojun/lighteval/tests/config/lighteval_config_override_custom.yaml" # define tasks
 SAVE_RESULTS=False # whether you want to save the results in json format, and update reference_tasks_scores_nanotron.py later
 RESULTS_DIRECTORY="/fsx/haojun/lighteval/tests"
-FULL_TEST = os.environ.get("LIGHTEVAL_FULL_TEST", True) # Full evaluation or Lite evaluation
+FULL_TEST = os.environ.get("LIGHTEVAL_FULL_TEST", False) # Full evaluation or Lite evaluation
 
 # set env variables as nanotron need them
 os.environ["MASTER_ADDR"] = "localhost"
