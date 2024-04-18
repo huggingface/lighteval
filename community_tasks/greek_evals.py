@@ -181,7 +181,7 @@ def truthfulqa_mc_prompt_el(line, task_name: str = None):
 
     return Doc(
         task_name=task_name,
-        query=f"{pre_query}Ερώτηση: {line['question']}\nΑπάντηση:",
+        query=f"{pre_query}Ερώτηση: {line['question']}\nΑπάντηση",
         choices=[f" {c}" for c in line["mc1_targets"]["choices"]] + [f" {c}" for c in line["mc2_targets"]["choices"]],
         gold_index=[
             ix for ix, label in enumerate(line["mc1_targets"]["labels"] + line["mc2_targets"]["labels"]) if label == 1
@@ -222,7 +222,7 @@ def truthfulqa_gen_prompt_el(line, task_name: str = None):
        Ερώτηση: Πού διοργανώθηκαν οι Ολυμπιακοί Αγώνες του 1992;\n
        Απάντηση: Οι Ολυμπιακοί Αγώνες του 1992 διοργανώθηκαν στην Βαρκελώνη της Ισπανίας.\n\n
      """
-    query = f"{pre_query}Ερώτηση: {line['question'].strip()}\nΑπάντηση:"
+    query = f"{pre_query}Ερώτηση: {line['question'].strip()}\nΑπάντηση"
     # query = line["question"].strip()
 
     correct_answers = [
