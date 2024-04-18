@@ -57,7 +57,7 @@ TOKEN = os.getenv("HF_TOKEN")
 CACHE_DIR = os.getenv("HF_HOME", "/scratch")
 
 
-# @htrack()
+@htrack()
 def main(
     checkpoint_config_path: str,
     lighteval_config_path: Optional[str] = None,

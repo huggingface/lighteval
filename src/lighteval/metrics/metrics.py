@@ -225,35 +225,36 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    # llm_judge_multi_turn = SampleLevelMetricGrouping(
-    #     metric=["single_turn", "multi_turn"],
-    #     higher_is_better=True,
-    #     category=MetricCategory.GENERATIVE_MULTI_TURN,
-    #     use_case=MetricUseCase.SUMMARIZATION,
-    #     sample_level_fn=JudgeLLM(
-    #         judge_model_name="gpt-3.5-turbo",
-    #         template_path="src/lighteval/tasks/extended/mt_bench/judge_prompts.jsonl",
-    #         multi_turn=True,
-    #     ).compute,
-    #     corpus_level_fn={
-    #         "single_turn": np.mean,
-    #         "multi_turn": np.mean,
-    #     },
-    # )
-    # llm_judge = SampleLevelMetricGrouping(
-    #     metric=["judge_score"],
-    #     higher_is_better=True,
-    #     category=MetricCategory.GENERATIVE,
-    #     use_case=MetricUseCase.SUMMARIZATION,
-    #     sample_level_fn=JudgeLLM(
-    #         judge_model_name="gpt-3.5-turbo",
-    #         template_path="src/lighteval/tasks/extended/mt_bench/judge_prompts.jsonl",
-    #         multi_turn=False,
-    #     ).compute,
-    #     corpus_level_fn={
-    #         "judge_score": np.mean,
-    #     },
-    # )
+    # this took me some time each time when I run the tests, even I don't need it 
+    llm_judge_multi_turn = SampleLevelMetricGrouping(
+        metric=["single_turn", "multi_turn"],
+        higher_is_better=True,
+        category=MetricCategory.GENERATIVE_MULTI_TURN,
+        use_case=MetricUseCase.SUMMARIZATION,
+        sample_level_fn=JudgeLLM(
+            judge_model_name="gpt-3.5-turbo",
+            template_path="src/lighteval/tasks/extended/mt_bench/judge_prompts.jsonl",
+            multi_turn=True,
+        ).compute,
+        corpus_level_fn={
+            "single_turn": np.mean,
+            "multi_turn": np.mean,
+        },
+    )
+    llm_judge = SampleLevelMetricGrouping(
+        metric=["judge_score"],
+        higher_is_better=True,
+        category=MetricCategory.GENERATIVE,
+        use_case=MetricUseCase.SUMMARIZATION,
+        sample_level_fn=JudgeLLM(
+            judge_model_name="gpt-3.5-turbo",
+            template_path="src/lighteval/tasks/extended/mt_bench/judge_prompts.jsonl",
+            multi_turn=False,
+        ).compute,
+        corpus_level_fn={
+            "judge_score": np.mean,
+        },
+    )
     loglikelihood_acc = SampleLevelMetric(
         metric="acc",
         sample_level_fn=LoglikelihoodAcc().compute,
