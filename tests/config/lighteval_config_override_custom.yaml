@@ -1,0 +1,30 @@
+batch_size: 16
+checkpoints_path: null
+generation: null
+logging:
+  hub_repo_details: null
+  hub_repo_results: null
+  hub_repo_tensorboard: zzhhjjj/debug-nanotron
+  local_output_path: /scratch/haojun/lighteval/nanotron-119M-seed-6-3188821
+  push_details_to_hub: null
+  push_results_to_hub: null
+  push_results_to_tensorboard: true
+  tensorboard_metric_prefix: e
+parallelism:
+  dp: 1
+  expert_parallel_size: 1
+  pp: 1
+  pp_engine: 1f1b
+  tp: 1
+  tp_linear_async_communication: false
+  tp_mode: ALL_REDUCE
+slurm_script_dir: /fsx/haojun/logs_evals
+slurm_template: /fsx/haojun/brrr/examples/get-started-kit/run_eval.slurm.jinja
+tasks:
+  custom_tasks: null
+  dataset_loading_processes: 1
+  max_samples: 10
+  multichoice_continuations_start_space: null
+  no_multichoice_continuations_start_space: null
+  num_fewshot_seeds: null
+  tasks: lighteval|anli:r1|0|0,lighteval|blimp:adjunct_island|0|0,lighteval|blimp:ellipsis_n_bar_1|0|0,leaderboard|arc:challenge|25|0,leaderboard|hellaswag|10|0,leaderboard|mmlu:abstract_algebra|5|0,leaderboard|mmlu:college_chemistry|5|0,leaderboard|mmlu:computer_security|5|0,leaderboard|mmlu:us_foreign_policy|5|0,leaderboard|truthfulqa:mc|0|0,helm|mmlu:abstract_algebra|5|0,helm|mmlu:college_chemistry|5|0,helm|mmlu:computer_security|5|0,helm|mmlu:us_foreign_policy|5|0,helm|boolq|5|0,helm|hellaswag|5|0,leaderboard|gsm8k|5|0

@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 # flake8: noqa: C901
+from argparse import Namespace
 import os
 import random
 from typing import Optional, Type
@@ -37,6 +38,7 @@ from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_t
 from lighteval.tasks.registry import Registry, get_custom_tasks, taskinfo_selector
 from lighteval.utils import NO_NANOTRON_ERROR_MSG, is_nanotron_available
 from lighteval.utils_parallelism import test_all_gather
+import torch
 
 
 if not is_nanotron_available():
@@ -48,7 +50,6 @@ from nanotron.logging import get_logger
 from nanotron.parallel.context import ParallelContext
 from nanotron.utils import local_ranks_zero_first
 
-
 logger = get_logger(__name__)
 
 SEED = 1234
@@ -56,7 +57,7 @@ TOKEN = os.getenv("HF_TOKEN")
 CACHE_DIR = os.getenv("HF_HOME", "/scratch")
 
 
-@htrack()
+# @htrack()
 def main(
     checkpoint_config_path: str,
     lighteval_config_path: Optional[str] = None,
@@ -64,7 +65,13 @@ def main(
     config_cls: Type = Config,
     model_config_cls: Optional[Type] = None,
     model_cls: Optional[Type] = None,
+    args: Optional[Namespace] = None  # accept args for more flexibility 
 ):
+    if args is not None: 
+        checkpoint_config_path= args.checkpoint_config_path if checkpoint_config_path==None else checkpoint_config_path
+        lighteval_config_path= args.lighteval_override if lighteval_config_path==None else lighteval_config_path
+        cache_dir=args.cache_dir if cache_dir==None else cache_dir
+
     if cache_dir is None:
         cache_dir = CACHE_DIR
 
@@ -89,6 +96,9 @@ def main(
             nanotron_config.lighteval = lighteval_config
         else:
             lighteval_config = nanotron_config.lighteval
+            
+        if args.max_samples is not None: 
+            lighteval_config.tasks.max_samples=args.max_samples
 
         parallel_context = ParallelContext(
             tensor_parallel_size=lighteval_config.parallelism.tp,
@@ -157,8 +167,13 @@ def main(
 
     with htrack_block("Setting seeds and waiting for all processes"):
         hlog(f"setting seed to {SEED} for random and numpy")
+
+        torch.manual_seed(SEED)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed(SEED)
         random.seed(SEED)
         np.random.seed(SEED)
+        
         dist.barrier()
 
     with htrack_block("Evaluation"):
@@ -192,3 +207,4 @@ def main(
         hlog(make_results_table(final_dict))
 
         return final_dict
+
