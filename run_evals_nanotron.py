@@ -48,7 +48,7 @@ def get_parser():
     parser.add_argument(
         "--max_samples",
         type=int,
-        required=True,
+        default=10,
         help="number of samples used for evaluation",
     )
 

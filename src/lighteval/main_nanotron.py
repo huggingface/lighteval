@@ -92,6 +92,7 @@ def main(
             model_config_class=model_config_cls,
             skip_unused_config_keys=True,
             skip_null_keys=True,
+            igonore_all_unused_keys=True,
         )
 
         if lighteval_config_path:
