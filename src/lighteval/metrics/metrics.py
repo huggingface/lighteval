@@ -327,6 +327,16 @@ class Metrics(Enum):
         corpus_level_fn=matthews_corrcoef,
         higher_is_better=True,
     )
+    maj_at_4_math = SampleLevelMetric(
+        metric="maj@4",
+        sample_level_fn=MajAtK(
+            k=4, strip_strings=True, normalize_pred=math_normalizer, normalize_gold=math_normalizer_gold
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.MATH,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
     maj_at_5 = SampleLevelMetric(
         metric="maj@5",
         sample_level_fn=MajAtK(k=5).compute,
