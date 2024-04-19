@@ -148,12 +148,15 @@ def apply_multichoice_metric_one_token(results: list[ModelReturn], formatted_doc
     return results, outputs
 
 
-def apply_generative_multi_turn_metric(results: list[ModelReturn], formatted_doc: Doc, metrics: list[str]):
+def apply_llm_as_judge_metric(results: list[ModelReturn], formatted_doc: Doc, metrics: list[str]):
     outputs = {}
     predictions = results.pop(0).result
 
     for metric in metrics:
-        if Metrics[metric].value.category == MetricCategory.GENERATIVE_MULTI_TURN:
+        if (
+            Metrics[metric].value.category == MetricCategory.LLM_AS_JUDGE_MULTI_TURN
+            or Metrics[metric].value.category == MetricCategory.LLM_AS_JUDGE
+        ):
             outputs.update(Metrics[metric].value.compute(predictions=predictions, formatted_doc=formatted_doc))
 
     return results, outputs
