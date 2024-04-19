@@ -24,7 +24,7 @@ tasks:
 ```
 
 ## Randomized results
-Please make sure to set **for_inference** to true. This will load model with a fixed output layer norm implementation. It's set to true by default for training
+Please make sure to set **for_inference** to true. This will load model with a fixed output layer norm implementation. It's set to false by default for training
 ```
 model:
   ddp_bucket_cap_mb: 25
