@@ -225,7 +225,7 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    # this took me some time each time when I run the tests, even I don't need it 
+    # this took me some time each time when I run the tests, even I don't need it
     llm_judge_multi_turn = SampleLevelMetricGrouping(
         metric=["single_turn", "multi_turn"],
         higher_is_better=True,
