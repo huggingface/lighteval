@@ -909,7 +909,7 @@ class BaseModel(LightevalModel):
         )
 
     def pad_and_gather(
-        self, output_tensor: torch.Tensor, drop_last_samples: bool = True, num_samples: int = 1
+        self, output_tensor: torch.Tensor, drop_last_samples: bool = True, num_samples: int = None
     ) -> torch.Tensor:
         """
         Pads the `output_tensor` to the maximum length and gathers the lengths across processes.
@@ -924,19 +924,17 @@ class BaseModel(LightevalModel):
             torch.Tensor: The padded output tensor and the gathered length tensor.
         """
         # Create a tensor of size batch_size, [output_length] * batch_size, for each process
-        # length_tensor = torch.tensor([output_tensor.shape[1]] * output_tensor.shape[0], device=self.device)
-        length_tensor = torch.zeros(
-            [output_tensor.shape[-1]] * num_samples * output_tensor.shape[0], device=self.device
-        )
+        # output_tensor can be of size: batch_size * num_samples * length_item or just batch_size * length_item
+        length_tensor = torch.tensor([output_tensor.shape[-1]] * output_tensor.shape[0], device=self.device)
         if self.accelerator is not None:
             # Gather all the lengths, we end up with a tensor of size num_processes [output_length_1, output_length_2, ...]
             length_tensor = self.accelerator.gather(length_tensor)
         # We pad the output_tensor to the max length
         max_length = length_tensor.max().item()
         padding = (
-            (0, max_length - output_tensor.shape[1], 0, 0, 0, 0)
-            if num_samples > 1
-            else (0, max_length - output_tensor.shape[1], 0, 0)
+            (0, max_length - output_tensor.shape[-1], 0, 0, 0, 0)
+            if num_samples is not None
+            else (0, max_length - output_tensor.shape[-1], 0, 0)
         )
         output_tensor = F.pad(output_tensor, padding, value=self.tokenizer.pad_token_id)
         if self.accelerator:
