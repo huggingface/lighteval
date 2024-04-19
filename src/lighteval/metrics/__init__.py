@@ -70,12 +70,15 @@ def apply_generative_metric(results: list[ModelReturn], formatted_doc: Doc, metr
     outputs = {}
 
     # Post processing prediction
-    pred_raw = results.pop(0).result
-    if output_regex is not None:
-        pred = next(iter(re.findall(output_regex, pred_raw)), "")
-    else:
-        pred = pred_raw
-    pred = as_list(pred)
+    preds_raw = as_list(results.pop(0).result)
+    preds = []
+
+    for pred_raw in preds_raw:
+        if output_regex is not None:
+            pred = next(iter(re.findall(output_regex, pred_raw)), "")
+        else:
+            pred = pred_raw
+        preds.append(pred)
 
     # Extracting gold
     try:
@@ -87,12 +90,41 @@ def apply_generative_metric(results: list[ModelReturn], formatted_doc: Doc, metr
     # if "label_to_choices" in formatted_doc:
     if formatted_doc.specific is not None and "label_to_choices" in formatted_doc.specific:
         # Helm predicts on labels keys (A/B/C/D), but computes metrics on choices
-        pred = [formatted_doc.specific["label_to_choices"].get(p) for p in pred]
+        preds = [formatted_doc.specific["label_to_choices"].get(p) for p in preds]
         golds = [formatted_doc.specific["label_to_choices"][g] for g in golds]
 
     for metric in metrics:
-        if Metrics[metric].value.category in [MetricCategory.GENERATIVE, MetricCategory.GENERATIVE_SAMPLING]:
-            outputs.update(Metrics[metric].value.compute(golds=golds, predictions=pred, formatted_doc=formatted_doc))
+        if Metrics[metric].value.category == MetricCategory.GENERATIVE:
+            outputs.update(Metrics[metric].value.compute(golds=golds, predictions=preds, formatted_doc=formatted_doc))
+
+    return results, outputs
+
+
+def apply_generative_sampling_metric(
+    results: list[ModelReturn], formatted_doc: Doc, metrics: list[str], output_regex=None
+):
+    outputs = {}
+
+    # Post processing prediction
+    preds_raw = as_list(results.pop(0).result)
+    preds = []
+
+    for pred_raw in preds_raw:
+        if output_regex is not None:
+            pred = next(iter(re.findall(output_regex, pred_raw)), "")
+        else:
+            pred = pred_raw
+        preds.append(pred)
+
+    # Extracting gold
+    try:
+        golds = formatted_doc.get_golds()
+    except (KeyError, IndexError):
+        golds = None
+
+    for metric in metrics:
+        if Metrics[metric].value.category == MetricCategory.GENERATIVE_SAMPLING:
+            outputs.update(Metrics[metric].value.compute(golds=golds, predictions=preds, formatted_doc=formatted_doc))
 
     return results, outputs
 

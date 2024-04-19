@@ -344,7 +344,7 @@ class Metrics(Enum):
         higher_is_better=True,
     )
     maj_at_8_gsm8k = SampleLevelMetric(
-        metric="qem",
+        metric="maj@8",
         sample_level_fn=MajAtK(
             k=8, strip_strings=True, normalize_pred=gsm8k_normalizer, normalize_gold=gsm8k_normalizer
         ).compute,

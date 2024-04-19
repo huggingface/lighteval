@@ -34,6 +34,7 @@ from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.metrics import (
     apply_generative_logprob_metric,
     apply_generative_metric,
+    apply_generative_sampling_metric,
     apply_llm_as_judge_metric,
     apply_multichoice_metric,
     apply_multichoice_metric_one_token,
@@ -563,14 +564,17 @@ class LightevalTask:
                 results=results, formatted_doc=formatted_doc, metrics=self.metrics
             )
             outputs.update(cur_outputs)
-        if (
-            self.has_metric_category[MetricCategory.GENERATIVE]
-            or self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]
-        ):
+        if self.has_metric_category[MetricCategory.GENERATIVE]:
             results, cur_outputs = apply_generative_metric(
                 results=results, formatted_doc=formatted_doc, metrics=self.metrics, output_regex=self.output_regex
             )
             outputs.update(cur_outputs)
+        if self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]:
+            results, cur_outputs = apply_generative_sampling_metric(
+                results=results, formatted_doc=formatted_doc, metrics=self.metrics, output_regex=self.output_regex
+            )
+            outputs.update(cur_outputs)
+
         if self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]:
             results, cur_outputs = apply_generative_logprob_metric(
                 results=results, formatted_doc=formatted_doc, metrics=self.metrics

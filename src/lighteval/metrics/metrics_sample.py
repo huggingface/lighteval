@@ -725,38 +725,35 @@ class MajAtK:
         if len(golds) > 1:
             raise Exception("Cannot compute maj@k with several golds")
 
-        gold = golds[0]
+        gold = self.get_processed_gold(golds[0])
         all_answers = []
         for pred in predictions[: self.k]:
-            all_answers.append(self.compute_one_item(gold=gold, pred=pred))
-        return 1 if sum(all_answers) / len(all_answers) >= 0.5 else 0
+            all_answers.append(self.get_processed_pred(pred=pred))
+        majority_prediction = max(all_answers, key=all_answers.count)
+        return self.compute_score(majority_prediction, gold)
 
-    def compute_one_item(
-        self,
-        gold: str,
-        pred: str,
-    ) -> float:
-        """Compares two strings only.
-
-        Args:
-            gold (str): One of the possible references
-            pred (str): One of the possible predictions
-
-        Returns:
-            float: The exact match score. Will be 1 for a match, 0 otherwise.
-        """
-        if not pred:
-            return 0
-
+    def get_processed_gold(self, gold: str) -> float:
         if self.strip_strings:
             gold = gold.strip()
-            pred = pred.strip()
 
         if self.normalize_gold:
             gold = self.normalize_gold(gold)
+
+        return gold
+
+    def get_processed_pred(self, pred: str) -> float:
+        if not pred:
+            return ""
+
+        if self.strip_strings:
+            pred = pred.strip()
+
         if self.normalize_pred:
             pred = self.normalize_pred(pred)
 
+        return pred
+
+    def compute_score(self, pred: str, gold: str):
         if self.type_exact_match == "prefix":
             return 1 if pred.startswith(gold) else 0
         if self.type_exact_match == "suffix":
