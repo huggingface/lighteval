@@ -135,8 +135,8 @@ def math_normalizer(text: str, is_gold: bool = False) -> str:  # noqa C901
 
         return retval
 
-    def _fix_fracs(string):
-        substrs = string.split("\\frac")
+    def _fix_fracs(text: str) -> str:
+        substrs = text.split("\\frac")
         new_str = substrs[0]
         if len(substrs) > 1:
             substrs = substrs[1:]
@@ -148,7 +148,7 @@ def math_normalizer(text: str, is_gold: bool = False) -> str:  # noqa C901
                     try:
                         assert len(substr) >= 2
                     except Exception:
-                        return string
+                        return text
                     a = substr[0]
                     b = substr[1]
                     if b != "{":
@@ -163,8 +163,8 @@ def math_normalizer(text: str, is_gold: bool = False) -> str:  # noqa C901
                             new_str += "{" + a + "}" + b + post_substr
                         else:
                             new_str += "{" + a + "}" + b
-        string = new_str
-        return string
+        text = new_str
+        return text
 
     def _fix_a_slash_b(text: str) -> str:
         """Source: https://github.com/hendrycks/math
