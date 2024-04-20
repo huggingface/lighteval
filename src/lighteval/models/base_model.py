@@ -373,7 +373,11 @@ class BaseModel(LightevalModel):
             dataloader, desc="Greedy Multi Turn generation", position=1, leave=False, disable=self.disable_tqdm
         ):
             request = request_batch[0]
-            stop_tokens = request.stop_sequence
+            # For chat models, generation stops with EOS token, so we don't need to specify stop tokens
+            if hasattr(self.tokenizer, "chat_template") and self.tokenizer.chat_template is not None:
+                stop_tokens = []
+            else:
+                stop_tokens = request.stop_sequence
             max_generated_tokens = request.generation_size
             context = request.context[0]
             max_context_size_allowed = self.max_length - max_generated_tokens
@@ -541,10 +545,14 @@ class BaseModel(LightevalModel):
             for batch in tqdm(
                 dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
             ):
-                # NOTE: we are assuming all items in a batch behave similarly (same
-                # stop_tokens and max_tokens genrated) which is not necessarily
-                # the case! Because of that we only use batch size of 1
-                stop_tokens = batch[0].stop_sequence
+                # For chat models, generation stops with EOS token, so we don't need to specify stop tokens
+                if hasattr(self.tokenizer, "chat_template") and self.tokenizer.chat_template is not None:
+                    stop_tokens = []
+                else:
+                    # NOTE: we are assuming all items in a batch behave similarly (same
+                    # stop_tokens and max_tokens genrated) which is not necessarily
+                    # the case! Because of that we only use batch size of 1
+                    stop_tokens = batch[0].stop_sequence
                 max_new_tokens = batch[0].generation_size
 
                 # The main question for this step is the following:
