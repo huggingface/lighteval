@@ -88,13 +88,15 @@ def remove_braces_and_strip(text: str) -> str:
 def math_normalizer(text: str) -> str:  # noqa C901
     """Source: https://github.com/hendrycks/math"""
 
-    def _remove_boxed(text: str) -> str:
+    def _remove_boxed(text: str | None) -> str:
         """
         Extract the text within a \\boxed{...} environment.
         Example:
         >>> _remove_boxed(\\boxed{\\frac{2}{3}})
         \\frac{2}{3}
         """
+        if text is None:
+            return ""
         if "\\boxed " in text:
             left = "\\boxed "
             assert text[: len(left)] == left
