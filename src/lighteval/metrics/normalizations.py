@@ -147,7 +147,7 @@ def math_normalizer(text: str, is_gold: bool = False) -> str:  # noqa C901
                 else:
                     try:
                         assert len(substr) >= 2
-                    except Exception:
+                    except AssertionError:
                         return text
                     a = substr[0]
                     b = substr[1]
