@@ -85,7 +85,7 @@ def remove_braces_and_strip(text: str) -> str:
     return text
 
 
-def math_normalizer(text: str, is_gold: bool = False) -> str:  # noqa C901
+def math_normalizer(text: str) -> str:  # noqa C901
     """Source: https://github.com/hendrycks/math"""
 
     def _remove_boxed(text: str) -> str:
@@ -236,12 +236,7 @@ def math_normalizer(text: str, is_gold: bool = False) -> str:  # noqa C901
             new_string += new_substr
         return new_string
 
-    if is_gold:
-        text = _remove_boxed(_last_boxed_only_string(text))
-    else:
-        indices = [pos for pos, char in enumerate(text) if char == "$"]
-        if len(indices) > 1:
-            text = text[indices[0] + 1 : indices[-1]]
+    text = _remove_boxed(_last_boxed_only_string(text))
 
     to_replace_1 = [
         ("\n", ""),  # linebreaks
@@ -302,10 +297,6 @@ def math_normalizer(text: str, is_gold: bool = False) -> str:  # noqa C901
     text = _fix_a_slash_b(text)
 
     return text
-
-
-def math_normalizer_gold(text: str) -> str:
-    return math_normalizer(text, True)
 
 
 def gsm8k_normalizer(text: str) -> str:
