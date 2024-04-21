@@ -28,7 +28,10 @@ from contextlib import nullcontext
 from datetime import timedelta
 
 import numpy as np
+import sys
+from lighteval.commands.lighteval_cli import parser_accelerate
 
+from lighteval.commands.lighteval_cli import parser_accelerate
 from lighteval.evaluator import evaluate, make_results_table
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn, htrack, htrack_block
@@ -53,58 +56,8 @@ if is_accelerate_available():
 else:
     accelerator = None
 
-
-def get_parser():
-    parser = argparse.ArgumentParser()
-    group = parser.add_mutually_exclusive_group(required=True)
-    task_type_group = parser.add_mutually_exclusive_group(required=True)
-
-    # Model type: either use a config file or simply the model name
-    task_type_group.add_argument("--model_config_path")
-    task_type_group.add_argument("--model_args")
-
-    # Debug
-    parser.add_argument("--max_samples", type=int, default=None)
-    parser.add_argument("--override_batch_size", type=int, default=-1)
-    parser.add_argument("--job_id", type=str, help="Optional Job ID for future reference", default="")
-    # Saving
-    parser.add_argument("--output_dir", required=True)
-    parser.add_argument("--push_results_to_hub", default=False, action="store_true")
-    parser.add_argument("--save_details", action="store_true")
-    parser.add_argument("--push_details_to_hub", default=False, action="store_true")
-    parser.add_argument(
-        "--public_run", default=False, action="store_true", help="Push results and details to a public repo"
-    )
-    parser.add_argument("--cache_dir", type=str, default=CACHE_DIR)
-    parser.add_argument(
-        "--results_org",
-        type=str,
-        help="Hub organisation where you want to store the results. Your current token must have write access to it",
-    )
-    # Common parameters
-    parser.add_argument("--use_chat_template", default=False, action="store_true")
-    parser.add_argument("--system_prompt", type=str, default=None)
-    parser.add_argument("--dataset_loading_processes", type=int, default=1)
-    parser.add_argument(
-        "--custom_tasks",
-        type=str,
-        default=None,
-        help="Path to a file with custom tasks (a TASK list of dict and potentially prompt formating functions)",
-    )
-    group.add_argument(
-        "--tasks",
-        type=str,
-        default=None,
-        help="Id of a task, e.g. 'original|mmlu:abstract_algebra|5' or path to a texte file with a list of tasks",
-    )
-    parser.add_argument("--num_fewshot_seeds", type=int, default=1, help="Number of trials the few shots")
-    return parser
-
-
 @htrack()
-def main():
-    parser = get_parser()
-    args, _ = parser.parse_known_args()
+def main(args):
     env_config = EnvConfig(token=TOKEN, cache_dir=args.cache_dir)
     evaluation_tracker = EvaluationTracker(hub_results_org=args.results_org, token=TOKEN)
     evaluation_tracker.general_config_logger.log_args_info(
@@ -193,3 +146,11 @@ def main():
 
         model.cleanup()
         return final_dict
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+    parser = parser_accelerate(parser)
+    args, _ = parser.parse_known_args(sys.argv[0:])
+
+    main(args)

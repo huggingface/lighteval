@@ -23,128 +23,125 @@
 # SOFTWARE.
 
 import argparse
-import importlib
-import json
 import os
+from pprint import pprint
 
-import pkg_resources
+from accelerate.commands.launch import launch_command, launch_command_parser  # noqa: I001
 
-
-def load_tasks_table_extended(module_name: any) -> list:
-    """
-    load the module module_name
-
-    Args:
-    - module_name the name of the module we want to load
-    Returns:
-    - TASKS_TABLE: a list of the task in the module
-    """
-    module_path = f"lighteval.tasks.extended.{module_name}.main"
-    module_loaded = importlib.import_module(module_path)
-    tasks_list = None
-    try:
-        tasks_list = module_loaded.TASKS_TABLE
-    except Exception as e:
-        print(e)
-    return tasks_list if tasks_list is not None else []
+from lighteval.commands.utils import list_tasks_command
 
 
-def get_tasks_table_json() -> list:
-    """
-    Fetch tasks/tasks_table.jsonl
-    Returns
-    - a list of all the tasks in tasks/tasks_table.jsonl
-    """
-    tasks = []
-    # Handling tasks_table.jsonl
-    # Get the path to the resource file
-    tasks_table_path = pkg_resources.resource_filename("lighteval", "tasks/tasks_table.jsonl")
-    with open(tasks_table_path) as jsonl_tasks_table:
-        jsonl_tasks_table_content = jsonl_tasks_table.read()
-        for jline in jsonl_tasks_table_content.splitlines():
-            tasks.append(json.loads(jline))
-    return tasks
+TOKEN = os.getenv("HF_TOKEN")
+CACHE_DIR = os.getenv("HF_HOME")
+
+def parser_accelerate(parser):
+    group = parser.add_mutually_exclusive_group(required=True)
+    task_type_group = parser.add_mutually_exclusive_group(required=True)
+
+    # Model type: either use a config file or simply the model name
+    task_type_group.add_argument("--model_config_path")
+    task_type_group.add_argument("--model_args")
 
 
-def get_extended_tasks() -> list:
-    """
-    Fetch all the tasks in the extended suite
-    Returns
-    - a list of all the extended tasks
-    """
-    tasks_extended = []
-    extended_tasks_dir = pkg_resources.resource_filename("lighteval", "tasks/extended")
-    for root, dirs, files in os.walk(extended_tasks_dir):
-        for file in files:
-            if file == "main.py":
-                module_name = os.path.basename(root)
-                tasks_table = load_tasks_table_extended(module_name)
-                tasks_extended += tasks_table
-    return tasks_extended
+    parser.add_argument("--num_processes", type=int, default=1)
+
+    # Debug
+    parser.add_argument("--max_samples", type=int, default=None)
+    parser.add_argument("--override_batch_size", type=int, default=-1)
+    parser.add_argument("--job_id", type=str, help="Optional Job ID for future reference", default="")
+    # Saving
+    parser.add_argument("--output_dir", required=True)
+    parser.add_argument("--push_results_to_hub", default=False, action="store_true")
+    parser.add_argument("--save_details", action="store_true")
+    parser.add_argument("--push_details_to_hub", default=False, action="store_true")
+    parser.add_argument(
+        "--public_run", default=False, action="store_true", help="Push results and details to a public repo"
+    )
+    parser.add_argument("--cache_dir", type=str, default=CACHE_DIR)
+    parser.add_argument(
+        "--results_org",
+        type=str,
+        help="Hub organisation where you want to store the results. Your current token must have write access to it",
+    )
+    # Common parameters
+    parser.add_argument("--use_chat_template", default=False, action="store_true")
+    parser.add_argument("--system_prompt", type=str, default=None)
+    parser.add_argument("--dataset_loading_processes", type=int, default=1)
+    parser.add_argument(
+        "--custom_tasks",
+        type=str,
+        default=None,
+        help="Path to a file with custom tasks (a TASK list of dict and potentially prompt formating functions)",
+    )
+    group.add_argument(
+        "--tasks",
+        type=str,
+        default=None,
+        help="Id of a task, e.g. 'original|mmlu:abstract_algebra|5' or path to a texte file with a list of tasks",
+    )
+    parser.add_argument("--num_fewshot_seeds", type=int, default=1, help="Number of trials the few shots")
+    return parser
 
 
-def group_by_suite(tasks: list, tasks_extended: list) -> dict:
-    """
-    Group tasks by suite and sort them alphabetically
-    Args:
-    - tasks: list of tasks in tasks/tasks_table.jsonl
-    - tasks_extended: list of extended tasks
-    Returns:
-    - a dict of tasks grouped by suite
-    """
-    grouped_by_suite = {}
-    for task in tasks:
-        for suite in task["suite"]:
-            if suite not in grouped_by_suite.keys():
-                grouped_by_suite[suite] = [task["name"]]
-            else:
-                grouped_by_suite[suite].append(task["name"])
-                grouped_by_suite[suite].sort()
-
-    grouped_by_suite["extended"] = []
-    # Adding extended suite
-    for task in tasks_extended:
-        grouped_by_suite["extended"].append(task["name"])
-    grouped_by_suite["extended"].sort()
-    return grouped_by_suite
-
-
-def list_tasks_command():
-    """
-    List all the available tasks in tasks_table.jsonl and the extended directory
-    Assumes the existence of TASKS_TABLE in the main.py file for each extended
-    tasks in tasks/extended
-    """
-    try:
-        # Handling tasks_table.jsonl
-        tasks = get_tasks_table_json()
-
-        # Handling extended tasks
-        tasks_extended = get_extended_tasks()
-
-        # Grouping by suite the tasks
-        grouped_by_suite = group_by_suite(tasks, tasks_extended)
-
-        # Print tasks
-        print("Available tasks: (Grouped by suite)\n")
-        for suite, task_list in grouped_by_suite.items():
-            print("- " + suite)
-            for task in task_list:
-                print("\t - " + task)
-    except Exception as e:
-        print("Error: ", e)
+def parser_nanotron(parser):
+    parser.add_argument(
+        "--checkpoint-config-path",
+        type=str,
+        required=True,
+        help="Path to the brr checkpoint YAML or python config file, potentially on S3",
+    )
+    parser.add_argument(
+        "--lighteval-override",
+        type=str,
+        help="Path to an optional YAML or python Lighteval config to override part of the checkpoint Lighteval config",
+    )
+    parser.add_argument(
+        "--cache-dir",
+        type=str,
+        default=None,
+        help="Cache directory",
+    )
 
 
 def main():
     parser = argparse.ArgumentParser(description="CLI tool for lighteval, a lightweight framework for LLM evaluation")
     parser.add_argument("--list-tasks", action="store_true", help="List available tasks")
+    subparsers = parser.add_subparsers(help='help for subcommand', dest="subcommand")
+
+    # create the parser for the "accelerate" command
+    parser_a = subparsers.add_parser('accelerate', help='use accelerate and transformers as backend for evaluation.')
+    parser_accelerate(parser_a)
+
+    # create the parser for the "nanotron" command
+    parser_b = subparsers.add_parser('nanotron', help='use nanotron as backend for evaluation.')
+    parser_nanotron(parser_b)
+
+    parser_c = subparsers.add_parser('list-tasks', help='List available tasks')
+
     args = parser.parse_args()
 
-    if args.list_tasks:
-        list_tasks_command()
-    else:
-        parser.print_help()
+    if args.subcommand == "accelerate":
+        if args.num_processes > 1:
+            accelerate_args = ["--multi_gpu", "--num_processes", str(args.num_processes), "-m", "lighteval.main_accelerate"]
+        else:
+            accelerate_args = ["--num_processes", "1", "-m", "lighteval.main_accelerate"]
 
+        for key, value in vars(args).items():
+            if value is not None and key != "subcommand" and value is not False:
+                accelerate_args.extend([f"--{str(key)}", str(value)])
+
+        args_accelerate = launch_command_parser().parse_args(accelerate_args)
+        launch_command(args_accelerate)
+        return
+
+    if args.subcommand == "nanotron":
+        from lighteval.main_nanotron import main as main_nanotron
+        main_nanotron(args)
+        return
+
+    if args.subcommand == "list-tasks":
+        list_tasks_command()
+        return
 
 if __name__ == "__main__":
     main()

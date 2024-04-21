@@ -76,9 +76,9 @@ dependencies = [
     "pycountry",
 ]
 
-[project.scripts]
-lighteval-nanotron = "lighteval.main_accelerate:main"
-lighteval-accelerate = "lighteval.main_accelerate:main"
+# [project.scripts]
+# lighteval-nanotron = "lighteval.main_accelerate:main"
+# lighteval-accelerate = "lighteval.main_accelerate:main"
 
 [project.optional-dependencies]
 accelerate = ["accelerate"]
