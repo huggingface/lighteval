@@ -40,12 +40,12 @@ class DynamicBatchDataset(Dataset):
     def __init__(
         self,
         requests: list,
-        dataset_splits: int,
+        num_dataset_splits: int,
     ):
         """
         This dataset class uses dynamic batching to speed up the generation.
         Each request is sorted by the length of the prompt + the length of the
-        continuation. Then, the dataset is split into dataset_splits splits.
+        continuation. Then, the dataset is split into num_dataset_splits splits.
         The first split will contain the longest requests, the second split will
         contain the second longest requests, etc. This allows us to use dynamic
         batching by starting with a small batch size and doubling it for each
@@ -54,7 +54,7 @@ class DynamicBatchDataset(Dataset):
 
         Args:
             requests (List): A list of requests.
-            dataset_splits (int): The number of dataset splits.
+            num_dataset_splits (int): The number of dataset splits.
         """
         # We make sure the requests contain the tokenized versions of their values
         if any(r.tokenized_context is None for r in requests):
@@ -69,16 +69,24 @@ class DynamicBatchDataset(Dataset):
 
         self.total_size = len(self.sorted_data)
 
-        if dataset_splits >= self.total_size:
-            hlog_warn(
-                f"dataset_splits ({dataset_splits}) >= total_size ({self.total_size}), setting dataset_splits to 1"
-            )
-            dataset_splits = 1
+        self.num_dataset_splits, self.splits = self.init_split_limits(num_dataset_splits)
 
-        self.dataset_splits = dataset_splits
-        self.split_size = self.total_size // self.dataset_splits + 1
-        self.split_start = 0
-        self.split_end = min(self.split_start + self.split_size, self.total_size)
+        self.split_start = self.splits[0][0]
+        self.split_end = self.splits[0][1]
+
+    def init_split_limits(self, num_dataset_splits):
+        if num_dataset_splits >= self.total_size:
+            hlog_warn(
+                f"num_dataset_splits ({num_dataset_splits}) >= total_size ({self.total_size}), setting num_dataset_splits to 1"
+            )
+            num_dataset_splits = 1
+
+        split_size = self.total_size // self.num_dataset_splits + 1
+        splits_indices = [
+            (ix * split_size, min((ix + 1) * split_size, self.total_size)) for ix in range(self.num_dataset_splits)
+        ]
+
+        return num_dataset_splits, splits_indices
 
     def get_original_order(self, new_arr: list) -> list:
         """
@@ -113,8 +121,8 @@ class DynamicBatchDataset(Dataset):
         Returns:
             tuple: A tuple containing the start and end indices of the split.
         """
-        self.split_start = split_id * self.split_size
-        self.split_end = min(self.split_start + self.split_size, self.total_size)
+        self.split_start = self.splits[split_id][0]
+        self.split_end = self.splits[split_id][1]
         return self.split_start, self.split_end
 
     def splits_start_end_iterator(self) -> tuple[int, int]:
@@ -126,7 +134,7 @@ class DynamicBatchDataset(Dataset):
         Yields:
             tuple: A tuple containing the start and end indices of a split.
         """
-        for split_id in range(self.dataset_splits):
+        for split_id in range(self.num_dataset_splits):
             yield self.get_split_start_end(split_id)
 
     def __getitem__(self, index) -> Request:
@@ -204,6 +212,32 @@ class LoglikelihoodSingleTokenDataset(DynamicBatchDataset):
 
 
 class GenerativeTaskDataset(DynamicBatchDataset):
+    def init_split_limits(self, num_dataset_splits):
+        if num_dataset_splits is not None:
+            hlog_warn(
+                "You cannot select the number of dataset splits for a generative evaluation at the moment. Automatically inferring."
+            )
+
+        all_sorting_criterion = [self._sorting_criteria(self.sorted_data[0])[:2]]
+        splits_indices = [(-1, -1)]
+        for ix, req in enumerate(self.sorted_data[1:]):
+            current_sorting_criteria = self._sorting_criteria(req)
+            current_key = current_sorting_criteria[:2]
+            if current_key not in all_sorting_criterion:
+                all_sorting_criterion.append(current_key)
+                splits_indices.append((splits_indices[-1][1] + 1, ix))
+
+        # We add the last split
+        if splits_indices[-1][1] != self.total_size:
+            splits_indices.append((splits_indices[-1][1] + 1, self.total_size))
+
+        # We remove the fake first index
+        splits_indices = splits_indices[1:]
+
+        num_dataset_splits = len(splits_indices)
+
+        return num_dataset_splits, splits_indices
+
     def _sorting_criteria(self, request: GreedyUntilRequest) -> int:
         """
         Collate function for generating batches.
@@ -219,10 +253,10 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         # The generative task has no limit except the model context
         if gen_length is None:
             gen_length = 0
-        return -(len(toks) + gen_length)
+        return request.use_logits, request.stop_sequence, -(len(toks) + gen_length)
 
 
-class GenerativeTaskDatasetNanotron(DynamicBatchDataset):
+class GenerativeTaskDatasetNanotron(GenerativeTaskDataset):
     def __getitem__(self, index) -> Request:
         """
         Get an item from the dataset depending on the split we are currently in.
@@ -237,20 +271,6 @@ class GenerativeTaskDatasetNanotron(DynamicBatchDataset):
             Any: The item at the specified index.
         """
         return index, self.sorted_data[index + self.split_start]
-
-    def _sorting_criteria(self, request) -> int:
-        """
-        Collate function for generating batches.
-
-        Args:
-            x (Any): The input data.
-
-        Returns:
-            Any: The collated data.
-        """
-        toks = request.tokenized_context
-        gen_length = request.generation_size
-        return -(len(toks) + gen_length)
 
 
 class GenDistributedSampler(DistributedSampler):

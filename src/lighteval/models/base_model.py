@@ -334,7 +334,7 @@ class BaseModel(LightevalModel):
 
         results = []
 
-        dataset = GenerativeTaskDataset(requests=requests, dataset_splits=1)
+        dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=1)
         dataloader = DataLoader(dataset, batch_size=1, collate_fn=lambda batch: batch)
 
         if self.accelerator:
@@ -475,7 +475,7 @@ class BaseModel(LightevalModel):
             request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
             request.tokenized_context = self.tok_encode(request.context)
 
-        dataset = GenerativeTaskDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
+        dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
         results = []
 
@@ -708,7 +708,7 @@ class BaseModel(LightevalModel):
         return_bool_score: bool = True,
         rolling: bool = False,
     ) -> list[LoglikelihoodReturn]:
-        dataset = LoglikelihoodDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
+        dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
         res = []
 
@@ -950,7 +950,7 @@ class BaseModel(LightevalModel):
     def _loglikelihood_single_token(
         self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: int = -1
     ) -> list[LoglikelihoodSingleTokenReturn]:
-        dataset = LoglikelihoodSingleTokenDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
+        dataset = LoglikelihoodSingleTokenDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
         res = []
 
