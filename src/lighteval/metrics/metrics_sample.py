@@ -712,12 +712,14 @@ class MajAtK:
             )
         self.type_exact_match = type_exact_match
 
-    def compute(self, golds: list[str], predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
+    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> dict[str, float]:
         """Computes the metric over a list of golds and predictions for one single sample.
+        It applies normalisation (if needed) to model prediction and gold, and takes the most frequent answer of all the available ones,
+        then compares it to the gold.
 
         Args:
             golds (list[str]): Reference targets
-            predictions (list[str]): Predicted strings
+            predictions (list[str]): k predicted strings
 
         Returns:
             float: Aggregated score over the current sample's items.
