@@ -136,6 +136,24 @@ def math_normalizer(text: str, is_gold: bool = False) -> str:  # noqa C901
         return retval
 
     def _fix_fracs(text: str) -> str:
+        """
+        Fix the formatting of fractions in the given text.
+        Copied from: https://github.com/hendrycks/math/blob/357963a7f5501a6c1708cf3f3fb0cdf525642761/modeling/math_equivalence.py#L1
+
+        Args:
+            text (str): The input text.
+
+        Returns:
+            str: The text with properly formatted fractions.
+
+        Examples:
+            >>> _fix_fracs("\\frac12")
+            "\\frac{1}{2}"
+            >>> _fix_fracs("\\frac{3}{4}")
+            "\\frac{3}{4}"
+            >>> _fix_fracs("\\frac1{2}")
+            "\\frac{1}{2}"
+        """
         substrs = text.split("\\frac")
         new_str = substrs[0]
         if len(substrs) > 1:
@@ -149,7 +167,8 @@ def math_normalizer(text: str, is_gold: bool = False) -> str:  # noqa C901
                         assert len(substr) >= 2
                     except AssertionError:
                         return text
-                    a, b = substr
+                    a = substr[0]
+                    b = substr[1]
                     if b != "{":
                         if len(substr) > 2:
                             post_substr = substr[2:]

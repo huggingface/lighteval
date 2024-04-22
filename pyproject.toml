@@ -100,3 +100,6 @@ Homepage = "https://github.com/huggingface/lighteval"
 Issues = "https://github.com/huggingface/lighteval/issues"
 # Documentation = ""
 # Changelog = "https://github.com/huggingface/lighteval/blob/master/CHANGELOG.md"
+
+[project.scripts]
+lighteval = "lighteval.commands.lighteval_cli:main"

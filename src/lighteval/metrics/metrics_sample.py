@@ -23,6 +23,7 @@
 """This module manages all the metrics occurring at the sample level. The results of said metrics are then aggregated
 using simple function (min, mean, max, ...) at the corpus level. Most metrics fall under this category.
 """
+import os
 from typing import Union
 
 import nltk
@@ -38,6 +39,7 @@ from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.imports.bert_scorer import BERTScorer
 from lighteval.metrics.imports.data_stats_metric import DataStatsMetric
 from lighteval.metrics.imports.summac import SummaCZS
+from lighteval.metrics.llm_as_judge import JudgeOpenAI
 from lighteval.metrics.normalizations import remove_braces, remove_braces_and_strip
 from lighteval.tasks.requests import Doc
 from lighteval.utils import as_list
@@ -616,3 +618,60 @@ class StringDistance:
         """
         edist = edit_distance(s1, s2)
         return 1.0 - edist / max(len(s1), len(s2)) if len(s1) > 0 and len(s2) > 0 else 0
+
+
+class JudgeLLM:
+    available_models = ["gpt-3.5-turbo"]
+
+    def __init__(self, judge_model_name: str, template_path: str, multi_turn: bool = False):
+        if judge_model_name not in self.available_models:
+            raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
+
+        OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+        self.multi_turn = multi_turn
+
+        try:
+            self.judge = JudgeOpenAI(
+                model=judge_model_name,
+                seed=42,
+                temperature=0.0,
+                templates_path=template_path,
+                openai_api_key=OPENAI_API_KEY,
+                multi_turn=multi_turn,
+            )
+        except Exception as e:
+            print(f"Could not initialize the JudgeOpenAI model:\n{e}")
+            self.judge = None
+
+    def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
+        """
+        Compute the score of a generative taks using a llm as a judge.
+        The generative task can be multiturn with 2 turns max, in that case, we
+        return scores for turn 1 and 2. Also returns user_prompt and judgment
+        which are ignored later by the aggregator.
+        """
+
+        # If we are evaluating a multiturn task, we need to have specific field in the formated doc
+        if self.multi_turn:
+            questions = formatted_doc.specific["multi_turn_queries"]
+            ref_answers = formatted_doc.specific.get("reference", None) if formatted_doc.specific is not None else None
+        else:
+            questions = [formatted_doc.query]
+            ref_answers = [formatted_doc.choices[formatted_doc.gold_index]]
+
+        scores, messages, judgements = self.judge.evaluate_answer(questions, predictions, ref_answers)
+
+        # Multi turn only has 2 turns
+        if self.multi_turn:
+            return {
+                "single_turn": scores[0],
+                "multi_turn": scores[1],
+                "user_prompt": [messages[0], messages[1]],
+                "judgement": [judgements[0], judgements[1]],
+            }
+
+        return {
+            "judge_score": scores[0],
+            "user_prompt": messages[0],
+            "judgement": judgements[0],
+        }
