@@ -260,6 +260,11 @@ class InferenceEndpointModel(LightevalModel):
             ):
                 # the `returns_logits` flag is only used to filter the results, we always request the full details.
                 returns_logits = batch[0].use_logits
+                num_samples = batch[0].num_samples
+                if num_samples > 1:
+                    hlog_err(
+                        "Inference endpoints does not allow sampling evaluations - this is likely to fail or provide problematic results"
+                    )
 
                 if self.use_async:
                     responses = asyncio.run(self.__async_process_batch_generate(batch))
