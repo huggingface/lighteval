@@ -24,12 +24,11 @@ import argparse
 import os
 import random
 import shutil
+import sys
 from contextlib import nullcontext
 from datetime import timedelta
 
 import numpy as np
-import sys
-from lighteval.commands.lighteval_cli import parser_accelerate
 
 from lighteval.commands.lighteval_cli import parser_accelerate
 from lighteval.evaluator import evaluate, make_results_table
@@ -55,6 +54,7 @@ if is_accelerate_available():
     accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
 else:
     accelerator = None
+
 
 @htrack()
 def main(args):
@@ -147,8 +147,8 @@ def main(args):
         model.cleanup()
         return final_dict
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser = parser_accelerate(parser)
     args, _ = parser.parse_known_args(sys.argv[0:])

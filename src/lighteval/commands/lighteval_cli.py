@@ -23,35 +23,39 @@
 # SOFTWARE.
 
 import argparse
-import os
-from pprint import pprint
 
 from accelerate.commands.launch import launch_command, launch_command_parser  # noqa: I001
 
-from lighteval.commands.utils import list_tasks_command
 from lighteval.commands.parsers import parser_accelerate, parser_nanotron
+from lighteval.commands.utils import list_tasks_command
 
 
 def main():
     parser = argparse.ArgumentParser(description="CLI tool for lighteval, a lightweight framework for LLM evaluation")
     parser.add_argument("--list-tasks", action="store_true", help="List available tasks")
-    subparsers = parser.add_subparsers(help='help for subcommand', dest="subcommand")
+    subparsers = parser.add_subparsers(help="help for subcommand", dest="subcommand")
 
     # create the parser for the "accelerate" command
-    parser_a = subparsers.add_parser('accelerate', help='use accelerate and transformers as backend for evaluation.')
+    parser_a = subparsers.add_parser("accelerate", help="use accelerate and transformers as backend for evaluation.")
     parser_accelerate(parser_a)
 
     # create the parser for the "nanotron" command
-    parser_b = subparsers.add_parser('nanotron', help='use nanotron as backend for evaluation.')
+    parser_b = subparsers.add_parser("nanotron", help="use nanotron as backend for evaluation.")
     parser_nanotron(parser_b)
 
-    subparsers.add_parser('list-tasks', help='List available tasks')
+    subparsers.add_parser("list-tasks", help="List available tasks")
 
     args = parser.parse_args()
 
     if args.subcommand == "accelerate":
         if args.num_processes > 1:
-            accelerate_args = ["--multi_gpu", "--num_processes", str(args.num_processes), "-m", "lighteval.main_accelerate"]
+            accelerate_args = [
+                "--multi_gpu",
+                "--num_processes",
+                str(args.num_processes),
+                "-m",
+                "lighteval.main_accelerate",
+            ]
         else:
             accelerate_args = ["--num_processes", "1", "-m", "lighteval.main_accelerate"]
 
@@ -65,12 +69,14 @@ def main():
 
     if args.subcommand == "nanotron":
         from lighteval.main_nanotron import main as main_nanotron
+
         main_nanotron(args)
         return
 
     if args.subcommand == "list-tasks":
         list_tasks_command()
         return
+
 
 if __name__ == "__main__":
     main()
