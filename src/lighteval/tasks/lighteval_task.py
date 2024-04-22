@@ -552,7 +552,11 @@ class LightevalTask:
             or self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]
         ):
             results, cur_outputs = apply_generative_metric(
-                results=results, formatted_doc=formatted_doc, metrics=self.metrics, output_regex=self.output_regex
+                results=results,
+                formatted_doc=formatted_doc,
+                metrics=self.metrics,
+                output_regex=self.output_regex,
+                max_num_samples=max(self.num_samples),
             )
             outputs.update(cur_outputs)
         if self.has_metric_category[MetricCategory.MULTICHOICE]:

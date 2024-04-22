@@ -66,7 +66,9 @@ def apply_perplexity_metric(results: list[ModelReturn], formatted_doc: Doc, metr
     return results, outputs
 
 
-def apply_generative_metric(results: list[ModelReturn], formatted_doc: Doc, metrics: list[str], output_regex=None):
+def apply_generative_metric(
+    results: list[ModelReturn], formatted_doc: Doc, metrics: list[str], output_regex=None, max_num_samples=1
+):
     outputs = {}
 
     # Post processing prediction
@@ -93,11 +95,19 @@ def apply_generative_metric(results: list[ModelReturn], formatted_doc: Doc, metr
         preds = [formatted_doc.specific["label_to_choices"].get(p) for p in preds]
         golds = [formatted_doc.specific["label_to_choices"][g] for g in golds]
 
+    preds_no_sampling = preds
+    if max_num_samples > 1:  # We want to run our evaluation on only one sample for base generative evals
+        preds_no_sampling = as_list(preds[0])
+
     for metric in metrics:
         if Metrics[metric].value.category == MetricCategory.GENERATIVE:
-            outputs.update(Metrics[metric].value.compute(golds=golds, predictions=preds, formatted_doc=formatted_doc))
+            outputs.update(
+                Metrics[metric].value.compute(golds=golds, predictions=preds_no_sampling, formatted_doc=formatted_doc)
+            )
         if Metrics[metric].value.category == MetricCategory.GENERATIVE_LOGPROB:
-            outputs.update(Metrics[metric].value.compute(results=results, formatted_doc=formatted_doc))
+            outputs.update(
+                Metrics[metric].value.compute(golds=golds, predictions=preds_no_sampling, formatted_doc=formatted_doc)
+            )
         if Metrics[metric].value.category == MetricCategory.GENERATIVE_SAMPLING:
             outputs.update(Metrics[metric].value.compute(golds=golds, predictions=preds, formatted_doc=formatted_doc))
 
