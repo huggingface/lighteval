@@ -81,9 +81,9 @@ class DynamicBatchDataset(Dataset):
             )
             num_dataset_splits = 1
 
-        split_size = self.total_size // self.num_dataset_splits + 1
+        split_size = self.total_size // num_dataset_splits + 1
         splits_indices = [
-            (ix * split_size, min((ix + 1) * split_size, self.total_size)) for ix in range(self.num_dataset_splits)
+            (ix * split_size, min((ix + 1) * split_size, self.total_size)) for ix in range(num_dataset_splits)
         ]
 
         return num_dataset_splits, splits_indices
@@ -228,8 +228,8 @@ class GenerativeTaskDataset(DynamicBatchDataset):
                 splits_indices.append((splits_indices[-1][1] + 1, ix))
 
         # We add the last split
-        if splits_indices[-1][1] != self.total_size:
-            splits_indices.append((splits_indices[-1][1] + 1, self.total_size))
+        if splits_indices[-1][1] != self.total_size + 1:
+            splits_indices.append((splits_indices[-1][1], self.total_size + 1))
 
         # We remove the fake first index
         splits_indices = splits_indices[1:]
