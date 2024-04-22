@@ -35,10 +35,8 @@ from lighteval.models.model_config import (
     EnvConfig,
     InferenceEndpointModelConfig,
     InferenceModelConfig,
-    TGIModelConfig,
 )
-from lighteval.models.tgi_model import ModelClient
-from lighteval.utils import NO_TGI_ERROR_MSG, is_accelerate_available, is_tgi_available
+from lighteval.utils import is_accelerate_available
 
 
 if is_accelerate_available():
@@ -54,9 +52,9 @@ class ModelInfo:
 
 
 def load_model(  # noqa: C901
-    config: Union[BaseModelConfig, AdapterModelConfig, DeltaModelConfig, TGIModelConfig, InferenceEndpointModelConfig],
+    config: Union[BaseModelConfig, AdapterModelConfig, DeltaModelConfig, InferenceEndpointModelConfig],
     env_config: EnvConfig,
-) -> Tuple[Union[BaseModel, AdapterModel, DeltaModel, ModelClient], ModelInfo]:
+) -> Tuple[Union[BaseModel, AdapterModel, DeltaModel], ModelInfo]:
     """Will load either a model from an inference server or a model from a checkpoint. depending
     on the arguments passed to the program.
 
@@ -70,36 +68,13 @@ def load_model(  # noqa: C901
         ValueError: If you did not specify a base model when using delta weights or adapter weights
 
     Returns:
-        Union[BaseModel, AdapterModel, DeltaModel, ModelClient]: The model that will be evaluated
+        Union[BaseModel, AdapterModel, DeltaModel]: The model that will be evaluated
     """
-    # Inference server loading
-    if isinstance(config, TGIModelConfig):
-        return load_model_with_tgi(config)
-
     if isinstance(config, InferenceEndpointModelConfig) or isinstance(config, InferenceModelConfig):
         return load_model_with_inference_endpoints(config, env_config=env_config)
 
     if isinstance(config, BaseModelConfig):
         return load_model_with_accelerate_or_default(config=config, env_config=env_config)
-
-
-def load_model_with_tgi(config: TGIModelConfig):
-    if not is_tgi_available():
-        raise ImportError(NO_TGI_ERROR_MSG)
-
-    hlog(f"Load model from inference server: {config.inference_server_address}")
-    model = ModelClient(address=config.inference_server_address, auth_token=config.inference_server_auth)
-    model_name = str(model.model_info["model_id"])
-    model_sha = model.model_info["model_sha"]
-    model_precision = model.model_info["dtype"]
-    model_size = -1
-    model_info = ModelInfo(
-        model_name=model_name,
-        model_sha=model_sha,
-        model_dtype=model_precision,
-        model_size=model_size,
-    )
-    return model, model_info
 
 
 def load_model_with_inference_endpoints(config: InferenceEndpointModelConfig, env_config: EnvConfig):

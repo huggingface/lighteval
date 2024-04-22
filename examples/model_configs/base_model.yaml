@@ -1,5 +1,5 @@
 model:
-  type: "base" # can be base, tgi, or endpoint
+  type: "base" # can be base or endpoint
   base_params:
     model_args: "pretrained=HuggingFaceH4/zephyr-7b-beta,revision=main" # pretrained=model_name,trust_remote_code=boolean,revision=revision_to_use,model_parallel=True ...
     dtype: "bfloat16"
