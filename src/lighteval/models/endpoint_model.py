@@ -44,7 +44,6 @@ from lighteval.models.model_config import EnvConfig, InferenceEndpointModelConfi
 from lighteval.models.model_output import GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
-    GreedyUntilWithLogitsRequest,
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
     LoglikelihoodSingleTokenRequest,
@@ -182,7 +181,7 @@ class InferenceEndpointModel(LightevalModel):
 
     async def __async_process_batch_generate(
         self,
-        requests: list[GreedyUntilRequest | GreedyUntilWithLogitsRequest],
+        requests: list[GreedyUntilRequest],
     ) -> list[TextGenerationOutput]:
         return await asyncio.gather(
             *[
@@ -197,7 +196,7 @@ class InferenceEndpointModel(LightevalModel):
 
     def __process_batch_generate(
         self,
-        requests: list[GreedyUntilRequest | GreedyUntilWithLogitsRequest],
+        requests: list[GreedyUntilRequest],
     ) -> list[TextGenerationOutput]:
         return [
             self.__process_request(
@@ -234,35 +233,9 @@ class InferenceEndpointModel(LightevalModel):
             for request in requests
         ]
 
-    def greedy_until_with_logits(
-        self,
-        requests: list[GreedyUntilWithLogitsRequest],
-        override_bs: Optional[int] = None,
-    ) -> list[GenerateReturn]:
-        """
-        Generates sequences greedily until a stopping condition is met,
-        returning both the generated sequences and the logits.
-
-        Args:
-            requests (list[tuple[str, dict]]): A list of input requests,
-                where each request is a tuple containing a prompt string and a dictionary of additional parameters.
-            override_bs (Optional[int], optional): Overrides the batch size for generation. Defaults to None.
-
-        Returns:
-            list[GenerateReturn]: A list of GenerateReturn objects,
-                where each object contains the generated sequence and the corresponding logits.
-        """
-
-        return self.greedy_until(
-            requests,
-            returns_logits=True,
-            override_bs=override_bs,
-        )
-
     def greedy_until(
         self,
         requests: List[GreedyUntilRequest],
-        returns_logits: bool = False,
         override_bs: Optional[int] = None,
     ) -> List[GenerateReturn]:
         for request in requests:
@@ -286,6 +259,8 @@ class InferenceEndpointModel(LightevalModel):
                 dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
             ):
                 # the `returns_logits` flag is only used to filter the results, we always request the full details.
+                returns_logits = batch[0].use_logits
+
                 if self.use_async:
                     responses = asyncio.run(self.__async_process_batch_generate(batch))
                 else:

@@ -86,10 +86,6 @@ def evaluate(  # noqa: C901
             full_resps = lm.loglikelihood_rolling(requests, override_bs=override_bs)
         elif request_type == RequestType.GREEDY_UNTIL:
             full_resps = lm.greedy_until(requests, override_bs=override_bs)
-        elif request_type == RequestType.GREEDY_UNTIL_WITH_LOGITS:
-            full_resps = lm.greedy_until_with_logits(requests, override_bs=override_bs)
-        elif request_type == RequestType.GREEDY_UNTIL_WITH_SAMPLING:
-            full_resps = lm.greedy_until(requests, override_bs=override_bs)
         elif request_type == RequestType.GREEDY_UNTIL_MULTI_TURN:
             full_resps = lm.greedy_until_multi_turn(requests, override_bs=override_bs)
         else:

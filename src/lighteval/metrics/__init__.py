@@ -96,46 +96,10 @@ def apply_generative_metric(results: list[ModelReturn], formatted_doc: Doc, metr
     for metric in metrics:
         if Metrics[metric].value.category == MetricCategory.GENERATIVE:
             outputs.update(Metrics[metric].value.compute(golds=golds, predictions=preds, formatted_doc=formatted_doc))
-
-    return results, outputs
-
-
-def apply_generative_sampling_metric(
-    results: list[ModelReturn], formatted_doc: Doc, metrics: list[str], output_regex=None
-):
-    outputs = {}
-
-    # Post processing prediction
-    preds_raw = as_list(results.pop(0).result)
-    preds = []
-
-    for pred_raw in preds_raw:
-        if output_regex is not None:
-            pred = next(iter(re.findall(output_regex, pred_raw)), "")
-        else:
-            pred = pred_raw
-        preds.append(pred)
-
-    # Extracting gold
-    try:
-        golds = formatted_doc.get_golds()
-    except (KeyError, IndexError):
-        golds = None
-
-    for metric in metrics:
-        if Metrics[metric].value.category == MetricCategory.GENERATIVE_SAMPLING:
-            outputs.update(Metrics[metric].value.compute(golds=golds, predictions=preds, formatted_doc=formatted_doc))
-
-    return results, outputs
-
-
-def apply_generative_logprob_metric(results: list[ModelReturn], formatted_doc: Doc, metrics: list[str]):
-    # Applied to no metric atm, but we have the model side logic
-    outputs = {}
-
-    for metric in metrics:
         if Metrics[metric].value.category == MetricCategory.GENERATIVE_LOGPROB:
             outputs.update(Metrics[metric].value.compute(results=results, formatted_doc=formatted_doc))
+        if Metrics[metric].value.category == MetricCategory.GENERATIVE_SAMPLING:
+            outputs.update(Metrics[metric].value.compute(golds=golds, predictions=preds, formatted_doc=formatted_doc))
 
     return results, outputs
 

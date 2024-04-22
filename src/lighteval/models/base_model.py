@@ -46,8 +46,6 @@ from lighteval.models.utils import _get_dtype, _simplify_name, batched
 from lighteval.tasks.requests import (
     GreedyUntilMultiTurnRequest,
     GreedyUntilRequest,
-    GreedyUntilWithLogitsRequest,
-    GreedyUntilWithSamplingRequest,
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
     LoglikelihoodSingleTokenRequest,
@@ -327,32 +325,6 @@ class BaseModel(LightevalModel):
         hlog(f"Determined largest batch size: {batch_size}")
         return batch_size
 
-    def greedy_until_with_logits(
-        self,
-        requests: list[GreedyUntilWithLogitsRequest],
-        override_bs: Optional[int] = None,
-    ) -> list[GenerateReturn]:
-        """
-        Generates sequences greedily until a stopping condition is met,
-        returning both the generated sequences and the logits.
-
-        Args:
-            requests (list[GreedyUntilWithLogitsRequest]): A list of input requests,
-                where each request is a tuple containing a prompt string and a dictionary of additional parameters.
-            override_bs (Optional[int], optional): Overrides the batch size for generation. Defaults to None.
-
-        Returns:
-            list[GenerateReturn]: A list of GenerateReturn objects,
-                where each object contains the generated sequence and the corresponding logits.
-        """
-
-        return self.greedy_until(
-            requests,
-            returns_logits=True,
-            disable_tqdm=self.disable_tqdm,
-            override_bs=override_bs,
-        )
-
     def greedy_until_multi_turn(  # noqa: C901
         self, requests: list[GreedyUntilMultiTurnRequest], override_bs: Optional[int] = None
     ) -> GenerateMultiTurnReturn:
@@ -487,7 +459,6 @@ class BaseModel(LightevalModel):
     def greedy_until(
         self,
         requests: list[GreedyUntilRequest],
-        returns_logits: bool = False,
         override_bs: Optional[int] = None,
     ) -> list[GenerateReturn]:
         """
@@ -495,7 +466,6 @@ class BaseModel(LightevalModel):
 
         Args:
             requests (list[Request]): list of requests containing the context and ending conditions.
-            returns_logits (bool, optional): Whether to return the logits of the generated responses. Defaults to False.
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
 
         Returns:
@@ -543,11 +513,12 @@ class BaseModel(LightevalModel):
                 dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
             ):
                 # NOTE: we are assuming all items in a batch behave similarly (same
-                # stop_tokens and max_tokens genrated) which is not necessarily
+                # stop_tokens and max_tokens generated) which is not necessarily
                 # the case! Because of that we only use batch size of 1
                 stop_tokens = batch[0].stop_sequence
                 max_new_tokens = batch[0].generation_size
-                num_samples = batch[0].num_samples if isinstance(batch[0], GreedyUntilWithSamplingRequest) else 1
+                returns_logits = batch[0].use_logits
+                num_samples = batch[0].num_samples
 
                 # The main question for this step is the following:
                 # Would we rather truncate the prompt to allow generation to go to max_new_tokens, at the risk
