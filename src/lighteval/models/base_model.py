@@ -640,9 +640,9 @@ class BaseModel(LightevalModel):
 
                 decoded_generations.append(decoded_generation)
 
-            if num_samples == 1:  # We only return one item
-                result_generations = result_generations[0]
-                decoded_generations = decoded_generations[0]
+            # if num_samples == 1:  # We only return one item
+            #    result_generations = result_generations[0]
+            #    decoded_generations = decoded_generations[0]
 
             cur_response = GenerateReturn(
                 result=decoded_generations,

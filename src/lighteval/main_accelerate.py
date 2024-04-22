@@ -35,12 +35,12 @@ from lighteval.models.model_config import EnvConfig, create_model_config
 from lighteval.models.model_loader import load_model
 from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_tasks
 from lighteval.tasks.registry import Registry, taskinfo_selector
-from lighteval.utils import is_accelerate_available, is_tgi_available
+from lighteval.utils import is_accelerate_available
 from lighteval.utils_parallelism import test_all_gather
 
 
-if not is_accelerate_available() and not is_tgi_available():
-    hlog_warn("Using either accelerate or text-generation to run this script is advised.")
+if not is_accelerate_available():
+    hlog_warn("Using accelerate to run this script is advised.")
 
 TOKEN = os.getenv("HF_TOKEN")
 CACHE_DIR = os.getenv("HF_HOME")

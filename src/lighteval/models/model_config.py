@@ -196,12 +196,6 @@ class AdapterModelConfig(BaseModelConfig):
 
 
 @dataclass
-class TGIModelConfig:
-    inference_server_address: str
-    inference_server_auth: str
-
-
-@dataclass
 class InferenceModelConfig:
     model: str
     add_special_tokens: bool = True
@@ -274,12 +268,6 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
     else:
         with open(args.model_config_path, "r") as f:
             config = yaml.safe_load(f)["model"]
-
-    if config["type"] == "tgi":
-        return TGIModelConfig(
-            inference_server_address=args["instance"]["inference_server_address"],
-            inference_server_auth=args["instance"]["inference_server_auth"],
-        )
 
     if config["type"] == "endpoint":
         reuse_existing_endpoint = config["base_params"]["reuse_existing"]

@@ -25,20 +25,19 @@
 
 import collections
 import copy
-from typing import Dict, Union
+from typing import Dict
 
 from pytablewriter import LatexTableWriter, MarkdownTableWriter
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.base_model import BaseModel
-from lighteval.models.tgi_model import ModelClient
 from lighteval.tasks.lighteval_task import LightevalTask
 from lighteval.tasks.requests import Doc, Request, RequestType, TaskExampleId
 
 
 def evaluate(  # noqa: C901
-    lm: Union[BaseModel, ModelClient],
+    lm: BaseModel,
     requests_dict: Dict[RequestType, list[Request]],
     docs: Dict[TaskExampleId, Doc],
     task_dict: Dict[str, LightevalTask],
