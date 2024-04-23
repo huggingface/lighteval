@@ -47,7 +47,7 @@ task1 = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="test",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+    metric=["loglikelihood_acc"],
 )
 
 # Task 2: Choose context by question.
@@ -63,7 +63,7 @@ task2 = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="test",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+    metric=["loglikelihood_acc"],
 )
 
 
@@ -80,7 +80,7 @@ task3 = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="test",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+    metric=["loglikelihood_acc"],
 )
 
 # Task 4: Context-question match.
@@ -96,7 +96,7 @@ task4 = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="test",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+    metric=["loglikelihood_acc"],
 )
 
 
