@@ -755,7 +755,7 @@ class MajAtK:
 
         return pred
 
-    def compute_score(self, pred: str, gold: str):
+    def compute_score(self, pred: str, gold: str) -> int:
         if self.type_exact_match == "prefix":
             return 1 if pred.startswith(gold) else 0
         if self.type_exact_match == "suffix":
