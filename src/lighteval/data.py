@@ -219,20 +219,17 @@ class GenerativeTaskDataset(DynamicBatchDataset):
             )
 
         all_sorting_criterion = [self._sorting_criteria(self.sorted_data[0])[:2]]
-        splits_indices = [(-1, -1)]
-        for ix, req in enumerate(self.sorted_data[1:]):
+        splits_indices = [[0, None]]
+        for ix, req in enumerate(self.sorted_data):
             current_sorting_criteria = self._sorting_criteria(req)
             current_key = current_sorting_criteria[:2]
             if current_key not in all_sorting_criterion:
                 all_sorting_criterion.append(current_key)
-                splits_indices.append((splits_indices[-1][1] + 1, ix))
+                splits_indices[-1][1] = ix
+                splits_indices.append([ix, None])
 
         # We add the last split
-        if splits_indices[-1][1] != self.total_size + 1:
-            splits_indices.append((splits_indices[-1][1], self.total_size + 1))
-
-        # We remove the fake first index
-        splits_indices = splits_indices[1:]
+        splits_indices[-1][1] = self.total_size
 
         num_dataset_splits = len(splits_indices)
 

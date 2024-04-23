@@ -481,7 +481,7 @@ class BaseModel(LightevalModel):
 
         for split_start, split_end in tqdm(
             dataset.splits_start_end_iterator(),
-            total=self.DATASET_SPLITS,
+            total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
             disable=self.disable_tqdm,
