@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import collections
+import os
 import random
 from dataclasses import dataclass
 from multiprocessing import Pool
@@ -209,7 +210,7 @@ class LightevalTask:
         ):
             if os.getenv("OPENAI_API_KEY") is None:
                 raise ValueError(
-                    "Using llm as judge metric but no OPEN_API_KEY were found, please set it with export OPEN_API_KEY={yourkey}"
+                    "Using llm as judge metric but no OPEN_API_KEY were found, please set it with: export OPEN_API_KEY={yourkey}"
                 )
 
         current_categories = [Metrics[metric].value.category for metric in self.metrics]

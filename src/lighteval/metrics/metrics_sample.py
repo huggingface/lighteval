@@ -28,6 +28,7 @@ from typing import Union
 
 import nltk
 import numpy as np
+import openai
 from nltk.metrics.distance import edit_distance
 from nltk.tokenize import word_tokenize
 from nltk.tokenize.treebank import TreebankWordTokenizer
@@ -630,14 +631,17 @@ class JudgeLLM:
         OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
         self.multi_turn = multi_turn
 
-        self.judge = JudgeOpenAI(
-            model=judge_model_name,
-            seed=42,
-            temperature=0.0,
-            templates_path=template_path,
-            openai_api_key=OPENAI_API_KEY,
-            multi_turn=multi_turn,
-        )
+        try:
+            self.judge = JudgeOpenAI(
+                model=judge_model_name,
+                seed=42,
+                temperature=0.0,
+                templates_path=template_path,
+                openai_api_key=OPENAI_API_KEY,
+                multi_turn=multi_turn,
+            )
+        except openai.OpenAIError:
+            self.judge = None
 
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
         """
