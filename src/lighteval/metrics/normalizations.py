@@ -207,14 +207,41 @@ def math_normalizer(text: str) -> str:  # noqa C901
             return text
 
     def _remove_right_units(text: str) -> str:
-        """Source: https://github.com/hendrycks/math
-        Remove units (on the right).
-        "\\text{ " only ever occurs (at least in the val set) when describing units.
         """
+        Removes unit descriptions from LaTeX-formatted text, where units are indicated by "\\text{ }".
+        This function splits the text at each "\\text{ " and returns the part before the first occurrence,
+        effectively discarding any units and additional text following this pattern. This function also
+        trims any trailing whitespace left after removing units.
+
+        Args:
+            text (str): The input string potentially containing LaTeX-style unit descriptions.
+
+        Returns:
+            str: The text with unit descriptions removed.
+
+        Examples:
+            - Input: '50.5 \\text{ kg}'
+            Output: '50.5'
+
+            - Input: 'The mass is 20 grams'
+            Output: 'The mass is 20 grams'
+
+            - Input: 'The object weighs 30.2 \\text{ lbs} and is 15 \\text{ inches} long'
+            Output: 'The object weighs 30.2'
+
+            - Input: '\\text{ unit without preceding text}'
+            Output: ''
+
+        Note:
+            This function assumes that "\\text{ " is only used to denote units. It will remove all text
+            following the first occurrence of "\\text{ ", including any further text and units that might
+            appear in complex sentences.
+        """
+        # Check for "\\text{ " and split the text at each occurrence
         if "\\text{ " in text:
             splits = text.split("\\text{ ")
-            assert len(splits) == 2
-            return splits[0]
+            # Return only the first part which is assumed to contain the main content without units
+            return splits[0].rstrip()
         else:
             return text
 
