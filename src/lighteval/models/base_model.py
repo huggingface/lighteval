@@ -75,6 +75,7 @@ class BaseModel(LightevalModel):
         self.accelerator = config.accelerator
         self._batch_size = config.batch_size
         self._max_length = self._init_max_length(config.max_length)
+        self.use_chat_template = config.use_chat_template
 
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
         self._tokenizer = self._create_auto_tokenizer(config, env_config)
@@ -374,7 +375,7 @@ class BaseModel(LightevalModel):
         ):
             request = request_batch[0]
             # For chat models, generation stops with EOS token, so we don't need to specify stop tokens
-            if hasattr(self.tokenizer, "chat_template") and self.tokenizer.chat_template is not None:
+            if self.use_chat_template:
                 stop_tokens = []
             else:
                 stop_tokens = request.stop_sequence
@@ -546,7 +547,7 @@ class BaseModel(LightevalModel):
                 dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
             ):
                 # For chat models, generation stops with EOS token, so we don't need to specify stop tokens
-                if hasattr(self.tokenizer, "chat_template") and self.tokenizer.chat_template is not None:
+                if self.use_chat_template:
                     stop_tokens = []
                 else:
                     # NOTE: we are assuming all items in a batch behave similarly (same
