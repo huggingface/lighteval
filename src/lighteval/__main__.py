@@ -24,15 +24,12 @@
 
 import argparse
 
-from accelerate.commands.launch import launch_command, launch_command_parser  # noqa: I001
-
-from lighteval.commands.parsers import parser_accelerate, parser_nanotron
-from lighteval.commands.utils import list_tasks_command
+from lighteval.parsers import parser_accelerate, parser_nanotron
+from lighteval.utils import list_tasks_command
 
 
-def main():
+def cli_evaluate():
     parser = argparse.ArgumentParser(description="CLI tool for lighteval, a lightweight framework for LLM evaluation")
-    parser.add_argument("--list-tasks", action="store_true", help="List available tasks")
     subparsers = parser.add_subparsers(help="help for subcommand", dest="subcommand")
 
     # create the parser for the "accelerate" command
@@ -43,40 +40,24 @@ def main():
     parser_b = subparsers.add_parser("nanotron", help="use nanotron as backend for evaluation.")
     parser_nanotron(parser_b)
 
-    subparsers.add_parser("list-tasks", help="List available tasks")
+    parser.add_argument("--list-tasks", action="store_true", help="List available tasks")
 
     args = parser.parse_args()
 
     if args.subcommand == "accelerate":
-        if args.num_processes > 1:
-            accelerate_args = [
-                "--multi_gpu",
-                "--num_processes",
-                str(args.num_processes),
-                "-m",
-                "lighteval.main_accelerate",
-            ]
-        else:
-            accelerate_args = ["--num_processes", "1", "-m", "lighteval.main_accelerate"]
-
-        for key, value in vars(args).items():
-            if value is not None and key != "subcommand" and value is not False:
-                accelerate_args.extend([f"--{str(key)}", str(value)])
-
-        args_accelerate = launch_command_parser().parse_args(accelerate_args)
-        launch_command(args_accelerate)
+        from lighteval.main_accelerate import main as main_accelerate
+        main_accelerate(args)
         return
 
     if args.subcommand == "nanotron":
         from lighteval.main_nanotron import main as main_nanotron
-
         main_nanotron(args)
         return
 
-    if args.subcommand == "list-tasks":
+    if args.list_tasks:
         list_tasks_command()
         return
 
 
 if __name__ == "__main__":
-    main()
+    cli_evaluate()

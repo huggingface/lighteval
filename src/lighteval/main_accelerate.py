@@ -30,7 +30,6 @@ from datetime import timedelta
 
 import numpy as np
 
-from lighteval.commands.lighteval_cli import parser_accelerate
 from lighteval.evaluator import evaluate, make_results_table
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn, htrack, htrack_block
@@ -146,11 +145,3 @@ def main(args):
 
         model.cleanup()
         return final_dict
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser = parser_accelerate(parser)
-    args, _ = parser.parse_known_args(sys.argv[0:])
-
-    main(args)

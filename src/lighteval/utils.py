@@ -14,6 +14,13 @@
 import importlib
 from dataclasses import asdict, is_dataclass
 from typing import Any, Union
+import importlib
+import json
+import os
+
+import pkg_resources
+
+
 
 import numpy as np
 
@@ -147,6 +154,111 @@ def flatten(item: list[Union[list, str]]) -> list[str]:
 
 def is_accelerate_available() -> bool:
     return importlib.util.find_spec("accelerate") is not None
+
+
+def load_tasks_table_extended(module_name: any) -> list:
+    """
+    load the module module_name
+
+    Args:
+    - module_name the name of the module we want to load
+    Returns:
+    - TASKS_TABLE: a list of the task in the module
+    """
+    module_path = f"lighteval.tasks.extended.{module_name}.main"
+    module_loaded = importlib.import_module(module_path)
+    tasks_list = None
+    try:
+        tasks_list = module_loaded.TASKS_TABLE
+    except Exception as e:
+        print(e)
+    return tasks_list if tasks_list is not None else []
+
+
+def get_tasks_table_json() -> list:
+    """
+    Fetch tasks/tasks_table.jsonl
+    Returns
+    - a list of all the tasks in tasks/tasks_table.jsonl
+    """
+    tasks = []
+    # Handling tasks_table.jsonl
+    # Get the path to the resource file
+    tasks_table_path = pkg_resources.resource_filename("lighteval", "tasks/tasks_table.jsonl")
+    with open(tasks_table_path) as jsonl_tasks_table:
+        jsonl_tasks_table_content = jsonl_tasks_table.read()
+        for jline in jsonl_tasks_table_content.splitlines():
+            tasks.append(json.loads(jline))
+    return tasks
+
+
+def get_extended_tasks() -> list:
+    """
+    Fetch all the tasks in the extended suite
+    Returns
+    - a list of all the extended tasks
+    """
+    tasks_extended = []
+    extended_tasks_dir = pkg_resources.resource_filename("lighteval", "tasks/extended")
+    for root, dirs, files in os.walk(extended_tasks_dir):
+        for file in files:
+            if file == "main.py":
+                module_name = os.path.basename(root)
+                tasks_table = load_tasks_table_extended(module_name)
+                tasks_extended += tasks_table
+    return tasks_extended
+
+
+def group_by_suite(tasks: list, tasks_extended: list) -> dict:
+    """
+    Group tasks by suite and sort them alphabetically
+    Args:
+    - tasks: list of tasks in tasks/tasks_table.jsonl
+    - tasks_extended: list of extended tasks
+    Returns:
+    - a dict of tasks grouped by suite
+    """
+    grouped_by_suite = {}
+    for task in tasks:
+        for suite in task["suite"]:
+            if suite not in grouped_by_suite.keys():
+                grouped_by_suite[suite] = [task["name"]]
+            else:
+                grouped_by_suite[suite].append(task["name"])
+                grouped_by_suite[suite].sort()
+
+    grouped_by_suite["extended"] = []
+    # Adding extended suite
+    for task in tasks_extended:
+        grouped_by_suite["extended"].append(task["name"])
+    grouped_by_suite["extended"].sort()
+    return grouped_by_suite
+
+
+def list_tasks_command():
+    """
+    List all the available tasks in tasks_table.jsonl and the extended directory
+    Assumes the existence of TASKS_TABLE in the main.py file for each extended
+    tasks in tasks/extended
+    """
+    try:
+        # Handling tasks_table.jsonl
+        tasks = get_tasks_table_json()
+
+        # Handling extended tasks
+        tasks_extended = get_extended_tasks()
+
+        # Grouping by suite the tasks
+        grouped_by_suite = group_by_suite(tasks, tasks_extended)
+
+        # Print tasks
+        print("Available tasks: (Grouped by suite)\n")
+        for suite, task_list in grouped_by_suite.items():
+            print("- " + suite)
+            for task in task_list:
+                print("\t - " + task)
+    except Exception as e:
+        print("Error: ", e)
 
 
 NO_ACCELERATE_ERROR_MSG = "You requested the use of accelerate for this evaluation, but it is not available in your current environement. Please install it using pip."
