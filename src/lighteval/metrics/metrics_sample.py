@@ -39,7 +39,7 @@ from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.imports.bert_scorer import BERTScorer
 from lighteval.metrics.imports.data_stats_metric import DataStatsMetric
 from lighteval.metrics.imports.summac import SummaCZS
-from lighteval.metrics.llm_as_judge import JudgeOpenAI
+from lighteval.metrics.llm_as_judge import JudgeLM
 from lighteval.metrics.normalizations import remove_braces, remove_braces_and_strip
 from lighteval.tasks.requests import Doc
 from lighteval.utils import as_list
@@ -619,28 +619,30 @@ class StringDistance:
         edist = edit_distance(s1, s2)
         return 1.0 - edist / max(len(s1), len(s2)) if len(s1) > 0 and len(s2) > 0 else 0
 
-
 class JudgeLLM:
     available_models = ["gpt-3.5-turbo"]
 
     def __init__(self, judge_model_name: str, template_path: str, multi_turn: bool = False):
         if judge_model_name not in self.available_models:
-            raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
+            judge_type = "openai"
+        else:
+            judge_type = "transformers"
 
         OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
         self.multi_turn = multi_turn
 
         try:
-            self.judge = JudgeOpenAI(
+            self.judge = JudgeLM(
                 model=judge_model_name,
                 seed=42,
                 temperature=0.0,
                 templates_path=template_path,
+                judge_type=judge_type,
                 openai_api_key=OPENAI_API_KEY,
                 multi_turn=multi_turn,
             )
         except Exception as e:
-            print(f"Could not initialize the JudgeOpenAI model:\n{e}")
+            print(f"Could not initialize the JudgeLLM model:\n{e}")
             self.judge = None
 
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
