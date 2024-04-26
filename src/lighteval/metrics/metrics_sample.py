@@ -642,7 +642,7 @@ class JudgeLLM:
                 multi_turn=multi_turn,
             )
         except Exception as e:
-            print(f"Could not initialize the JudgeLLM model:\n{e}")
+            print(f"Could not initialize the JudgeLM model:\n{e}")
             self.judge = None
 
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
