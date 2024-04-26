@@ -37,7 +37,7 @@ import os
 
 task = LightevalTaskConfig(
     name="mt_bench",
-    prompt_function="prompt_fn",  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
+    prompt_function="mt_bench_prompt",  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
     suite=["extended"],
     hf_repo="lighteval/mt-bench",
     hf_subset="default",
@@ -51,7 +51,7 @@ task = LightevalTaskConfig(
 )
 
 
-def prompt_fn(line, task_name: str = None):
+def mt_bench_prompt(line, task_name: str = None):
     """Defines how to go from a dataset line to a doc object.
     Follow examples in src/lighteval/tasks/tasks_prompt_formatting.py, or get more info
     about what this function should do in the README.
