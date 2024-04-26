@@ -78,8 +78,8 @@ pre-commit install
 
 We provide two main entry points to evaluate models:
 
-* `run_evals_accelerate.py`: evaluate models on CPU or one or more GPUs using [🤗 Accelerate](https://github.com/huggingface/accelerate).
-* `run_evals_nanotron.py`: evaluate models in distributed settings using [⚡️ Nanotron](https://github.com/huggingface/nanotron).
+* `lighteval accelerate`: evaluate models on CPU or one or more GPUs using [🤗 Accelerate](https://github.com/huggingface/accelerate).
+* `lighteval nanotron`: evaluate models in distributed settings using [⚡️ Nanotron](https://github.com/huggingface/nanotron).
 
 For most users, we recommend using the 🤗 Accelerate backend - see below for specific commands.
 
@@ -94,7 +94,8 @@ accelerate config
 You can then evaluate a model using data parallelism as follows:
 
 ```shell
-accelerate launch --multi_gpu --num_processes=<num_gpus> run_evals_accelerate.py \
+accelerate launch --multi_gpu --num_processes=<num_gpus> -m \
+    lighteval accelerate \
     --model_args="pretrained=<path to model on the hub>" \
     --tasks <task parameters> \
     --output_dir output_dir
@@ -109,7 +110,8 @@ suite|task|num_few_shot|{0 or 1 to automatically reduce `num_few_shot` if prompt
 or a file path like [`examples/tasks/recommended_set.txt`](./examples/tasks/recommended_set.txt) which specifies multiple task configurations. For example, to evaluate GPT-2 on the Truthful QA benchmark run:
 
 ```shell
-accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py \
+accelerate launch --multi_gpu --num_processes=8 -m \
+    lighteval accelerate \
     --model_args "pretrained=gpt2" \
     --tasks "lighteval|truthfulqa:mc|0|0" \
     --override_batch_size 1 \
@@ -119,7 +121,8 @@ accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py \
 Here, `--override_batch_size` defines the _batch size per device_, so the effective batch size will be `override_batch_size x num_gpus`. To evaluate on multiple benchmarks, separate each task configuration with a comma, e.g.
 
 ```shell
-accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py \
+accelerate launch --multi_gpu --num_processes=8 -m \
+    lighteval accelerate \
     --model_args "pretrained=gpt2" \
     --tasks "leaderboard|truthfulqa:mc|0|0,leaderboard|gsm8k|0|0" \
     --override_batch_size 1 \
@@ -133,7 +136,8 @@ See the [`examples/tasks/recommended_set.txt`](./examples/tasks/recommended_set.
 If you want to evaluate a model by spinning up inference endpoints, or use adapter/delta weights, or more complex configuration options, you can load models using a configuration file. This is done as follows:
 
 ```shell
-accelerate launch --multi_gpu --num_processes=<num_gpus> run_evals_accelerate.py \
+accelerate launch --multi_gpu --num_processes=<num_gpus> -m \
+    lighteval accelerate \
     --model_config_path="<path to your model configuration>" \
     --tasks <task parameters> \
     --output_dir output_dir
@@ -147,13 +151,15 @@ To evaluate models larger that ~40B parameters in 16-bit precision, you will nee
 
 ```shell
 # PP=2, DP=4 - good for models < 70B params
-accelerate launch --multi_gpu --num_processes=4 run_evals_accelerate.py \
+accelerate launch --multi_gpu --num_processes=4 -m \
+    lighteval accelerate \
     --model_args="pretrained=<path to model on the hub>,model_parallel=True" \
     --tasks <task parameters> \
     --output_dir output_dir
 
 # PP=4, DP=2 - good for huge models >= 70B params
-accelerate launch --multi_gpu --num_processes=2 run_evals_accelerate.py \
+accelerate launch --multi_gpu --num_processes=2 -m \
+    lighteval accelerate \
     --model_args="pretrained=<path to model on the hub>,model_parallel=True" \
     --tasks <task parameters> \
     --output_dir output_dir
@@ -164,7 +170,8 @@ accelerate launch --multi_gpu --num_processes=2 run_evals_accelerate.py \
 To evaluate a model on all the benchmarks of the [Open LLM Leaderboard](https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard) using a single node of 8 GPUs, run:
 
 ```shell
-accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py \
+accelerate launch --multi_gpu --num_processes=8 -m \
+    lighteval accelerate \
     --model_args "pretrained=<model name>" \
     --tasks examples/tasks/open_llm_leaderboard_tasks.txt \
     --override_batch_size 1 \
@@ -176,7 +183,7 @@ accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py \
 You can also use `lighteval` to evaluate models on CPU, although note this will typically be very slow for large models. To do so, run:
 
 ```shell
-python run_evals_accelerate.py \
+lighteval accelerate \
     --model_args="pretrained=<path to model on the hub>"\
     --tasks <task parameters> \
     --output_dir output_dir
@@ -193,7 +200,7 @@ Independently of the default tasks provided in `lighteval` that you will find in
 
 For example, to run an extended task like ifeval, you can run:
 ```shell
-python run_evals_accelerate.py \
+lighteval accelerate \
     --model_args "pretrained=HuggingFaceH4/zephyr-7b-beta" \
     --use_chat_template \ # optional, if you want to run the evaluation with the chat template
     --tasks "extended|ifeval|0|0" \
@@ -203,7 +210,7 @@ python run_evals_accelerate.py \
 To run a community or custom task, you can use (note the custom_tasks flag):
 
 ```shell
-python run_evals_accelerate.py \
+lighteval accelerate \
     --model_args="pretrained=<path to model on the hub>"\
     --tasks <task parameters> \
     --custom_tasks <path to your custom or community task> \
@@ -213,7 +220,7 @@ python run_evals_accelerate.py \
 For example, to launch `lighteval` on `arabic_mmlu:abstract_algebra` for `HuggingFaceH4/zephyr-7b-beta`, run:
 
 ```shell
-python run_evals_accelerate.py \
+lighteval accelerate \
     --model_args "pretrained=HuggingFaceH4/zephyr-7b-beta" \
     --use_chat_template \ # optional, if you want to run the evaluation with the chat template
     --tasks "community|arabic_mmlu:abstract_algebra|5|1" \
@@ -433,7 +440,7 @@ source <path_to_your_venv>/activate #or conda activate yourenv
 cd <path_to_your_lighteval>/lighteval
 
 export CUDA_LAUNCH_BLOCKING=1
-srun accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py --model_args "pretrained=your model name" --tasks examples/tasks/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir=your output dir
+srun accelerate launch --multi_gpu --num_processes=8 -m lighteval accelerate --model_args "pretrained=your model name" --tasks examples/tasks/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir=your output dir
 ```
 
 ## Releases
