@@ -25,7 +25,7 @@
 """
 Custom evaluation tasks for lighteval.
 
-This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
+This file generally creates just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
 This module implements the 4 tasks of deutsche-telekom/Ger-RAG-eval.
 See: https://huggingface.co/datasets/deutsche-telekom/Ger-RAG-eval
 """
