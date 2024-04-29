@@ -172,7 +172,7 @@ class TaskExampleId(NamedTuple):
 class Doc:
     """
     Dataclass used to represent the content of a task example
-    almost every field is optional, but some tasks require some fields to be present
+    almost every field is optional, but some tasks require some fields to be present.
     When adding a new task, please add the required fields to the doc class.
     Each task will have a different set of fields needed.
     """
