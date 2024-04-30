@@ -54,7 +54,7 @@ from lighteval.data import (
     LoglikelihoodDataset,
     LoglikelihoodSingleTokenDataset,
 )
-from lighteval.logging.hierarchical_logger import hlog_warn
+from lighteval.logging.hierarchical_logger import hlog_err, hlog_warn
 from lighteval.models.base_model import LightevalModel
 from lighteval.models.model_config import EnvConfig
 from lighteval.models.model_output import Batch, GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
@@ -350,21 +350,6 @@ class NanotronLightevalModel(LightevalModel):
 
     def _model_call(self, inputs: torch.Tensor) -> torch.Tensor:
         return self.model(inputs)
-
-    def greedy_until_with_logits(
-        self,
-        requests: list[tuple[str, dict]],
-        disable_tqdm: bool = False,
-        override_bs=None,
-        dataset_splits: int = 4,
-    ) -> list[GenerateReturn]:
-        return self.greedy_until(
-            requests,
-            returns_logits=True,
-            disable_tqdm=disable_tqdm,
-            override_bs=override_bs,
-            dataset_splits=dataset_splits,
-        )
 
     def _encode_pair(self, context, continuation):
         n_spaces = len(context) - len(context.rstrip())
@@ -1130,7 +1115,6 @@ class NanotronLightevalModel(LightevalModel):
     def greedy_until(
         self,
         requests: List[GreedyUntilRequest],
-        returns_logits=False,
         disable_tqdm: bool = False,
         override_bs=None,
         dataset_splits: int = 1,
@@ -1216,6 +1200,12 @@ class NanotronLightevalModel(LightevalModel):
                 # the maximum allowed generation size for the batch, unless we want to force truncation
                 # need to pass them somewhere ! stop_tokens = batch[0].stop_sequence
                 max_new_tokens = batch[0].generation_size
+                returns_logits = batch[0].use_logits
+                num_samples = batch[0].num_samples
+                if num_samples > 1:
+                    hlog_err(
+                        "Nonotron models does not allow sampling evaluations - this is likely to fail or provide problematic results"
+                    )
 
                 # The main question for this step is the following:
                 # Would we rather truncate the prompt to allow generation to go to max_new_tokens, at the risk
