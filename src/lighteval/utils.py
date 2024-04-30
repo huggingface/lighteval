@@ -12,17 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import importlib
-from dataclasses import asdict, is_dataclass
-from typing import Any, Union
-import importlib
 import json
 import os
-
-import pkg_resources
-
-
+from dataclasses import asdict, is_dataclass
+from typing import Any, Union
 
 import numpy as np
+import pkg_resources
 
 
 def flatten_dict(nested: dict, sep="/") -> dict:

@@ -46,11 +46,13 @@ def cli_evaluate():
 
     if args.subcommand == "accelerate":
         from lighteval.main_accelerate import main as main_accelerate
+
         main_accelerate(args)
         return
 
     if args.subcommand == "nanotron":
         from lighteval.main_nanotron import main as main_nanotron
+
         main_nanotron(args)
         return
 

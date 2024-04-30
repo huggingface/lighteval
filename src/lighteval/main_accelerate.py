@@ -20,11 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import argparse
 import os
 import random
 import shutil
-import sys
 from contextlib import nullcontext
 from datetime import timedelta
 
