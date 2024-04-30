@@ -203,10 +203,8 @@ class LightevalTask:
             hlog_warn(f"[WARNING] Not implemented yet: ignoring the metric {' ,'.join(ignored)} for task {self.name}.")
 
         if any(
-            [
-                Metrics[metric].value.category in [MetricCategory.LLM_AS_JUDGE, MetricCategory.LLM_AS_JUDGE_MULTI_TURN]
-                for metric in self.metrics
-            ]
+            Metrics[metric].value.category in [MetricCategory.LLM_AS_JUDGE, MetricCategory.LLM_AS_JUDGE_MULTI_TURN]
+            for metric in self.metrics
         ):
             if os.getenv("OPENAI_API_KEY") is None:
                 raise ValueError(
