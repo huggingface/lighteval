@@ -53,7 +53,7 @@ def cli_evaluate():
     if args.subcommand == "nanotron":
         from lighteval.main_nanotron import main as main_nanotron
 
-        main_nanotron(args)
+        main_nanotron(args.checkpoint_config_path, args.lighteval_override, args.cache_dir)
         return
 
     if args.list_tasks:
