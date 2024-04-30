@@ -25,12 +25,12 @@ import ast
 import json
 import re
 import time
-from typing import Optional, Any
+from typing import Any, Optional
 
 from openai import OpenAI
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
 from lighteval.logging.hierarchical_logger import hlog_warn
-from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 
 
 class JudgeLM:
@@ -63,16 +63,15 @@ class JudgeLM:
     """
 
     def __init__(
-            self,
-            model: str,
-            seed: int,
-            temperature: float,
-            templates_path: str,
-            judge_type: str,
-            openai_api_key: Optional[str] = None,
-            multi_turn: bool = False,
+        self,
+        model: str,
+        seed: int,
+        temperature: float,
+        templates_path: str,
+        judge_type: str,
+        openai_api_key: Optional[str] = None,
+        multi_turn: bool = False,
     ):
-
         self.model = model
         self.seed = seed
         self.temperature = temperature
@@ -98,8 +97,9 @@ class JudgeLM:
             self.API_RETRY_SLEEP = 10
             self.max_tokens = 2048
         else:
-            transformers_model = AutoModelForCausalLM.from_pretrained(model,
-                                                                      torch_dtype="auto", trust_remote_code=True)
+            transformers_model = AutoModelForCausalLM.from_pretrained(
+                model, torch_dtype="auto", trust_remote_code=True
+            )
             tokenizer = AutoTokenizer.from_pretrained(model)
             self.pipe = pipeline(
                 "text-generation",
@@ -114,7 +114,7 @@ class JudgeLM:
             }
 
     def evaluate_answer(
-            self, questions: list[str], answers: list[str], references: list[str]
+        self, questions: list[str], answers: list[str], references: list[str]
     ) -> tuple[list[int], list[list[dict[str, str]]], list[str | None | Any]]:
         """
         Evaluates an answer using the OpenAI API or Transformers.
@@ -141,10 +141,10 @@ class JudgeLM:
 
         judgments = []
         for prompt in prompts:
-            if hasattr(self, 'client'):
+            if hasattr(self, "client"):
                 response = self.__call_openai_api(prompt)
             else:
-                response = self.pipe(prompt)[0]['generated_text']
+                response = self.pipe(prompt)[0]["generated_text"]
             judgments.append(response)
 
         scores = [self.__process_judge_response(judgment) for judgment in judgments]
@@ -169,7 +169,7 @@ class JudgeLM:
         raise Exception("Failed to get response from the API")
 
     def __get_prompts_multi_turn(
-            self, questions: list[str], answers: list[str], references: Optional[list[str]]
+        self, questions: list[str], answers: list[str], references: Optional[list[str]]
     ) -> list[dict[str, str]]:
         """
         Generates prompts for multi-turn conversations. The prompts are generated based on the templates.

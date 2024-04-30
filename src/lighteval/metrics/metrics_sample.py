@@ -619,6 +619,7 @@ class StringDistance:
         edist = edit_distance(s1, s2)
         return 1.0 - edist / max(len(s1), len(s2)) if len(s1) > 0 and len(s2) > 0 else 0
 
+
 class JudgeLLM:
     available_models = ["gpt-3.5-turbo"]
 
