@@ -85,6 +85,7 @@ class LightevalTaskConfig:
         output_regex (str)
         frozen (bool)
         trust_dataset (bool): Whether to trust the dataset at execution or not
+        version (int): The version of the task. Defaults to 0.
     """
 
     name: str
@@ -111,6 +112,8 @@ class LightevalTaskConfig:
 
     must_remove_duplicate_docs: bool = None
 
+    version: int = 0
+
     def as_dict(self):
         return {
             "name": self.name,
@@ -127,6 +130,7 @@ class LightevalTaskConfig:
             "output_regex": self.output_regex,
             "frozen": self.frozen,
             "suite": self.suite,
+            "version": self.version,
         }
 
     def __post_init__(self):
@@ -143,6 +147,7 @@ class LightevalTaskConfig:
         self.evaluation_splits = tuple(self.evaluation_splits) if self.evaluation_splits is not None else None
         self.suite = tuple(self.suite) if self.suite is not None else None
         self.stop_sequence = tuple(self.stop_sequence) if self.stop_sequence is not None else None
+        # TODO: should we also add self.version here?
 
 
 class LightevalTask:
@@ -162,7 +167,7 @@ class LightevalTask:
                 containing task-specific functions. Defaults to None.
         """
         self.name = name
-        self.VERSION = 0
+        self.VERSION = cfg.version  # TODO: change VERSION to lowercase
         self.is_main_process = False
         self.cache_dir = cache_dir
         self._cfg = cfg
