@@ -29,7 +29,6 @@ from torch.utils.data.distributed import DistributedSampler, T_co
 from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
-    GreedyUntilWithLogitsRequest,
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
     LoglikelihoodSingleTokenRequest,
@@ -205,7 +204,7 @@ class LoglikelihoodSingleTokenDataset(DynamicBatchDataset):
 
 
 class GenerativeTaskDataset(DynamicBatchDataset):
-    def _sorting_criteria(self, request: GreedyUntilRequest | GreedyUntilWithLogitsRequest) -> int:
+    def _sorting_criteria(self, request: GreedyUntilRequest) -> int:
         """
         Collate function for generating batches.
 
