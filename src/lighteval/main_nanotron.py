@@ -33,6 +33,7 @@ from lighteval.logging.hierarchical_logger import hlog, htrack, htrack_block
 from lighteval.models.model_config import EnvConfig
 from lighteval.models.model_loader import ModelInfo
 from lighteval.models.nanotron_model import NanotronLightevalModel
+from lighteval.parsers import parser_nanotron
 from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_tasks
 from lighteval.tasks.registry import Registry, get_custom_tasks, taskinfo_selector
 from lighteval.utils import NO_NANOTRON_ERROR_MSG, is_nanotron_available
@@ -42,7 +43,6 @@ from lighteval.utils_parallelism import test_all_gather
 if not is_nanotron_available():
     raise ImportError(NO_NANOTRON_ERROR_MSG)
 
-import argparse
 
 from nanotron import distributed as dist
 from nanotron.config import Config, LightEvalConfig, get_config_from_file
@@ -58,36 +58,13 @@ TOKEN = os.getenv("HF_TOKEN")
 CACHE_DIR = os.getenv("HF_HOME", "/scratch")
 
 
-def get_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--checkpoint-config-path",
-        type=str,
-        required=True,
-        help="Path to the brr checkpoint YAML or python config file, potentially on S3",
-    )
-    parser.add_argument(
-        "--lighteval-override",
-        type=str,
-        help="Path to an optional YAML or python Lighteval config to override part of the checkpoint Lighteval config",
-    )
-    parser.add_argument(
-        "--cache-dir",
-        type=str,
-        default=None,
-        help="Cache directory",
-    )
-
-    return parser
-
-
 @htrack()
 def main(
     config_cls: Type = Config,
     model_config_cls: Optional[Type] = None,
     model_cls: Optional[Type] = None,
 ):
-    parser = get_parser()
+    parser = parser_nanotron()
     args, _ = parser.parse_known_args()
     checkpoint_config_path = args.checkpoint_config_path
     lighteval_config_path = args.lighteval_override
