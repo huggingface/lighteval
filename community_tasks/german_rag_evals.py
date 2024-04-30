@@ -48,6 +48,7 @@ task1 = LightevalTaskConfig(
     few_shots_split="test",
     few_shots_select="sequential",
     metric=["loglikelihood_acc"],
+    version=1,
 )
 
 # Task 2: Choose context by question.
@@ -64,6 +65,7 @@ task2 = LightevalTaskConfig(
     few_shots_split="test",
     few_shots_select="sequential",
     metric=["loglikelihood_acc"],
+    version=1,
 )
 
 
@@ -81,6 +83,7 @@ task3 = LightevalTaskConfig(
     few_shots_split="test",
     few_shots_select="sequential",
     metric=["loglikelihood_acc"],
+    version=1,
 )
 
 # Task 4: Context-question match.
@@ -97,6 +100,7 @@ task4 = LightevalTaskConfig(
     few_shots_split="test",
     few_shots_select="sequential",
     metric=["loglikelihood_acc"],
+    version=1,
 )
 
 
