@@ -33,6 +33,7 @@ from lighteval.logging.hierarchical_logger import hlog, htrack, htrack_block
 from lighteval.models.model_config import EnvConfig
 from lighteval.models.model_loader import ModelInfo
 from lighteval.models.nanotron_model import NanotronLightevalModel
+from lighteval.parsers import parser_nanotron
 from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_tasks
 from lighteval.tasks.registry import Registry, get_custom_tasks, taskinfo_selector
 from lighteval.utils import NO_NANOTRON_ERROR_MSG, is_nanotron_available
@@ -41,6 +42,7 @@ from lighteval.utils_parallelism import test_all_gather
 
 if not is_nanotron_available():
     raise ImportError(NO_NANOTRON_ERROR_MSG)
+
 
 from nanotron import distributed as dist
 from nanotron.config import Config, LightEvalConfig, get_config_from_file
@@ -58,13 +60,16 @@ CACHE_DIR = os.getenv("HF_HOME", "/scratch")
 
 @htrack()
 def main(
-    checkpoint_config_path: str,
-    lighteval_config_path: Optional[str] = None,
-    cache_dir: Optional[str] = None,
     config_cls: Type = Config,
     model_config_cls: Optional[Type] = None,
     model_cls: Optional[Type] = None,
 ):
+    parser = parser_nanotron()
+    args, _ = parser.parse_known_args()
+    checkpoint_config_path = args.checkpoint_config_path
+    lighteval_config_path = args.lighteval_override
+    cache_dir = args.cache_dir
+
     if cache_dir is None:
         cache_dir = CACHE_DIR
 
