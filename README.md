@@ -456,5 +456,6 @@ python3 -m build .
   year = {2023},
   version = {0.3.0},
   url = {https://github.com/huggingface/lighteval}
+}
 ```
 
