@@ -450,3 +450,15 @@ srun accelerate launch --multi_gpu --num_processes=8 -m lighteval accelerate --m
 pip install build
 python3 -m build .
 ```
+
+## Cite as
+
+```bibtex
+@misc{lighteval,
+  author = {Fourrier, Clémentine and Habib, Nathan and Wolf, Thomas and Tunstall, Lewis},
+  title = {LightEval: A lightweight framework for LLM evaluation},
+  year = {2023},
+  version = {0.3.0},
+  url = {https://github.com/huggingface/lighteval}
+```
+
