@@ -167,7 +167,7 @@ class LightevalTask:
                 containing task-specific functions. Defaults to None.
         """
         self.name = name
-        self.VERSION = cfg.version  # TODO: change VERSION to lowercase
+        self.version = cfg.version  # TODO: this is changed from self.VERSION to lowercase - is the change consistent?
         self.is_main_process = False
         self.cache_dir = cache_dir
         self._cfg = cfg
@@ -689,7 +689,7 @@ def create_requests_from_tasks(  # noqa: C901
         # logs out the diferent versions of the tasks for every few shot
         for num_fewshot, _ in fewshot_dict[task_name]:
             cur_task_name = f"{task_name}|{num_fewshot}"
-            evaluation_tracker.versions_logger.log(cur_task_name, task.VERSION)
+            evaluation_tracker.versions_logger.log(cur_task_name, task.version)
 
         rnd = random.Random()
         rnd.seed(42)
