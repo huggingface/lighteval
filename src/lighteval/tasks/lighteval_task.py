@@ -85,7 +85,7 @@ class LightevalTaskConfig:
         output_regex (str)
         frozen (bool)
         trust_dataset (bool): Whether to trust the dataset at execution or not
-        version (int): The version of the task. Defaults to 0.
+        version (int): The version of the task. Defaults to 0. Can be increased if the underlying dataset or the prompt changes.
     """
 
     name: str
