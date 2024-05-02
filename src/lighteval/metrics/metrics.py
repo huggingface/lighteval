@@ -41,6 +41,7 @@ from lighteval.metrics.metrics_sample import (
     F1_score,
     JudgeLLM,
     LoglikelihoodAcc,
+    MajAtK,
     Recall,
     StringDistance,
     acc_golds_likelihood,
@@ -325,6 +326,42 @@ class Metrics(Enum):
         category=MetricCategory.MULTICHOICE_ONE_TOKEN,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=matthews_corrcoef,
+        higher_is_better=True,
+    )
+    maj_at_4_math = SampleLevelMetric(
+        metric="maj@4",
+        sample_level_fn=MajAtK(
+            k=4, strip_strings=True, normalize_pred=math_normalizer, normalize_gold=math_normalizer_gold
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.MATH,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    maj_at_5 = SampleLevelMetric(
+        metric="maj@5",
+        sample_level_fn=MajAtK(k=5).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.ACCURACY,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    maj_at_8 = SampleLevelMetric(
+        metric="maj@8",
+        sample_level_fn=MajAtK(k=8).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.ACCURACY,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    maj_at_8_gsm8k = SampleLevelMetric(
+        metric="maj@8",
+        sample_level_fn=MajAtK(
+            k=8, strip_strings=True, normalize_pred=gsm8k_normalizer, normalize_gold=gsm8k_normalizer
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.MATH,
+        corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     mrr = SampleLevelMetric(

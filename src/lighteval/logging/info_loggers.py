@@ -350,7 +350,10 @@ class DetailsLogger:
         ):
             pred_saved = True
             pass  # should we log something?
-        if task.has_metric_category[MetricCategory.GENERATIVE]:
+        if (
+            task.has_metric_category[MetricCategory.GENERATIVE]
+            or task.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]
+        ):
             detail.gold = doc.get_golds()
             pred_saved = True
         if task.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]:
