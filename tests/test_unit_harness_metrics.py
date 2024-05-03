@@ -26,7 +26,6 @@ import os
 import pytest
 
 from lighteval.metrics import (
-    apply_generative_logprob_metric,
     apply_generative_metric,
     apply_multichoice_metric,
     apply_multichoice_metric_one_token,
@@ -129,13 +128,12 @@ def apply_metric(metric, results, formatted_doc: Doc):
     if Metrics[metric].value.category == MetricCategory.PERPLEXITY:
         _, cur_outputs = apply_perplexity_metric(results=results, formatted_doc=formatted_doc, metrics=[metric])
         return cur_outputs
-    if Metrics[metric].value.category == MetricCategory.GENERATIVE:
+    if Metrics[metric].value.category in [
+        MetricCategory.GENERATIVE,
+        MetricCategory.GENERATIVE_LOGPROB,
+        MetricCategory.GENERATIVE_SAMPLING,
+    ]:
         _, cur_outputs = apply_generative_metric(results=results, formatted_doc=formatted_doc, metrics=[metric])
-        return cur_outputs
-    if Metrics[metric].value.category == MetricCategory.GENERATIVE_LOGPROB:
-        _, cur_outputs = apply_generative_logprob_metric(
-            results=results, formatted_doc=formatted_doc, metrics=[metric]
-        )
         return cur_outputs
     if Metrics[metric].value.category == MetricCategory.MULTICHOICE:
         _, cur_outputs = apply_multichoice_metric(results=results, formatted_doc=formatted_doc, metrics=[metric])
