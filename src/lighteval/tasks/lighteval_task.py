@@ -147,7 +147,6 @@ class LightevalTaskConfig:
         self.evaluation_splits = tuple(self.evaluation_splits) if self.evaluation_splits is not None else None
         self.suite = tuple(self.suite) if self.suite is not None else None
         self.stop_sequence = tuple(self.stop_sequence) if self.stop_sequence is not None else None
-        # TODO: should we also add self.version here?
 
 
 class LightevalTask:
@@ -167,7 +166,7 @@ class LightevalTask:
                 containing task-specific functions. Defaults to None.
         """
         self.name = name
-        self.version = cfg.version  # TODO: this is changed from self.VERSION to lowercase - is the change consistent?
+        self.version = cfg.version
         self.is_main_process = False
         self.cache_dir = cache_dir
         self._cfg = cfg
