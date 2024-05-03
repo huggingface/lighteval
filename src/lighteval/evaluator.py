@@ -82,12 +82,10 @@ def evaluate(  # noqa: C901
             full_resps = lm.loglikelihood(requests, override_bs=override_bs)
         elif request_type == RequestType.LOGLIKELIHOOD_SINGLE_TOKEN:
             full_resps = lm.loglikelihood_single_token(requests, override_bs=override_bs)
-        elif request_type == RequestType.GREEDY_UNTIL:
-            full_resps = lm.greedy_until(requests, override_bs=override_bs)
-        elif request_type == RequestType.GREEDY_UNTIL_WITH_LOGITS:
-            full_resps = lm.greedy_until_with_logits(requests, override_bs=override_bs)
         elif request_type == RequestType.LOGLIKELIHOOD_ROLLING:
             full_resps = lm.loglikelihood_rolling(requests, override_bs=override_bs)
+        elif request_type == RequestType.GREEDY_UNTIL:
+            full_resps = lm.greedy_until(requests, override_bs=override_bs)
         elif request_type == RequestType.GREEDY_UNTIL_MULTI_TURN:
             full_resps = lm.greedy_until_multi_turn(requests, override_bs=override_bs)
         else:
@@ -117,22 +115,8 @@ def evaluate(  # noqa: C901
         # using a deep copy here because process results pops from the model responses
         metrics = task.process_results(doc, copy.deepcopy(model_responses))
 
-        # Remove the user_prompt from the metrics in case of llm-as-judge metric
-        if "user_prompt" in metrics:
-            user_prompt = metrics["user_prompt"]
-            del metrics["user_prompt"]
-        else:
-            user_prompt = None
-        if "judgement" in metrics:
-            judgement = metrics["judgement"]
-            del metrics["judgement"]
-        else:
-            judgement = None
-
         evaluation_tracker.metrics_logger.log(task_example_id.task_name, metrics)
-        evaluation_tracker.details_logger.log(
-            task_example_id.task_name, task, doc, model_responses, metrics, (user_prompt, judgement)
-        )
+        evaluation_tracker.details_logger.log(task_example_id.task_name, task, doc, model_responses, metrics)
 
     return evaluation_tracker
 

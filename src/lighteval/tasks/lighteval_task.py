@@ -32,9 +32,8 @@ from datasets import load_dataset
 from lighteval.few_shot_manager import FewShotSampler
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.metrics import (
-    apply_generative_logprob_metric,
     apply_generative_metric,
-    apply_generative_multi_turn_metric,
+    apply_llm_as_judge_metric,
     apply_multichoice_metric,
     apply_multichoice_metric_one_token,
     apply_perplexity_metric,
@@ -47,7 +46,6 @@ from lighteval.tasks.requests import (
     Doc,
     GreedyUntilMultiTurnRequest,
     GreedyUntilRequest,
-    GreedyUntilWithLogitsRequest,
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
     LoglikelihoodSingleTokenRequest,
@@ -101,6 +99,7 @@ class LightevalTaskConfig:
     generation_size: int = None
     stop_sequence: Optional[Tuple[str]] = None
     output_regex: Optional[str] = None
+    num_samples: Optional[list[int]] = None
 
     frozen: bool = False
     suite: Optional[Tuple[str]] = None
@@ -201,6 +200,11 @@ class LightevalTask:
             hlog_warn(f"[WARNING] Not implemented yet: ignoring the metric {' ,'.join(ignored)} for task {self.name}.")
         current_categories = [Metrics[metric].value.category for metric in self.metrics]
         self.has_metric_category = {category: (category in current_categories) for category in MetricCategory}
+        # Sub-optimal system - we might want to store metric parametrisation in a yaml conf for example
+        # We assume num_samples always contains 1 (for base generative evals)
+        self.num_samples = [1] + [
+            int(metric.replace("maj_at_", "").split("_")[0]) for metric in self.metrics if "maj_at_" in metric
+        ]
 
         # Data processing
         # to use once prompt formatting is managed as a module
@@ -394,7 +398,7 @@ class LightevalTask:
         return as_list(formatted_doc.get_golds(few_shot=few_shot))[0]
 
     # Requests
-    def get_request_type(self) -> list[RequestType]:
+    def get_request_type(self) -> list[RequestType]:  # noqa C901
         """
         Returns the request types for the task.
 
@@ -408,23 +412,27 @@ class LightevalTask:
         request_types = []
         if self.has_metric_category[MetricCategory.TARGET_PERPLEXITY]:
             request_types.append(RequestType.LOGLIKELIHOOD)
-        if self.has_metric_category[MetricCategory.PERPLEXITY]:
-            request_types.append(RequestType.LOGLIKELIHOOD_ROLLING)
-        if self.has_metric_category[MetricCategory.GENERATIVE]:
-            request_types.append(RequestType.GREEDY_UNTIL)
-        if self.has_metric_category[MetricCategory.GENERATIVE_MULTI_TURN]:
-            request_types.append(RequestType.GREEDY_UNTIL_MULTI_TURN)
-        if self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]:
-            request_types.append(RequestType.GREEDY_UNTIL_WITH_LOGITS)
         if self.has_metric_category[MetricCategory.MULTICHOICE]:
             request_types.append(RequestType.LOGLIKELIHOOD)
         if self.has_metric_category[MetricCategory.MULTICHOICE_ONE_TOKEN]:
             request_types.append(RequestType.LOGLIKELIHOOD_SINGLE_TOKEN)
+        if self.has_metric_category[MetricCategory.PERPLEXITY]:
+            request_types.append(RequestType.LOGLIKELIHOOD_ROLLING)
+        if self.has_metric_category[MetricCategory.GENERATIVE]:
+            request_types.append(RequestType.GREEDY_UNTIL)
+        if self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]:
+            request_types.append(RequestType.GREEDY_UNTIL)
+        if self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]:
+            request_types.append(RequestType.GREEDY_UNTIL)
+        if self.has_metric_category[MetricCategory.LLM_AS_JUDGE]:
+            request_types.append(RequestType.GREEDY_UNTIL)
+        if self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]:
+            request_types.append(RequestType.GREEDY_UNTIL_MULTI_TURN)
 
         if len(request_types) == 0:
             raise NotImplementedError(f"Request type not implemented for task {self.name}")
 
-        return request_types
+        return list(set(request_types))
 
     def construct_requests(
         self, formatted_doc: Doc, context: str, document_id_seed: str, current_task_name: str
@@ -461,7 +469,13 @@ class LightevalTask:
                     task_name=current_task_name, example_index=document_id_seed, request_index=0, context=context
                 )
             ]
-        if self.has_metric_category[MetricCategory.GENERATIVE]:
+        if (
+            self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]
+            or self.has_metric_category[MetricCategory.GENERATIVE]
+            or self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]
+        ):
+            # All these tasks require the same generation process - we can do them in one step
+            use_logits = self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]
             requests[RequestType.GREEDY_UNTIL] += [
                 GreedyUntilRequest(
                     task_name=current_task_name,
@@ -470,17 +484,8 @@ class LightevalTask:
                     context=context,
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
-                )
-            ]
-        if self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]:
-            requests[RequestType.GREEDY_UNTIL_WITH_LOGITS] += [
-                GreedyUntilWithLogitsRequest(
-                    task_name=current_task_name,
-                    example_index=document_id_seed,
-                    request_index=0,
-                    context=context,
-                    stop_sequence=self.stop_sequence,
-                    generation_size=self.generation_size,
+                    num_samples=max(self.num_samples),  # If we have several samplings to apply, we use the max
+                    use_logits=use_logits,
                 )
             ]
         if self.has_metric_category[MetricCategory.MULTICHOICE]:
@@ -504,7 +509,7 @@ class LightevalTask:
                     choices=formatted_doc.choices,
                 )
             ]
-        if self.has_metric_category[MetricCategory.GENERATIVE_MULTI_TURN]:
+        if self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]:
             requests[RequestType.GREEDY_UNTIL_MULTI_TURN] += [
                 GreedyUntilMultiTurnRequest(
                     task_name=current_task_name,
@@ -541,14 +546,17 @@ class LightevalTask:
                 results=results, formatted_doc=formatted_doc, metrics=self.metrics
             )
             outputs.update(cur_outputs)
-        if self.has_metric_category[MetricCategory.GENERATIVE]:
+        if (
+            self.has_metric_category[MetricCategory.GENERATIVE]
+            or self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]
+            or self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]
+        ):
             results, cur_outputs = apply_generative_metric(
-                results=results, formatted_doc=formatted_doc, metrics=self.metrics, output_regex=self.output_regex
-            )
-            outputs.update(cur_outputs)
-        if self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]:
-            results, cur_outputs = apply_generative_logprob_metric(
-                results=results, formatted_doc=formatted_doc, metrics=self.metrics
+                results=results,
+                formatted_doc=formatted_doc,
+                metrics=self.metrics,
+                output_regex=self.output_regex,
+                max_num_samples=max(self.num_samples),
             )
             outputs.update(cur_outputs)
         if self.has_metric_category[MetricCategory.MULTICHOICE]:
@@ -561,8 +569,11 @@ class LightevalTask:
                 results=results, formatted_doc=formatted_doc, metrics=self.metrics
             )
             outputs.update(cur_outputs)
-        if self.has_metric_category[MetricCategory.GENERATIVE_MULTI_TURN]:
-            results, cur_outputs = apply_generative_multi_turn_metric(
+        if (
+            self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]
+            or self.has_metric_category[MetricCategory.LLM_AS_JUDGE]
+        ):
+            results, cur_outputs = apply_llm_as_judge_metric(
                 results=results, formatted_doc=formatted_doc, metrics=self.metrics
             )
             outputs.update(cur_outputs)
