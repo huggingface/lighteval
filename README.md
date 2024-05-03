@@ -186,7 +186,7 @@ python run_evals_accelerate.py \
 
 Independently of the default tasks provided in `lighteval` that you will find in the `tasks_table.jsonl` file, you can use `lighteval` to evaluate models on tasks that require special processing (or have been added by the community). These tasks have their own evaluation suites and are defined as follows:
 
-* `extended`: tasks which have complex pre- or post-processing and are added by the `lighteval` maintainers. See the [`extended_tasks`](./src/lighteval/tasks/extended_tasks) folder for examples.
+* `extended`: tasks which have complex pre- or post-processing and are added by the `lighteval` maintainers. See the [`extended`](./src/lighteval/tasks/extended) folder for examples.
 * `community`: tasks which have been added by the community. See the [`community_tasks`](./community_tasks) folder for examples.
 * `custom`: tasks which are defined locally and not present in the core library. Use this suite if you want to experiment with designing a special metric or task.
 
