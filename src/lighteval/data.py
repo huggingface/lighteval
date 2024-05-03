@@ -232,7 +232,7 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         splits_indices[-1][1] = self.total_size
 
         num_dataset_splits = len(splits_indices)
-
+    split_indices = [tuple(e) for e in split_indices]
         return num_dataset_splits, splits_indices
 
     def _sorting_criteria(self, request: GreedyUntilRequest) -> int:
