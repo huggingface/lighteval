@@ -43,13 +43,13 @@ task = LightevalTaskConfig(
     evaluation_splits=["train"],
     few_shots_split="train",
     few_shots_select="sequential",
-    metric=["perfect_exact_match"],
+    metric=["quasi_exact_match_math"],
     generation_size=5,
     stop_sequence=None,
 )
 
 
-def prompt(line, task_name: str = None):
+def aimo_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         choices=[str(line["answer"])],
