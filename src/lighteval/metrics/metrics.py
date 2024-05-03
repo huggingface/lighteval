@@ -329,7 +329,7 @@ class Metrics(Enum):
     maj_at_4_math = SampleLevelMetric(
         metric="maj@4",
         sample_level_fn=MajAtK(
-            k=4, strip_strings=True, normalize_pred=math_normalizer, normalize_gold=math_normalizer_gold
+            k=4, strip_strings=True, normalize_pred=math_normalizer, normalize_gold=math_normalizer
         ).compute,
         category=MetricCategory.GENERATIVE_SAMPLING,
         use_case=MetricUseCase.MATH,
