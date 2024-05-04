@@ -74,6 +74,7 @@ class BaseModel(LightevalModel):
         self.accelerator = config.accelerator
         self._batch_size = config.batch_size
         self._max_length = self._init_max_length(config.max_length)
+        self.use_chat_template = config.use_chat_template
 
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
         self._tokenizer = self._create_auto_tokenizer(config, env_config)
@@ -346,7 +347,11 @@ class BaseModel(LightevalModel):
             dataloader, desc="Greedy Multi Turn generation", position=1, leave=False, disable=self.disable_tqdm
         ):
             request = request_batch[0]
-            stop_tokens = request.stop_sequence
+            # For chat models, generation stops with EOS token, so we don't need to specify stop tokens
+            if self.use_chat_template:
+                stop_tokens = []
+            else:
+                stop_tokens = request.stop_sequence
             max_generated_tokens = request.generation_size
             context = request.context[0]
             max_context_size_allowed = self.max_length - max_generated_tokens
@@ -512,10 +517,15 @@ class BaseModel(LightevalModel):
             for batch in tqdm(
                 dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
             ):
-                # NOTE: we are assuming all items in a batch behave similarly (same
-                # stop_tokens and max_tokens generated) which is not necessarily
-                # the case! Because of that we only use batch size of 1
-                stop_tokens = batch[0].stop_sequence
+                # For chat models, generation stops with EOS token, so we don't need to specify stop tokens
+                if self.use_chat_template:
+                    stop_tokens = []
+                else:
+                    # NOTE: we are assuming all items in a batch behave similarly (same
+                    # stop_tokens and max_tokens genrated) which is not necessarily
+                    # the case! Because of that we only use batch size of 1
+                    stop_tokens = batch[0].stop_sequence
+
                 max_new_tokens = batch[0].generation_size
                 returns_logits = batch[0].use_logits
                 num_samples = batch[0].num_samples
