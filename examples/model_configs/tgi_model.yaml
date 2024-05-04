@@ -1,0 +1,4 @@
+model:
+  type: "tgi" # can be base, tgi, or endpoint
+  instance:
+    base_url: ""
