@@ -35,6 +35,7 @@ from lighteval.models.model_config import (
     EnvConfig,
     InferenceEndpointModelConfig,
     InferenceModelConfig,
+    TGIModelConfig,
 )
 from lighteval.utils import is_accelerate_available
 
@@ -70,7 +71,11 @@ def load_model(  # noqa: C901
     Returns:
         Union[BaseModel, AdapterModel, DeltaModel]: The model that will be evaluated
     """
-    if isinstance(config, InferenceEndpointModelConfig) or isinstance(config, InferenceModelConfig):
+    if (
+        isinstance(config, InferenceEndpointModelConfig)
+        or isinstance(config, InferenceModelConfig)
+        or isinstance(config, TGIModelConfig)
+    ):
         return load_model_with_inference_endpoints(config, env_config=env_config)
 
     if isinstance(config, BaseModelConfig):
