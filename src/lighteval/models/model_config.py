@@ -122,6 +122,7 @@ class BaseModelConfig:
     device: Union[int, str] = "cuda"
     quantization_config: Optional[BitsAndBytesConfig] = None
     trust_remote_code: bool = False
+    use_chat_template: bool = False
 
     def __post_init__(self):
         if self.quantization_config is not None and not is_bnb_available():
@@ -266,6 +267,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
     if args.model_args:
         args_dict = {k.split("=")[0]: k.split("=")[1] for k in args.model_args.split(",")}
         args_dict["accelerator"] = accelerator
+        args_dict["use_chat_template"] = args.use_chat_template
 
         return BaseModelConfig(**args_dict)
 
@@ -333,6 +335,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
         args_dict["quantization_config"] = quantization_config
         args_dict["batch_size"] = args.override_batch_size
         args_dict["multichoice_continuations_start_space"] = multichoice_continuations_start_space
+        args_dict["use_chat_template"] = args.use_chat_template
 
         # Keeping only non null params
         args_dict = {k: v for k, v in args_dict.items() if v is not None}
