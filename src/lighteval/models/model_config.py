@@ -346,7 +346,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
                 raise ValueError("You need to specify a base model when using adapter weights")
             return AdapterModelConfig(**args_dict)
         if config["merged_weights"]["base_model"] not in ["", None]:
-            raise ValueError("You can't specifify a base model if you are not using delta/adapter weights")
+            raise ValueError("You can't specify a base model if you are not using delta/adapter weights")
         return BaseModelConfig(**args_dict)
 
     raise ValueError(f"Unknown model type in your model config file: {config['type']}")
