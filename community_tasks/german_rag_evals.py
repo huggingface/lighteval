@@ -110,7 +110,9 @@ Fragen:
 A: {choice_a}
 B: {choice_b}
 C: {choice_c}
-D: {choice_d}"""
+D: {choice_d}
+
+Antwort:"""
     query = instruction + query_template.format(
         context=line["context"],
         choice_a=line["choice_a"],
@@ -147,7 +149,9 @@ C:
 {choice_c}
 
 D:
-{choice_d}"""
+{choice_d}
+
+Antwort:"""
     query = instruction + query_template.format(
         question=line["question"],
         choice_a=line["choice_a"],
@@ -170,7 +174,9 @@ def prompt_fn_question_answer_match(line, task_name: str = None):
     query_template = """\
 Die Frage: {question}
 
-Die Antwort: {answer}"""
+Die Antwort: {answer}
+
+Auswahl (J/N):"""
     query = instruction + query_template.format(
         question=line["question"],
         answer=line["answer"],
@@ -191,7 +197,9 @@ def prompt_fn_context_question_match(line, task_name: str = None):
 Kontext:
 {context}
 
-Die Frage: {question}"""
+Die Frage: {question}
+
+Auswahl (J/N):"""
     query = instruction + query_template.format(
         question=line["question"],
         context=line["context"],

@@ -350,6 +350,7 @@ These metrics need the model to generate an output. They are therefore slower.
     - `f1_score`:  Average F1 score in terms of word overlap between the model output and gold without normalisation
     - `f1_score_macro`: Corpus level macro F1 score
     - `f1_score_macro`: Corpus level micro F1 score
+    - `maj_at_5` and `maj_at_8`: Model majority vote. Takes n (5 or 8) generations from the model and assumes the most frequent is the actual prediction.
 - Summarization:
     - `rouge` (Harness): Average ROUGE score [(Lin, 2004)](https://aclanthology.org/W04-1013/)
     - `rouge1` (HELM): Average ROUGE score [(Lin, 2004)](https://aclanthology.org/W04-1013/) based on 1-gram overlap.
@@ -376,7 +377,9 @@ These metrics need the model to generate an output. They are therefore slower.
         - `edit_similarity`: average Levenshtein edit similarity (normalized by length of longer sequence) between model generation and reference.
 - Math:
     - `quasi_exact_match_math` (HELM): Fraction of instances where the normalized prediction matches the normalized gold (normalization done for math, where latex symbols, units, etc are removed)
+    - `maj_at_4_math` (Lighteval): Majority choice evaluation, using the math normalisation for the predictions and gold
     - `quasi_exact_match_gsm8k` (Harness): Fraction of instances where the normalized prediction matches the normalized gold (normalization done for gsm8k, where latex symbols, units, etc are removed)
+    - `maj_at_8_gsm8k` (Lighteval): Majority choice evaluation, using the gsm8k normalisation for the predictions and gold
 
 ### Metrics for specific tasks
 To keep compatibility with the Harness for some specific tasks, we ported their evaluations more or less as such. They include `drop` (for the DROP dataset) and `truthfulqa_mc_metrics` (for TruthfulQA). In general, except for tasks where the dataset has a very different formatting than usual (an other language, programming language, math, ...), we want to use standard implementations of the above metrics. It makes little sense to have 10 different versions of an exact match depending on the task. However, most of the above metrics are parametrizable so that you can change the normalization applied easily for experimental purposes.
@@ -443,3 +446,15 @@ srun accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py --m
 pip install build
 python3 -m build .
 ```
+
+## Cite as
+
+```bibtex
+@misc{lighteval,
+  author = {Fourrier, Clémentine and Habib, Nathan and Wolf, Thomas and Tunstall, Lewis},
+  title = {LightEval: A lightweight framework for LLM evaluation},
+  year = {2023},
+  version = {0.3.0},
+  url = {https://github.com/huggingface/lighteval}
+```
+
