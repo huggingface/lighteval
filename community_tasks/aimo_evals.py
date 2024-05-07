@@ -1,7 +1,6 @@
 # MIT License
 
 # Copyright (c) 2024 The HuggingFace Team
-# Copyright (c) 2024 Philip May, Deutsche Telekom AG
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,10 +22,7 @@
 
 # ruff: noqa: F405, F403, F401
 """
-Custom evaluation tasks for lighteval.
-
-This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
-This module implements the ...
+Task to evaluate LLMs on the training set of the Kaggle AIMO competition: https://www.kaggle.com/competitions/ai-mathematical-olympiad-prize
 """
 
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
@@ -35,7 +31,7 @@ from lighteval.tasks.requests import Doc
 
 task = LightevalTaskConfig(
     name="aimo_progress_prize_1",
-    prompt_function="prompt",
+    prompt_function="aimo_prompt",
     suite=["community"],
     hf_subset="",
     hf_repo="lighteval/aimo_progress_prize_1",
