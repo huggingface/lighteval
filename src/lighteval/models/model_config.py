@@ -85,9 +85,9 @@ class BaseModelConfig:
            If `None`, the default value will be set to `True` for seq2seq models (e.g. T5) and
             `False` for causal models.
         model_parallel (bool, optional, defaults to False):
-            True/False: force to uses or not the `accelerate` library to load a large
+            True/False: force to use or not the `accelerate` library to load a large
             model across multiple devices.
-            Default: None which correspond to comparing the number of process with
+            Default: None which corresponds to comparing the number of processes with
                 the number of GPUs. If it's smaller => model-parallelism, else not.
         dtype (Union[str, torch.dtype], optional, defaults to None):):
             Converts the model weights to `dtype`, if specified. Strings get
@@ -279,8 +279,8 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
 
     if config["type"] == "tgi":
         return TGIModelConfig(
-            inference_server_address=args["instance"]["inference_server_address"],
-            inference_server_auth=args["instance"]["inference_server_auth"],
+            inference_server_address=config["instance"]["inference_server_address"],
+            inference_server_auth=config["instance"]["inference_server_auth"],
         )
 
     if config["type"] == "endpoint":
