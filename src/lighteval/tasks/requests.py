@@ -187,9 +187,7 @@ class Doc:
             choices = self.choices
         golds = []
         for gold_ix in gold_indices:
-            local_golds = as_list(choices[gold_ix])
-            for local_gold in local_golds:
-                golds.append(local_gold)
+            golds.extend(as_list(choices[gold_ix]))
         return golds
 
     def __repr__(self):

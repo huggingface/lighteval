@@ -64,13 +64,13 @@ def get_parser():
         "--custom_tasks",
         type=str,
         default=None,
-        help="Path to a file with custom tasks (a TASK list of dict and potentially prompt formating functions)",
+        help="Path to a file with custom tasks (a TASK list of dict and potentially prompt formatting functions)",
     )
     group.add_argument(
         "--tasks",
         type=str,
         default=None,
-        help="Id of a task, e.g. 'original|mmlu:abstract_algebra|5' or path to a texte file with a list of tasks",
+        help="Id of a task, e.g. 'original|mmlu:abstract_algebra|5' or path to a text file with a list of tasks",
     )
     parser.add_argument("--num_fewshot_seeds", type=int, default=1, help="Number of trials the few shots")
     return parser

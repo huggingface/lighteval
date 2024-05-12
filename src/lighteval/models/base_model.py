@@ -819,7 +819,7 @@ class BaseModel(LightevalModel):
                     )
                     res.append(answer)
 
-                # Clean up GPUS
+                # Clean up GPUs
                 del model_output
                 del logits
                 del batched_inputs
@@ -852,7 +852,7 @@ class BaseModel(LightevalModel):
             hlog_warn("max_context is None, using max_length")
             max_context = self.max_length
 
-        # Each sample is concatenated and cut to lenght or padded to max_length
+        # Each sample is concatenated and cut to length or padded to max_length
         for orig_tokens in inputs:
             truncated.append(max(len(orig_tokens) - max_context, 0))
 
@@ -1030,7 +1030,7 @@ class BaseModel(LightevalModel):
                     )
                     res.append(answer)
 
-                # Clean up GPUS
+                # Clean up GPUs
                 del out
                 del batch_probs
                 del batched_inputs
