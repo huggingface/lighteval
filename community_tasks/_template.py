@@ -40,7 +40,7 @@ from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 
 
 # EVAL WITH NO SUBSET ##
-# This is how you create a simple tasks (like hellaswag) which has one single subset
+# This is how you create a simple task (like hellaswag) which has one single subset
 # attached to it, and one evaluation possible.
 task = LightevalTaskConfig(
     name="myothertask",
