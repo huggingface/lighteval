@@ -197,15 +197,14 @@ class AdapterModelConfig(BaseModelConfig):
 
 
 @dataclass
-class TGIModelConfig:
-    inference_server_address: str
-    inference_server_auth: str
-
-
-@dataclass
 class InferenceModelConfig:
     model: str
     add_special_tokens: bool = True
+
+
+@dataclass
+class TGIModelConfig:
+    base_url: str
 
 
 @dataclass
@@ -279,8 +278,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
 
     if config["type"] == "tgi":
         return TGIModelConfig(
-            inference_server_address=args["instance"]["inference_server_address"],
-            inference_server_auth=args["instance"]["inference_server_auth"],
+            base_url=args["instance"]["base_url"],
         )
 
     if config["type"] == "endpoint":

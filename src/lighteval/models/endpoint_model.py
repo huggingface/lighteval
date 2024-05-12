@@ -40,7 +40,7 @@ from transformers import AutoTokenizer
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
 from lighteval.models.abstract_model import LightevalModel
-from lighteval.models.model_config import EnvConfig, InferenceEndpointModelConfig, InferenceModelConfig
+from lighteval.models.model_config import EnvConfig, InferenceEndpointModelConfig, InferenceModelConfig, TGIModelConfig
 from lighteval.models.model_output import GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
@@ -48,8 +48,11 @@ from lighteval.tasks.requests import (
     LoglikelihoodRollingRequest,
     LoglikelihoodSingleTokenRequest,
 )
-from lighteval.utils import as_list
+from lighteval.utils import as_list, is_tgi_available
 
+
+if is_tgi_available():
+    from text_generation import AsyncClient, Client
 
 BATCH_SIZE = 50
 
@@ -60,7 +63,7 @@ class InferenceEndpointModel(LightevalModel):
     """
 
     def __init__(
-        self, config: Union[InferenceEndpointModelConfig, InferenceModelConfig], env_config: EnvConfig
+        self, config: Union[InferenceEndpointModelConfig, InferenceModelConfig, TGIModelConfig], env_config: EnvConfig
     ) -> None:
         self.reuse_existing = getattr(config, "should_reuse_existing", True)
         if isinstance(config, InferenceEndpointModelConfig):
@@ -107,6 +110,14 @@ class InferenceEndpointModel(LightevalModel):
             self.revision = self.endpoint.revision
             self.async_client: AsyncInferenceClient = self.endpoint.async_client
             self.client: InferenceClient = self.endpoint.client
+        elif isinstance(config, TGIModelConfig):
+            self.endpoint = None
+            self.name = f"local_tgi_{config.inference_server_address}"
+            self.client.text_generation = self.client.generate
+            self.async_client = AsyncClient(base_url=config.inference_server_address, timeout=240)
+            self.async_client.text_generation = self.async_client.generate
+            self.client = Client(base_url=config.inference_server_address, timeout=240)
+            self.client.text_generation = self.client.generate
 
         else:  # Free inference client
             self.endpoint = None
@@ -160,7 +171,6 @@ class InferenceEndpointModel(LightevalModel):
             decoder_input_details=True,
             max_new_tokens=max_tokens,
             stop_sequences=stop_tokens,
-            # truncate=,
         )
 
         return generated_text
@@ -174,7 +184,6 @@ class InferenceEndpointModel(LightevalModel):
             decoder_input_details=True,
             max_new_tokens=max_tokens,
             stop_sequences=stop_tokens,
-            # truncate=,
         )
 
         return generated_text

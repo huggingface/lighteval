@@ -152,13 +152,6 @@ def is_accelerate_available() -> bool:
 NO_ACCELERATE_ERROR_MSG = "You requested the use of accelerate for this evaluation, but it is not available in your current environement. Please install it using pip."
 
 
-def is_tgi_available() -> bool:
-    return importlib.util.find_spec("text-generation") is not None
-
-
-NO_TGI_ERROR_MSG = "You are trying to start a text generation inference endpoint, but text-generation is not present in your local environement. Please install it using pip."
-
-
 def is_nanotron_available() -> bool:
     return importlib.util.find_spec("nanotron") is not None
 
@@ -189,6 +182,13 @@ def is_peft_available() -> bool:
 
 
 NO_PEFT_ERROR_MSG = "You are trying to use adapter weights models, for which you need `peft`, which is not available in your environment. Please install it using pip."
+
+
+def is_tgi_available() -> bool:
+    return importlib.util.find_spec("text-generation") is not None
+
+
+NO_TGI_ERROR_MSG = "You are trying to start a text generation inference endpoint, but text-generation is not present in your local environement. Please install it using pip."
 
 
 def can_load_extended_tasks() -> bool:
