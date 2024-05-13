@@ -213,21 +213,21 @@ class LoglikelihoodAcc:
             length_normalization (bool, optional): Whether log-likelihood scores should be normalized for sentence length. Defaults to False.
                 Should be True for most cases.
             ignore_first_space (bool, optional): Whether to ignore the first token's log prob (if it's a space only). Defaults to False.
-                Only case when it should be True is when the possible choices (for example `A`,`B` ...) have an extra
+                The only case when it should be True is when the possible choices (for example `A`,`B` ...) have an extra
                 space added in front of them to manage tokenization issues (` A`, ` B`, ...) for some models.
         """
         self.length_normalization = length_normalization
         self.ignore_first_space = ignore_first_space
 
     def compute(self, gold_ixs: list[int], choices_logprob: list[float], formatted_doc: Doc, **kwargs) -> int:
-        """Computs the log likelihood accuracy: is the choice with the highest logprob in `choices_logprob` present
-        in the `gold_idxs`?
+        """Computes the log likelihood accuracy: is the choice with the highest logprob in `choices_logprob` present
+        in the `gold_ixs`?
 
         Args:
             gold_ixs (list[int]): All the gold choices indices
             choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
             formatted_doc (Doc): Original document for the sample.
-                Used to get the original choices's length for possible normalisation
+                Used to get the original choices' length for possible normalization
 
         Returns:
             int: The eval score: 1 if the best log-prob choice is in gold, 0 otherwise.
@@ -258,7 +258,7 @@ class Recall:
 
     def compute(self, choices_logprob: list[float], gold_ixs: list[int], **kwargs) -> int:
         """Computes the recall at the requested depth level: looks at the `n` best predicted choices (with the
-        highest log probabilies) and see if there is an actual gold among them.
+        highest log probabilities) and see if there is an actual gold among them.
 
         Args:
             gold_ixs (list[int]): All the gold choices indices
@@ -277,7 +277,7 @@ class MRR:
         """A mean reciprocal rank class.
 
         Args:
-            length_normalization (bool, optional): Whether to use normalisation be choice length when computing the best log-probabilities. Defaults to False.
+            length_normalization (bool, optional): Whether to use normalization on choice length when computing the best log-probabilities. Defaults to False.
         """
         self.length_normalization = length_normalization
 
@@ -288,7 +288,7 @@ class MRR:
             gold_ixs (list[int]): All the gold choices indices
             choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
             formatted_doc (Doc): Original document for the sample.
-                Used to get the original choices's length for possible normalisation
+                Used to get the original choices' length for possible normalization
 
         Returns:
             float: MRR score.
