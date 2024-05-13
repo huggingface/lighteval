@@ -23,6 +23,7 @@
 """This module manages all the metrics occurring at the sample level. The results of said metrics are then aggregated
 using simple function (min, mean, max, ...) at the corpus level. Most metrics fall under this category.
 """
+
 import os
 from typing import Union
 
@@ -327,7 +328,7 @@ class ROUGE:
 
         Args:
             methods (str | list[str]): What type of ROUGE scoring to use. Can be one or any of `rouge1`, `rouge2`, `rougeL` or `rougeLsum`.
-            multiple_golds (bool, optional): Whether to compute ROUGE by allowing the comparision to several golds
+            multiple_golds (bool, optional): Whether to compute ROUGE by allowing the comparison to several golds
                 at once, or to compute ROUGE on individual gold/prediction pairs and aggregate afterwards. Defaults to False.
             bootstrap (bool, optional): Whether to use bootstrapping. Defaults to False.
             aggregation_function (callable, optional): How to aggregate the item results. Defaults to max.
@@ -645,13 +646,13 @@ class JudgeLLM:
 
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
         """
-        Compute the score of a generative taks using a llm as a judge.
+        Compute the score of a generative task using a llm as a judge.
         The generative task can be multiturn with 2 turns max, in that case, we
         return scores for turn 1 and 2. Also returns user_prompt and judgment
         which are ignored later by the aggregator.
         """
 
-        # If we are evaluating a multiturn task, we need to have specific field in the formated doc
+        # If we are evaluating a multiturn task, we need to have specific field in the formatted doc
         if self.multi_turn:
             questions = formatted_doc.specific["multi_turn_queries"]
             ref_answers = formatted_doc.specific.get("reference", None) if formatted_doc.specific is not None else None
