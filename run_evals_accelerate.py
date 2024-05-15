@@ -50,7 +50,12 @@ def get_parser():
     parser.add_argument(
         "--public_run", default=False, action="store_true", help="Push results and details to a public repo"
     )
-    parser.add_argument("--cache_dir", type=str, default=CACHE_DIR, help="Cache directory for downloaded datasets & model, defaults to `HF_HOME` environment variable")
+    parser.add_argument(
+        "--cache_dir",
+        type=str,
+        default=CACHE_DIR,
+        help="Cache directory for downloaded datasets & model, defaults to `HF_HOME` environment variable",
+    )
     parser.add_argument(
         "--results_org",
         type=str,
