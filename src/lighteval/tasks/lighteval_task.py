@@ -440,7 +440,7 @@ class LightevalTask:
 
     def construct_requests(
         self, formatted_doc: Doc, context: str, document_id_seed: str, current_task_name: str
-    ) -> Dict[RequestType: List[Request]]:
+    ) -> Dict[RequestType, List[Request]]:
         """
         Constructs a list of requests from the task based on the given parameters.
 

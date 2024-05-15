@@ -74,6 +74,8 @@ dependencies = [
     "sentencepiece>=0.1.99",
     "protobuf==3.20.*", # pinned for sentencepiece compat
     "pycountry",
+    # LLM judges
+    "openai",
 ]
 
 [project.optional-dependencies]

@@ -79,7 +79,7 @@ class BaseModel(LightevalModel):
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
         self._tokenizer = self._create_auto_tokenizer(config, env_config)
 
-        # If model_parallel is not set we compare the number of process with the number of GPUs
+        # If model_parallel is not set we compare the number of processes with the number of GPUs
         self.model = self._create_auto_model(config, env_config)
         self.model.eval()
         torch.set_grad_enabled(False)
