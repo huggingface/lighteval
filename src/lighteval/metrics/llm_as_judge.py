@@ -68,7 +68,7 @@ class JudgeOpenAI:
         openai_api_key: str,
         multi_turn: bool = False,
     ):
-        self.client = None # loaded lazily
+        self.client = None  # loaded lazily
         self.openai_api_key = openai_api_key
         self.model = model
         self.seed = seed
@@ -113,6 +113,7 @@ class JudgeOpenAI:
         """
         if self.client is None:
             from openai import OpenAI
+
             self.client = OpenAI(api_key=self.openai_api_key)
 
         prompts = [
