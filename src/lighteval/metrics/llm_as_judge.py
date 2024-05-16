@@ -27,8 +27,6 @@ import re
 import time
 from typing import Optional
 
-from openai import OpenAI
-
 from lighteval.logging.hierarchical_logger import hlog_warn
 
 
@@ -70,7 +68,8 @@ class JudgeOpenAI:
         openai_api_key: str,
         multi_turn: bool = False,
     ):
-        self.client = OpenAI(api_key=openai_api_key)
+        self.client = None # loaded lazily
+        self.openai_api_key = openai_api_key
         self.model = model
         self.seed = seed
         self.temperature = temperature
@@ -112,6 +111,10 @@ class JudgeOpenAI:
         Raises:
             Exception: If an error occurs during the API call.
         """
+        if self.client is None:
+            from openai import OpenAI
+            self.client = OpenAI(api_key=self.openai_api_key)
+
         prompts = [
             self.__get_prompts_single_turn(
                 questions[0], answers[0], references[0] if references is not None and len(references) > 0 else None
