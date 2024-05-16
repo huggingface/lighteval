@@ -34,7 +34,6 @@ class RequestType(Enum):
     LOGLIKELIHOOD_ROLLING = auto()
     GREEDY_UNTIL = auto()
     GREEDY_UNTIL_MULTI_TURN = auto()
-    GREEDY_UNTIL_WITH_LOGITS = auto()
 
 
 @dataclass
@@ -119,6 +118,8 @@ class GreedyUntilRequest(Request):
     generation_size: int
     request_type = RequestType.GREEDY_UNTIL
     tokenized_context: list[int] = None
+    num_samples: int = None
+    use_logits: bool = False
 
 
 @dataclass
@@ -135,24 +136,6 @@ class GreedyUntilMultiTurnRequest(Request):
     stop_sequence: str
     generation_size: int
     request_type = RequestType.GREEDY_UNTIL_MULTI_TURN
-
-
-@dataclass
-class GreedyUntilWithLogitsRequest(Request):
-    """
-    Represents a request for generating text using the Greedy-Until strategy but
-    returning the logits.
-
-    Attributes:
-        stop_sequence (str): The sequence of tokens that indicates when to stop generating text.
-        generation_size (int): The maximum number of tokens to generate.
-        request_type (RequestType): The type of the request (GREEDY_UNTIL_WITH_LOGITS).
-    """
-
-    stop_sequence: Union[str, tuple[str], list[str]]
-    generation_size: int
-    request_type = RequestType.GREEDY_UNTIL_WITH_LOGITS
-    tokenized_context: list[int] = None
 
 
 class TaskExampleId(NamedTuple):
@@ -172,7 +155,7 @@ class TaskExampleId(NamedTuple):
 class Doc:
     """
     Dataclass used to represent the content of a task example
-    almost every field is optional, but some tasks require some fields to be present
+    almost every field is optional, but some tasks require some fields to be present.
     When adding a new task, please add the required fields to the doc class.
     Each task will have a different set of fields needed.
     """
