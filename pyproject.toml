@@ -55,7 +55,7 @@ keywords = ["evaluation", "nlp", "llm"]
 dependencies = [
     # Base dependencies
     "transformers>=4.38.0",
-    "huggingface_hub>=0.22.0",
+    "huggingface_hub>=0.23.0",
     "torch>=2.0",
     "GitPython>=3.1.41", # for logging
     "datasets>=2.14.0",
