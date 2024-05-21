@@ -375,11 +375,9 @@ class BERTScorer:
         self._model_type = model_type
         self._num_layers = num_layers
 
-        # Building model and tokenizer
-        self._tokenizer = AutoTokenizer.from_pretrained(model_type)
-        self._model = AutoModel.from_pretrained(model_type)
-        self._model.eval()
-        self._model.to(self.device)
+        # Model and tokenizer are lazily loaded in `score()`.
+        self._tokenizer = None
+        self._model = None
 
         self._idf_dict = None
 
@@ -442,6 +440,13 @@ class BERTScorer:
                       multiple references, the returned score of this candidate is
                       the *best* score among all references.
         """
+
+        if self._model is None:
+            hlog(f"Loading BERTScorer model `{self._model_type}`")
+            self._tokenizer = AutoTokenizer.from_pretrained(self._model_type)
+            self._model = AutoModel.from_pretrained(self._model_type)
+            self._model.eval()
+            self._model.to(self.device)
 
         ref_group_boundaries = None
         if not isinstance(refs[0], str):
