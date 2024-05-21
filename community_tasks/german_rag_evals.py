@@ -25,7 +25,7 @@
 """
 Custom evaluation tasks for lighteval.
 
-This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
+This file generally creates just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
 This module implements the 4 tasks of deutsche-telekom/Ger-RAG-eval.
 See: https://huggingface.co/datasets/deutsche-telekom/Ger-RAG-eval
 """
@@ -48,6 +48,7 @@ task1 = LightevalTaskConfig(
     few_shots_split="test",
     few_shots_select="sequential",
     metric=["loglikelihood_acc"],
+    version=1,
 )
 
 # Task 2: Choose context by question.
@@ -64,6 +65,7 @@ task2 = LightevalTaskConfig(
     few_shots_split="test",
     few_shots_select="sequential",
     metric=["loglikelihood_acc"],
+    version=1,
 )
 
 
@@ -81,6 +83,7 @@ task3 = LightevalTaskConfig(
     few_shots_split="test",
     few_shots_select="sequential",
     metric=["loglikelihood_acc"],
+    version=1,
 )
 
 # Task 4: Context-question match.
@@ -97,6 +100,7 @@ task4 = LightevalTaskConfig(
     few_shots_split="test",
     few_shots_select="sequential",
     metric=["loglikelihood_acc"],
+    version=1,
 )
 
 
@@ -110,7 +114,9 @@ Fragen:
 A: {choice_a}
 B: {choice_b}
 C: {choice_c}
-D: {choice_d}"""
+D: {choice_d}
+
+Antwort:"""
     query = instruction + query_template.format(
         context=line["context"],
         choice_a=line["choice_a"],
@@ -147,7 +153,9 @@ C:
 {choice_c}
 
 D:
-{choice_d}"""
+{choice_d}
+
+Antwort:"""
     query = instruction + query_template.format(
         question=line["question"],
         choice_a=line["choice_a"],
@@ -170,7 +178,9 @@ def prompt_fn_question_answer_match(line, task_name: str = None):
     query_template = """\
 Die Frage: {question}
 
-Die Antwort: {answer}"""
+Die Antwort: {answer}
+
+Auswahl (J/N):"""
     query = instruction + query_template.format(
         question=line["question"],
         answer=line["answer"],
@@ -191,7 +201,9 @@ def prompt_fn_context_question_match(line, task_name: str = None):
 Kontext:
 {context}
 
-Die Frage: {question}"""
+Die Frage: {question}
+
+Auswahl (J/N):"""
     query = instruction + query_template.format(
         question=line["question"],
         context=line["context"],
