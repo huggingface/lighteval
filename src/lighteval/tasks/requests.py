@@ -143,7 +143,7 @@ class TaskExampleId(NamedTuple):
     Represents the identifier for an example in a task.
 
     Attributes:
-        task_name (str): The name of the task.
+        task_name (str): The name of the task in `name|num_fewshot` format.
         doc_id_seed (str): The document id with the seed used for few_shot appended at the end.
     """
 
