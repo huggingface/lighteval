@@ -54,7 +54,6 @@ from lighteval.metrics.normalizations import (
     harness_triviaqa_normalizer,
     helm_normalizer,
     math_normalizer,
-    math_normalizer_gold,
     remove_braces,
     remove_braces_and_strip,
 )
@@ -331,7 +330,7 @@ class Metrics(Enum):
     maj_at_4_math = SampleLevelMetric(
         metric="maj@4",
         sample_level_fn=MajAtK(
-            k=4, strip_strings=True, normalize_pred=math_normalizer, normalize_gold=math_normalizer_gold
+            k=4, strip_strings=True, normalize_pred=math_normalizer, normalize_gold=math_normalizer
         ).compute,
         category=MetricCategory.GENERATIVE_SAMPLING,
         use_case=MetricUseCase.MATH,
@@ -439,7 +438,7 @@ class Metrics(Enum):
     quasi_exact_match_math = SampleLevelMetric(
         metric="qem",
         sample_level_fn=ExactMatches(
-            strip_strings=True, normalize_pred=math_normalizer, normalize_gold=math_normalizer_gold
+            strip_strings=True, normalize_pred=math_normalizer, normalize_gold=math_normalizer
         ).compute,
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.MATH,

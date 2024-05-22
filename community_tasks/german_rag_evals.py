@@ -25,7 +25,7 @@
 """
 Custom evaluation tasks for lighteval.
 
-This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
+This file generally creates just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
 This module implements the 4 tasks of deutsche-telekom/Ger-RAG-eval.
 See: https://huggingface.co/datasets/deutsche-telekom/Ger-RAG-eval
 """
@@ -48,6 +48,7 @@ task1 = LightevalTaskConfig(
     few_shots_split="test",
     few_shots_select="sequential",
     metric=["loglikelihood_acc"],
+    version=1,
 )
 
 # Task 2: Choose context by question.
@@ -64,6 +65,7 @@ task2 = LightevalTaskConfig(
     few_shots_split="test",
     few_shots_select="sequential",
     metric=["loglikelihood_acc"],
+    version=1,
 )
 
 
@@ -81,6 +83,7 @@ task3 = LightevalTaskConfig(
     few_shots_split="test",
     few_shots_select="sequential",
     metric=["loglikelihood_acc"],
+    version=1,
 )
 
 # Task 4: Context-question match.
@@ -97,6 +100,7 @@ task4 = LightevalTaskConfig(
     few_shots_split="test",
     few_shots_select="sequential",
     metric=["loglikelihood_acc"],
+    version=1,
 )
 
 
