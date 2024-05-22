@@ -54,7 +54,7 @@ The setup tested most is:
 pip install '.[accelerate,quantization,adapters]'
 ```
 
-If you want to push your results to the Hugging Face Hub, don't forget to add your access token to the environment variable `HUGGING_FACE_HUB_TOKEN`. You can do this by running:
+If you want to push your results to the Hugging Face Hub, don't forget to add your access token to the environment variable `HF_TOKEN`. You can do this by running:
 
 ```shell
 huggingface-cli login
