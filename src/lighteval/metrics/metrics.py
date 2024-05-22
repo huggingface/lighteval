@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
+
 import numpy as np
 from aenum import Enum
 
@@ -232,7 +234,7 @@ class Metrics(Enum):
         use_case=MetricUseCase.SUMMARIZATION,
         sample_level_fn=JudgeLLM(
             judge_model_name="gpt-3.5-turbo",
-            template_path="src/lighteval/tasks/extended/mt_bench/judge_prompts.jsonl",
+            template_path=os.path.join(os.path.dirname(__file__), "judge_prompts.jsonl"),
             multi_turn=True,
         ).compute,
         corpus_level_fn={
@@ -247,7 +249,7 @@ class Metrics(Enum):
         use_case=MetricUseCase.SUMMARIZATION,
         sample_level_fn=JudgeLLM(
             judge_model_name="gpt-3.5-turbo",
-            template_path="src/lighteval/tasks/extended/mt_bench/judge_prompts.jsonl",
+            template_path=os.path.join(os.path.dirname(__file__), "", "judge_prompts.jsonl"),
             multi_turn=False,
         ).compute,
         corpus_level_fn={
