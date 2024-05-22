@@ -45,6 +45,12 @@ def get_parser():
         default=None,
         help="Cache directory",
     )
+    parser.add_argument(
+        "--max_samples",
+        type=int,
+        default=10,
+        help="number of samples used for evaluation",
+    )
 
     return parser
 

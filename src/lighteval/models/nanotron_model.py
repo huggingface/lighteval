@@ -570,6 +570,7 @@ class NanotronLightevalModel(LightevalModel):
 
             # since in _collate we make sure length is descending, the longest is always the first one.
             padding_length = padding_length if padding_length is not None else inplen
+
             if padding_length - inplen < 0:
                 raise ValueError("Negative padding")
             padded.append(padding_length - inplen)
@@ -655,7 +656,7 @@ class NanotronLightevalModel(LightevalModel):
     def _loglikelihood_single_token(
         self, requests, disable_tqdm: bool = False, override_bs: int = -1, dataset_splits: int = 1
     ) -> List[LoglikelihoodSingleTokenReturn]:
-        dataset = LoglikelihoodSingleTokenDataset(requests=requests)
+        dataset = LoglikelihoodSingleTokenDataset(requests=requests, dataset_splits=dataset_splits)
         res = []
 
         # Dataset is sorted in descending size.
