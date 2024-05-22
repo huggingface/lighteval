@@ -57,8 +57,8 @@ def load_model(  # noqa: C901
     config: Union[BaseModelConfig, AdapterModelConfig, DeltaModelConfig, TGIModelConfig, InferenceEndpointModelConfig],
     env_config: EnvConfig,
 ) -> Tuple[Union[BaseModel, AdapterModel, DeltaModel, ModelClient], ModelInfo]:
-    """Will load either a model from an inference server or a model from a checkpoint. depending
-    on the arguments passed to the program.
+    """Will load either a model from an inference server or a model from a checkpoint, depending
+    on the config type.
 
     Args:
         args (Namespace): arguments passed to the program

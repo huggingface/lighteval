@@ -79,7 +79,7 @@ class BaseModel(LightevalModel):
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
         self._tokenizer = self._create_auto_tokenizer(config, env_config)
 
-        # If model_parallel is not set we compare the number of process with the number of GPUs
+        # If model_parallel is not set we compare the number of processes with the number of GPUs
         self.model = self._create_auto_model(config, env_config)
         self.model.eval()
         torch.set_grad_enabled(False)
@@ -819,7 +819,7 @@ class BaseModel(LightevalModel):
                     )
                     res.append(answer)
 
-                # Clean up GPUS
+                # Clean up GPUs
                 del model_output
                 del logits
                 del batched_inputs
@@ -852,7 +852,7 @@ class BaseModel(LightevalModel):
             hlog_warn("max_context is None, using max_length")
             max_context = self.max_length
 
-        # Each sample is concatenated and cut to lenght or padded to max_length
+        # Each sample is concatenated and cut to length or padded to max_length
         for orig_tokens in inputs:
             truncated.append(max(len(orig_tokens) - max_context, 0))
 
@@ -1030,7 +1030,7 @@ class BaseModel(LightevalModel):
                     )
                     res.append(answer)
 
-                # Clean up GPUS
+                # Clean up GPUs
                 del out
                 del batch_probs
                 del batched_inputs

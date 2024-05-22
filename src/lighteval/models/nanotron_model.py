@@ -846,7 +846,7 @@ class NanotronLightevalModel(LightevalModel):
 
                     tq.desc = f"loglikelihood_single_token Subset {s} Node {dist.get_rank(self.parallel_context.world_pg)} - {human_format(tokens_per_sec)} tokens/s"
 
-                    # Clean up GPUS
+                    # Clean up GPUs
                     del out
                     del batch_probs
                     del batched_inputs
@@ -1083,7 +1083,7 @@ class NanotronLightevalModel(LightevalModel):
                     tokens_per_sec = batched_inputs.numel() / (elapsed_time_per_iteration_ms / 1000)
                     tq.desc = f"loglikelihood Subset {s} Node {dist.get_rank(self.parallel_context.world_pg)} - {human_format(tokens_per_sec)} tokens/s"
 
-                    # Clean up GPUS
+                    # Clean up GPUs
                     del out
                     del logits
                     del batched_inputs
