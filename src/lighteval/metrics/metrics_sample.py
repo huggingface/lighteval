@@ -28,6 +28,7 @@ from typing import Union
 
 import nltk
 import numpy as np
+from huggingface_hub import HfApi
 from nltk.metrics.distance import edit_distance
 from nltk.tokenize import word_tokenize
 from nltk.tokenize.treebank import TreebankWordTokenizer
@@ -621,13 +622,18 @@ class StringDistance:
 
 
 class JudgeLLM:
-    available_models = ["gpt-3.5-turbo"]
+    gpt_models = ["gpt-3.5-turbo"]
 
     def __init__(self, judge_model_name: str, template_path: str, multi_turn: bool = False):
-        if judge_model_name not in self.available_models:
+        if judge_model_name in self.gpt_models:
             judge_type = "openai"
         else:
-            judge_type = "transformers"
+            api = HfApi()
+            models = api.list_models(model_name=judge_model_name)
+            if models:
+                judge_type = "transformers"
+            else:
+                raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
 
         OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
         self.multi_turn = multi_turn
