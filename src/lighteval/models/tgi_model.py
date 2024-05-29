@@ -22,13 +22,19 @@
 
 import asyncio
 import math
-from typing import Coroutine, List, Tuple, Union
+from typing import Coroutine, List, Optional, Tuple, Union
 
+from lighteval.data import GenerativeTaskDataset
+from lighteval.models.model_output import GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
+from lighteval.tasks.requests import GreedyUntilRequest, LoglikelihoodRollingRequest, LoglikelihoodSingleTokenRequest
 import numpy as np
 import requests
 from tqdm import tqdm
 from transformers import AutoTokenizer
+from torch.utils.data import DataLoader
+from huggingface_hub import TextGenerationOutput
 
+from lighteval.models.abstract_model import LightevalModel
 from lighteval.utils import NO_TGI_ERROR_MSG, as_list, is_tgi_available
 
 
@@ -45,7 +51,7 @@ def divide_chunks(array, n):
         yield array[i : i + n]
 
 
-class ModelClient:
+class ModelClient(LightevalModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
     def __init__(
@@ -60,28 +66,20 @@ class ModelClient:
         self.client = AsyncClient(address, headers=headers, timeout=240)
         self._max_gen_toks = 256
         self.model_info = requests.get(f"{address}/info").json()
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_info["model_id"])
+        self._tokenizer = AutoTokenizer.from_pretrained(self.model_info["model_id"])
+        self._add_special_tokens = True
 
-    def __process_request_generate(self, request: Tuple[str, Union[Tuple, List]]) -> Coroutine[None, List, str]:
-        context, stopping_arugments = request
-
-        if isinstance(stopping_arugments, tuple):
-            stop_sequence_arg, max_gen_tokens_arg = stopping_arugments
-            stop_sequences = as_list(stop_sequence_arg)
-            # Todo @clefourrier add proper messaging explaining this
-            # we don't want people to be surprised because they set a max len in the model overwritten by the eval
-            max_tokens = max_gen_tokens_arg
-        else:
-            stop_sequences = as_list(stopping_arugments)
-            max_tokens = self._max_gen_toks
-
+    def __process_request_generate(self, request: GreedyUntilRequest) -> TextGenerationOutput:
+        
+        stop_sequences = as_list(request.stop_sequence)
+        
         if stop_sequences is None or stop_sequences == [None]:
             stop_sequences = []
 
         generated_text = self.client.generate(
-            context,
-            max_new_tokens=max_tokens,
-            decoder_input_details=True,
+            request.context,
+            max_new_tokens=request.generation_size,
+            decoder_input_details=False,
             stop_sequences=stop_sequences,
             seed=42,
             truncate=ModelClient._DEFAULT_MAX_LENGTH,
@@ -89,21 +87,53 @@ class ModelClient:
 
         return generated_text
 
-    async def __process_batch_generate(self, requests: List[Tuple[str, Union[Tuple, List]]]):
+    async def __process_batch_generate(self, requests: List[GreedyUntilRequest]):
         return await asyncio.gather(*[self.__process_request_generate(request) for request in requests])
 
-    def greedy_until(self, requests: List[Tuple[str, Union[Tuple, List]]], override_bs=None) -> List[str]:
-        generated_texts: List[str] = []
-
+    def greedy_until(self, requests: List[GreedyUntilRequest], override_bs=None) -> List[str]:
         batch_size = override_bs if override_bs > 0 else BATCH_SIZE
 
-        for batch in tqdm(
-            divide_chunks(requests, batch_size), total=math.ceil(len(requests) // batch_size), maxinterval=2
-        ):
-            results = asyncio.run(self.__process_batch_generate(batch))
-            generated_texts.extend([result.generated_text for result in results])
+        for request in requests:
+            request.tokenized_context = self.tok_encode(request.context)
+            request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
 
-        return generated_texts
+        dataset = GenerativeTaskDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
+        batch_size = override_bs if override_bs is not None else BATCH_SIZE
+        results: List[GenerateReturn] = []
+
+        for _, _ in tqdm(
+            dataset.splits_start_end_iterator(),
+            total=self.DATASET_SPLITS,
+            desc="Splits",
+            position=0,
+            disable=self.disable_tqdm,
+        ):
+            dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda batch: batch)
+
+            for batch in tqdm(
+                dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
+            ):
+                # the `returns_logits` flag is only used to filter the results, we always request the full details.
+                returns_logits = batch[0].use_logits
+                num_samples = batch[0].num_samples
+                if num_samples > 1:
+                    raise Exception(
+                        "Inference endpoints does not allow sampling evaluations - this is likely to fail or provide problematic results"
+                    )
+
+                responses = asyncio.run(self.__process_batch_generate(batch))
+                for response in responses:
+                    results.append(
+                        GenerateReturn(
+                            result=response.generated_text,
+                            logits=[item.logprob for item in response.details.prefill] if returns_logits else None,
+                            truncated_tokens_count=-1,
+                            padded_tokens_count=-1,
+                        )
+                    )
+
+        return dataset.get_original_order(results)
+
 
     def __process_request_logprob(self, request: Tuple[str, str]) -> Coroutine[None, List, str]:
         context, choice = request
@@ -125,8 +155,8 @@ class ModelClient:
             details = [result.details.prefill for result in results]
 
             for detail, (context, choice) in zip(details, batch):
-                tokenized_context = self.tokenizer.tokenize(context, add_special_tokens=True)
-                tokenized_input = self.tokenizer.tokenize(context + choice, add_special_tokens=True)
+                tokenized_context = self.tokenizer.tokenize(context, add_special_tokens=self._add_special_tokens)
+                tokenized_input = self.tokenizer.tokenize(context + choice, add_special_tokens=self._add_special_tokens)
 
                 i = 0
                 while i < len(tokenized_context) and tokenized_input[i] == tokenized_context[i]:
@@ -139,5 +169,36 @@ class ModelClient:
 
         return res
 
+    def loglikelihood_rolling(
+        self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
+    ) -> list[LoglikelihoodReturn]:
+        """This function is used to compute the log likelihood of the context for perplexity metrics."""
+        return NotImplemented
+
+    def loglikelihood_single_token(
+        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: Optional[int] = None
+    ) -> list[LoglikelihoodSingleTokenReturn]:
+        """Tokenize the context and continuation and compute the log likelihood of those
+        tokenized sequences.
+        """
+        return NotImplemented
+
     def set_cache_hook(self, cache_hook):
         self.cache_hook = cache_hook
+
+    @property
+    def tokenizer(self):
+        return self._tokenizer
+
+    @property
+    def add_special_tokens(self):
+        return self._add_special_tokens
+
+    @property
+    def max_length(self) -> int:
+        """Return the maximum sequence length of the model."""
+        return ModelClient._DEFAULT_MAX_LENGTH
+
+    @property
+    def disable_tqdm(self) -> bool:
+        False

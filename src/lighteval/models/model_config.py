@@ -280,8 +280,8 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
 
     if config["type"] == "tgi":
         return TGIModelConfig(
-            inference_server_address=args["instance"]["inference_server_address"],
-            inference_server_auth=args["instance"]["inference_server_auth"],
+            inference_server_address=config["instance"]["inference_server_address"],
+            inference_server_auth=config["instance"]["inference_server_auth"],
         )
 
     if config["type"] == "endpoint":
