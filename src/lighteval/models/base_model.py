@@ -73,11 +73,12 @@ class BaseModel(LightevalModel):
         self._config = config.init_configs(env_config)
         self.accelerator = config.accelerator
         self._batch_size = config.batch_size
-        self.use_chat_template = config.use_chat_template
         self._max_length = self._init_max_length(config.max_length)
+        self.use_chat_template = config.use_chat_template
 
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
         self._tokenizer = self._create_auto_tokenizer(config, env_config)
+
         # If model_parallel is not set we compare the number of process with the number of GPUs
         self.model = self._create_auto_model(config, env_config)
         self.model.eval()
