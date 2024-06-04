@@ -267,8 +267,6 @@ class BaseModel(LightevalModel):
             if hasattr(self._config, attr):
                 return getattr(self._config, attr)
 
-        if hasattr(self.tokenizer, "model_max_length"):
-            return self.tokenizer.model_max_length
         # Default max sequence length setting for when no `max_length` is provided
         # or no max length config setting is found in the model or tokenizer.
         return 2048
