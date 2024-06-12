@@ -1232,10 +1232,7 @@ class NanotronLightevalModel(LightevalModel):
                         + str({i.task_name for i in batch})
                         + ". This is likely to lead to some errors."  # noqa C401
                     )
-
-                if (
-                    context_size > self.max_length
-                ):  # There will be truncation of at least one sample, maximum generation size will be one
+                    # There will be truncation of at least one sample, maximum generation size will be one
                     max_new_tokens = 1
                 else:  # We can't allow generation of more than max_length
                     max_new_tokens = min(self.max_length - context_size, max_new_tokens)
