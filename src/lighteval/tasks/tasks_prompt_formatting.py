@@ -1239,6 +1239,15 @@ def math(line, task_name: str = None):
     )
 
 
+def math_cot(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=f"{line['problem']}\nPlease reason step by step, and put your final answer within \\boxed{{}}.",
+        gold_index=0,
+        choices=[f" {line['solution']}"],
+    )
+
+
 def math_helm(line, task_name: str = None):
     return Doc(
         task_name=task_name,
