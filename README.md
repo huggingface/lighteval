@@ -26,7 +26,7 @@ In case of problems or question, feel free to open an issue!
 Clone the repo:
 
 ```bash
-git clone https://github.com/huggingface/lighteval.git
+git clone https://github.com/LeonVouk/lighteval.git
 cd lighteval
 ```
 
