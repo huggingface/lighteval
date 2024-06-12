@@ -1,0 +1,30 @@
+# ARC
+# leaderboard|arc:challenge|25|0
+# lighteval|arc:easy|25|0
+# ARC EL
+community|arc_el:challenge|25|0
+community|arc_el:easy|25|0
+# HellaSwag
+# leaderboard|hellaswag|10|0
+# Hellaswag EL
+community|hellaswag_el|10|0
+# TruthfulQA
+# leaderboard|truthfulqa:mc|0|0
+# TruthfulQA EL
+community|truthfulqa_el:mc|0|0
+# MedicalMCQA EL
+community|medicalmcqa|15|0
+# BELEBELE
+community|belebele:el|5|0
+# community|belebele:en|5|0
+# XNLI EL
+# community|xnli:el|5|0
+# FLORES200
+# community|flores200:en->el|0|0
+# community|flores200:el->en|0|0
+# MMLU EL
+community|mmlu_el:all|5|0
+# WinoGrande
+# leaderboard|winogrande|5|0
+# GSM8K
+# leaderboard|gsm8k|5|0
