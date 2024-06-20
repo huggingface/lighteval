@@ -60,7 +60,7 @@ from . import tasks_prompt_formatting
 
 if TYPE_CHECKING:
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    
+
 FormatterType = Callable[[dict, str], Doc]
 
 
@@ -175,14 +175,13 @@ def load_prompt_function(prompt_function: str, custom_tasks_module: list | None)
         # If we have a prompt in both the module and our tasks_prompt_formatting
         # We take the prompt from the module
         if hasattr(tasks_prompt_formatting, prompt_function):
-            hlog_warn(
-                f"Be careful you are using custom prompt function {prompt_function} and not the default one."
-            )
+            hlog_warn(f"Be careful you are using custom prompt function {prompt_function} and not the default one.")
         return formatter[0]
     else:
         raise Exception(
             f"You defined the prompt function {prompt_function} several times in the different custom modules you are loading."
         )
+
 
 class LightevalTask:
     def __init__(  # noqa: C901
