@@ -25,7 +25,7 @@ import random
 from dataclasses import dataclass
 from multiprocessing import Pool
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Union
 
 from datasets import load_dataset
 
@@ -60,6 +60,8 @@ from . import tasks_prompt_formatting
 
 if TYPE_CHECKING:
     from lighteval.logging.evaluation_tracker import EvaluationTracker
+
+FormatterType = Callable[[dict, str], Doc]
 
 
 @dataclass
@@ -147,6 +149,38 @@ class LightevalTaskConfig:
         self.evaluation_splits = tuple(self.evaluation_splits) if self.evaluation_splits is not None else None
         self.suite = tuple(self.suite) if self.suite is not None else None
         self.stop_sequence = tuple(self.stop_sequence) if self.stop_sequence is not None else None
+
+
+def load_prompt_function(prompt_function: str, custom_tasks_module: list | None) -> FormatterType:
+    """
+    Tries to load the prompt function defined as string.
+    Arguments:
+        prompt_function (str): Name of the prompt function to load.
+        custom_tasks_module (list): List of custom modules to search for the prompt function.
+    Returns:
+        FormatterType: The prompt function.
+    """
+
+    if custom_tasks_module is None:
+        return getattr(tasks_prompt_formatting, prompt_function)
+
+    formatter = []
+    for module in custom_tasks_module:
+        if hasattr(module, prompt_function):
+            formatter.append(getattr(module, prompt_function))
+
+    if len(formatter) == 0:  # Default version
+        return getattr(tasks_prompt_formatting, prompt_function)
+    elif len(formatter) == 1:
+        # If we have a prompt in both the module and our tasks_prompt_formatting
+        # We take the prompt from the module
+        if hasattr(tasks_prompt_formatting, prompt_function):
+            hlog_warn(f"Be careful you are using custom prompt function {prompt_function} and not the default one.")
+        return formatter[0]
+    else:
+        raise Exception(
+            f"You defined the prompt function {prompt_function} several times in the different custom modules you are loading."
+        )
 
 
 class LightevalTask:
