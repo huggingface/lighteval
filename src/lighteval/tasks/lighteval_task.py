@@ -91,7 +91,7 @@ class LightevalTaskConfig:
     """
 
     name: str
-    prompt_function: str
+    prompt_function: FormatterType | str
     hf_repo: str
     hf_subset: str
     metric: Tuple[Union[str, Metrics]]
@@ -243,31 +243,12 @@ class LightevalTask:
         self.num_samples = [1] + [
             int(metric.replace("maj_at_", "").split("_")[0]) for metric in self.metrics if "maj_at_" in metric
         ]
-
-        # Data processing
-        # to use once prompt formatting is managed as a module
-        if custom_tasks_module is None:
-            self.formatter = getattr(tasks_prompt_formatting, cfg.prompt_function)
+        self.formatter: FormatterType
+        if isinstance(cfg.prompt_function, str):
+            self.formatter = load_prompt_function(cfg.prompt_function, custom_tasks_module)
         else:
-            formatter = []
-            for module in custom_tasks_module:
-                if hasattr(module, cfg.prompt_function):
-                    formatter.append(getattr(module, cfg.prompt_function))
+            self.formatter = cfg.prompt_function
 
-            if len(formatter) == 0:  # Default version
-                self.formatter = getattr(tasks_prompt_formatting, cfg.prompt_function)
-            elif len(formatter) == 1:
-                # If we have a prompt in both the module and our tasks_prompt_formatting
-                # We take the prompt from the module
-                if hasattr(tasks_prompt_formatting, cfg.prompt_function):
-                    hlog_warn(
-                        f"Be careful you are using custom prompt function {cfg.prompt_function} and not the default one."
-                    )
-                self.formatter = formatter[0]
-            else:
-                raise Exception(
-                    f"You defined the prompt function {cfg.prompt_function} several times in the different custom modules you are loading."
-                )
         self.generation_size = cfg.generation_size
         self.stop_sequence = cfg.stop_sequence
         self.output_regex = cfg.output_regex
