@@ -34,7 +34,7 @@ from lighteval.logging.hierarchical_logger import hlog, hlog_warn, htrack, htrac
 from lighteval.models.model_config import EnvConfig, create_model_config
 from lighteval.models.model_loader import load_model
 from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_tasks
-from lighteval.tasks.registry import Registry, taskinfo_selector
+from lighteval.tasks.registry import Registry, get_custom_tasks, taskinfo_selector
 from lighteval.utils import is_accelerate_available, is_tgi_available
 from lighteval.utils_parallelism import test_all_gather
 
@@ -79,7 +79,13 @@ def main(args):
 
     with htrack_block("Tasks loading"):
         with accelerator.main_process_first() if accelerator is not None else nullcontext():
-            task_names_list, few_shots_dict = taskinfo_selector(args.tasks)
+            tasks_selection = args.tasks
+            if args.custom_tasks:
+                _, tasks_groups_dict = get_custom_tasks(args.custom_tasks)
+                if tasks_groups_dict and args.tasks in tasks_groups_dict:
+                    tasks_selection = tasks_groups_dict[args.tasks]
+
+            task_names_list, few_shots_dict = taskinfo_selector(tasks_selection)
             task_dict = Registry(cache_dir=env_config.cache_dir).get_task_dict(
                 task_names_list, custom_tasks=args.custom_tasks
             )

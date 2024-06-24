@@ -164,7 +164,7 @@ class EvaluationTracker:
             f.write(dumped)
 
         for task_name, task_details in self.details_logger.details.items():
-            output_file_details = output_dir_details_sub_folder / f"details_{task_name}_{date_id}.parquet"
+            output_file_details = output_dir_details_sub_folder / f"details_{task_name}_{date_id}.json"
             # Create a dataset from the dictionary
             try:
                 dataset = Dataset.from_list([asdict(detail) for detail in task_details])
@@ -182,7 +182,7 @@ class EvaluationTracker:
             # Sort column names to make it easier later
             dataset = dataset.select_columns(sorted(column_names))
             # Save the dataset to a Parquet file
-            dataset.to_parquet(output_file_details.as_posix())
+            dataset.to_json(output_file_details.as_posix())
 
         if push_results_to_hub:
             self.api.upload_folder(

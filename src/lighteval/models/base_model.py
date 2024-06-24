@@ -670,6 +670,7 @@ class BaseModel(LightevalModel):
         self,
         requests: list[LoglikelihoodRequest],
         override_bs: Optional[int] = None,
+        debug: bool = False,
     ) -> list[LoglikelihoodReturn]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
@@ -690,7 +691,11 @@ class BaseModel(LightevalModel):
                     request.context, request.choice
                 )
 
-        return self._loglikelihood_tokens(requests, override_bs=override_bs)
+        return (
+            self._loglikelihood_tokens(requests, override_bs=override_bs)
+            if not debug
+            else [LoglikelihoodReturn(0.0)] * len(requests)
+        )
 
     def loglikelihood_rolling(
         self,

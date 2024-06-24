@@ -95,6 +95,8 @@ class LightevalTaskConfig:
     hf_repo: str
     hf_subset: str
     metric: Tuple[Union[str, Metrics]]
+    limit: int | None = None
+    filter: Callable[[dict], bool] | None = None
     hf_avail_splits: Optional[Tuple[str]] = None
     evaluation_splits: Optional[Tuple[str]] = None
     few_shots_split: Optional[str] = None
@@ -211,6 +213,8 @@ class LightevalTask:
         self.dataset_path = self.hf_repo
         self.dataset_config_name = self.hf_subset
         self.dataset = None  # Delayed download
+        self.dataset_filter = cfg.filter
+        self.dataset_limit = cfg.limit
         self.trust_dataset = cfg.trust_dataset
         hlog(f"{self.dataset_path} {self.dataset_config_name}")
         self._fewshot_docs = None
@@ -332,7 +336,7 @@ class LightevalTask:
         hlog_warn(f"Careful, the task {self.name} is using evaluation data to build the few shot examples.")
         return None
 
-    def _get_docs_from_split(self, splits: list[str], few_shots=False) -> list[Doc]:
+    def _get_docs_from_split(self, splits: list[str], few_shots=False, limit: int | None = None) -> list[Doc]:
         """
         Get the documents from the dataset for the given keys (splits).
 
@@ -345,12 +349,17 @@ class LightevalTask:
             list[Doc]: List of documents.
         """
         if self.dataset is None:
-            self.dataset = download_dataset_worker((self.dataset_path, self.dataset_config_name, self.trust_dataset))
+            self.dataset = download_dataset_worker((self.dataset_path, self.dataset_config_name), self.dataset_filter)
+
         splits = as_list(splits)
 
         docs = []
         for split in splits:
-            for item in self.dataset[split]:
+            if limit is not None and len(docs) >= limit:
+                break
+            split_docs = self.dataset[split]
+            split_docs = split_docs.take(limit - len(docs)) if limit else split_docs
+            for item in split_docs:
                 # Some tasks formatting is applied differently when the document is used for fewshot examples
                 # vs when it's used for the actual prompt. That's why we store whether we are currently using the
                 # doc for a fewshot sample (few_shots=True) or not, which then leads to the creation of a different Doc.
@@ -396,7 +405,7 @@ class LightevalTask:
             list[Doc]: Evaluation documents.
         """
         if self._docs is None:
-            self._docs = self._get_docs_from_split(self.evaluation_split)
+            self._docs = self._get_docs_from_split(self.evaluation_split, limit=self.dataset_limit)
             if self.must_remove_duplicate_docs:
                 self._docs = self.remove_duplicate_docs(self._docs)
         return self._docs
@@ -635,7 +644,7 @@ class LightevalTask:
             task.dataset = dataset
 
 
-def download_dataset_worker(args):
+def download_dataset_worker(args, filter_fn: Callable[[dict], bool] | None = None):
     """
     Worker function to download a dataset from the HuggingFace Hub.
     Used for parallel dataset loading.
@@ -649,6 +658,8 @@ def download_dataset_worker(args):
         download_mode=None,
         trust_remote_code=trust_dataset,
     )
+    if filter_fn:
+        dataset = dataset.filter(filter_fn)
     return dataset
 
 
