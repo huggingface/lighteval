@@ -48,7 +48,6 @@ from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
-    LoglikelihoodSingleTokenRequest,
     Request,
     RequestType,
     TaskExampleId,
@@ -444,6 +443,8 @@ class LightevalTask:
             request_types.append(RequestType.LOGLIKELIHOOD)
         if self.has_metric_category[MetricCategory.MULTICHOICE_ONE_TOKEN]:
             request_types.append(RequestType.LOGLIKELIHOOD_SINGLE_TOKEN)
+        if self.has_metric_category[MetricCategory.MULTICHOICE_PMI]:
+            request_types.append(RequestType.LOGLIKELIHOOD_SINGLE_TOKEN)
         if self.has_metric_category[MetricCategory.PERPLEXITY]:
             request_types.append(RequestType.LOGLIKELIHOOD_ROLLING)
         if self.has_metric_category[MetricCategory.GENERATIVE]:
@@ -464,7 +465,7 @@ class LightevalTask:
 
     def construct_requests(
         self, formatted_doc: Doc, context: str, document_id_seed: str, current_task_name: str
-    ) -> List[Request]:
+    ) -> dict[RequestType, List[Request]]:
         """
         Constructs a list of requests from the task based on the given parameters.
 
@@ -516,7 +517,10 @@ class LightevalTask:
                     use_logits=use_logits,
                 )
             ]
-        if self.has_metric_category[MetricCategory.MULTICHOICE]:
+        if (
+            self.has_metric_category[MetricCategory.MULTICHOICE]
+            or self.has_metric_category[MetricCategory.MULTICHOICE_PMI]
+        ):
             requests[RequestType.LOGLIKELIHOOD] += [
                 LoglikelihoodRequest(
                     task_name=current_task_name,
@@ -529,7 +533,7 @@ class LightevalTask:
             ]
         if self.has_metric_category[MetricCategory.MULTICHOICE_ONE_TOKEN]:
             requests[RequestType.LOGLIKELIHOOD_SINGLE_TOKEN] += [
-                LoglikelihoodSingleTokenRequest(
+                LoglikelihoodRollingRequest(
                     task_name=current_task_name,
                     example_index=document_id_seed,
                     request_index=0,
@@ -537,6 +541,19 @@ class LightevalTask:
                     choices=formatted_doc.choices,
                 )
             ]
+
+        if self.has_metric_category[MetricCategory.MULTICHOICE_PMI]:
+            requests[RequestType.LOGLIKELIHOOD_NO_PREFIX] += [
+                LoglikelihoodRequest(
+                    task_name=current_task_name,
+                    example_index=document_id_seed,
+                    request_index=i,
+                    context="",
+                    choice=choice,
+                )
+                for i, choice in enumerate(formatted_doc.choices)
+            ]
+
         if self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]:
             requests[RequestType.GREEDY_UNTIL_MULTI_TURN] += [
                 GreedyUntilMultiTurnRequest(
@@ -706,7 +723,6 @@ def create_requests_from_tasks(  # noqa: C901
 
     # Get lists of each type of request
     for task_name, task in task_dict_items:
-        req_types = task.get_request_type()
         task_docs = list(task.eval_docs())
         n_samples = min(max_samples, len(task_docs)) if max_samples else len(task_docs)
         evaluation_tracker.task_config_logger.log_num_docs(task_name, len(task_docs), n_samples)
@@ -759,7 +775,7 @@ def create_requests_from_tasks(  # noqa: C901
                     # Constructing the requests
                     docs[TaskExampleId(cur_task_name, doc_id_seed)] = doc
                     reqs = task.construct_requests(doc, ctx, doc_id_seed, cur_task_name)
-                    for req_type in req_types:
-                        requests[req_type].extend(reqs[req_type])
+                    for req_type, reqs in reqs.items():
+                        requests[req_type].extend(reqs)
 
     return requests, docs

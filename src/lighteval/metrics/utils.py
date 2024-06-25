@@ -34,6 +34,7 @@ class MetricCategory(Enum):
     LLM_AS_JUDGE = auto()
     MULTICHOICE = auto()
     MULTICHOICE_ONE_TOKEN = auto()
+    MULTICHOICE_PMI = auto()
     IGNORED = auto()
 
 

@@ -32,6 +32,7 @@ class RequestType(Enum):
     LOGLIKELIHOOD = auto()
     LOGLIKELIHOOD_SINGLE_TOKEN = auto()
     LOGLIKELIHOOD_ROLLING = auto()
+    LOGLIKELIHOOD_NO_PREFIX = auto()
     GREEDY_UNTIL = auto()
     GREEDY_UNTIL_MULTI_TURN = auto()
 
