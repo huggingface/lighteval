@@ -25,13 +25,16 @@
 
 import collections
 import copy
-from typing import Dict, Union
+from itertools import chain
+from typing import Dict, Sequence, Union
 
 from pytablewriter import LatexTableWriter, MarkdownTableWriter
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog
+from lighteval.metrics.utils import MetricCategory
 from lighteval.models.base_model import BaseModel
+from lighteval.models.model_output import ModelReturn
 from lighteval.models.tgi_model import ModelClient
 from lighteval.tasks.lighteval_task import LightevalTask
 from lighteval.tasks.requests import Doc, Request, RequestType, TaskExampleId
@@ -71,7 +74,7 @@ def evaluate(  # noqa: C901
 
     # all responses for each (task, doc)
     RequestIndexModelResponseTuple = collections.namedtuple(
-        "RequestIndexModelResponseTuple", ["request_index", "model_response"]
+        "RequestIndexModelResponseTuple", ["request_index", "model_response", "request_reason"]
     )
     example_id_response_dict: dict[TaskExampleId, list[RequestIndexModelResponseTuple]] = collections.defaultdict(list)
 
@@ -94,16 +97,26 @@ def evaluate(  # noqa: C901
         for full_resp, request in zip(full_resps, requests):
             cur_resp = copy.deepcopy(full_resp)
             example_id_response_dict[TaskExampleId(request.task_name, request.example_index)].append(
-                RequestIndexModelResponseTuple(request.request_index, cur_resp)
+                RequestIndexModelResponseTuple(request.request_index, cur_resp, request.request_reason)
             )
 
     # ===== unpack results and sort back in order and return control to Task =====
     for task_example_id, prediction_list in example_id_response_dict.items():
         # ===== Unpack the request =====
+        # Group the requests by the reason
+        reason_requests: dict[MetricCategory, list[tuple[int, ModelReturn]]] = collections.defaultdict(list)
+        for request in prediction_list:
+            for reason in request.request_reason:
+                reason_requests[reason].append((request.request_index, request.model_response))
+        reason_model_return: dict[MetricCategory, Sequence[ModelReturn]] = {
+            k: [model_respnse for _, model_respnse in sorted(v, key=lambda x: x[0])]
+            for k, v in reason_requests.items()
+        }
+        model_returns = list(chain.from_iterable(reason_model_return.values()))
+
         prediction_list.sort(
             key=lambda x: x.request_index
         )  # When we use Loglikelihood for several tokens we have all the options here
-        model_responses = [x.model_response for x in prediction_list]
         cur_task_name = task_example_id.task_name.rsplit("|", 1)[0]
 
         task: LightevalTask = task_dict[cur_task_name]
@@ -112,11 +125,10 @@ def evaluate(  # noqa: C901
         if doc.instruction is None:
             doc.instruction = ""
 
-        # using a deep copy here because process results pops from the model responses
-        metrics = task.process_results(doc, copy.deepcopy(model_responses))
+        metrics = task.process_results(doc, reason_model_return)
 
         evaluation_tracker.metrics_logger.log(task_example_id.task_name, metrics)
-        evaluation_tracker.details_logger.log(task_example_id.task_name, task, doc, model_responses, metrics)
+        evaluation_tracker.details_logger.log(task_example_id.task_name, task, doc, model_returns, metrics)
 
     return evaluation_tracker
 

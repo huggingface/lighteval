@@ -683,6 +683,7 @@ class BaseModel(LightevalModel):
         """
         for request in requests:
             if request.context == "":
+                # Pad token
                 request.tokenized_context = [self.tokenizer.eos_token_id]
                 request.tokenized_continuation = self.tok_encode(request.choice)
             else:
@@ -728,6 +729,8 @@ class BaseModel(LightevalModel):
         res = []
 
         for split_start, split_end in tqdm(dataset.splits_start_end_iterator()):
+            if len(dataset) == 0:
+                continue
             context_enc = dataset[0].tokenized_context
             continuation_enc = dataset[0].tokenized_continuation
             if rolling:  # we take all the sequence in rolling mode
@@ -970,6 +973,8 @@ class BaseModel(LightevalModel):
         res = []
 
         for split_start, split_end in tqdm(dataset.splits_start_end_iterator()):
+            if len(dataset) == 0:
+                break
             context_enc = dataset[0].tokenized_context
             max_context = len(context_enc[-self.max_length :])
             batch_size = self._get_batch_size(override_bs=override_bs, max_input_length=max_context)

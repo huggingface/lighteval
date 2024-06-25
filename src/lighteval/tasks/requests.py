@@ -25,6 +25,7 @@ from dataclasses import asdict, dataclass
 from enum import Enum, auto
 from typing import NamedTuple, Optional, Union
 
+from lighteval.metrics.utils import MetricCategory
 from lighteval.utils import as_list
 
 
@@ -32,7 +33,6 @@ class RequestType(Enum):
     LOGLIKELIHOOD = auto()
     LOGLIKELIHOOD_SINGLE_TOKEN = auto()
     LOGLIKELIHOOD_ROLLING = auto()
-    LOGLIKELIHOOD_NO_PREFIX = auto()
     GREEDY_UNTIL = auto()
     GREEDY_UNTIL_MULTI_TURN = auto()
 
@@ -50,11 +50,13 @@ class Request:
         example_index (int): The index of the example.
         request_index (int): The index of the request.
         context (str): The context for the request.
+        request_reason (list[MetricCategory]): The reason for querying the request
     """
 
     task_name: str
     example_index: int
     request_index: int
+    request_reason: list[MetricCategory]
     context: str
 
 
@@ -166,6 +168,9 @@ class Doc:
     gold_index: Union[int, list[int]]
     original_query: Optional[str] = ""  # the query before preprocessing, if stored
     specific: dict = None  # Information which is specific to the current eval
+    uncoditioned_prefix: str | None = (
+        None  # Prefix to use during pmi normalization for each chioce, if None PMI is not supported
+    )
     task_name: str = ""
 
     # For few-shot

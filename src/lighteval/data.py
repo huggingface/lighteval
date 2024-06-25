@@ -113,7 +113,8 @@ class DynamicBatchDataset(Dataset):
         Returns:
             tuple: A tuple containing the start and end indices of the split.
         """
-        self.split_start = split_id * self.split_size
+        # Split start can also overflow, due to split_size being upper-bound
+        self.split_start = min(split_id * self.split_size, self.total_size)
         self.split_end = min(self.split_start + self.split_size, self.total_size)
         return self.split_start, self.split_end
 
