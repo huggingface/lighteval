@@ -272,7 +272,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
 
         return BaseModelConfig(**args_dict)
 
-    if args.model_config:
+    if hasattr(args, 'model_config') and args.model_config:
         config = args.model_config["model"]
     else:
         with open(args.model_config_path, "r") as f:
