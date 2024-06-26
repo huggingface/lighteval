@@ -224,6 +224,7 @@ class InferenceEndpointModelConfig:
     add_special_tokens: bool = True
     revision: str = "main"
     namespace: str = None  # The namespace under which to launch the endopint. Defaults to the current user's namespace
+    image_url: str = None
 
     def get_dtype_args(self) -> Dict[str, str]:
         model_dtype = self.model_dtype.lower()
@@ -303,6 +304,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
                 instance_size=config["instance"]["instance_size"],
                 instance_type=config["instance"]["instance_type"],
                 namespace=config["instance"]["namespace"],
+                image_url=config["instance"]["image_url"]
             )
         return InferenceModelConfig(model=config["base_params"]["endpoint_name"])
 

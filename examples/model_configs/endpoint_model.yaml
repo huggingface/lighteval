@@ -15,5 +15,6 @@ model:
     framework: "pytorch"
     endpoint_type: "protected"
     namespace: null # The namespace under which to launch the endopint. Defaults to the current user's namespace
+    image_url: null 
   generation:
     add_special_tokens: true
