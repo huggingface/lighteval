@@ -88,10 +88,12 @@ def load_model_with_tgi(config: TGIModelConfig):
         raise ImportError(NO_TGI_ERROR_MSG)
 
     hlog(f"Load model from inference server: {config.inference_server_address}")
-    model = ModelClient(address=config.inference_server_address, auth_token=config.inference_server_auth)
+    model = ModelClient(
+        address=config.inference_server_address, auth_token=config.inference_server_auth, model_id=config.model_id
+    )
     model_name = str(model.model_info["model_id"])
     model_sha = model.model_info["model_sha"]
-    model_precision = model.model_info["dtype"]
+    model_precision = model.model_info["model_dtype"]
     model_size = -1
     model_info = ModelInfo(
         model_name=model_name,
