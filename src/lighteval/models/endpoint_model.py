@@ -92,6 +92,7 @@ class InferenceEndpointModel(LightevalModel):
                             "MAX_TOTAL_TOKENS": "2048",
                             "MODEL_ID": "/repository",
                             **config.get_dtype_args(),
+                            **config.get_custom_env_vars()
                         },
                         "url": (config.image_url or "ghcr.io/huggingface/text-generation-inference:1.1.0"),
                     },
