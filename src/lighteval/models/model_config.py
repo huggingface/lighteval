@@ -240,8 +240,8 @@ class InferenceEndpointModelConfig:
             return {"DTYPE": model_dtype}
         return {}
 
-    def get_custom_env_vars(self):
-        return self.env_vars or {}
+    def get_custom_env_vars(self) -> Dict[str, str]:
+        return {k:str(v) for k,v in self.env_vars.items()} if self.env_vars else {}
 
     @staticmethod
     def nullable_keys() -> list[str]:
@@ -250,7 +250,7 @@ class InferenceEndpointModelConfig:
         keys be specified in the configuration in order to launch the endpoint. This function returns the list of keys
         that are not required and can remain None.
         """
-        return ["namespace"]
+        return ["namespace", "env_vars", "image_url"]
 
 
 def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]) -> BaseModelConfig:  # noqa: C901
@@ -310,8 +310,8 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
                 instance_size=config["instance"]["instance_size"],
                 instance_type=config["instance"]["instance_type"],
                 namespace=config["instance"]["namespace"],
-                image_url=config["instance"].get("image_url", None)
-                env_vars=config["instance"].get("get_custom_env_vars", None)
+                image_url=config["instance"].get("image_url", None),
+                env_vars=config["instance"].get("env_vars", None)
             )
         return InferenceModelConfig(model=config["base_params"]["endpoint_name"])
 

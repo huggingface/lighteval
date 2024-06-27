@@ -16,6 +16,6 @@ model:
     endpoint_type: "protected"
     namespace: null # The namespace under which to launch the endopint. Defaults to the current user's namespace
     image_url: null
-    env_vars: null # Optional environment variables to include when launching the endpoint 
+    env_vars: null # Optional environment variables to include when launching the endpoint. Value should be a mapping.
   generation:
     add_special_tokens: true
