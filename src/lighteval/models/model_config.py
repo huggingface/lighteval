@@ -241,7 +241,7 @@ class InferenceEndpointModelConfig:
         return {}
 
     def get_custom_env_vars(self) -> Dict[str, str]:
-        return {k:str(v) for k,v in self.env_vars.items()} if self.env_vars else {}
+        return {k: str(v) for k, v in self.env_vars.items()} if self.env_vars else {}
 
     @staticmethod
     def nullable_keys() -> list[str]:
@@ -277,7 +277,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
 
         return BaseModelConfig(**args_dict)
 
-    if hasattr(args, 'model_config') and args.model_config:
+    if hasattr(args, "model_config") and args.model_config:
         config = args.model_config["model"]
     else:
         with open(args.model_config_path, "r") as f:
@@ -287,7 +287,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
         return TGIModelConfig(
             inference_server_address=config["instance"]["inference_server_address"],
             inference_server_auth=config["instance"]["inference_server_auth"],
-            model_id=config["instance"]["model_id"]
+            model_id=config["instance"]["model_id"],
         )
 
     if config["type"] == "endpoint":
@@ -311,7 +311,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
                 instance_type=config["instance"]["instance_type"],
                 namespace=config["instance"]["namespace"],
                 image_url=config["instance"].get("image_url", None),
-                env_vars=config["instance"].get("env_vars", None)
+                env_vars=config["instance"].get("env_vars", None),
             )
         return InferenceModelConfig(model=config["base_params"]["endpoint_name"])
 

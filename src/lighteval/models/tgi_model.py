@@ -46,16 +46,11 @@ def divide_chunks(array, n):
 
 
 # inherit from InferenceEndpointModel instead of LightevalModel since they both use the same interface, and only overwrite
-# the client functions, since they use a different client. 
+# the client functions, since they use a different client.
 class ModelClient(InferenceEndpointModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
-    def __init__(
-        self,
-        address,
-        auth_token=None,
-        model_id=None
-    ) -> None:
+    def __init__(self, address, auth_token=None, model_id=None) -> None:
         if not is_tgi_available():
             raise ImportError(NO_TGI_ERROR_MSG)
         headers = {} if auth_token is None else {"Authorization": f"Bearer {auth_token}"}
@@ -63,8 +58,8 @@ class ModelClient(InferenceEndpointModel):
         self.client = AsyncClient(address, headers=headers, timeout=240)
         self._max_gen_toks = 256
         self.model_info = requests.get(f"{address}/info", headers=headers).json()
-        if not 'model_id' in self.model_info:
-            raise ValueError('Error occured when fetching info: ' + str(self.model_info))
+        if not "model_id" in self.model_info:
+            raise ValueError("Error occured when fetching info: " + str(self.model_info))
         if model_id:
             self.model_info["model_id"] = model_id
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_info["model_id"])
