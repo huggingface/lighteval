@@ -41,6 +41,7 @@ from lighteval.metrics import (
     apply_target_perplexity_metric,
 )
 from lighteval.metrics.metrics import MetricCategory, Metrics
+from lighteval.metrics.utils import Metric
 from lighteval.models.base_model import BaseModel
 from lighteval.models.model_output import ModelReturn
 from lighteval.tasks.requests import (
@@ -94,7 +95,7 @@ class LightevalTaskConfig:
     prompt_function: FormatterType | str
     hf_repo: str
     hf_subset: str
-    metric: Tuple[Union[str, Metrics]]
+    metric: Tuple[Union[str, Metric, Metrics]]
     limit: int | None = None
     filter: Callable[[dict], bool] | None = None
     hf_avail_splits: Optional[Tuple[str]] = None
@@ -124,7 +125,7 @@ class LightevalTaskConfig:
             "prompt_function": self.prompt_function,
             "hf_repo": self.hf_repo,
             "hf_subset": self.hf_subset,
-            "metric": tuple(str(m) for m in self.metric),
+            "metric": tuple(self.metric),
             "hf_avail_splits": self.hf_avail_splits,
             "evaluation_splits": self.evaluation_splits,
             "few_shots_split": self.few_shots_split,
@@ -185,6 +186,16 @@ def load_prompt_function(prompt_function: str, custom_tasks_module: list | None)
         )
 
 
+def load_metric(metric: Union[str, Metric, Metrics]) -> Metric:
+    if isinstance(metric, str):
+        return Metrics[metric].value
+    if isinstance(metric, Metric):
+        return metric
+    if isinstance(metric, Metrics):
+        return metric.value
+    raise ValueError(f"Metric {metric} is not a valid metric")
+
+
 class LightevalTask:
     def __init__(  # noqa: C901
         self, name: str, cfg: LightevalTaskConfig, cache_dir: Optional[str] = None, custom_tasks_module: list = None
@@ -235,17 +246,22 @@ class LightevalTask:
         )
 
         # Metrics
-        self.metrics = as_list(cfg.metric)
+        self.metrics = [load_metric(metric) for metric in as_list(cfg.metric)]
+
         self.suite = as_list(cfg.suite)
-        ignored = [metric for metric in self.metrics if Metrics[metric].value.category == MetricCategory.IGNORED]
+        ignored = [metric for metric in self.metrics if metric.category == MetricCategory.IGNORED]
         if len(ignored) > 0:
             hlog_warn(f"[WARNING] Not implemented yet: ignoring the metric {' ,'.join(ignored)} for task {self.name}.")
-        current_categories = [Metrics[metric].value.category for metric in self.metrics]
+        current_categories = [metric.category for metric in self.metrics]
         self.has_metric_category = {category: (category in current_categories) for category in MetricCategory}
         # Sub-optimal system - we might want to store metric parametrisation in a yaml conf for example
         # We assume num_samples always contains 1 (for base generative evals)
+        self.num_samples = [1]
+        # TODO deal with this
         self.num_samples = [1] + [
-            int(metric.replace("maj_at_", "").split("_")[0]) for metric in self.metrics if "maj_at_" in metric
+            int(metric.metric.replace("maj_at_", "").split("_")[0])
+            for metric in self.metrics
+            if "maj_at_" in metric.metric
         ]
         self.formatter: FormatterType
         if isinstance(cfg.prompt_function, str):
@@ -483,9 +499,13 @@ class LightevalTask:
                     num_samples=max(self.num_samples),  # If we have several samplings to apply, we use the max
                     use_logits=use_logits,
                     request_reason=[
-                        MetricCategory.GENERATIVE,
-                        MetricCategory.GENERATIVE_SAMPLING,
-                        MetricCategory.GENERATIVE_LOGPROB,
+                        category
+                        for category in [
+                            MetricCategory.GENERATIVE,
+                            MetricCategory.GENERATIVE_SAMPLING,
+                            MetricCategory.GENERATIVE_LOGPROB,
+                        ]
+                        if self.has_metric_category[category]
                     ],
                 )
             ]
@@ -500,7 +520,14 @@ class LightevalTask:
                     request_index=i,
                     context=context,
                     choice=choice,
-                    request_reason=[MetricCategory.MULTICHOICE, MetricCategory.MULTICHOICE_PMI],
+                    request_reason=[
+                        category
+                        for category in [
+                            MetricCategory.MULTICHOICE,
+                            MetricCategory.MULTICHOICE_PMI,
+                        ]
+                        if self.has_metric_category[category]
+                    ],
                 )
                 for i, choice in enumerate(formatted_doc.choices)
             ]
@@ -519,7 +546,7 @@ class LightevalTask:
         if self.has_metric_category[MetricCategory.MULTICHOICE_PMI]:
             assert (
                 formatted_doc.uncoditioned_prefix is not None
-            ), "PMI Metric requires Doc to have an uncoditioned_prefix"
+            ), f"PMI Metric requires Doc to have an uncoditioned_prefix, update the prompt function in task {self.name}"
             requests[RequestType.LOGLIKELIHOOD] += [
                 LoglikelihoodRequest(
                     task_name=current_task_name,

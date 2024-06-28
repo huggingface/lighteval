@@ -162,7 +162,7 @@ class DetailsLogger:
 
     """
 
-    @dataclass()
+    @dataclass
     class Detail:
         """Experiment details of one single example of one task.
 

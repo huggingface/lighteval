@@ -24,12 +24,13 @@ import re
 from typing import Sequence
 
 from lighteval.metrics.metrics import MetricCategory, Metrics
+from lighteval.metrics.utils import Metric
 from lighteval.models.model_output import ModelReturn
 from lighteval.tasks.requests import Doc
 from lighteval.utils import as_list
 
 
-def apply_target_perplexity_metric(results: Sequence[ModelReturn], formatted_doc: Doc, metrics: list[str]):
+def apply_target_perplexity_metric(results: Sequence[ModelReturn], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
     reference_text = formatted_doc.get_golds()[0]
     current_result = results[0]
@@ -37,7 +38,7 @@ def apply_target_perplexity_metric(results: Sequence[ModelReturn], formatted_doc
     target_acc = current_result.result[1]
 
     for metric in metrics:
-        if Metrics[metric].value.category == MetricCategory.TARGET_PERPLEXITY:
+        if metric.category == MetricCategory.TARGET_PERPLEXITY:
             outputs.update(
                 Metrics[metric].value.compute(
                     logprobs=target_logprob, target_acc=target_acc, reference_text=reference_text
@@ -47,7 +48,7 @@ def apply_target_perplexity_metric(results: Sequence[ModelReturn], formatted_doc
     return outputs
 
 
-def apply_perplexity_metric(results: Sequence[ModelReturn], formatted_doc: Doc, metrics: list[str]):
+def apply_perplexity_metric(results: Sequence[ModelReturn], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
     current_result = results[0]
     # Sometimes, processing was added for the log processings
@@ -59,16 +60,14 @@ def apply_perplexity_metric(results: Sequence[ModelReturn], formatted_doc: Doc, 
         reference_text = formatted_doc.query
 
     for metric in metrics:
-        if Metrics[metric].value.category == MetricCategory.PERPLEXITY:
-            outputs.update(
-                Metrics[metric].value.compute(logprobs=current_result.result, reference_text=reference_text)
-            )
+        if metric.category == MetricCategory.PERPLEXITY:
+            outputs.update(metric.compute(logprobs=current_result.result, reference_text=reference_text))
 
     return outputs
 
 
 def apply_generative_metric(
-    results: Sequence[ModelReturn], formatted_doc: Doc, metrics: list[str], output_regex=None, max_num_samples=1
+    results: Sequence[ModelReturn], formatted_doc: Doc, metrics: list[Metric], output_regex=None, max_num_samples=1
 ):
     outputs = {}
 
@@ -97,29 +96,29 @@ def apply_generative_metric(
         golds = [formatted_doc.specific["label_to_choices"][g] for g in golds]
 
     for metric in metrics:
-        if Metrics[metric].value.category == MetricCategory.GENERATIVE:
+        if metric.category == MetricCategory.GENERATIVE:
             outputs.update(
-                Metrics[metric].value.compute(
+                metric.compute(
                     golds=golds,
                     predictions=as_list(preds[0]) if max_num_samples > 0 else preds,
                     formatted_doc=formatted_doc,
                 )
             )
-        if Metrics[metric].value.category == MetricCategory.GENERATIVE_LOGPROB:
+        if metric.category == MetricCategory.GENERATIVE_LOGPROB:
             outputs.update(
-                Metrics[metric].value.compute(
+                metric.compute(
                     golds=golds,
                     predictions=as_list(preds[0]) if max_num_samples > 0 else preds,
                     formatted_doc=formatted_doc,
                 )
             )
-        if Metrics[metric].value.category == MetricCategory.GENERATIVE_SAMPLING:
-            outputs.update(Metrics[metric].value.compute(golds=golds, predictions=preds, formatted_doc=formatted_doc))
+        if metric.category == MetricCategory.GENERATIVE_SAMPLING:
+            outputs.update(metric.compute(golds=golds, predictions=preds, formatted_doc=formatted_doc))
 
     return outputs
 
 
-def apply_multichoice_metric(results: Sequence[ModelReturn], formatted_doc: Doc, metrics: list[str]):
+def apply_multichoice_metric(results: Sequence[ModelReturn], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
     if len(formatted_doc.choices) != len(results):
         raise ValueError("Length of results is not equal to the length of the choices")
@@ -133,17 +132,15 @@ def apply_multichoice_metric(results: Sequence[ModelReturn], formatted_doc: Doc,
     gold_ixs = as_list(formatted_doc.gold_index)
 
     for metric in metrics:
-        if Metrics[metric].value.category == MetricCategory.MULTICHOICE:
+        if metric.category == MetricCategory.MULTICHOICE:
             outputs.update(
-                Metrics[metric].value.compute(
-                    choices_logprob=choices_logprob, gold_ixs=gold_ixs, formatted_doc=formatted_doc
-                )
+                metric.compute(choices_logprob=choices_logprob, gold_ixs=gold_ixs, formatted_doc=formatted_doc)
             )
 
     return outputs
 
 
-def apply_multichoice_metric_pmi(results: Sequence[ModelReturn], formatted_doc: Doc, metrics: list[str]):
+def apply_multichoice_metric_pmi(results: Sequence[ModelReturn], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
     gold_ixs = as_list(formatted_doc.gold_index)
     # We expect i for conditioned and len(choices) + i for unconditioned for i in [0, 1, ..., len(choices) - 1]
@@ -154,38 +151,34 @@ def apply_multichoice_metric_pmi(results: Sequence[ModelReturn], formatted_doc: 
         for i in range(len(formatted_doc.choices))
     ]
     for metric in metrics:
-        if Metrics[metric].value.category == MetricCategory.MULTICHOICE_PMI:
+        if metric.category == MetricCategory.MULTICHOICE_PMI:
             outputs.update(
-                Metrics[metric].value.compute(
-                    choices_logprob=normalized_log_probs, gold_ixs=gold_ixs, formatted_doc=formatted_doc
-                )
+                metric.compute(choices_logprob=normalized_log_probs, gold_ixs=gold_ixs, formatted_doc=formatted_doc)
             )
 
     return outputs
 
 
-def apply_multichoice_metric_one_token(results: Sequence[ModelReturn], formatted_doc: Doc, metrics: list[str]):
+def apply_multichoice_metric_one_token(results: Sequence[ModelReturn], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
     gold_ixs = as_list(formatted_doc.gold_index)
     choices_logprob = results[0].result
 
     for metric in metrics:
-        if Metrics[metric].value.category == MetricCategory.MULTICHOICE_ONE_TOKEN:
+        if metric.category == MetricCategory.MULTICHOICE_ONE_TOKEN:
             outputs.update(
-                Metrics[metric].value.compute(
-                    choices_logprob=choices_logprob, gold_ixs=gold_ixs, formatted_doc=formatted_doc
-                )
+                metric.compute(choices_logprob=choices_logprob, gold_ixs=gold_ixs, formatted_doc=formatted_doc)
             )
 
     return outputs
 
 
-def apply_llm_as_judge_metric(results: Sequence[ModelReturn], formatted_doc: Doc, metrics: list[str]):
+def apply_llm_as_judge_metric(results: Sequence[ModelReturn], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
     predictions = results[0].result
 
     for metric in metrics:
-        if Metrics[metric].value.category in [MetricCategory.LLM_AS_JUDGE_MULTI_TURN, MetricCategory.LLM_AS_JUDGE]:
-            outputs.update(Metrics[metric].value.compute(predictions=predictions, formatted_doc=formatted_doc))
+        if metric.category in [MetricCategory.LLM_AS_JUDGE_MULTI_TURN, MetricCategory.LLM_AS_JUDGE]:
+            outputs.update(metric.compute(predictions=predictions, formatted_doc=formatted_doc))
 
     return outputs

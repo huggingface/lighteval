@@ -27,6 +27,7 @@ import re
 import time
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 
 from datasets import Dataset, load_dataset
@@ -41,6 +42,7 @@ from lighteval.logging.info_loggers import (
     TaskConfigLogger,
     VersionsLogger,
 )
+from lighteval.metrics.utils import Metric
 from lighteval.utils import is_nanotron_available, obj_to_markdown
 
 
@@ -55,8 +57,13 @@ class EnhancedJSONEncoder(json.JSONEncoder):
     """
 
     def default(self, o):
+        if isinstance(o, Metric):
+            return o.metric
+        if isinstance(o, Enum):
+            return o.name
+        # As dict is better as it gives more control
         if is_dataclass(o):
-            return asdict(o)
+            return o.__dict__
         if callable(o):
             return o.__name__
         return super().default(o)

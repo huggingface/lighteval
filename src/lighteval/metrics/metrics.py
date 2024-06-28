@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from typing import Callable
+
 import numpy as np
 from aenum import Enum
 
@@ -61,6 +63,7 @@ from lighteval.metrics.sample_preparator import GenerativePreparator, Loglikelih
 from lighteval.metrics.utils import (
     CorpusLevelMetric,
     CorpusLevelMetricGrouping,
+    Metric,
     MetricCategory,
     MetricGrouping,
     MetricUseCase,
@@ -596,22 +599,20 @@ class Metrics(Enum):
         return res
 
     @staticmethod
-    def corpus_level_fns(metrics: list[str]) -> dict[str, callable]:
+    def corpus_level_fns(metrics: list[Metric]) -> dict[str, Callable]:
         res = {}
-        for metric in Metrics:
-            if metric.name not in metrics:
+        for metric in metrics:
+            if metric.category == MetricCategory.IGNORED:
                 continue
-            if metric.value.category == MetricCategory.IGNORED:
-                continue
-            if isinstance(metric.value, MetricGrouping):
-                if isinstance(metric.value.corpus_level_fn, dict):
-                    res.update(metric.value.corpus_level_fn)
+            if isinstance(metric, MetricGrouping):
+                if isinstance(metric.corpus_level_fn, dict):
+                    res.update(metric.corpus_level_fn)
                 else:
                     # Must make sure there is a caching implementation here
-                    for m in metric.value.metric:
-                        res[m] = metric.value.corpus_level_fn
+                    for m in metric.metric:
+                        res[m] = metric.corpus_level_fn
             else:
-                res[metric.value.metric] = metric.value.corpus_level_fn
+                res[metric.metric] = metric.corpus_level_fn
         return res
 
     @staticmethod

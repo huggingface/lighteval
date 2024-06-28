@@ -2135,6 +2135,7 @@ def storycloze(line, task_name: str = None):
         ),
         choices=[f" {line['sentence_quiz1']}", f" {line['sentence_quiz2']}"],
         gold_index=int(line["answer_right_ending"]) - 1,
+        uncoditioned_prefix="",
         # "metric": "choices_loglikelihood",
     )
 
@@ -2358,6 +2359,7 @@ def winogrande(line, task_name: str = None):
         query=query,
         choices=[f"{line['option1']} {end_of_target}", f"{line['option2']} {end_of_target}"],
         gold_index=int(line["answer"]) - 1 if line["answer"] != "" else -1,  # managing unk test index
+        uncoditioned_prefix="",
         # "metric": "choices_loglikelihood",
     )
 
