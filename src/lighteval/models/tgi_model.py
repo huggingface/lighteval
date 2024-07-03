@@ -21,15 +21,14 @@
 # SOFTWARE.
 
 import asyncio
-from typing import Coroutine, List
+from typing import Coroutine
+
+import requests
+from huggingface_hub import TextGenerationOutput
+from transformers import AutoTokenizer
 
 from lighteval.models.endpoint_model import InferenceEndpointModel
-import requests
-from transformers import AutoTokenizer
-from huggingface_hub import TextGenerationOutput
-
-from lighteval.models.abstract_model import LightevalModel
-from lighteval.utils import NO_TGI_ERROR_MSG, as_list, is_tgi_available
+from lighteval.utils import NO_TGI_ERROR_MSG, is_tgi_available
 
 
 if is_tgi_available():
@@ -58,7 +57,7 @@ class ModelClient(InferenceEndpointModel):
         self.client = AsyncClient(address, headers=headers, timeout=240)
         self._max_gen_toks = 256
         self.model_info = requests.get(f"{address}/info", headers=headers).json()
-        if not "model_id" in self.model_info:
+        if "model_id" not in self.model_info:
             raise ValueError("Error occured when fetching info: " + str(self.model_info))
         if model_id:
             self.model_info["model_id"] = model_id
