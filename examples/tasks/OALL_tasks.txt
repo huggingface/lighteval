@@ -134,3 +134,4 @@ community|copa_ext_ar|5|1
 community|hellaswag_okapi_ar|5|1
 community|toxigen_ar|5|1
 community|sciq_ar|5|1
+community|mbzuai_arabic_mmlu|5|1
