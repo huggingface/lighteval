@@ -5,7 +5,7 @@ model:
     model: "meta-llama/Llama-2-7b-hf"
     revision: "main"
     dtype: "float16" # can be any of "awq", "eetq", "gptq", "4bit' or "8bit" (will use bitsandbytes), "bfloat16" or "float16"
-    reuse_existing: false # if true, ignore all params in instance
+    reuse_existing: false # if true, ignore all params in instance, and don't delete the endpoint after evaluation
   instance:
     accelerator: "gpu"
     region: "eu-west-1"
@@ -15,7 +15,8 @@ model:
     framework: "pytorch"
     endpoint_type: "protected"
     namespace: null # The namespace under which to launch the endopint. Defaults to the current user's namespace
-    image_url: null
-    env_vars: null # Optional environment variables to include when launching the endpoint. Value should be a mapping.
+    image_url: null # Optionally specify the docker image to use when launching the endpoint model. E.g., launching models with later releases of the TGI container with support for newer models.
+    env_vars: 
+      null # Optional environment variables to include when launching the endpoint. e.g., `MAX_INPUT_LENGTH: 2048`
   generation:
     add_special_tokens: true
