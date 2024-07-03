@@ -7,6 +7,9 @@ from ..tasks.mqa_with_context.m3exam import M3ExamTask
 from ..tasks.mqa_with_context.xquad import XquadTask
 from ..tasks.nli.xnli import XNLITask
 from ..tasks.qa.tydiqa import TydiqaTask
+from ..tasks.mqa.xcopa import XCopaTask
+
+#TODO: Add potential the thai winograde
 
 _TASKS = [
     TydiqaTask(lang="th"),

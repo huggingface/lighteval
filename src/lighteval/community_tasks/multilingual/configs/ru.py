@@ -1,3 +1,6 @@
+from typing import get_args
+
+from ..tasks.suites.mera import _TASKS as _MERA_TASKS
 from ..tasks.mqa.mlmm import M_ARCTask, M_HellaSwagTask, M_MMLUTask, M_TruthfulQATask
 from ..tasks.mqa_with_context.belebele import BelebeleTask
 from ..tasks.mqa_with_context.m3exam import M3ExamTask
@@ -29,7 +32,8 @@ _MMLM_TASKS = [
     M_TruthfulQATask(lang="ru", type="mc2"),
 ]
 
-_TASKS += _MMLM_TASKS
+
+_TASKS += _MMLM_TASKS + _MERA_TASKS
 _TASKS_STRINGS = ",".join([f"custom|{t.name}|0|1" for t in _TASKS])
 TASKS_GROUPS = {
     "all": _TASKS_STRINGS,

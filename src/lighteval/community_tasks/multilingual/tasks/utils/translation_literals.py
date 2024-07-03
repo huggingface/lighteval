@@ -140,11 +140,13 @@ INCORRECT_LABELS = {
 }
 
 YES_LABELS = {
-    "ar": "نعم"
+    "ar": "نعم",
+    "hi": "हाँ"
 }
 
 NO_LABELS = {
-    "ar": "لا"
+    "ar": "لا",
+    "hi": "नहीं"
 }
 
 CAUSE_LABELS = {

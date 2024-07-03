@@ -70,19 +70,6 @@ def get_arc_prompt(lang: LANGS, nested_choices=False):
 
     return adapter
 
-def get_french_boolqa_prompt(lang: LANGS):
-    prompter = _get_multi_qa_prompt(lang)
-
-    def adapter(line, task_name):
-        return prompter(
-            task_name,
-            line["question"],
-            [ENTAILMENT_LABELS[lang], CONTRADICTION_LABELS[lang]],
-            [1, 0].index(line["label"]),
-            context=line["context"],
-        )
-
-    return adapter
 
 def get_cmllu_prompt(lang: LANGS):
     prompter = _get_multi_qa_prompt(lang)
@@ -216,23 +203,35 @@ def get_acva_prompt(lang: LANGS):
     return lambda line, task_name: prompter(task_name, line["question"], choices, choices.index(line["answer"]))
 
 
+def get_mathqa_prompt(lang: LANGS):
+    prompter = _get_multi_qa_prompt(lang)
+    def adapter(line, task_name):
+        options = [line["inputs"][f"option_{i.lower()}"] for i in LETTER_INDICES]
+        return prompter(task_name, line["inputs"]["text"], options, LETTER_INDICES.index(line["outputs"]))
+    return adapter
+
+def get_openbookqa_prompt(lang: LANGS):
+    prompter = _get_multi_qa_prompt(lang)
+    def adapter(line, task_name):
+        options = [line["inputs"][f"option_{i.lower()}"] for i in LETTER_INDICES]
+        return prompter(task_name, line["inputs"]["question"], options, LETTER_INDICES.index(line["outputs"]))
+    return adapter
+
 # QA-Tasks (No multichoice)
-
-
 QA_TEMPLATE = "{topic}{context}{question_word}: {question}\n{answer_word}:"
 def _get_qa_prompt(lang: LANGS):
     def qa_prompt(
-        task_name: str, question: str, answer: str, context: str | None = None, topic: str | None = None, instruction: str | None = None
-    ):
+        task_name: str, question: str, answer: str, context: str | None = None, topic: str | None = None):
         query = QA_TEMPLATE.format(
-            topic=f"{topic}\n" if topic else "",
+            # topic=f"{topic}\n" if topic else "",
+            topic="",
             question=question,
             context=f"{context}\n" if context else "",
             question_word=QUESTION[lang],
             answer_word=ANSWER[lang],
         )
         return Doc(
-            task_name=task_name, instruction=instruction, query=query, gold_index=0, choices=[answer], uncoditioned_prefix=f"{ANSWER[lang]}:"
+            task_name=task_name, query=query, gold_index=0, choices=[answer], uncoditioned_prefix=f"{ANSWER[lang]}:"
         )
 
     return qa_prompt
@@ -251,17 +250,14 @@ def get_cmath_prompt(lang: LANGS):
     prompter = _get_qa_prompt(lang)
     return lambda line, task_name: prompter(task_name, line["question"], line["golden"])
 
-
-def get_french_fquadv2_prompt(lang):
+def get_chekega_prompt(lang: LANGS):
     prompter = _get_qa_prompt(lang)
-    # Possibly fix to allow multilang
-    instruct = "après l'information dans le contexte donné, donne la réponse à la question en citant quelques mots du contexte. Si il est impossible de répondre avec les informations du contexte, répond 'Impossible."
+    return lambda line, task_name: prompter(task_name, line["inputs"]["text"], line["outputs"], topic=line["inputs"]["topic"])
 
-    def adapter(task_name, line):
-        answer = line["answers"]["text"][0] if line["answers"]["text"] else IMPOSSIBLE[lang]
-        return prompter(task_name, line["question"], answer, context=line["context"], instruction=instruct)
+def get_french_trivia_prompt(lang: LANGS):
+    prompter = _get_qa_prompt(lang)
+    return lambda line, task_name: prompter(task_name, line["Question"], line["Answer"])
 
-    return adapter
 
 
 # NLI premise/hypthesis
@@ -278,6 +274,8 @@ def _get_nli_prompt(lang: LANGS, pos_labels: list[Literal["entailment", "neutral
         labels.append(CONTRADICTION_LABELS[lang])
 
     def nli_prompt(task_name: str, premise: str, hypothesis: str, label: int):
+        premise = premise.strip(".").strip()
+        hypothesis = hypothesis.strip(".").strip()
         return Doc(
             task_name=task_name,
             query="",
@@ -296,6 +294,10 @@ def _get_nli_prompt(lang: LANGS, pos_labels: list[Literal["entailment", "neutral
 
     return nli_prompt
 
+def get_rcb_prompt(lang: LANGS):
+    prompter = _get_nli_prompt(lang, ["entailment", "contradiction", "neutral"])
+    return lambda line, task_name: prompter(task_name, line["inputs"]["premise"], line["meta"]["task"], int(line["outputs"] -1))
+
 
 def get_xnli_prompt(lang: LANGS):
     prompter = _get_nli_prompt(lang, ["entailment", "neutral", "contradiction"])
@@ -310,6 +312,11 @@ def get_paws_x_prompt(lang: LANGS):
 COPA_TEMPLATE = "{premise} {cause_or_effect}"
 def _get_copa_prompt(lang: LANGS):
     def copa_prompt(task_name: str, premise: str, cause_or_effect: Literal["cause", "effect"], hypotheses: list[str], gold_index: int):
+        # Convert it into He was nice (premise) thus he was nice (hypothesis).
+        # We expecte hypotheses and premise to be ended by .
+        assert premise.endswith(".") and all(hyp.endswith(".") for hyp in hypotheses), f"Premise and hypotheses must end with a dot. Premise: {premise}, Hypotheses: {hypotheses}"
+        premise = premise.strip()[:-1]
+        hypotheses = [f"{hyp[0].lower()}{hyp[1:]}" for hyp in hypotheses]
         cause_effect_trans = CAUSE_LABELS[lang] if cause_or_effect == "cause" else EFFECT_LABELS[lang]
         return Doc(
             task_name=task_name,
@@ -332,13 +339,12 @@ def _get_copa_prompt(lang: LANGS):
 def get_copa_prompt(lang: LANGS):
     # TODO: solve the punctuation issue
     prompter = _get_copa_prompt(lang)
-    def adapter(line, task_name):
-        premise = line["premise"].strip()[:-1]
-        hyptheses = [f"{hyp[0].lower()}{hyp[1:]}" for hyp in [line["choice1"], line["choice2"]]]
-        return prompter(task_name, premise, line["question"], hyptheses, int(line["label"]))
-    return adapter
+    return lambda line, task_name: prompter(task_name, line["premise"], line["question"] ,[line["choice1"], line["choice2"]],  int(line["label"]))
 
 
+def get_parus_prompt(lang: LANGS):
+    prompter = _get_copa_prompt(lang)
+    return lambda line, task_name: prompter(task_name, line["inputs"]["premise"], line["meta"]["task"], [line["inputs"]["choice1"], line["inputs"]["choice2"]], int(line["outputs"] -1))
 
 
 # QA YES/NO
@@ -356,6 +362,18 @@ def get_boolq_prompt(lang: LANGS):
 def get_indic_boolq_prompt(lang: LANGS):
     prompter = _get_boolq_prompt(lang)
     return lambda line, task_name: prompter(task_name, line["itv2 hi question"], line["answer"] == "true", context=line["itv2 hi passage"])
+
+def get_french_boolqa_prompt(lang: LANGS):
+    prompter = _get_boolq_prompt(lang)
+    def adapter(line, task_name):
+        return prompter(
+            task_name,
+            line["question"],
+            line["label"] == 1,
+            context=line["passage"],
+        )
+
+    return adapter
 
 
 # NLI Hellaswag

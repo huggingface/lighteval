@@ -31,7 +31,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 # TODO all supported langauges
-LANGS = Literal["en", "bg", "hr", "hu", "it", "mk", "pl", "pt", "sq", "sr", "tr", "vi", "zh", "te", "th", "sw", "hi", "ru"]
+LANGS = Literal["en", "bg", "hr", "hu", "it", "mk", "pl", "pt", "sq", "sr", "tr", "vi", "zh", "te", "th", "sw", "hi", "ru", "fr"]
 
 
 # We convert from made-up codes to "standard" codes 😎, ignoring the script

@@ -5,7 +5,7 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-LANGS = Literal["bg", "hr", "hu", "it", "mk", "pl", "pt", "sq", "sr", "tr", "vi"]
+LANGS = Literal["bg", "hr", "hu", "it", "mk", "pl", "pt", "sq", "sr", "tr", "vi", "fr"]
 
 
 # If too hard we can add help with para
@@ -22,5 +22,5 @@ class ExamsTask(LightevalTaskConfig):
             few_shots_split="train",
             generation_size=-1,
             stop_sequence=("\n",),
-            metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace),
+            metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace, Metrics.loglikelihood_acc_norm_pmi),
         )
