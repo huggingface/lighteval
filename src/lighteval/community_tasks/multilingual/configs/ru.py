@@ -1,21 +1,12 @@
-from typing import get_args
-from ..tasks.mqa.agieval import CHINESE_AGIEVAL_TASK_TYPE, ChineseAgievalTask
-from ..tasks.mqa.ceval import CEVAL_TASK_TYPE, CEvalTask
-from ..tasks.mqa.cmmlu import CMMLU_TASK_TYPE, CMMLUTask
 from ..tasks.mqa.mlmm import M_ARCTask, M_HellaSwagTask, M_MMLUTask, M_TruthfulQATask
 from ..tasks.mqa_with_context.belebele import BelebeleTask
 from ..tasks.mqa_with_context.m3exam import M3ExamTask
 from ..tasks.mqa_with_context.xquad import XquadTask
 from ..tasks.mqa_with_context.xstory_cloze import XStoryClozeTask
-from ..tasks.nli.pawns import PawnsXTask
 from ..tasks.nli.xcsr import XCODAHTask, XCSQATask
 from ..tasks.nli.xnli import XNLITask
 from ..tasks.nli.xwinograd import XWinogradeTask
-from ..tasks.qa.cmath import CMathTask
-from ..tasks.qa.mlqa import MlqaTask
 from ..tasks.qa.tydiqa import TydiqaTask
-from ..tasks.mqa.xcopa import XCopaTask
-
 
 _TASKS = [
     BelebeleTask(lang="ru"),

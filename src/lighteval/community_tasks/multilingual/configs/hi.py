@@ -1,5 +1,3 @@
-from typing import get_args
-
 from ..tasks.suites.indic_evals import ARCIndTask, BoolQIndTask, HellaSwagIndTask
 from ..tasks.qa.Indicqa import IndicQATask
 from ..tasks.mqa.indicxcopa import XCopaIndicTask

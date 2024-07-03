@@ -1,7 +1,7 @@
-from tasks.mqa.xcopa import XCopaTask
-from tasks.mqa_with_context.m3exam import M3ExamTask
-from tasks.nli.xcsr import XCODAHTask, XCSQATask
-from tasks.nli.xnli import XNLITask
+from ..tasks.mqa.xcopa import XCopaTask
+from ..tasks.mqa_with_context.m3exam import M3ExamTask
+from ..tasks.nli.xcsr import XCODAHTask, XCSQATask
+from ..tasks.nli.xnli import XNLITask
 from ..tasks.mqa_with_context.belebele import BelebeleTask
 from ..tasks.mqa_with_context.xstory_cloze import XStoryClozeTask
 from ..tasks.suites.swahili_leaderboard import TASKS as SW_TASKS

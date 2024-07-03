@@ -1,6 +1,5 @@
 from typing import get_args
-from tasks.mqa.exams import ExamsTask
-
+from ..tasks.mqa.exams import ExamsTask
 from ..tasks.qa.tquad import Tquad2Task
 from ..tasks.suites.turkish_leaderboard import ARCEasyTrTask, HellaSwagTrTask, MMLUTaskTr, TruthfulQATrTask, WinogradeTrTask, MMLU_SUBSETS
 from ..tasks.mqa_with_context.belebele import BelebeleTask

@@ -1,8 +1,5 @@
-from typing import get_args
-
 from ..tasks.mqa.xcopa import XCopaTask
 from ..tasks.mqa.mlmm import M_ARCTask, M_HellaSwagTask, M_MMLUTask, M_TruthfulQATask
-from ..tasks.mqa_with_context.belebele import BelebeleTask
 from ..tasks.mqa_with_context.xquad import XquadTask
 from ..tasks.mqa_with_context.xstory_cloze import XStoryClozeTask
 from ..tasks.nli.xcsr import XCODAHTask, XCSQATask
