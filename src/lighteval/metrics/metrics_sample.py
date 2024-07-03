@@ -23,6 +23,7 @@
 """This module manages all the metrics occurring at the sample level. The results of said metrics are then aggregated
 using simple function (min, mean, max, ...) at the corpus level. Most metrics fall under this category.
 """
+
 import os
 from typing import Union
 
@@ -214,21 +215,21 @@ class LoglikelihoodAcc:
             length_normalization (bool, optional): Whether log-likelihood scores should be normalized for sentence length. Defaults to False.
                 Should be True for most cases.
             ignore_first_space (bool, optional): Whether to ignore the first token's log prob (if it's a space only). Defaults to False.
-                Only case when it should be True is when the possible choices (for example `A`,`B` ...) have an extra
+                The only case when it should be True is when the possible choices (for example `A`,`B` ...) have an extra
                 space added in front of them to manage tokenization issues (` A`, ` B`, ...) for some models.
         """
         self.length_normalization = length_normalization
         self.ignore_first_space = ignore_first_space
 
     def compute(self, gold_ixs: list[int], choices_logprob: list[float], formatted_doc: Doc, **kwargs) -> int:
-        """Computs the log likelihood accuracy: is the choice with the highest logprob in `choices_logprob` present
-        in the `gold_idxs`?
+        """Computes the log likelihood accuracy: is the choice with the highest logprob in `choices_logprob` present
+        in the `gold_ixs`?
 
         Args:
             gold_ixs (list[int]): All the gold choices indices
             choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
             formatted_doc (Doc): Original document for the sample.
-                Used to get the original choices's length for possible normalisation
+                Used to get the original choices' length for possible normalization
 
         Returns:
             int: The eval score: 1 if the best log-prob choice is in gold, 0 otherwise.
@@ -259,7 +260,7 @@ class Recall:
 
     def compute(self, choices_logprob: list[float], gold_ixs: list[int], **kwargs) -> int:
         """Computes the recall at the requested depth level: looks at the `n` best predicted choices (with the
-        highest log probabilies) and see if there is an actual gold among them.
+        highest log probabilities) and see if there is an actual gold among them.
 
         Args:
             gold_ixs (list[int]): All the gold choices indices
@@ -278,7 +279,7 @@ class MRR:
         """A mean reciprocal rank class.
 
         Args:
-            length_normalization (bool, optional): Whether to use normalisation be choice length when computing the best log-probabilities. Defaults to False.
+            length_normalization (bool, optional): Whether to use normalization on choice length when computing the best log-probabilities. Defaults to False.
         """
         self.length_normalization = length_normalization
 
@@ -289,7 +290,7 @@ class MRR:
             gold_ixs (list[int]): All the gold choices indices
             choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
             formatted_doc (Doc): Original document for the sample.
-                Used to get the original choices's length for possible normalisation
+                Used to get the original choices' length for possible normalization
 
         Returns:
             float: MRR score.
@@ -328,7 +329,7 @@ class ROUGE:
 
         Args:
             methods (str | list[str]): What type of ROUGE scoring to use. Can be one or any of `rouge1`, `rouge2`, `rougeL` or `rougeLsum`.
-            multiple_golds (bool, optional): Whether to compute ROUGE by allowing the comparision to several golds
+            multiple_golds (bool, optional): Whether to compute ROUGE by allowing the comparison to several golds
                 at once, or to compute ROUGE on individual gold/prediction pairs and aggregate afterwards. Defaults to False.
             bootstrap (bool, optional): Whether to use bootstrapping. Defaults to False.
             aggregation_function (callable, optional): How to aggregate the item results. Defaults to max.
@@ -654,13 +655,13 @@ class JudgeLLM:
 
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
         """
-        Compute the score of a generative taks using a llm as a judge.
+        Compute the score of a generative task using a llm as a judge.
         The generative task can be multiturn with 2 turns max, in that case, we
         return scores for turn 1 and 2. Also returns user_prompt and judgment
         which are ignored later by the aggregator.
         """
 
-        # If we are evaluating a multiturn task, we need to have specific field in the formated doc
+        # If we are evaluating a multiturn task, we need to have specific field in the formatted doc
         if self.multi_turn:
             questions = formatted_doc.specific["multi_turn_queries"]
             ref_answers = formatted_doc.specific.get("reference", None) if formatted_doc.specific is not None else None
@@ -684,3 +685,89 @@ class JudgeLLM:
             "user_prompt": messages[0],
             "judgement": judgements[0],
         }
+
+
+class MajAtK:
+    def __init__(
+        self,
+        k: int,
+        normalize_gold: callable = None,
+        normalize_pred: callable = None,
+        strip_strings: bool = False,
+        type_exact_match: str = "full",
+    ):
+        """An exact match class.
+
+        Args:
+            normalize_gold (callable, optional): Function to use to normalize the reference strings.
+                Defaults to None if no normalization is applied.
+            normalize_pred (callable, optional): Function to use to normalize the predicted strings.
+                Defaults to None if no normalization is applied.
+            strip_strings (bool, optional): Whether to strip both reference and predictions. Defaults to False.
+            type_exact_match (str, optional): Defines what type of match to apply (post normalization if present).
+                Can be any of `prefix`, `suffix` or `full`. Defaults to "full".
+                `prefix` checks if the prediction starts with the gold,
+                `suffix` if the prediction ends with the gold,
+                `full` if the prediction and gold are equal
+        """
+        self.k = k
+        self.normalize_gold = normalize_gold
+        self.normalize_pred = normalize_pred
+        self.strip_strings = strip_strings
+
+        if type_exact_match not in ["prefix", "suffix", "full"]:
+            # todo: we could add a set exact match
+            raise ValueError(
+                f"type_exact_match (used in parametrized_exact_match) must be one of prefix, suffix, or full. Was {type_exact_match} instead."
+            )
+        self.type_exact_match = type_exact_match
+
+    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> dict[str, float]:
+        """Computes the metric over a list of golds and predictions for one single sample.
+        It applies normalisation (if needed) to model prediction and gold, and takes the most frequent answer of all the available ones,
+        then compares it to the gold.
+
+        Args:
+            golds (list[str]): Reference targets
+            predictions (list[str]): k predicted strings
+
+        Returns:
+            float: Aggregated score over the current sample's items.
+        """
+        if len(golds) > 1:
+            raise Exception("Cannot compute maj@k with several golds")
+
+        gold = self.get_processed_gold(golds[0])
+        all_answers = []
+        for pred in predictions[: self.k]:
+            all_answers.append(self.get_processed_pred(pred=pred))
+        majority_prediction = max(all_answers, key=all_answers.count)
+        return self.compute_score(majority_prediction, gold)
+
+    def get_processed_gold(self, gold: str) -> float:
+        if self.strip_strings:
+            gold = gold.strip()
+
+        if self.normalize_gold:
+            gold = self.normalize_gold(gold)
+
+        return gold
+
+    def get_processed_pred(self, pred: str) -> float:
+        if not pred:
+            return ""
+
+        if self.strip_strings:
+            pred = pred.strip()
+
+        if self.normalize_pred:
+            pred = self.normalize_pred(pred)
+
+        return pred
+
+    def compute_score(self, pred: str, gold: str) -> int:
+        if self.type_exact_match == "prefix":
+            return 1 if pred.startswith(gold) else 0
+        if self.type_exact_match == "suffix":
+            return 1 if pred.endswith(gold) else 0
+        return 1 if gold == pred else 0

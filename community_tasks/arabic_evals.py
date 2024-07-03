@@ -24,7 +24,7 @@
 """
 Custom evaluation tasks for lighteval
 
-This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
+This file generally creates just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
 """
 import random
 import re
@@ -75,6 +75,7 @@ class CustomArabicMMLUTask(LightevalTaskConfig):
             output_regex=None,
             frozen=False,
             trust_dataset=True,
+            version=0,
         )
 
 
@@ -142,6 +143,7 @@ class CustomACVATask(LightevalTaskConfig):
             output_regex=None,
             frozen=False,
             trust_dataset=True,
+            version=0,
         )
 
 
@@ -173,6 +175,7 @@ arabic_exams_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
@@ -230,6 +233,7 @@ class CustomAlGhafaNativeTask(LightevalTaskConfig):
             stop_sequence=None,
             output_regex=None,
             frozen=False,
+            version=0,
         )
 
 
@@ -273,6 +277,7 @@ race_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
@@ -289,6 +294,7 @@ piqa_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
@@ -305,6 +311,7 @@ arc_easy_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
@@ -321,6 +328,7 @@ arc_challenge_okapi_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
@@ -337,6 +345,7 @@ mmlu_okapi_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
@@ -353,6 +362,7 @@ openbook_qa_ext_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
@@ -369,6 +379,7 @@ boolq_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
@@ -408,6 +419,7 @@ copa_ext_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
@@ -443,6 +455,7 @@ hellaswag_okapi_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
@@ -487,6 +500,7 @@ toxigen_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
@@ -524,6 +538,7 @@ sciq_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
