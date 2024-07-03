@@ -105,6 +105,65 @@ def mmlu_arabic(line, task_name: str = None):
         target_for_fewshot_sorting=LETTER_INDICES_AR[gold_ix],
     )
 
+# mbzuai_arabic_mmlu #
+
+# fmt: off
+MBZUAI_ArabicMMLU_SUBSETS = ["test"]
+# fmt: on
+
+class CustomMBZUAIArabicMMLU(LightevalTaskConfig):
+    def __init__(
+        self,
+        name,
+        hf_subset,
+    ):
+        super().__init__(
+            name=name,
+            hf_subset=hf_subset,
+            prompt_function="mbzuai_arabic_mmlu",
+            hf_repo="MBZUAI/ArabicMMLU",
+            metric=["loglikelihood_acc_norm"],
+            hf_avail_splits=["test"],
+            evaluation_splits=["test"],
+            few_shots_split="test",
+            few_shots_select="sequential",
+            suite=["community"],
+            generation_size=-1,
+            stop_sequence=None,
+            output_regex=None,
+            frozen=False,
+            trust_dataset=True,
+            version=0,
+        )
+
+MBZUAI_ArabicMMLU_TASKS = [
+    CustomMBZUAIArabicMMLU(name=f"mbzuai_arabic_mmlu:{subset}", hf_subset=subset) for subset in MBZUAI_ArabicMMLU_SUBSETS
+]
+
+def mbzuai_mmlu_arabic(line, task_name: str = None):
+    topic = line["Subject"]
+    instruction = f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}. \n\n"
+    choices = [line["Option 1"], line["Option 2"],
+               line["Option 3"], line["Option 4"],
+               line["Option 5"]]
+    
+    # Answers are provided with roman letters - we look for the correct index in LETTER_INDICES,
+    # it will then be applied to arabic letters
+    gold_ix = LETTER_INDICES.index(line["Answer Key"])
+
+    query = f"{instruction}{line['Question']}\n"
+    query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES_AR[:5], choices)])
+    query += "الإجابة:"
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=LETTER_INDICES_AR[:5],
+        gold_index=gold_ix,
+        instruction=instruction,
+        target_for_fewshot_sorting=LETTER_INDICES_AR[gold_ix],
+    )
+
 
 # ACVA ##
 # fmt: off
@@ -593,6 +652,7 @@ _TASKS = (
     + [hellaswag_okapi_ar_task]
     + [toxigen_ar_task]
     + [sciq_ar_task]
+    + MBZUAI_ArabicMMLU_TASKS
 )
 
 # Convert to dict for lighteval
