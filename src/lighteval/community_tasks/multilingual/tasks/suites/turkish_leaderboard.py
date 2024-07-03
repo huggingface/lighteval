@@ -27,8 +27,9 @@ class WinogradeTrTask(LightevalTaskConfig):
             name=f"xwinograd-tr",
             suite=("custom",),
             prompt_function=winogrande,
-            hf_repo="malhajar/hellaswag_tr-v0.2",
+            hf_repo="malhajar/winogrande-tr-v0.2",
             hf_subset="default",
+            filter=lambda x: x["sentence"].count("_") == 1,
             evaluation_splits=("test",),
             few_shots_split="train",
             metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm, Metrics.loglikelihood_acc_norm_pmi),
@@ -40,7 +41,7 @@ class ARCEasyTrTask(LightevalTaskConfig):
             name=f"arc-tr",
             prompt_function=get_arc_prompt("tr", nested_choices=True),
             suite=("custom",),
-            hf_repo="malhajar/arc_tr-v0.2",
+            hf_repo="malhajar/arc-tr-v0.2",
             hf_subset="default",
             evaluation_splits=("test",),
             metric=(
@@ -115,7 +116,7 @@ class MMLUTaskTr(LightevalTaskConfig):
     def __init__(self, subset: MMLU_SUBSETS):
         super().__init__(
             name=f"mmlu-tr",
-            prompt_function=get_mmlu_prompt("tr"),
+            prompt_function=get_mmlu_prompt("tr", is_number_choice=True),
             suite=("custom",),
             hf_repo="malhajar/mmlu_tr-v0.2",
             hf_subset=subset,

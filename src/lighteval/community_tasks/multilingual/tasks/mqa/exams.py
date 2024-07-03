@@ -5,7 +5,7 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-LANGS = Literal["bg", "hr", "hu", "it", "mk", "pl", "pt", "sq", "sr", "tr", "vi", "fr"]
+LANGS = Literal["bg", "hr", "hu", "it", "mk", "pl", "pt", "sq", "sr", "tr", "vi"]
 
 
 # If too hard we can add help with para
@@ -19,6 +19,8 @@ class ExamsTask(LightevalTaskConfig):
             hf_repo="mhardalov/exams",
             hf_subset=f"crosslingual_{lang}",
             evaluation_splits=("validation",),
+            # Weird bug in dataset
+            filter=lambda x: x["answerKey"] != "@",
             few_shots_split="train",
             generation_size=-1,
             stop_sequence=("\n",),

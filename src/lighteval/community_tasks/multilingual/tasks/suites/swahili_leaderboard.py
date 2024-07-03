@@ -9,7 +9,7 @@ class MMLUSwTask(LightevalTaskConfig):
     def __init__(self):
         super().__init__(
             name=f"mmlu-sw",
-            prompt_function=get_mmlu_prompt("sw"),
+            prompt_function=get_mmlu_prompt("sw", is_number_choice=True, zero_based=False),
             suite=("custom",),
             hf_repo="Mollel/MMUL_sw",
             hf_subset="default",

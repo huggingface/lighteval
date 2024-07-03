@@ -8,6 +8,7 @@ LANG_NAMES = {
     "bengali": "bn",
     "english": "en",
     "finnish": "fi",
+    "french": "fr",
     "indonesian": "id",
     "korean": "ko",
     "russian": "ru",
@@ -17,6 +18,7 @@ LANG_NAMES = {
     "chinese": "zh",
     "italian": "it",
     "javanese": "jv",
+    "hindi": "hi",
     "portuguese": "pt",
     "thai": "th",
     "vietnamese": "vi",
@@ -65,6 +67,7 @@ NLI_QUESTION = {
     "hi": "सही",
     "ru": "правильно",
     "sw": "sawa",
+    "te": "సరియైనదా",
     "th": "ถูกต้อง",
     "tr": "doğru",
     "ur": "صحیح",
@@ -83,6 +86,7 @@ ENTAILMENT_LABELS = {
     "hi": "हाँ",
     "ru": "Да",
     "sw": "Ndiyo",
+    "te": "అవును",
     "th": "ใช่",
     "tr": "Evet",
     "ur": "جی ہاں",
@@ -103,6 +107,7 @@ NEUTRAL_LABELS = {
     "sw": "Hivyo",
     "th": "ดังนั้น",
     "tr": "Böylece",
+    "te": "అలాగే",
     "ur": "اس لئے",
     "vi": "Vì vậy",
     "zh": "所以",
@@ -119,6 +124,7 @@ CONTRADICTION_LABELS = {
     "hi": "नहीं",
     "ru": "Нет",
     "sw": "Hapana",
+    "te": "నం",
     "th": "ไม่",
     "tr": "Hayır",
     "ur": "نہیں",
@@ -141,17 +147,20 @@ INCORRECT_LABELS = {
 
 YES_LABELS = {
     "ar": "نعم",
-    "hi": "हाँ"
+    "hi": "हाँ",
+    "fr": "Oui"
 }
 
 NO_LABELS = {
     "ar": "لا",
-    "hi": "नहीं"
+    "hi": "नहीं",
+    "fr": "Non"
 }
 
 CAUSE_LABELS = {
     "ar": "لأن",
     "en": "because",
+    "hi": "क्योंकि",
     "et": "sest",
     "ht": "poukisa",
     "it": "perché",
@@ -160,14 +169,17 @@ CAUSE_LABELS = {
     "sw": "kwa sababu",
     "zh": "因为",
     "ta": "காரணமாக",
+    "te": "ఎందుకంటే",
     "th": "เพราะ",
     "tr": "çünkü",
+    "ru": "потому что",
     "vi": "bởi vì"
 }
 
 EFFECT_LABELS = {
     "ar": "لذلك",
     "en": "therefore",
+    "hi": "इसलिए",
     "et": "seetõttu",
     "ht": "donk sa",
     "it": "quindi",
@@ -176,7 +188,9 @@ EFFECT_LABELS = {
     "sw": "kwa hiyo",
     "zh": "所以",
     "ta": "எனவே",
+    "te": "అందువలన",
     "th": "ดังนั้น",
     "tr": "bu yüzden",
+    "ru": "поэтому",
     "vi": "vì vậy"
 }

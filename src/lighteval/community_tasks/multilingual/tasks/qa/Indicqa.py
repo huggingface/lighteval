@@ -17,6 +17,8 @@ class IndicQATask(LightevalTaskConfig):
             suite=("custom",),
             hf_repo="ai4bharat/IndicQA",
             hf_subset=f"indicqa.{lang}",
+            hf_revision="78ee8d58e880c72f324e176c989dfefa55427af4",
+            trust_dataset=True,
             evaluation_splits=("test",),
             few_shots_split="test",
             filter=lambda x: all(len(a) != 0 for a in x["answers"]["text"]),

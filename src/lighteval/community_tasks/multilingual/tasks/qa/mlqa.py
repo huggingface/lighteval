@@ -6,7 +6,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 # TODO Support all available
-LANGS = Literal["zh", "en", "ar", "hi", "fr"]
+LANGS = Literal["zh", "en", "ar", "hi"]
 
 
 class MlqaTask(LightevalTaskConfig):

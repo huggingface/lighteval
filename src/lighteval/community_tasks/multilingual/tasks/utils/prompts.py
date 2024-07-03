@@ -54,24 +54,31 @@ def _get_multi_qa_prompt(lang: LANGS):
     return multi_qa_prompt
 
 
-def get_mmlu_prompt(lang: LANGS):
+#TODO: Uggly
+def get_mmlu_prompt(lang: LANGS, is_number_choice: bool = False, zero_based=True):
     prompter = _get_multi_qa_prompt(lang)
 
     def adapter(line, task_name):
-        return prompter(task_name, line["question"], line["choices"], LETTER_INDICES.index(line["answer"]))
+        gold_index = LETTER_INDICES.index(line["answer"]) if not is_number_choice else int(line["answer"])
+        if not zero_based:
+            gold_index -= 1
+        return prompter(task_name, line["question"], line["choices"], gold_index)
 
     return adapter
 
+
 def get_c3_prompt(lang: LANGS):
     prompter = _get_multi_qa_prompt(lang)
-    return lambda line, task_name: prompter(task_name, line["question"], line["choice"], line["choice"].index(line["answer"]), context=line["context"])
+    return lambda line, task_name: prompter(task_name, line["question"], line["choice"], line["choice"].index(line["answer"]), context=" ".join(line["context"]))
 
 def get_arc_prompt(lang: LANGS, nested_choices=False):
     prompter = _get_multi_qa_prompt(lang)
 
     def adapter(line, task_name):
         choices = line["choices"]["text"] if nested_choices else line["choices"]
-        return prompter(task_name, line["question"], choices, LETTER_INDICES.index(line["answerKey"]))
+        is_number_choice = line["answerKey"].isdigit()
+        gold_index = LETTER_INDICES.index(line["answerKey"]) if not is_number_choice else int(line["answerKey"]) - 1
+        return prompter(task_name, line["question"], choices, gold_index)
 
     return adapter
 
@@ -130,7 +137,7 @@ def get_m_exams_prompt(lang: LANGS):
             task_name,
             line["question"]["stem"],
             texts,
-            letters.index(line["label"]),
+            letters.index(line["answerKey"]),
         )
 
     return adapter
@@ -212,14 +219,14 @@ def get_acva_prompt(lang: LANGS):
 def get_mathqa_prompt(lang: LANGS):
     prompter = _get_multi_qa_prompt(lang)
     def adapter(line, task_name):
-        options = [line["inputs"][f"option_{i.lower()}"] for i in LETTER_INDICES]
+        options = [line["inputs"][f"option_{i.lower()}"] for i in LETTER_INDICES[:4]]
         return prompter(task_name, line["inputs"]["text"], options, LETTER_INDICES.index(line["outputs"]))
     return adapter
 
 def get_openbookqa_prompt(lang: LANGS):
     prompter = _get_multi_qa_prompt(lang)
     def adapter(line, task_name):
-        options = [line["inputs"][f"option_{i.lower()}"] for i in LETTER_INDICES]
+        options = [line["inputs"][f"option_{i.lower()}"] for i in LETTER_INDICES[:4]]
         return prompter(task_name, line["inputs"]["question"], options, LETTER_INDICES.index(line["outputs"]))
     return adapter
 
@@ -231,6 +238,7 @@ def _get_qa_prompt(lang: LANGS):
         task_name: str, question: str, answer: list[str], context: str | None = None, topic: str | None = None):
         question = question.strip()
         context = context.strip() if context else ""
+        assert isinstance(answer, list), f"Answer is not a list: {answer} in task {task_name}"
         answer = [ans.strip() for ans in answer]
         query = QA_TEMPLATE.format(
             # topic=f"{topic}\n" if topic else "",
@@ -252,21 +260,25 @@ def get_mlqa_prompt(lang: LANGS):
     return lambda line, task_name: prompter(task_name, line["question"], line["answers"]["text"], line["context"])
 
 
+def get_tquad_prompt(lang: LANGS):
+    prompter = _get_qa_prompt(lang)
+    return lambda line, task_name: prompter(task_name, line["question"], [a["text"] for a in line["answers"]], line["context"])
+
 def get_mintaka_prompt(lang: LANGS):
     prompter = _get_qa_prompt(lang)
     return lambda line, task_name: prompter(task_name, line["question"], [line["answerText"]])
 
 def get_cmath_prompt(lang: LANGS):
     prompter = _get_qa_prompt(lang)
-    return lambda line, task_name: prompter(task_name, line["question"], line["golden"])
+    return lambda line, task_name: prompter(task_name, line["question"], [line["golden"]])
 
 def get_chekega_prompt(lang: LANGS):
     prompter = _get_qa_prompt(lang)
-    return lambda line, task_name: prompter(task_name, line["inputs"]["text"], line["outputs"], topic=line["inputs"]["topic"])
+    return lambda line, task_name: prompter(task_name, line["inputs"]["text"], [line["outputs"]], topic=line["inputs"]["topic"])
 
 def get_french_trivia_prompt(lang: LANGS):
     prompter = _get_qa_prompt(lang)
-    return lambda line, task_name: prompter(task_name, line["Question"], line["Answer"])
+    return lambda line, task_name: prompter(task_name, line["Question"], [line["Answer"]])
 
 
 # NLI premise/hypthesis
@@ -305,7 +317,7 @@ def _get_nli_prompt(lang: LANGS, pos_labels: list[Literal["entailment", "neutral
 
 def get_rcb_prompt(lang: LANGS):
     prompter = _get_nli_prompt(lang, ["entailment", "contradiction", "neutral"])
-    return lambda line, task_name: prompter(task_name, line["inputs"]["premise"], line["meta"]["task"], int(line["outputs"] -1))
+    return lambda line, task_name: prompter(task_name, line["inputs"]["premise"], line["inputs"]["hypothesis"], int(line["outputs"]) -1)
 
 
 def get_xnli_prompt(lang: LANGS):
@@ -319,7 +331,7 @@ def get_paws_x_prompt(lang: LANGS):
     return lambda line, task_name: prompter(task_name, line["sentence1"], line["sentence2"], int(line["label"]))
 
 # NLI Cause/Effect (Copa)
-COPA_TEMPLATE = "{premise} {cause_or_effect}"
+COPA_TEMPLATE = "{premise} {cause_or_effect} {hypothesis}"
 def _get_copa_prompt(lang: LANGS):
     def copa_prompt(task_name: str, premise: str, cause_or_effect: Literal["cause", "effect"], hypotheses: list[str], gold_index: int):
         # Convert it into He was nice (premise) thus he was nice (hypothesis).
@@ -334,7 +346,7 @@ def _get_copa_prompt(lang: LANGS):
                 COPA_TEMPLATE.format(
                     premise=premise,
                     cause_or_effect=cause_effect_trans,
-                    hypothesis=f" {hypothesis}",
+                    hypothesis=hypothesis,
                 )
                 for hypothesis in hypotheses
             ],
@@ -353,7 +365,7 @@ def get_copa_prompt(lang: LANGS):
 
 def get_parus_prompt(lang: LANGS):
     prompter = _get_copa_prompt(lang)
-    return lambda line, task_name: prompter(task_name, line["inputs"]["premise"], line["meta"]["task"], [line["inputs"]["choice1"], line["inputs"]["choice2"]], int(line["outputs"] -1))
+    return lambda line, task_name: prompter(task_name, line["inputs"]["premise"], line["meta"]["task"], [line["inputs"]["choice1"], line["inputs"]["choice2"]], int(line["outputs"]) -1)
 
 
 # QA YES/NO

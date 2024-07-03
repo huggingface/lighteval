@@ -28,7 +28,7 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-LANGS = Literal["zh", "ru", "fr", "en", "es", "de", "ja", "th", "sw"]
+LANGS = Literal["zh", "en", "es", "de", "ja", "th", "sw"]
 
 
 class M3ExamTask(LightevalTaskConfig):

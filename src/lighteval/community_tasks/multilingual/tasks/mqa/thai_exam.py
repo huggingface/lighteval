@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from ..utils.prompts import get_m_exams_prompt, get_thai_exams_prompt
+from ..utils.prompts import get_thai_exams_prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 

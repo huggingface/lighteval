@@ -20,7 +20,6 @@ _TASKS = [
     XNLITask(lang="ru"),
     XStoryClozeTask(lang="ru"),
     XWinogradeTask(lang="ru"),
-    M3ExamTask(lang="ru"),
 ]
 
 

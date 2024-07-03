@@ -16,15 +16,12 @@ from ..tasks.suites.frenchbench import _TASKS as _FRENCH_BENCH_TASKS
 _TASKS = [
     LambadaTask(lang="fr"),
     BelebeleTask(lang="fr"),
-    MlqaTask(lang="fr"),
     MintakaTask(lang="fr"),
-    ExamsTask(lang="fr"),
     PawnsXTask(lang="fr"),
     XCODAHTask(lang="fr"),
     XCSQATask(lang="fr"),
     XNLITask(lang="fr"),
     XWinogradeTask(lang="fr"),
-    M3ExamTask(lang="fr"),
 ]
 
 
