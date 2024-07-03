@@ -54,7 +54,7 @@ from lighteval.tasks.requests import (
     RequestType,
     TaskExampleId,
 )
-from lighteval.utils import as_list
+from lighteval.utils import NO_OPENAI_ERROR_MSG, as_list, is_openai_available
 
 from . import tasks_prompt_formatting
 
@@ -209,6 +209,8 @@ class LightevalTask:
             Metrics[metric].value.category in [MetricCategory.LLM_AS_JUDGE, MetricCategory.LLM_AS_JUDGE_MULTI_TURN]
             for metric in self.metrics
         ):
+            if not is_openai_available():
+                raise ImportError(NO_OPENAI_ERROR_MSG)
             if os.getenv("OPENAI_API_KEY") is None:
                 raise ValueError(
                     "Using llm as judge metric but no OPEN_API_KEY were found, please set it with: export OPEN_API_KEY={yourkey}"

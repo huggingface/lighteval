@@ -28,6 +28,7 @@ import time
 from typing import Optional
 
 from lighteval.logging.hierarchical_logger import hlog_warn
+from lighteval.utils import NO_OPENAI_ERROR_MSG, is_openai_available
 
 
 class JudgeOpenAI:
@@ -112,6 +113,9 @@ class JudgeOpenAI:
             Exception: If an error occurs during the API call.
         """
         if self.client is None:
+            if not is_openai_available():
+                raise ImportError(NO_OPENAI_ERROR_MSG)
+
             from openai import OpenAI
 
             self.client = OpenAI(api_key=self.openai_api_key)

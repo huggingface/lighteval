@@ -227,7 +227,7 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    llm_judge_multi_turn = SampleLevelMetricGrouping(
+    llm_judge_multi_turn_openai = SampleLevelMetricGrouping(
         metric=["single_turn", "multi_turn"],
         higher_is_better=True,
         category=MetricCategory.LLM_AS_JUDGE_MULTI_TURN,
@@ -242,7 +242,7 @@ class Metrics(Enum):
             "multi_turn": np.mean,
         },
     )
-    llm_judge = SampleLevelMetricGrouping(
+    llm_judge_openai = SampleLevelMetricGrouping(
         metric=["judge_score"],
         higher_is_better=True,
         category=MetricCategory.LLM_AS_JUDGE,
