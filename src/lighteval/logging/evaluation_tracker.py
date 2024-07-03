@@ -193,10 +193,10 @@ class EvaluationTracker:
 
         if push_results_to_hub:
             self.api.upload_folder(
-                repo_id=self.hub_results_repo if public else self.hub_private_results_repo,
+                repo_id=self.general_config_logger.config.lighteval.logging.hub_repo_tensorboard,
                 folder_path=output_dir_results,
-                path_in_repo=self.general_config_logger.model_name,
-                repo_type="dataset",
+                path_in_repo="results/" + self.general_config_logger.model_name,
+                # repo_type="dataset",
                 commit_message=f"Updating model {self.general_config_logger.model_name}",
             )
 

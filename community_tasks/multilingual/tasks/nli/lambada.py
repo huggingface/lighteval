@@ -12,7 +12,7 @@ class LambadaTask(LightevalTaskConfig):
     def __init__(self, lang: LANGS):
         self.lang = lang
         super().__init__(
-            name=f"lambada_{lang}",
+            name=f"lambada-{lang}",
             prompt_function=lambada,
             suite=("custom",),
             hf_repo="EleutherAI/lambada_openai",

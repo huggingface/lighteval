@@ -1,22 +1,22 @@
 from typing import Literal
 
-from ..utils.prompts import get_paws_x_prompt
+from ..utils.prompts import get_xnli_prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-LANGS = Literal["de", "en", "es", "fr", "ja", "ko", "zh"]
+LANGS = Literal["as", "bn", "gu", "hi", "kn", "ml", "mr", "or", "pa", "ta", "te"]
 
 
-class PawnsXTask(LightevalTaskConfig):
+class XNLIIndicTask(LightevalTaskConfig):
     def __init__(self, lang: LANGS):
         super().__init__(
-            name=f"pawns-{lang}",
+            name=f"xnli-{lang}",
             suite=("custom",),
-            prompt_function=get_paws_x_prompt(lang),
-            hf_repo="google-research-datasets/paws-x",
+            prompt_function=get_xnli_prompt(lang),
+            hf_repo="Divyanshu/indicxnli",
             hf_subset=lang,
-            evaluation_splits=("test",),
+            evaluation_splits=("validation",),
             few_shots_split="train",
             few_shots_select=None,
             generation_size=-1,

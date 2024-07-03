@@ -573,6 +573,12 @@ class BaseModel(LightevalModel):
                     ],
                     padded=[sum(mask == 0) for mask in tokenized["attention_mask"]],
                 )
+                
+                # The above assumption is rather optimistic, as we can get less than 1 letter per token (e.g. chinese)
+                # TODO: ADD this to nanotron too
+                if max_new_tokens > self.max_length - prepared_batch.input_ids.shape[1]:
+                    max_new_tokens = self.max_length - prepared_batch.input_ids.shape[1]
+                    hlog(f"Using max_new_tokens = {max_new_tokens} based on remaining context length")
 
                 cur_reponses = self._generate(
                     batch=prepared_batch,

@@ -65,9 +65,9 @@ def bootstrap_stderr(metric: Callable, population: list, number_experiments: int
     by sampling said population for number_experiments and recomputing the metric on the
     different samplings.
     """
-    import multiprocessing as mp
+    from multiprocess import Pool, cpu_count
 
-    pool = mp.Pool(mp.cpu_count())
+    pool = Pool(cpu_count())
 
     res = []
     number_draws = min(1000, number_experiments)

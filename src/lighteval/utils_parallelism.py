@@ -47,9 +47,13 @@ def should_reduce_batch_size(exception: Exception) -> bool:
         "CUDA out of memory.",  # CUDA OOM
         "cuDNN error: CUDNN_STATUS_NOT_SUPPORTED.",  # CUDNN SNAFU
         "DefaultCPUAllocator: can't allocate memory",  # CPU OOM
+        "Triton Error [CUDA]: an illegal memory access was encountered",  # Triton OOM
     ]
+    
     if isinstance(exception, RuntimeError) and len(exception.args) == 1:
-        return any(err in exception.args[0] for err in _statements)
+        res = any(err in exception.args[0] for err in _statements)
+        return res
+    
     return False
 
 
@@ -101,7 +105,11 @@ def find_executable_batch_size(function: callable = None, starting_batch_size: i
             if batch_size == 0:
                 raise RuntimeError("No executable batch size found, reached zero.")
             try:
-                return function(batch_size, *args, **kwargs)
+                res = function(batch_size, *args, **kwargs)
+                # Clean up the GPU
+                gc.collect()
+                torch.cuda.empty_cache()
+                return res
             except Exception as e:
                 if should_reduce_batch_size(e):
                     gc.collect()

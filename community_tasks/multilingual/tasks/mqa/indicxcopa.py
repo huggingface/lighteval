@@ -6,26 +6,19 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from ..utils.prompts import get_copa_prompt
 
 
-LANGS = Literal["ar", "et", "ht", "it", "id", "qu", "sw", "zh", "ta", "th", "tr", "vi"]
+LANGS = Literal["as", "bn", "en", "gom", "gu", "hi", "kn", "mai", "ml", "mr", "ne", "or", "pa", "sa", "sat", "sd", "ta", "te", "ur"]
 
 
-class XCopaTask(LightevalTaskConfig):
+class XCopaIndicTask(LightevalTaskConfig):
     def __init__(self, lang: LANGS):
-        repo = "xcopa" if lang != "ar" else "OALL/AlGhafa-Arabic-LLM-Benchmark-Translated"
-        subset = lang if lang != "ar" else "copa_ext_ar"
-        #TODO: The ar also has fewshots
+        subset = f"translation-{lang}"
         super().__init__(
             name=f"xcopa-{lang}",
             suite=("custom",),
             prompt_function=get_copa_prompt(lang),
-            hf_repo=repo,
+            hf_repo="ai4bharat/IndicCOPA",
             hf_subset=subset,
             evaluation_splits=("test",),
-            few_shots_split=None,
-            few_shots_select=None,
-            generation_size=-1,
             metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace, Metrics.loglikelihood_acc_norm_pmi),
-            stop_sequence=("\n",),
             trust_dataset=True,
-            version=0,
         )

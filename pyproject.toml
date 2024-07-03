@@ -59,6 +59,7 @@ dependencies = [
     "torch>=2.0",
     "GitPython>=3.1.41", # for logging
     "datasets>=2.14.0",
+    "multiprocess", # For better multiprocessing support
     # Prettiness
     "termcolor==2.3.0",
     "pytablewriter",

@@ -1,4 +1,12 @@
-x = [
+from ast import List
+from typing import Literal
+
+from ..utils.prompts import get_cmllu_prompt
+from lighteval.metrics.metrics import Metrics
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
+
+
+CMMLU_TASK_TYPE = Literal[
     "agronomy",
     "anatomy",
     "ancient_chinese",
@@ -67,3 +75,21 @@ x = [
     "world_history",
     "world_religions",
 ]
+
+class CMMLUTask(LightevalTaskConfig):
+    def __init__(self, task: CMMLU_TASK_TYPE):
+        self.task = task
+        super().__init__(
+            name=f"cmmlu:{task}",
+            prompt_function=get_cmllu_prompt("zh"),
+            suite=("custom",),
+            hf_repo="haonan-li/cmmlu",
+            hf_subset=task,
+            evaluation_splits=("test",),
+            few_shots_split="dev",
+            metric=(
+                Metrics.loglikelihood_acc,
+                Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_pmi,
+            ),
+        )

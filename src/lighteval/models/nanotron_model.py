@@ -31,7 +31,7 @@ import transformers
 from datasets.download.streaming_download_manager import xPath
 from nanotron import distributed as dist
 from nanotron import logging
-from nanotron.config import LightEvalConfig, ModelArgs, ParallelismArgs, TokenizerArgs
+from nanotron.config import LightEvalConfig, ModelArgs, ParallelismArgs, TokenizerArgs, Config, ProfilerArgs
 from nanotron.generation.decode import decode_tokenized
 from nanotron.logging import human_format, log_rank
 from nanotron.models import build_model
@@ -322,9 +322,12 @@ class NanotronLightevalModel(LightevalModel):
         def forward_batch(batch_size):
             logger.warning(f"Testing batch size {batch_size}")
             test_batch = torch.ones(
-                (batch_size + int(0.1 * batch_size), max_input_length), device=self.device
+                (batch_size + int(0.35 * batch_size), max_input_length), device=self.device
             ).long()  # We add 10% for marging :)
-            F.log_softmax(self._model_call(test_batch).float(), dim=-1).cpu()
+            input_mask = torch.ones_like(test_batch, dtype=torch.bool, device=self.device)
+            F.log_softmax(self._model_call(test_batch, input_mask).float(), dim=-1).cpu()
+            del test_batch
+            del input_mask
             return batch_size
 
         batch_size = forward_batch()
@@ -348,8 +351,8 @@ class NanotronLightevalModel(LightevalModel):
     def tok_decode(self, tokens: torch.LongTensor) -> List[str]:
         return self.tokenizer.batch_decode(tokens, skip_special_tokens=True)
 
-    def _model_call(self, inputs: torch.Tensor) -> torch.Tensor:
-        return self.model(inputs)
+    def _model_call(self, inputs: torch.Tensor, input_mask: torch.Tensor) -> torch.Tensor:
+        return self.model(input_ids=inputs, input_mask=input_mask)
 
     def _encode_pair(self, context, continuation):
         n_spaces = len(context) - len(context.rstrip())
@@ -911,8 +914,10 @@ class NanotronLightevalModel(LightevalModel):
             context_enc = dataset[0].tokenized_context
             continuation_enc = dataset[0].tokenized_continuation
 
+            # Assert that the first continuation + context is the longest
             max_context = len((context_enc + continuation_enc)[-(self.max_length + 1) :][:-1])
 
+            # Get the mem allocated
             batch_size = self._get_batch_size(
                 override_bs=override_bs, max_input_length=max_context, starting_batch_size=starting_batch_size
             )
@@ -1250,6 +1255,9 @@ class NanotronLightevalModel(LightevalModel):
                     ],
                     padded=[sum(mask == 0) for mask in tokenized["attention_mask"]],
                 )
+                if max_new_tokens > self.max_length - batch_model.input_ids.shape[1]:
+                    max_new_tokens = self.max_length - batch_model.input_ids.shape[1]
+                    hlog_warn(f"Using max_new_tokens = {max_new_tokens} based on remaining context length")
 
                 # responses, logits and input_ids have all been gathered accross GPUs already
                 # but we also grab the original length of these vectors, which have been padded

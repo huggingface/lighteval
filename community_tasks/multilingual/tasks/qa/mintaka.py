@@ -1,7 +1,7 @@
 from typing import Literal
 
-from community_tasks.multilingual.tasks.utils.metrics import get_qa_metric
-from community_tasks.multilingual.tasks.utils.prompts import get_mintaka_prompt
+from ..utils.metrics import get_qa_metric
+from ..utils.prompts import get_mintaka_prompt
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
@@ -12,7 +12,7 @@ LANGS = Literal["ar", "de", "en", "es", "fr", "hi", "it", "ja", "pt"]
 class MintakaTask(LightevalTaskConfig):
     def __init__(self, lang: LANGS):
         super().__init__(
-            name=f"mintaka:{lang}",
+            name=f"mintaka-{lang}",
             prompt_function=get_mintaka_prompt(lang),
             suite=("custom",),
             hf_repo="AmazonScience/mintaka",

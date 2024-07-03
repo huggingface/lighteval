@@ -25,7 +25,7 @@
 # pylint: disable=C0103,W0221,W0106
 # Replace summ_eval.data_stats_metric
 from collections import Counter
-from multiprocessing import Pool
+from multiprocess import Pool
 
 import spacy
 

@@ -1,7 +1,7 @@
 from typing import Literal
 
-from community_tasks.multilingual.tasks.utils.metrics import get_qa_metric
-from community_tasks.multilingual.tasks.utils.prompts import get_mlqa_prompt
+from ..utils.metrics import get_qa_metric
+from ..utils.prompts import get_mlqa_prompt
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
@@ -12,7 +12,7 @@ LANGS = Literal["ar", "en", "hi", "ru", "th", "tr", "zh"]
 class XquadTask(LightevalTaskConfig):
     def __init__(self, lang: LANGS):
         super().__init__(
-            name=f"xquad:{lang}",
+            name=f"xquad-{lang}",
             prompt_function=get_mlqa_prompt(lang),
             suite=("custom",),
             hf_repo="google/xquad",

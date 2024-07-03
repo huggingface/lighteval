@@ -6,7 +6,7 @@ from typing import Literal
 
 import numpy as np
 
-from community_tasks.multilingual.tasks.utils.translation_literals import LANGS
+from ..utils.translation_literals import LANGS
 from lighteval.metrics.metrics_sample import ExactMatches, F1_score
 from lighteval.metrics.utils import MetricCategory, MetricUseCase, SampleLevelMetric
 

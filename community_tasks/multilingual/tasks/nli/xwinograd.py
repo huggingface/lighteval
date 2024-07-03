@@ -11,7 +11,7 @@ LANGS = Literal["zh", "ru", "fr", "en"]
 class XWinogradeTask(LightevalTaskConfig):
     def __init__(self, lang: LANGS):
         super().__init__(
-            name=f"xwinograd:{lang}",
+            name=f"xwinograd-{lang}",
             suite=("custom",),
             prompt_function=winogrande,
             hf_repo="Muennighoff/xwinograd",
@@ -25,3 +25,9 @@ class XWinogradeTask(LightevalTaskConfig):
             output_regex=None,
             version=0,
         )
+
+
+#TODO: Add thai wsc (it's a bit non-trivial and time consuming)
+# https://huggingface.co/datasets/pakphum/winograd_th?row=2
+# https://github.com/PhakphumAdev/Thai-Winograd/blob/main/prompt_eval.py
+# https://huggingface.co/datasets/pakphum/winograd_th?row=2

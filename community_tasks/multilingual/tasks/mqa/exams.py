@@ -1,6 +1,6 @@
 from typing import Literal
 
-from community_tasks.multilingual.tasks.utils.prompts import get_m_exams_prompt
+from ..utils.prompts import get_m_exams_prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
@@ -13,7 +13,7 @@ class ExamsTask(LightevalTaskConfig):
     def __init__(self, lang: LANGS):
         self.lang = lang
         super().__init__(
-            name=f"m_exams:{lang}",
+            name=f"exams-{lang}",
             prompt_function=get_m_exams_prompt(lang),
             suite=("custom",),
             hf_repo="mhardalov/exams",

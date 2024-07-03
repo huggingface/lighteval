@@ -25,13 +25,13 @@ from typing import Literal
 from datasets import get_dataset_split_names
 from langcodes import standardize_tag
 
-from community_tasks.multilingual.tasks.utils.prompts import get_m_belebele_prompt
+from ..utils.prompts import get_m_belebele_prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 # TODO all supported langauges
-LANGS = Literal["en", "bg", "hr", "hu", "it", "mk", "pl", "pt", "sq", "sr", "tr", "vi", "zh"]
+LANGS = Literal["en", "bg", "hr", "hu", "it", "mk", "pl", "pt", "sq", "sr", "tr", "vi", "zh", "te", "th", "sw", "hi", "ru"]
 
 
 # We convert from made-up codes to "standard" codes 😎, ignoring the script
@@ -51,7 +51,7 @@ class BelebeleTask(LightevalTaskConfig):
             )
         split = splits[0]
         super().__init__(
-            name=f"belebele:{lang}",
+            name=f"belebele-{lang}",
             prompt_function=get_m_belebele_prompt(lang),
             suite=("custom",),
             hf_repo="facebook/belebele",

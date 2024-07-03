@@ -22,19 +22,19 @@
 
 from typing import Literal
 
-from community_tasks.multilingual.tasks.utils.prompts import get_m_m3exam_prompt
-from community_tasks.multilingual.tasks.utils.translation_literals import LANG_NAMES_INVERTED
+from ..utils.prompts import get_m_m3exam_prompt
+from ..utils.translation_literals import LANG_NAMES_INVERTED
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-LANGS = Literal["zh", "ru", "fr", "en", "es", "de", "ja"]
+LANGS = Literal["zh", "ru", "fr", "en", "es", "de", "ja", "th", "sw"]
 
 
 class M3ExamTask(LightevalTaskConfig):
     def __init__(self, lang: LANGS):
         super().__init__(
-            name=f"m3exam:{lang}",
+            name=f"m3exam-{lang}",
             suite=("custom",),
             prompt_function=get_m_m3exam_prompt(lang),
             hf_repo="chiayewken/m3exam",

@@ -40,7 +40,7 @@ def apply_target_perplexity_metric(results: Sequence[ModelReturn], formatted_doc
     for metric in metrics:
         if metric.category == MetricCategory.TARGET_PERPLEXITY:
             outputs.update(
-                Metrics[metric].value.compute(
+                metric.compute(
                     logprobs=target_logprob, target_acc=target_acc, reference_text=reference_text
                 )
             )

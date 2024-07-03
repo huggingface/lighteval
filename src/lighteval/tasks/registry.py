@@ -25,6 +25,7 @@ import importlib
 import os
 from pathlib import Path
 from pprint import pformat
+import sys
 from types import ModuleType
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -164,6 +165,9 @@ def create_custom_tasks_module(custom_tasks: Union[str, ModuleType]) -> ModuleTy
     Returns:
         ModuleType: The newly imported/created custom tasks modules
     """
+
+
+    hlog(f"Seacrching for custom tasks: {custom_tasks} in {sys.path}")
     if isinstance(custom_tasks, ModuleType):
         return custom_tasks
     if isinstance(custom_tasks, (str, Path)) and os.path.exists(custom_tasks):

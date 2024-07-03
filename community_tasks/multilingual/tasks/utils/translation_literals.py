@@ -22,6 +22,8 @@ LANG_NAMES = {
     "vietnamese": "vi",
 }
 
+NO_PUNCT_LANGS = ["th"]
+
 LANG_NAMES_INVERTED = {v: k for k, v in LANG_NAMES.items()}
 
 
@@ -51,7 +53,6 @@ ANSWER = {
 }
 
 # Harness cfg
-# TODO: AUTOGENERATE CHECK THESE
 # We sure the XNLI definitions from eval harness
 NLI_QUESTION = {
     "ar": "صحيح",
@@ -63,7 +64,7 @@ NLI_QUESTION = {
     "fr": "correct",
     "hi": "सही",
     "ru": "правильно",
-    "sw": "sahihi",
+    "sw": "sawa",
     "th": "ถูกต้อง",
     "tr": "doğru",
     "ur": "صحیح",
@@ -90,7 +91,7 @@ ENTAILMENT_LABELS = {
 }
 
 NEUTRAL_LABELS = {
-    "ar": "لذا",
+    "ar": "و",
     "bg": "така",
     "de": "Auch",
     "el": "Έτσι",
@@ -108,7 +109,7 @@ NEUTRAL_LABELS = {
 }
 
 CONTRADICTION_LABELS = {
-    "ar": "رقم",
+    "ar": "لا",
     "bg": "не",
     "de": "Nein",
     "el": "όχι",
@@ -127,4 +128,53 @@ CONTRADICTION_LABELS = {
 
 IMPOSSIBLE = {
     "fr": "Impossible",
+}
+
+
+CORRECT_LABELS = {
+    "ar": "صح"
+}
+
+INCORRECT_LABELS = {
+    "ar": "خطأ"
+}
+
+YES_LABELS = {
+    "ar": "نعم"
+}
+
+NO_LABELS = {
+    "ar": "لا"
+}
+
+CAUSE_LABELS = {
+    "ar": "لأن",
+    "en": "because",
+    "et": "sest",
+    "ht": "poukisa",
+    "it": "perché",
+    "id": "karena",
+    "qu": "imataq",
+    "sw": "kwa sababu",
+    "zh": "因为",
+    "ta": "காரணமாக",
+    "th": "เพราะ",
+    "tr": "çünkü",
+    "vi": "bởi vì"
+}
+
+EFFECT_LABELS = {
+    "ar": "لذلك",
+    "en": "therefore",
+    "et": "seetõttu",
+    "ht": "donk sa",
+    "it": "quindi",
+    "id": "maka",
+    "qu": "chaymi",
+    "sw": "kwa hiyo",
+    "zh": "所以",
+    "ta": "எனவே",
+    "th": "ดังนั้น",
+    "tr": "bu yüzden",
+    "vi": "vì vậy"
 }

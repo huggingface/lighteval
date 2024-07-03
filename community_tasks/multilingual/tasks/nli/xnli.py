@@ -1,6 +1,6 @@
 from typing import Literal
 
-from community_tasks.multilingual.tasks.utils.prompts import get_xnli_prompt
+from ..utils.prompts import get_xnli_prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
@@ -11,7 +11,7 @@ LANGS = Literal["ar", "bg", "de", "el", "en", "es", "fr", "hi", "ru", "sw", "th"
 class XNLITask(LightevalTaskConfig):
     def __init__(self, lang: LANGS):
         super().__init__(
-            name=f"xnli:{lang}",
+            name=f"xnli-{lang}",
             suite=("custom",),
             prompt_function=get_xnli_prompt(lang),
             hf_repo="facebook/xnli",

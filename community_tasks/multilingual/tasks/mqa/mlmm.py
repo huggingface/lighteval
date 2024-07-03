@@ -1,28 +1,29 @@
 from typing import Literal
 
-from community_tasks.multilingual.tasks.utils.prompts import get_m_arc_prompt, m_hellaswag_prompt
+from ..utils.prompts import get_arc_prompt, get_hellaswag_prompt, get_m_truthfulqa_prompt, get_mmlu_prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+# trust_dataset is a bit scary and thus we lock the commit
 LANGS = Literal["en", "ar", "zh", "ru", "fr", "hi", "te"]
 
 
 class M_HellaSwagTask(LightevalTaskConfig):
     def __init__(self, lang: LANGS):
-        self.lang = lang
         super().__init__(
-            name=f"m_hellaswag_{lang}",
-            prompt_function=m_hellaswag_prompt,
+            name=f"hellaswag-{lang}",
+            prompt_function=get_hellaswag_prompt(lang),
             suite=("custom",),
-            hf_repo="alexandrainst/m_hellaswag",
+            hf_repo="jon-tow/okapi_hellaswag",
             hf_subset=lang,
-            evaluation_splits=("val",),
+            hf_revision="96ed8e0dfc6172dad1d3df338d7b8ba6c1ff9d83",
+            trust_dataset=True,
+            evaluation_splits=("validation",),
             metric=(
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
                 Metrics.loglikelihood_acc_norm_pmi,
-                Metrics.loglikelihood_acc_norm_nospace_pmi,
             ),
         )
 
@@ -30,16 +31,16 @@ class M_HellaSwagTask(LightevalTaskConfig):
 # TODO define the few-shot split
 class M_MMLUTask(LightevalTaskConfig):
     def __init__(self, lang: LANGS):
-        self.lang = lang
         super().__init__(
-            name=f"m_mmlu_{lang}",
-            prompt_function=get_m_arc_prompt(lang),
+            name=f"mmlu-{lang}",
+            prompt_function=get_mmlu_prompt(lang),
             suite=("custom",),
-            hf_repo="alexandrainst/m_mmlu",
+            hf_repo="jon-tow/okapi_mmlu",
             hf_subset=lang,
-            evaluation_splits=("val",),
-            generation_size=-1,
-            stop_sequence=("\n",),
+            hf_revision="5d8c41172a1d463f718c793595308eb35f4fca02",
+            trust_dataset=True,
+            evaluation_splits=("test",),
+            few_shots_split="dev",
             metric=(
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
@@ -50,19 +51,37 @@ class M_MMLUTask(LightevalTaskConfig):
 
 class M_ARCTask(LightevalTaskConfig):
     def __init__(self, lang: LANGS):
-        self.lang = lang
         super().__init__(
-            name=f"m_arc_{lang}",
-            prompt_function=get_m_arc_prompt(lang),
+            name=f"arc-{lang}",
+            prompt_function=get_arc_prompt(lang),
             suite=("custom",),
-            hf_repo="alexandrainst/m_arc",
+            hf_repo="jon-tow/okapi_arc_challenge",
             hf_subset=lang,
-            evaluation_splits=("val",),
-            generation_size=-1,
-            stop_sequence=("\n",),
+            hf_revision="823d5d7bfaf8974a3ab52a825b6cf4903b35dbc4",
+            trust_dataset=True,
+            evaluation_splits=("test",),
+            few_shots_split="train",
             metric=(
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
                 Metrics.loglikelihood_acc_norm_pmi,
             ),
+        )
+
+class M_TruthfulQATask(LightevalTaskConfig):
+    def __init__(self, lang: LANGS, type: Literal["mc1", "mc2"]):
+        super().__init__(
+            name=f"truthfulqa-{lang}:{type}",
+            prompt_function=get_m_truthfulqa_prompt(lang, type),
+            suite=("custom",),
+            hf_repo="jon-tow/okapi_truthfulqa",
+            hf_subset=lang,
+            hf_revision="cdd5db1a66fd04105622109d1c2a5cbc8cde7586",
+            trust_dataset=True,
+            evaluation_splits=("validation",),
+            metric=(
+                Metrics.loglikelihood_acc,
+                Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_pmi,
+            )
         )
