@@ -29,7 +29,7 @@ class ARCSwTask(LightevalTaskConfig):
         repo = f"Mollel/ARC_{subset.capitalize()}_SWH"
         super().__init__(
             name=f"arc-sw:{subset}",
-            prompt_function=get_arc_prompt("sw"),
+            prompt_function=get_arc_prompt("sw", nested_choices=True),
             suite=("custom",),
             hf_repo=repo,
             hf_subset="default",

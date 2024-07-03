@@ -1,12 +1,8 @@
 from typing import get_args
 
-from community_tasks.multilingual.tasks.qa.mintaka import MintakaTask
-
+from ..tasks.qa.mintaka import MintakaTask
 from ..tasks.mqa.exams import ExamsTask
 from ..tasks.nli.lambada import LambadaTask
-from ..tasks.mqa.agieval import CHINESE_AGIEVAL_TASK_TYPE, ChineseAgievalTask
-from ..tasks.mqa.ceval import CEVAL_TASK_TYPE, CEvalTask
-from ..tasks.mqa.cmmlu import CMMLU_TASK_TYPE, CMMLUTask
 from ..tasks.mqa.mlmm import M_ARCTask, M_HellaSwagTask, M_MMLUTask, M_TruthfulQATask
 from ..tasks.mqa_with_context.belebele import BelebeleTask
 from ..tasks.mqa_with_context.m3exam import M3ExamTask

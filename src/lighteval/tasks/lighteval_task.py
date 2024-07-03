@@ -689,9 +689,9 @@ def download_dataset_worker(dataset_path: str, dataset_config_name: str, trust_d
     Worker function to download a dataset from the HuggingFace Hub.
     Used for parallel dataset loading.
     """
-    # print(f"Downloading dataset from {dataset_path} with config {dataset_config_name}")
-    # print(f"Trust dataset: {trust_dataset}")
-    # print(f"HF revision: {hf_revision}")
+    hlog_warn(f"Downloading dataset from {dataset_path} with config {dataset_config_name}")
+    print(f"Trust dataset: {trust_dataset}")
+    print(f"HF revision: {hf_revision}")
     # print(f"Filter fn: {filter_fn}")
     dataset = load_dataset(
         path=dataset_path,

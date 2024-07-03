@@ -3,7 +3,7 @@
 
 from typing import Literal
 
-from community_tasks.multilingual.tasks.utils.metrics import get_qa_metric
+from ..utils.metrics import get_qa_metric
 
 from ..utils.prompts import get_chekega_prompt, get_mathqa_prompt, get_openbookqa_prompt, get_parus_prompt, get_rcb_prompt
 from lighteval.metrics.metrics import Metrics

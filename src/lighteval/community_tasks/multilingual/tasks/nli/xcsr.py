@@ -1,6 +1,6 @@
 from typing import Literal
 
-from ..utils.prompts import get_m_xcsr_prompt
+from ..utils.prompts import get_m_xcsr_prompt, xcodah_prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
@@ -14,7 +14,7 @@ class XCODAHTask(LightevalTaskConfig):
         self.lang = lang
         super().__init__(
             name=f"x-codah-{lang}",
-            prompt_function=get_m_xcsr_prompt(lang),
+            prompt_function=xcodah_prompt,
             suite=("custom",),
             hf_repo="INK-USC/xcsr",
             hf_subset=f"X-CODAH-{lang}",

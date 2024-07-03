@@ -38,7 +38,7 @@ class ARCEasyTrTask(LightevalTaskConfig):
     def __init__(self):
         super().__init__(
             name=f"arc-tr",
-            prompt_function=get_arc_prompt("tr"),
+            prompt_function=get_arc_prompt("tr", nested_choices=True),
             suite=("custom",),
             hf_repo="malhajar/arc_tr-v0.2",
             hf_subset="default",

@@ -1,7 +1,7 @@
 # MMML
 
 import re
-from typing import Literal
+from typing import Any, Literal
 
 from ..utils.translation_literals import (
     ANSWER,
@@ -22,6 +22,8 @@ from ..utils.translation_literals import (
 from lighteval.tasks.requests import Doc
 from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 
+PUNCT = "-.!?،؟‽, "
+
 
 # Notes:
 # - For the context we can also put something in front (not implemented right now)
@@ -32,6 +34,9 @@ MULTI_QA_TEMPLATE = "{context}{question_word}: {question}\n{answer_word}:"
 
 def _get_multi_qa_prompt(lang: LANGS):
     def multi_qa_prompt(task_name: str, question: str, answers: list[str], gold_index, context: str | None = None):
+        question = question.strip()
+        context = context.strip() if context else ""
+        answers = [answer.strip() for answer in answers]
         query = MULTI_QA_TEMPLATE.format(
             question=question,
             context=f"{context}\n" if context else "",
@@ -152,6 +157,7 @@ def get_m_xcsr_prompt(lang: LANGS):
 
     return adapter
 
+
 def get_agieval_prompt(lang: Literal["zh"]):
     prefix_re = re.compile(r"^\([A-D]\)")
     prompter = _get_multi_qa_prompt(lang)
@@ -220,8 +226,12 @@ def get_openbookqa_prompt(lang: LANGS):
 # QA-Tasks (No multichoice)
 QA_TEMPLATE = "{topic}{context}{question_word}: {question}\n{answer_word}:"
 def _get_qa_prompt(lang: LANGS):
+    # TODO: I am not sure what gold it should have
     def qa_prompt(
-        task_name: str, question: str, answer: str, context: str | None = None, topic: str | None = None):
+        task_name: str, question: str, answer: list[str], context: str | None = None, topic: str | None = None):
+        question = question.strip()
+        context = context.strip() if context else ""
+        answer = [ans.strip() for ans in answer]
         query = QA_TEMPLATE.format(
             # topic=f"{topic}\n" if topic else "",
             topic="",
@@ -231,7 +241,7 @@ def _get_qa_prompt(lang: LANGS):
             answer_word=ANSWER[lang],
         )
         return Doc(
-            task_name=task_name, query=query, gold_index=0, choices=[answer], uncoditioned_prefix=f"{ANSWER[lang]}:"
+            task_name=task_name, query=query, gold_index=0, choices=answer, uncoditioned_prefix=f"{ANSWER[lang]}:"
         )
 
     return qa_prompt
@@ -244,7 +254,7 @@ def get_mlqa_prompt(lang: LANGS):
 
 def get_mintaka_prompt(lang: LANGS):
     prompter = _get_qa_prompt(lang)
-    return lambda line, task_name: prompter(task_name, line["question"], line["answerText"])
+    return lambda line, task_name: prompter(task_name, line["question"], [line["answerText"]])
 
 def get_cmath_prompt(lang: LANGS):
     prompter = _get_qa_prompt(lang)
@@ -257,7 +267,6 @@ def get_chekega_prompt(lang: LANGS):
 def get_french_trivia_prompt(lang: LANGS):
     prompter = _get_qa_prompt(lang)
     return lambda line, task_name: prompter(task_name, line["Question"], line["Answer"])
-
 
 
 # NLI premise/hypthesis
@@ -274,8 +283,8 @@ def _get_nli_prompt(lang: LANGS, pos_labels: list[Literal["entailment", "neutral
         labels.append(CONTRADICTION_LABELS[lang])
 
     def nli_prompt(task_name: str, premise: str, hypothesis: str, label: int):
-        premise = premise.strip(".").strip()
-        hypothesis = hypothesis.strip(".").strip()
+        premise = premise.rstrip(PUNCT)
+        hypothesis = hypothesis.rstrip(PUNCT)
         return Doc(
             task_name=task_name,
             query="",
@@ -305,7 +314,8 @@ def get_xnli_prompt(lang: LANGS):
 
 
 def get_paws_x_prompt(lang: LANGS):
-    prompter = _get_nli_prompt(lang, ["entailment", "contradiction"])
+    # Each label has two possible values: 0 indicates the pair has different meaning, while 1 indicates the pair is a paraphrase.
+    prompter = _get_nli_prompt(lang, ["contradiction", "entailment"])
     return lambda line, task_name: prompter(task_name, line["sentence1"], line["sentence2"], int(line["label"]))
 
 # NLI Cause/Effect (Copa)
@@ -314,9 +324,8 @@ def _get_copa_prompt(lang: LANGS):
     def copa_prompt(task_name: str, premise: str, cause_or_effect: Literal["cause", "effect"], hypotheses: list[str], gold_index: int):
         # Convert it into He was nice (premise) thus he was nice (hypothesis).
         # We expecte hypotheses and premise to be ended by .
-        assert premise.endswith(".") and all(hyp.endswith(".") for hyp in hypotheses), f"Premise and hypotheses must end with a dot. Premise: {premise}, Hypotheses: {hypotheses}"
-        premise = premise.strip()[:-1]
-        hypotheses = [f"{hyp[0].lower()}{hyp[1:]}" for hyp in hypotheses]
+        premise = premise.rstrip(PUNCT)
+        hypotheses = [hyp.capitalize() for hyp in hypotheses]
         cause_effect_trans = CAUSE_LABELS[lang] if cause_or_effect == "cause" else EFFECT_LABELS[lang]
         return Doc(
             task_name=task_name,
@@ -339,7 +348,7 @@ def _get_copa_prompt(lang: LANGS):
 def get_copa_prompt(lang: LANGS):
     # TODO: solve the punctuation issue
     prompter = _get_copa_prompt(lang)
-    return lambda line, task_name: prompter(task_name, line["premise"], line["question"] ,[line["choice1"], line["choice2"]],  int(line["label"]))
+    return lambda line, task_name: prompter(task_name, line["premise"], line["question"] , [line["choice1"], line["choice2"]],  int(line["label"]))
 
 
 def get_parus_prompt(lang: LANGS):
@@ -394,7 +403,7 @@ def _get_hellaswag_prompt(lang: LANGS):
             text = text.replace(dot_repl, ". ")
         text = re.sub("\\[.*?\\]", "", text)
         text = text.replace("  ", " ")
-        return text
+        return text.strip()
 
     def hellaswag_prompt(task_name: str, ctx: tuple[str, str] | str, endings: list[str], label: int, activity_label: str | None = None):
         ctx = f"{ctx[0]} {ctx[1].capitalize()} " if isinstance(ctx, tuple) else ctx
@@ -409,15 +418,23 @@ def _get_hellaswag_prompt(lang: LANGS):
     )
     return hellaswag_prompt
 
-def get_hellaswag_prompt(lang: LANGS):
+def get_hellaswag_prompt(lang: LANGS, use_activity_label: bool = True):
     prompter = _get_hellaswag_prompt(lang)
-    return lambda line, task_name: prompter(task_name, (line["ctx_a"], line["ctx_b"]), line["endings"], line["label"], activity_label=line.get("activity_label"))
+    return lambda line, task_name: prompter(task_name, (line["ctx_a"], line["ctx_b"]), line["endings"], line["label"], activity_label=line.get("activity_label") if use_activity_label else None)
 
 
-def get_hellaswag_prompt_full_ctx(lang: LANGS):
+def get_hellaswag_prompt_full_ctx(lang: LANGS, use_activity_label: bool = True):
     prompter = _get_hellaswag_prompt(lang)
-    return lambda line, task_name: prompter(task_name, line["ctx"], line["endings"], line["label"])
+    return lambda line, task_name: prompter(task_name, line["ctx"], line["endings"], line["label"], activity_label=line.get("activity_label") if use_activity_label else None)
+
+def xcodah_prompt(line: dict[str, Any], task_name: str):
+    gold_index = line["question"]["choices"]["label"].index(line["answerKey"])
+    return Doc(
+        task_name=task_name,
+        query="",
+        choices=line["question"]["choices"]["text"],
+        gold_index=gold_index,
+        uncoditioned_prefix=None
+    )
 
 # NLI (collocations)
-
-

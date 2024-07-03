@@ -13,7 +13,7 @@ class M_HellaSwagTask(LightevalTaskConfig):
     def __init__(self, lang: LANGS):
         super().__init__(
             name=f"hellaswag-{lang}",
-            prompt_function=get_hellaswag_prompt(lang),
+            prompt_function=get_hellaswag_prompt(lang, use_activity_label=False),
             suite=("custom",),
             hf_repo="jon-tow/okapi_hellaswag",
             hf_subset=lang,
@@ -53,7 +53,7 @@ class M_ARCTask(LightevalTaskConfig):
     def __init__(self, lang: LANGS):
         super().__init__(
             name=f"arc-{lang}",
-            prompt_function=get_arc_prompt(lang),
+            prompt_function=get_arc_prompt(lang, nested_choices=True),
             suite=("custom",),
             hf_repo="jon-tow/okapi_arc_challenge",
             hf_subset=lang,
