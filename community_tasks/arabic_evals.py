@@ -105,40 +105,21 @@ def mmlu_arabic(line, task_name: str = None):
         target_for_fewshot_sorting=LETTER_INDICES_AR[gold_ix],
     )
 
-# mbzuai_arabic_mmlu #
-
-# fmt: off
-MBZUAI_ArabicMMLU_SUBSETS = ["test"]
-# fmt: on
-
-class CustomMBZUAIArabicMMLU(LightevalTaskConfig):
-    def __init__(
-        self,
-        name,
-        hf_subset,
-    ):
-        super().__init__(
-            name=name,
-            hf_subset=hf_subset,
-            prompt_function="mbzuai_arabic_mmlu",
-            hf_repo="MBZUAI/ArabicMMLU",
-            metric=["loglikelihood_acc_norm"],
-            hf_avail_splits=["test"],
-            evaluation_splits=["test"],
-            few_shots_split="test",
-            few_shots_select="sequential",
-            suite=["community"],
-            generation_size=-1,
-            stop_sequence=None,
-            output_regex=None,
-            frozen=False,
-            trust_dataset=True,
-            version=0,
-        )
-
-MBZUAI_ArabicMMLU_TASKS = [
-    CustomMBZUAIArabicMMLU(name=f"mbzuai_arabic_mmlu:{subset}", hf_subset=subset) for subset in MBZUAI_ArabicMMLU_SUBSETS
-]
+# mbzuai_arabic_mmlu
+mbzuai_arabic_mmlu_task = LightevalTaskConfig(
+    name="mbzuai_arabic_mmlu",
+    prompt_function="mbzuai_arabic_mmlu",
+    suite=["community"],
+    hf_repo="MBZUAI/ArabicMMLU",
+    hf_subset="test",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split="validation",
+    few_shots_select="sequential",
+    metric=["loglikelihood_acc_norm"],
+    trust_dataset=True,
+    version=0,
+)
 
 def mbzuai_arabic_mmlu(line, task_name: str = None):
     topic = line["Subject"]
@@ -652,7 +633,7 @@ _TASKS = (
     + [hellaswag_okapi_ar_task]
     + [toxigen_ar_task]
     + [sciq_ar_task]
-    + MBZUAI_ArabicMMLU_TASKS
+    + [mbzuai_arabic_mmlu_task]
 )
 
 # Convert to dict for lighteval
