@@ -140,7 +140,7 @@ MBZUAI_ArabicMMLU_TASKS = [
     CustomMBZUAIArabicMMLU(name=f"mbzuai_arabic_mmlu:{subset}", hf_subset=subset) for subset in MBZUAI_ArabicMMLU_SUBSETS
 ]
 
-def mbzuai_mmlu_arabic(line, task_name: str = None):
+def mbzuai_arabic_mmlu(line, task_name: str = None):
     topic = line["Subject"]
     instruction = f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}. \n\n"
     choices = [line["Option 1"], line["Option 2"],
