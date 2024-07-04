@@ -24,7 +24,6 @@ import os
 
 import numpy as np
 from aenum import Enum
-from pkg_resources import resource_filename
 
 from lighteval.metrics.harness_compatibility.drop import drop_metrics
 from lighteval.metrics.harness_compatibility.truthful_qa import truthfulqa_mc_metrics
