@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import collections
+import os
 import random
 from dataclasses import dataclass
 from multiprocess import Pool
@@ -54,7 +55,7 @@ from lighteval.tasks.requests import (
     RequestType,
     TaskExampleId,
 )
-from lighteval.utils import as_list
+from lighteval.utils import NO_OPENAI_ERROR_MSG, as_list, is_openai_available
 
 from . import tasks_prompt_formatting
 
@@ -259,6 +260,17 @@ class LightevalTask:
         if len(ignored) > 0:
             hlog_warn(f"[WARNING] Not implemented yet: ignoring the metric {' ,'.join(ignored)} for task {self.name}.")
         current_categories = [metric.category for metric in self.metrics]
+        if any(
+            cat in [MetricCategory.LLM_AS_JUDGE, MetricCategory.LLM_AS_JUDGE_MULTI_TURN]
+            for cat in current_categories
+        ):
+            if not is_openai_available():
+                raise ImportError(NO_OPENAI_ERROR_MSG)
+            if os.getenv("OPENAI_API_KEY") is None:
+                raise ValueError(
+                    "Using llm as judge metric but no OPEN_API_KEY were found, please set it with: export OPEN_API_KEY={yourkey}"
+                )
+
         self.has_metric_category = {category: (category in current_categories) for category in MetricCategory}
         # Sub-optimal system - we might want to store metric parametrisation in a yaml conf for example
         # We assume num_samples always contains 1 (for base generative evals)

@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 from typing import Callable
+import os
 
 import numpy as np
 from aenum import Enum
@@ -229,14 +230,14 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    llm_judge_multi_turn = SampleLevelMetricGrouping(
+    llm_judge_multi_turn_openai = SampleLevelMetricGrouping(
         metric=["single_turn", "multi_turn"],
         higher_is_better=True,
         category=MetricCategory.LLM_AS_JUDGE_MULTI_TURN,
         use_case=MetricUseCase.SUMMARIZATION,
         sample_level_fn=JudgeLLM(
             judge_model_name="gpt-3.5-turbo",
-            template_path="src/lighteval/tasks/extended/mt_bench/judge_prompts.jsonl",
+            template_path=os.path.join(os.path.dirname(__file__), "judge_prompts.jsonl"),
             multi_turn=True,
         ).compute,
         corpus_level_fn={
@@ -244,14 +245,14 @@ class Metrics(Enum):
             "multi_turn": np.mean,
         },
     )
-    llm_judge = SampleLevelMetricGrouping(
+    llm_judge_openai = SampleLevelMetricGrouping(
         metric=["judge_score"],
         higher_is_better=True,
         category=MetricCategory.LLM_AS_JUDGE,
         use_case=MetricUseCase.SUMMARIZATION,
         sample_level_fn=JudgeLLM(
             judge_model_name="gpt-3.5-turbo",
-            template_path="src/lighteval/tasks/extended/mt_bench/judge_prompts.jsonl",
+            template_path=os.path.join(os.path.dirname(__file__), "", "judge_prompts.jsonl"),
             multi_turn=False,
         ).compute,
         corpus_level_fn={
