@@ -22,7 +22,7 @@
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-abstract_narrative_understanding = LightevalTaskConfig(
+abstract_narrative_understanding_bigbench = LightevalTaskConfig(
     name="abstract_narrative_understanding",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -40,7 +40,7 @@ abstract_narrative_understanding = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-agieval_aqua_rat = LightevalTaskConfig(
+agieval_aqua_rat_lighteval = LightevalTaskConfig(
     name="agieval:aqua-rat",
     suite=["lighteval"],
     prompt_function="agieval",
@@ -58,7 +58,7 @@ agieval_aqua_rat = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-agieval_gaokao_biology = LightevalTaskConfig(
+agieval_gaokao_biology_lighteval = LightevalTaskConfig(
     name="agieval:gaokao-biology",
     suite=["lighteval"],
     prompt_function="agieval",
@@ -76,7 +76,7 @@ agieval_gaokao_biology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-agieval_gaokao_chemistry = LightevalTaskConfig(
+agieval_gaokao_chemistry_lighteval = LightevalTaskConfig(
     name="agieval:gaokao-chemistry",
     suite=["lighteval"],
     prompt_function="agieval",
@@ -94,7 +94,7 @@ agieval_gaokao_chemistry = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-agieval_gaokao_chinese = LightevalTaskConfig(
+agieval_gaokao_chinese_lighteval = LightevalTaskConfig(
     name="agieval:gaokao-chinese",
     suite=["lighteval"],
     prompt_function="agieval",
@@ -112,7 +112,7 @@ agieval_gaokao_chinese = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-agieval_gaokao_english = LightevalTaskConfig(
+agieval_gaokao_english_lighteval = LightevalTaskConfig(
     name="agieval:gaokao-english",
     suite=["lighteval"],
     prompt_function="agieval",
@@ -130,7 +130,7 @@ agieval_gaokao_english = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-agieval_gaokao_geography = LightevalTaskConfig(
+agieval_gaokao_geography_lighteval = LightevalTaskConfig(
     name="agieval:gaokao-geography",
     suite=["lighteval"],
     prompt_function="agieval",
@@ -148,7 +148,7 @@ agieval_gaokao_geography = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-agieval_gaokao_history = LightevalTaskConfig(
+agieval_gaokao_history_lighteval = LightevalTaskConfig(
     name="agieval:gaokao-history",
     suite=["lighteval"],
     prompt_function="agieval",
@@ -166,7 +166,7 @@ agieval_gaokao_history = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-agieval_gaokao_mathqa = LightevalTaskConfig(
+agieval_gaokao_mathqa_lighteval = LightevalTaskConfig(
     name="agieval:gaokao-mathqa",
     suite=["lighteval"],
     prompt_function="agieval",
@@ -184,7 +184,7 @@ agieval_gaokao_mathqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-agieval_gaokao_physics = LightevalTaskConfig(
+agieval_gaokao_physics_lighteval = LightevalTaskConfig(
     name="agieval:gaokao-physics",
     suite=["lighteval"],
     prompt_function="agieval",
@@ -202,7 +202,7 @@ agieval_gaokao_physics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-agieval_logiqa_en = LightevalTaskConfig(
+agieval_logiqa_en_lighteval = LightevalTaskConfig(
     name="agieval:logiqa-en",
     suite=["lighteval"],
     prompt_function="agieval",
@@ -220,7 +220,7 @@ agieval_logiqa_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-agieval_logiqa_zh = LightevalTaskConfig(
+agieval_logiqa_zh_lighteval = LightevalTaskConfig(
     name="agieval:logiqa-zh",
     suite=["lighteval"],
     prompt_function="agieval",
@@ -238,7 +238,7 @@ agieval_logiqa_zh = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-agieval_lsat_ar = LightevalTaskConfig(
+agieval_lsat_ar_lighteval = LightevalTaskConfig(
     name="agieval:lsat-ar",
     suite=["lighteval"],
     prompt_function="agieval",
@@ -256,7 +256,7 @@ agieval_lsat_ar = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-agieval_lsat_lr = LightevalTaskConfig(
+agieval_lsat_lr_lighteval = LightevalTaskConfig(
     name="agieval:lsat-lr",
     suite=["lighteval"],
     prompt_function="agieval",
@@ -274,7 +274,7 @@ agieval_lsat_lr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-agieval_lsat_rc = LightevalTaskConfig(
+agieval_lsat_rc_lighteval = LightevalTaskConfig(
     name="agieval:lsat-rc",
     suite=["lighteval"],
     prompt_function="agieval",
@@ -292,7 +292,7 @@ agieval_lsat_rc = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-agieval_sat_en = LightevalTaskConfig(
+agieval_sat_en_lighteval = LightevalTaskConfig(
     name="agieval:sat-en",
     suite=["lighteval"],
     prompt_function="agieval",
@@ -310,7 +310,7 @@ agieval_sat_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-agieval_sat_en_without_passage = LightevalTaskConfig(
+agieval_sat_en_without_passage_lighteval = LightevalTaskConfig(
     name="agieval:sat-en-without-passage",
     suite=["lighteval"],
     prompt_function="agieval",
@@ -328,7 +328,7 @@ agieval_sat_en_without_passage = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-agieval_sat_math = LightevalTaskConfig(
+agieval_sat_math_lighteval = LightevalTaskConfig(
     name="agieval:sat-math",
     suite=["lighteval"],
     prompt_function="agieval",
@@ -346,7 +346,7 @@ agieval_sat_math = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-anachronisms = LightevalTaskConfig(
+anachronisms_bigbench = LightevalTaskConfig(
     name="anachronisms",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -364,7 +364,7 @@ anachronisms = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-analogical_similarity = LightevalTaskConfig(
+analogical_similarity_bigbench = LightevalTaskConfig(
     name="analogical_similarity",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -382,7 +382,7 @@ analogical_similarity = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-analytic_entailment = LightevalTaskConfig(
+analytic_entailment_bigbench = LightevalTaskConfig(
     name="analytic_entailment",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -400,7 +400,7 @@ analytic_entailment = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-anli = LightevalTaskConfig(
+anli_lighteval = LightevalTaskConfig(
     name="anli",
     suite=["lighteval", "anli"],
     prompt_function="anli",
@@ -428,7 +428,7 @@ anli = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-anli_r1 = LightevalTaskConfig(
+anli_r1_lighteval = LightevalTaskConfig(
     name="anli:r1",
     suite=["lighteval", "anli"],
     prompt_function="anli",
@@ -446,7 +446,7 @@ anli_r1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-anli_r2 = LightevalTaskConfig(
+anli_r2_lighteval = LightevalTaskConfig(
     name="anli:r2",
     suite=["lighteval", "anli"],
     prompt_function="anli",
@@ -464,7 +464,7 @@ anli_r2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-anli_r3 = LightevalTaskConfig(
+anli_r3_lighteval = LightevalTaskConfig(
     name="anli:r3",
     suite=["lighteval", "anli"],
     prompt_function="anli",
@@ -482,7 +482,7 @@ anli_r3 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-arc_c_letters = LightevalTaskConfig(
+arc_c_letters_original = LightevalTaskConfig(
     name="arc:c:letters",
     suite=["original", "arc"],
     prompt_function="arc_with_options_letters_predict",
@@ -500,7 +500,7 @@ arc_c_letters = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-arc_c_options = LightevalTaskConfig(
+arc_c_options_original = LightevalTaskConfig(
     name="arc:c:options",
     suite=["original", "arc"],
     prompt_function="arc_with_options",
@@ -518,7 +518,7 @@ arc_c_options = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-arc_c_simple = LightevalTaskConfig(
+arc_c_simple_original = LightevalTaskConfig(
     name="arc:c:simple",
     suite=["original", "arc"],
     prompt_function="arc",
@@ -536,7 +536,7 @@ arc_c_simple = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-arc_challenge = LightevalTaskConfig(
+arc_challenge_leaderboard = LightevalTaskConfig(
     name="arc:challenge",
     suite=["leaderboard", "arc"],
     prompt_function="arc",
@@ -554,7 +554,7 @@ arc_challenge = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-arc_easy = LightevalTaskConfig(
+arc_easy_lighteval = LightevalTaskConfig(
     name="arc:easy",
     suite=["lighteval", "arc"],
     prompt_function="arc",
@@ -572,7 +572,7 @@ arc_easy = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-arithmetic_1dc = LightevalTaskConfig(
+arithmetic_1dc_lighteval = LightevalTaskConfig(
     name="arithmetic:1dc",
     suite=["lighteval", "arithmetic"],
     prompt_function="arithmetic",
@@ -590,7 +590,7 @@ arithmetic_1dc = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-arithmetic_2da = LightevalTaskConfig(
+arithmetic_2da_lighteval = LightevalTaskConfig(
     name="arithmetic:2da",
     suite=["lighteval", "arithmetic"],
     prompt_function="arithmetic",
@@ -608,7 +608,7 @@ arithmetic_2da = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-arithmetic_2dm = LightevalTaskConfig(
+arithmetic_2dm_lighteval = LightevalTaskConfig(
     name="arithmetic:2dm",
     suite=["lighteval", "arithmetic"],
     prompt_function="arithmetic",
@@ -626,7 +626,7 @@ arithmetic_2dm = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-arithmetic_2ds = LightevalTaskConfig(
+arithmetic_2ds_lighteval = LightevalTaskConfig(
     name="arithmetic:2ds",
     suite=["lighteval", "arithmetic"],
     prompt_function="arithmetic",
@@ -644,7 +644,7 @@ arithmetic_2ds = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-arithmetic_3da = LightevalTaskConfig(
+arithmetic_3da_lighteval = LightevalTaskConfig(
     name="arithmetic:3da",
     suite=["lighteval", "arithmetic"],
     prompt_function="arithmetic",
@@ -662,7 +662,7 @@ arithmetic_3da = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-arithmetic_3ds = LightevalTaskConfig(
+arithmetic_3ds_lighteval = LightevalTaskConfig(
     name="arithmetic:3ds",
     suite=["lighteval", "arithmetic"],
     prompt_function="arithmetic",
@@ -680,7 +680,7 @@ arithmetic_3ds = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-arithmetic_4da = LightevalTaskConfig(
+arithmetic_4da_lighteval = LightevalTaskConfig(
     name="arithmetic:4da",
     suite=["lighteval", "arithmetic"],
     prompt_function="arithmetic",
@@ -698,7 +698,7 @@ arithmetic_4da = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-arithmetic_4ds = LightevalTaskConfig(
+arithmetic_4ds_lighteval = LightevalTaskConfig(
     name="arithmetic:4ds",
     suite=["lighteval", "arithmetic"],
     prompt_function="arithmetic",
@@ -716,7 +716,7 @@ arithmetic_4ds = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-arithmetic_5da = LightevalTaskConfig(
+arithmetic_5da_lighteval = LightevalTaskConfig(
     name="arithmetic:5da",
     suite=["lighteval", "arithmetic"],
     prompt_function="arithmetic",
@@ -734,7 +734,7 @@ arithmetic_5da = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-arithmetic_5ds = LightevalTaskConfig(
+arithmetic_5ds_lighteval = LightevalTaskConfig(
     name="arithmetic:5ds",
     suite=["lighteval", "arithmetic"],
     prompt_function="arithmetic",
@@ -752,7 +752,7 @@ arithmetic_5ds = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-arithmetic_bb = LightevalTaskConfig(
+arithmetic_bb_bigbench = LightevalTaskConfig(
     name="arithmetic_bb",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -770,7 +770,7 @@ arithmetic_bb = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-ascii_word_recognition = LightevalTaskConfig(
+ascii_word_recognition_bigbench = LightevalTaskConfig(
     name="ascii_word_recognition",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -788,7 +788,7 @@ ascii_word_recognition = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-asdiv = LightevalTaskConfig(
+asdiv_lighteval = LightevalTaskConfig(
     name="asdiv",
     suite=["lighteval"],
     prompt_function="asdiv",
@@ -806,7 +806,7 @@ asdiv = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-authorship_verification = LightevalTaskConfig(
+authorship_verification_bigbench = LightevalTaskConfig(
     name="authorship_verification",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -824,7 +824,7 @@ authorship_verification = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-auto_categorization = LightevalTaskConfig(
+auto_categorization_bigbench = LightevalTaskConfig(
     name="auto_categorization",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -842,7 +842,7 @@ auto_categorization = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-auto_debugging = LightevalTaskConfig(
+auto_debugging_bigbench_lite = LightevalTaskConfig(
     name="auto_debugging",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench_linefeed_before_and_after_query",
@@ -859,7 +859,7 @@ auto_debugging = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-babi_qa = LightevalTaskConfig(
+babi_qa_helm = LightevalTaskConfig(
     name="babi_qa",
     suite=["helm"],
     prompt_function="babi_qa",
@@ -877,7 +877,7 @@ babi_qa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_causal_judgment = LightevalTaskConfig(
+bigbench_causal_judgment_lighteval = LightevalTaskConfig(
     name="bigbench:causal_judgment",
     suite=["lighteval"],
     prompt_function="bbh_lighteval",
@@ -895,7 +895,7 @@ bigbench_causal_judgment = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_date_understanding = LightevalTaskConfig(
+bigbench_date_understanding_lighteval = LightevalTaskConfig(
     name="bigbench:date_understanding",
     suite=["lighteval"],
     prompt_function="bbh_lighteval",
@@ -913,7 +913,7 @@ bigbench_date_understanding = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_disambiguation_qa = LightevalTaskConfig(
+bigbench_disambiguation_qa_lighteval = LightevalTaskConfig(
     name="bigbench:disambiguation_qa",
     suite=["lighteval"],
     prompt_function="bbh_lighteval",
@@ -931,7 +931,7 @@ bigbench_disambiguation_qa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_geometric_shapes = LightevalTaskConfig(
+bigbench_geometric_shapes_lighteval = LightevalTaskConfig(
     name="bigbench:geometric_shapes",
     suite=["lighteval"],
     prompt_function="bbh_lighteval",
@@ -949,7 +949,7 @@ bigbench_geometric_shapes = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_logical_deduction_five_objects = LightevalTaskConfig(
+bigbench_logical_deduction_five_objects_lighteval = LightevalTaskConfig(
     name="bigbench:logical_deduction_five_objects",
     suite=["lighteval"],
     prompt_function="bbh_lighteval",
@@ -967,7 +967,7 @@ bigbench_logical_deduction_five_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_logical_deduction_seven_objects = LightevalTaskConfig(
+bigbench_logical_deduction_seven_objects_lighteval = LightevalTaskConfig(
     name="bigbench:logical_deduction_seven_objects",
     suite=["lighteval"],
     prompt_function="bbh_lighteval",
@@ -985,7 +985,7 @@ bigbench_logical_deduction_seven_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_logical_deduction_three_objects = LightevalTaskConfig(
+bigbench_logical_deduction_three_objects_lighteval = LightevalTaskConfig(
     name="bigbench:logical_deduction_three_objects",
     suite=["lighteval"],
     prompt_function="bbh_lighteval",
@@ -1003,7 +1003,7 @@ bigbench_logical_deduction_three_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_movie_recommendation = LightevalTaskConfig(
+bigbench_movie_recommendation_lighteval = LightevalTaskConfig(
     name="bigbench:movie_recommendation",
     suite=["lighteval"],
     prompt_function="bbh_lighteval",
@@ -1021,7 +1021,7 @@ bigbench_movie_recommendation = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_navigate = LightevalTaskConfig(
+bigbench_navigate_lighteval = LightevalTaskConfig(
     name="bigbench:navigate",
     suite=["lighteval"],
     prompt_function="bbh_lighteval",
@@ -1039,7 +1039,7 @@ bigbench_navigate = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_reasoning_about_colored_objects = LightevalTaskConfig(
+bigbench_reasoning_about_colored_objects_lighteval = LightevalTaskConfig(
     name="bigbench:reasoning_about_colored_objects",
     suite=["lighteval"],
     prompt_function="bbh_lighteval",
@@ -1057,7 +1057,7 @@ bigbench_reasoning_about_colored_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_ruin_names = LightevalTaskConfig(
+bigbench_ruin_names_lighteval = LightevalTaskConfig(
     name="bigbench:ruin_names",
     suite=["lighteval"],
     prompt_function="bbh_lighteval",
@@ -1075,7 +1075,7 @@ bigbench_ruin_names = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_salient_translation_error_detection = LightevalTaskConfig(
+bigbench_salient_translation_error_detection_lighteval = LightevalTaskConfig(
     name="bigbench:salient_translation_error_detection",
     suite=["lighteval"],
     prompt_function="bbh_lighteval",
@@ -1093,7 +1093,7 @@ bigbench_salient_translation_error_detection = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_snarks = LightevalTaskConfig(
+bigbench_snarks_lighteval = LightevalTaskConfig(
     name="bigbench:snarks",
     suite=["lighteval"],
     prompt_function="bbh_lighteval",
@@ -1111,7 +1111,7 @@ bigbench_snarks = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_sports_understanding = LightevalTaskConfig(
+bigbench_sports_understanding_lighteval = LightevalTaskConfig(
     name="bigbench:sports_understanding",
     suite=["lighteval"],
     prompt_function="bbh_lighteval",
@@ -1129,7 +1129,7 @@ bigbench_sports_understanding = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_temporal_sequences = LightevalTaskConfig(
+bigbench_temporal_sequences_lighteval = LightevalTaskConfig(
     name="bigbench:temporal_sequences",
     suite=["lighteval"],
     prompt_function="bbh_lighteval",
@@ -1147,7 +1147,7 @@ bigbench_temporal_sequences = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_tracking_shuffled_objects_five_objects = LightevalTaskConfig(
+bigbench_tracking_shuffled_objects_five_objects_lighteval = LightevalTaskConfig(
     name="bigbench:tracking_shuffled_objects_five_objects",
     suite=["lighteval"],
     prompt_function="bbh_lighteval",
@@ -1165,7 +1165,7 @@ bigbench_tracking_shuffled_objects_five_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_tracking_shuffled_objects_seven_objects = LightevalTaskConfig(
+bigbench_tracking_shuffled_objects_seven_objects_lighteval = LightevalTaskConfig(
     name="bigbench:tracking_shuffled_objects_seven_objects",
     suite=["lighteval"],
     prompt_function="bbh_lighteval",
@@ -1183,7 +1183,7 @@ bigbench_tracking_shuffled_objects_seven_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_tracking_shuffled_objects_three_objects = LightevalTaskConfig(
+bigbench_tracking_shuffled_objects_three_objects_lighteval = LightevalTaskConfig(
     name="bigbench:tracking_shuffled_objects_three_objects",
     suite=["lighteval"],
     prompt_function="bbh_lighteval",
@@ -1201,7 +1201,7 @@ bigbench_tracking_shuffled_objects_three_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_causal_judgment = LightevalTaskConfig(
+bigbench_causal_judgment_harness = LightevalTaskConfig(
     name="bigbench:causal_judgment",
     suite=["harness"],
     prompt_function="bbh_harness",
@@ -1220,7 +1220,7 @@ bigbench_causal_judgment = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_date_understanding = LightevalTaskConfig(
+bigbench_date_understanding_harness = LightevalTaskConfig(
     name="bigbench:date_understanding",
     suite=["harness"],
     prompt_function="bbh_harness",
@@ -1239,7 +1239,7 @@ bigbench_date_understanding = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_disambiguation_qa = LightevalTaskConfig(
+bigbench_disambiguation_qa_harness = LightevalTaskConfig(
     name="bigbench:disambiguation_qa",
     suite=["harness"],
     prompt_function="bbh_harness",
@@ -1258,7 +1258,7 @@ bigbench_disambiguation_qa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_geometric_shapes = LightevalTaskConfig(
+bigbench_geometric_shapes_harness = LightevalTaskConfig(
     name="bigbench:geometric_shapes",
     suite=["harness"],
     prompt_function="bbh_harness",
@@ -1277,7 +1277,7 @@ bigbench_geometric_shapes = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_logical_deduction_five_objects = LightevalTaskConfig(
+bigbench_logical_deduction_five_objects_harness = LightevalTaskConfig(
     name="bigbench:logical_deduction_five_objects",
     suite=["harness"],
     prompt_function="bbh_harness",
@@ -1296,7 +1296,7 @@ bigbench_logical_deduction_five_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_logical_deduction_seven_objects = LightevalTaskConfig(
+bigbench_logical_deduction_seven_objects_harness = LightevalTaskConfig(
     name="bigbench:logical_deduction_seven_objects",
     suite=["harness"],
     prompt_function="bbh_harness",
@@ -1315,7 +1315,7 @@ bigbench_logical_deduction_seven_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_logical_deduction_three_objects = LightevalTaskConfig(
+bigbench_logical_deduction_three_objects_harness = LightevalTaskConfig(
     name="bigbench:logical_deduction_three_objects",
     suite=["harness"],
     prompt_function="bbh_harness",
@@ -1334,7 +1334,7 @@ bigbench_logical_deduction_three_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_movie_recommendation = LightevalTaskConfig(
+bigbench_movie_recommendation_harness = LightevalTaskConfig(
     name="bigbench:movie_recommendation",
     suite=["harness"],
     prompt_function="bbh_harness",
@@ -1353,7 +1353,7 @@ bigbench_movie_recommendation = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_navigate = LightevalTaskConfig(
+bigbench_navigate_harness = LightevalTaskConfig(
     name="bigbench:navigate",
     suite=["harness"],
     prompt_function="bbh_harness",
@@ -1372,7 +1372,7 @@ bigbench_navigate = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_reasoning_about_colored_objects = LightevalTaskConfig(
+bigbench_reasoning_about_colored_objects_harness = LightevalTaskConfig(
     name="bigbench:reasoning_about_colored_objects",
     suite=["harness"],
     prompt_function="bbh_harness",
@@ -1391,7 +1391,7 @@ bigbench_reasoning_about_colored_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_ruin_names = LightevalTaskConfig(
+bigbench_ruin_names_harness = LightevalTaskConfig(
     name="bigbench:ruin_names",
     suite=["harness"],
     prompt_function="bbh_harness",
@@ -1410,7 +1410,7 @@ bigbench_ruin_names = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_salient_translation_error_detection = LightevalTaskConfig(
+bigbench_salient_translation_error_detection_harness = LightevalTaskConfig(
     name="bigbench:salient_translation_error_detection",
     suite=["harness"],
     prompt_function="bbh_harness",
@@ -1429,7 +1429,7 @@ bigbench_salient_translation_error_detection = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_snarks = LightevalTaskConfig(
+bigbench_snarks_harness = LightevalTaskConfig(
     name="bigbench:snarks",
     suite=["harness"],
     prompt_function="bbh_harness",
@@ -1448,7 +1448,7 @@ bigbench_snarks = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_sports_understanding = LightevalTaskConfig(
+bigbench_sports_understanding_harness = LightevalTaskConfig(
     name="bigbench:sports_understanding",
     suite=["harness"],
     prompt_function="bbh_harness",
@@ -1467,7 +1467,7 @@ bigbench_sports_understanding = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_temporal_sequences = LightevalTaskConfig(
+bigbench_temporal_sequences_harness = LightevalTaskConfig(
     name="bigbench:temporal_sequences",
     suite=["harness"],
     prompt_function="bbh_harness",
@@ -1486,7 +1486,7 @@ bigbench_temporal_sequences = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_tracking_shuffled_objects_five_objects = LightevalTaskConfig(
+bigbench_tracking_shuffled_objects_five_objects_harness = LightevalTaskConfig(
     name="bigbench:tracking_shuffled_objects_five_objects",
     suite=["harness"],
     prompt_function="bbh_harness",
@@ -1505,7 +1505,7 @@ bigbench_tracking_shuffled_objects_five_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_tracking_shuffled_objects_seven_objects = LightevalTaskConfig(
+bigbench_tracking_shuffled_objects_seven_objects_harness = LightevalTaskConfig(
     name="bigbench:tracking_shuffled_objects_seven_objects",
     suite=["harness"],
     prompt_function="bbh_harness",
@@ -1524,7 +1524,7 @@ bigbench_tracking_shuffled_objects_seven_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_tracking_shuffled_objects_three_objects = LightevalTaskConfig(
+bigbench_tracking_shuffled_objects_three_objects_harness = LightevalTaskConfig(
     name="bigbench:tracking_shuffled_objects_three_objects",
     suite=["harness"],
     prompt_function="bbh_harness",
@@ -1543,7 +1543,7 @@ bigbench_tracking_shuffled_objects_three_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_boolean_expressions = LightevalTaskConfig(
+bbh_boolean_expressions_harness = LightevalTaskConfig(
     name="bbh:boolean_expressions",
     suite=["harness"],
     prompt_function="bbh_boolean_expressions",
@@ -1567,7 +1567,7 @@ bbh_boolean_expressions = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_causal_judgment = LightevalTaskConfig(
+bbh_causal_judgment_harness = LightevalTaskConfig(
     name="bbh:causal_judgment",
     suite=["harness"],
     prompt_function="bbh_causal_judgment",
@@ -1591,7 +1591,7 @@ bbh_causal_judgment = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_date_understanding = LightevalTaskConfig(
+bbh_date_understanding_harness = LightevalTaskConfig(
     name="bbh:date_understanding",
     suite=["harness"],
     prompt_function="bbh_date_understanding",
@@ -1615,7 +1615,7 @@ bbh_date_understanding = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_disambiguation_qa = LightevalTaskConfig(
+bbh_disambiguation_qa_harness = LightevalTaskConfig(
     name="bbh:disambiguation_qa",
     suite=["harness"],
     prompt_function="bbh_disambiguation_qa",
@@ -1639,7 +1639,7 @@ bbh_disambiguation_qa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_dyck_languages = LightevalTaskConfig(
+bbh_dyck_languages_harness = LightevalTaskConfig(
     name="bbh:dyck_languages",
     suite=["harness"],
     prompt_function="bbh_dyck_languages",
@@ -1663,7 +1663,7 @@ bbh_dyck_languages = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_formal_fallacies = LightevalTaskConfig(
+bbh_formal_fallacies_harness = LightevalTaskConfig(
     name="bbh:formal_fallacies",
     suite=["harness"],
     prompt_function="bbh_formal_fallacies",
@@ -1687,7 +1687,7 @@ bbh_formal_fallacies = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_geometric_shapes = LightevalTaskConfig(
+bbh_geometric_shapes_harness = LightevalTaskConfig(
     name="bbh:geometric_shapes",
     suite=["harness"],
     prompt_function="bbh_geometric_shapes",
@@ -1711,7 +1711,7 @@ bbh_geometric_shapes = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_hyperbaton = LightevalTaskConfig(
+bbh_hyperbaton_harness = LightevalTaskConfig(
     name="bbh:hyperbaton",
     suite=["harness"],
     prompt_function="bbh_hyperbaton",
@@ -1735,7 +1735,7 @@ bbh_hyperbaton = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_logical_deduction_five_objects = LightevalTaskConfig(
+bbh_logical_deduction_five_objects_harness = LightevalTaskConfig(
     name="bbh:logical_deduction_five_objects",
     suite=["harness"],
     prompt_function="bbh_logical_deduction_five_objects",
@@ -1759,7 +1759,7 @@ bbh_logical_deduction_five_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_logical_deduction_seven_objects = LightevalTaskConfig(
+bbh_logical_deduction_seven_objects_harness = LightevalTaskConfig(
     name="bbh:logical_deduction_seven_objects",
     suite=["harness"],
     prompt_function="bbh_logical_deduction_seven_objects",
@@ -1783,7 +1783,7 @@ bbh_logical_deduction_seven_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_logical_deduction_three_objects = LightevalTaskConfig(
+bbh_logical_deduction_three_objects_harness = LightevalTaskConfig(
     name="bbh:logical_deduction_three_objects",
     suite=["harness"],
     prompt_function="bbh_logical_deduction_three_objects",
@@ -1807,7 +1807,7 @@ bbh_logical_deduction_three_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_movie_recommendation = LightevalTaskConfig(
+bbh_movie_recommendation_harness = LightevalTaskConfig(
     name="bbh:movie_recommendation",
     suite=["harness"],
     prompt_function="bbh_movie_recommendation",
@@ -1831,7 +1831,7 @@ bbh_movie_recommendation = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_multistep_arithmetic_two = LightevalTaskConfig(
+bbh_multistep_arithmetic_two_harness = LightevalTaskConfig(
     name="bbh:multistep_arithmetic_two",
     suite=["harness"],
     prompt_function="bbh_multistep_arithmetic_two",
@@ -1855,7 +1855,7 @@ bbh_multistep_arithmetic_two = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_navigate = LightevalTaskConfig(
+bbh_navigate_harness = LightevalTaskConfig(
     name="bbh:navigate",
     suite=["harness"],
     prompt_function="bbh_navigate",
@@ -1879,7 +1879,7 @@ bbh_navigate = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_object_counting = LightevalTaskConfig(
+bbh_object_counting_harness = LightevalTaskConfig(
     name="bbh:object_counting",
     suite=["harness"],
     prompt_function="bbh_object_counting",
@@ -1903,7 +1903,7 @@ bbh_object_counting = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_penguins_in_a_table = LightevalTaskConfig(
+bbh_penguins_in_a_table_harness = LightevalTaskConfig(
     name="bbh:penguins_in_a_table",
     suite=["harness"],
     prompt_function="bbh_penguins_in_a_table",
@@ -1927,7 +1927,7 @@ bbh_penguins_in_a_table = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_reasoning_about_colored_objects = LightevalTaskConfig(
+bbh_reasoning_about_colored_objects_harness = LightevalTaskConfig(
     name="bbh:reasoning_about_colored_objects",
     suite=["harness"],
     prompt_function="bbh_reasoning_about_colored_objects",
@@ -1951,7 +1951,7 @@ bbh_reasoning_about_colored_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_ruin_names = LightevalTaskConfig(
+bbh_ruin_names_harness = LightevalTaskConfig(
     name="bbh:ruin_names",
     suite=["harness"],
     prompt_function="bbh_ruin_names",
@@ -1975,7 +1975,7 @@ bbh_ruin_names = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_salient_translation_error_detection = LightevalTaskConfig(
+bbh_salient_translation_error_detection_harness = LightevalTaskConfig(
     name="bbh:salient_translation_error_detection",
     suite=["harness"],
     prompt_function="bbh_salient_translation_error_detection",
@@ -1999,7 +1999,7 @@ bbh_salient_translation_error_detection = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_snarks = LightevalTaskConfig(
+bbh_snarks_harness = LightevalTaskConfig(
     name="bbh:snarks",
     suite=["harness"],
     prompt_function="bbh_snarks",
@@ -2023,7 +2023,7 @@ bbh_snarks = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_sports_understanding = LightevalTaskConfig(
+bbh_sports_understanding_harness = LightevalTaskConfig(
     name="bbh:sports_understanding",
     suite=["harness"],
     prompt_function="bbh_sports_understanding",
@@ -2047,7 +2047,7 @@ bbh_sports_understanding = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_temporal_sequences = LightevalTaskConfig(
+bbh_temporal_sequences_harness = LightevalTaskConfig(
     name="bbh:temporal_sequences",
     suite=["harness"],
     prompt_function="bbh_temporal_sequences",
@@ -2071,7 +2071,7 @@ bbh_temporal_sequences = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_tracking_shuffled_objects_five_objects = LightevalTaskConfig(
+bbh_tracking_shuffled_objects_five_objects_harness = LightevalTaskConfig(
     name="bbh:tracking_shuffled_objects_five_objects",
     suite=["harness"],
     prompt_function="bbh_tracking_shuffled_objects_five_objects",
@@ -2095,7 +2095,7 @@ bbh_tracking_shuffled_objects_five_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_tracking_shuffled_objects_seven_objects = LightevalTaskConfig(
+bbh_tracking_shuffled_objects_seven_objects_harness = LightevalTaskConfig(
     name="bbh:tracking_shuffled_objects_seven_objects",
     suite=["harness"],
     prompt_function="bbh_tracking_shuffled_objects_seven_objects",
@@ -2119,7 +2119,7 @@ bbh_tracking_shuffled_objects_seven_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_tracking_shuffled_objects_three_objects = LightevalTaskConfig(
+bbh_tracking_shuffled_objects_three_objects_harness = LightevalTaskConfig(
     name="bbh:tracking_shuffled_objects_three_objects",
     suite=["harness"],
     prompt_function="bbh_tracking_shuffled_objects_three_objects",
@@ -2143,7 +2143,7 @@ bbh_tracking_shuffled_objects_three_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_web_of_lies = LightevalTaskConfig(
+bbh_web_of_lies_harness = LightevalTaskConfig(
     name="bbh:web_of_lies",
     suite=["harness"],
     prompt_function="bbh_web_of_lies",
@@ -2167,7 +2167,7 @@ bbh_web_of_lies = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbh_word_sorting = LightevalTaskConfig(
+bbh_word_sorting_harness = LightevalTaskConfig(
     name="bbh:word_sorting",
     suite=["harness"],
     prompt_function="bbh_word_sorting",
@@ -2191,7 +2191,7 @@ bbh_word_sorting = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbq = LightevalTaskConfig(
+bbq_helm = LightevalTaskConfig(
     name="bbq",
     suite=["helm"],
     prompt_function="bbq",
@@ -2215,7 +2215,7 @@ bbq = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbq_Age = LightevalTaskConfig(
+bbq_Age_helm = LightevalTaskConfig(
     name="bbq:Age",
     suite=["helm"],
     prompt_function="bbq",
@@ -2239,7 +2239,7 @@ bbq_Age = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbq_Disability_status = LightevalTaskConfig(
+bbq_Disability_status_helm = LightevalTaskConfig(
     name="bbq:Disability_status",
     suite=["helm"],
     prompt_function="bbq",
@@ -2263,7 +2263,7 @@ bbq_Disability_status = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbq_Gender_identity = LightevalTaskConfig(
+bbq_Gender_identity_helm = LightevalTaskConfig(
     name="bbq:Gender_identity",
     suite=["helm"],
     prompt_function="bbq",
@@ -2287,7 +2287,7 @@ bbq_Gender_identity = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbq_Nationality = LightevalTaskConfig(
+bbq_Nationality_helm = LightevalTaskConfig(
     name="bbq=Nationality",
     suite=["helm"],
     prompt_function="bbq",
@@ -2311,7 +2311,7 @@ bbq_Nationality = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbq_Physical_appearance = LightevalTaskConfig(
+bbq_Physical_appearance_helm = LightevalTaskConfig(
     name="bbq:Physical_appearance",
     suite=["helm"],
     prompt_function="bbq",
@@ -2335,7 +2335,7 @@ bbq_Physical_appearance = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbq_Race_ethnicity = LightevalTaskConfig(
+bbq_Race_ethnicity_helm = LightevalTaskConfig(
     name="bbq:Race_ethnicity",
     suite=["helm"],
     prompt_function="bbq",
@@ -2359,7 +2359,7 @@ bbq_Race_ethnicity = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbq_Race_x_SES = LightevalTaskConfig(
+bbq_Race_x_SES_helm = LightevalTaskConfig(
     name="bbq:Race_x_SES",
     suite=["helm"],
     prompt_function="bbq",
@@ -2383,7 +2383,7 @@ bbq_Race_x_SES = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbq_Race_x_gender = LightevalTaskConfig(
+bbq_Race_x_gender_helm = LightevalTaskConfig(
     name="bbq:Race_x_gender",
     suite=["helm"],
     prompt_function="bbq",
@@ -2407,7 +2407,7 @@ bbq_Race_x_gender = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbq_Religion = LightevalTaskConfig(
+bbq_Religion_helm = LightevalTaskConfig(
     name="bbq:Religion",
     suite=["helm"],
     prompt_function="bbq",
@@ -2431,7 +2431,7 @@ bbq_Religion = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbq_SES = LightevalTaskConfig(
+bbq_SES_helm = LightevalTaskConfig(
     name="bbq:SES",
     suite=["helm"],
     prompt_function="bbq",
@@ -2455,7 +2455,7 @@ bbq_SES = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbq_Sexual_orientation = LightevalTaskConfig(
+bbq_Sexual_orientation_helm = LightevalTaskConfig(
     name="bbq:Sexual_orientation",
     suite=["helm"],
     prompt_function="bbq",
@@ -2479,7 +2479,7 @@ bbq_Sexual_orientation = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bbq_lite_json = LightevalTaskConfig(
+bbq_lite_json_bigbench_lite = LightevalTaskConfig(
     name="bbq_lite_json",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench_linefeed_before_whitespace_after_query",
@@ -2497,7 +2497,7 @@ bbq_lite_json = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_auto_debugging = LightevalTaskConfig(
+bigbench_auto_debugging_helm = LightevalTaskConfig(
     name="bigbench:auto_debugging",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2515,7 +2515,7 @@ bigbench_auto_debugging = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_bbq_lite_json_age_ambig = LightevalTaskConfig(
+bigbench_bbq_lite_json_age_ambig_helm = LightevalTaskConfig(
     name="bigbench:bbq_lite_json:age_ambig",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2533,7 +2533,7 @@ bigbench_bbq_lite_json_age_ambig = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_bbq_lite_json_age_disambig = LightevalTaskConfig(
+bigbench_bbq_lite_json_age_disambig_helm = LightevalTaskConfig(
     name="bigbench:bbq_lite_json:age_disambig",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2551,7 +2551,7 @@ bigbench_bbq_lite_json_age_disambig = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_bbq_lite_json_disability_status_ambig = LightevalTaskConfig(
+bigbench_bbq_lite_json_disability_status_ambig_helm = LightevalTaskConfig(
     name="bigbench:bbq_lite_json:disability_status_ambig",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2569,7 +2569,7 @@ bigbench_bbq_lite_json_disability_status_ambig = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_bbq_lite_json_disability_status_disambig = LightevalTaskConfig(
+bigbench_bbq_lite_json_disability_status_disambig_helm = LightevalTaskConfig(
     name="bigbench:bbq_lite_json:disability_status_disambig",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2587,7 +2587,7 @@ bigbench_bbq_lite_json_disability_status_disambig = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_bbq_lite_json_gender_identity_ambig = LightevalTaskConfig(
+bigbench_bbq_lite_json_gender_identity_ambig_helm = LightevalTaskConfig(
     name="bigbench:bbq_lite_json:gender_identity_ambig",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2605,7 +2605,7 @@ bigbench_bbq_lite_json_gender_identity_ambig = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_bbq_lite_json_gender_identity_disambig = LightevalTaskConfig(
+bigbench_bbq_lite_json_gender_identity_disambig_helm = LightevalTaskConfig(
     name="bigbench:bbq_lite_json:gender_identity_disambig",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2623,7 +2623,7 @@ bigbench_bbq_lite_json_gender_identity_disambig = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_bbq_lite_json_nationality_ambig = LightevalTaskConfig(
+bigbench_bbq_lite_json_nationality_ambig_helm = LightevalTaskConfig(
     name="bigbench:bbq_lite_json:nationality_ambig",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2641,7 +2641,7 @@ bigbench_bbq_lite_json_nationality_ambig = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_bbq_lite_json_nationality_disambig = LightevalTaskConfig(
+bigbench_bbq_lite_json_nationality_disambig_helm = LightevalTaskConfig(
     name="bigbench:bbq_lite_json:nationality_disambig",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2659,7 +2659,7 @@ bigbench_bbq_lite_json_nationality_disambig = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_bbq_lite_json_physical_appearance_ambig = LightevalTaskConfig(
+bigbench_bbq_lite_json_physical_appearance_ambig_helm = LightevalTaskConfig(
     name="bigbench:bbq_lite_json:physical_appearance_ambig",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2677,7 +2677,7 @@ bigbench_bbq_lite_json_physical_appearance_ambig = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_bbq_lite_json_physical_appearance_disambig = LightevalTaskConfig(
+bigbench_bbq_lite_json_physical_appearance_disambig_helm = LightevalTaskConfig(
     name="bigbench:bbq_lite_json:physical_appearance_disambig",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2695,7 +2695,7 @@ bigbench_bbq_lite_json_physical_appearance_disambig = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_bbq_lite_json_race_ethnicity_ambig = LightevalTaskConfig(
+bigbench_bbq_lite_json_race_ethnicity_ambig_helm = LightevalTaskConfig(
     name="bigbench:bbq_lite_json:race_ethnicity_ambig",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2713,7 +2713,7 @@ bigbench_bbq_lite_json_race_ethnicity_ambig = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_bbq_lite_json_race_ethnicity_disambig = LightevalTaskConfig(
+bigbench_bbq_lite_json_race_ethnicity_disambig_helm = LightevalTaskConfig(
     name="bigbench:bbq_lite_json:race_ethnicity_disambig",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2731,7 +2731,7 @@ bigbench_bbq_lite_json_race_ethnicity_disambig = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_bbq_lite_json_religion_ambig = LightevalTaskConfig(
+bigbench_bbq_lite_json_religion_ambig_helm = LightevalTaskConfig(
     name="bigbench:bbq_lite_json:religion_ambig",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2749,7 +2749,7 @@ bigbench_bbq_lite_json_religion_ambig = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_bbq_lite_json_religion_disambig = LightevalTaskConfig(
+bigbench_bbq_lite_json_religion_disambig_helm = LightevalTaskConfig(
     name="bigbench:bbq_lite_json:religion_disambig",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2767,7 +2767,7 @@ bigbench_bbq_lite_json_religion_disambig = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_bbq_lite_json_ses_ambig = LightevalTaskConfig(
+bigbench_bbq_lite_json_ses_ambig_helm = LightevalTaskConfig(
     name="bigbench:bbq_lite_json:ses_ambig",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2785,7 +2785,7 @@ bigbench_bbq_lite_json_ses_ambig = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_bbq_lite_json_ses_disambig = LightevalTaskConfig(
+bigbench_bbq_lite_json_ses_disambig_helm = LightevalTaskConfig(
     name="bigbench:bbq_lite_json:ses_disambig",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2803,7 +2803,7 @@ bigbench_bbq_lite_json_ses_disambig = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_bbq_lite_json_sexual_orientation_ambig = LightevalTaskConfig(
+bigbench_bbq_lite_json_sexual_orientation_ambig_helm = LightevalTaskConfig(
     name="bigbench:bbq_lite_json:sexual_orientation_ambig",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2821,7 +2821,7 @@ bigbench_bbq_lite_json_sexual_orientation_ambig = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_bbq_lite_json_sexual_orientation_disambig = LightevalTaskConfig(
+bigbench_bbq_lite_json_sexual_orientation_disambig_helm = LightevalTaskConfig(
     name="bigbench:bbq_lite_json:sexual_orientation_disambig",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2839,7 +2839,7 @@ bigbench_bbq_lite_json_sexual_orientation_disambig = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_code_line_description = LightevalTaskConfig(
+bigbench_code_line_description_helm = LightevalTaskConfig(
     name="bigbench:code_line_description",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2857,7 +2857,7 @@ bigbench_code_line_description = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_conceptual_combinations_contradictions = LightevalTaskConfig(
+bigbench_conceptual_combinations_contradictions_helm = LightevalTaskConfig(
     name="bigbench:conceptual_combinations:contradictions",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2875,7 +2875,7 @@ bigbench_conceptual_combinations_contradictions = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_conceptual_combinations_emergent_properties = LightevalTaskConfig(
+bigbench_conceptual_combinations_emergent_properties_helm = LightevalTaskConfig(
     name="bigbench:conceptual_combinations:emergent_properties",
     suite=["helm"],
     prompt_function="bigbench_helm",
@@ -2893,7 +2893,7 @@ bigbench_conceptual_combinations_emergent_properties = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_conceptual_combinations_fanciful_fictional_combinations = LightevalTaskConfig(
+bigbench_conceptual_combinations_fanciful_fictional_combinations_helm = LightevalTaskConfig(
     name="bigbench:conceptual_combinations:fanciful_fictional_combinations",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2911,7 +2911,7 @@ bigbench_conceptual_combinations_fanciful_fictional_combinations = LightevalTask
     trust_dataset=True,
     version=0,
 )
-bigbench_conceptual_combinations_homonyms = LightevalTaskConfig(
+bigbench_conceptual_combinations_homonyms_helm = LightevalTaskConfig(
     name="bigbench:conceptual_combinations:homonyms",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2929,7 +2929,7 @@ bigbench_conceptual_combinations_homonyms = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_conceptual_combinations_invented_words = LightevalTaskConfig(
+bigbench_conceptual_combinations_invented_words_helm = LightevalTaskConfig(
     name="bigbench:conceptual_combinations:invented_words",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2947,7 +2947,7 @@ bigbench_conceptual_combinations_invented_words = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_conlang_translation_adna_from = LightevalTaskConfig(
+bigbench_conlang_translation_adna_from_helm = LightevalTaskConfig(
     name="bigbench:conlang_translation:adna_from",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2965,7 +2965,7 @@ bigbench_conlang_translation_adna_from = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_conlang_translation_adna_to = LightevalTaskConfig(
+bigbench_conlang_translation_adna_to_helm = LightevalTaskConfig(
     name="bigbench:conlang_translation:adna_to",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -2983,7 +2983,7 @@ bigbench_conlang_translation_adna_to = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_conlang_translation_atikampe_from = LightevalTaskConfig(
+bigbench_conlang_translation_atikampe_from_helm = LightevalTaskConfig(
     name="bigbench:conlang_translation:atikampe_from",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3001,7 +3001,7 @@ bigbench_conlang_translation_atikampe_from = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_conlang_translation_atikampe_to = LightevalTaskConfig(
+bigbench_conlang_translation_atikampe_to_helm = LightevalTaskConfig(
     name="bigbench:conlang_translation:atikampe_to",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3019,7 +3019,7 @@ bigbench_conlang_translation_atikampe_to = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_conlang_translation_gornam_from = LightevalTaskConfig(
+bigbench_conlang_translation_gornam_from_helm = LightevalTaskConfig(
     name="bigbench:conlang_translation:gornam_from",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3037,7 +3037,7 @@ bigbench_conlang_translation_gornam_from = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_conlang_translation_gornam_to = LightevalTaskConfig(
+bigbench_conlang_translation_gornam_to_helm = LightevalTaskConfig(
     name="bigbench:conlang_translation:gornam_to",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3055,7 +3055,7 @@ bigbench_conlang_translation_gornam_to = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_conlang_translation_holuan_from = LightevalTaskConfig(
+bigbench_conlang_translation_holuan_from_helm = LightevalTaskConfig(
     name="bigbench:conlang_translation:holuan_from",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3073,7 +3073,7 @@ bigbench_conlang_translation_holuan_from = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_conlang_translation_holuan_to = LightevalTaskConfig(
+bigbench_conlang_translation_holuan_to_helm = LightevalTaskConfig(
     name="bigbench:conlang_translation:holuan_to",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3091,7 +3091,7 @@ bigbench_conlang_translation_holuan_to = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_conlang_translation_mkafala_from = LightevalTaskConfig(
+bigbench_conlang_translation_mkafala_from_helm = LightevalTaskConfig(
     name="bigbench:conlang_translation:mkafala_from",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3109,7 +3109,7 @@ bigbench_conlang_translation_mkafala_from = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_conlang_translation_mkafala_to = LightevalTaskConfig(
+bigbench_conlang_translation_mkafala_to_helm = LightevalTaskConfig(
     name="bigbench:conlang_translation:mkafala_to",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3127,7 +3127,7 @@ bigbench_conlang_translation_mkafala_to = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_conlang_translation_postpositive_english_from = LightevalTaskConfig(
+bigbench_conlang_translation_postpositive_english_from_helm = LightevalTaskConfig(
     name="bigbench:conlang_translation:postpositive_english_from",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3145,7 +3145,7 @@ bigbench_conlang_translation_postpositive_english_from = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_conlang_translation_postpositive_english_to = LightevalTaskConfig(
+bigbench_conlang_translation_postpositive_english_to_helm = LightevalTaskConfig(
     name="bigbench:conlang_translation:postpositive_english_to",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3163,7 +3163,7 @@ bigbench_conlang_translation_postpositive_english_to = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_conlang_translation_unapuri_from = LightevalTaskConfig(
+bigbench_conlang_translation_unapuri_from_helm = LightevalTaskConfig(
     name="bigbench:conlang_translation:unapuri_from",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3181,7 +3181,7 @@ bigbench_conlang_translation_unapuri_from = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_conlang_translation_unapuri_to = LightevalTaskConfig(
+bigbench_conlang_translation_unapuri_to_helm = LightevalTaskConfig(
     name="bigbench:conlang_translation:unapuri_to",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3199,7 +3199,7 @@ bigbench_conlang_translation_unapuri_to = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_conlang_translation_vaomi_from = LightevalTaskConfig(
+bigbench_conlang_translation_vaomi_from_helm = LightevalTaskConfig(
     name="bigbench:conlang_translation:vaomi_from",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3217,7 +3217,7 @@ bigbench_conlang_translation_vaomi_from = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_conlang_translation_vaomi_to = LightevalTaskConfig(
+bigbench_conlang_translation_vaomi_to_helm = LightevalTaskConfig(
     name="bigbench:conlang_translation:vaomi_to",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3235,7 +3235,7 @@ bigbench_conlang_translation_vaomi_to = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_emoji_movie = LightevalTaskConfig(
+bigbench_emoji_movie_helm = LightevalTaskConfig(
     name="bigbench:emoji_movie",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3253,7 +3253,7 @@ bigbench_emoji_movie = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_formal_fallacies_syllogisms_negation = LightevalTaskConfig(
+bigbench_formal_fallacies_syllogisms_negation_helm = LightevalTaskConfig(
     name="bigbench:formal_fallacies_syllogisms_negation",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3271,7 +3271,7 @@ bigbench_formal_fallacies_syllogisms_negation = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_hindu_knowledge = LightevalTaskConfig(
+bigbench_hindu_knowledge_helm = LightevalTaskConfig(
     name="bigbench:hindu_knowledge",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3289,7 +3289,7 @@ bigbench_hindu_knowledge = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_known_unknowns = LightevalTaskConfig(
+bigbench_known_unknowns_helm = LightevalTaskConfig(
     name="bigbench:known_unknowns",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3307,7 +3307,7 @@ bigbench_known_unknowns = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_language_identification = LightevalTaskConfig(
+bigbench_language_identification_helm = LightevalTaskConfig(
     name="bigbench:language_identification",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3325,7 +3325,7 @@ bigbench_language_identification = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_linguistics_puzzles = LightevalTaskConfig(
+bigbench_linguistics_puzzles_helm = LightevalTaskConfig(
     name="bigbench:linguistics_puzzles",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3343,7 +3343,7 @@ bigbench_linguistics_puzzles = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_logic_grid_puzzle = LightevalTaskConfig(
+bigbench_logic_grid_puzzle_helm = LightevalTaskConfig(
     name="bigbench:logic_grid_puzzle",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3361,7 +3361,7 @@ bigbench_logic_grid_puzzle = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_logical_deduction_five_objects = LightevalTaskConfig(
+bigbench_logical_deduction_five_objects_helm = LightevalTaskConfig(
     name="bigbench:logical_deduction-five_objects",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3379,7 +3379,7 @@ bigbench_logical_deduction_five_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_logical_deduction_seven_objects = LightevalTaskConfig(
+bigbench_logical_deduction_seven_objects_helm = LightevalTaskConfig(
     name="bigbench:logical_deduction-seven_objects",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3397,7 +3397,7 @@ bigbench_logical_deduction_seven_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_logical_deduction_three_objects = LightevalTaskConfig(
+bigbench_logical_deduction_three_objects_helm = LightevalTaskConfig(
     name="bigbench:logical_deduction-three_objects",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3415,7 +3415,7 @@ bigbench_logical_deduction_three_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_misconceptions_russian = LightevalTaskConfig(
+bigbench_misconceptions_russian_helm = LightevalTaskConfig(
     name="bigbench:misconceptions_russian",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3433,7 +3433,7 @@ bigbench_misconceptions_russian = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_novel_concepts = LightevalTaskConfig(
+bigbench_novel_concepts_helm = LightevalTaskConfig(
     name="bigbench:novel_concepts",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3451,7 +3451,7 @@ bigbench_novel_concepts = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_operators = LightevalTaskConfig(
+bigbench_operators_helm = LightevalTaskConfig(
     name="bigbench:operators",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3469,7 +3469,7 @@ bigbench_operators = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_parsinlu_reading_comprehension = LightevalTaskConfig(
+bigbench_parsinlu_reading_comprehension_helm = LightevalTaskConfig(
     name="bigbench:parsinlu_reading_comprehension",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3487,7 +3487,7 @@ bigbench_parsinlu_reading_comprehension = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_play_dialog_same_or_different = LightevalTaskConfig(
+bigbench_play_dialog_same_or_different_helm = LightevalTaskConfig(
     name="bigbench:play_dialog_same_or_different",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3505,7 +3505,7 @@ bigbench_play_dialog_same_or_different = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_repeat_copy_logic = LightevalTaskConfig(
+bigbench_repeat_copy_logic_helm = LightevalTaskConfig(
     name="bigbench:repeat_copy_logic",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3523,7 +3523,7 @@ bigbench_repeat_copy_logic = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_strange_stories_boolean = LightevalTaskConfig(
+bigbench_strange_stories_boolean_helm = LightevalTaskConfig(
     name="bigbench:strange_stories-boolean",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3541,7 +3541,7 @@ bigbench_strange_stories_boolean = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_strange_stories_multiple_choice = LightevalTaskConfig(
+bigbench_strange_stories_multiple_choice_helm = LightevalTaskConfig(
     name="bigbench:strange_stories-multiple_choice",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3559,7 +3559,7 @@ bigbench_strange_stories_multiple_choice = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_strategyqa = LightevalTaskConfig(
+bigbench_strategyqa_helm = LightevalTaskConfig(
     name="bigbench:strategyqa",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3577,7 +3577,7 @@ bigbench_strategyqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_symbol_interpretation_adversarial = LightevalTaskConfig(
+bigbench_symbol_interpretation_adversarial_helm = LightevalTaskConfig(
     name="bigbench:symbol_interpretation-adversarial",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3595,7 +3595,7 @@ bigbench_symbol_interpretation_adversarial = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_symbol_interpretation_emoji_agnostic = LightevalTaskConfig(
+bigbench_symbol_interpretation_emoji_agnostic_helm = LightevalTaskConfig(
     name="bigbench:symbol_interpretation-emoji_agnostic",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3613,7 +3613,7 @@ bigbench_symbol_interpretation_emoji_agnostic = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_symbol_interpretation_name_agnostic = LightevalTaskConfig(
+bigbench_symbol_interpretation_name_agnostic_helm = LightevalTaskConfig(
     name="bigbench:symbol_interpretation-name_agnostic",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3631,7 +3631,7 @@ bigbench_symbol_interpretation_name_agnostic = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_symbol_interpretation_plain = LightevalTaskConfig(
+bigbench_symbol_interpretation_plain_helm = LightevalTaskConfig(
     name="bigbench:symbol_interpretation-plain",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3649,7 +3649,7 @@ bigbench_symbol_interpretation_plain = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_symbol_interpretation_tricky = LightevalTaskConfig(
+bigbench_symbol_interpretation_tricky_helm = LightevalTaskConfig(
     name="bigbench:symbol_interpretation-tricky",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3667,7 +3667,7 @@ bigbench_symbol_interpretation_tricky = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_vitaminc_fact_verification = LightevalTaskConfig(
+bigbench_vitaminc_fact_verification_helm = LightevalTaskConfig(
     name="bigbench:vitaminc_fact_verification",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3685,7 +3685,7 @@ bigbench_vitaminc_fact_verification = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bigbench_winowhy = LightevalTaskConfig(
+bigbench_winowhy_helm = LightevalTaskConfig(
     name="bigbench:winowhy",
     suite=["helm", "bigbench_scenario"],
     prompt_function="bigbench_helm",
@@ -3703,7 +3703,7 @@ bigbench_winowhy = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_adjunct_island = LightevalTaskConfig(
+blimp_adjunct_island_lighteval = LightevalTaskConfig(
     name="blimp:adjunct_island",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -3721,7 +3721,7 @@ blimp_adjunct_island = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_adjunct_island = LightevalTaskConfig(
+blimp_adjunct_island_helm = LightevalTaskConfig(
     name="blimp:adjunct_island",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -3739,7 +3739,7 @@ blimp_adjunct_island = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_anaphor_gender_agreement = LightevalTaskConfig(
+blimp_anaphor_gender_agreement_lighteval = LightevalTaskConfig(
     name="blimp:anaphor_gender_agreement",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -3757,7 +3757,7 @@ blimp_anaphor_gender_agreement = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_anaphor_gender_agreement = LightevalTaskConfig(
+blimp_anaphor_gender_agreement_helm = LightevalTaskConfig(
     name="blimp:anaphor_gender_agreement",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -3775,7 +3775,7 @@ blimp_anaphor_gender_agreement = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_anaphor_number_agreement = LightevalTaskConfig(
+blimp_anaphor_number_agreement_lighteval = LightevalTaskConfig(
     name="blimp:anaphor_number_agreement",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -3793,7 +3793,7 @@ blimp_anaphor_number_agreement = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_anaphor_number_agreement = LightevalTaskConfig(
+blimp_anaphor_number_agreement_helm = LightevalTaskConfig(
     name="blimp:anaphor_number_agreement",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -3811,7 +3811,7 @@ blimp_anaphor_number_agreement = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_animate_subject_passive = LightevalTaskConfig(
+blimp_animate_subject_passive_lighteval = LightevalTaskConfig(
     name="blimp:animate_subject_passive",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -3829,7 +3829,7 @@ blimp_animate_subject_passive = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_animate_subject_passive = LightevalTaskConfig(
+blimp_animate_subject_passive_helm = LightevalTaskConfig(
     name="blimp:animate_subject_passive",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -3847,7 +3847,7 @@ blimp_animate_subject_passive = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_animate_subject_trans = LightevalTaskConfig(
+blimp_animate_subject_trans_lighteval = LightevalTaskConfig(
     name="blimp:animate_subject_trans",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -3865,7 +3865,7 @@ blimp_animate_subject_trans = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_animate_subject_trans = LightevalTaskConfig(
+blimp_animate_subject_trans_helm = LightevalTaskConfig(
     name="blimp:animate_subject_trans",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -3883,7 +3883,7 @@ blimp_animate_subject_trans = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_causative = LightevalTaskConfig(
+blimp_causative_lighteval = LightevalTaskConfig(
     name="blimp:causative",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -3901,7 +3901,7 @@ blimp_causative = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_causative = LightevalTaskConfig(
+blimp_causative_helm = LightevalTaskConfig(
     name="blimp:causative",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -3919,7 +3919,7 @@ blimp_causative = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_complex_NP_island = LightevalTaskConfig(
+blimp_complex_NP_island_lighteval = LightevalTaskConfig(
     name="blimp:complex_NP_island",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -3937,7 +3937,7 @@ blimp_complex_NP_island = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_complex_NP_island = LightevalTaskConfig(
+blimp_complex_NP_island_helm = LightevalTaskConfig(
     name="blimp:complex_NP_island",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -3955,7 +3955,7 @@ blimp_complex_NP_island = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_coordinate_structure_constraint_complex_left_branch = LightevalTaskConfig(
+blimp_coordinate_structure_constraint_complex_left_branch_lighteval = LightevalTaskConfig(
     name="blimp:coordinate_structure_constraint_complex_left_branch",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -3973,7 +3973,7 @@ blimp_coordinate_structure_constraint_complex_left_branch = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_coordinate_structure_constraint_complex_left_branch = LightevalTaskConfig(
+blimp_coordinate_structure_constraint_complex_left_branch_helm = LightevalTaskConfig(
     name="blimp:coordinate_structure_constraint_complex_left_branch",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -3991,7 +3991,7 @@ blimp_coordinate_structure_constraint_complex_left_branch = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_coordinate_structure_constraint_object_extraction = LightevalTaskConfig(
+blimp_coordinate_structure_constraint_object_extraction_lighteval = LightevalTaskConfig(
     name="blimp:coordinate_structure_constraint_object_extraction",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4009,7 +4009,7 @@ blimp_coordinate_structure_constraint_object_extraction = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_coordinate_structure_constraint_object_extraction = LightevalTaskConfig(
+blimp_coordinate_structure_constraint_object_extraction_helm = LightevalTaskConfig(
     name="blimp:coordinate_structure_constraint_object_extraction",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4027,7 +4027,7 @@ blimp_coordinate_structure_constraint_object_extraction = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_determiner_noun_agreement_1 = LightevalTaskConfig(
+blimp_determiner_noun_agreement_1_lighteval = LightevalTaskConfig(
     name="blimp:determiner_noun_agreement_1",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4045,7 +4045,7 @@ blimp_determiner_noun_agreement_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_determiner_noun_agreement_1 = LightevalTaskConfig(
+blimp_determiner_noun_agreement_1_helm = LightevalTaskConfig(
     name="blimp:determiner_noun_agreement_1",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4063,7 +4063,7 @@ blimp_determiner_noun_agreement_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_determiner_noun_agreement_2 = LightevalTaskConfig(
+blimp_determiner_noun_agreement_2_lighteval = LightevalTaskConfig(
     name="blimp:determiner_noun_agreement_2",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4081,7 +4081,7 @@ blimp_determiner_noun_agreement_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_determiner_noun_agreement_2 = LightevalTaskConfig(
+blimp_determiner_noun_agreement_2_helm = LightevalTaskConfig(
     name="blimp:determiner_noun_agreement_2",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4099,7 +4099,7 @@ blimp_determiner_noun_agreement_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_determiner_noun_agreement_irregular_1 = LightevalTaskConfig(
+blimp_determiner_noun_agreement_irregular_1_lighteval = LightevalTaskConfig(
     name="blimp:determiner_noun_agreement_irregular_1",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4117,7 +4117,7 @@ blimp_determiner_noun_agreement_irregular_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_determiner_noun_agreement_irregular_1 = LightevalTaskConfig(
+blimp_determiner_noun_agreement_irregular_1_helm = LightevalTaskConfig(
     name="blimp:determiner_noun_agreement_irregular_1",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4135,7 +4135,7 @@ blimp_determiner_noun_agreement_irregular_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_determiner_noun_agreement_irregular_2 = LightevalTaskConfig(
+blimp_determiner_noun_agreement_irregular_2_lighteval = LightevalTaskConfig(
     name="blimp:determiner_noun_agreement_irregular_2",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4153,7 +4153,7 @@ blimp_determiner_noun_agreement_irregular_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_determiner_noun_agreement_irregular_2 = LightevalTaskConfig(
+blimp_determiner_noun_agreement_irregular_2_helm = LightevalTaskConfig(
     name="blimp:determiner_noun_agreement_irregular_2",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4171,7 +4171,7 @@ blimp_determiner_noun_agreement_irregular_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_determiner_noun_agreement_with_adj_2 = LightevalTaskConfig(
+blimp_determiner_noun_agreement_with_adj_2_lighteval = LightevalTaskConfig(
     name="blimp:determiner_noun_agreement_with_adj_2",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4189,7 +4189,7 @@ blimp_determiner_noun_agreement_with_adj_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_determiner_noun_agreement_with_adj_2 = LightevalTaskConfig(
+blimp_determiner_noun_agreement_with_adj_2_helm = LightevalTaskConfig(
     name="blimp:determiner_noun_agreement_with_adj_2",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4207,7 +4207,7 @@ blimp_determiner_noun_agreement_with_adj_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_determiner_noun_agreement_with_adj_irregular_1 = LightevalTaskConfig(
+blimp_determiner_noun_agreement_with_adj_irregular_1_lighteval = LightevalTaskConfig(
     name="blimp:determiner_noun_agreement_with_adj_irregular_1",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4225,7 +4225,7 @@ blimp_determiner_noun_agreement_with_adj_irregular_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_determiner_noun_agreement_with_adj_irregular_1 = LightevalTaskConfig(
+blimp_determiner_noun_agreement_with_adj_irregular_1_helm = LightevalTaskConfig(
     name="blimp:determiner_noun_agreement_with_adj_irregular_1",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4243,7 +4243,7 @@ blimp_determiner_noun_agreement_with_adj_irregular_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_determiner_noun_agreement_with_adj_irregular_2 = LightevalTaskConfig(
+blimp_determiner_noun_agreement_with_adj_irregular_2_lighteval = LightevalTaskConfig(
     name="blimp:determiner_noun_agreement_with_adj_irregular_2",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4261,7 +4261,7 @@ blimp_determiner_noun_agreement_with_adj_irregular_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_determiner_noun_agreement_with_adj_irregular_2 = LightevalTaskConfig(
+blimp_determiner_noun_agreement_with_adj_irregular_2_helm = LightevalTaskConfig(
     name="blimp:determiner_noun_agreement_with_adj_irregular_2",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4279,7 +4279,7 @@ blimp_determiner_noun_agreement_with_adj_irregular_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_determiner_noun_agreement_with_adjective_1 = LightevalTaskConfig(
+blimp_determiner_noun_agreement_with_adjective_1_lighteval = LightevalTaskConfig(
     name="blimp:determiner_noun_agreement_with_adjective_1",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4297,7 +4297,7 @@ blimp_determiner_noun_agreement_with_adjective_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_determiner_noun_agreement_with_adjective_1 = LightevalTaskConfig(
+blimp_determiner_noun_agreement_with_adjective_1_helm = LightevalTaskConfig(
     name="blimp:determiner_noun_agreement_with_adjective_1",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4315,7 +4315,7 @@ blimp_determiner_noun_agreement_with_adjective_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_distractor_agreement_relational_noun = LightevalTaskConfig(
+blimp_distractor_agreement_relational_noun_lighteval = LightevalTaskConfig(
     name="blimp:distractor_agreement_relational_noun",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4333,7 +4333,7 @@ blimp_distractor_agreement_relational_noun = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_distractor_agreement_relational_noun = LightevalTaskConfig(
+blimp_distractor_agreement_relational_noun_helm = LightevalTaskConfig(
     name="blimp:distractor_agreement_relational_noun",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4351,7 +4351,7 @@ blimp_distractor_agreement_relational_noun = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_distractor_agreement_relative_clause = LightevalTaskConfig(
+blimp_distractor_agreement_relative_clause_lighteval = LightevalTaskConfig(
     name="blimp:distractor_agreement_relative_clause",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4369,7 +4369,7 @@ blimp_distractor_agreement_relative_clause = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_distractor_agreement_relative_clause = LightevalTaskConfig(
+blimp_distractor_agreement_relative_clause_helm = LightevalTaskConfig(
     name="blimp:distractor_agreement_relative_clause",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4387,7 +4387,7 @@ blimp_distractor_agreement_relative_clause = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_drop_argument = LightevalTaskConfig(
+blimp_drop_argument_lighteval = LightevalTaskConfig(
     name="blimp:drop_argument",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4405,7 +4405,7 @@ blimp_drop_argument = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_drop_argument = LightevalTaskConfig(
+blimp_drop_argument_helm = LightevalTaskConfig(
     name="blimp:drop_argument",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4423,7 +4423,7 @@ blimp_drop_argument = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_ellipsis_n_bar_1 = LightevalTaskConfig(
+blimp_ellipsis_n_bar_1_lighteval = LightevalTaskConfig(
     name="blimp:ellipsis_n_bar_1",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4441,7 +4441,7 @@ blimp_ellipsis_n_bar_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_ellipsis_n_bar_1 = LightevalTaskConfig(
+blimp_ellipsis_n_bar_1_helm = LightevalTaskConfig(
     name="blimp:ellipsis_n_bar_1",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4459,7 +4459,7 @@ blimp_ellipsis_n_bar_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_ellipsis_n_bar_2 = LightevalTaskConfig(
+blimp_ellipsis_n_bar_2_lighteval = LightevalTaskConfig(
     name="blimp:ellipsis_n_bar_2",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4477,7 +4477,7 @@ blimp_ellipsis_n_bar_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_ellipsis_n_bar_2 = LightevalTaskConfig(
+blimp_ellipsis_n_bar_2_helm = LightevalTaskConfig(
     name="blimp:ellipsis_n_bar_2",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4495,7 +4495,7 @@ blimp_ellipsis_n_bar_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_existential_there_object_raising = LightevalTaskConfig(
+blimp_existential_there_object_raising_lighteval = LightevalTaskConfig(
     name="blimp:existential_there_object_raising",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4513,7 +4513,7 @@ blimp_existential_there_object_raising = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_existential_there_object_raising = LightevalTaskConfig(
+blimp_existential_there_object_raising_helm = LightevalTaskConfig(
     name="blimp:existential_there_object_raising",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4531,7 +4531,7 @@ blimp_existential_there_object_raising = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_existential_there_quantifiers_1 = LightevalTaskConfig(
+blimp_existential_there_quantifiers_1_lighteval = LightevalTaskConfig(
     name="blimp:existential_there_quantifiers_1",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4549,7 +4549,7 @@ blimp_existential_there_quantifiers_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_existential_there_quantifiers_1 = LightevalTaskConfig(
+blimp_existential_there_quantifiers_1_helm = LightevalTaskConfig(
     name="blimp:existential_there_quantifiers_1",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4567,7 +4567,7 @@ blimp_existential_there_quantifiers_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_existential_there_quantifiers_2 = LightevalTaskConfig(
+blimp_existential_there_quantifiers_2_lighteval = LightevalTaskConfig(
     name="blimp:existential_there_quantifiers_2",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4585,7 +4585,7 @@ blimp_existential_there_quantifiers_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_existential_there_quantifiers_2 = LightevalTaskConfig(
+blimp_existential_there_quantifiers_2_helm = LightevalTaskConfig(
     name="blimp:existential_there_quantifiers_2",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4603,7 +4603,7 @@ blimp_existential_there_quantifiers_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_existential_there_subject_raising = LightevalTaskConfig(
+blimp_existential_there_subject_raising_lighteval = LightevalTaskConfig(
     name="blimp:existential_there_subject_raising",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4621,7 +4621,7 @@ blimp_existential_there_subject_raising = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_existential_there_subject_raising = LightevalTaskConfig(
+blimp_existential_there_subject_raising_helm = LightevalTaskConfig(
     name="blimp:existential_there_subject_raising",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4639,7 +4639,7 @@ blimp_existential_there_subject_raising = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_expletive_it_object_raising = LightevalTaskConfig(
+blimp_expletive_it_object_raising_lighteval = LightevalTaskConfig(
     name="blimp:expletive_it_object_raising",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4657,7 +4657,7 @@ blimp_expletive_it_object_raising = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_expletive_it_object_raising = LightevalTaskConfig(
+blimp_expletive_it_object_raising_helm = LightevalTaskConfig(
     name="blimp:expletive_it_object_raising",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4675,7 +4675,7 @@ blimp_expletive_it_object_raising = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_inchoative = LightevalTaskConfig(
+blimp_inchoative_lighteval = LightevalTaskConfig(
     name="blimp:inchoative",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4693,7 +4693,7 @@ blimp_inchoative = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_inchoative = LightevalTaskConfig(
+blimp_inchoative_helm = LightevalTaskConfig(
     name="blimp:inchoative",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4711,7 +4711,7 @@ blimp_inchoative = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_intransitive = LightevalTaskConfig(
+blimp_intransitive_lighteval = LightevalTaskConfig(
     name="blimp:intransitive",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4729,7 +4729,7 @@ blimp_intransitive = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_intransitive = LightevalTaskConfig(
+blimp_intransitive_helm = LightevalTaskConfig(
     name="blimp:intransitive",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4747,7 +4747,7 @@ blimp_intransitive = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_irregular_past_participle_adjectives = LightevalTaskConfig(
+blimp_irregular_past_participle_adjectives_lighteval = LightevalTaskConfig(
     name="blimp:irregular_past_participle_adjectives",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4765,7 +4765,7 @@ blimp_irregular_past_participle_adjectives = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_irregular_past_participle_adjectives = LightevalTaskConfig(
+blimp_irregular_past_participle_adjectives_helm = LightevalTaskConfig(
     name="blimp:irregular_past_participle_adjectives",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4783,7 +4783,7 @@ blimp_irregular_past_participle_adjectives = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_irregular_past_participle_verbs = LightevalTaskConfig(
+blimp_irregular_past_participle_verbs_lighteval = LightevalTaskConfig(
     name="blimp:irregular_past_participle_verbs",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4801,7 +4801,7 @@ blimp_irregular_past_participle_verbs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_irregular_past_participle_verbs = LightevalTaskConfig(
+blimp_irregular_past_participle_verbs_helm = LightevalTaskConfig(
     name="blimp:irregular_past_participle_verbs",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4819,7 +4819,7 @@ blimp_irregular_past_participle_verbs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_irregular_plural_subject_verb_agreement_1 = LightevalTaskConfig(
+blimp_irregular_plural_subject_verb_agreement_1_lighteval = LightevalTaskConfig(
     name="blimp:irregular_plural_subject_verb_agreement_1",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4837,7 +4837,7 @@ blimp_irregular_plural_subject_verb_agreement_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_irregular_plural_subject_verb_agreement_1 = LightevalTaskConfig(
+blimp_irregular_plural_subject_verb_agreement_1_helm = LightevalTaskConfig(
     name="blimp:irregular_plural_subject_verb_agreement_1",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4855,7 +4855,7 @@ blimp_irregular_plural_subject_verb_agreement_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_irregular_plural_subject_verb_agreement_2 = LightevalTaskConfig(
+blimp_irregular_plural_subject_verb_agreement_2_lighteval = LightevalTaskConfig(
     name="blimp:irregular_plural_subject_verb_agreement_2",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4873,7 +4873,7 @@ blimp_irregular_plural_subject_verb_agreement_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_irregular_plural_subject_verb_agreement_2 = LightevalTaskConfig(
+blimp_irregular_plural_subject_verb_agreement_2_helm = LightevalTaskConfig(
     name="blimp:irregular_plural_subject_verb_agreement_2",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4891,7 +4891,7 @@ blimp_irregular_plural_subject_verb_agreement_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_left_branch_island_echo_question = LightevalTaskConfig(
+blimp_left_branch_island_echo_question_lighteval = LightevalTaskConfig(
     name="blimp:left_branch_island_echo_question",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4909,7 +4909,7 @@ blimp_left_branch_island_echo_question = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_left_branch_island_echo_question = LightevalTaskConfig(
+blimp_left_branch_island_echo_question_helm = LightevalTaskConfig(
     name="blimp:left_branch_island_echo_question",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4927,7 +4927,7 @@ blimp_left_branch_island_echo_question = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_left_branch_island_simple_question = LightevalTaskConfig(
+blimp_left_branch_island_simple_question_lighteval = LightevalTaskConfig(
     name="blimp:left_branch_island_simple_question",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4945,7 +4945,7 @@ blimp_left_branch_island_simple_question = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_left_branch_island_simple_question = LightevalTaskConfig(
+blimp_left_branch_island_simple_question_helm = LightevalTaskConfig(
     name="blimp:left_branch_island_simple_question",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4963,7 +4963,7 @@ blimp_left_branch_island_simple_question = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_matrix_question_npi_licensor_present = LightevalTaskConfig(
+blimp_matrix_question_npi_licensor_present_lighteval = LightevalTaskConfig(
     name="blimp:matrix_question_npi_licensor_present",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -4981,7 +4981,7 @@ blimp_matrix_question_npi_licensor_present = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_matrix_question_npi_licensor_present = LightevalTaskConfig(
+blimp_matrix_question_npi_licensor_present_helm = LightevalTaskConfig(
     name="blimp:matrix_question_npi_licensor_present",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -4999,7 +4999,7 @@ blimp_matrix_question_npi_licensor_present = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_npi_present_1 = LightevalTaskConfig(
+blimp_npi_present_1_lighteval = LightevalTaskConfig(
     name="blimp:npi_present_1",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5017,7 +5017,7 @@ blimp_npi_present_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_npi_present_1 = LightevalTaskConfig(
+blimp_npi_present_1_helm = LightevalTaskConfig(
     name="blimp:npi_present_1",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5035,7 +5035,7 @@ blimp_npi_present_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_npi_present_2 = LightevalTaskConfig(
+blimp_npi_present_2_lighteval = LightevalTaskConfig(
     name="blimp:npi_present_2",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5053,7 +5053,7 @@ blimp_npi_present_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_npi_present_2 = LightevalTaskConfig(
+blimp_npi_present_2_helm = LightevalTaskConfig(
     name="blimp:npi_present_2",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5071,7 +5071,7 @@ blimp_npi_present_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_only_npi_licensor_present = LightevalTaskConfig(
+blimp_only_npi_licensor_present_lighteval = LightevalTaskConfig(
     name="blimp:only_npi_licensor_present",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5089,7 +5089,7 @@ blimp_only_npi_licensor_present = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_only_npi_licensor_present = LightevalTaskConfig(
+blimp_only_npi_licensor_present_helm = LightevalTaskConfig(
     name="blimp:only_npi_licensor_present",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5107,7 +5107,7 @@ blimp_only_npi_licensor_present = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_only_npi_scope = LightevalTaskConfig(
+blimp_only_npi_scope_lighteval = LightevalTaskConfig(
     name="blimp:only_npi_scope",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5125,7 +5125,7 @@ blimp_only_npi_scope = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_only_npi_scope = LightevalTaskConfig(
+blimp_only_npi_scope_helm = LightevalTaskConfig(
     name="blimp:only_npi_scope",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5143,7 +5143,7 @@ blimp_only_npi_scope = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_passive_1 = LightevalTaskConfig(
+blimp_passive_1_lighteval = LightevalTaskConfig(
     name="blimp:passive_1",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5161,7 +5161,7 @@ blimp_passive_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_passive_1 = LightevalTaskConfig(
+blimp_passive_1_helm = LightevalTaskConfig(
     name="blimp:passive_1",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5179,7 +5179,7 @@ blimp_passive_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_passive_2 = LightevalTaskConfig(
+blimp_passive_2_lighteval = LightevalTaskConfig(
     name="blimp:passive_2",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5197,7 +5197,7 @@ blimp_passive_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_passive_2 = LightevalTaskConfig(
+blimp_passive_2_helm = LightevalTaskConfig(
     name="blimp:passive_2",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5215,7 +5215,7 @@ blimp_passive_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_principle_A_c_command = LightevalTaskConfig(
+blimp_principle_A_c_command_lighteval = LightevalTaskConfig(
     name="blimp:principle_A_c_command",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5233,7 +5233,7 @@ blimp_principle_A_c_command = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_principle_A_c_command = LightevalTaskConfig(
+blimp_principle_A_c_command_helm = LightevalTaskConfig(
     name="blimp:principle_A_c_command",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5251,7 +5251,7 @@ blimp_principle_A_c_command = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_principle_A_case_1 = LightevalTaskConfig(
+blimp_principle_A_case_1_lighteval = LightevalTaskConfig(
     name="blimp:principle_A_case_1",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5269,7 +5269,7 @@ blimp_principle_A_case_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_principle_A_case_1 = LightevalTaskConfig(
+blimp_principle_A_case_1_helm = LightevalTaskConfig(
     name="blimp:principle_A_case_1",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5287,7 +5287,7 @@ blimp_principle_A_case_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_principle_A_case_2 = LightevalTaskConfig(
+blimp_principle_A_case_2_lighteval = LightevalTaskConfig(
     name="blimp:principle_A_case_2",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5305,7 +5305,7 @@ blimp_principle_A_case_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_principle_A_case_2 = LightevalTaskConfig(
+blimp_principle_A_case_2_helm = LightevalTaskConfig(
     name="blimp:principle_A_case_2",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5323,7 +5323,7 @@ blimp_principle_A_case_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_principle_A_domain_1 = LightevalTaskConfig(
+blimp_principle_A_domain_1_lighteval = LightevalTaskConfig(
     name="blimp:principle_A_domain_1",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5341,7 +5341,7 @@ blimp_principle_A_domain_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_principle_A_domain_1 = LightevalTaskConfig(
+blimp_principle_A_domain_1_helm = LightevalTaskConfig(
     name="blimp:principle_A_domain_1",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5359,7 +5359,7 @@ blimp_principle_A_domain_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_principle_A_domain_2 = LightevalTaskConfig(
+blimp_principle_A_domain_2_lighteval = LightevalTaskConfig(
     name="blimp:principle_A_domain_2",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5377,7 +5377,7 @@ blimp_principle_A_domain_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_principle_A_domain_2 = LightevalTaskConfig(
+blimp_principle_A_domain_2_helm = LightevalTaskConfig(
     name="blimp:principle_A_domain_2",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5395,7 +5395,7 @@ blimp_principle_A_domain_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_principle_A_domain_3 = LightevalTaskConfig(
+blimp_principle_A_domain_3_lighteval = LightevalTaskConfig(
     name="blimp:principle_A_domain_3",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5413,7 +5413,7 @@ blimp_principle_A_domain_3 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_principle_A_domain_3 = LightevalTaskConfig(
+blimp_principle_A_domain_3_helm = LightevalTaskConfig(
     name="blimp:principle_A_domain_3",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5431,7 +5431,7 @@ blimp_principle_A_domain_3 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_principle_A_reconstruction = LightevalTaskConfig(
+blimp_principle_A_reconstruction_lighteval = LightevalTaskConfig(
     name="blimp:principle_A_reconstruction",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5449,7 +5449,7 @@ blimp_principle_A_reconstruction = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_principle_A_reconstruction = LightevalTaskConfig(
+blimp_principle_A_reconstruction_helm = LightevalTaskConfig(
     name="blimp:principle_A_reconstruction",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5467,7 +5467,7 @@ blimp_principle_A_reconstruction = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_regular_plural_subject_verb_agreement_1 = LightevalTaskConfig(
+blimp_regular_plural_subject_verb_agreement_1_lighteval = LightevalTaskConfig(
     name="blimp:regular_plural_subject_verb_agreement_1",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5485,7 +5485,7 @@ blimp_regular_plural_subject_verb_agreement_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_regular_plural_subject_verb_agreement_1 = LightevalTaskConfig(
+blimp_regular_plural_subject_verb_agreement_1_helm = LightevalTaskConfig(
     name="blimp:regular_plural_subject_verb_agreement_1",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5503,7 +5503,7 @@ blimp_regular_plural_subject_verb_agreement_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_regular_plural_subject_verb_agreement_2 = LightevalTaskConfig(
+blimp_regular_plural_subject_verb_agreement_2_lighteval = LightevalTaskConfig(
     name="blimp:regular_plural_subject_verb_agreement_2",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5521,7 +5521,7 @@ blimp_regular_plural_subject_verb_agreement_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_regular_plural_subject_verb_agreement_2 = LightevalTaskConfig(
+blimp_regular_plural_subject_verb_agreement_2_helm = LightevalTaskConfig(
     name="blimp:regular_plural_subject_verb_agreement_2",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5539,7 +5539,7 @@ blimp_regular_plural_subject_verb_agreement_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_sentential_negation_npi_licensor_present = LightevalTaskConfig(
+blimp_sentential_negation_npi_licensor_present_lighteval = LightevalTaskConfig(
     name="blimp:sentential_negation_npi_licensor_present",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5557,7 +5557,7 @@ blimp_sentential_negation_npi_licensor_present = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_sentential_negation_npi_licensor_present = LightevalTaskConfig(
+blimp_sentential_negation_npi_licensor_present_helm = LightevalTaskConfig(
     name="blimp:sentential_negation_npi_licensor_present",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5575,7 +5575,7 @@ blimp_sentential_negation_npi_licensor_present = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_sentential_negation_npi_scope = LightevalTaskConfig(
+blimp_sentential_negation_npi_scope_lighteval = LightevalTaskConfig(
     name="blimp:sentential_negation_npi_scope",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5593,7 +5593,7 @@ blimp_sentential_negation_npi_scope = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_sentential_negation_npi_scope = LightevalTaskConfig(
+blimp_sentential_negation_npi_scope_helm = LightevalTaskConfig(
     name="blimp:sentential_negation_npi_scope",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5611,7 +5611,7 @@ blimp_sentential_negation_npi_scope = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_sentential_subject_island = LightevalTaskConfig(
+blimp_sentential_subject_island_lighteval = LightevalTaskConfig(
     name="blimp:sentential_subject_island",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5629,7 +5629,7 @@ blimp_sentential_subject_island = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_sentential_subject_island = LightevalTaskConfig(
+blimp_sentential_subject_island_helm = LightevalTaskConfig(
     name="blimp:sentential_subject_island",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5647,7 +5647,7 @@ blimp_sentential_subject_island = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_superlative_quantifiers_1 = LightevalTaskConfig(
+blimp_superlative_quantifiers_1_lighteval = LightevalTaskConfig(
     name="blimp:superlative_quantifiers_1",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5665,7 +5665,7 @@ blimp_superlative_quantifiers_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_superlative_quantifiers_1 = LightevalTaskConfig(
+blimp_superlative_quantifiers_1_helm = LightevalTaskConfig(
     name="blimp:superlative_quantifiers_1",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5683,7 +5683,7 @@ blimp_superlative_quantifiers_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_superlative_quantifiers_2 = LightevalTaskConfig(
+blimp_superlative_quantifiers_2_lighteval = LightevalTaskConfig(
     name="blimp:superlative_quantifiers_2",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5701,7 +5701,7 @@ blimp_superlative_quantifiers_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_superlative_quantifiers_2 = LightevalTaskConfig(
+blimp_superlative_quantifiers_2_helm = LightevalTaskConfig(
     name="blimp:superlative_quantifiers_2",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5719,7 +5719,7 @@ blimp_superlative_quantifiers_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_tough_vs_raising_1 = LightevalTaskConfig(
+blimp_tough_vs_raising_1_lighteval = LightevalTaskConfig(
     name="blimp:tough_vs_raising_1",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5737,7 +5737,7 @@ blimp_tough_vs_raising_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_tough_vs_raising_1 = LightevalTaskConfig(
+blimp_tough_vs_raising_1_helm = LightevalTaskConfig(
     name="blimp:tough_vs_raising_1",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5755,7 +5755,7 @@ blimp_tough_vs_raising_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_tough_vs_raising_2 = LightevalTaskConfig(
+blimp_tough_vs_raising_2_lighteval = LightevalTaskConfig(
     name="blimp:tough_vs_raising_2",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5773,7 +5773,7 @@ blimp_tough_vs_raising_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_tough_vs_raising_2 = LightevalTaskConfig(
+blimp_tough_vs_raising_2_helm = LightevalTaskConfig(
     name="blimp:tough_vs_raising_2",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5791,7 +5791,7 @@ blimp_tough_vs_raising_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_transitive = LightevalTaskConfig(
+blimp_transitive_lighteval = LightevalTaskConfig(
     name="blimp:transitive",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5809,7 +5809,7 @@ blimp_transitive = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_transitive = LightevalTaskConfig(
+blimp_transitive_helm = LightevalTaskConfig(
     name="blimp:transitive",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5827,7 +5827,7 @@ blimp_transitive = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_wh_island = LightevalTaskConfig(
+blimp_wh_island_lighteval = LightevalTaskConfig(
     name="blimp:wh_island",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5845,7 +5845,7 @@ blimp_wh_island = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_wh_island = LightevalTaskConfig(
+blimp_wh_island_helm = LightevalTaskConfig(
     name="blimp:wh_island",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5863,7 +5863,7 @@ blimp_wh_island = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_wh_questions_object_gap = LightevalTaskConfig(
+blimp_wh_questions_object_gap_lighteval = LightevalTaskConfig(
     name="blimp:wh_questions_object_gap",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5881,7 +5881,7 @@ blimp_wh_questions_object_gap = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_wh_questions_object_gap = LightevalTaskConfig(
+blimp_wh_questions_object_gap_helm = LightevalTaskConfig(
     name="blimp:wh_questions_object_gap",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5899,7 +5899,7 @@ blimp_wh_questions_object_gap = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_wh_questions_subject_gap = LightevalTaskConfig(
+blimp_wh_questions_subject_gap_lighteval = LightevalTaskConfig(
     name="blimp:wh_questions_subject_gap",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5917,7 +5917,7 @@ blimp_wh_questions_subject_gap = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_wh_questions_subject_gap = LightevalTaskConfig(
+blimp_wh_questions_subject_gap_helm = LightevalTaskConfig(
     name="blimp:wh_questions_subject_gap",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5935,7 +5935,7 @@ blimp_wh_questions_subject_gap = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_wh_questions_subject_gap_long_distance = LightevalTaskConfig(
+blimp_wh_questions_subject_gap_long_distance_lighteval = LightevalTaskConfig(
     name="blimp:wh_questions_subject_gap_long_distance",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5953,7 +5953,7 @@ blimp_wh_questions_subject_gap_long_distance = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_wh_questions_subject_gap_long_distance = LightevalTaskConfig(
+blimp_wh_questions_subject_gap_long_distance_helm = LightevalTaskConfig(
     name="blimp:wh_questions_subject_gap_long_distance",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -5971,7 +5971,7 @@ blimp_wh_questions_subject_gap_long_distance = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_wh_vs_that_no_gap = LightevalTaskConfig(
+blimp_wh_vs_that_no_gap_lighteval = LightevalTaskConfig(
     name="blimp:wh_vs_that_no_gap",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -5989,7 +5989,7 @@ blimp_wh_vs_that_no_gap = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_wh_vs_that_no_gap = LightevalTaskConfig(
+blimp_wh_vs_that_no_gap_helm = LightevalTaskConfig(
     name="blimp:wh_vs_that_no_gap",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -6007,7 +6007,7 @@ blimp_wh_vs_that_no_gap = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_wh_vs_that_no_gap_long_distance = LightevalTaskConfig(
+blimp_wh_vs_that_no_gap_long_distance_lighteval = LightevalTaskConfig(
     name="blimp:wh_vs_that_no_gap_long_distance",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -6025,7 +6025,7 @@ blimp_wh_vs_that_no_gap_long_distance = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_wh_vs_that_no_gap_long_distance = LightevalTaskConfig(
+blimp_wh_vs_that_no_gap_long_distance_helm = LightevalTaskConfig(
     name="blimp:wh_vs_that_no_gap_long_distance",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -6043,7 +6043,7 @@ blimp_wh_vs_that_no_gap_long_distance = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_wh_vs_that_with_gap = LightevalTaskConfig(
+blimp_wh_vs_that_with_gap_lighteval = LightevalTaskConfig(
     name="blimp:wh_vs_that_with_gap",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -6061,7 +6061,7 @@ blimp_wh_vs_that_with_gap = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_wh_vs_that_with_gap = LightevalTaskConfig(
+blimp_wh_vs_that_with_gap_helm = LightevalTaskConfig(
     name="blimp:wh_vs_that_with_gap",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -6079,7 +6079,7 @@ blimp_wh_vs_that_with_gap = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_wh_vs_that_with_gap_long_distance = LightevalTaskConfig(
+blimp_wh_vs_that_with_gap_long_distance_lighteval = LightevalTaskConfig(
     name="blimp:wh_vs_that_with_gap_long_distance",
     suite=["lighteval", "blimp"],
     prompt_function="blimp",
@@ -6097,7 +6097,7 @@ blimp_wh_vs_that_with_gap_long_distance = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-blimp_wh_vs_that_with_gap_long_distance = LightevalTaskConfig(
+blimp_wh_vs_that_with_gap_long_distance_helm = LightevalTaskConfig(
     name="blimp:wh_vs_that_with_gap_long_distance",
     suite=["helm", "blimp"],
     prompt_function="blimp_helm",
@@ -6115,7 +6115,7 @@ blimp_wh_vs_that_with_gap_long_distance = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bold = LightevalTaskConfig(
+bold_helm = LightevalTaskConfig(
     name="bold",
     suite=["helm"],
     prompt_function="bold",
@@ -6133,7 +6133,7 @@ bold = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bold_gender = LightevalTaskConfig(
+bold_gender_helm = LightevalTaskConfig(
     name="bold:gender",
     suite=["helm"],
     prompt_function="bold",
@@ -6151,7 +6151,7 @@ bold_gender = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bold_political_ideology = LightevalTaskConfig(
+bold_political_ideology_helm = LightevalTaskConfig(
     name="bold:political_ideology",
     suite=["helm"],
     prompt_function="bold",
@@ -6169,7 +6169,7 @@ bold_political_ideology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bold_profession = LightevalTaskConfig(
+bold_profession_helm = LightevalTaskConfig(
     name="bold:profession",
     suite=["helm"],
     prompt_function="bold",
@@ -6187,7 +6187,7 @@ bold_profession = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bold_race = LightevalTaskConfig(
+bold_race_helm = LightevalTaskConfig(
     name="bold:race",
     suite=["helm"],
     prompt_function="bold",
@@ -6205,7 +6205,7 @@ bold_race = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bold_religious_ideology = LightevalTaskConfig(
+bold_religious_ideology_helm = LightevalTaskConfig(
     name="bold:religious_ideology",
     suite=["helm"],
     prompt_function="bold",
@@ -6223,7 +6223,7 @@ bold_religious_ideology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-boolq = LightevalTaskConfig(
+boolq_helm = LightevalTaskConfig(
     name="boolq",
     suite=["helm", "helm_general"],
     prompt_function="boolq_helm",
@@ -6241,7 +6241,7 @@ boolq = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-boolq_contrastset = LightevalTaskConfig(
+boolq_contrastset_helm = LightevalTaskConfig(
     name="boolq:contrastset",
     suite=["helm"],
     prompt_function="boolq_helm_contrastset",
@@ -6259,7 +6259,7 @@ boolq_contrastset = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-bridging_anaphora_resolution_barqa = LightevalTaskConfig(
+bridging_anaphora_resolution_barqa_bigbench = LightevalTaskConfig(
     name="bridging_anaphora_resolution_barqa",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -6277,7 +6277,7 @@ bridging_anaphora_resolution_barqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-causal_judgment = LightevalTaskConfig(
+causal_judgment_bigbench = LightevalTaskConfig(
     name="causal_judgment",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -6295,7 +6295,7 @@ causal_judgment = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-cause_and_effect = LightevalTaskConfig(
+cause_and_effect_bigbench = LightevalTaskConfig(
     name="cause_and_effect",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -6313,7 +6313,7 @@ cause_and_effect = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-checkmate_in_one = LightevalTaskConfig(
+checkmate_in_one_bigbench = LightevalTaskConfig(
     name="checkmate_in_one",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -6331,7 +6331,7 @@ checkmate_in_one = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-chess_state_tracking = LightevalTaskConfig(
+chess_state_tracking_bigbench = LightevalTaskConfig(
     name="chess_state_tracking",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -6349,7 +6349,7 @@ chess_state_tracking = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-chinese_remainder_theorem = LightevalTaskConfig(
+chinese_remainder_theorem_bigbench = LightevalTaskConfig(
     name="chinese_remainder_theorem",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -6367,7 +6367,7 @@ chinese_remainder_theorem = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-cifar10_classification = LightevalTaskConfig(
+cifar10_classification_bigbench = LightevalTaskConfig(
     name="cifar10_classification",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -6385,7 +6385,7 @@ cifar10_classification = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-civil_comments = LightevalTaskConfig(
+civil_comments_helm = LightevalTaskConfig(
     name="civil_comments",
     suite=["helm", "helm_general"],
     prompt_function="civil_comments",
@@ -6410,7 +6410,7 @@ civil_comments = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-civil_comments_LGBTQ = LightevalTaskConfig(
+civil_comments_LGBTQ_helm = LightevalTaskConfig(
     name="civil_comments:LGBTQ",
     suite=["helm"],
     prompt_function="civil_comments",
@@ -6435,7 +6435,7 @@ civil_comments_LGBTQ = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-civil_comments_black = LightevalTaskConfig(
+civil_comments_black_helm = LightevalTaskConfig(
     name="civil_comments:black",
     suite=["helm"],
     prompt_function="civil_comments",
@@ -6460,7 +6460,7 @@ civil_comments_black = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-civil_comments_christian = LightevalTaskConfig(
+civil_comments_christian_helm = LightevalTaskConfig(
     name="civil_comments:christian",
     suite=["helm"],
     prompt_function="civil_comments",
@@ -6485,7 +6485,7 @@ civil_comments_christian = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-civil_comments_female = LightevalTaskConfig(
+civil_comments_female_helm = LightevalTaskConfig(
     name="civil_comments:female",
     suite=["helm"],
     prompt_function="civil_comments",
@@ -6510,7 +6510,7 @@ civil_comments_female = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-civil_comments_male = LightevalTaskConfig(
+civil_comments_male_helm = LightevalTaskConfig(
     name="civil_comments:male",
     suite=["helm"],
     prompt_function="civil_comments",
@@ -6535,7 +6535,7 @@ civil_comments_male = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-civil_comments_muslim = LightevalTaskConfig(
+civil_comments_muslim_helm = LightevalTaskConfig(
     name="civil_comments:muslim",
     suite=["helm"],
     prompt_function="civil_comments",
@@ -6560,7 +6560,7 @@ civil_comments_muslim = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-civil_comments_other_religions = LightevalTaskConfig(
+civil_comments_other_religions_helm = LightevalTaskConfig(
     name="civil_comments:other_religions",
     suite=["helm"],
     prompt_function="civil_comments",
@@ -6585,7 +6585,7 @@ civil_comments_other_religions = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-civil_comments_white = LightevalTaskConfig(
+civil_comments_white_helm = LightevalTaskConfig(
     name="civil_comments:white",
     suite=["helm"],
     prompt_function="civil_comments",
@@ -6610,7 +6610,7 @@ civil_comments_white = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-code_line_description = LightevalTaskConfig(
+code_line_description_bigbench_lite = LightevalTaskConfig(
     name="code_line_description",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench_linefeed_before_and_after_query",
@@ -6628,7 +6628,7 @@ code_line_description = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-codenames = LightevalTaskConfig(
+codenames_bigbench = LightevalTaskConfig(
     name="codenames",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -6646,7 +6646,7 @@ codenames = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-color = LightevalTaskConfig(
+color_bigbench = LightevalTaskConfig(
     name="color",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -6664,7 +6664,7 @@ color = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-common_morpheme = LightevalTaskConfig(
+common_morpheme_bigbench = LightevalTaskConfig(
     name="common_morpheme",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -6682,7 +6682,7 @@ common_morpheme = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-commonsenseqa = LightevalTaskConfig(
+commonsenseqa_helm = LightevalTaskConfig(
     name="commonsenseqa",
     suite=["helm", "commonsense_scenario"],
     prompt_function="commonsense_qa",
@@ -6700,7 +6700,7 @@ commonsenseqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-conceptual_combinations = LightevalTaskConfig(
+conceptual_combinations_bigbench_lite = LightevalTaskConfig(
     name="conceptual_combinations",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench_linefeed_before_whitespace_after_query",
@@ -6718,7 +6718,7 @@ conceptual_combinations = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-conlang_translation = LightevalTaskConfig(
+conlang_translation_bigbench_lite = LightevalTaskConfig(
     name="conlang_translation",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench_whitespace_after_query",
@@ -6735,7 +6735,7 @@ conlang_translation = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-contextual_parametric_knowledge_conflicts = LightevalTaskConfig(
+contextual_parametric_knowledge_conflicts_bigbench = LightevalTaskConfig(
     name="contextual_parametric_knowledge_conflicts",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -6753,7 +6753,7 @@ contextual_parametric_knowledge_conflicts = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-copyright_n_books_1000_extractions_per_book_1_prefix_length_125 = LightevalTaskConfig(
+copyright_n_books_1000_extractions_per_book_1_prefix_length_125_helm = LightevalTaskConfig(
     name="copyright:n_books_1000-extractions_per_book_1-prefix_length_125",
     suite=["helm", "copyright_scenario"],
     prompt_function="copyright",
@@ -6771,7 +6771,7 @@ copyright_n_books_1000_extractions_per_book_1_prefix_length_125 = LightevalTaskC
     trust_dataset=True,
     version=0,
 )
-copyright_n_books_1000_extractions_per_book_1_prefix_length_25 = LightevalTaskConfig(
+copyright_n_books_1000_extractions_per_book_1_prefix_length_25_helm = LightevalTaskConfig(
     name="copyright:n_books_1000-extractions_per_book_1-prefix_length_25",
     suite=["helm", "copyright_scenario"],
     prompt_function="copyright",
@@ -6789,7 +6789,7 @@ copyright_n_books_1000_extractions_per_book_1_prefix_length_25 = LightevalTaskCo
     trust_dataset=True,
     version=0,
 )
-copyright_n_books_1000_extractions_per_book_1_prefix_length_5 = LightevalTaskConfig(
+copyright_n_books_1000_extractions_per_book_1_prefix_length_5_helm = LightevalTaskConfig(
     name="copyright:n_books_1000-extractions_per_book_1-prefix_length_5",
     suite=["helm", "copyright_scenario"],
     prompt_function="copyright",
@@ -6807,7 +6807,7 @@ copyright_n_books_1000_extractions_per_book_1_prefix_length_5 = LightevalTaskCon
     trust_dataset=True,
     version=0,
 )
-copyright_n_books_1000_extractions_per_book_3_prefix_length_125 = LightevalTaskConfig(
+copyright_n_books_1000_extractions_per_book_3_prefix_length_125_helm = LightevalTaskConfig(
     name="copyright:n_books_1000-extractions_per_book_3-prefix_length_125",
     suite=["helm", "copyright_scenario"],
     prompt_function="copyright",
@@ -6825,7 +6825,7 @@ copyright_n_books_1000_extractions_per_book_3_prefix_length_125 = LightevalTaskC
     trust_dataset=True,
     version=0,
 )
-copyright_n_books_1000_extractions_per_book_3_prefix_length_25 = LightevalTaskConfig(
+copyright_n_books_1000_extractions_per_book_3_prefix_length_25_helm = LightevalTaskConfig(
     name="copyright:n_books_1000-extractions_per_book_3-prefix_length_25",
     suite=["helm", "copyright_scenario"],
     prompt_function="copyright",
@@ -6843,7 +6843,7 @@ copyright_n_books_1000_extractions_per_book_3_prefix_length_25 = LightevalTaskCo
     trust_dataset=True,
     version=0,
 )
-copyright_n_books_1000_extractions_per_book_3_prefix_length_5 = LightevalTaskConfig(
+copyright_n_books_1000_extractions_per_book_3_prefix_length_5_helm = LightevalTaskConfig(
     name="copyright:n_books_1000-extractions_per_book_3-prefix_length_5",
     suite=["helm", "copyright_scenario"],
     prompt_function="copyright",
@@ -6861,7 +6861,7 @@ copyright_n_books_1000_extractions_per_book_3_prefix_length_5 = LightevalTaskCon
     trust_dataset=True,
     version=0,
 )
-copyright_oh_the_places = LightevalTaskConfig(
+copyright_oh_the_places_helm = LightevalTaskConfig(
     name="copyright:oh_the_places",
     suite=["helm", "copyright_scenario"],
     prompt_function="copyright",
@@ -6879,7 +6879,7 @@ copyright_oh_the_places = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-copyright_pilot = LightevalTaskConfig(
+copyright_pilot_helm = LightevalTaskConfig(
     name="copyright:pilot",
     suite=["helm", "copyright_scenario"],
     prompt_function="copyright",
@@ -6897,7 +6897,7 @@ copyright_pilot = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-copyright_popular_books_prefix_length_10 = LightevalTaskConfig(
+copyright_popular_books_prefix_length_10_helm = LightevalTaskConfig(
     name="copyright:popular_books-prefix_length_10",
     suite=["helm", "copyright_scenario"],
     prompt_function="copyright",
@@ -6915,7 +6915,7 @@ copyright_popular_books_prefix_length_10 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-copyright_popular_books_prefix_length_125 = LightevalTaskConfig(
+copyright_popular_books_prefix_length_125_helm = LightevalTaskConfig(
     name="copyright:popular_books-prefix_length_125",
     suite=["helm", "copyright_scenario"],
     prompt_function="copyright",
@@ -6933,7 +6933,7 @@ copyright_popular_books_prefix_length_125 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-copyright_popular_books_prefix_length_25 = LightevalTaskConfig(
+copyright_popular_books_prefix_length_25_helm = LightevalTaskConfig(
     name="copyright:popular_books-prefix_length_25",
     suite=["helm", "copyright_scenario"],
     prompt_function="copyright",
@@ -6951,7 +6951,7 @@ copyright_popular_books_prefix_length_25 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-copyright_popular_books_prefix_length_250 = LightevalTaskConfig(
+copyright_popular_books_prefix_length_250_helm = LightevalTaskConfig(
     name="copyright:popular_books-prefix_length_250",
     suite=["helm", "copyright_scenario"],
     prompt_function="copyright",
@@ -6969,7 +6969,7 @@ copyright_popular_books_prefix_length_250 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-copyright_popular_books_prefix_length_5 = LightevalTaskConfig(
+copyright_popular_books_prefix_length_5_helm = LightevalTaskConfig(
     name="copyright:popular_books-prefix_length_5",
     suite=["helm", "copyright_scenario"],
     prompt_function="copyright",
@@ -6987,7 +6987,7 @@ copyright_popular_books_prefix_length_5 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-copyright_popular_books_prefix_length_50 = LightevalTaskConfig(
+copyright_popular_books_prefix_length_50_helm = LightevalTaskConfig(
     name="copyright:popular_books-prefix_length_50",
     suite=["helm", "copyright_scenario"],
     prompt_function="copyright",
@@ -7005,7 +7005,7 @@ copyright_popular_books_prefix_length_50 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-copyright_prompt_num_line_1_min_lines_20 = LightevalTaskConfig(
+copyright_prompt_num_line_1_min_lines_20_helm = LightevalTaskConfig(
     name="copyright:prompt_num_line_1-min_lines_20",
     suite=["helm", "copyright_scenario"],
     prompt_function="copyright",
@@ -7023,7 +7023,7 @@ copyright_prompt_num_line_1_min_lines_20 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-copyright_prompt_num_line_10_min_lines_20 = LightevalTaskConfig(
+copyright_prompt_num_line_10_min_lines_20_helm = LightevalTaskConfig(
     name="copyright:prompt_num_line_10-min_lines_20",
     suite=["helm", "copyright_scenario"],
     prompt_function="copyright",
@@ -7041,7 +7041,7 @@ copyright_prompt_num_line_10_min_lines_20 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-copyright_prompt_num_line_5_min_lines_20 = LightevalTaskConfig(
+copyright_prompt_num_line_5_min_lines_20_helm = LightevalTaskConfig(
     name="copyright:prompt_num_line_5-min_lines_20",
     suite=["helm", "copyright_scenario"],
     prompt_function="copyright",
@@ -7059,7 +7059,7 @@ copyright_prompt_num_line_5_min_lines_20 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-coqa = LightevalTaskConfig(
+coqa_lighteval = LightevalTaskConfig(
     name="coqa",
     suite=["lighteval"],
     prompt_function="coqa",
@@ -7077,7 +7077,7 @@ coqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-coqa_bb = LightevalTaskConfig(
+coqa_bb_lighteval = LightevalTaskConfig(
     name="coqa_bb",
     suite=["lighteval", "bigbench_programmatic", "bigbench"],
     prompt_function="coqa",
@@ -7095,7 +7095,7 @@ coqa_bb = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-covid_dialogue = LightevalTaskConfig(
+covid_dialogue_helm = LightevalTaskConfig(
     name="covid_dialogue",
     suite=["helm"],
     prompt_function="covid_dialogue",
@@ -7113,7 +7113,7 @@ covid_dialogue = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-crash_blossom = LightevalTaskConfig(
+crash_blossom_bigbench = LightevalTaskConfig(
     name="crash_blossom",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7131,7 +7131,7 @@ crash_blossom = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-crass_ai = LightevalTaskConfig(
+crass_ai_bigbench = LightevalTaskConfig(
     name="crass_ai",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7149,7 +7149,7 @@ crass_ai = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-cryobiology_spanish = LightevalTaskConfig(
+cryobiology_spanish_bigbench = LightevalTaskConfig(
     name="cryobiology_spanish",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7167,7 +7167,7 @@ cryobiology_spanish = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-cryptonite = LightevalTaskConfig(
+cryptonite_bigbench = LightevalTaskConfig(
     name="cryptonite",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7185,7 +7185,7 @@ cryptonite = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-cs_algorithms = LightevalTaskConfig(
+cs_algorithms_bigbench = LightevalTaskConfig(
     name="cs_algorithms",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7203,7 +7203,7 @@ cs_algorithms = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-dark_humor_detection = LightevalTaskConfig(
+dark_humor_detection_bigbench = LightevalTaskConfig(
     name="dark_humor_detection",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7221,7 +7221,7 @@ dark_humor_detection = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-date_understanding = LightevalTaskConfig(
+date_understanding_bigbench = LightevalTaskConfig(
     name="date_understanding",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7239,7 +7239,7 @@ date_understanding = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-disambiguation_qa = LightevalTaskConfig(
+disambiguation_qa_bigbench = LightevalTaskConfig(
     name="disambiguation_qa",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7257,7 +7257,7 @@ disambiguation_qa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-discourse_marker_prediction = LightevalTaskConfig(
+discourse_marker_prediction_bigbench = LightevalTaskConfig(
     name="discourse_marker_prediction",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7275,7 +7275,7 @@ discourse_marker_prediction = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-disfl_qa = LightevalTaskConfig(
+disfl_qa_bigbench = LightevalTaskConfig(
     name="disfl_qa",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7293,7 +7293,7 @@ disfl_qa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-drop = LightevalTaskConfig(
+drop_lighteval = LightevalTaskConfig(
     name="drop",
     suite=["lighteval"],
     prompt_function="drop",
@@ -7311,7 +7311,7 @@ drop = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-dyck_language_2 = LightevalTaskConfig(
+dyck_language_2_helm = LightevalTaskConfig(
     name="dyck_language:2",
     suite=["helm"],
     prompt_function="dyck_language",
@@ -7329,7 +7329,7 @@ dyck_language_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-dyck_language_3 = LightevalTaskConfig(
+dyck_language_3_helm = LightevalTaskConfig(
     name="dyck_language:3",
     suite=["helm"],
     prompt_function="dyck_language",
@@ -7347,7 +7347,7 @@ dyck_language_3 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-dyck_language_4 = LightevalTaskConfig(
+dyck_language_4_helm = LightevalTaskConfig(
     name="dyck_language:4",
     suite=["helm"],
     prompt_function="dyck_language",
@@ -7365,7 +7365,7 @@ dyck_language_4 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-dyck_languages = LightevalTaskConfig(
+dyck_languages_bigbench = LightevalTaskConfig(
     name="dyck_languages",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7383,7 +7383,7 @@ dyck_languages = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-elementary_math_qa = LightevalTaskConfig(
+elementary_math_qa_bigbench = LightevalTaskConfig(
     name="elementary_math_qa",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7401,7 +7401,7 @@ elementary_math_qa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-emoji_movie = LightevalTaskConfig(
+emoji_movie_bigbench_lite = LightevalTaskConfig(
     name="emoji_movie",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench_linefeed_before_whitespace_after_query",
@@ -7419,7 +7419,7 @@ emoji_movie = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-emojis_emotion_prediction = LightevalTaskConfig(
+emojis_emotion_prediction_bigbench = LightevalTaskConfig(
     name="emojis_emotion_prediction",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7437,7 +7437,7 @@ emojis_emotion_prediction = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-empirical_judgments = LightevalTaskConfig(
+empirical_judgments_bigbench = LightevalTaskConfig(
     name="empirical_judgments",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7455,7 +7455,7 @@ empirical_judgments = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-english_proverbs = LightevalTaskConfig(
+english_proverbs_bigbench = LightevalTaskConfig(
     name="english_proverbs",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7473,7 +7473,7 @@ english_proverbs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-english_russian_proverbs = LightevalTaskConfig(
+english_russian_proverbs_bigbench = LightevalTaskConfig(
     name="english_russian_proverbs",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7491,7 +7491,7 @@ english_russian_proverbs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-entailed_polarity = LightevalTaskConfig(
+entailed_polarity_bigbench = LightevalTaskConfig(
     name="entailed_polarity",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7509,7 +7509,7 @@ entailed_polarity = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-entailed_polarity_hindi = LightevalTaskConfig(
+entailed_polarity_hindi_bigbench = LightevalTaskConfig(
     name="entailed_polarity_hindi",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7527,7 +7527,7 @@ entailed_polarity_hindi = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-entity_data_imputation_Buy = LightevalTaskConfig(
+entity_data_imputation_Buy_helm = LightevalTaskConfig(
     name="entity_data_imputation:Buy",
     suite=["helm"],
     prompt_function="entity_data_imputation",
@@ -7545,7 +7545,7 @@ entity_data_imputation_Buy = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-entity_data_imputation_Restaurant = LightevalTaskConfig(
+entity_data_imputation_Restaurant_helm = LightevalTaskConfig(
     name="entity_data_imputation:Restaurant",
     suite=["helm"],
     prompt_function="entity_data_imputation",
@@ -7563,7 +7563,7 @@ entity_data_imputation_Restaurant = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-entity_matching_Abt_Buy = LightevalTaskConfig(
+entity_matching_Abt_Buy_helm = LightevalTaskConfig(
     name="entity_matching:Abt_Buy",
     suite=["helm"],
     prompt_function="entity_matching",
@@ -7581,7 +7581,7 @@ entity_matching_Abt_Buy = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-entity_matching_Amazon_Google = LightevalTaskConfig(
+entity_matching_Amazon_Google_helm = LightevalTaskConfig(
     name="entity_matching:Amazon_Google",
     suite=["helm"],
     prompt_function="entity_matching",
@@ -7599,7 +7599,7 @@ entity_matching_Amazon_Google = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-entity_matching_Beer = LightevalTaskConfig(
+entity_matching_Beer_helm = LightevalTaskConfig(
     name="entity_matching:Beer",
     suite=["helm"],
     prompt_function="entity_matching",
@@ -7617,7 +7617,7 @@ entity_matching_Beer = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-entity_matching_Company = LightevalTaskConfig(
+entity_matching_Company_helm = LightevalTaskConfig(
     name="entity_matching:Company",
     suite=["helm"],
     prompt_function="entity_matching",
@@ -7635,7 +7635,7 @@ entity_matching_Company = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-entity_matching_DBLP_ACM = LightevalTaskConfig(
+entity_matching_DBLP_ACM_helm = LightevalTaskConfig(
     name="entity_matching:DBLP_ACM",
     suite=["helm"],
     prompt_function="entity_matching",
@@ -7653,7 +7653,7 @@ entity_matching_DBLP_ACM = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-entity_matching_DBLP_GoogleScholar = LightevalTaskConfig(
+entity_matching_DBLP_GoogleScholar_helm = LightevalTaskConfig(
     name="entity_matching:DBLP_GoogleScholar",
     suite=["helm"],
     prompt_function="entity_matching",
@@ -7671,7 +7671,7 @@ entity_matching_DBLP_GoogleScholar = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-entity_matching_Dirty_DBLP_ACM = LightevalTaskConfig(
+entity_matching_Dirty_DBLP_ACM_helm = LightevalTaskConfig(
     name="entity_matching:Dirty_DBLP_ACM",
     suite=["helm"],
     prompt_function="entity_matching",
@@ -7689,7 +7689,7 @@ entity_matching_Dirty_DBLP_ACM = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-entity_matching_Dirty_DBLP_GoogleScholar = LightevalTaskConfig(
+entity_matching_Dirty_DBLP_GoogleScholar_helm = LightevalTaskConfig(
     name="entity_matching:Dirty_DBLP_GoogleScholar",
     suite=["helm"],
     prompt_function="entity_matching",
@@ -7707,7 +7707,7 @@ entity_matching_Dirty_DBLP_GoogleScholar = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-entity_matching_Dirty_Walmart_Amazon = LightevalTaskConfig(
+entity_matching_Dirty_Walmart_Amazon_helm = LightevalTaskConfig(
     name="entity_matching:Dirty_Walmart_Amazon",
     suite=["helm"],
     prompt_function="entity_matching",
@@ -7725,7 +7725,7 @@ entity_matching_Dirty_Walmart_Amazon = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-entity_matching_Dirty_iTunes_Amazon = LightevalTaskConfig(
+entity_matching_Dirty_iTunes_Amazon_helm = LightevalTaskConfig(
     name="entity_matching:Dirty_iTunes_Amazon",
     suite=["helm"],
     prompt_function="entity_matching",
@@ -7743,7 +7743,7 @@ entity_matching_Dirty_iTunes_Amazon = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-entity_matching_Fodors_Zagats = LightevalTaskConfig(
+entity_matching_Fodors_Zagats_helm = LightevalTaskConfig(
     name="entity_matching=Fodors_Zagats",
     suite=["helm"],
     prompt_function="entity_matching",
@@ -7761,7 +7761,7 @@ entity_matching_Fodors_Zagats = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-entity_matching_Walmart_Amazon = LightevalTaskConfig(
+entity_matching_Walmart_Amazon_helm = LightevalTaskConfig(
     name="entity_matching:Walmart_Amazon",
     suite=["helm"],
     prompt_function="entity_matching",
@@ -7779,7 +7779,7 @@ entity_matching_Walmart_Amazon = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-entity_matching_iTunes_Amazon = LightevalTaskConfig(
+entity_matching_iTunes_Amazon_helm = LightevalTaskConfig(
     name="entity_matching:iTunes_Amazon",
     suite=["helm"],
     prompt_function="entity_matching",
@@ -7797,7 +7797,7 @@ entity_matching_iTunes_Amazon = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-epistemic_reasoning = LightevalTaskConfig(
+epistemic_reasoning_bigbench = LightevalTaskConfig(
     name="epistemic_reasoning",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7815,7 +7815,7 @@ epistemic_reasoning = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-ethics_commonsense = LightevalTaskConfig(
+ethics_commonsense_lighteval = LightevalTaskConfig(
     name="ethics:commonsense",
     suite=["lighteval", "ethics"],
     prompt_function="ethics_commonsense",
@@ -7833,7 +7833,7 @@ ethics_commonsense = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-ethics_deontology = LightevalTaskConfig(
+ethics_deontology_lighteval = LightevalTaskConfig(
     name="ethics:deontology",
     suite=["lighteval", "ethics"],
     prompt_function="ethics_deontology",
@@ -7851,7 +7851,7 @@ ethics_deontology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-ethics_justice = LightevalTaskConfig(
+ethics_justice_lighteval = LightevalTaskConfig(
     name="ethics:justice",
     suite=["lighteval", "ethics"],
     prompt_function="ethics_justice",
@@ -7869,7 +7869,7 @@ ethics_justice = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-ethics_utilitarianism = LightevalTaskConfig(
+ethics_utilitarianism_lighteval = LightevalTaskConfig(
     name="ethics:utilitarianism",
     suite=["lighteval", "ethics"],
     prompt_function="ethics_utilitarianism",
@@ -7887,7 +7887,7 @@ ethics_utilitarianism = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-ethics_virtue = LightevalTaskConfig(
+ethics_virtue_lighteval = LightevalTaskConfig(
     name="ethics:virtue",
     suite=["lighteval", "ethics"],
     prompt_function="ethics_virtue",
@@ -7905,7 +7905,7 @@ ethics_virtue = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-evaluating_information_essentiality = LightevalTaskConfig(
+evaluating_information_essentiality_bigbench = LightevalTaskConfig(
     name="evaluating_information_essentiality",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7923,7 +7923,7 @@ evaluating_information_essentiality = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-fact_checker = LightevalTaskConfig(
+fact_checker_bigbench = LightevalTaskConfig(
     name="fact_checker",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7941,7 +7941,7 @@ fact_checker = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-fantasy_reasoning = LightevalTaskConfig(
+fantasy_reasoning_bigbench = LightevalTaskConfig(
     name="fantasy_reasoning",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7959,7 +7959,7 @@ fantasy_reasoning = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-few_shot_nlg = LightevalTaskConfig(
+few_shot_nlg_bigbench = LightevalTaskConfig(
     name="few_shot_nlg",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7977,7 +7977,7 @@ few_shot_nlg = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-figure_of_speech_detection = LightevalTaskConfig(
+figure_of_speech_detection_bigbench = LightevalTaskConfig(
     name="figure_of_speech_detection",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -7995,7 +7995,7 @@ figure_of_speech_detection = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-formal_fallacies_syllogisms_negation = LightevalTaskConfig(
+formal_fallacies_syllogisms_negation_bigbench_lite = LightevalTaskConfig(
     name="formal_fallacies_syllogisms_negation",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench_linefeed_before_whitespace_after_query",
@@ -8013,7 +8013,7 @@ formal_fallacies_syllogisms_negation = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-gem = LightevalTaskConfig(
+gem_bigbench = LightevalTaskConfig(
     name="gem",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -8031,7 +8031,7 @@ gem = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-gender_inclusive_sentences_german = LightevalTaskConfig(
+gender_inclusive_sentences_german_bigbench = LightevalTaskConfig(
     name="gender_inclusive_sentences_german",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -8049,7 +8049,7 @@ gender_inclusive_sentences_german = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-general_knowledge = LightevalTaskConfig(
+general_knowledge_bigbench = LightevalTaskConfig(
     name="general_knowledge",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -8067,7 +8067,7 @@ general_knowledge = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-geometric_shapes = LightevalTaskConfig(
+geometric_shapes_bigbench = LightevalTaskConfig(
     name="geometric_shapes",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -8085,7 +8085,7 @@ geometric_shapes = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-glue_cola = LightevalTaskConfig(
+glue_cola_lighteval = LightevalTaskConfig(
     name="glue:cola",
     suite=["lighteval", "glue"],
     prompt_function="cola",
@@ -8103,7 +8103,7 @@ glue_cola = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-glue_mnli = LightevalTaskConfig(
+glue_mnli_lighteval = LightevalTaskConfig(
     name="glue:mnli",
     suite=["lighteval", "glue"],
     prompt_function="mnli",
@@ -8121,7 +8121,7 @@ glue_mnli = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-glue_mnli_mismatched = LightevalTaskConfig(
+glue_mnli_mismatched_lighteval = LightevalTaskConfig(
     name="glue:mnli_mismatched",
     suite=["lighteval", "glue"],
     prompt_function="mnli",
@@ -8139,7 +8139,7 @@ glue_mnli_mismatched = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-glue_mrpc = LightevalTaskConfig(
+glue_mrpc_lighteval = LightevalTaskConfig(
     name="glue:mrpc",
     suite=["lighteval", "glue"],
     prompt_function="mrpc",
@@ -8157,7 +8157,7 @@ glue_mrpc = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-glue_qnli = LightevalTaskConfig(
+glue_qnli_lighteval = LightevalTaskConfig(
     name="glue:qnli",
     suite=["lighteval", "glue"],
     prompt_function="qnli",
@@ -8175,7 +8175,7 @@ glue_qnli = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-glue_qqp = LightevalTaskConfig(
+glue_qqp_lighteval = LightevalTaskConfig(
     name="glue:qqp",
     suite=["lighteval", "glue"],
     prompt_function="qqp",
@@ -8193,7 +8193,7 @@ glue_qqp = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-glue_rte = LightevalTaskConfig(
+glue_rte_lighteval = LightevalTaskConfig(
     name="glue:rte",
     suite=["lighteval", "glue"],
     prompt_function="rte",
@@ -8211,7 +8211,7 @@ glue_rte = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-glue_sst2 = LightevalTaskConfig(
+glue_sst2_lighteval = LightevalTaskConfig(
     name="glue:sst2",
     suite=["lighteval", "glue"],
     prompt_function="sst",
@@ -8229,7 +8229,7 @@ glue_sst2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-glue_stsb = LightevalTaskConfig(
+glue_stsb_lighteval = LightevalTaskConfig(
     name="glue:stsb",
     suite=["lighteval", "glue"],
     prompt_function="stsb",
@@ -8247,7 +8247,7 @@ glue_stsb = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-glue_wnli = LightevalTaskConfig(
+glue_wnli_lighteval = LightevalTaskConfig(
     name="glue:wnli",
     suite=["lighteval", "glue"],
     prompt_function="wnli",
@@ -8265,7 +8265,7 @@ glue_wnli = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-goal_step_wikihow = LightevalTaskConfig(
+goal_step_wikihow_bigbench = LightevalTaskConfig(
     name="goal_step_wikihow",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -8283,7 +8283,7 @@ goal_step_wikihow = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-gpqa = LightevalTaskConfig(
+gpqa_lighteval = LightevalTaskConfig(
     name="gpqa",
     suite=["lighteval"],
     prompt_function="gpqa",
@@ -8301,7 +8301,7 @@ gpqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-gre_reading_comprehension = LightevalTaskConfig(
+gre_reading_comprehension_bigbench = LightevalTaskConfig(
     name="gre_reading_comprehension",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -8319,7 +8319,7 @@ gre_reading_comprehension = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-gsm8k = LightevalTaskConfig(
+gsm8k_leaderboard = LightevalTaskConfig(
     name="gsm8k",
     suite=["leaderboard"],
     prompt_function="gsm8k",
@@ -8337,7 +8337,7 @@ gsm8k = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-gsm8k = LightevalTaskConfig(
+gsm8k_lighteval = LightevalTaskConfig(
     name="gsm8k",
     suite=["lighteval"],
     prompt_function="gsm8k",
@@ -8355,7 +8355,7 @@ gsm8k = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-headqa_en = LightevalTaskConfig(
+headqa_en_lighteval = LightevalTaskConfig(
     name="headqa:en",
     suite=["lighteval", "headqa"],
     prompt_function="headqa",
@@ -8373,7 +8373,7 @@ headqa_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-headqa_es = LightevalTaskConfig(
+headqa_es_lighteval = LightevalTaskConfig(
     name="headqa:es",
     suite=["lighteval", "headqa"],
     prompt_function="headqa",
@@ -8391,7 +8391,7 @@ headqa_es = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-hellaswag = LightevalTaskConfig(
+hellaswag_leaderboard = LightevalTaskConfig(
     name="hellaswag",
     suite=["leaderboard"],
     prompt_function="hellaswag_harness",
@@ -8409,7 +8409,7 @@ hellaswag = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-hellaswag = LightevalTaskConfig(
+hellaswag_helm = LightevalTaskConfig(
     name="hellaswag",
     suite=["helm", "helm_general"],
     prompt_function="hellaswag_helm",
@@ -8427,7 +8427,7 @@ hellaswag = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-hhh_alignment = LightevalTaskConfig(
+hhh_alignment_bigbench = LightevalTaskConfig(
     name="hhh_alignment",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -8445,7 +8445,7 @@ hhh_alignment = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-hindi_question_answering = LightevalTaskConfig(
+hindi_question_answering_bigbench = LightevalTaskConfig(
     name="hindi_question_answering",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -8463,7 +8463,7 @@ hindi_question_answering = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-hindu_knowledge = LightevalTaskConfig(
+hindu_knowledge_bigbench_lite = LightevalTaskConfig(
     name="hindu_knowledge",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench_linefeed_before_whitespace_after_query",
@@ -8481,7 +8481,7 @@ hindu_knowledge = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-hinglish_toxicity = LightevalTaskConfig(
+hinglish_toxicity_bigbench = LightevalTaskConfig(
     name="hinglish_toxicity",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -8499,7 +8499,7 @@ hinglish_toxicity = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-human_organs_senses = LightevalTaskConfig(
+human_organs_senses_bigbench = LightevalTaskConfig(
     name="human_organs_senses",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -8517,7 +8517,7 @@ human_organs_senses = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-humaneval = LightevalTaskConfig(
+humaneval_helm = LightevalTaskConfig(
     name="humaneval",
     suite=["helm", "code_scenario"],
     prompt_function="humaneval",
@@ -8535,7 +8535,7 @@ humaneval = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-hyperbaton = LightevalTaskConfig(
+hyperbaton_bigbench = LightevalTaskConfig(
     name="hyperbaton",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -8553,7 +8553,7 @@ hyperbaton = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-identify_math_theorems = LightevalTaskConfig(
+identify_math_theorems_bigbench = LightevalTaskConfig(
     name="identify_math_theorems",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -8571,7 +8571,7 @@ identify_math_theorems = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-identify_odd_metaphor = LightevalTaskConfig(
+identify_odd_metaphor_bigbench = LightevalTaskConfig(
     name="identify_odd_metaphor",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -8589,7 +8589,7 @@ identify_odd_metaphor = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-imdb = LightevalTaskConfig(
+imdb_helm = LightevalTaskConfig(
     name="imdb",
     suite=["helm", "helm_general"],
     prompt_function="imdb",
@@ -8614,7 +8614,7 @@ imdb = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-imdb_contrastset = LightevalTaskConfig(
+imdb_contrastset_helm = LightevalTaskConfig(
     name="imdb:contrastset",
     suite=["helm"],
     prompt_function="imdb_contrastset",
@@ -8639,7 +8639,7 @@ imdb_contrastset = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-implicatures = LightevalTaskConfig(
+implicatures_bigbench = LightevalTaskConfig(
     name="implicatures",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -8657,7 +8657,7 @@ implicatures = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-implicit_relations = LightevalTaskConfig(
+implicit_relations_bigbench = LightevalTaskConfig(
     name="implicit_relations",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -8675,7 +8675,7 @@ implicit_relations = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-intent_recognition = LightevalTaskConfig(
+intent_recognition_bigbench = LightevalTaskConfig(
     name="intent_recognition",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -8693,7 +8693,7 @@ intent_recognition = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-interactive_qa_mmlu_abstract_algebra = LightevalTaskConfig(
+interactive_qa_mmlu_abstract_algebra_helm = LightevalTaskConfig(
     name="interactive_qa_mmlu:abstract_algebra",
     suite=["helm", "interactive_qa_mmlu_scenario"],
     prompt_function="mmlu_qa_abstract_algebra",
@@ -8711,7 +8711,7 @@ interactive_qa_mmlu_abstract_algebra = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-interactive_qa_mmlu_college_chemistry = LightevalTaskConfig(
+interactive_qa_mmlu_college_chemistry_helm = LightevalTaskConfig(
     name="interactive_qa_mmlu:college_chemistry",
     suite=["helm", "interactive_qa_mmlu_scenario"],
     prompt_function="mmlu_qa_college_chemistry",
@@ -8729,7 +8729,7 @@ interactive_qa_mmlu_college_chemistry = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-interactive_qa_mmlu_global_facts = LightevalTaskConfig(
+interactive_qa_mmlu_global_facts_helm = LightevalTaskConfig(
     name="interactive_qa_mmlu:global_facts",
     suite=["helm", "interactive_qa_mmlu_scenario"],
     prompt_function="mmlu_qa_global_facts",
@@ -8747,7 +8747,7 @@ interactive_qa_mmlu_global_facts = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-interactive_qa_mmlu_miscellaneous = LightevalTaskConfig(
+interactive_qa_mmlu_miscellaneous_helm = LightevalTaskConfig(
     name="interactive_qa_mmlu:miscellaneous",
     suite=["helm", "interactive_qa_mmlu_scenario"],
     prompt_function="mmlu_qa_miscellaneous",
@@ -8765,7 +8765,7 @@ interactive_qa_mmlu_miscellaneous = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-interactive_qa_mmlu_nutrition = LightevalTaskConfig(
+interactive_qa_mmlu_nutrition_helm = LightevalTaskConfig(
     name="interactive_qa_mmlu:nutrition",
     suite=["helm", "interactive_qa_mmlu_scenario"],
     prompt_function="mmlu_qa_nutrition",
@@ -8783,7 +8783,7 @@ interactive_qa_mmlu_nutrition = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-interactive_qa_mmlu_us_foreign_policy = LightevalTaskConfig(
+interactive_qa_mmlu_us_foreign_policy_helm = LightevalTaskConfig(
     name="interactive_qa_mmlu:us_foreign_policy",
     suite=["helm", "interactive_qa_mmlu_scenario"],
     prompt_function="mmlu_qa_us_foreign_policy",
@@ -8801,7 +8801,7 @@ interactive_qa_mmlu_us_foreign_policy = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-international_phonetic_alphabet_nli = LightevalTaskConfig(
+international_phonetic_alphabet_nli_bigbench = LightevalTaskConfig(
     name="international_phonetic_alphabet_nli",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -8819,7 +8819,7 @@ international_phonetic_alphabet_nli = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-international_phonetic_alphabet_transliterate = LightevalTaskConfig(
+international_phonetic_alphabet_transliterate_bigbench = LightevalTaskConfig(
     name="international_phonetic_alphabet_transliterate",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -8837,7 +8837,7 @@ international_phonetic_alphabet_transliterate = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-intersect_geometry = LightevalTaskConfig(
+intersect_geometry_bigbench = LightevalTaskConfig(
     name="intersect_geometry",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -8855,7 +8855,7 @@ intersect_geometry = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-irony_identification = LightevalTaskConfig(
+irony_identification_bigbench = LightevalTaskConfig(
     name="irony_identification",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -8873,7 +8873,7 @@ irony_identification = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-iwslt17_ar_en = LightevalTaskConfig(
+iwslt17_ar_en_lighteval = LightevalTaskConfig(
     name="iwslt17:ar-en",
     suite=["lighteval", "harness_selection"],
     prompt_function="wmt_alphabetical",
@@ -8891,7 +8891,7 @@ iwslt17_ar_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-iwslt17_de_en = LightevalTaskConfig(
+iwslt17_de_en_lighteval = LightevalTaskConfig(
     name="iwslt17:de-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -8909,7 +8909,7 @@ iwslt17_de_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-iwslt17_en_ar = LightevalTaskConfig(
+iwslt17_en_ar_lighteval = LightevalTaskConfig(
     name="iwslt17:en-ar",
     suite=["lighteval", "harness_selection"],
     prompt_function="wmt_reverse_alphabetical",
@@ -8927,7 +8927,7 @@ iwslt17_en_ar = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-iwslt17_en_de = LightevalTaskConfig(
+iwslt17_en_de_lighteval = LightevalTaskConfig(
     name="iwslt17:en-de",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -8945,7 +8945,7 @@ iwslt17_en_de = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-iwslt17_en_fr = LightevalTaskConfig(
+iwslt17_en_fr_lighteval = LightevalTaskConfig(
     name="iwslt17:en-fr",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -8963,7 +8963,7 @@ iwslt17_en_fr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-iwslt17_en_ja = LightevalTaskConfig(
+iwslt17_en_ja_lighteval = LightevalTaskConfig(
     name="iwslt17:en-ja",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -8981,7 +8981,7 @@ iwslt17_en_ja = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-iwslt17_en_ko = LightevalTaskConfig(
+iwslt17_en_ko_lighteval = LightevalTaskConfig(
     name="iwslt17:en-ko",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -8999,7 +8999,7 @@ iwslt17_en_ko = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-iwslt17_en_zh = LightevalTaskConfig(
+iwslt17_en_zh_lighteval = LightevalTaskConfig(
     name="iwslt17:en-zh",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -9017,7 +9017,7 @@ iwslt17_en_zh = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-iwslt17_fr_en = LightevalTaskConfig(
+iwslt17_fr_en_lighteval = LightevalTaskConfig(
     name="iwslt17:fr-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -9035,7 +9035,7 @@ iwslt17_fr_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-iwslt17_ja_en = LightevalTaskConfig(
+iwslt17_ja_en_lighteval = LightevalTaskConfig(
     name="iwslt17:ja-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -9053,7 +9053,7 @@ iwslt17_ja_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-iwslt17_ko_en = LightevalTaskConfig(
+iwslt17_ko_en_lighteval = LightevalTaskConfig(
     name="iwslt17:ko-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -9071,7 +9071,7 @@ iwslt17_ko_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-iwslt17_zh_en = LightevalTaskConfig(
+iwslt17_zh_en_lighteval = LightevalTaskConfig(
     name="iwslt17:zh-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -9089,7 +9089,7 @@ iwslt17_zh_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-kanji_ascii = LightevalTaskConfig(
+kanji_ascii_bigbench = LightevalTaskConfig(
     name="kanji_ascii",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -9107,7 +9107,7 @@ kanji_ascii = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-kannada = LightevalTaskConfig(
+kannada_bigbench = LightevalTaskConfig(
     name="kannada",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -9125,7 +9125,7 @@ kannada = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-key_value_maps = LightevalTaskConfig(
+key_value_maps_bigbench = LightevalTaskConfig(
     name="key_value_maps",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -9143,7 +9143,7 @@ key_value_maps = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-known_unknowns = LightevalTaskConfig(
+known_unknowns_bigbench_lite = LightevalTaskConfig(
     name="known_unknowns",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench_linefeed_before_whitespace_after_query",
@@ -9161,7 +9161,7 @@ known_unknowns = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lambada_standard = LightevalTaskConfig(
+lambada_standard_lighteval = LightevalTaskConfig(
     name="lambada:standard",
     suite=["lighteval", "lambada"],
     prompt_function="lambada",
@@ -9179,7 +9179,7 @@ lambada_standard = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lambada_standard_cloze = LightevalTaskConfig(
+lambada_standard_cloze_lighteval = LightevalTaskConfig(
     name="lambada:standard_cloze",
     suite=["lighteval", "lambada"],
     prompt_function="lambada_cloze",
@@ -9197,7 +9197,7 @@ lambada_standard_cloze = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lambada_openai = LightevalTaskConfig(
+lambada_openai_lighteval = LightevalTaskConfig(
     name="lambada:openai",
     suite=["lighteval", "lambada"],
     prompt_function="lambada",
@@ -9215,7 +9215,7 @@ lambada_openai = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lambada_openai_de = LightevalTaskConfig(
+lambada_openai_de_lighteval = LightevalTaskConfig(
     name="lambada:openai:de",
     suite=["lighteval", "lambada"],
     prompt_function="lambada",
@@ -9233,7 +9233,7 @@ lambada_openai_de = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lambada_openai_en = LightevalTaskConfig(
+lambada_openai_en_lighteval = LightevalTaskConfig(
     name="lambada:openai:en",
     suite=["lighteval", "lambada"],
     prompt_function="lambada",
@@ -9251,7 +9251,7 @@ lambada_openai_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lambada_openai_es = LightevalTaskConfig(
+lambada_openai_es_lighteval = LightevalTaskConfig(
     name="lambada:openai:es",
     suite=["lighteval", "lambada"],
     prompt_function="lambada",
@@ -9269,7 +9269,7 @@ lambada_openai_es = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lambada_openai_fr = LightevalTaskConfig(
+lambada_openai_fr_lighteval = LightevalTaskConfig(
     name="lambada:openai:fr",
     suite=["lighteval", "lambada"],
     prompt_function="lambada",
@@ -9287,7 +9287,7 @@ lambada_openai_fr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lambada_openai_it = LightevalTaskConfig(
+lambada_openai_it_lighteval = LightevalTaskConfig(
     name="lambada:openai:it",
     suite=["lighteval", "lambada"],
     prompt_function="lambada",
@@ -9305,7 +9305,7 @@ lambada_openai_it = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lambada_openai_cloze = LightevalTaskConfig(
+lambada_openai_cloze_lighteval = LightevalTaskConfig(
     name="lambada:openai_cloze",
     suite=["lighteval", "lambada"],
     prompt_function="lambada_cloze",
@@ -9323,7 +9323,7 @@ lambada_openai_cloze = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-language_games = LightevalTaskConfig(
+language_games_bigbench = LightevalTaskConfig(
     name="language_games",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -9341,7 +9341,7 @@ language_games = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-language_identification = LightevalTaskConfig(
+language_identification_bigbench_lite = LightevalTaskConfig(
     name="language_identification",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -9359,7 +9359,7 @@ language_identification = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-legal_summarization_billsum = LightevalTaskConfig(
+legal_summarization_billsum_helm = LightevalTaskConfig(
     name="legal_summarization:billsum",
     suite=["helm"],
     prompt_function="legal_summarization",
@@ -9377,7 +9377,7 @@ legal_summarization_billsum = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-legal_summarization_eurlexsum = LightevalTaskConfig(
+legal_summarization_eurlexsum_helm = LightevalTaskConfig(
     name="legal_summarization:eurlexsum",
     suite=["helm"],
     prompt_function="legal_summarization",
@@ -9395,7 +9395,7 @@ legal_summarization_eurlexsum = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-legal_summarization_multilexsum = LightevalTaskConfig(
+legal_summarization_multilexsum_helm = LightevalTaskConfig(
     name="legal_summarization:multilexsum",
     suite=["helm"],
     prompt_function="multilexsum",
@@ -9413,7 +9413,7 @@ legal_summarization_multilexsum = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-legalsupport = LightevalTaskConfig(
+legalsupport_helm = LightevalTaskConfig(
     name="legalsupport",
     suite=["helm"],
     prompt_function="legal_support",
@@ -9431,7 +9431,7 @@ legalsupport = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lexglue_case_hold = LightevalTaskConfig(
+lexglue_case_hold_helm = LightevalTaskConfig(
     name="lexglue:case_hold",
     suite=["helm", "lex_glue_scenario"],
     prompt_function="lex_glue_case_hold",
@@ -9449,7 +9449,7 @@ lexglue_case_hold = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lexglue_ecthr_a = LightevalTaskConfig(
+lexglue_ecthr_a_helm = LightevalTaskConfig(
     name="lexglue:ecthr_a",
     suite=["helm", "lex_glue_scenario"],
     prompt_function="lex_glue_ecthr_a",
@@ -9467,7 +9467,7 @@ lexglue_ecthr_a = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lexglue_ecthr_b = LightevalTaskConfig(
+lexglue_ecthr_b_helm = LightevalTaskConfig(
     name="lexglue:ecthr_b",
     suite=["helm", "lex_glue_scenario"],
     prompt_function="lex_glue_ecthr_b",
@@ -9485,7 +9485,7 @@ lexglue_ecthr_b = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lexglue_eurlex = LightevalTaskConfig(
+lexglue_eurlex_helm = LightevalTaskConfig(
     name="lexglue:eurlex",
     suite=["helm", "lex_glue_scenario"],
     prompt_function="lex_glue_eurlex",
@@ -9503,7 +9503,7 @@ lexglue_eurlex = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lexglue_ledgar = LightevalTaskConfig(
+lexglue_ledgar_helm = LightevalTaskConfig(
     name="lexglue:ledgar",
     suite=["helm", "lex_glue_scenario"],
     prompt_function="lex_glue_ledgar",
@@ -9521,7 +9521,7 @@ lexglue_ledgar = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lexglue_scotus = LightevalTaskConfig(
+lexglue_scotus_helm = LightevalTaskConfig(
     name="lexglue:scotus",
     suite=["helm", "lex_glue_scenario"],
     prompt_function="lex_glue_scotus",
@@ -9539,7 +9539,7 @@ lexglue_scotus = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lexglue_unfair_tos = LightevalTaskConfig(
+lexglue_unfair_tos_helm = LightevalTaskConfig(
     name="lexglue:unfair_tos",
     suite=["helm", "lex_glue_scenario"],
     prompt_function="lex_glue_unfair_tos",
@@ -9557,7 +9557,7 @@ lexglue_unfair_tos = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lextreme_brazilian_court_decisions_judgment = LightevalTaskConfig(
+lextreme_brazilian_court_decisions_judgment_helm = LightevalTaskConfig(
     name="lextreme:brazilian_court_decisions_judgment",
     suite=["helm", "lextreme_scenario"],
     prompt_function="lextreme_brazilian_court_decisions_judgment",
@@ -9575,7 +9575,7 @@ lextreme_brazilian_court_decisions_judgment = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lextreme_brazilian_court_decisions_unanimity = LightevalTaskConfig(
+lextreme_brazilian_court_decisions_unanimity_helm = LightevalTaskConfig(
     name="lextreme:brazilian_court_decisions_unanimity",
     suite=["helm", "lextreme_scenario"],
     prompt_function="lextreme_brazilian_court_decisions_unanimity",
@@ -9593,7 +9593,7 @@ lextreme_brazilian_court_decisions_unanimity = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lextreme_covid19_emergency_event = LightevalTaskConfig(
+lextreme_covid19_emergency_event_helm = LightevalTaskConfig(
     name="lextreme:covid19_emergency_event",
     suite=["helm", "lextreme_scenario"],
     prompt_function="lextreme_covid19_emergency_event",
@@ -9611,7 +9611,7 @@ lextreme_covid19_emergency_event = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lextreme_german_argument_mining = LightevalTaskConfig(
+lextreme_german_argument_mining_helm = LightevalTaskConfig(
     name="lextreme:german_argument_mining",
     suite=["helm", "lextreme_scenario"],
     prompt_function="lextreme_german_argument_mining",
@@ -9629,7 +9629,7 @@ lextreme_german_argument_mining = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lextreme_greek_legal_code_chapter = LightevalTaskConfig(
+lextreme_greek_legal_code_chapter_helm = LightevalTaskConfig(
     name="lextreme:greek_legal_code_chapter",
     suite=["helm", "lextreme_scenario"],
     prompt_function="lextreme_greek_legal_code_chapter",
@@ -9647,7 +9647,7 @@ lextreme_greek_legal_code_chapter = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lextreme_greek_legal_code_subject = LightevalTaskConfig(
+lextreme_greek_legal_code_subject_helm = LightevalTaskConfig(
     name="lextreme:greek_legal_code_subject",
     suite=["helm", "lextreme_scenario"],
     prompt_function="lextreme_greek_legal_code_subject",
@@ -9665,7 +9665,7 @@ lextreme_greek_legal_code_subject = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lextreme_greek_legal_code_volume = LightevalTaskConfig(
+lextreme_greek_legal_code_volume_helm = LightevalTaskConfig(
     name="lextreme:greek_legal_code_volume",
     suite=["helm", "lextreme_scenario"],
     prompt_function="lextreme_greek_legal_code_volume",
@@ -9683,7 +9683,7 @@ lextreme_greek_legal_code_volume = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lextreme_greek_legal_ner = LightevalTaskConfig(
+lextreme_greek_legal_ner_helm = LightevalTaskConfig(
     name="lextreme:greek_legal_ner",
     suite=["helm", "lextreme_scenario"],
     prompt_function="lextreme_greek_legal_ner",
@@ -9701,7 +9701,7 @@ lextreme_greek_legal_ner = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lextreme_legalnero = LightevalTaskConfig(
+lextreme_legalnero_helm = LightevalTaskConfig(
     name="lextreme:legalnero",
     suite=["helm", "lextreme_scenario"],
     prompt_function="lextreme_legalnero",
@@ -9719,7 +9719,7 @@ lextreme_legalnero = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lextreme_lener_br = LightevalTaskConfig(
+lextreme_lener_br_helm = LightevalTaskConfig(
     name="lextreme:lener_br",
     suite=["helm", "lextreme_scenario"],
     prompt_function="lextreme_lener_br",
@@ -9737,7 +9737,7 @@ lextreme_lener_br = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lextreme_mapa_coarse = LightevalTaskConfig(
+lextreme_mapa_coarse_helm = LightevalTaskConfig(
     name="lextreme:mapa_coarse",
     suite=["helm", "lextreme_scenario"],
     prompt_function="lextreme_mapa_coarse",
@@ -9755,7 +9755,7 @@ lextreme_mapa_coarse = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lextreme_mapa_fine = LightevalTaskConfig(
+lextreme_mapa_fine_helm = LightevalTaskConfig(
     name="lextreme:mapa_fine",
     suite=["helm", "lextreme_scenario"],
     prompt_function="lextreme_mapa_fine",
@@ -9773,7 +9773,7 @@ lextreme_mapa_fine = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lextreme_multi_eurlex_level_1 = LightevalTaskConfig(
+lextreme_multi_eurlex_level_1_helm = LightevalTaskConfig(
     name="lextreme:multi_eurlex_level_1",
     suite=["helm", "lextreme_scenario"],
     prompt_function="lextreme_multi_eurlex_level_1",
@@ -9791,7 +9791,7 @@ lextreme_multi_eurlex_level_1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lextreme_multi_eurlex_level_2 = LightevalTaskConfig(
+lextreme_multi_eurlex_level_2_helm = LightevalTaskConfig(
     name="lextreme:multi_eurlex_level_2",
     suite=["helm", "lextreme_scenario"],
     prompt_function="lextreme_multi_eurlex_level_2",
@@ -9809,7 +9809,7 @@ lextreme_multi_eurlex_level_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lextreme_multi_eurlex_level_3 = LightevalTaskConfig(
+lextreme_multi_eurlex_level_3_helm = LightevalTaskConfig(
     name="lextreme:multi_eurlex_level_3",
     suite=["helm", "lextreme_scenario"],
     prompt_function="lextreme_multi_eurlex_level_3",
@@ -9827,7 +9827,7 @@ lextreme_multi_eurlex_level_3 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lextreme_online_terms_of_service_clause_topics = LightevalTaskConfig(
+lextreme_online_terms_of_service_clause_topics_helm = LightevalTaskConfig(
     name="lextreme:online_terms_of_service_clause_topics",
     suite=["helm", "lextreme_scenario"],
     prompt_function="lextreme_online_terms_of_service_clause_topics",
@@ -9845,7 +9845,7 @@ lextreme_online_terms_of_service_clause_topics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lextreme_online_terms_of_service_unfairness_levels = LightevalTaskConfig(
+lextreme_online_terms_of_service_unfairness_levels_helm = LightevalTaskConfig(
     name="lextreme:online_terms_of_service_unfairness_levels",
     suite=["helm", "lextreme_scenario"],
     prompt_function="lextreme_online_terms_of_service_unfairness_levels",
@@ -9863,7 +9863,7 @@ lextreme_online_terms_of_service_unfairness_levels = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lextreme_swiss_judgment_prediction = LightevalTaskConfig(
+lextreme_swiss_judgment_prediction_helm = LightevalTaskConfig(
     name="lextreme:swiss_judgment_prediction",
     suite=["helm", "lextreme_scenario"],
     prompt_function="lextreme_swiss_judgment_prediction",
@@ -9881,7 +9881,7 @@ lextreme_swiss_judgment_prediction = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-linguistic_mappings = LightevalTaskConfig(
+linguistic_mappings_bigbench = LightevalTaskConfig(
     name="linguistic_mappings",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -9899,7 +9899,7 @@ linguistic_mappings = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-linguistics_puzzles = LightevalTaskConfig(
+linguistics_puzzles_bigbench_lite = LightevalTaskConfig(
     name="linguistics_puzzles",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench_whitespace_after_query",
@@ -9916,7 +9916,7 @@ linguistics_puzzles = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-logic_grid_puzzle = LightevalTaskConfig(
+logic_grid_puzzle_bigbench_lite = LightevalTaskConfig(
     name="logic_grid_puzzle",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -9934,7 +9934,7 @@ logic_grid_puzzle = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-logical_args = LightevalTaskConfig(
+logical_args_bigbench = LightevalTaskConfig(
     name="logical_args",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -9952,7 +9952,7 @@ logical_args = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-logical_deduction = LightevalTaskConfig(
+logical_deduction_bigbench_lite = LightevalTaskConfig(
     name="logical_deduction",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench_whitespace_after_query",
@@ -9970,7 +9970,7 @@ logical_deduction = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-logical_fallacy_detection = LightevalTaskConfig(
+logical_fallacy_detection_bigbench = LightevalTaskConfig(
     name="logical_fallacy_detection",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -9988,7 +9988,7 @@ logical_fallacy_detection = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-logical_sequence = LightevalTaskConfig(
+logical_sequence_bigbench = LightevalTaskConfig(
     name="logical_sequence",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -10006,7 +10006,7 @@ logical_sequence = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-logiqa = LightevalTaskConfig(
+logiqa_lighteval = LightevalTaskConfig(
     name="logiqa",
     suite=["lighteval"],
     prompt_function="logiqa",
@@ -10024,7 +10024,7 @@ logiqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lsat_qa = LightevalTaskConfig(
+lsat_qa_helm = LightevalTaskConfig(
     name="lsat_qa",
     suite=["helm", "lsat_qa_scenario"],
     prompt_function="lsat_qa",
@@ -10042,7 +10042,7 @@ lsat_qa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lsat_qa_assignment = LightevalTaskConfig(
+lsat_qa_assignment_helm = LightevalTaskConfig(
     name="lsat_qa:assignment",
     suite=["helm", "lsat_qa_scenario"],
     prompt_function="lsat_qa",
@@ -10060,7 +10060,7 @@ lsat_qa_assignment = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lsat_qa_grouping = LightevalTaskConfig(
+lsat_qa_grouping_helm = LightevalTaskConfig(
     name="lsat_qa:grouping",
     suite=["helm", "lsat_qa_scenario"],
     prompt_function="lsat_qa",
@@ -10078,7 +10078,7 @@ lsat_qa_grouping = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lsat_qa_miscellaneous = LightevalTaskConfig(
+lsat_qa_miscellaneous_helm = LightevalTaskConfig(
     name="lsat_qa:miscellaneous",
     suite=["helm", "lsat_qa_scenario"],
     prompt_function="lsat_qa",
@@ -10096,7 +10096,7 @@ lsat_qa_miscellaneous = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-lsat_qa_ordering = LightevalTaskConfig(
+lsat_qa_ordering_helm = LightevalTaskConfig(
     name="lsat_qa:ordering",
     suite=["helm", "lsat_qa_scenario"],
     prompt_function="lsat_qa",
@@ -10114,7 +10114,7 @@ lsat_qa_ordering = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-math_algebra = LightevalTaskConfig(
+math_algebra_lighteval = LightevalTaskConfig(
     name="math:algebra",
     suite=["lighteval", "math"],
     prompt_function="math",
@@ -10132,7 +10132,7 @@ math_algebra = LightevalTaskConfig(
     trust_dataset=True,
     version=1,
 )
-math_counting_and_probability = LightevalTaskConfig(
+math_counting_and_probability_lighteval = LightevalTaskConfig(
     name="math:counting_and_probability",
     suite=["lighteval", "math"],
     prompt_function="math",
@@ -10150,7 +10150,7 @@ math_counting_and_probability = LightevalTaskConfig(
     trust_dataset=True,
     version=1,
 )
-math_geometry = LightevalTaskConfig(
+math_geometry_lighteval = LightevalTaskConfig(
     name="math:geometry",
     suite=["lighteval", "math"],
     prompt_function="math",
@@ -10168,7 +10168,7 @@ math_geometry = LightevalTaskConfig(
     trust_dataset=True,
     version=1,
 )
-math_intermediate_algebra = LightevalTaskConfig(
+math_intermediate_algebra_lighteval = LightevalTaskConfig(
     name="math:intermediate_algebra",
     suite=["lighteval", "math"],
     prompt_function="math",
@@ -10186,7 +10186,7 @@ math_intermediate_algebra = LightevalTaskConfig(
     trust_dataset=True,
     version=1,
 )
-math_number_theory = LightevalTaskConfig(
+math_number_theory_lighteval = LightevalTaskConfig(
     name="math:number_theory",
     suite=["lighteval", "math"],
     prompt_function="math",
@@ -10204,7 +10204,7 @@ math_number_theory = LightevalTaskConfig(
     trust_dataset=True,
     version=1,
 )
-math_prealgebra = LightevalTaskConfig(
+math_prealgebra_lighteval = LightevalTaskConfig(
     name="math:prealgebra",
     suite=["lighteval", "math"],
     prompt_function="math",
@@ -10222,7 +10222,7 @@ math_prealgebra = LightevalTaskConfig(
     trust_dataset=True,
     version=1,
 )
-math_precalculus = LightevalTaskConfig(
+math_precalculus_lighteval = LightevalTaskConfig(
     name="math:precalculus",
     suite=["lighteval", "math"],
     prompt_function="math",
@@ -10240,7 +10240,7 @@ math_precalculus = LightevalTaskConfig(
     trust_dataset=True,
     version=1,
 )
-math_cot_algebra = LightevalTaskConfig(
+math_cot_algebra_lighteval = LightevalTaskConfig(
     name="math_cot:algebra",
     suite=["lighteval", "math"],
     prompt_function="math_cot",
@@ -10258,7 +10258,7 @@ math_cot_algebra = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-math_cot_counting_and_probability = LightevalTaskConfig(
+math_cot_counting_and_probability_lighteval = LightevalTaskConfig(
     name="math_cot:counting_and_probability",
     suite=["lighteval", "math"],
     prompt_function="math_cot",
@@ -10276,7 +10276,7 @@ math_cot_counting_and_probability = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-math_cot_geometry = LightevalTaskConfig(
+math_cot_geometry_lighteval = LightevalTaskConfig(
     name="math_cot:geometry",
     suite=["lighteval", "math"],
     prompt_function="math_cot",
@@ -10294,7 +10294,7 @@ math_cot_geometry = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-math_cot_intermediate_algebra = LightevalTaskConfig(
+math_cot_intermediate_algebra_lighteval = LightevalTaskConfig(
     name="math_cot:intermediate_algebra",
     suite=["lighteval", "math"],
     prompt_function="math_cot",
@@ -10312,7 +10312,7 @@ math_cot_intermediate_algebra = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-math_cot_number_theory = LightevalTaskConfig(
+math_cot_number_theory_lighteval = LightevalTaskConfig(
     name="math_cot:number_theory",
     suite=["lighteval", "math"],
     prompt_function="math_cot",
@@ -10330,7 +10330,7 @@ math_cot_number_theory = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-math_cot_prealgebra = LightevalTaskConfig(
+math_cot_prealgebra_lighteval = LightevalTaskConfig(
     name="math_cot:prealgebra",
     suite=["lighteval", "math"],
     prompt_function="math_cot",
@@ -10348,7 +10348,7 @@ math_cot_prealgebra = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-math_cot_precalculus = LightevalTaskConfig(
+math_cot_precalculus_lighteval = LightevalTaskConfig(
     name="math_cot:precalculus",
     suite=["lighteval", "math"],
     prompt_function="math_cot",
@@ -10366,7 +10366,7 @@ math_cot_precalculus = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mathematical_induction = LightevalTaskConfig(
+mathematical_induction_bigbench = LightevalTaskConfig(
     name="mathematical_induction",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -10384,7 +10384,7 @@ mathematical_induction = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mathqa = LightevalTaskConfig(
+mathqa_lighteval = LightevalTaskConfig(
     name="mathqa",
     suite=["lighteval"],
     prompt_function="mathqa",
@@ -10402,7 +10402,7 @@ mathqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-matrixshapes = LightevalTaskConfig(
+matrixshapes_bigbench = LightevalTaskConfig(
     name="matrixshapes",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -10420,7 +10420,7 @@ matrixshapes = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-me_q_sum = LightevalTaskConfig(
+me_q_sum_helm = LightevalTaskConfig(
     name="me_q_sum",
     suite=["helm"],
     prompt_function="me_q_sum",
@@ -10438,7 +10438,7 @@ me_q_sum = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-med_dialog_healthcaremagic = LightevalTaskConfig(
+med_dialog_healthcaremagic_helm = LightevalTaskConfig(
     name="med_dialog:healthcaremagic",
     suite=["helm"],
     prompt_function="med_dialog",
@@ -10456,7 +10456,7 @@ med_dialog_healthcaremagic = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-med_dialog_icliniq = LightevalTaskConfig(
+med_dialog_icliniq_helm = LightevalTaskConfig(
     name="med_dialog:icliniq",
     suite=["helm"],
     prompt_function="med_dialog",
@@ -10474,7 +10474,7 @@ med_dialog_icliniq = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-med_mcqa = LightevalTaskConfig(
+med_mcqa_helm = LightevalTaskConfig(
     name="med_mcqa",
     suite=["helm"],
     prompt_function="med_mcqa",
@@ -10492,7 +10492,7 @@ med_mcqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-med_paragraph_simplification = LightevalTaskConfig(
+med_paragraph_simplification_helm = LightevalTaskConfig(
     name="med_paragraph_simplification",
     suite=["helm"],
     prompt_function="med_paragraph_simplification",
@@ -10510,7 +10510,7 @@ med_paragraph_simplification = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-med_qa = LightevalTaskConfig(
+med_qa_helm = LightevalTaskConfig(
     name="med_qa",
     suite=["helm"],
     prompt_function="med_qa",
@@ -10528,7 +10528,7 @@ med_qa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-metaphor_boolean = LightevalTaskConfig(
+metaphor_boolean_bigbench = LightevalTaskConfig(
     name="metaphor_boolean",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -10546,7 +10546,7 @@ metaphor_boolean = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-metaphor_understanding = LightevalTaskConfig(
+metaphor_understanding_bigbench = LightevalTaskConfig(
     name="metaphor_understanding",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -10564,7 +10564,7 @@ metaphor_understanding = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mgsm_en = LightevalTaskConfig(
+mgsm_en_lighteval = LightevalTaskConfig(
     name="mgsm:en",
     suite=["lighteval"],
     prompt_function="mgsm_en",
@@ -10582,7 +10582,7 @@ mgsm_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mgsm_es = LightevalTaskConfig(
+mgsm_es_lighteval = LightevalTaskConfig(
     name="mgsm:es",
     suite=["lighteval"],
     prompt_function="mgsm_es",
@@ -10600,7 +10600,7 @@ mgsm_es = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mgsm_fr = LightevalTaskConfig(
+mgsm_fr_lighteval = LightevalTaskConfig(
     name="mgsm:fr",
     suite=["lighteval"],
     prompt_function="mgsm_fr",
@@ -10618,7 +10618,7 @@ mgsm_fr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mgsm_de = LightevalTaskConfig(
+mgsm_de_lighteval = LightevalTaskConfig(
     name="mgsm:de",
     suite=["lighteval"],
     prompt_function="mgsm_de",
@@ -10636,7 +10636,7 @@ mgsm_de = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mgsm_ru = LightevalTaskConfig(
+mgsm_ru_lighteval = LightevalTaskConfig(
     name="mgsm:ru",
     suite=["lighteval"],
     prompt_function="mgsm_ru",
@@ -10654,7 +10654,7 @@ mgsm_ru = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mgsm_zh = LightevalTaskConfig(
+mgsm_zh_lighteval = LightevalTaskConfig(
     name="mgsm:zh",
     suite=["lighteval"],
     prompt_function="mgsm_zh",
@@ -10672,7 +10672,7 @@ mgsm_zh = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mgsm_ja = LightevalTaskConfig(
+mgsm_ja_lighteval = LightevalTaskConfig(
     name="mgsm:ja",
     suite=["lighteval"],
     prompt_function="mgsm_ja",
@@ -10690,7 +10690,7 @@ mgsm_ja = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mgsm_th = LightevalTaskConfig(
+mgsm_th_lighteval = LightevalTaskConfig(
     name="mgsm:th",
     suite=["lighteval"],
     prompt_function="mgsm_th",
@@ -10708,7 +10708,7 @@ mgsm_th = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mgsm_sw = LightevalTaskConfig(
+mgsm_sw_lighteval = LightevalTaskConfig(
     name="mgsm:sw",
     suite=["lighteval"],
     prompt_function="mgsm_sw",
@@ -10726,7 +10726,7 @@ mgsm_sw = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mgsm_bn = LightevalTaskConfig(
+mgsm_bn_lighteval = LightevalTaskConfig(
     name="mgsm:bn",
     suite=["lighteval"],
     prompt_function="mgsm_bn",
@@ -10744,7 +10744,7 @@ mgsm_bn = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mgsm_te = LightevalTaskConfig(
+mgsm_te_lighteval = LightevalTaskConfig(
     name="mgsm:te",
     suite=["lighteval"],
     prompt_function="mgsm_te",
@@ -10762,7 +10762,7 @@ mgsm_te = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-minute_mysteries_qa = LightevalTaskConfig(
+minute_mysteries_qa_bigbench = LightevalTaskConfig(
     name="minute_mysteries_qa",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -10780,7 +10780,7 @@ minute_mysteries_qa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-misconceptions = LightevalTaskConfig(
+misconceptions_bigbench = LightevalTaskConfig(
     name="misconceptions",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -10798,7 +10798,7 @@ misconceptions = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-misconceptions_russian = LightevalTaskConfig(
+misconceptions_russian_bigbench_lite = LightevalTaskConfig(
     name="misconceptions_russian",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -10816,7 +10816,7 @@ misconceptions_russian = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu = LightevalTaskConfig(
+mmlu_helm = LightevalTaskConfig(
     name="mmlu",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -10834,7 +10834,7 @@ mmlu = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu = LightevalTaskConfig(
+mmlu_original = LightevalTaskConfig(
     name="mmlu",
     suite=["original"],
     prompt_function="mmlu_helm",
@@ -10852,7 +10852,7 @@ mmlu = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_abstract_algebra = LightevalTaskConfig(
+mmlu_abstract_algebra_original = LightevalTaskConfig(
     name="mmlu:abstract_algebra",
     suite=["original", "mmlu"],
     prompt_function="mmlu_abstract_algebra",
@@ -10870,7 +10870,7 @@ mmlu_abstract_algebra = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_abstract_algebra = LightevalTaskConfig(
+mmlu_abstract_algebra_leaderboard = LightevalTaskConfig(
     name="mmlu:abstract_algebra",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -10888,7 +10888,7 @@ mmlu_abstract_algebra = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_abstract_algebra = LightevalTaskConfig(
+mmlu_abstract_algebra_helm = LightevalTaskConfig(
     name="mmlu:abstract_algebra",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -10906,7 +10906,7 @@ mmlu_abstract_algebra = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_anatomy = LightevalTaskConfig(
+mmlu_anatomy_original = LightevalTaskConfig(
     name="mmlu:anatomy",
     suite=["original", "mmlu"],
     prompt_function="mmlu_anatomy",
@@ -10924,7 +10924,7 @@ mmlu_anatomy = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_anatomy = LightevalTaskConfig(
+mmlu_anatomy_leaderboard = LightevalTaskConfig(
     name="mmlu:anatomy",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -10942,7 +10942,7 @@ mmlu_anatomy = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_anatomy = LightevalTaskConfig(
+mmlu_anatomy_helm = LightevalTaskConfig(
     name="mmlu:anatomy",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -10960,7 +10960,7 @@ mmlu_anatomy = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_astronomy = LightevalTaskConfig(
+mmlu_astronomy_original = LightevalTaskConfig(
     name="mmlu:astronomy",
     suite=["original", "mmlu"],
     prompt_function="mmlu_astronomy",
@@ -10978,7 +10978,7 @@ mmlu_astronomy = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_astronomy = LightevalTaskConfig(
+mmlu_astronomy_leaderboard = LightevalTaskConfig(
     name="mmlu:astronomy",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -10996,7 +10996,7 @@ mmlu_astronomy = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_astronomy = LightevalTaskConfig(
+mmlu_astronomy_helm = LightevalTaskConfig(
     name="mmlu:astronomy",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -11014,7 +11014,7 @@ mmlu_astronomy = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_business_ethics = LightevalTaskConfig(
+mmlu_business_ethics_original = LightevalTaskConfig(
     name="mmlu:business_ethics",
     suite=["original", "mmlu"],
     prompt_function="mmlu_business_ethics",
@@ -11032,7 +11032,7 @@ mmlu_business_ethics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_business_ethics = LightevalTaskConfig(
+mmlu_business_ethics_leaderboard = LightevalTaskConfig(
     name="mmlu:business_ethics",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -11050,7 +11050,7 @@ mmlu_business_ethics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_business_ethics = LightevalTaskConfig(
+mmlu_business_ethics_helm = LightevalTaskConfig(
     name="mmlu:business_ethics",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -11068,7 +11068,7 @@ mmlu_business_ethics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_clinical_knowledge = LightevalTaskConfig(
+mmlu_clinical_knowledge_original = LightevalTaskConfig(
     name="mmlu:clinical_knowledge",
     suite=["original", "mmlu"],
     prompt_function="mmlu_clinical_knowledge",
@@ -11086,7 +11086,7 @@ mmlu_clinical_knowledge = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_clinical_knowledge = LightevalTaskConfig(
+mmlu_clinical_knowledge_leaderboard = LightevalTaskConfig(
     name="mmlu:clinical_knowledge",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -11104,7 +11104,7 @@ mmlu_clinical_knowledge = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_clinical_knowledge = LightevalTaskConfig(
+mmlu_clinical_knowledge_helm = LightevalTaskConfig(
     name="mmlu:clinical_knowledge",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -11122,7 +11122,7 @@ mmlu_clinical_knowledge = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_college_biology = LightevalTaskConfig(
+mmlu_college_biology_original = LightevalTaskConfig(
     name="mmlu:college_biology",
     suite=["original", "mmlu"],
     prompt_function="mmlu_college_biology",
@@ -11140,7 +11140,7 @@ mmlu_college_biology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_college_biology = LightevalTaskConfig(
+mmlu_college_biology_leaderboard = LightevalTaskConfig(
     name="mmlu:college_biology",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -11158,7 +11158,7 @@ mmlu_college_biology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_college_biology = LightevalTaskConfig(
+mmlu_college_biology_helm = LightevalTaskConfig(
     name="mmlu:college_biology",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -11176,7 +11176,7 @@ mmlu_college_biology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_college_chemistry = LightevalTaskConfig(
+mmlu_college_chemistry_original = LightevalTaskConfig(
     name="mmlu:college_chemistry",
     suite=["original", "mmlu"],
     prompt_function="mmlu_college_chemistry",
@@ -11194,7 +11194,7 @@ mmlu_college_chemistry = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_college_chemistry = LightevalTaskConfig(
+mmlu_college_chemistry_leaderboard = LightevalTaskConfig(
     name="mmlu:college_chemistry",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -11212,7 +11212,7 @@ mmlu_college_chemistry = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_college_chemistry = LightevalTaskConfig(
+mmlu_college_chemistry_helm = LightevalTaskConfig(
     name="mmlu:college_chemistry",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -11230,7 +11230,7 @@ mmlu_college_chemistry = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_college_computer_science = LightevalTaskConfig(
+mmlu_college_computer_science_original = LightevalTaskConfig(
     name="mmlu:college_computer_science",
     suite=["original", "mmlu"],
     prompt_function="mmlu_college_computer_science",
@@ -11248,7 +11248,7 @@ mmlu_college_computer_science = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_college_computer_science = LightevalTaskConfig(
+mmlu_college_computer_science_leaderboard = LightevalTaskConfig(
     name="mmlu:college_computer_science",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -11266,7 +11266,7 @@ mmlu_college_computer_science = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_college_computer_science = LightevalTaskConfig(
+mmlu_college_computer_science_helm = LightevalTaskConfig(
     name="mmlu:college_computer_science",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -11284,7 +11284,7 @@ mmlu_college_computer_science = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_college_mathematics = LightevalTaskConfig(
+mmlu_college_mathematics_original = LightevalTaskConfig(
     name="mmlu:college_mathematics",
     suite=["original", "mmlu"],
     prompt_function="mmlu_college_mathematics",
@@ -11302,7 +11302,7 @@ mmlu_college_mathematics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_college_mathematics = LightevalTaskConfig(
+mmlu_college_mathematics_leaderboard = LightevalTaskConfig(
     name="mmlu:college_mathematics",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -11320,7 +11320,7 @@ mmlu_college_mathematics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_college_mathematics = LightevalTaskConfig(
+mmlu_college_mathematics_helm = LightevalTaskConfig(
     name="mmlu:college_mathematics",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -11338,7 +11338,7 @@ mmlu_college_mathematics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_college_medicine = LightevalTaskConfig(
+mmlu_college_medicine_original = LightevalTaskConfig(
     name="mmlu:college_medicine",
     suite=["original", "mmlu"],
     prompt_function="mmlu_college_medicine",
@@ -11356,7 +11356,7 @@ mmlu_college_medicine = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_college_medicine = LightevalTaskConfig(
+mmlu_college_medicine_leaderboard = LightevalTaskConfig(
     name="mmlu:college_medicine",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -11374,7 +11374,7 @@ mmlu_college_medicine = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_college_medicine = LightevalTaskConfig(
+mmlu_college_medicine_helm = LightevalTaskConfig(
     name="mmlu:college_medicine",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -11392,7 +11392,7 @@ mmlu_college_medicine = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_college_physics = LightevalTaskConfig(
+mmlu_college_physics_original = LightevalTaskConfig(
     name="mmlu:college_physics",
     suite=["original", "mmlu"],
     prompt_function="mmlu_college_physics",
@@ -11410,7 +11410,7 @@ mmlu_college_physics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_college_physics = LightevalTaskConfig(
+mmlu_college_physics_leaderboard = LightevalTaskConfig(
     name="mmlu:college_physics",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -11428,7 +11428,7 @@ mmlu_college_physics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_college_physics = LightevalTaskConfig(
+mmlu_college_physics_helm = LightevalTaskConfig(
     name="mmlu:college_physics",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -11446,7 +11446,7 @@ mmlu_college_physics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_computer_security = LightevalTaskConfig(
+mmlu_computer_security_original = LightevalTaskConfig(
     name="mmlu:computer_security",
     suite=["original", "mmlu"],
     prompt_function="mmlu_computer_security",
@@ -11464,7 +11464,7 @@ mmlu_computer_security = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_computer_security = LightevalTaskConfig(
+mmlu_computer_security_leaderboard = LightevalTaskConfig(
     name="mmlu:computer_security",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -11482,7 +11482,7 @@ mmlu_computer_security = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_computer_security = LightevalTaskConfig(
+mmlu_computer_security_helm = LightevalTaskConfig(
     name="mmlu:computer_security",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -11500,7 +11500,7 @@ mmlu_computer_security = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_conceptual_physics = LightevalTaskConfig(
+mmlu_conceptual_physics_original = LightevalTaskConfig(
     name="mmlu:conceptual_physics",
     suite=["original", "mmlu"],
     prompt_function="mmlu_conceptual_physics",
@@ -11518,7 +11518,7 @@ mmlu_conceptual_physics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_conceptual_physics = LightevalTaskConfig(
+mmlu_conceptual_physics_leaderboard = LightevalTaskConfig(
     name="mmlu:conceptual_physics",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -11536,7 +11536,7 @@ mmlu_conceptual_physics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_conceptual_physics = LightevalTaskConfig(
+mmlu_conceptual_physics_helm = LightevalTaskConfig(
     name="mmlu:conceptual_physics",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -11554,7 +11554,7 @@ mmlu_conceptual_physics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_econometrics = LightevalTaskConfig(
+mmlu_econometrics_original = LightevalTaskConfig(
     name="mmlu:econometrics",
     suite=["original", "mmlu"],
     prompt_function="mmlu_econometrics",
@@ -11572,7 +11572,7 @@ mmlu_econometrics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_econometrics = LightevalTaskConfig(
+mmlu_econometrics_leaderboard = LightevalTaskConfig(
     name="mmlu:econometrics",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -11590,7 +11590,7 @@ mmlu_econometrics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_econometrics = LightevalTaskConfig(
+mmlu_econometrics_helm = LightevalTaskConfig(
     name="mmlu:econometrics",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -11608,7 +11608,7 @@ mmlu_econometrics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_electrical_engineering = LightevalTaskConfig(
+mmlu_electrical_engineering_original = LightevalTaskConfig(
     name="mmlu:electrical_engineering",
     suite=["original", "mmlu"],
     prompt_function="mmlu_electrical_engineering",
@@ -11626,7 +11626,7 @@ mmlu_electrical_engineering = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_electrical_engineering = LightevalTaskConfig(
+mmlu_electrical_engineering_leaderboard = LightevalTaskConfig(
     name="mmlu:electrical_engineering",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -11644,7 +11644,7 @@ mmlu_electrical_engineering = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_electrical_engineering = LightevalTaskConfig(
+mmlu_electrical_engineering_helm = LightevalTaskConfig(
     name="mmlu:electrical_engineering",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -11662,7 +11662,7 @@ mmlu_electrical_engineering = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_elementary_mathematics = LightevalTaskConfig(
+mmlu_elementary_mathematics_original = LightevalTaskConfig(
     name="mmlu:elementary_mathematics",
     suite=["original", "mmlu"],
     prompt_function="mmlu_elementary_mathematics",
@@ -11680,7 +11680,7 @@ mmlu_elementary_mathematics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_elementary_mathematics = LightevalTaskConfig(
+mmlu_elementary_mathematics_leaderboard = LightevalTaskConfig(
     name="mmlu:elementary_mathematics",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -11698,7 +11698,7 @@ mmlu_elementary_mathematics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_elementary_mathematics = LightevalTaskConfig(
+mmlu_elementary_mathematics_helm = LightevalTaskConfig(
     name="mmlu:elementary_mathematics",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -11716,7 +11716,7 @@ mmlu_elementary_mathematics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_formal_logic = LightevalTaskConfig(
+mmlu_formal_logic_original = LightevalTaskConfig(
     name="mmlu:formal_logic",
     suite=["original", "mmlu"],
     prompt_function="mmlu_formal_logic",
@@ -11734,7 +11734,7 @@ mmlu_formal_logic = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_formal_logic = LightevalTaskConfig(
+mmlu_formal_logic_leaderboard = LightevalTaskConfig(
     name="mmlu:formal_logic",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -11752,7 +11752,7 @@ mmlu_formal_logic = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_formal_logic = LightevalTaskConfig(
+mmlu_formal_logic_helm = LightevalTaskConfig(
     name="mmlu:formal_logic",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -11770,7 +11770,7 @@ mmlu_formal_logic = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_global_facts = LightevalTaskConfig(
+mmlu_global_facts_original = LightevalTaskConfig(
     name="mmlu:global_facts",
     suite=["original", "mmlu"],
     prompt_function="mmlu_global_facts",
@@ -11788,7 +11788,7 @@ mmlu_global_facts = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_global_facts = LightevalTaskConfig(
+mmlu_global_facts_leaderboard = LightevalTaskConfig(
     name="mmlu:global_facts",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -11806,7 +11806,7 @@ mmlu_global_facts = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_global_facts = LightevalTaskConfig(
+mmlu_global_facts_helm = LightevalTaskConfig(
     name="mmlu:global_facts",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -11824,7 +11824,7 @@ mmlu_global_facts = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_biology = LightevalTaskConfig(
+mmlu_high_school_biology_original = LightevalTaskConfig(
     name="mmlu:high_school_biology",
     suite=["original", "mmlu"],
     prompt_function="mmlu_high_school_biology",
@@ -11842,7 +11842,7 @@ mmlu_high_school_biology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_biology = LightevalTaskConfig(
+mmlu_high_school_biology_leaderboard = LightevalTaskConfig(
     name="mmlu:high_school_biology",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -11860,7 +11860,7 @@ mmlu_high_school_biology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_biology = LightevalTaskConfig(
+mmlu_high_school_biology_helm = LightevalTaskConfig(
     name="mmlu:high_school_biology",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -11878,7 +11878,7 @@ mmlu_high_school_biology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_chemistry = LightevalTaskConfig(
+mmlu_high_school_chemistry_original = LightevalTaskConfig(
     name="mmlu:high_school_chemistry",
     suite=["original", "mmlu"],
     prompt_function="mmlu_high_school_chemistry",
@@ -11896,7 +11896,7 @@ mmlu_high_school_chemistry = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_chemistry = LightevalTaskConfig(
+mmlu_high_school_chemistry_leaderboard = LightevalTaskConfig(
     name="mmlu:high_school_chemistry",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -11914,7 +11914,7 @@ mmlu_high_school_chemistry = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_chemistry = LightevalTaskConfig(
+mmlu_high_school_chemistry_helm = LightevalTaskConfig(
     name="mmlu:high_school_chemistry",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -11932,7 +11932,7 @@ mmlu_high_school_chemistry = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_computer_science = LightevalTaskConfig(
+mmlu_high_school_computer_science_original = LightevalTaskConfig(
     name="mmlu:high_school_computer_science",
     suite=["original", "mmlu"],
     prompt_function="mmlu_high_school_computer_science",
@@ -11950,7 +11950,7 @@ mmlu_high_school_computer_science = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_computer_science = LightevalTaskConfig(
+mmlu_high_school_computer_science_leaderboard = LightevalTaskConfig(
     name="mmlu:high_school_computer_science",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -11968,7 +11968,7 @@ mmlu_high_school_computer_science = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_computer_science = LightevalTaskConfig(
+mmlu_high_school_computer_science_helm = LightevalTaskConfig(
     name="mmlu:high_school_computer_science",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -11986,7 +11986,7 @@ mmlu_high_school_computer_science = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_european_history = LightevalTaskConfig(
+mmlu_high_school_european_history_original = LightevalTaskConfig(
     name="mmlu:high_school_european_history",
     suite=["original", "mmlu"],
     prompt_function="mmlu_high_school_european_history",
@@ -12004,7 +12004,7 @@ mmlu_high_school_european_history = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_european_history = LightevalTaskConfig(
+mmlu_high_school_european_history_leaderboard = LightevalTaskConfig(
     name="mmlu:high_school_european_history",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -12022,7 +12022,7 @@ mmlu_high_school_european_history = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_european_history = LightevalTaskConfig(
+mmlu_high_school_european_history_helm = LightevalTaskConfig(
     name="mmlu:high_school_european_history",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -12040,7 +12040,7 @@ mmlu_high_school_european_history = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_geography = LightevalTaskConfig(
+mmlu_high_school_geography_original = LightevalTaskConfig(
     name="mmlu:high_school_geography",
     suite=["original", "mmlu"],
     prompt_function="mmlu_high_school_geography",
@@ -12058,7 +12058,7 @@ mmlu_high_school_geography = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_geography = LightevalTaskConfig(
+mmlu_high_school_geography_leaderboard = LightevalTaskConfig(
     name="mmlu:high_school_geography",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -12076,7 +12076,7 @@ mmlu_high_school_geography = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_geography = LightevalTaskConfig(
+mmlu_high_school_geography_helm = LightevalTaskConfig(
     name="mmlu:high_school_geography",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -12094,7 +12094,7 @@ mmlu_high_school_geography = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_government_and_politics = LightevalTaskConfig(
+mmlu_high_school_government_and_politics_original = LightevalTaskConfig(
     name="mmlu:high_school_government_and_politics",
     suite=["original", "mmlu"],
     prompt_function="mmlu_high_school_government_and_politics",
@@ -12112,7 +12112,7 @@ mmlu_high_school_government_and_politics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_government_and_politics = LightevalTaskConfig(
+mmlu_high_school_government_and_politics_leaderboard = LightevalTaskConfig(
     name="mmlu:high_school_government_and_politics",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -12130,7 +12130,7 @@ mmlu_high_school_government_and_politics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_government_and_politics = LightevalTaskConfig(
+mmlu_high_school_government_and_politics_helm = LightevalTaskConfig(
     name="mmlu:high_school_government_and_politics",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -12148,7 +12148,7 @@ mmlu_high_school_government_and_politics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_macroeconomics = LightevalTaskConfig(
+mmlu_high_school_macroeconomics_original = LightevalTaskConfig(
     name="mmlu:high_school_macroeconomics",
     suite=["original", "mmlu"],
     prompt_function="mmlu_high_school_macroeconomics",
@@ -12166,7 +12166,7 @@ mmlu_high_school_macroeconomics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_macroeconomics = LightevalTaskConfig(
+mmlu_high_school_macroeconomics_leaderboard = LightevalTaskConfig(
     name="mmlu:high_school_macroeconomics",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -12184,7 +12184,7 @@ mmlu_high_school_macroeconomics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_macroeconomics = LightevalTaskConfig(
+mmlu_high_school_macroeconomics_helm = LightevalTaskConfig(
     name="mmlu:high_school_macroeconomics",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -12202,7 +12202,7 @@ mmlu_high_school_macroeconomics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_mathematics = LightevalTaskConfig(
+mmlu_high_school_mathematics_original = LightevalTaskConfig(
     name="mmlu:high_school_mathematics",
     suite=["original", "mmlu"],
     prompt_function="mmlu_high_school_mathematics",
@@ -12220,7 +12220,7 @@ mmlu_high_school_mathematics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_mathematics = LightevalTaskConfig(
+mmlu_high_school_mathematics_leaderboard = LightevalTaskConfig(
     name="mmlu:high_school_mathematics",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -12238,7 +12238,7 @@ mmlu_high_school_mathematics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_mathematics = LightevalTaskConfig(
+mmlu_high_school_mathematics_helm = LightevalTaskConfig(
     name="mmlu:high_school_mathematics",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -12256,7 +12256,7 @@ mmlu_high_school_mathematics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_microeconomics = LightevalTaskConfig(
+mmlu_high_school_microeconomics_original = LightevalTaskConfig(
     name="mmlu:high_school_microeconomics",
     suite=["original", "mmlu"],
     prompt_function="mmlu_high_school_microeconomics",
@@ -12274,7 +12274,7 @@ mmlu_high_school_microeconomics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_microeconomics = LightevalTaskConfig(
+mmlu_high_school_microeconomics_leaderboard = LightevalTaskConfig(
     name="mmlu:high_school_microeconomics",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -12292,7 +12292,7 @@ mmlu_high_school_microeconomics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_microeconomics = LightevalTaskConfig(
+mmlu_high_school_microeconomics_helm = LightevalTaskConfig(
     name="mmlu:high_school_microeconomics",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -12310,7 +12310,7 @@ mmlu_high_school_microeconomics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_physics = LightevalTaskConfig(
+mmlu_high_school_physics_original = LightevalTaskConfig(
     name="mmlu:high_school_physics",
     suite=["original", "mmlu"],
     prompt_function="mmlu_high_school_physics",
@@ -12328,7 +12328,7 @@ mmlu_high_school_physics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_physics = LightevalTaskConfig(
+mmlu_high_school_physics_leaderboard = LightevalTaskConfig(
     name="mmlu:high_school_physics",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -12346,7 +12346,7 @@ mmlu_high_school_physics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_physics = LightevalTaskConfig(
+mmlu_high_school_physics_helm = LightevalTaskConfig(
     name="mmlu:high_school_physics",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -12364,7 +12364,7 @@ mmlu_high_school_physics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_psychology = LightevalTaskConfig(
+mmlu_high_school_psychology_original = LightevalTaskConfig(
     name="mmlu:high_school_psychology",
     suite=["original", "mmlu"],
     prompt_function="mmlu_high_school_psychology",
@@ -12382,7 +12382,7 @@ mmlu_high_school_psychology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_psychology = LightevalTaskConfig(
+mmlu_high_school_psychology_leaderboard = LightevalTaskConfig(
     name="mmlu:high_school_psychology",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -12400,7 +12400,7 @@ mmlu_high_school_psychology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_psychology = LightevalTaskConfig(
+mmlu_high_school_psychology_helm = LightevalTaskConfig(
     name="mmlu:high_school_psychology",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -12418,7 +12418,7 @@ mmlu_high_school_psychology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_statistics = LightevalTaskConfig(
+mmlu_high_school_statistics_original = LightevalTaskConfig(
     name="mmlu:high_school_statistics",
     suite=["original", "mmlu"],
     prompt_function="mmlu_high_school_statistics",
@@ -12436,7 +12436,7 @@ mmlu_high_school_statistics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_statistics = LightevalTaskConfig(
+mmlu_high_school_statistics_leaderboard = LightevalTaskConfig(
     name="mmlu:high_school_statistics",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -12454,7 +12454,7 @@ mmlu_high_school_statistics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_statistics = LightevalTaskConfig(
+mmlu_high_school_statistics_helm = LightevalTaskConfig(
     name="mmlu:high_school_statistics",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -12472,7 +12472,7 @@ mmlu_high_school_statistics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_us_history = LightevalTaskConfig(
+mmlu_high_school_us_history_original = LightevalTaskConfig(
     name="mmlu:high_school_us_history",
     suite=["original", "mmlu"],
     prompt_function="mmlu_high_school_us_history",
@@ -12490,7 +12490,7 @@ mmlu_high_school_us_history = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_us_history = LightevalTaskConfig(
+mmlu_high_school_us_history_leaderboard = LightevalTaskConfig(
     name="mmlu:high_school_us_history",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -12508,7 +12508,7 @@ mmlu_high_school_us_history = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_us_history = LightevalTaskConfig(
+mmlu_high_school_us_history_helm = LightevalTaskConfig(
     name="mmlu:high_school_us_history",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -12526,7 +12526,7 @@ mmlu_high_school_us_history = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_world_history = LightevalTaskConfig(
+mmlu_high_school_world_history_original = LightevalTaskConfig(
     name="mmlu:high_school_world_history",
     suite=["original", "mmlu"],
     prompt_function="mmlu_high_school_world_history",
@@ -12544,7 +12544,7 @@ mmlu_high_school_world_history = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_world_history = LightevalTaskConfig(
+mmlu_high_school_world_history_leaderboard = LightevalTaskConfig(
     name="mmlu:high_school_world_history",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -12562,7 +12562,7 @@ mmlu_high_school_world_history = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_high_school_world_history = LightevalTaskConfig(
+mmlu_high_school_world_history_helm = LightevalTaskConfig(
     name="mmlu:high_school_world_history",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -12580,7 +12580,7 @@ mmlu_high_school_world_history = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_human_aging = LightevalTaskConfig(
+mmlu_human_aging_original = LightevalTaskConfig(
     name="mmlu:human_aging",
     suite=["original", "mmlu"],
     prompt_function="mmlu_human_aging",
@@ -12598,7 +12598,7 @@ mmlu_human_aging = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_human_aging = LightevalTaskConfig(
+mmlu_human_aging_leaderboard = LightevalTaskConfig(
     name="mmlu:human_aging",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -12616,7 +12616,7 @@ mmlu_human_aging = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_human_aging = LightevalTaskConfig(
+mmlu_human_aging_helm = LightevalTaskConfig(
     name="mmlu:human_aging",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -12634,7 +12634,7 @@ mmlu_human_aging = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_human_sexuality = LightevalTaskConfig(
+mmlu_human_sexuality_original = LightevalTaskConfig(
     name="mmlu:human_sexuality",
     suite=["original", "mmlu"],
     prompt_function="mmlu_human_sexuality",
@@ -12652,7 +12652,7 @@ mmlu_human_sexuality = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_human_sexuality = LightevalTaskConfig(
+mmlu_human_sexuality_leaderboard = LightevalTaskConfig(
     name="mmlu:human_sexuality",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -12670,7 +12670,7 @@ mmlu_human_sexuality = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_human_sexuality = LightevalTaskConfig(
+mmlu_human_sexuality_helm = LightevalTaskConfig(
     name="mmlu:human_sexuality",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -12688,7 +12688,7 @@ mmlu_human_sexuality = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_international_law = LightevalTaskConfig(
+mmlu_international_law_original = LightevalTaskConfig(
     name="mmlu:international_law",
     suite=["original", "mmlu"],
     prompt_function="mmlu_international_law",
@@ -12706,7 +12706,7 @@ mmlu_international_law = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_international_law = LightevalTaskConfig(
+mmlu_international_law_leaderboard = LightevalTaskConfig(
     name="mmlu:international_law",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -12724,7 +12724,7 @@ mmlu_international_law = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_international_law = LightevalTaskConfig(
+mmlu_international_law_helm = LightevalTaskConfig(
     name="mmlu:international_law",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -12742,7 +12742,7 @@ mmlu_international_law = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_jurisprudence = LightevalTaskConfig(
+mmlu_jurisprudence_original = LightevalTaskConfig(
     name="mmlu:jurisprudence",
     suite=["original", "mmlu"],
     prompt_function="mmlu_jurisprudence",
@@ -12760,7 +12760,7 @@ mmlu_jurisprudence = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_jurisprudence = LightevalTaskConfig(
+mmlu_jurisprudence_leaderboard = LightevalTaskConfig(
     name="mmlu:jurisprudence",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -12778,7 +12778,7 @@ mmlu_jurisprudence = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_jurisprudence = LightevalTaskConfig(
+mmlu_jurisprudence_helm = LightevalTaskConfig(
     name="mmlu:jurisprudence",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -12796,7 +12796,7 @@ mmlu_jurisprudence = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_logical_fallacies = LightevalTaskConfig(
+mmlu_logical_fallacies_original = LightevalTaskConfig(
     name="mmlu:logical_fallacies",
     suite=["original", "mmlu"],
     prompt_function="mmlu_logical_fallacies",
@@ -12814,7 +12814,7 @@ mmlu_logical_fallacies = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_logical_fallacies = LightevalTaskConfig(
+mmlu_logical_fallacies_leaderboard = LightevalTaskConfig(
     name="mmlu:logical_fallacies",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -12832,7 +12832,7 @@ mmlu_logical_fallacies = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_logical_fallacies = LightevalTaskConfig(
+mmlu_logical_fallacies_helm = LightevalTaskConfig(
     name="mmlu:logical_fallacies",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -12850,7 +12850,7 @@ mmlu_logical_fallacies = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_machine_learning = LightevalTaskConfig(
+mmlu_machine_learning_original = LightevalTaskConfig(
     name="mmlu:machine_learning",
     suite=["original", "mmlu"],
     prompt_function="mmlu_machine_learning",
@@ -12868,7 +12868,7 @@ mmlu_machine_learning = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_machine_learning = LightevalTaskConfig(
+mmlu_machine_learning_leaderboard = LightevalTaskConfig(
     name="mmlu:machine_learning",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -12886,7 +12886,7 @@ mmlu_machine_learning = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_machine_learning = LightevalTaskConfig(
+mmlu_machine_learning_helm = LightevalTaskConfig(
     name="mmlu:machine_learning",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -12904,7 +12904,7 @@ mmlu_machine_learning = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_management = LightevalTaskConfig(
+mmlu_management_original = LightevalTaskConfig(
     name="mmlu:management",
     suite=["original", "mmlu"],
     prompt_function="mmlu_management",
@@ -12922,7 +12922,7 @@ mmlu_management = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_management = LightevalTaskConfig(
+mmlu_management_leaderboard = LightevalTaskConfig(
     name="mmlu:management",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -12940,7 +12940,7 @@ mmlu_management = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_management = LightevalTaskConfig(
+mmlu_management_helm = LightevalTaskConfig(
     name="mmlu:management",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -12958,7 +12958,7 @@ mmlu_management = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_marketing = LightevalTaskConfig(
+mmlu_marketing_original = LightevalTaskConfig(
     name="mmlu:marketing",
     suite=["original", "mmlu"],
     prompt_function="mmlu_marketing",
@@ -12976,7 +12976,7 @@ mmlu_marketing = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_marketing = LightevalTaskConfig(
+mmlu_marketing_leaderboard = LightevalTaskConfig(
     name="mmlu:marketing",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -12994,7 +12994,7 @@ mmlu_marketing = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_marketing = LightevalTaskConfig(
+mmlu_marketing_helm = LightevalTaskConfig(
     name="mmlu:marketing",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -13012,7 +13012,7 @@ mmlu_marketing = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_medical_genetics = LightevalTaskConfig(
+mmlu_medical_genetics_original = LightevalTaskConfig(
     name="mmlu:medical_genetics",
     suite=["original", "mmlu"],
     prompt_function="mmlu_medical_genetics",
@@ -13030,7 +13030,7 @@ mmlu_medical_genetics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_medical_genetics = LightevalTaskConfig(
+mmlu_medical_genetics_leaderboard = LightevalTaskConfig(
     name="mmlu:medical_genetics",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -13048,7 +13048,7 @@ mmlu_medical_genetics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_medical_genetics = LightevalTaskConfig(
+mmlu_medical_genetics_helm = LightevalTaskConfig(
     name="mmlu:medical_genetics",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -13066,7 +13066,7 @@ mmlu_medical_genetics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_miscellaneous = LightevalTaskConfig(
+mmlu_miscellaneous_original = LightevalTaskConfig(
     name="mmlu:miscellaneous",
     suite=["original", "mmlu"],
     prompt_function="mmlu_miscellaneous",
@@ -13084,7 +13084,7 @@ mmlu_miscellaneous = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_miscellaneous = LightevalTaskConfig(
+mmlu_miscellaneous_leaderboard = LightevalTaskConfig(
     name="mmlu:miscellaneous",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -13102,7 +13102,7 @@ mmlu_miscellaneous = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_miscellaneous = LightevalTaskConfig(
+mmlu_miscellaneous_helm = LightevalTaskConfig(
     name="mmlu:miscellaneous",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -13120,7 +13120,7 @@ mmlu_miscellaneous = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_moral_disputes = LightevalTaskConfig(
+mmlu_moral_disputes_original = LightevalTaskConfig(
     name="mmlu:moral_disputes",
     suite=["original", "mmlu"],
     prompt_function="mmlu_moral_disputes",
@@ -13138,7 +13138,7 @@ mmlu_moral_disputes = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_moral_disputes = LightevalTaskConfig(
+mmlu_moral_disputes_leaderboard = LightevalTaskConfig(
     name="mmlu:moral_disputes",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -13156,7 +13156,7 @@ mmlu_moral_disputes = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_moral_disputes = LightevalTaskConfig(
+mmlu_moral_disputes_helm = LightevalTaskConfig(
     name="mmlu:moral_disputes",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -13174,7 +13174,7 @@ mmlu_moral_disputes = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_moral_scenarios = LightevalTaskConfig(
+mmlu_moral_scenarios_original = LightevalTaskConfig(
     name="mmlu:moral_scenarios",
     suite=["original", "mmlu"],
     prompt_function="mmlu_moral_scenarios",
@@ -13192,7 +13192,7 @@ mmlu_moral_scenarios = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_moral_scenarios = LightevalTaskConfig(
+mmlu_moral_scenarios_leaderboard = LightevalTaskConfig(
     name="mmlu:moral_scenarios",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -13210,7 +13210,7 @@ mmlu_moral_scenarios = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_moral_scenarios = LightevalTaskConfig(
+mmlu_moral_scenarios_helm = LightevalTaskConfig(
     name="mmlu:moral_scenarios",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -13228,7 +13228,7 @@ mmlu_moral_scenarios = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_nutrition = LightevalTaskConfig(
+mmlu_nutrition_original = LightevalTaskConfig(
     name="mmlu:nutrition",
     suite=["original", "mmlu"],
     prompt_function="mmlu_nutrition",
@@ -13246,7 +13246,7 @@ mmlu_nutrition = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_nutrition = LightevalTaskConfig(
+mmlu_nutrition_leaderboard = LightevalTaskConfig(
     name="mmlu:nutrition",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -13264,7 +13264,7 @@ mmlu_nutrition = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_nutrition = LightevalTaskConfig(
+mmlu_nutrition_helm = LightevalTaskConfig(
     name="mmlu:nutrition",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -13282,7 +13282,7 @@ mmlu_nutrition = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_philosophy = LightevalTaskConfig(
+mmlu_philosophy_original = LightevalTaskConfig(
     name="mmlu:philosophy",
     suite=["original", "mmlu"],
     prompt_function="mmlu_philosophy",
@@ -13300,7 +13300,7 @@ mmlu_philosophy = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_philosophy = LightevalTaskConfig(
+mmlu_philosophy_leaderboard = LightevalTaskConfig(
     name="mmlu:philosophy",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -13318,7 +13318,7 @@ mmlu_philosophy = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_philosophy = LightevalTaskConfig(
+mmlu_philosophy_helm = LightevalTaskConfig(
     name="mmlu:philosophy",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -13336,7 +13336,7 @@ mmlu_philosophy = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_prehistory = LightevalTaskConfig(
+mmlu_prehistory_original = LightevalTaskConfig(
     name="mmlu:prehistory",
     suite=["original", "mmlu"],
     prompt_function="mmlu_prehistory",
@@ -13354,7 +13354,7 @@ mmlu_prehistory = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_prehistory = LightevalTaskConfig(
+mmlu_prehistory_leaderboard = LightevalTaskConfig(
     name="mmlu:prehistory",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -13372,7 +13372,7 @@ mmlu_prehistory = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_prehistory = LightevalTaskConfig(
+mmlu_prehistory_helm = LightevalTaskConfig(
     name="mmlu:prehistory",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -13390,7 +13390,7 @@ mmlu_prehistory = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_professional_accounting = LightevalTaskConfig(
+mmlu_professional_accounting_original = LightevalTaskConfig(
     name="mmlu:professional_accounting",
     suite=["original", "mmlu"],
     prompt_function="mmlu_professional_accounting",
@@ -13408,7 +13408,7 @@ mmlu_professional_accounting = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_professional_accounting = LightevalTaskConfig(
+mmlu_professional_accounting_leaderboard = LightevalTaskConfig(
     name="mmlu:professional_accounting",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -13426,7 +13426,7 @@ mmlu_professional_accounting = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_professional_accounting = LightevalTaskConfig(
+mmlu_professional_accounting_helm = LightevalTaskConfig(
     name="mmlu:professional_accounting",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -13444,7 +13444,7 @@ mmlu_professional_accounting = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_professional_law = LightevalTaskConfig(
+mmlu_professional_law_original = LightevalTaskConfig(
     name="mmlu:professional_law",
     suite=["original", "mmlu"],
     prompt_function="mmlu_professional_law",
@@ -13462,7 +13462,7 @@ mmlu_professional_law = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_professional_law = LightevalTaskConfig(
+mmlu_professional_law_leaderboard = LightevalTaskConfig(
     name="mmlu:professional_law",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -13480,7 +13480,7 @@ mmlu_professional_law = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_professional_law = LightevalTaskConfig(
+mmlu_professional_law_helm = LightevalTaskConfig(
     name="mmlu:professional_law",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -13498,7 +13498,7 @@ mmlu_professional_law = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_professional_medicine = LightevalTaskConfig(
+mmlu_professional_medicine_original = LightevalTaskConfig(
     name="mmlu:professional_medicine",
     suite=["original", "mmlu"],
     prompt_function="mmlu_professional_medicine",
@@ -13516,7 +13516,7 @@ mmlu_professional_medicine = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_professional_medicine = LightevalTaskConfig(
+mmlu_professional_medicine_leaderboard = LightevalTaskConfig(
     name="mmlu:professional_medicine",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -13534,7 +13534,7 @@ mmlu_professional_medicine = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_professional_medicine = LightevalTaskConfig(
+mmlu_professional_medicine_helm = LightevalTaskConfig(
     name="mmlu:professional_medicine",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -13552,7 +13552,7 @@ mmlu_professional_medicine = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_professional_psychology = LightevalTaskConfig(
+mmlu_professional_psychology_original = LightevalTaskConfig(
     name="mmlu:professional_psychology",
     suite=["original", "mmlu"],
     prompt_function="mmlu_professional_psychology",
@@ -13570,7 +13570,7 @@ mmlu_professional_psychology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_professional_psychology = LightevalTaskConfig(
+mmlu_professional_psychology_leaderboard = LightevalTaskConfig(
     name="mmlu:professional_psychology",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -13588,7 +13588,7 @@ mmlu_professional_psychology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_professional_psychology = LightevalTaskConfig(
+mmlu_professional_psychology_helm = LightevalTaskConfig(
     name="mmlu:professional_psychology",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -13606,7 +13606,7 @@ mmlu_professional_psychology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_public_relations = LightevalTaskConfig(
+mmlu_public_relations_original = LightevalTaskConfig(
     name="mmlu:public_relations",
     suite=["original", "mmlu"],
     prompt_function="mmlu_public_relations",
@@ -13624,7 +13624,7 @@ mmlu_public_relations = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_public_relations = LightevalTaskConfig(
+mmlu_public_relations_leaderboard = LightevalTaskConfig(
     name="mmlu:public_relations",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -13642,7 +13642,7 @@ mmlu_public_relations = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_public_relations = LightevalTaskConfig(
+mmlu_public_relations_helm = LightevalTaskConfig(
     name="mmlu:public_relations",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -13660,7 +13660,7 @@ mmlu_public_relations = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_security_studies = LightevalTaskConfig(
+mmlu_security_studies_original = LightevalTaskConfig(
     name="mmlu:security_studies",
     suite=["original", "mmlu"],
     prompt_function="mmlu_security_studies",
@@ -13678,7 +13678,7 @@ mmlu_security_studies = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_security_studies = LightevalTaskConfig(
+mmlu_security_studies_leaderboard = LightevalTaskConfig(
     name="mmlu:security_studies",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -13696,7 +13696,7 @@ mmlu_security_studies = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_security_studies = LightevalTaskConfig(
+mmlu_security_studies_helm = LightevalTaskConfig(
     name="mmlu:security_studies",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -13714,7 +13714,7 @@ mmlu_security_studies = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_sociology = LightevalTaskConfig(
+mmlu_sociology_original = LightevalTaskConfig(
     name="mmlu:sociology",
     suite=["original", "mmlu"],
     prompt_function="mmlu_sociology",
@@ -13732,7 +13732,7 @@ mmlu_sociology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_sociology = LightevalTaskConfig(
+mmlu_sociology_leaderboard = LightevalTaskConfig(
     name="mmlu:sociology",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -13750,7 +13750,7 @@ mmlu_sociology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_sociology = LightevalTaskConfig(
+mmlu_sociology_helm = LightevalTaskConfig(
     name="mmlu:sociology",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -13768,7 +13768,7 @@ mmlu_sociology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_us_foreign_policy = LightevalTaskConfig(
+mmlu_us_foreign_policy_original = LightevalTaskConfig(
     name="mmlu:us_foreign_policy",
     suite=["original", "mmlu"],
     prompt_function="mmlu_us_foreign_policy",
@@ -13786,7 +13786,7 @@ mmlu_us_foreign_policy = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_us_foreign_policy = LightevalTaskConfig(
+mmlu_us_foreign_policy_leaderboard = LightevalTaskConfig(
     name="mmlu:us_foreign_policy",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -13804,7 +13804,7 @@ mmlu_us_foreign_policy = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_us_foreign_policy = LightevalTaskConfig(
+mmlu_us_foreign_policy_helm = LightevalTaskConfig(
     name="mmlu:us_foreign_policy",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -13822,7 +13822,7 @@ mmlu_us_foreign_policy = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_virology = LightevalTaskConfig(
+mmlu_virology_original = LightevalTaskConfig(
     name="mmlu:virology",
     suite=["original", "mmlu"],
     prompt_function="mmlu_virology",
@@ -13840,7 +13840,7 @@ mmlu_virology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_virology = LightevalTaskConfig(
+mmlu_virology_leaderboard = LightevalTaskConfig(
     name="mmlu:virology",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -13858,7 +13858,7 @@ mmlu_virology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_virology = LightevalTaskConfig(
+mmlu_virology_helm = LightevalTaskConfig(
     name="mmlu:virology",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -13876,7 +13876,7 @@ mmlu_virology = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_world_religions = LightevalTaskConfig(
+mmlu_world_religions_original = LightevalTaskConfig(
     name="mmlu:world_religions",
     suite=["original", "mmlu"],
     prompt_function="mmlu_world_religions",
@@ -13894,7 +13894,7 @@ mmlu_world_religions = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_world_religions = LightevalTaskConfig(
+mmlu_world_religions_leaderboard = LightevalTaskConfig(
     name="mmlu:world_religions",
     suite=["leaderboard", "mmlu"],
     prompt_function="mmlu_harness",
@@ -13912,7 +13912,7 @@ mmlu_world_religions = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mmlu_world_religions = LightevalTaskConfig(
+mmlu_world_religions_helm = LightevalTaskConfig(
     name="mmlu:world_religions",
     suite=["helm", "helm_general"],
     prompt_function="mmlu_helm",
@@ -13930,7 +13930,7 @@ mmlu_world_religions = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mnist_ascii = LightevalTaskConfig(
+mnist_ascii_bigbench = LightevalTaskConfig(
     name="mnist_ascii",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -13948,7 +13948,7 @@ mnist_ascii = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-modified_arithmetic = LightevalTaskConfig(
+modified_arithmetic_bigbench = LightevalTaskConfig(
     name="modified_arithmetic",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -13966,7 +13966,7 @@ modified_arithmetic = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-moral_permissibility = LightevalTaskConfig(
+moral_permissibility_bigbench = LightevalTaskConfig(
     name="moral_permissibility",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -13984,7 +13984,7 @@ moral_permissibility = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-movie_dialog_same_or_different = LightevalTaskConfig(
+movie_dialog_same_or_different_bigbench = LightevalTaskConfig(
     name="movie_dialog_same_or_different",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14002,7 +14002,7 @@ movie_dialog_same_or_different = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-movie_recommendation = LightevalTaskConfig(
+movie_recommendation_bigbench = LightevalTaskConfig(
     name="movie_recommendation",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14020,7 +14020,7 @@ movie_recommendation = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mtnt2019_en_fr = LightevalTaskConfig(
+mtnt2019_en_fr_lighteval = LightevalTaskConfig(
     name="mtnt2019:en-fr",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -14038,7 +14038,7 @@ mtnt2019_en_fr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mtnt2019_en_ja = LightevalTaskConfig(
+mtnt2019_en_ja_lighteval = LightevalTaskConfig(
     name="mtnt2019:en-ja",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -14056,7 +14056,7 @@ mtnt2019_en_ja = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mtnt2019_fr_en = LightevalTaskConfig(
+mtnt2019_fr_en_lighteval = LightevalTaskConfig(
     name="mtnt2019:fr-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -14074,7 +14074,7 @@ mtnt2019_fr_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mtnt2019_ja_en = LightevalTaskConfig(
+mtnt2019_ja_en_lighteval = LightevalTaskConfig(
     name="mtnt2019:ja-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -14092,7 +14092,7 @@ mtnt2019_ja_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mult_data_wrangling = LightevalTaskConfig(
+mult_data_wrangling_bigbench = LightevalTaskConfig(
     name="mult_data_wrangling",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14110,7 +14110,7 @@ mult_data_wrangling = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-multiemo = LightevalTaskConfig(
+multiemo_bigbench = LightevalTaskConfig(
     name="multiemo",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14128,7 +14128,7 @@ multiemo = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mutual = LightevalTaskConfig(
+mutual_lighteval = LightevalTaskConfig(
     name="mutual",
     suite=["lighteval"],
     prompt_function="mutual",
@@ -14146,7 +14146,7 @@ mutual = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-mutual_plus = LightevalTaskConfig(
+mutual_plus_lighteval = LightevalTaskConfig(
     name="mutual_plus",
     suite=["lighteval"],
     prompt_function="mutual",
@@ -14164,7 +14164,7 @@ mutual_plus = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-narrativeqa = LightevalTaskConfig(
+narrativeqa_helm = LightevalTaskConfig(
     name="narrativeqa",
     suite=["helm", "helm_general"],
     prompt_function="narrativeqa",
@@ -14182,7 +14182,7 @@ narrativeqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-natural_instructions = LightevalTaskConfig(
+natural_instructions_bigbench = LightevalTaskConfig(
     name="natural_instructions",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14200,7 +14200,7 @@ natural_instructions = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-navigate = LightevalTaskConfig(
+navigate_bigbench = LightevalTaskConfig(
     name="navigate",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14218,7 +14218,7 @@ navigate = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-nonsense_words_grammar = LightevalTaskConfig(
+nonsense_words_grammar_bigbench = LightevalTaskConfig(
     name="nonsense_words_grammar",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14236,7 +14236,7 @@ nonsense_words_grammar = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-novel_concepts = LightevalTaskConfig(
+novel_concepts_bigbench_lite = LightevalTaskConfig(
     name="novel_concepts",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14254,7 +14254,7 @@ novel_concepts = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-numeracy_linear_example = LightevalTaskConfig(
+numeracy_linear_example_helm = LightevalTaskConfig(
     name="numeracy:linear_example",
     suite=["helm"],
     prompt_function="numeracy",
@@ -14272,7 +14272,7 @@ numeracy_linear_example = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-numeracy_linear_standard = LightevalTaskConfig(
+numeracy_linear_standard_helm = LightevalTaskConfig(
     name="numeracy:linear_standard",
     suite=["helm"],
     prompt_function="numeracy",
@@ -14290,7 +14290,7 @@ numeracy_linear_standard = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-numeracy_parabola_example = LightevalTaskConfig(
+numeracy_parabola_example_helm = LightevalTaskConfig(
     name="numeracy:parabola_example",
     suite=["helm"],
     prompt_function="numeracy",
@@ -14308,7 +14308,7 @@ numeracy_parabola_example = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-numeracy_parabola_standard = LightevalTaskConfig(
+numeracy_parabola_standard_helm = LightevalTaskConfig(
     name="numeracy:parabola_standard",
     suite=["helm"],
     prompt_function="numeracy",
@@ -14326,7 +14326,7 @@ numeracy_parabola_standard = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-numeracy_paraboloid_example = LightevalTaskConfig(
+numeracy_paraboloid_example_helm = LightevalTaskConfig(
     name="numeracy:paraboloid_example",
     suite=["helm"],
     prompt_function="numeracy",
@@ -14344,7 +14344,7 @@ numeracy_paraboloid_example = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-numeracy_paraboloid_standard = LightevalTaskConfig(
+numeracy_paraboloid_standard_helm = LightevalTaskConfig(
     name="numeracy:paraboloid_standard",
     suite=["helm"],
     prompt_function="numeracy",
@@ -14362,7 +14362,7 @@ numeracy_paraboloid_standard = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-numeracy_plane_example = LightevalTaskConfig(
+numeracy_plane_example_helm = LightevalTaskConfig(
     name="numeracy:plane_example",
     suite=["helm"],
     prompt_function="numeracy",
@@ -14380,7 +14380,7 @@ numeracy_plane_example = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-numeracy_plane_standard = LightevalTaskConfig(
+numeracy_plane_standard_helm = LightevalTaskConfig(
     name="numeracy:plane_standard",
     suite=["helm"],
     prompt_function="numeracy",
@@ -14398,7 +14398,7 @@ numeracy_plane_standard = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-object_counting = LightevalTaskConfig(
+object_counting_bigbench = LightevalTaskConfig(
     name="object_counting",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14416,7 +14416,7 @@ object_counting = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-odd_one_out = LightevalTaskConfig(
+odd_one_out_bigbench = LightevalTaskConfig(
     name="odd_one_out",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14434,7 +14434,7 @@ odd_one_out = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-openbookqa = LightevalTaskConfig(
+openbookqa_helm = LightevalTaskConfig(
     name="openbookqa",
     suite=["helm", "commonsense_scenario", "helm_general"],
     prompt_function="openbookqa_helm",
@@ -14452,7 +14452,7 @@ openbookqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-openbookqa = LightevalTaskConfig(
+openbookqa_lighteval = LightevalTaskConfig(
     name="openbookqa",
     suite=["lighteval"],
     prompt_function="openbookqa",
@@ -14470,7 +14470,7 @@ openbookqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-operators = LightevalTaskConfig(
+operators_bigbench_lite = LightevalTaskConfig(
     name="operators",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench_whitespace_after_query",
@@ -14487,7 +14487,7 @@ operators = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-paragraph_segmentation = LightevalTaskConfig(
+paragraph_segmentation_bigbench = LightevalTaskConfig(
     name="paragraph_segmentation",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14505,7 +14505,7 @@ paragraph_segmentation = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-parsinlu_qa = LightevalTaskConfig(
+parsinlu_qa_bigbench = LightevalTaskConfig(
     name="parsinlu_qa",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14523,7 +14523,7 @@ parsinlu_qa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-parsinlu_reading_comprehension = LightevalTaskConfig(
+parsinlu_reading_comprehension_bigbench_lite = LightevalTaskConfig(
     name="parsinlu_reading_comprehension",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench_linefeed_before_whitespace_after_query",
@@ -14540,7 +14540,7 @@ parsinlu_reading_comprehension = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-penguins_in_a_table = LightevalTaskConfig(
+penguins_in_a_table_bigbench = LightevalTaskConfig(
     name="penguins_in_a_table",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14558,7 +14558,7 @@ penguins_in_a_table = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-periodic_elements = LightevalTaskConfig(
+periodic_elements_bigbench = LightevalTaskConfig(
     name="periodic_elements",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14576,7 +14576,7 @@ periodic_elements = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-persian_idioms = LightevalTaskConfig(
+persian_idioms_bigbench = LightevalTaskConfig(
     name="persian_idioms",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14594,7 +14594,7 @@ persian_idioms = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-phrase_relatedness = LightevalTaskConfig(
+phrase_relatedness_bigbench = LightevalTaskConfig(
     name="phrase_relatedness",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14612,7 +14612,7 @@ phrase_relatedness = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-physical_intuition = LightevalTaskConfig(
+physical_intuition_bigbench = LightevalTaskConfig(
     name="physical_intuition",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14630,7 +14630,7 @@ physical_intuition = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-physics = LightevalTaskConfig(
+physics_bigbench = LightevalTaskConfig(
     name="physics",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14648,7 +14648,7 @@ physics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-physics_questions = LightevalTaskConfig(
+physics_questions_bigbench = LightevalTaskConfig(
     name="physics_questions",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14666,7 +14666,7 @@ physics_questions = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-piqa = LightevalTaskConfig(
+piqa_lighteval = LightevalTaskConfig(
     name="piqa",
     suite=["lighteval"],
     prompt_function="piqa_harness",
@@ -14684,7 +14684,7 @@ piqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-piqa = LightevalTaskConfig(
+piqa_helm = LightevalTaskConfig(
     name="piqa",
     suite=["helm", "commonsense_scenario"],
     prompt_function="piqa_helm",
@@ -14702,7 +14702,7 @@ piqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-play_dialog_same_or_different = LightevalTaskConfig(
+play_dialog_same_or_different_bigbench_lite = LightevalTaskConfig(
     name="play_dialog_same_or_different",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench_linefeed_before_whitespace_after_query",
@@ -14720,7 +14720,7 @@ play_dialog_same_or_different = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-polish_sequence_labeling = LightevalTaskConfig(
+polish_sequence_labeling_bigbench = LightevalTaskConfig(
     name="polish_sequence_labeling",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14738,7 +14738,7 @@ polish_sequence_labeling = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-presuppositions_as_nli = LightevalTaskConfig(
+presuppositions_as_nli_bigbench = LightevalTaskConfig(
     name="presuppositions_as_nli",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14756,7 +14756,7 @@ presuppositions_as_nli = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-prost = LightevalTaskConfig(
+prost_lighteval = LightevalTaskConfig(
     name="prost",
     suite=["lighteval"],
     prompt_function="prost",
@@ -14774,7 +14774,7 @@ prost = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-pubmedqa = LightevalTaskConfig(
+pubmedqa_lighteval = LightevalTaskConfig(
     name="pubmedqa",
     suite=["lighteval"],
     prompt_function="pubmed_qa",
@@ -14792,7 +14792,7 @@ pubmedqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-pubmedqa = LightevalTaskConfig(
+pubmedqa_helm = LightevalTaskConfig(
     name="pubmedqa",
     suite=["helm"],
     prompt_function="pubmed_qa_helm",
@@ -14810,7 +14810,7 @@ pubmedqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-qa4mre_2011 = LightevalTaskConfig(
+qa4mre_2011_lighteval = LightevalTaskConfig(
     name="qa4mre:2011",
     suite=["lighteval"],
     prompt_function="qa4mre",
@@ -14828,7 +14828,7 @@ qa4mre_2011 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-qa4mre_2012 = LightevalTaskConfig(
+qa4mre_2012_lighteval = LightevalTaskConfig(
     name="qa4mre:2012",
     suite=["lighteval"],
     prompt_function="qa4mre",
@@ -14846,7 +14846,7 @@ qa4mre_2012 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-qa4mre_2013 = LightevalTaskConfig(
+qa4mre_2013_lighteval = LightevalTaskConfig(
     name="qa4mre:2013",
     suite=["lighteval"],
     prompt_function="qa4mre",
@@ -14864,7 +14864,7 @@ qa4mre_2013 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-qa_wikidata = LightevalTaskConfig(
+qa_wikidata_bigbench = LightevalTaskConfig(
     name="qa_wikidata",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14882,7 +14882,7 @@ qa_wikidata = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-qasper = LightevalTaskConfig(
+qasper_lighteval = LightevalTaskConfig(
     name="qasper",
     suite=["lighteval"],
     prompt_function="qasper",
@@ -14900,7 +14900,7 @@ qasper = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-qasper_ll = LightevalTaskConfig(
+qasper_ll_lighteval = LightevalTaskConfig(
     name="qasper_ll",
     suite=["lighteval"],
     prompt_function="qasper_ll",
@@ -14918,7 +14918,7 @@ qasper_ll = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-quac = LightevalTaskConfig(
+quac_helm = LightevalTaskConfig(
     name="quac",
     suite=["helm"],
     prompt_function="quac",
@@ -14936,7 +14936,7 @@ quac = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-question_selection = LightevalTaskConfig(
+question_selection_bigbench = LightevalTaskConfig(
     name="question_selection",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -14954,7 +14954,7 @@ question_selection = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-race_high = LightevalTaskConfig(
+race_high_lighteval = LightevalTaskConfig(
     name="race:high",
     suite=["lighteval", "race"],
     prompt_function="race",
@@ -14972,7 +14972,7 @@ race_high = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-raft_ade_corpus_v2 = LightevalTaskConfig(
+raft_ade_corpus_v2_helm = LightevalTaskConfig(
     name="raft:ade_corpus_v2",
     suite=["helm", "helm_general"],
     prompt_function="raft_ade_corpus_v2",
@@ -14997,7 +14997,7 @@ raft_ade_corpus_v2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-raft_banking_77 = LightevalTaskConfig(
+raft_banking_77_helm = LightevalTaskConfig(
     name="raft:banking_77",
     suite=["helm", "helm_general"],
     prompt_function="raft_banking_77",
@@ -15022,7 +15022,7 @@ raft_banking_77 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-raft_neurips_impact_statement_risks = LightevalTaskConfig(
+raft_neurips_impact_statement_risks_helm = LightevalTaskConfig(
     name="raft:neurips_impact_statement_risks",
     suite=["helm", "helm_general"],
     prompt_function="raft_neurips_impact_statement_risks",
@@ -15047,7 +15047,7 @@ raft_neurips_impact_statement_risks = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-raft_one_stop_english = LightevalTaskConfig(
+raft_one_stop_english_helm = LightevalTaskConfig(
     name="raft:one_stop_english",
     suite=["helm", "helm_general"],
     prompt_function="raft_one_stop_english",
@@ -15072,7 +15072,7 @@ raft_one_stop_english = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-raft_overruling = LightevalTaskConfig(
+raft_overruling_helm = LightevalTaskConfig(
     name="raft:overruling",
     suite=["helm", "helm_general"],
     prompt_function="raft_overruling",
@@ -15097,7 +15097,7 @@ raft_overruling = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-raft_semiconductor_org_types = LightevalTaskConfig(
+raft_semiconductor_org_types_helm = LightevalTaskConfig(
     name="raft:semiconductor_org_types",
     suite=["helm", "helm_general"],
     prompt_function="raft_semiconductor_org_types",
@@ -15122,7 +15122,7 @@ raft_semiconductor_org_types = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-raft_systematic_review_inclusion = LightevalTaskConfig(
+raft_systematic_review_inclusion_helm = LightevalTaskConfig(
     name="raft:systematic_review_inclusion",
     suite=["helm", "helm_general"],
     prompt_function="raft_systematic_review_inclusion",
@@ -15147,7 +15147,7 @@ raft_systematic_review_inclusion = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-raft_tai_safety_research = LightevalTaskConfig(
+raft_tai_safety_research_helm = LightevalTaskConfig(
     name="raft:tai_safety_research",
     suite=["helm", "helm_general"],
     prompt_function="raft_tai_safety_research",
@@ -15172,7 +15172,7 @@ raft_tai_safety_research = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-raft_terms_of_service = LightevalTaskConfig(
+raft_terms_of_service_helm = LightevalTaskConfig(
     name="raft:terms_of_service",
     suite=["helm", "helm_general"],
     prompt_function="raft_terms_of_service",
@@ -15197,7 +15197,7 @@ raft_terms_of_service = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-raft_tweet_eval_hate = LightevalTaskConfig(
+raft_tweet_eval_hate_helm = LightevalTaskConfig(
     name="raft:tweet_eval_hate",
     suite=["helm", "helm_general"],
     prompt_function="raft_tweet_eval_hate",
@@ -15222,7 +15222,7 @@ raft_tweet_eval_hate = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-raft_twitter_complaints = LightevalTaskConfig(
+raft_twitter_complaints_helm = LightevalTaskConfig(
     name="raft:twitter_complaints",
     suite=["helm", "helm_general"],
     prompt_function="raft_twitter_complaints",
@@ -15247,7 +15247,7 @@ raft_twitter_complaints = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-real_or_fake_text = LightevalTaskConfig(
+real_or_fake_text_bigbench = LightevalTaskConfig(
     name="real_or_fake_text",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15265,7 +15265,7 @@ real_or_fake_text = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-real_toxicity_prompts = LightevalTaskConfig(
+real_toxicity_prompts_helm = LightevalTaskConfig(
     name="real_toxicity_prompts",
     suite=["helm"],
     prompt_function="real_toxicity_prompts",
@@ -15283,7 +15283,7 @@ real_toxicity_prompts = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-reasoning_about_colored_objects = LightevalTaskConfig(
+reasoning_about_colored_objects_bigbench = LightevalTaskConfig(
     name="reasoning_about_colored_objects",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15301,7 +15301,7 @@ reasoning_about_colored_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-repeat_copy_logic = LightevalTaskConfig(
+repeat_copy_logic_bigbench_lite = LightevalTaskConfig(
     name="repeat_copy_logic",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench_whitespace_after_query",
@@ -15319,7 +15319,7 @@ repeat_copy_logic = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-rephrase = LightevalTaskConfig(
+rephrase_bigbench = LightevalTaskConfig(
     name="rephrase",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15337,7 +15337,7 @@ rephrase = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-rhyming = LightevalTaskConfig(
+rhyming_bigbench = LightevalTaskConfig(
     name="rhyming",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15355,7 +15355,7 @@ rhyming = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-riddle_sense = LightevalTaskConfig(
+riddle_sense_bigbench = LightevalTaskConfig(
     name="riddle_sense",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15373,7 +15373,7 @@ riddle_sense = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-ruin_names = LightevalTaskConfig(
+ruin_names_bigbench = LightevalTaskConfig(
     name="ruin_names",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15391,7 +15391,7 @@ ruin_names = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-salient_translation_error_detection = LightevalTaskConfig(
+salient_translation_error_detection_bigbench = LightevalTaskConfig(
     name="salient_translation_error_detection",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15409,7 +15409,7 @@ salient_translation_error_detection = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-scientific_press_release = LightevalTaskConfig(
+scientific_press_release_bigbench = LightevalTaskConfig(
     name="scientific_press_release",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15427,7 +15427,7 @@ scientific_press_release = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-sciq = LightevalTaskConfig(
+sciq_lighteval = LightevalTaskConfig(
     name="sciq",
     suite=["lighteval"],
     prompt_function="sciq",
@@ -15445,7 +15445,7 @@ sciq = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-semantic_parsing_in_context_sparc = LightevalTaskConfig(
+semantic_parsing_in_context_sparc_bigbench = LightevalTaskConfig(
     name="semantic_parsing_in_context_sparc",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15463,7 +15463,7 @@ semantic_parsing_in_context_sparc = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-semantic_parsing_spider = LightevalTaskConfig(
+semantic_parsing_spider_bigbench = LightevalTaskConfig(
     name="semantic_parsing_spider",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15481,7 +15481,7 @@ semantic_parsing_spider = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-sentence_ambiguity = LightevalTaskConfig(
+sentence_ambiguity_bigbench = LightevalTaskConfig(
     name="sentence_ambiguity",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15499,7 +15499,7 @@ sentence_ambiguity = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-similarities_abstraction = LightevalTaskConfig(
+similarities_abstraction_bigbench = LightevalTaskConfig(
     name="similarities_abstraction",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15517,7 +15517,7 @@ similarities_abstraction = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-simp_turing_concept = LightevalTaskConfig(
+simp_turing_concept_bigbench = LightevalTaskConfig(
     name="simp_turing_concept",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15535,7 +15535,7 @@ simp_turing_concept = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-simple_arithmetic_json = LightevalTaskConfig(
+simple_arithmetic_json_bigbench = LightevalTaskConfig(
     name="simple_arithmetic_json",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15553,7 +15553,7 @@ simple_arithmetic_json = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-simple_arithmetic_json_multiple_choice = LightevalTaskConfig(
+simple_arithmetic_json_multiple_choice_bigbench = LightevalTaskConfig(
     name="simple_arithmetic_json_multiple_choice",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15571,7 +15571,7 @@ simple_arithmetic_json_multiple_choice = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-simple_arithmetic_json_subtasks = LightevalTaskConfig(
+simple_arithmetic_json_subtasks_bigbench = LightevalTaskConfig(
     name="simple_arithmetic_json_subtasks",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15589,7 +15589,7 @@ simple_arithmetic_json_subtasks = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-simple_arithmetic_multiple_targets_json = LightevalTaskConfig(
+simple_arithmetic_multiple_targets_json_bigbench = LightevalTaskConfig(
     name="simple_arithmetic_multiple_targets_json",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15607,7 +15607,7 @@ simple_arithmetic_multiple_targets_json = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-simple_ethical_questions = LightevalTaskConfig(
+simple_ethical_questions_bigbench = LightevalTaskConfig(
     name="simple_ethical_questions",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15625,7 +15625,7 @@ simple_ethical_questions = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-simple_text_editing = LightevalTaskConfig(
+simple_text_editing_bigbench = LightevalTaskConfig(
     name="simple_text_editing",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15643,7 +15643,7 @@ simple_text_editing = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-siqa = LightevalTaskConfig(
+siqa_helm = LightevalTaskConfig(
     name="siqa",
     suite=["helm", "commonsense_scenario"],
     prompt_function="siqa",
@@ -15661,7 +15661,7 @@ siqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-snarks = LightevalTaskConfig(
+snarks_bigbench = LightevalTaskConfig(
     name="snarks",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15679,7 +15679,7 @@ snarks = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-social_iqa = LightevalTaskConfig(
+social_iqa_bigbench = LightevalTaskConfig(
     name="social_iqa",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15697,7 +15697,7 @@ social_iqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-social_support = LightevalTaskConfig(
+social_support_bigbench = LightevalTaskConfig(
     name="social_support",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15715,7 +15715,7 @@ social_support = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-sports_understanding = LightevalTaskConfig(
+sports_understanding_bigbench = LightevalTaskConfig(
     name="sports_understanding",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15733,7 +15733,7 @@ sports_understanding = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-storycloze_2016 = LightevalTaskConfig(
+storycloze_2016_lighteval = LightevalTaskConfig(
     name="storycloze:2016",
     suite=["lighteval", "storycloze"],
     prompt_function="storycloze",
@@ -15751,7 +15751,7 @@ storycloze_2016 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-storycloze_2018 = LightevalTaskConfig(
+storycloze_2018_lighteval = LightevalTaskConfig(
     name="storycloze:2018",
     suite=["lighteval", "storycloze"],
     prompt_function="storycloze",
@@ -15769,7 +15769,7 @@ storycloze_2018 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-strange_stories = LightevalTaskConfig(
+strange_stories_bigbench_lite = LightevalTaskConfig(
     name="strange_stories",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench_whitespace_after_query",
@@ -15787,7 +15787,7 @@ strange_stories = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-strategyqa = LightevalTaskConfig(
+strategyqa_bigbench_lite = LightevalTaskConfig(
     name="strategyqa",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench_linefeed_before_whitespace_after_query",
@@ -15805,7 +15805,7 @@ strategyqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-sufficient_information = LightevalTaskConfig(
+sufficient_information_bigbench = LightevalTaskConfig(
     name="sufficient_information",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15823,7 +15823,7 @@ sufficient_information = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-suicide_risk = LightevalTaskConfig(
+suicide_risk_bigbench = LightevalTaskConfig(
     name="suicide_risk",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -15841,7 +15841,7 @@ suicide_risk = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-summarization_cnn_dm = LightevalTaskConfig(
+summarization_cnn_dm_helm = LightevalTaskConfig(
     name="summarization:cnn-dm",
     suite=["helm", "helm_general"],
     prompt_function="cnn_dm",
@@ -15859,7 +15859,7 @@ summarization_cnn_dm = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-summarization_xsum = LightevalTaskConfig(
+summarization_xsum_helm = LightevalTaskConfig(
     name="summarization:xsum",
     suite=["helm", "helm_general"],
     prompt_function="xsum",
@@ -15877,7 +15877,7 @@ summarization_xsum = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-summarization_xsum_sampled = LightevalTaskConfig(
+summarization_xsum_sampled_helm = LightevalTaskConfig(
     name="summarization:xsum-sampled",
     suite=["helm"],
     prompt_function="xsum",
@@ -15895,7 +15895,7 @@ summarization_xsum_sampled = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-super_glue_boolq = LightevalTaskConfig(
+super_glue_boolq_lighteval = LightevalTaskConfig(
     name="super_glue:boolq",
     suite=["lighteval", "superglue"],
     prompt_function="boolq_harness",
@@ -15913,7 +15913,7 @@ super_glue_boolq = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-super_glue_cb = LightevalTaskConfig(
+super_glue_cb_lighteval = LightevalTaskConfig(
     name="super_glue:cb",
     suite=["lighteval", "superglue"],
     prompt_function="cb",
@@ -15931,7 +15931,7 @@ super_glue_cb = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-super_glue_copa = LightevalTaskConfig(
+super_glue_copa_lighteval = LightevalTaskConfig(
     name="super_glue:copa",
     suite=["lighteval", "superglue"],
     prompt_function="copa",
@@ -15949,7 +15949,7 @@ super_glue_copa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-super_glue_rte = LightevalTaskConfig(
+super_glue_rte_lighteval = LightevalTaskConfig(
     name="super_glue:rte",
     suite=["lighteval", "superglue"],
     prompt_function="rte",
@@ -15967,7 +15967,7 @@ super_glue_rte = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-super_glue_multirc = LightevalTaskConfig(
+super_glue_multirc_lighteval = LightevalTaskConfig(
     name="super_glue:multirc",
     suite=["lighteval", "superglue"],
     prompt_function="multirc",
@@ -15985,7 +15985,7 @@ super_glue_multirc = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-super_glue_wic = LightevalTaskConfig(
+super_glue_wic_lighteval = LightevalTaskConfig(
     name="super_glue:wic",
     suite=["lighteval", "superglue"],
     prompt_function="wic",
@@ -16003,7 +16003,7 @@ super_glue_wic = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-super_glue_wsc = LightevalTaskConfig(
+super_glue_wsc_lighteval = LightevalTaskConfig(
     name="super_glue:wsc",
     suite=["lighteval", "superglue"],
     prompt_function="wsc",
@@ -16021,7 +16021,7 @@ super_glue_wsc = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-swahili_english_proverbs = LightevalTaskConfig(
+swahili_english_proverbs_bigbench = LightevalTaskConfig(
     name="swahili_english_proverbs",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -16039,7 +16039,7 @@ swahili_english_proverbs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-swag = LightevalTaskConfig(
+swag_lighteval = LightevalTaskConfig(
     name="swag",
     suite=["lighteval"],
     prompt_function="swag",
@@ -16057,7 +16057,7 @@ swag = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-swedish_to_german_proverbs = LightevalTaskConfig(
+swedish_to_german_proverbs_bigbench = LightevalTaskConfig(
     name="swedish_to_german_proverbs",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -16075,7 +16075,7 @@ swedish_to_german_proverbs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-symbol_interpretation = LightevalTaskConfig(
+symbol_interpretation_bigbench_lite = LightevalTaskConfig(
     name="symbol_interpretation",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench_linefeed_before_whitespace_after_query",
@@ -16093,7 +16093,7 @@ symbol_interpretation = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-synthetic_reasoning_induction = LightevalTaskConfig(
+synthetic_reasoning_induction_helm = LightevalTaskConfig(
     name="synthetic_reasoning:induction",
     suite=["helm"],
     prompt_function="synthetic_reasoning",
@@ -16111,7 +16111,7 @@ synthetic_reasoning_induction = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-synthetic_reasoning_natural_easy = LightevalTaskConfig(
+synthetic_reasoning_natural_easy_helm = LightevalTaskConfig(
     name="synthetic_reasoning:natural_easy",
     suite=["helm"],
     prompt_function="synthetic_reasoning_natural",
@@ -16129,7 +16129,7 @@ synthetic_reasoning_natural_easy = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-synthetic_reasoning_natural_hard = LightevalTaskConfig(
+synthetic_reasoning_natural_hard_helm = LightevalTaskConfig(
     name="synthetic_reasoning:natural_hard",
     suite=["helm"],
     prompt_function="synthetic_reasoning_natural",
@@ -16147,7 +16147,7 @@ synthetic_reasoning_natural_hard = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-synthetic_reasoning_pattern_match = LightevalTaskConfig(
+synthetic_reasoning_pattern_match_helm = LightevalTaskConfig(
     name="synthetic_reasoning:pattern_match",
     suite=["helm"],
     prompt_function="synthetic_reasoning",
@@ -16165,7 +16165,7 @@ synthetic_reasoning_pattern_match = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-synthetic_reasoning_variable_substitution = LightevalTaskConfig(
+synthetic_reasoning_variable_substitution_helm = LightevalTaskConfig(
     name="synthetic_reasoning:variable_substitution",
     suite=["helm"],
     prompt_function="synthetic_reasoning",
@@ -16183,7 +16183,7 @@ synthetic_reasoning_variable_substitution = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-tellmewhy = LightevalTaskConfig(
+tellmewhy_bigbench = LightevalTaskConfig(
     name="tellmewhy",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -16201,7 +16201,7 @@ tellmewhy = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-temporal_sequences = LightevalTaskConfig(
+temporal_sequences_bigbench = LightevalTaskConfig(
     name="temporal_sequences",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -16219,7 +16219,7 @@ temporal_sequences = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-tense = LightevalTaskConfig(
+tense_bigbench = LightevalTaskConfig(
     name="tense",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -16237,7 +16237,7 @@ tense = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_arxiv = LightevalTaskConfig(
+the_pile_arxiv_lighteval = LightevalTaskConfig(
     name="the_pile:arxiv",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16255,7 +16255,7 @@ the_pile_arxiv = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_arxiv = LightevalTaskConfig(
+the_pile_arxiv_helm = LightevalTaskConfig(
     name="the_pile:arxiv",
     suite=["helm"],
     prompt_function="the_pile",
@@ -16273,7 +16273,7 @@ the_pile_arxiv = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_bibliotik = LightevalTaskConfig(
+the_pile_bibliotik_helm = LightevalTaskConfig(
     name="the_pile:bibliotik",
     suite=["helm"],
     prompt_function="the_pile",
@@ -16291,7 +16291,7 @@ the_pile_bibliotik = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_bookcorpus2 = LightevalTaskConfig(
+the_pile_bookcorpus2_lighteval = LightevalTaskConfig(
     name="the_pile:bookcorpus2",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16309,7 +16309,7 @@ the_pile_bookcorpus2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_books3 = LightevalTaskConfig(
+the_pile_books3_lighteval = LightevalTaskConfig(
     name="the_pile:books3",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16327,7 +16327,7 @@ the_pile_books3 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_commoncrawl = LightevalTaskConfig(
+the_pile_commoncrawl_helm = LightevalTaskConfig(
     name="the_pile:commoncrawl",
     suite=["helm"],
     prompt_function="the_pile",
@@ -16345,7 +16345,7 @@ the_pile_commoncrawl = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_dm_mathematics = LightevalTaskConfig(
+the_pile_dm_mathematics_lighteval = LightevalTaskConfig(
     name="the_pile:dm-mathematics",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16363,7 +16363,7 @@ the_pile_dm_mathematics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_dm_mathematics = LightevalTaskConfig(
+the_pile_dm_mathematics_helm = LightevalTaskConfig(
     name="the_pile:dm-mathematics",
     suite=["helm"],
     prompt_function="the_pile",
@@ -16381,7 +16381,7 @@ the_pile_dm_mathematics = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_enron = LightevalTaskConfig(
+the_pile_enron_lighteval = LightevalTaskConfig(
     name="the_pile:enron",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16399,7 +16399,7 @@ the_pile_enron = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_enron = LightevalTaskConfig(
+the_pile_enron_helm = LightevalTaskConfig(
     name="the_pile:enron",
     suite=["helm"],
     prompt_function="the_pile",
@@ -16417,7 +16417,7 @@ the_pile_enron = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_europarl = LightevalTaskConfig(
+the_pile_europarl_lighteval = LightevalTaskConfig(
     name="the_pile:europarl",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16435,7 +16435,7 @@ the_pile_europarl = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_europarl = LightevalTaskConfig(
+the_pile_europarl_helm = LightevalTaskConfig(
     name="the_pile:europarl",
     suite=["helm"],
     prompt_function="the_pile",
@@ -16453,7 +16453,7 @@ the_pile_europarl = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_freelaw = LightevalTaskConfig(
+the_pile_freelaw_lighteval = LightevalTaskConfig(
     name="the_pile:freelaw",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16471,7 +16471,7 @@ the_pile_freelaw = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_freelaw = LightevalTaskConfig(
+the_pile_freelaw_helm = LightevalTaskConfig(
     name="the_pile:freelaw",
     suite=["helm"],
     prompt_function="the_pile",
@@ -16489,7 +16489,7 @@ the_pile_freelaw = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_github = LightevalTaskConfig(
+the_pile_github_lighteval = LightevalTaskConfig(
     name="the_pile:github",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16507,7 +16507,7 @@ the_pile_github = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_github = LightevalTaskConfig(
+the_pile_github_helm = LightevalTaskConfig(
     name="the_pile:github",
     suite=["helm"],
     prompt_function="the_pile",
@@ -16525,7 +16525,7 @@ the_pile_github = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_gutenberg = LightevalTaskConfig(
+the_pile_gutenberg_lighteval = LightevalTaskConfig(
     name="the_pile:gutenberg",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16543,7 +16543,7 @@ the_pile_gutenberg = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_gutenberg = LightevalTaskConfig(
+the_pile_gutenberg_helm = LightevalTaskConfig(
     name="the_pile:gutenberg",
     suite=["helm"],
     prompt_function="the_pile",
@@ -16561,7 +16561,7 @@ the_pile_gutenberg = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_hackernews = LightevalTaskConfig(
+the_pile_hackernews_lighteval = LightevalTaskConfig(
     name="the_pile:hackernews",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16579,7 +16579,7 @@ the_pile_hackernews = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_hackernews = LightevalTaskConfig(
+the_pile_hackernews_helm = LightevalTaskConfig(
     name="the_pile:hackernews",
     suite=["helm"],
     prompt_function="the_pile",
@@ -16597,7 +16597,7 @@ the_pile_hackernews = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_nih_exporter = LightevalTaskConfig(
+the_pile_nih_exporter_lighteval = LightevalTaskConfig(
     name="the_pile:nih-exporter",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16615,7 +16615,7 @@ the_pile_nih_exporter = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_nih_exporter = LightevalTaskConfig(
+the_pile_nih_exporter_helm = LightevalTaskConfig(
     name="the_pile:nih-exporter",
     suite=["helm"],
     prompt_function="the_pile",
@@ -16633,7 +16633,7 @@ the_pile_nih_exporter = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_opensubtitles = LightevalTaskConfig(
+the_pile_opensubtitles_lighteval = LightevalTaskConfig(
     name="the_pile:opensubtitles",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16651,7 +16651,7 @@ the_pile_opensubtitles = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_opensubtitles = LightevalTaskConfig(
+the_pile_opensubtitles_helm = LightevalTaskConfig(
     name="the_pile:opensubtitles",
     suite=["helm"],
     prompt_function="the_pile",
@@ -16669,7 +16669,7 @@ the_pile_opensubtitles = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_openwebtext2 = LightevalTaskConfig(
+the_pile_openwebtext2_lighteval = LightevalTaskConfig(
     name="the_pile:openwebtext2",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16687,7 +16687,7 @@ the_pile_openwebtext2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_openwebtext2 = LightevalTaskConfig(
+the_pile_openwebtext2_helm = LightevalTaskConfig(
     name="the_pile:openwebtext2",
     suite=["helm"],
     prompt_function="the_pile",
@@ -16705,7 +16705,7 @@ the_pile_openwebtext2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_philpapers = LightevalTaskConfig(
+the_pile_philpapers_lighteval = LightevalTaskConfig(
     name="the_pile:philpapers",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16723,7 +16723,7 @@ the_pile_philpapers = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_pile_cc = LightevalTaskConfig(
+the_pile_pile_cc_lighteval = LightevalTaskConfig(
     name="the_pile:pile-cc",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16741,7 +16741,7 @@ the_pile_pile_cc = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_pubmed_abstracts = LightevalTaskConfig(
+the_pile_pubmed_abstracts_lighteval = LightevalTaskConfig(
     name="the_pile:pubmed-abstracts",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16759,7 +16759,7 @@ the_pile_pubmed_abstracts = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_pubmed_abstracts = LightevalTaskConfig(
+the_pile_pubmed_abstracts_helm = LightevalTaskConfig(
     name="the_pile:pubmed-abstracts",
     suite=["helm"],
     prompt_function="the_pile",
@@ -16777,7 +16777,7 @@ the_pile_pubmed_abstracts = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_pubmed_central = LightevalTaskConfig(
+the_pile_pubmed_central_lighteval = LightevalTaskConfig(
     name="the_pile:pubmed-central",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16795,7 +16795,7 @@ the_pile_pubmed_central = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_pubmed_central = LightevalTaskConfig(
+the_pile_pubmed_central_helm = LightevalTaskConfig(
     name="the_pile:pubmed-central",
     suite=["helm"],
     prompt_function="the_pile",
@@ -16813,7 +16813,7 @@ the_pile_pubmed_central = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_stackexchange = LightevalTaskConfig(
+the_pile_stackexchange_lighteval = LightevalTaskConfig(
     name="the_pile:stackexchange",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16831,7 +16831,7 @@ the_pile_stackexchange = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_stackexchange = LightevalTaskConfig(
+the_pile_stackexchange_helm = LightevalTaskConfig(
     name="the_pile:stackexchange",
     suite=["helm"],
     prompt_function="the_pile",
@@ -16849,7 +16849,7 @@ the_pile_stackexchange = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_ubuntu_irc = LightevalTaskConfig(
+the_pile_ubuntu_irc_lighteval = LightevalTaskConfig(
     name="the_pile:ubuntu-irc",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16867,7 +16867,7 @@ the_pile_ubuntu_irc = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_uspto = LightevalTaskConfig(
+the_pile_uspto_lighteval = LightevalTaskConfig(
     name="the_pile:uspto",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16885,7 +16885,7 @@ the_pile_uspto = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_upsto = LightevalTaskConfig(
+the_pile_upsto_helm = LightevalTaskConfig(
     name="the_pile:upsto",
     suite=["helm"],
     prompt_function="the_pile",
@@ -16903,7 +16903,7 @@ the_pile_upsto = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_wikipedia = LightevalTaskConfig(
+the_pile_wikipedia_lighteval = LightevalTaskConfig(
     name="the_pile:wikipedia",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16921,7 +16921,7 @@ the_pile_wikipedia = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_wikipedia = LightevalTaskConfig(
+the_pile_wikipedia_helm = LightevalTaskConfig(
     name="the_pile:wikipedia",
     suite=["helm"],
     prompt_function="the_pile",
@@ -16939,7 +16939,7 @@ the_pile_wikipedia = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_youtubesubtitles = LightevalTaskConfig(
+the_pile_youtubesubtitles_lighteval = LightevalTaskConfig(
     name="the_pile:youtubesubtitles",
     suite=["lighteval", "pile"],
     prompt_function="the_pile",
@@ -16957,7 +16957,7 @@ the_pile_youtubesubtitles = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-the_pile_youtubesubtitles = LightevalTaskConfig(
+the_pile_youtubesubtitles_helm = LightevalTaskConfig(
     name="the_pile:youtubesubtitles",
     suite=["helm"],
     prompt_function="the_pile",
@@ -16975,7 +16975,7 @@ the_pile_youtubesubtitles = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-timedial = LightevalTaskConfig(
+timedial_bigbench = LightevalTaskConfig(
     name="timedial",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -16993,7 +16993,7 @@ timedial = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-toxigen = LightevalTaskConfig(
+toxigen_lighteval = LightevalTaskConfig(
     name="toxigen",
     suite=["lighteval"],
     prompt_function="toxigen",
@@ -17011,7 +17011,7 @@ toxigen = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-topical_chat = LightevalTaskConfig(
+topical_chat_bigbench = LightevalTaskConfig(
     name="topical_chat",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -17029,7 +17029,7 @@ topical_chat = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-tracking_shuffled_objects = LightevalTaskConfig(
+tracking_shuffled_objects_bigbench = LightevalTaskConfig(
     name="tracking_shuffled_objects",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -17047,7 +17047,7 @@ tracking_shuffled_objects = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-triviaqa = LightevalTaskConfig(
+triviaqa_lighteval = LightevalTaskConfig(
     name="triviaqa",
     suite=["lighteval"],
     prompt_function="triviaqa",
@@ -17065,7 +17065,7 @@ triviaqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-truthfulqa_gen = LightevalTaskConfig(
+truthfulqa_gen_lighteval = LightevalTaskConfig(
     name="truthfulqa:gen",
     suite=["lighteval"],
     prompt_function="truthful_qa_generative",
@@ -17083,7 +17083,7 @@ truthfulqa_gen = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-truthfulqa_mc = LightevalTaskConfig(
+truthfulqa_mc_leaderboard = LightevalTaskConfig(
     name="truthfulqa:mc",
     suite=["leaderboard"],
     prompt_function="truthful_qa_multiple_choice",
@@ -17101,7 +17101,7 @@ truthfulqa_mc = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-truthfulqa = LightevalTaskConfig(
+truthfulqa_helm = LightevalTaskConfig(
     name="truthfulqa",
     suite=["helm", "helm_general"],
     prompt_function="truthful_qa_helm",
@@ -17119,7 +17119,7 @@ truthfulqa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-twitterAAE_aa = LightevalTaskConfig(
+twitterAAE_aa_helm = LightevalTaskConfig(
     name="twitterAAE:aa",
     suite=["helm"],
     prompt_function="twitter_aae",
@@ -17137,7 +17137,7 @@ twitterAAE_aa = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-twitterAAE_white = LightevalTaskConfig(
+twitterAAE_white_helm = LightevalTaskConfig(
     name="twitterAAE:white",
     suite=["helm"],
     prompt_function="twitter_aae",
@@ -17155,7 +17155,7 @@ twitterAAE_white = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-understanding_fables = LightevalTaskConfig(
+understanding_fables_bigbench = LightevalTaskConfig(
     name="understanding_fables",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -17173,7 +17173,7 @@ understanding_fables = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-undo_permutation = LightevalTaskConfig(
+undo_permutation_bigbench = LightevalTaskConfig(
     name="undo_permutation",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -17191,7 +17191,7 @@ undo_permutation = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-unit_conversion = LightevalTaskConfig(
+unit_conversion_bigbench = LightevalTaskConfig(
     name="unit_conversion",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -17209,7 +17209,7 @@ unit_conversion = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-unit_interpretation = LightevalTaskConfig(
+unit_interpretation_bigbench = LightevalTaskConfig(
     name="unit_interpretation",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -17227,7 +17227,7 @@ unit_interpretation = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-unnatural_in_context_learning = LightevalTaskConfig(
+unnatural_in_context_learning_bigbench = LightevalTaskConfig(
     name="unnatural_in_context_learning",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -17245,7 +17245,7 @@ unnatural_in_context_learning = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-unscramble_anagrams1 = LightevalTaskConfig(
+unscramble_anagrams1_lighteval = LightevalTaskConfig(
     name="unscramble:anagrams1",
     suite=["lighteval", "unscramble"],
     prompt_function="unscramble",
@@ -17263,7 +17263,7 @@ unscramble_anagrams1 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-unscramble_anagrams2 = LightevalTaskConfig(
+unscramble_anagrams2_lighteval = LightevalTaskConfig(
     name="unscramble:anagrams2",
     suite=["lighteval", "unscramble"],
     prompt_function="unscramble",
@@ -17281,7 +17281,7 @@ unscramble_anagrams2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-unscramble_cycle_letters = LightevalTaskConfig(
+unscramble_cycle_letters_lighteval = LightevalTaskConfig(
     name="unscramble:cycle_letters",
     suite=["lighteval", "unscramble"],
     prompt_function="unscramble",
@@ -17299,7 +17299,7 @@ unscramble_cycle_letters = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-unscramble_random_insertion = LightevalTaskConfig(
+unscramble_random_insertion_lighteval = LightevalTaskConfig(
     name="unscramble:random_insertion",
     suite=["lighteval", "unscramble"],
     prompt_function="unscramble",
@@ -17317,7 +17317,7 @@ unscramble_random_insertion = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-unscramble_reversed_words = LightevalTaskConfig(
+unscramble_reversed_words_lighteval = LightevalTaskConfig(
     name="unscramble:reversed_words",
     suite=["lighteval", "unscramble"],
     prompt_function="unscramble",
@@ -17335,7 +17335,7 @@ unscramble_reversed_words = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-vitaminc_fact_verification = LightevalTaskConfig(
+vitaminc_fact_verification_bigbench_lite = LightevalTaskConfig(
     name="vitaminc_fact_verification",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench_whitespace_after_query",
@@ -17353,7 +17353,7 @@ vitaminc_fact_verification = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-webqs = LightevalTaskConfig(
+webqs_lighteval = LightevalTaskConfig(
     name="webqs",
     suite=["lighteval"],
     prompt_function="webqs",
@@ -17371,7 +17371,7 @@ webqs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-what_is_the_tao = LightevalTaskConfig(
+what_is_the_tao_bigbench = LightevalTaskConfig(
     name="what_is_the_tao",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -17389,7 +17389,7 @@ what_is_the_tao = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-which_wiki_edit = LightevalTaskConfig(
+which_wiki_edit_bigbench = LightevalTaskConfig(
     name="which_wiki_edit",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -17407,7 +17407,7 @@ which_wiki_edit = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_applies_to_jurisdiction = LightevalTaskConfig(
+wikifact_applies_to_jurisdiction_helm = LightevalTaskConfig(
     name="wikifact:applies_to_jurisdiction",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17425,7 +17425,7 @@ wikifact_applies_to_jurisdiction = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_atomic_number = LightevalTaskConfig(
+wikifact_atomic_number_helm = LightevalTaskConfig(
     name="wikifact:atomic_number",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17443,7 +17443,7 @@ wikifact_atomic_number = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_author = LightevalTaskConfig(
+wikifact_author_helm = LightevalTaskConfig(
     name="wikifact:author",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17461,7 +17461,7 @@ wikifact_author = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_award_received = LightevalTaskConfig(
+wikifact_award_received_helm = LightevalTaskConfig(
     name="wikifact:award_received",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17479,7 +17479,7 @@ wikifact_award_received = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_basic_form_of_government = LightevalTaskConfig(
+wikifact_basic_form_of_government_helm = LightevalTaskConfig(
     name="wikifact:basic_form_of_government",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17497,7 +17497,7 @@ wikifact_basic_form_of_government = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_capital = LightevalTaskConfig(
+wikifact_capital_helm = LightevalTaskConfig(
     name="wikifact:capital",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17515,7 +17515,7 @@ wikifact_capital = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_capital_of = LightevalTaskConfig(
+wikifact_capital_of_helm = LightevalTaskConfig(
     name="wikifact:capital_of",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17533,7 +17533,7 @@ wikifact_capital_of = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_central_bank = LightevalTaskConfig(
+wikifact_central_bank_helm = LightevalTaskConfig(
     name="wikifact:central_bank",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17551,7 +17551,7 @@ wikifact_central_bank = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_composer = LightevalTaskConfig(
+wikifact_composer_helm = LightevalTaskConfig(
     name="wikifact:composer",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17569,7 +17569,7 @@ wikifact_composer = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_continent = LightevalTaskConfig(
+wikifact_continent_helm = LightevalTaskConfig(
     name="wikifact:continent",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17587,7 +17587,7 @@ wikifact_continent = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_country = LightevalTaskConfig(
+wikifact_country_helm = LightevalTaskConfig(
     name="wikifact:country",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17605,7 +17605,7 @@ wikifact_country = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_country_of_citizenship = LightevalTaskConfig(
+wikifact_country_of_citizenship_helm = LightevalTaskConfig(
     name="wikifact:country_of_citizenship",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17623,7 +17623,7 @@ wikifact_country_of_citizenship = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_country_of_origin = LightevalTaskConfig(
+wikifact_country_of_origin_helm = LightevalTaskConfig(
     name="wikifact:country_of_origin",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17641,7 +17641,7 @@ wikifact_country_of_origin = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_creator = LightevalTaskConfig(
+wikifact_creator_helm = LightevalTaskConfig(
     name="wikifact:creator",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17659,7 +17659,7 @@ wikifact_creator = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_currency = LightevalTaskConfig(
+wikifact_currency_helm = LightevalTaskConfig(
     name="wikifact:currency",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17677,7 +17677,7 @@ wikifact_currency = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_defendant = LightevalTaskConfig(
+wikifact_defendant_helm = LightevalTaskConfig(
     name="wikifact:defendant",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17695,7 +17695,7 @@ wikifact_defendant = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_developer = LightevalTaskConfig(
+wikifact_developer_helm = LightevalTaskConfig(
     name="wikifact:developer",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17713,7 +17713,7 @@ wikifact_developer = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_diplomatic_relation = LightevalTaskConfig(
+wikifact_diplomatic_relation_helm = LightevalTaskConfig(
     name="wikifact:diplomatic_relation",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17731,7 +17731,7 @@ wikifact_diplomatic_relation = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_director = LightevalTaskConfig(
+wikifact_director_helm = LightevalTaskConfig(
     name="wikifact:director",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17749,7 +17749,7 @@ wikifact_director = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_discoverer_or_inventor = LightevalTaskConfig(
+wikifact_discoverer_or_inventor_helm = LightevalTaskConfig(
     name="wikifact:discoverer_or_inventor",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17767,7 +17767,7 @@ wikifact_discoverer_or_inventor = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_drug_or_therapy_used_for_treatment = LightevalTaskConfig(
+wikifact_drug_or_therapy_used_for_treatment_helm = LightevalTaskConfig(
     name="wikifact:drug_or_therapy_used_for_treatment",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17785,7 +17785,7 @@ wikifact_drug_or_therapy_used_for_treatment = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_educated_at = LightevalTaskConfig(
+wikifact_educated_at_helm = LightevalTaskConfig(
     name="wikifact:educated_at",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17803,7 +17803,7 @@ wikifact_educated_at = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_electron_configuration = LightevalTaskConfig(
+wikifact_electron_configuration_helm = LightevalTaskConfig(
     name="wikifact:electron_configuration",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17821,7 +17821,7 @@ wikifact_electron_configuration = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_employer = LightevalTaskConfig(
+wikifact_employer_helm = LightevalTaskConfig(
     name="wikifact:employer",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17839,7 +17839,7 @@ wikifact_employer = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_field_of_work = LightevalTaskConfig(
+wikifact_field_of_work_helm = LightevalTaskConfig(
     name="wikifact:field_of_work",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17857,7 +17857,7 @@ wikifact_field_of_work = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_file_extension = LightevalTaskConfig(
+wikifact_file_extension_helm = LightevalTaskConfig(
     name="wikifact:file_extension",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17875,7 +17875,7 @@ wikifact_file_extension = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_genetic_association = LightevalTaskConfig(
+wikifact_genetic_association_helm = LightevalTaskConfig(
     name="wikifact:genetic_association",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17893,7 +17893,7 @@ wikifact_genetic_association = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_genre = LightevalTaskConfig(
+wikifact_genre_helm = LightevalTaskConfig(
     name="wikifact:genre",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17911,7 +17911,7 @@ wikifact_genre = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_has_part = LightevalTaskConfig(
+wikifact_has_part_helm = LightevalTaskConfig(
     name="wikifact:has_part",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17929,7 +17929,7 @@ wikifact_has_part = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_head_of_government = LightevalTaskConfig(
+wikifact_head_of_government_helm = LightevalTaskConfig(
     name="wikifact:head_of_government",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17947,7 +17947,7 @@ wikifact_head_of_government = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_head_of_state = LightevalTaskConfig(
+wikifact_head_of_state_helm = LightevalTaskConfig(
     name="wikifact:head_of_state",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17965,7 +17965,7 @@ wikifact_head_of_state = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_headquarters_location = LightevalTaskConfig(
+wikifact_headquarters_location_helm = LightevalTaskConfig(
     name="wikifact:headquarters_location",
     suite=["helm"],
     prompt_function="wikifact",
@@ -17983,7 +17983,7 @@ wikifact_headquarters_location = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_industry = LightevalTaskConfig(
+wikifact_industry_helm = LightevalTaskConfig(
     name="wikifact:industry",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18001,7 +18001,7 @@ wikifact_industry = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_influenced_by = LightevalTaskConfig(
+wikifact_influenced_by_helm = LightevalTaskConfig(
     name="wikifact:influenced_by",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18019,7 +18019,7 @@ wikifact_influenced_by = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_instance_of = LightevalTaskConfig(
+wikifact_instance_of_helm = LightevalTaskConfig(
     name="wikifact:instance_of",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18037,7 +18037,7 @@ wikifact_instance_of = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_instrument = LightevalTaskConfig(
+wikifact_instrument_helm = LightevalTaskConfig(
     name="wikifact:instrument",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18055,7 +18055,7 @@ wikifact_instrument = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_language_of_work_or_name = LightevalTaskConfig(
+wikifact_language_of_work_or_name_helm = LightevalTaskConfig(
     name="wikifact:language_of_work_or_name",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18073,7 +18073,7 @@ wikifact_language_of_work_or_name = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_languages_spoken_written_or_signed = LightevalTaskConfig(
+wikifact_languages_spoken_written_or_signed_helm = LightevalTaskConfig(
     name="wikifact:languages_spoken_written_or_signed",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18091,7 +18091,7 @@ wikifact_languages_spoken_written_or_signed = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_laws_applied = LightevalTaskConfig(
+wikifact_laws_applied_helm = LightevalTaskConfig(
     name="wikifact:laws_applied",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18109,7 +18109,7 @@ wikifact_laws_applied = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_located_in_the_administrative_territorial_entity = LightevalTaskConfig(
+wikifact_located_in_the_administrative_territorial_entity_helm = LightevalTaskConfig(
     name="wikifact:located_in_the_administrative_territorial_entity",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18127,7 +18127,7 @@ wikifact_located_in_the_administrative_territorial_entity = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_location = LightevalTaskConfig(
+wikifact_location_helm = LightevalTaskConfig(
     name="wikifact:location",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18145,7 +18145,7 @@ wikifact_location = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_location_of_discovery = LightevalTaskConfig(
+wikifact_location_of_discovery_helm = LightevalTaskConfig(
     name="wikifact:location_of_discovery",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18163,7 +18163,7 @@ wikifact_location_of_discovery = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_location_of_formation = LightevalTaskConfig(
+wikifact_location_of_formation_helm = LightevalTaskConfig(
     name="wikifact:location_of_formation",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18181,7 +18181,7 @@ wikifact_location_of_formation = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_majority_opinion_by = LightevalTaskConfig(
+wikifact_majority_opinion_by_helm = LightevalTaskConfig(
     name="wikifact:majority_opinion_by",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18199,7 +18199,7 @@ wikifact_majority_opinion_by = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_manufacturer = LightevalTaskConfig(
+wikifact_manufacturer_helm = LightevalTaskConfig(
     name="wikifact:manufacturer",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18217,7 +18217,7 @@ wikifact_manufacturer = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_measured_physical_quantity = LightevalTaskConfig(
+wikifact_measured_physical_quantity_helm = LightevalTaskConfig(
     name="wikifact:measured_physical_quantity",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18235,7 +18235,7 @@ wikifact_measured_physical_quantity = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_medical_condition_treated = LightevalTaskConfig(
+wikifact_medical_condition_treated_helm = LightevalTaskConfig(
     name="wikifact:medical_condition_treated",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18253,7 +18253,7 @@ wikifact_medical_condition_treated = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_member_of = LightevalTaskConfig(
+wikifact_member_of_helm = LightevalTaskConfig(
     name="wikifact:member_of",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18271,7 +18271,7 @@ wikifact_member_of = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_member_of_political_party = LightevalTaskConfig(
+wikifact_member_of_political_party_helm = LightevalTaskConfig(
     name="wikifact:member_of_political_party",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18289,7 +18289,7 @@ wikifact_member_of_political_party = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_member_of_sports_team = LightevalTaskConfig(
+wikifact_member_of_sports_team_helm = LightevalTaskConfig(
     name="wikifact:member_of_sports_team",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18307,7 +18307,7 @@ wikifact_member_of_sports_team = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_movement = LightevalTaskConfig(
+wikifact_movement_helm = LightevalTaskConfig(
     name="wikifact:movement",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18325,7 +18325,7 @@ wikifact_movement = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_named_after = LightevalTaskConfig(
+wikifact_named_after_helm = LightevalTaskConfig(
     name="wikifact:named_after",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18343,7 +18343,7 @@ wikifact_named_after = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_native_language = LightevalTaskConfig(
+wikifact_native_language_helm = LightevalTaskConfig(
     name="wikifact:native_language",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18361,7 +18361,7 @@ wikifact_native_language = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_number_of_processor_cores = LightevalTaskConfig(
+wikifact_number_of_processor_cores_helm = LightevalTaskConfig(
     name="wikifact:number_of_processor_cores",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18379,7 +18379,7 @@ wikifact_number_of_processor_cores = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_occupation = LightevalTaskConfig(
+wikifact_occupation_helm = LightevalTaskConfig(
     name="wikifact:occupation",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18397,7 +18397,7 @@ wikifact_occupation = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_office_held_by_head_of_government = LightevalTaskConfig(
+wikifact_office_held_by_head_of_government_helm = LightevalTaskConfig(
     name="wikifact:office_held_by_head_of_government",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18415,7 +18415,7 @@ wikifact_office_held_by_head_of_government = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_office_held_by_head_of_state = LightevalTaskConfig(
+wikifact_office_held_by_head_of_state_helm = LightevalTaskConfig(
     name="wikifact:office_held_by_head_of_state",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18433,7 +18433,7 @@ wikifact_office_held_by_head_of_state = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_official_language = LightevalTaskConfig(
+wikifact_official_language_helm = LightevalTaskConfig(
     name="wikifact:official_language",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18451,7 +18451,7 @@ wikifact_official_language = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_operating_system = LightevalTaskConfig(
+wikifact_operating_system_helm = LightevalTaskConfig(
     name="wikifact:operating_system",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18469,7 +18469,7 @@ wikifact_operating_system = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_original_language_of_film_or_TV_show = LightevalTaskConfig(
+wikifact_original_language_of_film_or_TV_show_helm = LightevalTaskConfig(
     name="wikifact:original_language_of_film_or_TV_show",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18487,7 +18487,7 @@ wikifact_original_language_of_film_or_TV_show = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_original_network = LightevalTaskConfig(
+wikifact_original_network_helm = LightevalTaskConfig(
     name="wikifact:original_network",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18505,7 +18505,7 @@ wikifact_original_network = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_overrules = LightevalTaskConfig(
+wikifact_overrules_helm = LightevalTaskConfig(
     name="wikifact:overrules",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18523,7 +18523,7 @@ wikifact_overrules = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_owned_by = LightevalTaskConfig(
+wikifact_owned_by_helm = LightevalTaskConfig(
     name="wikifact:owned_by",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18541,7 +18541,7 @@ wikifact_owned_by = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_part_of = LightevalTaskConfig(
+wikifact_part_of_helm = LightevalTaskConfig(
     name="wikifact:part_of",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18559,7 +18559,7 @@ wikifact_part_of = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_participating_team = LightevalTaskConfig(
+wikifact_participating_team_helm = LightevalTaskConfig(
     name="wikifact:participating_team",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18577,7 +18577,7 @@ wikifact_participating_team = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_place_of_birth = LightevalTaskConfig(
+wikifact_place_of_birth_helm = LightevalTaskConfig(
     name="wikifact:place_of_birth",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18595,7 +18595,7 @@ wikifact_place_of_birth = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_place_of_death = LightevalTaskConfig(
+wikifact_place_of_death_helm = LightevalTaskConfig(
     name="wikifact:place_of_death",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18613,7 +18613,7 @@ wikifact_place_of_death = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_plaintiff = LightevalTaskConfig(
+wikifact_plaintiff_helm = LightevalTaskConfig(
     name="wikifact:plaintiff",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18631,7 +18631,7 @@ wikifact_plaintiff = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_position_held = LightevalTaskConfig(
+wikifact_position_held_helm = LightevalTaskConfig(
     name="wikifact:position_held",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18649,7 +18649,7 @@ wikifact_position_held = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_position_played_on_team = LightevalTaskConfig(
+wikifact_position_played_on_team_helm = LightevalTaskConfig(
     name="wikifact:position_played_on_team",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18667,7 +18667,7 @@ wikifact_position_played_on_team = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_programming_language = LightevalTaskConfig(
+wikifact_programming_language_helm = LightevalTaskConfig(
     name="wikifact:programming_language",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18685,7 +18685,7 @@ wikifact_programming_language = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_recommended_unit_of_measurement = LightevalTaskConfig(
+wikifact_recommended_unit_of_measurement_helm = LightevalTaskConfig(
     name="wikifact:recommended_unit_of_measurement",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18703,7 +18703,7 @@ wikifact_recommended_unit_of_measurement = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_record_label = LightevalTaskConfig(
+wikifact_record_label_helm = LightevalTaskConfig(
     name="wikifact:record_label",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18721,7 +18721,7 @@ wikifact_record_label = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_religion = LightevalTaskConfig(
+wikifact_religion_helm = LightevalTaskConfig(
     name="wikifact:religion",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18739,7 +18739,7 @@ wikifact_religion = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_repealed_by = LightevalTaskConfig(
+wikifact_repealed_by_helm = LightevalTaskConfig(
     name="wikifact:repealed_by",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18757,7 +18757,7 @@ wikifact_repealed_by = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_shares_border_with = LightevalTaskConfig(
+wikifact_shares_border_with_helm = LightevalTaskConfig(
     name="wikifact:shares_border_with",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18775,7 +18775,7 @@ wikifact_shares_border_with = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_solved_by = LightevalTaskConfig(
+wikifact_solved_by_helm = LightevalTaskConfig(
     name="wikifact:solved_by",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18793,7 +18793,7 @@ wikifact_solved_by = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_statement_describes = LightevalTaskConfig(
+wikifact_statement_describes_helm = LightevalTaskConfig(
     name="wikifact:statement_describes",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18811,7 +18811,7 @@ wikifact_statement_describes = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_stock_exchange = LightevalTaskConfig(
+wikifact_stock_exchange_helm = LightevalTaskConfig(
     name="wikifact:stock_exchange",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18829,7 +18829,7 @@ wikifact_stock_exchange = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_subclass_of = LightevalTaskConfig(
+wikifact_subclass_of_helm = LightevalTaskConfig(
     name="wikifact:subclass_of",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18847,7 +18847,7 @@ wikifact_subclass_of = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_subsidiary = LightevalTaskConfig(
+wikifact_subsidiary_helm = LightevalTaskConfig(
     name="wikifact:subsidiary",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18865,7 +18865,7 @@ wikifact_subsidiary = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_symptoms_and_signs = LightevalTaskConfig(
+wikifact_symptoms_and_signs_helm = LightevalTaskConfig(
     name="wikifact:symptoms_and_signs",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18883,7 +18883,7 @@ wikifact_symptoms_and_signs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_therapeutic_area = LightevalTaskConfig(
+wikifact_therapeutic_area_helm = LightevalTaskConfig(
     name="wikifact:therapeutic_area",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18901,7 +18901,7 @@ wikifact_therapeutic_area = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_time_of_discovery_or_invention = LightevalTaskConfig(
+wikifact_time_of_discovery_or_invention_helm = LightevalTaskConfig(
     name="wikifact:time_of_discovery_or_invention",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18919,7 +18919,7 @@ wikifact_time_of_discovery_or_invention = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_twinned_administrative_body = LightevalTaskConfig(
+wikifact_twinned_administrative_body_helm = LightevalTaskConfig(
     name="wikifact:twinned_administrative_body",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18937,7 +18937,7 @@ wikifact_twinned_administrative_body = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikifact_work_location = LightevalTaskConfig(
+wikifact_work_location_helm = LightevalTaskConfig(
     name="wikifact:work_location",
     suite=["helm"],
     prompt_function="wikifact",
@@ -18955,7 +18955,7 @@ wikifact_work_location = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikitext_2 = LightevalTaskConfig(
+wikitext_2_lighteval = LightevalTaskConfig(
     name="wikitext:2",
     suite=["lighteval"],
     prompt_function="wikitext",
@@ -18973,7 +18973,7 @@ wikitext_2 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikitext_103_document_level = LightevalTaskConfig(
+wikitext_103_document_level_harness = LightevalTaskConfig(
     name="wikitext:103:document_level",
     suite=["harness"],
     prompt_function="wikitext_harness",
@@ -18991,7 +18991,7 @@ wikitext_103_document_level = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wikitext_103_document_level = LightevalTaskConfig(
+wikitext_103_document_level_helm = LightevalTaskConfig(
     name="wikitext:103:document_level",
     suite=["helm"],
     prompt_function="wikitext_helm",
@@ -19009,7 +19009,7 @@ wikitext_103_document_level = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wino_x_german = LightevalTaskConfig(
+wino_x_german_bigbench = LightevalTaskConfig(
     name="wino_x_german",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -19027,7 +19027,7 @@ wino_x_german = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-winogrande = LightevalTaskConfig(
+winogrande_leaderboard = LightevalTaskConfig(
     name="winogrande",
     suite=["leaderboard"],
     prompt_function="winogrande",
@@ -19045,7 +19045,7 @@ winogrande = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-winowhy = LightevalTaskConfig(
+winowhy_bigbench_lite = LightevalTaskConfig(
     name="winowhy",
     suite=["bigbench_lite", "bigbench", "bigbench_json"],
     prompt_function="bigbench_whitespace_after_query",
@@ -19063,7 +19063,7 @@ winowhy = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt08_cs_en = LightevalTaskConfig(
+wmt08_cs_en_lighteval = LightevalTaskConfig(
     name="wmt08:cs-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19081,7 +19081,7 @@ wmt08_cs_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt08_de_en = LightevalTaskConfig(
+wmt08_de_en_lighteval = LightevalTaskConfig(
     name="wmt08:de-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19099,7 +19099,7 @@ wmt08_de_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt08_en_cs = LightevalTaskConfig(
+wmt08_en_cs_lighteval = LightevalTaskConfig(
     name="wmt08:en-cs",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19117,7 +19117,7 @@ wmt08_en_cs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt08_en_de = LightevalTaskConfig(
+wmt08_en_de_lighteval = LightevalTaskConfig(
     name="wmt08:en-de",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19135,7 +19135,7 @@ wmt08_en_de = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt08_en_es = LightevalTaskConfig(
+wmt08_en_es_lighteval = LightevalTaskConfig(
     name="wmt08:en-es",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19153,7 +19153,7 @@ wmt08_en_es = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt08_en_fr = LightevalTaskConfig(
+wmt08_en_fr_lighteval = LightevalTaskConfig(
     name="wmt08:en-fr",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19171,7 +19171,7 @@ wmt08_en_fr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt08_en_hu = LightevalTaskConfig(
+wmt08_en_hu_lighteval = LightevalTaskConfig(
     name="wmt08:en-hu",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19189,7 +19189,7 @@ wmt08_en_hu = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt08_es_en = LightevalTaskConfig(
+wmt08_es_en_lighteval = LightevalTaskConfig(
     name="wmt08:es-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19207,7 +19207,7 @@ wmt08_es_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt08_fr_en = LightevalTaskConfig(
+wmt08_fr_en_lighteval = LightevalTaskConfig(
     name="wmt08:fr-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19225,7 +19225,7 @@ wmt08_fr_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt08_hu_en = LightevalTaskConfig(
+wmt08_hu_en_lighteval = LightevalTaskConfig(
     name="wmt08:hu-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19243,7 +19243,7 @@ wmt08_hu_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt09_cs_en = LightevalTaskConfig(
+wmt09_cs_en_lighteval = LightevalTaskConfig(
     name="wmt09:cs-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19261,7 +19261,7 @@ wmt09_cs_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt09_de_en = LightevalTaskConfig(
+wmt09_de_en_lighteval = LightevalTaskConfig(
     name="wmt09:de-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19279,7 +19279,7 @@ wmt09_de_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt09_en_cs = LightevalTaskConfig(
+wmt09_en_cs_lighteval = LightevalTaskConfig(
     name="wmt09:en-cs",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19297,7 +19297,7 @@ wmt09_en_cs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt09_en_de = LightevalTaskConfig(
+wmt09_en_de_lighteval = LightevalTaskConfig(
     name="wmt09:en-de",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19315,7 +19315,7 @@ wmt09_en_de = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt09_en_es = LightevalTaskConfig(
+wmt09_en_es_lighteval = LightevalTaskConfig(
     name="wmt09:en-es",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19333,7 +19333,7 @@ wmt09_en_es = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt09_en_fr = LightevalTaskConfig(
+wmt09_en_fr_lighteval = LightevalTaskConfig(
     name="wmt09:en-fr",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19351,7 +19351,7 @@ wmt09_en_fr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt09_en_hu = LightevalTaskConfig(
+wmt09_en_hu_lighteval = LightevalTaskConfig(
     name="wmt09:en-hu",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19369,7 +19369,7 @@ wmt09_en_hu = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt09_en_it = LightevalTaskConfig(
+wmt09_en_it_lighteval = LightevalTaskConfig(
     name="wmt09:en-it",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19387,7 +19387,7 @@ wmt09_en_it = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt09_es_en = LightevalTaskConfig(
+wmt09_es_en_lighteval = LightevalTaskConfig(
     name="wmt09:es-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19405,7 +19405,7 @@ wmt09_es_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt09_fr_en = LightevalTaskConfig(
+wmt09_fr_en_lighteval = LightevalTaskConfig(
     name="wmt09:fr-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19423,7 +19423,7 @@ wmt09_fr_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt09_hu_en = LightevalTaskConfig(
+wmt09_hu_en_lighteval = LightevalTaskConfig(
     name="wmt09:hu-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19441,7 +19441,7 @@ wmt09_hu_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt09_it_en = LightevalTaskConfig(
+wmt09_it_en_lighteval = LightevalTaskConfig(
     name="wmt09:it-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19459,7 +19459,7 @@ wmt09_it_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt10_cs_en = LightevalTaskConfig(
+wmt10_cs_en_lighteval = LightevalTaskConfig(
     name="wmt10:cs-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19477,7 +19477,7 @@ wmt10_cs_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt10_de_en = LightevalTaskConfig(
+wmt10_de_en_lighteval = LightevalTaskConfig(
     name="wmt10:de-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19495,7 +19495,7 @@ wmt10_de_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt10_en_cs = LightevalTaskConfig(
+wmt10_en_cs_lighteval = LightevalTaskConfig(
     name="wmt10:en-cs",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19513,7 +19513,7 @@ wmt10_en_cs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt10_en_de = LightevalTaskConfig(
+wmt10_en_de_lighteval = LightevalTaskConfig(
     name="wmt10:en-de",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19531,7 +19531,7 @@ wmt10_en_de = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt10_en_es = LightevalTaskConfig(
+wmt10_en_es_lighteval = LightevalTaskConfig(
     name="wmt10:en-es",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19549,7 +19549,7 @@ wmt10_en_es = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt10_en_fr = LightevalTaskConfig(
+wmt10_en_fr_lighteval = LightevalTaskConfig(
     name="wmt10:en-fr",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19567,7 +19567,7 @@ wmt10_en_fr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt10_es_en = LightevalTaskConfig(
+wmt10_es_en_lighteval = LightevalTaskConfig(
     name="wmt10:es-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19585,7 +19585,7 @@ wmt10_es_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt10_fr_en = LightevalTaskConfig(
+wmt10_fr_en_lighteval = LightevalTaskConfig(
     name="wmt10:fr-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19603,7 +19603,7 @@ wmt10_fr_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt11_cs_en = LightevalTaskConfig(
+wmt11_cs_en_lighteval = LightevalTaskConfig(
     name="wmt11:cs-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19621,7 +19621,7 @@ wmt11_cs_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt11_de_en = LightevalTaskConfig(
+wmt11_de_en_lighteval = LightevalTaskConfig(
     name="wmt11:de-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19639,7 +19639,7 @@ wmt11_de_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt11_en_cs = LightevalTaskConfig(
+wmt11_en_cs_lighteval = LightevalTaskConfig(
     name="wmt11:en-cs",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19657,7 +19657,7 @@ wmt11_en_cs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt11_en_de = LightevalTaskConfig(
+wmt11_en_de_lighteval = LightevalTaskConfig(
     name="wmt11:en-de",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19675,7 +19675,7 @@ wmt11_en_de = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt11_en_es = LightevalTaskConfig(
+wmt11_en_es_lighteval = LightevalTaskConfig(
     name="wmt11:en-es",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19693,7 +19693,7 @@ wmt11_en_es = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt11_en_fr = LightevalTaskConfig(
+wmt11_en_fr_lighteval = LightevalTaskConfig(
     name="wmt11:en-fr",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19711,7 +19711,7 @@ wmt11_en_fr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt11_es_en = LightevalTaskConfig(
+wmt11_es_en_lighteval = LightevalTaskConfig(
     name="wmt11:es-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19729,7 +19729,7 @@ wmt11_es_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt11_fr_en = LightevalTaskConfig(
+wmt11_fr_en_lighteval = LightevalTaskConfig(
     name="wmt11:fr-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19747,7 +19747,7 @@ wmt11_fr_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt12_cs_en = LightevalTaskConfig(
+wmt12_cs_en_lighteval = LightevalTaskConfig(
     name="wmt12:cs-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19765,7 +19765,7 @@ wmt12_cs_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt12_de_en = LightevalTaskConfig(
+wmt12_de_en_lighteval = LightevalTaskConfig(
     name="wmt12:de-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19783,7 +19783,7 @@ wmt12_de_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt12_en_cs = LightevalTaskConfig(
+wmt12_en_cs_lighteval = LightevalTaskConfig(
     name="wmt12:en-cs",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19801,7 +19801,7 @@ wmt12_en_cs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt12_en_de = LightevalTaskConfig(
+wmt12_en_de_lighteval = LightevalTaskConfig(
     name="wmt12:en-de",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19819,7 +19819,7 @@ wmt12_en_de = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt12_en_es = LightevalTaskConfig(
+wmt12_en_es_lighteval = LightevalTaskConfig(
     name="wmt12:en-es",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19837,7 +19837,7 @@ wmt12_en_es = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt12_en_fr = LightevalTaskConfig(
+wmt12_en_fr_lighteval = LightevalTaskConfig(
     name="wmt12:en-fr",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19855,7 +19855,7 @@ wmt12_en_fr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt12_es_en = LightevalTaskConfig(
+wmt12_es_en_lighteval = LightevalTaskConfig(
     name="wmt12:es-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19873,7 +19873,7 @@ wmt12_es_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt12_fr_en = LightevalTaskConfig(
+wmt12_fr_en_lighteval = LightevalTaskConfig(
     name="wmt12:fr-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19891,7 +19891,7 @@ wmt12_fr_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt13_cs_en = LightevalTaskConfig(
+wmt13_cs_en_lighteval = LightevalTaskConfig(
     name="wmt13:cs-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19909,7 +19909,7 @@ wmt13_cs_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt13_de_en = LightevalTaskConfig(
+wmt13_de_en_lighteval = LightevalTaskConfig(
     name="wmt13:de-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19927,7 +19927,7 @@ wmt13_de_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt13_en_cs = LightevalTaskConfig(
+wmt13_en_cs_lighteval = LightevalTaskConfig(
     name="wmt13:en-cs",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19945,7 +19945,7 @@ wmt13_en_cs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt13_en_de = LightevalTaskConfig(
+wmt13_en_de_lighteval = LightevalTaskConfig(
     name="wmt13:en-de",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -19963,7 +19963,7 @@ wmt13_en_de = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt13_en_es = LightevalTaskConfig(
+wmt13_en_es_lighteval = LightevalTaskConfig(
     name="wmt13:en-es",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19981,7 +19981,7 @@ wmt13_en_es = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt13_en_fr = LightevalTaskConfig(
+wmt13_en_fr_lighteval = LightevalTaskConfig(
     name="wmt13:en-fr",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -19999,7 +19999,7 @@ wmt13_en_fr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt13_en_ru = LightevalTaskConfig(
+wmt13_en_ru_lighteval = LightevalTaskConfig(
     name="wmt13:en-ru",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20017,7 +20017,7 @@ wmt13_en_ru = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt13_es_en = LightevalTaskConfig(
+wmt13_es_en_lighteval = LightevalTaskConfig(
     name="wmt13:es-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20035,7 +20035,7 @@ wmt13_es_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt13_fr_en = LightevalTaskConfig(
+wmt13_fr_en_lighteval = LightevalTaskConfig(
     name="wmt13:fr-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20053,7 +20053,7 @@ wmt13_fr_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt13_ru_en = LightevalTaskConfig(
+wmt13_ru_en_lighteval = LightevalTaskConfig(
     name="wmt13:ru-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20071,7 +20071,7 @@ wmt13_ru_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt14_cs_en = LightevalTaskConfig(
+wmt14_cs_en_lighteval = LightevalTaskConfig(
     name="wmt14:cs-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20089,7 +20089,7 @@ wmt14_cs_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt14_de_en = LightevalTaskConfig(
+wmt14_de_en_lighteval = LightevalTaskConfig(
     name="wmt14:de-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20107,7 +20107,7 @@ wmt14_de_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt14_en_cs = LightevalTaskConfig(
+wmt14_en_cs_lighteval = LightevalTaskConfig(
     name="wmt14:en-cs",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20125,7 +20125,7 @@ wmt14_en_cs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt14_en_de = LightevalTaskConfig(
+wmt14_en_de_lighteval = LightevalTaskConfig(
     name="wmt14:en-de",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20143,7 +20143,7 @@ wmt14_en_de = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt14_en_fr = LightevalTaskConfig(
+wmt14_en_fr_lighteval = LightevalTaskConfig(
     name="wmt14:en-fr",
     suite=["lighteval", "gpt3_benchmarks"],
     prompt_function="wmt_alphabetical",
@@ -20161,7 +20161,7 @@ wmt14_en_fr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt14_en_fr = LightevalTaskConfig(
+wmt14_en_fr_lighteval = LightevalTaskConfig(
     name="wmt14:en-fr",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20179,7 +20179,7 @@ wmt14_en_fr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt14_en_hi = LightevalTaskConfig(
+wmt14_en_hi_lighteval = LightevalTaskConfig(
     name="wmt14:en-hi",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20197,7 +20197,7 @@ wmt14_en_hi = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt14_en_ru = LightevalTaskConfig(
+wmt14_en_ru_lighteval = LightevalTaskConfig(
     name="wmt14:en-ru",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20215,7 +20215,7 @@ wmt14_en_ru = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt14_fr_en = LightevalTaskConfig(
+wmt14_fr_en_lighteval = LightevalTaskConfig(
     name="wmt14:fr-en",
     suite=["lighteval", "gpt3_benchmarks"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20233,7 +20233,7 @@ wmt14_fr_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt14_fr_en = LightevalTaskConfig(
+wmt14_fr_en_lighteval = LightevalTaskConfig(
     name="wmt14:fr-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20251,7 +20251,7 @@ wmt14_fr_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt14_hi_en = LightevalTaskConfig(
+wmt14_hi_en_lighteval = LightevalTaskConfig(
     name="wmt14:hi-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20269,7 +20269,7 @@ wmt14_hi_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt14_ru_en = LightevalTaskConfig(
+wmt14_ru_en_lighteval = LightevalTaskConfig(
     name="wmt14:ru-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20287,7 +20287,7 @@ wmt14_ru_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt14_cs_en = LightevalTaskConfig(
+wmt14_cs_en_helm = LightevalTaskConfig(
     name="wmt14:cs-en",
     suite=["helm"],
     prompt_function="wmt_alphabetical",
@@ -20305,7 +20305,7 @@ wmt14_cs_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt14_de_en = LightevalTaskConfig(
+wmt14_de_en_helm = LightevalTaskConfig(
     name="wmt14:de-en",
     suite=["helm"],
     prompt_function="wmt_alphabetical",
@@ -20323,7 +20323,7 @@ wmt14_de_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt14_fr_en = LightevalTaskConfig(
+wmt14_fr_en_helm = LightevalTaskConfig(
     name="wmt14:fr-en",
     suite=["helm"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20341,7 +20341,7 @@ wmt14_fr_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt14_hi_en = LightevalTaskConfig(
+wmt14_hi_en_helm = LightevalTaskConfig(
     name="wmt14:hi-en",
     suite=["helm"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20359,7 +20359,7 @@ wmt14_hi_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt14_ru_en = LightevalTaskConfig(
+wmt14_ru_en_helm = LightevalTaskConfig(
     name="wmt14:ru-en",
     suite=["helm"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20377,7 +20377,7 @@ wmt14_ru_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt15_cs_en = LightevalTaskConfig(
+wmt15_cs_en_lighteval = LightevalTaskConfig(
     name="wmt15:cs-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20395,7 +20395,7 @@ wmt15_cs_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt15_de_en = LightevalTaskConfig(
+wmt15_de_en_lighteval = LightevalTaskConfig(
     name="wmt15:de-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20413,7 +20413,7 @@ wmt15_de_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt15_en_cs = LightevalTaskConfig(
+wmt15_en_cs_lighteval = LightevalTaskConfig(
     name="wmt15:en-cs",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20431,7 +20431,7 @@ wmt15_en_cs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt15_en_de = LightevalTaskConfig(
+wmt15_en_de_lighteval = LightevalTaskConfig(
     name="wmt15:en-de",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20449,7 +20449,7 @@ wmt15_en_de = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt15_en_fi = LightevalTaskConfig(
+wmt15_en_fi_lighteval = LightevalTaskConfig(
     name="wmt15:en-fi",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20467,7 +20467,7 @@ wmt15_en_fi = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt15_en_fr = LightevalTaskConfig(
+wmt15_en_fr_lighteval = LightevalTaskConfig(
     name="wmt15:en-fr",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20485,7 +20485,7 @@ wmt15_en_fr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt15_en_ru = LightevalTaskConfig(
+wmt15_en_ru_lighteval = LightevalTaskConfig(
     name="wmt15:en-ru",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20503,7 +20503,7 @@ wmt15_en_ru = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt15_fi_en = LightevalTaskConfig(
+wmt15_fi_en_lighteval = LightevalTaskConfig(
     name="wmt15:fi-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20521,7 +20521,7 @@ wmt15_fi_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt15_fr_en = LightevalTaskConfig(
+wmt15_fr_en_lighteval = LightevalTaskConfig(
     name="wmt15:fr-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20539,7 +20539,7 @@ wmt15_fr_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt15_ru_en = LightevalTaskConfig(
+wmt15_ru_en_lighteval = LightevalTaskConfig(
     name="wmt15:ru-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20557,7 +20557,7 @@ wmt15_ru_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt16_cs_en = LightevalTaskConfig(
+wmt16_cs_en_lighteval = LightevalTaskConfig(
     name="wmt16:cs-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20575,7 +20575,7 @@ wmt16_cs_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt16_de_en = LightevalTaskConfig(
+wmt16_de_en_lighteval = LightevalTaskConfig(
     name="wmt16:de-en",
     suite=["lighteval", "gpt3_benchmarks"],
     prompt_function="wmt_alphabetical",
@@ -20593,7 +20593,7 @@ wmt16_de_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt16_de_en = LightevalTaskConfig(
+wmt16_de_en_lighteval = LightevalTaskConfig(
     name="wmt16:de-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20611,7 +20611,7 @@ wmt16_de_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt16_en_cs = LightevalTaskConfig(
+wmt16_en_cs_lighteval = LightevalTaskConfig(
     name="wmt16:en-cs",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20629,7 +20629,7 @@ wmt16_en_cs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt16_en_de = LightevalTaskConfig(
+wmt16_en_de_lighteval = LightevalTaskConfig(
     name="wmt16:en-de",
     suite=["lighteval", "gpt3_benchmarks"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20647,7 +20647,7 @@ wmt16_en_de = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt16_en_de = LightevalTaskConfig(
+wmt16_en_de_lighteval = LightevalTaskConfig(
     name="wmt16:en-de",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20665,7 +20665,7 @@ wmt16_en_de = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt16_en_fi = LightevalTaskConfig(
+wmt16_en_fi_lighteval = LightevalTaskConfig(
     name="wmt16:en-fi",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20683,7 +20683,7 @@ wmt16_en_fi = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt16_en_ro = LightevalTaskConfig(
+wmt16_en_ro_lighteval = LightevalTaskConfig(
     name="wmt16:en-ro",
     suite=["lighteval", "gpt3_benchmarks"],
     prompt_function="wmt_alphabetical",
@@ -20701,7 +20701,7 @@ wmt16_en_ro = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt16_en_ro = LightevalTaskConfig(
+wmt16_en_ro_lighteval = LightevalTaskConfig(
     name="wmt16:en-ro",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20719,7 +20719,7 @@ wmt16_en_ro = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt16_en_ru = LightevalTaskConfig(
+wmt16_en_ru_lighteval = LightevalTaskConfig(
     name="wmt16:en-ru",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20737,7 +20737,7 @@ wmt16_en_ru = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt16_en_tr = LightevalTaskConfig(
+wmt16_en_tr_lighteval = LightevalTaskConfig(
     name="wmt16:en-tr",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20755,7 +20755,7 @@ wmt16_en_tr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt16_fi_en = LightevalTaskConfig(
+wmt16_fi_en_lighteval = LightevalTaskConfig(
     name="wmt16:fi-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20773,7 +20773,7 @@ wmt16_fi_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt16_ro_en = LightevalTaskConfig(
+wmt16_ro_en_lighteval = LightevalTaskConfig(
     name="wmt16:ro-en",
     suite=["lighteval", "gpt3_benchmarks"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20791,7 +20791,7 @@ wmt16_ro_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt16_ro_en = LightevalTaskConfig(
+wmt16_ro_en_lighteval = LightevalTaskConfig(
     name="wmt16:ro-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20809,7 +20809,7 @@ wmt16_ro_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt16_ru_en = LightevalTaskConfig(
+wmt16_ru_en_lighteval = LightevalTaskConfig(
     name="wmt16:ru-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20827,7 +20827,7 @@ wmt16_ru_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt16_tr_en = LightevalTaskConfig(
+wmt16_tr_en_lighteval = LightevalTaskConfig(
     name="wmt16:tr-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20845,7 +20845,7 @@ wmt16_tr_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt17_cs_en = LightevalTaskConfig(
+wmt17_cs_en_lighteval = LightevalTaskConfig(
     name="wmt17:cs-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20863,7 +20863,7 @@ wmt17_cs_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt17_de_en = LightevalTaskConfig(
+wmt17_de_en_lighteval = LightevalTaskConfig(
     name="wmt17:de-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20881,7 +20881,7 @@ wmt17_de_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt17_en_cs = LightevalTaskConfig(
+wmt17_en_cs_lighteval = LightevalTaskConfig(
     name="wmt17:en-cs",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20899,7 +20899,7 @@ wmt17_en_cs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt17_en_de = LightevalTaskConfig(
+wmt17_en_de_lighteval = LightevalTaskConfig(
     name="wmt17:en-de",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -20917,7 +20917,7 @@ wmt17_en_de = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt17_en_fi = LightevalTaskConfig(
+wmt17_en_fi_lighteval = LightevalTaskConfig(
     name="wmt17:en-fi",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20935,7 +20935,7 @@ wmt17_en_fi = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt17_en_lv = LightevalTaskConfig(
+wmt17_en_lv_lighteval = LightevalTaskConfig(
     name="wmt17:en-lv",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20953,7 +20953,7 @@ wmt17_en_lv = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt17_en_ru = LightevalTaskConfig(
+wmt17_en_ru_lighteval = LightevalTaskConfig(
     name="wmt17:en-ru",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20971,7 +20971,7 @@ wmt17_en_ru = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt17_en_tr = LightevalTaskConfig(
+wmt17_en_tr_lighteval = LightevalTaskConfig(
     name="wmt17:en-tr",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -20989,7 +20989,7 @@ wmt17_en_tr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt17_en_zh = LightevalTaskConfig(
+wmt17_en_zh_lighteval = LightevalTaskConfig(
     name="wmt17:en-zh",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21007,7 +21007,7 @@ wmt17_en_zh = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt17_fi_en = LightevalTaskConfig(
+wmt17_fi_en_lighteval = LightevalTaskConfig(
     name="wmt17:fi-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21025,7 +21025,7 @@ wmt17_fi_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt17_lv_en = LightevalTaskConfig(
+wmt17_lv_en_lighteval = LightevalTaskConfig(
     name="wmt17:lv-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21043,7 +21043,7 @@ wmt17_lv_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt17_ru_en = LightevalTaskConfig(
+wmt17_ru_en_lighteval = LightevalTaskConfig(
     name="wmt17:ru-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21061,7 +21061,7 @@ wmt17_ru_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt17_tr_en = LightevalTaskConfig(
+wmt17_tr_en_lighteval = LightevalTaskConfig(
     name="wmt17:tr-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21079,7 +21079,7 @@ wmt17_tr_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt17_zh_en = LightevalTaskConfig(
+wmt17_zh_en_lighteval = LightevalTaskConfig(
     name="wmt17:zh-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21097,7 +21097,7 @@ wmt17_zh_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt18_cs_en = LightevalTaskConfig(
+wmt18_cs_en_lighteval = LightevalTaskConfig(
     name="wmt18:cs-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21115,7 +21115,7 @@ wmt18_cs_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt18_de_en = LightevalTaskConfig(
+wmt18_de_en_lighteval = LightevalTaskConfig(
     name="wmt18:de-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21133,7 +21133,7 @@ wmt18_de_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt18_en_cs = LightevalTaskConfig(
+wmt18_en_cs_lighteval = LightevalTaskConfig(
     name="wmt18:en-cs",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21151,7 +21151,7 @@ wmt18_en_cs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt18_en_de = LightevalTaskConfig(
+wmt18_en_de_lighteval = LightevalTaskConfig(
     name="wmt18:en-de",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21169,7 +21169,7 @@ wmt18_en_de = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt18_en_et = LightevalTaskConfig(
+wmt18_en_et_lighteval = LightevalTaskConfig(
     name="wmt18:en-et",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21187,7 +21187,7 @@ wmt18_en_et = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt18_en_fi = LightevalTaskConfig(
+wmt18_en_fi_lighteval = LightevalTaskConfig(
     name="wmt18:en-fi",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21205,7 +21205,7 @@ wmt18_en_fi = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt18_en_ru = LightevalTaskConfig(
+wmt18_en_ru_lighteval = LightevalTaskConfig(
     name="wmt18:en-ru",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21223,7 +21223,7 @@ wmt18_en_ru = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt18_en_tr = LightevalTaskConfig(
+wmt18_en_tr_lighteval = LightevalTaskConfig(
     name="wmt18:en-tr",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21241,7 +21241,7 @@ wmt18_en_tr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt18_en_zh = LightevalTaskConfig(
+wmt18_en_zh_lighteval = LightevalTaskConfig(
     name="wmt18:en-zh",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21259,7 +21259,7 @@ wmt18_en_zh = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt18_et_en = LightevalTaskConfig(
+wmt18_et_en_lighteval = LightevalTaskConfig(
     name="wmt18:et-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21277,7 +21277,7 @@ wmt18_et_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt18_fi_en = LightevalTaskConfig(
+wmt18_fi_en_lighteval = LightevalTaskConfig(
     name="wmt18:fi-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21295,7 +21295,7 @@ wmt18_fi_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt18_ru_en = LightevalTaskConfig(
+wmt18_ru_en_lighteval = LightevalTaskConfig(
     name="wmt18:ru-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21313,7 +21313,7 @@ wmt18_ru_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt18_tr_en = LightevalTaskConfig(
+wmt18_tr_en_lighteval = LightevalTaskConfig(
     name="wmt18:tr-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21331,7 +21331,7 @@ wmt18_tr_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt18_zh_en = LightevalTaskConfig(
+wmt18_zh_en_lighteval = LightevalTaskConfig(
     name="wmt18:zh-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21349,7 +21349,7 @@ wmt18_zh_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt19_cs_de = LightevalTaskConfig(
+wmt19_cs_de_lighteval = LightevalTaskConfig(
     name="wmt19:cs-de",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21367,7 +21367,7 @@ wmt19_cs_de = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt19_de_cs = LightevalTaskConfig(
+wmt19_de_cs_lighteval = LightevalTaskConfig(
     name="wmt19:de-cs",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21385,7 +21385,7 @@ wmt19_de_cs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt19_de_en = LightevalTaskConfig(
+wmt19_de_en_lighteval = LightevalTaskConfig(
     name="wmt19:de-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21403,7 +21403,7 @@ wmt19_de_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt19_de_fr = LightevalTaskConfig(
+wmt19_de_fr_lighteval = LightevalTaskConfig(
     name="wmt19:de-fr",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21421,7 +21421,7 @@ wmt19_de_fr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt19_en_cs = LightevalTaskConfig(
+wmt19_en_cs_lighteval = LightevalTaskConfig(
     name="wmt19:en-cs",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21439,7 +21439,7 @@ wmt19_en_cs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt19_en_de = LightevalTaskConfig(
+wmt19_en_de_lighteval = LightevalTaskConfig(
     name="wmt19:en-de",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21457,7 +21457,7 @@ wmt19_en_de = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt19_en_fi = LightevalTaskConfig(
+wmt19_en_fi_lighteval = LightevalTaskConfig(
     name="wmt19:en-fi",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21475,7 +21475,7 @@ wmt19_en_fi = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt19_en_gu = LightevalTaskConfig(
+wmt19_en_gu_lighteval = LightevalTaskConfig(
     name="wmt19:en-gu",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21493,7 +21493,7 @@ wmt19_en_gu = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt19_en_kk = LightevalTaskConfig(
+wmt19_en_kk_lighteval = LightevalTaskConfig(
     name="wmt19:en-kk",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21511,7 +21511,7 @@ wmt19_en_kk = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt19_en_lt = LightevalTaskConfig(
+wmt19_en_lt_lighteval = LightevalTaskConfig(
     name="wmt19:en-lt",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21529,7 +21529,7 @@ wmt19_en_lt = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt19_en_ru = LightevalTaskConfig(
+wmt19_en_ru_lighteval = LightevalTaskConfig(
     name="wmt19:en-ru",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21547,7 +21547,7 @@ wmt19_en_ru = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt19_en_zh = LightevalTaskConfig(
+wmt19_en_zh_lighteval = LightevalTaskConfig(
     name="wmt19:en-zh",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21565,7 +21565,7 @@ wmt19_en_zh = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt19_fi_en = LightevalTaskConfig(
+wmt19_fi_en_lighteval = LightevalTaskConfig(
     name="wmt19:fi-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21583,7 +21583,7 @@ wmt19_fi_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt19_fr_de = LightevalTaskConfig(
+wmt19_fr_de_lighteval = LightevalTaskConfig(
     name="wmt19:fr-de",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21601,7 +21601,7 @@ wmt19_fr_de = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt19_gu_en = LightevalTaskConfig(
+wmt19_gu_en_lighteval = LightevalTaskConfig(
     name="wmt19:gu-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21619,7 +21619,7 @@ wmt19_gu_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt19_kk_en = LightevalTaskConfig(
+wmt19_kk_en_lighteval = LightevalTaskConfig(
     name="wmt19:kk-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21637,7 +21637,7 @@ wmt19_kk_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt19_lt_en = LightevalTaskConfig(
+wmt19_lt_en_lighteval = LightevalTaskConfig(
     name="wmt19:lt-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21655,7 +21655,7 @@ wmt19_lt_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt19_ru_en = LightevalTaskConfig(
+wmt19_ru_en_lighteval = LightevalTaskConfig(
     name="wmt19:ru-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21673,7 +21673,7 @@ wmt19_ru_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt19_zh_en = LightevalTaskConfig(
+wmt19_zh_en_lighteval = LightevalTaskConfig(
     name="wmt19:zh-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21691,7 +21691,7 @@ wmt19_zh_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_cs_en = LightevalTaskConfig(
+wmt20_cs_en_lighteval = LightevalTaskConfig(
     name="wmt20:cs-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21709,7 +21709,7 @@ wmt20_cs_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_de_en = LightevalTaskConfig(
+wmt20_de_en_lighteval = LightevalTaskConfig(
     name="wmt20:de-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21727,7 +21727,7 @@ wmt20_de_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_de_fr = LightevalTaskConfig(
+wmt20_de_fr_lighteval = LightevalTaskConfig(
     name="wmt20:de-fr",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21745,7 +21745,7 @@ wmt20_de_fr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_en_cs = LightevalTaskConfig(
+wmt20_en_cs_lighteval = LightevalTaskConfig(
     name="wmt20:en-cs",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21763,7 +21763,7 @@ wmt20_en_cs = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_en_de = LightevalTaskConfig(
+wmt20_en_de_lighteval = LightevalTaskConfig(
     name="wmt20:en-de",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21781,7 +21781,7 @@ wmt20_en_de = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_en_iu = LightevalTaskConfig(
+wmt20_en_iu_lighteval = LightevalTaskConfig(
     name="wmt20:en-iu",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21799,7 +21799,7 @@ wmt20_en_iu = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_en_ja = LightevalTaskConfig(
+wmt20_en_ja_lighteval = LightevalTaskConfig(
     name="wmt20:en-ja",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21817,7 +21817,7 @@ wmt20_en_ja = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_en_km = LightevalTaskConfig(
+wmt20_en_km_lighteval = LightevalTaskConfig(
     name="wmt20:en-km",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21835,7 +21835,7 @@ wmt20_en_km = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_en_pl = LightevalTaskConfig(
+wmt20_en_pl_lighteval = LightevalTaskConfig(
     name="wmt20:en-pl",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21853,7 +21853,7 @@ wmt20_en_pl = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_en_ps = LightevalTaskConfig(
+wmt20_en_ps_lighteval = LightevalTaskConfig(
     name="wmt20:en-ps",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21871,7 +21871,7 @@ wmt20_en_ps = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_en_ru = LightevalTaskConfig(
+wmt20_en_ru_lighteval = LightevalTaskConfig(
     name="wmt20:en-ru",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21889,7 +21889,7 @@ wmt20_en_ru = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_en_ta = LightevalTaskConfig(
+wmt20_en_ta_lighteval = LightevalTaskConfig(
     name="wmt20:en-ta",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21907,7 +21907,7 @@ wmt20_en_ta = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_en_zh = LightevalTaskConfig(
+wmt20_en_zh_lighteval = LightevalTaskConfig(
     name="wmt20:en-zh",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_alphabetical",
@@ -21925,7 +21925,7 @@ wmt20_en_zh = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_fr_de = LightevalTaskConfig(
+wmt20_fr_de_lighteval = LightevalTaskConfig(
     name="wmt20:fr-de",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21943,7 +21943,7 @@ wmt20_fr_de = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_iu_en = LightevalTaskConfig(
+wmt20_iu_en_lighteval = LightevalTaskConfig(
     name="wmt20:iu-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21961,7 +21961,7 @@ wmt20_iu_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_ja_en = LightevalTaskConfig(
+wmt20_ja_en_lighteval = LightevalTaskConfig(
     name="wmt20:ja-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21979,7 +21979,7 @@ wmt20_ja_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_km_en = LightevalTaskConfig(
+wmt20_km_en_lighteval = LightevalTaskConfig(
     name="wmt20:km-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -21997,7 +21997,7 @@ wmt20_km_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_pl_en = LightevalTaskConfig(
+wmt20_pl_en_lighteval = LightevalTaskConfig(
     name="wmt20:pl-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -22015,7 +22015,7 @@ wmt20_pl_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_ps_en = LightevalTaskConfig(
+wmt20_ps_en_lighteval = LightevalTaskConfig(
     name="wmt20:ps-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -22033,7 +22033,7 @@ wmt20_ps_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_ru_en = LightevalTaskConfig(
+wmt20_ru_en_lighteval = LightevalTaskConfig(
     name="wmt20:ru-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -22051,7 +22051,7 @@ wmt20_ru_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_ta_en = LightevalTaskConfig(
+wmt20_ta_en_lighteval = LightevalTaskConfig(
     name="wmt20:ta-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -22069,7 +22069,7 @@ wmt20_ta_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wmt20_zh_en = LightevalTaskConfig(
+wmt20_zh_en_lighteval = LightevalTaskConfig(
     name="wmt20:zh-en",
     suite=["lighteval", "sacrebleu"],
     prompt_function="wmt_reverse_alphabetical",
@@ -22087,7 +22087,7 @@ wmt20_zh_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-word_sorting = LightevalTaskConfig(
+word_sorting_bigbench = LightevalTaskConfig(
     name="word_sorting",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -22105,7 +22105,7 @@ word_sorting = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-word_unscrambling = LightevalTaskConfig(
+word_unscrambling_bigbench = LightevalTaskConfig(
     name="word_unscrambling",
     suite=["bigbench", "bigbench_json"],
     prompt_function="bigbench",
@@ -22123,7 +22123,7 @@ word_unscrambling = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-wsc273 = LightevalTaskConfig(
+wsc273_lighteval = LightevalTaskConfig(
     name="wsc273",
     suite=["lighteval"],
     prompt_function="wsc273",
@@ -22141,7 +22141,7 @@ wsc273 = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xcopa_en = LightevalTaskConfig(
+xcopa_en_lighteval = LightevalTaskConfig(
     name="xcopa:en",
     suite=["lighteval"],
     prompt_function="xcopa_en",
@@ -22159,7 +22159,7 @@ xcopa_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xcopa_et = LightevalTaskConfig(
+xcopa_et_lighteval = LightevalTaskConfig(
     name="xcopa:et",
     suite=["lighteval"],
     prompt_function="xcopa_et",
@@ -22177,7 +22177,7 @@ xcopa_et = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xcopa_ht = LightevalTaskConfig(
+xcopa_ht_lighteval = LightevalTaskConfig(
     name="xcopa:ht",
     suite=["lighteval"],
     prompt_function="xcopa_ht",
@@ -22195,7 +22195,7 @@ xcopa_ht = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xcopa_it = LightevalTaskConfig(
+xcopa_it_lighteval = LightevalTaskConfig(
     name="xcopa:it",
     suite=["lighteval"],
     prompt_function="xcopa_it",
@@ -22213,7 +22213,7 @@ xcopa_it = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xcopa_id = LightevalTaskConfig(
+xcopa_id_lighteval = LightevalTaskConfig(
     name="xcopa:id",
     suite=["lighteval"],
     prompt_function="xcopa_id",
@@ -22231,7 +22231,7 @@ xcopa_id = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xcopa_qu = LightevalTaskConfig(
+xcopa_qu_lighteval = LightevalTaskConfig(
     name="xcopa:qu",
     suite=["lighteval"],
     prompt_function="xcopa_qu",
@@ -22249,7 +22249,7 @@ xcopa_qu = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xcopa_sw = LightevalTaskConfig(
+xcopa_sw_lighteval = LightevalTaskConfig(
     name="xcopa:sw",
     suite=["lighteval"],
     prompt_function="xcopa_sw",
@@ -22267,7 +22267,7 @@ xcopa_sw = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xcopa_zh = LightevalTaskConfig(
+xcopa_zh_lighteval = LightevalTaskConfig(
     name="xcopa:zh",
     suite=["lighteval"],
     prompt_function="xcopa_zh",
@@ -22285,7 +22285,7 @@ xcopa_zh = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xcopa_ta = LightevalTaskConfig(
+xcopa_ta_lighteval = LightevalTaskConfig(
     name="xcopa:ta",
     suite=["lighteval"],
     prompt_function="xcopa_ta",
@@ -22303,7 +22303,7 @@ xcopa_ta = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xcopa_th = LightevalTaskConfig(
+xcopa_th_lighteval = LightevalTaskConfig(
     name="xcopa:th",
     suite=["lighteval"],
     prompt_function="xcopa_th",
@@ -22321,7 +22321,7 @@ xcopa_th = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xcopa_tr = LightevalTaskConfig(
+xcopa_tr_lighteval = LightevalTaskConfig(
     name="xcopa:tr",
     suite=["lighteval"],
     prompt_function="xcopa_tr",
@@ -22339,7 +22339,7 @@ xcopa_tr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xcopa_vi = LightevalTaskConfig(
+xcopa_vi_lighteval = LightevalTaskConfig(
     name="xcopa:vi",
     suite=["lighteval"],
     prompt_function="xcopa_vi",
@@ -22357,7 +22357,7 @@ xcopa_vi = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xstory_cloze_en = LightevalTaskConfig(
+xstory_cloze_en_lighteval = LightevalTaskConfig(
     name="xstory_cloze:en",
     suite=["lighteval"],
     prompt_function="storycloze",
@@ -22375,7 +22375,7 @@ xstory_cloze_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xstory_cloze_ru = LightevalTaskConfig(
+xstory_cloze_ru_lighteval = LightevalTaskConfig(
     name="xstory_cloze:ru",
     suite=["lighteval"],
     prompt_function="storycloze",
@@ -22393,7 +22393,7 @@ xstory_cloze_ru = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xstory_cloze_zh = LightevalTaskConfig(
+xstory_cloze_zh_lighteval = LightevalTaskConfig(
     name="xstory_cloze:zh",
     suite=["lighteval"],
     prompt_function="storycloze",
@@ -22411,7 +22411,7 @@ xstory_cloze_zh = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xstory_cloze_es = LightevalTaskConfig(
+xstory_cloze_es_lighteval = LightevalTaskConfig(
     name="xstory_cloze:es",
     suite=["lighteval"],
     prompt_function="storycloze",
@@ -22429,7 +22429,7 @@ xstory_cloze_es = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xstory_cloze_ar = LightevalTaskConfig(
+xstory_cloze_ar_lighteval = LightevalTaskConfig(
     name="xstory_cloze:ar",
     suite=["lighteval"],
     prompt_function="storycloze",
@@ -22447,7 +22447,7 @@ xstory_cloze_ar = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xstory_cloze_hi = LightevalTaskConfig(
+xstory_cloze_hi_lighteval = LightevalTaskConfig(
     name="xstory_cloze:hi",
     suite=["lighteval"],
     prompt_function="storycloze",
@@ -22465,7 +22465,7 @@ xstory_cloze_hi = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xstory_cloze_id = LightevalTaskConfig(
+xstory_cloze_id_lighteval = LightevalTaskConfig(
     name="xstory_cloze:id",
     suite=["lighteval"],
     prompt_function="storycloze",
@@ -22483,7 +22483,7 @@ xstory_cloze_id = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xstory_cloze_te = LightevalTaskConfig(
+xstory_cloze_te_lighteval = LightevalTaskConfig(
     name="xstory_cloze:te",
     suite=["lighteval"],
     prompt_function="storycloze",
@@ -22501,7 +22501,7 @@ xstory_cloze_te = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xstory_cloze_sw = LightevalTaskConfig(
+xstory_cloze_sw_lighteval = LightevalTaskConfig(
     name="xstory_cloze:sw",
     suite=["lighteval"],
     prompt_function="storycloze",
@@ -22519,7 +22519,7 @@ xstory_cloze_sw = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xstory_cloze_eu = LightevalTaskConfig(
+xstory_cloze_eu_lighteval = LightevalTaskConfig(
     name="xstory_cloze:eu",
     suite=["lighteval"],
     prompt_function="storycloze",
@@ -22537,7 +22537,7 @@ xstory_cloze_eu = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xstory_cloze_my = LightevalTaskConfig(
+xstory_cloze_my_lighteval = LightevalTaskConfig(
     name="xstory_cloze:my",
     suite=["lighteval"],
     prompt_function="storycloze",
@@ -22555,7 +22555,7 @@ xstory_cloze_my = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xwinograd_en = LightevalTaskConfig(
+xwinograd_en_lighteval = LightevalTaskConfig(
     name="xwinograd:en",
     suite=["lighteval"],
     prompt_function="winogrande",
@@ -22573,7 +22573,7 @@ xwinograd_en = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xwinograd_fr = LightevalTaskConfig(
+xwinograd_fr_lighteval = LightevalTaskConfig(
     name="xwinograd:fr",
     suite=["lighteval"],
     prompt_function="winogrande",
@@ -22591,7 +22591,7 @@ xwinograd_fr = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xwinograd_jp = LightevalTaskConfig(
+xwinograd_jp_lighteval = LightevalTaskConfig(
     name="xwinograd:jp",
     suite=["lighteval"],
     prompt_function="winogrande",
@@ -22609,7 +22609,7 @@ xwinograd_jp = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xwinograd_pt = LightevalTaskConfig(
+xwinograd_pt_lighteval = LightevalTaskConfig(
     name="xwinograd:pt",
     suite=["lighteval"],
     prompt_function="winogrande",
@@ -22627,7 +22627,7 @@ xwinograd_pt = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xwinograd_ru = LightevalTaskConfig(
+xwinograd_ru_lighteval = LightevalTaskConfig(
     name="xwinograd:ru",
     suite=["lighteval"],
     prompt_function="winogrande",
@@ -22645,7 +22645,7 @@ xwinograd_ru = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-xwinograd_zh = LightevalTaskConfig(
+xwinograd_zh_lighteval = LightevalTaskConfig(
     name="xwinograd:zh",
     suite=["lighteval"],
     prompt_function="winogrande",
