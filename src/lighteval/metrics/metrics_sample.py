@@ -622,7 +622,7 @@ class StringDistance:
 
 
 class JudgeLLM:
-    available_models = ["gpt-3.5-turbo"]
+    available_models = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo", "gpt-4"]
 
     def __init__(self, judge_model_name: str, template_path: str, multi_turn: bool = False):
         if judge_model_name not in self.available_models:
@@ -631,18 +631,14 @@ class JudgeLLM:
         OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
         self.multi_turn = multi_turn
 
-        try:
-            self.judge = JudgeOpenAI(
-                model=judge_model_name,
-                seed=42,
-                temperature=0.0,
-                templates_path=template_path,
-                openai_api_key=OPENAI_API_KEY,
-                multi_turn=multi_turn,
-            )
-        except Exception as e:
-            print(f"Could not initialize the JudgeOpenAI model:\n{e}")
-            self.judge = None
+        self.judge = JudgeOpenAI(
+            model=judge_model_name,
+            seed=42,
+            temperature=0.0,
+            templates_path=template_path,
+            openai_api_key=OPENAI_API_KEY,
+            multi_turn=multi_turn,
+        )
 
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
         """
