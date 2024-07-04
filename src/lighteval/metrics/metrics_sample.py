@@ -622,7 +622,7 @@ class StringDistance:
 
 
 class JudgeLLM:
-    available_models = ["gpt-3.5-turbo"]
+    available_models = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo", "gpt-4"]
 
     def __init__(self, judge_model_name: str, template_path: str, multi_turn: bool = False):
         if judge_model_name not in self.available_models:
