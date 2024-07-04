@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 from datasets import load_dataset
 
+import lighteval.tasks.tasks_prompt_formatting as tasks_prompt_formatting
 from lighteval.few_shot_manager import FewShotSampler
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.metrics import (
@@ -54,8 +55,6 @@ from lighteval.tasks.requests import (
     TaskExampleId,
 )
 from lighteval.utils import as_list
-
-from . import tasks_prompt_formatting
 
 
 if TYPE_CHECKING:

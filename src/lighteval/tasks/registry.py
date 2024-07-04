@@ -31,6 +31,7 @@ from typing import Dict, List, Optional, Tuple, Union
 from datasets import Dataset
 from datasets.load import dataset_module_factory
 
+import lighteval.tasks.default_tasks as default_tasks
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.tasks.extended import AVAILABLE_EXTENDED_TASKS_MODULES
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
@@ -56,8 +57,6 @@ DEFAULT_SUITES = [
 ]
 
 TRUNCATE_FEW_SHOTS_DEFAULTS = True
-
-TABLE_PATH = os.path.join(os.path.dirname(__file__), "tasks_table.jsonl")
 
 
 class Registry:
@@ -256,8 +255,7 @@ def create_config_tasks(
 
         return LightevalTaskFromConfig
 
-    if meta_table is None:
-        meta_table = Dataset.from_json(TABLE_PATH)
+    meta_table = {name: config for name, config in dir(default_tasks) if isinstance(config, LightevalTaskConfig)}
 
     tasks_with_config = {}
     # Every task is renamed suite|task, if the suite is in DEFAULT_SUITE
