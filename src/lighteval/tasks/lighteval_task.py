@@ -114,25 +114,6 @@ class LightevalTaskConfig:
 
     version: int = 0
 
-    def as_dict(self):
-        return {
-            "name": self.name,
-            "prompt_function": self.prompt_function,
-            "hf_repo": self.hf_repo,
-            "hf_subset": self.hf_subset,
-            "metric": tuple(str(m) for m in self.metric),
-            "hf_avail_splits": self.hf_avail_splits,
-            "evaluation_splits": self.evaluation_splits,
-            "few_shots_split": self.few_shots_split,
-            "few_shots_select": self.few_shots_select,
-            "generation_size": self.generation_size,
-            "stop_sequence": self.stop_sequence,
-            "output_regex": self.output_regex,
-            "frozen": self.frozen,
-            "suite": self.suite,
-            "version": self.version,
-        }
-
     def __post_init__(self):
         if self.suite is None:
             self.suite = ["custom"]

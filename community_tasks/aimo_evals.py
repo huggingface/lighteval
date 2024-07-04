@@ -55,14 +55,12 @@ def aimo_prompt(line, task_name: str = None):
 
 
 # STORE YOUR EVALS
-_TASKS = [task]
+TASKS_TABLE = [task]
 
 
 # MODULE LOGIC
 # You should not need to touch this
-# Convert to dict for lighteval
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
 
 if __name__ == "__main__":
-    print(t["name"] for t in TASKS_TABLE)
+    print(t.name for t in TASKS_TABLE)
     print(len(TASKS_TABLE))
