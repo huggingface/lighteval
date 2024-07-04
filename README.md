@@ -139,7 +139,7 @@ accelerate launch --multi_gpu --num_processes=<num_gpus> run_evals_accelerate.py
     --output_dir output_dir
 ```
 
-Examples of possible configuration files are provided in `examples/model_configs`.
+You can find the template of the expected model configuration in [examples/model_configs/base_model.yaml_](./examples/model_configs/base_model.yaml). 
 
 ### Evaluating a large model with pipeline parallelism
 
@@ -182,6 +182,25 @@ python run_evals_accelerate.py \
     --output_dir output_dir
 ```
 
+### Evaluate the model on a server/container.
+
+An alternative to launching the evaluation locally is to serve the model on a TGI-compatible server/container and then run the evaluation by sending requests to the server. The command is the same as before, except you specify a path to a yaml config file (detailed below):
+
+```shell
+python run_evals_accelerate.py \
+    --model_config_path="/path/to/config/file"\
+    --tasks <task parameters> \
+    --output_dir output_dir
+```
+
+There are two types of configuration files that can be provided for running on the server:
+
+1. [endpoint_model.yaml](./examples/model_configs/endpoint_model.yaml): This configuration allows you to launch the model using [HuggingFace's Inference Endpoints](https://huggingface.co/inference-endpoints/dedicated). You can specify in the configuration file all the relevant parameters, and then `lighteval` will automatically deploy the endpoint, run the evaluation, and finally delete the endpoint (unless you specify an endpoint that was already launched, in which case the endpoint won't be deleted afterwards).
+
+2. [tgi_model.yaml](./examples/model_configs/tgi_model.yaml): This configuration lets you specify the URL of a model running in a TGI container, such as one deployed on HuggingFace's serverless inference. 
+
+Templates for these configurations can be found in [examples/model_configs](./examples/model_configs/).
+
 ### Evaluate a model on extended, community, or custom tasks.
 
 Independently of the default tasks provided in `lighteval` that you will find in the `tasks_table.jsonl` file, you can use `lighteval` to evaluate models on tasks that require special processing (or have been added by the community). These tasks have their own evaluation suites and are defined as follows:
@@ -189,7 +208,6 @@ Independently of the default tasks provided in `lighteval` that you will find in
 * `extended`: tasks that have complex pre- or post-processing and are added by the `lighteval` maintainers. See the [`extended`](./src/lighteval/tasks/extended) folder for examples.
 * `community`: tasks that have been added by the community. See the [`community_tasks`](src/lighteval/community_tasks) folder for examples.
 * `custom`: tasks that are defined locally and not present in the core library. Use this suite if you want to experiment with designing a special metric or task.
-
 
 For example, to run an extended task like `ifeval`, you can run:
 ```shell
