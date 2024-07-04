@@ -20,10 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-""" Example run command:
+"""Example run command:
 accelerate config
 accelerate launch run_evals_accelerate.py --tasks="leaderboard|hellaswag|5|1" --output_dir "/scratch/evals" --model_args "pretrained=gpt2"
 """
+
 import argparse
 
 from lighteval.main_accelerate import CACHE_DIR, main
@@ -70,7 +71,7 @@ def get_parser():
         "--tasks",
         type=str,
         default=None,
-        help="Id of a task, e.g. 'original|mmlu:abstract_algebra|5' or path to a texte file with a list of tasks",
+        help="Id of a task, e.g. 'original|mmlu:abstract_algebra|5|0' or path to a texte file with a list of tasks",
     )
     parser.add_argument("--num_fewshot_seeds", type=int, default=1, help="Number of trials the few shots")
     return parser
