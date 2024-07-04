@@ -28,7 +28,6 @@ from pprint import pformat
 from types import ModuleType
 from typing import Dict, List, Optional, Tuple, Union
 
-from datasets import Dataset
 from datasets.load import dataset_module_factory
 
 import lighteval.tasks.default_tasks as default_tasks
@@ -129,7 +128,7 @@ class Registry:
         # Import custom tasks provided by the user
         custom_tasks_registry = None
         custom_tasks_module = []
-        TASKS_TABLE = []
+        custom_tasks = []
         if custom_tasks is not None:
             custom_tasks_module.append(create_custom_tasks_module(custom_tasks=custom_tasks))
         if can_load_extended_tasks():
@@ -139,10 +138,10 @@ class Registry:
             hlog_warn(CANNOT_USE_EXTENDED_TASKS_MSG)
 
         for module in custom_tasks_module:
-            TASKS_TABLE.extend(module.TASKS_TABLE)
+            custom_tasks.extend(module.TASKS_TABLE)
 
-        if len(TASKS_TABLE) > 0:
-            custom_tasks_registry = create_config_tasks(meta_table=TASKS_TABLE, cache_dir=self.cache_dir)
+        if len(custom_tasks) > 0:
+            custom_tasks_registry = create_config_tasks(meta_table=custom_tasks, cache_dir=self.cache_dir)
             hlog(custom_tasks_registry)
 
         # Select relevant tasks given the subset asked for by the user
@@ -233,7 +232,7 @@ def taskinfo_selector(
 
 
 def create_config_tasks(
-    meta_table: Optional[Dataset] = None, cache_dir: Optional[str] = None
+    meta_table: Optional[List[LightevalTaskConfig]] = None, cache_dir: Optional[str] = None
 ) -> Dict[str, LightevalTask]:
     """
     Create configuration tasks based on the provided meta_table.
@@ -255,18 +254,19 @@ def create_config_tasks(
 
         return LightevalTaskFromConfig
 
-    meta_table = {name: config for name, config in dir(default_tasks) if isinstance(config, LightevalTaskConfig)}
+    if meta_table is None:
+        meta_table = [config for config in vars(default_tasks).items() if isinstance(config, LightevalTaskConfig)]
 
     tasks_with_config = {}
     # Every task is renamed suite|task, if the suite is in DEFAULT_SUITE
-    for line in meta_table:
-        if not any(suite in line["suite"] for suite in DEFAULT_SUITES):
+    for config in meta_table:
+        if not any(suite in config.suite for suite in DEFAULT_SUITES):
             hlog_warn(
-                f"This evaluation is not in any known suite: {line['name']} is in {line['suite']}, not in {DEFAULT_SUITES}. Skipping."
+                f"This evaluation is not in any known suite: {config.name} is in {config.suite}, not in {DEFAULT_SUITES}. Skipping."
             )
             continue
-        for suite in line["suite"]:
+        for suite in config.suite:
             if suite in DEFAULT_SUITES:
-                tasks_with_config[f"{suite}|{line['name']}"] = LightevalTaskConfig(**line)
+                tasks_with_config[f"{suite}|{config.name}"] = config
 
     return {task: create_task(task, cfg, cache_dir=cache_dir) for task, cfg in tasks_with_config.items()}
