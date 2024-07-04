@@ -631,18 +631,14 @@ class JudgeLLM:
         OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
         self.multi_turn = multi_turn
 
-        try:
-            self.judge = JudgeOpenAI(
-                model=judge_model_name,
-                seed=42,
-                temperature=0.0,
-                templates_path=template_path,
-                openai_api_key=OPENAI_API_KEY,
-                multi_turn=multi_turn,
-            )
-        except Exception as e:
-            print(f"Could not initialize the JudgeOpenAI model:\n{e}")
-            self.judge = None
+        self.judge = JudgeOpenAI(
+            model=judge_model_name,
+            seed=42,
+            temperature=0.0,
+            templates_path=template_path,
+            openai_api_key=OPENAI_API_KEY,
+            multi_turn=multi_turn,
+        )
 
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
         """
