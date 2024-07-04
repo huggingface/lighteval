@@ -23,9 +23,11 @@
 # flake8: noqa: C901
 import os
 import random
+from argparse import Namespace
 from typing import Optional, Type
 
 import numpy as np
+import torch
 
 from lighteval.evaluator import evaluate, make_results_table
 from lighteval.logging.evaluation_tracker import EvaluationTracker
@@ -64,7 +66,15 @@ def main(
     config_cls: Type = Config,
     model_config_cls: Optional[Type] = None,
     model_cls: Optional[Type] = None,
+    args: Optional[Namespace] = None,  # accept args for more flexibility
 ):
+    if args is not None:
+        checkpoint_config_path = (
+            args.checkpoint_config_path if checkpoint_config_path is None else checkpoint_config_path
+        )
+        lighteval_config_path = args.lighteval_override if lighteval_config_path is None else lighteval_config_path
+        cache_dir = args.cache_dir if cache_dir is None else cache_dir
+
     if cache_dir is None:
         cache_dir = CACHE_DIR
 
@@ -82,6 +92,7 @@ def main(
             model_config_class=model_config_cls,
             skip_unused_config_keys=True,
             skip_null_keys=True,
+            igonore_all_unused_keys=True,
         )
 
         if lighteval_config_path:
@@ -89,6 +100,9 @@ def main(
             nanotron_config.lighteval = lighteval_config
         else:
             lighteval_config = nanotron_config.lighteval
+
+        if args.max_samples is not None:
+            lighteval_config.tasks.max_samples = args.max_samples
 
         parallel_context = ParallelContext(
             tensor_parallel_size=lighteval_config.parallelism.tp,
@@ -157,8 +171,13 @@ def main(
 
     with htrack_block("Setting seeds and waiting for all processes"):
         hlog(f"setting seed to {SEED} for random and numpy")
+
+        torch.manual_seed(SEED)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed(SEED)
         random.seed(SEED)
         np.random.seed(SEED)
+
         dist.barrier()
 
     with htrack_block("Evaluation"):
