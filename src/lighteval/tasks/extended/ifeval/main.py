@@ -157,10 +157,8 @@ ifeval_metrics = SampleLevelMetricGrouping(
 )
 
 
-_TASKS = [ifeval]
+TASKS_TABLE = [ifeval]
 
-# Convert to dict for lighteval
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
 extend_enum(Metrics, "ifeval_metric", ifeval_metrics)
 
 if __name__ == "__main__":

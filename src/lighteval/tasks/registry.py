@@ -108,7 +108,7 @@ class Registry:
         )
 
     def get_task_dict(
-        self, task_name_list: List[str], custom_tasks: Optional[Union[str, ModuleType]] = None
+        self, task_name_list: List[str], custom_tasks: Optional[Union[str, Path, ModuleType]] = None
     ) -> Dict[str, LightevalTask]:
         """
         Get a dictionary of tasks based on the task name list.
@@ -128,7 +128,7 @@ class Registry:
         # Import custom tasks provided by the user
         custom_tasks_registry = None
         custom_tasks_module = []
-        custom_tasks = []
+        TASKS_TABLE = []
         if custom_tasks is not None:
             custom_tasks_module.append(create_custom_tasks_module(custom_tasks=custom_tasks))
         if can_load_extended_tasks():
@@ -138,10 +138,10 @@ class Registry:
             hlog_warn(CANNOT_USE_EXTENDED_TASKS_MSG)
 
         for module in custom_tasks_module:
-            custom_tasks.extend(module.TASKS_TABLE)
+            TASKS_TABLE.extend(module.TASKS_TABLE)
 
-        if len(custom_tasks) > 0:
-            custom_tasks_registry = create_config_tasks(meta_table=custom_tasks, cache_dir=self.cache_dir)
+        if len(TASKS_TABLE) > 0:
+            custom_tasks_registry = create_config_tasks(meta_table=TASKS_TABLE, cache_dir=self.cache_dir)
             hlog(custom_tasks_registry)
 
         # Select relevant tasks given the subset asked for by the user
@@ -255,7 +255,7 @@ def create_config_tasks(
         return LightevalTaskFromConfig
 
     if meta_table is None:
-        meta_table = [config for config in vars(default_tasks).items() if isinstance(config, LightevalTaskConfig)]
+        meta_table = [config for config in vars(default_tasks).values() if isinstance(config, LightevalTaskConfig)]
 
     tasks_with_config = {}
     # Every task is renamed suite|task, if the suite is in DEFAULT_SUITE
