@@ -679,7 +679,7 @@ _TASKS += AGIEVAL_TASKS
 EARLY_SIGNAL_TASKS = ",".join([t[1] for t in COMMON_SENSE_REASONING_STRING] + [t[1] for t in MMLU_STRING])
 
 # Convert to dict for lighteval
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
+TASKS_TABLE = _TASKS
 # You can have a few pre-organised groups of tasks
 TASKS_GROUPS = {
     "all": ",".join(t[1] for t in _TASKS_STRINGS),

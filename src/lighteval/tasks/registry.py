@@ -28,9 +28,9 @@ from pprint import pformat
 from types import ModuleType
 from typing import Dict, List, Optional, Tuple, Union
 
-from datasets import Dataset
 from datasets.load import dataset_module_factory
 
+import lighteval.tasks.default_tasks as default_tasks
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.tasks.extended import AVAILABLE_EXTENDED_TASKS_MODULES
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
@@ -56,8 +56,6 @@ DEFAULT_SUITES = [
 ]
 
 TRUNCATE_FEW_SHOTS_DEFAULTS = True
-
-TABLE_PATH = os.path.join(os.path.dirname(__file__), "tasks_table.jsonl")
 
 
 class Registry:
@@ -110,7 +108,7 @@ class Registry:
         )
 
     def get_task_dict(
-        self, task_name_list: List[str], custom_tasks: Optional[Union[str, ModuleType]] = None
+        self, task_name_list: List[str], custom_tasks: Optional[Union[str, Path, ModuleType]] = None
     ) -> Dict[str, LightevalTask]:
         """
         Get a dictionary of tasks based on the task name list.
@@ -155,7 +153,7 @@ class Registry:
         return tasks_dict
 
 
-def create_custom_tasks_module(custom_tasks: Union[str, ModuleType]) -> ModuleType:
+def create_custom_tasks_module(custom_tasks: Union[str, Path, ModuleType]) -> ModuleType:
     """Creates a custom task module to load tasks defined by the user in their own file.
 
     Args:
@@ -234,15 +232,15 @@ def taskinfo_selector(
 
 
 def create_config_tasks(
-    meta_table: Optional[Dataset] = None, cache_dir: Optional[str] = None
+    meta_table: Optional[List[LightevalTaskConfig]] = None, cache_dir: Optional[str] = None
 ) -> Dict[str, LightevalTask]:
     """
     Create configuration tasks based on the provided meta_table.
 
     Args:
-        meta_table (Optional[Dataset]): meta_table containing task
+        meta_table: meta_table containing task
             configurations. If not provided, it will be loaded from TABLE_PATH.
-        cache_dir (Optional[str]): Directory to store cached data. If not
+        cache_dir: Directory to store cached data. If not
             provided, the default cache directory will be used.
 
     Returns:
@@ -257,18 +255,18 @@ def create_config_tasks(
         return LightevalTaskFromConfig
 
     if meta_table is None:
-        meta_table = Dataset.from_json(TABLE_PATH)
+        meta_table = [config for config in vars(default_tasks).values() if isinstance(config, LightevalTaskConfig)]
 
     tasks_with_config = {}
     # Every task is renamed suite|task, if the suite is in DEFAULT_SUITE
-    for line in meta_table:
-        if not any(suite in line["suite"] for suite in DEFAULT_SUITES):
+    for config in meta_table:
+        if not any(suite in config.suite for suite in DEFAULT_SUITES):
             hlog_warn(
-                f"This evaluation is not in any known suite: {line['name']} is in {line['suite']}, not in {DEFAULT_SUITES}. Skipping."
+                f"This evaluation is not in any known suite: {config.name} is in {config.suite}, not in {DEFAULT_SUITES}. Skipping."
             )
             continue
-        for suite in line["suite"]:
+        for suite in config.suite:
             if suite in DEFAULT_SUITES:
-                tasks_with_config[f"{suite}|{line['name']}"] = LightevalTaskConfig(**line)
+                tasks_with_config[f"{suite}|{config.name}"] = config
 
     return {task: create_task(task, cfg, cache_dir=cache_dir) for task, cfg in tasks_with_config.items()}

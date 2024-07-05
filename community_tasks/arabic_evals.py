@@ -577,7 +577,7 @@ def sciq_prompt_arabic(line, task_name: str = None):
     )
 
 
-_TASKS = (
+TASKS_TABLE = (
     ARABIC_MMLU_TASKS
     + ACVA_TASKS
     + ALGHAFA_TASKS
@@ -595,9 +595,6 @@ _TASKS = (
     + [sciq_ar_task]
 )
 
-# Convert to dict for lighteval
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
-
 if __name__ == "__main__":
-    print(t["name"] for t in TASKS_TABLE)
+    print(t.name for t in TASKS_TABLE)
     print(len(TASKS_TABLE))
