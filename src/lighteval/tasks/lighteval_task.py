@@ -60,8 +60,6 @@ from lighteval.utils import NO_OPENAI_ERROR_MSG, as_list, is_openai_available
 if TYPE_CHECKING:
     from lighteval.logging.evaluation_tracker import EvaluationTracker
 
-FormatterType = Callable[[dict, str], Doc]
-
 
 @dataclass
 class LightevalTaskConfig:
@@ -70,7 +68,7 @@ class LightevalTaskConfig:
     Arguments:
         name (str): Short name of the evaluation task.
         suite (list[str]): Evaluation suites to which the task belongs.
-        prompt_function (FormatterType): Function used to create the [`Doc`] samples from each line of the evaluation dataset.
+        prompt_function (Callable[[dict, str], Doc]): Function used to create the [`Doc`] samples from each line of the evaluation dataset.
         hf_repo (str): Path of the hub dataset repository containing the evaluation information.
         hf_subset (str): Subset used for the current task, will be default if none is selected.
         hf_avail_splits (list[str]): All the available splits in the evaluation dataset
@@ -90,7 +88,7 @@ class LightevalTaskConfig:
     """
 
     name: str
-    prompt_function: FormatterType
+    prompt_function: Callable[[dict, str], Doc]
     hf_repo: str
     hf_subset: str
     metric: Tuple[Union[str, Metrics]]
@@ -204,7 +202,7 @@ class LightevalTask:
         self.num_samples = [1] + [
             int(metric.replace("maj_at_", "").split("_")[0]) for metric in self.metrics if "maj_at_" in metric
         ]
-        if not isinstance(cfg.prompt_function, FormatterType):
+        if not isinstance(cfg.prompt_function, Callable):
             raise TypeError(
                 f"Prompt formatting function ({str(cfg.prompt_function)}) should have been passed as a callable, was {type(cfg.prompt_function)} instead."
             )
