@@ -88,7 +88,7 @@ class LightevalTaskConfig:
     """
 
     name: str
-    prompt_function: Callable[[dict, str], Doc]
+    prompt_function: Callable  # [[dict, str], Doc]
     hf_repo: str
     hf_subset: str
     metric: Tuple[Union[str, Metrics]]
