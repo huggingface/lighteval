@@ -35,6 +35,7 @@ import requests
 from aenum import extend_enum
 from scipy.optimize import minimize
 
+import lighteval.tasks.tasks_prompt_formatting as prompt
 from lighteval.metrics import Metrics
 from lighteval.metrics.metrics import CorpusLevelMetricGrouping
 from lighteval.metrics.metrics_sample import ExactMatches, LoglikelihoodAcc
@@ -186,7 +187,7 @@ task_params = [
         "name": "winogrande",
         "dataset": "tinyBenchmarks/tinyWinogrande",
         "subset": "winogrande_xl",
-        "prompt": "winogrande",
+        "prompt": prompt.winogrande,
         "splits": ["train", "validation", "test"],
         "evaluation_split": ["validation"],
     },
@@ -194,7 +195,7 @@ task_params = [
         "name": "arc",
         "dataset": "tinyBenchmarks/tinyAI2_arc",
         "subset": "ARC-Challenge",
-        "prompt": "arc",
+        "prompt": prompt.arc,
         "splits": ["train", "validation", "test"],
         "evaluation_split": ["validation"],
     },
@@ -202,7 +203,7 @@ task_params = [
         "name": "hellaswag",
         "dataset": "tinyBenchmarks/tinyHellaswag",
         "subset": "default",
-        "prompt": "hellaswag_harness",
+        "prompt": prompt.hellaswag_harness,
         "splits": ["train", "validation", "test"],
         "evaluation_split": ["validation"],
     },
@@ -210,7 +211,7 @@ task_params = [
         "name": "mmlu",
         "dataset": "tinyBenchmarks/tinyMMLU",
         "subset": "all",
-        "prompt": "mmlu_harness",
+        "prompt": prompt.mmlu_harness,
         "splits": ["validation", "dev", "test"],
         "evaluation_split": ["test"],
     },
@@ -218,7 +219,7 @@ task_params = [
         "name": "truthfulqa",
         "dataset": "tinyBenchmarks/tinyTruthfulQA",
         "subset": "multiple_choice",
-        "prompt": "truthful_qa_multiple_choice",
+        "prompt": prompt.truthful_qa_multiple_choice,
         "splits": ["validation"],
         "evaluation_split": ["validation"],
     },
@@ -226,7 +227,7 @@ task_params = [
         "name": "gsm8k",
         "dataset": "tinyBenchmarks/tinyGSM8k",
         "subset": "main",
-        "prompt": "gsm8k",
+        "prompt": prompt.gsm8k,
         "splits": ["train", "test"],
         "evaluation_split": ["test"],
     },
