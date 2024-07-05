@@ -51,7 +51,12 @@ def get_parser():
     parser.add_argument(
         "--public_run", default=False, action="store_true", help="Push results and details to a public repo"
     )
-    parser.add_argument("--cache_dir", type=str, default=CACHE_DIR)
+    parser.add_argument(
+        "--cache_dir",
+        type=str,
+        default=CACHE_DIR,
+        help="Cache directory for downloaded datasets & model, defaults to `HF_HOME` environment variable",
+    )
     parser.add_argument(
         "--results_org",
         type=str,
@@ -65,13 +70,13 @@ def get_parser():
         "--custom_tasks",
         type=str,
         default=None,
-        help="Path to a file with custom tasks (a TASK list of dict and potentially prompt formating functions)",
+        help="Path to a file with custom tasks (a TASK list of dict and potentially prompt formatting functions)",
     )
     group.add_argument(
         "--tasks",
         type=str,
         default=None,
-        help="Id of a task, e.g. 'original|mmlu:abstract_algebra|5|0' or path to a texte file with a list of tasks",
+        help="Comma-separated ids of tasks, e.g. 'original|mmlu:abstract_algebra|5' or path to a text file with a list of tasks",
     )
     parser.add_argument("--num_fewshot_seeds", type=int, default=1, help="Number of trials the few shots")
     return parser
