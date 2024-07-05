@@ -587,7 +587,7 @@ class Metrics(Enum):
             if isinstance(metric.value, MetricGrouping):
                 res.update(metric.value.higher_is_better)
             else:
-                res[metric.value.metric] = metric.value.higher_is_better
+                res[metric.value.metric_name] = metric.value.higher_is_better
         return res
 
     @staticmethod
@@ -613,5 +613,5 @@ class Metrics(Enum):
         for metric in Metrics:
             if metric.value.category == MetricCategory.IGNORED:
                 continue
-            res.extend(as_list(metric.value.metric))
+            res.extend(as_list(metric.value.metric_name))
         return res
