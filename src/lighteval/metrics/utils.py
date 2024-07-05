@@ -69,7 +69,7 @@ class Metric:
             return {}
         if isinstance(self, MetricGrouping):
             return self.sample_level_fn(**kwargs)  # result, formatted_doc,
-        return {self.name: self.sample_level_fn(**kwargs)}  # result, formatted_doc,
+        return {self.metric_name: self.sample_level_fn(**kwargs)}  # result, formatted_doc,
 
 
 @dataclass
