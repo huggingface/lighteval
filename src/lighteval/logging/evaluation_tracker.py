@@ -516,7 +516,7 @@ class EvaluationTracker:
         self, results: dict[str, dict[str, float]], details: dict[str, DetailsLogger.CompiledDetail]
     ):
         if not is_nanotron_available():
-            hlog_warn("You cannot push results to tensorboard with having nanotron installed. Skipping")
+            hlog_warn("You cannot push results to tensorboard without having nanotron installed. Skipping")
             return
         config: Config = self.general_config_logger.config
         lighteval_config = config.lighteval

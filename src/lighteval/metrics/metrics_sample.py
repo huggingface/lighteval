@@ -686,7 +686,7 @@ class JudgeLLM:
         """
         Compute the score of a generative task using a llm as a judge.
         The generative task can be multiturn with 2 turns max, in that case, we
-        return scores for turn 1 and 2. Also returns user_prompt and judgment
+        return scores for turn 1 and 2. Also returns user_prompt and judgement
         which are ignored later by the aggregator.
         """
 
