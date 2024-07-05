@@ -29,9 +29,18 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
+def aimo_prompt(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        choices=[str(line["answer"])],
+        gold_index=0,
+        query=line["problem"],
+    )
+
+
 task = LightevalTaskConfig(
     name="aimo_progress_prize_1",
-    prompt_function="aimo_prompt",
+    prompt_function=aimo_prompt,
     suite=["community"],
     hf_subset="",
     hf_repo="lighteval/aimo_progress_prize_1",
@@ -43,16 +52,6 @@ task = LightevalTaskConfig(
     generation_size=2048,
     stop_sequence=None,
 )
-
-
-def aimo_prompt(line, task_name: str = None):
-    return Doc(
-        task_name=task_name,
-        choices=[str(line["answer"])],
-        gold_index=0,
-        query=line["problem"],
-    )
-
 
 # STORE YOUR EVALS
 TASKS_TABLE = [task]
