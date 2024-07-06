@@ -57,7 +57,8 @@ def get_answer_normalizer(lang: LANGS):
         elif lang == "zh":
             return text  # Chinese does not have formal articles
         else:
-            raise Exception("Unknown Language {}".format(lang))
+            # TODO: raise Exception("Unknown Language {}".format(lang))
+            return text
 
     def white_space_fix(text):
         if lang in WHITESPACE_LANGS:
@@ -65,7 +66,9 @@ def get_answer_normalizer(lang: LANGS):
         elif lang in MIXED_SEGMENTATION_LANGS:
             tokens = mixed_segmentation(text)
         else:
-            raise Exception("Unknown Language {}".format(lang))
+            # TODO: raise Exception("Unknown Language {}".format(lang))
+            # assume whitespace
+            tokens = whitespace_tokenize(text)
         return " ".join([t for t in tokens if t.strip() != ""])
 
     def remove_punc(text):
