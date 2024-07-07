@@ -323,6 +323,7 @@ class ROUGE:
         normalize_gold: callable = None,
         normalize_pred: callable = None,
         aggregation_function: callable = None,
+        tokenizer: object = None,
     ):
         """A ROUGE wrapper method. Relies on `rouge_scorer`.
 
@@ -337,6 +338,8 @@ class ROUGE:
                 Defaults to None if no normalization is applied.
             normalize_pred (callable, optional): Function to use to normalize the predicted strings.
                 Defaults to None if no normalization is applied.
+            tokenizer (object, optional): An object with `tokenize` method to be used by rouge scorer. If None, rouge-scorer's
+                default tokenizer will be used.
         """
         if aggregation_function and bootstrap:
             hlog_warn("Can't use both bootstrapping and an aggregation function in Rouge. Keeping bootstrap.")
@@ -349,7 +352,7 @@ class ROUGE:
             raise ValueError(
                 f"Rouge was initialised with method {methods}, which is not in {','.join(self.ALLOWED_ROUGE_METHODS)}"
             )
-        self.scorer = rouge_scorer.RougeScorer([methods])
+        self.scorer = rouge_scorer.RougeScorer([methods], tokenizer=tokenizer)
         self.multiple_golds = multiple_golds
         self.bootstrap = bootstrap
         self.normalize_gold = normalize_gold
@@ -416,7 +419,17 @@ class BertScore:
         normalize_pred: callable = None,
     ):
         """A BERT scorer class. Relies on some called extracted from `bert-score`. By default, will use the
-        `microsoft/deberta-large-mnli` as scorer
+        `microsoft/deberta-large-mnli` as scorer. For each tokenized (pred, target) pair, it computes Precision,
+        Recall and F1 as following:
+
+            Precision = \sum_{t=1}^{len(pred)} \div{max(Cos.Sim.(pred_t, target))}{IDF(pred_t)}
+
+            Recall = \sum_{t=1}^{len(target)} \div{max(Cos.Sim.(target_t, pred))}{IDF(target_t)}
+
+            F1 = \div{Precision * Recall}{Precision + Recall}
+        
+        in which `Cos.Sim.` is the Cosine Similarity metric and `IDF(.)` represents the Inverse Document
+        Frequency of its input token. It defaults to 1 for all tokens and 0 for EOS and SEP tokens.
 
         Args:
             normalize_gold (callable, optional): Function to use to normalize the reference strings.
@@ -558,19 +571,19 @@ class StringDistance:
         self.strip_prediction = strip_prediction
         self.sample_aggregations = {"longest_common_prefix_length": max, "edit_distance": min, "edit_similarity": max}
 
-    def compute(self, gold: list[str], predictions: list[str], **kwargs) -> dict:
+    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> dict:
         """Computes all the requested metrics on the golds and prediction.
 
         Args:
-            gold (list[str]): A list of possible golds. If it contains more than one item, only the first one is kept.
+            golds (list[str]): A list of possible golds. If it contains more than one item, only the first one is kept.
             predictions (list[str]): Predicted strings.
 
         Returns:
            dict: The different scores computed
         """
-        if len(gold) > 0:
+        if len(golds) > 1:
             hlog_warn("Provided more than one gold to compute a string distance metric. Just using the first one.")
-        reference = gold[0]
+        reference = golds[0]
 
         result = {m: [] for m in self.metric_types}
         for sequence in predictions:
