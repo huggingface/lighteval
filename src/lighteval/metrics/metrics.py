@@ -195,7 +195,6 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    #How is to rename it to bow_f1_score?
     f1_score = SampleLevelMetric(
         metric="f1",
         sample_level_fn=F1_score().compute,
@@ -209,7 +208,6 @@ class Metrics(Enum):
         sample_level_fn=GenerativePreparator().prepare,
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.ACCURACY,
-        # CorpusLevelF1Score.compute expects LogprobCorpusMetricInput as input
         corpus_level_fn=CorpusLevelF1Score(average="macro").compute,
         higher_is_better=True,
     )
