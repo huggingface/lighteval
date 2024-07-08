@@ -28,7 +28,7 @@ from typing import Optional
 from transformers import AutoTokenizer
 
 from lighteval.models.abstract_model import LightevalModel
-from lighteval.models.model_config import EnvConfig
+from lighteval.models.model_config import EnvConfig, DummyModelConfig
 from lighteval.models.model_output import LoglikelihoodSingleTokenReturn, LoglikelihoodReturn, GenerateReturn
 from lighteval.tasks.requests import LoglikelihoodSingleTokenRequest, LoglikelihoodRollingRequest, LoglikelihoodRequest, \
     GreedyUntilRequest
@@ -39,11 +39,12 @@ class DummyModel(LightevalModel):
 
     def __init__(
             self,
-            config,
+            config: DummyModelConfig,
             env_config: EnvConfig,
     ):
         self.config = config
         self.env_config = env_config
+        self._random = random.Random(self.config.seed)
         self._tokenizer = None
 
     @property
@@ -66,17 +67,17 @@ class DummyModel(LightevalModel):
 
     def loglikelihood(self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None) -> list[
         LoglikelihoodReturn]:
-        return [LoglikelihoodReturn((-random.random(), False))
+        return [LoglikelihoodReturn((-self._random.random(), False))
                 for _ in requests]
 
     def loglikelihood_rolling(self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None) -> \
             list[LoglikelihoodReturn]:
-        return [LoglikelihoodReturn((-random.random(), False))
+        return [LoglikelihoodReturn((-self._random.random(), False))
                 for _ in requests]
 
     def loglikelihood_single_token(self, requests: list[LoglikelihoodSingleTokenRequest],
                                    override_bs: Optional[int] = None) -> list[LoglikelihoodSingleTokenReturn]:
         return [
-            LoglikelihoodSingleTokenReturn(result=[-random.random() for _ in req.tokenized_continuation])
+            LoglikelihoodSingleTokenReturn(result=[-self._random.random() for _ in req.tokenized_continuation])
             for req in requests
         ]

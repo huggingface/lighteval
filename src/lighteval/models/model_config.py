@@ -22,7 +22,7 @@
 
 from argparse import Namespace
 from dataclasses import dataclass
-from typing import Dict, Optional, Union, TypeAlias
+from typing import Dict, Optional, Union
 
 import torch
 import yaml
@@ -205,7 +205,7 @@ class TGIModelConfig:
 
 @dataclass
 class DummyModelConfig:
-    pass
+    seed: 42
 
 
 @dataclass
@@ -258,10 +258,7 @@ class InferenceEndpointModelConfig:
         return ["namespace", "env_vars", "image_url"]
 
 
-ModelConfig: TypeAlias = Union[BaseModelConfig, AdapterModelConfig, DeltaModelConfig, TGIModelConfig, InferenceEndpointModelConfig, DummyModelConfig]
-
-
-def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]) -> ModelConfig:  # noqa: C901
+def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]) -> Union[BaseModelConfig, AdapterModelConfig, DeltaModelConfig, TGIModelConfig, InferenceEndpointModelConfig, DummyModelConfig]:  # noqa: C901
     """
     Create a model configuration based on the provided arguments.
 
@@ -270,7 +267,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
         accelerator (Union[Accelerator, None]): accelerator to use for model training.
 
     Returns:
-        ModelConfig: model configuration.
+        Union[BaseModelConfig, AdapterModelConfig, DeltaModelConfig, TGIModelConfig, InferenceEndpointModelConfig, DummyModelConfig]: model configuration.
 
     Raises:
         ValueError: If both an inference server address and model arguments are provided.
@@ -279,10 +276,11 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
         ValueError: If a base model is specified when not using delta weights or adapter weights.
     """
     if args.model_args:
-        if args.model_args == "dummy":
-            return DummyModelConfig()
+        args_dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.model_args.split(",")}
 
-        args_dict = {k.split("=")[0]: k.split("=")[1] for k in args.model_args.split(",")}
+        if args_dict.pop("dummy", False):
+            return DummyModelConfig(**args_dict)
+
         args_dict["accelerator"] = accelerator
         args_dict["use_chat_template"] = args.use_chat_template
 
