@@ -42,9 +42,9 @@ class DummyModel(LightevalModel):
     """Dummy model to generate random baselines."""
 
     def __init__(
-            self,
-            config: DummyModelConfig,
-            env_config: EnvConfig,
+        self,
+        config: DummyModelConfig,
+        env_config: EnvConfig,
     ):
         self.config = config
         self.env_config = env_config
@@ -65,22 +65,24 @@ class DummyModel(LightevalModel):
     def max_length(self) -> int:
         return 2048
 
-    def greedy_until(self, requests: list[GreedyUntilRequest], override_bs: Optional[int] = None) -> list[
-        GenerateReturn]:
+    def greedy_until(
+        self, requests: list[GreedyUntilRequest], override_bs: Optional[int] = None
+    ) -> list[GenerateReturn]:
         return [GenerateReturn(result="random baseline") for _ in range(len(requests))]
 
-    def loglikelihood(self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None) -> list[
-        LoglikelihoodReturn]:
-        return [LoglikelihoodReturn((-self._random.random(), False))
-                for _ in requests]
+    def loglikelihood(
+        self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
+    ) -> list[LoglikelihoodReturn]:
+        return [LoglikelihoodReturn((-self._random.random(), False)) for _ in requests]
 
-    def loglikelihood_rolling(self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None) -> \
-            list[LoglikelihoodReturn]:
-        return [LoglikelihoodReturn((-self._random.random(), False))
-                for _ in requests]
+    def loglikelihood_rolling(
+        self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
+    ) -> list[LoglikelihoodReturn]:
+        return [LoglikelihoodReturn((-self._random.random(), False)) for _ in requests]
 
-    def loglikelihood_single_token(self, requests: list[LoglikelihoodSingleTokenRequest],
-                                   override_bs: Optional[int] = None) -> list[LoglikelihoodSingleTokenReturn]:
+    def loglikelihood_single_token(
+        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: Optional[int] = None
+    ) -> list[LoglikelihoodSingleTokenReturn]:
         return [
             LoglikelihoodSingleTokenReturn(result=[-self._random.random() for _ in req.tokenized_continuation])
             for req in requests

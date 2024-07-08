@@ -258,7 +258,16 @@ class InferenceEndpointModelConfig:
         return ["namespace", "env_vars", "image_url"]
 
 
-def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]) -> Union[BaseModelConfig, AdapterModelConfig, DeltaModelConfig, TGIModelConfig, InferenceEndpointModelConfig, DummyModelConfig]:  # noqa: C901
+def create_model_config(
+    args: Namespace, accelerator: Union["Accelerator", None]
+) -> Union[
+    BaseModelConfig,
+    AdapterModelConfig,
+    DeltaModelConfig,
+    TGIModelConfig,
+    InferenceEndpointModelConfig,
+    DummyModelConfig,
+]:  # noqa: C901
     """
     Create a model configuration based on the provided arguments.
 

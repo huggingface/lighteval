@@ -56,7 +56,14 @@ class ModelInfo:
 
 
 def load_model(  # noqa: C901
-    config: Union[BaseModelConfig, AdapterModelConfig, DeltaModelConfig, TGIModelConfig, InferenceEndpointModelConfig, DummyModelConfig],
+    config: Union[
+        BaseModelConfig,
+        AdapterModelConfig,
+        DeltaModelConfig,
+        TGIModelConfig,
+        InferenceEndpointModelConfig,
+        DummyModelConfig,
+    ],
     env_config: EnvConfig,
 ) -> Tuple[Union[BaseModel, AdapterModel, DeltaModel, ModelClient, DummyModel], ModelInfo]:
     """Will load either a model from an inference server or a model from a checkpoint, depending
