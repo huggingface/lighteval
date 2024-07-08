@@ -91,7 +91,8 @@ def load_model(  # noqa: C901
     if isinstance(config, BaseModelConfig):
         return load_model_with_accelerate_or_default(config=config, env_config=env_config)
 
-    return load_dummy_model(config=config, env_config=env_config)
+    if isinstance(config, DummyModelConfig):
+        return load_dummy_model(config=config, env_config=env_config)
 
 
 def load_model_with_tgi(config: TGIModelConfig):

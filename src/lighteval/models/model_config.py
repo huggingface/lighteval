@@ -258,7 +258,7 @@ class InferenceEndpointModelConfig:
         return ["namespace", "env_vars", "image_url"]
 
 
-def create_model_config(
+def create_model_config(  # noqa: C901
     args: Namespace, accelerator: Union["Accelerator", None]
 ) -> Union[
     BaseModelConfig,
@@ -267,7 +267,7 @@ def create_model_config(
     TGIModelConfig,
     InferenceEndpointModelConfig,
     DummyModelConfig,
-]:  # noqa: C901
+]:
     """
     Create a model configuration based on the provided arguments.
 
