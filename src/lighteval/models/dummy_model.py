@@ -1,19 +1,17 @@
 # MIT License
-import random
-from typing import Optional
-
+#
 # Copyright (c) 2024 The HuggingFace Team
-
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -23,6 +21,11 @@ from typing import Optional
 # SOFTWARE.
 
 # inspired by https://github.com/EleutherAI/lm-evaluation-harness/blob/main/lm_eval/models/dummy.py
+
+import random
+from typing import Optional
+
+from transformers import AutoTokenizer
 
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.model_config import EnvConfig
@@ -41,18 +44,21 @@ class DummyModel(LightevalModel):
     ):
         self.config = config
         self.env_config = env_config
+        self._tokenizer = None
 
     @property
     def tokenizer(self):
-        return NotImplemented
+        if not self._tokenizer:
+            self._tokenizer = AutoTokenizer.from_pretrained("gpt2")
+        return self._tokenizer
 
     @property
     def add_special_tokens(self):
-        return NotImplemented
+        return False
 
     @property
     def max_length(self) -> int:
-        return NotImplemented
+        return 2048
 
     def greedy_until(self, requests: list[GreedyUntilRequest], override_bs: Optional[int] = None) -> list[
         GenerateReturn]:
@@ -72,12 +78,3 @@ class DummyModel(LightevalModel):
             LoglikelihoodSingleTokenReturn(result=[-random.random() for _ in req.tokenized_continuation])
             for req in requests
         ]
-
-    def tok_encode(self, str_to_encode: str | list[str], add_special_tokens: Optional[bool] = None):
-        return [1]
-
-    def tok_encode_pair(self, context, continuation):
-        return [1], [2]
-
-    def tok_decode(self, tokens) -> list[str]:
-        return ["random baseline"]
