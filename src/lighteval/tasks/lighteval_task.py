@@ -468,7 +468,7 @@ class LightevalTask:
                     example_index=document_id_seed,
                     request_index=0,
                     context=context,
-                    stop_sequence=self.stop_sequence,
+                    stop_sequence=self.stop_sequence or [],
                     generation_size=self.generation_size,
                     num_samples=max(self.num_samples),  # If we have several samplings to apply, we use the max
                     use_logits=use_logits,
@@ -502,7 +502,7 @@ class LightevalTask:
                     example_index=document_id_seed,
                     request_index=0,
                     context=context,
-                    stop_sequence=self.stop_sequence,
+                    stop_sequence=self.stop_sequence or [],
                     generation_size=self.generation_size,
                 )
             ]

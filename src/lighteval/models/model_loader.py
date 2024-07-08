@@ -116,13 +116,14 @@ def load_model_with_tgi(config: TGIModelConfig):
     return model, model_info
 
 
-def load_model_with_inference_endpoints(config: InferenceEndpointModelConfig, env_config: EnvConfig):
+def load_model_with_inference_endpoints(config: Union[InferenceEndpointModelConfig, InferenceModelConfig],
+                                        env_config: EnvConfig):
     hlog("Spin up model using inference endpoint.")
     model = InferenceEndpointModel(config=config, env_config=env_config)
     model_info = ModelInfo(
         model_name=model.name,
         model_sha=model.revision,
-        model_dtype=config.model_dtype or "default",
+        model_dtype=getattr(config, "model_dtype", "default"),
         model_size=-1,
     )
     return model, model_info
