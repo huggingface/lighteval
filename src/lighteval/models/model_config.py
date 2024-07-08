@@ -205,7 +205,7 @@ class TGIModelConfig:
 
 @dataclass
 class DummyModelConfig:
-    seed: 42
+    seed: int = 42
 
 
 @dataclass
