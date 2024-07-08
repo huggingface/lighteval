@@ -191,6 +191,7 @@ def is_peft_available() -> bool:
 NO_PEFT_ERROR_MSG = "You are trying to use adapter weights models, for which you need `peft`, which is not available in your environment. Please install it using pip."
 
 
+
 def is_tensorboardX_available() -> bool:
     return importlib.util.find_spec("tensorboardX") is not None
 
@@ -198,6 +199,12 @@ def is_tensorboardX_available() -> bool:
 NO_TENSORBOARDX_WARN_MSG = (
     "You are trying to log using tensorboardX, which is not installed. Please install it using pip. Skipping."
 )
+
+def is_openai_available() -> bool:
+    return importlib.util.find_spec("openai") is not None
+
+
+NO_OPENAI_ERROR_MSG = "You are trying to use an Open AI LLM as a judge, for which you need `openai`, which is not available in your environment. Please install it using pip."
 
 
 def can_load_extended_tasks() -> bool:
