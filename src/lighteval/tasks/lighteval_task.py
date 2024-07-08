@@ -591,6 +591,18 @@ class LightevalTask:
                     request_reason=[MetricCategory.LLM_AS_JUDGE_MULTI_TURN],
                 )
             ]
+        if self.has_metric_category[MetricCategory.LLM_AS_JUDGE]:
+            requests[RequestType.GREEDY_UNTIL] += [
+                GreedyUntilRequest(
+                    task_name=current_task_name,
+                    example_index=document_id_seed,
+                    request_index=0,
+                    context=context,
+                    stop_sequence=self.stop_sequence,
+                    generation_size=self.generation_size,
+                    num_samples=1,
+                )
+            ]
 
         return requests
 
