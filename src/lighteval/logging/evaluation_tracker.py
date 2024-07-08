@@ -495,7 +495,7 @@ class EvaluationTracker:
         if not is_tensorboardX_available:
             hlog_warn(NO_TENSORBOARDX_WARN_MSG)
             return
-          
+
         if not is_nanotron_available():
             hlog_warn("You cannot push results to tensorboard without having nanotron installed. Skipping")
             return
