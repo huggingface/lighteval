@@ -65,7 +65,7 @@ def load_model(  # noqa: C901
         DummyModelConfig,
     ],
     env_config: EnvConfig,
-) -> Tuple[Union[BaseModel, AdapterModel, DeltaModel, ModelClient, DummyModel], ModelInfo]:  # noqa: C901
+) -> Tuple[Union[BaseModel, AdapterModel, DeltaModel, ModelClient, DummyModel], ModelInfo]:
     """Will load either a model from an inference server or a model from a checkpoint, depending
     on the config type.
 
@@ -91,8 +91,7 @@ def load_model(  # noqa: C901
     if isinstance(config, BaseModelConfig):
         return load_model_with_accelerate_or_default(config=config, env_config=env_config)
 
-    if isinstance(config, DummyModelConfig):
-        return load_dummy_model(config=config, env_config=env_config)
+    return load_dummy_model(config=config, env_config=env_config)
 
 
 def load_model_with_tgi(config: TGIModelConfig):
