@@ -66,15 +66,18 @@ class DummyModel(LightevalModel):
 
     def loglikelihood(self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None) -> list[
         LoglikelihoodReturn]:
-        return [LoglikelihoodReturn((-random.random(), False)) for _ in requests]
+        return [LoglikelihoodReturn((-random.random(), False), truncated_tokens_count=0, padded_tokens_count=0)
+                for _ in requests]
 
     def loglikelihood_rolling(self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None) -> \
             list[LoglikelihoodReturn]:
-        return [LoglikelihoodReturn((-random.random(), False)) for _ in requests]
+        return [LoglikelihoodReturn((-random.random(), False), truncated_tokens_count=0, padded_tokens_count=0)
+                for _ in requests]
 
     def loglikelihood_single_token(self, requests: list[LoglikelihoodSingleTokenRequest],
                                    override_bs: Optional[int] = None) -> list[LoglikelihoodSingleTokenReturn]:
         return [
-            LoglikelihoodSingleTokenReturn(result=[-random.random() for _ in req.tokenized_continuation])
+            LoglikelihoodSingleTokenReturn(result=[-random.random() for _ in req.tokenized_continuation],
+                                           truncated_tokens_count=0, padded_tokens_count=0)
             for req in requests
         ]
