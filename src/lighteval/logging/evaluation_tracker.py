@@ -319,7 +319,7 @@ class EvaluationTracker:
             # to be able to parse the filename as iso dates, we need to re-replace the `-` with `:`
             # iso_date[13] = iso_date[16] = ':'
             dir_name = os.path.dirname(sub_file)
-            iso_date = dir_name[:13] + ":" + dir_name[14:16] + ":" + dir_name[17:]
+            iso_date = ':'.join(dir_name.rsplit('-', 2))
             eval_date = datetime.fromisoformat(iso_date)
 
             last_eval_date_results[task_name] = (
