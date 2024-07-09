@@ -24,7 +24,7 @@
 """
 Custom evaluation tasks for lighteval
 
-This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
+This file generally creates just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
 """
 import random
 import re
@@ -53,36 +53,6 @@ ARABIC_MMLU_SUBSETS = [
 # fmt: on
 
 
-class CustomArabicMMLUTask(LightevalTaskConfig):
-    def __init__(
-        self,
-        name,
-        hf_subset,
-    ):
-        super().__init__(
-            name=name,
-            hf_subset=hf_subset,
-            prompt_function="mmlu_arabic",
-            hf_repo="OALL/Arabic_MMLU",
-            metric=["loglikelihood_acc_norm"],
-            hf_avail_splits=["test", "dev"],
-            evaluation_splits=["test"],
-            few_shots_split="dev",
-            few_shots_select="sequential",
-            suite=["community"],
-            generation_size=-1,
-            stop_sequence=None,
-            output_regex=None,
-            frozen=False,
-            trust_dataset=True,
-        )
-
-
-ARABIC_MMLU_TASKS = [
-    CustomArabicMMLUTask(name=f"arabic_mmlu:{subset}", hf_subset=subset) for subset in ARABIC_MMLU_SUBSETS
-]
-
-
 def mmlu_arabic(line, task_name: str = None):
     topic = line["subject"]
     instruction = f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}. \n\n"
@@ -105,6 +75,36 @@ def mmlu_arabic(line, task_name: str = None):
     )
 
 
+class CustomArabicMMLUTask(LightevalTaskConfig):
+    def __init__(
+        self,
+        name,
+        hf_subset,
+    ):
+        super().__init__(
+            name=name,
+            hf_subset=hf_subset,
+            prompt_function=mmlu_arabic,
+            hf_repo="OALL/Arabic_MMLU",
+            metric=["loglikelihood_acc_norm"],
+            hf_avail_splits=["test", "dev"],
+            evaluation_splits=["test"],
+            few_shots_split="dev",
+            few_shots_select="sequential",
+            suite=["community"],
+            generation_size=-1,
+            stop_sequence=None,
+            output_regex=None,
+            frozen=False,
+            trust_dataset=True,
+            version=0,
+        )
+
+
+ARABIC_MMLU_TASKS = [
+    CustomArabicMMLUTask(name=f"arabic_mmlu:{subset}", hf_subset=subset) for subset in ARABIC_MMLU_SUBSETS
+]
+
 # ACVA ##
 # fmt: off
 ACVA_SUBSETS = [
@@ -120,34 +120,6 @@ ACVA_SUBSETS = [
 # fmt: on
 
 
-class CustomACVATask(LightevalTaskConfig):
-    def __init__(
-        self,
-        name,
-        hf_subset,
-    ):
-        super().__init__(
-            name=name,
-            hf_subset=hf_subset,
-            prompt_function="acva",
-            hf_repo="OALL/ACVA",
-            metric=["loglikelihood_acc_norm"],
-            hf_avail_splits=["test", "validation"],
-            evaluation_splits=["test"],
-            few_shots_split="validation",
-            few_shots_select="sequential",
-            suite=["community"],
-            generation_size=-1,
-            stop_sequence=None,
-            output_regex=None,
-            frozen=False,
-            trust_dataset=True,
-        )
-
-
-ACVA_TASKS = [CustomACVATask(name=f"acva:{subset}", hf_subset=subset) for subset in ACVA_SUBSETS]
-
-
 def acva(line, task_name: str = None):
     question = line["question"]
     answer = line["answer"]
@@ -160,20 +132,33 @@ def acva(line, task_name: str = None):
     )
 
 
-# ARABIC EXAMS ##
-arabic_exams_task = LightevalTaskConfig(
-    name="arabic_exams",
-    prompt_function="arabic_exams",
-    suite=["community"],
-    hf_repo="OALL/Arabic_EXAMS",
-    hf_subset="default",
-    hf_avail_splits=["test", "validation"],
-    evaluation_splits=["test"],
-    few_shots_split="validation",
-    few_shots_select="sequential",
-    metric=["loglikelihood_acc_norm"],
-    trust_dataset=True,
-)
+class CustomACVATask(LightevalTaskConfig):
+    def __init__(
+        self,
+        name,
+        hf_subset,
+    ):
+        super().__init__(
+            name=name,
+            hf_subset=hf_subset,
+            prompt_function=acva,
+            hf_repo="OALL/ACVA",
+            metric=["loglikelihood_acc_norm"],
+            hf_avail_splits=["test", "validation"],
+            evaluation_splits=["test"],
+            few_shots_split="validation",
+            few_shots_select="sequential",
+            suite=["community"],
+            generation_size=-1,
+            stop_sequence=None,
+            output_regex=None,
+            frozen=False,
+            trust_dataset=True,
+            version=0,
+        )
+
+
+ACVA_TASKS = [CustomACVATask(name=f"acva:{subset}", hf_subset=subset) for subset in ACVA_SUBSETS]
 
 
 def arabic_exams(line, task_name: str = None):
@@ -199,6 +184,23 @@ def arabic_exams(line, task_name: str = None):
     )
 
 
+# ARABIC EXAMS ##
+arabic_exams_task = LightevalTaskConfig(
+    name="arabic_exams",
+    prompt_function=arabic_exams,
+    suite=["community"],
+    hf_repo="OALL/Arabic_EXAMS",
+    hf_subset="default",
+    hf_avail_splits=["test", "validation"],
+    evaluation_splits=["test"],
+    few_shots_split="validation",
+    few_shots_select="sequential",
+    metric=["loglikelihood_acc_norm"],
+    trust_dataset=True,
+    version=0,
+)
+
+
 # ALGHAFA NATIVE ##
 # fmt: off
 ALGHAFA_SUBSETS = [
@@ -207,33 +209,6 @@ ALGHAFA_SUBSETS = [
     "multiple_choice_sentiment_task"
 ]
 # fmt: on
-
-
-class CustomAlGhafaNativeTask(LightevalTaskConfig):
-    def __init__(
-        self,
-        name,
-        hf_subset,
-    ):
-        super().__init__(
-            name=name,
-            hf_subset=hf_subset,
-            prompt_function="alghafa_prompt",
-            hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Native",
-            metric=["loglikelihood_acc_norm"],
-            hf_avail_splits=["test", "validation"],
-            evaluation_splits=["test"],
-            few_shots_split="validation",
-            few_shots_select="sequential",
-            suite=["community"],
-            generation_size=-1,
-            stop_sequence=None,
-            output_regex=None,
-            frozen=False,
-        )
-
-
-ALGHAFA_TASKS = [CustomAlGhafaNativeTask(name=f"alghafa:{subset}", hf_subset=subset) for subset in ALGHAFA_SUBSETS]
 
 
 def alghafa_prompt(line, task_name: str = None):
@@ -259,11 +234,38 @@ def alghafa_prompt(line, task_name: str = None):
     )
 
 
+class CustomAlGhafaNativeTask(LightevalTaskConfig):
+    def __init__(
+        self,
+        name,
+        hf_subset,
+    ):
+        super().__init__(
+            name=name,
+            hf_subset=hf_subset,
+            prompt_function=alghafa_prompt,
+            hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Native",
+            metric=["loglikelihood_acc_norm"],
+            hf_avail_splits=["test", "validation"],
+            evaluation_splits=["test"],
+            few_shots_split="validation",
+            few_shots_select="sequential",
+            suite=["community"],
+            generation_size=-1,
+            stop_sequence=None,
+            output_regex=None,
+            frozen=False,
+            version=0,
+        )
+
+
+ALGHAFA_TASKS = [CustomAlGhafaNativeTask(name=f"alghafa:{subset}", hf_subset=subset) for subset in ALGHAFA_SUBSETS]
+
 # ALGHAFA TRANSLATED ##
 # race_ar
 race_ar_task = LightevalTaskConfig(
     name="race_ar",
-    prompt_function="alghafa_prompt",
+    prompt_function=alghafa_prompt,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
     hf_subset="race_ar",
@@ -273,13 +275,14 @@ race_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
 # piqa_ar
 piqa_ar_task = LightevalTaskConfig(
     name="piqa_ar",
-    prompt_function="alghafa_prompt",
+    prompt_function=alghafa_prompt,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
     hf_subset="piqa_ar",
@@ -289,13 +292,14 @@ piqa_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
 # arc_easy_ar
 arc_easy_ar_task = LightevalTaskConfig(
     name="arc_easy_ar",
-    prompt_function="alghafa_prompt",
+    prompt_function=alghafa_prompt,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
     hf_subset="arc_easy_ar",
@@ -305,13 +309,14 @@ arc_easy_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
 # arc_challenge_okapi_ar
 arc_challenge_okapi_ar_task = LightevalTaskConfig(
     name="arc_challenge_okapi_ar",
-    prompt_function="alghafa_prompt",
+    prompt_function=alghafa_prompt,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
     hf_subset="arc_challenge_okapi_ar",
@@ -321,13 +326,14 @@ arc_challenge_okapi_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
 # mmlu_okapi_ar
 mmlu_okapi_ar_task = LightevalTaskConfig(
     name="mmlu_okapi_ar",
-    prompt_function="alghafa_prompt",
+    prompt_function=alghafa_prompt,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
     hf_subset="mmlu_okapi_ar",
@@ -337,13 +343,14 @@ mmlu_okapi_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
 # openbook_qa_ext_ar
 openbook_qa_ext_ar_task = LightevalTaskConfig(
     name="openbook_qa_ext_ar",
-    prompt_function="alghafa_prompt",
+    prompt_function=alghafa_prompt,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
     hf_subset="openbook_qa_ext_ar",
@@ -353,23 +360,11 @@ openbook_qa_ext_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
 # boolq_ar
-boolq_ar_task = LightevalTaskConfig(
-    name="boolq_ar",
-    prompt_function="boolq_prompt_arabic",
-    suite=["community"],
-    hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
-    hf_subset="boolq_ar",
-    hf_avail_splits=["test", "validation"],
-    evaluation_splits=["test"],
-    few_shots_split="validation",
-    few_shots_select="sequential",
-    metric=["loglikelihood_acc_norm"],
-    trust_dataset=True,
-)
 
 
 def boolq_prompt_arabic(line, task_name: str = None):
@@ -395,22 +390,23 @@ def boolq_prompt_arabic(line, task_name: str = None):
     )
 
 
-# copa_ext_ar
-copa_ext_ar_task = LightevalTaskConfig(
-    name="copa_ext_ar",
-    prompt_function="copa_prompt_arabic",
+boolq_ar_task = LightevalTaskConfig(
+    name="boolq_ar",
+    prompt_function=boolq_prompt_arabic,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
-    hf_subset="copa_ext_ar",
+    hf_subset="boolq_ar",
     hf_avail_splits=["test", "validation"],
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
+# copa_ext_ar
 def copa_prompt_arabic(line, task_name: str = None):
     premise = line["premise"]
     choices = [line["choice1"], line["choice2"]]
@@ -430,22 +426,23 @@ def copa_prompt_arabic(line, task_name: str = None):
     )
 
 
-# hellaswag_okapi_ar
-hellaswag_okapi_ar_task = LightevalTaskConfig(
-    name="hellaswag_okapi_ar",
-    prompt_function="hellaswag_prompt_arabic",
+copa_ext_ar_task = LightevalTaskConfig(
+    name="copa_ext_ar",
+    prompt_function=copa_prompt_arabic,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
-    hf_subset="hellaswag_okapi_ar",
+    hf_subset="copa_ext_ar",
     hf_avail_splits=["test", "validation"],
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
+# hellaswag_okapi_ar
 def hellaswag_prompt_arabic(line, task_name: str = None):
     ctx = re.sub(r"\[.*?\]", "", line["ctx"])  # Remove latin words within brackets
     endings = [
@@ -474,22 +471,23 @@ def hellaswag_prompt_arabic(line, task_name: str = None):
     )
 
 
-# toxigen_ar
-toxigen_ar_task = LightevalTaskConfig(
-    name="toxigen_ar",
-    prompt_function="toxigen_prompt_arabic",
+hellaswag_okapi_ar_task = LightevalTaskConfig(
+    name="hellaswag_okapi_ar",
+    prompt_function=hellaswag_prompt_arabic,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
-    hf_subset="toxigen_ar",
+    hf_subset="hellaswag_okapi_ar",
     hf_avail_splits=["test", "validation"],
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
+# toxigen_ar
 def toxigen_prompt_arabic(line, task_name: str = None):
     text = line["text"]
     label = 1 if ((line["toxicity_ai"] + line["toxicity_human"]) > 5.5) else 0
@@ -511,22 +509,23 @@ def toxigen_prompt_arabic(line, task_name: str = None):
     )
 
 
-# sciq_ar
-sciq_ar_task = LightevalTaskConfig(
-    name="sciq_ar",
-    prompt_function="sciq_prompt_arabic",
+toxigen_ar_task = LightevalTaskConfig(
+    name="toxigen_ar",
+    prompt_function=toxigen_prompt_arabic,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
-    hf_subset="sciq_ar",
+    hf_subset="toxigen_ar",
     hf_avail_splits=["test", "validation"],
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
     metric=["loglikelihood_acc_norm"],
     trust_dataset=True,
+    version=0,
 )
 
 
+# sciq_ar
 def sciq_prompt_arabic(line, task_name: str = None):
     support = line["support"]
     question = line["question"]
@@ -562,7 +561,23 @@ def sciq_prompt_arabic(line, task_name: str = None):
     )
 
 
-_TASKS = (
+sciq_ar_task = LightevalTaskConfig(
+    name="sciq_ar",
+    prompt_function=sciq_prompt_arabic,
+    suite=["community"],
+    hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
+    hf_subset="sciq_ar",
+    hf_avail_splits=["test", "validation"],
+    evaluation_splits=["test"],
+    few_shots_split="validation",
+    few_shots_select="sequential",
+    metric=["loglikelihood_acc_norm"],
+    trust_dataset=True,
+    version=0,
+)
+
+
+TASKS_TABLE = (
     ARABIC_MMLU_TASKS
     + ACVA_TASKS
     + ALGHAFA_TASKS
@@ -580,9 +595,6 @@ _TASKS = (
     + [sciq_ar_task]
 )
 
-# Convert to dict for lighteval
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
-
 if __name__ == "__main__":
-    print(t["name"] for t in TASKS_TABLE)
+    print(t.name for t in TASKS_TABLE)
     print(len(TASKS_TABLE))

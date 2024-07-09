@@ -118,7 +118,7 @@ class LightevalModel(ABC):
 
     @abstractmethod
     def loglikelihood_rolling(
-        self, requests: list[LoglikelihoodRollingRequest], override_bs=None
+        self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
     ) -> list[LoglikelihoodReturn]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         return NotImplemented

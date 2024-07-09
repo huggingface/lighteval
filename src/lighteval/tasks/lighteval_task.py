@@ -21,11 +21,12 @@
 # SOFTWARE.
 
 import collections
+import os
 import random
 from dataclasses import dataclass
 from multiprocessing import Pool
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
 
 from datasets import load_dataset
 
@@ -53,9 +54,7 @@ from lighteval.tasks.requests import (
     RequestType,
     TaskExampleId,
 )
-from lighteval.utils import as_list
-
-from . import tasks_prompt_formatting
+from lighteval.utils import NO_OPENAI_ERROR_MSG, as_list, is_openai_available
 
 
 if TYPE_CHECKING:
@@ -69,7 +68,7 @@ class LightevalTaskConfig:
     Arguments:
         name (str): Short name of the evaluation task.
         suite (list[str]): Evaluation suites to which the task belongs.
-        prompt_function (str): Name of the function used to create the [`Doc`] samples from each line of the evaluation dataset.
+        prompt_function (Callable[[dict, str], Doc]): Function used to create the [`Doc`] samples from each line of the evaluation dataset.
         hf_repo (str): Path of the hub dataset repository containing the evaluation information.
         hf_subset (str): Subset used for the current task, will be default if none is selected.
         hf_avail_splits (list[str]): All the available splits in the evaluation dataset
@@ -85,10 +84,11 @@ class LightevalTaskConfig:
         output_regex (str)
         frozen (bool)
         trust_dataset (bool): Whether to trust the dataset at execution or not
+        version (int): The version of the task. Defaults to 0. Can be increased if the underlying dataset or the prompt changes.
     """
 
     name: str
-    prompt_function: str
+    prompt_function: Callable  # [[dict, str], Doc]
     hf_repo: str
     hf_subset: str
     metric: Tuple[Union[str, Metrics]]
@@ -111,23 +111,7 @@ class LightevalTaskConfig:
 
     must_remove_duplicate_docs: bool = None
 
-    def as_dict(self):
-        return {
-            "name": self.name,
-            "prompt_function": self.prompt_function,
-            "hf_repo": self.hf_repo,
-            "hf_subset": self.hf_subset,
-            "metric": tuple(str(m) for m in self.metric),
-            "hf_avail_splits": self.hf_avail_splits,
-            "evaluation_splits": self.evaluation_splits,
-            "few_shots_split": self.few_shots_split,
-            "few_shots_select": self.few_shots_select,
-            "generation_size": self.generation_size,
-            "stop_sequence": self.stop_sequence,
-            "output_regex": self.output_regex,
-            "frozen": self.frozen,
-            "suite": self.suite,
-        }
+    version: int = 0
 
     def __post_init__(self):
         if self.suite is None:
@@ -162,7 +146,7 @@ class LightevalTask:
                 containing task-specific functions. Defaults to None.
         """
         self.name = name
-        self.VERSION = 0
+        self.version = cfg.version
         self.is_main_process = False
         self.cache_dir = cache_dir
         self._cfg = cfg
@@ -196,8 +180,21 @@ class LightevalTask:
         self.metrics = as_list(cfg.metric)
         self.suite = as_list(cfg.suite)
         ignored = [metric for metric in self.metrics if Metrics[metric].value.category == MetricCategory.IGNORED]
+
         if len(ignored) > 0:
             hlog_warn(f"[WARNING] Not implemented yet: ignoring the metric {' ,'.join(ignored)} for task {self.name}.")
+
+        if any(
+            Metrics[metric].value.category in [MetricCategory.LLM_AS_JUDGE, MetricCategory.LLM_AS_JUDGE_MULTI_TURN]
+            for metric in self.metrics
+        ):
+            if not is_openai_available():
+                raise ImportError(NO_OPENAI_ERROR_MSG)
+            if os.getenv("OPENAI_API_KEY") is None:
+                raise ValueError(
+                    "Using llm as judge metric but no OPEN_API_KEY were found, please set it with: export OPEN_API_KEY={yourkey}"
+                )
+
         current_categories = [Metrics[metric].value.category for metric in self.metrics]
         self.has_metric_category = {category: (category in current_categories) for category in MetricCategory}
         # Sub-optimal system - we might want to store metric parametrisation in a yaml conf for example
@@ -205,31 +202,12 @@ class LightevalTask:
         self.num_samples = [1] + [
             int(metric.replace("maj_at_", "").split("_")[0]) for metric in self.metrics if "maj_at_" in metric
         ]
+        if not isinstance(cfg.prompt_function, Callable):
+            raise TypeError(
+                f"Prompt formatting function ({str(cfg.prompt_function)}) should have been passed as a callable, was {type(cfg.prompt_function)} instead."
+            )
+        self.formatter = cfg.prompt_function
 
-        # Data processing
-        # to use once prompt formatting is managed as a module
-        if custom_tasks_module is None:
-            self.formatter = getattr(tasks_prompt_formatting, cfg.prompt_function)
-        else:
-            formatter = []
-            for module in custom_tasks_module:
-                if hasattr(module, cfg.prompt_function):
-                    formatter.append(getattr(module, cfg.prompt_function))
-
-            if len(formatter) == 0:  # Default version
-                self.formatter = getattr(tasks_prompt_formatting, cfg.prompt_function)
-            elif len(formatter) == 1:
-                # If we have a prompt in both the module and our tasks_prompt_formatting
-                # We take the prompt from the module
-                if hasattr(tasks_prompt_formatting, cfg.prompt_function):
-                    hlog_warn(
-                        f"Be careful you are using custom prompt function {cfg.prompt_function} and not the default one."
-                    )
-                self.formatter = formatter[0]
-            else:
-                raise Exception(
-                    f"You defined the prompt function {cfg.prompt_function} several times in the different custom modules you are loading."
-                )
         self.generation_size = cfg.generation_size
         self.stop_sequence = cfg.stop_sequence
         self.output_regex = cfg.output_regex
@@ -436,7 +414,7 @@ class LightevalTask:
 
     def construct_requests(
         self, formatted_doc: Doc, context: str, document_id_seed: str, current_task_name: str
-    ) -> List[Request]:
+    ) -> Dict[RequestType, List[Request]]:
         """
         Constructs a list of requests from the task based on the given parameters.
 
@@ -518,6 +496,18 @@ class LightevalTask:
                     context=context,
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
+                )
+            ]
+        if self.has_metric_category[MetricCategory.LLM_AS_JUDGE]:
+            requests[RequestType.GREEDY_UNTIL] += [
+                GreedyUntilRequest(
+                    task_name=current_task_name,
+                    example_index=document_id_seed,
+                    request_index=0,
+                    context=context,
+                    stop_sequence=self.stop_sequence,
+                    generation_size=self.generation_size,
+                    num_samples=1,
                 )
             ]
 
@@ -684,7 +674,7 @@ def create_requests_from_tasks(  # noqa: C901
         # logs out the diferent versions of the tasks for every few shot
         for num_fewshot, _ in fewshot_dict[task_name]:
             cur_task_name = f"{task_name}|{num_fewshot}"
-            evaluation_tracker.versions_logger.log(cur_task_name, task.VERSION)
+            evaluation_tracker.versions_logger.log(cur_task_name, task.version)
 
         rnd = random.Random()
         rnd.seed(42)

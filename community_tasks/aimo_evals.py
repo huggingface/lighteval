@@ -20,49 +20,46 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# ruff: noqa: F405, F403, F401, I001
+# ruff: noqa: F405, F403, F401
+"""
+Task to evaluate LLMs on the training set of the Kaggle AIMO competition: https://www.kaggle.com/competitions/ai-mathematical-olympiad-prize
+"""
+
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-def mt_bench_prompt(line, task_name: str = None):
-    """Defines how to go from a dataset line to a doc object.
-    Follow examples in src/lighteval/tasks/tasks_prompt_formatting.py, or get more info
-    about what this function should do in the README.
-    """
+def aimo_prompt(line, task_name: str = None):
     return Doc(
         task_name=task_name,
-        query=f"{line['turns'][0]}",
-        choices=None,
-        instruction=None,
-        gold_index=[],
-        specific={
-            "reference": line["reference"],
-            "category": line["category"],
-            "multi_turn_queries": line["turns"],
-            "id": line["question_id"],
-        },
+        choices=[str(line["answer"])],
+        gold_index=0,
+        query=line["problem"],
     )
 
 
 task = LightevalTaskConfig(
-    name="mt_bench",
-    prompt_function=mt_bench_prompt,  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
-    suite=["extended"],
-    hf_repo="lighteval/mt-bench",
-    hf_subset="default",
+    name="aimo_progress_prize_1",
+    prompt_function=aimo_prompt,
+    suite=["community"],
+    hf_subset="",
+    hf_repo="lighteval/aimo_progress_prize_1",
     hf_avail_splits=["train"],
     evaluation_splits=["train"],
-    few_shots_split="",
-    few_shots_select="random",
-    metric=["llm_judge_multi_turn_openai"],
-    generation_size=1024,
-    stop_sequence=[],
+    few_shots_split="train",
+    few_shots_select="sequential",
+    metric=["quasi_exact_match_math"],
+    generation_size=2048,
+    stop_sequence=None,
 )
 
-
+# STORE YOUR EVALS
 TASKS_TABLE = [task]
 
+
+# MODULE LOGIC
+# You should not need to touch this
+
 if __name__ == "__main__":
-    print(t["name"] for t in TASKS_TABLE)
+    print(t.name for t in TASKS_TABLE)
     print(len(TASKS_TABLE))

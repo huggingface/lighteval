@@ -74,11 +74,12 @@ class BaseModel(LightevalModel):
         self.accelerator = config.accelerator
         self._batch_size = config.batch_size
         self._max_length = self._init_max_length(config.max_length)
+        self.use_chat_template = config.use_chat_template
 
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
         self._tokenizer = self._create_auto_tokenizer(config, env_config)
 
-        # If model_parallel is not set we compare the number of process with the number of GPUs
+        # If model_parallel is not set we compare the number of processes with the number of GPUs
         self.model = self._create_auto_model(config, env_config)
         self.model.eval()
         torch.set_grad_enabled(False)
@@ -346,7 +347,11 @@ class BaseModel(LightevalModel):
             dataloader, desc="Greedy Multi Turn generation", position=1, leave=False, disable=self.disable_tqdm
         ):
             request = request_batch[0]
-            stop_tokens = request.stop_sequence
+            # For chat models, generation stops with EOS token, so we don't need to specify stop tokens
+            if self.use_chat_template:
+                stop_tokens = []
+            else:
+                stop_tokens = request.stop_sequence
             max_generated_tokens = request.generation_size
             context = request.context[0]
             max_context_size_allowed = self.max_length - max_generated_tokens
@@ -512,35 +517,20 @@ class BaseModel(LightevalModel):
             for batch in tqdm(
                 dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
             ):
-                # NOTE: we are assuming all items in a batch behave similarly (same
-                # stop_tokens and max_tokens generated) which is not necessarily
-                # the case! Because of that we only use batch size of 1
-                stop_tokens = batch[0].stop_sequence
+                # For chat models, generation stops with EOS token, so we don't need to specify stop tokens
+                if self.use_chat_template:
+                    stop_tokens = []
+                else:
+                    # NOTE: we are assuming all items in a batch behave similarly (same
+                    # stop_tokens and max_tokens genrated) which is not necessarily
+                    # the case! Because of that we only use batch size of 1
+                    stop_tokens = batch[0].stop_sequence
+
                 max_new_tokens = batch[0].generation_size
                 returns_logits = batch[0].use_logits
                 num_samples = batch[0].num_samples
 
-                # The main question for this step is the following:
-                # Would we rather truncate the prompt to allow generation to go to max_new_tokens, at the risk
-                # of loosing some meaning, or have some generations that are exceedingly short?
-                # The choice we go for here is to avoid truncating the prompt if we can, since it
-                # should have been managed by the prompt creator/few shot manager if requested by the user.
                 context = [c.context for c in batch]
-                smallest_context = min(len(c) for c in context)
-                biggest_context = max(len(c) for c in context)
-                if smallest_context > self.max_length:
-                    hlog_warn(
-                        f"The smallest context of your batch ({smallest_context}) is bigger than the maximum context size allowed by the model ({self.max_length}) for a task in"
-                        + str({i.task_name for i in batch})
-                        + ". This is likely to lead to some errors."  # noqa C401
-                    )
-
-                if (
-                    biggest_context > self.max_length
-                ):  # There will be truncation of at least one sample, maximum generation size will be one
-                    max_new_tokens = 1
-                else:  # We can't allow generation of more than max_length
-                    max_new_tokens = min(self.max_length - biggest_context, max_new_tokens)
 
                 # See doc https://huggingface.co/docs/transformers/v4.38.2/en/pad_truncation#padding-and-truncation
                 # Will do left truncation and padding, as defined when creating the tokenizer
@@ -552,6 +542,23 @@ class BaseModel(LightevalModel):
                     max_length=self.max_length - 1,  # we always allow minimum one token of generation
                     add_special_tokens=self.add_special_tokens,
                 ).to(self.device)
+
+                # The main question for this step is the following:
+                # Would we rather truncate the prompt to allow generation to go to max_new_tokens, at the risk
+                # of losing some meaning, or have some generations that are exceedingly short?
+                # The choice we go for here is to avoid truncating the prompt if we can, since it
+                # should have been managed by the prompt creator/few shot manager if requested by the user.
+                context_size = tokenized["input_ids"].shape[1]
+                if context_size > self.max_length:
+                    hlog_warn(
+                        f"The context size of your batch ({context_size}) is bigger than the maximum context size allowed by the model ({self.max_length}) for a task in"
+                        + str({i.task_name for i in batch})
+                        + ". This is likely to lead to some errors."  # noqa C401
+                    )
+                    # There will be truncation of at least one sample, maximum generation size will be one
+                    max_new_tokens = 1
+                else:  # We can't allow generation of more than max_length
+                    max_new_tokens = min(self.max_length - context_size, max_new_tokens)
 
                 prepared_batch = Batch(
                     input_ids=tokenized["input_ids"],
@@ -809,7 +816,7 @@ class BaseModel(LightevalModel):
                     )
                     res.append(answer)
 
-                # Clean up GPUS
+                # Clean up GPUs
                 del model_output
                 del logits
                 del batched_inputs
@@ -842,7 +849,7 @@ class BaseModel(LightevalModel):
             hlog_warn("max_context is None, using max_length")
             max_context = self.max_length
 
-        # Each sample is concatenated and cut to lenght or padded to max_length
+        # Each sample is concatenated and cut to length or padded to max_length
         for orig_tokens in inputs:
             truncated.append(max(len(orig_tokens) - max_context, 0))
 
@@ -1020,7 +1027,7 @@ class BaseModel(LightevalModel):
                     )
                     res.append(answer)
 
-                # Clean up GPUS
+                # Clean up GPUs
                 del out
                 del batch_probs
                 del batched_inputs
