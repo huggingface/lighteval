@@ -204,6 +204,11 @@ class TGIModelConfig:
 
 
 @dataclass
+class DummyModelConfig:
+    seed: int = 42
+
+
+@dataclass
 class InferenceModelConfig:
     model: str
     add_special_tokens: bool = True
@@ -253,7 +258,16 @@ class InferenceEndpointModelConfig:
         return ["namespace", "env_vars", "image_url"]
 
 
-def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]) -> BaseModelConfig:  # noqa: C901
+def create_model_config(  # noqa: C901
+    args: Namespace, accelerator: Union["Accelerator", None]
+) -> Union[
+    BaseModelConfig,
+    AdapterModelConfig,
+    DeltaModelConfig,
+    TGIModelConfig,
+    InferenceEndpointModelConfig,
+    DummyModelConfig,
+]:
     """
     Create a model configuration based on the provided arguments.
 
@@ -262,7 +276,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
         accelerator (Union[Accelerator, None]): accelerator to use for model training.
 
     Returns:
-        BaseModelConfig: model configuration.
+        Union[BaseModelConfig, AdapterModelConfig, DeltaModelConfig, TGIModelConfig, InferenceEndpointModelConfig, DummyModelConfig]: model configuration.
 
     Raises:
         ValueError: If both an inference server address and model arguments are provided.
@@ -271,7 +285,11 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
         ValueError: If a base model is specified when not using delta weights or adapter weights.
     """
     if args.model_args:
-        args_dict = {k.split("=")[0]: k.split("=")[1] for k in args.model_args.split(",")}
+        args_dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.model_args.split(",")}
+
+        if args_dict.pop("dummy", False):
+            return DummyModelConfig(**args_dict)
+
         args_dict["accelerator"] = accelerator
         args_dict["use_chat_template"] = args.use_chat_template
 
