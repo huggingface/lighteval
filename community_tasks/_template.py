@@ -106,7 +106,7 @@ def prompt_fn(line, task_name: str = None):
 
 # STORE YOUR EVALS
 SUBSET_TASKS = [CustomSubsetTask(name=f"mytask:{subset}", hf_subset=subset) for subset in SAMPLE_SUBSETS]
-_TASKS = SUBSET_TASKS + [task]
+TASKS_TABLE = SUBSET_TASKS + [task]
 
 
 # CUSTOM METRIC IF NEEDED
@@ -124,8 +124,6 @@ extend_enum(Metrics, "my_custom_metric_name", custom_metric)
 # MODULE LOGIC
 # You should not need to touch this
 # Convert to dict for lighteval
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
-
 if __name__ == "__main__":
-    print(t["name"] for t in TASKS_TABLE)
+    print(t.name for t in TASKS_TABLE)
     print(len(TASKS_TABLE))
