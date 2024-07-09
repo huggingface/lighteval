@@ -238,7 +238,7 @@ def create_config_tasks(
     Create configuration tasks based on the provided meta_table.
 
     Args:
-        meta_table: meta_table containing task
+        meta_table: meta_table containing tasks
             configurations. If not provided, it will be loaded from TABLE_PATH.
         cache_dir: Directory to store cached data. If not
             provided, the default cache directory will be used.
