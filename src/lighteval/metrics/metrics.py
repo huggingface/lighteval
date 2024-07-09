@@ -301,7 +301,7 @@ class Metrics(Enum):
         sample_level_fn=LoglikelihoodPreparator().prepare,
         category=MetricCategory.MULTICHOICE,
         use_case=MetricUseCase.ACCURACY,
-        corpus_level_fn=CorpusLevelF1Score(None),
+        corpus_level_fn=CorpusLevelF1Score(None).compute,
         higher_is_better=True,
     )
     loglikelihood_f1_single_token = CorpusLevelMetric(
@@ -309,7 +309,7 @@ class Metrics(Enum):
         sample_level_fn=LoglikelihoodPreparator(is_single_token=True).prepare,
         category=MetricCategory.MULTICHOICE_ONE_TOKEN,
         use_case=MetricUseCase.ACCURACY,
-        corpus_level_fn=CorpusLevelF1Score(None),
+        corpus_level_fn=CorpusLevelF1Score(None).compute,
         higher_is_better=True,
     )
     mcc = CorpusLevelMetric(
@@ -385,7 +385,7 @@ class Metrics(Enum):
         sample_level_fn=LoglikelihoodPreparator(is_single_token=True).prepare,
         category=MetricCategory.MULTICHOICE_ONE_TOKEN,
         use_case=MetricUseCase.ACCURACY,
-        corpus_level_fn=CorpusLevelF1Score(average=None, num_classes=3),
+        corpus_level_fn=CorpusLevelF1Score(average=None, num_classes=3).compute,
         higher_is_better=True,
     )
     perfect_exact_match = SampleLevelMetric(
