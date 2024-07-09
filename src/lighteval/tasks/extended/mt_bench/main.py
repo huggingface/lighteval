@@ -71,9 +71,7 @@ def mt_bench_prompt(line, task_name: str = None):
     )
 
 
-_TASKS = [task]
-
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
+TASKS_TABLE = [task]
 
 if __name__ == "__main__":
     print(t["name"] for t in TASKS_TABLE)

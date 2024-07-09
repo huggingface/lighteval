@@ -237,7 +237,7 @@ task_params = [
     #    },
 ]
 
-_TASKS = []
+TASKS_TABLE = []
 for task in task_params:
     name = task["name"]
     generation_size = None
@@ -259,7 +259,7 @@ for task in task_params:
         generation_size=generation_size,
         stop_sequence=stop_sequence,
     )
-    _TASKS.append(task)
+    TASKS_TABLE.append(task)
 
 # CUSTOM METRIC
 for task_param in task_params:
@@ -288,8 +288,6 @@ for task_param in task_params:
 # MODULE LOGIC
 # You should not need to touch this
 # Convert to dict for lighteval
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
-
 if __name__ == "__main__":
     print(t["name"] for t in TASKS_TABLE)
     print(len(TASKS_TABLE))
