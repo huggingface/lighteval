@@ -31,8 +31,8 @@ class ModelReturn:
     result: Union[tuple, list, str]
     input_tokens: list[int] = field(default_factory=list)  # model inputs
     generated_tokens: list[int] = field(default_factory=list)  # model generations
-    truncated_tokens_count: Optional[int] = None  # How many tokens truncated
-    padded_tokens_count: Optional[int] = None  # How many tokens of padding
+    truncated_tokens_count: Optional[int] = 0  # How many tokens truncated
+    padded_tokens_count: Optional[int] = 0  # How many tokens of padding
 
     def get_result_for_eval(self):
         raise NotImplementedError()
