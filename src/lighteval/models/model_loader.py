@@ -27,11 +27,13 @@ from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.adapter_model import AdapterModel
 from lighteval.models.base_model import BaseModel
 from lighteval.models.delta_model import DeltaModel
+from lighteval.models.dummy_model import DummyModel
 from lighteval.models.endpoint_model import InferenceEndpointModel
 from lighteval.models.model_config import (
     AdapterModelConfig,
     BaseModelConfig,
     DeltaModelConfig,
+    DummyModelConfig,
     EnvConfig,
     InferenceEndpointModelConfig,
     InferenceModelConfig,
@@ -54,11 +56,18 @@ class ModelInfo:
 
 
 def load_model(  # noqa: C901
-    config: Union[BaseModelConfig, AdapterModelConfig, DeltaModelConfig, TGIModelConfig, InferenceEndpointModelConfig],
+    config: Union[
+        BaseModelConfig,
+        AdapterModelConfig,
+        DeltaModelConfig,
+        TGIModelConfig,
+        InferenceEndpointModelConfig,
+        DummyModelConfig,
+    ],
     env_config: EnvConfig,
-) -> Tuple[Union[BaseModel, AdapterModel, DeltaModel, ModelClient], ModelInfo]:
-    """Will load either a model from an inference server or a model from a checkpoint. depending
-    on the arguments passed to the program.
+) -> Tuple[Union[BaseModel, AdapterModel, DeltaModel, ModelClient, DummyModel], ModelInfo]:
+    """Will load either a model from an inference server or a model from a checkpoint, depending
+    on the config type.
 
     Args:
         args (Namespace): arguments passed to the program
@@ -81,6 +90,9 @@ def load_model(  # noqa: C901
 
     if isinstance(config, BaseModelConfig):
         return load_model_with_accelerate_or_default(config=config, env_config=env_config)
+
+    if isinstance(config, DummyModelConfig):
+        return load_dummy_model(config=config, env_config=env_config)
 
 
 def load_model_with_tgi(config: TGIModelConfig):
@@ -143,3 +155,7 @@ def load_model_with_accelerate_or_default(
     hlog(f"Model info: {model_info}")
 
     return model, model_info
+
+
+def load_dummy_model(config: DummyModelConfig, env_config: EnvConfig):
+    return DummyModel(config=config, env_config=env_config), ModelInfo(model_name="dummy", model_sha=str(config.seed))

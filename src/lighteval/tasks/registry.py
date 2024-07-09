@@ -115,7 +115,7 @@ class Registry:
 
         Args:
             task_name_list (List[str]): A list of task names.
-            custom_tasks (Optional[Union[str, ModuleType]]): Path to the custom tasks file or name of a module to import containing custom tasks or the module it-self
+            custom_tasks (Optional[Union[str, ModuleType]]): Path to the custom tasks file or name of a module to import containing custom tasks or the module itself
             extended_tasks (Optional[str]): The path to the extended tasks group of submodules
 
         Returns:
@@ -157,7 +157,7 @@ def create_custom_tasks_module(custom_tasks: Union[str, Path, ModuleType]) -> Mo
     """Creates a custom task module to load tasks defined by the user in their own file.
 
     Args:
-        custom_tasks (Optional[Union[str, ModuleType]]): Path to the custom tasks file or name of a module to import containing custom tasks or the module it-self
+        custom_tasks (Optional[Union[str, ModuleType]]): Path to the custom tasks file or name of a module to import containing custom tasks or the module itself
 
     Returns:
         ModuleType: The newly imported/created custom tasks modules
@@ -176,7 +176,7 @@ def get_custom_tasks(custom_tasks: Union[str, ModuleType]) -> Tuple[ModuleType, 
     """Get all the custom tasks available from the given custom tasks file or module.
 
     Args:
-        custom_tasks (Optional[Union[str, ModuleType]]): Path to the custom tasks file or name of a module to import containing custom tasks or the module it-self
+        custom_tasks (Optional[Union[str, ModuleType]]): Path to the custom tasks file or name of a module to import containing custom tasks or the module itself
     """
     custom_tasks_module = create_custom_tasks_module(custom_tasks=custom_tasks)
     tasks_string = ""

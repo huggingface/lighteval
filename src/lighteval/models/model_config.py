@@ -85,9 +85,9 @@ class BaseModelConfig:
            If `None`, the default value will be set to `True` for seq2seq models (e.g. T5) and
             `False` for causal models.
         model_parallel (bool, optional, defaults to False):
-            True/False: force to uses or not the `accelerate` library to load a large
+            True/False: force to use or not the `accelerate` library to load a large
             model across multiple devices.
-            Default: None which correspond to comparing the number of process with
+            Default: None which corresponds to comparing the number of processes with
                 the number of GPUs. If it's smaller => model-parallelism, else not.
         dtype (Union[str, torch.dtype], optional, defaults to None):):
             Converts the model weights to `dtype`, if specified. Strings get
@@ -204,6 +204,11 @@ class TGIModelConfig:
 
 
 @dataclass
+class DummyModelConfig:
+    seed: int = 42
+
+
+@dataclass
 class InferenceModelConfig:
     model: str
     add_special_tokens: bool = True
@@ -253,7 +258,16 @@ class InferenceEndpointModelConfig:
         return ["namespace", "env_vars", "image_url"]
 
 
-def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]) -> BaseModelConfig:  # noqa: C901
+def create_model_config(  # noqa: C901
+    args: Namespace, accelerator: Union["Accelerator", None]
+) -> Union[
+    BaseModelConfig,
+    AdapterModelConfig,
+    DeltaModelConfig,
+    TGIModelConfig,
+    InferenceEndpointModelConfig,
+    DummyModelConfig,
+]:
     """
     Create a model configuration based on the provided arguments.
 
@@ -262,7 +276,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
         accelerator (Union[Accelerator, None]): accelerator to use for model training.
 
     Returns:
-        BaseModelConfig: model configuration.
+        Union[BaseModelConfig, AdapterModelConfig, DeltaModelConfig, TGIModelConfig, InferenceEndpointModelConfig, DummyModelConfig]: model configuration.
 
     Raises:
         ValueError: If both an inference server address and model arguments are provided.
@@ -271,17 +285,18 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
         ValueError: If a base model is specified when not using delta weights or adapter weights.
     """
     if args.model_args:
-        args_dict = {k.split("=")[0]: k.split("=")[1] for k in args.model_args.split(",")}
+        args_dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.model_args.split(",")}
+
+        if args_dict.pop("dummy", False):
+            return DummyModelConfig(**args_dict)
+
         args_dict["accelerator"] = accelerator
         args_dict["use_chat_template"] = args.use_chat_template
 
         return BaseModelConfig(**args_dict)
 
-    if hasattr(args, "model_config") and args.model_config:
-        config = args.model_config["model"]
-    else:
-        with open(args.model_config_path, "r") as f:
-            config = yaml.safe_load(f)["model"]
+    with open(args.model_config_path, "r") as f:
+        config = yaml.safe_load(f)["model"]
 
     if config["type"] == "tgi":
         return TGIModelConfig(
