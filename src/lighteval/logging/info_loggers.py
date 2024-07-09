@@ -37,7 +37,11 @@ from lighteval.models.model_loader import ModelInfo
 from lighteval.models.model_output import ModelReturn
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
-from lighteval.utils import as_list, sanitize_numpy
+from lighteval.utils import as_list, is_nanotron_available, sanitize_numpy
+
+
+if is_nanotron_available():
+    from nanotron.config import Config
 
 
 @dataclass(init=False)
@@ -82,6 +86,9 @@ class GeneralConfigLogger:
     model_dtype: str = None
     model_size: str = None
 
+    # Nanotron config
+    config: "Config" = None
+
     def __init__(self) -> None:
         """Stores the current lighteval commit for reproducibility, and starts the evaluation timer."""
         try:
@@ -98,6 +105,7 @@ class GeneralConfigLogger:
         override_batch_size: Union[None, int],
         max_samples: Union[None, int],
         job_id: str,
+        config: "Config" = None,
     ) -> None:
         """
         Logs the information about the arguments passed to the method.
@@ -109,11 +117,17 @@ class GeneralConfigLogger:
                 Else, the batch size is automatically inferred depending on what fits in memory.
             max_samples (Union[None, int]): maximum number of samples, if None, use all the samples available.
             job_id (str): job ID, used to retrieve logs.
+            config (optional): Nanotron Config
+
+        Returns:
+            None
+
         """
         self.num_fewshot_seeds = num_fewshot_seeds
         self.override_batch_size = override_batch_size
         self.max_samples = max_samples
         self.job_id = job_id
+        self.config = config
 
     def log_model_info(self, model_info: ModelInfo) -> None:
         """
