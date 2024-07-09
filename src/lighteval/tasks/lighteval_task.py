@@ -30,6 +30,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
 from datasets import load_dataset
 
+import lighteval.tasks.tasks_prompt_formatting as tasks_prompt_formatting
 from lighteval.few_shot_manager import FewShotSampler
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.metrics import (
@@ -55,8 +56,6 @@ from lighteval.tasks.requests import (
     TaskExampleId,
 )
 from lighteval.utils import NO_OPENAI_ERROR_MSG, as_list, is_openai_available
-
-from . import tasks_prompt_formatting
 
 
 if TYPE_CHECKING:
@@ -114,25 +113,6 @@ class LightevalTaskConfig:
     must_remove_duplicate_docs: bool = None
 
     version: int = 0
-
-    def as_dict(self):
-        return {
-            "name": self.name,
-            "prompt_function": self.prompt_function,
-            "hf_repo": self.hf_repo,
-            "hf_subset": self.hf_subset,
-            "metric": tuple(str(m) for m in self.metric),
-            "hf_avail_splits": self.hf_avail_splits,
-            "evaluation_splits": self.evaluation_splits,
-            "few_shots_split": self.few_shots_split,
-            "few_shots_select": self.few_shots_select,
-            "generation_size": self.generation_size,
-            "stop_sequence": self.stop_sequence,
-            "output_regex": self.output_regex,
-            "frozen": self.frozen,
-            "suite": self.suite,
-            "version": self.version,
-        }
 
     def __post_init__(self):
         if self.suite is None:

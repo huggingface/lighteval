@@ -219,14 +219,12 @@ Auswahl (J/N):"""
 
 
 # STORE YOUR EVALS
-_TASKS = [task1, task2, task3, task4]
+TASKS_TABLE = [task1, task2, task3, task4]
 
 
 # MODULE LOGIC
 # You should not need to touch this
-# Convert to dict for lighteval
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
 
 if __name__ == "__main__":
-    print(t["name"] for t in TASKS_TABLE)
+    print(t.name for t in TASKS_TABLE)
     print(len(TASKS_TABLE))
