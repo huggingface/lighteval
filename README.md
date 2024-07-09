@@ -139,7 +139,7 @@ accelerate launch --multi_gpu --num_processes=<num_gpus> run_evals_accelerate.py
     --output_dir output_dir
 ```
 
-You can find the template of the expected model configuration in [examples/model_configs/base_model.yaml_](./examples/model_configs/base_model.yaml). 
+You can find the template of the expected model configuration in [examples/model_configs/base_model.yaml_](./examples/model_configs/base_model.yaml).
 
 ### Evaluating a large model with pipeline parallelism
 
@@ -197,7 +197,7 @@ There are two types of configuration files that can be provided for running on t
 
 1. [endpoint_model.yaml](./examples/model_configs/endpoint_model.yaml): This configuration allows you to launch the model using [HuggingFace's Inference Endpoints](https://huggingface.co/inference-endpoints/dedicated). You can specify in the configuration file all the relevant parameters, and then `lighteval` will automatically deploy the endpoint, run the evaluation, and finally delete the endpoint (unless you specify an endpoint that was already launched, in which case the endpoint won't be deleted afterwards).
 
-2. [tgi_model.yaml](./examples/model_configs/tgi_model.yaml): This configuration lets you specify the URL of a model running in a TGI container, such as one deployed on HuggingFace's serverless inference. 
+2. [tgi_model.yaml](./examples/model_configs/tgi_model.yaml): This configuration lets you specify the URL of a model running in a TGI container, such as one deployed on HuggingFace's serverless inference.
 
 Templates for these configurations can be found in [examples/model_configs](./examples/model_configs/).
 
@@ -266,7 +266,7 @@ However, we are very grateful to the Harness and HELM teams for their continued 
         - [logging](https://github.com/huggingface/lighteval/tree/main/src/lighteval/logging): Our loggers, to display experiment information and push it to the hub after a run
         - [metrics](https://github.com/huggingface/lighteval/tree/main/src/lighteval/metrics): All the available metrics you can use. They are described in metrics, and divided between sample metrics (applied at the sample level, such as prediction accuracy) and corpus metrics (applied over the whole corpus). You'll also find available normalisation functions.
         - [models](https://github.com/huggingface/lighteval/tree/main/src/lighteval/models): Possible models to use. We cover transformers (base_model), with adapter or delta weights, as well as TGI models locally deployed (it's likely the code here is out of date though), and brrr/nanotron models.
-        - [tasks](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks): Available tasks. The complete list is in `tasks_table.jsonl`, and you'll find all the prompts in `tasks_prompt_formatting.py`. Popular tasks requiring custom logic are exceptionally added in the [extended tasks](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/extended).
+        - [tasks](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks): Available tasks. The complete list is in `default_tasks.py`, and you'll find all the prompts in `tasks_prompt_formatting.py`. Popular tasks requiring custom logic are exceptionally added in the [extended tasks](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/extended).
 - [examples/tasks](https://github.com/huggingface/lighteval/tree/main/examples/tasks) contains a list of available tasks you can launch. We advise using tasks in the `recommended_set`, as it's possible that some of the other tasks need double checking.
 - [tests](https://github.com/huggingface/lighteval/tree/main/tests) contains our test suite, which we run at each PR to prevent regressions in metrics/prompts/tasks, for a subset of important tasks.
 
@@ -285,10 +285,10 @@ A popular community evaluation can move to become an extended or core evaluation
 #### Core evaluations
 Prompt function: **find a suitable prompt function** in `src.lighteval.tasks.task_prompt_formatting.py`, or code your own. This function must output a `Doc` object, which should contain the `query`, your prompt, and either `gold`, the gold output, or `choices` and `gold_index`, the list of choices and index or indices of correct answers. If your query contains an instruction that should not be repeated in a few shot setup, add it to an `instruction` field.
 
-Summary: create a **line summary** of your evaluation, in `src/lighteval/tasks/tasks_table.jsonl`. This summary should contain the following fields:
+Summary: create a `LightevalTaskConfig` summary of your evaluation, in `src/lighteval/tasks/default_tasks.py`. This summary should contain the following fields:
 - `name` (str), your evaluation name
 - `suite` (list), the suite(s) to which your evaluation should belong. This field allows us to compare different task implementations and is used as a task selection to differentiate the versions to launch. At the moment, you'll find the keywords ["helm", "bigbench", "original", "lighteval", "community", "custom"]; for core evals, please choose `lighteval`.
-- `prompt_function` (str), the name of the prompt function you defined in the step above
+- `prompt_function` (Callable), the prompt function you defined in the step above
 - `hf_repo` (str), the path to your evaluation dataset on the hub
 - `hf_subset` (str), the specific subset you want to use for your evaluation (note: when the dataset has no subset, fill this field with `"default"`, not with `None` or `""`)
 - `hf_avail_splits` (list), all the splits available for your dataset (train, valid or validation, test, other...)
@@ -310,7 +310,7 @@ Summary: create a **line summary** of your evaluation, in `src/lighteval/tasks/t
 Make sure you can launch your model with your new task using `--tasks lighteval|yournewtask|2|0`.
 
 #### Community evaluations
-Copy the `community_tasks/_template.yml` to `community_tasks/yourevalname.py` and edit it to add your custom tasks (the parameters you can use are explained above). It contains an interesting mechanism if the dataset you are adding contains a lot of subsets.
+Copy the `community_tasks/_template.py` to `community_tasks/yourevalname.py` and edit it to add your custom tasks (the parameters you can use are explained above). It contains an interesting mechanism if the dataset you are adding contains a lot of subsets.
 
 Make sure you can launch your model with your new task using `--tasks community|yournewtask|2|0 --custom_tasks community_tasks/yourevalname.py`.
 
