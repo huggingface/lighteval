@@ -36,8 +36,9 @@ from lighteval.metrics.utils import MetricCategory
 from lighteval.models.base_model import BaseModel
 from lighteval.models.model_output import ModelReturn
 from lighteval.models.tgi_model import ModelClient
+from lighteval.tasks.doc import Doc
 from lighteval.tasks.lighteval_task import LightevalTask
-from lighteval.tasks.requests import Doc, Request, RequestType, TaskExampleId
+from lighteval.tasks.requests import Request, RequestType, TaskExampleId
 
 
 def evaluate(  # noqa: C901

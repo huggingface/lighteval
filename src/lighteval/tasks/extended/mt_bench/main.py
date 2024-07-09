@@ -29,7 +29,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from lighteval.metrics import Metrics
 from lighteval.metrics.utils import MetricCategory, MetricUseCase, SampleLevelMetric, SampleLevelMetricGrouping
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.doc import Doc
 from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 from colorama import Fore, Style
 import os

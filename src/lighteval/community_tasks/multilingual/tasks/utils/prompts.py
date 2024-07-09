@@ -19,7 +19,7 @@ from ..utils.translation_literals import (
     QUESTION,
     YES_LABELS,
 )
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.doc import Doc
 from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 
 PUNCT = "-.!?،؟‽, "

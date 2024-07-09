@@ -31,7 +31,7 @@ See: https://huggingface.co/datasets/deutsche-telekom/Ger-RAG-eval
 """
 
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.doc import Doc
 
 
 # Task 1: Choose question by context.

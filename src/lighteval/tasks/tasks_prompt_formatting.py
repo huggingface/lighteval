@@ -30,7 +30,7 @@ import numpy as np
 import pycountry
 
 from lighteval.logging.hierarchical_logger import hlog_warn
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.doc import Doc
 from lighteval.utils import as_list
 
 

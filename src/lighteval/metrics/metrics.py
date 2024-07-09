@@ -299,7 +299,7 @@ class Metrics(Enum):
     )
     loglikelihood_acc_norm_pmi = SampleLevelMetric(
         metric="acc_norm_pmi",
-        sample_level_fn=LoglikelihoodAcc(length_normalization=True).compute,
+        sample_level_fn=LoglikelihoodAcc().compute,
         category=MetricCategory.MULTICHOICE_PMI,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=np.mean,

@@ -26,7 +26,7 @@ import os
 import pytest
 
 import lighteval.tasks.tasks_prompt_formatting as tasks_prompt_formatting
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.doc import Doc
 
 
 PATH_TO_HARNESS_PROMPTS = os.path.join(os.path.dirname(__file__), "reference_scores/harness_prompts.json")

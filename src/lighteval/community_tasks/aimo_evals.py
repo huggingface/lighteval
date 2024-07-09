@@ -26,7 +26,7 @@ Task to evaluate LLMs on the training set of the Kaggle AIMO competition: https:
 """
 
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.doc import Doc
 
 
 task = LightevalTaskConfig(

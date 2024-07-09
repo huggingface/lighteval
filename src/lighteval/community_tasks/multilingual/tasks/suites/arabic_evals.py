@@ -30,7 +30,7 @@ import random
 import re
 
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.doc import Doc
 from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 from lighteval.metrics.metrics import Metrics
 

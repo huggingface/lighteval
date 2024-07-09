@@ -36,7 +36,7 @@ from lighteval.metrics.stderr import get_stderr_function
 from lighteval.models.model_loader import ModelInfo
 from lighteval.models.model_output import ModelReturn
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.doc import Doc
 from lighteval.utils import as_list, is_nanotron_available, sanitize_numpy
 
 

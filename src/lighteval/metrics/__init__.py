@@ -26,7 +26,7 @@ from typing import Sequence
 from lighteval.metrics.metrics import MetricCategory, Metrics
 from lighteval.metrics.utils import Metric
 from lighteval.models.model_output import ModelReturn
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.doc import Doc
 from lighteval.utils import as_list
 
 

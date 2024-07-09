@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, Optional
 from transformers import AutoTokenizer, PreTrainedTokenizer
 
 from lighteval.logging.hierarchical_logger import hlog_warn
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.doc import Doc
 
 
 if TYPE_CHECKING:

@@ -39,7 +39,7 @@ from lighteval.metrics.sample_preparator import (
     PerplexityCorpusMetricInput,
 )
 from lighteval.models.model_output import ModelReturn
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.doc import Doc
 from lighteval.utils import as_list
 
 

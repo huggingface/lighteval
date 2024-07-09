@@ -44,8 +44,8 @@ from lighteval.metrics.metrics import MetricCategory, Metrics
 from lighteval.metrics.utils import Metric
 from lighteval.models.base_model import BaseModel
 from lighteval.models.model_output import ModelReturn
+from lighteval.tasks.doc import Doc
 from lighteval.tasks.requests import (
-    Doc,
     GreedyUntilMultiTurnRequest,
     GreedyUntilRequest,
     LoglikelihoodRequest,

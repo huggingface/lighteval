@@ -31,7 +31,7 @@ from lighteval.metrics.utils import (
     SampleLevelMetricGrouping,
 )
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.doc import Doc
 
 
 # We create the task config

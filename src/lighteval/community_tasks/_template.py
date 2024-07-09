@@ -35,7 +35,7 @@ from lighteval.metrics import Metrics
 from lighteval.metrics.metrics import SampleLevelMetric
 from lighteval.metrics.utils import MetricCategory, MetricUseCase
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.doc import Doc
 from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 
 

@@ -42,7 +42,7 @@ from lighteval.metrics.imports.data_stats_metric import DataStatsMetric
 from lighteval.metrics.imports.summac import SummaCZS
 from lighteval.metrics.llm_as_judge import JudgeOpenAI
 from lighteval.metrics.normalizations import remove_braces, remove_braces_and_strip
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.doc import Doc
 from lighteval.utils import as_list
 
 
