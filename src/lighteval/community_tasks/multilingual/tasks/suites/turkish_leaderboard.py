@@ -1,8 +1,7 @@
 from typing import Literal
 
-from ..utils.prompts import get_arc_prompt, get_hellaswag_prompt, get_m_truthfulqa_prompt, get_mmlu_prompt
+from ..utils.prompts import get_arc_prompt, get_hellaswag_prompt, get_m_truthfulqa_prompt, get_mmlu_prompt, winogrande
 from lighteval.metrics.metrics import Metrics
-from lighteval.tasks.tasks_prompt_formatting import winogrande
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 class HellaSwagTrTask(LightevalTaskConfig):
@@ -29,7 +28,7 @@ class WinogradeTrTask(LightevalTaskConfig):
             prompt_function=winogrande,
             hf_repo="malhajar/winogrande-tr-v0.2",
             hf_subset="default",
-            filter=lambda x: x["sentence"].count("_") == 1,
+            filter=lambda x: x["sentence"].count("_") == 1 and len(x["sentence"].split("_")[0].strip()) > 0,
             evaluation_splits=("validation",),
             few_shots_split="train",
             metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm, Metrics.loglikelihood_acc_norm_pmi),

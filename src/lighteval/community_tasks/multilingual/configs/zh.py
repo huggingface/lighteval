@@ -59,8 +59,7 @@ _MMLM_TASKS = [
     M_TruthfulQATask(lang="zh", type="mc2"),
 ]
 
-# _TASKS += _CMMLU_TASKS + _CEVAL_TASKS + _AGIEVAL_TASKS + _CLUE_TASKS  + _MMLM_TASKS
-_TASKS = [M_TruthfulQATask(lang="zh", type="mc1"), M_TruthfulQATask(lang="zh", type="mc2")]
+_TASKS += _CMMLU_TASKS + _CEVAL_TASKS + _AGIEVAL_TASKS + _CLUE_TASKS  + _MMLM_TASKS
 _TASKS_STRINGS = ",".join([f"custom|{t.name}|0|1" for t in _TASKS])
 TASKS_GROUPS = {
     "all": _TASKS_STRINGS,

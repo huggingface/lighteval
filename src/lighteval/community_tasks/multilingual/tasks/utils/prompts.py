@@ -727,6 +727,7 @@ def winogrande(line, task_name: str = None):
     # LL of query + choices
     query, end_of_target = line["sentence"].split("_")
     query = query.strip()
+    assert len(query) > 0, f"Query must not be empty {line['sentence']}"
     query_ends_with_punct = query[-1] in PUNCT
     options = [
         o.capitalize() if query_ends_with_punct else decapitalize(o)

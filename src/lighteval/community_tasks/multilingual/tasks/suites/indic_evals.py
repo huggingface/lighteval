@@ -1,7 +1,6 @@
 from typing import Literal
 from ..utils.prompts import get_arc_prompt, get_hellaswag_prompt_full_ctx, get_indic_boolq_prompt
 from lighteval.metrics.metrics import Metrics
-from lighteval.tasks.tasks_prompt_formatting import winogrande
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 class ARCIndTask(LightevalTaskConfig):

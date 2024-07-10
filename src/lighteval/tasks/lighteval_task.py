@@ -689,9 +689,9 @@ def download_dataset_worker(dataset_path: str, dataset_config_name: str, trust_d
     Worker function to download a dataset from the HuggingFace Hub.
     Used for parallel dataset loading.
     """
-    hlog_warn(f"Downloading dataset from {dataset_path} with config {dataset_config_name}")
-    print(f"Trust dataset: {trust_dataset}")
-    print(f"HF revision: {hf_revision}")
+    # hlog_warn(f"Downloading dataset from {dataset_path} with config {dataset_config_name}")
+    # print(f"Trust dataset: {trust_dataset}")
+    # print(f"HF revision: {hf_revision}")
     # print(f"Filter fn: {filter_fn}")
     dataset = load_dataset(
         path=dataset_path,
@@ -798,6 +798,7 @@ def create_requests_from_tasks(  # noqa: C901
                     doc.num_effective_few_shots = num_effective_few_shots
                     doc.num_asked_few_shots = num_fewshot
                     doc.ctx = ctx
+                    assert -1 not in as_list(doc.gold_index), f"Gold index must not be -1 for task {task_name} with doc {doc_id_seed}"
 
                     # Constructing the requests
                     docs[TaskExampleId(cur_task_name, doc_id_seed)] = doc
