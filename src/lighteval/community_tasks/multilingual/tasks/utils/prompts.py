@@ -2,6 +2,7 @@
 
 import re
 from typing import Any, Literal
+import pythainlp
 
 from ..utils.translation_literals import (
     ANSWER,
@@ -207,9 +208,9 @@ def get_thai_exams_prompt(lang: LANGS):
     def adapter(line, task_name):
         letters = list(set(line.keys()) - set(["question", "answer", "subject", "__few_shots"]))
         options = [line[letter] for letter in letters]
-        non_empty_options = [str(opt) for opt in options if opt != ""]
+        non_empty_options = [str(opt) for opt in options]
+        assert all(opt != "" for opt in non_empty_options)
         gold_index = letters.index(line["answer"])
-        assert len(non_empty_options) < gold_index
         return prompter(
             task_name,
             line["question"],
@@ -368,7 +369,6 @@ QA_TEMPLATE = "{topic}{context}{question_word}{colon} {question}\n{answer_word}{
 
 
 def _get_qa_prompt(lang: LANGS):
-    # TODO: I am not sure what gold it should have
     def qa_prompt(
         task_name: str,
         question: str,
@@ -579,7 +579,6 @@ def _get_copa_prompt(lang: LANGS):
 
 
 def get_copa_prompt(lang: LANGS):
-    # TODO: solve the punctuation issue
     prompter = _get_copa_prompt(lang)
     return lambda line, task_name: prompter(
         task_name,
@@ -744,9 +743,6 @@ def xcodah_prompt(line: dict[str, Any], task_name: str):
 
 
 # NLI (collocations)
-
-
-# TODO use trans literals for punct
 def get_winogrande_prompt(lang: LANGS):
 
     def winogrande(line, task_name: str = None):
@@ -769,3 +765,32 @@ def get_winogrande_prompt(lang: LANGS):
         )
     
     return winogrande
+
+
+# WSCI (collocations), right now only for thai
+def get_wsci_prompt(lang: Literal["th"]):
+
+    def is_possessive(pronoun):
+        # Check if the pronoun is a possessive form
+        return pronoun.startswith("ของ")
+
+    def add_possessive(pronoun):
+        return f"ของ{pronoun}"
+    
+    def process_opt(option, pronoun):
+        return add_possessive(option) if is_possessive(pronoun) else option
+    
+
+    def wsci(line, task_name: str):
+        pronoun = line["pronoun"]
+        quote, ending = line["text"][:line["pronoun_loc"]], line["text"][line["pronoun_loc"]+len(pronoun):]
+        options = [process_opt(opt, pronoun) for opt in line["options"]]
+        return Doc(
+            task_name=task_name,
+            query=quote,
+            # We have to use spacing, because of tokenization
+            choices=[f" {option}{ending}" for option in options],
+            gold_index=line["label"],
+            uncoditioned_prefix="",
+        )
+    return wsci

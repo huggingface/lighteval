@@ -8,7 +8,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 LANGS = Literal["ar", "de", "en", "es", "fr", "hi", "it", "ja", "nl", "pl", "pt", "ru", "sw", "vi", "zh"]
 
 
-# TODO: Wait until they fix the test set in the meantime we use validation for evals
 class XCODAHTask(LightevalTaskConfig):
     def __init__(self, lang: LANGS):
         self.lang = lang

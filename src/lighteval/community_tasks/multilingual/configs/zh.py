@@ -2,7 +2,7 @@ from typing import get_args
 from ..tasks.mqa.agieval import CHINESE_AGIEVAL_TASK_TYPE, ChineseAgievalTask
 from ..tasks.mqa.ceval import CEVAL_TASK_TYPE, CEvalTask
 from ..tasks.mqa.cmmlu import CMMLU_TASK_TYPE, CMMLUTask
-from ..tasks.mqa.mlmm import M_ARCTask, M_HellaSwagTask, M_MMLUTask, M_TruthfulQATask
+from ..tasks.mqa.mlmm import get_mlmm_tasks
 from ..tasks.mqa_with_context.belebele import BelebeleTask
 from ..tasks.mqa_with_context.m3exam import M3ExamTask
 from ..tasks.mqa_with_context.xquad import XquadTask
@@ -51,13 +51,7 @@ _CLUE_TASKS = [
     C3Task(),
 ]
 
-_MMLM_TASKS = [
-    M_HellaSwagTask(lang="zh"),
-    M_MMLUTask(lang="zh"),
-    M_ARCTask(lang="zh"),
-    M_TruthfulQATask(lang="zh", type="mc1"),
-    M_TruthfulQATask(lang="zh", type="mc2"),
-]
+_MMLM_TASKS = get_mlmm_tasks("zh")
 
 _TASKS += _CMMLU_TASKS + _CEVAL_TASKS + _AGIEVAL_TASKS + _CLUE_TASKS  + _MMLM_TASKS
 _TASKS_STRINGS = ",".join([f"custom|{t.name}|0|1" for t in _TASKS])

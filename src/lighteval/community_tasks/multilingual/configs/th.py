@@ -1,5 +1,6 @@
 from typing import get_args
 
+from ..tasks.nli.wsci import WSCITask
 from ..tasks.mqa.thai_exam import ThaiExamsTask, ThaiExamSubset
 from ..tasks.mqa.xcopa import XCopaTask
 from ..tasks.mqa_with_context.belebele import BelebeleTask
@@ -18,6 +19,7 @@ _TASKS = [
     XCopaTask(lang="th"),
     M3ExamTask(lang="th"),
     BelebeleTask(lang="th"),
+    WSCITask(lang="th"),
 ]
 
 _THAI_EXAM = [

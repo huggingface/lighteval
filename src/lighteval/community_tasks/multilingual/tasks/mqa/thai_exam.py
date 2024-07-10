@@ -14,12 +14,21 @@ ThaiExamSubset = Literal["a_level", "ic", "onet", "tgat", "tpat1"]
 # If too hard we can add help with para
 class ThaiExamsTask(LightevalTaskConfig):
     def __init__(self, subset: ThaiExamSubset):
+
+        def invalid_answers(line):
+            letters = list(set(line.keys()) - set(["question", "answer", "subject", "__few_shots"]))
+            options = [line[letter] for letter in letters]
+            non_empty_options = [str(opt) for opt in options]
+            return all(opt != "" for opt in non_empty_options)
+        
+
         super().__init__(
             name=f"thai-exams:{subset}",
             prompt_function=get_thai_exams_prompt("th"),
             suite=("custom",),
             hf_repo="scb10x/thai_exam",
             hf_subset=subset,
+            filter=invalid_answers,
             evaluation_splits=("test",),
             few_shots_split="train",
             metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace, Metrics.loglikelihood_acc_norm_pmi),
