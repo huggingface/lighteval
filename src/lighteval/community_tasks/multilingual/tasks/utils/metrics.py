@@ -22,6 +22,7 @@ EVAL_TYPE = Literal["exact", "f1"]
 # MLQA normalizer
 # TODO: support rest
 # supports: en, zh, ar, hi
+# https://github.com/rajpurkar/SQuAD-explorer/blob/master/evaluate-v2.0.py
 def get_answer_normalizer(lang: LANGS):
     """Lower text and remove punctuation, articles and extra whitespace."""
 
@@ -50,12 +51,16 @@ def get_answer_normalizer(lang: LANGS):
     def remove_articles(text):
         if lang == "en":
             return re.sub(r"\b(a|an|the)\b", " ", text)
-        elif lang == "hi":
+        elif lang == "hi" or lang == "sw" or lang == "te" or lang == "zh" or lang == "ru":
             return text  # Hindi does not have formal articles
         elif lang == "ar":
             return re.sub(r"\sال^|ال", " ", text)
-        elif lang == "zh":
-            return text  # Chinese does not have formal articles
+        elif lang == "fr":
+            return re.sub(r"\b(l|le|la)\b", " ", text)
+        elif lang == "tr":
+            return re.sub(r"\b(bir)\b", " ", text)
+        elif lang == "th":
+            return re.sub(r"(คน|ตัว|ลูก)", " ", text)
         else:
             # TODO: raise Exception("Unknown Language {}".format(lang))
             return text

@@ -1,8 +1,8 @@
 from typing import Literal
+from ..utils.prompts import winogrande
 
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.tasks_prompt_formatting import winogrande
 
 
 LANGS = Literal["zh", "ru", "fr", "en"]

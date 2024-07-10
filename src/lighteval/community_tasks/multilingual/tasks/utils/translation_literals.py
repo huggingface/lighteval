@@ -95,7 +95,7 @@ ENTAILMENT_LABELS = {
 }
 
 NEUTRAL_LABELS = {
-    "ar": "و",
+    "ar": "كذلك",
     "bg": "така",
     "de": "Auch",
     "el": "Έτσι",
@@ -193,4 +193,59 @@ EFFECT_LABELS = {
     "tr": "bu yüzden",
     "ru": "поэтому",
     "vi": "vì vậy"
+}
+
+
+# Thai doesn't ahve full stop instead they use spac
+FULL_STOP = {
+    "ar": ".",
+    "en": ".",
+    "hi": "।",
+    "fr": ".",
+    "sw": ".",
+    "th": " ",
+    "zh": "。",
+    "te": ".",
+    "tr": ".",
+    "ru": ".",
+}
+
+SPACE = {
+    "ar": " ",
+    "en": " ",
+    "hi": " ",
+    "fr": " ",
+    "ru": " ",
+    "sw": " ",
+    "te": " ",
+    "th": "",
+    "tr": " ",
+    "zh": " ",
+}
+
+COMMA = {
+    "ar": "،",
+    "en": ",",
+    "hi": ",",
+    "fr": ",",
+    "ru": ",",
+    "sw": ",",
+    "te": ",",
+    "th": ",",
+    "tr": ",",
+    "zh": "，",
+}
+
+
+QUESTION_MARK = {
+    "ar": "؟",
+    "en": "?",
+    "hi": "?",
+    "fr": "?",
+    "ru": "?",
+    "sw": "?",
+    "te": "?",
+    "th": "?",
+    "tr": "?",
+    "zh": "？",
 }

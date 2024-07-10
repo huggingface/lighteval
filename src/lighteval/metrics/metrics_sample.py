@@ -240,11 +240,53 @@ class LoglikelihoodAcc:
                     normalized_log_probs.append(choices_logprob[ix] / (len(choice) - 1))
                 else:
                     normalized_log_probs.append(choices_logprob[ix] / len(choice))
+            choices_logprob = normalized_log_probs
 
-            best_choice = np.argmax(normalized_log_probs)
-        else:
-            best_choice = np.argmax(choices_logprob)
-        return int(best_choice in gold_ixs)
+        n_correct = len(gold_ixs)
+        best_choices = np.argpartition(choices_logprob, -n_correct)[-n_correct:]
+        intersection = set(best_choices) & set(gold_ixs)
+        return len(intersection) / n_correct
+
+
+class LoglikelihoodProb:
+    def __init__(self, length_normalization: bool = False, ignore_first_space: bool = False) -> None:
+        """Log likelihood probability class. It tests probability of choosing the best choice.
+
+        Args:
+            length_normalization (bool, optional): Whether log-likelihood scores should be normalized for sentence length. Defaults to False.
+                Should be True for most cases.
+            ignore_first_space (bool, optional): Whether to ignore the first token's log prob (if it's a space only). Defaults to False.
+                The only case when it should be True is when the possible choices (for example `A`,`B` ...) have an extra
+                space added in front of them to manage tokenization issues (` A`, ` B`, ...) for some models.
+        """
+        self.length_normalization = length_normalization
+        self.ignore_first_space = ignore_first_space
+
+    def compute(self, gold_ixs: list[int], choices_logprob: list[float], formatted_doc: Doc, **kwargs) -> int:
+        """Computes the log likelihood probability: chance of choosing the best choice.
+
+        Args:
+            gold_ixs (list[int]): All the gold choices indices
+            choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
+            formatted_doc (Doc): Original document for the sample.
+                Used to get the original choices' length for possible normalization
+
+        Returns:
+            int: The eval score: 1 if the best log-prob choice is in gold, 0 otherwise.
+        """
+        if self.length_normalization:
+            normalized_log_probs = []
+            for ix, choice in enumerate(formatted_doc.choices):
+                if self.ignore_first_space and choice[0] == " ":
+                    normalized_log_probs.append(choices_logprob[ix] / (len(choice) - 1))
+                else:
+                    normalized_log_probs.append(choices_logprob[ix] / len(choice))
+            choices_logprob = normalized_log_probs
+        
+        true_probs = np.sum(np.exp([choices_logprob[i] for i in gold_ixs]))
+        false_probs = np.sum(np.exp([choices_logprob[i] for i in (set(range(len(choices_logprob))) - set(gold_ixs))]))
+        prob_correct_choice = true_probs / (true_probs + false_probs)
+        return prob_correct_choice
 
 
 class Recall:

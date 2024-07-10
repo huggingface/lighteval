@@ -30,7 +30,7 @@ class WinogradeTrTask(LightevalTaskConfig):
             hf_repo="malhajar/winogrande-tr-v0.2",
             hf_subset="default",
             filter=lambda x: x["sentence"].count("_") == 1,
-            evaluation_splits=("test",),
+            evaluation_splits=("validation",),
             few_shots_split="train",
             metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm, Metrics.loglikelihood_acc_norm_pmi),
         )
@@ -139,6 +139,9 @@ class TruthfulQATrTask(LightevalTaskConfig):
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
                 Metrics.loglikelihood_acc_norm_pmi,
+                Metrics.loglikelihood_prob,
+                Metrics.loglikelihood_prob_norm,
+                Metrics.loglikelihood_prob_norm_pmi,
             )
         )
         
