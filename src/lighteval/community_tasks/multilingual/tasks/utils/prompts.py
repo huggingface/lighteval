@@ -640,7 +640,7 @@ DOT_REPLACEMENTS: dict[LANGS, list[str]] = {
 }
 
 HELLASWAG_TEMPLATE = "{activity_label}{ctx}"
-CTX_TEMPLATE = "{ctx_a}{full_stop}{space}{ctx_b}{full_stop}"
+CTX_TEMPLATE = "{ctx}{full_stop}"
 
 
 def _get_hellaswag_prompt(lang: LANGS):
@@ -655,6 +655,11 @@ def _get_hellaswag_prompt(lang: LANGS):
         text = re.sub("\\[.*?\\]", "", text)
         text = text.replace("  ", " ")
         return text.strip()
+    
+    def process_context(ctx):
+        if ctx == "":
+            return ""
+        return CTX_TEMPLATE.format(ctx=ctx.rstrip(PUNCT).capitalize(), full_stop=FULL_STOP[lang])
 
     def hellaswag_prompt(
         task_name: str,
@@ -663,18 +668,13 @@ def _get_hellaswag_prompt(lang: LANGS):
         label: int,
         activity_label: str | None = None,
     ):
-        ctx = (
-            CTX_TEMPLATE.format(
-                ctx_a=ctx[0].rstrip(PUNCT).capitalize(),
-                ctx_b=ctx[1].rstrip(PUNCT).capitalize(),
-                full_stop=FULL_STOP[lang],
-                space=SPACE[lang],
-            )
-            if isinstance(ctx, tuple)
-            else ctx
-        )
+        space = SPACE[lang]
+        ctx_list = list(ctx) if isinstance(ctx, tuple) else [ctx]
+        ctxs = [process_context(c) for c in ctx_list]
+        ctxs = [c for c in ctxs if c != ""]
+        context = space.join(ctxs)
         activity_label = f"{activity_label}: " if activity_label else ""
-        full_context = HELLASWAG_TEMPLATE.format(activity_label=activity_label, ctx=ctx)
+        full_context = HELLASWAG_TEMPLATE.format(activity_label=activity_label, ctx=context)
         return Doc(
             task_name=task_name,
             query=preprocess(full_context),
