@@ -72,7 +72,6 @@ class DynamicBatchDataset(Dataset):
         self.num_dataset_splits, self.splits = self.init_split_limits(num_dataset_splits)
 
         self.split_start, self.split_end = self.splits[0]
-        self.split_end = self.splits[0][1]
 
     def init_split_limits(self, num_dataset_splits):
         if num_dataset_splits >= self.total_size:
@@ -122,7 +121,6 @@ class DynamicBatchDataset(Dataset):
             tuple: A tuple containing the start and end indices of the split.
         """
         self.split_start, self.split_end = self.splits[split_id]
-        self.split_end = self.splits[split_id][1]
         return self.split_start, self.split_end
 
     def splits_start_end_iterator(self) -> tuple[int, int]:
