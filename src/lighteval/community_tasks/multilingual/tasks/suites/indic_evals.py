@@ -7,7 +7,7 @@ class ARCIndTask(LightevalTaskConfig):
     def __init__(self, subset: Literal["easy", "challenge"]):
         hf_subset = f"ARC-{subset.capitalize()}"
         super().__init__(
-            name=f"arc-hi",
+            name=f"arc-hi:{subset}",
             prompt_function=get_arc_prompt("hi", nested_choices=True),
             suite=("custom",),
             hf_repo="ai4bharat/ai2_arc-hi",

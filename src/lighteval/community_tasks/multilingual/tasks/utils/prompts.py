@@ -6,12 +6,12 @@ from typing import Any, Literal
 from ..utils.translation_literals import (
     ANSWER,
     CAUSE_LABELS,
+    COLON,
     COMMA,
     CONTRADICTION_LABELS,
     CORRECT_LABELS,
     EFFECT_LABELS,
     ENTAILMENT_LABELS,
-    IMPOSSIBLE,
     INCORRECT_LABELS,
     LANGS,
     NEUTRAL_LABELS,
@@ -30,6 +30,8 @@ PUNCT = "-.!?،؟‽,。，？؟،। "
 
 
 def decapitalize(word: str):
+    if len(word) == 0:
+        return word
     return word[0].lower() + word[1:]
 
 
@@ -39,8 +41,27 @@ def decapitalize(word: str):
 # For thai we use space in front of completions no matter the fact they might not be used, this is to ensure correct tokeniztion
 
 # QA-Tasks (multichoice no helpers)
-MULTI_QA_SIMPLE_TEMPLATE = "{context}{full_stop}{space}{question}"
+MULTI_QA_SIMPLE_TEMPLATE = "{context}{question}"
 
+
+def fix_ending_punct(ctx: str, lang: LANGS):
+    ctx = ctx.strip()
+    if len(ctx) == 0:
+        return ctx
+    if ctx.endswith("?"):
+        ctx = ctx[:-1] + QUESTION_MARK[lang]
+    elif ctx.endswith("."):
+        ctx = ctx[:-1] + FULL_STOP[lang]
+    elif ctx.endswith(","):
+        ctx = ctx[:-1] + COMMA[lang]
+    elif ctx.endswith(":"):
+        ctx = ctx[:-1] + COLON[lang]
+    return ctx
+
+def fix_capitalization(prefix: str, text: str, lang: LANGS):
+    # TODO: Prob cache this
+    cap_puncts = f"{QUESTION_MARK[lang]}{FULL_STOP[lang]}{COLON[lang]}"
+    return text.capitalize() if prefix.strip().endswith(cap_puncts) else decapitalize(text)
 
 def _get_multi_qa_simple_prompt(lang: LANGS):
     def multi_qa_prompt(
@@ -50,21 +71,19 @@ def _get_multi_qa_simple_prompt(lang: LANGS):
         gold_index,
         context: str | None = None,
     ):
-        question = question.strip()
-        context = context.rstrip(PUNCT) if context else ""
-        answers = [answer.strip() for answer in answers]
+        context = fix_ending_punct(context, lang).capitalize() if context else ""
+        question = fix_capitalization(context, fix_ending_punct(question, lang), lang)
+        answers = [fix_capitalization(context, fix_ending_punct(answer, lang), lang) for answer in answers]
         query = MULTI_QA_SIMPLE_TEMPLATE.format(
             context=f"{context}\n" if context else "",
             question=question,
-            full_stop=FULL_STOP[lang],
-            space=SPACE[lang],
         )
         return Doc(
             task_name=task_name,
             query=query,
             gold_index=gold_index,
             choices=[f" {c}" for c in answers if c],
-            uncoditioned_prefix=f"{ANSWER[lang]}:",
+            uncoditioned_prefix=f"{ANSWER[lang]}{COLON[lang]}",
         )
 
     return multi_qa_prompt
@@ -74,8 +93,7 @@ def get_m_m3exam_prompt(lang: LANGS):
     prompter = _get_multi_qa_simple_prompt(lang)
     # Would be nice to have general solution for the letters
 
-    dot = re.escape(FULL_STOP[lang])
-    prefix_re = re.compile(rf"^\([A-Da-d1-5๑๒๓๔๕]\)\s*|^[A-Da-e1-5๑๒๓๔๕][{dot}．]\s*")
+    prefix_re = re.compile(rf"^\([A-Da-d1-5๑๒๓๔๕]\)\s*|^[A-Da-e1-5๑๒๓๔๕][.．।。]\s*")
 
     def adapter(line, task_name):
         is_letter_based = line["answer_text"].isalpha()
@@ -97,7 +115,7 @@ def get_m_m3exam_prompt(lang: LANGS):
 
 
 # QA-Tasks (multichoice)
-MULTI_QA_TEMPLATE = "{context}{question_word}: {question}\n{answer_word}:"
+MULTI_QA_TEMPLATE = "{context}{question_word}{colon} {question}\n{answer_word}{colon}"
 
 
 def _get_multi_qa_prompt(lang: LANGS):
@@ -108,14 +126,15 @@ def _get_multi_qa_prompt(lang: LANGS):
         gold_index,
         context: str | None = None,
     ):
-        question = question.strip()
-        context = context.strip() if context else ""
-        answers = [answer.strip() for answer in answers]
+        context = fix_ending_punct(context, lang).capitalize() if context else ""
+        question = fix_capitalization(context, fix_ending_punct(question, lang), lang)
+        answers = [fix_ending_punct(answer.capitalize(), lang) for answer in answers]
         query = MULTI_QA_TEMPLATE.format(
             question=question,
             context=f"{context}\n" if context else "",
             question_word=QUESTION[lang],
             answer_word=ANSWER[lang],
+            colon=COLON[lang],
         )
         return Doc(
             task_name=task_name,
@@ -186,10 +205,11 @@ def get_thai_exams_prompt(lang: LANGS):
     prompter = _get_multi_qa_prompt(lang)
 
     def adapter(line, task_name):
-        letters = [letter.lower() for letter in LETTER_INDICES[:5]]
+        letters = list(set(line.keys()) - set(["question", "answer", "subject", "__few_shots"]))
         options = [line[letter] for letter in letters]
-        non_empty_options = [opt for opt in options if opt != ""]
+        non_empty_options = [str(opt) for opt in options if opt != ""]
         gold_index = letters.index(line["answer"])
+        assert len(non_empty_options) < gold_index
         return prompter(
             task_name,
             line["question"],
@@ -312,13 +332,6 @@ def get_sciq_prompt(lang: LANGS):
     )
 
 
-def get_acva_prompt(lang: LANGS):
-    prompter = _get_multi_qa_prompt(lang)
-    choices = [CORRECT_LABELS[lang], INCORRECT_LABELS[lang]]
-    return lambda line, task_name: prompter(
-        task_name, line["question"], choices, choices.index(line["answer"])
-    )
-
 
 def get_mathqa_prompt(lang: LANGS):
     prompter = _get_multi_qa_prompt(lang)
@@ -351,7 +364,7 @@ def get_openbookqa_prompt(lang: LANGS):
 
 
 # QA-Tasks (No multichoice)
-QA_TEMPLATE = "{topic}{context}{question_word}: {question}\n{answer_word}:"
+QA_TEMPLATE = "{topic}{context}{question_word}{colon} {question}\n{answer_word}{colon}"
 
 
 def _get_qa_prompt(lang: LANGS):
@@ -363,12 +376,12 @@ def _get_qa_prompt(lang: LANGS):
         context: str | None = None,
         topic: str | None = None,
     ):
-        question = question.strip()
-        context = context.strip() if context else ""
+        context = fix_ending_punct(context.capitalize(), lang) if context else ""
+        question = fix_capitalization(fix_ending_punct(context, lang), question, lang)
         assert isinstance(
             answer, list
         ), f"Answer is not a list: {answer} in task {task_name}"
-        answer = [ans.strip() for ans in answer]
+        answer = [ans.strip().capitalize() for ans in answer]
         query = QA_TEMPLATE.format(
             # topic=f"{topic}\n" if topic else "",
             topic="",
@@ -376,6 +389,7 @@ def _get_qa_prompt(lang: LANGS):
             context=f"{context}\n" if context else "",
             question_word=QUESTION[lang],
             answer_word=ANSWER[lang],
+            colon=COLON[lang],
         )
         return Doc(
             task_name=task_name,
@@ -438,7 +452,7 @@ def get_french_trivia_prompt(lang: LANGS):
 
 # NLI premise/hypthesis
 NLI_TEMPLATE = "{premise}{comma}{space}{question_word}{question_mark}"
-NLI_CONT_TEMPLATE = " {label}{comma}{space}{hypothesis}{full_stop}"
+NLI_CONT_TEMPLATE = " {label}{comma}{space}{hypothesis}"
 
 
 def _get_nli_prompt(
@@ -461,13 +475,13 @@ def _get_nli_prompt(
     labels = [label for label in labels if label is not None]
 
     def nli_prompt(task_name: str, premise: str, hypothesis: str, label: int):
-        premise = premise.rstrip(PUNCT)
-        hypothesis = decapitalize(hypothesis.rstrip(PUNCT))
+        premise = premise.rstrip(PUNCT).capitalize()
+        hypothesis = decapitalize(hypothesis)
         return Doc(
             task_name=task_name,
             query=NLI_TEMPLATE.format(
                 premise=premise,
-                question_word=NLI_QUESTION[lang].capitalize(),
+                question_word=NLI_QUESTION[lang],
                 question_mark=QUESTION_MARK[lang],
                 comma=COMMA[lang],
                 space=SPACE[lang],
@@ -477,7 +491,6 @@ def _get_nli_prompt(
                     comma=COMMA[lang],
                     label=label,
                     hypothesis=hypothesis,
-                    full_stop=FULL_STOP[lang],
                     space=SPACE[lang],
                 )
                 for label in labels
@@ -485,7 +498,7 @@ def _get_nli_prompt(
             gold_index=label,
             uncoditioned_prefix=NLI_TEMPLATE.format(
                 premise="",
-                question_word=NLI_QUESTION[lang].capitalize(),
+                question_word=NLI_QUESTION[lang],
                 question_mark=QUESTION_MARK[lang],
                 comma=COMMA[lang],
                 space=SPACE[lang],
@@ -535,7 +548,7 @@ def _get_copa_prompt(lang: LANGS):
     ):
         # Convert it into He was nice (premise) thus he was nice (hypothesis).
         # We expecte hypotheses and premise to be ended by .
-        premise = premise.rstrip(PUNCT)
+        premise = premise.rstrip(PUNCT).capitalize()
         hypotheses = [decapitalize(hyp) for hyp in hypotheses]
         cause_or_effect_trans = (
             CAUSE_LABELS[lang] if cause_or_effect == "cause" else EFFECT_LABELS[lang]
@@ -604,7 +617,7 @@ def _get_boolq_prompt(lang: LANGS):
 def get_boolq_prompt(lang: LANGS):
     prompter = _get_boolq_prompt(lang)
     return lambda line, task_name: prompter(
-        task_name, line["question"], line["answer"] == "true", context=line["passage"]
+        task_name, line["question"], line["answer"], context=line["passage"]
     )
 
 
@@ -613,7 +626,7 @@ def get_indic_boolq_prompt(lang: LANGS):
     return lambda line, task_name: prompter(
         task_name,
         line["itv2 hi question"],
-        line["answer"] == "true",
+        line["answer"],
         context=line["itv2 hi passage"],
     )
 
@@ -631,6 +644,16 @@ def get_french_boolqa_prompt(lang: LANGS):
 
     return adapter
 
+def get_acva_prompt(lang: LANGS):
+    prompter = _get_boolq_prompt(lang)
+    choices = [CORRECT_LABELS[lang], INCORRECT_LABELS[lang]]
+    def adapter(line, task_name):
+        question = f"{line['question'].rstrip(PUNCT)}{QUESTION_MARK[lang]}"
+        return prompter(
+            task_name, question, choices.index(line["answer"]) == 0
+        )
+    return adapter
+
 
 # NLI Hellaswag
 DEFAULT_DOT_REPLACEMENT = [" [title]"]
@@ -640,8 +663,6 @@ DOT_REPLACEMENTS: dict[LANGS, list[str]] = {
 }
 
 HELLASWAG_TEMPLATE = "{activity_label}{ctx}"
-CTX_TEMPLATE = "{ctx}{full_stop}"
-
 
 def _get_hellaswag_prompt(lang: LANGS):
     dot_replacment = DOT_REPLACEMENTS.get(lang, DEFAULT_DOT_REPLACEMENT)
@@ -654,12 +675,13 @@ def _get_hellaswag_prompt(lang: LANGS):
             text = text.replace(dot_repl, ". ")
         text = re.sub("\\[.*?\\]", "", text)
         text = text.replace("  ", " ")
+        text = text.replace(r"\.+", r"\.")
         return text.strip()
     
     def process_context(ctx):
         if ctx == "":
             return ""
-        return CTX_TEMPLATE.format(ctx=ctx.rstrip(PUNCT).capitalize(), full_stop=FULL_STOP[lang])
+        return fix_ending_punct(preprocess(ctx), lang).capitalize()
 
     def hellaswag_prompt(
         task_name: str,
@@ -670,15 +692,17 @@ def _get_hellaswag_prompt(lang: LANGS):
     ):
         space = SPACE[lang]
         ctx_list = list(ctx) if isinstance(ctx, tuple) else [ctx]
+        # Last one should be left as is
         ctxs = [process_context(c) for c in ctx_list]
         ctxs = [c for c in ctxs if c != ""]
         context = space.join(ctxs)
-        activity_label = f"{activity_label}: " if activity_label else ""
+        activity_label = f"{activity_label.capitalize()}:" if activity_label else ""
+        # Removoal of the [header] can happen and we need the first letter to be capital afterwards
         full_context = HELLASWAG_TEMPLATE.format(activity_label=activity_label, ctx=context)
         return Doc(
             task_name=task_name,
-            query=preprocess(full_context),
-            choices=[" " + preprocess(ending) for ending in endings],
+            query=full_context,
+            choices=[" " + fix_capitalization(full_context, preprocess(ending), lang) for ending in endings],
             gold_index=int(label) if label != "" else -1,  # -1 for test
             uncoditioned_prefix="",
         )
@@ -723,23 +747,25 @@ def xcodah_prompt(line: dict[str, Any], task_name: str):
 
 
 # TODO use trans literals for punct
-def winogrande(line, task_name: str = None):
-    # LL of query + choices
-    query, end_of_target = line["sentence"].split("_")
-    query = query.strip()
-    assert len(query) > 0, f"Query must not be empty {line['sentence']}"
-    query_ends_with_punct = query[-1] in PUNCT
-    options = [
-        o.capitalize() if query_ends_with_punct else decapitalize(o)
-        for o in [line["option1"], line["option2"]]
-    ]
-    end_of_target = end_of_target.strip()
-    return Doc(
-        task_name=task_name,
-        query=query,
-        choices=[f" {o} {end_of_target}" for o in options],
-        gold_index=(
-            int(line["answer"]) - 1 if line["answer"] != "" else -1
-        ),  # managing unk test index
-        uncoditioned_prefix="",
-    )
+def get_winogrande_prompt(lang: LANGS):
+
+    def winogrande(line, task_name: str = None):
+        # LL of query + choices
+        query, end_of_target = line["sentence"].split("_")
+        query = fix_ending_punct(query, lang).capitalize()
+        options = [
+            fix_capitalization(query, o, lang)
+            for o in [line["option1"], line["option2"]]
+        ]
+        end_of_target = fix_ending_punct(end_of_target.strip(), lang)
+        return Doc(
+            task_name=task_name,
+            query=query,
+            choices=[f" {o} {end_of_target}" for o in options],
+            gold_index=(
+                int(line["answer"]) - 1 if line["answer"] != "" else -1
+            ),  # managing unk test index
+            uncoditioned_prefix="",
+        )
+    
+    return winogrande

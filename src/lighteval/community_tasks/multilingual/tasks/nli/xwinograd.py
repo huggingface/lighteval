@@ -1,5 +1,5 @@
 from typing import Literal
-from ..utils.prompts import winogrande
+from ..utils.prompts import get_winogrande_prompt
 
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
@@ -13,7 +13,7 @@ class XWinogradeTask(LightevalTaskConfig):
         super().__init__(
             name=f"xwinograd-{lang}",
             suite=("custom",),
-            prompt_function=winogrande,
+            prompt_function=get_winogrande_prompt(lang),
             hf_repo="Muennighoff/xwinograd",
             hf_subset=lang,
             evaluation_splits=("test",),

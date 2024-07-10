@@ -58,30 +58,20 @@ ANSWER = {
 # We sure the XNLI definitions from eval harness
 NLI_QUESTION = {
     "ar": "صحيح",
-    "bg": "правилно",
-    "de": "richtig",
-    "el": "σωστός",
     "en": "right",
-    "es": "correcto",
-    "fr": "correct",
-    "hi": "सही",
-    "ru": "правильно",
-    "sw": "sawa",
-    "te": "సరియైనదా",
-    "th": "ถูกต้อง",
+    "fr": "n'est-ce pas",
+    "hi": "है ना",
+    "ru": "не так ли",
+    "sw": "sivyo",
+    "te": "కదా",
+    "th": "ใช่ไหม",
     "tr": "değil mi",
-    "ur": "صحیح",
-    "vi": "đúng",
-    "zh": "正确",
+    "zh": "对吧",
 }
 
 ENTAILMENT_LABELS = {
     "ar": "نعم",
-    "bg": "да",
-    "de": "Ja",
-    "el": "Ναί",
     "en": "Yes",
-    "es": "Sí",
     "fr": "Oui",
     "hi": "हाँ",
     "ru": "Да",
@@ -89,47 +79,33 @@ ENTAILMENT_LABELS = {
     "te": "అవును",
     "th": "ใช่",
     "tr": "Evet",
-    "ur": "جی ہاں",
-    "vi": "Vâng",
     "zh": "是的",
 }
 
 NEUTRAL_LABELS = {
     "ar": "كذلك",
-    "bg": "така",
-    "de": "Auch",
-    "el": "Έτσι",
     "en": "Also",
-    "es": "Asi que",
-    "fr": "Aussi",
-    "hi": "इसलिए",
-    "ru": "Так",
-    "sw": "Hivyo",
-    "th": "ดังนั้น",
+    "fr": "De plus",
+    "hi": "साथ ही",
+    "ru": "К тому же",
+    "sw": "Pia",
+    "th": "และ",
     "tr": "Ayrıca",
-    "te": "అలాగే",
-    "ur": "اس لئے",
-    "vi": "Vì vậy",
-    "zh": "所以",
+    "te": "అంతేకాక",
+    "zh": "而且",
 }
 
 CONTRADICTION_LABELS = {
     "ar": "لا",
-    "bg": "не",
-    "de": "Nein",
-    "el": "όχι",
     "en": "No",
-    "es": "No",
     "fr": "Non",
     "hi": "नहीं",
     "ru": "Нет",
     "sw": "Hapana",
-    "te": "నం",
-    "th": "ไม่",
+    "te": "కాదు",
+    "th": "ไม",
     "tr": "Hayır",
-    "ur": "نہیں",
-    "vi": "Không",
-    "zh": "不是的",
+    "zh": "不",
 }
 
 IMPOSSIBLE = {
@@ -161,11 +137,6 @@ CAUSE_LABELS = {
     "ar": "لأن",
     "en": "because",
     "hi": "क्योंकि",
-    "et": "sest",
-    "ht": "poukisa",
-    "it": "perché",
-    "id": "karena",
-    "qu": "imataq",
     "sw": "kwa sababu",
     "zh": "因为",
     "ta": "காரணமாக",
@@ -173,18 +144,12 @@ CAUSE_LABELS = {
     "th": "เพราะ",
     "tr": "çünkü",
     "ru": "потому что",
-    "vi": "bởi vì"
 }
 
 EFFECT_LABELS = {
     "ar": "لذلك",
     "en": "therefore",
     "hi": "इसलिए",
-    "et": "seetõttu",
-    "ht": "donk sa",
-    "it": "quindi",
-    "id": "maka",
-    "qu": "chaymi",
     "sw": "kwa hiyo",
     "zh": "所以",
     "ta": "எனவே",
@@ -192,7 +157,6 @@ EFFECT_LABELS = {
     "th": "ดังนั้น",
     "tr": "bu yüzden",
     "ru": "поэтому",
-    "vi": "vì vậy"
 }
 
 
@@ -248,4 +212,17 @@ QUESTION_MARK = {
     "th": "?",
     "tr": "?",
     "zh": "？",
+}
+
+COLON = {
+    "ar": ":",
+    "en": ":",
+    "hi": ":",
+    "fr": ":",
+    "ru": ":",
+    "sw": ":",
+    "te": ":",
+    "th": ":",
+    "tr": ":",
+    "zh": "：",
 }

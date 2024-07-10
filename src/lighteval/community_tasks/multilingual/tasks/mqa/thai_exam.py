@@ -15,7 +15,7 @@ ThaiExamSubset = Literal["a_level", "ic", "onet", "tgat", "tpat1"]
 class ThaiExamsTask(LightevalTaskConfig):
     def __init__(self, subset: ThaiExamSubset):
         super().__init__(
-            name="thai-exams",
+            name=f"thai-exams:{subset}",
             prompt_function=get_thai_exams_prompt("th"),
             suite=("custom",),
             hf_repo="scb10x/thai_exam",

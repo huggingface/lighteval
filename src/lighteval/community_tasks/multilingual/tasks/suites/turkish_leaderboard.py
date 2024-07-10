@@ -1,6 +1,6 @@
 from typing import Literal
 
-from ..utils.prompts import get_arc_prompt, get_hellaswag_prompt, get_m_truthfulqa_prompt, get_mmlu_prompt, winogrande
+from ..utils.prompts import get_arc_prompt, get_hellaswag_prompt, get_m_truthfulqa_prompt, get_mmlu_prompt, get_winogrande_prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
@@ -25,7 +25,7 @@ class WinogradeTrTask(LightevalTaskConfig):
         super().__init__(
             name=f"xwinograd-tr",
             suite=("custom",),
-            prompt_function=winogrande,
+            prompt_function=get_winogrande_prompt("tr"),
             hf_repo="malhajar/winogrande-tr-v0.2",
             hf_subset="default",
             filter=lambda x: x["sentence"].count("_") == 1 and len(x["sentence"].split("_")[0].strip()) > 0,
@@ -114,7 +114,7 @@ MMLU_SUBSETS = Literal[
 class MMLUTaskTr(LightevalTaskConfig):
     def __init__(self, subset: MMLU_SUBSETS):
         super().__init__(
-            name=f"mmlu-tr",
+            name=f"mmlu-tr:{subset}",
             prompt_function=get_mmlu_prompt("tr", is_number_choice=True),
             suite=("custom",),
             hf_repo="malhajar/mmlu_tr-v0.2",

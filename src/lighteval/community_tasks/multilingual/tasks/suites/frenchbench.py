@@ -31,7 +31,7 @@ class FrenchHellaSwagTask(LightevalTaskConfig):
     def __init__(self):
         super().__init__(
             name="french-hellaswag",
-            prompt_function=get_hellaswag_prompt("fr"),
+            prompt_function=get_hellaswag_prompt("fr", use_activity_label=False),
             suite=("custom",),
             hf_repo="manu/french_bench_hellaswag",
             hf_subset="default",
