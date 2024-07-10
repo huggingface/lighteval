@@ -143,7 +143,7 @@ class TaskExampleId(NamedTuple):
     Represents the identifier for an example in a task.
 
     Attributes:
-        task_name (str): The name of the task.
+        task_name (str): The name of the task in `name|num_fewshot` format.
         doc_id_seed (str): The document id with the seed used for few_shot appended at the end.
     """
 
@@ -187,9 +187,7 @@ class Doc:
             choices = self.choices
         golds = []
         for gold_ix in gold_indices:
-            local_golds = as_list(choices[gold_ix])
-            for local_gold in local_golds:
-                golds.append(local_gold)
+            golds.extend(as_list(choices[gold_ix]))
         return golds
 
     def __repr__(self):

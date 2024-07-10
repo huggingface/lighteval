@@ -21,34 +21,8 @@
 # SOFTWARE.
 
 # ruff: noqa: F405, F403, F401, I001
-
-import numpy as np
-from aenum import extend_enum
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
-from lighteval.metrics import Metrics
-from lighteval.metrics.utils import MetricCategory, MetricUseCase, SampleLevelMetric, SampleLevelMetricGrouping
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
-from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
-from colorama import Fore, Style
-import os
-
-
-task = LightevalTaskConfig(
-    name="mt_bench",
-    prompt_function="mt_bench_prompt",  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
-    suite=["extended"],
-    hf_repo="lighteval/mt-bench",
-    hf_subset="default",
-    hf_avail_splits=["train"],
-    evaluation_splits=["train"],
-    few_shots_split="",
-    few_shots_select="random",
-    metric=["llm_judge_multi_turn"],
-    generation_size=1024,
-    stop_sequence=[],
-)
 
 
 def mt_bench_prompt(line, task_name: str = None):
@@ -71,9 +45,23 @@ def mt_bench_prompt(line, task_name: str = None):
     )
 
 
-_TASKS = [task]
+task = LightevalTaskConfig(
+    name="mt_bench",
+    prompt_function=mt_bench_prompt,  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
+    suite=["extended"],
+    hf_repo="lighteval/mt-bench",
+    hf_subset="default",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split="",
+    few_shots_select="random",
+    metric=["llm_judge_multi_turn_openai"],
+    generation_size=1024,
+    stop_sequence=[],
+)
 
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
+
+TASKS_TABLE = [task]
 
 if __name__ == "__main__":
     print(t["name"] for t in TASKS_TABLE)
