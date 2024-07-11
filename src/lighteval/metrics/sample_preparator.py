@@ -132,7 +132,7 @@ class PerplexityPreparator:
         """Prepares an individual perplexity example to the format expected by metrics computed at the corpus level (aggregated).
 
         Args:
-            logprobs (list[float]): List of the logprobabilities computed for each item of the sequence or single aggregated logprob over the sequence
+            logprobs (list[float]): List of the log-probabilities computed for each item of the sequence or single aggregated logprob over the sequence
             reference_text (str): Current reference text for which to compute the length in self.units_type
 
         Returns:

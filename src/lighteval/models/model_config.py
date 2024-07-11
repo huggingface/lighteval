@@ -85,9 +85,9 @@ class BaseModelConfig:
            If `None`, the default value will be set to `True` for seq2seq models (e.g. T5) and
             `False` for causal models.
         model_parallel (bool, optional, defaults to False):
-            True/False: force to uses or not the `accelerate` library to load a large
+            True/False: force to use or not the `accelerate` library to load a large
             model across multiple devices.
-            Default: None which correspond to comparing the number of process with
+            Default: None which corresponds to comparing the number of processes with
                 the number of GPUs. If it's smaller => model-parallelism, else not.
         dtype (Union[str, torch.dtype], optional, defaults to None):):
             Converts the model weights to `dtype`, if specified. Strings get
@@ -122,6 +122,7 @@ class BaseModelConfig:
     device: Union[int, str] = "cuda"
     quantization_config: Optional[BitsAndBytesConfig] = None
     trust_remote_code: bool = False
+    use_chat_template: bool = False
 
     def __post_init__(self):
         if self.quantization_config is not None and not is_bnb_available():
@@ -199,6 +200,12 @@ class AdapterModelConfig(BaseModelConfig):
 class TGIModelConfig:
     inference_server_address: str
     inference_server_auth: str
+    model_id: str
+
+
+@dataclass
+class DummyModelConfig:
+    seed: int = 42
 
 
 @dataclass
@@ -223,6 +230,8 @@ class InferenceEndpointModelConfig:
     add_special_tokens: bool = True
     revision: str = "main"
     namespace: str = None  # The namespace under which to launch the endopint. Defaults to the current user's namespace
+    image_url: str = None
+    env_vars: dict = None
 
     def get_dtype_args(self) -> Dict[str, str]:
         model_dtype = self.model_dtype.lower()
@@ -236,6 +245,9 @@ class InferenceEndpointModelConfig:
             return {"DTYPE": model_dtype}
         return {}
 
+    def get_custom_env_vars(self) -> Dict[str, str]:
+        return {k: str(v) for k, v in self.env_vars.items()} if self.env_vars else {}
+
     @staticmethod
     def nullable_keys() -> list[str]:
         """
@@ -243,10 +255,19 @@ class InferenceEndpointModelConfig:
         keys be specified in the configuration in order to launch the endpoint. This function returns the list of keys
         that are not required and can remain None.
         """
-        return ["namespace"]
+        return ["namespace", "env_vars", "image_url"]
 
 
-def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]) -> BaseModelConfig:  # noqa: C901
+def create_model_config(  # noqa: C901
+    args: Namespace, accelerator: Union["Accelerator", None]
+) -> Union[
+    BaseModelConfig,
+    AdapterModelConfig,
+    DeltaModelConfig,
+    TGIModelConfig,
+    InferenceEndpointModelConfig,
+    DummyModelConfig,
+]:
     """
     Create a model configuration based on the provided arguments.
 
@@ -255,7 +276,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
         accelerator (Union[Accelerator, None]): accelerator to use for model training.
 
     Returns:
-        BaseModelConfig: model configuration.
+        Union[BaseModelConfig, AdapterModelConfig, DeltaModelConfig, TGIModelConfig, InferenceEndpointModelConfig, DummyModelConfig]: model configuration.
 
     Raises:
         ValueError: If both an inference server address and model arguments are provided.
@@ -264,21 +285,24 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
         ValueError: If a base model is specified when not using delta weights or adapter weights.
     """
     if args.model_args:
-        args_dict = {k.split("=")[0]: k.split("=")[1] for k in args.model_args.split(",")}
+        args_dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.model_args.split(",")}
+
+        if args_dict.pop("dummy", False):
+            return DummyModelConfig(**args_dict)
+
         args_dict["accelerator"] = accelerator
+        args_dict["use_chat_template"] = args.use_chat_template
 
         return BaseModelConfig(**args_dict)
 
-    if args.model_config:
-        config = args.model_config["model"]
-    else:
-        with open(args.model_config_path, "r") as f:
-            config = yaml.safe_load(f)["model"]
+    with open(args.model_config_path, "r") as f:
+        config = yaml.safe_load(f)["model"]
 
     if config["type"] == "tgi":
         return TGIModelConfig(
-            inference_server_address=args["instance"]["inference_server_address"],
-            inference_server_auth=args["instance"]["inference_server_auth"],
+            inference_server_address=config["instance"]["inference_server_address"],
+            inference_server_auth=config["instance"]["inference_server_auth"],
+            model_id=config["instance"]["model_id"],
         )
 
     if config["type"] == "endpoint":
@@ -301,6 +325,8 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
                 instance_size=config["instance"]["instance_size"],
                 instance_type=config["instance"]["instance_type"],
                 namespace=config["instance"]["namespace"],
+                image_url=config["instance"].get("image_url", None),
+                env_vars=config["instance"].get("env_vars", None),
             )
         return InferenceModelConfig(model=config["base_params"]["endpoint_name"])
 
@@ -333,6 +359,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
         args_dict["quantization_config"] = quantization_config
         args_dict["batch_size"] = args.override_batch_size
         args_dict["multichoice_continuations_start_space"] = multichoice_continuations_start_space
+        args_dict["use_chat_template"] = args.use_chat_template
 
         # Keeping only non null params
         args_dict = {k: v for k, v in args_dict.items() if v is not None}
@@ -346,7 +373,7 @@ def create_model_config(args: Namespace, accelerator: Union["Accelerator", None]
                 raise ValueError("You need to specify a base model when using adapter weights")
             return AdapterModelConfig(**args_dict)
         if config["merged_weights"]["base_model"] not in ["", None]:
-            raise ValueError("You can't specifify a base model if you are not using delta/adapter weights")
+            raise ValueError("You can't specify a base model if you are not using delta/adapter weights")
         return BaseModelConfig(**args_dict)
 
     raise ValueError(f"Unknown model type in your model config file: {config['type']}")
