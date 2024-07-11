@@ -211,6 +211,23 @@ class LoglikelihoodSingleTokenDataset(DynamicBatchDataset):
 
 class GenerativeTaskDataset(DynamicBatchDataset):
     def init_split_limits(self, num_dataset_splits):
+        """Initialises the split limits based on generation parameters.
+        The splits are used to estimate time remaining when evaluating, and in the case of generative evaluations, to group similar samples together.
+
+        For generative tasks, self._sorting_criteria outputs:
+        - a boolean (whether the generation task uses logits)
+        - a list (the stop sequences)
+        - the item length (the actual size sorting factor).
+
+        In the current function, we create evaluation groups by generation parameters (logits and eos), so that samples with similar properties get batched together afterwards.
+        The samples will then be further organised by length in each split.
+
+        Args:
+            num_dataset_splits (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         if num_dataset_splits is not None:
             hlog_warn(
                 "You cannot select the number of dataset splits for a generative evaluation at the moment. Automatically inferring."
@@ -233,7 +250,7 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         splits_indices = [tuple(e) for e in splits_indices]
         return num_dataset_splits, splits_indices
 
-    def _sorting_criteria(self, request: GreedyUntilRequest) -> int:
+    def _sorting_criteria(self, request: GreedyUntilRequest) -> tuple[bool, list, int]:
         """
         Collate function for generating batches.
 
