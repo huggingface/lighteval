@@ -193,7 +193,7 @@ class EvaluationTracker:
 
         if push_results_to_hub:
             self.api.upload_folder(
-                repo_id=self.general_config_logger.config.lighteval.logging.hub_repo_tensorboard,
+                repo_id=self.general_config_logger.config.lighteval.logging.hub_repo_results,
                 folder_path=output_dir_results,
                 path_in_repo="results/" + self.general_config_logger.model_name,
                 # repo_type="dataset",
@@ -201,11 +201,11 @@ class EvaluationTracker:
             )
 
         if push_details_to_hub:
-            self.details_to_hub(
-                model_name=self.general_config_logger.model_name,
-                results_file_path=output_results_in_details_file,
-                details_folder_path=output_dir_details_sub_folder,
-                push_as_public=public,
+            self.api.upload_folder(
+                repo_id=self.general_config_logger.config.lighteval.logging.hub_repo_details,
+                folder_path=output_dir_details_sub_folder,
+                path_in_repo="details/" + self.general_config_logger.model_name,
+                commit_message=f"Updating model {self.general_config_logger.model_name}",
             )
 
         if push_results_to_tensorboard:
