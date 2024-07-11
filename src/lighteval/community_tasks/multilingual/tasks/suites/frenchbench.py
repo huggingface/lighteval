@@ -54,7 +54,10 @@ class BoolQAFrenchTask(LightevalTaskConfig):
             hf_subset="default",
             evaluation_splits=("test",),
             few_shots_split="valid",
+            generation_size=5,
+            stop_sequence=["\n"],
             metric=(
+                Metrics.exact_match,
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
                 Metrics.loglikelihood_acc_norm_pmi,

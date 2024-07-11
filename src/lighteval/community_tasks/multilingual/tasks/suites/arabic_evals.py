@@ -34,7 +34,13 @@ from lighteval.tasks.doc import Doc
 from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 from lighteval.metrics.metrics import Metrics
 
-from ..utils.prompts import get_acva_prompt, get_alghafa_prompt, get_boolq_prompt, get_ceval_prompt, get_sciq_prompt
+from ..utils.prompts import (
+    get_acva_prompt,
+    get_alghafa_prompt,
+    get_boolq_prompt,
+    get_ceval_prompt,
+    get_sciq_prompt,
+)
 
 
 # fmt: off
@@ -55,6 +61,7 @@ ARABIC_MMLU_SUBSETS = [
 ]
 # fmt: on
 
+
 class CustomArabicMMLUTask(LightevalTaskConfig):
     def __init__(
         self,
@@ -66,7 +73,11 @@ class CustomArabicMMLUTask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=get_ceval_prompt("ar"),
             hf_repo="OALL/Arabic_MMLU",
-            metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm, Metrics.loglikelihood_acc_norm_pmi),
+            metric=(
+                Metrics.loglikelihood_acc,
+                Metrics.loglikelihood_acc_norm,
+                Metrics.loglikelihood_acc_norm_pmi,
+            ),
             hf_avail_splits=["test", "dev"],
             evaluation_splits=["test"],
             few_shots_split="dev",
@@ -82,9 +93,9 @@ class CustomArabicMMLUTask(LightevalTaskConfig):
 
 
 ARABIC_MMLU_TASKS = [
-    CustomArabicMMLUTask(name=f"arabic_mmlu:{subset}", hf_subset=subset) for subset in ARABIC_MMLU_SUBSETS
+    CustomArabicMMLUTask(name=f"arabic_mmlu:{subset}", hf_subset=subset)
+    for subset in ARABIC_MMLU_SUBSETS
 ]
-
 
 
 # ACVA ##
@@ -101,6 +112,7 @@ ACVA_SUBSETS = [
 ]
 # fmt: on
 
+
 class CustomACVATask(LightevalTaskConfig):
     def __init__(
         self,
@@ -112,7 +124,14 @@ class CustomACVATask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=get_acva_prompt("ar"),
             hf_repo="OALL/ACVA",
-            metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm, Metrics.loglikelihood_acc_norm_pmi),
+            generation_size=5,
+            stop_sequence=["\n"],
+            metric=(
+                Metrics.exact_match,
+                Metrics.loglikelihood_acc,
+                Metrics.loglikelihood_acc_norm,
+                Metrics.loglikelihood_acc_norm_pmi,
+            ),
             hf_avail_splits=["test", "validation"],
             evaluation_splits=["test"],
             few_shots_split="validation",
@@ -127,7 +146,9 @@ class CustomACVATask(LightevalTaskConfig):
         )
 
 
-ACVA_TASKS = [CustomACVATask(name=f"acva:{subset}", hf_subset=subset) for subset in ACVA_SUBSETS]
+ACVA_TASKS = [
+    CustomACVATask(name=f"acva:{subset}", hf_subset=subset) for subset in ACVA_SUBSETS
+]
 
 
 # ARABIC EXAMS ##
@@ -142,11 +163,14 @@ arabic_exams_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm, Metrics.loglikelihood_acc_norm_pmi),
+    metric=(
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc_norm,
+        Metrics.loglikelihood_acc_norm_pmi,
+    ),
     trust_dataset=True,
     version=0,
 )
-
 
 
 # ALGHAFA NATIVE ##
@@ -157,6 +181,7 @@ ALGHAFA_SUBSETS = [
     "multiple_choice_sentiment_task"
 ]
 # fmt: on
+
 
 class CustomAlGhafaNativeTask(LightevalTaskConfig):
     def __init__(
@@ -169,7 +194,11 @@ class CustomAlGhafaNativeTask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=get_alghafa_prompt("ar"),
             hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Native",
-            metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm, Metrics.loglikelihood_acc_norm_pmi),
+            metric=(
+                Metrics.loglikelihood_acc,
+                Metrics.loglikelihood_acc_norm,
+                Metrics.loglikelihood_acc_norm_pmi,
+            ),
             hf_avail_splits=["test", "validation"],
             evaluation_splits=["test"],
             few_shots_split="validation",
@@ -183,7 +212,10 @@ class CustomAlGhafaNativeTask(LightevalTaskConfig):
         )
 
 
-ALGHAFA_TASKS = [CustomAlGhafaNativeTask(name=f"alghafa:{subset}", hf_subset=subset) for subset in ALGHAFA_SUBSETS]
+ALGHAFA_TASKS = [
+    CustomAlGhafaNativeTask(name=f"alghafa:{subset}", hf_subset=subset)
+    for subset in ALGHAFA_SUBSETS
+]
 
 
 # ALGHAFA TRANSLATED ##
@@ -198,7 +230,11 @@ race_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm, Metrics.loglikelihood_acc_norm_pmi),
+    metric=(
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc_norm,
+        Metrics.loglikelihood_acc_norm_pmi,
+    ),
     trust_dataset=True,
     version=0,
 )
@@ -215,7 +251,11 @@ piqa_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm, Metrics.loglikelihood_acc_norm_pmi),
+    metric=(
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc_norm,
+        Metrics.loglikelihood_acc_norm_pmi,
+    ),
     trust_dataset=True,
     version=0,
 )
@@ -232,11 +272,14 @@ arc_easy_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm, Metrics.loglikelihood_acc_norm_pmi),
+    metric=(
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc_norm,
+        Metrics.loglikelihood_acc_norm_pmi,
+    ),
     trust_dataset=True,
     version=0,
 )
-
 
 
 # openbook_qa_ext_ar
@@ -250,12 +293,14 @@ openbook_qa_ext_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm, Metrics.loglikelihood_acc_norm_pmi),
+    metric=(
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc_norm,
+        Metrics.loglikelihood_acc_norm_pmi,
+    ),
     trust_dataset=True,
     version=0,
 )
-
-
 
 
 # boolq_ar
@@ -271,7 +316,12 @@ boolq_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     generation_size=5,
     stop_sequence=["\n"],
-    metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm, Metrics.loglikelihood_acc_norm_pmi, Metrics.exact_match),
+    metric=(
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc_norm,
+        Metrics.loglikelihood_acc_norm_pmi,
+        Metrics.exact_match,
+    ),
     trust_dataset=True,
     version=0,
 )
@@ -283,6 +333,7 @@ boolq_ar_task = LightevalTaskConfig(
 
 # toxigen_ar
 # TODO: I Don't think this will work so will not convert it
+
 
 def toxigen_prompt_arabic(line, task_name: str = None):
     text = line["text"]
@@ -302,8 +353,9 @@ def toxigen_prompt_arabic(line, task_name: str = None):
         gold_index=label,
         instruction=instruction,
         target_for_fewshot_sorting="نعم" if label == 1 else "لا",
-        uncoditioned_prefix=""
+        uncoditioned_prefix="",
     )
+
 
 toxigen_ar_task = LightevalTaskConfig(
     name="toxigen_ar",
@@ -315,7 +367,11 @@ toxigen_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm, Metrics.loglikelihood_acc_norm_pmi),
+    metric=(
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc_norm,
+        Metrics.loglikelihood_acc_norm_pmi,
+    ),
     trust_dataset=True,
     version=0,
 )
@@ -330,7 +386,11 @@ sciq_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm, Metrics.loglikelihood_acc_norm_pmi),
+    metric=(
+        Metrics.loglikelihood_acc,
+        Metrics.loglikelihood_acc_norm,
+        Metrics.loglikelihood_acc_norm_pmi,
+    ),
     trust_dataset=True,
     version=0,
 )

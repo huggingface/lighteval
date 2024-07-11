@@ -62,7 +62,7 @@ NLI_QUESTION = {
     "fr": "n'est-ce pas",
     "hi": "है ना",
     "ru": "не так ли",
-    "sw": "sivyo",
+    "sw": "sahihi",
     "te": "కదా",
     "th": "ใช่ไหม",
     "tr": "değil mi",
@@ -103,7 +103,7 @@ CONTRADICTION_LABELS = {
     "ru": "Нет",
     "sw": "Hapana",
     "te": "కాదు",
-    "th": "ไม",
+    "th": "ไม่",
     "tr": "Hayır",
     "zh": "不",
 }

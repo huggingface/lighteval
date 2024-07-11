@@ -48,7 +48,10 @@ class BoolQIndTask(LightevalTaskConfig):
             hf_subset="default",
             evaluation_splits=("validation",),
             few_shots_split="train",
+            generation_size=5,
+            stop_sequence=["\n"],
             metric=(
+                Metrics.exact_match,
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
                 Metrics.loglikelihood_acc_norm_pmi,
