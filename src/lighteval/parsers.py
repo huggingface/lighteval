@@ -48,14 +48,6 @@ def parser_accelerate(parser=None):
         help="Model arguments to pass to the model class, e.g. 'pretrained=gpt2,dtype=float16'",
     )
 
-    # Accelerate parameters
-    parser.add_argument(
-        "--num_processes",
-        type=int,
-        default=1,
-        help="Number of processes for accelerate to use, this directly translates to the data parallelism level",
-    )
-
     # Debug
     parser.add_argument("--max_samples", type=int, default=None, help="Maximum number of samples to evaluate on")
     parser.add_argument("--override_batch_size", type=int, default=-1)
@@ -70,6 +62,7 @@ def parser_accelerate(parser=None):
     parser.add_argument(
         "--push_details_to_hub", default=False, action="store_true", help="Set to push the details to the hub"
     )
+    parser.add_argument("--push_results_to_tensorboard", default=False, action="store_true")
     parser.add_argument(
         "--public_run", default=False, action="store_true", help="Push results and details to a public repo"
     )

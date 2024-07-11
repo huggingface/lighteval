@@ -25,7 +25,7 @@
 import argparse
 
 from lighteval.parsers import parser_accelerate, parser_nanotron
-from lighteval.utils import list_tasks_command
+from lighteval.tasks.registry import Registry
 
 
 def cli_evaluate():
@@ -57,7 +57,7 @@ def cli_evaluate():
         return
 
     if args.list_tasks:
-        list_tasks_command()
+        Registry(cache_dir="").print_all_tasks()
         return
 
 
