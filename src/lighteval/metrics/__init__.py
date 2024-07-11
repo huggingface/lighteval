@@ -100,7 +100,7 @@ def apply_generative_metric(
             outputs.update(
                 Metrics[metric].value.compute(
                     golds=golds,
-                    predictions=as_list(preds[0]) if max_num_samples > 0 else preds,
+                    predictions=as_list(preds[0]) if max_num_samples > 1 else preds,
                     formatted_doc=formatted_doc,
                 )
             )
@@ -108,7 +108,7 @@ def apply_generative_metric(
             outputs.update(
                 Metrics[metric].value.compute(
                     golds=golds,
-                    predictions=as_list(preds[0]) if max_num_samples > 0 else preds,
+                    predictions=as_list(preds[0]) if max_num_samples > 1 else preds,
                     formatted_doc=formatted_doc,
                 )
             )

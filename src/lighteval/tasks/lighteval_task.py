@@ -26,7 +26,7 @@ import random
 from dataclasses import dataclass
 from multiprocessing import Pool
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
 
 from datasets import load_dataset
 
@@ -56,8 +56,6 @@ from lighteval.tasks.requests import (
 )
 from lighteval.utils import NO_OPENAI_ERROR_MSG, as_list, is_openai_available
 
-from . import tasks_prompt_formatting
-
 
 if TYPE_CHECKING:
     from lighteval.logging.evaluation_tracker import EvaluationTracker
@@ -70,7 +68,7 @@ class LightevalTaskConfig:
     Arguments:
         name (str): Short name of the evaluation task.
         suite (list[str]): Evaluation suites to which the task belongs.
-        prompt_function (str): Name of the function used to create the [`Doc`] samples from each line of the evaluation dataset.
+        prompt_function (Callable[[dict, str], Doc]): Function used to create the [`Doc`] samples from each line of the evaluation dataset.
         hf_repo (str): Path of the hub dataset repository containing the evaluation information.
         hf_subset (str): Subset used for the current task, will be default if none is selected.
         hf_avail_splits (list[str]): All the available splits in the evaluation dataset
@@ -90,7 +88,7 @@ class LightevalTaskConfig:
     """
 
     name: str
-    prompt_function: str
+    prompt_function: Callable  # [[dict, str], Doc]
     hf_repo: str
     hf_subset: str
     metric: Tuple[Union[str, Metrics]]
@@ -114,25 +112,6 @@ class LightevalTaskConfig:
     must_remove_duplicate_docs: bool = None
 
     version: int = 0
-
-    def as_dict(self):
-        return {
-            "name": self.name,
-            "prompt_function": self.prompt_function,
-            "hf_repo": self.hf_repo,
-            "hf_subset": self.hf_subset,
-            "metric": tuple(str(m) for m in self.metric),
-            "hf_avail_splits": self.hf_avail_splits,
-            "evaluation_splits": self.evaluation_splits,
-            "few_shots_split": self.few_shots_split,
-            "few_shots_select": self.few_shots_select,
-            "generation_size": self.generation_size,
-            "stop_sequence": self.stop_sequence,
-            "output_regex": self.output_regex,
-            "frozen": self.frozen,
-            "suite": self.suite,
-            "version": self.version,
-        }
 
     def __post_init__(self):
         if self.suite is None:
@@ -223,31 +202,12 @@ class LightevalTask:
         self.num_samples = [1] + [
             int(metric.replace("maj_at_", "").split("_")[0]) for metric in self.metrics if "maj_at_" in metric
         ]
+        if not isinstance(cfg.prompt_function, Callable):
+            raise TypeError(
+                f"Prompt formatting function ({str(cfg.prompt_function)}) should have been passed as a callable, was {type(cfg.prompt_function)} instead."
+            )
+        self.formatter = cfg.prompt_function
 
-        # Data processing
-        # to use once prompt formatting is managed as a module
-        if custom_tasks_module is None:
-            self.formatter = getattr(tasks_prompt_formatting, cfg.prompt_function)
-        else:
-            formatter = []
-            for module in custom_tasks_module:
-                if hasattr(module, cfg.prompt_function):
-                    formatter.append(getattr(module, cfg.prompt_function))
-
-            if len(formatter) == 0:  # Default version
-                self.formatter = getattr(tasks_prompt_formatting, cfg.prompt_function)
-            elif len(formatter) == 1:
-                # If we have a prompt in both the module and our tasks_prompt_formatting
-                # We take the prompt from the module
-                if hasattr(tasks_prompt_formatting, cfg.prompt_function):
-                    hlog_warn(
-                        f"Be careful you are using custom prompt function {cfg.prompt_function} and not the default one."
-                    )
-                self.formatter = formatter[0]
-            else:
-                raise Exception(
-                    f"You defined the prompt function {cfg.prompt_function} several times in the different custom modules you are loading."
-                )
         self.generation_size = cfg.generation_size
         self.stop_sequence = cfg.stop_sequence
         self.output_regex = cfg.output_regex
@@ -536,6 +496,18 @@ class LightevalTask:
                     context=context,
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
+                )
+            ]
+        if self.has_metric_category[MetricCategory.LLM_AS_JUDGE]:
+            requests[RequestType.GREEDY_UNTIL] += [
+                GreedyUntilRequest(
+                    task_name=current_task_name,
+                    example_index=document_id_seed,
+                    request_index=0,
+                    context=context,
+                    stop_sequence=self.stop_sequence,
+                    generation_size=self.generation_size,
+                    num_samples=1,
                 )
             ]
 
