@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Literal, get_args
 
 from ..utils.prompts import (
@@ -97,7 +98,6 @@ MMLU_SUBSET = Literal[
     "world_religions",
 ]
 
-
 class M_MMLUTask(LightevalTaskConfig):
     def __init__(self, lang: LANGS, subset: MMLU_SUBSET):
         super().__init__(
@@ -106,8 +106,8 @@ class M_MMLUTask(LightevalTaskConfig):
             suite=("custom",),
             hf_repo="jon-tow/okapi_mmlu",
             hf_subset=lang,
-            hf_revision="5d8c41172a1d463f718c793595308eb35f4fca02",
-            filter=lambda x: x["id"].split("/")[0] == subset,
+            hf_revision="refs/pr/1",
+            filter=lambda line: line["id"].split("/")[0] == subset,
             trust_dataset=True,
             evaluation_splits=("test",),
             few_shots_split="dev",
@@ -120,6 +120,8 @@ class M_MMLUTask(LightevalTaskConfig):
                 Metrics.loglikelihood_prob_norm_pmi,
             ),
         )
+        self.subset = subset
+
 
 
 class M_ARCTask(LightevalTaskConfig):
