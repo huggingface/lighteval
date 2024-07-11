@@ -27,10 +27,8 @@ import re
 import time
 from typing import Any, Optional
 
-from openai import OpenAI
-from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
-
 from lighteval.logging.hierarchical_logger import hlog_warn
+from lighteval.utils import NO_OPENAI_ERROR_MSG, is_openai_available
 
 
 class JudgeLM:
@@ -72,6 +70,8 @@ class JudgeLM:
         openai_api_key: Optional[str] = None,
         multi_turn: bool = False,
     ):
+        self.client = None  # loaded lazily
+        self.openai_api_key = openai_api_key
         self.model = model
         self.seed = seed
         self.temperature = temperature
@@ -127,6 +127,14 @@ class JudgeLM:
         Returns:
             A tuple containing the score, prompts, and judgment.
         """
+        if self.client is None:
+            if not is_openai_available():
+                raise ImportError(NO_OPENAI_ERROR_MSG)
+
+            from openai import OpenAI
+
+            self.client = OpenAI(api_key=self.openai_api_key)
+
         prompts = [
             self.__get_prompts_single_turn(
                 questions[0], answers[0], references[0] if references and len(references) > 0 else None

@@ -643,9 +643,9 @@ class NanotronLightevalModel(LightevalModel):
 
         return gathered_outputs, gathered_length
 
-    def _get_subsets(self, dataset, dataset_splits):
+    def _get_subsets(self, dataset, num_dataset_splits):
         total_length = len(dataset)
-        subset_length = int(float(total_length) / float(dataset_splits)) + 1
+        subset_length = int(float(total_length) / float(num_dataset_splits)) + 1
         if subset_length < self.parallel_context.dp_pg.size():
             # We need at least one subset sample per DP process
             subset_length = self.parallel_context.dp_pg.size()
@@ -653,7 +653,7 @@ class NanotronLightevalModel(LightevalModel):
 
     @torch.inference_mode()
     def _loglikelihood_single_token(
-        self, requests, disable_tqdm: bool = False, override_bs: int = -1, dataset_splits: int = 1
+        self, requests, disable_tqdm: bool = False, override_bs: int = -1, num_dataset_splits: int = 1
     ) -> List[LoglikelihoodSingleTokenReturn]:
         dataset = LoglikelihoodSingleTokenDataset(requests=requests)
         res = []
@@ -663,7 +663,7 @@ class NanotronLightevalModel(LightevalModel):
         printed_error = False
         starting_batch_size = 512
 
-        total_length, subset_length = self._get_subsets(dataset, dataset_splits)
+        total_length, subset_length = self._get_subsets(dataset, num_dataset_splits)
 
         for s, subset_start in enumerate(
             tqdm(
@@ -846,7 +846,7 @@ class NanotronLightevalModel(LightevalModel):
 
                     tq.desc = f"loglikelihood_single_token Subset {s} Node {dist.get_rank(self.parallel_context.world_pg)} - {human_format(tokens_per_sec)} tokens/s"
 
-                    # Clean up GPUS
+                    # Clean up GPUs
                     del out
                     del batch_probs
                     del batched_inputs
@@ -883,17 +883,17 @@ class NanotronLightevalModel(LightevalModel):
         requests,
         disable_tqdm: bool = False,
         override_bs: int = -1,
-        dataset_splits: int = 1,
+        num_dataset_splits: int = 1,
         return_bool_score: bool = True,
     ) -> List[LoglikelihoodReturn]:
-        dataset = LoglikelihoodDataset(requests=requests, dataset_splits=dataset_splits)
+        dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=num_dataset_splits)
         res = []
 
         # Dataset is sorted in descending size.
         # every 20-25% of the dataset we try to double the batch size for speed up
         starting_batch_size = 512
 
-        total_length, subset_length = self._get_subsets(dataset, dataset_splits)
+        total_length, subset_length = self._get_subsets(dataset, num_dataset_splits)
 
         for s, subset_start in enumerate(
             tqdm(
@@ -1083,7 +1083,7 @@ class NanotronLightevalModel(LightevalModel):
                     tokens_per_sec = batched_inputs.numel() / (elapsed_time_per_iteration_ms / 1000)
                     tq.desc = f"loglikelihood Subset {s} Node {dist.get_rank(self.parallel_context.world_pg)} - {human_format(tokens_per_sec)} tokens/s"
 
-                    # Clean up GPUS
+                    # Clean up GPUs
                     del out
                     del logits
                     del batched_inputs
@@ -1117,7 +1117,7 @@ class NanotronLightevalModel(LightevalModel):
         requests: List[GreedyUntilRequest],
         disable_tqdm: bool = False,
         override_bs=None,
-        dataset_splits: int = 1,
+        num_dataset_splits: int = 1,
     ) -> List[GenerateReturn]:
         """Greedy generation until a stop token is generated."""
         # automatic (variable) batch size detection for vectorization
@@ -1126,14 +1126,14 @@ class NanotronLightevalModel(LightevalModel):
             request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
             request.tokenized_context = self.tok_encode(request.context)
 
-        dataset = GenerativeTaskDatasetNanotron(requests=requests, dataset_splits=dataset_splits)
+        dataset = GenerativeTaskDatasetNanotron(requests=requests, num_dataset_splits=num_dataset_splits)
         res = []
 
         # Dataset is sorted in descending size.
         # every 20-25% of the dataset we try to double the batch size for speed up
         starting_batch_size = 512
 
-        total_length, subset_length = self._get_subsets(dataset, dataset_splits)
+        total_length, subset_length = self._get_subsets(dataset, num_dataset_splits)
 
         for s, subset_start in enumerate(
             tqdm(
@@ -1207,27 +1207,7 @@ class NanotronLightevalModel(LightevalModel):
                         "Nonotron models does not allow sampling evaluations - this is likely to fail or provide problematic results"
                     )
 
-                # The main question for this step is the following:
-                # Would we rather truncate the prompt to allow generation to go to max_new_tokens, at the risk
-                # of loosing some meaning, or have some generations that are exceedingly short?
-                # The choice we go for here is to avoid truncating the prompt if we can, since it
-                # should have been managed by the prompt creator/few shot manager if requested by the user.
-                context = [c.context for c in batch]  # or tokenized context?
-                smallest_context = min(len(c) for c in context)
-                biggest_context = max(len(c) for c in context)
-                if smallest_context > self.max_length:
-                    hlog_warn(
-                        f"The smallest context of your batch ({smallest_context}) is bigger than the maximum context size allowed by the model ({self.max_length}) for a task in"
-                        + str({i.task_name for i in batch})
-                        + ". This is likely to lead to some errors."  # noqa C401
-                    )
-
-                if (
-                    biggest_context > self.max_length
-                ):  # There will be truncation of at least one sample, maximum generation size will be one
-                    max_new_tokens = 1
-                else:  # We can't allow generation of more than max_length
-                    max_new_tokens = min(self.max_length - biggest_context, max_new_tokens)
+                context = [c.context for c in batch]
 
                 # See doc https://huggingface.co/docs/transformers/v4.38.2/en/pad_truncation#padding-and-truncation
                 # Will do left truncation and padding, as defined when creating the tokenizer
@@ -1239,6 +1219,23 @@ class NanotronLightevalModel(LightevalModel):
                     max_length=self.max_length - 1,  # we always allow minimum one token of generation
                     add_special_tokens=self.add_special_tokens,
                 ).to(self.device)
+
+                # The main question for this step is the following:
+                # Would we rather truncate the prompt to allow generation to go to max_new_tokens, at the risk
+                # of losing some meaning, or have some generations that are exceedingly short?
+                # The choice we go for here is to avoid truncating the prompt if we can, since it
+                # should have been managed by the prompt creator/few shot manager if requested by the user.
+                context_size = tokenized["input_ids"].shape[1]
+                if context_size > self.max_length:
+                    hlog_warn(
+                        f"The context size of your batch ({context_size}) is bigger than the maximum context size allowed by the model ({self.max_length}) for a task in"
+                        + str({i.task_name for i in batch})
+                        + ". This is likely to lead to some errors."  # noqa C401
+                    )
+                    # There will be truncation of at least one sample, maximum generation size will be one
+                    max_new_tokens = 1
+                else:  # We can't allow generation of more than max_length
+                    max_new_tokens = min(self.max_length - context_size, max_new_tokens)
 
                 batch_model = Batch(
                     input_ids=tokenized["input_ids"],

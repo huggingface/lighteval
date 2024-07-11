@@ -639,25 +639,20 @@ class JudgeLLM:
         OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
         self.multi_turn = multi_turn
 
-        try:
-            self.judge = JudgeLM(
-                model=judge_model_name,
-                seed=42,
-                temperature=0.0,
-                templates_path=template_path,
-                judge_type=judge_type,
-                openai_api_key=OPENAI_API_KEY,
-                multi_turn=multi_turn,
-            )
-        except Exception as e:
-            print(f"Could not initialize the JudgeLM model:\n{e}")
-            self.judge = None
+        self.judge = JudgeOpenAI(
+            model=judge_model_name,
+            seed=42,
+            temperature=0.0,
+            templates_path=template_path,
+            openai_api_key=OPENAI_API_KEY,
+            multi_turn=multi_turn,
+        )
 
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
         """
         Compute the score of a generative task using a llm as a judge.
         The generative task can be multiturn with 2 turns max, in that case, we
-        return scores for turn 1 and 2. Also returns user_prompt and judgment
+        return scores for turn 1 and 2. Also returns user_prompt and judgement
         which are ignored later by the aggregator.
         """
 
