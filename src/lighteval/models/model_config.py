@@ -153,20 +153,21 @@ class BaseModelConfig:
         except (AttributeError, KeyError):
             model_auto_quantization_config = None
 
-        # We don't load models quantized by default with a different user provided conf
-        if model_auto_quantization_config is not None and self.quantization_config is not None:
-            raise ValueError("You manually requested quantization on a model already quantized!")
+        if model_auto_quantization_config is not None:
+            if self.quantization_config is not None:
+                # We don't load models quantized by default with a different user provided conf
+                raise ValueError("You manually requested quantization on a model already quantized!")
 
-        # We add the quantization to the model params we store
-        if model_auto_quantization_config["quant_method"] == "gptq":
-            if not is_autogptq_available():
-                raise ImportError(NO_AUTOGPTQ_ERROR_MSG)
-            auto_config.quantization_config["use_exllama"] = None
-            self.quantization_config = GPTQConfig(**auto_config.quantization_config, disable_exllama=True)
-        elif model_auto_quantization_config["quant_method"] == "bitsandbytes":
-            if not is_bnb_available():
-                raise ImportError(NO_BNB_ERROR_MSG)
-            self.quantization_config = BitsAndBytesConfig(**auto_config.quantization_config)
+            # We add the quantization to the model params we store
+            if model_auto_quantization_config["quant_method"] == "gptq":
+                if not is_autogptq_available():
+                    raise ImportError(NO_AUTOGPTQ_ERROR_MSG)
+                auto_config.quantization_config["use_exllama"] = None
+                self.quantization_config = GPTQConfig(**auto_config.quantization_config, disable_exllama=True)
+            elif model_auto_quantization_config["quant_method"] == "bitsandbytes":
+                if not is_bnb_available():
+                    raise ImportError(NO_BNB_ERROR_MSG)
+                self.quantization_config = BitsAndBytesConfig(**auto_config.quantization_config)
 
         return auto_config
 
