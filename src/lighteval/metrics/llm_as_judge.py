@@ -92,11 +92,15 @@ class JudgeLM:
         self.one_score_pattern_backup = re.compile(r"\[(\d+\.?\d*)\]")
 
         if judge_type == "openai":
+            from openai import OpenAI
+
             self.client = OpenAI(api_key=openai_api_key)
             self.API_MAX_RETRY = 16
             self.API_RETRY_SLEEP = 10
             self.max_tokens = 2048
         else:
+            from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+
             transformers_model = AutoModelForCausalLM.from_pretrained(
                 model, torch_dtype="auto", trust_remote_code=True
             )

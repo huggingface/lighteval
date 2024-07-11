@@ -103,6 +103,7 @@ class Registry:
             return custom_tasks_registry[task_name]
         hlog_warn(f"{task_name} not found in provided tasks")
         hlog_warn(pformat(self.TASK_REGISTRY))
+
         raise ValueError(
             f"Cannot find tasks {task_name} in task list or in custom task registry ({custom_tasks_registry})"
         )

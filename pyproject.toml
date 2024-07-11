@@ -92,7 +92,7 @@ tests = ["pytest==7.4.0"]
 dev = ["lighteval[accelerate,quality,tests]"]
 extended_tasks = [
   "langdetect", # ifeval
-  "openai", # mt-bench
+  #"openai", # mt-bench
 ]
 
 [project.urls]

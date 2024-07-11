@@ -639,13 +639,13 @@ class JudgeLLM:
         OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
         self.multi_turn = multi_turn
 
-        self.judge = JudgeOpenAI(
+        self.judge = JudgeLM(
             model=judge_model_name,
+            judge_type=judge_type,
+            openai_api_key=OPENAI_API_KEY,
             seed=42,
             temperature=0.0,
             templates_path=template_path,
-            openai_api_key=OPENAI_API_KEY,
-            multi_turn=multi_turn,
         )
 
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
