@@ -74,22 +74,6 @@ def mmlu_arabic(line, task_name: str = None):
         target_for_fewshot_sorting=LETTER_INDICES_AR[gold_ix],
     )
 
-# mbzuai_arabic_mmlu
-mbzuai_arabic_mmlu_task = LightevalTaskConfig(
-    name="mbzuai_arabic_mmlu",
-    prompt_function="mbzuai_arabic_mmlu",
-    suite=["community"],
-    hf_repo="MBZUAI/ArabicMMLU",
-    hf_subset="default",
-    hf_avail_splits=["test"],
-    evaluation_splits=["test"],
-    few_shots_split="test",
-    few_shots_select="sequential",
-    metric=["loglikelihood_acc_norm"],
-    trust_dataset=True,
-    version=0,
-)
-
 def mbzuai_arabic_mmlu(line, task_name: str = None):
     topic = line["Subject"]
     instruction = f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}. \n\n"
@@ -114,6 +98,21 @@ def mbzuai_arabic_mmlu(line, task_name: str = None):
         target_for_fewshot_sorting=LETTER_INDICES_AR[gold_ix],
     )
 
+# mbzuai_arabic_mmlu
+mbzuai_arabic_mmlu_task = LightevalTaskConfig(
+    name="mbzuai_arabic_mmlu",
+    prompt_function=mbzuai_arabic_mmlu,
+    suite=["community"],
+    hf_repo="MBZUAI/ArabicMMLU",
+    hf_subset="default",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split="test",
+    few_shots_select="sequential",
+    metric=["loglikelihood_acc_norm"],
+    trust_dataset=True,
+    version=0,
+)
 
 class CustomArabicMMLUTask(LightevalTaskConfig):
     def __init__(
