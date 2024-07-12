@@ -158,4 +158,4 @@ def load_model_with_accelerate_or_default(
 
 
 def load_dummy_model(config: DummyModelConfig, env_config: EnvConfig):
-    return DummyModel(config=config, env_config=env_config), ModelInfo(model_name="dummy", model_sha=str(config.seed))
+    return DummyModel(config=config, env_config=env_config), ModelInfo(model_name=config.name, model_sha=str(config.seed))

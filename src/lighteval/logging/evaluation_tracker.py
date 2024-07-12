@@ -115,7 +115,7 @@ class EvaluationTracker:
         output_dir: str,
         push_results_to_hub: bool,
         push_details_to_hub: bool,
-        public: bool,
+        hf_repo: str | None = None,
         push_results_to_tensorboard: bool = False,
     ) -> None:
         """Saves the experiment information and results to files, and to the hub if requested.
@@ -187,9 +187,10 @@ class EvaluationTracker:
             # Save the dataset to a Parquet file
             dataset.to_parquet(output_file_details.as_posix())
 
+        hf_repo = hf_repo or self.general_config_logger.config.lighteval.logging.hub_repo_results
         if push_results_to_hub:
             self.api.upload_folder(
-                repo_id=self.general_config_logger.config.lighteval.logging.hub_repo_results,
+                repo_id=hf_repo,
                 folder_path=output_dir_results,
                 path_in_repo="results/" + self.general_config_logger.model_name,
                 # repo_type="dataset",
@@ -198,7 +199,7 @@ class EvaluationTracker:
 
         if push_details_to_hub:
             self.api.upload_folder(
-                repo_id=self.general_config_logger.config.lighteval.logging.hub_repo_details,
+                repo_id=hf_repo,
                 folder_path=output_dir_details_sub_folder,
                 path_in_repo="details/" + self.general_config_logger.model_name,
                 commit_message=f"Updating model {self.general_config_logger.model_name}",

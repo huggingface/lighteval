@@ -27,6 +27,7 @@ class ChineseAgievalTask(LightevalTaskConfig):
             suite=("custom",),
             hf_repo=f"hails/agieval-{task}",
             hf_subset="default",
+            filter=lambda x: len(x["gold"]) > 0,
             evaluation_splits=("test",),
             few_shots_split=None,
             metric=(

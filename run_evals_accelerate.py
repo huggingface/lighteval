@@ -48,9 +48,7 @@ def get_parser():
     parser.add_argument("--push_results_to_hub", default=False, action="store_true")
     parser.add_argument("--save_details", action="store_true")
     parser.add_argument("--push_details_to_hub", default=False, action="store_true")
-    parser.add_argument(
-        "--public_run", default=False, action="store_true", help="Push results and details to a public repo"
-    )
+    parser.add_argument("--hf_repo", default=None, type=str, help="Hub repo to push the results to")
     parser.add_argument(
         "--cache_dir",
         type=str,

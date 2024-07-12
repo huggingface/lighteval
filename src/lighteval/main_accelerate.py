@@ -131,7 +131,7 @@ def main(args):
 
             if args.output_dir:
                 evaluation_tracker.save(
-                    args.output_dir, args.push_results_to_hub, args.push_details_to_hub, args.public_run
+                    args.output_dir, args.push_results_to_hub, args.push_details_to_hub, args.hf_repo
                 )
 
             final_dict = evaluation_tracker.generate_final_dict()

@@ -183,7 +183,6 @@ def main(
                     output_dir=lighteval_config.logging.local_output_path,
                     push_results_to_hub=lighteval_config.logging.push_results_to_hub,
                     push_details_to_hub=lighteval_config.logging.push_details_to_hub,
-                    public=False,
                     push_results_to_tensorboard=lighteval_config.logging.push_results_to_tensorboard,
                 )
 
