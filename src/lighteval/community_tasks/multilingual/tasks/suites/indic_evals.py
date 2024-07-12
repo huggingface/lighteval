@@ -7,7 +7,7 @@ class ARCIndTask(LightevalTaskConfig):
     def __init__(self, subset: Literal["easy", "challenge"]):
         hf_subset = f"ARC-{subset.capitalize()}"
         super().__init__(
-            name=f"arc-hi:{subset}",
+            name=f"hi-arc:{subset}",
             prompt_function=get_arc_prompt("hi", nested_choices=True),
             suite=("custom",),
             hf_repo="ai4bharat/ai2_arc-hi",
@@ -24,11 +24,12 @@ class ARCIndTask(LightevalTaskConfig):
 class HellaSwagIndTask(LightevalTaskConfig):
     def __init__(self):
         super().__init__(
-            name=f"hellaswag-hi",
+            name=f"hi-hellaswag",
             prompt_function=get_hellaswag_prompt_full_ctx("hi"),
             suite=("custom",),
             hf_repo="ai4bharat/hellaswag-hi",
             hf_subset="default",
+            filter=lambda x: all(len(choice.strip()) > 0 for choice in x["endings"]),
             evaluation_splits=("validation",),
             few_shots_split="train",
             metric=(
@@ -41,7 +42,7 @@ class HellaSwagIndTask(LightevalTaskConfig):
 class BoolQIndTask(LightevalTaskConfig):
     def __init__(self):
         super().__init__(
-            name=f"boolq-hi",
+            name=f"hi-boolq",
             prompt_function=get_indic_boolq_prompt("hi"),
             suite=("custom",),
             hf_repo="ai4bharat/boolq-hi",

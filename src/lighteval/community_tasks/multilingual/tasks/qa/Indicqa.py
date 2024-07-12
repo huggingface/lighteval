@@ -3,9 +3,7 @@
 from typing import Literal
 from ..utils.metrics import get_qa_metric
 from ..utils.prompts import get_mlqa_prompt
-from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-
 LANGS = Literal["as", "bn", "gu", "hi", "kn", "ml", "mr", "or", "pa", "ta", "te"]
 
 
