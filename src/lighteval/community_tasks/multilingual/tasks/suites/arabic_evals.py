@@ -137,8 +137,6 @@ class CustomACVATask(LightevalTaskConfig):
             few_shots_split="validation",
             few_shots_select="sequential",
             suite=["custom"],
-            generation_size=-1,
-            stop_sequence=None,
             output_regex=None,
             frozen=False,
             trust_dataset=True,

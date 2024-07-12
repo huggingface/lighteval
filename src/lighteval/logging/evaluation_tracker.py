@@ -144,9 +144,8 @@ class EvaluationTracker:
         output_dir_details_sub_folder.mkdir(parents=True, exist_ok=True)
 
         output_results_file = output_dir_results / f"results_{date_id}.json"
-        output_results_in_details_file = output_dir_details / f"results_{date_id}.json"
 
-        hlog(f"Saving results to {output_results_file} and {output_results_in_details_file}")
+        hlog(f"Saving results to {output_results_file}")
 
         config_general = copy.deepcopy(self.general_config_logger)
         config_general.config = (
@@ -162,16 +161,13 @@ class EvaluationTracker:
             "summary_tasks": self.details_logger.compiled_details,
             "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
         }
-        dumped = json.dumps(to_dump, cls=EnhancedJSONEncoder, indent=2)
+        dumped = json.dumps(to_dump, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False)
 
         with open(output_results_file, "w") as f:
             f.write(dumped)
 
-        with open(output_results_in_details_file, "w") as f:
-            f.write(dumped)
-
         for task_name, task_details in self.details_logger.details.items():
-            output_file_details = output_dir_details_sub_folder / f"details_{task_name}_{date_id}.json"
+            output_file_details = output_dir_details_sub_folder / f"details_{task_name}_{date_id}.parquet"
             # Create a dataset from the dictionary
             try:
                 dataset = Dataset.from_list([asdict(detail) for detail in task_details])
@@ -189,7 +185,7 @@ class EvaluationTracker:
             # Sort column names to make it easier later
             dataset = dataset.select_columns(sorted(column_names))
             # Save the dataset to a Parquet file
-            dataset.to_json(output_file_details.as_posix())
+            dataset.to_parquet(output_file_details.as_posix())
 
         if push_results_to_hub:
             self.api.upload_folder(
