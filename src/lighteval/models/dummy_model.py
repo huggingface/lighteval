@@ -54,7 +54,7 @@ class DummyModel(LightevalModel):
     @property
     def tokenizer(self):
         if not self._tokenizer:
-            self._tokenizer = AutoTokenizer.from_pretrained("gpt2")
+            self._tokenizer = AutoTokenizer.from_pretrained(self.config.tokenizer)
         return self._tokenizer
 
     @property
@@ -68,22 +68,33 @@ class DummyModel(LightevalModel):
     def greedy_until(
         self, requests: list[GreedyUntilRequest], override_bs: Optional[int] = None
     ) -> list[GenerateReturn]:
+        # return "random baseline" for each request
         return [GenerateReturn(result="random baseline") for _ in range(len(requests))]
 
     def loglikelihood(
         self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
     ) -> list[LoglikelihoodReturn]:
-        return [LoglikelihoodReturn((-self._random.random(), False)) for _ in requests]
+        # return the sum of logprobs for the n tokens in each request
+        # in practice, generate a random number and multiply it by the number of tokens (this is tokenizer dependent)
+        return [
+            LoglikelihoodReturn((-self._random.random() * len(self.tok_encode(req.choice)), False))
+            for req in requests
+        ]
 
     def loglikelihood_rolling(
         self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
     ) -> list[LoglikelihoodReturn]:
-        return [LoglikelihoodReturn((-self._random.random(), False)) for _ in requests]
+        # same as loglikelihood, but we evaluate "context" (there is no continuation, just the original sequence)
+        return [
+            LoglikelihoodReturn((-self._random.random() * len(self.tok_encode(req.context)), False))
+            for req in requests
+        ]
 
     def loglikelihood_single_token(
         self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: Optional[int] = None
     ) -> list[LoglikelihoodSingleTokenReturn]:
         return [
-            LoglikelihoodSingleTokenReturn(result=[-self._random.random() for _ in req.tokenized_continuation])
+            # return one logprob per possible choice
+            LoglikelihoodSingleTokenReturn(result=[-self._random.random() for _ in req.choices])
             for req in requests
         ]

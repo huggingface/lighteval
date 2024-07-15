@@ -40,7 +40,6 @@ from lighteval.utils import (
     is_peft_available,
 )
 
-
 if is_accelerate_available():
     from accelerate import Accelerator
 
@@ -205,8 +204,9 @@ class TGIModelConfig:
 
 @dataclass
 class DummyModelConfig:
-    name: str
+    name: str = "dummy"
     seed: int = 42
+    tokenizer: str = "gpt2"
 
 
 @dataclass
@@ -260,7 +260,7 @@ class InferenceEndpointModelConfig:
 
 
 def create_model_config(  # noqa: C901
-    args: Namespace, accelerator: Union["Accelerator", None]
+        args: Namespace, accelerator: Union["Accelerator", None]
 ) -> Union[
     BaseModelConfig,
     AdapterModelConfig,
@@ -287,11 +287,8 @@ def create_model_config(  # noqa: C901
     """
     if args.model_args:
         args_dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.model_args.split(",")}
-        
 
-        if args_dict.get("pretrained", "").startswith("dummy"):
-            # Rename pretrained to model
-            args_dict["name"] = args_dict.pop("pretrained")
+        if args_dict.pop("dummy", False):
             return DummyModelConfig(**args_dict)
 
         args_dict["accelerator"] = accelerator
