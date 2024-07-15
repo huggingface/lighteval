@@ -669,18 +669,24 @@ class JudgeLLM:
     def __init__(self, judge_model_name: str, template_path: str, multi_turn: bool = False):
         if judge_model_name not in self.available_models:
             raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
-
-        OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+        self.judge_model_name = judge_model_name
+        self.template_path = template_path
         self.multi_turn = multi_turn
 
-        self.judge = JudgeOpenAI(
-            model=judge_model_name,
-            seed=42,
-            temperature=0.0,
-            templates_path=template_path,
-            openai_api_key=OPENAI_API_KEY,
-            multi_turn=multi_turn,
-        )
+        self._judge = None
+
+    @property
+    def judge(self):
+        if self._judge is None:
+            self._judge = JudgeOpenAI(
+                model=self.judge_model_name,
+                seed=42,
+                temperature=0.0,
+                templates_path=self.template_path,
+                openai_api_key=os.getenv("OPENAI_API_KEY"),
+                multi_turn=self.multi_turn,
+            )
+        return self._judge
 
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
         """
