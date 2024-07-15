@@ -30,6 +30,7 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 
+import huggingface_hub
 from datasets import Dataset, load_dataset
 from datasets.utils.metadata import MetadataConfigs
 from huggingface_hub import DatasetCard, DatasetCardData, HfApi, HFSummaryWriter, hf_hub_url
@@ -45,9 +46,9 @@ from lighteval.logging.info_loggers import (
 from lighteval.metrics.utils import Metric
 from lighteval.utils import is_nanotron_available, obj_to_markdown
 
-
 if is_nanotron_available():
     from nanotron.config import Config
+MAX_HUB_UPLOAD_RETRIES = 8
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
@@ -67,6 +68,21 @@ class EnhancedJSONEncoder(json.JSONEncoder):
         if callable(o):
             return o.__name__
         return super().default(o)
+
+
+def push_with_retry(fn, **kwargs):
+    retries = 0
+    while True:
+        try:
+            fn(
+                **kwargs
+            )
+        except huggingface_hub.utils._errors.HfHubHTTPError as error:
+            if "504" in str(error) and retries < MAX_HUB_UPLOAD_RETRIES:  # gateway timeout
+                time.sleep(2 ** retries)
+                retries += 1
+                continue
+            raise error
 
 
 class EvaluationTracker:
@@ -111,12 +127,12 @@ class EvaluationTracker:
         self.api = HfApi(token=token)
 
     def save(
-        self,
-        output_dir: str,
-        push_results_to_hub: bool,
-        push_details_to_hub: bool,
-        hf_repo: str | None = None,
-        push_results_to_tensorboard: bool = False,
+            self,
+            output_dir: str,
+            push_results_to_hub: bool,
+            push_details_to_hub: bool,
+            hf_repo: str | None = None,
+            push_results_to_tensorboard: bool = False,
     ) -> None:
         """Saves the experiment information and results to files, and to the hub if requested.
 
@@ -189,7 +205,8 @@ class EvaluationTracker:
 
         hf_repo = hf_repo or self.general_config_logger.config.lighteval.logging.hub_repo_results
         if push_results_to_hub:
-            self.api.upload_folder(
+            push_with_retry(
+                self.api.upload_folder,
                 repo_id=hf_repo,
                 folder_path=output_dir_results,
                 path_in_repo="results/" + self.general_config_logger.model_name,
@@ -198,7 +215,8 @@ class EvaluationTracker:
             )
 
         if push_details_to_hub:
-            self.api.upload_folder(
+            push_with_retry(
+                self.api.upload_folder,
                 repo_id=hf_repo,
                 folder_path=output_dir_details_sub_folder,
                 path_in_repo="details/" + self.general_config_logger.model_name,
@@ -235,11 +253,11 @@ class EvaluationTracker:
         return final_dict
 
     def details_to_hub(
-        self,
-        model_name: str,
-        results_file_path: Path | str,
-        details_folder_path: Path | str,
-        push_as_public: bool = False,
+            self,
+            model_name: str,
+            results_file_path: Path | str,
+            details_folder_path: Path | str,
+            push_as_public: bool = False,
     ) -> None:
         """Pushes the experiment details (all the model predictions for every step) to the hub.
 
@@ -280,16 +298,20 @@ class EvaluationTracker:
         results["train"].to_parquet(parquet_local_path)
 
         # Upload results file (json and parquet) and folder
-        self.api.upload_file(
+
+        push_with_retry(
+            self.api.upload_file,
             repo_id=repo_id,
             path_or_fileobj=results_file_path,
             path_in_repo=os.path.basename(results_file_path),
             repo_type="dataset",
         )
-        self.api.upload_file(
+        push_with_retry(
+            self.api.upload_file,
             repo_id=repo_id, path_or_fileobj=parquet_local_path, path_in_repo=parquet_name, repo_type="dataset"
         )
-        self.api.upload_folder(
+        push_with_retry(
+            self.api.upload_folder,
             repo_id=repo_id, folder_path=details_folder_path, path_in_repo=sub_folder_path, repo_type="dataset"
         )
 
@@ -358,7 +380,7 @@ class EvaluationTracker:
                     former_entry = card_metadata["results"]
                     card_metadata["results"] = {
                         "data_files": former_entry["data_files"]
-                        + [{"split": sanitized_eval_date, "path": [repo_file_name]}]
+                                      + [{"split": sanitized_eval_date, "path": [repo_file_name]}]
                     }
             else:
                 if "results" in card_metadata:
@@ -389,7 +411,7 @@ class EvaluationTracker:
                     former_entry = card_metadata[sanitized_task]
                     card_metadata[sanitized_task] = {
                         "data_files": former_entry["data_files"]
-                        + [{"split": sanitized_eval_date, "path": [repo_file_name]}]
+                                      + [{"split": sanitized_eval_date, "path": [repo_file_name]}]
                     }
             else:
                 if sanitized_task in card_metadata:
@@ -487,19 +509,19 @@ class EvaluationTracker:
 
         card_data = DatasetCardData(
             dataset_summary=f"Dataset automatically created during the evaluation run of model "
-            f"[{model_name}](https://huggingface.co/{model_name})"
-            f"{org_string}.\n\n"
-            f"The dataset is composed of {len(card_metadata) - 1} configuration, each one coresponding to one of the evaluated task.\n\n"
-            f"The dataset has been created from {len(results_files)} run(s). Each run can be found as a specific split in each "
-            f'configuration, the split being named using the timestamp of the run.The "train" split is always pointing to the latest results.\n\n'
-            f'An additional configuration "results" store all the aggregated results of the run.\n\n'
-            f"To load the details from a run, you can for instance do the following:\n"
-            f'```python\nfrom datasets import load_dataset\ndata = load_dataset("{repo_id}",\n\t"{sanitized_task}",\n\tsplit="train")\n```\n\n'
-            f"## Latest results\n\n"
-            f'These are the [latest results from run {max_last_eval_date_results}]({last_results_file_path.replace("/resolve/", "/blob/")})'
-            f"(note that their might be results for other tasks in the repos if successive evals didn't cover the same tasks. "
-            f'You find each in the results and the "latest" split for each eval):\n\n'
-            f"```python\n{results_string}\n```",
+                            f"[{model_name}](https://huggingface.co/{model_name})"
+                            f"{org_string}.\n\n"
+                            f"The dataset is composed of {len(card_metadata) - 1} configuration, each one coresponding to one of the evaluated task.\n\n"
+                            f"The dataset has been created from {len(results_files)} run(s). Each run can be found as a specific split in each "
+                            f'configuration, the split being named using the timestamp of the run.The "train" split is always pointing to the latest results.\n\n'
+                            f'An additional configuration "results" store all the aggregated results of the run.\n\n'
+                            f"To load the details from a run, you can for instance do the following:\n"
+                            f'```python\nfrom datasets import load_dataset\ndata = load_dataset("{repo_id}",\n\t"{sanitized_task}",\n\tsplit="train")\n```\n\n'
+                            f"## Latest results\n\n"
+                            f'These are the [latest results from run {max_last_eval_date_results}]({last_results_file_path.replace("/resolve/", "/blob/")})'
+                            f"(note that their might be results for other tasks in the repos if successive evals didn't cover the same tasks. "
+                            f'You find each in the results and the "latest" split for each eval):\n\n'
+                            f"```python\n{results_string}\n```",
             repo_url=f"https://huggingface.co/{model_name}",
             pretty_name=f"Evaluation run of {model_name}",
             leaderboard_url=leaderboard_url,
@@ -514,7 +536,7 @@ class EvaluationTracker:
         card.push_to_hub(repo_id, repo_type="dataset")
 
     def push_results_to_tensorboard(  # noqa: C901
-        self, results: dict[str, dict[str, float]], details: dict[str, DetailsLogger.CompiledDetail]
+            self, results: dict[str, dict[str, float]], details: dict[str, DetailsLogger.CompiledDetail]
     ):
         if not is_nanotron_available():
             hlog_warn("You cannot push results to tensorboard without having nanotron installed. Skipping")
@@ -536,7 +558,8 @@ class EvaluationTracker:
             repo_id=lighteval_config.logging.hub_repo_tensorboard,
             repo_private=True,
             path_in_repo="tb",
-            commit_every=6000,  # Very long time so that we can change our files names and trigger push ourselves (see below)
+            commit_every=6000,
+            # Very long time so that we can change our files names and trigger push ourselves (see below)
         )
         bench_averages = {}
         for name, values in results.items():
