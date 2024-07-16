@@ -1,6 +1,7 @@
 from typing import get_args
+from ..tasks.utils.tasks_helpers import tasks_to_string
 
-from ..tasks.suites.mera import _TASKS as _MERA_TASKS
+from ..tasks.suites.mera import GENERATIVE_TASKS as _MERA_GENERATIVE_TASKS, MC_TASKS as _MERA_MC_TASKS
 from ..tasks.mqa.mlmm import get_mlmm_tasks
 from ..tasks.mqa_with_context.belebele import BelebeleTask
 from ..tasks.mqa_with_context.m3exam import M3ExamTask
@@ -11,28 +12,32 @@ from ..tasks.nli.xnli import XNLITask
 from ..tasks.nli.xwinograd import XWinogradeTask
 from ..tasks.qa.tydiqa import TydiqaTask
 
-_TASKS = [
-    BelebeleTask(lang="ru"),
+_GENERATIVE_TASKS = [
     TydiqaTask(lang="ru"),
     XquadTask(lang="ru"),
+    *_MERA_GENERATIVE_TASKS,
+]
+
+_MC_TASKS = [
+    BelebeleTask(lang="ru"),
     XCODAHTask(lang="ru"),
     XCSQATask(lang="ru"),
     XNLITask(lang="ru"),
     XStoryClozeTask(lang="ru"),
     XWinogradeTask(lang="ru"),
+    *get_mlmm_tasks("ru"),
+    *_MERA_MC_TASKS,
 ]
 
+_ALL_TASKS = list(set(_GENERATIVE_TASKS + _MC_TASKS))
 
-_MMLM_TASKS = get_mlmm_tasks("ru")
-
-_TASKS += _MMLM_TASKS + _MERA_TASKS
-_TASKS_STRINGS = ",".join([f"custom|{t.name}|0|1" for t in _TASKS])
 TASKS_GROUPS = {
-    "all": _TASKS_STRINGS,
+    "all": tasks_to_string(_ALL_TASKS),
+    "generative": tasks_to_string(_GENERATIVE_TASKS),
+    "mc": tasks_to_string(_MC_TASKS),
 }
 
-
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
+TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]
 
 if __name__ == "__main__":
     print([t for t in TASKS_TABLE])

@@ -1,3 +1,4 @@
+from ..tasks.utils.tasks_helpers import tasks_to_string
 from ..tasks.mqa.xcopa import XCopaTask
 from ..tasks.mqa_with_context.m3exam import M3ExamTask
 from ..tasks.nli.xcsr import XCODAHTask, XCSQATask
@@ -8,25 +9,30 @@ from ..tasks.suites.swahili_leaderboard import TASKS as SW_TASKS
 from ..tasks.qa.tydiqa import TydiqaTask
 
 
-_TASKS = [
-    BelebeleTask(lang="sw"),
+_GENERATIVE_TASKS = [
     TydiqaTask(lang="sw"),
+]
+
+_MC_TASKS = [
+    BelebeleTask(lang="sw"),
     XStoryClozeTask(lang="sw"),
     XCopaTask(lang="sw"),
     XNLITask(lang="sw"),
     M3ExamTask(lang="sw"),
     XCSQATask(lang="sw"),
     XCODAHTask(lang="sw"),
+    *SW_TASKS
 ]
 
-_TASKS += SW_TASKS
-_TASKS_STRINGS = ",".join([f"custom|{t.name}|0|1" for t in _TASKS])
+_ALL_TASKS = _GENERATIVE_TASKS + _MC_TASKS
+
 TASKS_GROUPS = {
-    "all": _TASKS_STRINGS,
+    "all": tasks_to_string(_ALL_TASKS),
+    "generative": tasks_to_string(_GENERATIVE_TASKS),
+    "mc": tasks_to_string(_MC_TASKS),
 }
 
-
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
+TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]
 
 if __name__ == "__main__":
     print([t for t in TASKS_TABLE])

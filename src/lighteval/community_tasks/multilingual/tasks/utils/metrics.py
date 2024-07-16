@@ -90,6 +90,7 @@ def get_qa_scorer(lang: LANGS, evalType: EVAL_TYPE):
         return ExactMatches(
             normalize_gold=get_answer_normalizer(lang),
             normalize_pred=get_answer_normalizer(lang),
+            type_exact_match="prefix"
         ).compute
     elif evalType == "f1":
         return F1_score(
@@ -109,20 +110,3 @@ def get_qa_metric(lang: LANGS, evalType: EVAL_TYPE):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-
-
-# ## QA metrics
-# metrics = [
-#     SampleLevelMetric(
-#         metric=f"qa_{lang}_{evalType}",
-#         sample_level_fn=get_qa_scorer(lang, evalType),
-#         category=MetricCategory.GENERATIVE,
-#         use_case=MetricUseCase.ACCURACY,
-#         corpus_level_fn=np.mean,
-#         higher_is_better=True,
-#     )
-#     for lang, evalType in itertools.product(get_args(LANGS), get_args(EVAL_TYPE))
-# ]
-# for metric in metrics:
-#     print(metric.metric)
-#     extend_enum(Metrics, metric.metric, metric)

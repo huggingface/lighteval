@@ -1,3 +1,4 @@
+from ..tasks.utils.tasks_helpers import tasks_to_string
 from ..tasks.suites.indic_evals import ARCIndTask, BoolQIndTask, HellaSwagIndTask
 from ..tasks.qa.Indicqa import IndicQATask
 from ..tasks.mqa.indicxcopa import XCopaIndicTask
@@ -13,37 +14,40 @@ from ..tasks.qa.mlqa import MlqaTask
 from ..tasks.qa.tydiqa import TydiqaTask
 
 
-_TASKS = [
+_GENERATIVE_TASKS = [
     MlqaTask(lang="hi"),
     XquadTask(lang="hi"),
-    BelebeleTask(lang="hi"),
     TydiqaTask(lang="hi"),
     MintakaTask(lang="hi"),
+    IndicQATask(lang="hi"),
+    BoolQIndTask(),
+]
+
+_MC_TASKS = [
+    BelebeleTask(lang="hi"),
     XCODAHTask(lang="hi"),
     XCSQATask(lang="hi"),
     XNLITask(lang="hi"),
     XStoryClozeTask(lang="hi"),
     XNLIIndicTask(lang="hi"),
     XCopaIndicTask(lang="hi"),
-    IndicQATask(lang="hi"),
-]
-
-_MMLM_TASKS = get_mlmm_tasks("hi")
-_INDIC_EVAL_TASKS = [
     ARCIndTask(subset="easy"),
     ARCIndTask(subset="challenge"),
     HellaSwagIndTask(),
     BoolQIndTask(),
+    *get_mlmm_tasks("hi")
 ]
 
-_TASKS += _INDIC_EVAL_TASKS + _MMLM_TASKS
-_TASKS_STRINGS = ",".join([f"custom|{t.name}|0|1" for t in _TASKS])
+
+_ALL_TASKS = list(set(_GENERATIVE_TASKS + _MC_TASKS))
+
 TASKS_GROUPS = {
-    "all": _TASKS_STRINGS,
+    "all": tasks_to_string(_ALL_TASKS),
+    "generative": tasks_to_string(_GENERATIVE_TASKS),
+    "mc": tasks_to_string(_MC_TASKS),
 }
 
-
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
+TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]
 
 if __name__ == "__main__":
     print([t for t in TASKS_TABLE])

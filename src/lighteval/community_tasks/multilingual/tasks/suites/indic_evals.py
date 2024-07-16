@@ -1,4 +1,6 @@
 from typing import Literal
+
+from ..utils.metrics import get_qa_metric
 from ..utils.prompts import get_arc_prompt, get_hellaswag_prompt_full_ctx, get_indic_boolq_prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
@@ -52,7 +54,7 @@ class BoolQIndTask(LightevalTaskConfig):
             generation_size=5,
             stop_sequence=["\n"],
             metric=(
-                Metrics.exact_match,
+                get_qa_metric("hi", "exact"),
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
                 Metrics.loglikelihood_acc_norm_pmi,

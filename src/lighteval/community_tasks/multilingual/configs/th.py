@@ -1,5 +1,7 @@
 from typing import get_args
 
+from ..tasks.utils.tasks_helpers import tasks_to_string
+
 from ..tasks.nli.wsci import WSCITask
 from ..tasks.mqa.thai_exam import ThaiExamsTask, ThaiExamSubset
 from ..tasks.mqa.xcopa import XCopaTask
@@ -10,31 +12,29 @@ from ..tasks.nli.xnli import XNLITask
 from ..tasks.qa.tydiqa import TydiqaTask
 from ..tasks.mqa.xcopa import XCopaTask
 
-#TODO: Add potential the thai winograde
-
-_TASKS = [
+_GENERATIVE_TASKS = [
     TydiqaTask(lang="th"),
     XquadTask(lang="th"),
+]
+
+_MC_TASKS = [
     XNLITask(lang="th"),
     XCopaTask(lang="th"),
     M3ExamTask(lang="th"),
     BelebeleTask(lang="th"),
     WSCITask(lang="th"),
+    *[ThaiExamsTask(subset=sb) for sb in get_args(ThaiExamSubset)]
 ]
+_ALL_TASKS = list(set(_GENERATIVE_TASKS + _MC_TASKS))
 
-_THAI_EXAM = [
-    ThaiExamsTask(subset=sb) for sb in get_args(ThaiExamSubset)
-]
-
-_TASKS += _THAI_EXAM
-
-_TASKS_STRINGS = ",".join([f"custom|{t.name}|0|1" for t in _TASKS])
 TASKS_GROUPS = {
-    "all": _TASKS_STRINGS,
+    "all": tasks_to_string(_ALL_TASKS),
+    "generative": tasks_to_string(_GENERATIVE_TASKS),
+    "mc": tasks_to_string(_MC_TASKS),
 }
 
 
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
+TASKS_TABLE = [task.as_dict() for task in _GENERATIVE_TASKS + _MC_TASKS]
 
 if __name__ == "__main__":
     print([t for t in TASKS_TABLE])

@@ -158,6 +158,9 @@ class LightevalTaskConfig:
         self.evaluation_splits = tuple(self.evaluation_splits) if self.evaluation_splits is not None else None
         self.suite = tuple(self.suite) if self.suite is not None else None
         self.stop_sequence = tuple(self.stop_sequence) if self.stop_sequence is not None else None
+        
+    def __hash__(self):
+        return hash(self.name)
 
 
 def load_prompt_function(prompt_function: str, custom_tasks_module: list | None) -> FormatterType:

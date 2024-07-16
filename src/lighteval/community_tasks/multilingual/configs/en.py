@@ -1,3 +1,4 @@
+from ..tasks.utils.tasks_helpers import tasks_to_string
 from ..tasks.mqa_with_context.belebele import BelebeleTask
 from ..tasks.mqa_with_context.m3exam import M3ExamTask
 from ..tasks.mqa_with_context.xquad import XquadTask
@@ -12,29 +13,34 @@ from ..tasks.qa.mlqa import MlqaTask
 from ..tasks.qa.tydiqa import TydiqaTask
 
 
-_TASKS = [
-    BelebeleTask(lang="en"),
-    LambadaTask(lang="en"),
+_GENERATIVE_TASKS = [
     MintakaTask(lang="en"),
     MlqaTask(lang="en"),
-    PawnsXTask(lang="en"),
     TydiqaTask(lang="en"),
+    XquadTask(lang="en"),
+]
+
+_MC_TASKS = [
+    BelebeleTask(lang="en"),
+    LambadaTask(lang="en"),
+    PawnsXTask(lang="en"),
     XCODAHTask(lang="en"),
     XCSQATask(lang="en"),
     XNLITask(lang="en"),
-    XquadTask(lang="en"),
     XStoryClozeTask(lang="en"),
     XWinogradeTask(lang="en"),
     M3ExamTask(lang="en"),
 ]
-_TASKS_STRINGS = ",".join([f"custom|{t.name}|0|1" for t in _TASKS])
+
+_ALL_TASKS = _GENERATIVE_TASKS + _MC_TASKS
+
 TASKS_GROUPS = {
-    "all": _TASKS_STRINGS,
+    "all": tasks_to_string(_ALL_TASKS),
+    "generative": tasks_to_string(_GENERATIVE_TASKS),
+    "mc": tasks_to_string(_MC_TASKS),
 }
 
-
-
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
+TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]
 
 if __name__ == "__main__":
     print([t for t in TASKS_TABLE])

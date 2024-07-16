@@ -190,11 +190,15 @@ _RUMMLU_SUBSETS = [
     RuMMLUTask(subset) for subset in get_args(RUMMLU_SUBSET)
 ]
 
-_TASKS = [
+GENERATIVE_TASKS = [
     CheGeKaTask(),
-    MathLogicQATask(),
+]
+
+MC_TASKS = [
     PARusTask(),
+    MathLogicQATask(),
     RCBTask(),
     RuOpenBookQATask(),
     RuWorldTreeTask(),
-] + _RUMMLU_SUBSETS
+    *_RUMMLU_SUBSETS,
+]

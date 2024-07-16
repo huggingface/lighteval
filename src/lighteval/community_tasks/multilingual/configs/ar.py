@@ -1,3 +1,4 @@
+from ..tasks.utils.tasks_helpers import tasks_to_string
 from ..tasks.mqa.xcopa import XCopaTask
 from ..tasks.mqa.mlmm import get_mlmm_tasks
 from ..tasks.mqa_with_context.xquad import XquadTask
@@ -6,30 +7,35 @@ from ..tasks.nli.xcsr import XCODAHTask, XCSQATask
 from ..tasks.nli.xnli import XNLITask
 from ..tasks.qa.mlqa import MlqaTask
 from ..tasks.qa.tydiqa import TydiqaTask
-from ..tasks.suites.arabic_evals import TASKS as ARABIC_EVALS_TASKS
+from ..tasks.suites.arabic_evals import GENERATIVE_TASKS as ARABIC_EVALS_GENERATIVE_TASKS, MC_TASKS as ARABIC_EVALS_MC_TASKS
 
 
-_TASKS = [
+_GENERATIVE_TASKS = [
     MlqaTask(lang="ar"),
     TydiqaTask(lang="ar"),
     XquadTask(lang="ar"),
+    *ARABIC_EVALS_GENERATIVE_TASKS,
+]
+
+_MC_TASKS = [
     XCODAHTask(lang="ar"),
     XCopaTask(lang="ar"),
     XCSQATask(lang="ar"),
     XNLITask(lang="ar"),
     XStoryClozeTask(lang="ar"),
+    *get_mlmm_tasks("ar"),
+    *ARABIC_EVALS_MC_TASKS,
 ]
 
+_ALL_TASKS = _GENERATIVE_TASKS + _MC_TASKS
 
-_MMLM_TASKS = get_mlmm_tasks("ar")
-_TASKS = _MMLM_TASKS + _TASKS + ARABIC_EVALS_TASKS
-_TASKS_STRINGS = ",".join([f"custom|{t.name}|0|1" for t in _TASKS])
 TASKS_GROUPS = {
-    "all": _TASKS_STRINGS,
+    "all": tasks_to_string(_ALL_TASKS),
+    "generative": tasks_to_string(_GENERATIVE_TASKS),
+    "mc": tasks_to_string(_MC_TASKS),
 }
 
-
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
+TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]
 
 if __name__ == "__main__":
     print([t for t in TASKS_TABLE])

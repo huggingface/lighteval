@@ -127,7 +127,7 @@ class CustomACVATask(LightevalTaskConfig):
             generation_size=5,
             stop_sequence=["\n"],
             metric=(
-                Metrics.exact_match,
+                get_qa_metric("ar", "exact"),
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm,
                 Metrics.loglikelihood_acc_norm_pmi,
@@ -318,7 +318,7 @@ boolq_ar_task = LightevalTaskConfig(
         Metrics.loglikelihood_acc,
         Metrics.loglikelihood_acc_norm,
         Metrics.loglikelihood_acc_norm_pmi,
-        Metrics.exact_match,
+        get_qa_metric("ar", "exact"),
     ),
     trust_dataset=True,
     version=0,
@@ -394,16 +394,20 @@ sciq_ar_task = LightevalTaskConfig(
 )
 
 
-TASKS = (
-    ARABIC_MMLU_TASKS
-    + ACVA_TASKS
-    + ALGHAFA_TASKS
-    + [arabic_exams_task]
-    + [race_ar_task]
-    + [piqa_ar_task]
-    + [arc_easy_ar_task]
-    + [openbook_qa_ext_ar_task]
-    + [boolq_ar_task]
-    + [toxigen_ar_task]
-    + [sciq_ar_task]
-)
+MC_TASKS = [
+    *ARABIC_MMLU_TASKS,
+    *ACVA_TASKS,
+    *ALGHAFA_TASKS,
+    arabic_exams_task,
+    race_ar_task,
+    piqa_ar_task,
+    arc_easy_ar_task,
+    openbook_qa_ext_ar_task,
+    toxigen_ar_task,
+    sciq_ar_task,
+]
+
+GENERATIVE_TASKS = [
+    *ACVA_TASKS,
+    boolq_ar_task
+]
