@@ -72,17 +72,16 @@ class EnhancedJSONEncoder(json.JSONEncoder):
 
 def push_with_retry(fn, **kwargs):
     retries = 0
-    while True:
+    while retries < MAX_HUB_UPLOAD_RETRIES:
         try:
-            fn(
-                **kwargs
-            )
+            return fn(**kwargs)
         except huggingface_hub.utils._errors.HfHubHTTPError as error:
-            if "504" in str(error) and retries < MAX_HUB_UPLOAD_RETRIES:  # gateway timeout
+            if "504" in str(error) or "429" in str(error):  # gateway timeout or client error
                 time.sleep(2 ** retries)
                 retries += 1
-                continue
-            raise error
+            else:
+                raise error
+    raise Exception(f"Failed to push after {MAX_HUB_UPLOAD_RETRIES} retries")
 
 
 class EvaluationTracker:
