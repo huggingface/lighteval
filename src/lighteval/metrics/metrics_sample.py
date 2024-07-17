@@ -418,7 +418,7 @@ class BertScore:
         normalize_gold: callable = None,
         normalize_pred: callable = None,
     ):
-        """A BERT scorer class. Relies on some called extracted from `bert-score`. By default, will use the
+        r"""A BERT scorer class. Relies on some called extracted from `bert-score`. By default, will use the
         `microsoft/deberta-large-mnli` as scorer. For each tokenized (pred, target) pair, it computes Precision,
         Recall and F1 as following:
 
@@ -427,7 +427,7 @@ class BertScore:
             Recall = \sum_{t=1}^{len(target)} \div{max(Cos.Sim.(target_t, pred))}{IDF(target_t)}
 
             F1 = \div{Precision * Recall}{Precision + Recall}
-        
+
         in which `Cos.Sim.` is the Cosine Similarity metric and `IDF(.)` represents the Inverse Document
         Frequency of its input token. It defaults to 1 for all tokens and 0 for EOS and SEP tokens.
 
