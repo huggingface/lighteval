@@ -77,7 +77,7 @@ DATASET_SPLITS = 1
 class TestReorderGenerativeTaskDataset:
     def test_dataset_needs_tokenization(self):
         with pytest.raises(ValueError):
-            GenerativeTaskDataset(requests=TEST_DATA, dataset_splits=DATASET_SPLITS)
+            GenerativeTaskDataset(requests=TEST_DATA, num_dataset_splits=DATASET_SPLITS)
 
     def test_reorder_dataset(self):
         tokenizer = AutoTokenizer.from_pretrained("gpt2")
@@ -85,7 +85,7 @@ class TestReorderGenerativeTaskDataset:
         for request in data:
             request.tokenized_context = tokenizer.encode(request.context)
 
-        dataset = GenerativeTaskDataset(requests=data, dataset_splits=DATASET_SPLITS)
+        dataset = GenerativeTaskDataset(requests=data, num_dataset_splits=DATASET_SPLITS)
 
         sorted_data = dataset.sorted_data
         original_data = dataset.get_original_order(sorted_data)

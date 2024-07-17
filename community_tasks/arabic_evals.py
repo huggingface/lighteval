@@ -29,6 +29,7 @@ This file generally creates just a TASKS_TABLE and TASKS_GROUPS which are then i
 import random
 import re
 
+from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
@@ -125,7 +126,7 @@ class CustomArabicMMLUTask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=mmlu_arabic,
             hf_repo="OALL/Arabic_MMLU",
-            metric=["loglikelihood_acc_norm"],
+            metric=[Metrics.loglikelihood_acc_norm],
             hf_avail_splits=["test", "dev"],
             evaluation_splits=["test"],
             few_shots_split="dev",
@@ -182,7 +183,7 @@ class CustomACVATask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=acva,
             hf_repo="OALL/ACVA",
-            metric=["loglikelihood_acc_norm"],
+            metric=[Metrics.loglikelihood_acc_norm],
             hf_avail_splits=["test", "validation"],
             evaluation_splits=["test"],
             few_shots_split="validation",
@@ -234,7 +235,7 @@ arabic_exams_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc_norm"],
+    metric=[Metrics.loglikelihood_acc_norm],
     trust_dataset=True,
     version=0,
 )
@@ -284,7 +285,7 @@ class CustomAlGhafaNativeTask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=alghafa_prompt,
             hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Native",
-            metric=["loglikelihood_acc_norm"],
+            metric=[Metrics.loglikelihood_acc_norm],
             hf_avail_splits=["test", "validation"],
             evaluation_splits=["test"],
             few_shots_split="validation",
@@ -312,7 +313,7 @@ race_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc_norm"],
+    metric=[Metrics.loglikelihood_acc_norm],
     trust_dataset=True,
     version=0,
 )
@@ -329,7 +330,7 @@ piqa_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc_norm"],
+    metric=[Metrics.loglikelihood_acc_norm],
     trust_dataset=True,
     version=0,
 )
@@ -346,7 +347,7 @@ arc_easy_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc_norm"],
+    metric=[Metrics.loglikelihood_acc_norm],
     trust_dataset=True,
     version=0,
 )
@@ -363,7 +364,7 @@ arc_challenge_okapi_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc_norm"],
+    metric=[Metrics.loglikelihood_acc_norm],
     trust_dataset=True,
     version=0,
 )
@@ -380,7 +381,7 @@ mmlu_okapi_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc_norm"],
+    metric=[Metrics.loglikelihood_acc_norm],
     trust_dataset=True,
     version=0,
 )
@@ -397,7 +398,7 @@ openbook_qa_ext_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc_norm"],
+    metric=[Metrics.loglikelihood_acc_norm],
     trust_dataset=True,
     version=0,
 )
@@ -439,7 +440,7 @@ boolq_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc_norm"],
+    metric=[Metrics.loglikelihood_acc_norm],
     trust_dataset=True,
     version=0,
 )
@@ -475,7 +476,7 @@ copa_ext_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc_norm"],
+    metric=[Metrics.loglikelihood_acc_norm],
     trust_dataset=True,
     version=0,
 )
@@ -520,7 +521,7 @@ hellaswag_okapi_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc_norm"],
+    metric=[Metrics.loglikelihood_acc_norm],
     trust_dataset=True,
     version=0,
 )
@@ -558,7 +559,7 @@ toxigen_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc_norm"],
+    metric=[Metrics.loglikelihood_acc_norm],
     trust_dataset=True,
     version=0,
 )
@@ -610,7 +611,7 @@ sciq_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc_norm"],
+    metric=[Metrics.loglikelihood_acc_norm],
     trust_dataset=True,
     version=0,
 )

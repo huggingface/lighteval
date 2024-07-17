@@ -36,8 +36,7 @@ from aenum import extend_enum
 from scipy.optimize import minimize
 
 import lighteval.tasks.tasks_prompt_formatting as prompt
-from lighteval.metrics import Metrics
-from lighteval.metrics.metrics import CorpusLevelMetricGrouping
+from lighteval.metrics.metrics import CorpusLevelMetricGrouping, Metrics
 from lighteval.metrics.metrics_sample import ExactMatches, LoglikelihoodAcc
 from lighteval.metrics.normalizations import gsm8k_normalizer
 from lighteval.metrics.utils import MetricCategory, MetricUseCase
@@ -276,7 +275,7 @@ for task_param in task_params:
         Metrics,
         f"tinybench_metric_{name}",
         CorpusLevelMetricGrouping(
-            metric=TinyCorpusAggregator.METRICS,
+            metric_name=TinyCorpusAggregator.METRICS,
             higher_is_better={m: True for m in TinyCorpusAggregator.METRICS},
             sample_level_fn=TinyCorpusAggregator(name).compute,
             category=category,

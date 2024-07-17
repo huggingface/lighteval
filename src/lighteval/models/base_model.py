@@ -267,8 +267,6 @@ class BaseModel(LightevalModel):
             if hasattr(self._config, attr):
                 return getattr(self._config, attr)
 
-        if hasattr(self.tokenizer, "model_max_length"):
-            return self.tokenizer.model_max_length
         # Default max sequence length setting for when no `max_length` is provided
         # or no max length config setting is found in the model or tokenizer.
         return 2048
@@ -335,7 +333,7 @@ class BaseModel(LightevalModel):
 
         results = []
 
-        dataset = GenerativeTaskDataset(requests=requests, dataset_splits=1)
+        dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=1)
         dataloader = DataLoader(dataset, batch_size=1, collate_fn=lambda batch: batch)
 
         if self.accelerator:
@@ -480,13 +478,13 @@ class BaseModel(LightevalModel):
             request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
             request.tokenized_context = self.tok_encode(request.context)
 
-        dataset = GenerativeTaskDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
+        dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
         results = []
 
         for split_start, split_end in tqdm(
             dataset.splits_start_end_iterator(),
-            total=self.DATASET_SPLITS,
+            total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
             disable=self.disable_tqdm,
@@ -715,7 +713,7 @@ class BaseModel(LightevalModel):
         return_bool_score: bool = True,
         rolling: bool = False,
     ) -> list[LoglikelihoodReturn]:
-        dataset = LoglikelihoodDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
+        dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
         res = []
 
@@ -957,7 +955,7 @@ class BaseModel(LightevalModel):
     def _loglikelihood_single_token(
         self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: int = -1
     ) -> list[LoglikelihoodSingleTokenReturn]:
-        dataset = LoglikelihoodSingleTokenDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
+        dataset = LoglikelihoodSingleTokenDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
         res = []
 

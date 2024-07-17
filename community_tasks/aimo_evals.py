@@ -25,6 +25,7 @@
 Task to evaluate LLMs on the training set of the Kaggle AIMO competition: https://www.kaggle.com/competitions/ai-mathematical-olympiad-prize
 """
 
+from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
@@ -48,7 +49,7 @@ task = LightevalTaskConfig(
     evaluation_splits=["train"],
     few_shots_split="train",
     few_shots_select="sequential",
-    metric=["quasi_exact_match_math"],
+    metric=[Metrics.quasi_exact_match_math],
     generation_size=2048,
     stop_sequence=None,
 )

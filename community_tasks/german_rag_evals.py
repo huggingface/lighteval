@@ -30,6 +30,7 @@ This module implements the 4 tasks of deutsche-telekom/Ger-RAG-eval.
 See: https://huggingface.co/datasets/deutsche-telekom/Ger-RAG-eval
 """
 
+from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
@@ -161,7 +162,7 @@ task1 = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="test",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc"],
+    metric=[Metrics.loglikelihood_acc],
     version=1,
 )
 
@@ -178,7 +179,7 @@ task2 = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="test",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc"],
+    metric=[Metrics.loglikelihood_acc],
     version=1,
 )
 
@@ -196,7 +197,7 @@ task3 = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="test",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc"],
+    metric=[Metrics.loglikelihood_acc],
     version=1,
 )
 
@@ -213,7 +214,7 @@ task4 = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="test",
     few_shots_select="sequential",
-    metric=["loglikelihood_acc"],
+    metric=[Metrics.loglikelihood_acc],
     version=1,
 )
 
