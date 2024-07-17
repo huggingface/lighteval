@@ -27,6 +27,7 @@ import re
 import time
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 
 from datasets import Dataset, load_dataset
@@ -59,6 +60,8 @@ class EnhancedJSONEncoder(json.JSONEncoder):
             return asdict(o)
         if callable(o):
             return o.__name__
+        if isinstance(o, Enum):
+            return o.name
         return super().default(o)
 
 
