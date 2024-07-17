@@ -40,7 +40,7 @@ from lighteval.metrics import (
     apply_perplexity_metric,
     apply_target_perplexity_metric,
 )
-from lighteval.metrics.metrics import MetricCategory, Metrics
+from lighteval.metrics.metrics import Metric, MetricCategory, Metrics
 from lighteval.models.base_model import BaseModel
 from lighteval.models.model_output import ModelReturn
 from lighteval.tasks.requests import (
@@ -91,7 +91,7 @@ class LightevalTaskConfig:
     prompt_function: Callable  # [[dict, str], Doc]
     hf_repo: str
     hf_subset: str
-    metric: Tuple[Union[str, Metrics]]
+    metric: Tuple[Union[Metric, Metrics]]
     hf_avail_splits: Optional[Tuple[str]] = None
     evaluation_splits: Optional[Tuple[str]] = None
     few_shots_split: Optional[str] = None
@@ -120,6 +120,9 @@ class LightevalTaskConfig:
             self.hf_avail_splits = ["train", "validation", "test"]
         if self.evaluation_splits is None:
             self.evaluation_splits = ["validation"]
+
+        # If we got a Metrics enums instead of a Metric, we convert
+        self.metric = [metric.value if isinstance(metric, Metrics) else metric for metric in self.metric]
 
         # Convert list to tuple for hashing
         self.metric = tuple(self.metric)
@@ -179,14 +182,16 @@ class LightevalTask:
         # Metrics
         self.metrics = as_list(cfg.metric)
         self.suite = as_list(cfg.suite)
-        ignored = [metric for metric in self.metrics if Metrics[metric].value.category == MetricCategory.IGNORED]
+        ignored = [metric for metric in self.metrics if metric.category == MetricCategory.IGNORED]
 
         if len(ignored) > 0:
             hlog_warn(f"[WARNING] Not implemented yet: ignoring the metric {' ,'.join(ignored)} for task {self.name}.")
 
-        if any(
-            Metrics[metric].value.category in [MetricCategory.LLM_AS_JUDGE, MetricCategory.LLM_AS_JUDGE_MULTI_TURN]
-            for metric in self.metrics
+        current_categories = [metric.category for metric in self.metrics]
+        self.has_metric_category = {category: (category in current_categories) for category in MetricCategory}
+        if (
+            self.has_metric_category[MetricCategory.LLM_AS_JUDGE]
+            or self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]
         ):
             if not is_openai_available():
                 raise ImportError(NO_OPENAI_ERROR_MSG)
@@ -195,13 +200,16 @@ class LightevalTask:
                     "Using llm as judge metric but no OPEN_API_KEY were found, please set it with: export OPEN_API_KEY={yourkey}"
                 )
 
-        current_categories = [Metrics[metric].value.category for metric in self.metrics]
-        self.has_metric_category = {category: (category in current_categories) for category in MetricCategory}
-        # Sub-optimal system - we might want to store metric parametrisation in a yaml conf for example
         # We assume num_samples always contains 1 (for base generative evals)
-        self.num_samples = [1] + [
-            int(metric.replace("maj_at_", "").split("_")[0]) for metric in self.metrics if "maj_at_" in metric
-        ]
+        self.num_samples = [1]
+        for metric in self.metrics:
+            metric_names = as_list(metric.metric_name)
+
+            for metric_name in metric_names:
+                # If we do maj_at_ metrics, we need to use the correct number of samples
+                if "maj_at_" in metric_name:
+                    self.num_samples.append(int(metric_name.replace("maj_at_", "").split("_")[0]))
+
         if not isinstance(cfg.prompt_function, Callable):
             raise TypeError(
                 f"Prompt formatting function ({str(cfg.prompt_function)}) should have been passed as a callable, was {type(cfg.prompt_function)} instead."
