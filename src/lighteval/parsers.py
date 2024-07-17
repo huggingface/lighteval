@@ -123,3 +123,25 @@ def parser_nanotron(parser=None):
     parser.add_argument(
         "--cache_dir", type=str, default=CACHE_DIR, help="Cache directory used to store datasets and models"
     )
+
+
+def parser_utils_tasks(parser=None):
+    if parser is None:
+        parser = argparse.ArgumentParser(
+            description="CLI tool for lighteval, a lightweight framework for LLM evaluation"
+        )
+
+    group = parser.add_mutually_exclusive_group(required=True)
+
+    group.add_argument("--list", action="store_true", help="List available tasks")
+    group.add_argument(
+        "--inspect",
+        type=str,
+        default=None,
+        help="Id of tasks or path to a text file with a list of tasks (e.g. 'original|mmlu:abstract_algebra|5') for which you want to manually inspect samples.",
+    )
+    parser.add_argument("--num_samples", type=int, default=10, help="Number of samples to display")
+    parser.add_argument("--show_config", default=False, action="store_true", help="Will display the full task config")
+    parser.add_argument(
+        "--cache_dir", type=str, default=CACHE_DIR, help="Cache directory used to store datasets and models"
+    )

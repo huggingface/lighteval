@@ -25,7 +25,7 @@
 import argparse
 import os
 
-from lighteval.parsers import parser_accelerate, parser_nanotron
+from lighteval.parsers import parser_accelerate, parser_nanotron, parser_utils_tasks
 from lighteval.tasks.registry import Registry, taskinfo_selector
 
 
@@ -36,25 +36,18 @@ def cli_evaluate():
     parser = argparse.ArgumentParser(description="CLI tool for lighteval, a lightweight framework for LLM evaluation")
     subparsers = parser.add_subparsers(help="help for subcommand", dest="subcommand")
 
-    # create the parser for the "accelerate" command
+    # Subparser for the "accelerate" command
     parser_a = subparsers.add_parser("accelerate", help="use accelerate and transformers as backend for evaluation.")
     parser_accelerate(parser_a)
 
-    # create the parser for the "nanotron" command
+    # Subparser for the "nanotron" command
     parser_b = subparsers.add_parser("nanotron", help="use nanotron as backend for evaluation.")
     parser_nanotron(parser_b)
 
-    # utils functions
-    parser.add_argument("--list-tasks", action="store_true", help="List available tasks")
-    parser.add_argument(
-        "--cache_dir", type=str, default=CACHE_DIR, help="Cache directory used to store datasets and models"
-    )
-    parser.add_argument(
-        "--tasks-examples",
-        type=str,
-        default=None,
-        help="Id of tasks or path to a text file with a list of tasks (e.g. 'original|mmlu:abstract_algebra|5') for which you want to manually inspect samples.",
-    )
+    # Subparser for task utils functions
+    parser_c = subparsers.add_parser("tasks", help="use nanotron as backend for evaluation.")
+    parser_utils_tasks(parser_c)
+
     args = parser.parse_args()
 
     if args.subcommand == "accelerate":
@@ -67,20 +60,27 @@ def cli_evaluate():
 
         main_nanotron(args.checkpoint_config_path, args.lighteval_override, args.cache_dir)
 
-    elif args.list_tasks:
-        Registry(cache_dir="").print_all_tasks()
+    elif args.subcommand == "tasks":
+        if args.list:
+            Registry(cache_dir="").print_all_tasks()
 
-    elif args.tasks_examples:
-        print(f"Loading the tasks dataset to cache folder: {args.cache_dir}")
-        print(
-            "All examples will be displayed without few shot, as few shot sample construction requires loading a model and using its tokenizer."
-        )
-        task_names_list, _ = taskinfo_selector(args.tasks_examples)
-        task_dict = Registry(cache_dir=args.cache_dir).get_task_dict(task_names_list)
-        for name, task in task_dict.items():
-            print("-" * 10, name, "-" * 10)
-            for sample in task.eval_docs()[:10]:
-                print(sample)
+        if args.inspect:
+            print(f"Loading the tasks dataset to cache folder: {args.cache_dir}")
+            print(
+                "All examples will be displayed without few shot, as few shot sample construction requires loading a model and using its tokenizer."
+            )
+            # Loading task
+            task_names_list, _ = taskinfo_selector(args.inspect)
+            task_dict = Registry(cache_dir=args.cache_dir).get_task_dict(task_names_list)
+            for name, task in task_dict.items():
+                print("-" * 10, name, "-" * 10)
+                if args.show_config:
+                    print("-" * 10, "CONFIG")
+                    task.print_config()
+                for ix, sample in enumerate(task.eval_docs()[: int(args.num_samples)]):
+                    if ix == 0:
+                        print("-" * 10, "SAMPLES")
+                    print(sample)
 
     else:
         print("You did not provide any argument. Exiting")
