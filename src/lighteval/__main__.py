@@ -44,13 +44,11 @@ def cli_evaluate():
     parser_b = subparsers.add_parser("nanotron", help="use nanotron as backend for evaluation.")
     parser_nanotron(parser_b)
 
-    # values which should always be set
+    # utils functions
+    parser.add_argument("--list-tasks", action="store_true", help="List available tasks")
     parser.add_argument(
         "--cache_dir", type=str, default=CACHE_DIR, help="Cache directory used to store datasets and models"
     )
-
-    # utils functions
-    parser.add_argument("--list-tasks", action="store_true", help="List available tasks")
     parser.add_argument(
         "--tasks-examples",
         type=str,

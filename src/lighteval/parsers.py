@@ -96,6 +96,9 @@ def parser_accelerate(parser=None):
         default=None,
         help="Id of a task, e.g. 'original|mmlu:abstract_algebra|5' or path to a texte file with a list of tasks",
     )
+    parser.add_argument(
+        "--cache_dir", type=str, default=CACHE_DIR, help="Cache directory used to store datasets and models"
+    )
     parser.add_argument("--num_fewshot_seeds", type=int, default=1, help="Number of trials the few shots")
     return parser
 
@@ -116,4 +119,7 @@ def parser_nanotron(parser=None):
         "--lighteval-override",
         type=str,
         help="Path to an optional YAML or python Lighteval config to override part of the checkpoint Lighteval config",
+    )
+    parser.add_argument(
+        "--cache_dir", type=str, default=CACHE_DIR, help="Cache directory used to store datasets and models"
     )
