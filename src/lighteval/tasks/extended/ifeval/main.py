@@ -24,7 +24,7 @@ import numpy as np
 from aenum import extend_enum
 
 import lighteval.tasks.extended.ifeval.instructions_registry as instructions_registry
-from lighteval.metrics import Metrics
+from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.utils import (
     MetricCategory,
     MetricUseCase,
@@ -34,10 +34,22 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
+# Very specific task where there are no precise outputs but instead we test if the format obeys rules
+def ifeval_prompt(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=line["prompt"],
+        choices=[""],
+        gold_index=0,
+        instruction="",
+        specific={"instructions_id_list": line["instruction_id_list"], "kwargs": line["kwargs"]},
+    )
+
+
 # We create the task config
 ifeval = LightevalTaskConfig(
     name="ifeval",
-    prompt_function="ifeval_prompt",
+    prompt_function=ifeval_prompt,
     suite=["extended"],
     hf_repo="wis-k/instruction-following-eval",
     hf_subset="default",
@@ -49,18 +61,6 @@ ifeval = LightevalTaskConfig(
     generation_size=1280,
     stop_sequence=[],  # no stop sequence, will use eot token
 )
-
-
-# very specific task where there are no precise outputs but instead we test if the format obeys rules
-def ifeval_prompt(line, task_name: str = None):
-    return Doc(
-        task_name=task_name,
-        query=line["prompt"],
-        choices=[""],
-        gold_index=0,
-        instruction="",
-        specific={"instructions_id_list": line["instruction_id_list"], "kwargs": line["kwargs"]},
-    )
 
 
 submetric_names = [
@@ -143,7 +143,7 @@ def agg_inst_level_acc(items):
 
 
 ifeval_metrics = SampleLevelMetricGrouping(
-    metric=submetric_names,
+    metric_name=submetric_names,
     higher_is_better={n: True for n in submetric_names},
     category=MetricCategory.GENERATIVE,
     use_case=MetricUseCase.ACCURACY,
@@ -157,10 +157,8 @@ ifeval_metrics = SampleLevelMetricGrouping(
 )
 
 
-_TASKS = [ifeval]
+TASKS_TABLE = [ifeval]
 
-# Convert to dict for lighteval
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
 extend_enum(Metrics, "ifeval_metric", ifeval_metrics)
 
 if __name__ == "__main__":

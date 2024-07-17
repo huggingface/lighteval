@@ -335,7 +335,7 @@ class BaseModel(LightevalModel):
 
         results = []
 
-        dataset = GenerativeTaskDataset(requests=requests, dataset_splits=1)
+        dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=1)
         dataloader = DataLoader(dataset, batch_size=1, collate_fn=lambda batch: batch)
 
         if self.accelerator:
@@ -480,13 +480,13 @@ class BaseModel(LightevalModel):
             request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
             request.tokenized_context = self.tok_encode(request.context)
 
-        dataset = GenerativeTaskDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
+        dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
         results = []
 
         for split_start, split_end in tqdm(
             dataset.splits_start_end_iterator(),
-            total=self.DATASET_SPLITS,
+            total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
             disable=self.disable_tqdm,
@@ -530,27 +530,7 @@ class BaseModel(LightevalModel):
                 returns_logits = batch[0].use_logits
                 num_samples = batch[0].num_samples
 
-                # The main question for this step is the following:
-                # Would we rather truncate the prompt to allow generation to go to max_new_tokens, at the risk
-                # of loosing some meaning, or have some generations that are exceedingly short?
-                # The choice we go for here is to avoid truncating the prompt if we can, since it
-                # should have been managed by the prompt creator/few shot manager if requested by the user.
                 context = [c.context for c in batch]
-                smallest_context = min(len(c) for c in context)
-                biggest_context = max(len(c) for c in context)
-                if smallest_context > self.max_length:
-                    hlog_warn(
-                        f"The smallest context of your batch ({smallest_context}) is bigger than the maximum context size allowed by the model ({self.max_length}) for a task in"
-                        + str({i.task_name for i in batch})
-                        + ". This is likely to lead to some errors."  # noqa C401
-                    )
-
-                if (
-                    biggest_context > self.max_length
-                ):  # There will be truncation of at least one sample, maximum generation size will be one
-                    max_new_tokens = 1
-                else:  # We can't allow generation of more than max_length
-                    max_new_tokens = min(self.max_length - biggest_context, max_new_tokens)
 
                 # See doc https://huggingface.co/docs/transformers/v4.38.2/en/pad_truncation#padding-and-truncation
                 # Will do left truncation and padding, as defined when creating the tokenizer
@@ -562,6 +542,23 @@ class BaseModel(LightevalModel):
                     max_length=self.max_length - 1,  # we always allow minimum one token of generation
                     add_special_tokens=self.add_special_tokens,
                 ).to(self.device)
+
+                # The main question for this step is the following:
+                # Would we rather truncate the prompt to allow generation to go to max_new_tokens, at the risk
+                # of losing some meaning, or have some generations that are exceedingly short?
+                # The choice we go for here is to avoid truncating the prompt if we can, since it
+                # should have been managed by the prompt creator/few shot manager if requested by the user.
+                context_size = tokenized["input_ids"].shape[1]
+                if context_size > self.max_length:
+                    hlog_warn(
+                        f"The context size of your batch ({context_size}) is bigger than the maximum context size allowed by the model ({self.max_length}) for a task in"
+                        + str({i.task_name for i in batch})
+                        + ". This is likely to lead to some errors."  # noqa C401
+                    )
+                    # There will be truncation of at least one sample, maximum generation size will be one
+                    max_new_tokens = 1
+                else:  # We can't allow generation of more than max_length
+                    max_new_tokens = min(self.max_length - context_size, max_new_tokens)
 
                 prepared_batch = Batch(
                     input_ids=tokenized["input_ids"],
@@ -718,7 +715,7 @@ class BaseModel(LightevalModel):
         return_bool_score: bool = True,
         rolling: bool = False,
     ) -> list[LoglikelihoodReturn]:
-        dataset = LoglikelihoodDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
+        dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
         res = []
 
@@ -960,7 +957,7 @@ class BaseModel(LightevalModel):
     def _loglikelihood_single_token(
         self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: int = -1
     ) -> list[LoglikelihoodSingleTokenReturn]:
-        dataset = LoglikelihoodSingleTokenDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
+        dataset = LoglikelihoodSingleTokenDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
         res = []
 

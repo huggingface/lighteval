@@ -91,10 +91,11 @@ class InferenceEndpointModel(LightevalModel):
                             "MAX_INPUT_LENGTH": "2047",
                             "MAX_TOTAL_TOKENS": "2048",
                             "MODEL_ID": "/repository",
+                            "HF_MODEL_TRUST_REMOTE_CODE": "true",
                             **config.get_dtype_args(),
                             **config.get_custom_env_vars(),
                         },
-                        "url": (config.image_url or "ghcr.io/huggingface/text-generation-inference:1.1.0"),
+                        "url": (config.image_url or "ghcr.io/huggingface/text-generation-inference:latest"),
                     },
                 )
             hlog("Deploying your endpoint. Please wait.")
@@ -243,7 +244,7 @@ class InferenceEndpointModel(LightevalModel):
             request.tokenized_context = self.tok_encode(request.context)
             request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
 
-        dataset = GenerativeTaskDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
+        dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         batch_size = override_bs if override_bs is not None else BATCH_SIZE
         results: List[str] = []
 
@@ -289,7 +290,7 @@ class InferenceEndpointModel(LightevalModel):
         for request in requests:
             request.tokenized_context = self.tok_encode(request.context)
             request.tokenized_continuation = self.tok_encode(request.choice)
-        dataset = LoglikelihoodDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
+        dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         batch_size = override_bs if override_bs is not None else BATCH_SIZE
         results: List[str] = []
 
@@ -335,7 +336,7 @@ class InferenceEndpointModel(LightevalModel):
             request.tokenized_context = [self.tokenizer.eos_token_id]
             request.tokenized_continuation = self.tok_encode(request.context)
 
-        dataset = LoglikelihoodDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
+        dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         batch_size = override_bs if override_bs is not None else BATCH_SIZE
         results: List[str] = []
 

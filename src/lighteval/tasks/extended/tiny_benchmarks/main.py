@@ -35,8 +35,8 @@ import requests
 from aenum import extend_enum
 from scipy.optimize import minimize
 
-from lighteval.metrics import Metrics
-from lighteval.metrics.metrics import CorpusLevelMetricGrouping
+import lighteval.tasks.tasks_prompt_formatting as prompt
+from lighteval.metrics.metrics import CorpusLevelMetricGrouping, Metrics
 from lighteval.metrics.metrics_sample import ExactMatches, LoglikelihoodAcc
 from lighteval.metrics.normalizations import gsm8k_normalizer
 from lighteval.metrics.utils import MetricCategory, MetricUseCase
@@ -186,7 +186,7 @@ task_params = [
         "name": "winogrande",
         "dataset": "tinyBenchmarks/tinyWinogrande",
         "subset": "winogrande_xl",
-        "prompt": "winogrande",
+        "prompt": prompt.winogrande,
         "splits": ["train", "validation", "test"],
         "evaluation_split": ["validation"],
     },
@@ -194,7 +194,7 @@ task_params = [
         "name": "arc",
         "dataset": "tinyBenchmarks/tinyAI2_arc",
         "subset": "ARC-Challenge",
-        "prompt": "arc",
+        "prompt": prompt.arc,
         "splits": ["train", "validation", "test"],
         "evaluation_split": ["validation"],
     },
@@ -202,7 +202,7 @@ task_params = [
         "name": "hellaswag",
         "dataset": "tinyBenchmarks/tinyHellaswag",
         "subset": "default",
-        "prompt": "hellaswag_harness",
+        "prompt": prompt.hellaswag_harness,
         "splits": ["train", "validation", "test"],
         "evaluation_split": ["validation"],
     },
@@ -210,7 +210,7 @@ task_params = [
         "name": "mmlu",
         "dataset": "tinyBenchmarks/tinyMMLU",
         "subset": "all",
-        "prompt": "mmlu_harness",
+        "prompt": prompt.mmlu_harness,
         "splits": ["validation", "dev", "test"],
         "evaluation_split": ["test"],
     },
@@ -218,7 +218,7 @@ task_params = [
         "name": "truthfulqa",
         "dataset": "tinyBenchmarks/tinyTruthfulQA",
         "subset": "multiple_choice",
-        "prompt": "truthful_qa_multiple_choice",
+        "prompt": prompt.truthful_qa_multiple_choice,
         "splits": ["validation"],
         "evaluation_split": ["validation"],
     },
@@ -226,7 +226,7 @@ task_params = [
         "name": "gsm8k",
         "dataset": "tinyBenchmarks/tinyGSM8k",
         "subset": "main",
-        "prompt": "gsm8k",
+        "prompt": prompt.gsm8k,
         "splits": ["train", "test"],
         "evaluation_split": ["test"],
     },
@@ -237,7 +237,7 @@ task_params = [
     #    },
 ]
 
-_TASKS = []
+TASKS_TABLE = []
 for task in task_params:
     name = task["name"]
     generation_size = None
@@ -259,7 +259,7 @@ for task in task_params:
         generation_size=generation_size,
         stop_sequence=stop_sequence,
     )
-    _TASKS.append(task)
+    TASKS_TABLE.append(task)
 
 # CUSTOM METRIC
 for task_param in task_params:
@@ -275,7 +275,7 @@ for task_param in task_params:
         Metrics,
         f"tinybench_metric_{name}",
         CorpusLevelMetricGrouping(
-            metric=TinyCorpusAggregator.METRICS,
+            metric_name=TinyCorpusAggregator.METRICS,
             higher_is_better={m: True for m in TinyCorpusAggregator.METRICS},
             sample_level_fn=TinyCorpusAggregator(name).compute,
             category=category,
@@ -288,8 +288,6 @@ for task_param in task_params:
 # MODULE LOGIC
 # You should not need to touch this
 # Convert to dict for lighteval
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
-
 if __name__ == "__main__":
     print(t["name"] for t in TASKS_TABLE)
     print(len(TASKS_TABLE))

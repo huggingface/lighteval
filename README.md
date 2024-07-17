@@ -42,7 +42,7 @@ Install the dependencies. For the default installation, you just need:
 pip install .
 ```
 
-If you want to evaluate models with frameworks like `accelerate` or `peft`, you will need to specify the optional dependencies group that fits your use case (`accelerate`,`tgi`,`optimum`,`quantization`,`adapters`,`nanotron`):
+If you want to evaluate models with frameworks like `accelerate` or `peft`, you will need to specify the optional dependencies group that fits your use case (`accelerate`,`tgi`,`optimum`,`quantization`,`adapters`,`nanotron`,`tensorboardX`):
 
 ```bash
 pip install '.[optional1,optional2]'
@@ -78,8 +78,8 @@ pre-commit install
 
 We provide two main entry points to evaluate models:
 
-* `run_evals_accelerate.py`: evaluate models on CPU or one or more GPUs using [🤗 Accelerate](https://github.com/huggingface/accelerate).
-* `run_evals_nanotron.py`: evaluate models in distributed settings using [⚡️ Nanotron](https://github.com/huggingface/nanotron).
+* `lighteval accelerate`: evaluate models on CPU or one or more GPUs using [🤗 Accelerate](https://github.com/huggingface/accelerate).
+* `lighteval nanotron`: evaluate models in distributed settings using [⚡️ Nanotron](https://github.com/huggingface/nanotron).
 
 For most users, we recommend using the 🤗 Accelerate backend - see below for specific commands.
 
@@ -94,7 +94,8 @@ accelerate config
 You can then evaluate a model using data parallelism as follows:
 
 ```shell
-accelerate launch --multi_gpu --num_processes=<num_gpus> run_evals_accelerate.py \
+accelerate launch --multi_gpu --num_processes=<num_gpus> -m \
+    lighteval accelerate \
     --model_args="pretrained=<path to model on the hub>" \
     --tasks <task parameters> \
     --output_dir output_dir
@@ -109,7 +110,8 @@ suite|task|num_few_shot|{0 or 1 to automatically reduce `num_few_shot` if prompt
 or a file path like [`examples/tasks/recommended_set.txt`](./examples/tasks/recommended_set.txt) which specifies multiple task configurations. For example, to evaluate GPT-2 on the Truthful QA benchmark run:
 
 ```shell
-accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py \
+accelerate launch --multi_gpu --num_processes=8 -m \
+    lighteval accelerate \
     --model_args "pretrained=gpt2" \
     --tasks "lighteval|truthfulqa:mc|0|0" \
     --override_batch_size 1 \
@@ -119,7 +121,8 @@ accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py \
 Here, `--override_batch_size` defines the _batch size per device_, so the effective batch size will be `override_batch_size x num_gpus`. To evaluate on multiple benchmarks, separate each task configuration with a comma, e.g.
 
 ```shell
-accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py \
+accelerate launch --multi_gpu --num_processes=8 -m \
+    lighteval accelerate \
     --model_args "pretrained=gpt2" \
     --tasks "leaderboard|truthfulqa:mc|0|0,leaderboard|gsm8k|0|0" \
     --override_batch_size 1 \
@@ -133,13 +136,14 @@ See the [`examples/tasks/recommended_set.txt`](./examples/tasks/recommended_set.
 If you want to evaluate a model by spinning up inference endpoints, use adapter/delta weights, or more complex configuration options, you can load models using a configuration file. This is done as follows:
 
 ```shell
-accelerate launch --multi_gpu --num_processes=<num_gpus> run_evals_accelerate.py \
+accelerate launch --multi_gpu --num_processes=<num_gpus> -m \
+    lighteval accelerate \
     --model_config_path="<path to your model configuration>" \
     --tasks <task parameters> \
     --output_dir output_dir
 ```
 
-You can find the template of the expected model configuration in [examples/model_configs/base_model.yaml_](./examples/model_configs/base_model.yaml). 
+You can find the template of the expected model configuration in [examples/model_configs/base_model.yaml_](./examples/model_configs/base_model.yaml).
 
 ### Evaluating a large model with pipeline parallelism
 
@@ -147,13 +151,15 @@ To evaluate models larger that ~40B parameters in 16-bit precision, you will nee
 
 ```shell
 # PP=2, DP=4 - good for models < 70B params
-accelerate launch --multi_gpu --num_processes=4 run_evals_accelerate.py \
+accelerate launch --multi_gpu --num_processes=4 -m \
+    lighteval accelerate \
     --model_args="pretrained=<path to model on the hub>,model_parallel=True" \
     --tasks <task parameters> \
     --output_dir output_dir
 
 # PP=4, DP=2 - good for huge models >= 70B params
-accelerate launch --multi_gpu --num_processes=2 run_evals_accelerate.py \
+accelerate launch --multi_gpu --num_processes=2 -m \
+    lighteval accelerate \
     --model_args="pretrained=<path to model on the hub>,model_parallel=True" \
     --tasks <task parameters> \
     --output_dir output_dir
@@ -164,7 +170,8 @@ accelerate launch --multi_gpu --num_processes=2 run_evals_accelerate.py \
 To evaluate a model on all the benchmarks of the [Open LLM Leaderboard](https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard) using a single node of 8 GPUs, run:
 
 ```shell
-accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py \
+accelerate launch --multi_gpu --num_processes=8 -m \
+    lighteval accelerate \
     --model_args "pretrained=<model name>" \
     --tasks examples/tasks/open_llm_leaderboard_tasks.txt \
     --override_batch_size 1 \
@@ -176,7 +183,7 @@ accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py \
 You can also use `lighteval` to evaluate models on CPU, although note this will typically be very slow for large models. To do so, run:
 
 ```shell
-python run_evals_accelerate.py \
+lighteval accelerate \
     --model_args="pretrained=<path to model on the hub>"\
     --tasks <task parameters> \
     --output_dir output_dir
@@ -197,7 +204,7 @@ There are two types of configuration files that can be provided for running on t
 
 1. [endpoint_model.yaml](./examples/model_configs/endpoint_model.yaml): This configuration allows you to launch the model using [HuggingFace's Inference Endpoints](https://huggingface.co/inference-endpoints/dedicated). You can specify in the configuration file all the relevant parameters, and then `lighteval` will automatically deploy the endpoint, run the evaluation, and finally delete the endpoint (unless you specify an endpoint that was already launched, in which case the endpoint won't be deleted afterwards).
 
-2. [tgi_model.yaml](./examples/model_configs/tgi_model.yaml): This configuration lets you specify the URL of a model running in a TGI container, such as one deployed on HuggingFace's serverless inference. 
+2. [tgi_model.yaml](./examples/model_configs/tgi_model.yaml): This configuration lets you specify the URL of a model running in a TGI container, such as one deployed on HuggingFace's serverless inference.
 
 Templates for these configurations can be found in [examples/model_configs](./examples/model_configs/).
 
@@ -211,7 +218,7 @@ Independently of the default tasks provided in `lighteval` that you will find in
 
 For example, to run an extended task like `ifeval`, you can run:
 ```shell
-python run_evals_accelerate.py \
+lighteval accelerate \
     --model_args "pretrained=HuggingFaceH4/zephyr-7b-beta" \
     --use_chat_template \ # optional, if you want to run the evaluation with the chat template
     --tasks "extended|ifeval|0|0" \
@@ -221,7 +228,7 @@ python run_evals_accelerate.py \
 To run a community or custom task, you can use (note the custom_tasks flag):
 
 ```shell
-python run_evals_accelerate.py \
+lighteval accelerate \
     --model_args="pretrained=<path to model on the hub>"\
     --tasks <task parameters> \
     --custom_tasks <path to your custom or community task> \
@@ -231,13 +238,24 @@ python run_evals_accelerate.py \
 For example, to launch `lighteval` on `arabic_mmlu:abstract_algebra` for `HuggingFaceH4/zephyr-7b-beta`, run:
 
 ```shell
-python run_evals_accelerate.py \
+lighteval accelerate \
     --model_args "pretrained=HuggingFaceH4/zephyr-7b-beta" \
     --use_chat_template \ # optional, if you want to run the evaluation with the chat template
     --tasks "community|arabic_mmlu:abstract_algebra|5|1" \
     --custom_tasks "community_tasks/arabic_evals" \
     --output_dir "./evals"
 ```
+
+### Using the dummy model
+To debug or obtain random baseline scores for a given set of tasks, you can use the `dummy` model:
+```shell
+python run_evals_accelerate.py \
+    --model_args "dummy"\
+    --tasks <task parameters> \
+    --output_dir output_dir
+```
+This "model" randomly generates logprobs (for selection/accuracy tasks) and the string "random baseline" for generation tasks.
+You can also select a specific seed for the random logprob values generated by the dummy model: `--model_args "dummy,seed=123"`.
 
 ## Deep thanks
 `lighteval` was originally built on top of the great [Eleuther AI Harness](https://github.com/EleutherAI/lm-evaluation-harness) (we use the latter to power the [Open LLM Leaderboard](https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard)). We also took a lot of inspiration from the amazing [HELM](https://crfm.stanford.edu/helm/latest/), notably for metrics.
@@ -255,7 +273,7 @@ However, we are very grateful to the Harness and HELM teams for their continued 
         - [logging](https://github.com/huggingface/lighteval/tree/main/src/lighteval/logging): Our loggers, to display experiment information and push it to the hub after a run
         - [metrics](https://github.com/huggingface/lighteval/tree/main/src/lighteval/metrics): All the available metrics you can use. They are described in metrics, and divided between sample metrics (applied at the sample level, such as prediction accuracy) and corpus metrics (applied over the whole corpus). You'll also find available normalisation functions.
         - [models](https://github.com/huggingface/lighteval/tree/main/src/lighteval/models): Possible models to use. We cover transformers (base_model), with adapter or delta weights, as well as TGI models locally deployed (it's likely the code here is out of date though), and brrr/nanotron models.
-        - [tasks](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks): Available tasks. The complete list is in `tasks_table.jsonl`, and you'll find all the prompts in `tasks_prompt_formatting.py`. Popular tasks requiring custom logic are exceptionally added in the [extended tasks](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/extended).
+        - [tasks](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks): Available tasks. The complete list is in `default_tasks.py`, and you'll find all the prompts in `tasks_prompt_formatting.py`. Popular tasks requiring custom logic are exceptionally added in the [extended tasks](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/extended).
 - [examples/tasks](https://github.com/huggingface/lighteval/tree/main/examples/tasks) contains a list of available tasks you can launch. We advise using tasks in the `recommended_set`, as it's possible that some of the other tasks need double checking.
 - [tests](https://github.com/huggingface/lighteval/tree/main/tests) contains our test suite, which we run at each PR to prevent regressions in metrics/prompts/tasks, for a subset of important tasks.
 
@@ -274,10 +292,10 @@ A popular community evaluation can move to become an extended or core evaluation
 #### Core evaluations
 Prompt function: **find a suitable prompt function** in `src.lighteval.tasks.task_prompt_formatting.py`, or code your own. This function must output a `Doc` object, which should contain the `query`, your prompt, and either `gold`, the gold output, or `choices` and `gold_index`, the list of choices and index or indices of correct answers. If your query contains an instruction that should not be repeated in a few shot setup, add it to an `instruction` field.
 
-Summary: create a **line summary** of your evaluation, in `src/lighteval/tasks/tasks_table.jsonl`. This summary should contain the following fields:
+Summary: create a `LightevalTaskConfig` summary of your evaluation, in `src/lighteval/tasks/default_tasks.py`. This summary should contain the following fields:
 - `name` (str), your evaluation name
 - `suite` (list), the suite(s) to which your evaluation should belong. This field allows us to compare different task implementations and is used as a task selection to differentiate the versions to launch. At the moment, you'll find the keywords ["helm", "bigbench", "original", "lighteval", "community", "custom"]; for core evals, please choose `lighteval`.
-- `prompt_function` (str), the name of the prompt function you defined in the step above
+- `prompt_function` (Callable), the prompt function you defined in the step above
 - `hf_repo` (str), the path to your evaluation dataset on the hub
 - `hf_subset` (str), the specific subset you want to use for your evaluation (note: when the dataset has no subset, fill this field with `"default"`, not with `None` or `""`)
 - `hf_avail_splits` (list), all the splits available for your dataset (train, valid or validation, test, other...)
@@ -299,7 +317,7 @@ Summary: create a **line summary** of your evaluation, in `src/lighteval/tasks/t
 Make sure you can launch your model with your new task using `--tasks lighteval|yournewtask|2|0`.
 
 #### Community evaluations
-Copy the `community_tasks/_template.yml` to `community_tasks/yourevalname.py` and edit it to add your custom tasks (the parameters you can use are explained above). It contains an interesting mechanism if the dataset you are adding contains a lot of subsets.
+Copy the `community_tasks/_template.py` to `community_tasks/yourevalname.py` and edit it to add your custom tasks (the parameters you can use are explained above). It contains an interesting mechanism if the dataset you are adding contains a lot of subsets.
 
 Make sure you can launch your model with your new task using `--tasks community|yournewtask|2|0 --custom_tasks community_tasks/yourevalname.py`.
 
@@ -453,7 +471,7 @@ source <path_to_your_venv>/activate #or conda activate yourenv
 cd <path_to_your_lighteval>/lighteval
 
 export CUDA_LAUNCH_BLOCKING=1
-srun accelerate launch --multi_gpu --num_processes=8 run_evals_accelerate.py --model_args "pretrained=your model name" --tasks examples/tasks/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir=your output dir
+srun accelerate launch --multi_gpu --num_processes=8 -m lighteval accelerate --model_args "pretrained=your model name" --tasks examples/tasks/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir=your output dir
 ```
 
 ## Releases

@@ -25,24 +25,9 @@
 Task to evaluate LLMs on the training set of the Kaggle AIMO competition: https://www.kaggle.com/competitions/ai-mathematical-olympiad-prize
 """
 
+from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
-
-
-task = LightevalTaskConfig(
-    name="aimo_progress_prize_1",
-    prompt_function="aimo_prompt",
-    suite=["community"],
-    hf_subset="",
-    hf_repo="lighteval/aimo_progress_prize_1",
-    hf_avail_splits=["train"],
-    evaluation_splits=["train"],
-    few_shots_split="train",
-    few_shots_select="sequential",
-    metric=["quasi_exact_match_math"],
-    generation_size=2048,
-    stop_sequence=None,
-)
 
 
 def aimo_prompt(line, task_name: str = None):
@@ -54,15 +39,28 @@ def aimo_prompt(line, task_name: str = None):
     )
 
 
+task = LightevalTaskConfig(
+    name="aimo_progress_prize_1",
+    prompt_function=aimo_prompt,
+    suite=["community"],
+    hf_subset="",
+    hf_repo="lighteval/aimo_progress_prize_1",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split="train",
+    few_shots_select="sequential",
+    metric=[Metrics.quasi_exact_match_math],
+    generation_size=2048,
+    stop_sequence=None,
+)
+
 # STORE YOUR EVALS
-_TASKS = [task]
+TASKS_TABLE = [task]
 
 
 # MODULE LOGIC
 # You should not need to touch this
-# Convert to dict for lighteval
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
 
 if __name__ == "__main__":
-    print(t["name"] for t in TASKS_TABLE)
+    print(t.name for t in TASKS_TABLE)
     print(len(TASKS_TABLE))

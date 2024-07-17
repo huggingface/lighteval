@@ -30,78 +30,9 @@ This module implements the 4 tasks of deutsche-telekom/Ger-RAG-eval.
 See: https://huggingface.co/datasets/deutsche-telekom/Ger-RAG-eval
 """
 
+from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
-
-
-# Task 1: Choose question by context.
-# Given is a context and 4 questions.
-# The task is to decide which question can be answered by the context.
-task1 = LightevalTaskConfig(
-    name="german_rag_eval:choose_question_by_context",
-    prompt_function="prompt_fn_choose_question_by_context",
-    suite=["community"],
-    hf_repo="deutsche-telekom/Ger-RAG-eval",
-    hf_subset="task1",
-    hf_avail_splits=["test"],
-    evaluation_splits=["test"],
-    few_shots_split="test",
-    few_shots_select="sequential",
-    metric=["loglikelihood_acc"],
-    version=1,
-)
-
-# Task 2: Choose context by question.
-# Given is a question and 4 contexts.
-# The task is to decide which context can answer the question.
-task2 = LightevalTaskConfig(
-    name="german_rag_eval:choose_context_by_question",
-    prompt_function="prompt_fn_choose_context_by_question",
-    suite=["community"],
-    hf_repo="deutsche-telekom/Ger-RAG-eval",
-    hf_subset="task2",
-    hf_avail_splits=["test"],
-    evaluation_splits=["test"],
-    few_shots_split="test",
-    few_shots_select="sequential",
-    metric=["loglikelihood_acc"],
-    version=1,
-)
-
-
-# Task 3: Question-answer match.
-# Given is a question and an answer.
-# The task is to decide whether the answer actualy answers the question.
-task3 = LightevalTaskConfig(
-    name="german_rag_eval:question_answer_match",
-    prompt_function="prompt_fn_question_answer_match",
-    suite=["community"],
-    hf_repo="deutsche-telekom/Ger-RAG-eval",
-    hf_subset="task3",
-    hf_avail_splits=["test"],
-    evaluation_splits=["test"],
-    few_shots_split="test",
-    few_shots_select="sequential",
-    metric=["loglikelihood_acc"],
-    version=1,
-)
-
-# Task 4: Context-question match.
-# Given is a context and a question.
-# The task is to decide whether the question can be answered by the context or not.
-task4 = LightevalTaskConfig(
-    name="german_rag_eval:context_question_match",
-    prompt_function="prompt_fn_context_question_match",
-    suite=["community"],
-    hf_repo="deutsche-telekom/Ger-RAG-eval",
-    hf_subset="task4",
-    hf_avail_splits=["test"],
-    evaluation_splits=["test"],
-    few_shots_split="test",
-    few_shots_select="sequential",
-    metric=["loglikelihood_acc"],
-    version=1,
-)
 
 
 def prompt_fn_choose_question_by_context(line, task_name: str = None):
@@ -218,15 +149,83 @@ Auswahl (J/N):"""
     )
 
 
+# Task 1: Choose question by context.
+# Given is a context and 4 questions.
+# The task is to decide which question can be answered by the context.
+task1 = LightevalTaskConfig(
+    name="german_rag_eval:choose_question_by_context",
+    prompt_function=prompt_fn_choose_question_by_context,
+    suite=["community"],
+    hf_repo="deutsche-telekom/Ger-RAG-eval",
+    hf_subset="task1",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split="test",
+    few_shots_select="sequential",
+    metric=[Metrics.loglikelihood_acc],
+    version=1,
+)
+
+# Task 2: Choose context by question.
+# Given is a question and 4 contexts.
+# The task is to decide which context can answer the question.
+task2 = LightevalTaskConfig(
+    name="german_rag_eval:choose_context_by_question",
+    prompt_function=prompt_fn_choose_context_by_question,
+    suite=["community"],
+    hf_repo="deutsche-telekom/Ger-RAG-eval",
+    hf_subset="task2",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split="test",
+    few_shots_select="sequential",
+    metric=[Metrics.loglikelihood_acc],
+    version=1,
+)
+
+
+# Task 3: Question-answer match.
+# Given is a question and an answer.
+# The task is to decide whether the answer actualy answers the question.
+task3 = LightevalTaskConfig(
+    name="german_rag_eval:question_answer_match",
+    prompt_function=prompt_fn_question_answer_match,
+    suite=["community"],
+    hf_repo="deutsche-telekom/Ger-RAG-eval",
+    hf_subset="task3",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split="test",
+    few_shots_select="sequential",
+    metric=[Metrics.loglikelihood_acc],
+    version=1,
+)
+
+# Task 4: Context-question match.
+# Given is a context and a question.
+# The task is to decide whether the question can be answered by the context or not.
+task4 = LightevalTaskConfig(
+    name="german_rag_eval:context_question_match",
+    prompt_function=prompt_fn_context_question_match,
+    suite=["community"],
+    hf_repo="deutsche-telekom/Ger-RAG-eval",
+    hf_subset="task4",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split="test",
+    few_shots_select="sequential",
+    metric=[Metrics.loglikelihood_acc],
+    version=1,
+)
+
+
 # STORE YOUR EVALS
-_TASKS = [task1, task2, task3, task4]
+TASKS_TABLE = [task1, task2, task3, task4]
 
 
 # MODULE LOGIC
 # You should not need to touch this
-# Convert to dict for lighteval
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
 
 if __name__ == "__main__":
-    print(t["name"] for t in TASKS_TABLE)
+    print(t.name for t in TASKS_TABLE)
     print(len(TASKS_TABLE))
