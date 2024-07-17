@@ -23,9 +23,13 @@
 # SOFTWARE.
 
 import argparse
+import os
 
 from lighteval.parsers import parser_accelerate, parser_nanotron
-from lighteval.tasks.registry import Registry
+from lighteval.tasks.registry import Registry, taskinfo_selector
+
+
+CACHE_DIR = os.getenv("HF_HOME")
 
 
 def cli_evaluate():
@@ -40,25 +44,48 @@ def cli_evaluate():
     parser_b = subparsers.add_parser("nanotron", help="use nanotron as backend for evaluation.")
     parser_nanotron(parser_b)
 
-    parser.add_argument("--list-tasks", action="store_true", help="List available tasks")
+    # values which should always be set
+    parser.add_argument(
+        "--cache_dir", type=str, default=CACHE_DIR, help="Cache directory used to store datasets and models"
+    )
 
+    # utils functions
+    parser.add_argument("--list-tasks", action="store_true", help="List available tasks")
+    parser.add_argument(
+        "--tasks-examples",
+        type=str,
+        default=None,
+        help="Id of tasks or path to a text file with a list of tasks (e.g. 'original|mmlu:abstract_algebra|5') for which you want to manually inspect samples.",
+    )
     args = parser.parse_args()
 
     if args.subcommand == "accelerate":
         from lighteval.main_accelerate import main as main_accelerate
 
         main_accelerate(args)
-        return
 
-    if args.subcommand == "nanotron":
+    elif args.subcommand == "nanotron":
         from lighteval.main_nanotron import main as main_nanotron
 
         main_nanotron(args.checkpoint_config_path, args.lighteval_override, args.cache_dir)
-        return
 
-    if args.list_tasks:
+    elif args.list_tasks:
         Registry(cache_dir="").print_all_tasks()
-        return
+
+    elif args.tasks_examples:
+        print(f"Loading the tasks dataset to cache folder: {args.cache_dir}")
+        print(
+            "All examples will be displayed without few shot, as few shot sample construction requires loading a model and using its tokenizer."
+        )
+        task_names_list, _ = taskinfo_selector(args.tasks_examples)
+        task_dict = Registry(cache_dir=args.cache_dir).get_task_dict(task_names_list)
+        for name, task in task_dict.items():
+            print("-" * 10, name, "-" * 10)
+            for sample in task.eval_docs()[:10]:
+                print(sample)
+
+    else:
+        print("You did not provide any argument. Exiting")
 
 
 if __name__ == "__main__":
