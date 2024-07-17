@@ -91,10 +91,11 @@ class InferenceEndpointModel(LightevalModel):
                             "MAX_INPUT_LENGTH": "2047",
                             "MAX_TOTAL_TOKENS": "2048",
                             "MODEL_ID": "/repository",
+                            "HF_MODEL_TRUST_REMOTE_CODE": "true",
                             **config.get_dtype_args(),
                             **config.get_custom_env_vars(),
                         },
-                        "url": (config.image_url or "ghcr.io/huggingface/text-generation-inference:1.1.0"),
+                        "url": (config.image_url or "ghcr.io/huggingface/text-generation-inference:latest"),
                     },
                 )
             hlog("Deploying your endpoint. Please wait.")
