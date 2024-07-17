@@ -57,7 +57,7 @@ class BoolQAFrenchTask(LightevalTaskConfig):
             generation_size=5,
             stop_sequence=["\n"],
             metric=(
-                Metrics.exact_match,
+                get_qa_metric("fr", "exact"),
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
                 Metrics.loglikelihood_acc_norm_pmi,
@@ -98,10 +98,14 @@ class TriviaFrenchTask(LightevalTaskConfig):
 
 # FrenchBench Fquad multi is a bit strange imo
 
-_TASKS = [
+_GENERATIVE_TASKS = [
+    FQuADv2Task(),
+    TriviaFrenchTask(),
+    BoolQAFrenchTask(),
+]
+
+_MC_TASKS = [
     FrenchARCTask(),
     FrenchHellaSwagTask(),
     BoolQAFrenchTask(),
-    FQuADv2Task(),
-    TriviaFrenchTask(),
 ]

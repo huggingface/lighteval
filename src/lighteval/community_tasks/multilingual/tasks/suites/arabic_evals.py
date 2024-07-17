@@ -33,6 +33,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.doc import Doc
 from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 from lighteval.metrics.metrics import Metrics
+from ..utils.metrics import get_qa_metric
 
 from ..utils.prompts import (
     get_acva_prompt,
