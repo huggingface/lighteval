@@ -67,9 +67,6 @@ def parser_accelerate(parser=None):
         "--public_run", default=False, action="store_true", help="Push results and details to a public repo"
     )
     parser.add_argument(
-        "--cache_dir", type=str, default=CACHE_DIR, help="Cache directory used to store datasets and models"
-    )
-    parser.add_argument(
         "--results_org",
         type=str,
         help="Hub organisation where you want to store the results. Your current token must have write access to it",
@@ -119,10 +116,4 @@ def parser_nanotron(parser=None):
         "--lighteval-override",
         type=str,
         help="Path to an optional YAML or python Lighteval config to override part of the checkpoint Lighteval config",
-    )
-    parser.add_argument(
-        "--cache-dir",
-        type=str,
-        default=None,
-        help="Cache directory",
     )
