@@ -54,7 +54,7 @@ class MetricUseCase(Enum):
 
 @dataclass
 class Metric:
-    metric: str
+    metric_name: str
     higher_is_better: bool
     category: MetricCategory
     use_case: MetricUseCase
@@ -69,7 +69,7 @@ class Metric:
             return {}
         if isinstance(self, MetricGrouping):
             return self.sample_level_fn(**kwargs)  # result, formatted_doc,
-        return {self.metric: self.sample_level_fn(**kwargs)}  # result, formatted_doc,
+        return {self.metric_name: self.sample_level_fn(**kwargs)}  # result, formatted_doc,
 
 
 @dataclass
@@ -78,7 +78,7 @@ class MetricGrouping(Metric):
     For example, if a costly preprocessing is the same for all metrics, it makes more sense to compute it once.
     """
 
-    metric: list[str]
+    metric_name: list[str]
     corpus_level_fn: dict[str:callable]
     higher_is_better: dict[str:callable]
 

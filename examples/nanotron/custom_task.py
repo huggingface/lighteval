@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from lighteval.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
@@ -79,7 +80,7 @@ TASKS_TABLE = [
         few_shots_split="dev",
         few_shots_select="sequential",
         generation_size=5,
-        metric=["loglikelihood_acc_single_token"],
+        metric=[Metrics.loglikelihood_acc_single_token],
         stop_sequence=["\n"],
         output_regex=None,
         frozen=False,
@@ -95,7 +96,7 @@ TASKS_TABLE = [
         few_shots_split="dev",
         few_shots_select="sequential",
         generation_size=5,
-        metric=["loglikelihood_acc_single_token"],
+        metric=[Metrics.loglikelihood_acc_single_token],
         stop_sequence=["\n"],
         output_regex=None,
         frozen=False,
