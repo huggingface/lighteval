@@ -28,7 +28,7 @@ import torch
 import yaml
 from transformers import AutoConfig, BitsAndBytesConfig, GPTQConfig, PretrainedConfig
 
-from lighteval.logging.hierarchical_logger import hlog
+from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.models.utils import _get_model_sha
 from lighteval.utils import (
     NO_AUTOGPTQ_ERROR_MSG,

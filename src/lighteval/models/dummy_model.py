@@ -24,8 +24,10 @@
 
 import random
 from typing import Optional
+from tqdm import tqdm
 
 from transformers import AutoTokenizer
+from lighteval.logging.hierarchical_logger import hlog_warn
 
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.model_config import DummyModelConfig, EnvConfig
@@ -53,7 +55,7 @@ class DummyModel(LightevalModel):
 
     @property
     def tokenizer(self):
-        if not self._tokenizer:
+        if self._tokenizer is None:
             self._tokenizer = AutoTokenizer.from_pretrained(self.config.tokenizer)
         return self._tokenizer
 
@@ -69,7 +71,7 @@ class DummyModel(LightevalModel):
         self, requests: list[GreedyUntilRequest], override_bs: Optional[int] = None
     ) -> list[GenerateReturn]:
         # return "random baseline" for each request
-        return [GenerateReturn(result="random baseline") for _ in range(len(requests))]
+        return [GenerateReturn(result="random baseline") for _ in tqdm(range(len(requests)))]
 
     def loglikelihood(
         self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
@@ -78,7 +80,7 @@ class DummyModel(LightevalModel):
         # in practice, generate a random number and multiply it by the number of tokens (this is tokenizer dependent)
         return [
             LoglikelihoodReturn((-self._random.random() * len(self.tok_encode(req.choice)), False))
-            for req in requests
+            for req in tqdm(requests)
         ]
 
     def loglikelihood_rolling(
@@ -87,7 +89,7 @@ class DummyModel(LightevalModel):
         # same as loglikelihood, but we evaluate "context" (there is no continuation, just the original sequence)
         return [
             LoglikelihoodReturn((-self._random.random() * len(self.tok_encode(req.context)), False))
-            for req in requests
+            for req in tqdm(requests)
         ]
 
     def loglikelihood_single_token(
@@ -96,5 +98,5 @@ class DummyModel(LightevalModel):
         return [
             # return one logprob per possible choice
             LoglikelihoodSingleTokenReturn(result=[-self._random.random() for _ in req.choices])
-            for req in requests
+            for req in tqdm(requests)
         ]
