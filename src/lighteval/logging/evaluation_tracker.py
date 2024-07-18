@@ -202,7 +202,10 @@ class EvaluationTracker:
             # Save the dataset to a Parquet file
             dataset.to_parquet(output_file_details.as_posix())
 
-        hf_repo = hf_repo or self.general_config_logger.config.lighteval.logging.hub_repo_results
+        try:
+            hf_repo = hf_repo or self.general_config_logger.config.lighteval.logging.hub_repo_results
+        except AttributeError:
+            hf_repo = None
         if push_results_to_hub:
             push_with_retry(
                 self.api.upload_folder,

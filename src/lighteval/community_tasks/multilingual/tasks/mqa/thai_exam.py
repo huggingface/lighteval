@@ -2,6 +2,8 @@
 
 from typing import Literal
 
+from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
+
 from ..utils.prompts import get_thai_exams_prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
@@ -16,10 +18,10 @@ class ThaiExamsTask(LightevalTaskConfig):
     def __init__(self, subset: ThaiExamSubset):
 
         def invalid_answers(line):
-            letters = list(set(line.keys()) - set(["question", "answer", "subject", "__few_shots"]))
-            options = [line[letter] for letter in letters]
+            pos_letters = [l.lower() for l in LETTER_INDICES[:5]]
+            options = [line[letter] for letter in pos_letters if letter in line]
             non_empty_options = [str(opt) for opt in options]
-            return all(opt != "" for opt in non_empty_options)
+            return all(opt.strip() != "" for opt in non_empty_options)
         
 
         super().__init__(

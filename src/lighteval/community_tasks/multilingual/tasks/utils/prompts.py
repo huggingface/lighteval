@@ -13,6 +13,7 @@ from ..utils.translation_literals import (
     EFFECT_LABELS,
     ENTAILMENT_LABELS,
     INCORRECT_LABELS,
+    OPTIONS,
     LANGS,
     NEUTRAL_LABELS,
     NLI_QUESTION,
@@ -118,18 +119,22 @@ def get_m_m3exam_prompt(lang: LANGS):
 
     return adapter
 
-
 # QA-Tasks (multichoice)
-MULTI_QA_TEMPLATE = "{context}{question_word}{colon} {question}\n{answer_word}{colon}"
+MULTI_QA_TEMPLATE = "{context}{question_word}{colon} {question}\n{options}{answer_word}{colon}"
 
 
 def _get_multi_qa_prompt(lang: LANGS):
+    def build_options(answers: list[str]):
+        options = "\n".join([f"{OPTIONS[lang]}{COLON[lang]}"] + [f"{LETTER_INDICES[i]}. {c}" for i, c in enumerate(answers)])
+        return f"{options}\n"
+    
     def multi_qa_prompt(
         task_name: str,
         question: str,
         answers: list[str],
         gold_index,
         context: str | None = None,
+        show_options: bool = False,
     ):
         context = capitalize(fix_ending_punct(context, lang)) if context else ""
         question = fix_capitalization(context, fix_ending_punct(question, lang), lang)
@@ -140,13 +145,14 @@ def _get_multi_qa_prompt(lang: LANGS):
             question_word=QUESTION[lang],
             answer_word=ANSWER[lang],
             colon=COLON[lang],
+            options=build_options(answers) if show_options else "",
         )
         return Doc(
             task_name=task_name,
             query=query,
             gold_index=gold_index,
             choices=[f" {c}" for c in answers if c],
-            uncoditioned_prefix=f"{ANSWER[lang]}:",
+            uncoditioned_prefix=f"{ANSWER[lang]}{COLON[lang]}",
         )
 
     return multi_qa_prompt
@@ -208,18 +214,18 @@ def get_cmllu_prompt(lang: LANGS):
 
 def get_thai_exams_prompt(lang: LANGS):
     prompter = _get_multi_qa_prompt(lang)
+    pos_letters = [l.lower() for l in LETTER_INDICES[:5]]
 
     def adapter(line, task_name):
-        letters = list(set(line.keys()) - set(["question", "answer", "subject", "__few_shots"]))
-        options = [line[letter] for letter in letters]
-        non_empty_options = [str(opt) for opt in options]
-        assert all(opt != "" for opt in non_empty_options)
+        letters = [letter for letter in pos_letters if letter in line]
+        options = [str(line[letter]) for letter in letters]
         gold_index = letters.index(line["answer"])
         return prompter(
             task_name,
             line["question"],
-            non_empty_options,
+            options,
             gold_index,
+            show_options=True,
         )
 
     return adapter

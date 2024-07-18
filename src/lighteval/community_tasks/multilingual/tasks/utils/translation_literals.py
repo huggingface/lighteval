@@ -41,6 +41,11 @@ QUESTION = {
     "tr": "Soru",
     "zh": "问题",
 }
+
+OPTIONS = {
+    "th": "ตัวเลือก"
+}
+
 ANSWER = {
     "ar": "إجابة",
     "en": "Answer",
@@ -168,7 +173,7 @@ FULL_STOP = {
     "hi": "।",
     "fr": ".",
     "sw": ".",
-    "th": " ",
+    "th": "",
     "zh": "。",
     "te": ".",
     "tr": ".",
