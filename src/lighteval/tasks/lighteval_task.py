@@ -567,6 +567,16 @@ class LightevalTask:
                 results=results, formatted_doc=formatted_doc, metrics=self.metrics
             )
             outputs.update(cur_outputs)
+        if self.has_metric_category[MetricCategory.MULTICHOICE]:
+            results, cur_outputs = apply_multichoice_metric(
+                results=results, formatted_doc=formatted_doc, metrics=self.metrics
+            )
+            outputs.update(cur_outputs)
+        if self.has_metric_category[MetricCategory.MULTICHOICE_ONE_TOKEN]:
+            results, cur_outputs = apply_multichoice_metric_one_token(
+                results=results, formatted_doc=formatted_doc, metrics=self.metrics
+            )
+            outputs.update(cur_outputs)
         if self.has_metric_category[MetricCategory.PERPLEXITY]:
             results, cur_outputs = apply_perplexity_metric(
                 results=results, formatted_doc=formatted_doc, metrics=self.metrics
@@ -583,16 +593,6 @@ class LightevalTask:
                 metrics=self.metrics,
                 output_regex=self.output_regex,
                 max_num_samples=max(self.num_samples),
-            )
-            outputs.update(cur_outputs)
-        if self.has_metric_category[MetricCategory.MULTICHOICE]:
-            results, cur_outputs = apply_multichoice_metric(
-                results=results, formatted_doc=formatted_doc, metrics=self.metrics
-            )
-            outputs.update(cur_outputs)
-        if self.has_metric_category[MetricCategory.MULTICHOICE_ONE_TOKEN]:
-            results, cur_outputs = apply_multichoice_metric_one_token(
-                results=results, formatted_doc=formatted_doc, metrics=self.metrics
             )
             outputs.update(cur_outputs)
         if (
@@ -671,7 +671,7 @@ def create_requests_from_tasks(  # noqa: C901
 ) -> Tuple[dict[RequestType, list[Request]], dict[TaskExampleId, Doc]]:
     """
     Takes a task dict and a fewshot dict and returns a dict of requests, a dict
-    of docs, and a dict of requests origins.  The construction of prompts and
+    of docs, and a dict of requests origins. The construction of prompts and
     thus the managing of few shots is done here.
 
     Args:
