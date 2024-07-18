@@ -2,7 +2,6 @@
 
 import re
 from typing import Any, Literal
-import pythainlp
 
 from ..utils.translation_literals import (
     ANSWER,
@@ -35,6 +34,11 @@ def decapitalize(word: str):
         return word
     return word[0].lower() + word[1:]
 
+def capitalize(word: str):
+    if len(word) == 0:
+        return word
+    return word[0].upper() + word[1:]
+
 
 # Notes:
 # - For the context we can also put something in front (not implemented right now)
@@ -62,7 +66,7 @@ def fix_ending_punct(ctx: str, lang: LANGS):
 def fix_capitalization(prefix: str, text: str, lang: LANGS):
     # TODO: Prob cache this
     cap_puncts = f"{QUESTION_MARK[lang]}{FULL_STOP[lang]}{COLON[lang]}"
-    return text.capitalize() if prefix.strip().endswith(cap_puncts) else decapitalize(text)
+    return capitalize(text) if prefix.strip().endswith(cap_puncts) else decapitalize(text)
 
 def _get_multi_qa_simple_prompt(lang: LANGS):
     def multi_qa_prompt(
@@ -72,7 +76,7 @@ def _get_multi_qa_simple_prompt(lang: LANGS):
         gold_index,
         context: str | None = None,
     ):
-        context = fix_ending_punct(context, lang).capitalize() if context else ""
+        context = capitalize(fix_ending_punct(context, lang)) if context else ""
         question = fix_capitalization(context, fix_ending_punct(question, lang), lang)
         answers = [fix_capitalization(context, fix_ending_punct(answer, lang), lang) for answer in answers]
         query = MULTI_QA_SIMPLE_TEMPLATE.format(
@@ -127,9 +131,9 @@ def _get_multi_qa_prompt(lang: LANGS):
         gold_index,
         context: str | None = None,
     ):
-        context = fix_ending_punct(context, lang).capitalize() if context else ""
+        context = capitalize(fix_ending_punct(context, lang)) if context else ""
         question = fix_capitalization(context, fix_ending_punct(question, lang), lang)
-        answers = [fix_ending_punct(answer.capitalize(), lang) for answer in answers]
+        answers = [capitalize(fix_ending_punct(answer, lang)) for answer in answers]
         query = MULTI_QA_TEMPLATE.format(
             question=question,
             context=f"{context}\n" if context else "",
@@ -376,12 +380,12 @@ def _get_qa_prompt(lang: LANGS):
         context: str | None = None,
         topic: str | None = None,
     ):
-        context = fix_ending_punct(context.capitalize(), lang) if context else ""
+        context = capitalize(fix_ending_punct(context, lang)) if context else ""
         question = fix_capitalization(fix_ending_punct(context, lang), question, lang)
         assert isinstance(
             answer, list
         ), f"Answer is not a list: {answer} in task {task_name}"
-        answer = [ans.strip().capitalize() for ans in answer]
+        answer = [capitalize(ans.strip()) for ans in answer]
         query = QA_TEMPLATE.format(
             # topic=f"{topic}\n" if topic else "",
             topic="",
@@ -475,7 +479,7 @@ def _get_nli_prompt(
     labels = [label for label in labels if label is not None]
 
     def nli_prompt(task_name: str, premise: str, hypothesis: str, label: int):
-        premise = premise.rstrip(PUNCT).capitalize()
+        premise = capitalize(premise.rstrip(PUNCT))
         hypothesis = decapitalize(hypothesis)
         return Doc(
             task_name=task_name,
@@ -548,7 +552,7 @@ def _get_copa_prompt(lang: LANGS):
     ):
         # Convert it into He was nice (premise) thus he was nice (hypothesis).
         # We expecte hypotheses and premise to be ended by .
-        premise = premise.rstrip(PUNCT).capitalize()
+        premise = capitalize(premise.rstrip(PUNCT))
         hypotheses = [decapitalize(hyp) for hyp in hypotheses]
         cause_or_effect_trans = (
             CAUSE_LABELS[lang] if cause_or_effect == "cause" else EFFECT_LABELS[lang]
@@ -680,7 +684,7 @@ def _get_hellaswag_prompt(lang: LANGS):
     def process_context(ctx):
         if ctx == "":
             return ""
-        return fix_ending_punct(preprocess(ctx), lang).capitalize()
+        return capitalize(fix_ending_punct(preprocess(ctx), lang))
 
     def hellaswag_prompt(
         task_name: str,
@@ -695,7 +699,7 @@ def _get_hellaswag_prompt(lang: LANGS):
         ctxs = [process_context(c) for c in ctx_list]
         ctxs = [c for c in ctxs if c != ""]
         context = space.join(ctxs)
-        activity_label = f"{activity_label.capitalize()}:" if activity_label else ""
+        activity_label = f"{capitalize(activity_label)}:" if activity_label else ""
         # Removoal of the [header] can happen and we need the first letter to be capital afterwards
         full_context = HELLASWAG_TEMPLATE.format(activity_label=activity_label, ctx=context)
         return Doc(
@@ -748,7 +752,7 @@ def get_winogrande_prompt(lang: LANGS):
     def winogrande(line, task_name: str = None):
         # LL of query + choices
         query, end_of_target = line["sentence"].split("_")
-        query = fix_ending_punct(query, lang).capitalize()
+        query = capitalize(fix_ending_punct(query, lang))
         options = [
             fix_capitalization(query, o, lang)
             for o in [line["option1"], line["option2"]]
