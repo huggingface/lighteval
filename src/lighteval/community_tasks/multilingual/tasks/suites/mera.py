@@ -35,6 +35,7 @@ class MathLogicQATask(LightevalTaskConfig):
             metric=(
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_pmi,
             ),
         )
@@ -53,6 +54,7 @@ class PARusTask(LightevalTaskConfig):
             metric=(
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_pmi,
             ),
         )
@@ -70,6 +72,7 @@ class RCBTask(LightevalTaskConfig):
             metric=(
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_pmi,
             ),
         )
@@ -147,6 +150,7 @@ class RuMMLUTask(LightevalTaskConfig):
             metric=(
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_pmi,
             ),
         )
@@ -163,6 +167,7 @@ class RuOpenBookQATask(LightevalTaskConfig):
             metric=(
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_pmi,
             ),
         )
@@ -179,6 +184,7 @@ class RuWorldTreeTask(LightevalTaskConfig):
             metric=(
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_pmi,
             ),
         )

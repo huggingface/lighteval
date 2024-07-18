@@ -35,6 +35,7 @@ class C3Task(LightevalTaskConfig):
             metric=(
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_pmi,
             ),
         )

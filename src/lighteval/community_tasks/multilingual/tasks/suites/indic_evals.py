@@ -19,6 +19,7 @@ class ARCIndTask(LightevalTaskConfig):
             metric=(
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_pmi,
             ),
         )
@@ -37,6 +38,7 @@ class HellaSwagIndTask(LightevalTaskConfig):
             metric=(
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_pmi,
             ),
         )
@@ -57,6 +59,7 @@ class BoolQIndTask(LightevalTaskConfig):
                 get_qa_metric("hi", "exact"),
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_pmi,
             ),
         )

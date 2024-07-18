@@ -206,7 +206,7 @@ class F1_score:
 
 
 class LoglikelihoodAcc:
-    def __init__(self, length_normalization: bool = False, ignore_first_space: bool = False) -> None:
+    def __init__(self, length_normalization: bool = False, token_length_normalization: bool = False, ignore_first_space: bool = False) -> None:
         """Log likelihood accuracy class. It tests if the highest log-probability of the possible choices
         is actually in the gold ones.
 
@@ -218,9 +218,11 @@ class LoglikelihoodAcc:
                 space added in front of them to manage tokenization issues (` A`, ` B`, ...) for some models.
         """
         self.length_normalization = length_normalization
+        self.token_length_normalization = token_length_normalization
         self.ignore_first_space = ignore_first_space
 
-    def compute(self, gold_ixs: list[int], choices_logprob: list[float], formatted_doc: Doc, **kwargs) -> int:
+    # Solve the choices token lengths properly
+    def compute(self, gold_ixs: list[int], choices_logprob: list[float], formatted_doc: Doc, choices_token_lengths: list[int] = [], **kwargs) -> int:
         """Computes the log likelihood accuracy: is the choice with the highest logprob in `choices_logprob` present
         in the `gold_ixs`?
 
@@ -241,6 +243,10 @@ class LoglikelihoodAcc:
                 else:
                     normalized_log_probs.append(choices_logprob[ix] / len(choice))
             choices_logprob = normalized_log_probs
+            
+        if self.token_length_normalization:
+            assert len(choices_token_lengths) == len(formatted_doc.choices), f"Choices token lengths {choices_token_lengths} must have the same length as the number of choices {len(formatted_doc.choices)}"
+            choices_logprob = [choices_logprob[ix] / choices_token_lengths[ix] for ix in range(len(choices_logprob))]
 
         n_correct = len(gold_ixs)
         best_choices = np.argpartition(choices_logprob, -n_correct)[-n_correct:]

@@ -76,7 +76,8 @@ class CustomArabicMMLUTask(LightevalTaskConfig):
             hf_repo="OALL/Arabic_MMLU",
             metric=(
                 Metrics.loglikelihood_acc,
-                Metrics.loglikelihood_acc_norm,
+                Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_pmi,
             ),
             hf_avail_splits=["test", "dev"],
@@ -130,7 +131,8 @@ class CustomACVATask(LightevalTaskConfig):
             metric=(
                 get_qa_metric("ar", "exact"),
                 Metrics.loglikelihood_acc,
-                Metrics.loglikelihood_acc_norm,
+                Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_pmi,
             ),
             hf_avail_splits=["test", "validation"],
@@ -164,7 +166,8 @@ arabic_exams_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=(
         Metrics.loglikelihood_acc,
-        Metrics.loglikelihood_acc_norm,
+        Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
         Metrics.loglikelihood_acc_norm_pmi,
     ),
     trust_dataset=True,
@@ -195,7 +198,8 @@ class CustomAlGhafaNativeTask(LightevalTaskConfig):
             hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Native",
             metric=(
                 Metrics.loglikelihood_acc,
-                Metrics.loglikelihood_acc_norm,
+                Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_pmi,
             ),
             hf_avail_splits=["test", "validation"],
@@ -231,7 +235,8 @@ race_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=(
         Metrics.loglikelihood_acc,
-        Metrics.loglikelihood_acc_norm,
+        Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
         Metrics.loglikelihood_acc_norm_pmi,
     ),
     trust_dataset=True,
@@ -252,7 +257,8 @@ piqa_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=(
         Metrics.loglikelihood_acc,
-        Metrics.loglikelihood_acc_norm,
+        Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
         Metrics.loglikelihood_acc_norm_pmi,
     ),
     trust_dataset=True,
@@ -273,7 +279,8 @@ arc_easy_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=(
         Metrics.loglikelihood_acc,
-        Metrics.loglikelihood_acc_norm,
+        Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
         Metrics.loglikelihood_acc_norm_pmi,
     ),
     trust_dataset=True,
@@ -294,7 +301,8 @@ openbook_qa_ext_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=(
         Metrics.loglikelihood_acc,
-        Metrics.loglikelihood_acc_norm,
+        Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
         Metrics.loglikelihood_acc_norm_pmi,
     ),
     trust_dataset=True,
@@ -317,7 +325,8 @@ boolq_ar_task = LightevalTaskConfig(
     stop_sequence=["\n"],
     metric=(
         Metrics.loglikelihood_acc,
-        Metrics.loglikelihood_acc_norm,
+        Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
         Metrics.loglikelihood_acc_norm_pmi,
         get_qa_metric("ar", "exact"),
     ),
@@ -368,7 +377,8 @@ toxigen_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=(
         Metrics.loglikelihood_acc,
-        Metrics.loglikelihood_acc_norm,
+        Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
         Metrics.loglikelihood_acc_norm_pmi,
     ),
     trust_dataset=True,
@@ -387,7 +397,8 @@ sciq_ar_task = LightevalTaskConfig(
     few_shots_select="sequential",
     metric=(
         Metrics.loglikelihood_acc,
-        Metrics.loglikelihood_acc_norm,
+        Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
         Metrics.loglikelihood_acc_norm_pmi,
     ),
     trust_dataset=True,

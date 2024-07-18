@@ -15,5 +15,6 @@ class WSCITask(LightevalTaskConfig):
             hf_repo="pakphum/winograd_th",
             hf_subset=f"default",
             evaluation_splits=("test",),
-            metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace, Metrics.loglikelihood_acc_norm_pmi],
+            metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token, Metrics.loglikelihood_acc_norm_pmi],
         )

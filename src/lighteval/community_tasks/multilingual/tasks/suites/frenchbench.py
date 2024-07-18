@@ -23,6 +23,7 @@ class FrenchARCTask(LightevalTaskConfig):
             metric=(
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_pmi,
             ),
         )
@@ -39,6 +40,7 @@ class FrenchHellaSwagTask(LightevalTaskConfig):
             metric=(
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_pmi,
             ),
         )
@@ -60,6 +62,7 @@ class BoolQAFrenchTask(LightevalTaskConfig):
                 get_qa_metric("fr", "exact"),
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_pmi,
             ),
         )

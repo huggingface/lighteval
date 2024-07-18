@@ -60,8 +60,9 @@ class BelebeleTask(LightevalTaskConfig):
             generation_size=-1,
             stop_sequence=("\n",),
             metric=(
-                Metrics.loglikelihood_acc_norm,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_pmi,
             ),
         )

@@ -283,6 +283,14 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
+    loglikelihood_acc_norm_token = SampleLevelMetric(
+        metric="acc_norm_token",
+        sample_level_fn=LoglikelihoodAcc(token_length_normalization=True).compute,
+        category=MetricCategory.MULTICHOICE,
+        use_case=MetricUseCase.ACCURACY,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
     loglikelihood_prob_norm = SampleLevelMetric(
         metric="prob_norm",
         sample_level_fn=LoglikelihoodProb(length_normalization=True).compute,

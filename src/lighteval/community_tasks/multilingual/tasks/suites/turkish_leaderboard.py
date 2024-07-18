@@ -16,6 +16,7 @@ class HellaSwagTrTask(LightevalTaskConfig):
             metric=(
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_pmi,
             ),
         )
@@ -31,7 +32,8 @@ class WinogradeTrTask(LightevalTaskConfig):
             filter=lambda x: x["sentence"].count("_") == 1 and len(x["sentence"].split("_")[0].strip()) > 0,
             evaluation_splits=("validation",),
             few_shots_split="train",
-            metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm, Metrics.loglikelihood_acc_norm_pmi),
+            metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token, Metrics.loglikelihood_acc_norm_pmi),
         )
 
 class ARCEasyTrTask(LightevalTaskConfig):
@@ -46,6 +48,7 @@ class ARCEasyTrTask(LightevalTaskConfig):
             metric=(
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_pmi,
             ),
         )
@@ -121,7 +124,8 @@ class MMLUTaskTr(LightevalTaskConfig):
             hf_subset=subset,
             evaluation_splits=("test",),
             few_shots_split="dev",
-            metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm, Metrics.loglikelihood_acc_norm_pmi),
+            metric=(Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token, Metrics.loglikelihood_acc_norm_pmi),
         )
         
 
@@ -137,6 +141,7 @@ class TruthfulQATrTask(LightevalTaskConfig):
             metric=(
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_pmi,
                 Metrics.loglikelihood_prob,
                 Metrics.loglikelihood_prob_norm,

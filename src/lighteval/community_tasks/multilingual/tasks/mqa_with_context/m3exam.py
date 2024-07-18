@@ -43,5 +43,5 @@ class M3ExamTask(LightevalTaskConfig):
             few_shots_split="dev",
             few_shots_select=None,
             generation_size=-1,
-            metric=(Metrics.loglikelihood_acc_norm, Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_pmi),
+            metric=(Metrics.loglikelihood_acc_norm_nospace, Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_pmi, Metrics.loglikelihood_acc_norm_token),
         )
