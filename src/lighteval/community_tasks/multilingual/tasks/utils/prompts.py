@@ -406,7 +406,7 @@ def _get_qa_prompt(lang: LANGS):
             query=query,
             gold_index=list(range(len(answer))),
             choices=answer,
-            uncoditioned_prefix=f"{ANSWER[lang]}:",
+            uncoditioned_prefix=f"{ANSWER[lang]}{COLON[lang]}",
         )
 
     return qa_prompt
