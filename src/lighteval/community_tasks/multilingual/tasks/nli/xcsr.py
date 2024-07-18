@@ -36,5 +36,5 @@ class XCSQATask(LightevalTaskConfig):
             evaluation_splits=("validation",),
             generation_size=-1,
             stop_sequence=("\n",),
-            metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+            metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace, Metrics.loglikelihood_acc_norm_pmi],
         )

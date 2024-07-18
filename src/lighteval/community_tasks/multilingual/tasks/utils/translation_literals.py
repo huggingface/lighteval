@@ -48,11 +48,12 @@ ANSWER = {
     "hi": "उत्तर",
     "ru": "ответ",
     "sw": "Jibu",
-    "te": "సమాధానం",
+    "te": "జవాబు",
     "th": "คำตอบ",
     "tr": "Cevap",
     "zh": "答案",
 }
+
 
 # Harness cfg
 # We sure the XNLI definitions from eval harness
@@ -91,7 +92,7 @@ NEUTRAL_LABELS = {
     "sw": "Pia",
     "th": "และ",
     "tr": "Ayrıca",
-    "te": "అంతేకాక",
+    "te": "అలాగే",
     "zh": "而且",
 }
 
