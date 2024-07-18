@@ -8,5 +8,4 @@ model:
     adapter_weights: false # set to True of your model has been trained with peft, also need to provide the base model name
     base_model: null # path to the base_model
   generation:
-    multichoice_continuations_start_space: false # Whether to force multiple choice continuations to start with a space
-    no_multichoice_continuations_start_space: false # Whether to force multiple choice continuations to not start with a space
+    multichoice_continuations_start_space: null # If true/false, will force multiple choice continuations to start/not start with a space. If none, will do nothing
