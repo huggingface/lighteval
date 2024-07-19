@@ -78,9 +78,13 @@ class DummyModel(LightevalModel):
     ) -> list[LoglikelihoodReturn]:
         # return the sum of logprobs for the n tokens in each request
         # in practice, generate a random number and multiply it by the number of tokens (this is tokenizer dependent)
+        tokenized_choices = [self.tok_encode(req.choice) for req in tqdm(requests)]
         return [
-            LoglikelihoodReturn((-self._random.random() * len(self.tok_encode(req.choice)), False))
-            for req in tqdm(requests)
+            LoglikelihoodReturn(
+                result=(-self._random.random() * len(tokenized_choices[i]), False),
+                generated_tokens=tokenized_choices[i],
+            )
+            for i in range(len(requests))
         ]
 
     def loglikelihood_rolling(
