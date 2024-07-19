@@ -826,6 +826,8 @@ def create_requests_from_tasks(  # noqa: C901
                     doc.num_asked_few_shots = num_fewshot
                     doc.ctx = ctx
                     assert -1 not in as_list(doc.gold_index), f"Gold index must not be -1 for task {task_name} with doc {doc_id_seed}"
+                    # Ensure non-empty choices
+                    assert all(len(choice) > 0 for choice in as_list(doc.choices)), f"Choices are empty for task {task_name} with doc {doc_id_seed}"
 
                     # Constructing the requests
                     docs[TaskExampleId(cur_task_name, doc_id_seed)] = doc

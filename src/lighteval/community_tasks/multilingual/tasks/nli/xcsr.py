@@ -33,6 +33,7 @@ class XCSQATask(LightevalTaskConfig):
             suite=("custom",),
             hf_repo="INK-USC/xcsr",
             hf_subset=f"X-CSQA-{lang}",
+            filter=lambda x: all(len(x["question"]["choices"]["text"][i].strip()) > 0 for i in range(len(x["question"]["choices"]["text"]))),
             evaluation_splits=("validation",),
             generation_size=-1,
             stop_sequence=("\n",),

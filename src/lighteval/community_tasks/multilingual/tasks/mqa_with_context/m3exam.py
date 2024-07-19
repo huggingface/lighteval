@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import re
 from typing import Literal
 
 from ..utils.prompts import get_m_m3exam_prompt
@@ -30,6 +31,8 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 LANGS = Literal["zh", "en", "es", "de", "ja", "th", "sw"]
 
+prefix_re = re.compile(rf"^\([A-Da-d1-5๑๒๓๔๕]\)\s*|^[A-Da-e1-5๑๒๓๔๕][.．।。]\s*")
+
 
 class M3ExamTask(LightevalTaskConfig):
     def __init__(self, lang: LANGS):
@@ -39,6 +42,7 @@ class M3ExamTask(LightevalTaskConfig):
             prompt_function=get_m_m3exam_prompt(lang),
             hf_repo="chiayewken/m3exam",
             hf_subset=LANG_NAMES_INVERTED[lang],
+            filter=lambda x: all(len(prefix_re.sub("", c)) > 0 for c in x["options"]),
             evaluation_splits=("test",),
             few_shots_split="dev",
             few_shots_select=None,
