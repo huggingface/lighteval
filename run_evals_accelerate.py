@@ -44,23 +44,16 @@ def get_parser():
     parser.add_argument("--override_batch_size", type=int, default=-1)
     parser.add_argument("--job_id", type=str, help="Optional Job ID for future reference", default="")
     # Saving
-    parser.add_argument("--output_dir", required=True)
-    parser.add_argument("--push_results_to_hub", default=False, action="store_true")
-    parser.add_argument("--save_details", action="store_true")
-    parser.add_argument("--push_details_to_hub", default=False, action="store_true")
-    parser.add_argument("--hf_repo", default=None, type=str, help="Hub repo to push the results to")
+    parser.add_argument("--logging_dir", type=str, help="Base dir for saving logs (e.g., './output' or 'hf://repo' or 's3://bucket/prefix')", required=True)
+    parser.add_argument("--save_results", action="store_true", help="Save results to the logging dir", default=True)
+    parser.add_argument("--save_details", action="store_true", help="Save details to the logging dir")
+    parser.add_argument("--save_to_tensorboard", action="store_true", help="Save tensorboard logs to the logging dir")
     parser.add_argument(
         "--cache_dir",
         type=str,
         default=CACHE_DIR,
         help="Cache directory for downloaded datasets & model, defaults to `HF_HOME` environment variable",
     )
-    parser.add_argument(
-        "--results_org",
-        type=str,
-        help="Hub organisation where you want to store the results. Your current token must have write access to it",
-    )
-    # Common parameters
     parser.add_argument("--use_chat_template", default=False, action="store_true")
     parser.add_argument("--system_prompt", type=str, default=None)
     parser.add_argument("--dataset_loading_processes", type=int, default=1)
@@ -77,7 +70,6 @@ def get_parser():
         help="Comma-separated ids of tasks, e.g. 'original|mmlu:abstract_algebra|5' or path to a text file with a list of tasks",
     )
     parser.add_argument("--num_fewshot_seeds", type=int, default=1, help="Number of trials the few shots")
-    parser.add_argument("--debug", default=False, action="store_true")
     return parser
 
 

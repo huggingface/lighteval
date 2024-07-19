@@ -162,6 +162,8 @@ NO_TGI_ERROR_MSG = "You are trying to start a text generation inference endpoint
 def is_nanotron_available() -> bool:
     return importlib.util.find_spec("nanotron") is not None
 
+def is_hf_available() -> bool:
+    return importlib.util.find_spec("huggingface_hub") is not None
 
 NO_NANOTRON_ERROR_MSG = "You requested the use of nanotron for this evaluation, but it is not available in your current environement. Please install it using pip."
 

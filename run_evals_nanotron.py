@@ -35,9 +35,10 @@ def get_parser():
         help="Path to the brr checkpoint YAML or python config file, potentially on S3",
     )
     parser.add_argument(
-        "--lighteval-override",
+        "--lighteval-config",
         type=str,
         help="Path to an optional YAML or python Lighteval config to override part of the checkpoint Lighteval config",
+        required=True,
     )
     parser.add_argument(
         "--cache-dir",
@@ -52,4 +53,4 @@ def get_parser():
 if __name__ == "__main__":
     parser = get_parser()
     args, unknowns = parser.parse_known_args()
-    main(args.checkpoint_config_path, args.lighteval_override, args.cache_dir)
+    main(args.checkpoint_config_path, args.lighteval_config, args.cache_dir)

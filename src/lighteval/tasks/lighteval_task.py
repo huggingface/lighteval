@@ -739,7 +739,7 @@ def create_requests_from_tasks(  # noqa: C901
     fewshot_dict: dict[str, list[Tuple[int, bool]]],
     num_fewshot_seeds: int,
     lm: BaseModel,
-    max_samples: int,
+    max_samples: int | None,
     evaluation_tracker: "EvaluationTracker",
     use_chat_template: bool,
     system_prompt: str,

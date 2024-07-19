@@ -21,16 +21,18 @@
 # SOFTWARE.
 
 import copy
+from io import TextIOWrapper
 import json
 import os
 import re
 import time
-from dataclasses import asdict, is_dataclass
+from dataclasses import asdict, dataclass, is_dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from fsspec import AbstractFileSystem, url_to_fs
+from fsspec.spec import AbstractBufferedFile
 
-import huggingface_hub
 from datasets import Dataset, load_dataset
 from datasets.utils.metadata import MetadataConfigs
 from huggingface_hub import DatasetCard, DatasetCardData, HfApi, HFSummaryWriter, hf_hub_url
@@ -44,12 +46,34 @@ from lighteval.logging.info_loggers import (
     VersionsLogger,
 )
 from lighteval.metrics.utils import Metric
-from lighteval.utils import is_nanotron_available, obj_to_markdown
+from lighteval.utils import is_hf_available, is_nanotron_available, obj_to_markdown
 
 if is_nanotron_available():
     from nanotron.config import Config
+    
+
+if is_hf_available():
+    from huggingface_hub import HfFileSystem
+    
 MAX_HUB_UPLOAD_RETRIES = 8
 
+
+@dataclass(frozen=True)
+class FsspecDataResource:
+    fs: AbstractFileSystem
+    path: str
+    
+    @classmethod
+    def from_uri(cls, uri: str) -> "FsspecDataResource":
+        fs, path = url_to_fs(uri)
+        return cls(fs=fs, path=path)
+    
+    def __truediv__(self, other: str) -> "FsspecDataResource":
+        return FsspecDataResource(fs=self.fs, path=os.path.join(self.path, other))
+    
+    def __str__(self) -> str:
+        return self.path
+    
 
 class EnhancedJSONEncoder(json.JSONEncoder):
     """
@@ -70,18 +94,7 @@ class EnhancedJSONEncoder(json.JSONEncoder):
         return super().default(o)
 
 
-def push_with_retry(fn, **kwargs):
-    retries = 0
-    while retries < MAX_HUB_UPLOAD_RETRIES:
-        try:
-            return fn(**kwargs)
-        except huggingface_hub.utils._errors.HfHubHTTPError as error:
-            if "504" in str(error) or "429" in str(error):  # gateway timeout or client error
-                time.sleep(2 ** retries)
-                retries += 1
-            else:
-                raise error
-    raise Exception(f"Failed to push after {MAX_HUB_UPLOAD_RETRIES} retries")
+    
 
 
 class EvaluationTracker:
@@ -102,9 +115,8 @@ class EvaluationTracker:
     versions_logger: VersionsLogger
     general_config_logger: GeneralConfigLogger
     task_config_logger: TaskConfigLogger
-    hub_results_org: str
 
-    def __init__(self, hub_results_org: str = "", token: str = "") -> None:
+    def __init__(self, logging_dir: str) -> None:
         """
         Creates all the necessary loggers for evaluation tracking.
 
@@ -120,18 +132,13 @@ class EvaluationTracker:
         self.versions_logger = VersionsLogger()
         self.general_config_logger = GeneralConfigLogger()
         self.task_config_logger = TaskConfigLogger()
-        self.hub_results_org = hub_results_org
-        self.hub_results_repo = f"{hub_results_org}/results"
-        self.hub_private_results_repo = f"{hub_results_org}/private-results"
-        self.api = HfApi(token=token)
+        self.logging_folder_res = FsspecDataResource.from_uri(logging_dir)
 
     def save(
             self,
-            output_dir: str,
-            push_results_to_hub: bool,
-            push_details_to_hub: bool,
-            hf_repo: str | None = None,
-            push_results_to_tensorboard: bool = False,
+            save_results: bool,
+            save_details: bool,
+            save_tensorboard: bool,
     ) -> None:
         """Saves the experiment information and results to files, and to the hub if requested.
 
@@ -139,28 +146,15 @@ class EvaluationTracker:
             In case of save failure, this function will only print a warning, with the error message.
 
         Args:
-            output_dir (str): Local folder path where you want results to be saved
-            push_results_to_hub (bool): If True, results are pushed to the hub.
-                Results will be pushed either to `{hub_results_org}/results`, a public dataset, if `public` is True else to `{hub_results_org}/private-results`, a private dataset.
-            push_details_to_hub (bool): If True, details are pushed to the hub.
-                Results are pushed to `{hub_results_org}/details__{sanitized model_name}` for the model `model_name`, a public dataset,
-                if `public` is True else `{hub_results_org}/details__{sanitized model_name}_private`, a private dataset.
-            public (bool): If True, results and details are pushed in private orgs
+            output_dir (str): Local folder path where you want results to be saved.
+            save_results (bool): If True, results are saved to the specified logging URI.
+            save_details (bool): If True, detailed results are saved to the specified logging URI.
+            save_tensorboard (bool, optional): If True, tensorboard logs are saved to the specified logging URI. Defaults to False.
 
         """
         hlog("Saving experiment tracker")
         # try:
         date_id = datetime.now().isoformat().replace(":", "-")
-
-        output_dir_results = Path(output_dir) / "results" / self.general_config_logger.model_name
-        output_dir_details = Path(output_dir) / "details" / self.general_config_logger.model_name
-        output_dir_details_sub_folder = output_dir_details / date_id
-        output_dir_results.mkdir(parents=True, exist_ok=True)
-        output_dir_details_sub_folder.mkdir(parents=True, exist_ok=True)
-
-        output_results_file = output_dir_results / f"results_{date_id}.json"
-
-        hlog(f"Saving results to {output_results_file}")
 
         config_general = copy.deepcopy(self.general_config_logger)
         config_general.config = (
@@ -178,54 +172,42 @@ class EvaluationTracker:
         }
         dumped = json.dumps(to_dump, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False)
 
-        with open(output_results_file, "w") as f:
-            f.write(dumped)
+        if save_results:
+            output_results_folder = self.logging_folder_res / "results" / self.general_config_logger.model_name
+            hlog(f"Saving results to {output_results_folder}")
+            output_results_folder.fs.mkdirs(output_results_folder.path, exist_ok=True)
+            output_results_file = output_results_folder / f"results_{date_id}.json"
+            with output_results_file.fs.open(output_results_file.path, "w") as f:
+                f.write(dumped)
 
-        for task_name, task_details in self.details_logger.details.items():
-            output_file_details = output_dir_details_sub_folder / f"details_{task_name}_{date_id}.parquet"
-            # Create a dataset from the dictionary
-            try:
-                dataset = Dataset.from_list([asdict(detail) for detail in task_details])
-            except Exception:
-                # We force cast to str to avoid formatting problems for nested objects
-                dataset = Dataset.from_list(
-                    [{k: str(v) for k, v in asdict(detail).items()} for detail in task_details]
-                )
+        if save_details:
+            output_details_folder = self.logging_folder_res / "details" / self.general_config_logger.model_name
+            hlog(f"Saving details to {output_details_folder}")
+            output_details_folder.fs.mkdirs(output_details_folder.path, exist_ok=True)
 
-            # We don't keep 'id' around if it's there
-            column_names = dataset.column_names
-            if "id" in dataset.column_names:
-                column_names = [t for t in dataset.column_names if t != "id"]
+            for task_name, task_details in self.details_logger.details.items():
+                output_task_details_file = output_details_folder / f"details_{task_name}_{date_id}.parquet"
+                # Create a dataset from the dictionary
+                try:
+                    dataset = Dataset.from_list([asdict(detail) for detail in task_details])
+                except Exception:
+                    # We force cast to str to avoid formatting problems for nested objects
+                    dataset = Dataset.from_list(
+                        [{k: str(v) for k, v in asdict(detail).items()} for detail in task_details]
+                    )
 
-            # Sort column names to make it easier later
-            dataset = dataset.select_columns(sorted(column_names))
-            # Save the dataset to a Parquet file
-            dataset.to_parquet(output_file_details.as_posix())
+                # We don't keep 'id' around if it's there
+                column_names = dataset.column_names
+                if "id" in dataset.column_names:
+                    column_names = [t for t in dataset.column_names if t != "id"]
 
-        try:
-            hf_repo = hf_repo or self.general_config_logger.config.lighteval.logging.hub_repo_results
-        except AttributeError:
-            hf_repo = None
-        if push_results_to_hub:
-            push_with_retry(
-                self.api.upload_folder,
-                repo_id=hf_repo,
-                folder_path=output_dir_results,
-                path_in_repo="results/" + self.general_config_logger.model_name,
-                # repo_type="dataset",
-                commit_message=f"Updating model {self.general_config_logger.model_name}",
-            )
+                # Sort column names to make it easier later
+                dataset = dataset.select_columns(sorted(column_names))
+                # Save the dataset to a Parquet file
+                with output_task_details_file.fs.open(output_task_details_file.path, "wb") as f:
+                    dataset.to_parquet(f)
 
-        if push_details_to_hub:
-            push_with_retry(
-                self.api.upload_folder,
-                repo_id=hf_repo,
-                folder_path=output_dir_details_sub_folder,
-                path_in_repo="details/" + self.general_config_logger.model_name,
-                commit_message=f"Updating model {self.general_config_logger.model_name}",
-            )
-
-        if push_results_to_tensorboard:
+        if save_tensorboard:
             self.push_results_to_tensorboard(
                 results=self.metrics_logger.metric_aggregated, details=self.details_logger.details
             )
@@ -301,18 +283,18 @@ class EvaluationTracker:
 
         # Upload results file (json and parquet) and folder
 
-        push_with_retry(
+        push_to_remote(
             self.api.upload_file,
             repo_id=repo_id,
             path_or_fileobj=results_file_path,
             path_in_repo=os.path.basename(results_file_path),
             repo_type="dataset",
         )
-        push_with_retry(
+        push_to_remote(
             self.api.upload_file,
             repo_id=repo_id, path_or_fileobj=parquet_local_path, path_in_repo=parquet_name, repo_type="dataset"
         )
-        push_with_retry(
+        push_to_remote(
             self.api.upload_folder,
             repo_id=repo_id, folder_path=details_folder_path, path_in_repo=sub_folder_path, repo_type="dataset"
         )
@@ -543,6 +525,11 @@ class EvaluationTracker:
         if not is_nanotron_available():
             hlog_warn("You cannot push results to tensorboard without having nanotron installed. Skipping")
             return
+        
+        # TODO: We might want to eventuallly support it
+        if not is_hf_available() or not isinstance(self.logging_folder_res, HfFileSystem):
+            hlog_warn("You cannot push results to tensorboard without having huggingface_hub installed or using a HfFileSystem. Skipping")
+            return
         config: Config = self.general_config_logger.config
         lighteval_config = config.lighteval
         try:
@@ -553,10 +540,10 @@ class EvaluationTracker:
             prefix = config.lighteval.logging.tensorboard_metric_prefix
         else:
             prefix = "eval"
-        output_dir_tb = Path(lighteval_config.logging.local_output_path) / "tb" / (config.general.run + "_" + prefix)
-        output_dir_tb.mkdir(parents=True, exist_ok=True)
+        output_dir_tb: FsspecDataResource = self.logging_folder_res / "tb" / (config.general.run + "_" + prefix)
+        output_dir_tb.fs.mkdirs(output_dir_tb.path, exist_ok=True)
         tb_context = HFSummaryWriter(
-            logdir=str(output_dir_tb),
+            logdir=output_dir_tb.path,
             repo_id=lighteval_config.logging.hub_repo_tensorboard,
             repo_private=True,
             path_in_repo="tb",

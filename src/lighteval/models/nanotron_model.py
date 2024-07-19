@@ -47,6 +47,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
 from transformers import AutoTokenizer, BatchEncoding
+from lighteval.config.lighteval_config import LightEvalConfig
 
 from lighteval.data import (
     GenDistributedSampler,

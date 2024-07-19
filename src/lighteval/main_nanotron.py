@@ -37,13 +37,14 @@ from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_t
 from lighteval.tasks.registry import Registry, get_custom_tasks, taskinfo_selector
 from lighteval.utils import NO_NANOTRON_ERROR_MSG, is_nanotron_available
 from lighteval.utils_parallelism import test_all_gather
+from lighteval.config.lighteval_config import LightEvalConfig
 
 
 if not is_nanotron_available():
     raise ImportError(NO_NANOTRON_ERROR_MSG)
 
 from nanotron import distributed as dist
-from nanotron.config import Config, LightEvalConfig, get_config_from_file
+from nanotron.config import Config, get_config_from_file
 from nanotron.logging import get_logger
 from nanotron.parallel.context import ParallelContext
 from nanotron.utils import local_ranks_zero_first
@@ -59,7 +60,7 @@ CACHE_DIR = os.getenv("HF_HOME", "/scratch")
 @htrack()
 def main(
     checkpoint_config_path: str,
-    lighteval_config_path: Optional[str] = None,
+    lighteval_config_path: str,
     cache_dir: Optional[str] = None,
     config_cls: Type = Config,
     model_config_cls: Optional[Type] = None,
@@ -76,6 +77,7 @@ def main(
         if not checkpoint_config_path.endswith(".yaml"):
             raise ValueError("The checkpoint path should point to a YAML file")
 
+        # IMPORTANT: nanotron lighteval config is completely ignored
         nanotron_config: config_cls = get_config_from_file(
             checkpoint_config_path,
             config_class=config_cls,
@@ -83,12 +85,8 @@ def main(
             skip_unused_config_keys=True,
             skip_null_keys=True,
         )
-
-        if lighteval_config_path:
-            lighteval_config: config_cls = get_config_from_file(lighteval_config_path, config_class=LightEvalConfig)
-            nanotron_config.lighteval = lighteval_config
-        else:
-            lighteval_config = nanotron_config.lighteval
+        
+        lighteval_config: LightEvalConfig = get_config_from_file(config_path=lighteval_config_path, config_class=LightEvalConfig) # The nanotron config can't correclty infer the type
 
         parallel_context = ParallelContext(
             tensor_parallel_size=lighteval_config.parallelism.tp,
@@ -96,7 +94,7 @@ def main(
             data_parallel_size=lighteval_config.parallelism.dp,
         )
 
-        evaluation_tracker = EvaluationTracker(token=TOKEN)
+        evaluation_tracker = EvaluationTracker(logging_dir=lighteval_config.logging.logging_dir)
         evaluation_tracker.general_config_logger.log_args_info(
             num_fewshot_seeds=1,
             override_batch_size=None,
@@ -177,14 +175,11 @@ def main(
             evaluation_tracker.general_config_logger.log_end_time()
             evaluation_tracker.metrics_logger.aggregate(task_dict=task_dict, bootstrap_iters=1000)
             evaluation_tracker.details_logger.aggregate()
-
-            if lighteval_config.logging.local_output_path:
-                evaluation_tracker.save(
-                    output_dir=lighteval_config.logging.local_output_path,
-                    push_results_to_hub=lighteval_config.logging.push_results_to_hub,
-                    push_details_to_hub=lighteval_config.logging.push_details_to_hub,
-                    push_results_to_tensorboard=lighteval_config.logging.push_results_to_tensorboard,
-                )
+            evaluation_tracker.save(
+                save_results=lighteval_config.logging.save_results,
+                save_details=lighteval_config.logging.save_details,
+                save_tensorboard=lighteval_config.logging.save_to_tensorboard,
+            )
 
             final_dict = evaluation_tracker.generate_final_dict()
 

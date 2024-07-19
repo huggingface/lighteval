@@ -56,7 +56,7 @@ else:
 @htrack()
 def main(args):
     env_config = EnvConfig(token=TOKEN, cache_dir=args.cache_dir)
-    evaluation_tracker = EvaluationTracker(hub_results_org=args.results_org, token=TOKEN)
+    evaluation_tracker = EvaluationTracker(logging_dir=args.logging_dir)
     evaluation_tracker.general_config_logger.log_args_info(
         args.num_fewshot_seeds, args.override_batch_size, args.max_samples, args.job_id
     )
@@ -129,10 +129,9 @@ def main(args):
             evaluation_tracker.metrics_logger.aggregate(task_dict=task_dict, bootstrap_iters=1000)
             evaluation_tracker.details_logger.aggregate()
 
-            if args.output_dir:
-                evaluation_tracker.save(
-                    args.output_dir, args.push_results_to_hub, args.push_details_to_hub, args.hf_repo
-                )
+            evaluation_tracker.save(
+                args.save_results, args.save_details, args.save_to_tensorboard
+            )
 
             final_dict = evaluation_tracker.generate_final_dict()
 
