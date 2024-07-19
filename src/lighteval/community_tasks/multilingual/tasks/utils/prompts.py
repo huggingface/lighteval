@@ -414,9 +414,13 @@ def _get_qa_prompt(lang: LANGS):
 
 def get_mlqa_prompt(lang: LANGS):
     prompter = _get_qa_prompt(lang)
-    return lambda line, task_name: prompter(
-        task_name, line["question"], line["answers"]["text"], line["context"]
-    )
+    def adapter(line, task_name):
+        # remove empty answers
+        answers = [ans for ans in line["answers"]["text"] if len(ans) > 0]
+        return prompter(
+            task_name, line["question"], answers, line["context"]
+        )
+    return adapter
 
 
 def get_tquad_prompt(lang: LANGS):
