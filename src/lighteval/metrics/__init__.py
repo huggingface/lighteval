@@ -129,7 +129,7 @@ def apply_multichoice_metric(results: Sequence[ModelReturn], formatted_doc: Doc,
 
     # Todo: make better system with return_bool_score instead of taking first element
     choices_logprob = [results[i].result[0] for i in range(len(formatted_doc.choices))]  # sum(
-    choices_token_lengths = [results[i].generated_tokens for i in range(len(formatted_doc.choices))]
+    choices_token_lengths = [len(results[i].generated_tokens) for i in range(len(formatted_doc.choices))]
     gold_ixs = as_list(formatted_doc.gold_index)
 
     for metric in metrics:
