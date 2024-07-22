@@ -30,7 +30,8 @@ from dataclasses import asdict, dataclass, is_dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from fsspec import AbstractFileSystem, url_to_fs
+from fsspec import AbstractFileSystem
+from fsspec.core import url_to_fs
 from fsspec.spec import AbstractBufferedFile
 
 from datasets import Dataset, load_dataset
