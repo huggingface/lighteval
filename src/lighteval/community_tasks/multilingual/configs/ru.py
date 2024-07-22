@@ -1,7 +1,7 @@
 from typing import get_args
 from ..tasks.utils.tasks_helpers import tasks_to_string
 
-from ..tasks.suites.mera import GENERATIVE_TASKS as _MERA_GENERATIVE_TASKS, MC_TASKS as _MERA_MC_TASKS
+from ..tasks.suites.mera import GENERATIVE_TASKS as _MERA_GENERATIVE_TASKS, MC_TASKS as _MERA_MC_TASKS, RCBTask
 from ..tasks.mqa.mlmm import get_mlmm_tasks
 from ..tasks.mqa_with_context.belebele import BelebeleTask
 from ..tasks.mqa_with_context.m3exam import M3ExamTask
@@ -35,6 +35,7 @@ TASKS_GROUPS = {
     "all": tasks_to_string(_ALL_TASKS),
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
+    "pawns": tasks_to_string([RCBTask(), XNLITask(lang="ru")]),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

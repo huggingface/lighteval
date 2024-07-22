@@ -7,6 +7,7 @@ from ..tasks.qa.mintaka import MintakaTask
 from ..tasks.mqa.mlmm import get_mlmm_tasks
 from ..tasks.mqa_with_context.belebele import BelebeleTask
 from ..tasks.mqa_with_context.xquad import XquadTask
+from ..tasks.nli.indicnxnli import XNLIIndicTask
 from ..tasks.mqa_with_context.xstory_cloze import XStoryClozeTask
 from ..tasks.nli.xcsr import XCODAHTask, XCSQATask
 from ..tasks.nli.xnli import XNLITask
@@ -45,6 +46,7 @@ TASKS_GROUPS = {
     "all": tasks_to_string(_ALL_TASKS),
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
+    "xnli": tasks_to_string([XNLITask(lang="hi"), XNLIIndicTask(lang="hi")]),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

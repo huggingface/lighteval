@@ -33,6 +33,7 @@ TASKS_GROUPS = {
     "all": tasks_to_string(_ALL_TASKS),
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
+    "xnli": tasks_to_string([XNLITask(lang="tr")]),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]
