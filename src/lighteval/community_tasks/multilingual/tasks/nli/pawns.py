@@ -1,5 +1,7 @@
 from typing import Literal
 
+from lighteval.community_tasks.multilingual.tasks.utils.translation_literals import FULL_STOP
+
 from ..utils.prompts import get_paws_x_prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
@@ -16,6 +18,7 @@ class PawnsXTask(LightevalTaskConfig):
             prompt_function=get_paws_x_prompt(lang),
             hf_repo="google-research-datasets/paws-x",
             hf_subset=lang,
+            filter=lambda x: x["sentence1"].endswith(FULL_STOP[lang]),
             evaluation_splits=("test",),
             few_shots_split="train",
             few_shots_select=None,

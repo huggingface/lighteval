@@ -62,11 +62,13 @@ class PARusTask(LightevalTaskConfig):
 class RCBTask(LightevalTaskConfig):
     def __init__(self):
         super().__init__(
-            name=f"rcb",
+            name=f"rcb-bool",
             prompt_function=get_rcb_prompt("ru"),
             suite=("custom",),
             hf_repo="ai-forever/MERA",
             hf_subset="rcb",
+            # Ignore neutral label
+            filter=lambda x: x["inputs"]["premise"].endswith(".") and int(x["outputs"]) in [1,2],
             evaluation_splits=("train",),
             few_shots_split="validation",
             metric=(

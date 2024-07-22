@@ -1,6 +1,8 @@
 from typing import Literal
 
-from ..utils.prompts import get_xnli_prompt
+from lighteval.community_tasks.multilingual.tasks.utils.translation_literals import FULL_STOP
+
+from ..utils.prompts import get_xnli_prompt, fix_ending_punct
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
@@ -11,11 +13,13 @@ LANGS = Literal["ar", "bg", "de", "el", "en", "es", "fr", "hi", "ru", "sw", "th"
 class XNLITask(LightevalTaskConfig):
     def __init__(self, lang: LANGS):
         super().__init__(
-            name=f"xnli-{lang}",
+            name=f"xnli-bool-{lang}",
             suite=("custom",),
             prompt_function=get_xnli_prompt(lang),
             hf_repo="facebook/xnli",
             hf_subset=lang,
+            # XNLI does use normal dot for chinese
+            filter=lambda x: fix_ending_punct(x["premise"], lang).endswith(FULL_STOP[lang]) and int(x["label"]) in [0, 2],
             evaluation_splits=("validation",),
             few_shots_split="train",
             few_shots_select=None,

@@ -465,23 +465,21 @@ def get_french_trivia_prompt(lang: LANGS):
 
 
 # NLI premise/hypthesis
-NLI_TEMPLATE = "{premise}{comma}{space}{question_word}{question_mark}"
-NLI_CONT_TEMPLATE = " {label}{comma}{space}{hypothesis}"
+NLI_TEMPLATE = "{premise}{full_stop}{space}{hypothesis}{comma}{space}{question_word}{question_mark}"
+NLI_CONT_TEMPLATE = " {label}"
 
 
 def _get_nli_prompt(
-    lang: LANGS, pos_labels: list[Literal["entailment", "neutral", "contradiction"]]
+    lang: LANGS, pos_labels: list[Literal["entailment", "contradiction"]]
 ):
     """
-    pos_labels: list[Literal["entailment", "neutral", "contradiction"]] what labels are possible, the ordering matters as
+    pos_labels: list[Literal["entailment", "contradiction"]] what labels are possible, the ordering matters as
     the the gold_index should be the index of the label in the list.
     """
 
-    def _get_pos_label(label: Literal["entailment", "neutral", "contradiction"]):
+    def _get_pos_label(label: Literal["entailment", "contradiction"]):
         if label == "entailment":
             return ENTAILMENT_LABELS[lang]
-        elif label == "neutral":
-            return NEUTRAL_LABELS[lang]
         elif label == "contradiction":
             return CONTRADICTION_LABELS[lang]
 
@@ -490,11 +488,13 @@ def _get_nli_prompt(
 
     def nli_prompt(task_name: str, premise: str, hypothesis: str, label: int):
         premise = capitalize(premise.rstrip(PUNCT))
-        hypothesis = decapitalize(hypothesis)
+        hypothesis = capitalize(hypothesis.rstrip(PUNCT))
         return Doc(
             task_name=task_name,
             query=NLI_TEMPLATE.format(
                 premise=premise,
+                hypothesis=hypothesis,
+                full_stop=FULL_STOP[lang],
                 question_word=NLI_QUESTION[lang],
                 question_mark=QUESTION_MARK[lang],
                 comma=COMMA[lang],
@@ -502,20 +502,19 @@ def _get_nli_prompt(
             ),
             choices=[
                 NLI_CONT_TEMPLATE.format(
-                    comma=COMMA[lang],
                     label=label,
-                    hypothesis=hypothesis,
-                    space=SPACE[lang],
                 )
                 for label in labels
             ],
             gold_index=label,
             uncoditioned_prefix=NLI_TEMPLATE.format(
                 premise="",
+                hypothesis="",
                 question_word=NLI_QUESTION[lang],
                 question_mark=QUESTION_MARK[lang],
                 comma=COMMA[lang],
                 space=SPACE[lang],
+                full_stop=FULL_STOP[lang],
             ),
         )
 
@@ -523,7 +522,7 @@ def _get_nli_prompt(
 
 
 def get_rcb_prompt(lang: LANGS):
-    prompter = _get_nli_prompt(lang, ["entailment", "contradiction", "neutral"])
+    prompter = _get_nli_prompt(lang, ["entailment", "contradiction"])
     return lambda line, task_name: prompter(
         task_name,
         line["inputs"]["premise"],
@@ -533,9 +532,14 @@ def get_rcb_prompt(lang: LANGS):
 
 
 def get_xnli_prompt(lang: LANGS):
-    prompter = _get_nli_prompt(lang, ["entailment", "neutral", "contradiction"])
+    prompter = _get_nli_prompt(lang, ["entailment", "contradiction"])
+    # 0 is entailment contradiction is 2
+    label_remap = {
+        0: 0,
+        2: 1,
+    }
     return lambda line, task_name: prompter(
-        task_name, line["premise"], line["hypothesis"], int(line["label"])
+        task_name, line["premise"], line["hypothesis"], label_remap[int(line["label"])]
     )
 
 
