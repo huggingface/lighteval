@@ -68,9 +68,8 @@ class RCBTask(LightevalTaskConfig):
             hf_repo="ai-forever/MERA",
             hf_subset="rcb",
             # Ignore neutral label
-            filter=lambda x: x["inputs"]["premise"].endswith(".") and int(x["outputs"]) in [1,2],
-            evaluation_splits=("train",),
-            few_shots_split="validation",
+            filter=lambda x: x["inputs"]["premise"].endswith(".") and (int(x["outputs"] or "0") in [1,2]),
+            evaluation_splits=("train","validation"),
             metric=(
                 Metrics.loglikelihood_acc,
                 Metrics.loglikelihood_acc_norm_nospace,
