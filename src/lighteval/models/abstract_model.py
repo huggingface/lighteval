@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Optional, Union
 
 import torch
@@ -43,6 +44,14 @@ from lighteval.tasks.requests import (
 
 
 TokenSequence = Union[list[int], torch.LongTensor, torch.Tensor, BatchEncoding]
+
+
+@dataclass
+class ModelInfo:
+    model_name: str
+    model_sha: Optional[str] = None
+    model_dtype: Optional[str] = None
+    model_size: Optional[str] = None
 
 
 class LightevalModel(ABC):

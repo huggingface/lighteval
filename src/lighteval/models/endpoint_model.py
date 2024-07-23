@@ -39,7 +39,7 @@ from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
-from lighteval.models.abstract_model import LightevalModel
+from lighteval.models.abstract_model import LightevalModel, ModelInfo
 from lighteval.models.model_config import EnvConfig, InferenceEndpointModelConfig, InferenceModelConfig
 from lighteval.models.model_output import GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
 from lighteval.tasks.requests import (
@@ -121,6 +121,13 @@ class InferenceEndpointModel(LightevalModel):
 
         self._tokenizer = AutoTokenizer.from_pretrained(self.name)
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
+
+        self.model_info = ModelInfo(
+            model_name=self.name,
+            model_sha=self.revision,
+            model_dtype=config.model_dtype or "default",
+            model_size=-1,
+        )
 
     @property
     def tokenizer(self):

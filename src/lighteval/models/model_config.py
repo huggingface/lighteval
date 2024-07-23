@@ -30,6 +30,7 @@ from transformers import AutoConfig, BitsAndBytesConfig, GPTQConfig, PretrainedC
 
 from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.utils import _get_model_sha
+from lighteval.pipeline import EnvConfig
 from lighteval.utils import (
     NO_AUTOGPTQ_ERROR_MSG,
     NO_BNB_ERROR_MSG,
@@ -43,20 +44,6 @@ from lighteval.utils import (
 
 if is_accelerate_available():
     from accelerate import Accelerator
-
-
-@dataclass
-class EnvConfig:
-    """
-    Configuration class for environment settings.
-
-    Attributes:
-        cache_dir (str): directory for caching data.
-        token (str): authentication token used for accessing the HuggingFace Hub.
-    """
-
-    cache_dir: str = None
-    token: str = None
 
 
 @dataclass
