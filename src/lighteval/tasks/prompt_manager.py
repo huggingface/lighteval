@@ -65,20 +65,18 @@ class PromptManager:
         )
 
     @staticmethod
-    def doc_to_target(formatted_doc: Doc, few_shot: bool = False) -> str:
+    def doc_to_target(formatted_doc: Doc) -> str:
         """
         Returns the target of the given document.
 
         Args:
             formatted_doc (Doc): Formatted document.
-            few_shot (bool, optional): Whether the document is used for few
-                shot examples. Defaults to False.
 
         Returns:
             str: Target of the document, which is the correct answer for a document.
         """
         # likely we mostly need one example not all
-        return as_list(formatted_doc.get_golds(few_shot=few_shot))[0]
+        return as_list(formatted_doc.get_golds())[0]
 
     def add_context_to_doc(
         self,
@@ -363,7 +361,7 @@ class FewShotSampler:
         # Sort by counts of labels
         label_to_instances = defaultdict(list)
         for instance in fewshotpool:
-            target = PromptManager.doc_to_target(instance, few_shot=True)
+            target = instance.get_target_for_fewshot_sorting()
             label_to_instances[target].append(instance)
 
         counts_to_labels = defaultdict(list)
