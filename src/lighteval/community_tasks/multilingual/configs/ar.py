@@ -21,7 +21,8 @@ _MC_TASKS = [
     XCODAHTask(lang="ar"),
     XCopaTask(lang="ar"),
     XCSQATask(lang="ar"),
-    XNLITask(lang="ar"),
+    XNLITask(lang="ar", version=1),
+    XNLITask(lang="ar", version=2),
     XStoryClozeTask(lang="ar"),
     *get_mlmm_tasks("ar"),
     *ARABIC_EVALS_MC_TASKS,
@@ -33,7 +34,7 @@ TASKS_GROUPS = {
     "all": tasks_to_string(_ALL_TASKS),
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
-    "xnli": tasks_to_string([XNLITask(lang="ar")]),
+    "xnli": tasks_to_string([XNLITask(lang="ar", version=version) for version in (1, 2)]),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

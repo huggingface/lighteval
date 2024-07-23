@@ -39,7 +39,7 @@ from ..utils.prompts import (
     get_acva_prompt,
     get_alghafa_prompt,
     get_boolq_prompt,
-    get_ceval_prompt,
+    get_ar_mmlu_prompt,
     get_sciq_prompt,
 )
 
@@ -72,7 +72,7 @@ class CustomArabicMMLUTask(LightevalTaskConfig):
         super().__init__(
             name=name,
             hf_subset=hf_subset,
-            prompt_function=get_ceval_prompt("ar"),
+            prompt_function=get_ar_mmlu_prompt("ar"),
             hf_repo="OALL/Arabic_MMLU",
             metric=(
                 Metrics.loglikelihood_acc,
@@ -156,7 +156,7 @@ ACVA_TASKS = [
 
 arabic_exams_task = LightevalTaskConfig(
     name="arabic_exams",
-    prompt_function=get_ceval_prompt("ar"),
+    prompt_function=get_ar_mmlu_prompt("ar"),
     suite=["custom"],
     hf_repo="OALL/Arabic_EXAMS",
     hf_subset="default",

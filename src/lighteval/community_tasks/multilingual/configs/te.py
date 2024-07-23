@@ -14,7 +14,8 @@ _GENERATIVE_TASKS = [
 ]
 
 _MC_TASKS = [
-    XNLIIndicTask(lang="te"),
+    XNLIIndicTask(lang="te", version=1),
+    XNLIIndicTask(lang="te", version=2),
     XCopaIndicTask(lang="te"),
     BelebeleTask(lang="te"),
     XStoryClozeTask(lang="te"),
@@ -27,7 +28,7 @@ TASKS_GROUPS = {
     "all": tasks_to_string(_ALL_TASKS),
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
-    "xnli": tasks_to_string([IndicQATask(lang="te")]),
+    "xnli": tasks_to_string([XNLIIndicTask(lang="te", version=version) for version in (1, 2)]),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _GENERATIVE_TASKS + _MC_TASKS]

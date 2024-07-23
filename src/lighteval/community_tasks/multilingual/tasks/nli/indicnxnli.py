@@ -11,11 +11,11 @@ LANGS = Literal["as", "bn", "gu", "hi", "kn", "ml", "mr", "or", "pa", "ta", "te"
 
 
 class XNLIIndicTask(LightevalTaskConfig):
-    def __init__(self, lang: LANGS):
+    def __init__(self, lang: LANGS, version: Literal[1,2]):
         super().__init__(
-            name=f"indicnxnli-{lang}-bool",
+            name=f"indicnxnli-{lang}-bool{f'-v{version}' if version != 1 else ''}-{lang}",
             suite=("custom",),
-            prompt_function=get_xnli_prompt(lang),
+            prompt_function=get_xnli_prompt(lang, version),
             hf_repo="Divyanshu/indicxnli",
             hf_subset=lang,
             # Ignore neutral

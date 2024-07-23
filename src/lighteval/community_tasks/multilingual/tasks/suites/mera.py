@@ -60,10 +60,10 @@ class PARusTask(LightevalTaskConfig):
         )
         
 class RCBTask(LightevalTaskConfig):
-    def __init__(self):
+    def __init__(self, version: Literal[1,2]):
         super().__init__(
-            name=f"rcb-bool",
-            prompt_function=get_rcb_prompt("ru"),
+            name=f"rcb-bool{f'-v{version}' if version != 1 else ''}-ru",
+            prompt_function=get_rcb_prompt("ru", version=version),
             suite=("custom",),
             hf_repo="ai-forever/MERA",
             hf_subset="rcb",
@@ -204,7 +204,8 @@ GENERATIVE_TASKS = [
 MC_TASKS = [
     PARusTask(),
     MathLogicQATask(),
-    RCBTask(),
+    RCBTask(version=1),
+    RCBTask(version=2),
     RuOpenBookQATask(),
     RuWorldTreeTask(),
     *_RUMMLU_SUBSETS,

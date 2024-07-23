@@ -19,10 +19,12 @@ _GENERATIVE_TASKS = [
 _MC_TASKS = [
     LambadaTask(lang="fr"),
     BelebeleTask(lang="fr"),
-    PawnsXTask(lang="fr"),
+    PawnsXTask(lang="fr", version=1),
+    PawnsXTask(lang="fr", version=2),
     XCODAHTask(lang="fr"),
     XCSQATask(lang="fr"),
-    XNLITask(lang="fr"),
+    XNLITask(lang="fr", version=1),
+    XNLITask(lang="fr", version=2),
     XWinogradeTask(lang="fr"),
     *get_mlmm_tasks("fr"),
     *_FRENCH_BENCH_MC_TASKS
@@ -34,7 +36,9 @@ TASKS_GROUPS = {
     "all": tasks_to_string(_ALL_TASKS),
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
-    "xnli": tasks_to_string([XNLITask(lang="fr"), PawnsXTask(lang="fr")]),
+    "xnli": tasks_to_string([XNLITask(lang="fr", version=version) for version in (1, 2)] +
+                            [PawnsXTask(lang="fr", version=version) for version in (1, 2)]
+                            ),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

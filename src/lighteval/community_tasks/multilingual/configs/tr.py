@@ -17,7 +17,8 @@ _GENERATIVE_TASKS = [
 
 _MC_TASKS = [
     BelebeleTask(lang="tr"),
-    XNLITask(lang="tr"),
+    XNLITask(lang="tr", version=1),
+    XNLITask(lang="tr", version=2),
     XCopaTask(lang="tr"),
     ExamsTask(lang="tr"),
     HellaSwagTrTask(),
@@ -33,7 +34,7 @@ TASKS_GROUPS = {
     "all": tasks_to_string(_ALL_TASKS),
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
-    "xnli": tasks_to_string([XNLITask(lang="tr")]),
+    "xnli": tasks_to_string([XNLITask(lang="tr", version=version) for version in (1, 2)]),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

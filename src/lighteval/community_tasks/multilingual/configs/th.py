@@ -18,7 +18,8 @@ _GENERATIVE_TASKS = [
 ]
 
 _MC_TASKS = [
-    XNLITask(lang="th"),
+    XNLITask(lang="th", version=1),
+    XNLITask(lang="th", version=2),
     XCopaTask(lang="th"),
     M3ExamTask(lang="th"),
     BelebeleTask(lang="th"),
@@ -31,7 +32,7 @@ TASKS_GROUPS = {
     "all": tasks_to_string(_ALL_TASKS),
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
-    "xnli": tasks_to_string([XNLITask(lang="th")]),
+    "xnli": tasks_to_string([XNLITask(lang="th", version=version) for version in (1, 2)]),
 }
 
 

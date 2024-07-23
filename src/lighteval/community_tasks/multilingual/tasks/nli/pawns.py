@@ -11,11 +11,11 @@ LANGS = Literal["de", "en", "es", "fr", "ja", "ko", "zh"]
 
 
 class PawnsXTask(LightevalTaskConfig):
-    def __init__(self, lang: LANGS):
+    def __init__(self, lang: LANGS, version: Literal[1, 2]):
         super().__init__(
-            name=f"pawns-{lang}",
+            name=f"pawns{f'-v{version}' if version != 1 else ''}-{lang}",
             suite=("custom",),
-            prompt_function=get_paws_x_prompt(lang),
+            prompt_function=get_paws_x_prompt(lang, version=version),
             hf_repo="google-research-datasets/paws-x",
             hf_subset=lang,
             filter=lambda x: x["sentence1"].endswith(FULL_STOP[lang]),

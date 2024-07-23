@@ -11,11 +11,11 @@ LANGS = Literal["ar", "bg", "de", "el", "en", "es", "fr", "hi", "ru", "sw", "th"
 
 
 class XNLITask(LightevalTaskConfig):
-    def __init__(self, lang: LANGS):
+    def __init__(self, lang: LANGS, version: Literal[1,2]):
         super().__init__(
-            name=f"xnli-bool-{lang}",
+            name=f"xnli-bool{f'-v{version}' if version != 1 else ''}-{lang}",
             suite=("custom",),
-            prompt_function=get_xnli_prompt(lang),
+            prompt_function=get_xnli_prompt(lang, version),
             hf_repo="facebook/xnli",
             hf_subset=lang,
             # XNLI does use normal dot for chinese

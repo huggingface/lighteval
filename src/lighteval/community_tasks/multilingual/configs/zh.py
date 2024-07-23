@@ -29,10 +29,12 @@ _GENERATIVE_TASKS = [
 
 _MC_TASKS = [
     BelebeleTask(lang="zh"),
-    PawnsXTask(lang="zh"),
+    PawnsXTask(lang="zh", version=1),
+    PawnsXTask(lang="zh", version=2),
     XCODAHTask(lang="zh"),
     XCSQATask(lang="zh"),
-    XNLITask(lang="zh"),
+    XNLITask(lang="zh", version=1),
+    XNLITask(lang="zh", version=2),
     XStoryClozeTask(lang="zh"),
     XCopaTask(lang="zh"),
     XWinogradeTask(lang="zh"),
@@ -49,7 +51,8 @@ TASKS_GROUPS = {
     "all": tasks_to_string(_ALL_TASKS),
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
-    "xnli": tasks_to_string([XNLITask(lang="zh"), PawnsXTask(lang="zh")]),
+    "xnli": tasks_to_string([XNLITask(lang="zh", version=version) for version in (1, 2)] +
+                            [PawnsXTask(lang="zh", version=version) for version in (1, 2)]),
     "ceval": tasks_to_string([CEvalTask(task, show_options=show_options) for task in get_args(CEVAL_TASK_TYPE) for show_options in [True,False]]),
     "agieval": tasks_to_string([ChineseAgievalTask(task, show_options=show_options) for task in get_args(CHINESE_AGIEVAL_TASK_TYPE) for show_options in [True,False]]),
 }

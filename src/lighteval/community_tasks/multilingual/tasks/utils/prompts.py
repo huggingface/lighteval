@@ -2,7 +2,7 @@
 
 from functools import reduce
 import re
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, Callable
 
 from ..utils.translation_literals import (
     ANSWER,
@@ -231,6 +231,15 @@ def get_thai_exams_prompt(lang: LANGS):
 
     return adapter
 
+
+def get_ar_mmlu_prompt(lang: LANGS):
+    prompter = _get_multi_qa_prompt(lang)
+    return lambda line, task_name: prompter(
+        task_name,
+        line["question"],
+        [line["A"], line["B"], line["C"], line["D"]],
+        LETTER_INDICES.index(line["answer"]),
+    )
 
 def get_ceval_prompt(lang: LANGS, show_options: bool = False):
     prompter = _get_multi_qa_prompt(lang)
@@ -510,61 +519,86 @@ def get_french_trivia_prompt(lang: LANGS):
 NLI_TEMPLATE = "{premise}{full_stop}{space}{hypothesis}{comma}{space}{question_word}{question_mark}"
 NLI_CONT_TEMPLATE = " {label}"
 
+# NLI v2 long premise/hypthesis
+NLI_2_TEMPLATE = "{premise}{comma}{space}{question_word}{question_mark}"
+NLI_2_CONT_TEMPLATE = " {label}{comma}{space}{hypothesis}"
 
 def _get_nli_prompt(
-    lang: LANGS, pos_labels: list[Literal["entailment", "contradiction"]]
-):
+    lang: LANGS,
+    pos_labels: list[Literal["entailment", "contradiction"]],
+    template_version: Literal[1,2] = 1
+) -> Callable[[str, str, str, int], Doc]:
     """
-    pos_labels: list[Literal["entailment", "contradiction"]] what labels are possible, the ordering matters as
-    the the gold_index should be the index of the label in the list.
-    """
+    Create an NLI prompt function based on the specified language, labels, and template version.
 
-    def _get_pos_label(label: Literal["entailment", "contradiction"]):
+    Args:
+        lang: The language to use for the prompt.
+        pos_labels: List of possible labels, order matters for gold_index.
+        template_version: Which template version to use ("v1" or "v2").
+
+    Returns:
+        A function that generates an NLI prompt given task name, premise, hypothesis, and label.
+    """
+    def _get_pos_label(label: Literal["entailment", "contradiction"]) -> str | None:
         if label == "entailment":
             return ENTAILMENT_LABELS[lang]
         elif label == "contradiction":
             return CONTRADICTION_LABELS[lang]
 
-    labels = [_get_pos_label(label) for label in pos_labels]
-    labels = [label for label in labels if label is not None]
+    labels = [_get_pos_label(label) for label in pos_labels if _get_pos_label(label) is not None]
 
-    def nli_prompt(task_name: str, premise: str, hypothesis: str, label: int):
+    def nli_prompt(task_name: str, premise: str, hypothesis: str, label: int) -> Doc:
         premise = capitalize(premise.rstrip(PUNCT))
-        hypothesis = capitalize(hypothesis.rstrip(PUNCT))
+        hypothesis = hypothesis.rstrip(PUNCT)
+        if template_version == 1:
+            hypothesis = capitalize(hypothesis)
+        else:
+            hypothesis = decapitalize(hypothesis)
+        
+        if template_version == 1:
+            query_template = NLI_TEMPLATE
+            cont_template = NLI_CONT_TEMPLATE
+        else:  # v2
+            query_template = NLI_2_TEMPLATE
+            cont_template = NLI_2_CONT_TEMPLATE
+
+        query = query_template.format(
+            premise=premise,
+            hypothesis=hypothesis,
+            full_stop=FULL_STOP[lang],
+            question_word=NLI_QUESTION[lang],
+            question_mark=QUESTION_MARK[lang],
+            comma=COMMA[lang],
+            space=SPACE[lang],
+        )
+
+        choices = [
+            cont_template.format(label=label, hypothesis=hypothesis, comma=COMMA[lang], space=SPACE[lang])
+            for label in labels
+        ]
+
+        unconditioned_prefix = query_template.format(
+            premise="",
+            hypothesis="",
+            question_word=NLI_QUESTION[lang],
+            question_mark=QUESTION_MARK[lang],
+            comma=COMMA[lang],
+            space=SPACE[lang],
+            full_stop=FULL_STOP[lang],
+        )
+
         return Doc(
             task_name=task_name,
-            query=NLI_TEMPLATE.format(
-                premise=premise,
-                hypothesis=hypothesis,
-                full_stop=FULL_STOP[lang],
-                question_word=NLI_QUESTION[lang],
-                question_mark=QUESTION_MARK[lang],
-                comma=COMMA[lang],
-                space=SPACE[lang],
-            ),
-            choices=[
-                NLI_CONT_TEMPLATE.format(
-                    label=label,
-                )
-                for label in labels
-            ],
+            query=query,
+            choices=choices,
             gold_index=label,
-            uncoditioned_prefix=NLI_TEMPLATE.format(
-                premise="",
-                hypothesis="",
-                question_word=NLI_QUESTION[lang],
-                question_mark=QUESTION_MARK[lang],
-                comma=COMMA[lang],
-                space=SPACE[lang],
-                full_stop=FULL_STOP[lang],
-            ),
+            uncoditioned_prefix=unconditioned_prefix,
         )
 
     return nli_prompt
 
-
-def get_rcb_prompt(lang: LANGS):
-    prompter = _get_nli_prompt(lang, ["entailment", "contradiction"])
+def get_rcb_prompt(lang: LANGS, version: Literal[1,2]):
+    prompter = _get_nli_prompt(lang, ["entailment", "contradiction"], version)
     return lambda line, task_name: prompter(
         task_name,
         line["inputs"]["premise"],
@@ -573,21 +607,21 @@ def get_rcb_prompt(lang: LANGS):
     )
 
 
-def get_xnli_prompt(lang: LANGS):
-    prompter = _get_nli_prompt(lang, ["entailment", "contradiction"])
+def get_xnli_prompt(lang: LANGS, version: Literal[1,2]):
+    prompter = _get_nli_prompt(lang, ["entailment", "contradiction"], version)
     # 0 is entailment contradiction is 2
     label_remap = {
         0: 0,
         2: 1,
     }
     return lambda line, task_name: prompter(
-        task_name, line["premise"], line["hypothesis"], label_remap[int(line["label"])]
+        task_name, line["premise"], line["hypothesis"], label_remap[int(line["label"])],
     )
 
 
-def get_paws_x_prompt(lang: LANGS):
+def get_paws_x_prompt(lang: LANGS, version: Literal[1,2]):
     # Each label has two possible values: 0 indicates the pair has different meaning, while 1 indicates the pair is a paraphrase.
-    prompter = _get_nli_prompt(lang, ["contradiction", "entailment"])
+    prompter = _get_nli_prompt(lang, ["entailment", "contradiction"], version)
     return lambda line, task_name: prompter(
         task_name, line["sentence1"], line["sentence2"], int(line["label"])
     )

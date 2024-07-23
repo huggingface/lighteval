@@ -22,7 +22,8 @@ _MC_TASKS = [
     BelebeleTask(lang="ru"),
     XCODAHTask(lang="ru"),
     XCSQATask(lang="ru"),
-    XNLITask(lang="ru"),
+    XNLITask(lang="ru", version=1),
+    XNLITask(lang="ru", version=2),
     XStoryClozeTask(lang="ru"),
     XWinogradeTask(lang="ru"),
     *get_mlmm_tasks("ru"),
@@ -35,7 +36,7 @@ TASKS_GROUPS = {
     "all": tasks_to_string(_ALL_TASKS),
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
-    "xnli": tasks_to_string([RCBTask(), XNLITask(lang="ru")]),
+    "xnli": tasks_to_string([RCBTask(version=version) for version in (1, 2)] + [XNLITask(lang="ru", version=version) for version in (1, 2)]),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]
