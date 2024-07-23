@@ -27,7 +27,7 @@ import collections
 import copy
 from typing import Dict, Union
 
-from pytablewriter import LatexTableWriter, MarkdownTableWriter
+from pytablewriter import MarkdownTableWriter
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog
@@ -123,9 +123,7 @@ def evaluate(  # noqa: C901
 def make_results_table(result_dict):
     """Generate table of results."""
     md_writer = MarkdownTableWriter()
-    latex_writer = LatexTableWriter()
     md_writer.headers = ["Task", "Version", "Metric", "Value", "", "Stderr"]
-    latex_writer.headers = ["Task", "Version", "Metric", "Value", "", "Stderr"]
 
     values = []
 
@@ -144,6 +142,5 @@ def make_results_table(result_dict):
             k = ""
             version = ""
     md_writer.value_matrix = values
-    latex_writer.value_matrix = values
 
     return md_writer.dumps()
