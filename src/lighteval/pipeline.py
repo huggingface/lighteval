@@ -41,6 +41,7 @@ from lighteval.utils import (
     NO_ACCELERATE_ERROR_MSG,
     NO_NANOTRON_ERROR_MSG,
     NO_TGI_ERROR_MSG,
+    EnvConfig,
     is_accelerate_available,
     is_nanotron_available,
     is_tgi_available,
@@ -54,20 +55,6 @@ if is_nanotron_available():
     from nanotron import distributed as dist
     from nanotron.parallel.context import ParallelContext
     from nanotron.utils import local_ranks_zero_first
-
-
-@dataclass
-class EnvConfig:
-    """
-    Configuration class for environment settings.
-
-    Attributes:
-        cache_dir (str): directory for caching data.
-        token (str): authentication token used for accessing the HuggingFace Hub.
-    """
-
-    cache_dir: str = os.getenv("HF_HOME", "/scratch")
-    token: str = os.getenv("HF_TOKEN")
 
 
 class ParallelismManager(Enum):

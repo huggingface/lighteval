@@ -56,14 +56,13 @@ from lighteval.data import (
 )
 from lighteval.logging.hierarchical_logger import hlog_err, hlog_warn
 from lighteval.models.base_model import LightevalModel, ModelInfo
-from lighteval.models.model_config import EnvConfig
 from lighteval.models.model_output import Batch, GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
 )
-from lighteval.utils import as_list, is_nanotron_available
+from lighteval.utils import EnvConfig, as_list, is_nanotron_available
 from lighteval.utils_parallelism import find_executable_batch_size
 
 

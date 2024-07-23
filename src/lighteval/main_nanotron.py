@@ -26,9 +26,8 @@ from typing import Optional
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import htrack, htrack_block
-from lighteval.models.model_config import EnvConfig
 from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
-from lighteval.utils import NO_NANOTRON_ERROR_MSG, is_nanotron_available
+from lighteval.utils import NO_NANOTRON_ERROR_MSG, EnvConfig, is_nanotron_available
 
 
 if not is_nanotron_available():

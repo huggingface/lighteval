@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import importlib
-from dataclasses import asdict, is_dataclass
+import os
+from dataclasses import asdict, dataclass, is_dataclass
 from typing import Any, Union
 
 import numpy as np
@@ -143,6 +144,20 @@ def flatten(item: list[Union[list, str]]) -> list[str]:
     for sub_item in item:
         flat_item.extend(sub_item) if isinstance(sub_item, list) else flat_item.append(sub_item)
     return flat_item
+
+
+@dataclass
+class EnvConfig:
+    """
+    Configuration class for environment settings.
+
+    Attributes:
+        cache_dir (str): directory for caching data.
+        token (str): authentication token used for accessing the HuggingFace Hub.
+    """
+
+    cache_dir: str = os.getenv("HF_HOME", "/scratch")
+    token: str = os.getenv("HF_TOKEN")
 
 
 def is_accelerate_available() -> bool:

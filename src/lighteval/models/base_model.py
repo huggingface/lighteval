@@ -34,7 +34,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
 from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_config import BaseModelConfig, EnvConfig
+from lighteval.models.model_config import BaseModelConfig
 from lighteval.models.model_output import (
     Batch,
     GenerateMultiTurnReturn,
@@ -51,7 +51,7 @@ from lighteval.tasks.requests import (
     LoglikelihoodSingleTokenRequest,
     Request,
 )
-from lighteval.utils import as_list, is_accelerate_available
+from lighteval.utils import EnvConfig, as_list, is_accelerate_available
 from lighteval.utils_parallelism import find_executable_batch_size
 
 
