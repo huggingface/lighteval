@@ -30,11 +30,11 @@ from transformers import AutoConfig, BitsAndBytesConfig, GPTQConfig, PretrainedC
 
 from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.utils import _get_model_sha
-from lighteval.pipeline import EnvConfig
 from lighteval.utils import (
     NO_AUTOGPTQ_ERROR_MSG,
     NO_BNB_ERROR_MSG,
     NO_PEFT_ERROR_MSG,
+    EnvConfig,
     is_accelerate_available,
     is_autogptq_available,
     is_bnb_available,
