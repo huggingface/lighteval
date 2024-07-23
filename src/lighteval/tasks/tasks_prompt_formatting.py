@@ -175,7 +175,6 @@ def bbh_harness(line, task_name: str = None):
         query=query,
         choices=choices,
         gold_index=correct_index,
-        target_for_fewshot_sorting=choices,
         instruction=line.get("task_prefix", None),
     )
 
@@ -195,7 +194,6 @@ def bbh_lighteval(line, task_name: str = None):
         query=query,
         choices=LETTER_INDICES[: len(line["choices"])],
         gold_index=line["target_idx"],
-        target_for_fewshot_sorting=LETTER_INDICES[: len(line["choices"])],
         instruction=line.get("task_prefix", None),
     )
 
@@ -204,9 +202,8 @@ def bbh(line, instruction, choices, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"{instruction}Q: {line['input']}\nA:",
-        choices=choices,
+        choices=[(' ' if line["__few_shots"] else '') + c for c in choices],
         gold_index=choices.index(line["target"]),
-        target_for_fewshot_sorting=[f" {c}" for c in choices],
         instruction=instruction,
     )
 
@@ -784,10 +781,9 @@ def hellaswag_helm(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=query,
-        choices=[" " + i for i in LETTER_INDICES[: len(line["endings"])]],
+        choices=[" " + i for i in LETTER_INDICES[: len(line["endings"])]] + ([""] if line["__fewshot"] else []),
         gold_index=gold_ix,  # -1 for test,
         instruction="The following are multiple choice questions (with answers) about common sense.\n\n",
-        target_for_fewshot_sorting=line["endings"][gold_ix] if gold_ix > -1 else "",
         specific={
             "label_to_choices": {f" {key}": choice for key, choice in zip(LETTER_INDICES, line["endings"])},
         },

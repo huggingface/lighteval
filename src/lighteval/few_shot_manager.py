@@ -95,7 +95,7 @@ class FewShotSampler:
                 self.init_fewshot_sampling_random(fewshotpool=fewshotpool, variance_seed=variance_seed)
             elif self.few_shots_select.value.sorting == "balanced":
                 self.init_fewshot_sampling_balanced(
-                    fewshotpool=fewshotpool, num_fewshot=num_fewshot, variance_seed=variance_seed, task=task
+                    fewshotpool=fewshotpool, num_fewshot=num_fewshot, variance_seed=variance_seed
                 )
             else:
                 raise Exception("No correct few shot strategy selected - but this point should not be reachable.")
@@ -133,7 +133,6 @@ class FewShotSampler:
         fewshotpool: list[Doc],
         num_fewshot: int,
         variance_seed: int,
-        task: "LightevalTask",
     ):
         # rnd = random.Random(variance_seed)
         random.seed(variance_seed)
@@ -142,7 +141,7 @@ class FewShotSampler:
         # Sort by counts of labels
         label_to_instances = defaultdict(list)
         for instance in fewshotpool:
-            target = task.doc_to_target(instance, few_shot=True)
+            target = instance.get_target_for_fewshot_sorting()
             label_to_instances[target].append(instance)
 
         counts_to_labels = defaultdict(list)
