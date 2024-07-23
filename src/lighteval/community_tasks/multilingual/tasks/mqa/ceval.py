@@ -63,10 +63,10 @@ CEVAL_TASK_TYPE = Literal[
 
 
 class CEvalTask(LightevalTaskConfig):
-    def __init__(self, task: CEVAL_TASK_TYPE):
+    def __init__(self, task: CEVAL_TASK_TYPE, show_options: bool = False):
         super().__init__(
-            name=f"ceval:{task}",
-            prompt_function=get_ceval_prompt("zh"),
+            name=f"ceval{'_options' if show_options else ''}:{task}",
+            prompt_function=get_ceval_prompt("zh", show_options),
             suite=("custom",),
             hf_repo="ceval/ceval-exam",
             hf_subset=task,

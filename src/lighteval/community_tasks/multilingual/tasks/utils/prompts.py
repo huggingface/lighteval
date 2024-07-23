@@ -1,7 +1,8 @@
 # MMML
 
+from functools import reduce
 import re
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 from ..utils.translation_literals import (
     ANSWER,
@@ -95,15 +96,15 @@ def _get_multi_qa_simple_prompt(lang: LANGS):
     return multi_qa_prompt
 
 
+answer_prefix_re = re.compile(rf"^\([A-Da-d1-5๑๒๓๔๕]\)\s*|^[A-Da-e1-5๑๒๓๔๕][.．।。]\s*")
 def get_m_m3exam_prompt(lang: LANGS):
     prompter = _get_multi_qa_simple_prompt(lang)
     # Would be nice to have general solution for the letters
 
-    prefix_re = re.compile(rf"^\([A-Da-d1-5๑๒๓๔๕]\)\s*|^[A-Da-e1-5๑๒๓๔๕][.．।。]\s*")
 
     def adapter(line, task_name):
         is_letter_based = line["answer_text"].isalpha()
-        clean_options = [prefix_re.sub("", c) for c in line["options"]]
+        clean_options = [answer_prefix_re.sub("", c) for c in line["options"]]
         gold_idx = (
             LETTER_INDICES.index(line["answer_text"].upper())
             if is_letter_based
@@ -231,14 +232,41 @@ def get_thai_exams_prompt(lang: LANGS):
     return adapter
 
 
-def get_ceval_prompt(lang: LANGS):
+def get_ceval_prompt(lang: LANGS, show_options: bool = False):
     prompter = _get_multi_qa_prompt(lang)
-    return lambda line, task_name: prompter(
-        task_name,
-        line["question"],
-        [line["A"], line["B"], line["C"], line["D"]],
-        LETTER_INDICES.index(line["answer"]),
-    )
+    # All ceval tasks ends with ____(。?)
+    # Some can follow this fill space with possible answers in format
+    # (①|②|③|④)text
+    # We must thus remove ___ and extract the answers from the question
+    
+
+    prompter = _get_multi_qa_prompt(lang)
+    def adapter(line, task_name):
+        answers = [line["A"], line["B"], line["C"], line["D"]]
+        parts = line['question'].rsplit('____', maxsplit=1)
+        cleaned_question = parts[0].rstrip(PUNCT).strip()
+        possible_answers_part = parts[1].lstrip(PUNCT)
+        gold_index = LETTER_INDICES.index(line["answer"])
+        
+        choices_unique_chars = set("".join(answers).replace("和", ""))
+        
+        # Sometimes there can be choose one of the following from options.
+        # In this case we want to extract the answer from the question to comply with CF format.
+        has_answers_in_question = choices_unique_chars.issubset("①②③④⑤⑥")
+        maybe_extracted_answers = _extract_answers_from_string(possible_answers_part, answers, gold_index, sorted(list(choices_unique_chars))) if has_answers_in_question else None
+        if maybe_extracted_answers:
+            start_index, answers, gold_index = maybe_extracted_answers
+            # Here we don't expect anything to be before the answers from second part
+            assert start_index == 0, f"Start index is not 0: {start_index}"
+        else:
+            # If the second part is not list of answers we return it back
+            cleaned_question = f"{cleaned_question} {possible_answers_part}" if possible_answers_part else cleaned_question
+            
+        # Lastly make it into question:
+        cleaned_question = f"{cleaned_question.rstrip(PUNCT).strip()}？"
+        return prompter(task_name, cleaned_question, answers, gold_index, show_options=show_options)
+
+    return adapter
 
 
 def get_alghafa_prompt(lang: LANGS):
@@ -296,8 +324,8 @@ def get_m_xcsr_prompt(lang: LANGS):
     return adapter
 
 
-def get_agieval_prompt(lang: Literal["zh"]):
-    prefix_re = re.compile(r"^\([A-D]\)")
+def get_agieval_prompt(lang: Literal["zh"], show_options: bool = False):
+    # Kinda meh as some questions require knowledge of possible answers
     prompter = _get_multi_qa_prompt(lang)
 
     def adapter(line, task_name):
@@ -306,9 +334,23 @@ def get_agieval_prompt(lang: Literal["zh"]):
         context, rest = line["query"].split("问题：", maxsplit=1)
         question, _ = rest.split(" 选项：", maxsplit=1)
         original_choices = line["choices"]
-        no_letter_choices = [prefix_re.sub("", c) for c in original_choices]
+        cleaned_choices = [answer_prefix_re.sub("", c).strip() for c in original_choices]
+        gold_index = line["gold"]
+        # Ignore 和 ①和④ which sometimes joins together the possible options
+        choices_unique_chars = set("".join(cleaned_choices).replace("和", ""))
+        
+        # Sometimes there can be choose one of the following from options.
+        # In this case we want to extract the answer from the question to comply with CF format.
+        has_answers_in_question = choices_unique_chars.issubset("①②③④⑤") and len(gold_index) == 1
+        maybe_extracted_answers = _extract_answers_from_string(question, cleaned_choices, gold_index[0], sorted(list(choices_unique_chars))) if has_answers_in_question else None
+        if maybe_extracted_answers:
+            start_index, cleaned_choices, gold_index = maybe_extracted_answers
+            question = question[:start_index]
+            
+        question = question.strip()
         return prompter(
-            task_name, question, no_letter_choices, line["gold"], context=context
+            task_name, question, cleaned_choices, gold_index, context=context,
+            show_options=show_options
         )
 
     return adapter
@@ -812,3 +854,54 @@ def get_wsci_prompt(lang: Literal["th"]):
             uncoditioned_prefix="",
         )
     return wsci
+
+
+def _extract_answers_from_string(answer_string: str, task_answers: list[str], gold_idx: int, answers_letters: list[str]=["①", "②", "③", "④"]) -> Optional[tuple[int, list[str], list[int]]]:
+    """
+    Extracts answers from the question. The search is done from the end to the beginning.
+    The goal is to extract multichoice answers from a question
+
+    Example:
+    This is a question. 
+    ① Yes ② No ③ Yes ④ No
+    Args:
+        answer_string (str): String possibly containing answers.
+        answers (list[str]): Task answers
+        gold_idx (int): The index of the gold answer.
+    Returns:
+        Optional[tuple[int, list[str], list[int]]]: A tuple containing the start index of the answers, list of answers and list of new gold indices.
+    """
+    def extract_answer(acc: tuple[str, int, list[str]], symbol: str) -> tuple[str, int, list[str]]:
+        """
+        Extracts an answer from the text until the next symbol is found.
+        If the last index == -1 it means we failed to find the symbol.
+        """
+        text, last_index, answers = acc
+        if last_index == -1:
+            return text, last_index, answers
+        start_index = last_index
+        end_index = text.rfind(symbol[:last_index])
+        if end_index == -1:
+            return text, -1, answers
+        return text, end_index, answers + [text[end_index:start_index]]
+    
+
+    # Try to extract answers from the possible_answers_part
+    answer_string = answer_string.strip()
+    
+
+    
+    
+
+    # Split by ①②③④ to get the answers
+    _, last_index, found_answers = reduce(extract_answer, reversed(answers_letters), (answer_string, len(answer_string), []))
+    if last_index == -1:
+        return None
+    
+
+    found_answers = [answer.rstrip(PUNCT + ";").strip() for answer in found_answers]
+    id_answer_pairs = [(answer[:1], answer[1:]) for answer in found_answers]
+    new_gold_idx = [i for i, (id, _) in enumerate(id_answer_pairs) if id in task_answers[gold_idx]]
+    if len(new_gold_idx) == 0:
+        return None
+    return last_index, [answer for _, answer in id_answer_pairs], new_gold_idx

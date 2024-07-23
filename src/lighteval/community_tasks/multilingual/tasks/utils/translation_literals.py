@@ -43,7 +43,8 @@ QUESTION = {
 }
 
 OPTIONS = {
-    "th": "ตัวเลือก"
+    "th": "ตัวเลือก",
+    "zh": "选项"
 }
 
 ANSWER = {
