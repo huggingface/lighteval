@@ -116,15 +116,14 @@ def apply_generative_metric(
 
 def apply_multichoice_metric(results: list[ModelReturn], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
-    if len(formatted_doc.choices) != len(results):
-        raise ValueError("Length of results is not equal to the length of the choices")
+    mc_results = results[: len(formatted_doc.choices)]
     if len(formatted_doc.choices) <= 1:
         raise ValueError(
             "You can't use a multi choice metric with only one choice. Use `acc_golds_likelihood` instead."
         )
 
     # Todo: make better system with return_bool_score instead of taking first element
-    choices_logprob = [results[i].result[0] for i in range(len(formatted_doc.choices))]  # sum(
+    choices_logprob = [mc_results[i].result[0] for i in range(len(formatted_doc.choices))]  # sum(
     gold_ixs = as_list(formatted_doc.gold_index)
 
     for metric in metrics:
@@ -132,8 +131,7 @@ def apply_multichoice_metric(results: list[ModelReturn], formatted_doc: Doc, met
             outputs.update(
                 metric.compute(choices_logprob=choices_logprob, gold_ixs=gold_ixs, formatted_doc=formatted_doc)
             )
-
-    return results, outputs
+    return results[len(formatted_doc.choices) :], outputs
 
 
 def apply_multichoice_metric_one_token(results: list[ModelReturn], formatted_doc: Doc, metrics: list[Metric]):
