@@ -95,7 +95,8 @@ class BaseModelConfig:
             Use `dtype="auto"` to derive the type from the model's weights.
         device (Union[int, str]): device to use for model training.
         quantization_config (Optional[BitsAndBytesConfig]): quantization
-            configuration for the model. Needed for 4-bit and 8-bit precision.
+            configuration for the model, manually provided to load a normally floating point
+            model at a quantized precision. Needed for 4-bit and 8-bit precision.
         trust_remote_code (bool): Whether to trust remote code during model
             loading.
 
@@ -144,13 +145,29 @@ class BaseModelConfig:
             cache_dir=env_config.cache_dir,
             token=env_config.token,
         )
-        if getattr(auto_config, "quantization_config", False) and self.quantization_config is None:
-            if not is_autogptq_available():
-                raise ImportError(NO_AUTOGPTQ_ERROR_MSG)
-            hlog(
-                "`quantization_config` is None but was found in the model's config, using the one found in config.json"
-            )
-            self.quantization_config = GPTQConfig(**auto_config.quantization_config, disable_exllama=True)
+
+        # Gathering the model's automatic quantization config, if available
+        try:
+            model_auto_quantization_config = auto_config.quantization_config
+            hlog("An automatic quantization config was found in the model's config. Using it to load the model")
+        except (AttributeError, KeyError):
+            model_auto_quantization_config = None
+
+        if model_auto_quantization_config is not None:
+            if self.quantization_config is not None:
+                # We don't load models quantized by default with a different user provided conf
+                raise ValueError("You manually requested quantization on a model already quantized!")
+
+            # We add the quantization to the model params we store
+            if model_auto_quantization_config["quant_method"] == "gptq":
+                if not is_autogptq_available():
+                    raise ImportError(NO_AUTOGPTQ_ERROR_MSG)
+                auto_config.quantization_config["use_exllama"] = None
+                self.quantization_config = GPTQConfig(**auto_config.quantization_config, disable_exllama=True)
+            elif model_auto_quantization_config["quant_method"] == "bitsandbytes":
+                if not is_bnb_available():
+                    raise ImportError(NO_BNB_ERROR_MSG)
+                self.quantization_config = BitsAndBytesConfig(**auto_config.quantization_config)
 
         return auto_config
 

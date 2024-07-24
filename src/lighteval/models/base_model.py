@@ -29,7 +29,7 @@ import transformers
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
 from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
@@ -88,9 +88,7 @@ class BaseModel(LightevalModel):
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
 
         # We are in DP (and launch the script with `accelerate launch`)
-        if not config.model_parallel and config.quantization_config is None:
-            # might need to use accelerate instead
-            # self.model = config.accelerator.prepare(self.model)
+        if not config.model_parallel and not isinstance(config.quantization_config, BitsAndBytesConfig):
             hlog(f"Using Data Parallelism, putting model on device {self._device}")
             self.model = self.model.to(self._device)
 
@@ -267,8 +265,6 @@ class BaseModel(LightevalModel):
             if hasattr(self._config, attr):
                 return getattr(self._config, attr)
 
-        if hasattr(self.tokenizer, "model_max_length"):
-            return self.tokenizer.model_max_length
         # Default max sequence length setting for when no `max_length` is provided
         # or no max length config setting is found in the model or tokenizer.
         return 2048
