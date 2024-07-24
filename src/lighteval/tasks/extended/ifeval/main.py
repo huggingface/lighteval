@@ -24,7 +24,7 @@ import numpy as np
 from aenum import extend_enum
 
 import lighteval.tasks.extended.ifeval.instructions_registry as instructions_registry
-from lighteval.metrics import Metrics
+from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.utils import (
     MetricCategory,
     MetricUseCase,
@@ -143,7 +143,7 @@ def agg_inst_level_acc(items):
 
 
 ifeval_metrics = SampleLevelMetricGrouping(
-    metric=submetric_names,
+    metric_name=submetric_names,
     higher_is_better={n: True for n in submetric_names},
     category=MetricCategory.GENERATIVE,
     use_case=MetricUseCase.ACCURACY,

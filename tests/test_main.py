@@ -27,7 +27,7 @@ import pytest
 from pytest import approx
 
 from lighteval.main_accelerate import main  # noqa: E402
-from run_evals_accelerate import get_parser
+from lighteval.parsers import parser_accelerate
 from tests.reference_scores.reference_task_scores import RESULTS_FULL, RESULTS_LITE  # noqa: E402
 from tests.reference_scores.reference_tasks import ALL_SUBSETS
 
@@ -58,7 +58,7 @@ def run_model_predictions_full(model: str, tasks: list):
         "1",
         "--save_details",
     ]
-    parser = get_parser()
+    parser = parser_accelerate()
     args = parser.parse_args(lighteval_args)
     results = main(args)
     return results
@@ -77,7 +77,7 @@ def run_model_predictions_lite(model: str, tasks: list):
         "--save_details",
     ]
     lighteval_args += ["--max_samples", "10"]
-    parser = get_parser()
+    parser = parser_accelerate()
     args = parser.parse_args(lighteval_args)
     results = main(args)
     return results

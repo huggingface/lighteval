@@ -23,6 +23,7 @@
 import collections
 import importlib
 import os
+from itertools import groupby
 from pathlib import Path
 from pprint import pformat
 from types import ModuleType
@@ -152,6 +153,19 @@ class Registry:
             tasks_dict[task_name] = task_class(custom_tasks_module=custom_tasks_module)
 
         return tasks_dict
+
+    def print_all_tasks(self):
+        """
+        Print all the tasks in the task registry.
+        """
+        tasks_names = list(self.TASK_REGISTRY.keys())
+        tasks_names.sort()
+        for suite, g in groupby(tasks_names, lambda x: x.split("|")[0]):
+            tasks_names = list(g)
+            tasks_names.sort()
+            print(f"\n- {suite}:")
+            for task_name in tasks_names:
+                print(f"  - {task_name}")
 
 
 def create_custom_tasks_module(custom_tasks: Union[str, Path, ModuleType]) -> ModuleType:
