@@ -188,16 +188,6 @@ class LightevalTask:
 
         current_categories = [metric.category for metric in self.metrics]
         self.has_metric_category = {category: (category in current_categories) for category in MetricCategory}
-        if (
-            self.has_metric_category[MetricCategory.LLM_AS_JUDGE]
-            or self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]
-        ):
-            if not is_openai_available():
-                raise ImportError(NO_OPENAI_ERROR_MSG)
-            if os.getenv("OPENAI_API_KEY") is None:
-                raise ValueError(
-                    "Using llm as judge metric but no OPEN_API_KEY were found, please set it with: export OPEN_API_KEY={yourkey}"
-                )
 
         # We assume num_samples always contains 1 (for base generative evals)
         self.num_samples = [1]
