@@ -27,7 +27,7 @@ import collections
 import copy
 from typing import Dict, Union
 
-from pytablewriter import LatexTableWriter, MarkdownTableWriter
+from pytablewriter import MarkdownTableWriter
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog
@@ -64,7 +64,7 @@ def evaluate(  # noqa: C901
     :return
         Dictionary of results
     """
-    # A request output tupe is a Tuple where the first element is the index of
+    # A request output tuple is a Tuple where the first element is the index of
     # the request for one document of one task i.e.
     # task: "arc_easy", doc: "0"# request: "0" -> request_index = 0,
     # We can have multiple requests per doc for multi choice tasks for example.
@@ -75,8 +75,11 @@ def evaluate(  # noqa: C901
     )
     example_id_response_dict: dict[TaskExampleId, list[RequestIndexModelResponseTuple]] = collections.defaultdict(list)
 
-    for request_type, requests in requests_dict.items():
+    for request_type in RequestType:
+        if request_type not in requests_dict:
+            continue
         hlog(f"Running {request_type} requests")
+        requests = requests_dict[request_type]
         # These are all the request type from the request factory at the moment
         if request_type == RequestType.LOGLIKELIHOOD:
             full_resps = lm.loglikelihood(requests, override_bs=override_bs)
@@ -99,10 +102,6 @@ def evaluate(  # noqa: C901
 
     # ===== unpack results and sort back in order and return control to Task =====
     for task_example_id, prediction_list in example_id_response_dict.items():
-        # ===== Unpack the request =====
-        prediction_list.sort(
-            key=lambda x: x.request_index
-        )  # When we use Loglikelihood for several tokens we have all the options here
         model_responses = [x.model_response for x in prediction_list]
         cur_task_name = task_example_id.task_name.rsplit("|", 1)[0]
 
@@ -124,9 +123,7 @@ def evaluate(  # noqa: C901
 def make_results_table(result_dict):
     """Generate table of results."""
     md_writer = MarkdownTableWriter()
-    latex_writer = LatexTableWriter()
     md_writer.headers = ["Task", "Version", "Metric", "Value", "", "Stderr"]
-    latex_writer.headers = ["Task", "Version", "Metric", "Value", "", "Stderr"]
 
     values = []
 
@@ -145,6 +142,5 @@ def make_results_table(result_dict):
             k = ""
             version = ""
     md_writer.value_matrix = values
-    latex_writer.value_matrix = values
 
     return md_writer.dumps()
