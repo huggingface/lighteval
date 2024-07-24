@@ -24,7 +24,6 @@
 using simple function (min, mean, max, ...) at the corpus level. Most metrics fall under this category.
 """
 
-import os
 from typing import Union
 
 import nltk
@@ -623,29 +622,17 @@ class StringDistance:
 
 
 class JudgeLLM:
-    gpt_models = ["gpt-3.5-turbo"]
-
     def __init__(self, judge_model_name: str, template_path: str, multi_turn: bool = False):
-        if judge_model_name in self.gpt_models:
-            judge_type = "openai"
-        else:
-            api = HfApi()
-            models = api.list_models(model_name=judge_model_name)
-            if models:
-                judge_type = "transformers"
-            else:
-                raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
+        api = HfApi()
+        models = api.list_models(model_name=judge_model_name)
+        if not models:
+            raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
 
-        OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
         self.multi_turn = multi_turn
-
         self.judge = JudgeLM(
             model=judge_model_name,
-            judge_type=judge_type,
-            openai_api_key=OPENAI_API_KEY,
-            seed=42,
-            temperature=0.0,
             templates_path=template_path,
+            multi_turn=multi_turn,
         )
 
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:

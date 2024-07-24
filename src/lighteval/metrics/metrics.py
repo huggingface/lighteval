@@ -233,7 +233,7 @@ class Metrics(Enum):
         category=MetricCategory.LLM_AS_JUDGE_MULTI_TURN,
         use_case=MetricUseCase.SUMMARIZATION,
         sample_level_fn=JudgeLLM(
-            judge_model_name="gpt2",
+            judge_model_name="HuggingFaceH4/zephyr-7b-alpha",
             template_path=os.path.join(os.path.dirname(__file__), "judge_prompts.jsonl"),
             multi_turn=True,
         ).compute,
@@ -248,7 +248,7 @@ class Metrics(Enum):
         category=MetricCategory.LLM_AS_JUDGE,
         use_case=MetricUseCase.SUMMARIZATION,
         sample_level_fn=JudgeLLM(
-            judge_model_name="gpt2",
+            judge_model_name="HuggingFaceH4/zephyr-7b-alpha",
             template_path=os.path.join(os.path.dirname(__file__), "judge_prompts.jsonl"),
             multi_turn=False,
         ).compute,

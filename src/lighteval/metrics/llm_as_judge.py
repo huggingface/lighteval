@@ -24,11 +24,7 @@
 import ast
 import json
 import re
-import time
 from typing import Any, Optional
-
-from lighteval.logging.hierarchical_logger import hlog_warn
-from lighteval.utils import NO_OPENAI_ERROR_MSG, is_openai_available
 
 
 class JudgeLM:
@@ -63,19 +59,12 @@ class JudgeLM:
     def __init__(
         self,
         model: str,
-        seed: int,
-        temperature: float,
         templates_path: str,
-        judge_type: str,
-        openai_api_key: Optional[str] = None,
         multi_turn: bool = False,
     ):
-        self.client = None  # loaded lazily
-        self.openai_api_key = openai_api_key
-        self.model = model
-        self.seed = seed
-        self.temperature = temperature
         self.multi_turn = multi_turn
+        self.pipe = None
+        self.model = model
 
         data = []
         with open(templates_path, "r") as f:
@@ -91,37 +80,11 @@ class JudgeLM:
         self.one_score_pattern = re.compile(r"\[\[(\d+\.?\d*)\]\]")
         self.one_score_pattern_backup = re.compile(r"\[(\d+\.?\d*)\]")
 
-        if judge_type == "openai":
-            from openai import OpenAI
-
-            self.client = OpenAI(api_key=openai_api_key)
-            self.API_MAX_RETRY = 16
-            self.API_RETRY_SLEEP = 10
-            self.max_tokens = 2048
-        else:
-            from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
-
-            transformers_model = AutoModelForCausalLM.from_pretrained(
-                model, torch_dtype="auto", trust_remote_code=True
-            )
-            tokenizer = AutoTokenizer.from_pretrained(model)
-            self.pipe = pipeline(
-                "text-generation",
-                model=transformers_model,
-                tokenizer=tokenizer,
-            )
-            self.generation_args = {
-                "max_new_tokens": 500,
-                "return_full_text": False,
-                "temperature": temperature,
-                "do_sample": False,
-            }
-
     def evaluate_answer(
         self, questions: list[str], answers: list[str], references: list[str]
     ) -> tuple[list[int], list[list[dict[str, str]]], list[str | None | Any]]:
         """
-        Evaluates an answer using the OpenAI API or Transformers.
+        Evaluates an answer using Transformers.
 
         Args:
             questions (list[str]): A list of questions (can be a list because of multi-turn conversations)
@@ -131,13 +94,21 @@ class JudgeLM:
         Returns:
             A tuple containing the score, prompts, and judgment.
         """
-        if self.client is None:
-            if not is_openai_available():
-                raise ImportError(NO_OPENAI_ERROR_MSG)
+        # lazy loading of the pipeline
+        if self.pipe is None:
+            import torch
+            from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
-            from openai import OpenAI
-
-            self.client = OpenAI(api_key=self.openai_api_key)
+            transformers_model = AutoModelForCausalLM.from_pretrained(
+                self.model, torch_dtype=torch.bfloat16, trust_remote_code=False, device_map="cuda"
+            )
+            tokenizer = AutoTokenizer.from_pretrained(self.model)
+            self.pipe = pipeline(
+                "text-generation",
+                model=transformers_model,
+                tokenizer=tokenizer,
+                max_new_tokens=50,
+            )
 
         prompts = [
             self.__get_prompts_single_turn(
@@ -153,32 +124,13 @@ class JudgeLM:
 
         judgments = []
         for prompt in prompts:
-            if hasattr(self, "client"):
-                response = self.__call_openai_api(prompt)
-            else:
-                response = self.pipe(prompt)[0]["generated_text"]
+            response = self.pipe(prompt)[0]["generated_text"]
+            response = response[-1]["content"]
             judgments.append(response)
 
         scores = [self.__process_judge_response(judgment) for judgment in judgments]
 
         return scores, prompts, judgments
-
-    def __call_openai_api(self, prompt):
-        for _ in range(self.API_MAX_RETRY):
-            try:
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    seed=self.seed,
-                    temperature=self.temperature,
-                    messages=prompt,
-                    max_tokens=self.max_tokens,
-                    n=1,
-                )
-                return response.choices[0].message.content
-            except Exception as e:
-                hlog_warn(f"{type(e), e}")
-                time.sleep(self.API_RETRY_SLEEP)
-        raise Exception("Failed to get response from the API")
 
     def __get_prompts_multi_turn(
         self, questions: list[str], answers: list[str], references: Optional[list[str]]
