@@ -33,6 +33,7 @@ class M_HellaSwagTask(LightevalTaskConfig):
                 Metrics.loglikelihood_acc_norm_pmi,
                 Metrics.loglikelihood_prob,
                 Metrics.loglikelihood_prob_norm,
+                Metrics.loglikelihood_prob_norm_token,
                 Metrics.loglikelihood_prob_norm_pmi,
             ),
         )
@@ -119,6 +120,7 @@ class M_MMLUTask(LightevalTaskConfig):
                 Metrics.loglikelihood_acc_norm_pmi,
                 Metrics.loglikelihood_prob,
                 Metrics.loglikelihood_prob_norm,
+                Metrics.loglikelihood_prob_norm_token,
                 Metrics.loglikelihood_prob_norm_pmi,
             ),
         )
@@ -145,6 +147,7 @@ class M_ARCTask(LightevalTaskConfig):
                 Metrics.loglikelihood_acc_norm_pmi,
                 Metrics.loglikelihood_prob,
                 Metrics.loglikelihood_prob_norm,
+                Metrics.loglikelihood_prob_norm_token,
                 Metrics.loglikelihood_prob_norm_pmi,
             ),
         )
@@ -168,6 +171,7 @@ class M_TruthfulQATask(LightevalTaskConfig):
                 Metrics.loglikelihood_acc_norm_pmi,
                 Metrics.loglikelihood_prob,
                 Metrics.loglikelihood_prob_norm,
+                Metrics.loglikelihood_prob_norm_token,
                 Metrics.loglikelihood_prob_norm_pmi,
             ),
         )

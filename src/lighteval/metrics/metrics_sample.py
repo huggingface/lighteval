@@ -255,20 +255,23 @@ class LoglikelihoodAcc:
 
 
 class LoglikelihoodProb:
-    def __init__(self, length_normalization: bool = False, ignore_first_space: bool = False) -> None:
+    def __init__(self, length_normalization: bool = False, token_length_normalization: bool = False, ignore_first_space: bool = False) -> None:
         """Log likelihood probability class. It tests probability of choosing the best choice.
 
         Args:
             length_normalization (bool, optional): Whether log-likelihood scores should be normalized for sentence length. Defaults to False.
                 Should be True for most cases.
+            token_length_normalization (bool, optional): Whether log-likelihood scores should be normalized for token length. Defaults to False.
+                Should be True when the model's tokenization granularity affects the log-likelihood scores.
             ignore_first_space (bool, optional): Whether to ignore the first token's log prob (if it's a space only). Defaults to False.
                 The only case when it should be True is when the possible choices (for example `A`,`B` ...) have an extra
                 space added in front of them to manage tokenization issues (` A`, ` B`, ...) for some models.
         """
         self.length_normalization = length_normalization
+        self.token_length_normalization = token_length_normalization
         self.ignore_first_space = ignore_first_space
 
-    def compute(self, gold_ixs: list[int], choices_logprob: list[float], formatted_doc: Doc, **kwargs) -> int:
+    def compute(self, gold_ixs: list[int], choices_logprob: list[float], formatted_doc: Doc, choices_token_lengths: list[int] = [], **kwargs) -> float:
         """Computes the log likelihood probability: chance of choosing the best choice.
 
         Args:
@@ -276,9 +279,10 @@ class LoglikelihoodProb:
             choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
             formatted_doc (Doc): Original document for the sample.
                 Used to get the original choices' length for possible normalization
+            choices_token_lengths (list[int], optional): Token lengths of all the possible choices for the model, ordered as the choices.
 
         Returns:
-            int: The eval score: 1 if the best log-prob choice is in gold, 0 otherwise.
+            float: The probability of the best log-prob choice being a gold choice.
         """
         if self.length_normalization:
             normalized_log_probs = []
@@ -288,7 +292,11 @@ class LoglikelihoodProb:
                 else:
                     normalized_log_probs.append(choices_logprob[ix] / len(choice))
             choices_logprob = normalized_log_probs
-        
+
+        if self.token_length_normalization:
+            assert len(choices_token_lengths) == len(formatted_doc.choices), f"Choices token lengths {choices_token_lengths} must have the same length as the number of choices {len(formatted_doc.choices)}"
+            choices_logprob = [choices_logprob[ix] / choices_token_lengths[ix] for ix in range(len(choices_logprob))]
+
         true_probs = np.sum(np.exp([choices_logprob[i] for i in gold_ixs]))
         false_probs = np.sum(np.exp([choices_logprob[i] for i in (set(range(len(choices_logprob))) - set(gold_ixs))]))
         prob_correct_choice = true_probs / (true_probs + false_probs)
