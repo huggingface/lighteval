@@ -33,21 +33,14 @@ class JudgeLM:
 
     Args:
         model (str): The name of the model to use.
-        seed (int): The seed value for generating random responses.
-        temperature (float): The temperature value for controlling the randomness of the responses.
         templates_path (str): The path to the JSON file containing the templates for prompts.
+        multi_turn (bool): Whether to use multi-turn prompts
 
     Attributes:
         model (str): The name of the model.
-        seed (int): The seed value, passed to the API when generating responses.
-        temperature (float): The temperature value, passed to the API when generating responses.
         templates (dict): A dictionary containing the templates for prompts.
-        judge_type (str): Judge type based on used model.
         one_score_pattern (re.Pattern): A regular expression pattern for extracting scores from the response.
         one_score_pattern_backup (re.Pattern): A backup regular expression pattern for extracting scores.
-        API_MAX_RETRY (int): The maximum number of API retries.
-        API_RETRY_SLEEP (int): The sleep time between API retries.
-        max_tokens (int): The maximum number of tokens allowed in the response.
 
     Methods:
         evaluate_answer: Evaluates an answer using the OpenAI API or Transformers library.
