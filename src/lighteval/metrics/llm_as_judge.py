@@ -31,19 +31,20 @@ from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.utils import NO_OPENAI_ERROR_MSG, is_openai_available
 
 
-class JudgeOpenAI:
+class JudgeEndpoint:
     """
-    A class representing a judge for evaluating answers using the OpenAI API.
+    A class representing a judge for evaluating answers using the OpenAI API or the Inference Endpoints API.
 
     Args:
-        model (str): The name of the OpenAI model to use.
+        model (str): The name of the model to use.
         seed (int): The seed value for generating random responses.
         temperature (float): The temperature value for controlling the randomness of the responses.
         templates_path (str): The path to the JSON file containing the templates for prompts.
+        api_key (str): The API key to use to create/connect to the endpoint
 
     Attributes:
-        client: An instance of the OpenAI client.
-        model (str): The name of the OpenAI model.
+        client: An instance of the endpoint client.
+        model (str): The name of the endpoint model.
         seed (int): The seed value, passed to the API when generating responses.
         temperature (float): The temperature value, passed to the API when generating responses.
         templates (dict): A dictionary containing the templates for prompts.
@@ -63,15 +64,17 @@ class JudgeOpenAI:
     def __init__(
         self,
         model: str,
+        url: str,
         seed: int,
         temperature: float,
         templates_path: str,
-        openai_api_key: str,
+        api_key: str,
         multi_turn: bool = False,
     ):
         self.client = None  # loaded lazily
-        self.openai_api_key = openai_api_key
+        self.api_key = api_key
         self.model = model
+        self.url = url  # None for Open AI, value for Inference endpoint
         self.seed = seed
         self.temperature = temperature
         self.multi_turn = multi_turn
@@ -118,7 +121,7 @@ class JudgeOpenAI:
 
             from openai import OpenAI
 
-            self.client = OpenAI(api_key=self.openai_api_key)
+            self.client = OpenAI(base_url=self.url, api_key=self.api_key)
 
         prompts = [
             self.__get_prompts_single_turn(

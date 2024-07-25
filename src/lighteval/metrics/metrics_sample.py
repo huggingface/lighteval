@@ -40,7 +40,7 @@ from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.imports.bert_scorer import BERTScorer
 from lighteval.metrics.imports.data_stats_metric import DataStatsMetric
 from lighteval.metrics.imports.summac import SummaCZS
-from lighteval.metrics.llm_as_judge import JudgeOpenAI
+from lighteval.metrics.llm_as_judge import JudgeEndpoint
 from lighteval.metrics.normalizations import remove_braces, remove_braces_and_strip
 from lighteval.tasks.requests import Doc
 from lighteval.utils import as_list
@@ -622,21 +622,26 @@ class StringDistance:
 
 
 class JudgeLLM:
-    available_models = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo", "gpt-4"]
+    available_models_openai = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo", "gpt-4"]
 
-    def __init__(self, judge_model_name: str, template_path: str, multi_turn: bool = False):
-        if judge_model_name not in self.available_models:
-            raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
+    def __init__(self, judge_model_name_or_url: str, template_path: str, multi_turn: bool = False):
+        if judge_model_name_or_url in self.available_models_openai:
+            API_KEY = os.getenv("OPENAI_API_KEY")
+            url = None
+            model = judge_model_name_or_url
+        else:
+            API_KEY = os.getenv("HF_TOKEN")
+            url = judge_model_name_or_url
+            model = "tgi"
 
-        OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
         self.multi_turn = multi_turn
-
-        self.judge = JudgeOpenAI(
-            model=judge_model_name,
+        self.judge = JudgeEndpoint(
+            model=model,
+            url=url,
             seed=42,
             temperature=0.0,
             templates_path=template_path,
-            openai_api_key=OPENAI_API_KEY,
+            api_key=API_KEY,
             multi_turn=multi_turn,
         )
 
