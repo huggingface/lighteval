@@ -24,6 +24,8 @@
 
 import argparse
 import os
+from dataclasses import asdict
+from pprint import pformat
 
 from lighteval.parsers import parser_accelerate, parser_nanotron, parser_utils_tasks
 from lighteval.tasks.registry import Registry, taskinfo_selector
@@ -80,7 +82,8 @@ def cli_evaluate():
                 for ix, sample in enumerate(task.eval_docs()[: int(args.num_samples)]):
                     if ix == 0:
                         print("-" * 10, "SAMPLES")
-                    print(sample)
+                    print(f"-- sample {ix} --")
+                    print(pformat(asdict(sample), indent=1))
 
     else:
         print("You did not provide any argument. Exiting")
