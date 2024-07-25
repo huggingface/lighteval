@@ -154,11 +154,13 @@ def boolstring_to_bool(x: Union[str, bool, int]) -> Union[bool, None]:
     Returns:
         Union[bool, None]: the corresponding boolean
     """
+    if x in [None, "None", "null", ""]:
+        return None
     if x in ["True", "true", True, 1]:
         return True
     if x in ["False", "false", False, 0]:
         return False
-    return None
+    raise ValueError(f"You tried to convert {x} to a boolean but it's not possible.")
 
 
 def is_accelerate_available() -> bool:
