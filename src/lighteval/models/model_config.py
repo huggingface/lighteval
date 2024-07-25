@@ -366,7 +366,7 @@ def create_model_config(  # noqa: C901
                 )
             else:
                 hlog(
-                    "You set `multichoice_continuations_start_space` to true. This will remove a leading space from multichoice continuations, if present."
+                    "You set `multichoice_continuations_start_space` to false. This will remove a leading space from multichoice continuations, if present."
                 )
 
         # Creating optional quantization configuration
