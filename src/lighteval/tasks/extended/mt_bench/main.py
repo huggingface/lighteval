@@ -55,7 +55,7 @@ task = LightevalTaskConfig(
     evaluation_splits=["train"],
     few_shots_split="",
     few_shots_select="random",
-    metric=["llm_judge_multi_turn_openai"],
+    metric=["llm_judge_multi_turn_gpt3p5", "llm_judge_multi_turn_llama3_405"],
     generation_size=1024,
     stop_sequence=[],
 )

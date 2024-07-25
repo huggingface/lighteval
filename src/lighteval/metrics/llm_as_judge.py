@@ -37,6 +37,7 @@ class JudgeEndpoint:
 
     Args:
         model (str): The name of the model to use.
+        url (str): Endpoint to go to (open ai or inference endpoint)
         seed (int): The seed value for generating random responses.
         temperature (float): The temperature value for controlling the randomness of the responses.
         templates_path (str): The path to the JSON file containing the templates for prompts.

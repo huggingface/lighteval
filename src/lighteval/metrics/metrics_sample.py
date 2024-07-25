@@ -624,19 +624,17 @@ class StringDistance:
 class JudgeLLM:
     available_models_openai = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo", "gpt-4"]
 
-    def __init__(self, judge_model_name_or_url: str, template_path: str, multi_turn: bool = False):
-        if judge_model_name_or_url in self.available_models_openai:
+    def __init__(self, judge_model_name: str, template_path: str, multi_turn: bool = False):
+        if judge_model_name in self.available_models_openai:
             API_KEY = os.getenv("OPENAI_API_KEY")
             url = None
-            model = judge_model_name_or_url
         else:
             API_KEY = os.getenv("HF_TOKEN")
-            url = judge_model_name_or_url
-            model = "tgi"
+            url = "https://api-inference.huggingface.co/v1/"
 
         self.multi_turn = multi_turn
         self.judge = JudgeEndpoint(
-            model=model,
+            model=judge_model_name,
             url=url,
             seed=42,
             temperature=0.0,
