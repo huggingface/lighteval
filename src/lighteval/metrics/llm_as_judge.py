@@ -24,7 +24,10 @@
 import ast
 import json
 import re
+import time
 from typing import Any, Optional
+
+from lighteval.logging.hierarchical_logger import hlog_warn
 
 
 class JudgeLM:
@@ -54,9 +57,11 @@ class JudgeLM:
         model: str,
         templates_path: str,
         multi_turn: bool = False,
+        use_transformers: bool = False,
+        url: Optional[str] = None,
+        api_key: Optional[str] = None,
     ):
         self.multi_turn = multi_turn
-        self.pipe = None
         self.model = model
 
         data = []
@@ -72,6 +77,39 @@ class JudgeLM:
         # the second is for the backup case: [score]
         self.one_score_pattern = re.compile(r"\[\[(\d+\.?\d*)\]\]")
         self.one_score_pattern_backup = re.compile(r"\[(\d+\.?\d*)\]")
+        self.API_MAX_RETRY = 3
+        self.API_RETRY_SLEEP = 1
+
+        self.client = None
+        self.pipe = None
+        self.use_transformers = use_transformers
+        self.url = url
+        self.api_key = api_key
+
+    def lazy_load_client(self):
+        if not self.use_transformers:
+            if self.client is None:
+                from openai import OpenAI
+
+                if self.url is None:
+                    self.client = OpenAI(api_key=self.api_key)
+                else:
+                    self.client = OpenAI(base_url=self.url, api_key=self.api_key)
+        else:
+            if self.pipe is None:
+                import torch
+                from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+
+                transformers_model = AutoModelForCausalLM.from_pretrained(
+                    self.model, torch_dtype=torch.bfloat16, trust_remote_code=False, device_map="cuda"
+                )
+                tokenizer = AutoTokenizer.from_pretrained(self.model)
+                self.pipe = pipeline(
+                    "text-generation",
+                    model=transformers_model,
+                    tokenizer=tokenizer,
+                    max_new_tokens=50,
+                )
 
     def evaluate_answer(
         self, questions: list[str], answers: list[str], references: list[str]
@@ -88,20 +126,7 @@ class JudgeLM:
             A tuple containing the score, prompts, and judgment.
         """
         # lazy loading of the pipeline
-        if self.pipe is None:
-            import torch
-            from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
-
-            transformers_model = AutoModelForCausalLM.from_pretrained(
-                self.model, torch_dtype=torch.bfloat16, trust_remote_code=False, device_map="cuda"
-            )
-            tokenizer = AutoTokenizer.from_pretrained(self.model)
-            self.pipe = pipeline(
-                "text-generation",
-                model=transformers_model,
-                tokenizer=tokenizer,
-                max_new_tokens=50,
-            )
+        self.lazy_load_client()
 
         prompts = [
             self.__get_prompts_single_turn(
@@ -117,8 +142,11 @@ class JudgeLM:
 
         judgments = []
         for prompt in prompts:
-            response = self.pipe(prompt)[0]["generated_text"]
-            response = response[-1]["content"]
+            if self.client is not None:
+                response = self.__call_openai_api(prompt)
+            else:
+                response = self.pipe(prompt)[0]["generated_text"]
+                response = response[-1]["content"]
             judgments.append(response)
 
         scores = [self.__process_judge_response(judgment) for judgment in judgments]
@@ -202,3 +230,20 @@ class JudgeLM:
             rating = -1
 
         return rating
+
+    def __call_openai_api(self, prompt):
+        for _ in range(self.API_MAX_RETRY):
+            try:
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    # seed=self.seed,
+                    # temperature=self.temperature,
+                    messages=prompt,
+                    max_tokens=512,
+                    n=1,
+                )
+                return response.choices[0].message.content
+            except Exception as e:
+                hlog_warn(f"{type(e), e}")
+                time.sleep(self.API_RETRY_SLEEP)
+        raise Exception("Failed to get response from the API")

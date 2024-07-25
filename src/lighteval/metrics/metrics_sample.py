@@ -24,6 +24,7 @@
 using simple function (min, mean, max, ...) at the corpus level. Most metrics fall under this category.
 """
 
+import os
 from typing import Union
 
 import nltk
@@ -626,17 +627,33 @@ class StringDistance:
 
 
 class JudgeLLM:
-    def __init__(self, judge_model_name: str, template_path: str, multi_turn: bool = False):
-        api = HfApi()
-        models = api.list_models(model_name=judge_model_name)
-        if not models:
-            raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
+    available_models_openai = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo", "gpt-4"]
+
+    def __init__(
+        self, judge_model_name: str, template_path: str, multi_turn: bool = False, use_transformers: bool = False
+    ) -> None:
+        if judge_model_name in self.available_models_openai:
+            api_key = os.getenv("OPENAI_API_KEY")
+            url = None
+        elif not use_transformers:
+            api_key = os.getenv("HF_TOKEN")
+            url = "https://api-inference.huggingface.co/v1/"
+        else:
+            api = HfApi()
+            models = api.list_models(model_name=judge_model_name)
+            url = None
+            api_key = None
+            if not models:
+                raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
 
         self.multi_turn = multi_turn
         self.judge = JudgeLM(
             model=judge_model_name,
             templates_path=template_path,
             multi_turn=multi_turn,
+            use_transformers=use_transformers,
+            api_key=api_key,
+            url=url,
         )
 
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
