@@ -1339,7 +1339,6 @@ def mmlu(line, topic, task_name: str = None):
         choices=[" A", " B", " C", " D"] if is_few_shots else ["A", "B", "C", "D"],
         gold_index=gold_ix,
         instruction=f"The following are multiple choice questions (with answers) about  {topic.replace('_', ' ')}.\n\n",
-        target_for_fewshot_sorting=[" A", " B", " C", " D"][gold_ix],
     )
 
 
@@ -1360,7 +1359,6 @@ def custom_mmlu_thom(line, task_name: str = None):
         choices=[" A", " B", " C", " D"] if is_few_shots else ["A", "B", "C", "D"],
         gold_index=gold_ix,
         instruction=f"The following are multiple choice questions (with answers) about  {topic.replace('_', ' ')}.\n\n",
-        target_for_fewshot_sorting=[" A", " B", " C", " D"][gold_ix],
     )
 
 
@@ -1600,7 +1598,6 @@ def mmlu_harness(line, task_name: str = None):
     query += "Answer:"
 
     gold_ix = LETTER_INDICES.index(line["answer"]) if isinstance(line["answer"], str) else line["answer"]
-    "__few_shots" in line and line["__few_shots"] is True  # We are adding few shots
 
     return Doc(
         task_name=task_name,
@@ -1608,7 +1605,6 @@ def mmlu_harness(line, task_name: str = None):
         choices=[" A", " B", " C", " D"],
         gold_index=gold_ix,
         instruction=f"The following are multiple choice questions (with answers) about {topic.replace('_', ' ')}.\n\n",
-        target_for_fewshot_sorting=[" A", " B", " C", " D"][gold_ix],
     )
 
 
@@ -1619,14 +1615,14 @@ def mmlu_helm(line, task_name: str = None):
     query += "\nAnswer:"
 
     gold_ix = LETTER_INDICES.index(line["answer"]) if isinstance(line["answer"], str) else line["answer"]
+    is_few_shots = line.get("__few_shots", False)  # We are adding few shots
 
     return Doc(
         task_name=task_name,
         query=query,
-        choices=[" A", " B", " C", " D"],
+        choices=[" A", " B", " C", " D"] if not is_few_shots else ["A", "B", "C", "D"], # specific to HELM evals
         gold_index=gold_ix,
         instruction=f"The following are multiple choice questions (with answers) about {subject.replace('_', ' ')}.\n\n",
-        target_for_fewshot_sorting=line["choices"][gold_ix],  # specific to HELM evals
     )
 
 
@@ -1785,6 +1781,7 @@ def openbookqa_helm(line, task_name: str = None):
     query += "Answer: "
 
     gold_ix = ["A", "B", "C", "D", "E"].index(line["answerKey"].strip())
+    # I don't get this.
     return Doc(
         task_name=task_name,
         query=query,
@@ -1812,7 +1809,7 @@ def piqa_helm(line, task_name: str = None):
     query += "Answer: "
 
     gold_ix = int(line["label"])
-
+    # Also this.
     return Doc(
         task_name=task_name,
         query=query,
@@ -1852,7 +1849,7 @@ def pubmed_qa_helm(line, task_name: str = None):
     )
     query += f"\n\nQuestion: {line['question']}\nAnswer: "
     gold_ix = ["yes", "no", "maybe"].index(line["final_decision"])
-
+    # And this
     return Doc(
         task_name=task_name,
         query=query,
@@ -2238,7 +2235,7 @@ def truthful_qa_helm(line, task_name: str = None):
     query = f"Question: {line['question']}\n"
     query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, line["choices"])])
     query += "Answer:"
-
+    # And this.
     return Doc(
         task_name=task_name,
         query=query,
