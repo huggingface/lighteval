@@ -23,7 +23,7 @@
 import re
 from typing import Literal
 
-from ..utils.prompts import get_m_m3exam_prompt
+from ..utils.prompts import get_m_m3exam_prompt, answer_prefix_re, LETTER_INDICES
 from ..utils.translation_literals import LANG_NAMES_INVERTED
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
@@ -31,7 +31,6 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 LANGS = Literal["zh", "en", "es", "de", "ja", "th", "sw"]
 
-prefix_re = re.compile(rf"^\([A-Da-d1-5๑๒๓๔๕]\)\s*|^[A-Da-e1-5๑๒๓๔๕][.．।。]\s*")
 
 
 class M3ExamTask(LightevalTaskConfig):
@@ -42,7 +41,7 @@ class M3ExamTask(LightevalTaskConfig):
             prompt_function=get_m_m3exam_prompt(lang),
             hf_repo="chiayewken/m3exam",
             hf_subset=LANG_NAMES_INVERTED[lang],
-            filter=lambda x: all(len(prefix_re.sub("", c)) > 0 for c in x["options"]),
+            filter=lambda x: all(len(answer_prefix_re.sub("", c)) > 0 for c in x["options"]) and LETTER_INDICES.index(x["answer_text"]) < len(x["options"]),
             evaluation_splits=("test",),
             few_shots_split="dev",
             few_shots_select=None,
