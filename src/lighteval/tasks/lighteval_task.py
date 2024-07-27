@@ -63,7 +63,7 @@ from . import tasks_prompt_formatting
 if TYPE_CHECKING:
     from lighteval.logging.evaluation_tracker import EvaluationTracker
 
-FormatterType = Callable[[dict, str], Doc]
+FormatterType = Callable[[dict, str], Doc | None]
 
 
 @dataclass
@@ -404,8 +404,14 @@ class LightevalTask:
                 # doc for a fewshot sample (few_shots=True) or not, which then leads to the creation of a different Doc.
                 item["__few_shots"] = few_shots
                 cur_docs = self.formatter(item, self.name)
+
                 if cur_docs is None:
                     continue
+
+                assert all(gi >= 0 for gi in as_list(cur_docs.gold_index)), f"Gold index must not be negative for task {self.name} with doc {cur_docs}"
+                # Ensure non-empty choices
+                assert all(len(choice) > 0 for choice in as_list(cur_docs.choices)), f"Choices are empty for task {self.name} with doc {cur_docs}"
+                assert all(i < len(cur_docs.choices) for i in as_list(cur_docs.gold_index)), f"gold_index is out of bounds for {self.name} {cur_docs}"
                 docs.extend(as_list(cur_docs))
         return docs
 
@@ -825,10 +831,6 @@ def create_requests_from_tasks(  # noqa: C901
                     doc.num_effective_few_shots = num_effective_few_shots
                     doc.num_asked_few_shots = num_fewshot
                     doc.ctx = ctx
-                    assert -1 not in as_list(doc.gold_index), f"Gold index must not be -1 for task {task_name} with doc {doc_id_seed}"
-                    # Ensure non-empty choices
-                    assert all(len(choice) > 0 for choice in as_list(doc.choices)), f"Choices are empty for task {task_name} with doc {doc_id_seed}"
-
                     # Constructing the requests
                     docs[TaskExampleId(cur_task_name, doc_id_seed)] = doc
                     reqs = task.construct_requests(doc, ctx, doc_id_seed, cur_task_name)

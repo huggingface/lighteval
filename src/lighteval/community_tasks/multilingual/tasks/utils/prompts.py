@@ -4,6 +4,8 @@ from functools import reduce
 import re
 from typing import Any, Literal, Optional, Callable
 
+from lighteval.utils import as_list
+
 from ..utils.translation_literals import (
     ANSWER,
     CAUSE_LABELS,
@@ -99,17 +101,21 @@ def _get_multi_qa_simple_prompt(lang: LANGS):
 answer_prefix_re = re.compile(rf"^\([A-Da-d1-5๑๒๓๔๕]\)\s*|^[A-Da-e1-5๑๒๓๔๕][.．।。]\s*")
 def get_m_m3exam_prompt(lang: LANGS):
     prompter = _get_multi_qa_simple_prompt(lang)
-    # Would be nice to have general solution for the letters
-
+    # TODO: Would be nice to have general solution for the letters
+    letter_indices = "๑๒๓๔๕" if lang == "th" else LETTER_INDICES
 
     def adapter(line, task_name):
-        is_letter_based = line["answer_text"].isalpha()
+        is_number_based = line["answer_text"].isdigit()
         clean_options = [answer_prefix_re.sub("", c) for c in line["options"]]
         gold_idx = (
-            LETTER_INDICES.index(line["answer_text"].upper())
-            if is_letter_based
-            else int(line["answer_text"]) - 1
+            int(line["answer_text"]) - 1
+            if is_number_based
+            else letter_indices.index(line["answer_text"].upper())
         )
+        
+        if not all(len(c) > 0 for c in clean_options) or gold_idx >= len(clean_options):
+            return None
+
         return prompter(
             task_name,
             line["question_text"],
@@ -273,6 +279,9 @@ def get_ceval_prompt(lang: LANGS, show_options: bool = False):
             
         # Lastly make it into question:
         cleaned_question = f"{cleaned_question.rstrip(PUNCT).strip()}？"
+        if not all(i < len(answers) for i in as_list(gold_index)):
+            raise ValueError(f"Gold index is out of bounds: {gold_index}")
+
         return prompter(task_name, cleaned_question, answers, gold_index, show_options=show_options)
 
     return adapter
@@ -930,6 +939,13 @@ def _extract_answers_from_string(answer_string: str, task_answers: list[str], go
     # Split by ①②③④ to get the answers
     _, last_index, found_answers = reduce(extract_answer, reversed(answers_letters), (answer_string, len(answer_string), []))
     if last_index == -1:
+        return None
+    
+    found_answers = [x for x in found_answers if x.strip() != ""]
+    
+
+    # Ensure we have extracted all answers
+    if len(found_answers) != len(answers_letters):
         return None
     
 

@@ -41,7 +41,6 @@ class M3ExamTask(LightevalTaskConfig):
             prompt_function=get_m_m3exam_prompt(lang),
             hf_repo="chiayewken/m3exam",
             hf_subset=LANG_NAMES_INVERTED[lang],
-            filter=lambda x: all(len(answer_prefix_re.sub("", c)) > 0 for c in x["options"]) and LETTER_INDICES.index(x["answer_text"]) < len(x["options"]),
             evaluation_splits=("test",),
             few_shots_split="dev",
             few_shots_select=None,
