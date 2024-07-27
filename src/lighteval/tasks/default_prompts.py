@@ -1790,14 +1790,12 @@ def openbookqa_helm(line, task_name: str = None):
     query += "Answer: "
 
     gold_ix = ["A", "B", "C", "D", "E"].index(line["answerKey"].strip())
-    # I don't get this.
     return Doc(
         task_name=task_name,
         query=query,
         choices=["A", "B", "C", "D", "E"],
         gold_index=gold_ix,
         instruction="The following are multiple choice questions (with answers) about common sense.\n",
-        target_for_fewshot_sorting=line["choices"]["text"][gold_ix],  # specific to HELM evals
     )
 
 
@@ -1818,14 +1816,12 @@ def piqa_helm(line, task_name: str = None):
     query += "Answer: "
 
     gold_ix = int(line["label"])
-    # Also this.
     return Doc(
         task_name=task_name,
         query=query,
         choices=["A", "B"],
         gold_index=gold_ix,
         instruction="The following are multiple choice questions (with answers) about common sense.\n",
-        target_for_fewshot_sorting=[line["sol1"], line["sol2"]][gold_ix],
     )
 
 
@@ -1858,13 +1854,11 @@ def pubmed_qa_helm(line, task_name: str = None):
     )
     query += f"\n\nQuestion: {line['question']}\nAnswer: "
     gold_ix = ["yes", "no", "maybe"].index(line["final_decision"])
-    # And this
     return Doc(
         task_name=task_name,
         query=query,
         choices=["A", "B", "C"],
         gold_index=gold_ix,
-        target_for_fewshot_sorting=["yes", "no", "maybe"][gold_ix],
     )
 
 
@@ -2244,13 +2238,11 @@ def truthful_qa_helm(line, task_name: str = None):
     query = f"Question: {line['question']}\n"
     query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, line["choices"])])
     query += "Answer:"
-    # And this.
     return Doc(
         task_name=task_name,
         query=query,
         choices=LETTER_INDICES[: len(line["choices"])],
         gold_index=line["gold_index"],
-        target_for_fewshot_sorting=line["choices"][line["gold_index"]],
     )
 
 
