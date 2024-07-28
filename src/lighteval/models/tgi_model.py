@@ -21,10 +21,10 @@
 # SOFTWARE.
 
 import asyncio
-from typing import Coroutine
+from typing import Coroutine, Optional
 
 import requests
-from huggingface_hub import TextGenerationOutput
+from huggingface_hub import TextGenerationOutput, TextGenerationInputGrammarType
 from transformers import AutoTokenizer
 
 from lighteval.models.endpoint_model import InferenceEndpointModel
@@ -66,12 +66,13 @@ class ModelClient(InferenceEndpointModel):
         self.use_async = True
 
     def _async_process_request(
-        self, context: str, stop_tokens: list[str], max_tokens: int
+        self, context: str, stop_tokens: list[str], max_tokens: int, grammar: Optional[TextGenerationInputGrammarType] = None
     ) -> Coroutine[None, list[TextGenerationOutput], str]:
         # Todo: add an option to launch with conversational instead for chat prompts
         generated_text = self.client.generate(
             prompt=context,
             decoder_input_details=True,
+            grammar=grammar,
             max_new_tokens=max_tokens,
             stop_sequences=stop_tokens,
         )
