@@ -312,8 +312,11 @@ def create_model_config(  # noqa: C901
 
         return BaseModelConfig(**args_dict)
 
-    with open(args.model_config_path, "r") as f:
-        config = yaml.safe_load(f)["model"]
+    if hasattr(args, "model_config") and args.model_config:
+        config = args.model_config["model"]
+    else:
+        with open(args.model_config_path, "r") as f:
+            config = yaml.safe_load(f)["model"]
 
     if config["type"] == "tgi":
         return TGIModelConfig(
