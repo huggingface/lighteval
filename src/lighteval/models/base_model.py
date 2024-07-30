@@ -566,7 +566,10 @@ class BaseModel(LightevalModel):
                     # There will be truncation of at least one sample, maximum generation size will be one
                     max_new_tokens = 1
                 else:  # We can't allow generation of more than max_length
-                    max_new_tokens = min(self.max_length - context_size, max_new_tokens)
+                    if max_new_tokens is None:  # If generation size is not set, we go all the way
+                        max_new_tokens = self.max_length - context_size
+                    else:
+                        max_new_tokens = min(self.max_length - context_size, max_new_tokens)
 
                 prepared_batch = Batch(
                     input_ids=tokenized["input_ids"],
