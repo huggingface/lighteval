@@ -164,6 +164,8 @@ class EvaluationTracker:
 
         config_general = copy.deepcopy(self.general_config_logger)
         config_general = asdict(config_general)
+        # We remove the config from logging, which contains context/accelerator objects
+        config_general.pop("config")
 
         to_dump = {
             "config_general": config_general,
