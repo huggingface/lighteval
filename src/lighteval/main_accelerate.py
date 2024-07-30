@@ -58,7 +58,7 @@ def main(args):
     )
     pipeline_params = PipelineParameters(
         launcher_type=ParallelismManager.ACCELERATE,
-        envconfig=env_config,
+        env_config=env_config,
         job_id=args.job_id,
         dataset_loading_processes=args.dataset_loading_processes,
         custom_tasks_directory=args.custom_tasks,

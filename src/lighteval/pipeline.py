@@ -34,7 +34,6 @@ from lighteval.evaluator import evaluate, make_results_table
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog, htrack_block
 from lighteval.models.model_loader import load_model
-from lighteval.models.nanotron_model import NanotronLightevalModel
 from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_tasks
 from lighteval.tasks.registry import Registry, get_custom_tasks, taskinfo_selector
 from lighteval.utils import (
@@ -55,6 +54,8 @@ if is_nanotron_available():
     from nanotron import distributed as dist
     from nanotron.parallel.context import ParallelContext
     from nanotron.utils import local_ranks_zero_first
+
+    from lighteval.models.nanotron_model import NanotronLightevalModel
 
 
 class ParallelismManager(Enum):
@@ -116,9 +117,9 @@ class Pipeline:
 
         self.evaluation_tracker = evaluation_tracker
         self.model_config = model_config
-        self.model = self._init_model(model_config, model, pipeline_parameters)
+        self.model = self._init_model(model_config, model)
 
-        self.evaluation_tracker.general_config_logger.log_model_info(model.model_info)
+        self.evaluation_tracker.general_config_logger.log_model_info(self.model.model_info)
         self._init_tasks_and_requests(tasks=tasks)
         self._init_random_seeds()
 
@@ -126,9 +127,13 @@ class Pipeline:
         accelerator, parallel_context = None, None
         with htrack_block("Test all gather"):
             if self.launcher_type == ParallelismManager.ACCELERATE:
+                if not is_accelerate_available():
+                    raise ValueError("You are trying to launch an accelerate model, but accelerate is not installed")
                 accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
                 test_all_gather(accelerator=accelerator)
             elif self.launcher_type == ParallelismManager.NANOTRON:
+                if not is_nanotron_available():
+                    raise ValueError("You are trying to launch a nanotron model, but nanotron is not installed")
                 dist.initialize_torch_distributed()
                 parallel_context = ParallelContext(
                     tensor_parallel_size=self.model_config.parallelism.tp,
@@ -161,6 +166,7 @@ class Pipeline:
             with local_ranks_zero_first() if self.launcher_type == ParallelismManager.NANOTRON else nullcontext():
                 # If some tasks are provided as task groups, we load them separately
                 custom_tasks = self.pipeline_parameters.custom_tasks_directory
+                tasks_groups_dict = None
                 if custom_tasks:
                     _, tasks_groups_dict = get_custom_tasks(custom_tasks)
                 if tasks_groups_dict and tasks in tasks_groups_dict:
@@ -200,7 +206,7 @@ class Pipeline:
             np.random.seed(1234)
             if self.accelerator is not None:
                 self.accelerator.wait_for_everyone()
-            if self.parallel_process is not None:
+            if self.parallel_context is not None:
                 dist.barrier()
 
     def evaluate(self):

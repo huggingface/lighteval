@@ -105,7 +105,7 @@ class BaseModel(LightevalModel):
         self.model_info = ModelInfo(
             model_name=self.model_name,
             model_sha=self.model_sha,
-            model_dtype=self.model_precision,
+            model_dtype=self.precision,
             model_size=model_size,
         )
 
