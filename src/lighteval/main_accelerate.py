@@ -80,6 +80,8 @@ def main(args):
 
     pipeline.evaluate()
 
-    pipeline.show_results()
+    results = pipeline.show_results()
 
     pipeline.save_and_push_results()
+
+    return results

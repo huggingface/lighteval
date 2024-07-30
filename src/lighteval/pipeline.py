@@ -258,3 +258,4 @@ class Pipeline:
     def show_results(self):
         final_dict = self.evaluation_tracker.generate_final_dict()
         print(make_results_table(final_dict))
+        return final_dict
