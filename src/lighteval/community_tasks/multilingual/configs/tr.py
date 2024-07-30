@@ -1,7 +1,7 @@
 from typing import get_args
 
 from ..tasks.utils.tasks_helpers import tasks_to_string
-from ..tasks.mqa.exams import ExamsTask
+from ..tasks.mqa.exams import ExamsTask, subjects_by_lang_code
 from ..tasks.qa.tquad import Tquad2Task
 from ..tasks.suites.turkish_leaderboard import ARCEasyTrTask, HellaSwagTrTask, MMLUTaskTr, TruthfulQATrTask, WinogradeTrTask, MMLU_SUBSETS
 from ..tasks.mqa_with_context.belebele import BelebeleTask
@@ -20,13 +20,13 @@ _MC_TASKS = [
     XNLITask(lang="tr", version=1),
     XNLITask(lang="tr", version=2),
     XCopaTask(lang="tr"),
-    ExamsTask(lang="tr"),
     HellaSwagTrTask(),
     TruthfulQATrTask("mc1"),
     TruthfulQATrTask("mc2"),
-    ARCEasyTrTask(),
+    ARCEasyTrTask(version=2),
     WinogradeTrTask(),
-    *[MMLUTaskTr(subset) for subset in get_args(MMLU_SUBSETS)]
+    *[MMLUTaskTr(subset) for subset in get_args(MMLU_SUBSETS)],
+    *[ExamsTask(lang="tr", subject=subject, show_options=show_options) for subject in subjects_by_lang_code["tr"] for show_options in [True, False]]
 ]
 
 _ALL_TASKS = list(set(_GENERATIVE_TASKS + _MC_TASKS))
@@ -35,6 +35,8 @@ TASKS_GROUPS = {
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
     "xnli": tasks_to_string([XNLITask(lang="tr", version=version) for version in (1, 2)]),
+    "arc": tasks_to_string([ARCEasyTrTask(version=2)]),
+    "exams": tasks_to_string([ExamsTask(lang="tr", subject=subject, show_options=show_options) for subject in subjects_by_lang_code["tr"] for show_options in [True, False]])
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

@@ -18,9 +18,7 @@ class XCODAHTask(LightevalTaskConfig):
             hf_repo="INK-USC/xcsr",
             hf_subset=f"X-CODAH-{lang}",
             evaluation_splits=("validation",),
-            generation_size=-1,
-            stop_sequence=("\n",),
-            metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace, Metrics.loglikelihood_acc_norm_token],
+            metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace, Metrics.loglikelihood_acc_norm_token, Metrics.loglikelihood_acc_norm_pmi],
         )
 
 

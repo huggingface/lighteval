@@ -1,10 +1,12 @@
+from typing import get_args
+from ..tasks.mqa.meta_mmlu import MetaMMLUTask
 from ..tasks.utils.tasks_helpers import tasks_to_string
 from ..tasks.suites.indic_evals import ARCIndTask, BoolQIndTask, HellaSwagIndTask
 from ..tasks.qa.Indicqa import IndicQATask
 from ..tasks.mqa.indicxcopa import XCopaIndicTask
 from ..tasks.nli.indicnxnli import XNLIIndicTask
 from ..tasks.qa.mintaka import MintakaTask
-from ..tasks.mqa.mlmm import get_mlmm_tasks
+from ..tasks.mqa.mlmm import MMLU_SUBSET, get_mlmm_tasks
 from ..tasks.mqa_with_context.belebele import BelebeleTask
 from ..tasks.mqa_with_context.xquad import XquadTask
 from ..tasks.nli.indicnxnli import XNLIIndicTask
@@ -38,6 +40,7 @@ _MC_TASKS = [
     ARCIndTask(subset="challenge"),
     HellaSwagIndTask(),
     BoolQIndTask(),
+    *[MetaMMLUTask("hi", subset) for subset in get_args(MMLU_SUBSET)],
     *get_mlmm_tasks("hi")
 ]
 
@@ -50,6 +53,7 @@ TASKS_GROUPS = {
     "mc": tasks_to_string(_MC_TASKS),
     "xnli": tasks_to_string([XNLITask(lang="hi", version=version) for version in (1, 2)] +
                             [XNLIIndicTask(lang="hi", version=version) for version in (1, 2)]),
+    "meta_mmlu": tasks_to_string([MetaMMLUTask("hi", subset) for subset in get_args(MMLU_SUBSET)])
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

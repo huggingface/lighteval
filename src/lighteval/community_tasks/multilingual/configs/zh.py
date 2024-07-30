@@ -1,6 +1,6 @@
 from typing import get_args
 from ..tasks.utils.tasks_helpers import tasks_to_string
-from ..tasks.mqa.agieval import CHINESE_AGIEVAL_TASK_TYPE, ChineseAgievalTask
+from ..tasks.mqa.agieval import CHINESE_AGIEVAL_TASK_TYPE, ChineseAgievalTask, MULTICHOICE_JOIN_VARIANT
 from ..tasks.mqa.ceval import CEVAL_TASK_TYPE, CEvalTask
 from ..tasks.mqa.cmmlu import CMMLU_TASK_TYPE, CMMLUTask
 from ..tasks.mqa.mlmm import get_mlmm_tasks
@@ -41,8 +41,8 @@ _MC_TASKS = [
     M3ExamTask(lang="zh"),
     C3Task(),
     *[CMMLUTask(task) for task in get_args(CMMLU_TASK_TYPE)],
-    *[CEvalTask(task, show_options=show_options) for task in get_args(CEVAL_TASK_TYPE) for show_options in [True,False]],
-    *[ChineseAgievalTask(task, show_options=show_options) for task in get_args(CHINESE_AGIEVAL_TASK_TYPE) for show_options in [True,False]],
+    *[CEvalTask(task, show_options=False, join_variant=join_variant) for task in get_args(CEVAL_TASK_TYPE) for join_variant in get_args(MULTICHOICE_JOIN_VARIANT)],
+    *[ChineseAgievalTask(task, show_options=False, join_variant=join_variant) for task in get_args(CHINESE_AGIEVAL_TASK_TYPE) for join_variant in get_args(MULTICHOICE_JOIN_VARIANT)],
     *get_mlmm_tasks("zh")
 ]
 
@@ -53,8 +53,8 @@ TASKS_GROUPS = {
     "mc": tasks_to_string(_MC_TASKS),
     "xnli": tasks_to_string([XNLITask(lang="zh", version=version) for version in (1, 2)] +
                             [PawnsXTask(lang="zh", version=version) for version in (1, 2)]),
-    "ceval": tasks_to_string([CEvalTask(task, show_options=show_options) for task in get_args(CEVAL_TASK_TYPE) for show_options in [True,False]]),
-    "agieval": tasks_to_string([ChineseAgievalTask(task, show_options=show_options) for task in get_args(CHINESE_AGIEVAL_TASK_TYPE) for show_options in [True,False]]),
+    "ceval": tasks_to_string([CEvalTask(task, show_options=False, join_variant=join_variant) for task in get_args(CEVAL_TASK_TYPE) for join_variant in get_args(MULTICHOICE_JOIN_VARIANT)]),
+    "agieval": tasks_to_string([ChineseAgievalTask(task, show_options=False, join_variant=join_variant) for task in get_args(CHINESE_AGIEVAL_TASK_TYPE) for join_variant in get_args(MULTICHOICE_JOIN_VARIANT)]),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

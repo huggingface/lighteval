@@ -1,6 +1,6 @@
 from typing import Literal
-from ..utils.prompts import get_ceval_prompt
-from lighteval.metrics.metrics import Metrics
+from ..utils.prompts import get_ceval_prompt, MULTICHOICE_JOIN_VARIANT
+from lighteval.metrics.metrics import Metrics 
 
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
@@ -63,10 +63,10 @@ CEVAL_TASK_TYPE = Literal[
 
 
 class CEvalTask(LightevalTaskConfig):
-    def __init__(self, task: CEVAL_TASK_TYPE, show_options: bool = False):
+    def __init__(self, task: CEVAL_TASK_TYPE, show_options: bool = False, join_variant: MULTICHOICE_JOIN_VARIANT="AND"):
         super().__init__(
-            name=f"ceval{'_options' if show_options else ''}:{task}",
-            prompt_function=get_ceval_prompt("zh", show_options),
+            name=f"ceval{'_options' if show_options else ''}_{join_variant}:{task}",
+            prompt_function=get_ceval_prompt("zh", show_options, join_variant),
             suite=("custom",),
             hf_repo="ceval/ceval-exam",
             hf_subset=task,

@@ -37,13 +37,13 @@ class WinogradeTrTask(LightevalTaskConfig):
         )
 
 class ARCEasyTrTask(LightevalTaskConfig):
-    def __init__(self):
+    def __init__(self, version: Literal[1, 2]):
         super().__init__(
-            name=f"arc-tr",
+            name=f"arc{'' if version == 1 else '-v2'}-tr",
             prompt_function=get_arc_prompt("tr", nested_choices=True),
             suite=("custom",),
-            hf_repo="malhajar/arc-tr-v0.2",
-            hf_subset="default",
+            hf_repo=f"malhajar/arc-tr{'-v0.2' if version == 1 else ''}",
+            hf_subset="default" if version == 1 else "ARC-Easy",
             evaluation_splits=("test",),
             metric=(
                 Metrics.loglikelihood_acc,

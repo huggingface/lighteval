@@ -1,3 +1,5 @@
+from ..tasks.mqa.exams import ExamsTask, subjects_by_lang_code
+from ..tasks.mqa_with_context.belebele import BelebeleTask
 from ..tasks.utils.tasks_helpers import tasks_to_string
 from ..tasks.mqa.xcopa import XCopaTask
 from ..tasks.mqa.mlmm import get_mlmm_tasks
@@ -14,6 +16,7 @@ _GENERATIVE_TASKS = [
     MlqaTask(lang="ar"),
     TydiqaTask(lang="ar"),
     XquadTask(lang="ar"),
+    BelebeleTask(lang="ar"),
     *ARABIC_EVALS_GENERATIVE_TASKS,
 ]
 
@@ -26,6 +29,7 @@ _MC_TASKS = [
     XStoryClozeTask(lang="ar"),
     *get_mlmm_tasks("ar"),
     *ARABIC_EVALS_MC_TASKS,
+    *[ExamsTask(lang="ar", subject=subject, show_options=show_options) for subject in subjects_by_lang_code["ar"] for show_options in [True, False]]
 ]
 
 _ALL_TASKS = _GENERATIVE_TASKS + _MC_TASKS
@@ -35,6 +39,8 @@ TASKS_GROUPS = {
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
     "xnli": tasks_to_string([XNLITask(lang="ar", version=version) for version in (1, 2)]),
+    "belebele": tasks_to_string([BelebeleTask(lang="ar")]),
+    "exams": tasks_to_string([ExamsTask(lang="ar", subject=subject, show_options=show_options) for subject in subjects_by_lang_code["ar"] for show_options in [True, False]])
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

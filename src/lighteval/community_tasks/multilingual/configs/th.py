@@ -1,5 +1,7 @@
 from typing import get_args
 
+from ..tasks.mqa.meta_mmlu import MetaMMLUTask, MMLU_SUBSET
+
 from ..tasks.utils.tasks_helpers import tasks_to_string
 
 from ..tasks.nli.wsci import WSCITask
@@ -24,7 +26,8 @@ _MC_TASKS = [
     M3ExamTask(lang="th"),
     BelebeleTask(lang="th"),
     WSCITask(lang="th"),
-    *[ThaiExamsTask(subset=sb) for sb in get_args(ThaiExamSubset)]
+    *[ThaiExamsTask(subset=sb) for sb in get_args(ThaiExamSubset)],
+    *[MetaMMLUTask("th", subset) for subset in get_args(MMLU_SUBSET)],
 ]
 _ALL_TASKS = list(set(_GENERATIVE_TASKS + _MC_TASKS))
 
@@ -33,6 +36,7 @@ TASKS_GROUPS = {
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
     "xnli": tasks_to_string([XNLITask(lang="th", version=version) for version in (1, 2)]),
+    "meta_mmlu": tasks_to_string([MetaMMLUTask("th", subset) for subset in get_args(MMLU_SUBSET)])
 }
 
 

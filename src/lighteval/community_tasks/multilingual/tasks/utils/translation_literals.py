@@ -19,6 +19,7 @@ LANG_NAMES = {
     "italian": "it",
     "javanese": "jv",
     "hindi": "hi",
+    "turkish": "tr",
     "portuguese": "pt",
     "thai": "th",
     "vietnamese": "vi",
@@ -73,7 +74,7 @@ NLI_QUESTION = {
     "te": "కదా",
     "th": "ใช่ไหม",
     "tr": "değil mi",
-    "zh": "对吧",
+    "zh": "是不是",
 }
 
 ENTAILMENT_LABELS = {
@@ -112,7 +113,7 @@ CONTRADICTION_LABELS = {
     "te": "కాదు",
     "th": "ไม่",
     "tr": "Hayır",
-    "zh": "不",
+    "zh": "不是",
 }
 
 IMPOSSIBLE = {
@@ -232,4 +233,13 @@ COLON = {
     "th": ":",
     "tr": ":",
     "zh": "：",
+}
+
+
+AND = {
+    "zh": "和",
+}
+
+OR = {
+    "zh": "或",
 }

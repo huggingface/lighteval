@@ -1,6 +1,7 @@
 # MMML
 
-from functools import reduce
+from functools import partial, reduce
+import os
 import re
 from typing import Any, Literal, Optional, Callable
 
@@ -26,11 +27,14 @@ from ..utils.translation_literals import (
     SPACE,
     YES_LABELS,
     FULL_STOP,
+    AND,
+    OR
 )
 from lighteval.tasks.doc import Doc
 from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 
 PUNCT = "-.!?،؟‽,。，？؟،। "
+MULTICHOICE_JOIN_VARIANT = Literal["AND", "OR", "NEW_LINE", "COMMA"]
 
 
 def decapitalize(word: str):
@@ -246,8 +250,17 @@ def get_ar_mmlu_prompt(lang: LANGS):
         [line["A"], line["B"], line["C"], line["D"]],
         LETTER_INDICES.index(line["answer"]),
     )
+    
+def get_meta_mmlu_prompt(lang: LANGS):
+    prompter = _get_multi_qa_prompt(lang)
+    return lambda line, task_name: prompter(
+        task_name,
+        line["input_question"],
+        line["input_choice_list"].values(),
+        LETTER_INDICES.index(line["input_correct_responses"][0]),
+    )
 
-def get_ceval_prompt(lang: LANGS, show_options: bool = False):
+def get_ceval_prompt(lang: LANGS, show_options: bool = False, join_variant: MULTICHOICE_JOIN_VARIANT="AND"):
     prompter = _get_multi_qa_prompt(lang)
     # All ceval tasks ends with ____(。?)
     # Some can follow this fill space with possible answers in format
@@ -255,32 +268,33 @@ def get_ceval_prompt(lang: LANGS, show_options: bool = False):
     # We must thus remove ___ and extract the answers from the question
     
 
-    prompter = _get_multi_qa_prompt(lang)
+    multichoice_joiner = partial(multichoice_join, lang=lang, variant=join_variant)
+
     def adapter(line, task_name):
         answers = [line["A"], line["B"], line["C"], line["D"]]
         parts = line['question'].rsplit('____', maxsplit=1)
         cleaned_question = parts[0].rstrip(PUNCT).strip()
         possible_answers_part = parts[1].lstrip(PUNCT)
         gold_index = LETTER_INDICES.index(line["answer"])
-        
-        choices_unique_chars = set("".join(answers).replace("和", ""))
-        
         # Sometimes there can be choose one of the following from options.
         # In this case we want to extract the answer from the question to comply with CF format.
-        has_answers_in_question = choices_unique_chars.issubset("①②③④⑤⑥")
-        maybe_extracted_answers = _extract_answers_from_string(possible_answers_part, answers, gold_index, sorted(list(choices_unique_chars))) if has_answers_in_question else None
+
+        maybe_extracted_answers = _extract_answers_from_string(possible_answers_part, answers)
         if maybe_extracted_answers:
-            start_index, answers, gold_index = maybe_extracted_answers
+            start_index, multi_choices = maybe_extracted_answers
             # Here we don't expect anything to be before the answers from second part
             assert start_index == 0, f"Start index is not 0: {start_index}"
+            answers = [multichoice_joiner(mc) for mc in multi_choices]
         else:
             # If the second part is not list of answers we return it back
             cleaned_question = f"{cleaned_question} {possible_answers_part}" if possible_answers_part else cleaned_question
             
         # Lastly make it into question:
         cleaned_question = f"{cleaned_question.rstrip(PUNCT).strip()}？"
-        if not all(i < len(answers) for i in as_list(gold_index)):
-            raise ValueError(f"Gold index is out of bounds: {gold_index}")
+        
+        # If still have weird numbers only answers we discrd this sample
+        if set("".join(answers).replace("和", "").strip()).issubset("①②③④⑤⑥"):
+            return None
 
         return prompter(task_name, cleaned_question, answers, gold_index, show_options=show_options)
 
@@ -302,7 +316,7 @@ def get_alghafa_prompt(lang: LANGS):
     return adapter
 
 
-def get_m_exams_prompt(lang: LANGS):
+def get_m_exams_prompt(lang: LANGS, show_options: bool = False):
     prompter = _get_multi_qa_prompt(lang)
 
     def adapter(line, task_name):
@@ -313,6 +327,7 @@ def get_m_exams_prompt(lang: LANGS):
             line["question"]["stem"],
             texts,
             letters.index(line["answerKey"]),
+            show_options=show_options
         )
 
     return adapter
@@ -342,9 +357,11 @@ def get_m_xcsr_prompt(lang: LANGS):
     return adapter
 
 
-def get_agieval_prompt(lang: Literal["zh"], show_options: bool = False):
+def get_agieval_prompt(lang: Literal["zh"], show_options: bool = False, join_variant: MULTICHOICE_JOIN_VARIANT = "AND"):
     # Kinda meh as some questions require knowledge of possible answers
     prompter = _get_multi_qa_prompt(lang)
+    multichoice_joiner = partial(multichoice_join, lang=lang, variant=join_variant)
+    multichoice_composer = partial(multichoice_compose, lang=lang, variant=join_variant)
 
     def adapter(line, task_name):
         # Remove the question at the start to get consistency
@@ -354,18 +371,22 @@ def get_agieval_prompt(lang: Literal["zh"], show_options: bool = False):
         original_choices = line["choices"]
         cleaned_choices = [answer_prefix_re.sub("", c).strip() for c in original_choices]
         gold_index = line["gold"]
-        # Ignore 和 ①和④ which sometimes joins together the possible options
-        choices_unique_chars = set("".join(cleaned_choices).replace("和", ""))
         
         # Sometimes there can be choose one of the following from options.
         # In this case we want to extract the answer from the question to comply with CF format.
-        has_answers_in_question = choices_unique_chars.issubset("①②③④⑤") and len(gold_index) == 1
-        maybe_extracted_answers = _extract_answers_from_string(question, cleaned_choices, gold_index[0], sorted(list(choices_unique_chars))) if has_answers_in_question else None
+        maybe_extracted_answers = _extract_answers_from_string(question, cleaned_choices)
         if maybe_extracted_answers:
-            start_index, cleaned_choices, gold_index = maybe_extracted_answers
+            start_index, multi_choices = maybe_extracted_answers
             question = question[:start_index]
-            
+            cleaned_choices = [multichoice_joiner(mc) for mc in multi_choices]
+        
+        cleaned_choices, gold_index = multichoice_composer(cleaned_choices, gold_index)
         question = question.strip()
+
+        # If still have weird numbers only answers we discrd this sample
+        if set("".join(cleaned_choices).replace("和", "").strip()).issubset("①②③④⑤⑥"):
+            return None
+        
         return prompter(
             task_name, question, cleaned_choices, gold_index, context=context,
             show_options=show_options
@@ -836,12 +857,31 @@ def get_hellaswag_prompt_full_ctx(lang: LANGS, use_activity_label: bool = True):
 
 def xcodah_prompt(line: dict[str, Any], task_name: str):
     gold_index = line["question"]["choices"]["label"].index(line["answerKey"])
+    # All the choices have already common prefix "baken in" so we have to remove to get clearer signal
+    # Extract common prefix from choices
+    choices = line["question"]["choices"]["text"]
+    common_prefix = os.path.commonprefix(choices)
+
+    # Backtract to first space to get good tokenization
+    common_prefix = common_prefix[:common_prefix.rfind(" ")+1]
+    
+    # Remove common prefix from each choice
+    cleaned_choices = [choice[len(common_prefix):] for choice in choices]
+    
+    # The space will be prepended by prompter to all choices
+
+    # If there is a common_prefix is must have a space thus remove it and add it to choices instead
+    if len(common_prefix) > 0:
+        common_prefix = common_prefix.strip()
+        cleaned_choices = [f" {c}" for c in cleaned_choices]
+
+    
     return Doc(
         task_name=task_name,
-        query="",
-        choices=line["question"]["choices"]["text"],
+        query=common_prefix,
+        choices=cleaned_choices,
         gold_index=gold_index,
-        uncoditioned_prefix=None,
+        uncoditioned_prefix="",
     )
 
 
@@ -899,7 +939,7 @@ def get_wsci_prompt(lang: Literal["th"]):
     return wsci
 
 
-def _extract_answers_from_string(answer_string: str, task_answers: list[str], gold_idx: int, answers_letters: list[str]=["①", "②", "③", "④"]) -> Optional[tuple[int, list[str], list[int]]]:
+def _extract_answers_from_string(answer_string: str, task_answers: list[str]) -> Optional[tuple[int, list[list[str]]]]:
     """
     Extracts answers from the question. The search is done from the end to the beginning.
     The goal is to extract multichoice answers from a question
@@ -912,7 +952,7 @@ def _extract_answers_from_string(answer_string: str, task_answers: list[str], go
         answers (list[str]): Task answers
         gold_idx (int): The index of the gold answer.
     Returns:
-        Optional[tuple[int, list[str], list[int]]]: A tuple containing the start index of the answers, list of answers and list of new gold indices.
+        Optional[tuple[int, list[list[str]]]]: A tuple containing the start index of the answers, list of list of answers (as answers can have multiple correct solutions).
     """
     def extract_answer(acc: tuple[str, int, list[str]], symbol: str) -> tuple[str, int, list[str]]:
         """
@@ -928,16 +968,20 @@ def _extract_answers_from_string(answer_string: str, task_answers: list[str], go
             return text, -1, answers
         return text, end_index, answers + [text[end_index:start_index]]
     
+        
+    # Remove and from answers
+    task_answers = [answer.replace("和", "").strip() for answer in task_answers]
+    answer_letters = set("".join(task_answers))
+    
+    if not answer_letters.issubset("①②③④⑤⑥"):
+        return None
+    
 
     # Try to extract answers from the possible_answers_part
     answer_string = answer_string.strip()
     
-
-    
-    
-
     # Split by ①②③④ to get the answers
-    _, last_index, found_answers = reduce(extract_answer, reversed(answers_letters), (answer_string, len(answer_string), []))
+    _, last_index, found_answers = reduce(extract_answer, sorted(list(answer_letters), reverse=True), (answer_string, len(answer_string), []))
     if last_index == -1:
         return None
     
@@ -945,13 +989,49 @@ def _extract_answers_from_string(answer_string: str, task_answers: list[str], go
     
 
     # Ensure we have extracted all answers
-    if len(found_answers) != len(answers_letters):
+    if len(found_answers) != len(answer_letters):
         return None
     
 
     found_answers = [answer.rstrip(PUNCT + ";").strip() for answer in found_answers]
-    id_answer_pairs = [(answer[:1], answer[1:]) for answer in found_answers]
-    new_gold_idx = [i for i, (id, _) in enumerate(id_answer_pairs) if id in task_answers[gold_idx]]
-    if len(new_gold_idx) == 0:
+    letter_answer_dict = {answer[:1]: answer[1:].strip() for answer in found_answers}
+    
+    new_answer_list = [[letter_answer_dict.get(letter) for letter in answer] for answer in task_answers]
+    
+    # I can't figure out case where this wouldn't hold but just to be sure
+    if any(any(a is None for a in l_ans) for l_ans in new_answer_list):
         return None
-    return last_index, [answer for _, answer in id_answer_pairs], new_gold_idx
+    
+    return last_index, new_answer_list
+
+
+def multichoice_join(choices: list[str], lang: str, variant: MULTICHOICE_JOIN_VARIANT):
+    separator: str
+    if variant == "AND":
+        separator = f"{SPACE[lang]}{AND[lang]}{SPACE[lang]}"
+    elif variant == "OR":
+        separator = f"{SPACE[lang]}{OR[lang]}{SPACE[lang]}"
+    elif variant == "COMMA":
+        separator = f"{COMMA[lang]}{SPACE[lang]}"
+    elif variant == "NEW_LINE":
+        # We keep space to get consistent tokenization
+        separator = f"\n{SPACE[lang]}"
+        
+    return separator.join(choices)
+
+
+def multichoice_compose(choices: list[str], gold_idx: list[int], lang: str, variant: MULTICHOICE_JOIN_VARIANT):
+    if len(gold_idx) == 1:
+        return choices, gold_idx
+    
+    multichoice_joiner = partial(multichoice_join, lang=lang, variant=variant)
+    
+    new_choices = [multichoice_joiner([choices[i] for i in gold_idx])] + [
+        choice for i,choice in enumerate(choices) if not i in gold_idx
+    ]
+    
+    # All correct choices are now at 0
+    return new_choices, [0]
+    
+    
+

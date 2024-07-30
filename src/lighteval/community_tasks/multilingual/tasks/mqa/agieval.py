@@ -1,7 +1,7 @@
 
 import re
 from typing import Literal
-from ..utils.prompts import get_agieval_prompt, answer_prefix_re
+from ..utils.prompts import get_agieval_prompt, answer_prefix_re, MULTICHOICE_JOIN_VARIANT
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
@@ -21,10 +21,10 @@ CHINESE_AGIEVAL_TASK_TYPE = Literal[
 ]
 
 class ChineseAgievalTask(LightevalTaskConfig):
-    def __init__(self, task: CHINESE_AGIEVAL_TASK_TYPE, show_options: bool = False):
+    def __init__(self, task: CHINESE_AGIEVAL_TASK_TYPE, show_options: bool = False, join_variant: MULTICHOICE_JOIN_VARIANT = "AND"):
         super().__init__(
-            name=f"agieval{'_options' if show_options else ''}:{task}",
-            prompt_function=get_agieval_prompt("zh", show_options=show_options),
+            name=f"agieval{'_options' if show_options else ''}_{join_variant}:{task}",
+            prompt_function=get_agieval_prompt("zh", show_options=show_options, join_variant=join_variant),
             suite=("custom",),
             hf_repo=f"hails/agieval-{task}",
             hf_subset="default",
