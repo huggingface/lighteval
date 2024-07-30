@@ -503,6 +503,27 @@ def get_mlqa_prompt(lang: LANGS):
         )
     return adapter
 
+def get_mkqa_prompt(lang: LANGS, lang_key: str):
+    prompter = _get_qa_prompt(lang)
+    def adapter(line, task_name):
+        text = line["answers"][lang_key][0]["text"]
+        if text is None:
+            return None
+
+        aliases = line["answers"][lang_key][0]["aliases"]
+        answers = list(filter(lambda x: len(x.strip()) > 0, [text] + aliases))
+        # Some samples are broken so this is heuristic
+        # e. g   'text': '七月 20, 1969',
+        #        'aliases': ['1', 'u', ',', '2', ' ', '6', 'l', 'y', '9', '0', 'j']}],
+        if len(answers) == 0 or len(answers) > 5:
+            return None
+
+        return prompter(
+            task_name,
+            line["queries"][lang_key],
+            answers
+    )
+    return adapter
 
 def get_tquad_prompt(lang: LANGS):
     prompter = _get_qa_prompt(lang)
@@ -648,6 +669,15 @@ def get_xnli_prompt(lang: LANGS, version: Literal[1,2]):
         task_name, line["premise"], line["hypothesis"], label_remap[int(line["label"])],
     )
 
+def get_ocnli_prompt(lang: LANGS, version: Literal[1,2]):
+    prompter = _get_nli_prompt(lang, ["entailment", "contradiction"], version)
+    label_remap = {
+        0: 0,
+        2: 1,
+    }
+    return lambda line, task_name: prompter(
+        task_name, line["sentence1"], line["sentence2"], label_remap[int(line["label"])]
+    )
 
 def get_paws_x_prompt(lang: LANGS, version: Literal[1,2]):
     # Each label has two possible values: 0 indicates the pair has different meaning, while 1 indicates the pair is a paraphrase.

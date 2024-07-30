@@ -1,5 +1,7 @@
 from typing import get_args
 
+from ..tasks.qa.mkqa import MkqaTask, TaskType
+
 from ..tasks.mqa.exams import ExamsTask, subjects_by_lang_code
 from ..tasks.utils.tasks_helpers import tasks_to_string
 
@@ -17,6 +19,7 @@ from ..tasks.mqa.meta_mmlu import MetaMMLUTask, MMLU_SUBSET
 _GENERATIVE_TASKS = [
     MintakaTask(lang="fr"),
     *_FRENCH_BENCH_GENERATIVE_TASKS,
+    *[MkqaTask(lang="fr", type=type) for type in get_args(TaskType)]
 ]
 
 _MC_TASKS = [
@@ -46,8 +49,8 @@ TASKS_GROUPS = {
                             ),
     "meta_mmlu": tasks_to_string([MetaMMLUTask("fr", subset) for subset in get_args(MMLU_SUBSET)]),
     "xcodah": tasks_to_string([XCODAHTask(lang="fr")]),
-    "exams": tasks_to_string([ExamsTask(lang="fr", subject=subject, show_options=show_options) for subject in subjects_by_lang_code["fr"] for show_options in [True, False]])
-    
+    "exams": tasks_to_string([ExamsTask(lang="fr", subject=subject, show_options=show_options) for subject in subjects_by_lang_code["fr"] for show_options in [True, False]]),
+    "mkqa": tasks_to_string([MkqaTask(lang="fr", type=type) for type in get_args(TaskType)])
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

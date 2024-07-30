@@ -13,10 +13,12 @@ from ..tasks.mqa_with_context.xquad import XquadTask
 from ..tasks.nli.xnli import XNLITask
 from ..tasks.qa.tydiqa import TydiqaTask
 from ..tasks.mqa.xcopa import XCopaTask
+from ..tasks.qa.mkqa import MkqaTask, TaskType
 
 _GENERATIVE_TASKS = [
     TydiqaTask(lang="th"),
     XquadTask(lang="th"),
+    *[MkqaTask(lang="th", type=task_type) for task_type in get_args(TaskType)],
 ]
 
 _MC_TASKS = [
@@ -36,7 +38,8 @@ TASKS_GROUPS = {
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
     "xnli": tasks_to_string([XNLITask(lang="th", version=version) for version in (1, 2)]),
-    "meta_mmlu": tasks_to_string([MetaMMLUTask("th", subset) for subset in get_args(MMLU_SUBSET)])
+    "meta_mmlu": tasks_to_string([MetaMMLUTask("th", subset) for subset in get_args(MMLU_SUBSET)]),
+    "mkqa": tasks_to_string([MkqaTask(lang="th", type=task_type) for task_type in get_args(TaskType)])
 }
 
 

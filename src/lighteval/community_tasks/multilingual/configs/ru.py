@@ -1,4 +1,6 @@
 from typing import get_args
+
+from ..tasks.qa.mkqa import MkqaTask, TaskType
 from ..tasks.utils.tasks_helpers import tasks_to_string
 
 from ..tasks.suites.mera import GENERATIVE_TASKS as _MERA_GENERATIVE_TASKS, MC_TASKS as _MERA_MC_TASKS, RCBTask
@@ -16,6 +18,7 @@ _GENERATIVE_TASKS = [
     TydiqaTask(lang="ru"),
     XquadTask(lang="ru"),
     *_MERA_GENERATIVE_TASKS,
+    *[MkqaTask(lang="ru", type=task_type) for task_type in get_args(TaskType)]
 ]
 
 _MC_TASKS = [
@@ -37,6 +40,7 @@ TASKS_GROUPS = {
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
     "xnli": tasks_to_string([RCBTask(version=version) for version in (1, 2)] + [XNLITask(lang="ru", version=version) for version in (1, 2)]),
+    "mkqa": tasks_to_string([MkqaTask(lang="ru", type=task_type) for task_type in get_args(TaskType)])
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

@@ -8,11 +8,13 @@ from ..tasks.mqa_with_context.belebele import BelebeleTask
 from ..tasks.mqa_with_context.xquad import XquadTask
 from ..tasks.nli.xnli import XNLITask
 from ..tasks.mqa.xcopa import XCopaTask
+from ..tasks.qa.mkqa import MkqaTask, TaskType
 
 
 _GENERATIVE_TASKS = [
     XquadTask(lang="tr"),
     Tquad2Task(),
+    *[MkqaTask(lang="tr", type=task_type) for task_type in get_args(TaskType)]
 ]
 
 _MC_TASKS = [
@@ -36,7 +38,8 @@ TASKS_GROUPS = {
     "mc": tasks_to_string(_MC_TASKS),
     "xnli": tasks_to_string([XNLITask(lang="tr", version=version) for version in (1, 2)]),
     "arc": tasks_to_string([ARCEasyTrTask(version=2)]),
-    "exams": tasks_to_string([ExamsTask(lang="tr", subject=subject, show_options=show_options) for subject in subjects_by_lang_code["tr"] for show_options in [True, False]])
+    "exams": tasks_to_string([ExamsTask(lang="tr", subject=subject, show_options=show_options) for subject in subjects_by_lang_code["tr"] for show_options in [True, False]]),
+    "mkqa": tasks_to_string([MkqaTask(lang="tr", type=task_type) for task_type in get_args(TaskType)])
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]
