@@ -200,9 +200,16 @@ NO_TENSORBOARDX_WARN_MSG = (
 )
 
 
+def is_openai_available() -> bool:
+    return importlib.util.find_spec("openai") is not None
+
+
+NO_OPENAI_ERROR_MSG = "You are trying to use an Open AI LLM as a judge, for which you need `openai`, which is not available in your environment. Please install it using pip."
+
+
 def can_load_extended_tasks() -> bool:
     imports = []
-    for package in ["langdetect"]:
+    for package in ["langdetect", "openai"]:
         imports.append(importlib.util.find_spec(package))
 
     return all(cur_import is not None for cur_import in imports)

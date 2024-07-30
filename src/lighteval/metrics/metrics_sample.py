@@ -651,7 +651,6 @@ class JudgeLLM:
             model=judge_model_name,
             templates_path=template_path,
             multi_turn=multi_turn,
-            use_transformers=use_transformers,
             api_key=api_key,
             url=url,
         )

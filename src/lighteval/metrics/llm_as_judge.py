@@ -27,29 +27,43 @@ import re
 import time
 from typing import Any, Optional
 
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+
 from lighteval.logging.hierarchical_logger import hlog_warn
 
 
 class JudgeLM:
     """
-    A class representing a judge for evaluating answers using the Transformers library.
+    A class representing a judge for evaluating answers using either the OpeanAI or Transformers library.
 
     Args:
         model (str): The name of the model to use.
         templates_path (str): The path to the JSON file containing the templates for prompts.
         multi_turn (bool): Whether to use multi-turn prompts
+        url (Optional[str]): The URL for the OpenAI API.
+        api_key (Optional[str]): The API key for the OpenAI API (either OpenAI or HF key).
 
     Attributes:
         model (str): The name of the model.
         templates (dict): A dictionary containing the templates for prompts.
         one_score_pattern (re.Pattern): A regular expression pattern for extracting scores from the response.
         one_score_pattern_backup (re.Pattern): A backup regular expression pattern for extracting scores.
+        API_MAX_RETRY (int): The maximum number of retries for the API.
+        API_RETRY_SLEEP (int): The sleep time between retries.
+        client (Optional[OpenAI]): The OpenAI client.
+        pipe (Optional[pipeline]): The Transformers pipeline.
+        use_transformers (bool): Whether to use the Transformers library.
+        url (Optional[str]): The URL for the OpenAI API.
+        api_key (Optional[str]): The API key for the OpenAI API (either OpenAI or HF key).
 
     Methods:
         evaluate_answer: Evaluates an answer using the OpenAI API or Transformers library.
         __get_prompts_multi_turn: Generates prompts for multi-turn conversations.
         __get_prompts_single_turn: Generates prompts for single-turn conversations.
         __process_judge_response: Processes the judge's response and extracts the score.
+        __call_openai_api: Calls the OpenAI API to get the judge's response.
+        __lazy_load_client: Lazy loads the OpenAI client or Transformers pipeline.
     """
 
     def __init__(
@@ -57,7 +71,6 @@ class JudgeLM:
         model: str,
         templates_path: str,
         multi_turn: bool = False,
-        use_transformers: bool = False,
         url: Optional[str] = None,
         api_key: Optional[str] = None,
     ):
@@ -82,24 +95,21 @@ class JudgeLM:
 
         self.client = None
         self.pipe = None
-        self.use_transformers = use_transformers
+
+        if url is not None and api_key is None:
+            raise ValueError("API key must be provided if using a custom URL. `export HF_TOKEN=your_token`")
+
+        if url is None and api_key is None:
+            self.use_transformers = True
+        else:
+            self.use_transformers = False
+
         self.url = url
         self.api_key = api_key
 
-    def lazy_load_client(self):
-        if not self.use_transformers:
-            if self.client is None:
-                from openai import OpenAI
-
-                if self.url is None:
-                    self.client = OpenAI(api_key=self.api_key)
-                else:
-                    self.client = OpenAI(base_url=self.url, api_key=self.api_key)
-        else:
+    def __lazy_load_client(self):
+        if self.use_transformers:
             if self.pipe is None:
-                import torch
-                from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
-
                 transformers_model = AutoModelForCausalLM.from_pretrained(
                     self.model, torch_dtype=torch.bfloat16, trust_remote_code=False, device_map="cuda"
                 )
@@ -110,6 +120,14 @@ class JudgeLM:
                     tokenizer=tokenizer,
                     max_new_tokens=50,
                 )
+        else:
+            if self.client is None:
+                from openai import OpenAI
+
+                if self.url is None:
+                    self.client = OpenAI(api_key=self.api_key)
+                else:
+                    self.client = OpenAI(base_url=self.url, api_key=self.api_key)
 
     def evaluate_answer(
         self, questions: list[str], answers: list[str], references: list[str]
@@ -126,7 +144,7 @@ class JudgeLM:
             A tuple containing the score, prompts, and judgment.
         """
         # lazy loading of the pipeline
-        self.lazy_load_client()
+        self.__lazy_load_client()
 
         prompts = [
             self.__get_prompts_single_turn(

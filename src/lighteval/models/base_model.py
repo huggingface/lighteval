@@ -351,6 +351,7 @@ class BaseModel(LightevalModel):
             max_generated_tokens = request.generation_size
             context = request.context[0]
             max_context_size_allowed = self.max_length - max_generated_tokens
+
             model_inputs = self.tokenizer(
                 context,
                 padding=True,
