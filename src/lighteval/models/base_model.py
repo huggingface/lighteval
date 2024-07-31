@@ -91,6 +91,8 @@ class BaseModel(LightevalModel):
         if not config.model_parallel and not isinstance(config.quantization_config, BitsAndBytesConfig):
             hlog(f"Using Data Parallelism, putting model on device {self._device}")
             self.model = self.model.to(self._device)
+        if config.compile:
+            self.model.model.compile()
 
         self.model_name = _simplify_name(config.pretrained)
         self.model_sha = config.get_model_sha()
