@@ -96,9 +96,6 @@ class JudgeLM:
         self.client = None
         self.pipe = None
 
-        if url is not None and api_key is None:
-            raise ValueError("API key must be provided if using a custom URL. `export HF_TOKEN=your_token`")
-
         self.use_transformers = url is None and api_key is None
 
         self.url = url
