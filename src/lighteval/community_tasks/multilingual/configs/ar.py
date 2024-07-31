@@ -1,4 +1,6 @@
 from typing import get_args
+
+from ..tasks.mqa.arabic_mmlu import AR_MMLU_TASK_TYPE, ArabicMMLUTask
 from ..tasks.qa.mkqa import MkqaTask, TaskType
 from ..tasks.mqa.exams import ExamsTask, subjects_by_lang_code
 from ..tasks.mqa_with_context.belebele import BelebeleTask
@@ -20,7 +22,7 @@ _GENERATIVE_TASKS = [
     XquadTask(lang="ar"),
     BelebeleTask(lang="ar"),
     *ARABIC_EVALS_GENERATIVE_TASKS,
-    *[MkqaTask(lang="ar", type=task_type) for task_type in get_args(TaskType)]
+    *[MkqaTask(lang="ar", type=task_type) for task_type in get_args(TaskType)],
 ]
 
 _MC_TASKS = [
@@ -32,7 +34,8 @@ _MC_TASKS = [
     XStoryClozeTask(lang="ar"),
     *get_mlmm_tasks("ar"),
     *ARABIC_EVALS_MC_TASKS,
-    *[ExamsTask(lang="ar", subject=subject, show_options=show_options) for subject in subjects_by_lang_code["ar"] for show_options in [True, False]]
+    *[ExamsTask(lang="ar", subject=subject, show_options=show_options) for subject in subjects_by_lang_code["ar"] for show_options in [True, False]],
+    *[ArabicMMLUTask(task=task) for task in get_args(AR_MMLU_TASK_TYPE)]
 ]
 
 _ALL_TASKS = _GENERATIVE_TASKS + _MC_TASKS
@@ -46,6 +49,7 @@ TASKS_GROUPS = {
     "exams": tasks_to_string([ExamsTask(lang="ar", subject=subject, show_options=show_options) for subject in subjects_by_lang_code["ar"] for show_options in [True, False]]),
     "xcodah": tasks_to_string([XCopaTask(lang="ar")]),
     "mkqa": tasks_to_string([MkqaTask(lang="ar", type=task_type) for task_type in get_args(TaskType)]),
+    "arabic_mmlu": tasks_to_string([ArabicMMLUTask(task=task) for task in get_args(AR_MMLU_TASK_TYPE)]),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

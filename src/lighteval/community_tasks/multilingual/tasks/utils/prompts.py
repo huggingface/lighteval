@@ -259,6 +259,25 @@ def get_meta_mmlu_prompt(lang: LANGS):
         line["input_choice_list"].values(),
         LETTER_INDICES.index(line["input_correct_responses"][0]),
     )
+    
+def get_arabic_mmlu_prompt(lang: LANGS):
+    prompter = _get_multi_qa_prompt(lang)
+    def adapter(line, task_name):
+        question = line['Question']
+        if line["Context"]:
+            question = f"{question}\n{line['Context']}"
+
+        gold_index = LETTER_INDICES.index(line["Answer Key"])
+        options = [line[f"Option {i}"] for i in range(1, 6)]
+        options = [o for o in options if o is not None]
+        assert all(len(o.strip()) > 0 for o in options), f"All options must be non-empty: {options}"
+        return prompter(
+            task_name,
+            question,
+            options,
+            gold_index,
+        )
+    return adapter
 
 def get_ceval_prompt(lang: LANGS, show_options: bool = False, join_variant: MULTICHOICE_JOIN_VARIANT="AND"):
     prompter = _get_multi_qa_prompt(lang)
