@@ -60,7 +60,8 @@ TASKS_GROUPS = {
     "ceval": tasks_to_string([CEvalTask(task, show_options=False, join_variant=join_variant) for task in get_args(CEVAL_TASK_TYPE) for join_variant in get_args(MULTICHOICE_JOIN_VARIANT)]),
     "agieval": tasks_to_string([ChineseAgievalTask(task, show_options=False, join_variant=join_variant) for task in get_args(CHINESE_AGIEVAL_TASK_TYPE) for join_variant in get_args(MULTICHOICE_JOIN_VARIANT)]),
     "ocnli": tasks_to_string([OCNLI(version=version) for version in (1, 2)]),
-    "mkqa": tasks_to_string([MkqaTask(lang="zh", type=task_type) for task_type in get_args(TaskType)])
+    "mkqa": tasks_to_string([MkqaTask(lang="zh", type=task_type) for task_type in get_args(TaskType)]),
+    "xcodah": tasks_to_string([XCODAHTask(lang="zh")])
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

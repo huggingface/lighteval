@@ -53,7 +53,8 @@ TASKS_GROUPS = {
     "mc": tasks_to_string(_MC_TASKS),
     "xnli": tasks_to_string([XNLITask(lang="hi", version=version) for version in (1, 2)] +
                             [XNLIIndicTask(lang="hi", version=version) for version in (1, 2)]),
-    "meta_mmlu": tasks_to_string([MetaMMLUTask("hi", subset) for subset in get_args(MMLU_SUBSET)])
+    "meta_mmlu": tasks_to_string([MetaMMLUTask("hi", subset) for subset in get_args(MMLU_SUBSET)]),
+    "xcodah": tasks_to_string([XCODAHTask("hi")])
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

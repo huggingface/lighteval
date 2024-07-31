@@ -57,8 +57,6 @@ class BelebeleTask(LightevalTaskConfig):
             hf_repo="facebook/belebele",
             hf_subset="default",
             evaluation_splits=(split,),
-            generation_size=-1,
-            stop_sequence=("\n",),
             metric=(
                 Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_nospace,

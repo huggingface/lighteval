@@ -128,8 +128,10 @@ def main(
             tasks_selection = lighteval_config.tasks.tasks
             if lighteval_config.tasks.custom_tasks:
                 _, tasks_groups_dict = get_custom_tasks(lighteval_config.tasks.custom_tasks)
-                if tasks_groups_dict and lighteval_config.tasks.tasks in tasks_groups_dict:
-                    tasks_selection = tasks_groups_dict[lighteval_config.tasks.tasks]
+
+                selected_task_groups = lighteval_config.tasks.tasks.split(",")
+                if tasks_groups_dict and all(task in tasks_groups_dict for task in selected_task_groups):
+                    tasks_selection = ",".join(tasks_groups_dict[task_group] for task_group in selected_task_groups)
 
             task_names_list, few_shots_dict = taskinfo_selector(tasks_selection)
             task_dict = Registry(cache_dir=cache_dir).get_task_dict(

@@ -40,7 +40,8 @@ TASKS_GROUPS = {
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
     "xnli": tasks_to_string([RCBTask(version=version) for version in (1, 2)] + [XNLITask(lang="ru", version=version) for version in (1, 2)]),
-    "mkqa": tasks_to_string([MkqaTask(lang="ru", type=task_type) for task_type in get_args(TaskType)])
+    "mkqa": tasks_to_string([MkqaTask(lang="ru", type=task_type) for task_type in get_args(TaskType)]),
+    "xcodah": tasks_to_string([XCODAHTask("ru")])
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

@@ -40,7 +40,8 @@ TASKS_GROUPS = {
     "mc": tasks_to_string(_MC_TASKS),
     "xnli": tasks_to_string([XNLITask(lang="ar", version=version) for version in (1, 2)]),
     "belebele": tasks_to_string([BelebeleTask(lang="ar")]),
-    "exams": tasks_to_string([ExamsTask(lang="ar", subject=subject, show_options=show_options) for subject in subjects_by_lang_code["ar"] for show_options in [True, False]])
+    "exams": tasks_to_string([ExamsTask(lang="ar", subject=subject, show_options=show_options) for subject in subjects_by_lang_code["ar"] for show_options in [True, False]]),
+    "xcodah": tasks_to_string([XCopaTask(lang="ar")])
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

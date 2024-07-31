@@ -45,6 +45,9 @@ QUESTION = {
 
 OPTIONS = {
     "th": "ตัวเลือก",
+    "tr": "Seçenekler",
+    "fr": "Possibilités",
+    "ar": "خيارات",
     "zh": "选项"
 }
 

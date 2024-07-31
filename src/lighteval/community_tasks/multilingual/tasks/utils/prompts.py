@@ -292,8 +292,8 @@ def get_ceval_prompt(lang: LANGS, show_options: bool = False, join_variant: MULT
         # Lastly make it into question:
         cleaned_question = f"{cleaned_question.rstrip(PUNCT).strip()}？"
         
-        # If still have weird numbers only answers we discrd this sample
-        if set("".join(answers).replace("和", "").strip()).issubset("①②③④⑤⑥"):
+        # If still have weird numbers only answers we discrd this sample or we have just single option
+        if set("".join(answers).replace("和", "").strip()).issubset("①②③④⑤⑥") or len(answers) <= 1:
             return None
 
         return prompter(task_name, cleaned_question, answers, gold_index, show_options=show_options)
@@ -384,7 +384,7 @@ def get_agieval_prompt(lang: Literal["zh"], show_options: bool = False, join_var
         question = question.strip()
 
         # If still have weird numbers only answers we discrd this sample
-        if set("".join(cleaned_choices).replace("和", "").strip()).issubset("①②③④⑤⑥"):
+        if set("".join(cleaned_choices).replace("和", "").strip()).issubset("①②③④⑤⑥") or len(cleaned_choices) <= 1:
             return None
         
         return prompter(
