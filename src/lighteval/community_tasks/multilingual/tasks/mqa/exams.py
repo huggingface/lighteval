@@ -34,7 +34,7 @@ class ExamsTask(LightevalTaskConfig):
         assert subject in subjects_by_lang_code.get(lang, {}), f"Unsuported {lang=} or {subject=}"
         lang_name = LANG_NAMES_INVERTED[lang].capitalize()
         super().__init__(
-            name=f"exams-{lang}:{subject}",
+            name=f"exams{'_options' if show_options else ''}-{lang}:{subject}",
             prompt_function=get_m_exams_prompt(lang, show_options=show_options),
             suite=("custom",),
             hf_repo="mhardalov/exams",
