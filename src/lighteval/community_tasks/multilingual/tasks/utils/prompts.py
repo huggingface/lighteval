@@ -256,7 +256,7 @@ def get_meta_mmlu_prompt(lang: LANGS):
     return lambda line, task_name: prompter(
         task_name,
         line["input_question"],
-        line["input_choice_list"].values(),
+        [v for _, v in sorted(line["input_choice_list"].items())],
         LETTER_INDICES.index(line["input_correct_responses"][0]),
     )
     
