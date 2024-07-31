@@ -130,7 +130,7 @@ class JudgeLM:
         self, questions: list[str], answers: list[str], references: list[str]
     ) -> tuple[list[int], list[list[dict[str, str]]], list[str | None | Any]]:
         """
-        Evaluates an answer using Transformers.
+        Evaluates an answer using either Transformers or OpenAI API.
 
         Args:
             questions (list[str]): A list of questions (can be a list because of multi-turn conversations)
@@ -158,7 +158,7 @@ class JudgeLM:
         judgments = []
         for prompt in prompts:
             if self.client is not None:
-                response = self.__call_openai_api(prompt)
+                response = self.__call_api(prompt)
             else:
                 response = self.pipe(prompt)[0]["generated_text"]
                 response = response[-1]["content"]
@@ -246,13 +246,11 @@ class JudgeLM:
 
         return rating
 
-    def __call_openai_api(self, prompt):
+    def __call_api(self, prompt):
         for _ in range(self.API_MAX_RETRY):
             try:
                 response = self.client.chat.completions.create(
                     model=self.model,
-                    # seed=self.seed,
-                    # temperature=self.temperature,
                     messages=prompt,
                     max_tokens=512,
                     n=1,
