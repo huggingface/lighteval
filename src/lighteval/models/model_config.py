@@ -126,6 +126,7 @@ class BaseModelConfig:
     quantization_config: Optional[BitsAndBytesConfig] = None
     trust_remote_code: bool = False
     use_chat_template: bool = False
+    compile: bool = False
 
     def __post_init__(self):
         # Making sure this parameter is a boolean
@@ -314,6 +315,7 @@ def create_model_config(  # noqa: C901
 
         args_dict["accelerator"] = accelerator
         args_dict["use_chat_template"] = args.use_chat_template
+        args_dict["compile"] = bool(args_dict["compile"]) if "compile" in args_dict else False
 
         return BaseModelConfig(**args_dict)
 
@@ -382,6 +384,7 @@ def create_model_config(  # noqa: C901
 
         # We store the relevant other args
         args_dict["base_model"] = config["merged_weights"]["base_model"]
+        args_dict["compile"] = bool(config["base_params"]["compile"])
         args_dict["dtype"] = config["base_params"]["dtype"]
         args_dict["accelerator"] = accelerator
         args_dict["quantization_config"] = quantization_config
