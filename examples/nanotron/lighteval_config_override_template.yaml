@@ -24,7 +24,6 @@ lighteval:
     dataset_loading_processes: 8
     max_samples: 10
     multichoice_continuations_start_space: null
-    no_multichoice_continuations_start_space: null
     num_fewshot_seeds: null
     tasks: early-signal
     # tasks: custom|hellaswag|0
