@@ -63,7 +63,7 @@ from lighteval.tasks.requests import (
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
 )
-from lighteval.utils import as_list
+from lighteval.utils import as_list, boolstring_to_bool
 from lighteval.utils_parallelism import find_executable_batch_size
 
 
@@ -113,20 +113,10 @@ class NanotronLightevalModel(LightevalModel):
             # To implement PP parallelism we need to think about how we want to sync the output for the PP ranks without outputs
             raise ValueError("PP parallelism is not supported yet")
 
-        multichoice_continuations_start_space = lighteval_config.tasks.multichoice_continuations_start_space
-        if (
-            not multichoice_continuations_start_space
-            and not lighteval_config.tasks.no_multichoice_continuations_start_space
-        ):
-            multichoice_continuations_start_space = None
-            # multichoice_continuations_start_space can be True (forcing space), False (forcing no space) or None (no forcing)
-        if (
+        # multichoice_continuations_start_space can be True (forcing space), False (forcing no space) or None (no forcing)
+        multichoice_continuations_start_space = boolstring_to_bool(
             lighteval_config.tasks.multichoice_continuations_start_space
-            and lighteval_config.tasks.no_multichoice_continuations_start_space
-        ):
-            raise ValueError(
-                "You cannot force both the multichoice continuations to start with a space and not to start with a space"
-            )
+        )
 
         self.generation_config = lighteval_config.generation
         if isinstance(self.generation_config, dict):
@@ -409,10 +399,11 @@ class NanotronLightevalModel(LightevalModel):
         - None (Don't touch - default)
         Todo: find a way to add this back WITHOUT breaking compatibility with the harness
         """
-        if self.multichoice_continuations_start_space is True and continuation[0] != " ":
-            continuation = " " + continuation
-        if self.multichoice_continuations_start_space is False and continuation[0] == " ":
-            continuation = continuation.lstrip()
+        if self.multichoice_continuations_start_space is not None:
+            if self.multichoice_continuations_start_space and continuation[0] != " ":
+                continuation = " " + continuation
+            if not self.multichoice_continuations_start_space and continuation[0] == " ":
+                continuation = continuation.lstrip()
         return continuation
 
     def loglikelihood_single_token(
@@ -443,7 +434,7 @@ class NanotronLightevalModel(LightevalModel):
             if any(len(c) > 1 for c in continuations_enc):
                 raise ValueError(
                     f"Trying to do single token multiple choice but one choice has several tokens: {continuations_enc}. "
-                    "If the additional pre-token is a space, try to set --no_multichoice_continuations_start_space "
+                    "If the additional pre-token is a space, try to set multichoice_continuations_start_space=False in the model parameters "
                 )
             request.tokenized_continuation = continuations_enc
 
