@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 
-class MetricCategory(Enum):
+class MetricCategory(str, Enum):
     TARGET_PERPLEXITY = auto()
     PERPLEXITY = auto()
     GENERATIVE = auto()
@@ -37,7 +37,7 @@ class MetricCategory(Enum):
     IGNORED = auto()
 
 
-class MetricUseCase(Enum):
+class MetricUseCase(str, Enum):
     # General
     ACCURACY = auto()
     PERPLEXITY = auto()
