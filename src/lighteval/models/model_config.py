@@ -124,6 +124,7 @@ class BaseModelConfig:
     quantization_config: Optional[BitsAndBytesConfig] = None
     trust_remote_code: bool = False
     use_chat_template: bool = False
+    compile: bool = False
 
     def __post_init__(self):
         if self.quantization_config is not None and not is_bnb_available():
@@ -309,6 +310,7 @@ def create_model_config(  # noqa: C901
 
         args_dict["accelerator"] = accelerator
         args_dict["use_chat_template"] = args.use_chat_template
+        args_dict["compile"] = bool(args_dict["compile"]) if "compile" in args_dict else False
 
         return BaseModelConfig(**args_dict)
 
@@ -323,10 +325,10 @@ def create_model_config(  # noqa: C901
         )
 
     if config["type"] == "endpoint":
-        reuse_existing_endpoint = config["base_params"]["reuse_existing"]
+        reuse_existing_endpoint = config["base_params"].get("reuse_existing", None)
         complete_config_endpoint = all(
             val not in [None, ""]
-            for key, val in config["instance"].items()
+            for key, val in config.get("instance", {}).items()
             if key not in InferenceEndpointModelConfig.nullable_keys()
         )
         if reuse_existing_endpoint or complete_config_endpoint:
@@ -371,6 +373,7 @@ def create_model_config(  # noqa: C901
 
         # We store the relevant other args
         args_dict["base_model"] = config["merged_weights"]["base_model"]
+        args_dict["compile"] = bool(config["base_params"]["compile"])
         args_dict["dtype"] = config["base_params"]["dtype"]
         args_dict["accelerator"] = accelerator
         args_dict["quantization_config"] = quantization_config
