@@ -296,10 +296,11 @@ class BaseModel(LightevalModel):
         - None (Don't touch - default)
         Todo: find a way to add this back WITHOUT breaking compatibility with the harness
         """
-        if self.multichoice_continuations_start_space is True and continuation[0] != " ":
-            continuation = " " + continuation
-        if self.multichoice_continuations_start_space is False and continuation[0] == " ":
-            continuation = continuation.lstrip()
+        if self.multichoice_continuations_start_space is not None:
+            if self.multichoice_continuations_start_space and continuation[0] != " ":
+                continuation = " " + continuation
+            if not self.multichoice_continuations_start_space and continuation[0] == " ":
+                continuation = continuation.lstrip()
         return continuation
 
     def _model_call(self, inputs: torch.Tensor) -> torch.Tensor:
@@ -949,7 +950,7 @@ class BaseModel(LightevalModel):
             if any(len(c) > 1 for c in continuations_enc):
                 raise ValueError(
                     f"Trying to do single token multiple choice but one choice has several tokens: {continuations_enc}. "
-                    "If the additional pre-token is a space, try to set --no_multichoice_continuations_start_space "
+                    "If the additional pre-token is a space, try to set `multichoice_continuations_start_space=False` in the model parameters "
                 )
             request.tokenized_continuation = continuations_enc
 
