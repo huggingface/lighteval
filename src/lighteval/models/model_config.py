@@ -325,10 +325,10 @@ def create_model_config(  # noqa: C901
         )
 
     if config["type"] == "endpoint":
-        reuse_existing_endpoint = config["base_params"]["reuse_existing"]
+        reuse_existing_endpoint = config["base_params"].get("reuse_existing", None)
         complete_config_endpoint = all(
             val not in [None, ""]
-            for key, val in config["instance"].items()
+            for key, val in config.get("instance", {}).items()
             if key not in InferenceEndpointModelConfig.nullable_keys()
         )
         if reuse_existing_endpoint or complete_config_endpoint:
