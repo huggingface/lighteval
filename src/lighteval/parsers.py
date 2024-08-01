@@ -67,9 +67,6 @@ def parser_accelerate(parser=None):
         "--public_run", default=False, action="store_true", help="Push results and details to a public repo"
     )
     parser.add_argument(
-        "--cache_dir", type=str, default=CACHE_DIR, help="Cache directory used to store datasets and models"
-    )
-    parser.add_argument(
         "--results_org",
         type=str,
         help="Hub organisation where you want to store the results. Your current token must have write access to it",
@@ -99,6 +96,9 @@ def parser_accelerate(parser=None):
         default=None,
         help="Id of a task, e.g. 'original|mmlu:abstract_algebra|5' or path to a texte file with a list of tasks",
     )
+    parser.add_argument(
+        "--cache_dir", type=str, default=CACHE_DIR, help="Cache directory used to store datasets and models"
+    )
     parser.add_argument("--num_fewshot_seeds", type=int, default=1, help="Number of trials the few shots")
     return parser
 
@@ -121,8 +121,27 @@ def parser_nanotron(parser=None):
         help="Path to an optional YAML or python Lighteval config to override part of the checkpoint Lighteval config",
     )
     parser.add_argument(
-        "--cache-dir",
+        "--cache_dir", type=str, default=CACHE_DIR, help="Cache directory used to store datasets and models"
+    )
+
+
+def parser_utils_tasks(parser=None):
+    if parser is None:
+        parser = argparse.ArgumentParser(
+            description="CLI tool for lighteval, a lightweight framework for LLM evaluation"
+        )
+
+    group = parser.add_mutually_exclusive_group(required=True)
+
+    group.add_argument("--list", action="store_true", help="List available tasks")
+    group.add_argument(
+        "--inspect",
         type=str,
         default=None,
-        help="Cache directory",
+        help="Id of tasks or path to a text file with a list of tasks (e.g. 'original|mmlu:abstract_algebra|5') for which you want to manually inspect samples.",
+    )
+    parser.add_argument("--num_samples", type=int, default=10, help="Number of samples to display")
+    parser.add_argument("--show_config", default=False, action="store_true", help="Will display the full task config")
+    parser.add_argument(
+        "--cache_dir", type=str, default=CACHE_DIR, help="Cache directory used to store datasets and models"
     )
