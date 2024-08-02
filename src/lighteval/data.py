@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Iterator
+from typing import Generator, Iterator, Tuple
 
 import torch
 from torch.utils.data import Dataset
@@ -110,7 +110,7 @@ class DynamicBatchDataset(Dataset):
 
         return original_order
 
-    def get_split_start_end(self, split_id: int) -> tuple[int, int]:
+    def get_split_start_end(self, split_id: int) -> Tuple[int, int]:
         """
         Get the start and end indices of a dataset split.
 
@@ -123,7 +123,7 @@ class DynamicBatchDataset(Dataset):
         self.split_start, self.split_end = self.splits[split_id]
         return self.split_start, self.split_end
 
-    def splits_start_end_iterator(self) -> tuple[int, int]:
+    def splits_start_end_iterator(self) -> Generator[Tuple[int, int], None, None]:
         """
         Iterator that yields the start and end indices of each dataset split.
         Also updates the starting batch size for each split (trying to double
@@ -132,7 +132,7 @@ class DynamicBatchDataset(Dataset):
         Yields:
             tuple: A tuple containing the start and end indices of a split.
         """
-        for split_id in range(self.num_dataset_splits):
+        for split_id in range(self.total_size and self.num_dataset_splits):
             yield self.get_split_start_end(split_id)
 
     def __getitem__(self, index) -> Request:
@@ -233,7 +233,8 @@ class GenerativeTaskDataset(DynamicBatchDataset):
                 "You cannot select the number of dataset splits for a generative evaluation at the moment. Automatically inferring."
             )
 
-        all_sorting_criterion = [self._sorting_criteria(self.sorted_data[0])[:2]]
+        if self.sorted_data:
+            all_sorting_criterion = [self._sorting_criteria(self.sorted_data[0])[:2]]
         splits_indices = [[0, None]]
         for ix, req in enumerate(self.sorted_data):
             current_sorting_criteria = self._sorting_criteria(req)
