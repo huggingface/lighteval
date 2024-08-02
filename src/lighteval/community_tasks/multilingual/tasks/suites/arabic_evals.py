@@ -126,7 +126,7 @@ class CustomACVATask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=get_acva_prompt("ar"),
             hf_repo="OALL/ACVA",
-            generation_size=5,
+            generation_size=1,
             stop_sequence=["\n"],
             metric=(
                 get_qa_metric("ar", "exact"),
@@ -421,5 +421,5 @@ MC_TASKS = [
 
 GENERATIVE_TASKS = [
     *ACVA_TASKS,
-    boolq_ar_task
+    # boolq_ar_task
 ]

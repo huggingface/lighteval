@@ -15,7 +15,7 @@ class ThaiQATask(LightevalTaskConfig):
             hf_subset="default",
             evaluation_splits=("train",),
             few_shots_split="validation",
-            generation_size=100,
+            generation_size=40,
             stop_sequence=("\n",),
             metric=(get_qa_metric("th", "exact"), get_qa_metric("th", "f1")),
         )
@@ -34,7 +34,7 @@ class SberSquadTask(LightevalTaskConfig):
             hf_revision="92d74b272206a76fb3fec1f0355acab370a4de3a",
             trust_dataset=True,
             metric=(get_qa_metric("ru", "exact"), get_qa_metric("ru", "f1")),
-            generation_size=100,
+            generation_size=50,
             stop_sequence=("\n",),
         )
         
@@ -50,7 +50,7 @@ class ARCDSquadTask(LightevalTaskConfig):
             evaluation_splits=("train", "validation"),
             trust_dataset=True,
             metric=(get_qa_metric("ar", "exact"), get_qa_metric("ar", "f1")),
-            generation_size=100,
+            generation_size=75,
             stop_sequence=("\n",),
         )
         
@@ -65,6 +65,6 @@ class KenswQuADTask(LightevalTaskConfig):
             evaluation_splits=("test",),
             few_shots_split="validation",
             metric=(get_qa_metric("sw", "exact"), get_qa_metric("sw", "f1")),
-            generation_size=100,
+            generation_size=40,
             stop_sequence=("\n",),
         )

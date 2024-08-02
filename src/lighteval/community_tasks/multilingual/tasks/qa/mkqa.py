@@ -56,7 +56,7 @@ class MkqaTask(LightevalTaskConfig):
             filter=lambda line: line["answers"][dst_lang][0]["type"] == get_args(TaskType).index(type),
             trust_dataset=True,
             evaluation_splits=("train",),
-            generation_size=100,
+            generation_size=50,
             stop_sequence=("\n",),
             metric=(get_qa_metric(lang, "exact"), get_qa_metric(lang, "f1")),
         )

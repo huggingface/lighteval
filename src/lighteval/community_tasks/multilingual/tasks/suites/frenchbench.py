@@ -56,7 +56,7 @@ class BoolQAFrenchTask(LightevalTaskConfig):
             hf_subset="default",
             evaluation_splits=("test",),
             few_shots_split="valid",
-            generation_size=5,
+            generation_size=1,
             stop_sequence=["\n"],
             metric=(
                 get_qa_metric("fr", "exact"),
@@ -78,7 +78,7 @@ class FQuADv2Task(LightevalTaskConfig):
             hf_subset="default",
             evaluation_splits=("test_hasAns",),
             few_shots_split="valid_hasAns",
-            generation_size=100,
+            generation_size=80,
             stop_sequence=("\n",),
             metric=(get_qa_metric("fr", "exact"), get_qa_metric("fr", "f1")),
         )
@@ -103,8 +103,8 @@ class TriviaFrenchTask(LightevalTaskConfig):
 
 _GENERATIVE_TASKS = [
     FQuADv2Task(),
-    TriviaFrenchTask(),
-    BoolQAFrenchTask(),
+    # TriviaFrenchTask(),
+    # BoolQAFrenchTask(),
 ]
 
 _MC_TASKS = [

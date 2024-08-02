@@ -16,7 +16,7 @@ class CMathTask(LightevalTaskConfig):
             hf_subset="default",
             evaluation_splits=("test",),
             few_shots_split="validation",
-            generation_size=100,
+            generation_size=25,
             metric=(get_qa_metric("zh", "exact"), get_qa_metric("zh", "f1")),
             stop_sequence=("\n",),
         )

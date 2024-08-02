@@ -20,7 +20,7 @@ class IndicQATask(LightevalTaskConfig):
             evaluation_splits=("test",),
             few_shots_split="test",
             filter=lambda x: all(len(a) != 0 for a in x["answers"]["text"]),
-            generation_size=100,
+            generation_size=30,
             metric=(get_qa_metric(lang, "exact"), get_qa_metric(lang, "f1")),
             stop_sequence=("\n",),
         )

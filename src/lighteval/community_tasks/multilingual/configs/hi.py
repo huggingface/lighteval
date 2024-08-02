@@ -23,7 +23,7 @@ _GENERATIVE_TASKS = [
     TydiqaTask(lang="hi"),
     MintakaTask(lang="hi"),
     IndicQATask(lang="hi"),
-    BoolQIndTask(),
+    # BoolQIndTask(),
 ]
 
 _MC_TASKS = [

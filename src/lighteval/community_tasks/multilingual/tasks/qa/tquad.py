@@ -15,7 +15,7 @@ class Tquad2Task(LightevalTaskConfig):
             hf_subset="default",
             evaluation_splits=("validation",),
             few_shots_split="train",
-            generation_size=100,
+            generation_size=60,
             stop_sequence=("\n",),
             metric=(get_qa_metric("tr", "exact"), get_qa_metric("tr", "f1")),
         )

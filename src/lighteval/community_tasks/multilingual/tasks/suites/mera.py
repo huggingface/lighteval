@@ -18,7 +18,7 @@ class CheGeKaTask(LightevalTaskConfig):
             hf_repo="ai-forever/MERA",
             hf_subset="chegeka",
             evaluation_splits=("train",),
-            generation_size=100,
+            generation_size=90,
             stop_sequence=("\n",),
             metric=(get_qa_metric("ru", "exact"), get_qa_metric("ru", "f1")),
         )
