@@ -44,10 +44,11 @@ TASKS_GROUPS = {
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
     "xnli": tasks_to_string([RCBTask(version=version) for version in (1, 2)] + [XNLITask(lang="ru", version=version) for version in (1, 2)] + [XNLI2Task(lang="ru", version=version) for version in (1, 2)]),
-    "xnli2": tasks_to_string([XNLI2Task(lang="ru", version=version) for version in (1, 2)]),
+    "xnli2": tasks_to_string([XNLI2Task(lang="ru", version=2)]),
     "mkqa": tasks_to_string([MkqaTask(lang="ru", type=task_type) for task_type in get_args(TaskType)]),
     "sber_squad": tasks_to_string([SberSquadTask()]),
-    "xcodah": tasks_to_string([XCODAHTask("ru")])
+    "xcodah": tasks_to_string([XCODAHTask("ru")]),
+    "winograde": tasks_to_string([XWinogradeTask("ru")]),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

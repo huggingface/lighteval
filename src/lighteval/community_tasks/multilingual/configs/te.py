@@ -30,7 +30,7 @@ TASKS_GROUPS = {
     "all": tasks_to_string(_ALL_TASKS),
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
-    "xnli": tasks_to_string([XNLIIndicTask(lang="te", version=version) for version in (1, 2)]),
+    "xnli": tasks_to_string([XNLIIndicTask(lang="te", version=2)]),
     "custom_hellaswag": tasks_to_string([CustomHellaswagTeluguTask()]),
 }
 

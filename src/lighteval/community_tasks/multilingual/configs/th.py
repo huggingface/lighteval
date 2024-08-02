@@ -27,10 +27,8 @@ _GENERATIVE_TASKS = [
 ]
 
 _MC_TASKS = [
-    XNLITask(lang="th", version=1),
     XNLITask(lang="th", version=2),
     XCopaTask(lang="th"),
-    XNLI2Task(lang="th", version=1),
     XNLI2Task(lang="th", version=2),
     CustomHellaswagThaiTask(),
     M3ExamTask(lang="th"),
@@ -47,7 +45,7 @@ TASKS_GROUPS = {
     "mc": tasks_to_string(_MC_TASKS),
     "xnli": tasks_to_string([XNLITask(lang="th", version=version) for version in (1, 2)] +
                             [XNLI2Task(lang="th", version=version) for version in (1, 2)]),
-    "xnli2": tasks_to_string([XNLI2Task(lang="th", version=version) for version in (1, 2)]),
+    "xnli2": tasks_to_string([XNLI2Task(lang="th", version=2)]),
     "meta_mmlu": tasks_to_string([MetaMMLUTask("th", subset) for subset in get_args(MMLU_SUBSET)]),
     "mkqa": tasks_to_string([MkqaTask(lang="th", type=task_type) for task_type in get_args(TaskType)]),
     "thai_qa": tasks_to_string([ThaiQATask()]),

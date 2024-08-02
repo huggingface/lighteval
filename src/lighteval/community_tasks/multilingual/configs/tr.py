@@ -40,10 +40,12 @@ TASKS_GROUPS = {
     "mc": tasks_to_string(_MC_TASKS),
     "xnli": tasks_to_string([XNLITask(lang="tr", version=version) for version in (1, 2)] +
                             [XNLI2Task(lang="tr", version=version) for version in (1, 2)]),
-    "xnli2": tasks_to_string([XNLI2Task(lang="tr", version=version) for version in (1, 2)]),
+    "xnli2": tasks_to_string([XNLI2Task(lang="tr", version=2)]),
     "arc": tasks_to_string([ARCEasyTrTask(version=2)]),
     "exams": tasks_to_string([ExamsTask(lang="tr", subject=subject, show_options=show_options) for subject in subjects_by_lang_code["tr"] for show_options in [True, False]]),
-    "mkqa": tasks_to_string([MkqaTask(lang="tr", type=task_type) for task_type in get_args(TaskType)])
+    "mkqa": tasks_to_string([MkqaTask(lang="tr", type=task_type) for task_type in get_args(TaskType)]),
+    "hellaswag": tasks_to_string([HellaSwagTrTask()]),
+    "winograde": tasks_to_string([WinogradeTrTask()]),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

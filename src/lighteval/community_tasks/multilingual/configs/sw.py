@@ -37,7 +37,7 @@ TASKS_GROUPS = {
     "mc": tasks_to_string(_MC_TASKS),
     "xnli": tasks_to_string([XNLITask(lang="sw", version=version) for version in (1, 2)] +
                             [XNLI2Task(lang="sw", version=version) for version in (1, 2)]),
-    "xnli2": tasks_to_string([XNLI2Task(lang="sw", version=version) for version in (1, 2)]),
+    "xnli2": tasks_to_string([XNLI2Task(lang="sw", version=2)]),
     "kenswquad": tasks_to_string([KenswQuADTask()]),
     "xcodah": tasks_to_string([XCODAHTask(lang="sw")])
 }

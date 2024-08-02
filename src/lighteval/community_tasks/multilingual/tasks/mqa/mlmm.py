@@ -180,4 +180,4 @@ class M_TruthfulQATask(LightevalTaskConfig):
 
 def get_mlmm_tasks(lang: LANGS):
     mmlu_tasks = [M_MMLUTask(lang, subset) for subset in get_args(MMLU_SUBSET)]
-    return mmlu_tasks + [M_HellaSwagTask(lang), M_ARCTask(lang), M_TruthfulQATask(lang, "mc1"), M_TruthfulQATask(lang, "mc2")]
+    return mmlu_tasks + [M_HellaSwagTask(lang), M_ARCTask(lang)]

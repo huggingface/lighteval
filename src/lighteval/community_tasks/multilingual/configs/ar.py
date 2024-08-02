@@ -54,7 +54,7 @@ TASKS_GROUPS = {
     "mkqa": tasks_to_string([MkqaTask(lang="ar", type=task_type) for task_type in get_args(TaskType)]),
     "arabic_mmlu": tasks_to_string([ArabicMMLUTask(task=task) for task in get_args(AR_MMLU_TASK_TYPE)]),
     "arcd": tasks_to_string([ARCDSquadTask()]),
-    "xnli2": tasks_to_string([XNLI2Task(lang="ar", version=version) for version in (1, 2)]),
+    "xnli2": tasks_to_string([XNLI2Task(lang="ar", version=2)]),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

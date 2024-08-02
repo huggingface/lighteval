@@ -56,7 +56,7 @@ TASKS_GROUPS = {
     "xnli": tasks_to_string([XNLITask(lang="hi", version=version) for version in (1, 2)] +
                             [XNLI2Task(lang="hi", version=version) for version in (1, 2)] +
                             [XNLIIndicTask(lang="hi", version=version) for version in (1, 2)]),
-    "xnli2": tasks_to_string([XNLI2Task(lang="hi", version=version) for version in (1, 2)]),
+    "xnli2": tasks_to_string([XNLI2Task(lang="hi", version=2)]),
     "meta_mmlu": tasks_to_string([MetaMMLUTask("hi", subset) for subset in get_args(MMLU_SUBSET)]),
     "xcodah": tasks_to_string([XCODAHTask("hi")])
 }

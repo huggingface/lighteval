@@ -31,15 +31,11 @@ _GENERATIVE_TASKS = [
 
 _MC_TASKS = [
     BelebeleTask(lang="zh"),
-    PawnsXTask(lang="zh", version=1),
     PawnsXTask(lang="zh", version=2),
     XCODAHTask(lang="zh"),
     XCSQATask(lang="zh"),
-    XNLITask(lang="zh", version=1),
     XNLITask(lang="zh", version=2),
-    XNLI2Task(lang="zh", version=1),
     XNLI2Task(lang="zh", version=2),
-    OCNLI(version=1),
     OCNLI(version=2),
     XStoryClozeTask(lang="zh"),
     XCopaTask(lang="zh"),
