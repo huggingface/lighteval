@@ -410,7 +410,7 @@ class LightevalTask:
 
                 assert all(gi >= 0 for gi in as_list(cur_docs.gold_index)), f"Gold index must not be negative for task {self.name} with doc {cur_docs}"
                 # Ensure non-empty choices
-                assert all(len(choice) > 0 for choice in as_list(cur_docs.choices)), f"Choices are empty for task {self.name} with doc {cur_docs}"
+                assert all(len(choice.strip()) > 0 for choice in as_list(cur_docs.choices)), f"Choices are empty for task {self.name} with doc {cur_docs}"
                 assert all(i < len(cur_docs.choices) for i in as_list(cur_docs.gold_index)), f"gold_index is out of bounds for {self.name} {cur_docs}"
                 docs.extend(as_list(cur_docs))
         return docs

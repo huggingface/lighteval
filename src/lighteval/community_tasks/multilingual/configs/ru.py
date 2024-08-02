@@ -1,5 +1,6 @@
 from typing import get_args
 
+from ..tasks.qa.custom_squad import SberSquadTask
 from ..tasks.qa.mkqa import MkqaTask, TaskType
 from ..tasks.utils.tasks_helpers import tasks_to_string
 
@@ -10,13 +11,14 @@ from ..tasks.mqa_with_context.m3exam import M3ExamTask
 from ..tasks.mqa_with_context.xquad import XquadTask
 from ..tasks.mqa_with_context.xstory_cloze import XStoryClozeTask
 from ..tasks.nli.xcsr import XCODAHTask, XCSQATask
-from ..tasks.nli.xnli import XNLITask
+from ..tasks.nli.xnli import XNLITask, XNLI2Task
 from ..tasks.nli.xwinograd import XWinogradeTask
 from ..tasks.qa.tydiqa import TydiqaTask
 
 _GENERATIVE_TASKS = [
     TydiqaTask(lang="ru"),
     XquadTask(lang="ru"),
+    SberSquadTask(),
     *_MERA_GENERATIVE_TASKS,
     *[MkqaTask(lang="ru", type=task_type) for task_type in get_args(TaskType)]
 ]
@@ -27,6 +29,8 @@ _MC_TASKS = [
     XCSQATask(lang="ru"),
     XNLITask(lang="ru", version=1),
     XNLITask(lang="ru", version=2),
+    XNLI2Task(lang="ru", version=1),
+    XNLI2Task(lang="ru", version=2),
     XStoryClozeTask(lang="ru"),
     XWinogradeTask(lang="ru"),
     *get_mlmm_tasks("ru"),
@@ -39,8 +43,10 @@ TASKS_GROUPS = {
     "all": tasks_to_string(_ALL_TASKS),
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
-    "xnli": tasks_to_string([RCBTask(version=version) for version in (1, 2)] + [XNLITask(lang="ru", version=version) for version in (1, 2)]),
+    "xnli": tasks_to_string([RCBTask(version=version) for version in (1, 2)] + [XNLITask(lang="ru", version=version) for version in (1, 2)] + [XNLI2Task(lang="ru", version=version) for version in (1, 2)]),
+    "xnli2": tasks_to_string([XNLI2Task(lang="ru", version=version) for version in (1, 2)]),
     "mkqa": tasks_to_string([MkqaTask(lang="ru", type=task_type) for task_type in get_args(TaskType)]),
+    "sber_squad": tasks_to_string([SberSquadTask()]),
     "xcodah": tasks_to_string([XCODAHTask("ru")])
 }
 

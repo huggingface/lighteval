@@ -11,7 +11,7 @@ from ..tasks.mqa.mlmm import get_mlmm_tasks
 from ..tasks.mqa_with_context.belebele import BelebeleTask
 from ..tasks.nli.pawns import PawnsXTask
 from ..tasks.nli.xcsr import XCODAHTask, XCSQATask
-from ..tasks.nli.xnli import XNLITask
+from ..tasks.nli.xnli import XNLI2Task, XNLITask
 from ..tasks.nli.xwinograd import XWinogradeTask
 from ..tasks.suites.frenchbench import _GENERATIVE_TASKS as _FRENCH_BENCH_GENERATIVE_TASKS, _MC_TASKS as _FRENCH_BENCH_MC_TASKS
 from ..tasks.mqa.meta_mmlu import MetaMMLUTask, MMLU_SUBSET
@@ -31,6 +31,8 @@ _MC_TASKS = [
     XCSQATask(lang="fr"),
     XNLITask(lang="fr", version=1),
     XNLITask(lang="fr", version=2),
+    XNLI2Task(lang="fr", version=1),
+    XNLI2Task(lang="fr", version=2),
     XWinogradeTask(lang="fr"),
     *get_mlmm_tasks("fr"),
     *_FRENCH_BENCH_MC_TASKS,
@@ -45,8 +47,10 @@ TASKS_GROUPS = {
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
     "xnli": tasks_to_string([XNLITask(lang="fr", version=version) for version in (1, 2)] +
+                            [XNLI2Task(lang="fr", version=version) for version in (1, 2)] +
                             [PawnsXTask(lang="fr", version=version) for version in (1, 2)]
                             ),
+    "xnli2": tasks_to_string([XNLI2Task(lang="fr", version=version) for version in (1, 2)]),
     "meta_mmlu": tasks_to_string([MetaMMLUTask("fr", subset) for subset in get_args(MMLU_SUBSET)]),
     "xcodah": tasks_to_string([XCODAHTask(lang="fr")]),
     "exams": tasks_to_string([ExamsTask(lang="fr", subject=subject, show_options=show_options) for subject in subjects_by_lang_code["fr"] for show_options in [True, False]]),

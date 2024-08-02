@@ -1,3 +1,4 @@
+from ..tasks.mqa.custom_hellaswags import CustomHellaswagTeluguTask
 from ..tasks.utils.tasks_helpers import tasks_to_string
 from ..tasks.qa.Indicqa import IndicQATask
 from ..tasks.nli.indicnxnli import XNLIIndicTask
@@ -19,6 +20,7 @@ _MC_TASKS = [
     XCopaIndicTask(lang="te"),
     BelebeleTask(lang="te"),
     XStoryClozeTask(lang="te"),
+    CustomHellaswagTeluguTask(),
     *get_mlmm_tasks("te")
 ]
 
@@ -29,6 +31,7 @@ TASKS_GROUPS = {
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
     "xnli": tasks_to_string([XNLIIndicTask(lang="te", version=version) for version in (1, 2)]),
+    "custom_hellaswag": tasks_to_string([CustomHellaswagTeluguTask()]),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _GENERATIVE_TASKS + _MC_TASKS]

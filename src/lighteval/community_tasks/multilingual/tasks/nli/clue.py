@@ -41,7 +41,6 @@ class C3Task(LightevalTaskConfig):
             ),
         )
         
-        
 class OCNLI(LightevalTaskConfig):
     def __init__(self, version: Literal[1,2]):
         super().__init__(
@@ -50,7 +49,8 @@ class OCNLI(LightevalTaskConfig):
             suite=("custom",),
             hf_repo="clue/clue",
             hf_subset="ocnli",
-            filter=lambda x: int(x["label"]) in [0, 2],
+            # Only keep the positive and negative examples
+            filter=lambda x: int(x["label"]) in [1, 2],
             evaluation_splits=("validation",),
             few_shots_split="train",
             metric=(

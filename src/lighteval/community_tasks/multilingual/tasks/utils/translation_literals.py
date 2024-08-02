@@ -1,6 +1,7 @@
 from typing import Literal
 
 
+# This is experimental flag if activated languages without sentence space separation will be evaluated that way
 LANGS = Literal["ar", "en", "fr", "hi", "ru", "sw", "te", "th", "tr", "zh"]
 
 LANG_NAMES = {
@@ -185,7 +186,7 @@ FULL_STOP = {
     "ru": ".",
 }
 
-SPACE = {
+WORD_SPACE = {
     "ar": " ",
     "en": " ",
     "hi": " ",
@@ -195,7 +196,20 @@ SPACE = {
     "te": " ",
     "th": "",
     "tr": " ",
-    "zh": " ",
+    "zh": "",
+}
+
+SENTENCE_SPACE = {
+    "ar": " ",
+    "en": " ",
+    "hi": " ",
+    "fr": " ",
+    "ru": " ",
+    "sw": " ",
+    "te": " ",
+    "th": " ",
+    "tr": " ",
+    "zh": "",
 }
 
 COMMA = {
