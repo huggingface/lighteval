@@ -67,7 +67,7 @@ class OCNLI(LightevalTaskConfig):
         )
     
     
-class CMNLI(LightevalTaskConfig):
+class CMNLITask(LightevalTaskConfig):
     def __init__(self, version: Literal[1,2]):
         super().__init__(
             name=f"cmnli-bool{f'-v{version}' if version != 1 else ''}-zh",

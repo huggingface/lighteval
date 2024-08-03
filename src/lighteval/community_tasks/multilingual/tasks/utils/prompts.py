@@ -714,8 +714,12 @@ def get_ocnli_prompt(lang: LANGS, version: Literal[1,2]):
     
 def get_cmnli_prompt(lang: LANGS, version: Literal[1,2]):
     prompter = _get_nli_prompt(lang, ["entailment", "contradiction"], version)
+    label_map = {
+        "entailment": 0,
+        "contradiction": 1,
+    }
     return lambda line, task_name: prompter(
-        task_name, line["premise"], line["hypothesis"], int(line["label"])
+        task_name, line["sentence1"], line["sentence2"], label_map[line["label"]]
     )
 
 def get_paws_x_prompt(lang: LANGS, version: Literal[1,2]):

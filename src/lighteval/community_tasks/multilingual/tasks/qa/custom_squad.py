@@ -94,10 +94,11 @@ class ChAITask(LightevalTaskConfig):
             name=f"chai-{lang}",
             prompt_function=get_kenswquad_prompt(lang, answer_key="answer_text"),
             suite=("custom",),
-            hf_repo="meghanabhange/chaii",
+            hf_repo="nirantk/chaii-hindi-and-tamil-question-answering",
             hf_subset="default",
+            evaluation_splits=("train",),
             filter=lambda x: x["language"] == lang_long_name,
-            generation_size=100,
+            generation_size=90,
             stop_sequence=("\n",),
             metric=(get_qa_metric(lang, "exact"), get_qa_metric(lang, "f1")),
         )

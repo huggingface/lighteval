@@ -10,7 +10,7 @@ from ..tasks.mqa_with_context.belebele import BelebeleTask
 from ..tasks.mqa_with_context.m3exam import M3ExamTask
 from ..tasks.mqa_with_context.xquad import XquadTask
 from ..tasks.mqa_with_context.xstory_cloze import XStoryClozeTask
-from ..tasks.nli.clue import OCNLI, C3Task, CMRC2018Task
+from ..tasks.nli.clue import CMNLITask, OCNLI, C3Task, CMRC2018Task
 from ..tasks.nli.pawns import PawnsXTask
 from ..tasks.nli.xcsr import XCODAHTask, XCSQATask
 from ..tasks.nli.xnli import XNLITask, XNLI2Task
@@ -43,6 +43,7 @@ _MC_TASKS = [
     XStoryClozeTask(lang="zh"),
     XCopaTask(lang="zh"),
     XWinogradeTask(lang="zh"),
+    CMNLITask(version=2),
     M3ExamTask(lang="zh"),
     C3Task(),
     *[CMMLUTask(task) for task in get_args(CMMLU_TASK_TYPE)],
@@ -66,6 +67,7 @@ TASKS_GROUPS = {
     "ocnli": tasks_to_string([OCNLI(version=version) for version in (1, 2)]),
     "mkqa": tasks_to_string([MkqaTask(lang="zh", type=task_type) for task_type in get_args(TaskType)]),
     "xcodah": tasks_to_string([XCODAHTask(lang="zh")]),
+    "cmnli": tasks_to_string([CMNLITask(version=2)]),
     "squad-zh": tasks_to_string([ChineseSQuADTask()]),
     "winograd": tasks_to_string([XWinogradeTask(lang="zh")]),
 
