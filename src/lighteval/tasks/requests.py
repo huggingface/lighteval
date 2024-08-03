@@ -169,26 +169,23 @@ class Doc:
 
     # For few-shot
     instruction: Optional[list[str]] = None
-    target_for_fewshot_sorting: Optional[str] = None  # will probably have to be removed in the future
+    target_for_fewshot_sorting: Optional[str] = None
 
     # Filled when parsing and adding the few-shot context
     ctx: Optional[str] = ""
     num_asked_few_shots: int = -1
     num_effective_few_shots: int = -1
 
-    def get_golds(self, few_shot: bool = False):
+    def get_golds(self):
         """Return gold targets extracted from the target dict"""
         gold_indices = as_list(self.gold_index)
-        if few_shot and self.target_for_fewshot_sorting is not None:
-            choices = self.target_for_fewshot_sorting
-            if isinstance(choices, str):  # correct choice is already selected
-                return choices
-        else:
-            choices = self.choices
         golds = []
         for gold_ix in gold_indices:
-            golds.extend(as_list(choices[gold_ix]))
+            golds.extend(as_list(self.choices[gold_ix]))
         return golds
+    
+    def get_target_for_fewshot_sorting(self) -> str:
+        return self.target_for_fewshot_sorting or as_list(self.get_golds())[0]
 
     def __repr__(self):
         doc_dict = asdict(self)
