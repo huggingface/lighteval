@@ -3,8 +3,9 @@
 
 from typing import Literal
 from ..utils.metrics import get_qa_metric
-from ..utils.prompts import get_c3_prompt, get_mlqa_prompt, get_ocnli_prompt, get_xnli_prompt
+from ..utils.prompts import get_c3_prompt, get_cmnli_prompt, get_mlqa_prompt, get_ocnli_prompt, get_xnli_prompt
 from lighteval.metrics.metrics import Metrics
+from ..utils.translation_literals import FULL_STOP
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
@@ -65,6 +66,30 @@ class OCNLI(LightevalTaskConfig):
             ),
         )
     
+    
+class CMNLI(LightevalTaskConfig):
+    def __init__(self, version: Literal[1,2]):
+        super().__init__(
+            name=f"cmnli-bool{f'-v{version}' if version != 1 else ''}-zh",
+            prompt_function=get_cmnli_prompt("zh", version),
+            suite=("custom",),
+            hf_repo="fenffef/cmnli",
+            hf_subset="default",
+            # Only keep the positive and negative examples
+            filter=lambda x: x["label"] in ["entailment", "contradiction"] and x["sentence1"].endswith(FULL_STOP["zh"]),
+            evaluation_splits=("validation",),
+            few_shots_split="train",
+            metric=(
+                Metrics.loglikelihood_acc,
+                Metrics.loglikelihood_acc_norm_nospace,
+                Metrics.loglikelihood_acc_norm_token,
+                Metrics.loglikelihood_acc_norm_pmi,
+                Metrics.loglikelihood_prob,
+                Metrics.loglikelihood_prob_norm,
+                Metrics.loglikelihood_prob_norm_token,
+                Metrics.loglikelihood_prob_norm_pmi,
+            ),
+        )
 
 
 # TODO: DEEPSEEK Also uses CHID + CCPM, but I am not sure how to prompt it

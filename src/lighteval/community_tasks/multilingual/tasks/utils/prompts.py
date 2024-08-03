@@ -711,6 +711,12 @@ def get_ocnli_prompt(lang: LANGS, version: Literal[1,2]):
     return lambda line, task_name: prompter(
         task_name, line["sentence1"], line["sentence2"], label_remap[int(line["label"])]
     )
+    
+def get_cmnli_prompt(lang: LANGS, version: Literal[1,2]):
+    prompter = _get_nli_prompt(lang, ["entailment", "contradiction"], version)
+    return lambda line, task_name: prompter(
+        task_name, line["premise"], line["hypothesis"], int(line["label"])
+    )
 
 def get_paws_x_prompt(lang: LANGS, version: Literal[1,2]):
     # Each label has two possible values: 0 indicates the pair has different meaning, while 1 indicates the pair is a paraphrase.

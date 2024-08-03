@@ -6,7 +6,7 @@ from ..tasks.nli.xcsr import XCODAHTask, XCSQATask
 from ..tasks.nli.xnli import XNLITask, XNLI2Task
 from ..tasks.mqa_with_context.belebele import BelebeleTask
 from ..tasks.mqa_with_context.xstory_cloze import XStoryClozeTask
-from ..tasks.suites.swahili_leaderboard import TASKS as SW_TASKS
+from ..tasks.suites.swahili_leaderboard import TASKS as SW_TASKS, ARCSwTask
 from ..tasks.qa.tydiqa import TydiqaTask
 
 
@@ -39,7 +39,16 @@ TASKS_GROUPS = {
                             [XNLI2Task(lang="sw", version=version) for version in (1, 2)]),
     "xnli2": tasks_to_string([XNLI2Task(lang="sw", version=2)]),
     "kenswquad": tasks_to_string([KenswQuADTask()]),
-    "xcodah": tasks_to_string([XCODAHTask(lang="sw")])
+    "xcodah": tasks_to_string([XCODAHTask(lang="sw")]),
+    "early-signals": tasks_to_string([
+        ARCSwTask(subset="easy"),
+        KenswQuADTask(),
+        M3ExamTask(lang="sw"),
+        XCSQATask(lang="sw"),
+        XCopaTask(lang="sw"),
+        XNLI2Task(lang="sw", version=2),
+        XStoryClozeTask(lang="sw")
+    ])
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]
