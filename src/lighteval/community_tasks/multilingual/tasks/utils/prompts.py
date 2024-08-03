@@ -930,7 +930,10 @@ def get_xcodah_prompt(lang: LANGS):
         common_prefix = os.path.commonprefix(choices)
 
         # Backtract to first space to get good tokenization
-        common_prefix = common_prefix[:common_prefix.rfind(WORD_SPACE[lang])]
+        first_word = common_prefix.rfind(WORD_SPACE[lang])
+        
+        # If there is no word_space we shouldn't remove the common prefix
+        common_prefix = common_prefix[:first_word] if first_word != -1 else ""
         
         # Remove common prefix from each choice
         cleaned_choices = [choice[len(common_prefix):] for choice in choices]
