@@ -295,13 +295,20 @@ class DetailsLogger:
         hash_input_tokens: str = ""
         hash_cont_tokens: str = ""
 
-    hashes: dict[str, list[Hash]] = collections.defaultdict(list)
-    compiled_hashes: dict[str, CompiledHash] = collections.defaultdict(CompiledHash)
+    hashes: dict[str, list[Hash]]
+    compiled_hashes: dict[str, CompiledHash]
 
     # dict of details for each task, i.e. winogrande: [example1_details, example2_details, ...]
-    details: dict[str, list[Detail]] = collections.defaultdict(list)
-    compiled_details: dict[str, CompiledDetail] = collections.defaultdict(CompiledDetail)
-    compiled_details_over_all_tasks: CompiledDetailOverAllTasks = CompiledDetailOverAllTasks()
+    details: dict[str, list[Detail]]
+    compiled_details: dict[str, CompiledDetail]
+    compiled_details_over_all_tasks: CompiledDetailOverAllTasks
+
+    def __init__(self):
+        self.hashes = collections.defaultdict(list)
+        self.compiled_hashes  = collections.defaultdict(DetailsLogger.CompiledHash)
+        self.details  = collections.defaultdict(list)
+        self.compiled_details  = collections.defaultdict(DetailsLogger.CompiledDetail)
+        self.compiled_details_over_all_tasks = DetailsLogger.CompiledDetailOverAllTasks()
 
     def log(
         self,
@@ -460,8 +467,12 @@ class MetricsLogger:
             Example: {"winogrande|winogrande_xl": {"accuracy": 0.5}}
     """
 
-    metrics_values: dict[str, dict[str, list[float]]] = collections.defaultdict(lambda: collections.defaultdict(list))
-    metric_aggregated: dict[str, dict[str, float]] = collections.defaultdict(lambda: collections.defaultdict(dict))
+    metrics_values: dict[str, dict[str, list[float]]]
+    metric_aggregated: dict[str, dict[str, float]]
+
+    def __init__(self):
+        self.metrics_values = collections.defaultdict(lambda: collections.defaultdict(list))
+        self.metric_aggregated  = collections.defaultdict(lambda: collections.defaultdict(dict))
 
     def log(self, task_name: str, metrics: dict) -> None:
         for metric_name, metric_value in metrics.items():
