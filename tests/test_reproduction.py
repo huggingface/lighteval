@@ -17,7 +17,7 @@ def run_evaluation() -> dict:
     task = LightevalTask("test", task_config)
     task_dict = {"custom|test": task}
     evaluation_tracker.task_config_logger.log(task_dict)
-    doc = Doc("Who is the GOAT?", ["CR7", "Messi", "Pele", "ZIZI"], gold_index=3)
+    doc = Doc("Who is the GOAT?", ["CR7", "Messi", "Pele", "Zizou"], gold_index=3)
     doc.ctx = "Who is the GOAT?"
     docs = {TaskExampleId("custom|test|0", "0_0"): doc}
     requests_dict = task.construct_requests(doc, doc.ctx, "0_0", "custom|test|0")
