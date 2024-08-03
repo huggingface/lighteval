@@ -156,6 +156,15 @@ class LightevalModel(ABC):
         context_enc_len = len(context_enc)
         continuation_enc = whole_enc[context_enc_len:]
         return context_enc, continuation_enc
+    
+    def tok_encode_pair_separated(self, context, continuation):
+        """Encodes a context, continuation pair by taking care of the spaces in between."""
+        n_spaces = len(context) - len(context.rstrip())
+        if n_spaces > 0:
+            continuation = context[-n_spaces:] + continuation
+            context = context[:-n_spaces]
+            
+        return self.tok_encode(context), self.tok_encode(continuation, add_special_tokens=False)
 
     def tok_decode(self, tokens: torch.LongTensor) -> list[str]:
         return self.tokenizer.batch_decode(tokens, skip_special_tokens=True)

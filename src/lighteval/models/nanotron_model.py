@@ -469,7 +469,8 @@ class NanotronLightevalModel(LightevalModel):
                 request.tokenized_continuation = self.tok_encode(request.choice)
             else:
                 # The following line is mandatory for compatibility with the harness
-                request.tokenized_context, request.tokenized_continuation = self.tok_encode_pair(
+                # EDIT: The harness way to tokenization is absolutely incorrect
+                request.tokenized_context, request.tokenized_continuation = self.tok_encode_pair_separated(
                     request.context, request.choice
                 )
 

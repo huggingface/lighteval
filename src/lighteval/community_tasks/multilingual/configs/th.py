@@ -49,6 +49,7 @@ TASKS_GROUPS = {
     "meta_mmlu": tasks_to_string([MetaMMLUTask("th", subset) for subset in get_args(MMLU_SUBSET)]),
     "mkqa": tasks_to_string([MkqaTask(lang="th", type=task_type) for task_type in get_args(TaskType)]),
     "thai_qa": tasks_to_string([ThaiQATask()]),
+    "wsci": tasks_to_string([WSCITask(lang="th")]),
     "custom_hellaswag": tasks_to_string([CustomHellaswagThaiTask()]),
 }
 
