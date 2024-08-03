@@ -32,6 +32,14 @@ TASKS_GROUPS = {
     "mc": tasks_to_string(_MC_TASKS),
     "xnli": tasks_to_string([XNLIIndicTask(lang="te", version=2)]),
     "custom_hellaswag": tasks_to_string([CustomHellaswagTeluguTask()]),
+    "early-signals": tasks_to_string([
+        CustomHellaswagTeluguTask(),
+        IndicQATask(lang="te"),
+        TydiqaTask(lang="te"),
+        XCopaIndicTask(lang="te"),
+        XStoryClozeTask(lang="te"),
+    ])
+        
 }
 
 TASKS_TABLE = [task.as_dict() for task in _GENERATIVE_TASKS + _MC_TASKS]

@@ -1,5 +1,6 @@
 from typing import Literal
 
+from ..utils.translation_literals import LANG_NAMES_INVERTED
 from ..utils.metrics import get_qa_metric
 from ..utils.prompts import get_kenswquad_prompt, get_mlqa_prompt
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
@@ -67,4 +68,36 @@ class KenswQuADTask(LightevalTaskConfig):
             metric=(get_qa_metric("sw", "exact"), get_qa_metric("sw", "f1")),
             generation_size=40,
             stop_sequence=("\n",),
+        )
+        
+class ChineseSQuADTask(LightevalTaskConfig):
+    def __init__(self):
+        super().__init__(
+            name=f"chinese-squad",
+            prompt_function=get_mlqa_prompt("zh"),
+            suite=("custom",),
+            hf_repo="HuggingFaceFW-Dev/ChineseSquad",
+            hf_subset="default",
+            evaluation_splits=("validation",),
+            few_shots_split="train",
+            metric=(get_qa_metric("zh", "exact"), get_qa_metric("zh", "f1")),
+            generation_size=40,
+            stop_sequence=("\n",),
+        )
+
+
+
+class ChAITask(LightevalTaskConfig):
+    def __init__(self, lang: Literal["hi"]):
+        lang_long_name = LANG_NAMES_INVERTED[lang]
+        super().__init__(
+            name=f"chai-{lang}",
+            prompt_function=get_kenswquad_prompt(lang, answer_key="answer_text"),
+            suite=("custom",),
+            hf_repo="meghanabhange/chaii",
+            hf_subset="default",
+            filter=lambda x: x["language"] == lang_long_name,
+            generation_size=100,
+            stop_sequence=("\n",),
+            metric=(get_qa_metric(lang, "exact"), get_qa_metric(lang, "f1")),
         )

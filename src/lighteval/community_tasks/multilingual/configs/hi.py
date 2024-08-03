@@ -1,4 +1,6 @@
 from typing import get_args
+
+from ..tasks.qa.custom_squad import ChAITask
 from ..tasks.mqa.meta_mmlu import MetaMMLUTask
 from ..tasks.utils.tasks_helpers import tasks_to_string
 from ..tasks.suites.indic_evals import ARCIndTask, BoolQIndTask, HellaSwagIndTask
@@ -23,6 +25,7 @@ _GENERATIVE_TASKS = [
     TydiqaTask(lang="hi"),
     MintakaTask(lang="hi"),
     IndicQATask(lang="hi"),
+    ChAITask(lang="hi"),
     # BoolQIndTask(),
 ]
 
@@ -58,7 +61,8 @@ TASKS_GROUPS = {
                             [XNLIIndicTask(lang="hi", version=version) for version in (1, 2)]),
     "xnli2": tasks_to_string([XNLI2Task(lang="hi", version=2)]),
     "meta_mmlu": tasks_to_string([MetaMMLUTask("hi", subset) for subset in get_args(MMLU_SUBSET)]),
-    "xcodah": tasks_to_string([XCODAHTask("hi")])
+    "xcodah": tasks_to_string([XCODAHTask("hi")]),
+    "chai": tasks_to_string([ChAITask("hi")]),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

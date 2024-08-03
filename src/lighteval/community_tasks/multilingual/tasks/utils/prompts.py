@@ -529,11 +529,12 @@ def get_mlqa_prompt(lang: LANGS, answer_key: str = "text"):
     return adapter
 
 
-def get_kenswquad_prompt(lang: LANGS):
+def get_kenswquad_prompt(lang: LANGS, answer_key: str = "answer"):
     prompter = _get_qa_prompt(lang)
     return lambda line, task_name: prompter(
-        task_name, line["question"], [line["answer"]], context=line["context"]
+        task_name, line["question"], [line[answer_key]], context=line["context"]
     )
+    
 
 def get_mkqa_prompt(lang: LANGS, lang_key: str):
     prompter = _get_qa_prompt(lang)

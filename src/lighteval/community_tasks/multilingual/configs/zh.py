@@ -1,4 +1,6 @@
 from typing import get_args
+
+from ..tasks.qa.custom_squad import ChineseSQuADTask
 from ..tasks.utils.tasks_helpers import tasks_to_string
 from ..tasks.mqa.agieval import CHINESE_AGIEVAL_TASK_TYPE, ChineseAgievalTask, MULTICHOICE_JOIN_VARIANT
 from ..tasks.mqa.ceval import CEVAL_TASK_TYPE, CEvalTask
@@ -27,6 +29,7 @@ _GENERATIVE_TASKS = [
     XquadTask(lang="zh"),
     CMathTask(),
     CMRC2018Task(),
+    ChineseSQuADTask(),
 ]
 
 _MC_TASKS = [
@@ -62,7 +65,10 @@ TASKS_GROUPS = {
     "agieval": tasks_to_string([ChineseAgievalTask(task, show_options=False, join_variant=join_variant) for task in get_args(CHINESE_AGIEVAL_TASK_TYPE) for join_variant in get_args(MULTICHOICE_JOIN_VARIANT)]),
     "ocnli": tasks_to_string([OCNLI(version=version) for version in (1, 2)]),
     "mkqa": tasks_to_string([MkqaTask(lang="zh", type=task_type) for task_type in get_args(TaskType)]),
-    "xcodah": tasks_to_string([XCODAHTask(lang="zh")])
+    "xcodah": tasks_to_string([XCODAHTask(lang="zh")]),
+    "squad-zh": tasks_to_string([ChineseSQuADTask()]),
+    "winograd": tasks_to_string([XWinogradeTask(lang="zh")]),
+
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]
