@@ -1,9 +1,10 @@
+from typing import get_args
 from ..tasks.mqa.custom_hellaswags import CustomHellaswagTeluguTask
 from ..tasks.utils.tasks_helpers import tasks_to_string
 from ..tasks.qa.Indicqa import IndicQATask
 from ..tasks.nli.indicnxnli import XNLIIndicTask
 from ..tasks.mqa.indicxcopa import XCopaIndicTask
-from ..tasks.mqa.mlmm import get_mlmm_tasks
+from ..tasks.mqa.mlmm import MMLU_SUBSET, get_mlmm_tasks, M_MMLUTask
 from ..tasks.mqa_with_context.belebele import BelebeleTask
 from ..tasks.mqa_with_context.xstory_cloze import XStoryClozeTask
 from ..tasks.qa.tydiqa import TydiqaTask
@@ -33,11 +34,12 @@ TASKS_GROUPS = {
     "xnli": tasks_to_string([XNLIIndicTask(lang="te", version=2)]),
     "custom_hellaswag": tasks_to_string([CustomHellaswagTeluguTask()]),
     "early-signals": tasks_to_string([
-        CustomHellaswagTeluguTask(),
-        IndicQATask(lang="te"),
-        TydiqaTask(lang="te"),
-        XCopaIndicTask(lang="te"),
-        XStoryClozeTask(lang="te"),
+        "belebele-te",
+        "custom_hellaswag-te",
+        "indicqa.te",
+        *[M_MMLUTask("te", subset) for subset in get_args(MMLU_SUBSET)],
+        "xcopa-te",
+        "xstory_cloze-te",
     ])
         
 }

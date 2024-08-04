@@ -34,11 +34,11 @@ LANGS = Literal["zh", "en", "es", "de", "ja", "th", "sw"]
 
 
 class M3ExamTask(LightevalTaskConfig):
-    def __init__(self, lang: LANGS):
+    def __init__(self, lang: LANGS, version: Literal[1, 2] = 1):
         super().__init__(
-            name=f"m3exam-{lang}",
+            name=f"m3exam{f'-v{version}' if version > 1 else ''}-{lang}",
             suite=("custom",),
-            prompt_function=get_m_m3exam_prompt(lang),
+            prompt_function=get_m_m3exam_prompt(lang, version=version),
             hf_repo="chiayewken/m3exam",
             hf_subset=LANG_NAMES_INVERTED[lang],
             evaluation_splits=("test",),

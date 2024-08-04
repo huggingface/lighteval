@@ -63,6 +63,20 @@ TASKS_GROUPS = {
     "meta_mmlu": tasks_to_string([MetaMMLUTask("hi", subset) for subset in get_args(MMLU_SUBSET)]),
     "xcodah": tasks_to_string([XCODAHTask("hi")]),
     "chai": tasks_to_string([ChAITask("hi")]),
+    "early-signals": tasks_to_string([
+        "belebele-hi",
+        "hellaswag-hi",
+        "hi-arc:easy",
+        "indicqa.hi",
+        "mlqa-hi",
+        *[MetaMMLUTask("hi", subset) for subset in get_args(MMLU_SUBSET)],
+        "x-codah-hi",
+        "x-csqa-hi",
+        "xcopa-hi",
+        "xnli-2.0-bool-v2-hi",
+        "chai-hi",
+        "xstory_cloze-hi",
+    ]),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

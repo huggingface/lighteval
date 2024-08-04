@@ -31,7 +31,8 @@ _MC_TASKS = [
     XCopaTask(lang="th"),
     XNLI2Task(lang="th", version=2),
     CustomHellaswagThaiTask(),
-    M3ExamTask(lang="th"),
+    M3ExamTask(lang="th", version=1),
+    M3ExamTask(lang="th", version=2),
     BelebeleTask(lang="th"),
     WSCITask(lang="th"),
     *[ThaiExamsTask(subset=sb) for sb in get_args(ThaiExamSubset)],
@@ -51,6 +52,15 @@ TASKS_GROUPS = {
     "thai_qa": tasks_to_string([ThaiQATask()]),
     "wsci": tasks_to_string([WSCITask(lang="th")]),
     "custom_hellaswag": tasks_to_string([CustomHellaswagThaiTask()]),
+    "m3exam": tasks_to_string([M3ExamTask(lang="th", version=version) for version in (2,)]),
+    "early-signals": tasks_to_string([
+        "belebele-th",
+        "m3exam-th",
+        *[MetaMMLUTask("th", subset) for subset in get_args(MMLU_SUBSET)],
+        "xnli-2.0-bool-v2-th",
+        "custom_hellaswag-th",
+        "thaiqa",
+    ]),
 }
 
 

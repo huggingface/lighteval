@@ -23,7 +23,8 @@ _MC_TASKS = [
     XNLITask(lang="sw", version=2),
     XNLI2Task(lang="sw", version=1),
     XNLI2Task(lang="sw", version=2),
-    M3ExamTask(lang="sw"),
+    M3ExamTask(lang="sw", version=1),
+    M3ExamTask(lang="sw", version=2),
     XCSQATask(lang="sw"),
     XCODAHTask(lang="sw"),
     *SW_TASKS
@@ -40,15 +41,17 @@ TASKS_GROUPS = {
     "xnli2": tasks_to_string([XNLI2Task(lang="sw", version=2)]),
     "kenswquad": tasks_to_string([KenswQuADTask()]),
     "xcodah": tasks_to_string([XCODAHTask(lang="sw")]),
+    "m3exam": tasks_to_string([M3ExamTask(lang="sw", version=version) for version in (2,)]),
     "early-signals": tasks_to_string([
-        ARCSwTask(subset="easy"),
-        KenswQuADTask(),
-        M3ExamTask(lang="sw"),
-        XCSQATask(lang="sw"),
-        XCopaTask(lang="sw"),
-        XNLI2Task(lang="sw", version=2),
-        XStoryClozeTask(lang="sw")
-    ])
+        "belebele-sw",
+        "arc-sw:easy",
+        "kenswquad",
+        "m3exam-sw",
+        "x-csqa-sw",
+        "xcopa-sw",
+        "xnli-2.0-bool-v2-sw",
+        "xstory_cloze-sw",
+    ]),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

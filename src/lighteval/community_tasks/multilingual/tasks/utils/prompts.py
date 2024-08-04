@@ -109,8 +109,11 @@ def _get_multi_qa_simple_prompt(lang: LANGS):
 
 
 answer_prefix_re = re.compile(rf"^\([A-Da-d1-5๑๒๓๔๕]\)\s*|^[A-Da-e1-5๑๒๓๔๕][.．।。]\s*")
-def get_m_m3exam_prompt(lang: LANGS):
-    prompter = _get_multi_qa_simple_prompt(lang)
+def get_m_m3exam_prompt(lang: LANGS, version: Literal[1,2]):
+    if version == 1:
+        prompter = _get_multi_qa_simple_prompt(lang)
+    else:
+        prompter = _get_multi_qa_prompt(lang)
     # TODO: Would be nice to have general solution for the letters
     letter_indices = "๑๒๓๔๕" if lang == "th" else LETTER_INDICES
 

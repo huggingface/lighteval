@@ -159,7 +159,7 @@ class RuMMLUTask(LightevalTaskConfig):
 class RuOpenBookQATask(LightevalTaskConfig):
     def __init__(self):
         super().__init__(
-            name=f"rummlu",
+            name=f"ruopenbookqa",
             prompt_function=get_openbookqa_prompt("ru"),
             suite=("custom",),
             hf_repo="ai-forever/MERA",

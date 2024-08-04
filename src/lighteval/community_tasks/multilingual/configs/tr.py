@@ -46,6 +46,16 @@ TASKS_GROUPS = {
     "mkqa": tasks_to_string([MkqaTask(lang="tr", type=task_type) for task_type in get_args(TaskType)]),
     "hellaswag": tasks_to_string([HellaSwagTrTask()]),
     "winograde": tasks_to_string([WinogradeTrTask()]),
+    "early-signals": tasks_to_string([
+        "arc-v2-tr",
+        *[ExamsTask(lang="tr", subject=subject, show_options=False) for subject in ("Biology", "Business", "History", "Philosophy")],
+        "hellaswag-tr",
+        *[MMLUTaskTr(subset) for subset in get_args(MMLU_SUBSETS)],
+        "tqduad2",
+        "xcopa-tr",
+        "xnli-2.0-bool-v2-tr",
+        "xquad-tr",
+    ]),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

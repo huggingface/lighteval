@@ -4,7 +4,7 @@ from ..tasks.qa.custom_squad import SberSquadTask
 from ..tasks.qa.mkqa import MkqaTask, TaskType
 from ..tasks.utils.tasks_helpers import tasks_to_string
 
-from ..tasks.suites.mera import GENERATIVE_TASKS as _MERA_GENERATIVE_TASKS, MC_TASKS as _MERA_MC_TASKS, RCBTask
+from ..tasks.suites.mera import GENERATIVE_TASKS as _MERA_GENERATIVE_TASKS, MC_TASKS as _MERA_MC_TASKS, RUMMLU_SUBSET, RCBTask, RuMMLUTask
 from ..tasks.mqa.mlmm import get_mlmm_tasks
 from ..tasks.mqa_with_context.belebele import BelebeleTask
 from ..tasks.mqa_with_context.m3exam import M3ExamTask
@@ -49,6 +49,20 @@ TASKS_GROUPS = {
     "sber_squad": tasks_to_string([SberSquadTask()]),
     "xcodah": tasks_to_string([XCODAHTask("ru")]),
     "winograde": tasks_to_string([XWinogradeTask("ru")]),
+    "early-signals": tasks_to_string([
+        "arc-ru",
+        "belebele-ru",
+        "hellaswag-ru",
+        "parus",
+        *[RuMMLUTask(subset) for subset in get_args(RUMMLU_SUBSET)],
+        "ruopenbookqa",
+        "tydiqa-ru",
+        "x-codah-ru",
+        "x-csqa-ru",
+        "xnli-2.0-bool-v2-ru",
+        "sber_squad",
+        "xstory_cloze-ru",
+    ]),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

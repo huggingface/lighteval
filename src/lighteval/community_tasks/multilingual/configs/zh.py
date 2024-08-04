@@ -25,6 +25,7 @@ from ..tasks.qa.mkqa import MkqaTask, TaskType
 
 _GENERATIVE_TASKS = [
     *[MkqaTask(lang="zh", type=task_type) for task_type in get_args(TaskType)],
+    MlqaTask(lang="zh"),
     TydiqaTask(lang="zh"),
     XquadTask(lang="zh"),
     CMathTask(),
@@ -44,7 +45,8 @@ _MC_TASKS = [
     XCopaTask(lang="zh"),
     XWinogradeTask(lang="zh"),
     CMNLITask(version=2),
-    M3ExamTask(lang="zh"),
+    M3ExamTask(lang="zh", version=1),
+    M3ExamTask(lang="zh", version=2),
     C3Task(),
     *[CMMLUTask(task) for task in get_args(CMMLU_TASK_TYPE)],
     *[CEvalTask(task, show_options=False, join_variant=join_variant) for task in get_args(CEVAL_TASK_TYPE) for join_variant in get_args(MULTICHOICE_JOIN_VARIANT)],
@@ -67,9 +69,26 @@ TASKS_GROUPS = {
     "ocnli": tasks_to_string([OCNLI(version=version) for version in (1, 2)]),
     "mkqa": tasks_to_string([MkqaTask(lang="zh", type=task_type) for task_type in get_args(TaskType)]),
     "xcodah": tasks_to_string([XCODAHTask(lang="zh")]),
+    "m3exam": tasks_to_string([M3ExamTask(lang="zh", version=version) for version in (2,)]),
     "cmnli": tasks_to_string([CMNLITask(version=2)]),
     "squad-zh": tasks_to_string([ChineseSQuADTask()]),
-    "winograd": tasks_to_string([XWinogradeTask(lang="zh")]),
+    "early-signals": tasks_to_string([
+            *[ChineseAgievalTask(task, show_options=False, join_variant="NEW_LINE") for task in get_args(CHINESE_AGIEVAL_TASK_TYPE) if task != "gaokao-mathqa"],
+            "belebele-zh",
+            "c3",
+            *[CEvalTask(task, show_options=False, join_variant="NEW_LINE") for task in get_args(CEVAL_TASK_TYPE)],
+            *[CMMLUTask(subset) for subset in get_args(CMMLU_TASK_TYPE)],
+            "cmrc",
+            "hellaswag-zh",
+            "m3exam-zh",
+            "mlqa-zh",
+            "x-codah-zh",
+            "x-csqa-zh",
+            "xcopa-zh",
+            "xquad-zh",
+            "xstory_cloze-zh",
+            "xwinograd-zh",
+    ])
 
 }
 
