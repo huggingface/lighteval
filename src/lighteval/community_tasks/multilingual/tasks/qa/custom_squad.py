@@ -7,7 +7,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 EVAL_TYPE = Literal["exact", "f1"]
 
 class ThaiQATask(LightevalTaskConfig):
-    def __init__(self):
+    def __init__(self, max_query_length: int):
         super().__init__(
             name=f"thaiqa",
             prompt_function=get_mlqa_prompt("th", answer_key="answer"),
@@ -18,6 +18,7 @@ class ThaiQATask(LightevalTaskConfig):
             few_shots_split="validation",
             generation_size=40,
             stop_sequence=("\n",),
+            filter=lambda x: len(x["question"] + x["context"]) < max_query_length,
             metric=(get_qa_metric("th", "exact"), get_qa_metric("th", "f1")),
         )
         
@@ -56,7 +57,7 @@ class ARCDSquadTask(LightevalTaskConfig):
         )
         
 class KenswQuADTask(LightevalTaskConfig):
-    def __init__(self):
+    def __init__(self, max_query_length: int):
         super().__init__(
             name=f"kenswquad",
             prompt_function=get_kenswquad_prompt("sw"),
@@ -65,6 +66,7 @@ class KenswQuADTask(LightevalTaskConfig):
             hf_subset="default",
             evaluation_splits=("test",),
             few_shots_split="validation",
+            filter=lambda x: len(x["question"] + x["context"]) < max_query_length,
             metric=(get_qa_metric("sw", "exact"), get_qa_metric("sw", "f1")),
             generation_size=40,
             stop_sequence=("\n",),
@@ -88,7 +90,7 @@ class ChineseSQuADTask(LightevalTaskConfig):
 
 
 class ChAITask(LightevalTaskConfig):
-    def __init__(self, lang: Literal["hi"]):
+    def __init__(self, lang: Literal["hi"], max_query_length: int):
         lang_long_name = LANG_NAMES_INVERTED[lang]
         super().__init__(
             name=f"chai-{lang}",
@@ -97,7 +99,7 @@ class ChAITask(LightevalTaskConfig):
             hf_repo="nirantk/chaii-hindi-and-tamil-question-answering",
             hf_subset="default",
             evaluation_splits=("train",),
-            filter=lambda x: x["language"] == lang_long_name,
+            filter=lambda x: x["language"] == lang_long_name and len(x["question"] + x["context"]) < max_query_length,
             generation_size=90,
             stop_sequence=("\n",),
             metric=(get_qa_metric(lang, "exact"), get_qa_metric(lang, "f1")),

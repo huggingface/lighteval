@@ -13,7 +13,7 @@ from ..tasks.qa.mkqa import MkqaTask, TaskType
 
 _GENERATIVE_TASKS = [
     XquadTask(lang="tr"),
-    Tquad2Task(),
+    Tquad2Task(max_query_length=2800),
     *[MkqaTask(lang="tr", type=task_type) for task_type in get_args(TaskType)]
 ]
 

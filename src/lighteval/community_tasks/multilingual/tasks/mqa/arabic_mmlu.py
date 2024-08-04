@@ -50,13 +50,15 @@ AR_MMLU_TASK_TYPE = Literal[
 ]
 
 class ArabicMMLUTask(LightevalTaskConfig):
-    def __init__(self, task: AR_MMLU_TASK_TYPE):
+    def __init__(self, task: AR_MMLU_TASK_TYPE, max_query_length: int, limit: int):
         super().__init__(
             name=f"arabic_mmlu_native:{task.lower().replace(' ', '_').replace('(', '').replace(')', '')}",
             prompt_function=get_arabic_mmlu_prompt("ar"),
             suite=("custom",),
             hf_repo="yazeed7/ArabicMMLU",
+            filter=lambda line: len(line["Question"]) + len(line.get("Context", "")) < max_query_length,
             hf_subset=task,
+            limit=limit,
             evaluation_splits=("test",),
             metric=(
                 Metrics.loglikelihood_acc,

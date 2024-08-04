@@ -12,7 +12,7 @@ from ..tasks.qa.tydiqa import TydiqaTask
 
 _GENERATIVE_TASKS = [
     TydiqaTask(lang="te"),
-    IndicQATask(lang="te"),
+    IndicQATask(lang="te", max_query_length=4500),
 ]
 
 _MC_TASKS = [

@@ -8,7 +8,7 @@ LANGS = Literal["as", "bn", "gu", "hi", "kn", "ml", "mr", "or", "pa", "ta", "te"
 
 
 class IndicQATask(LightevalTaskConfig):
-    def __init__(self, lang: LANGS):
+    def __init__(self, lang: LANGS, max_query_length: int):
         super().__init__(
             name=f"indicqa.{lang}",
             prompt_function=get_mlqa_prompt(lang),
@@ -19,7 +19,7 @@ class IndicQATask(LightevalTaskConfig):
             trust_dataset=True,
             evaluation_splits=("test",),
             few_shots_split="test",
-            filter=lambda x: all(len(a) != 0 for a in x["answers"]["text"]),
+            filter=lambda x: all(len(a) != 0 for a in x["answers"]["text"]) and len(x["question"] + x["context"]) < max_query_length,
             generation_size=30,
             metric=(get_qa_metric(lang, "exact"), get_qa_metric(lang, "f1")),
             stop_sequence=("\n",),

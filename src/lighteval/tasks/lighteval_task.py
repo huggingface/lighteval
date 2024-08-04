@@ -397,7 +397,7 @@ class LightevalTask:
             if limit is not None and len(docs) >= limit:
                 break
             split_docs = self.dataset[split]
-            split_docs = split_docs.take(limit - len(docs)) if limit else split_docs
+            split_docs = split_docs.take(min(limit - len(docs), len(split_docs))) if limit else split_docs
             for item in split_docs:
                 # Some tasks formatting is applied differently when the document is used for fewshot examples
                 # vs when it's used for the actual prompt. That's why we store whether we are currently using the

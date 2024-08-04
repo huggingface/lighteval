@@ -12,7 +12,7 @@ from ..tasks.qa.tydiqa import TydiqaTask
 
 _GENERATIVE_TASKS = [
     TydiqaTask(lang="sw"),
-    KenswQuADTask(),
+    KenswQuADTask(max_query_length=6200),
 ]
 
 _MC_TASKS = [
@@ -39,7 +39,7 @@ TASKS_GROUPS = {
     "xnli": tasks_to_string([XNLITask(lang="sw", version=version) for version in (1, 2)] +
                             [XNLI2Task(lang="sw", version=version) for version in (1, 2)]),
     "xnli2": tasks_to_string([XNLI2Task(lang="sw", version=2)]),
-    "kenswquad": tasks_to_string([KenswQuADTask()]),
+    "kenswquad": tasks_to_string([KenswQuADTask(max_query_length=6200)]),
     "xcodah": tasks_to_string([XCODAHTask(lang="sw")]),
     "m3exam": tasks_to_string([M3ExamTask(lang="sw", version=version) for version in (2,)]),
     "early-signals": tasks_to_string([
