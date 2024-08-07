@@ -75,6 +75,45 @@ def mmlu_arabic(line, task_name: str = None):
         target_for_fewshot_sorting=LETTER_INDICES_AR[gold_ix],
     )
 
+def mbzuai_arabic_mmlu(line, task_name: str = None):
+    topic = line["Subject"]
+    instruction = f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}. \n\n"
+    choices = [line["Option 1"], line["Option 2"],
+               line["Option 3"], line["Option 4"],
+               line["Option 5"]]
+    
+    # Answers are provided with roman letters - we look for the correct index in LETTER_INDICES,
+    # it will then be applied to arabic letters
+    gold_ix = LETTER_INDICES.index(line["Answer Key"])
+
+    query = f"{instruction}{line['Question']}\n"
+    query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES_AR[:5], choices)])
+    query += "الإجابة:"
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=LETTER_INDICES_AR[:5],
+        gold_index=gold_ix,
+        instruction=instruction,
+        target_for_fewshot_sorting=LETTER_INDICES_AR[gold_ix],
+    )
+
+# mbzuai_arabic_mmlu
+mbzuai_arabic_mmlu_task = LightevalTaskConfig(
+    name="mbzuai_arabic_mmlu",
+    prompt_function=mbzuai_arabic_mmlu,
+    suite=["community"],
+    hf_repo="MBZUAI/ArabicMMLU",
+    hf_subset="default",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split="test",
+    few_shots_select="sequential",
+    metric=["loglikelihood_acc_norm"],
+    trust_dataset=True,
+    version=0,
+)
 
 class CustomArabicMMLUTask(LightevalTaskConfig):
     def __init__(
@@ -594,6 +633,7 @@ TASKS_TABLE = (
     + [hellaswag_okapi_ar_task]
     + [toxigen_ar_task]
     + [sciq_ar_task]
+    + [mbzuai_arabic_mmlu_task]
 )
 
 if __name__ == "__main__":
