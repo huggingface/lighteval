@@ -35,6 +35,7 @@ from lighteval.utils import (
     NO_BNB_ERROR_MSG,
     NO_PEFT_ERROR_MSG,
     EnvConfig,
+    boolstring_to_bool,
     is_accelerate_available,
     is_autogptq_available,
     is_bnb_available,
@@ -63,6 +64,7 @@ class BaseModelConfig:
             space at the start of each continuation in multichoice generation.
             For example, context: "What is the capital of France?" and choices: "Paris", "London".
             Will be tokenized as: "What is the capital of France? Paris" and "What is the capital of France? London".
+            True adds a space, False strips a space, None does nothing
         subfolder (Optional[str]): The subfolder within the model repository.
         revision (str): The revision of the model.
         batch_size (int): The batch size for model training.
@@ -111,8 +113,12 @@ class BaseModelConfig:
     quantization_config: Optional[BitsAndBytesConfig] = None
     trust_remote_code: bool = False
     use_chat_template: bool = False
+    compile: bool = False
 
     def __post_init__(self):
+        # Making sure this parameter is a boolean
+        self.multichoice_continuations_start_space = boolstring_to_bool(self.multichoice_continuations_start_space)
+
         if self.quantization_config is not None and not is_bnb_available():
             raise ImportError(NO_BNB_ERROR_MSG)
 
@@ -296,6 +302,7 @@ def create_model_config(  # noqa: C901
 
         args_dict["accelerator"] = accelerator
         args_dict["use_chat_template"] = args.use_chat_template
+        args_dict["compile"] = bool(args_dict["compile"]) if "compile" in args_dict else False
 
         return BaseModelConfig(**args_dict)
 
@@ -310,10 +317,10 @@ def create_model_config(  # noqa: C901
         )
 
     if config["type"] == "endpoint":
-        reuse_existing_endpoint = config["base_params"]["reuse_existing"]
+        reuse_existing_endpoint = config["base_params"].get("reuse_existing", None)
         complete_config_endpoint = all(
             val not in [None, ""]
-            for key, val in config["instance"].items()
+            for key, val in config.get("instance", {}).items()
             if key not in InferenceEndpointModelConfig.nullable_keys()
         )
         if reuse_existing_endpoint or complete_config_endpoint:
@@ -335,15 +342,21 @@ def create_model_config(  # noqa: C901
         return InferenceModelConfig(model=config["base_params"]["endpoint_name"])
 
     if config["type"] == "base":
-        # Tests on the multichoice space parameters
-        multichoice_continuations_start_space = config["generation"]["multichoice_continuations_start_space"]
-        no_multichoice_continuations_start_space = config["generation"]["no_multichoice_continuations_start_space"]
-        if not multichoice_continuations_start_space and not no_multichoice_continuations_start_space:
-            multichoice_continuations_start_space = None
-        if multichoice_continuations_start_space and no_multichoice_continuations_start_space:
-            raise ValueError(
-                "You cannot force both the multichoice continuations to start with a space and not to start with a space"
-            )
+        # Creating the multichoice space parameters
+        # We need to take into account possible conversion issues from our different input formats
+        multichoice_continuations_start_space = boolstring_to_bool(
+            config["generation"]["multichoice_continuations_start_space"]
+        )
+
+        if multichoice_continuations_start_space is not None:
+            if multichoice_continuations_start_space:
+                hlog(
+                    "You set `multichoice_continuations_start_space` to true. This will force multichoice continuations to use a starting space"
+                )
+            else:
+                hlog(
+                    "You set `multichoice_continuations_start_space` to false. This will remove a leading space from multichoice continuations, if present."
+                )
 
         # Creating optional quantization configuration
         if config["base_params"]["dtype"] == "4bit":
@@ -358,6 +371,7 @@ def create_model_config(  # noqa: C901
 
         # We store the relevant other args
         args_dict["base_model"] = config["merged_weights"]["base_model"]
+        args_dict["compile"] = bool(config["base_params"]["compile"])
         args_dict["dtype"] = config["base_params"]["dtype"]
         args_dict["accelerator"] = accelerator
         args_dict["quantization_config"] = quantization_config

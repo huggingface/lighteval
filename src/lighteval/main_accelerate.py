@@ -34,7 +34,6 @@ if not is_accelerate_available() and not is_tgi_available():
     hlog_warn("Using either accelerate or text-generation to run this script is advised.")
 
 TOKEN = os.getenv("HF_TOKEN")
-CACHE_DIR = os.getenv("HF_HOME")
 
 if is_accelerate_available():
     from accelerate import Accelerator, InitProcessGroupKwargs
