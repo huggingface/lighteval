@@ -477,6 +477,17 @@ class LightevalTask:
                 )
                 for i, gold in enumerate(golds)
             ]
+        if self.has_metric_category[MetricCategory.TARGET_PERPLEXITY_MULTI_CONTEXT]:
+            requests[RequestType.LOGLIKELIHOOD] += [
+                LoglikelihoodRequest(
+                    task_name=current_task_name,
+                    example_index=document_id_seed,
+                    request_index=i,
+                    context=context + local_context,
+                    choice=formatted_doc.choices[0],
+                )
+                for i, local_context in enumerate(formatted_doc.specific["local_contexts"])
+            ]
         if self.has_metric_category[MetricCategory.PERPLEXITY]:
             requests[RequestType.LOGLIKELIHOOD_ROLLING] += [
                 LoglikelihoodRollingRequest(

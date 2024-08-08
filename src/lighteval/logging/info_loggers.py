@@ -347,6 +347,7 @@ class DetailsLogger:
         if (
             task.has_metric_category[MetricCategory.PERPLEXITY]
             or task.has_metric_category[MetricCategory.TARGET_PERPLEXITY]
+            or task.has_metric_category[MetricCategory.TARGET_PERPLEXITY_MULTI_CONTEXT]
         ):
             pred_saved = True
             pass  # should we log something?

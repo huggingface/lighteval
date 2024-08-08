@@ -26,6 +26,7 @@ from enum import Enum, auto
 
 class MetricCategory(str, Enum):
     TARGET_PERPLEXITY = auto()
+    TARGET_PERPLEXITY_MULTI_CONTEXT = auto()
     PERPLEXITY = auto()
     GENERATIVE = auto()
     GENERATIVE_LOGPROB = auto()
