@@ -236,10 +236,10 @@ class LoglikelihoodAcc:
         if self.length_normalization:
             normalized_log_probs = []
             for ix, choice in enumerate(formatted_doc.choices):
-                if self.ignore_first_space and choice[0] == " ":
-                    normalized_log_probs.append(choices_logprob[ix] / (len(choice) - 1))
-                else:
-                    normalized_log_probs.append(choices_logprob[ix] / len(choice))
+                normalization_length = (
+                    (len(choice) - 1) if self.ignore_first_space and choice[0] == " " else len(choice)
+                )
+                normalized_log_probs.append(choices_logprob[ix] / normalization_length)
 
             best_choice = np.argmax(normalized_log_probs)
         else:
