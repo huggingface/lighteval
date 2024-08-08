@@ -33,7 +33,7 @@ import xxhash
 from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics import MetricCategory
 from lighteval.metrics.stderr import get_stderr_function
-from lighteval.models.model_loader import ModelInfo
+from lighteval.models.abstract_model import ModelInfo
 from lighteval.models.model_output import ModelReturn
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc

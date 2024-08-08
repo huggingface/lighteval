@@ -33,8 +33,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
 from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
-from lighteval.models.abstract_model import LightevalModel
-from lighteval.models.model_config import BaseModelConfig, EnvConfig
+from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.model_config import BaseModelConfig
 from lighteval.models.model_output import (
     Batch,
     GenerateMultiTurnReturn,
@@ -51,12 +51,12 @@ from lighteval.tasks.requests import (
     LoglikelihoodSingleTokenRequest,
     Request,
 )
-from lighteval.utils import as_list, is_accelerate_available
+from lighteval.utils import EnvConfig, as_list, is_accelerate_available
 from lighteval.utils_parallelism import find_executable_batch_size
 
 
 if is_accelerate_available():
-    from accelerate.utils import get_max_memory
+    from accelerate.utils import calculate_maximum_sizes, convert_bytes, get_max_memory
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -98,6 +98,18 @@ class BaseModel(LightevalModel):
         self.model_sha = config.get_model_sha()
 
         self.precision = _get_dtype(config.dtype, config=self._config)
+
+        if is_accelerate_available():
+            model_size, _ = calculate_maximum_sizes(self.model)
+            model_size = convert_bytes(model_size)
+        else:
+            model_size = -1
+        self.model_info = ModelInfo(
+            model_name=self.model_name,
+            model_sha=self.model_sha,
+            model_dtype=self.precision,
+            model_size=model_size,
+        )
 
     @property
     def tokenizer(self):

@@ -34,6 +34,7 @@ from lighteval.utils import (
     NO_AUTOGPTQ_ERROR_MSG,
     NO_BNB_ERROR_MSG,
     NO_PEFT_ERROR_MSG,
+    EnvConfig,
     boolstring_to_bool,
     is_accelerate_available,
     is_autogptq_available,
@@ -44,20 +45,6 @@ from lighteval.utils import (
 
 if is_accelerate_available():
     from accelerate import Accelerator
-
-
-@dataclass
-class EnvConfig:
-    """
-    Configuration class for environment settings.
-
-    Attributes:
-        cache_dir (str): directory for caching data.
-        token (str): authentication token used for accessing the HuggingFace Hub.
-    """
-
-    cache_dir: str = None
-    token: str = None
 
 
 @dataclass

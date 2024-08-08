@@ -29,20 +29,6 @@ import torch
 import torch.nn.functional as F
 import transformers
 from datasets.download.streaming_download_manager import xPath
-from nanotron import distributed as dist
-from nanotron import logging
-from nanotron.config import LightEvalConfig, ModelArgs, ParallelismArgs, TokenizerArgs
-from nanotron.generation.decode import decode_tokenized
-from nanotron.logging import human_format, log_rank
-from nanotron.models import build_model
-from nanotron.parallel.context import ParallelContext
-from nanotron.parallel.parameters import sanity_check
-from nanotron.parallel.pipeline_parallel.block import get_min_max_rank
-from nanotron.parallel.pipeline_parallel.tensor_pointer import TensorPointer
-from nanotron.parallel.tensor_parallel.enum import TensorParallelLinearMode
-from nanotron.random import RandomStates, get_current_random_state, get_synced_random_state, set_random_seed
-from nanotron.serialize import load_weights
-from nanotron.trainer import CONFIG_TO_MODEL_CLASS, mark_tied_parameters
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
@@ -55,25 +41,39 @@ from lighteval.data import (
     LoglikelihoodSingleTokenDataset,
 )
 from lighteval.logging.hierarchical_logger import hlog_err, hlog_warn
-from lighteval.models.base_model import LightevalModel
-from lighteval.models.model_config import EnvConfig
+from lighteval.models.base_model import LightevalModel, ModelInfo
 from lighteval.models.model_output import Batch, GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
 )
-from lighteval.utils import as_list, boolstring_to_bool
+from lighteval.utils import EnvConfig, as_list, is_nanotron_available, boolstring_to_bool
 from lighteval.utils_parallelism import find_executable_batch_size
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-logger = logging.get_logger(__name__)
-
 TokenSequence = Union[List[int], torch.LongTensor, torch.Tensor, BatchEncoding]
 
-# _DeviceMapping = NewType("DeviceMapping", Mapping[str, Union[int, str, torch.device]])
+if is_nanotron_available():
+    import nanotron
+    from nanotron import distributed as dist
+    from nanotron import logging
+    from nanotron.config import LightEvalConfig, ModelArgs, TokenizerArgs
+    from nanotron.generation.decode import decode_tokenized
+    from nanotron.logging import human_format, log_rank
+    from nanotron.models import build_model
+    from nanotron.parallel.context import ParallelContext
+    from nanotron.parallel.parameters import sanity_check
+    from nanotron.parallel.pipeline_parallel.block import get_min_max_rank
+    from nanotron.parallel.pipeline_parallel.tensor_pointer import TensorPointer
+    from nanotron.parallel.tensor_parallel.enum import TensorParallelLinearMode
+    from nanotron.random import RandomStates, get_current_random_state, get_synced_random_state, set_random_seed
+    from nanotron.serialize import load_weights
+    from nanotron.trainer import CONFIG_TO_MODEL_CLASS, mark_tied_parameters
+
+logger = logging.get_logger(__name__)
 
 
 class NanotronLightevalModel(LightevalModel):
@@ -84,12 +84,8 @@ class NanotronLightevalModel(LightevalModel):
     def __init__(
         self,
         checkpoint_path: str,
-        model_args: ModelArgs,
-        tokenizer: TokenizerArgs,
+        nanotron_config: nanotron.config.Config,
         parallel_context: ParallelContext,
-        parallel_config: ParallelismArgs,
-        lighteval_config: LightEvalConfig,
-        batch_size: Optional[int] = -1,
         max_gen_toks: Optional[int] = 256,
         max_length: Optional[int] = None,
         add_special_tokens: Optional[bool] = True,
@@ -102,8 +98,12 @@ class NanotronLightevalModel(LightevalModel):
         """Initializes a nanotron model for evaluation.
         Args:
         """
+        model_args: ModelArgs = nanotron_config.model
+        tokenizer: TokenizerArgs = nanotron_config.tokenizer
+        lighteval_config: LightEvalConfig = nanotron_config.lighteval
+        parallel_config: ParallelContext = nanotron_config.lighteval.parallelism
 
-        self._batch_size = batch_size
+        self._batch_size = lighteval_config.batch_size
         self._max_gen_toks = max_gen_toks
         self._max_length = max_length
         self.parallel_config = parallel_config
@@ -210,6 +210,8 @@ class NanotronLightevalModel(LightevalModel):
         self.input_pp_rank, self.output_pp_rank = get_min_max_rank(module=self.model)
 
         self.multichoice_continuations_start_space = multichoice_continuations_start_space
+
+        self.model_info = ModelInfo(model_name=f"{nanotron_config.general.run}/{nanotron_config.general.step}")
 
     @property
     def tokenizer(self):

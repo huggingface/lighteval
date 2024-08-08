@@ -27,8 +27,8 @@ from typing import Optional
 
 from transformers import AutoTokenizer
 
-from lighteval.models.abstract_model import LightevalModel
-from lighteval.models.model_config import DummyModelConfig, EnvConfig
+from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.model_config import DummyModelConfig
 from lighteval.models.model_output import GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
@@ -36,6 +36,7 @@ from lighteval.tasks.requests import (
     LoglikelihoodRollingRequest,
     LoglikelihoodSingleTokenRequest,
 )
+from lighteval.utils import EnvConfig
 
 
 class DummyModel(LightevalModel):
@@ -50,6 +51,7 @@ class DummyModel(LightevalModel):
         self.env_config = env_config
         self._random = random.Random(self.config.seed)
         self._tokenizer = None
+        self.model_info = ModelInfo(model_name="dummy", model_sha=str(config.seed))
 
     @property
     def tokenizer(self):
