@@ -145,6 +145,24 @@ def flatten(item: list[Union[list, str]]) -> list[str]:
     return flat_item
 
 
+def boolstring_to_bool(x: Union[str, bool, int]) -> Union[bool, None]:
+    """Allows to manage string or bool to bool conversion, in case a configuration input is badly formatted.
+
+    Args:
+        x (str): A string (true, false, True, False, ...)
+
+    Returns:
+        Union[bool, None]: the corresponding boolean
+    """
+    if x in [None, "None", "null", ""]:
+        return None
+    if x in ["True", "true", True, 1]:
+        return True
+    if x in ["False", "false", False, 0]:
+        return False
+    raise ValueError(f"You tried to convert {x} to a boolean but it's not possible.")
+
+
 def is_accelerate_available() -> bool:
     return importlib.util.find_spec("accelerate") is not None
 

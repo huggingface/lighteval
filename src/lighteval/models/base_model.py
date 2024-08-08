@@ -29,7 +29,7 @@ import transformers
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
 from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
@@ -88,11 +88,11 @@ class BaseModel(LightevalModel):
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
 
         # We are in DP (and launch the script with `accelerate launch`)
-        if not config.model_parallel and config.quantization_config is None:
-            # might need to use accelerate instead
-            # self.model = config.accelerator.prepare(self.model)
+        if not config.model_parallel and not isinstance(config.quantization_config, BitsAndBytesConfig):
             hlog(f"Using Data Parallelism, putting model on device {self._device}")
             self.model = self.model.to(self._device)
+        if config.compile:
+            self.model.model.compile()
 
         self.model_name = _simplify_name(config.pretrained)
         self.model_sha = config.get_model_sha()
@@ -267,8 +267,6 @@ class BaseModel(LightevalModel):
             if hasattr(self._config, attr):
                 return getattr(self._config, attr)
 
-        if hasattr(self.tokenizer, "model_max_length"):
-            return self.tokenizer.model_max_length
         # Default max sequence length setting for when no `max_length` is provided
         # or no max length config setting is found in the model or tokenizer.
         return 2048
@@ -298,10 +296,11 @@ class BaseModel(LightevalModel):
         - None (Don't touch - default)
         Todo: find a way to add this back WITHOUT breaking compatibility with the harness
         """
-        if self.multichoice_continuations_start_space is True and continuation[0] != " ":
-            continuation = " " + continuation
-        if self.multichoice_continuations_start_space is False and continuation[0] == " ":
-            continuation = continuation.lstrip()
+        if self.multichoice_continuations_start_space is not None:
+            if self.multichoice_continuations_start_space and continuation[0] != " ":
+                continuation = " " + continuation
+            if not self.multichoice_continuations_start_space and continuation[0] == " ":
+                continuation = continuation.lstrip()
         return continuation
 
     def _model_call(self, inputs: torch.Tensor) -> torch.Tensor:
@@ -558,7 +557,10 @@ class BaseModel(LightevalModel):
                     # There will be truncation of at least one sample, maximum generation size will be one
                     max_new_tokens = 1
                 else:  # We can't allow generation of more than max_length
-                    max_new_tokens = min(self.max_length - context_size, max_new_tokens)
+                    if max_new_tokens is None:  # If generation size is not set, we go all the way
+                        max_new_tokens = self.max_length - context_size
+                    else:
+                        max_new_tokens = min(self.max_length - context_size, max_new_tokens)
 
                 prepared_batch = Batch(
                     input_ids=tokenized["input_ids"],
@@ -948,7 +950,7 @@ class BaseModel(LightevalModel):
             if any(len(c) > 1 for c in continuations_enc):
                 raise ValueError(
                     f"Trying to do single token multiple choice but one choice has several tokens: {continuations_enc}. "
-                    "If the additional pre-token is a space, try to set --no_multichoice_continuations_start_space "
+                    "If the additional pre-token is a space, try to set `multichoice_continuations_start_space=False` in the model parameters "
                 )
             request.tokenized_continuation = continuations_enc
 

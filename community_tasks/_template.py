@@ -68,7 +68,7 @@ task = LightevalTaskConfig(
     evaluation_splits=[],
     few_shots_split="",
     few_shots_select="",
-    metric=[""],
+    metric=[],  # select your metric in Metrics
 )
 
 # EVALS WITH SUBSET
@@ -91,7 +91,7 @@ class CustomSubsetTask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=prompt_fn,  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
             hf_repo="",
-            metric=[""],
+            metric=[custom_metric],  # select your metric in Metrics or use your custom_metric
             hf_avail_splits=[],
             evaluation_splits=[],
             few_shots_split="",
@@ -111,15 +111,13 @@ TASKS_TABLE = SUBSET_TASKS + [task]
 
 # CUSTOM METRIC IF NEEDED
 custom_metric = SampleLevelMetric(
-    metric="my_custom_metric_name",
+    metric_name="my_custom_metric_name",
     higher_is_better=True,
     category=MetricCategory.IGNORED,
     use_case=MetricUseCase.NONE,
     sample_level_fn=lambda x: x,  # how to compute score for one sample
     corpus_level_fn=np.mean,  # aggregation
 )
-
-extend_enum(Metrics, "my_custom_metric_name", custom_metric)
 
 # MODULE LOGIC
 # You should not need to touch this

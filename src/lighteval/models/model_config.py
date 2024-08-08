@@ -34,6 +34,7 @@ from lighteval.utils import (
     NO_AUTOGPTQ_ERROR_MSG,
     NO_BNB_ERROR_MSG,
     NO_PEFT_ERROR_MSG,
+    boolstring_to_bool,
     is_accelerate_available,
     is_autogptq_available,
     is_bnb_available,
@@ -76,6 +77,7 @@ class BaseModelConfig:
             space at the start of each continuation in multichoice generation.
             For example, context: "What is the capital of France?" and choices: "Paris", "London".
             Will be tokenized as: "What is the capital of France? Paris" and "What is the capital of France? London".
+            True adds a space, False strips a space, None does nothing
         subfolder (Optional[str]): The subfolder within the model repository.
         revision (str): The revision of the model.
         batch_size (int): The batch size for model training.
@@ -95,7 +97,8 @@ class BaseModelConfig:
             Use `dtype="auto"` to derive the type from the model's weights.
         device (Union[int, str]): device to use for model training.
         quantization_config (Optional[BitsAndBytesConfig]): quantization
-            configuration for the model. Needed for 4-bit and 8-bit precision.
+            configuration for the model, manually provided to load a normally floating point
+            model at a quantized precision. Needed for 4-bit and 8-bit precision.
         trust_remote_code (bool): Whether to trust remote code during model
             loading.
 
@@ -123,8 +126,12 @@ class BaseModelConfig:
     quantization_config: Optional[BitsAndBytesConfig] = None
     trust_remote_code: bool = False
     use_chat_template: bool = False
+    compile: bool = False
 
     def __post_init__(self):
+        # Making sure this parameter is a boolean
+        self.multichoice_continuations_start_space = boolstring_to_bool(self.multichoice_continuations_start_space)
+
         if self.quantization_config is not None and not is_bnb_available():
             raise ImportError(NO_BNB_ERROR_MSG)
 
@@ -144,13 +151,29 @@ class BaseModelConfig:
             cache_dir=env_config.cache_dir,
             token=env_config.token,
         )
-        if getattr(auto_config, "quantization_config", False) and self.quantization_config is None:
-            if not is_autogptq_available():
-                raise ImportError(NO_AUTOGPTQ_ERROR_MSG)
-            hlog(
-                "`quantization_config` is None but was found in the model's config, using the one found in config.json"
-            )
-            self.quantization_config = GPTQConfig(**auto_config.quantization_config, disable_exllama=True)
+
+        # Gathering the model's automatic quantization config, if available
+        try:
+            model_auto_quantization_config = auto_config.quantization_config
+            hlog("An automatic quantization config was found in the model's config. Using it to load the model")
+        except (AttributeError, KeyError):
+            model_auto_quantization_config = None
+
+        if model_auto_quantization_config is not None:
+            if self.quantization_config is not None:
+                # We don't load models quantized by default with a different user provided conf
+                raise ValueError("You manually requested quantization on a model already quantized!")
+
+            # We add the quantization to the model params we store
+            if model_auto_quantization_config["quant_method"] == "gptq":
+                if not is_autogptq_available():
+                    raise ImportError(NO_AUTOGPTQ_ERROR_MSG)
+                auto_config.quantization_config["use_exllama"] = None
+                self.quantization_config = GPTQConfig(**auto_config.quantization_config, disable_exllama=True)
+            elif model_auto_quantization_config["quant_method"] == "bitsandbytes":
+                if not is_bnb_available():
+                    raise ImportError(NO_BNB_ERROR_MSG)
+                self.quantization_config = BitsAndBytesConfig(**auto_config.quantization_config)
 
         return auto_config
 
@@ -292,6 +315,7 @@ def create_model_config(  # noqa: C901
 
         args_dict["accelerator"] = accelerator
         args_dict["use_chat_template"] = args.use_chat_template
+        args_dict["compile"] = bool(args_dict["compile"]) if "compile" in args_dict else False
 
         return BaseModelConfig(**args_dict)
 
@@ -306,10 +330,10 @@ def create_model_config(  # noqa: C901
         )
 
     if config["type"] == "endpoint":
-        reuse_existing_endpoint = config["base_params"]["reuse_existing"]
+        reuse_existing_endpoint = config["base_params"].get("reuse_existing", None)
         complete_config_endpoint = all(
             val not in [None, ""]
-            for key, val in config["instance"].items()
+            for key, val in config.get("instance", {}).items()
             if key not in InferenceEndpointModelConfig.nullable_keys()
         )
         if reuse_existing_endpoint or complete_config_endpoint:
@@ -331,15 +355,21 @@ def create_model_config(  # noqa: C901
         return InferenceModelConfig(model=config["base_params"]["endpoint_name"])
 
     if config["type"] == "base":
-        # Tests on the multichoice space parameters
-        multichoice_continuations_start_space = config["generation"]["multichoice_continuations_start_space"]
-        no_multichoice_continuations_start_space = config["generation"]["no_multichoice_continuations_start_space"]
-        if not multichoice_continuations_start_space and not no_multichoice_continuations_start_space:
-            multichoice_continuations_start_space = None
-        if multichoice_continuations_start_space and no_multichoice_continuations_start_space:
-            raise ValueError(
-                "You cannot force both the multichoice continuations to start with a space and not to start with a space"
-            )
+        # Creating the multichoice space parameters
+        # We need to take into account possible conversion issues from our different input formats
+        multichoice_continuations_start_space = boolstring_to_bool(
+            config["generation"]["multichoice_continuations_start_space"]
+        )
+
+        if multichoice_continuations_start_space is not None:
+            if multichoice_continuations_start_space:
+                hlog(
+                    "You set `multichoice_continuations_start_space` to true. This will force multichoice continuations to use a starting space"
+                )
+            else:
+                hlog(
+                    "You set `multichoice_continuations_start_space` to false. This will remove a leading space from multichoice continuations, if present."
+                )
 
         # Creating optional quantization configuration
         if config["base_params"]["dtype"] == "4bit":
@@ -354,6 +384,7 @@ def create_model_config(  # noqa: C901
 
         # We store the relevant other args
         args_dict["base_model"] = config["merged_weights"]["base_model"]
+        args_dict["compile"] = bool(config["base_params"]["compile"])
         args_dict["dtype"] = config["base_params"]["dtype"]
         args_dict["accelerator"] = accelerator
         args_dict["quantization_config"] = quantization_config
