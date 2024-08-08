@@ -21,13 +21,16 @@
 # SOFTWARE.
 
 import collections
+import inspect
+import os
 import random
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from multiprocessing import Pool
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
 
 from datasets import load_dataset
+from pytablewriter import MarkdownTableWriter
 
 from lighteval.few_shot_manager import FewShotSampler
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
@@ -220,6 +223,32 @@ class LightevalTask:
     @property
     def cfg(self):
         return self._cfg
+
+    def print_config(self):
+        md_writer = MarkdownTableWriter()
+        md_writer.headers = ["Key", "Value"]
+
+        values = []
+
+        for k, v in asdict(self.cfg).items():
+            if k == "metric":
+                for ix, metrics in enumerate(v):
+                    for metric_k, metric_v in metrics.items():
+                        if inspect.ismethod(metric_v):
+                            values.append([f"{k} {ix}: {metric_k}", metric_v.__qualname__])
+                        else:
+                            values.append([f"{k} {ix}: {metric_k}", repr(metric_v)])
+
+            else:
+                if isinstance(v, Callable):
+                    values.append([k, v.__name__])
+                else:
+                    values.append([k, repr(v)])
+            # print(k, ":", repr(v))
+
+        md_writer.value_matrix = values
+
+        print(md_writer.dumps())
 
     def doc_to_text_without_instructions(self, doc: Doc) -> str:
         """
