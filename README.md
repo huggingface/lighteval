@@ -152,6 +152,12 @@ If you want to evaluate a model by quantizing it, then the model can be loaded i
 
 An example configuration can be found in [examples/model_configs/quantized_model.yaml](./examples/model_configs/quantized_model.yaml).
 
+### Evaluating a PEFT model
+
+If you want to evaluate a model trained with `peft`, check out [examples/model_configs/peft_model.yaml](./examples/model_configs/peft_model.yaml).
+
+Currently, `lighteval` supports `adapter` and `delta` weights to be applied to the base model.
+
 ### Evaluating a large model with pipeline parallelism
 
 To evaluate models larger that ~40B parameters in 16-bit precision, you will need to shard the model across multiple GPUs to fit it in VRAM. You can do this by passing `model_parallel=True` and adapting `--num_processes` to be the number of processes to use for data parallel. For example, on a single node of 8 GPUs, you can run:
