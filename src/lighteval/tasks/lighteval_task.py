@@ -40,6 +40,7 @@ from lighteval.metrics import (
     apply_multichoice_metric,
     apply_multichoice_metric_one_token,
     apply_perplexity_metric,
+    apply_target_multicontext_perplexity_metric,
     apply_target_perplexity_metric,
 )
 from lighteval.metrics.metrics import Metric, MetricCategory, Metrics
@@ -426,6 +427,8 @@ class LightevalTask:
         request_types = []
         if self.has_metric_category[MetricCategory.TARGET_PERPLEXITY]:
             request_types.append(RequestType.LOGLIKELIHOOD)
+        if self.has_metric_category[MetricCategory.TARGET_PERPLEXITY_MULTI_CONTEXT]:
+            request_types.append(RequestType.LOGLIKELIHOOD)
         if self.has_metric_category[MetricCategory.MULTICHOICE]:
             request_types.append(RequestType.LOGLIKELIHOOD)
         if self.has_metric_category[MetricCategory.MULTICHOICE_ONE_TOKEN]:
@@ -484,7 +487,7 @@ class LightevalTask:
                     example_index=document_id_seed,
                     request_index=i,
                     context=context + local_context,
-                    choice=formatted_doc.choices[0],
+                    choice=formatted_doc.choices[i],
                 )
                 for i, local_context in enumerate(formatted_doc.specific["local_contexts"])
             ]
@@ -575,6 +578,11 @@ class LightevalTask:
         outputs = {}
         if self.has_metric_category[MetricCategory.TARGET_PERPLEXITY]:
             results, cur_outputs = apply_target_perplexity_metric(
+                results=results, formatted_doc=formatted_doc, metrics=self.metrics
+            )
+            outputs.update(cur_outputs)
+        if self.has_metric_category[MetricCategory.TARGET_PERPLEXITY_MULTI_CONTEXT]:
+            results, cur_outputs = apply_target_multicontext_perplexity_metric(
                 results=results, formatted_doc=formatted_doc, metrics=self.metrics
             )
             outputs.update(cur_outputs)
