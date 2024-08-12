@@ -505,6 +505,12 @@ export CUDA_LAUNCH_BLOCKING=1
 srun accelerate launch --multi_gpu --num_processes=8 -m lighteval accelerate --model_args "pretrained=your model name" --tasks examples/tasks/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir=your output dir
 ```
 
+## Authentication
+
+For authentication of HuggingFace models (i.e `base` models), a HuggingFace token is used. The `HF_TOKEN` used is picked up directly from the environment.
+
+For `tgi` models, authentication is provided in the config file. An example can be found at [tgi_model.yaml](./examples/model_configs/tgi_model.yaml).
+
 ## Releases
 
 ### Building the package
