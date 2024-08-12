@@ -159,6 +159,7 @@ class EnvConfig:
     cache_dir: str = os.getenv("HF_HOME", "/scratch")
     token: str = os.getenv("HF_TOKEN")
 
+
 def boolstring_to_bool(x: Union[str, bool, int]) -> Union[bool, None]:
     """Allows to manage string or bool to bool conversion, in case a configuration input is badly formatted.
 

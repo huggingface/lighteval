@@ -48,7 +48,7 @@ from lighteval.tasks.requests import (
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
 )
-from lighteval.utils import EnvConfig, as_list, is_nanotron_available, boolstring_to_bool
+from lighteval.utils import EnvConfig, as_list, boolstring_to_bool, is_nanotron_available
 from lighteval.utils_parallelism import find_executable_batch_size
 
 
