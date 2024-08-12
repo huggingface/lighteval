@@ -133,7 +133,10 @@ class DynamicBatchDataset(Dataset):
         Yields:
             tuple: A tuple containing the start and end indices of a split.
         """
-        for split_id in range(self.total_size and self.num_dataset_splits):
+        split_range = self.num_dataset_splits
+        if self.total_size == 0:
+            split_range = 0
+        for split_id in range(split_range):
             yield self.get_split_start_end(split_id)
 
     def __getitem__(self, index) -> Request:
