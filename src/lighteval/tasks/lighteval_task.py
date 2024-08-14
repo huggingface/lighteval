@@ -22,7 +22,6 @@
 
 import collections
 import inspect
-import os
 import random
 from dataclasses import asdict, dataclass
 from multiprocessing import Pool
