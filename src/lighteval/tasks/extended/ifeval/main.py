@@ -46,23 +46,6 @@ def ifeval_prompt(line, task_name: str = None):
     )
 
 
-# We create the task config
-ifeval = LightevalTaskConfig(
-    name="ifeval",
-    prompt_function=ifeval_prompt,
-    suite=["extended"],
-    hf_repo="wis-k/instruction-following-eval",
-    hf_subset="default",
-    metric=["ifeval_metric"],
-    hf_avail_splits=["train"],
-    evaluation_splits=["train"],
-    few_shots_split="train",
-    few_shots_select="random_sampling",
-    generation_size=1280,
-    stop_sequence=[],  # no stop sequence, will use eot token
-)
-
-
 submetric_names = [
     "prompt_level_strict_acc",
     "inst_level_strict_acc",
@@ -154,6 +137,22 @@ ifeval_metrics = SampleLevelMetricGrouping(
         "prompt_level_loose_acc": np.mean,
         "inst_level_loose_acc": agg_inst_level_acc,
     },
+)
+
+# We create the task config
+ifeval = LightevalTaskConfig(
+    name="ifeval",
+    prompt_function=ifeval_prompt,
+    suite=["extended"],
+    hf_repo="wis-k/instruction-following-eval",
+    hf_subset="default",
+    metric=[ifeval_metrics],
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split="train",
+    few_shots_select="random_sampling",
+    generation_size=1280,
+    stop_sequence=[],  # no stop sequence, will use eot token
 )
 
 
