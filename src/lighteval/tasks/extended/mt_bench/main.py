@@ -23,6 +23,7 @@
 # ruff: noqa: F405, F403, F401, I001
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
+from lighteval.metrics.metrics import Metrics
 
 
 def mt_bench_prompt(line, task_name: str = None):
@@ -55,7 +56,7 @@ task = LightevalTaskConfig(
     evaluation_splits=["train"],
     few_shots_split="",
     few_shots_select="random",
-    metric=["llm_judge_multi_turn_openai"],
+    metric=[Metrics.llm_judge_multi_turn_gpt3p5],
     generation_size=1024,
     stop_sequence=[],
 )

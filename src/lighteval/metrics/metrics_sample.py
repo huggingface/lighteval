@@ -29,6 +29,7 @@ from typing import Union
 
 import nltk
 import numpy as np
+from huggingface_hub import HfApi
 from nltk.metrics.distance import edit_distance
 from nltk.tokenize import word_tokenize
 from nltk.tokenize.treebank import TreebankWordTokenizer
@@ -40,7 +41,7 @@ from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.imports.bert_scorer import BERTScorer
 from lighteval.metrics.imports.data_stats_metric import DataStatsMetric
 from lighteval.metrics.imports.summac import SummaCZS
-from lighteval.metrics.llm_as_judge import JudgeOpenAI
+from lighteval.metrics.llm_as_judge import JudgeLM
 from lighteval.metrics.normalizations import remove_braces, remove_braces_and_strip
 from lighteval.tasks.requests import Doc
 from lighteval.utils import as_list
@@ -626,22 +627,32 @@ class StringDistance:
 
 
 class JudgeLLM:
-    available_models = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo", "gpt-4"]
+    available_models_openai = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo", "gpt-4"]
 
-    def __init__(self, judge_model_name: str, template_path: str, multi_turn: bool = False):
-        if judge_model_name not in self.available_models:
-            raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
+    def __init__(
+        self, judge_model_name: str, template_path: str, multi_turn: bool = False, use_transformers: bool = False
+    ) -> None:
+        if judge_model_name in self.available_models_openai:
+            api_key = os.getenv("OPENAI_API_KEY")
+            url = None
+        elif not use_transformers:
+            api_key = os.getenv("HF_TOKEN")
+            url = "https://api-inference.huggingface.co/v1/"
+        else:
+            api = HfApi()
+            models = api.list_models(model_name=judge_model_name)
+            url = None
+            api_key = None
+            if not models:
+                raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
 
-        OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
         self.multi_turn = multi_turn
-
-        self.judge = JudgeOpenAI(
+        self.judge = JudgeLM(
             model=judge_model_name,
-            seed=42,
-            temperature=0.0,
             templates_path=template_path,
-            openai_api_key=OPENAI_API_KEY,
             multi_turn=multi_turn,
+            api_key=api_key,
+            url=url,
         )
 
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:

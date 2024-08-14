@@ -57,7 +57,10 @@ class EnhancedJSONEncoder(json.JSONEncoder):
 
     def default(self, o):
         if is_dataclass(o):
-            return asdict(o)
+            try:
+                return asdict(o)
+            except Exception:
+                return str(o)
         if callable(o):
             return o.__name__
         if isinstance(o, Enum):

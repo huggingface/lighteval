@@ -21,15 +21,16 @@
 # SOFTWARE.
 
 import collections
-import os
+import inspect
 import random
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from multiprocessing import Pool
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
 
 from datasets import load_dataset
 from huggingface_hub import TextGenerationInputGrammarType
+from pytablewriter import MarkdownTableWriter
 
 from lighteval.few_shot_manager import FewShotSampler
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
@@ -55,7 +56,7 @@ from lighteval.tasks.requests import (
     RequestType,
     TaskExampleId,
 )
-from lighteval.utils import NO_OPENAI_ERROR_MSG, as_list, is_openai_available
+from lighteval.utils import as_list
 
 
 if TYPE_CHECKING:
@@ -192,16 +193,6 @@ class LightevalTask:
 
         current_categories = [metric.category for metric in self.metrics]
         self.has_metric_category = {category: (category in current_categories) for category in MetricCategory}
-        if (
-            self.has_metric_category[MetricCategory.LLM_AS_JUDGE]
-            or self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]
-        ):
-            if not is_openai_available():
-                raise ImportError(NO_OPENAI_ERROR_MSG)
-            if os.getenv("OPENAI_API_KEY") is None:
-                raise ValueError(
-                    "Using llm as judge metric but no OPEN_API_KEY were found, please set it with: export OPEN_API_KEY={yourkey}"
-                )
 
         # We assume num_samples always contains 1 (for base generative evals)
         self.num_samples = [1]
@@ -235,6 +226,32 @@ class LightevalTask:
     @property
     def cfg(self):
         return self._cfg
+
+    def print_config(self):
+        md_writer = MarkdownTableWriter()
+        md_writer.headers = ["Key", "Value"]
+
+        values = []
+
+        for k, v in asdict(self.cfg).items():
+            if k == "metric":
+                for ix, metrics in enumerate(v):
+                    for metric_k, metric_v in metrics.items():
+                        if inspect.ismethod(metric_v):
+                            values.append([f"{k} {ix}: {metric_k}", metric_v.__qualname__])
+                        else:
+                            values.append([f"{k} {ix}: {metric_k}", repr(metric_v)])
+
+            else:
+                if isinstance(v, Callable):
+                    values.append([k, v.__name__])
+                else:
+                    values.append([k, repr(v)])
+            # print(k, ":", repr(v))
+
+        md_writer.value_matrix = values
+
+        print(md_writer.dumps())
 
     def doc_to_text_without_instructions(self, doc: Doc) -> str:
         """
