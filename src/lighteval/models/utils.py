@@ -41,18 +41,17 @@ def _get_dtype(dtype: Union[str, torch.dtype], config: Optional[AutoConfig] = No
         torch.dtype: The torch dtype based on the input arguments.
     """
 
-    if config is not None and hasattr(config, "quantization_config"):
-        # must be infered
-        return None
-
-    if isinstance(dtype, str) and dtype not in ["auto", "4bit", "8bit"]:
-        # Convert `str` args torch dtype: `float16` -> `torch.float16`
-        return getattr(torch, dtype)
-
     if config is not None:  # For quantized models
-        return config.torch_dtype
-
-    return dtype
+        if hasattr(config, "quantization_config"):
+            _torch_dtype = None  # must be inferred
+        else:
+            _torch_dtype = config.torch_dtype
+    elif isinstance(dtype, str) and dtype not in ["auto", "4bit", "8bit"]:
+        # Convert `str` args torch dtype: `float16` -> `torch.float16`
+        _torch_dtype = getattr(torch, dtype)
+    else:
+        _torch_dtype = dtype
+    return _torch_dtype
 
 
 def _simplify_name(name_or_path: str) -> str:
