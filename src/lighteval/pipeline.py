@@ -81,6 +81,8 @@ class PipelineParameters:
     max_samples: int = None
     use_chat_template: bool = False
     system_prompt: str = None
+    # Final results
+    final_dict: dict = None
 
     def __post_init__(self):
         if self.launcher_type == ParallelismManager.ACCELERATE:
@@ -157,8 +159,7 @@ class Pipeline:
                         env_config=self.pipeline_parameters.env_config,
                     )
                 else:
-                    with self.accelerator.main_process_first() if self.accelerator is not None else nullcontext():
-                        return load_model(config=model_config, env_config=self.pipeline_parameters.env_config)
+                    return load_model(config=model_config, env_config=self.pipeline_parameters.env_config)
             return model
 
     def _init_tasks_and_requests(self, tasks):
@@ -209,6 +210,15 @@ class Pipeline:
             if self.parallel_context is not None:
                 dist.barrier()
 
+    def is_main_process(self):
+        if self.accelerator:
+            context = self.accelerator.is_main_process
+        elif self.parallel_context:
+            context = dist.get_rank(self.parallel_context.world_pg) == 0
+        else:
+            context = nullcontext()
+        return context
+
     def evaluate(self):
         with htrack_block("Evaluation"):
             self.evaluation_tracker.general_config_logger.log_args_info(
@@ -229,33 +239,34 @@ class Pipeline:
                 evaluation_tracker=self.evaluation_tracker,
             )
 
-        if self.accelerator:
-            context = self.accelerator.is_main_process
-        elif self.parallel_context:
-            context = dist.get_rank(self.parallel_context.world_pg) == 0
-        else:
-            context = nullcontext()
-
-        if context:
+        with self.get_context():
             with htrack_block("Compiling results"):
                 self.evaluation_tracker.general_config_logger.log_end_time()
                 self.evaluation_tracker.metrics_logger.aggregate(task_dict=self.task_dict, bootstrap_iters=1000)
                 self.evaluation_tracker.details_logger.aggregate()
 
-        with htrack_block("Cleaninp up"):  # For non nanotron models
-            for weights in ["delta", "adapter"]:
-                try:
-                    tmp_weights_dir = f"{self.evaluation_tracker.general_config_logger.model_name}-{weights}-applied"
-                    shutil.rmtree(tmp_weights_dir)
-                    hlog(f"Removed {tmp_weights_dir}")
-                except OSError:
-                    pass
-            self.model.cleanup()
+            with htrack_block("Cleaning up"):  # For non nanotron models
+                for weights in ["delta", "adapter"]:
+                    try:
+                        tmp_weights_dir = (
+                            f"{self.evaluation_tracker.general_config_logger.model_name}-{weights}-applied"
+                        )
+                        shutil.rmtree(tmp_weights_dir)
+                        hlog(f"Removed {tmp_weights_dir}")
+                    except OSError:
+                        pass
+                self.model.cleanup()
 
     def save_and_push_results(self):
-        self.evaluation_tracker.save()
+        with self.get_context():
+            self.evaluation_tracker.save()
 
     def show_results(self):
-        final_dict = self.evaluation_tracker.generate_final_dict()
-        print(make_results_table(final_dict))
-        return final_dict
+        if self.final_dict is None:
+            self.final_dict = self.evaluation_tracker.generate_final_dict()
+        print(make_results_table(self.final_dict))
+
+    def get_results(self):
+        if self.final_dict is None:
+            self.final_dict = self.evaluation_tracker.generate_final_dict()
+        return self.final_dict
