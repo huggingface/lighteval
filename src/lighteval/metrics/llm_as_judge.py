@@ -25,56 +25,57 @@ import ast
 import json
 import re
 import time
-from typing import Optional
+from typing import Any, Optional
+
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
 from lighteval.logging.hierarchical_logger import hlog_warn
-from lighteval.utils import NO_OPENAI_ERROR_MSG, is_openai_available
 
 
-class JudgeOpenAI:
+class JudgeLM:
     """
-    A class representing a judge for evaluating answers using the OpenAI API.
+    A class representing a judge for evaluating answers using either the OpeanAI or Transformers library.
 
     Args:
-        model (str): The name of the OpenAI model to use.
-        seed (int): The seed value for generating random responses.
-        temperature (float): The temperature value for controlling the randomness of the responses.
+        model (str): The name of the model to use.
         templates_path (str): The path to the JSON file containing the templates for prompts.
+        multi_turn (bool): Whether to use multi-turn prompts
+        url (Optional[str]): The URL for the OpenAI API.
+        api_key (Optional[str]): The API key for the OpenAI API (either OpenAI or HF key).
 
     Attributes:
-        client: An instance of the OpenAI client.
-        model (str): The name of the OpenAI model.
-        seed (int): The seed value, passed to the API when generating responses.
-        temperature (float): The temperature value, passed to the API when generating responses.
+        model (str): The name of the model.
         templates (dict): A dictionary containing the templates for prompts.
         one_score_pattern (re.Pattern): A regular expression pattern for extracting scores from the response.
         one_score_pattern_backup (re.Pattern): A backup regular expression pattern for extracting scores.
-        API_MAX_RETRY (int): The maximum number of API retries.
-        API_RETRY_SLEEP (int): The sleep time between API retries.
-        max_tokens (int): The maximum number of tokens allowed in the response.
+        API_MAX_RETRY (int): The maximum number of retries for the API.
+        API_RETRY_SLEEP (int): The sleep time between retries.
+        client (Optional[OpenAI]): The OpenAI client.
+        pipe (Optional[pipeline]): The Transformers pipeline.
+        use_transformers (bool): Whether to use the Transformers library.
+        url (Optional[str]): The URL for the OpenAI API.
+        api_key (Optional[str]): The API key for the OpenAI API (either OpenAI or HF key).
 
     Methods:
-        evaluate_answer: Evaluates an answer using the OpenAI API.
+        evaluate_answer: Evaluates an answer using the OpenAI API or Transformers library.
         __get_prompts_multi_turn: Generates prompts for multi-turn conversations.
         __get_prompts_single_turn: Generates prompts for single-turn conversations.
         __process_judge_response: Processes the judge's response and extracts the score.
+        __call_openai_api: Calls the OpenAI API to get the judge's response.
+        __lazy_load_client: Lazy loads the OpenAI client or Transformers pipeline.
     """
 
     def __init__(
         self,
         model: str,
-        seed: int,
-        temperature: float,
         templates_path: str,
-        openai_api_key: str,
         multi_turn: bool = False,
+        url: Optional[str] = None,
+        api_key: Optional[str] = None,
     ):
-        self.client = None  # loaded lazily
-        self.openai_api_key = openai_api_key
-        self.model = model
-        self.seed = seed
-        self.temperature = temperature
         self.multi_turn = multi_turn
+        self.model = model
 
         data = []
         with open(templates_path, "r") as f:
@@ -89,40 +90,59 @@ class JudgeOpenAI:
         # the second is for the backup case: [score]
         self.one_score_pattern = re.compile(r"\[\[(\d+\.?\d*)\]\]")
         self.one_score_pattern_backup = re.compile(r"\[(\d+\.?\d*)\]")
+        self.API_MAX_RETRY = 3
+        self.API_RETRY_SLEEP = 1
 
-        self.API_MAX_RETRY = 16
-        self.API_RETRY_SLEEP = 10
-        self.max_tokens = 2048
+        self.client = None
+        self.pipe = None
+
+        self.use_transformers = url is None and api_key is None
+
+        self.url = url
+        self.api_key = api_key
+
+    def __lazy_load_client(self):
+        if self.use_transformers:
+            if self.pipe is None:
+                transformers_model = AutoModelForCausalLM.from_pretrained(
+                    self.model, torch_dtype=torch.bfloat16, trust_remote_code=False, device_map="cuda"
+                )
+                tokenizer = AutoTokenizer.from_pretrained(self.model)
+                self.pipe = pipeline(
+                    "text-generation",
+                    model=transformers_model,
+                    tokenizer=tokenizer,
+                    max_new_tokens=50,
+                )
+        else:
+            if self.client is None:
+                from openai import OpenAI
+
+                if self.url is None:
+                    self.client = OpenAI(api_key=self.api_key)
+                else:
+                    self.client = OpenAI(base_url=self.url, api_key=self.api_key)
 
     def evaluate_answer(
         self, questions: list[str], answers: list[str], references: list[str]
-    ) -> tuple[int, list[dict[str, str]], str]:
+    ) -> tuple[list[int], list[list[dict[str, str]]], list[str | None | Any]]:
         """
-        Evaluates an answer using the OpenAI API.
+        Evaluates an answer using either Transformers or OpenAI API.
 
         Args:
             questions (list[str]): A list of questions (can be a list because of multi-turn conversations)
             answers (list[str]): A list of answers, one for each question.
             references (list[str]): A list of reference answers, one for each question (sometimes not available)
-            single_turn (bool): Indicates whether the conversation is single-turn or multi-turn.
 
         Returns:
             A tuple containing the score, prompts, and judgment.
-
-        Raises:
-            Exception: If an error occurs during the API call.
         """
-        if self.client is None:
-            if not is_openai_available():
-                raise ImportError(NO_OPENAI_ERROR_MSG)
-
-            from openai import OpenAI
-
-            self.client = OpenAI(api_key=self.openai_api_key)
+        # lazy loading of the pipeline
+        self.__lazy_load_client()
 
         prompts = [
             self.__get_prompts_single_turn(
-                questions[0], answers[0], references[0] if references is not None and len(references) > 0 else None
+                questions[0], answers[0], references[0] if references and len(references) > 0 else None
             )
         ]
 
@@ -132,28 +152,15 @@ class JudgeOpenAI:
             )
             prompts.append(prompts_multi_turn)
 
-        responses = []
+        judgments = []
         for prompt in prompts:
-            for _ in range(self.API_MAX_RETRY):
-                try:
-                    response = self.client.chat.completions.create(
-                        model=self.model,
-                        seed=self.seed,
-                        temperature=self.temperature,
-                        messages=prompt,
-                        max_tokens=self.max_tokens,
-                        n=1,
-                    )
-                    responses.append(response)
-                    break
-                except Exception as e:
-                    hlog_warn(f"{type(e), e}")
-                    time.sleep(self.API_RETRY_SLEEP)
+            if self.client is not None:
+                response = self.__call_api(prompt)
+            else:
+                response = self.pipe(prompt)[0]["generated_text"]
+                response = response[-1]["content"]
+            judgments.append(response)
 
-        if len(responses) == 0:
-            raise Exception("Failed to get response from the API")
-
-        judgments = [response.choices[0].message.content for response in responses]
         scores = [self.__process_judge_response(judgment) for judgment in judgments]
 
         return scores, prompts, judgments
@@ -235,3 +242,18 @@ class JudgeOpenAI:
             rating = -1
 
         return rating
+
+    def __call_api(self, prompt):
+        for _ in range(self.API_MAX_RETRY):
+            try:
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=prompt,
+                    max_tokens=512,
+                    n=1,
+                )
+                return response.choices[0].message.content
+            except Exception as e:
+                hlog_warn(f"{type(e), e}")
+                time.sleep(self.API_RETRY_SLEEP)
+        raise Exception("Failed to get response from the API")
