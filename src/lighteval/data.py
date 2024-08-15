@@ -22,6 +22,7 @@
 
 from typing import Iterator
 
+import math
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data.distributed import DistributedSampler, T_co
@@ -80,7 +81,7 @@ class DynamicBatchDataset(Dataset):
             )
             num_dataset_splits = 1
 
-        split_size = self.total_size // num_dataset_splits + 1
+        split_size = math.ceil(self.total_size / num_dataset_splits)
         splits_indices = [
             (ix * split_size, min((ix + 1) * split_size, self.total_size)) for ix in range(num_dataset_splits)
         ]

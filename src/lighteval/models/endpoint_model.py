@@ -86,7 +86,7 @@ class InferenceEndpointModel(LightevalModel):
                     custom_image={
                         "health_route": "/health",
                         "env": {
-                            # Documentaiton: https://huggingface.co/docs/text-generation-inference/en/basic_tutorials/launcher
+                            # Documentation: https://huggingface.co/docs/text-generation-inference/en/basic_tutorials/launcher
                             "MAX_BATCH_PREFILL_TOKENS": "2048",
                             "MAX_INPUT_LENGTH": "2047",
                             "MAX_TOTAL_TOKENS": "2048",
@@ -162,7 +162,7 @@ class InferenceEndpointModel(LightevalModel):
             decoder_input_details=True,
             max_new_tokens=max_tokens,
             stop_sequences=stop_tokens,
-            # truncate=,
+            truncate=self.max_length,
         )
 
         return generated_text
@@ -176,7 +176,7 @@ class InferenceEndpointModel(LightevalModel):
             decoder_input_details=True,
             max_new_tokens=max_tokens,
             stop_sequences=stop_tokens,
-            # truncate=,
+            truncate=self.max_length,
         )
 
         return generated_text
@@ -250,7 +250,7 @@ class InferenceEndpointModel(LightevalModel):
 
         for _, _ in tqdm(
             dataset.splits_start_end_iterator(),
-            total=self.DATASET_SPLITS,
+            total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
             disable=self.disable_tqdm,
@@ -272,12 +272,13 @@ class InferenceEndpointModel(LightevalModel):
                     responses = asyncio.run(self._async_process_batch_generate(batch))
                 else:
                     responses = self._process_batch_generate(batch)
-                for response in responses:
+                for i, response in enumerate(responses):
                     results.append(
                         GenerateReturn(
                             result=response.generated_text,
                             logits=[item.logprob for item in response.details.prefill] if returns_logits else None,
-                            truncated_tokens_count=-1,
+                            generated_tokens=[token.id for token in response.details.tokens],
+                            truncated_tokens_count=max(len(self.tokenizer.encode(batch[i].context))-self.max_length, 0),
                             padded_tokens_count=-1,
                         )
                     )
@@ -296,7 +297,7 @@ class InferenceEndpointModel(LightevalModel):
 
         for _, _ in tqdm(
             dataset.splits_start_end_iterator(),
-            total=self.DATASET_SPLITS,
+            total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
             disable=self.disable_tqdm,
@@ -342,7 +343,7 @@ class InferenceEndpointModel(LightevalModel):
 
         for _, _ in tqdm(
             dataset.splits_start_end_iterator(),
-            total=self.DATASET_SPLITS,
+            total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
             disable=self.disable_tqdm,
