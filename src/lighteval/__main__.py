@@ -47,7 +47,7 @@ def cli_evaluate():
     parser_nanotron(parser_b)
 
     # Subparser for task utils functions
-    parser_c = subparsers.add_parser("tasks", help="use nanotron as backend for evaluation.")
+    parser_c = subparsers.add_parser("tasks", help="display information about available tasks and samples.")
     parser_utils_tasks(parser_c)
 
     args = parser.parse_args()

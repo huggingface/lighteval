@@ -38,7 +38,7 @@ from lighteval.metrics.sample_preparator import (
     LogprobCorpusMetricInput,
     PerplexityCorpusMetricInput,
 )
-from lighteval.models.model_output import ModelReturn
+from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
 from lighteval.utils import as_list
 
@@ -87,7 +87,7 @@ def test_model_prediction(prompt_inputs: tuple[str, str, list]):
         formatted_doc = Doc(**formatted_doc)
         error_msg = f"Metric {metric_name} failed on input {formatted_doc} from task {task_name}.\n"
 
-        results = [ModelReturn(result=i, input_tokens=[], generated_tokens=[]) for i in example["predictions"]]
+        results = [ModelResponse(result=i, input_tokens=[], generated_tokens=[]) for i in example["predictions"]]
         # todo: update to create list of ModelResults in results
         metric_result = apply_metric(metric=metric, results=results, formatted_doc=formatted_doc)
         assert metric_result is not None, error_msg

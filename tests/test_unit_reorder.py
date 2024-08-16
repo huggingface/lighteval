@@ -24,6 +24,7 @@ import pytest
 from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset
+from lighteval.metrics.utils import MetricCategory
 from lighteval.tasks.requests import GreedyUntilRequest
 
 
@@ -31,43 +32,48 @@ from lighteval.tasks.requests import GreedyUntilRequest
 TEST_DATA = [
     GreedyUntilRequest(
         task_name="test",
-        example_index=0,
+        sample_index=0,
         request_index=0,
         context="1 The quick brown fox jumps over the lazy dog",
         stop_sequence=[":", "stop"],
         generation_size=10,
+        associated_metrics=[MetricCategory.GENERATIVE],
     ),
     GreedyUntilRequest(
         task_name="test",
-        example_index=2,
+        sample_index=2,
         request_index=0,
         context="2 The quick brown fox jumps over the lazy dog njsa",
         stop_sequence=[":", "stop"],
         generation_size=10,
+        associated_metrics=[MetricCategory.GENERATIVE],
     ),
     GreedyUntilRequest(
         task_name="test",
-        example_index=5,
+        sample_index=5,
         request_index=0,
         context="Some text",
         stop_sequence=[":", "stop"],
         generation_size=10,
+        associated_metrics=[MetricCategory.GENERATIVE],
     ),
     GreedyUntilRequest(
         task_name="test",
-        example_index=21,
+        sample_index=21,
         request_index=0,
         context="some more text",
         stop_sequence=[":", "stop"],
         generation_size=10,
+        associated_metrics=[MetricCategory.GENERATIVE],
     ),
     GreedyUntilRequest(
         task_name="test",
-        example_index=1,
+        sample_index=1,
         request_index=0,
         context="not sure what to write here",
         stop_sequence=[":", "stop"],
         generation_size=10,
+        associated_metrics=[MetricCategory.GENERATIVE],
     ),
 ]
 
