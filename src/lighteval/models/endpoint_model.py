@@ -41,7 +41,7 @@ from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
 from lighteval.models.model_config import InferenceEndpointModelConfig, InferenceModelConfig
-from lighteval.models.model_output import GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
+from lighteval.models.model_output import GenerativeResponse, LoglikelihoodResponse, LoglikelihoodSingleTokenResponse
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -246,7 +246,7 @@ class InferenceEndpointModel(LightevalModel):
         self,
         requests: List[GreedyUntilRequest],
         override_bs: Optional[int] = None,
-    ) -> List[GenerateReturn]:
+    ) -> List[GenerativeResponse]:
         for request in requests:
             request.tokenized_context = self.tok_encode(request.context)
             request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
@@ -281,7 +281,7 @@ class InferenceEndpointModel(LightevalModel):
                     responses = self._process_batch_generate(batch)
                 for response in responses:
                     results.append(
-                        GenerateReturn(
+                        GenerativeResponse(
                             result=response.generated_text,
                             logits=[item.logprob for item in response.details.prefill] if returns_logits else None,
                             truncated_tokens_count=-1,
@@ -293,7 +293,7 @@ class InferenceEndpointModel(LightevalModel):
 
     def loglikelihood(
         self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodReturn]:
+    ) -> list[LoglikelihoodResponse]:
         for request in requests:
             request.tokenized_context = self.tok_encode(request.context)
             request.tokenized_continuation = self.tok_encode(request.choice)
@@ -324,7 +324,7 @@ class InferenceEndpointModel(LightevalModel):
                     greedy_tokens = torch.tensor(logits).argmax(dim=-1)
                     max_equal = (greedy_tokens == cont_toks).all().squeeze(0)
                     results.append(
-                        LoglikelihoodReturn(
+                        LoglikelihoodResponse(
                             result=(sum(logits), bool(max_equal)),
                             input_tokens=[t.id for t in response.details.prefill[:-len_choice]],
                             generated_tokens=[t.id for t in response.details.prefill[-len_choice:]],
@@ -337,7 +337,7 @@ class InferenceEndpointModel(LightevalModel):
 
     def loglikelihood_rolling(
         self, requests: list[LoglikelihoodRollingRequest], override_bs=None
-    ) -> list[LoglikelihoodReturn]:
+    ) -> list[LoglikelihoodResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         for request in requests:
             request.tokenized_context = [self.tokenizer.eos_token_id]
@@ -367,7 +367,7 @@ class InferenceEndpointModel(LightevalModel):
                     logits = [t.logprob for t in response.details.tokens[:-1]]
 
                     results.append(
-                        LoglikelihoodReturn(
+                        LoglikelihoodResponse(
                             result=sum(logits),
                             input_tokens=[t.id for t in response.details.prefill],
                             generated_tokens=[t.id for t in response.details.tokens[:-1]],
@@ -382,5 +382,5 @@ class InferenceEndpointModel(LightevalModel):
         self,
         requests: list[LoglikelihoodSingleTokenRequest],
         override_bs: Optional[int] = None,
-    ) -> list[LoglikelihoodSingleTokenReturn]:
+    ) -> list[LoglikelihoodSingleTokenResponse]:
         raise ValueError("Endpoint models can't use single token metrics. Change the metric to the standard version")

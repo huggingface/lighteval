@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import collections
 import os
 import random
 import shutil
@@ -30,12 +31,14 @@ from enum import Enum, auto
 
 import numpy as np
 
-from lighteval.evaluator import evaluate, make_results_table
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog, htrack_block
+from lighteval.metrics.utils import MetricCategory
 from lighteval.models.model_loader import load_model
+from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_tasks
 from lighteval.tasks.registry import Registry, get_custom_tasks, taskinfo_selector
+from lighteval.tasks.requests import Doc, SampleUid
 from lighteval.utils import (
     NO_ACCELERATE_ERROR_MSG,
     NO_NANOTRON_ERROR_MSG,
@@ -44,6 +47,7 @@ from lighteval.utils import (
     is_accelerate_available,
     is_nanotron_available,
     is_tgi_available,
+    make_results_table,
 )
 from lighteval.utils_parallelism import test_all_gather
 
@@ -230,14 +234,8 @@ class Pipeline:
             )
 
             hlog(f"Evaluate on {len(self.task_names_list)} tasks.")
-            self.evaluation_tracker = evaluate(
-                lm=self.model,
-                requests_dict=self.requests,
-                docs=self.docs,
-                task_dict=self.task_dict,
-                override_bs=self.pipeline_parameters.override_batch_size,
-                evaluation_tracker=self.evaluation_tracker,
-            )
+            sample_id_to_responses = self._run_model()
+            self._compute_metrics(sample_id_to_responses)
 
         with self.get_context():
             with htrack_block("Compiling results"):
@@ -256,6 +254,40 @@ class Pipeline:
                     except OSError:
                         pass
                 self.model.cleanup()
+
+    def _run_model(self):
+        # Running all requests depending on the model call type (log likelihood, generative, ...)
+        # to be able to batch them
+        sample_id_to_responses: dict[(SampleUid, MetricCategory), list[ModelResponse]] = collections.defaultdict(list)
+
+        for request_type, requests in self.requests.items():
+            hlog(f"Running {request_type} requests")
+            run_model = self.model.get_method_from_request_type(request_type=request_type)
+            responses = run_model(requests, override_bs=self.pipeline_parameters.override_batch_size)
+
+            # Storing the responses associated to the same samples together
+            for response, request in zip(responses, requests):
+                for metric_category in request.metric_categories:
+                    sample_id = SampleUid(request.task_name, request.sample_index)
+                    sample_id_to_responses[(sample_id, metric_category)].append(response)
+
+        return sample_id_to_responses
+
+    def _compute_metrics(self, sample_id_to_responses):
+        # 2. Running the metric on each sample on its own.
+        # Note: some samples are associated with several responses, like the multichoice samples
+        # and some metrics will parse all samples at once in a second step during aggregation
+        for (sample_id, metric_category), sample_responses in sample_id_to_responses.items():
+            short_task_name = sample_id.task_name.rsplit("|", 1)[0]
+
+            task: LightevalTask = self.task_dict[short_task_name]
+            doc: Doc = self.docs[sample_id]
+
+            compute_metric = task.get_metric_method_from_category(metric_category=metric_category)
+            metrics = compute_metric(results=sample_responses, formatted_doc=doc, metrics=task.metrics)
+
+            self.evaluation_tracker.metrics_logger.log(sample_id.task_name, metrics)
+            self.evaluation_tracker.details_logger.log(sample_id.task_name, task, doc, sample_responses, metrics)
 
     def save_and_push_results(self):
         with self.get_context():

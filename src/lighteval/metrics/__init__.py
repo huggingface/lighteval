@@ -23,12 +23,12 @@
 import re
 
 from lighteval.metrics.metrics import Metric, MetricCategory
-from lighteval.models.model_output import ModelReturn
+from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
 from lighteval.utils import as_list
 
 
-def apply_target_perplexity_metric(results: list[ModelReturn], formatted_doc: Doc, metrics: list[Metric]):
+def apply_target_perplexity_metric(results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
     reference_text = formatted_doc.get_golds()[0]
     current_result = results.pop(0)
@@ -44,7 +44,7 @@ def apply_target_perplexity_metric(results: list[ModelReturn], formatted_doc: Do
     return results, outputs
 
 
-def apply_perplexity_metric(results: list[ModelReturn], formatted_doc: Doc, metrics: list[Metric]):
+def apply_perplexity_metric(results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
     current_result = results.pop(0)
     # Sometimes, processing was added for the log processings
@@ -63,7 +63,7 @@ def apply_perplexity_metric(results: list[ModelReturn], formatted_doc: Doc, metr
 
 
 def apply_generative_metric(
-    results: list[ModelReturn], formatted_doc: Doc, metrics: list[Metric], output_regex=None, max_num_samples=1
+    results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric], output_regex=None, max_num_samples=1
 ):
     outputs = {}
 
@@ -114,7 +114,7 @@ def apply_generative_metric(
     return results, outputs
 
 
-def apply_multichoice_metric(results: list[ModelReturn], formatted_doc: Doc, metrics: list[Metric]):
+def apply_multichoice_metric(results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
     mc_results = results[: len(formatted_doc.choices)]
     if len(formatted_doc.choices) <= 1:
@@ -134,7 +134,7 @@ def apply_multichoice_metric(results: list[ModelReturn], formatted_doc: Doc, met
     return results[len(formatted_doc.choices) :], outputs
 
 
-def apply_multichoice_metric_one_token(results: list[ModelReturn], formatted_doc: Doc, metrics: list[Metric]):
+def apply_multichoice_metric_one_token(results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
     choices_logprob = results.pop(0).result
     gold_ixs = as_list(formatted_doc.gold_index)
@@ -148,7 +148,7 @@ def apply_multichoice_metric_one_token(results: list[ModelReturn], formatted_doc
     return results, outputs
 
 
-def apply_llm_as_judge_metric(results: list[ModelReturn], formatted_doc: Doc, metrics: list[Metric]):
+def apply_llm_as_judge_metric(results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
     predictions = results.pop(0).result
 

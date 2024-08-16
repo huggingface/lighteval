@@ -42,7 +42,12 @@ from lighteval.data import (
 )
 from lighteval.logging.hierarchical_logger import hlog_err, hlog_warn
 from lighteval.models.base_model import LightevalModel, ModelInfo
-from lighteval.models.model_output import Batch, GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
+from lighteval.models.model_output import (
+    Batch,
+    GenerativeResponse,
+    LoglikelihoodResponse,
+    LoglikelihoodSingleTokenResponse,
+)
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -410,7 +415,7 @@ class NanotronLightevalModel(LightevalModel):
 
     def loglikelihood_single_token(
         self, requests: List[Tuple[str, dict]], override_bs=None
-    ) -> List[LoglikelihoodSingleTokenReturn]:
+    ) -> List[LoglikelihoodSingleTokenResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
 
@@ -446,7 +451,7 @@ class NanotronLightevalModel(LightevalModel):
             disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
         )
 
-    def loglikelihood(self, requests: List[LoglikelihoodRequest], override_bs=None) -> List[LoglikelihoodReturn]:
+    def loglikelihood(self, requests: List[LoglikelihoodRequest], override_bs=None) -> List[LoglikelihoodResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
@@ -470,7 +475,7 @@ class NanotronLightevalModel(LightevalModel):
 
     def loglikelihood_rolling(
         self, requests: List[LoglikelihoodRollingRequest], override_bs=None
-    ) -> List[LoglikelihoodReturn]:
+    ) -> List[LoglikelihoodResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         for request in tqdm(
             requests, desc="Tokenizing", disable=bool(dist.get_rank(self.parallel_context.world_pg) != 0)
@@ -647,7 +652,7 @@ class NanotronLightevalModel(LightevalModel):
     @torch.inference_mode()
     def _loglikelihood_single_token(
         self, requests, disable_tqdm: bool = False, override_bs: int = -1, num_dataset_splits: int = 1
-    ) -> List[LoglikelihoodSingleTokenReturn]:
+    ) -> List[LoglikelihoodSingleTokenResponse]:
         dataset = LoglikelihoodSingleTokenDataset(requests=requests)
         res = []
 
@@ -817,7 +822,7 @@ class NanotronLightevalModel(LightevalModel):
                             batched_lengths,
                         )
                     ):
-                        answer = LoglikelihoodSingleTokenReturn(
+                        answer = LoglikelihoodSingleTokenResponse(
                             result=probs[: batched_probs_lengths[ix]].numpy(force=True),
                             input_tokens=batched_input[: batched_length.item()].numpy(force=True),
                             generated_tokens=cont_tokens[: batched_cont_tokens_lengths[ix]].numpy(force=True),
@@ -878,7 +883,7 @@ class NanotronLightevalModel(LightevalModel):
         override_bs: int = -1,
         num_dataset_splits: int = 1,
         return_bool_score: bool = True,
-    ) -> List[LoglikelihoodReturn]:
+    ) -> List[LoglikelihoodResponse]:
         dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=num_dataset_splits)
         res = []
 
@@ -1055,7 +1060,7 @@ class NanotronLightevalModel(LightevalModel):
                             batch_padded,
                         )
                     ):
-                        answer = LoglikelihoodReturn(
+                        answer = LoglikelihoodResponse(
                             result=(float(logit), bool(maxe)) if return_bool_score else float(logit.sum()),
                             input_tokens=batched_input[: batched_length.item()].numpy(force=True),
                             generated_tokens=cont_tokens[: cont_length.item()].numpy(force=True),
@@ -1111,7 +1116,7 @@ class NanotronLightevalModel(LightevalModel):
         disable_tqdm: bool = False,
         override_bs=None,
         num_dataset_splits: int = 1,
-    ) -> List[GenerateReturn]:
+    ) -> List[GenerativeResponse]:
         """Greedy generation until a stop token is generated."""
         # automatic (variable) batch size detection for vectorization
         # pull longest context sample from request
@@ -1183,7 +1188,7 @@ class NanotronLightevalModel(LightevalModel):
                         rank=0,
                     )
                 iteration_start_time = time.time()
-                example_index, batch = zip(*indexed_batch)
+                sample_index, batch = zip(*indexed_batch)
 
                 # NOTE: we are assuming all items in a batch behave similarly (same
                 # stop_tokens and max_tokens genrated) which is not necessarily
@@ -1269,24 +1274,24 @@ class NanotronLightevalModel(LightevalModel):
                     generations = batch_generations.numpy(force=True)
                     input_ids = batch_input_ids.numpy(force=True)
 
-                    batch_example_index = torch.tensor(example_index, device=self.device)
-                    batch_example_index = self.gather(batch_example_index)
+                    batch_sample_index = torch.tensor(sample_index, device=self.device)
+                    batch_sample_index = self.gather(batch_sample_index)
                     batch_truncated = torch.tensor(batch_model.truncated, device=self.device)
                     batch_truncated = self.gather(batch_truncated)
                     batch_padded = torch.tensor(batch_model.padded, device=self.device)
                     batch_padded = self.gather(batch_padded)
 
                     batch_res = []
-                    for ix, (generation, batched_input, trunc, padded, example_index) in enumerate(
-                        zip(generations, input_ids, batch_truncated, batch_padded, batch_example_index)
+                    for ix, (generation, batched_input, trunc, padded, sample_index) in enumerate(
+                        zip(generations, input_ids, batch_truncated, batch_padded, batch_sample_index)
                     ):
                         # Ensure the generated responses do not contain the stop sequences.
                         decoded_response = self.tokenizer.decode(generation, skip_special_tokens=False)
-                        stop_terms = dataset[example_index][1].stop_sequence
+                        stop_terms = dataset[sample_index][1].stop_sequence
                         for stop_term in stop_terms:
                             decoded_response = decoded_response.split(stop_term)[0]
                         # partial caching
-                        cur_response = GenerateReturn(
+                        cur_response = GenerativeResponse(
                             result=decoded_response,
                             logits=logits[ix][: len_logits[ix]] if returns_logits else None,
                             generated_tokens=generation,

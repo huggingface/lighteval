@@ -79,7 +79,9 @@ def main(args):
 
     pipeline.evaluate()
 
-    results = pipeline.show_results()
+    pipeline.show_results()
+
+    results = pipeline.get_results()
 
     pipeline.save_and_push_results()
 

@@ -29,7 +29,7 @@ from transformers import AutoTokenizer
 
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
 from lighteval.models.model_config import DummyModelConfig
-from lighteval.models.model_output import GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
+from lighteval.models.model_output import GenerativeResponse, LoglikelihoodResponse, LoglikelihoodSingleTokenResponse
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -69,23 +69,23 @@ class DummyModel(LightevalModel):
 
     def greedy_until(
         self, requests: list[GreedyUntilRequest], override_bs: Optional[int] = None
-    ) -> list[GenerateReturn]:
-        return [GenerateReturn(result="random baseline") for _ in range(len(requests))]
+    ) -> list[GenerativeResponse]:
+        return [GenerativeResponse(result="random baseline") for _ in range(len(requests))]
 
     def loglikelihood(
         self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodReturn]:
-        return [LoglikelihoodReturn((-self._random.random(), False)) for _ in requests]
+    ) -> list[LoglikelihoodResponse]:
+        return [LoglikelihoodResponse((-self._random.random(), False)) for _ in requests]
 
     def loglikelihood_rolling(
         self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodReturn]:
-        return [LoglikelihoodReturn((-self._random.random(), False)) for _ in requests]
+    ) -> list[LoglikelihoodResponse]:
+        return [LoglikelihoodResponse((-self._random.random(), False)) for _ in requests]
 
     def loglikelihood_single_token(
         self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodSingleTokenReturn]:
+    ) -> list[LoglikelihoodSingleTokenResponse]:
         return [
-            LoglikelihoodSingleTokenReturn(result=[-self._random.random() for _ in req.tokenized_continuation])
+            LoglikelihoodSingleTokenResponse(result=[-self._random.random() for _ in req.tokenized_continuation])
             for req in requests
         ]
