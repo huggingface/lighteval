@@ -153,6 +153,7 @@ ifeval = LightevalTaskConfig(
     few_shots_select="random_sampling",
     generation_size=1280,
     stop_sequence=[],  # no stop sequence, will use eot token
+    version="0.1",
 )
 
 
