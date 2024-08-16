@@ -29,7 +29,7 @@ from huggingface_hub import HfApi
 from transformers import AutoConfig
 
 
-def _get_dtype(dtype: Union[str, torch.dtype, None], config: Optional[AutoConfig] = None) -> torch.dtype:
+def _get_dtype(dtype: Union[str, torch.dtype, None], config: Optional[AutoConfig] = None) -> Optional[torch.dtype]:
     """
     Get the torch dtype based on the input arguments.
 
