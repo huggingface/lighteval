@@ -70,6 +70,10 @@ def get_answer_normalizer(lang: LANGS):
             tokens = whitespace_tokenize(text)
         elif lang in MIXED_SEGMENTATION_LANGS:
             tokens = mixed_segmentation(text)
+            
+        elif lang == "th":
+            from pythainlp.tokenize import word_tokenize
+            tokens = word_tokenize(text, keep_whitespace=False, engine="newmm")
         else:
             # TODO: raise Exception("Unknown Language {}".format(lang))
             # assume whitespace
