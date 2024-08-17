@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 import math
-from typing import Generator, Iterator, Tuple
+from typing import Iterator, Tuple
 
 import torch
 from torch.utils.data import Dataset
@@ -124,7 +124,7 @@ class DynamicBatchDataset(Dataset):
         self.split_start, self.split_end = self.splits[split_id]
         return self.split_start, self.split_end
 
-    def splits_start_end_iterator(self) -> Generator[Tuple[int, int], None, None]:
+    def splits_start_end_iterator(self) -> Iterator[Tuple[int, int]]:
         """
         Iterator that yields the start and end indices of each dataset split.
         Also updates the starting batch size for each split (trying to double
