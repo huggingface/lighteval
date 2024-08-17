@@ -319,8 +319,13 @@ def create_model_config(  # noqa: C901
 
         return BaseModelConfig(**args_dict)
 
-    with open(args.model_config_path, "r") as f:
-        config = yaml.safe_load(f)["model"]
+    # This option isn't provided for use via the CLI but rather for programmatic use when constructing the config
+    # in code, so that the config won't need to be saved to a temp file when calling lighteval.
+    if hasattr(args, "model_config") and args.model_config:
+        config = args.model_config["model"]
+    else:
+        with open(args.model_config_path, "r") as f:
+            config = yaml.safe_load(f)["model"]
 
     if config["type"] == "tgi":
         return TGIModelConfig(
