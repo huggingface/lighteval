@@ -27,21 +27,28 @@ _MC_TASKS = [
 
 _ALL_TASKS = list(set(_GENERATIVE_TASKS + _MC_TASKS))
 
+early_signals_generative = [
+    "indicqa.te",
+]
+
+early_signals_mc = [
+    "belebele-te",
+    "custom_hellaswag-te",
+    *[M_MMLUTask("te", subset) for subset in get_args(MMLU_SUBSET)],
+    "indicnxnli-te-bool-v2-te",
+    "xcopa-te",
+    "xstory_cloze-te",
+]
+
 TASKS_GROUPS = {
     "all": tasks_to_string(_ALL_TASKS),
     "generative": tasks_to_string(_GENERATIVE_TASKS),
     "mc": tasks_to_string(_MC_TASKS),
     "xnli": tasks_to_string([XNLIIndicTask(lang="te", version=2)]),
     "custom_hellaswag": tasks_to_string([CustomHellaswagTeluguTask()]),
-    "early-signals": tasks_to_string([
-        "belebele-te",
-        "custom_hellaswag-te",
-        "indicqa.te",
-        *[M_MMLUTask("te", subset) for subset in get_args(MMLU_SUBSET)],
-        "xcopa-te",
-        "xstory_cloze-te",
-    ])
-        
+    "early-signals": tasks_to_string(early_signals_mc + early_signals_generative),
+    "early-signals-mc": tasks_to_string(early_signals_mc),
+    "early-signals-generative": tasks_to_string(early_signals_generative),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _GENERATIVE_TASKS + _MC_TASKS]

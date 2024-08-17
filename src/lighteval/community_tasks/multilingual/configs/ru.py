@@ -39,6 +39,25 @@ _MC_TASKS = [
 
 _ALL_TASKS = list(set(_GENERATIVE_TASKS + _MC_TASKS))
 
+early_signals_generative = [
+    "tydiqa-ru",
+    "sber_squad",
+    "xquad-ru",
+]
+
+early_signals_mc = [
+    "arc-ru",
+    "belebele-ru",
+    "hellaswag-ru",
+    "parus",
+    *[RuMMLUTask(subset).name for subset in get_args(RUMMLU_SUBSET)],
+    "ruopenbookqa",
+    "x-codah-ru",
+    "x-csqa-ru",
+    "xnli-2.0-bool-v2-ru",
+    "xstory_cloze-ru",
+]
+
 TASKS_GROUPS = {
     "all": tasks_to_string(_ALL_TASKS),
     "generative": tasks_to_string(_GENERATIVE_TASKS),
@@ -49,20 +68,10 @@ TASKS_GROUPS = {
     "sber_squad": tasks_to_string([SberSquadTask()]),
     "xcodah": tasks_to_string([XCODAHTask("ru")]),
     "winograde": tasks_to_string([XWinogradeTask("ru")]),
-    "early-signals": tasks_to_string([
-        "arc-ru",
-        "belebele-ru",
-        "hellaswag-ru",
-        "parus",
-        *[RuMMLUTask(subset) for subset in get_args(RUMMLU_SUBSET)],
-        "ruopenbookqa",
-        "tydiqa-ru",
-        "x-codah-ru",
-        "x-csqa-ru",
-        "xnli-2.0-bool-v2-ru",
-        "sber_squad",
-        "xstory_cloze-ru",
-    ]),
+    "openbookqa": tasks_to_string(["ruopenbookqa"]),
+    "early-signals": tasks_to_string(early_signals_generative + early_signals_mc),
+    "early-signals-generative": tasks_to_string(early_signals_generative),
+    "early-signals-mc": tasks_to_string(early_signals_mc),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

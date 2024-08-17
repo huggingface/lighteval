@@ -50,6 +50,21 @@ _MC_TASKS = [
 ]
 
 
+early_signals_generative = [
+    "indicqa.hi",
+]
+early_signals_mc = [
+    "belebele-hi",
+    "hellaswag-hi",
+    "hi-arc:easy",
+    *[MetaMMLUTask("hi", subset) for subset in get_args(MMLU_SUBSET)],
+    "x-codah-hi",
+    "x-csqa-hi",
+    "xcopa-hi",
+    "indicnxnli-hi-bool-v2-hi",
+    "xstory_cloze-hi",
+]
+
 _ALL_TASKS = list(set(_GENERATIVE_TASKS + _MC_TASKS))
 
 TASKS_GROUPS = {
@@ -62,20 +77,9 @@ TASKS_GROUPS = {
     "xnli2": tasks_to_string([XNLI2Task(lang="hi", version=2)]),
     "meta_mmlu": tasks_to_string([MetaMMLUTask("hi", subset) for subset in get_args(MMLU_SUBSET)]),
     "xcodah": tasks_to_string([XCODAHTask("hi")]),
-    "chai": tasks_to_string([ChAITask("hi", max_query_length=5100)]),
-    "early-signals": tasks_to_string([
-        "belebele-hi",
-        "hellaswag-hi",
-        "hi-arc:easy",
-        "indicqa.hi",
-        *[MetaMMLUTask("hi", subset) for subset in get_args(MMLU_SUBSET)],
-        "x-codah-hi",
-        "x-csqa-hi",
-        "xcopa-hi",
-        "xnli-2.0-bool-v2-hi",
-        "chai-hi",
-        "xstory_cloze-hi",
-    ]),
+    "early-signals": tasks_to_string(early_signals_generative + early_signals_mc),
+    "early-signals-generative": tasks_to_string(early_signals_generative),
+    "early-signals-mc": tasks_to_string(early_signals_mc),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

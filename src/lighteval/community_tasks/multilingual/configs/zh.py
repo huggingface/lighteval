@@ -55,6 +55,29 @@ _MC_TASKS = [
 ]
 
 _ALL_TASKS = list(set(_GENERATIVE_TASKS + _MC_TASKS))
+
+early_signals_generative = [
+    "cmrc",
+    "mlqa-zh",
+    "chinese-squad",
+]
+
+early_signals_mc = [
+    *[ChineseAgievalTask(task, show_options=False, join_variant="NEW_LINE") for task in get_args(CHINESE_AGIEVAL_TASK_TYPE) if task != "gaokao-mathqa"],
+    "belebele-zh",
+    "c3",
+    *[CEvalTask(task, show_options=False, join_variant="NEW_LINE") for task in get_args(CEVAL_TASK_TYPE)],
+    *[CMMLUTask(subset) for subset in get_args(CMMLU_TASK_TYPE)],
+    "hellaswag-zh",
+    "m3exam-zh",
+    "x-codah-zh",
+    "x-csqa-zh",
+    "xcopa-zh",
+    "ocnli-bool-v2-zh"
+    "xstory_cloze-zh",
+    "xwinograd-zh",
+]
+
 TASKS_GROUPS = {
     "all": tasks_to_string(_ALL_TASKS),
     "generative": tasks_to_string(_GENERATIVE_TASKS),
@@ -72,24 +95,9 @@ TASKS_GROUPS = {
     "m3exam": tasks_to_string([M3ExamTask(lang="zh", version=version) for version in (2,)]),
     "cmnli": tasks_to_string([CMNLITask(version=2)]),
     "squad-zh": tasks_to_string([ChineseSQuADTask()]),
-    "early-signals": tasks_to_string([
-            *[ChineseAgievalTask(task, show_options=False, join_variant="NEW_LINE") for task in get_args(CHINESE_AGIEVAL_TASK_TYPE) if task != "gaokao-mathqa"],
-            "belebele-zh",
-            "c3",
-            *[CEvalTask(task, show_options=False, join_variant="NEW_LINE") for task in get_args(CEVAL_TASK_TYPE)],
-            *[CMMLUTask(subset) for subset in get_args(CMMLU_TASK_TYPE)],
-            "cmrc",
-            "hellaswag-zh",
-            "m3exam-zh",
-            "mlqa-zh",
-            "x-codah-zh",
-            "x-csqa-zh",
-            "xcopa-zh",
-            "xquad-zh",
-            "xstory_cloze-zh",
-            "xwinograd-zh",
-    ])
-
+    "early-signals-generative": tasks_to_string(early_signals_generative),
+    "early-signals-mc": tasks_to_string(early_signals_mc),
+    "early-signals": tasks_to_string(early_signals_generative + early_signals_mc),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

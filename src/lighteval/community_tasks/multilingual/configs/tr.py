@@ -34,6 +34,24 @@ _MC_TASKS = [
 ]
 
 _ALL_TASKS = list(set(_GENERATIVE_TASKS + _MC_TASKS))
+
+
+early_signals_generative = [
+    "xquad-tr",
+    "tqduad2",
+]
+
+early_signals_mc = [
+    "arc-v2-tr",
+    "belbele-tr",
+    *[ExamsTask(lang="tr", subject=subject, show_options=False) for subject in get_args(subjects_by_lang_code["tr"])],
+    "hellaswag-tr",
+    *[MMLUTaskTr(subset) for subset in get_args(MMLU_SUBSETS)],
+    "xcopa-tr",
+    "xnli-2.0-bool-v2-tr",
+]
+    
+    
 TASKS_GROUPS = {
     "all": tasks_to_string(_ALL_TASKS),
     "generative": tasks_to_string(_GENERATIVE_TASKS),
@@ -46,16 +64,9 @@ TASKS_GROUPS = {
     "mkqa": tasks_to_string([MkqaTask(lang="tr", type=task_type) for task_type in get_args(TaskType)]),
     "hellaswag": tasks_to_string([HellaSwagTrTask()]),
     "winograde": tasks_to_string([WinogradeTrTask()]),
-    "early-signals": tasks_to_string([
-        "arc-v2-tr",
-        *[ExamsTask(lang="tr", subject=subject, show_options=False) for subject in ("Biology", "Business", "History", "Philosophy")],
-        "hellaswag-tr",
-        *[MMLUTaskTr(subset) for subset in get_args(MMLU_SUBSETS)],
-        "tqduad2",
-        "xcopa-tr",
-        "xnli-2.0-bool-v2-tr",
-        "xquad-tr",
-    ]),
+    "early-signals": tasks_to_string(early_signals_mc + early_signals_generative),
+    "early-signals-mc": tasks_to_string(early_signals_mc),
+    "early-signals-generative": tasks_to_string(early_signals_generative),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

@@ -32,6 +32,21 @@ _MC_TASKS = [
 
 _ALL_TASKS = _GENERATIVE_TASKS + _MC_TASKS
 
+early_signals_generative = [
+    "kenswquad",
+]
+
+early_signals_mc = [
+    "belebele-sw",
+    "arc-sw:easy",
+    "mmlu-sw",
+    "m3exam-sw",
+    "x-csqa-sw",
+    "xcopa-sw",
+    "xnli-bool-hi",
+    "xstory_cloze-sw",
+]
+
 TASKS_GROUPS = {
     "all": tasks_to_string(_ALL_TASKS),
     "generative": tasks_to_string(_GENERATIVE_TASKS),
@@ -42,16 +57,9 @@ TASKS_GROUPS = {
     "kenswquad": tasks_to_string([KenswQuADTask(max_query_length=6200)]),
     "xcodah": tasks_to_string([XCODAHTask(lang="sw")]),
     "m3exam": tasks_to_string([M3ExamTask(lang="sw", version=version) for version in (2,)]),
-    "early-signals": tasks_to_string([
-        "belebele-sw",
-        "arc-sw:easy",
-        "kenswquad",
-        "m3exam-sw",
-        "x-csqa-sw",
-        "xcopa-sw",
-        "xnli-2.0-bool-v2-sw",
-        "xstory_cloze-sw",
-    ]),
+    "early-signals": tasks_to_string(early_signals_generative + early_signals_mc),
+    "early-signals-generative": tasks_to_string(early_signals_generative),
+    "early-signals-mc": tasks_to_string(early_signals_mc),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

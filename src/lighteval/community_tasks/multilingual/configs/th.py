@@ -40,6 +40,19 @@ _MC_TASKS = [
 ]
 _ALL_TASKS = list(set(_GENERATIVE_TASKS + _MC_TASKS))
 
+early_signals_generative = [
+    "thaiqa",
+]
+
+early_signals_mc = [
+    "belebele-th",
+    "m3exam-th",
+    *[MetaMMLUTask("th", subset) for subset in get_args(MMLU_SUBSET)],
+    "xnli-2.0-bool-v2-th",
+    "custom_hellaswag-th",
+    "thai-exams:tgat"
+]
+
 TASKS_GROUPS = {
     "all": tasks_to_string(_ALL_TASKS),
     "generative": tasks_to_string(_GENERATIVE_TASKS),
@@ -52,14 +65,9 @@ TASKS_GROUPS = {
     "wsci": tasks_to_string([WSCITask(lang="th")]),
     "custom_hellaswag": tasks_to_string([CustomHellaswagThaiTask()]),
     "m3exam": tasks_to_string([M3ExamTask(lang="th", version=version) for version in (2,)]),
-    "early-signals": tasks_to_string([
-        "belebele-th",
-        "m3exam-th",
-        *[MetaMMLUTask("th", subset) for subset in get_args(MMLU_SUBSET)],
-        "xnli-2.0-bool-v2-th",
-        "custom_hellaswag-th",
-        "thaiqa",
-    ]),
+    "early-signals": tasks_to_string(early_signals_generative + early_signals_mc),
+    "early-signals-generative": tasks_to_string(early_signals_generative),
+    "early-signals-mc": tasks_to_string(early_signals_mc),
 }
 
 

@@ -42,6 +42,22 @@ _MC_TASKS = [
 
 _ALL_TASKS = list(set(_GENERATIVE_TASKS + _MC_TASKS))
 
+
+early_signals_generative = [
+    "fquadv2",
+    "mintaka-fr",
+]
+
+early_signals_mc = [
+    "belebele-fr",
+    "french-hellaswag",
+    *[MetaMMLUTask("fr", subset) for subset in get_args(MMLU_SUBSET)],
+    "pawns-v2-fr",
+    "x-codah-fr",
+    "x-csqa-fr",
+    "xnli-2.0-bool-v2-fr",
+]
+
 TASKS_GROUPS = {
     "all": tasks_to_string(_ALL_TASKS),
     "generative": tasks_to_string(_GENERATIVE_TASKS),
@@ -56,17 +72,9 @@ TASKS_GROUPS = {
     "exams": tasks_to_string([ExamsTask(lang="fr", subject=subject, show_options=show_options) for subject in subjects_by_lang_code["fr"] for show_options in [True, False]]),
     "mkqa": tasks_to_string([MkqaTask(lang="fr", type=type) for type in get_args(TaskType)]),
     "winograde": tasks_to_string([XWinogradeTask(lang="fr")]),
-    "early-signals": tasks_to_string([
-        "belebele-fr",
-        "fquadv2",
-        "french-hellaswag",
-        "mintaka-fr",
-        *[MetaMMLUTask("fr", subset) for subset in get_args(MMLU_SUBSET)],
-        "pawns-v2-fr",
-        "x-codah-fr",
-        "x-csqa-fr",
-        "xnli-2.0-bool-v2-fr",
-    ]),
+    "early-signals-generative": tasks_to_string(early_signals_generative),
+    "early-signals-mc": tasks_to_string(early_signals_mc),
+    "early-signals": tasks_to_string(early_signals_generative + early_signals_mc),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]

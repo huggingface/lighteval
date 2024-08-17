@@ -43,6 +43,28 @@ _MC_TASKS = [
 
 _ALL_TASKS = _GENERATIVE_TASKS + _MC_TASKS
 
+early_signals_generative = [
+    "mlqa-ar",
+    "tydiqa-ar",
+    "arcd",
+]
+
+early_signals_mc = [
+    "alghafa:mcq_exams_test_ar",
+    "alghafa:meta_ar_msa",
+    "alghafa:multiple_choice_grounded_statement_soqal_task",
+    *[ArabicMMLUTask(task=task, max_query_length=2450, limit=250) for task in get_args(AR_MMLU_TASK_TYPE)],
+    "arc_easy_ar",
+    "hellaswag-ar",
+    "piqa_ar",
+    "race_ar",
+    "sciq_ar",
+    "x-codah-ar",
+    "x-csqa-ar",
+    "xnli-2.0-bool-v2-ar",
+    "xstory_cloze-ar",
+]
+
 TASKS_GROUPS = {
     "all": tasks_to_string(_ALL_TASKS),
     "generative": tasks_to_string(_GENERATIVE_TASKS),
@@ -55,24 +77,9 @@ TASKS_GROUPS = {
     "arabic_mmlu": tasks_to_string([ArabicMMLUTask(task=task, max_query_length=2450, limit=250) for task in get_args(AR_MMLU_TASK_TYPE)]),
     "arcd": tasks_to_string([ARCDSquadTask()]),
     "xnli2": tasks_to_string([XNLI2Task(lang="ar", version=2)]),
-    "early-signals": tasks_to_string([
-        "alghafa:mcq_exams_test_ar",
-        "alghafa:meta_ar_msa",
-        "alghafa:multiple_choice_grounded_statement_soqal_task",
-        *[ArabicMMLUTask(task=task, max_query_length=2450, limit=250) for task in get_args(AR_MMLU_TASK_TYPE)],
-        "arc_easy_ar",
-        "hellaswag-ar",
-        "mlqa-ar",
-        "piqa_ar",
-        "race_ar",
-        "sciq_ar",
-        "tydiqa-ar",
-        "x-codah-ar",
-        "x-csqa-ar",
-        "xnli-2.0-bool-v2-ar",
-        "arcd",
-        "xstory_cloze-ar",
-    ])
+    "early-signals-generative": tasks_to_string(early_signals_generative),
+    "early-signals-mc": tasks_to_string(early_signals_mc),
+    "early-signals": tasks_to_string(early_signals_generative + early_signals_mc),
 }
 
 TASKS_TABLE = [task.as_dict() for task in _ALL_TASKS]
