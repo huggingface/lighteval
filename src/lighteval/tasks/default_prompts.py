@@ -203,7 +203,7 @@ def bbh(line, instruction, choices, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"{instruction}Q: {line['input']}\nA:",
-        choices=[(' ' if line["__few_shots"] else '') + c for c in choices],
+        choices=[(" " if line["__few_shots"] else "") + c for c in choices],
         gold_index=choices.index(line["target"]),
         instruction=instruction,
     )
@@ -790,7 +790,7 @@ def hellaswag_helm(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=query,
-        choices=[" " + i for i in LETTER_INDICES[: len(line["endings"])]] + ([""] if line["__fewshot"] else []),
+        choices=[" " + i for i in LETTER_INDICES[: len(line["endings"])]] + ([""] if line["__few_shot"] else []),
         gold_index=gold_ix,  # -1 for test,
         instruction="The following are multiple choice questions (with answers) about common sense.\n\n",
         specific={
@@ -1629,7 +1629,7 @@ def mmlu_helm(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=query,
-        choices=[" A", " B", " C", " D"] if not is_few_shots else ["A", "B", "C", "D"], # specific to HELM evals
+        choices=[" A", " B", " C", " D"] if not is_few_shots else ["A", "B", "C", "D"],  # specific to HELM evals
         gold_index=gold_ix,
         instruction=f"The following are multiple choice questions (with answers) about {subject.replace('_', ' ')}.\n\n",
     )

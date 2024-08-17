@@ -253,9 +253,7 @@ class PromptManager:
 class FewShotSelectionMethod:
     sorting: str  # sorting method for the overall few shot pool (balanced, random, sequential)
     with_sampling: bool  # samples item randomly from the few shot pool
-    fewshotpool_unique: (
-        bool
-    )  # set to true if you are CERTAIN there is no intersection between the few shot pool and your evaluation set
+    fewshotpool_unique: bool  # set to true if you are CERTAIN there is no intersection between the few shot pool and your evaluation set
 
 
 class FewShotSelection(Enum):

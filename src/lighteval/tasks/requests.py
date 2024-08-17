@@ -200,7 +200,7 @@ class Doc:
         for gold_ix in gold_indices:
             golds.extend(as_list(self.choices[gold_ix]))
         return golds
-    
+
     def get_target_for_fewshot_sorting(self) -> str:
         return self.target_for_fewshot_sorting or as_list(self.get_golds())[0]
 
