@@ -24,6 +24,7 @@ import json
 from dataclasses import asdict, dataclass
 from enum import Enum, auto
 from typing import NamedTuple, Optional, Union
+
 from huggingface_hub import TextGenerationInputGrammarType
 
 from lighteval.utils import as_list
@@ -119,7 +120,7 @@ class GreedyUntilRequest(Request):
 
     stop_sequence: Union[str, tuple[str], list[str]]
     generation_size: Union[int, None]
-    generation_grammar: Union[TextGenerationInputGrammarType, None]
+    generation_grammar: Union[TextGenerationInputGrammarType, None] = None
     request_type = RequestType.GREEDY_UNTIL
     tokenized_context: list[int] = None
     num_samples: int = None

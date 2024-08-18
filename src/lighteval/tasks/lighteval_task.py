@@ -100,7 +100,7 @@ class LightevalTaskConfig:
     few_shots_split: Optional[str] = None
     few_shots_select: Optional[str] = None
     generation_size: Optional[int] = None
-    generation_grammar : Optional[TextGenerationInputGrammarType] = None
+    generation_grammar: Optional[TextGenerationInputGrammarType] = None
     stop_sequence: Optional[Tuple[str]] = None
     output_regex: Optional[str] = None
     num_samples: Optional[list[int]] = None

@@ -29,8 +29,8 @@ from huggingface_hub import (
     InferenceClient,
     InferenceEndpoint,
     InferenceEndpointTimeoutError,
-    TextGenerationOutput,
     TextGenerationInputGrammarType,
+    TextGenerationOutput,
     create_inference_endpoint,
     get_inference_endpoint,
 )
@@ -153,7 +153,11 @@ class InferenceEndpointModel(LightevalModel):
         return self._max_length
 
     def _async_process_request(
-        self, context: str, stop_tokens: list[str], max_tokens: int, grammar: Optional[TextGenerationInputGrammarType] = None
+        self,
+        context: str,
+        stop_tokens: list[str],
+        max_tokens: int,
+        grammar: Optional[TextGenerationInputGrammarType] = None,
     ) -> Coroutine[None, list[TextGenerationOutput], str]:
         # Todo: add an option to launch with conversational instead for chat prompts
         # https://huggingface.co/docs/huggingface_hub/v0.20.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.conversational
@@ -169,7 +173,13 @@ class InferenceEndpointModel(LightevalModel):
 
         return generated_text
 
-    def _process_request(self, context: str, stop_tokens: list[str], max_tokens: int, grammar: Optional[TextGenerationInputGrammarType] = None) -> TextGenerationOutput:
+    def _process_request(
+        self,
+        context: str,
+        stop_tokens: list[str],
+        max_tokens: int,
+        grammar: Optional[TextGenerationInputGrammarType] = None,
+    ) -> TextGenerationOutput:
         # Todo: add an option to launch with conversational instead for chat prompts
         # https://huggingface.co/docs/huggingface_hub/v0.20.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.conversational
         generated_text = self.client.text_generation(
