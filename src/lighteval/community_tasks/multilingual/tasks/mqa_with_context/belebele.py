@@ -22,7 +22,7 @@
 
 from typing import Literal
 
-from datasets import get_dataset_split_names
+from datasets import get_dataset_config_names
 from langcodes import standardize_tag
 
 from ..utils.prompts import get_m_belebele_prompt
@@ -38,25 +38,25 @@ LANGS = Literal["ar", "en", "bg", "hr", "hu", "it", "mk", "pl", "pt", "sq", "sr"
 class BelebeleTask(LightevalTaskConfig):
     def __init__(self, lang: LANGS):
         if lang == "zh":
-            splits = ["zho_Hans"]
+            config_names = ["zho_Hans"]
         else:
-            splits = [
-                split
-                for split in get_dataset_split_names("facebook/belebele")
-                if standardize_tag(split, macro=True) == lang
+            config_names = [
+                config_name
+                for config_name in get_dataset_config_names("facebook/belebele")
+                if standardize_tag(config_name, macro=True) == lang
             ]
-        if len(splits) != 1:
+        if len(config_names) != 1:
             raise ValueError(
                 f"Language {lang} not found in belebele or there are multiple splits for the same language"
             )
-        split = splits[0]
+        config_name = config_names[0]
         super().__init__(
             name=f"belebele-{lang}",
             prompt_function=get_m_belebele_prompt(lang),
             suite=("custom",),
             hf_repo="facebook/belebele",
-            hf_subset="default",
-            evaluation_splits=(split,),
+            hf_subset=config_name,
+            evaluation_splits=("test",),
             metric=(
                 Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_nospace,
