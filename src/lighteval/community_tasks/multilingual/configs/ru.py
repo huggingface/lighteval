@@ -16,7 +16,7 @@ from ..tasks.nli.xwinograd import XWinogradeTask
 from ..tasks.qa.tydiqa import TydiqaTask
 
 _GENERATIVE_TASKS = [
-    TydiqaTask(lang="ru"),
+    TydiqaTask(lang="ru", max_query_length=6800),
     XquadTask(lang="ru"),
     SberSquadTask(),
     *_MERA_GENERATIVE_TASKS,

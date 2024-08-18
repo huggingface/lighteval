@@ -24,8 +24,8 @@ _GENERATIVE_TASKS = [
     XquadTask(lang="hi"),
     TydiqaTask(lang="hi"),
     MintakaTask(lang="hi"),
-    IndicQATask(lang="hi", max_query_length=5100),
-    ChAITask(lang="hi", max_query_length=5100),
+    IndicQATask(lang="hi", max_query_length=4300),
+    ChAITask(lang="hi", max_query_length=4300),
     # BoolQIndTask(),
 ]
 

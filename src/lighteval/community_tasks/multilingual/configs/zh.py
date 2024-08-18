@@ -25,7 +25,7 @@ from ..tasks.qa.mkqa import MkqaTask, TaskType
 
 _GENERATIVE_TASKS = [
     *[MkqaTask(lang="zh", type=task_type) for task_type in get_args(TaskType)],
-    MlqaTask(lang="zh"),
+    MlqaTask(lang="zh", max_query_length=2300),
     TydiqaTask(lang="zh"),
     XquadTask(lang="zh"),
     CMathTask(),

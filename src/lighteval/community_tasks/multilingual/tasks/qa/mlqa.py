@@ -10,7 +10,7 @@ LANGS = Literal["zh", "en", "ar", "hi"]
 
 
 class MlqaTask(LightevalTaskConfig):
-    def __init__(self, lang: LANGS):
+    def __init__(self, lang: LANGS, max_query_length: int | None = None):
         self.source_lang = lang
         super().__init__(
             name=f"mlqa-{lang}",
@@ -19,6 +19,7 @@ class MlqaTask(LightevalTaskConfig):
             hf_repo="facebook/mlqa",
             hf_subset=f"mlqa.{lang}.{lang}",
             hf_revision="397ed406c1a7902140303e7faf60fff35b58d285",
+            filter=lambda x: len(x["question"] + x["context"]) < max_query_length if max_query_length else True,
             trust_dataset=True,
             evaluation_splits=("test",),
             few_shots_split="train",

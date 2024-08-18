@@ -18,8 +18,8 @@ from ..tasks.suites.arabic_evals import GENERATIVE_TASKS as ARABIC_EVALS_GENERAT
 
 
 _GENERATIVE_TASKS = [
-    MlqaTask(lang="ar"),
-    TydiqaTask(lang="ar"),
+    MlqaTask(lang="ar", max_query_length=4900),
+    TydiqaTask(lang="ar", max_query_length=4900),
     XquadTask(lang="ar"),
     BelebeleTask(lang="ar"),
     *ARABIC_EVALS_GENERATIVE_TASKS,

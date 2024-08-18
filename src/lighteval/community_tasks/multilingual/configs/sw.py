@@ -12,7 +12,7 @@ from ..tasks.qa.tydiqa import TydiqaTask
 
 _GENERATIVE_TASKS = [
     TydiqaTask(lang="sw"),
-    KenswQuADTask(max_query_length=6200),
+    KenswQuADTask(max_query_length=5000),
 ]
 
 _MC_TASKS = [

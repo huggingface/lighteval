@@ -23,7 +23,7 @@ _GENERATIVE_TASKS = [
     TydiqaTask(lang="th"),
     XquadTask(lang="th"),
     *[MkqaTask(lang="th", type=task_type) for task_type in get_args(TaskType)],
-    ThaiQATask(max_query_length=4754),
+    ThaiQATask(max_query_length=3200),
 ]
 
 _MC_TASKS = [
