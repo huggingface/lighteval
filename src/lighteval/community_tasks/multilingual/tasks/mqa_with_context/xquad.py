@@ -19,7 +19,7 @@ class XquadTask(LightevalTaskConfig):
             hf_subset=f"xquad.{lang}",
             evaluation_splits=("validation",),
             few_shots_split="validation",
-            generation_size=66,
+            generation_size=100,
             stop_sequence=("\n",),
             metric=(get_qa_metric(lang, "exact"), get_qa_metric(lang, "f1")),
         )

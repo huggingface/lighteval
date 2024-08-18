@@ -29,7 +29,7 @@ _GENERATIVE_TASKS = [
     TydiqaTask(lang="zh"),
     XquadTask(lang="zh"),
     CMathTask(),
-    CMRC2018Task(),
+    CMRC2018Task(max_generation_chars=100),
     ChineseSQuADTask(),
 ]
 

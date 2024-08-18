@@ -23,7 +23,7 @@ class TydiqaTask(LightevalTaskConfig):
             filter=lambda x: x["id"].split("-")[0] == LANG_NAMES_INVERTED[lang] and (len(x["question"] + x["context"]) < max_query_length if max_query_length else True),
             evaluation_splits=("validation",),
             few_shots_split="train",
-            generation_size=100,
+            generation_size=130,
             stop_sequence=("\n",),
             metric=(get_qa_metric(lang, "exact"), get_qa_metric(lang, "f1")),
         )

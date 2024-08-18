@@ -16,7 +16,7 @@ class ThaiQATask(LightevalTaskConfig):
             hf_subset="default",
             evaluation_splits=("train",),
             few_shots_split="validation",
-            generation_size=40,
+            generation_size=70,
             stop_sequence=("\n",),
             filter=lambda x: len(x["question"] + x["context"]) < max_query_length,
             metric=(get_qa_metric("th", "exact"), get_qa_metric("th", "f1")),
@@ -52,7 +52,7 @@ class ARCDSquadTask(LightevalTaskConfig):
             evaluation_splits=("train", "validation"),
             trust_dataset=True,
             metric=(get_qa_metric("ar", "exact"), get_qa_metric("ar", "f1")),
-            generation_size=75,
+            generation_size=70,
             stop_sequence=("\n",),
         )
         
@@ -68,7 +68,7 @@ class KenswQuADTask(LightevalTaskConfig):
             few_shots_split="validation",
             filter=lambda x: len(x["question"] + x["context"]) < max_query_length,
             metric=(get_qa_metric("sw", "exact"), get_qa_metric("sw", "f1")),
-            generation_size=40,
+            generation_size=50,
             stop_sequence=("\n",),
         )
         
@@ -83,7 +83,7 @@ class ChineseSQuADTask(LightevalTaskConfig):
             evaluation_splits=("validation",),
             few_shots_split="train",
             metric=(get_qa_metric("zh", "exact"), get_qa_metric("zh", "f1")),
-            generation_size=40,
+            generation_size=50,
             stop_sequence=("\n",),
         )
 

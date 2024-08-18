@@ -16,7 +16,7 @@ class Tquad2Task(LightevalTaskConfig):
             evaluation_splits=("validation",),
             few_shots_split="train",
             filter=lambda x: len(x["question"] + x["context"]) < max_query_length,
-            generation_size=60,
+            generation_size=80,
             stop_sequence=("\n",),
             metric=(get_qa_metric("tr", "exact"), get_qa_metric("tr", "f1")),
         )

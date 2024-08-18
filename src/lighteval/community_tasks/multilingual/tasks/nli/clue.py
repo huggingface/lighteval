@@ -10,7 +10,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
 class CMRC2018Task(LightevalTaskConfig):
-    def __init__(self):
+    def __init__(self, max_generation_chars: int | None = None):
         super().__init__(
             name=f"cmrc",
             prompt_function=get_mlqa_prompt("zh"),
@@ -18,6 +18,7 @@ class CMRC2018Task(LightevalTaskConfig):
             hf_repo="clue/clue",
             hf_subset="cmrc2018",
             evaluation_splits=("trial",),
+            filter=lambda x: all(len(ans) < max_generation_chars for ans in x["answers"]["text"]) if max_generation_chars else True,
             few_shots_split="train",
             generation_size=100,
             metric=(get_qa_metric("zh", "exact"), get_qa_metric("zh", "f1")),
