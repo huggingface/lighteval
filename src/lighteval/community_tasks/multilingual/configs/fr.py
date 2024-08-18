@@ -50,6 +50,7 @@ early_signals_generative = [
 
 early_signals_mc = [
     "belebele-fr",
+    "arc-fr",
     "french-hellaswag",
     *[MetaMMLUTask("fr", subset) for subset in get_args(MMLU_SUBSET)],
     "pawns-v2-fr",

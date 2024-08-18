@@ -22,7 +22,7 @@
 
 from typing import Literal
 
-from datasets import get_dataset_config_names
+from datasets import get_dataset_split_names
 from langcodes import standardize_tag
 
 from ..utils.prompts import get_m_belebele_prompt
@@ -37,26 +37,28 @@ LANGS = Literal["ar", "en", "bg", "hr", "hu", "it", "mk", "pl", "pt", "sq", "sr"
 # We convert from made-up codes to "standard" codes 😎, ignoring the script
 class BelebeleTask(LightevalTaskConfig):
     def __init__(self, lang: LANGS):
+        # TODO: beleble now uses actually config name, until i update the code I am locking the revision
         if lang == "zh":
-            config_names = ["zho_Hans"]
+            splits = ["zho_Hans"]
         else:
-            config_names = [
-                config_name
-                for config_name in get_dataset_config_names("facebook/belebele")
-                if standardize_tag(config_name, macro=True) == lang
+            splits = [
+                split
+                for split in get_dataset_split_names("facebook/belebele", revision="75b399394a9803252cfec289d103de462763db7c")
+                if standardize_tag(split, macro=True) == lang
             ]
-        if len(config_names) != 1:
+        if len(splits) != 1:
             raise ValueError(
                 f"Language {lang} not found in belebele or there are multiple splits for the same language"
             )
-        config_name = config_names[0]
+        split = splits[0]
         super().__init__(
             name=f"belebele-{lang}",
             prompt_function=get_m_belebele_prompt(lang),
             suite=("custom",),
+            hf_revision="75b399394a9803252cfec289d103de462763db7c",
             hf_repo="facebook/belebele",
-            hf_subset=config_name,
-            evaluation_splits=("test",),
+            hf_subset="default",
+            evaluation_splits=(split,),
             metric=(
                 Metrics.loglikelihood_acc_norm_token,
                 Metrics.loglikelihood_acc_norm_nospace,

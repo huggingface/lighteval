@@ -43,7 +43,7 @@ early_signals_mc = [
     "m3exam-sw",
     "x-csqa-sw",
     "xcopa-sw",
-    "xnli-bool-hi",
+    "xnli-2.0-bool-v2-sw",
     "xstory_cloze-sw",
 ]
 
