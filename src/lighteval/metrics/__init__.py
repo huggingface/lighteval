@@ -30,9 +30,8 @@ from lighteval.utils import as_list
 
 def apply_target_perplexity_metric(results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
-    if len(results) > 1:
-        raise Exception("You returned more than one result for a sample with a target perplexity metric.")
-    results = results[0]
+    # We only consider the best choice, to check if its logprobs are above 0.5
+    results = results[formatted_doc.gold_index]
     target_logprob = results.result[0]
     target_acc = results.result[1]
     reference_text = formatted_doc.get_golds()[0]

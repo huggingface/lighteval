@@ -25,20 +25,14 @@ import os
 
 import pytest
 
-from lighteval.metrics import (
-    apply_generative_metric,
-    apply_multichoice_metric,
-    apply_multichoice_metric_one_token,
-    apply_perplexity_metric,
-    apply_target_perplexity_metric,
-)
-from lighteval.metrics.metrics import MetricCategory, Metrics
+from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.sample_preparator import (
     GenerativeCorpusMetricInput,
     LogprobCorpusMetricInput,
     PerplexityCorpusMetricInput,
 )
 from lighteval.models.model_output import ModelResponse
+from lighteval.tasks.lighteval_task import LightevalTask
 from lighteval.tasks.requests import Doc
 from lighteval.utils import as_list
 
@@ -124,26 +118,6 @@ def test_model_prediction(prompt_inputs: tuple[str, str, list]):
 
 
 def apply_metric(metric, results, formatted_doc: Doc):
-    if metric.category == MetricCategory.TARGET_PERPLEXITY:
-        _, cur_outputs = apply_target_perplexity_metric(results=results, formatted_doc=formatted_doc, metrics=[metric])
-        return cur_outputs
-    if metric.category == MetricCategory.PERPLEXITY:
-        _, cur_outputs = apply_perplexity_metric(results=results, formatted_doc=formatted_doc, metrics=[metric])
-        return cur_outputs
-    if metric.category in [
-        MetricCategory.GENERATIVE,
-        MetricCategory.GENERATIVE_LOGPROB,
-        MetricCategory.GENERATIVE_SAMPLING,
-    ]:
-        _, cur_outputs = apply_generative_metric(results=results, formatted_doc=formatted_doc, metrics=[metric])
-        return cur_outputs
-    if metric.category == MetricCategory.MULTICHOICE:
-        _, cur_outputs = apply_multichoice_metric(results=results, formatted_doc=formatted_doc, metrics=[metric])
-        return cur_outputs
-    if metric.category == MetricCategory.MULTICHOICE_ONE_TOKEN:
-        _, cur_outputs = apply_multichoice_metric_one_token(
-            results=results, formatted_doc=formatted_doc, metrics=[metric]
-        )
-        return cur_outputs
-    else:
-        raise Exception(f"Metric {metric} not found.")
+    method = LightevalTask._get_metric_method_from_category(metric.category)
+    cur_outputs = method(results=results, formatted_doc=formatted_doc, metrics=[metric])
+    return cur_outputs

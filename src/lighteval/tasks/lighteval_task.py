@@ -566,6 +566,10 @@ class LightevalTask:
         if not self.has_metric_category[metric_category]:
             raise ValueError(f"Requested a metric category {metric_category} absent from the task list.")
 
+        return LightevalTask._get_metric_method_from_category(metric_category)
+
+    @staticmethod
+    def _get_metric_method_from_category(metric_category):
         if metric_category == MetricCategory.TARGET_PERPLEXITY:
             return apply_target_perplexity_metric
         if metric_category == MetricCategory.MULTICHOICE:
