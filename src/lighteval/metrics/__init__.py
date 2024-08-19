@@ -148,7 +148,7 @@ def apply_multichoice_metric(results: list[ModelReturn], formatted_doc: Doc, met
             outputs.update(
                 metric.compute(choices_logprob=choices_logprob, gold_ixs=gold_ixs, formatted_doc=formatted_doc)
             )
-    return results[len(formatted_doc.choices) :], outputs
+    return results, outputs
 
 
 def apply_multichoice_metric_one_token(results: list[ModelReturn], formatted_doc: Doc, metrics: list[Metric]):
