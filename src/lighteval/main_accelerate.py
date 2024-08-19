@@ -68,7 +68,12 @@ def main(args):
         system_prompt=args.system_prompt,
     )
 
-    model_config = create_model_config(args=args, accelerator=accelerator)
+    model_config = create_model_config(
+        use_chat_template=args.use_chat_template,
+        override_batch_size=args.override_batch_size,
+        model_args=args.model_args,
+        accelerator=accelerator,
+    )
 
     pipeline = Pipeline(
         tasks=args.tasks,
