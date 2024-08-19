@@ -469,7 +469,7 @@ class LightevalTask:
                     request_index=i,
                     context=context,
                     choice=gold,
-                    associated_metrics=[MetricCategory.TARGET_PERPLEXITY],
+                    metric_categories=[MetricCategory.TARGET_PERPLEXITY],
                 )
                 for i, gold in enumerate(golds)
             ]
@@ -480,7 +480,7 @@ class LightevalTask:
                     sample_index=document_id_seed,
                     request_index=0,
                     context=context,
-                    associated_metrics=[MetricCategory.PERPLEXITY],
+                    metric_categories=[MetricCategory.PERPLEXITY],
                 )
             ]
         if (
@@ -500,7 +500,7 @@ class LightevalTask:
                     generation_size=self.generation_size,
                     num_samples=max(self.num_samples),  # If we have several samplings to apply, we use the max
                     use_logits=use_logits,
-                    associated_metrics=[
+                    metric_categories=[
                         c
                         for c in [
                             MetricCategory.GENERATIVE_SAMPLING,
@@ -519,7 +519,7 @@ class LightevalTask:
                     request_index=i,
                     context=context,
                     choice=choice,
-                    associated_metrics=[MetricCategory.MULTICHOICE],
+                    metric_categories=[MetricCategory.MULTICHOICE],
                 )
                 for i, choice in enumerate(formatted_doc.choices)
             ]
@@ -531,7 +531,7 @@ class LightevalTask:
                     request_index=0,
                     context=context,
                     choices=formatted_doc.choices,
-                    associated_metrics=[MetricCategory.MULTICHOICE_ONE_TOKEN],
+                    metric_categories=[MetricCategory.MULTICHOICE_ONE_TOKEN],
                 )
             ]
         if self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]:
