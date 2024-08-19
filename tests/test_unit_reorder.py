@@ -37,7 +37,7 @@ TEST_DATA = [
         context="1 The quick brown fox jumps over the lazy dog",
         stop_sequence=[":", "stop"],
         generation_size=10,
-        associated_metrics=[MetricCategory.GENERATIVE],
+        metric_categories=[MetricCategory.GENERATIVE],
     ),
     GreedyUntilRequest(
         task_name="test",
@@ -46,7 +46,7 @@ TEST_DATA = [
         context="2 The quick brown fox jumps over the lazy dog njsa",
         stop_sequence=[":", "stop"],
         generation_size=10,
-        associated_metrics=[MetricCategory.GENERATIVE],
+        metric_categories=[MetricCategory.GENERATIVE],
     ),
     GreedyUntilRequest(
         task_name="test",
@@ -55,7 +55,7 @@ TEST_DATA = [
         context="Some text",
         stop_sequence=[":", "stop"],
         generation_size=10,
-        associated_metrics=[MetricCategory.GENERATIVE],
+        metric_categories=[MetricCategory.GENERATIVE],
     ),
     GreedyUntilRequest(
         task_name="test",
@@ -64,7 +64,7 @@ TEST_DATA = [
         context="some more text",
         stop_sequence=[":", "stop"],
         generation_size=10,
-        associated_metrics=[MetricCategory.GENERATIVE],
+        metric_categories=[MetricCategory.GENERATIVE],
     ),
     GreedyUntilRequest(
         task_name="test",
@@ -73,7 +73,7 @@ TEST_DATA = [
         context="not sure what to write here",
         stop_sequence=[":", "stop"],
         generation_size=10,
-        associated_metrics=[MetricCategory.GENERATIVE],
+        metric_categories=[MetricCategory.GENERATIVE],
     ),
 ]
 
