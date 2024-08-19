@@ -144,7 +144,7 @@ ifeval = LightevalTaskConfig(
     name="ifeval",
     prompt_function=ifeval_prompt,
     suite=["extended"],
-    hf_repo="wis-k/instruction-following-eval",
+    hf_repo="google/IFEval",
     hf_subset="default",
     metric=[ifeval_metrics],
     hf_avail_splits=["train"],
@@ -153,6 +153,7 @@ ifeval = LightevalTaskConfig(
     few_shots_select="random_sampling",
     generation_size=1280,
     stop_sequence=[],  # no stop sequence, will use eot token
+    version="0.1",
 )
 
 
