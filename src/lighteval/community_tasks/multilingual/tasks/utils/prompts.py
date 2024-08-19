@@ -1011,6 +1011,8 @@ def get_wsci_prompt(lang: Literal["th"]):
         pronoun = line["pronoun"]
         quote, ending = line["text"][:line["pronoun_loc"]], line["text"][line["pronoun_loc"]+len(pronoun):]
         options = [process_opt(opt, pronoun) for opt in line["options"]]
+        if any(len(c.strip()) == 0 for c in options):
+            return None
         separator_query = SENTENCE_SPACE[lang] if should_follow_sentence_space(quote, lang) else WORD_SPACE[lang]
         return Doc(
             task_name=task_name,

@@ -34,6 +34,7 @@ _ALL_TASKS = _GENERATIVE_TASKS + _MC_TASKS
 
 early_signals_generative = [
     "kenswquad",
+    "tydiqa-sw",
 ]
 
 early_signals_mc = [
@@ -57,6 +58,7 @@ TASKS_GROUPS = {
     "kenswquad": tasks_to_string([KenswQuADTask(max_query_length=6200)]),
     "xcodah": tasks_to_string([XCODAHTask(lang="sw")]),
     "m3exam": tasks_to_string([M3ExamTask(lang="sw", version=version) for version in (2,)]),
+    "tydiqa": tasks_to_string([TydiqaTask(lang="sw")]),
     "early-signals": tasks_to_string(early_signals_generative + early_signals_mc),
     "early-signals-generative": tasks_to_string(early_signals_generative),
     "early-signals-mc": tasks_to_string(early_signals_mc),

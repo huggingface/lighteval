@@ -73,7 +73,7 @@ early_signals_mc = [
     "x-codah-zh",
     "x-csqa-zh",
     "xcopa-zh",
-    "ocnli-bool-v2-zh"
+    "ocnli-bool-v2-zh",
     "xstory_cloze-zh",
     "xwinograd-zh",
 ]

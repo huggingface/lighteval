@@ -42,6 +42,7 @@ _ALL_TASKS = list(set(_GENERATIVE_TASKS + _MC_TASKS))
 
 early_signals_generative = [
     "thaiqa",
+    "xquad-th"
 ]
 
 early_signals_mc = [
