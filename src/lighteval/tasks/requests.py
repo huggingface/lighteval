@@ -25,7 +25,7 @@ from dataclasses import asdict, dataclass
 from enum import Enum, auto
 from typing import NamedTuple, Optional, Union
 
-from lighteval.metrics.utils import MetricCategory
+# from lighteval.metrics.utils import MetricCategory
 from lighteval.utils import as_list
 
 
@@ -57,7 +57,7 @@ class Request:
     sample_index: int
     request_index: int
     context: str
-    metric_categories: list[MetricCategory]
+    metric_categories: list["MetricCategory"]  # noqa F821
 
 
 @dataclass

@@ -85,8 +85,6 @@ class PipelineParameters:
     max_samples: int = None
     use_chat_template: bool = False
     system_prompt: str = None
-    # Final results
-    final_dict: dict = None
 
     def __post_init__(self):
         if self.launcher_type == ParallelismManager.ACCELERATE:
@@ -128,6 +126,8 @@ class Pipeline:
         self.evaluation_tracker.general_config_logger.log_model_info(self.model.model_info)
         self._init_tasks_and_requests(tasks=tasks)
         self._init_random_seeds()
+        # Final results
+        self.final_dict: dict = None
 
     def _init_parallelism_manager(self):
         accelerator, parallel_context = None, None
@@ -216,12 +216,10 @@ class Pipeline:
 
     def is_main_process(self):
         if self.accelerator:
-            context = self.accelerator.is_main_process
-        elif self.parallel_context:
-            context = dist.get_rank(self.parallel_context.world_pg) == 0
-        else:
-            context = nullcontext()
-        return context
+            return self.accelerator.is_main_process
+        if self.parallel_context:
+            return dist.get_rank(self.parallel_context.world_pg) == 0
+        return True
 
     def evaluate(self):
         with htrack_block("Evaluation"):
@@ -237,7 +235,7 @@ class Pipeline:
             sample_id_to_responses = self._run_model()
             self._compute_metrics(sample_id_to_responses)
 
-        with self.get_context():
+        if self.is_main_process():
             with htrack_block("Compiling results"):
                 self.evaluation_tracker.general_config_logger.log_end_time()
                 self.evaluation_tracker.metrics_logger.aggregate(task_dict=self.task_dict, bootstrap_iters=1000)
@@ -290,15 +288,19 @@ class Pipeline:
             self.evaluation_tracker.details_logger.log(sample_id.task_name, task, doc, sample_responses, metrics)
 
     def save_and_push_results(self):
-        with self.get_context():
+        if self.is_main_process():
             self.evaluation_tracker.save()
 
+    def _init_final_dict(self):
+        if self.is_main_process():
+            if self.final_dict is None:
+                self.final_dict = self.evaluation_tracker.generate_final_dict()
+
     def show_results(self):
-        if self.final_dict is None:
-            self.final_dict = self.evaluation_tracker.generate_final_dict()
-        print(make_results_table(self.final_dict))
+        self._init_final_dict()
+        if self.is_main_process():
+            print(make_results_table(self.final_dict))
 
     def get_results(self):
-        if self.final_dict is None:
-            self.final_dict = self.evaluation_tracker.generate_final_dict()
+        self._init_final_dict()
         return self.final_dict
