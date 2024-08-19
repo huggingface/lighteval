@@ -146,14 +146,6 @@ class Metrics(Enum):
         corpus_level_fn=CorpusLevelTranslationMetric("chrf").compute,
         higher_is_better=True,
     )
-    context_based_loglikelihood_acc = SampleLevelMetric(
-        metric_name="acc",
-        sample_level_fn=LoglikelihoodAcc().compute,
-        category=MetricCategory.MULTICHOICE,
-        use_case=MetricUseCase.ACCURACY,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
     copyright = SampleLevelMetricGrouping(
         metric_name=["longest_common_prefix_length", "edit_distance", "edit_similarity"],
         sample_level_fn=StringDistance(
@@ -299,6 +291,14 @@ class Metrics(Enum):
         sample_level_fn=LoglikelihoodAcc().compute,
         category=MetricCategory.MULTICHOICE,
         use_case=MetricUseCase.ACCURACY,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    loglikelihood_acc_multicontext = SampleLevelMetric(
+        metric_name="acc",
+        sample_level_fn=LoglikelihoodAcc().compute,
+        category=MetricCategory.TARGET_PERPLEXITY_MULTI_CONTEXT,
+        use_case=MetricUseCase.PERPLEXITY,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
@@ -586,14 +586,6 @@ class Metrics(Enum):
         use_case=MetricUseCase.PERPLEXITY,
         corpus_level_fn=CorpusLevelPerplexityMetric("perplexity").compute,
         higher_is_better=False,
-    )
-    target_perplexity_loglikelihood_acc = SampleLevelMetric(
-        metric_name="acc",
-        sample_level_fn=LoglikelihoodAcc().compute,
-        category=MetricCategory.TARGET_PERPLEXITY_MULTI_CONTEXT,
-        use_case=MetricUseCase.PERPLEXITY,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
     )
     ter = CorpusLevelMetric(
         metric_name="ter",

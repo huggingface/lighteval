@@ -129,6 +129,6 @@ TASKS_TABLE = [
         hf_subset="default",
         evaluation_splits=["test"],
         few_shots_split=None,
-        metric=(Metrics.target_perplexity_loglikelihood_acc,),
+        metric=(Metrics.loglikelihood_acc_multicontext,),
     )
 ]
