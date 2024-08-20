@@ -25,7 +25,7 @@ from dataclasses import asdict, dataclass
 from enum import Enum, auto
 from typing import NamedTuple, Optional, Union
 
-from lighteval.utils import as_list
+from lighteval.utils.utils import as_list
 
 
 class RequestType(Enum):

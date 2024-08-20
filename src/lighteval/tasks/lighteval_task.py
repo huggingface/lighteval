@@ -55,7 +55,7 @@ from lighteval.tasks.requests import (
     RequestType,
     TaskExampleId,
 )
-from lighteval.utils import as_list
+from lighteval.utils.utils import as_list
 
 
 if TYPE_CHECKING:

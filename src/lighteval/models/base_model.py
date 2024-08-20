@@ -51,8 +51,9 @@ from lighteval.tasks.requests import (
     LoglikelihoodSingleTokenRequest,
     Request,
 )
+from lighteval.utils.imports import is_accelerate_available
 from lighteval.utils.parallelism import find_executable_batch_size
-from lighteval.utils.utils import as_list, is_accelerate_available
+from lighteval.utils.utils import as_list
 
 
 if is_accelerate_available():
