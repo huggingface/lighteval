@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from lighteval.utils import can_load_extended_tasks
+from lighteval.utils.imports import can_load_extended_tasks
 
 
 if can_load_extended_tasks():

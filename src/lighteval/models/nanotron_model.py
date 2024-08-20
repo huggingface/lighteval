@@ -63,8 +63,8 @@ from lighteval.tasks.requests import (
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
 )
-from lighteval.utils import as_list, boolstring_to_bool
-from lighteval.utils_parallelism import find_executable_batch_size
+from lighteval.utils.parallelism import find_executable_batch_size
+from lighteval.utils.utils import as_list, boolstring_to_bool
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"

@@ -37,7 +37,8 @@ from lighteval.models.model_loader import ModelInfo
 from lighteval.models.model_output import ModelReturn
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
-from lighteval.utils import as_list, is_nanotron_available, sanitize_numpy
+from lighteval.utils.imports import is_nanotron_available
+from lighteval.utils.utils import as_list, sanitize_numpy
 
 
 if is_nanotron_available():

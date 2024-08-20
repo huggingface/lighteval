@@ -29,7 +29,7 @@ from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.base_model import BaseModel
 from lighteval.models.model_config import AdapterModelConfig, EnvConfig
 from lighteval.models.utils import _get_dtype
-from lighteval.utils import is_peft_available
+from lighteval.utils.imports import is_peft_available
 
 
 if is_peft_available():
