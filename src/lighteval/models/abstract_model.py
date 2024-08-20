@@ -24,7 +24,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, Union
 
 import torch
-from transformers import BatchEncoding
+from transformers import AutoTokenizer, BatchEncoding
 
 from lighteval.models.model_config import EnvConfig
 from lighteval.models.model_output import (
@@ -64,7 +64,7 @@ class LightevalModel(ABC):
 
     @property
     @abstractmethod
-    def tokenizer(self):
+    def tokenizer(self) -> AutoTokenizer:
         raise NotImplementedError
 
     @property

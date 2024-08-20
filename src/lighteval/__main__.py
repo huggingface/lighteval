@@ -78,7 +78,7 @@ def cli_evaluate():
                 print("-" * 10, name, "-" * 10)
                 if args.show_config:
                     print("-" * 10, "CONFIG")
-                    task.print_config()
+                    task.cfg.print()
                 for ix, sample in enumerate(task.eval_docs()[: int(args.num_samples)]):
                     if ix == 0:
                         print("-" * 10, "SAMPLES")
