@@ -214,19 +214,12 @@ class PromptManager:
     def get_examples(
         self,
         example: str,
-        instruction: str,
+        instruction: Union[str | None],
         fewshot_ex: list[str],
         system_prompt: Union[str | None],
         use_chat_template: bool,
     ):
         examples = []
-        # System prompt and instruction
-        if system_prompt is not None:
-            if use_chat_template:
-                examples.append({"role": "system", "content": system_prompt + instruction})
-            else:
-                examples.append(system_prompt + instruction)
-
         # Few shot examples
         for ex in fewshot_ex:
             if use_chat_template:
@@ -241,17 +234,18 @@ class PromptManager:
         else:
             examples.append(example)
 
-        # We add the initial instruction back, before the task if no system prompt was present
-        if system_prompt is None:
-            if use_chat_template:
-                examples[0]["content"] = instruction + examples[0]["content"]
-            else:
-                examples.insert(0, instruction)
-
+        # System prompt and instruction
         if use_chat_template:
+            if system_prompt is not None:  # We add system prompt and instruction jointly if possible
+                examples.insert(0, {"role": "system", "content": system_prompt + instruction})
+            else:  # Else we add the instruction to the first example
+                examples[0]["content"] = instruction + examples[0]["content"]
             return self.model.tokenizer.apply_chat_template(examples, tokenize=False, add_generation_prompt=True)
         else:
-            output = "\n\n".join(examples)
+            if system_prompt is not None:
+                output = system_prompt + instruction + "\n\n".join(examples)
+            else:
+                output = instruction + "\n\n".join(examples)
             if output == "\n\n":
                 return ""
             return output
