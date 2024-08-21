@@ -11,11 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from dataclasses import asdict, is_dataclass
+import os
+from dataclasses import asdict, dataclass, is_dataclass
 from typing import Any, Union
 
 import numpy as np
 from datasets import load_dataset
+from pytablewriter import MarkdownTableWriter
 
 
 def flatten_dict(nested: dict, sep="/") -> dict:
@@ -143,6 +145,46 @@ def flatten(item: list[Union[list, str]]) -> list[str]:
     for sub_item in item:
         flat_item.extend(sub_item) if isinstance(sub_item, list) else flat_item.append(sub_item)
     return flat_item
+
+
+def make_results_table(result_dict):
+    """Generate table of results."""
+    md_writer = MarkdownTableWriter()
+    md_writer.headers = ["Task", "Version", "Metric", "Value", "", "Stderr"]
+
+    values = []
+
+    for k in sorted(result_dict["results"].keys()):
+        dic = result_dict["results"][k]
+        version = result_dict["versions"][k] if k in result_dict["versions"] else ""
+        for m, v in dic.items():
+            if m.endswith("_stderr"):
+                continue
+
+            if m + "_stderr" in dic:
+                se = dic[m + "_stderr"]
+                values.append([k, version, m, "%.4f" % v, "±", "%.4f" % se])
+            else:
+                values.append([k, version, m, "%.4f" % v, "", ""])
+            k = ""
+            version = ""
+    md_writer.value_matrix = values
+
+    return md_writer.dumps()
+
+
+@dataclass
+class EnvConfig:
+    """
+    Configuration class for environment settings.
+
+    Attributes:
+        cache_dir (str): directory for caching data.
+        token (str): authentication token used for accessing the HuggingFace Hub.
+    """
+
+    cache_dir: str = os.getenv("HF_HOME", "/scratch")
+    token: str = os.getenv("HF_TOKEN")
 
 
 def boolstring_to_bool(x: Union[str, bool, int]) -> Union[bool, None]:

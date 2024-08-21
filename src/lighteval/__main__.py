@@ -47,7 +47,7 @@ def cli_evaluate():
     parser_nanotron(parser_b)
 
     # Subparser for task utils functions
-    parser_c = subparsers.add_parser("tasks", help="use nanotron as backend for evaluation.")
+    parser_c = subparsers.add_parser("tasks", help="display information about available tasks and samples.")
     parser_utils_tasks(parser_c)
 
     args = parser.parse_args()
@@ -69,7 +69,7 @@ def cli_evaluate():
         if args.inspect:
             print(f"Loading the tasks dataset to cache folder: {args.cache_dir}")
             print(
-                "All examples will be displayed without few shot, as few shot sample construction requires loading a model and using its tokenizer."
+                "All examples will be displayed without few shot, as few shot sample construction requires loading a model and using its tokenizer. "
             )
             # Loading task
             task_names_list, _ = taskinfo_selector(args.inspect)

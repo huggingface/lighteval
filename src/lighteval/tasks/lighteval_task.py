@@ -28,6 +28,7 @@ from multiprocessing import Pool
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
 
+from huggingface_hub import TextGenerationInputGrammarType
 from pytablewriter import MarkdownTableWriter
 
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
@@ -41,7 +42,6 @@ from lighteval.metrics import (
 )
 from lighteval.metrics.metrics import Metric, MetricCategory, Metrics
 from lighteval.models.base_model import BaseModel
-from lighteval.models.model_output import ModelReturn
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import (
     Doc,
@@ -52,7 +52,7 @@ from lighteval.tasks.requests import (
     LoglikelihoodSingleTokenRequest,
     Request,
     RequestType,
-    TaskExampleId,
+    SampleUid,
 )
 from lighteval.utils.utils import as_list, download_dataset_worker
 
@@ -76,6 +76,7 @@ class LightevalTaskConfig:
         few_shots_split (str): Name of the split from which to sample few-shot examples
         few_shots_select (str): Method with which to sample few-shot examples
         generation_size (int): Maximum allowed size of the generation
+        generation_grammar (TextGenerationInputGrammarType): The grammar to generate completion according to. Currently only available for TGI and Inference Endpoint models.
         metric (list[str]): List of all the metrics for the current task.
         stop_sequence (list[str]): Stop sequence which interrupts the generation for generative metrics.
         original_num_docs (int): Number of documents in the task
@@ -96,7 +97,8 @@ class LightevalTaskConfig:
     evaluation_splits: Optional[Tuple[str]] = None
     few_shots_split: Optional[str] = None
     few_shots_select: Optional[str] = None
-    generation_size: int = None
+    generation_size: Optional[int] = None
+    generation_grammar: Optional[TextGenerationInputGrammarType] = None
     stop_sequence: Optional[Tuple[str]] = None
     output_regex: Optional[str] = None
     num_samples: Optional[list[int]] = None
@@ -229,6 +231,7 @@ class LightevalTask:
         self.formatter = cfg.prompt_function
 
         self.generation_size = cfg.generation_size
+        self.generation_grammar = cfg.generation_grammar
         self.stop_sequence = cfg.stop_sequence
         self.output_regex = cfg.output_regex
         self.must_remove_duplicate_docs = cfg.must_remove_duplicate_docs
@@ -402,17 +405,22 @@ class LightevalTask:
             requests[RequestType.LOGLIKELIHOOD] += [
                 LoglikelihoodRequest(
                     task_name=current_task_name,
-                    example_index=document_id_seed,
+                    sample_index=document_id_seed,
                     request_index=i,
                     context=context,
                     choice=gold,
+                    metric_categories=[MetricCategory.TARGET_PERPLEXITY],
                 )
                 for i, gold in enumerate(golds)
             ]
         if self.has_metric_category[MetricCategory.PERPLEXITY]:
             requests[RequestType.LOGLIKELIHOOD_ROLLING] += [
                 LoglikelihoodRollingRequest(
-                    task_name=current_task_name, example_index=document_id_seed, request_index=0, context=context
+                    task_name=current_task_name,
+                    sample_index=document_id_seed,
+                    request_index=0,
+                    context=context,
+                    metric_categories=[MetricCategory.PERPLEXITY],
                 )
             ]
         if (
@@ -425,23 +433,34 @@ class LightevalTask:
             requests[RequestType.GREEDY_UNTIL] += [
                 GreedyUntilRequest(
                     task_name=current_task_name,
-                    example_index=document_id_seed,
+                    sample_index=document_id_seed,
                     request_index=0,
                     context=context,
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
+                    generation_grammar=self.generation_grammar,
                     num_samples=max(self.num_samples),  # If we have several samplings to apply, we use the max
                     use_logits=use_logits,
+                    metric_categories=[
+                        c
+                        for c in [
+                            MetricCategory.GENERATIVE_SAMPLING,
+                            MetricCategory.GENERATIVE,
+                            MetricCategory.GENERATIVE_LOGPROB,
+                        ]
+                        if self.has_metric_category[c]
+                    ],
                 )
             ]
         if self.has_metric_category[MetricCategory.MULTICHOICE]:
             requests[RequestType.LOGLIKELIHOOD] += [
                 LoglikelihoodRequest(
                     task_name=current_task_name,
-                    example_index=document_id_seed,
+                    sample_index=document_id_seed,
                     request_index=i,
                     context=context,
                     choice=choice,
+                    metric_categories=[MetricCategory.MULTICHOICE],
                 )
                 for i, choice in enumerate(formatted_doc.choices)
             ]
@@ -449,94 +468,66 @@ class LightevalTask:
             requests[RequestType.LOGLIKELIHOOD_SINGLE_TOKEN] += [
                 LoglikelihoodSingleTokenRequest(
                     task_name=current_task_name,
-                    example_index=document_id_seed,
+                    sample_index=document_id_seed,
                     request_index=0,
                     context=context,
                     choices=formatted_doc.choices,
+                    metric_categories=[MetricCategory.MULTICHOICE_ONE_TOKEN],
                 )
             ]
         if self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]:
             requests[RequestType.GREEDY_UNTIL_MULTI_TURN] += [
                 GreedyUntilMultiTurnRequest(
                     task_name=current_task_name,
-                    example_index=document_id_seed,
+                    sample_index=document_id_seed,
                     request_index=0,
                     context=context,
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
+                    metric_categories=[MetricCategory.LLM_AS_JUDGE_MULTI_TURN],
                 )
             ]
         if self.has_metric_category[MetricCategory.LLM_AS_JUDGE]:
             requests[RequestType.GREEDY_UNTIL] += [
                 GreedyUntilRequest(
                     task_name=current_task_name,
-                    example_index=document_id_seed,
+                    sample_index=document_id_seed,
                     request_index=0,
                     context=context,
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
+                    generation_grammar=self.generation_grammar,
                     num_samples=1,
+                    metric_categories=[MetricCategory.LLM_AS_JUDGE],
                 )
             ]
 
         return requests
 
-    def process_results(self, formatted_doc: Doc, results: list[ModelReturn]) -> dict[str, float]:
-        """
-        Processes the results of the task, and stores them in the output dict.
+    def get_metric_method_from_category(self, metric_category):
+        if not self.has_metric_category[metric_category]:
+            raise ValueError(f"Requested a metric category {metric_category} absent from the task list.")
 
-        Args:
-            formatted_doc (Doc): formatted document of the task.
-            results (list[ModelReturn]): results of the task, returned by the model class after evaluation.
+        return LightevalTask._get_metric_method_from_category(metric_category)
 
-        Returns:
-            dict[str, float]: output dictionary containing the results of the task.
-        """
-        # Metrics management is done in metrics.__init__
-        outputs = {}
-        if self.has_metric_category[MetricCategory.TARGET_PERPLEXITY]:
-            results, cur_outputs = apply_target_perplexity_metric(
-                results=results, formatted_doc=formatted_doc, metrics=self.metrics
-            )
-            outputs.update(cur_outputs)
-        if self.has_metric_category[MetricCategory.MULTICHOICE]:
-            results, cur_outputs = apply_multichoice_metric(
-                results=results, formatted_doc=formatted_doc, metrics=self.metrics
-            )
-            outputs.update(cur_outputs)
-        if self.has_metric_category[MetricCategory.MULTICHOICE_ONE_TOKEN]:
-            results, cur_outputs = apply_multichoice_metric_one_token(
-                results=results, formatted_doc=formatted_doc, metrics=self.metrics
-            )
-            outputs.update(cur_outputs)
-        if self.has_metric_category[MetricCategory.PERPLEXITY]:
-            results, cur_outputs = apply_perplexity_metric(
-                results=results, formatted_doc=formatted_doc, metrics=self.metrics
-            )
-            outputs.update(cur_outputs)
-        if (
-            self.has_metric_category[MetricCategory.GENERATIVE]
-            or self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]
-            or self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]
-        ):
-            results, cur_outputs = apply_generative_metric(
-                results=results,
-                formatted_doc=formatted_doc,
-                metrics=self.metrics,
-                output_regex=self.output_regex,
-                max_num_samples=max(self.num_samples),
-            )
-            outputs.update(cur_outputs)
-        if (
-            self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]
-            or self.has_metric_category[MetricCategory.LLM_AS_JUDGE]
-        ):
-            results, cur_outputs = apply_llm_as_judge_metric(
-                results=results, formatted_doc=formatted_doc, metrics=self.metrics
-            )
-            outputs.update(cur_outputs)
-
-        return outputs
+    @staticmethod
+    def _get_metric_method_from_category(metric_category):
+        if metric_category == MetricCategory.TARGET_PERPLEXITY:
+            return apply_target_perplexity_metric
+        if metric_category == MetricCategory.MULTICHOICE:
+            return apply_multichoice_metric
+        if metric_category == MetricCategory.MULTICHOICE_ONE_TOKEN:
+            return apply_multichoice_metric_one_token
+        if metric_category == MetricCategory.PERPLEXITY:
+            return apply_perplexity_metric
+        if metric_category in [
+            MetricCategory.GENERATIVE,
+            MetricCategory.GENERATIVE_SAMPLING,
+            MetricCategory.GENERATIVE_LOGPROB,
+        ]:
+            return apply_generative_metric
+        if metric_category in [MetricCategory.LLM_AS_JUDGE_MULTI_TURN, MetricCategory.LLM_AS_JUDGE]:
+            return apply_llm_as_judge_metric
 
     def aggregation(self):
         """
@@ -583,7 +574,7 @@ def create_requests_from_tasks(  # noqa: C901
     evaluation_tracker: "EvaluationTracker",
     use_chat_template: bool,
     system_prompt: str,
-) -> Tuple[dict[RequestType, list[Request]], dict[TaskExampleId, Doc]]:
+) -> Tuple[dict[RequestType, list[Request]], dict[SampleUid, Doc]]:
     """
     Takes a task dict and a fewshot dict and returns a dict of requests, a dict
     of docs, and a dict of requests origins. The construction of prompts and
@@ -606,11 +597,10 @@ def create_requests_from_tasks(  # noqa: C901
             task.
 
     Returns:
-        Tuple[dict[RequestType, list[Request]], dict[TaskExampleId, Doc]]: A
+        Tuple[dict[RequestType, list[Request]], dict[SampleUid, Doc]]: A
             tuple containing the requests and the documents.
     """
-    # todo: move this to pipeline once merged
-    docs: dict[TaskExampleId, Doc] = {}
+    docs: dict[SampleUid, Doc] = {}
     requests: dict[RequestType, list[Request]] = collections.defaultdict(list)
 
     # Filter out tasks that don't have any docs
@@ -653,8 +643,8 @@ def create_requests_from_tasks(  # noqa: C901
 
                     # Constructing the requests
                     cur_task_name = f"{task_name}|{num_fewshot}"
-                    docs[TaskExampleId(cur_task_name, doc_id_seed)] = doc
-                    reqs = task.construct_requests(doc, doc.ctx, doc_id_seed, cur_task_name)
+                    docs[SampleUid(cur_task_name, doc_id_seed)] = doc
+                    reqs: dict = task.construct_requests(doc, doc.ctx, doc_id_seed, cur_task_name)
                     for req_type in req_types:
                         requests[req_type].extend(reqs[req_type])
 

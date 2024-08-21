@@ -21,17 +21,17 @@
 # SOFTWARE.
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Optional, Union
 
 import torch
 from transformers import AutoTokenizer, BatchEncoding
 
-from lighteval.models.model_config import EnvConfig
 from lighteval.models.model_output import (
-    GenerateMultiTurnReturn,
-    GenerateReturn,
-    LoglikelihoodReturn,
-    LoglikelihoodSingleTokenReturn,
+    GenerativeMultiturnResponse,
+    GenerativeResponse,
+    LoglikelihoodResponse,
+    LoglikelihoodSingleTokenResponse,
 )
 from lighteval.tasks.requests import (
     GreedyUntilMultiTurnRequest,
@@ -39,10 +39,20 @@ from lighteval.tasks.requests import (
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
     LoglikelihoodSingleTokenRequest,
+    RequestType,
 )
+from lighteval.utils.utils import EnvConfig
 
 
 TokenSequence = Union[list[int], torch.LongTensor, torch.Tensor, BatchEncoding]
+
+
+@dataclass
+class ModelInfo:
+    model_name: str
+    model_sha: Optional[str] = None
+    model_dtype: Optional[str] = None
+    model_size: Optional[str] = None
 
 
 class LightevalModel(ABC):
@@ -82,9 +92,22 @@ class LightevalModel(ABC):
     def disable_tqdm(self) -> bool:
         raise NotImplementedError
 
+    def get_method_from_request_type(self, request_type: RequestType):
+        if request_type == RequestType.LOGLIKELIHOOD:
+            return self.loglikelihood
+        if request_type == RequestType.LOGLIKELIHOOD_SINGLE_TOKEN:
+            return self.loglikelihood_single_token
+        if request_type == RequestType.LOGLIKELIHOOD_ROLLING:
+            return self.loglikelihood_rolling
+        if request_type == RequestType.GREEDY_UNTIL:
+            return self.greedy_until
+        if request_type == RequestType.GREEDY_UNTIL_MULTI_TURN:
+            return self.greedy_until_multi_turn
+        raise NotImplementedError(f"Request type {request_type} not supported")
+
     def greedy_until_multi_turn(  # noqa: C901
         self, requests: list[GreedyUntilMultiTurnRequest], override_bs: Optional[int] = None
-    ) -> GenerateMultiTurnReturn:
+    ) -> GenerativeMultiturnResponse:
         """Generates responses using a greedy decoding strategy until certain ending conditions are met."""
         return NotImplemented
 
@@ -93,7 +116,7 @@ class LightevalModel(ABC):
         self,
         requests: list[GreedyUntilRequest],
         override_bs: Optional[int] = None,
-    ) -> list[GenerateReturn]:
+    ) -> list[GenerativeResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
@@ -103,14 +126,14 @@ class LightevalModel(ABC):
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
 
         Returns:
-            list[GenerateReturn]: list of generated responses.
+            list[GenerativeResponse]: list of generated responses.
         """
         return NotImplemented
 
     @abstractmethod
     def loglikelihood(
         self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodReturn]:
+    ) -> list[LoglikelihoodResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
@@ -119,14 +142,14 @@ class LightevalModel(ABC):
     @abstractmethod
     def loglikelihood_rolling(
         self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodReturn]:
+    ) -> list[LoglikelihoodResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         return NotImplemented
 
     @abstractmethod
     def loglikelihood_single_token(
         self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodSingleTokenReturn]:
+    ) -> list[LoglikelihoodSingleTokenResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
