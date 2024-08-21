@@ -29,6 +29,7 @@ from huggingface_hub import (
     InferenceClient,
     InferenceEndpoint,
     InferenceEndpointTimeoutError,
+    TextGenerationInputGrammarType,
     TextGenerationOutput,
     create_inference_endpoint,
     get_inference_endpoint,
@@ -159,7 +160,11 @@ class InferenceEndpointModel(LightevalModel):
         return self._max_length
 
     def _async_process_request(
-        self, context: str, stop_tokens: list[str], max_tokens: int
+        self,
+        context: str,
+        stop_tokens: list[str],
+        max_tokens: int,
+        grammar: Optional[TextGenerationInputGrammarType] = None,
     ) -> Coroutine[None, list[TextGenerationOutput], str]:
         # Todo: add an option to launch with conversational instead for chat prompts
         # https://huggingface.co/docs/huggingface_hub/v0.20.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.conversational
@@ -167,6 +172,7 @@ class InferenceEndpointModel(LightevalModel):
             prompt=context,
             details=True,
             decoder_input_details=True,
+            grammar=grammar,
             max_new_tokens=max_tokens,
             stop_sequences=stop_tokens,
             # truncate=,
@@ -174,13 +180,20 @@ class InferenceEndpointModel(LightevalModel):
 
         return generated_text
 
-    def _process_request(self, context: str, stop_tokens: list[str], max_tokens: int) -> TextGenerationOutput:
+    def _process_request(
+        self,
+        context: str,
+        stop_tokens: list[str],
+        max_tokens: int,
+        grammar: Optional[TextGenerationInputGrammarType] = None,
+    ) -> TextGenerationOutput:
         # Todo: add an option to launch with conversational instead for chat prompts
         # https://huggingface.co/docs/huggingface_hub/v0.20.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.conversational
         generated_text = self.client.text_generation(
             prompt=context,
             details=True,
             decoder_input_details=True,
+            grammar=grammar,
             max_new_tokens=max_tokens,
             stop_sequences=stop_tokens,
             # truncate=,
@@ -198,6 +211,7 @@ class InferenceEndpointModel(LightevalModel):
                     context=request.context,
                     stop_tokens=as_list(request.stop_sequence),
                     max_tokens=request.generation_size,
+                    grammar=request.generation_grammar,
                 )
                 for request in requests
             ]
@@ -212,6 +226,7 @@ class InferenceEndpointModel(LightevalModel):
                 context=request.context,
                 stop_tokens=as_list(request.stop_sequence),
                 max_tokens=request.generation_size,
+                grammar=request.generation_grammar,
             )
             for request in requests
         ]

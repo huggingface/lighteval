@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
 
 from datasets import load_dataset
+from huggingface_hub import TextGenerationInputGrammarType
 from pytablewriter import MarkdownTableWriter
 
 from lighteval.few_shot_manager import FewShotSampler
@@ -76,6 +77,7 @@ class LightevalTaskConfig:
         few_shots_split (str): Name of the split from which to sample few-shot examples
         few_shots_select (str): Method with which to sample few-shot examples
         generation_size (int): Maximum allowed size of the generation
+        generation_grammar (TextGenerationInputGrammarType): The grammar to generate completion according to. Currently only available for TGI and Inference Endpoint models.
         metric (list[str]): List of all the metrics for the current task.
         stop_sequence (list[str]): Stop sequence which interrupts the generation for generative metrics.
         original_num_docs (int): Number of documents in the task
@@ -96,7 +98,8 @@ class LightevalTaskConfig:
     evaluation_splits: Optional[Tuple[str]] = None
     few_shots_split: Optional[str] = None
     few_shots_select: Optional[str] = None
-    generation_size: int = None
+    generation_size: Optional[int] = None
+    generation_grammar: Optional[TextGenerationInputGrammarType] = None
     stop_sequence: Optional[Tuple[str]] = None
     output_regex: Optional[str] = None
     num_samples: Optional[list[int]] = None
@@ -207,6 +210,7 @@ class LightevalTask:
         self.formatter = cfg.prompt_function
 
         self.generation_size = cfg.generation_size
+        self.generation_grammar = cfg.generation_grammar
         self.stop_sequence = cfg.stop_sequence
         self.output_regex = cfg.output_regex
         self.must_remove_duplicate_docs = cfg.must_remove_duplicate_docs
@@ -487,6 +491,7 @@ class LightevalTask:
                     context=context,
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
+                    generation_grammar=self.generation_grammar,
                     num_samples=max(self.num_samples),  # If we have several samplings to apply, we use the max
                     use_logits=use_logits,
                     metric_categories=[
@@ -544,6 +549,7 @@ class LightevalTask:
                     context=context,
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
+                    generation_grammar=self.generation_grammar,
                     num_samples=1,
                     metric_categories=[MetricCategory.LLM_AS_JUDGE],
                 )
