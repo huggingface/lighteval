@@ -27,7 +27,7 @@ import requests
 from huggingface_hub import TextGenerationInputGrammarType, TextGenerationOutput
 from transformers import AutoTokenizer
 
-from lighteval.models.endpoint_model import InferenceEndpointModel
+from lighteval.models.endpoint_model import InferenceEndpointModel, ModelInfo
 from lighteval.utils import NO_TGI_ERROR_MSG, is_tgi_available
 
 
@@ -64,6 +64,16 @@ class ModelClient(InferenceEndpointModel):
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_info["model_id"])
         self._add_special_tokens = True
         self.use_async = True
+
+        model_name = str(self.model_info["model_id"])
+        model_sha = self.model_info["model_sha"]
+        model_precision = self.model_info["model_dtype"]
+        self.model_info = ModelInfo(
+            model_name=model_name,
+            model_sha=model_sha,
+            model_dtype=model_precision,
+            model_size=-1,
+        )
 
     def _async_process_request(
         self,
