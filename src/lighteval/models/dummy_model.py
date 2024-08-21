@@ -36,7 +36,7 @@ from lighteval.tasks.requests import (
     LoglikelihoodRollingRequest,
     LoglikelihoodSingleTokenRequest,
 )
-from lighteval.utils import EnvConfig
+from lighteval.utils.utils import EnvConfig
 
 
 class DummyModel(LightevalModel):

@@ -53,8 +53,9 @@ from lighteval.tasks.requests import (
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
 )
-from lighteval.utils import EnvConfig, as_list, boolstring_to_bool, is_nanotron_available
-from lighteval.utils_parallelism import find_executable_batch_size
+from lighteval.utils.imports import is_nanotron_available
+from lighteval.utils.parallelism import find_executable_batch_size
+from lighteval.utils.utils import EnvConfig, as_list, boolstring_to_bool
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"

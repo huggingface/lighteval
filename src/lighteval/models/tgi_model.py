@@ -28,7 +28,7 @@ from huggingface_hub import TextGenerationInputGrammarType, TextGenerationOutput
 from transformers import AutoTokenizer
 
 from lighteval.models.endpoint_model import InferenceEndpointModel, ModelInfo
-from lighteval.utils import NO_TGI_ERROR_MSG, is_tgi_available
+from lighteval.utils.imports import NO_TGI_ERROR_MSG, is_tgi_available
 
 
 if is_tgi_available():
