@@ -25,6 +25,8 @@ from dataclasses import asdict, dataclass
 from enum import Enum, auto
 from typing import NamedTuple, Optional, Union
 
+from huggingface_hub import TextGenerationInputGrammarType
+
 from lighteval.utils import as_list
 
 
@@ -111,11 +113,14 @@ class GreedyUntilRequest(Request):
     Attributes:
         stop_sequence (str): The sequence of tokens that indicates when to stop generating text.
         generation_size (int): The maximum number of tokens to generate.
+        generation_grammar (TextGenerationInputGrammarType): The grammar to generate completion according to.
+            Currently only available for TGI models.
         request_type (RequestType): The type of the request, set to RequestType.GREEDY_UNTIL.
     """
 
     stop_sequence: Union[str, tuple[str], list[str]]
-    generation_size: int
+    generation_size: Union[int, None]
+    generation_grammar: Union[TextGenerationInputGrammarType, None] = None
     request_type = RequestType.GREEDY_UNTIL
     tokenized_context: list[int] = None
     num_samples: int = None
