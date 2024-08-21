@@ -154,11 +154,16 @@ def apply_multichoice_metric(results: list[ModelResponse], formatted_doc: Doc, m
     choices_texts = formatted_doc.choices
     choices_tokens = [res.generated_tokens for res in mc_results]
 
-
     for metric in metrics:
         if metric.category == MetricCategory.MULTICHOICE_PMI or metric.category == MetricCategory.MULTICHOICE:
             outputs.update(
-                metric.compute(gold_ixs=gold_ixs, choices_logprob=conditioned_lp, unconditioned_logprob=unconditioned_lp, choices_texts=choices_texts, choices_tokens=choices_tokens)
+                metric.compute(
+                    gold_ixs=gold_ixs,
+                    choices_logprob=conditioned_lp,
+                    unconditioned_logprob=unconditioned_lp,
+                    choices_texts=choices_texts,
+                    choices_tokens=choices_tokens,
+                )
             )
     return outputs
 
