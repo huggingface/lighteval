@@ -39,17 +39,16 @@ from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_tasks
 from lighteval.tasks.registry import Registry, get_custom_tasks, taskinfo_selector
 from lighteval.tasks.requests import Doc, SampleUid
-from lighteval.utils import (
+from lighteval.utils.imports import (
     NO_ACCELERATE_ERROR_MSG,
     NO_NANOTRON_ERROR_MSG,
     NO_TGI_ERROR_MSG,
-    EnvConfig,
     is_accelerate_available,
     is_nanotron_available,
     is_tgi_available,
-    make_results_table,
 )
-from lighteval.utils_parallelism import test_all_gather
+from lighteval.utils.parallelism import test_all_gather
+from lighteval.utils.utils import EnvConfig, make_results_table
 
 
 if is_accelerate_available():

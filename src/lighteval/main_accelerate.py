@@ -27,7 +27,7 @@ from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog_warn, htrack
 from lighteval.models.model_config import create_model_config
 from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
-from lighteval.utils import is_accelerate_available, is_tgi_available
+from lighteval.utils.imports import is_accelerate_available, is_tgi_available
 
 
 if not is_accelerate_available() and not is_tgi_available():

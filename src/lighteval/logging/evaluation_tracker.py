@@ -43,7 +43,8 @@ from lighteval.logging.info_loggers import (
     TaskConfigLogger,
     VersionsLogger,
 )
-from lighteval.utils import NO_TENSORBOARDX_WARN_MSG, is_nanotron_available, is_tensorboardX_available, obj_to_markdown
+from lighteval.utils.imports import NO_TENSORBOARDX_WARN_MSG, is_nanotron_available, is_tensorboardX_available
+from lighteval.utils.utils import obj_to_markdown
 
 
 if is_nanotron_available():
