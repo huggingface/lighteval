@@ -27,7 +27,7 @@ from typing import NamedTuple, Optional, Union
 
 from huggingface_hub import TextGenerationInputGrammarType
 
-from lighteval.utils import as_list
+from lighteval.utils.utils import as_list
 
 
 class RequestType(Enum):

@@ -34,7 +34,7 @@ from lighteval.metrics.sample_preparator import (
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask
 from lighteval.tasks.requests import Doc
-from lighteval.utils import as_list
+from lighteval.utils.utils import as_list
 
 
 PATH_TO_HARNESS_METRICS = os.path.join(os.path.dirname(__file__), "reference_scores/harness_metrics.json")

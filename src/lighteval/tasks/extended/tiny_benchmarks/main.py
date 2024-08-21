@@ -35,7 +35,7 @@ import requests
 from aenum import extend_enum
 from scipy.optimize import minimize
 
-import lighteval.tasks.tasks_prompt_formatting as prompt
+import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import CorpusLevelMetricGrouping, Metrics
 from lighteval.metrics.metrics_sample import ExactMatches, LoglikelihoodAcc
 from lighteval.metrics.normalizations import gsm8k_normalizer

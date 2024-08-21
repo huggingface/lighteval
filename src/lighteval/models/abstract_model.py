@@ -41,7 +41,7 @@ from lighteval.tasks.requests import (
     LoglikelihoodSingleTokenRequest,
     RequestType,
 )
-from lighteval.utils import EnvConfig
+from lighteval.utils.utils import EnvConfig
 
 
 TokenSequence = Union[list[int], torch.LongTensor, torch.Tensor, BatchEncoding]

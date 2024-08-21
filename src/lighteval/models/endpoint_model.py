@@ -49,7 +49,7 @@ from lighteval.tasks.requests import (
     LoglikelihoodRollingRequest,
     LoglikelihoodSingleTokenRequest,
 )
-from lighteval.utils import EnvConfig, as_list
+from lighteval.utils.utils import EnvConfig, as_list
 
 
 BATCH_SIZE = 50
