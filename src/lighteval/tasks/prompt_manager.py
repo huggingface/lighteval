@@ -251,7 +251,10 @@ class PromptManager:
         if use_chat_template:
             return self.model.tokenizer.apply_chat_template(examples, tokenize=False, add_generation_prompt=True)
         else:
-            return "\n\n".join(examples)
+            output = "\n\n".join(examples)
+            if output == "\n\n":
+                return ""
+            return output
 
 
 @dataclass
