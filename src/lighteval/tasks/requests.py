@@ -25,8 +25,9 @@ from dataclasses import asdict, dataclass
 from enum import Enum, auto
 from typing import NamedTuple, Optional, Union
 
-from lighteval.utils.utils import as_list
 from huggingface_hub import TextGenerationInputGrammarType
+
+from lighteval.utils.utils import as_list
 
 
 class RequestType(Enum):
