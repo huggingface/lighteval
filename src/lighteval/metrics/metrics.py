@@ -55,6 +55,7 @@ from lighteval.metrics.metrics_sample import (
 from lighteval.metrics.normalizations import (
     CharNorm,
     Normalization,
+    PMINorm,
     bigbench_normalizer,
     gsm8k_normalizer,
     harness_triviaqa_normalizer,
@@ -661,7 +662,7 @@ class Metrics(Enum):
         return SampleLevelMetric(
             metric_name=metric_name,
             sample_level_fn=LoglikelihoodAcc(normalization=normalization).compute,
-            category=MetricCategory.MULTICHOICE,
+            category=MetricCategory.MULTICHOICE if not normalization == PMINorm() else MetricCategory.MULTICHOICE_PMI,
             use_case=MetricUseCase.ACCURACY,
             corpus_level_fn=np.mean,
             higher_is_better=True,
@@ -686,7 +687,7 @@ class Metrics(Enum):
             sample_level_fn=Probability(
                 normalization=normalization, return_mass=return_mass, aggregation_function=aggregation_function
             ).compute,
-            category=MetricCategory.MULTICHOICE,
+            category=MetricCategory.MULTICHOICE if not normalization == PMINorm() else MetricCategory.MULTICHOICE_PMI,
             use_case=MetricUseCase.ACCURACY,
             corpus_level_fn=np.mean,
             higher_is_better=True,

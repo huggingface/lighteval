@@ -124,23 +124,41 @@ def apply_generative_metric(
 
 def apply_multichoice_metric(results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
-    if len(formatted_doc.choices) <= 1:
+    n_choices = len(formatted_doc.choices)
+    contains_pmi = any(metric.category == MetricCategory.MULTICHOICE_PMI for metric in metrics)
+
+    if n_choices <= 1:
         raise ValueError(
             "You can't use a multi choice metric with only one choice. Use `acc_golds_likelihood` instead."
         )
-    if len(results) != len(formatted_doc.choices):
+        
+    if not contains_pmi and len(results) != len(formatted_doc.choices):
         raise Exception(
             f"You shoud have returned as many model outputs as choices when using an multi choice metric. Returned {len(results)} instead of {len(formatted_doc.choices)}"
         )
-
+    
+    if contains_pmi and len(results) != n_choices * 2:
+        raise Exception(
+            f"You shoud have returned as many model outputs as choices when using an multi choice metric. Returned {len(results)} instead of {n_choices * 2} (conditioned + unconditioned)"
+        )
+        
+    mc_results = results[:n_choices]
     # Todo: make better system with return_bool_score instead of taking first element
-    choices_logprob = [results[i].result[0] for i in range(len(formatted_doc.choices))]
+    conditioned_lp = [res.result[0] for res in mc_results]
+    unconditioned_lp = None
+    if contains_pmi:
+        unconditioned_lp, results = [res.result[0] for res in results[n_choices:n_choices * 2]]
+        
+
     gold_ixs = as_list(formatted_doc.gold_index)
+    choices_texts = formatted_doc.choices
+    choices_tokens = [res.generated_tokens for res in mc_results]
+
 
     for metric in metrics:
-        if metric.category == MetricCategory.MULTICHOICE:
+        if metric.category == MetricCategory.MULTICHOICE_PMI or metric.category == MetricCategory.MULTICHOICE:
             outputs.update(
-                metric.compute(choices_logprob=choices_logprob, gold_ixs=gold_ixs, formatted_doc=formatted_doc)
+                metric.compute(gold_ixs=gold_ixs, choices_logprob=conditioned_lp, unconditioned_logprob=unconditioned_lp, choices_texts=choices_texts, choices_tokens=choices_tokens)
             )
     return outputs
 

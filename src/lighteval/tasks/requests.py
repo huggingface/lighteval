@@ -183,6 +183,9 @@ class Doc:
     ctx: Optional[str] = ""
     num_asked_few_shots: int = -1
     num_effective_few_shots: int = -1
+    
+    # For PMI normalization
+    unconditioned_query: Optional[str] = None
 
     def __post_init__(self):
         if self.instruction is None:

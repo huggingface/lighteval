@@ -208,6 +208,7 @@ class DetailsLogger:
         gold_index: list = field(default_factory=list)
         metrics: dict = field(default_factory=dict)
         specifics: dict = field(default_factory=dict)
+        unconditioned_query: Optional[str] = None
 
     @dataclass
     class CompiledDetail:
@@ -372,6 +373,12 @@ class DetailsLogger:
             pred_saved = True
         if task.has_metric_category[MetricCategory.MULTICHOICE_ONE_TOKEN]:
             detail.choices = doc.choices
+            detail.gold_index = as_list(doc.gold_index)
+            pred_saved = True
+        
+        if task.has_metric_category[MetricCategory.MULTICHOICE_PMI]:
+            detail.choices = doc.choices
+            detail.unconditioned_query = doc.unconditioned_query
             detail.gold_index = as_list(doc.gold_index)
             pred_saved = True
         if (

@@ -192,7 +192,7 @@ class TestBaseMetrics:
             unconditioned_logprob=None,
             choices_tokens=None,
         )
-        assert np.isclose(result, 0.7)
+        assert result == pytest.approx(0.7)
 
         # Mass test
         prob_mass_metric = Metrics.probability_metric(return_mass=True)
@@ -203,7 +203,7 @@ class TestBaseMetrics:
             unconditioned_logprob=None,
             choices_tokens=None,
         )
-        assert np.isclose(result, 0.7)
+        assert result == pytest.approx(0.7)
 
         # Aggregation function test
         prob_min_metric = Metrics.probability_metric(aggregation_function=np.min)
@@ -214,7 +214,7 @@ class TestBaseMetrics:
             unconditioned_logprob=None,
             choices_tokens=None,
         )
-        assert np.isclose(result, 0.1)
+        assert result == pytest.approx(0.1)
 
         prob_norm_metric = Metrics.probability_metric(normalization=CharNorm())
         result = prob_norm_metric.sample_level_fn(
@@ -224,7 +224,7 @@ class TestBaseMetrics:
             unconditioned_logprob=None,
             choices_tokens=None,
         )
-        assert np.isclose(result, 0.2 ** (1 / 2))  # Normalized by length of "BB"
+        assert result == pytest.approx(0.2 ** (1 / 2))  # Normalized by length of "BB"
 
     def test_acc(self):
         # Test without normalization
