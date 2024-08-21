@@ -25,7 +25,7 @@ using simple function (min, mean, max, ...) at the corpus level. Most metrics fa
 """
 
 import os
-from typing import Union
+from typing import Callable, Union
 
 import nltk
 import numpy as np
@@ -42,7 +42,7 @@ from lighteval.metrics.imports.bert_scorer import BERTScorer
 from lighteval.metrics.imports.data_stats_metric import DataStatsMetric
 from lighteval.metrics.imports.summac import SummaCZS
 from lighteval.metrics.llm_as_judge import JudgeLM
-from lighteval.metrics.normalizations import remove_braces, remove_braces_and_strip
+from lighteval.metrics.normalizations import Normalization, normalize_log_probs, remove_braces, remove_braces_and_strip
 from lighteval.tasks.requests import Doc
 from lighteval.utils.utils import as_list
 
@@ -207,45 +207,112 @@ class F1_score:
 
 
 class LoglikelihoodAcc:
-    def __init__(self, length_normalization: bool = False, ignore_first_space: bool = False) -> None:
+    def __init__(self, normalization: Normalization | None = None):
         """Log likelihood accuracy class. It tests if the highest log-probability of the possible choices
         is actually in the gold ones.
 
         Args:
-            length_normalization (bool, optional): Whether log-likelihood scores should be normalized for sentence length. Defaults to False.
-                Should be True for most cases.
-            ignore_first_space (bool, optional): Whether to ignore the first token's log prob (if it's a space only). Defaults to False.
-                The only case when it should be True is when the possible choices (for example `A`,`B` ...) have an extra
-                space added in front of them to manage tokenization issues (` A`, ` B`, ...) for some models.
+            normalization (Normalization): The normalization to apply.
         """
-        self.length_normalization = length_normalization
-        self.ignore_first_space = ignore_first_space
+        self.normalization = normalization
 
-    def compute(self, gold_ixs: list[int], choices_logprob: list[float], formatted_doc: Doc, **kwargs) -> int:
+    # Solve the choices token lengths properly
+    def compute(
+        self,
+        gold_ixs: list[int],
+        choices_logprob: list[float],
+        unconditioned_logprob: list[float] | None,
+        choices_texts: list[str] | None,
+        choices_tokens: list[list[int]] | None,
+        **kwargs,
+    ) -> int:
         """Computes the log likelihood accuracy: is the choice with the highest logprob in `choices_logprob` present
         in the `gold_ixs`?
+
+        Args:
+            gold_ixs (list[int]): All the gold choices indices
+            formatted_doc (Doc): Original document for the sample.
+                Used to get the original choices' length for possible normalization
+            choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
+            unconditioned_logprob (list[float] | None): Unconditioned log-probabilities for PMI normalization, ordered as the choices.
+            choices_tokens (list[list[int]] | None): Tokenized choices for token normalization, ordered as the choices.
+
+        Returns:
+            int: The eval score: 1 if the best log-prob choice is in gold, 0 otherwise.
+        """
+
+        normalized_log_probs = (
+            normalize_log_probs(
+                self.normalization, choices_logprob, unconditioned_logprob, choices_texts, choices_tokens
+            )
+            if self.normalization
+            else choices_logprob
+        )
+
+        best_choice = np.argmax(normalized_log_probs)
+        return int(best_choice in gold_ixs)
+
+
+class Probability:
+    def __init__(
+        self,
+        normalization: Normalization | None = None,
+        return_mass: bool = False,
+        aggregation_function: Callable[[np.ndarray], float] = np.max,
+    ):
+        """Probability class. Returns the probability of choosing the best choice. If multiple choices are gold,
+        it return the aggregated probability (default is max).
+
+        Args:
+            normalization (Normalization | None): The normalization to apply.
+            return_mass (bool): Whether to return the probability mass of the gold choices or just the probability of the best choice.
+                By mass we mean normalized probability of all choices.
+            aggregation_function (Callable[[list[float]], float]): The function to use to aggregate the probabilities.
+        """
+        self.normalization = normalization
+        self.aggregation_function = aggregation_function
+        self.return_mass = return_mass
+
+    def safe_divide(self, numerator: np.ndarray, denominator: float, default_value: float = 0.0) -> np.ndarray:
+        return np.where(denominator != 0, numerator / denominator, default_value)
+
+    def compute(
+        self,
+        gold_ixs: list[int],
+        choices_logprob: list[float],
+        unconditioned_logprob: list[float] | None,
+        choices_texts: list[str] | None,
+        choices_tokens: list[list[int]] | None,
+        **kwargs,
+    ) -> float:
+        """Computes the log likelihood probability: chance of choosing the best choice.
 
         Args:
             gold_ixs (list[int]): All the gold choices indices
             choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
             formatted_doc (Doc): Original document for the sample.
                 Used to get the original choices' length for possible normalization
+            choices_token_lengths (list[int], optional): Token lengths of all the possible choices for the model, ordered as the choices.
 
         Returns:
-            int: The eval score: 1 if the best log-prob choice is in gold, 0 otherwise.
+            float: The probability of the best log-prob choice being a gold choice.
         """
-        if self.length_normalization:
-            normalized_log_probs = []
-            for ix, choice in enumerate(formatted_doc.choices):
-                if self.ignore_first_space and choice[0] == " ":
-                    normalized_log_probs.append(choices_logprob[ix] / (len(choice) - 1))
-                else:
-                    normalized_log_probs.append(choices_logprob[ix] / len(choice))
+        normalized_log_probs = (
+            normalize_log_probs(
+                self.normalization, choices_logprob, unconditioned_logprob, choices_texts, choices_tokens
+            )
+            if self.normalization
+            else choices_logprob
+        )
+        normalized_probs = np.exp(normalized_log_probs)
 
-            best_choice = np.argmax(normalized_log_probs)
-        else:
-            best_choice = np.argmax(choices_logprob)
-        return int(best_choice in gold_ixs)
+        normalized_probs = (
+            self.safe_divide(normalized_probs[gold_ixs], np.sum(normalized_probs))
+            if self.return_mass
+            else normalized_probs[gold_ixs]
+        )
+        gold_idx_agg_prob = self.aggregation_function(normalized_probs)
+        return gold_idx_agg_prob
 
 
 class Recall:

@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import os
+from typing import Callable
 
 import numpy as np
 from aenum import Enum
@@ -44,6 +45,7 @@ from lighteval.metrics.metrics_sample import (
     JudgeLLM,
     LoglikelihoodAcc,
     MajAtK,
+    Probability,
     Recall,
     StringDistance,
     acc_golds_likelihood,
@@ -51,11 +53,14 @@ from lighteval.metrics.metrics_sample import (
     faithfulness,
 )
 from lighteval.metrics.normalizations import (
+    CharNorm,
+    Normalization,
     bigbench_normalizer,
     gsm8k_normalizer,
     harness_triviaqa_normalizer,
     helm_normalizer,
     math_normalizer,
+    normalization_name,
     remove_braces,
     remove_braces_and_strip,
 )
@@ -288,7 +293,7 @@ class Metrics(Enum):
     )
     loglikelihood_acc = SampleLevelMetric(
         metric_name="acc",
-        sample_level_fn=LoglikelihoodAcc().compute,
+        sample_level_fn=LoglikelihoodAcc(normalization=None).compute,
         category=MetricCategory.MULTICHOICE,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=np.mean,
@@ -296,7 +301,7 @@ class Metrics(Enum):
     )
     loglikelihood_acc_norm = SampleLevelMetric(
         metric_name="acc_norm",
-        sample_level_fn=LoglikelihoodAcc(length_normalization=True).compute,
+        sample_level_fn=LoglikelihoodAcc(normalization=CharNorm()).compute,
         category=MetricCategory.MULTICHOICE,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=np.mean,
@@ -304,7 +309,7 @@ class Metrics(Enum):
     )
     loglikelihood_acc_norm_nospace = SampleLevelMetric(
         metric_name="acc_norm",
-        sample_level_fn=LoglikelihoodAcc(length_normalization=True, ignore_first_space=True).compute,
+        sample_level_fn=LoglikelihoodAcc(normalization=CharNorm(ignore_first_space=True)).compute,
         category=MetricCategory.MULTICHOICE,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=np.mean,
@@ -312,7 +317,7 @@ class Metrics(Enum):
     )
     loglikelihood_acc_norm_single_token = SampleLevelMetric(
         metric_name="acc_norm",
-        sample_level_fn=LoglikelihoodAcc(length_normalization=True).compute,
+        sample_level_fn=LoglikelihoodAcc(normalization=CharNorm()).compute,
         category=MetricCategory.MULTICHOICE_ONE_TOKEN,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=np.mean,
@@ -320,7 +325,7 @@ class Metrics(Enum):
     )
     loglikelihood_acc_single_token = SampleLevelMetric(
         metric_name="acc",
-        sample_level_fn=LoglikelihoodAcc().compute,
+        sample_level_fn=LoglikelihoodAcc(normalization=None).compute,
         category=MetricCategory.MULTICHOICE_ONE_TOKEN,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=np.mean,
@@ -644,3 +649,45 @@ class Metrics(Enum):
                 continue
             res.extend(as_list(metric.value.metric_name))
         return res
+
+    @staticmethod
+    def loglikelihood_acc_metric(normalization: Normalization | None = None) -> SampleLevelMetric:
+        """
+        Dynamic loglikelihood accuracy metric with a custom normalization in runtime.
+        """
+
+        normalization_str = normalization_name(normalization) if normalization else ""
+        metric_name = f"acc_{normalization_str}"
+        return SampleLevelMetric(
+            metric_name=metric_name,
+            sample_level_fn=LoglikelihoodAcc(normalization=normalization).compute,
+            category=MetricCategory.MULTICHOICE,
+            use_case=MetricUseCase.ACCURACY,
+            corpus_level_fn=np.mean,
+            higher_is_better=True,
+        )
+
+    @staticmethod
+    def probability_metric(
+        normalization: Normalization | None = None,
+        return_mass: bool = False,
+        aggregation_function: Callable[[np.ndarray], float] = np.max,
+    ) -> SampleLevelMetric:
+        """
+        Dynamic probability metric with a custom normalization in runtime.
+        """
+
+        mass_str = "mass" if return_mass else ""
+        normalization_str = normalization_name(normalization) if normalization else ""
+        metric_name = "_".join(filter(None, ["prob", mass_str, normalization_str]))
+
+        return SampleLevelMetric(
+            metric_name=metric_name,
+            sample_level_fn=Probability(
+                normalization=normalization, return_mass=return_mass, aggregation_function=aggregation_function
+            ).compute,
+            category=MetricCategory.MULTICHOICE,
+            use_case=MetricUseCase.ACCURACY,
+            corpus_level_fn=np.mean,
+            higher_is_better=True,
+        )
