@@ -61,7 +61,6 @@ from lighteval.metrics.normalizations import (
     harness_triviaqa_normalizer,
     helm_normalizer,
     math_normalizer,
-    normalization_name,
     remove_braces,
     remove_braces_and_strip,
 )
@@ -657,7 +656,7 @@ class Metrics(Enum):
         Function for creating custom loglikelihood accuracy metric in runtime.
         """
 
-        normalization_str = normalization_name(normalization) if normalization else ""
+        normalization_str = normalization.name if normalization else ""
         metric_name = f"acc_{normalization_str}"
         return SampleLevelMetric(
             metric_name=metric_name,
@@ -679,7 +678,7 @@ class Metrics(Enum):
         """
 
         mass_str = "mass" if return_mass else ""
-        normalization_str = normalization_name(normalization) if normalization else ""
+        normalization_str = normalization.name if normalization else ""
         metric_name = "_".join(filter(None, ["prob", mass_str, normalization_str]))
 
         return SampleLevelMetric(

@@ -27,14 +27,13 @@ from lighteval.metrics.normalizations import CharNorm, PMINorm, TokenNorm, norma
 
 def test_char_norm():
     choices_logprob = [10.0, 20.0]
-    choices_text = ["hello", "world"]
+    choices_text = [" hell", "world"]
 
     result = normalize_log_probs(CharNorm(ignore_first_space=False), choices_logprob, None, choices_text, None)
     assert result == pytest.approx([2.0, 4.0])
 
     result = normalize_log_probs(CharNorm(ignore_first_space=True), choices_logprob, None, choices_text, None)
-    assert result == pytest.approx([2.5, 5.0])
-
+    assert result == pytest.approx([2.5, 4.0])
 
 def test_token_norm():
     choices_logprob = [10.0, 20.0]
