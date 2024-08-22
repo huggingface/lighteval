@@ -366,8 +366,8 @@ class PMINorm:
 @dataclass
 class TokenNorm:
     """
-    Performs loglikelihood on token level. log_likelihood/token_length.
-    Useful for most of the cases.
+    Performs token level normalization. log_likelihood/token_length.
+    Useful for non-english languages.
     """
 
     pass

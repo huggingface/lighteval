@@ -266,8 +266,8 @@ class Probability:
         Args:
             normalization (Normalization | None): The normalization to apply.
             return_mass (bool): Whether to return the probability mass of the gold choices or just the probability of the best choice.
-                By mass we mean normalized probability of all choices.
-            aggregation_function (Callable[[list[float]], float]): The function to use to aggregate the probabilities.
+                By mass we mean normalized probability by all choices.
+            aggregation_function (Callable[[list[float]], float]): The function to use to aggregate gold probabilities in case of multiple golds.
         """
         self.normalization = normalization
         self.aggregation_function = aggregation_function

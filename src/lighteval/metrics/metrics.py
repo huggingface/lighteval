@@ -654,7 +654,7 @@ class Metrics(Enum):
     @staticmethod
     def loglikelihood_acc_metric(normalization: Normalization | None = None) -> SampleLevelMetric:
         """
-        Dynamic loglikelihood accuracy metric with a custom normalization in runtime.
+        Function for creating custom loglikelihood accuracy metric in runtime.
         """
 
         normalization_str = normalization_name(normalization) if normalization else ""
@@ -675,7 +675,7 @@ class Metrics(Enum):
         aggregation_function: Callable[[np.ndarray], float] = np.max,
     ) -> SampleLevelMetric:
         """
-        Dynamic probability metric with a custom normalization in runtime.
+        Function for creating custom probability metric in runtime.
         """
 
         mass_str = "mass" if return_mass else ""
