@@ -147,10 +147,9 @@ def apply_multichoice_metric(results: list[ModelResponse], formatted_doc: Doc, m
     conditioned_lp = [res.result[0] for res in mc_results]
     unconditioned_lp = None
     if contains_pmi:
-        unconditioned_lp, results = [res.result[0] for res in results[n_choices : n_choices * 2]]
+        unconditioned_lp = [res.result[0] for res in results[n_choices : n_choices * 2]]
 
     gold_ixs = as_list(formatted_doc.gold_index)
-    choices_texts = formatted_doc.choices
     choices_tokens = [res.generated_tokens for res in mc_results]
 
     for metric in metrics:
@@ -160,8 +159,8 @@ def apply_multichoice_metric(results: list[ModelResponse], formatted_doc: Doc, m
                     gold_ixs=gold_ixs,
                     choices_logprob=conditioned_lp,
                     unconditioned_logprob=unconditioned_lp,
-                    choices_texts=choices_texts,
                     choices_tokens=choices_tokens,
+                    formatted_doc=formatted_doc,
                 )
             )
     return outputs
@@ -173,12 +172,21 @@ def apply_multichoice_metric_one_token(results: list[ModelResponse], formatted_d
         raise Exception("You returned more than one result for a sample with a gmultichoice metric on only one token.")
     results = results[0]
     choices_logprob = results.result
+    choices_texts = formatted_doc.choices
     gold_ixs = as_list(formatted_doc.gold_index)
 
     for metric in metrics:
         if metric.category == MetricCategory.MULTICHOICE_ONE_TOKEN:
             outputs.update(
-                metric.compute(choices_logprob=choices_logprob, gold_ixs=gold_ixs, formatted_doc=formatted_doc)
+                metric.compute(
+                    choices_logprob=choices_logprob,
+                    # Neither token or PMI are supported for this metric
+                    unconditioned_logprob=None,
+                    choices_tokens=None,
+                    choices_texts=choices_texts,
+                    gold_ixs=gold_ixs,
+                    formatted_doc=formatted_doc,
+                )
             )
 
     return outputs

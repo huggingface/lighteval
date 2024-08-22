@@ -359,6 +359,7 @@ class PMINorm:
     Performs Pointwise mutual information normalization. log_likelihood_conditioned - log_likelihood_unconditioned.
     Useful when answer contains generally unlikely tokens.
     """
+
     name: str = "norm_pmi"
 
     pass
@@ -370,6 +371,7 @@ class TokenNorm:
     Performs token level normalization. log_likelihood/token_length.
     Useful for non-english languages.
     """
+
     name: str = "norm_token"
     pass
 
@@ -382,6 +384,7 @@ class CharNorm:
         The only case when it should be True is when the possible choices (for example `A`,`B` ...) have an extra
         space added in front of them to manage tokenization issues (` A`, ` B`, ...) for some models.
     """
+
     name: str = "norm"
 
     ignore_first_space: bool = False
@@ -401,7 +404,10 @@ def normalize_log_probs(
     match normalization:
         case CharNorm(ignore_first_space=True):
             assert choices_text is not None, "choices_text must be provided for character normalization"
-            normalized_log_probs = [choices_logprob[ix] / (len(choice) - 1 if choice[0] == " " else len(choice)) for ix, choice in enumerate(choices_text)]
+            normalized_log_probs = [
+                choices_logprob[ix] / (len(choice) - 1 if choice[0] == " " else len(choice))
+                for ix, choice in enumerate(choices_text)
+            ]
         case CharNorm(ignore_first_space=False):
             assert choices_text is not None, "choices_text must be provided for character normalization"
             normalized_log_probs = [choices_logprob[ix] / len(choice) for ix, choice in enumerate(choices_text)]

@@ -21,7 +21,6 @@
 # SOFTWARE.
 
 import os
-from typing import Callable
 
 import numpy as np
 from aenum import Enum
@@ -45,7 +44,6 @@ from lighteval.metrics.metrics_sample import (
     JudgeLLM,
     LoglikelihoodAcc,
     MajAtK,
-    Probability,
     Recall,
     StringDistance,
     acc_golds_likelihood,
@@ -54,8 +52,6 @@ from lighteval.metrics.metrics_sample import (
 )
 from lighteval.metrics.normalizations import (
     CharNorm,
-    Normalization,
-    PMINorm,
     bigbench_normalizer,
     gsm8k_normalizer,
     harness_triviaqa_normalizer,
@@ -649,45 +645,3 @@ class Metrics(Enum):
                 continue
             res.extend(as_list(metric.value.metric_name))
         return res
-
-    @staticmethod
-    def loglikelihood_acc_metric(normalization: Normalization | None = None) -> SampleLevelMetric:
-        """
-        Function for creating custom loglikelihood accuracy metric in runtime.
-        """
-
-        normalization_str = normalization.name if normalization else ""
-        metric_name = f"acc_{normalization_str}"
-        return SampleLevelMetric(
-            metric_name=metric_name,
-            sample_level_fn=LoglikelihoodAcc(normalization=normalization).compute,
-            category=MetricCategory.MULTICHOICE if not normalization == PMINorm() else MetricCategory.MULTICHOICE_PMI,
-            use_case=MetricUseCase.ACCURACY,
-            corpus_level_fn=np.mean,
-            higher_is_better=True,
-        )
-
-    @staticmethod
-    def probability_metric(
-        normalization: Normalization | None = None,
-        return_mass: bool = False,
-        aggregation_function: Callable[[np.ndarray], float] = np.max,
-    ) -> SampleLevelMetric:
-        """
-        Function for creating custom probability metric in runtime.
-        """
-
-        mass_str = "mass" if return_mass else ""
-        normalization_str = normalization.name if normalization else ""
-        metric_name = "_".join(filter(None, ["prob", mass_str, normalization_str]))
-
-        return SampleLevelMetric(
-            metric_name=metric_name,
-            sample_level_fn=Probability(
-                normalization=normalization, return_mass=return_mass, aggregation_function=aggregation_function
-            ).compute,
-            category=MetricCategory.MULTICHOICE if not normalization == PMINorm() else MetricCategory.MULTICHOICE_PMI,
-            use_case=MetricUseCase.ACCURACY,
-            corpus_level_fn=np.mean,
-            higher_is_better=True,
-        )

@@ -222,8 +222,8 @@ class LoglikelihoodAcc:
         gold_ixs: list[int],
         choices_logprob: list[float],
         unconditioned_logprob: list[float] | None,
-        choices_texts: list[str] | None,
         choices_tokens: list[list[int]] | None,
+        formatted_doc: Doc,
         **kwargs,
     ) -> int:
         """Computes the log likelihood accuracy: is the choice with the highest logprob in `choices_logprob` present
@@ -231,11 +231,11 @@ class LoglikelihoodAcc:
 
         Args:
             gold_ixs (list[int]): All the gold choices indices
-            formatted_doc (Doc): Original document for the sample.
-                Used to get the original choices' length for possible normalization
             choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
             unconditioned_logprob (list[float] | None): Unconditioned log-probabilities for PMI normalization, ordered as the choices.
             choices_tokens (list[list[int]] | None): Tokenized choices for token normalization, ordered as the choices.
+            formatted_doc (Doc): Original document for the sample.
+                Used to get the original choices' length for possible normalization
 
         Returns:
             int: The eval score: 1 if the best log-prob choice is in gold, 0 otherwise.
@@ -243,7 +243,7 @@ class LoglikelihoodAcc:
 
         normalized_log_probs = (
             normalize_log_probs(
-                self.normalization, choices_logprob, unconditioned_logprob, choices_texts, choices_tokens
+                self.normalization, choices_logprob, unconditioned_logprob, formatted_doc.choices, choices_tokens
             )
             if self.normalization
             else choices_logprob
@@ -278,8 +278,8 @@ class Probability:
         gold_ixs: list[int],
         choices_logprob: list[float],
         unconditioned_logprob: list[float] | None,
-        choices_texts: list[str] | None,
         choices_tokens: list[list[int]] | None,
+        formatted_doc: Doc,
         **kwargs,
     ) -> float:
         """Computes the log likelihood probability: chance of choosing the best choice.
@@ -287,16 +287,18 @@ class Probability:
         Args:
             gold_ixs (list[int]): All the gold choices indices
             choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
+            unconditioned_logprob (list[float] | None): Unconditioned log-probabilities for PMI normalization, ordered as the choices.
+            choices_tokens (list[list[int]] | None): Tokenized choices for token normalization, ordered as the choices.
             formatted_doc (Doc): Original document for the sample.
                 Used to get the original choices' length for possible normalization
-            choices_token_lengths (list[int], optional): Token lengths of all the possible choices for the model, ordered as the choices.
 
         Returns:
             float: The probability of the best log-prob choice being a gold choice.
         """
+
         normalized_log_probs = (
             normalize_log_probs(
-                self.normalization, choices_logprob, unconditioned_logprob, choices_texts, choices_tokens
+                self.normalization, choices_logprob, unconditioned_logprob, formatted_doc.choices, choices_tokens
             )
             if self.normalization
             else choices_logprob

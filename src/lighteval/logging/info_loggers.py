@@ -378,7 +378,7 @@ class DetailsLogger:
         if task.has_metric_category[MetricCategory.MULTICHOICE_PMI]:
             detail.choices = doc.choices
             detail.gold_index = as_list(doc.gold_index)
-            doc.specific["unconditioned_query"] = doc.unconditioned_query
+            doc.specific = {**(doc.specific or {}), **{"unconditioned_query": doc.unconditioned_query}}
             pred_saved = True
         if (
             task.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]

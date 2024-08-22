@@ -440,7 +440,11 @@ class LightevalTask:
                     request_index=i,
                     context=context,
                     choice=choice,
-                    metric_categories=[MetricCategory.MULTICHOICE],
+                    metric_categories=[
+                        c
+                        for c in [MetricCategory.MULTICHOICE, MetricCategory.MULTICHOICE_PMI]
+                        if self.has_metric_category[c]
+                    ],
                 )
                 for i, choice in enumerate(formatted_doc.choices)
             ]
@@ -452,11 +456,12 @@ class LightevalTask:
             requests[RequestType.LOGLIKELIHOOD] += [
                 LoglikelihoodRequest(
                     task_name=current_task_name,
-                    example_index=document_id_seed,
+                    sample_index=document_id_seed,
                     # The normalization should come after the choices
                     request_index=i + len(formatted_doc.choices),
                     context=formatted_doc.unconditioned_query,
                     choice=choice,
+                    metric_categories=[MetricCategory.MULTICHOICE_PMI],
                 )
                 for i, choice in enumerate(formatted_doc.choices)
             ]
@@ -510,7 +515,7 @@ class LightevalTask:
     def _get_metric_method_from_category(metric_category):
         if metric_category == MetricCategory.TARGET_PERPLEXITY:
             return apply_target_perplexity_metric
-        if metric_category == MetricCategory.MULTICHOICE:
+        if metric_category == MetricCategory.MULTICHOICE or metric_category == MetricCategory.MULTICHOICE_PMI:
             return apply_multichoice_metric
         if metric_category == MetricCategory.MULTICHOICE_ONE_TOKEN:
             return apply_multichoice_metric_one_token
