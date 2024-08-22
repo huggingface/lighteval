@@ -131,24 +131,23 @@ def apply_multichoice_metric(results: list[ModelResponse], formatted_doc: Doc, m
         raise ValueError(
             "You can't use a multi choice metric with only one choice. Use `acc_golds_likelihood` instead."
         )
-        
+
     if not contains_pmi and len(results) != len(formatted_doc.choices):
         raise Exception(
             f"You shoud have returned as many model outputs as choices when using an multi choice metric. Returned {len(results)} instead of {len(formatted_doc.choices)}"
         )
-    
+
     if contains_pmi and len(results) != n_choices * 2:
         raise Exception(
             f"You shoud have returned as many model outputs as choices when using an multi choice metric. Returned {len(results)} instead of {n_choices * 2} (conditioned + unconditioned)"
         )
-        
+
     mc_results = results[:n_choices]
     # Todo: make better system with return_bool_score instead of taking first element
     conditioned_lp = [res.result[0] for res in mc_results]
     unconditioned_lp = None
     if contains_pmi:
-        unconditioned_lp, results = [res.result[0] for res in results[n_choices:n_choices * 2]]
-        
+        unconditioned_lp, results = [res.result[0] for res in results[n_choices : n_choices * 2]]
 
     gold_ixs = as_list(formatted_doc.gold_index)
     choices_texts = formatted_doc.choices

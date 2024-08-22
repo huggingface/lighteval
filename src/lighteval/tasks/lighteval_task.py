@@ -639,8 +639,8 @@ def create_requests_from_tasks(  # noqa: C901
                     # Constructing the requests
                     cur_task_name = f"{task_name}|{num_fewshot}"
                     docs[SampleUid(cur_task_name, doc_id_seed)] = doc
-                    reqs = task.construct_requests(doc, doc.ctx, doc_id_seed, cur_task_name)
-                    for req_type, reqs in reqs.items():
+                    req_type_reqs_dict = task.construct_requests(doc, doc.ctx, doc_id_seed, cur_task_name)
+                    for req_type, reqs in req_type_reqs_dict.items():
                         requests[req_type].extend(reqs)
 
     return requests, docs

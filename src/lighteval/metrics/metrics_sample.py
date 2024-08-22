@@ -44,7 +44,7 @@ from lighteval.metrics.imports.summac import SummaCZS
 from lighteval.metrics.llm_as_judge import JudgeLM
 from lighteval.metrics.normalizations import Normalization, normalize_log_probs, remove_braces, remove_braces_and_strip
 from lighteval.tasks.requests import Doc
-from lighteval.utils.utils import as_list
+from lighteval.utils.utils import as_list, safe_divide
 
 
 class ExactMatches:
@@ -273,9 +273,6 @@ class Probability:
         self.aggregation_function = aggregation_function
         self.return_mass = return_mass
 
-    def safe_divide(self, numerator: np.ndarray, denominator: float, default_value: float = 0.0) -> np.ndarray:
-        return np.where(denominator != 0, numerator / denominator, default_value)
-
     def compute(
         self,
         gold_ixs: list[int],
@@ -307,7 +304,7 @@ class Probability:
         normalized_probs = np.exp(normalized_log_probs)
 
         normalized_probs = (
-            self.safe_divide(normalized_probs[gold_ixs], np.sum(normalized_probs))
+            safe_divide(normalized_probs[gold_ixs], np.sum(normalized_probs))
             if self.return_mass
             else normalized_probs[gold_ixs]
         )
