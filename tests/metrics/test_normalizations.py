@@ -35,6 +35,7 @@ def test_char_norm():
     result = normalize_log_probs(CharNorm(ignore_first_space=True), choices_logprob, None, choices_text, None)
     assert result == pytest.approx([2.5, 4.0])
 
+
 def test_token_norm():
     choices_logprob = [10.0, 20.0]
     choices_tokens = [[1, 2, 3], [4, 5]]
