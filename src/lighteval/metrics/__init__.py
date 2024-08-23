@@ -125,19 +125,19 @@ def apply_generative_metric(
 def apply_multichoice_metric(results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
     n_choices = len(formatted_doc.choices)
-    contains_pmi = any(metric.category == MetricCategory.MULTICHOICE_PMI for metric in metrics)
+    is_pmi_category = all(metric.category == MetricCategory.MULTICHOICE_PMI for metric in metrics)
 
     if n_choices <= 1:
         raise ValueError(
             "You can't use a multi choice metric with only one choice. Use `acc_golds_likelihood` instead."
         )
 
-    if not contains_pmi and len(results) != len(formatted_doc.choices):
+    if not is_pmi_category and len(results) != len(formatted_doc.choices):
         raise Exception(
             f"You shoud have returned as many model outputs as choices when using an multi choice metric. Returned {len(results)} instead of {len(formatted_doc.choices)}"
         )
 
-    if contains_pmi and len(results) != n_choices * 2:
+    if is_pmi_category and len(results) != n_choices * 2:
         raise Exception(
             f"You shoud have returned as many model outputs as choices when using an multi choice metric. Returned {len(results)} instead of {n_choices * 2} (conditioned + unconditioned)"
         )
@@ -146,7 +146,7 @@ def apply_multichoice_metric(results: list[ModelResponse], formatted_doc: Doc, m
     # Todo: make better system with return_bool_score instead of taking first element
     conditioned_lp = [res.result[0] for res in mc_results]
     unconditioned_lp = None
-    if contains_pmi:
+    if is_pmi_category:
         unconditioned_lp = [res.result[0] for res in results[n_choices : n_choices * 2]]
 
     gold_ixs = as_list(formatted_doc.gold_index)

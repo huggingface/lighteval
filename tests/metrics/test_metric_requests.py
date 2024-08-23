@@ -92,6 +92,45 @@ def test_pmi_request():
     assert result[metric.metric_name][0] == 0
 
 
+def test_pmi_request_with_logprob_metric():
+    """
+    Test that the PMI requests are correctly routed and computed, this ensures that metrics categories producing same requests are handled correctly
+    """
+    fake_model = FakeModel(
+        loglikelihood_responses=[
+            LoglikelihoodResponse(
+                result=(0.9, True),
+                generated_tokens=[0],
+                input_tokens=[0],
+            ),
+            LoglikelihoodResponse(
+                result=(0.2, False),
+                generated_tokens=[0],
+                input_tokens=[0],
+            ),
+            # Normalization loglikehioods
+            LoglikelihoodResponse(
+                result=(0.85, True),
+                generated_tokens=[0],
+                input_tokens=[0],
+            ),
+            LoglikelihoodResponse(
+                result=(0.1, False),
+                generated_tokens=[0],
+                input_tokens=[0],
+            ),
+        ]
+    )
+
+    metrics = [loglikelihood_acc_metric(normalization=PMINorm()), loglikelihood_acc_metric(normalization=None)]
+    pmi_test_config = get_pmi_task(metrics=metrics)
+    task = LightevalTask(pmi_test_config.name, pmi_test_config)
+    result = fake_evaluate_task(task, fake_model, max_samples=1)
+    # Correc choice after norm should be the second one so 0 acc
+    assert result[metrics[0].metric_name][0] == 0
+    assert result[metrics[1].metric_name][0] == 1
+
+
 def test_pmi_request_with_generative_metric():
     """
     Test that the PMI requests are correctly routed even with other metrics to compute
