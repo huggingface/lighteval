@@ -25,7 +25,7 @@ import os
 import random
 import shutil
 from contextlib import nullcontext
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import timedelta
 from enum import Enum, auto
 
@@ -72,7 +72,7 @@ class ParallelismManager(Enum):
 class PipelineParameters:
     launcher_type: ParallelismManager
     # Env parameters
-    env_config: EnvConfig = EnvConfig()
+    env_config: EnvConfig = field(default_factory=EnvConfig)
     job_id: int = 0
     dataset_loading_processes: int = 1
     nanotron_checkpoint_path: str = None  # only for nanotron models
