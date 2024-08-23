@@ -321,36 +321,8 @@ class NanotronLightevalModel(LightevalModel):
         logger.warning("Determined largest batch size: %d", batch_size)
         return batch_size
 
-    def tok_encode(self, string: str, add_special_tokens: Optional[bool] = None) -> TokenSequence:
-        # TODO: Merge `tok_encode_batch` here.
-        if add_special_tokens is None:
-            add_special_tokens = self.add_special_tokens
-        return self.tokenizer.encode(string, add_special_tokens=add_special_tokens)
-
-    def tok_encode_batch(self, strings: List[str]) -> TokenSequence:
-        return self.tokenizer(
-            strings,
-            padding=True,
-            add_special_tokens=self.add_special_tokens,
-            return_tensors="pt",
-        )
-
-    def tok_decode(self, tokens: torch.LongTensor) -> List[str]:
-        return self.tokenizer.batch_decode(tokens, skip_special_tokens=True)
-
     def _model_call(self, inputs: torch.Tensor) -> torch.Tensor:
         return self.model(inputs)
-
-    def _encode_pair(self, context, continuation):
-        n_spaces = len(context) - len(context.rstrip())
-        if n_spaces > 0:
-            continuation = context[-n_spaces:] + continuation
-            context = context[:-n_spaces]
-        whole_enc = self.tok_encode(context + continuation)
-        context_enc = self.tok_encode(context)
-        context_enc_len = len(context_enc)
-        continuation_enc = whole_enc[context_enc_len:]
-        return context_enc, continuation_enc
 
     def homogeneize_ending_conditions(self, ending_condition: tuple | dict | list | str) -> tuple[list, int]:
         """Ending conditions are submitted in several possible formats.
@@ -1200,16 +1172,26 @@ class NanotronLightevalModel(LightevalModel):
 
                 context = [c.context for c in batch]
 
-                # See doc https://huggingface.co/docs/transformers/v4.38.2/en/pad_truncation#padding-and-truncation
-                # Will do left truncation and padding, as defined when creating the tokenizer
-                tokenized = self.tokenizer(
-                    context,
-                    truncation="longest_first",  # we truncate to the model max length if needed
-                    padding="longest",  # we pad to the longest sequence
-                    return_tensors="pt",
-                    max_length=self.max_length - 1,  # we always allow minimum one token of generation
-                    add_special_tokens=self.add_special_tokens,
-                ).to(self.device)
+                if isinstance(context[0], str):
+                    # See doc https://huggingface.co/docs/transformers/v4.38.2/en/pad_truncation#padding-and-truncation
+                    # Will do left truncation and padding, as defined when creating the tokenizer
+                    tokenized = self.tokenizer(
+                        context,
+                        truncation="longest_first",  # we truncate to the model max length if needed
+                        padding="longest",  # we pad to the longest sequence
+                        return_tensors="pt",
+                        max_length=self.max_length - 1,  # we always allow minimum one token of generation
+                        add_special_tokens=self.add_special_tokens,
+                    ).to(self.device)
+                else:
+                    tokenized = self.tokenizer.apply_chat_template(
+                        context,
+                        truncation="longest_first",
+                        padding="longest",
+                        return_tensors="pt",
+                        max_length=self.max_length - 1,
+                        add_special_tokens=self.add_special_tokens,
+                    )
 
                 # The main question for this step is the following:
                 # Would we rather truncate the prompt to allow generation to go to max_new_tokens, at the risk
@@ -1232,10 +1214,7 @@ class NanotronLightevalModel(LightevalModel):
                     input_ids=tokenized["input_ids"],
                     input_lengths=[len(item == 1) for item in tokenized["attention_mask"]],
                     input_mask=tokenized["attention_mask"],
-                    truncated=[
-                        len(c) - tokenized["input_ids"].shape[1] if len(c) > tokenized["input_ids"].shape[1] else 0
-                        for c in context
-                    ],
+                    truncated=[max(len(c.tokenized_context) - tokenized["input_ids"].shape[1], 0) for c in batch],
                     padded=[sum(mask == 0) for mask in tokenized["attention_mask"]],
                 )
 

@@ -24,7 +24,8 @@ from abc import ABC, abstractmethod
 from typing import Optional, Union
 
 import torch
-from transformers import BatchEncoding
+from huggingface_hub import ChatCompletionInputMessage
+from transformers import BatchEncoding, PreTrainedTokenizerBase
 
 from lighteval.models.model_config import EnvConfig
 from lighteval.models.model_output import (
@@ -34,12 +35,14 @@ from lighteval.models.model_output import (
     LoglikelihoodSingleTokenReturn,
 )
 from lighteval.tasks.requests import (
+    Conversation,
     GreedyUntilMultiTurnRequest,
     GreedyUntilRequest,
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
     LoglikelihoodSingleTokenRequest,
 )
+from lighteval.utils import as_list
 
 
 TokenSequence = Union[list[int], torch.LongTensor, torch.Tensor, BatchEncoding]
@@ -64,7 +67,7 @@ class LightevalModel(ABC):
 
     @property
     @abstractmethod
-    def tokenizer(self):
+    def tokenizer(self) -> PreTrainedTokenizerBase:
         raise NotImplementedError
 
     @property
@@ -133,17 +136,34 @@ class LightevalModel(ABC):
         return NotImplemented
 
     # Tokenization utils
-    def tok_encode(self, str_to_encode: str | list[str], add_special_tokens: Optional[bool] = None) -> TokenSequence:
+    def tok_encode(
+        self,
+        input: str | list[str] | ChatCompletionInputMessage | Conversation | list[Conversation],
+        add_special_tokens: Optional[bool] = None,
+    ) -> TokenSequence:
         if add_special_tokens is None:
             add_special_tokens = self.add_special_tokens
-        if isinstance(str_to_encode, str):
-            return self.tokenizer.encode(str_to_encode, add_special_tokens=add_special_tokens)
-        return self.tokenizer(
-            str_to_encode,
-            padding=True,
-            add_special_tokens=add_special_tokens,
-            return_tensors="pt",
-        )
+        if isinstance(input, str):
+            return self.tokenizer.encode(input, add_special_tokens=add_special_tokens)
+        elif isinstance(input, ChatCompletionInputMessage) or isinstance(input[0], ChatCompletionInputMessage):
+            return self.tokenizer.apply_chat_template(
+                as_list(input), add_generation_prompt=True, add_special_tokens=add_special_tokens
+            )
+        elif isinstance(input, list) and isinstance(input[0], str):
+            return self.tokenizer(
+                input,
+                padding=True,
+                add_special_tokens=add_special_tokens,
+                return_tensors="pt",
+            )
+        else:
+            return self.tokenizer.apply_chat_template(
+                input,
+                add_generation_prompt=True,
+                add_special_tokens=add_special_tokens,
+                padding=True,
+                return_tensors="pt",
+            )
 
     def tok_encode_pair(self, context, continuation):
         """Encodes a context, continuation pair by taking care of the spaces in between."""

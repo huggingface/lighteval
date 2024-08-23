@@ -531,16 +531,26 @@ class BaseModel(LightevalModel):
 
                 context = [c.context for c in batch]
 
-                # See doc https://huggingface.co/docs/transformers/v4.38.2/en/pad_truncation#padding-and-truncation
-                # Will do left truncation and padding, as defined when creating the tokenizer
-                tokenized = self.tokenizer(
-                    context,
-                    truncation="longest_first",  # we truncate to the model max length if needed
-                    padding="longest",  # we pad to the longest sequence
-                    return_tensors="pt",
-                    max_length=self.max_length - 1,  # we always allow minimum one token of generation
-                    add_special_tokens=self.add_special_tokens,
-                ).to(self.device)
+                if self.use_chat_template:
+                    tokenized = self.tokenizer.apply_chat_template(
+                        context,
+                        truncation="longest_first",
+                        padding="longest",
+                        return_tensors="pt",
+                        max_length=self.max_length - 1,
+                        add_special_tokens=self.add_special_tokens,
+                    )
+                else:
+                    # See doc https://huggingface.co/docs/transformers/v4.38.2/en/pad_truncation#padding-and-truncation
+                    # Will do left truncation and padding, as defined when creating the tokenizer
+                    tokenized = self.tokenizer(
+                        context,
+                        truncation="longest_first",  # we truncate to the model max length if needed
+                        padding="longest",  # we pad to the longest sequence
+                        return_tensors="pt",
+                        max_length=self.max_length - 1,  # we always allow minimum one token of generation
+                        add_special_tokens=self.add_special_tokens,
+                    ).to(self.device)
 
                 # The main question for this step is the following:
                 # Would we rather truncate the prompt to allow generation to go to max_new_tokens, at the risk
@@ -566,10 +576,7 @@ class BaseModel(LightevalModel):
                     input_ids=tokenized["input_ids"],
                     input_lengths=[len(item == 1) for item in tokenized["attention_mask"]],
                     input_mask=tokenized["attention_mask"],
-                    truncated=[
-                        len(c) - tokenized["input_ids"].shape[1] if len(c) > tokenized["input_ids"].shape[1] else 0
-                        for c in context
-                    ],
+                    truncated=[max(len(c.tokenized_context) - tokenized["input_ids"].shape[1], 0) for c in batch],
                     padded=[sum(mask == 0) for mask in tokenized["attention_mask"]],
                 )
 

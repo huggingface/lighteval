@@ -45,6 +45,7 @@ from lighteval.metrics.metrics import Metric, MetricCategory, Metrics
 from lighteval.models.base_model import BaseModel
 from lighteval.models.model_output import ModelReturn
 from lighteval.tasks.requests import (
+    Context,
     Doc,
     GreedyUntilMultiTurnRequest,
     GreedyUntilRequest,
@@ -438,14 +439,14 @@ class LightevalTask:
         return list(set(request_types))
 
     def construct_requests(
-        self, formatted_doc: Doc, context: str, document_id_seed: str, current_task_name: str
+        self, formatted_doc: Doc, context: Context, document_id_seed: str, current_task_name: str
     ) -> Dict[RequestType, List[Request]]:
         """
         Constructs a list of requests from the task based on the given parameters.
 
         Args:
             formatted_doc (Doc): Formatted document almost straight from the dataset.
-            ctx (str): Context, which is the few shot examples + the query.
+            context (Context): Context, which is the few shot examples + the query.
             document_id_seed (str): Index of the document in the task appended with the seed used for the few shot sampling.
             current_task_name (str): Name of the current task.
 

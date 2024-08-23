@@ -88,7 +88,7 @@ nanotron = [
 ]
 tensorboardX = ["tensorboardX"]
 quality = ["ruff==v0.2.2","pre-commit"]
-tests = ["pytest==7.4.0"]
+tests = ["pytest==7.4.0", "docker"]
 dev = ["lighteval[accelerate,quality,tests]"]
 extended_tasks = [
   "langdetect", # ifeval

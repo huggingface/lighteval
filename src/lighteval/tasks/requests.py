@@ -23,9 +23,15 @@
 import json
 from dataclasses import asdict, dataclass
 from enum import Enum, auto
-from typing import NamedTuple, Optional, Union
+from typing import List, NamedTuple, Optional, TypeAlias, Union
+
+from huggingface_hub import ChatCompletionInputMessage
 
 from lighteval.utils import as_list
+
+
+# We later could move this and similar types to lighteval/types.py
+Conversation: TypeAlias = List[ChatCompletionInputMessage]
 
 
 class RequestType(Enum):
@@ -34,6 +40,9 @@ class RequestType(Enum):
     LOGLIKELIHOOD_ROLLING = auto()
     GREEDY_UNTIL = auto()
     GREEDY_UNTIL_MULTI_TURN = auto()
+
+
+Context: TypeAlias = object
 
 
 @dataclass
@@ -48,13 +57,13 @@ class Request:
         task_name (str): The name of the task.
         example_index (int): The index of the example.
         request_index (int): The index of the request.
-        context (str): The context for the request.
+        context (ContextType): The context for the request.
     """
 
     task_name: str
     example_index: int
     request_index: int
-    context: str
+    context: Context
 
 
 @dataclass
@@ -117,7 +126,7 @@ class GreedyUntilRequest(Request):
     stop_sequence: Union[str, tuple[str], list[str]]
     generation_size: int
     request_type = RequestType.GREEDY_UNTIL
-    tokenized_context: list[int] = None
+    tokenized_context: Optional[list[int]] = None
     num_samples: int = None
     use_logits: bool = False
 
@@ -135,6 +144,7 @@ class GreedyUntilMultiTurnRequest(Request):
 
     stop_sequence: str
     generation_size: int
+    context: Conversation
     request_type = RequestType.GREEDY_UNTIL_MULTI_TURN
     use_logits: bool = False
 
@@ -173,7 +183,7 @@ class Doc:
     target_for_fewshot_sorting: Optional[str] = None  # will probably have to be removed in the future
 
     # Filled when parsing and adding the few-shot context
-    ctx: Optional[str] = ""
+    ctx: Optional[Context] = ""
     num_asked_few_shots: int = -1
     num_effective_few_shots: int = -1
 
