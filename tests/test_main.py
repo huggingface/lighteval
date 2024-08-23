@@ -49,8 +49,8 @@ FULL_TEST = os.environ.get("LIGHTEVAL_FULL_TEST", False)
 ModelInput = Tuple[str, str, str, str, Callable[[], dict], float]
 
 
-# Caching here to avoid re-running predictions for every single test
-@lru_cache(maxsize=1)
+# Caching here to avoid re-running predictions for every single test, the size should be >= MODELS
+@lru_cache(maxsize=len(MODELS))
 def run_model_predictions_full(model: str, tasks: tuple):
     """Runs the full main as a black box, using the input model and tasks, on all samples without parallelism"""
     lighteval_args = ["--model_args", f"pretrained={model}", "--tasks", ",".join(tasks)]
@@ -69,7 +69,7 @@ def run_model_predictions_full(model: str, tasks: tuple):
     return results
 
 
-@lru_cache(maxsize=1)
+@lru_cache(maxsize=len(MODELS))
 def run_model_predictions_lite(model: str, tasks: tuple):
     """Runs the full main as a black box, using the input model and tasks, on 10 samples without parallelism"""
     lighteval_args = ["--model_args", f"pretrained={model}", "--tasks", ",".join(tasks)]
