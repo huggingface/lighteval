@@ -1,0 +1,6 @@
+model:
+  type: "openai" # can be base, openai, tgi, or endpoint
+  instance:
+    address: null
+    model_id: null # Required, pointing to the HF repo for loading the tokenized
+    auth_token: null # Optional

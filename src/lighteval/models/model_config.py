@@ -219,6 +219,12 @@ class TGIModelConfig:
     inference_server_auth: str
     model_id: str
 
+@dataclass
+class OAIModelConfig:
+    address: str
+    model_id: str
+    auth_token: str
+    
 
 @dataclass
 class DummyModelConfig:
@@ -282,6 +288,7 @@ def create_model_config(  # noqa: C901
     AdapterModelConfig,
     DeltaModelConfig,
     TGIModelConfig,
+    OAIModelConfig,
     InferenceEndpointModelConfig,
     DummyModelConfig,
 ]:
@@ -293,7 +300,7 @@ def create_model_config(  # noqa: C901
         accelerator (Union[Accelerator, None]): accelerator to use for model training.
 
     Returns:
-        Union[BaseModelConfig, AdapterModelConfig, DeltaModelConfig, TGIModelConfig, InferenceEndpointModelConfig, DummyModelConfig]: model configuration.
+        Union[BaseModelConfig, AdapterModelConfig, DeltaModelConfig, TGIModelConfig, OAIModelConfig, InferenceEndpointModelConfig, DummyModelConfig]: model configuration.
 
     Raises:
         ValueError: If both an inference server address and model arguments are provided.
@@ -325,6 +332,13 @@ def create_model_config(  # noqa: C901
             inference_server_address=config["instance"]["inference_server_address"],
             inference_server_auth=config["instance"]["inference_server_auth"],
             model_id=config["instance"]["model_id"],
+        )
+    
+    if config["type"] == "openai":
+        return OAIModelConfig(
+            address=config["instance"]["address"],
+            model_id=config["instance"]["model_id"],
+            auth_token=config["instance"]["auth_token"]
         )
 
     if config["type"] == "endpoint":

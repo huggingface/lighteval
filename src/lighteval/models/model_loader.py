@@ -37,8 +37,10 @@ from lighteval.models.model_config import (
     EnvConfig,
     InferenceEndpointModelConfig,
     InferenceModelConfig,
+    OAIModelConfig,
     TGIModelConfig,
 )
+from lighteval.models.oai_model import OAIModelClient
 from lighteval.models.tgi_model import ModelClient
 from lighteval.utils import NO_TGI_ERROR_MSG, is_accelerate_available, is_tgi_available
 
@@ -60,12 +62,13 @@ def load_model(  # noqa: C901
         BaseModelConfig,
         AdapterModelConfig,
         DeltaModelConfig,
+        OAIModelConfig,
         TGIModelConfig,
         InferenceEndpointModelConfig,
         DummyModelConfig,
     ],
     env_config: EnvConfig,
-) -> Tuple[Union[BaseModel, AdapterModel, DeltaModel, ModelClient, DummyModel], ModelInfo]:
+) -> Tuple[Union[BaseModel, AdapterModel, DeltaModel, ModelClient, OAIModelClient, DummyModel], ModelInfo]:
     """Will load either a model from an inference server or a model from a checkpoint, depending
     on the config type.
 
@@ -79,11 +82,14 @@ def load_model(  # noqa: C901
         ValueError: If you did not specify a base model when using delta weights or adapter weights
 
     Returns:
-        Union[BaseModel, AdapterModel, DeltaModel, ModelClient]: The model that will be evaluated
+        Union[BaseModel, AdapterModel, DeltaModel, ModelClient, OAIModelClient]: The model that will be evaluated
     """
     # Inference server loading
     if isinstance(config, TGIModelConfig):
         return load_model_with_tgi(config)
+    
+    if isinstance(config, OAIModelConfig):
+        return load_model_with_oai(config)
 
     if isinstance(config, InferenceEndpointModelConfig) or isinstance(config, InferenceModelConfig):
         return load_model_with_inference_endpoints(config, env_config=env_config)
@@ -94,6 +100,13 @@ def load_model(  # noqa: C901
     if isinstance(config, DummyModelConfig):
         return load_dummy_model(config=config, env_config=env_config)
 
+
+def load_model_with_oai(config: OAIModelConfig):
+    model = OAIModelClient(
+        address=config.address, model_id=config.model_id, auth_token=config.auth_token
+    )
+    return model, ModelInfo(model_name=config.model_id, model_sha='unknown', model_dtype='unknown', model_size='unknown')
+    
 
 def load_model_with_tgi(config: TGIModelConfig):
     if not is_tgi_available():

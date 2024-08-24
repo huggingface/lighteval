@@ -33,12 +33,13 @@ from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.base_model import BaseModel
 from lighteval.models.tgi_model import ModelClient
+from lighteval.models.oai_model import OAIModelClient
 from lighteval.tasks.lighteval_task import LightevalTask
 from lighteval.tasks.requests import Doc, Request, RequestType, TaskExampleId
 
 
 def evaluate(  # noqa: C901
-    lm: Union[BaseModel, ModelClient],
+    lm: Union[BaseModel, ModelClient, OAIModelClient],
     requests_dict: Dict[RequestType, list[Request]],
     docs: Dict[TaskExampleId, Doc],
     task_dict: Dict[str, LightevalTask],
