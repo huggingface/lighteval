@@ -163,14 +163,18 @@ class LightevalModel(ABC):
                 add_special_tokens=add_special_tokens,
                 padding=True,
                 return_tensors="pt",
+                return_dict=True,
             )
 
-    def tok_encode_pair(self, context, continuation):
+    def tok_encode_pair(self, context: str | Conversation, continuation: str | ChatCompletionInputMessage):
         """Encodes a context, continuation pair by taking care of the spaces in between."""
-        n_spaces = len(context) - len(context.rstrip())
-        if n_spaces > 0:
-            continuation = context[-n_spaces:] + continuation
-            context = context[:-n_spaces]
+        if isinstance(context, str):
+            n_spaces = len(context) - len(context.rstrip())
+            if n_spaces > 0:
+                continuation = context[-n_spaces:] + continuation
+                context = context[:-n_spaces]
+        else:
+            continuation = [continuation]
         whole_enc = self.tok_encode(context + continuation)
         context_enc = self.tok_encode(context)
         context_enc_len = len(context_enc)

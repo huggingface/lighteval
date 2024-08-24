@@ -21,19 +21,16 @@
 # SOFTWARE.
 
 import os
-import random
-import time
-from collections import defaultdict
 from typing import Iterator, TypeAlias
 
-import docker
 import pytest
-import requests
 from huggingface_hub import ChatCompletionInputMessage
+from transformers import BatchEncoding
 
 from lighteval.evaluator import EvaluationTracker, evaluate
 from lighteval.metrics.metrics import Metrics
-from lighteval.models.tgi_model import ModelClient as TGIModel
+from lighteval.models.base_model import BaseModel
+from lighteval.models.model_config import BaseModelConfig, EnvConfig
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig, create_requests_from_tasks
 from lighteval.tasks.requests import (
     Doc,
@@ -47,42 +44,31 @@ CACHE_PATH = os.getenv("HF_HOME", ".")
 
 
 @pytest.fixture(scope="module")
-def tgi_model() -> Iterator[TGIModel]:
-    client = docker.from_env()
-    port = random.randint(8000, 9000)
-    container = client.containers.run(
-        "ghcr.io/huggingface/text-generation-inference:2.2.0",
-        command=[
-            "--model-id",
-            "hf-internal-testing/tiny-random-LlamaForCausalLM",
-            "--dtype",
-            "float16",
-        ],
-        detach=True,
-        name="lighteval-tgi-model-test",
-        auto_remove=True,
-        ports={"80/tcp": port},
-    )
-    address = f"http://localhost:{port}"
-    for _ in range(30):
-        try:
-            if requests.get(f"{address}/health"):
-                break
-        except Exception:
-            time.sleep(1)
-    else:
-        raise RuntimeError("Couldn't setup TGI server.")
-    model = TGIModel(address)
-    yield model
-    container.stop()
-    container.wait()
-    model.cleanup()
+def base_model() -> Iterator[BaseModel]:
+    config = BaseModelConfig("hf-internal-testing/tiny-random-LlamaForCausalLM")
+    return BaseModel(config, EnvConfig(CACHE_PATH, TOKEN))
 
 
 RequestDict: TypeAlias = dict[RequestType, list[Request]]
 
 
-class TestEndpointModel:
+def test_abstract_model_tokenizer_api(base_model: BaseModel):
+    encoded = base_model.tok_encode("Hi there!")
+    assert isinstance(encoded, list) and isinstance(encoded[0], int)
+
+    encoded = base_model.tok_encode(ChatCompletionInputMessage("user", "Hi there!"))
+    assert encoded == base_model.tok_encode([ChatCompletionInputMessage("user", "Hi there!")])
+    assert isinstance(encoded, list) and isinstance(encoded[0], int)
+
+    assert isinstance(
+        base_model.tok_encode(["Hi there!", "Hello there!"]),
+        BatchEncoding,
+    )
+
+    assert isinstance(base_model.tok_encode([[ChatCompletionInputMessage("user", "Hi there!")]]), BatchEncoding)
+
+
+class TestBaseModel:
     @pytest.fixture
     def task(self) -> LightevalTask:
         eval_docs = [
@@ -127,36 +113,11 @@ class TestEndpointModel:
         task._fewshot_docs = fewshot_docs
         return task
 
-    @pytest.fixture
-    def zero_shot_request_dict(self, task: LightevalTask) -> RequestDict:
-        result = defaultdict(list)
-        for i, doc in enumerate(task.eval_docs()):
-            if i % 2 == 0:
-                context = [ChatCompletionInputMessage(role="user", content=doc.query)]
-            else:
-                context = doc.query
-            doc_result = task.construct_requests(doc, context, f"{i}_0", "custom|test|0")
-            for req_type in doc_result:
-                result[req_type].extend(doc_result[req_type])
-        return result
-
-    def test_greedy_until(self, zero_shot_request_dict: RequestDict, tgi_model: TGIModel):
-        returns = tgi_model.greedy_until(zero_shot_request_dict[RequestType.GREEDY_UNTIL])
-        assert len(returns) == 4
-        assert all(r.result is not None for r in returns)
-
-    def test_loglikelihood(self, zero_shot_request_dict: RequestDict, tgi_model: TGIModel):
-        returns = tgi_model.loglikelihood(zero_shot_request_dict[RequestType.LOGLIKELIHOOD])
-        assert len(returns) == 8
-        assert all(r.result[0] is not None for r in returns)
-
-        returns = tgi_model.loglikelihood_rolling(zero_shot_request_dict[RequestType.LOGLIKELIHOOD_ROLLING])
-        assert len(returns) == 4
-        assert all(r.result[0] is not None for r in returns)
-
     @pytest.mark.parametrize("num_fewshot", [0, 2])
     @pytest.mark.parametrize("use_chat_template", [False, True])
-    def test_integration(self, task: LightevalTask, tgi_model: TGIModel, num_fewshot: int, use_chat_template: bool):
+    def test_integration(self, task: LightevalTask, base_model: BaseModel, num_fewshot: int, use_chat_template: bool):
+        base_model.use_chat_template = use_chat_template
+
         evaluation_tracker = EvaluationTracker()
         task_dict = {"custom|test": task}
         evaluation_tracker.task_config_logger.log(task_dict)
@@ -164,7 +125,7 @@ class TestEndpointModel:
             task_dict=task_dict,
             fewshot_dict={"custom|test": [(num_fewshot, False)]},
             num_fewshot_seeds=0,
-            lm=tgi_model,
+            lm=base_model,
             max_samples=1,
             evaluation_tracker=evaluation_tracker,
             use_chat_template=use_chat_template,
@@ -172,7 +133,7 @@ class TestEndpointModel:
         )
 
         evaluation_tracker = evaluate(
-            lm=tgi_model,
+            lm=base_model,
             requests_dict=requests_dict,
             docs=docs,
             task_dict=task_dict,
