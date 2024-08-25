@@ -26,6 +26,7 @@ import asyncio
 from typing import Coroutine
 from lighteval.models.endpoint_model import InferenceEndpointModel
 from huggingface_hub import TextGenerationOutput
+from lighteval.models.utils import retry_with_backoff
 from transformers import AutoTokenizer
 from openai import AsyncOpenAI
 
@@ -45,12 +46,13 @@ class OAIModelClient(InferenceEndpointModel):
         self, context: str, stop_tokens: list[str], max_tokens: int
     ) -> Coroutine[None, TextGenerationOutput, str]:
         # Todo: add an option to launch with conversational instead for chat prompts
-        output = await self.client.completions.create(
+        output = await retry_with_backoff(self.client.completions.create(
             model="/repository", 
             prompt=context,
             max_tokens=max_tokens,
-            stop=stop_tokens)
-        
+            stop=stop_tokens
+        ))
+
         return TextGenerationOutput(generated_text=output.choices[0].text)
         
     def _process_request(self, *args, **kwargs) -> TextGenerationOutput:

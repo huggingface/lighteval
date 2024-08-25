@@ -23,6 +23,7 @@
 import asyncio
 from typing import Coroutine, List, Optional, Union
 
+from lighteval.models.utils import retry_with_backoff
 import torch
 from huggingface_hub import (
     AsyncInferenceClient,
@@ -52,7 +53,6 @@ from lighteval.utils import as_list
 
 
 BATCH_SIZE = 50
-
 
 class InferenceEndpointModel(LightevalModel):
     """InferenceEndpointModels can be used both with the free inference client, or with inference
@@ -165,7 +165,7 @@ class InferenceEndpointModel(LightevalModel):
             # truncate=,
         )
 
-        return generated_text
+        return retry_with_backoff(generated_text)
 
     def _process_request(self, context: str, stop_tokens: list[str], max_tokens: int) -> TextGenerationOutput:
         # Todo: add an option to launch with conversational instead for chat prompts

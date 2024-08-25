@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import asyncio
 import os
 from itertools import islice
 from typing import Optional, Union
@@ -98,3 +99,17 @@ def batched(iterable, n):
     it = iter(iterable)
     while batch := tuple(islice(it, n)):
         yield batch
+
+import random
+MAX_RETRIES = 5
+INITIAL_BACKOFF = 1
+async def retry_with_backoff(coro):
+    for attempt in range(MAX_RETRIES):
+        try:
+            return await coro
+        except Exception as e:
+            if attempt < MAX_RETRIES - 1:
+                backoff_time = INITIAL_BACKOFF * (2 ** attempt) + random.uniform(0, 1)
+                await asyncio.sleep(backoff_time)
+            else:
+                raise e
