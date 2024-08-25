@@ -56,8 +56,8 @@ def test_abstract_model_tokenizer_api(base_model: BaseModel):
     encoded = base_model.tok_encode("Hi there!")
     assert isinstance(encoded, list) and isinstance(encoded[0], int)
 
-    encoded = base_model.tok_encode(ChatCompletionInputMessage("user", "Hi there!"))
-    assert encoded == base_model.tok_encode([ChatCompletionInputMessage("user", "Hi there!")])
+    encoded = base_model.tok_encode(ChatCompletionInputMessage(role="user", content="Hi there!"))
+    assert encoded == base_model.tok_encode([ChatCompletionInputMessage(role="user", content="Hi there!")])
     assert isinstance(encoded, list) and isinstance(encoded[0], int)
 
     assert isinstance(
@@ -65,7 +65,9 @@ def test_abstract_model_tokenizer_api(base_model: BaseModel):
         BatchEncoding,
     )
 
-    assert isinstance(base_model.tok_encode([[ChatCompletionInputMessage("user", "Hi there!")]]), BatchEncoding)
+    assert isinstance(
+        base_model.tok_encode([[ChatCompletionInputMessage(role="user", content="Hi there!")]]), BatchEncoding
+    )
 
 
 class TestBaseModel:
