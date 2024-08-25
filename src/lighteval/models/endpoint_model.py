@@ -156,16 +156,16 @@ class InferenceEndpointModel(LightevalModel):
     ) -> Coroutine[None, list[TextGenerationOutput], str]:
         # Todo: add an option to launch with conversational instead for chat prompts
         # https://huggingface.co/docs/huggingface_hub/v0.20.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.conversational
-        generated_text = self.async_client.text_generation(
+        generated_text = retry_with_backoff(lambda: self.async_client.text_generation(
             prompt=context,
             details=True,
             decoder_input_details=True,
             max_new_tokens=max_tokens,
             stop_sequences=stop_tokens,
             # truncate=,
-        )
+        ))
 
-        return retry_with_backoff(generated_text)
+        return generated_text
 
     def _process_request(self, context: str, stop_tokens: list[str], max_tokens: int) -> TextGenerationOutput:
         # Todo: add an option to launch with conversational instead for chat prompts

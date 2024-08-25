@@ -46,7 +46,7 @@ class OAIModelClient(InferenceEndpointModel):
         self, context: str, stop_tokens: list[str], max_tokens: int
     ) -> Coroutine[None, TextGenerationOutput, str]:
         # Todo: add an option to launch with conversational instead for chat prompts
-        output = await retry_with_backoff(self.client.completions.create(
+        output = await retry_with_backoff(lambda: self.client.completions.create(
             model="/repository", 
             prompt=context,
             max_tokens=max_tokens,

@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import asyncio
+import logging
 import os
 from itertools import islice
 from typing import Optional, Union
@@ -101,15 +102,17 @@ def batched(iterable, n):
         yield batch
 
 import random
-MAX_RETRIES = 5
+MAX_RETRIES = 15
 INITIAL_BACKOFF = 1
-async def retry_with_backoff(coro):
+async def retry_with_backoff(coro_fn):
     for attempt in range(MAX_RETRIES):
         try:
-            return await coro
+            return await coro_fn()
         except Exception as e:
             if attempt < MAX_RETRIES - 1:
-                backoff_time = INITIAL_BACKOFF * (2 ** attempt) + random.uniform(0, 1)
+                backoff_time = INITIAL_BACKOFF * (2 ** attempt) + random.uniform(0, 1) # used to be 2 **, but waited too long
+                logging.info(e)
+                logging.info(f'Encountered error, backing off and retrying in {backoff_time}s...')
                 await asyncio.sleep(backoff_time)
             else:
                 raise e
