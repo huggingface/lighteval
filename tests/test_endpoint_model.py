@@ -27,6 +27,7 @@ from collections import defaultdict
 from typing import Iterator, TypeAlias
 
 import docker
+import docker.errors
 import pytest
 import requests
 from huggingface_hub import ChatCompletionInputMessage
@@ -49,20 +50,25 @@ CACHE_PATH = os.getenv("HF_HOME", ".")
 @pytest.fixture(scope="module")
 def tgi_model() -> Iterator[TGIModel]:
     client = docker.from_env()
-    port = random.randint(8000, 9000)
-    container = client.containers.run(
-        "ghcr.io/huggingface/text-generation-inference:2.2.0",
-        command=[
-            "--model-id",
-            "hf-internal-testing/tiny-random-LlamaForCausalLM",
-            "--dtype",
-            "float16",
-        ],
-        detach=True,
-        name="lighteval-tgi-model-test",
-        auto_remove=True,
-        ports={"80/tcp": port},
-    )
+
+    try:
+        container = client.containers.get("lighteval-tgi-model-test")
+        port = container.ports["80/tcp"][0]["HostPort"]
+    except docker.errors.NotFound:
+        port = random.randint(8000, 9000)
+        container = client.containers.run(
+            "ghcr.io/huggingface/text-generation-inference:2.2.0",
+            command=[
+                "--model-id",
+                "hf-internal-testing/tiny-random-LlamaForCausalLM",
+                "--dtype",
+                "float16",
+            ],
+            detach=True,
+            name="lighteval-tgi-model-test",
+            auto_remove=False,
+            ports={"80/tcp": port},
+        )
     address = f"http://localhost:{port}"
     for _ in range(30):
         try:
@@ -76,6 +82,7 @@ def tgi_model() -> Iterator[TGIModel]:
     yield model
     container.stop()
     container.wait()
+    container.remove()
     model.cleanup()
 
 
