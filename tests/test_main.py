@@ -121,7 +121,7 @@ def normalize_eval_name(eval_name: str) -> str:
     return "|".join(parts[:3]) if len(parts) == 4 else eval_name
 
 
-# generated the model predictions parameters at test collection time
+# generates the model predictions parameters at test collection time
 parameters: list[ModelInput] = generate_test_parameters(TASKS)
 ids = [f"{model_input[0]}_{model_input[1]}_{model_input[2]}_{model_input[3]}" for model_input in parameters]
 
