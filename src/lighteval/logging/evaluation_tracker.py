@@ -28,12 +28,12 @@ import time
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import torch
 from datasets import Dataset, load_dataset
 from datasets.utils.metadata import MetadataConfigs
-from huggingface_hub import DatasetCard, DatasetCardData, HfApi, HFSummaryWriter, hf_hub_url
+from huggingface_hub import DatasetCard, DatasetCardData, HfApi, hf_hub_url
 
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.logging.info_loggers import (
@@ -44,6 +44,7 @@ from lighteval.logging.info_loggers import (
     VersionsLogger,
 )
 from lighteval.utils.imports import NO_TENSORBOARDX_WARN_MSG, is_nanotron_available, is_tensorboardX_available
+from lighteval.utils.io import FsspecDataResource
 from lighteval.utils.utils import obj_to_markdown
 
 
@@ -94,13 +95,10 @@ class EvaluationTracker:
 
     def __init__(
         self,
-        output_dir: str = None,
-        hub_results_org: str = "",
-        push_results_to_hub: bool = False,
-        push_details_to_hub: bool = False,
-        push_results_to_tensorboard: bool = False,
-        tensorboard_metric_prefix: str = "eval",
-        public: bool = False,
+        output_dir: str,
+        save_results: bool,
+        save_details: bool,
+        save_tensorboard: bool,
         token: str = "",
         nanotron_run_info: "GeneralArgs" = None,
     ) -> None:
@@ -131,48 +129,31 @@ class EvaluationTracker:
 
         self.api = HfApi(token=token)
 
-        self.output_dir = output_dir
-
-        self.hub_results_org = hub_results_org  # will also contain tensorboard results
-        if hub_results_org in ["", None] and any(
-            [push_details_to_hub, push_results_to_hub, push_results_to_tensorboard]
-        ):
-            raise Exception(
-                "You need to select which org to push to, using `--results_org`, if you want to save information to the hub."
-            )
-
-        self.hub_results_repo = f"{hub_results_org}/results"
-        self.hub_private_results_repo = f"{hub_results_org}/private-results"
-        self.push_results_to_hub = push_results_to_hub
-        self.push_details_to_hub = push_details_to_hub
-
-        self.push_results_to_tensorboard = push_results_to_tensorboard
-        self.tensorboard_repo = f"{hub_results_org}/tensorboard_logs"
-        self.tensorboard_metric_prefix = tensorboard_metric_prefix
+        self.output_res = FsspecDataResource.from_uri(output_dir)
+        self.save_results = save_results
+        self.save_details = save_details
+        self.save_tensorboard = save_tensorboard
         self.nanotron_run_info = nanotron_run_info
 
-        self.public = public
-
     def save(self) -> None:
-        """Saves the experiment information and results to files, and to the hub if requested."""
+        """Saves the experiment information and results to files, and to the hub if requested.
+        Note:
+            In case of save failure, this function will only print a warning, with the error message.
+
+        Args:
+            output_dir (str): Local folder path where you want results to be saved.
+            save_results (bool): If True, results are saved to the specified logging URI.
+            save_details (bool): If True, detailed results are saved to the specified logging URI.
+            save_tensorboard (bool, optional): If True, tensorboard logs are saved to the specified logging URI. Defaults to False.
+        """
+
         hlog("Saving experiment tracker")
         date_id = datetime.now().isoformat().replace(":", "-")
-
-        output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name
-        output_dir_details = Path(self.output_dir) / "details" / self.general_config_logger.model_name
-        output_dir_details_sub_folder = output_dir_details / date_id
-        output_dir_results.mkdir(parents=True, exist_ok=True)
-        output_dir_details_sub_folder.mkdir(parents=True, exist_ok=True)
-
-        output_results_file = output_dir_results / f"results_{date_id}.json"
-        output_results_in_details_file = output_dir_details / f"results_{date_id}.json"
-
-        hlog(f"Saving results to {output_results_file} and {output_results_in_details_file}")
-
         config_general = copy.deepcopy(self.general_config_logger)
+        config_general.config = (
+            config_general.config.as_dict() if is_dataclass(config_general.config) else config_general.config
+        )
         config_general = asdict(config_general)
-        # We remove the config from logging, which contains context/accelerator objects
-        config_general.pop("config")
 
         to_dump = {
             "config_general": config_general,
@@ -182,45 +163,44 @@ class EvaluationTracker:
             "summary_tasks": self.details_logger.compiled_details,
             "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
         }
-        dumped = json.dumps(to_dump, cls=EnhancedJSONEncoder, indent=2)
+        dumped = json.dumps(to_dump, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False)
 
-        with open(output_results_file, "w") as f:
-            f.write(dumped)
+        if self.save_results:
+            output_results_res = self.output_res / "results" / self.general_config_logger.model_name
+            hlog(f"Saving results to {output_results_res}")
+            output_results_res.fs.mkdirs(output_results_res.path, exist_ok=True)
+            output_results_file = output_results_res / f"results_{date_id}.json"
+            with output_results_file.fs.open(output_results_file.path, "w") as f:
+                f.write(dumped)
 
-        with open(output_results_in_details_file, "w") as f:
-            f.write(dumped)
+        if self.save_details:
+            output_details_res = self.output_res / "details" / self.general_config_logger.model_name
+            hlog(f"Saving details to {output_details_res}")
+            output_details_res.fs.mkdirs(output_details_res.path, exist_ok=True)
 
-        for task_name, task_details in self.details_logger.details.items():
-            output_file_details = output_dir_details_sub_folder / f"details_{task_name}_{date_id}.parquet"
-            # Create a dataset from the dictionary - we force cast to str to avoid formatting problems for nested objects
-            dataset = Dataset.from_list([{k: str(v) for k, v in asdict(detail).items()} for detail in task_details])
+            for task_name, task_details in self.details_logger.details.items():
+                output_task_details_file = output_details_res / f"details_{task_name}_{date_id}.parquet"
+                # Create a dataset from the dictionary
+                try:
+                    dataset = Dataset.from_list([asdict(detail) for detail in task_details])
+                except Exception:
+                    # We force cast to str to avoid formatting problems for nested objects
+                    dataset = Dataset.from_list(
+                        [{k: str(v) for k, v in asdict(detail).items()} for detail in task_details]
+                    )
 
-            # We don't keep 'id' around if it's there
-            column_names = dataset.column_names
-            if "id" in dataset.column_names:
-                column_names = [t for t in dataset.column_names if t != "id"]
+                # We don't keep 'id' around if it's there
+                column_names = dataset.column_names
+                if "id" in dataset.column_names:
+                    column_names = [t for t in dataset.column_names if t != "id"]
 
-            # Sort column names to make it easier later
-            dataset = dataset.select_columns(sorted(column_names))
-            # Save the dataset to a Parquet file
-            dataset.to_parquet(output_file_details.as_posix())
+                # Sort column names to make it easier later
+                dataset = dataset.select_columns(sorted(column_names))
+                # Save the dataset to a Parquet file
+                with output_task_details_file.fs.open(output_task_details_file.path, "wb") as f:
+                    dataset.to_parquet(f)
 
-        if self.push_results_to_hub:
-            self.api.upload_folder(
-                repo_id=self.hub_results_repo if self.public else self.hub_private_results_repo,
-                folder_path=output_dir_results,
-                path_in_repo=self.general_config_logger.model_name,
-                repo_type="dataset",
-                commit_message=f"Updating model {self.general_config_logger.model_name}",
-            )
-
-        if self.push_details_to_hub:
-            self.details_to_hub(
-                results_file_path=output_results_in_details_file,
-                details_folder_path=output_dir_details_sub_folder,
-            )
-
-        if self.push_results_to_tensorboard:
+        if self.save_tensorboard:
             self.push_to_tensorboard(
                 results=self.metrics_logger.metric_aggregated, details=self.details_logger.details
             )
@@ -245,63 +225,6 @@ class EvaluationTracker:
         }
 
         return final_dict
-
-    def details_to_hub(
-        self,
-        results_file_path: Path | str,
-        details_folder_path: Path | str,
-    ) -> None:
-        """Pushes the experiment details (all the model predictions for every step) to the hub.
-
-        Args:
-            results_file_path (str or Path): Local path of the current's experiment aggregated results individual file
-            details_folder_path (str or Path): Local path of the current's experiment details folder.
-                The details folder (created by [`EvaluationTracker.save`]) should contain one parquet file per task used during the evaluation run of the current model.
-
-        """
-        results_file_path = str(results_file_path)
-        details_folder_path = str(details_folder_path)
-
-        sanitized_model_name = self.general_config_logger.model_name.replace("/", "__")
-
-        # "Default" detail names are the public detail names (same as results vs private-results)
-        repo_id = f"{self.hub_results_org}/details_{sanitized_model_name}"
-        if not self.public:  # if not public, we add `_private`
-            repo_id = f"{repo_id}_private"
-
-        sub_folder_path = os.path.basename(results_file_path).replace(".json", "").replace("results_", "")
-
-        paths_to_check = [os.path.basename(results_file_path)]
-        try:
-            checked_paths = list(self.api.get_paths_info(repo_id=repo_id, paths=paths_to_check, repo_type="dataset"))
-        except Exception:
-            checked_paths = []
-
-        if len(checked_paths) == 0:
-            hlog(f"Repo {repo_id} not found for {results_file_path}. Creating it.")
-            self.api.create_repo(repo_id, private=not (self.public), repo_type="dataset", exist_ok=True)
-
-        # Create parquet version of results file as well
-        results = load_dataset("json", data_files=results_file_path)
-        parquet_name = os.path.basename(results_file_path).replace(".json", ".parquet")
-        parquet_local_path = os.path.join(os.path.dirname(results_file_path), parquet_name)
-        results["train"].to_parquet(parquet_local_path)
-
-        # Upload results file (json and parquet) and folder
-        self.api.upload_file(
-            repo_id=repo_id,
-            path_or_fileobj=results_file_path,
-            path_in_repo=os.path.basename(results_file_path),
-            repo_type="dataset",
-        )
-        self.api.upload_file(
-            repo_id=repo_id, path_or_fileobj=parquet_local_path, path_in_repo=parquet_name, repo_type="dataset"
-        )
-        self.api.upload_folder(
-            repo_id=repo_id, folder_path=details_folder_path, path_in_repo=sub_folder_path, repo_type="dataset"
-        )
-
-        self.recreate_metadata_card(repo_id)
 
     def recreate_metadata_card(self, repo_id: str) -> None:  # noqa: C901
         """Fully updates the details repository metadata card for the currently evaluated model
@@ -513,6 +436,9 @@ class EvaluationTracker:
         if not is_nanotron_available():
             hlog_warn("You cannot push results to tensorboard without having nanotron installed. Skipping")
             return
+
+        from tensorboardX import SummaryWriter
+
         prefix = self.tensorboard_metric_prefix
 
         if self.nanotron_run_info is not None:
@@ -522,71 +448,75 @@ class EvaluationTracker:
             global_step = 0
             run = prefix
 
-        output_dir_tb = Path(self.output_dir) / "tb" / run
-        output_dir_tb.mkdir(parents=True, exist_ok=True)
-        tb_context = HFSummaryWriter(
-            logdir=str(output_dir_tb),
-            repo_id=self.tensorboard_repo,
-            repo_private=True,
-            path_in_repo="tb",
-            commit_every=6000,  # Very long time so that we can change our files names and trigger push ourselves (see below)
-        )
-        bench_averages = {}
-        for name, values in results.items():
-            splited_name = name.split("|")
-            if len(splited_name) == 3:
-                _, task_name, _ = splited_name
-            else:
-                task_name = name
-            bench_suite = None
-            if ":" in task_name:
-                bench_suite = task_name.split(":")[0]  # e.g. MMLU
-                hlog(f"bench_suite {bench_suite} in {task_name}")
+        with TemporaryDirectory() as tmp_dir:
+            tb_context = SummaryWriter(
+                logdir=tmp_dir,
+            )
+            bench_averages = {}
+            for name, values in results.items():
+                splited_name = name.split("|")
+                if len(splited_name) == 3:
+                    _, task_name, _ = splited_name
+                else:
+                    task_name = name
+                bench_suite = None
+                if ":" in task_name:
+                    bench_suite = task_name.split(":")[0]  # e.g. MMLU
+                    hlog(f"bench_suite {bench_suite} in {task_name}")
+                    for metric, value in values.items():
+                        if "stderr" in metric:
+                            continue
+                        if bench_suite not in bench_averages:
+                            bench_averages[bench_suite] = {}
+                        bench_averages[bench_suite][metric] = bench_averages[bench_suite].get(metric, []) + [
+                            float(value)
+                        ]
+                hlog(f"Pushing {task_name} {values} to tensorboard")
                 for metric, value in values.items():
                     if "stderr" in metric:
-                        continue
-                    if bench_suite not in bench_averages:
-                        bench_averages[bench_suite] = {}
-                    bench_averages[bench_suite][metric] = bench_averages[bench_suite].get(metric, []) + [float(value)]
-            hlog(f"Pushing {task_name} {values} to tensorboard")
-            for metric, value in values.items():
-                if "stderr" in metric:
-                    tb_context.add_scalar(f"stderr_{prefix}/{task_name}/{metric}", value, global_step=global_step)
-                elif bench_suite is not None:
+                        tb_context.add_scalar(f"stderr_{prefix}/{task_name}/{metric}", value, global_step=global_step)
+                    elif bench_suite is not None:
+                        tb_context.add_scalar(
+                            f"{prefix}_{bench_suite}/{task_name}/{metric}", value, global_step=global_step
+                        )
+                    else:
+                        tb_context.add_scalar(f"{prefix}/{task_name}/{metric}", value, global_step=global_step)
+            # Tasks with subtasks
+            for name, values in bench_averages.items():
+                for metric, values in values.items():
+                    hlog(f"Pushing average {name} {metric} {sum(values) / len(values)} to tensorboard")
                     tb_context.add_scalar(
-                        f"{prefix}_{bench_suite}/{task_name}/{metric}", value, global_step=global_step
+                        f"{prefix}/{name}/{metric}", sum(values) / len(values), global_step=global_step
                     )
-                else:
-                    tb_context.add_scalar(f"{prefix}/{task_name}/{metric}", value, global_step=global_step)
-        # Tasks with subtasks
-        for name, values in bench_averages.items():
-            for metric, values in values.items():
-                hlog(f"Pushing average {name} {metric} {sum(values) / len(values)} to tensorboard")
-                tb_context.add_scalar(f"{prefix}/{name}/{metric}", sum(values) / len(values), global_step=global_step)
 
-        tb_context.add_text("eval_config", obj_to_markdown(results), global_step=global_step)
+            tb_context.add_text("eval_config", obj_to_markdown(results), global_step=global_step)
 
-        for task_name, task_details in details.items():
-            tb_context.add_text(
-                f"eval_details_{task_name}",
-                obj_to_markdown({"0": task_details[0], "1": task_details[1] if len(task_details) > 1 else {}}),
-                global_step=global_step,
-            )
+            for task_name, task_details in details.items():
+                tb_context.add_text(
+                    f"eval_details_{task_name}",
+                    obj_to_markdown({"0": task_details[0], "1": task_details[1] if len(task_details) > 1 else {}}),
+                    global_step=global_step,
+                )
 
-        # We are doing parallel evaluations of multiple checkpoints and recording the steps not in order
-        # This messes up with tensorboard, so the easiest is to rename files in the order of the checkpoints
-        # See: https://github.com/tensorflow/tensorboard/issues/5958
-        # But tensorboardX don't let us control the prefix of the files (only the suffix), so we need to do it ourselves before commiting the files
+            # We are doing parallel evaluations of multiple checkpoints and recording the steps not in order
+            # This messes up with tensorboard, so the easiest is to rename files in the order of the checkpoints
+            # See: https://github.com/tensorflow/tensorboard/issues/5958
+            # But tensorboardX don't let us control the prefix of the files (only the suffix), so we need to do it ourselves before commiting the files
 
-        tb_context.close()  # flushes the unfinished write operations
-        time.sleep(5)
-        files = os.listdir(output_dir_tb)
-        for file in files:
-            os.rename(os.path.join(output_dir_tb, file), os.path.join(output_dir_tb, f"{global_step:07d}_{file}"))
+            tb_context.close()  # flushes the unfinished write operations
+            time.sleep(5)
+            files = os.listdir(tmp_dir)
+            for file in files:
+                os.rename(os.path.join(tmp_dir, file), os.path.join(tmp_dir, f"{global_step:07d}_{file}"))
 
-        # Now we can push to the hub
-        tb_context.scheduler.trigger()
-        hlog(
-            f"Pushed to tensorboard at https://huggingface.co/{self.tensorboard_repo}/{output_dir_tb}/tensorboard"
-            f"at global_step {global_step}"
-        )
+            output_dir_tb = self.output_res / "tb" / run
+            output_dir_tb.fs.mkdirs(output_dir_tb.path, exist_ok=True)
+            for root, _, files in os.walk(tmp_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    with output_dir_tb.fs.open(output_dir_tb / file, "wb") as output_f, open(
+                        file_path, "rb"
+                    ) as input_f:
+                        output_f.write(input_f.read())
+
+            hlog(f"Pushed to tensorboard at {output_dir_tb}" f"at global_step {global_step}")
