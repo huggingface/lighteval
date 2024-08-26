@@ -28,8 +28,9 @@ from transformers import AutoModelForCausalLM
 
 from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.base_model import BaseModel
-from lighteval.models.model_config import DeltaModelConfig, EnvConfig
+from lighteval.models.model_config import DeltaModelConfig
 from lighteval.models.utils import _get_dtype
+from lighteval.utils.utils import EnvConfig
 
 
 class DeltaModel(BaseModel):

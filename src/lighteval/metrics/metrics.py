@@ -70,7 +70,7 @@ from lighteval.metrics.utils import (
     SampleLevelMetric,
     SampleLevelMetricGrouping,
 )
-from lighteval.utils import as_list
+from lighteval.utils.utils import as_list
 
 
 class Metrics(Enum):

@@ -101,7 +101,8 @@ accelerate launch --multi_gpu --num_processes=<num_gpus> -m \
     --output_dir output_dir
 ```
 
-Here, `--tasks` refers to either a _comma-separated_ list of supported tasks from the [metadata table](src/lighteval/tasks/tasks_table.jsonl) in the format:
+Here, `--tasks` refers to either a _comma-separated_ list of supported tasks from the [tasks_list](examples/tasks/all_tasks.txt) in the format:
+Tasks details can also be found in the [file implementing them](src/lighteval/tasks/default_tasks.py).
 
 ```
 suite|task|num_few_shot|{0 or 1 to automatically reduce `num_few_shot` if prompt is too long}
@@ -113,7 +114,7 @@ or a file path like [`examples/tasks/recommended_set.txt`](./examples/tasks/reco
 accelerate launch --multi_gpu --num_processes=8 -m \
     lighteval accelerate \
     --model_args "pretrained=gpt2" \
-    --tasks "lighteval|truthfulqa:mc|0|0" \
+    --tasks "leaderboard|truthfulqa:mc|0|0" \
     --override_batch_size 1 \
     --output_dir="./evals/"
 ```

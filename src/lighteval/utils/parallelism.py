@@ -27,7 +27,7 @@ import inspect
 import torch
 
 from lighteval.logging.hierarchical_logger import hlog, logger
-from lighteval.utils import (
+from lighteval.utils.imports import (
     NO_ACCELERATE_ERROR_MSG,
     NO_NANOTRON_ERROR_MSG,
     is_accelerate_available,
