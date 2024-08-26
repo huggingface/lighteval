@@ -111,6 +111,7 @@ def generate_test_parameters(tasks: List[str]) -> List[ModelInput]:
         else:
             predictions_lite = partial(run_model_predictions_lite, model, tuple(tasks))
             parameters.extend(generate_model_parameters(model, "lite", predictions_lite))
+
     return parameters
 
 
@@ -120,26 +121,12 @@ def normalize_eval_name(eval_name: str) -> str:
     return "|".join(parts[:3]) if len(parts) == 4 else eval_name
 
 
-def pytest_generate_tests(metafunc: pytest.Metafunc):
-    """Initializes the main test setup. This function is automatically called by pytest during test collection and
-    should not be called manually.
-
-    Every function with "model_input" as arguments will be sent the "parameters". This ensures that every model/task is single test.
-    Because prediction function is very expensive, we:
-    1) Cache the results per model/tasks combination
-    2) We run the prediction over all task for given model to leverage batching (that's why we don't run directly in fixture)
-    3) Most importantly we don't call it during collection, as it makes refershing tests unreasonably slow.
-
-    Thus we can call the prediction function in every fixture without worrying re-running the prediction.
-    This assumes that the tests are run sequentially.
-    """
-    # If model_input is a test function argument
-    # (= the function requires a fixture)
-    if "model_input" in metafunc.fixturenames:
-        parameters = generate_test_parameters(TASKS)
-        metafunc.parametrize("model_input", parameters, scope="session")
+# generated the model predictions parameters at test collection time
+parameters: list[ModelInput] = generate_test_parameters(TASKS)
+ids = [f"{model_input[0]}_{model_input[1]}_{model_input[2]}_{model_input[3]}" for model_input in parameters]
 
 
+@pytest.mark.parametrize("model_input", parameters, ids=ids)
 def test_model_prediction(model_input: ModelInput):
     """Evaluates a model on a full task - is parametrized using pytest_generate_test"""
     model_name, test_type, eval_name, metric, get_predictions, reference = model_input
@@ -151,6 +138,4 @@ def test_model_prediction(model_input: ModelInput):
 
 if __name__ == "__main__":
     parameters = generate_test_parameters(TASKS)
-    # Call the get_predictions function for each parameter
-    parameters = [(*parameter[:4], parameter[4](), parameter[5]) for parameter in parameters]
     print(parameters)
