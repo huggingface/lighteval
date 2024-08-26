@@ -26,8 +26,8 @@ Custom evaluation tasks for lighteval.
 
 This file generally creates just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
 
-OZ Eval (sr. Opšte Znanje Evaluacija) dataset was created for the purposes of evaluating General Knowledge of LLM models in Serbian language. 
-Data consists of 1k+ high-quality questions and answers which were used as part of entry exams at the Faculty of Philosophy and Faculty of Organizational Sciences, University of Belgrade. 
+OZ Eval (sr. Opšte Znanje Evaluacija) dataset was created for the purposes of evaluating General Knowledge of LLM models in Serbian language.
+Data consists of 1k+ high-quality questions and answers which were used as part of entry exams at the Faculty of Philosophy and Faculty of Organizational Sciences, University of Belgrade.
 The exams test the General Knowledge of students and were used in the enrollment periods from 2003 to 2024.
 For more details and results see: https://huggingface.co/datasets/DjMel/oz-eval
 
@@ -50,7 +50,7 @@ def prompt_fn_oz_eval_task(line, task_name: str = None):
 
     Krajnji odgovor:"""
 
-    options = line['options']
+    options = line["options"]
 
     query = query_template.format(
         question=line["questions"],
