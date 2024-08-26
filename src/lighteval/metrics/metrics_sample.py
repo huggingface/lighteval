@@ -29,6 +29,7 @@ from typing import Union
 
 import nltk
 import numpy as np
+from huggingface_hub import HfApi
 from nltk.metrics.distance import edit_distance
 from nltk.tokenize import word_tokenize
 from nltk.tokenize.treebank import TreebankWordTokenizer
@@ -40,10 +41,10 @@ from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.imports.bert_scorer import BERTScorer
 from lighteval.metrics.imports.data_stats_metric import DataStatsMetric
 from lighteval.metrics.imports.summac import SummaCZS
-from lighteval.metrics.llm_as_judge import JudgeOpenAI
+from lighteval.metrics.llm_as_judge import JudgeLM
 from lighteval.metrics.normalizations import remove_braces, remove_braces_and_strip
 from lighteval.tasks.requests import Doc
-from lighteval.utils import as_list
+from lighteval.utils.utils import as_list
 
 
 class ExactMatches:
@@ -323,6 +324,7 @@ class ROUGE:
         normalize_gold: callable = None,
         normalize_pred: callable = None,
         aggregation_function: callable = None,
+        tokenizer: object = None,
     ):
         """A ROUGE wrapper method. Relies on `rouge_scorer`.
 
@@ -337,6 +339,8 @@ class ROUGE:
                 Defaults to None if no normalization is applied.
             normalize_pred (callable, optional): Function to use to normalize the predicted strings.
                 Defaults to None if no normalization is applied.
+            tokenizer (object, optional): An object with `tokenize` method to be used by rouge scorer. If None, rouge-scorer's
+                default tokenizer will be used.
         """
         if aggregation_function and bootstrap:
             hlog_warn("Can't use both bootstrapping and an aggregation function in Rouge. Keeping bootstrap.")
@@ -349,7 +353,7 @@ class ROUGE:
             raise ValueError(
                 f"Rouge was initialised with method {methods}, which is not in {','.join(self.ALLOWED_ROUGE_METHODS)}"
             )
-        self.scorer = rouge_scorer.RougeScorer([methods])
+        self.scorer = rouge_scorer.RougeScorer([methods], tokenizer=tokenizer)
         self.multiple_golds = multiple_golds
         self.bootstrap = bootstrap
         self.normalize_gold = normalize_gold
@@ -415,8 +419,18 @@ class BertScore:
         normalize_gold: callable = None,
         normalize_pred: callable = None,
     ):
-        """A BERT scorer class. Relies on some called extracted from `bert-score`. By default, will use the
-        `microsoft/deberta-large-mnli` as scorer
+        r"""A BERT scorer class. Relies on some called extracted from `bert-score`. By default, will use the
+        `microsoft/deberta-large-mnli` as scorer. For each tokenized (pred, target) pair, it computes Precision,
+        Recall and F1 as following:
+
+            Precision = \sum_{t=1}^{len(pred)} \div{max(Cos.Sim.(pred_t, target))}{IDF(pred_t)}
+
+            Recall = \sum_{t=1}^{len(target)} \div{max(Cos.Sim.(target_t, pred))}{IDF(target_t)}
+
+            F1 = \div{Precision * Recall}{Precision + Recall}
+
+        in which `Cos.Sim.` is the Cosine Similarity metric and `IDF(.)` represents the Inverse Document
+        Frequency of its input token. It defaults to 1 for all tokens and 0 for EOS and SEP tokens.
 
         Args:
             normalize_gold (callable, optional): Function to use to normalize the reference strings.
@@ -562,19 +576,19 @@ class StringDistance:
         self.strip_prediction = strip_prediction
         self.sample_aggregations = {"longest_common_prefix_length": max, "edit_distance": min, "edit_similarity": max}
 
-    def compute(self, gold: list[str], predictions: list[str], **kwargs) -> dict:
+    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> dict:
         """Computes all the requested metrics on the golds and prediction.
 
         Args:
-            gold (list[str]): A list of possible golds. If it contains more than one item, only the first one is kept.
+            golds (list[str]): A list of possible golds. If it contains more than one item, only the first one is kept.
             predictions (list[str]): Predicted strings.
 
         Returns:
            dict: The different scores computed
         """
-        if len(gold) > 0:
+        if len(golds) > 1:
             hlog_warn("Provided more than one gold to compute a string distance metric. Just using the first one.")
-        reference = gold[0]
+        reference = golds[0]
 
         result = {m: [] for m in self.metric_types}
         for sequence in predictions:
@@ -626,22 +640,32 @@ class StringDistance:
 
 
 class JudgeLLM:
-    available_models = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo", "gpt-4"]
+    available_models_openai = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo", "gpt-4"]
 
-    def __init__(self, judge_model_name: str, template_path: str, multi_turn: bool = False):
-        if judge_model_name not in self.available_models:
-            raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
+    def __init__(
+        self, judge_model_name: str, template_path: str, multi_turn: bool = False, use_transformers: bool = False
+    ) -> None:
+        if judge_model_name in self.available_models_openai:
+            api_key = os.getenv("OPENAI_API_KEY")
+            url = None
+        elif not use_transformers:
+            api_key = os.getenv("HF_TOKEN")
+            url = "https://api-inference.huggingface.co/v1/"
+        else:
+            api = HfApi()
+            models = api.list_models(model_name=judge_model_name)
+            url = None
+            api_key = None
+            if not models:
+                raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
 
-        OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
         self.multi_turn = multi_turn
-
-        self.judge = JudgeOpenAI(
+        self.judge = JudgeLM(
             model=judge_model_name,
-            seed=42,
-            temperature=0.0,
             templates_path=template_path,
-            openai_api_key=OPENAI_API_KEY,
             multi_turn=multi_turn,
+            api_key=api_key,
+            url=url,
         )
 
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:

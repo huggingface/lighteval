@@ -33,11 +33,12 @@ import xxhash
 from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics import MetricCategory
 from lighteval.metrics.stderr import get_stderr_function
-from lighteval.models.model_loader import ModelInfo
-from lighteval.models.model_output import ModelReturn
+from lighteval.models.abstract_model import ModelInfo
+from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
-from lighteval.utils import as_list, is_nanotron_available, sanitize_numpy
+from lighteval.utils.imports import is_nanotron_available
+from lighteval.utils.utils import as_list, sanitize_numpy
 
 
 if is_nanotron_available():
@@ -308,7 +309,7 @@ class DetailsLogger:
         task_name: str,
         task: LightevalTask,
         doc: Doc,
-        outputs: list[ModelReturn],
+        outputs: list[ModelResponse],
         metrics: dict,
         llm_as_prompt_judgement: Optional[tuple[str, str]] = None,
     ) -> None:
@@ -318,7 +319,7 @@ class DetailsLogger:
             task_name (str): Name of the current task of interest.
             task (LightevalTask): Current task of interest.
             doc (Doc): Current sample that we want to store.
-            outputs (list[ModelReturn]): Model outputs for the current sample
+            outputs (list[ModelResponse]): Model outputs for the current sample
             metrics (_type_): Model scores for said sample on the current task's metrics.
             llm_as_prompt_judgement (tuple[str, str]): Tuple containing the
                 prompt passed to the judge and the judgement for the current sample when using llm-as-judge metric.

@@ -101,7 +101,8 @@ accelerate launch --multi_gpu --num_processes=<num_gpus> -m \
     --output_dir output_dir
 ```
 
-Here, `--tasks` refers to either a _comma-separated_ list of supported tasks from the [metadata table](src/lighteval/tasks/tasks_table.jsonl) in the format:
+Here, `--tasks` refers to either a _comma-separated_ list of supported tasks from the [tasks_list](examples/tasks/all_tasks.txt) in the format:
+Tasks details can also be found in the [file implementing them](src/lighteval/tasks/default_tasks.py).
 
 ```
 suite|task|num_few_shot|{0 or 1 to automatically reduce `num_few_shot` if prompt is too long}
@@ -113,7 +114,7 @@ or a file path like [`examples/tasks/recommended_set.txt`](./examples/tasks/reco
 accelerate launch --multi_gpu --num_processes=8 -m \
     lighteval accelerate \
     --model_args "pretrained=gpt2" \
-    --tasks "lighteval|truthfulqa:mc|0|0" \
+    --tasks "leaderboard|truthfulqa:mc|0|0" \
     --override_batch_size 1 \
     --output_dir="./evals/"
 ```
@@ -415,6 +416,11 @@ These metrics need the model to generate an output. They are therefore slower.
     - `maj_at_4_math` (Lighteval): Majority choice evaluation, using the math normalisation for the predictions and gold
     - `quasi_exact_match_gsm8k` (Harness): Fraction of instances where the normalized prediction matches the normalized gold (normalization done for gsm8k, where latex symbols, units, etc are removed)
     - `maj_at_8_gsm8k` (Lighteval): Majority choice evaluation, using the gsm8k normalisation for the predictions and gold
+- LLM-as-Judge:
+    - `llm_judge_gpt3p5`: Can be used for any generative task, the model will be scored by a GPT3.5 model using the openai API
+    - `llm_judge_llama_3_405b`: Can be used for any generative task, the model will be scored by a Llama 3.405B model using the openai API
+    - `llm_judge_multi_turn_gpt3p5`: Can be used for any generative task, the model will be scored by a GPT3.5 model using the openai API. It is used for multiturn tasks like mt-bench.
+    - `llm_judge_multi_turn_llama_3_405b`: Can be used for any generative task, the model will be scored by a Llama 3.405B model using the openai API. It is used for multiturn tasks like mt-bench.
 
 ### Metrics for specific tasks
 To keep compatibility with the Harness for some specific tasks, we ported their evaluations more or less as such. They include `drop` (for the DROP dataset) and `truthfulqa_mc_metrics` (for TruthfulQA). In general, except for tasks where the dataset has very different formatting than usual (another language, programming language, math, ...), we want to use standard implementations of the above metrics. It makes little sense to have 10 different versions of an exact match depending on the task. However, most of the above metrics are parametrizable so that you can change the normalization applied easily for experimental purposes.
