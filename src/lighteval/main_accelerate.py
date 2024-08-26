@@ -67,6 +67,7 @@ def main(args):
     evaluation_tracker.general_config_logger.log_args_info(
         args.num_fewshot_seeds, args.override_batch_size, args.max_samples, args.job_id
     )
+    print("HELLO")
 
     if args.max_samples:
         hlog(

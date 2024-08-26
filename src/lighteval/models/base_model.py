@@ -92,6 +92,7 @@ class BaseModel(LightevalModel):
             hlog(f"Using Data Parallelism, putting model on device {self._device}")
             self.model = self.model.to(self._device)
         if config.compile:
+            hlog("Compiling the model")
             self.model.model.compile()
 
         self.model_name = _simplify_name(config.pretrained)
@@ -536,9 +537,9 @@ class BaseModel(LightevalModel):
                 tokenized = self.tokenizer(
                     context,
                     truncation="longest_first",  # we truncate to the model max length if needed
-                    padding="longest",  # we pad to the longest sequence
+                    padding="max_length",  # we pad to the longest sequence
                     return_tensors="pt",
-                    max_length=self.max_length - 1,  # we always allow minimum one token of generation
+                    max_length=max_context_continuation_size_allowed,  # we always allow minimum one token of generation
                     add_special_tokens=self.add_special_tokens,
                 ).to(self.device)
 
