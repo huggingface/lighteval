@@ -237,7 +237,7 @@ class GenerativeTaskDataset(DynamicBatchDataset):
                 "You cannot select the number of dataset splits for a generative evaluation at the moment. Automatically inferring."
             )
 
-        if self.sorted_data:
+        if len(self.sorted_data) > 0:
             all_sorting_criterion = [self._sorting_criteria(self.sorted_data[0])[:2]]
         splits_indices = [[0, None]]
         for ix, req in enumerate(self.sorted_data):
