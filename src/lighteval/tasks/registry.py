@@ -149,7 +149,7 @@ class Registry:
         tasks_dict = {}
         for task_name in task_name_list:
             task_class = self.get_task_class(task_name, custom_tasks_registry=custom_tasks_registry)
-            tasks_dict[task_name] = task_class(custom_tasks_module=custom_tasks_module)
+            tasks_dict[task_name] = task_class()
 
         return tasks_dict
 
@@ -263,8 +263,8 @@ def create_config_tasks(
 
     def create_task(name, cfg: LightevalTaskConfig, cache_dir: str):
         class LightevalTaskFromConfig(LightevalTask):
-            def __init__(self, custom_tasks_module=None):
-                super().__init__(name, cfg, cache_dir=cache_dir, custom_tasks_module=custom_tasks_module)
+            def __init__(self):
+                super().__init__(name, cfg, cache_dir=cache_dir)
 
         return LightevalTaskFromConfig
 
