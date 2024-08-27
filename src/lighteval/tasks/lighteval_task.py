@@ -153,7 +153,6 @@ class LightevalTaskConfig:
                     values.append([k, v.__name__])
                 else:
                     values.append([k, repr(v)])
-            # print(k, ":", repr(v))
 
         md_writer.value_matrix = values
 
