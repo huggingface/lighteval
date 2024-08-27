@@ -374,7 +374,6 @@ class DetailsLogger:
             detail.choices = doc.choices
             detail.gold_index = as_list(doc.gold_index)
             pred_saved = True
-
         if task.has_metric_category[MetricCategory.MULTICHOICE_PMI]:
             detail.choices = doc.choices
             detail.gold_index = as_list(doc.gold_index)
