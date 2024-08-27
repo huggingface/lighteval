@@ -16,6 +16,7 @@ from dataclasses import asdict, dataclass, is_dataclass
 from typing import Any, Union
 
 import numpy as np
+from datasets import load_dataset
 from pytablewriter import MarkdownTableWriter
 
 
@@ -202,3 +203,20 @@ def boolstring_to_bool(x: Union[str, bool, int]) -> Union[bool, None]:
     if x in ["False", "false", False, 0]:
         return False
     raise ValueError(f"You tried to convert {x} to a boolean but it's not possible.")
+
+
+def download_dataset_worker(args):
+    """
+    Worker function to download a dataset from the HuggingFace Hub.
+    Used for parallel dataset loading.
+    """
+    dataset_path, dataset_config_name, trust_dataset = args
+    dataset = load_dataset(
+        path=dataset_path,
+        name=dataset_config_name,
+        data_dir=None,
+        cache_dir=None,
+        download_mode=None,
+        trust_remote_code=trust_dataset,
+    )
+    return dataset
