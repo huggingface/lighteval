@@ -25,9 +25,9 @@ from dataclasses import asdict, dataclass
 from enum import Enum, auto
 from typing import List, NamedTuple, Optional, TypeAlias, Union
 
-from huggingface_hub import ChatCompletionInputMessage
+from huggingface_hub import ChatCompletionInputMessage, TextGenerationInputGrammarType
 
-from lighteval.utils import as_list
+from lighteval.utils.utils import as_list
 
 
 # We later could move this and similar types to lighteval/types.py
@@ -55,15 +55,17 @@ class Request:
 
     Attributes:
         task_name (str): The name of the task.
-        example_index (int): The index of the example.
+        sample_index (int): The index of the example.
         request_index (int): The index of the request.
-        context (ContextType): The context for the request.
+        context (Context): The context for the request.
+        metric_categories (list[MetricCategory]): All the metric categories which concern this request
     """
 
     task_name: str
-    example_index: int
+    sample_index: int
     request_index: int
     context: Context
+    metric_categories: list["MetricCategory"]  # noqa F821
 
 
 @dataclass
@@ -120,11 +122,14 @@ class GreedyUntilRequest(Request):
     Attributes:
         stop_sequence (str): The sequence of tokens that indicates when to stop generating text.
         generation_size (int): The maximum number of tokens to generate.
+        generation_grammar (TextGenerationInputGrammarType): The grammar to generate completion according to.
+            Currently only available for TGI models.
         request_type (RequestType): The type of the request, set to RequestType.GREEDY_UNTIL.
     """
 
     stop_sequence: Union[str, tuple[str], list[str]]
-    generation_size: int
+    generation_size: Union[int, None]
+    generation_grammar: Union[TextGenerationInputGrammarType, None] = None
     request_type = RequestType.GREEDY_UNTIL
     tokenized_context: Optional[list[int]] = None
     num_samples: int = None
@@ -149,7 +154,7 @@ class GreedyUntilMultiTurnRequest(Request):
     use_logits: bool = False
 
 
-class TaskExampleId(NamedTuple):
+class SampleUid(NamedTuple):
     """
     Represents the identifier for an example in a task.
 
@@ -179,13 +184,17 @@ class Doc:
     task_name: str = ""
 
     # For few-shot
-    instruction: Optional[list[str]] = None
+    instruction: Optional[str] = ""
     target_for_fewshot_sorting: Optional[str] = None  # will probably have to be removed in the future
 
     # Filled when parsing and adding the few-shot context
     ctx: Optional[Context] = ""
     num_asked_few_shots: int = -1
     num_effective_few_shots: int = -1
+
+    def __post_init__(self):
+        if self.instruction is None:
+            self.instruction = ""
 
     def get_golds(self, few_shot: bool = False):
         """Return gold targets extracted from the target dict"""

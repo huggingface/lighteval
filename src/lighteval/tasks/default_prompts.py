@@ -31,7 +31,7 @@ import pycountry
 
 from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.tasks.requests import Doc
-from lighteval.utils import as_list
+from lighteval.utils.utils import as_list
 
 
 # fmt: off

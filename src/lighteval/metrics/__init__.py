@@ -23,17 +23,18 @@
 import re
 
 from lighteval.metrics.metrics import Metric, MetricCategory
-from lighteval.models.model_output import ModelReturn
+from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
-from lighteval.utils import as_list
+from lighteval.utils.utils import as_list
 
 
-def apply_target_perplexity_metric(results: list[ModelReturn], formatted_doc: Doc, metrics: list[Metric]):
+def apply_target_perplexity_metric(results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
+    # We only consider the best choice, to check if its logprobs are above 0.5
+    results = results[formatted_doc.gold_index]
+    target_logprob = results.result[0]
+    target_acc = results.result[1]
     reference_text = formatted_doc.get_golds()[0]
-    current_result = results.pop(0)
-    target_logprob = current_result.result[0]
-    target_acc = current_result.result[1]
 
     for metric in metrics:
         if metric.category == MetricCategory.TARGET_PERPLEXITY:
@@ -41,12 +42,15 @@ def apply_target_perplexity_metric(results: list[ModelReturn], formatted_doc: Do
                 metric.compute(logprobs=target_logprob, target_acc=target_acc, reference_text=reference_text)
             )
 
-    return results, outputs
+    return outputs
 
 
-def apply_perplexity_metric(results: list[ModelReturn], formatted_doc: Doc, metrics: list[Metric]):
+def apply_perplexity_metric(results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
-    current_result = results.pop(0)
+    if len(results) > 1:
+        raise Exception("You returned more than one result for a sample with a perplexity metric.")
+    results = results[0]
+
     # Sometimes, processing was added for the log processings
     # that we don't want to include when computing the sentence length
     # Check if we want to keep this or not
@@ -57,18 +61,22 @@ def apply_perplexity_metric(results: list[ModelReturn], formatted_doc: Doc, metr
 
     for metric in metrics:
         if metric.category == MetricCategory.PERPLEXITY:
-            outputs.update(metric.compute(logprobs=current_result.result, reference_text=reference_text))
+            outputs.update(metric.compute(logprobs=results.result, reference_text=reference_text))
 
-    return results, outputs
+    return outputs
 
 
 def apply_generative_metric(
-    results: list[ModelReturn], formatted_doc: Doc, metrics: list[Metric], output_regex=None, max_num_samples=1
+    results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric], output_regex=None, max_num_samples=1
 ):
     outputs = {}
 
+    if len(results) > 1:
+        raise Exception("You returned more than one result for a sample with a generative metric.")
+    results = results[0]
+
     # Post processing prediction
-    preds_raw = as_list(results.pop(0).result)
+    preds_raw = as_list(results.result)
     preds = []
 
     for pred_raw in preds_raw:
@@ -111,19 +119,22 @@ def apply_generative_metric(
         if metric.category == MetricCategory.GENERATIVE_SAMPLING:
             outputs.update(metric.compute(golds=golds, predictions=preds, formatted_doc=formatted_doc))
 
-    return results, outputs
+    return outputs
 
 
-def apply_multichoice_metric(results: list[ModelReturn], formatted_doc: Doc, metrics: list[Metric]):
+def apply_multichoice_metric(results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
-    mc_results = results[: len(formatted_doc.choices)]
     if len(formatted_doc.choices) <= 1:
         raise ValueError(
             "You can't use a multi choice metric with only one choice. Use `acc_golds_likelihood` instead."
         )
+    if len(results) != len(formatted_doc.choices):
+        raise Exception(
+            f"You shoud have returned as many model outputs as choices when using an multi choice metric. Returned {len(results)} instead of {len(formatted_doc.choices)}"
+        )
 
     # Todo: make better system with return_bool_score instead of taking first element
-    choices_logprob = [mc_results[i].result[0] for i in range(len(formatted_doc.choices))]  # sum(
+    choices_logprob = [results[i].result[0] for i in range(len(formatted_doc.choices))]
     gold_ixs = as_list(formatted_doc.gold_index)
 
     for metric in metrics:
@@ -131,12 +142,15 @@ def apply_multichoice_metric(results: list[ModelReturn], formatted_doc: Doc, met
             outputs.update(
                 metric.compute(choices_logprob=choices_logprob, gold_ixs=gold_ixs, formatted_doc=formatted_doc)
             )
-    return results[len(formatted_doc.choices) :], outputs
+    return outputs
 
 
-def apply_multichoice_metric_one_token(results: list[ModelReturn], formatted_doc: Doc, metrics: list[Metric]):
+def apply_multichoice_metric_one_token(results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
-    choices_logprob = results.pop(0).result
+    if len(results) > 1:
+        raise Exception("You returned more than one result for a sample with a gmultichoice metric on only one token.")
+    results = results[0]
+    choices_logprob = results.result
     gold_ixs = as_list(formatted_doc.gold_index)
 
     for metric in metrics:
@@ -145,15 +159,19 @@ def apply_multichoice_metric_one_token(results: list[ModelReturn], formatted_doc
                 metric.compute(choices_logprob=choices_logprob, gold_ixs=gold_ixs, formatted_doc=formatted_doc)
             )
 
-    return results, outputs
+    return outputs
 
 
-def apply_llm_as_judge_metric(results: list[ModelReturn], formatted_doc: Doc, metrics: list[Metric]):
+def apply_llm_as_judge_metric(results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
-    predictions = results.pop(0).result
+    if len(results) > 1:
+        raise Exception("You returned more than one result for a sample with an llm as a judge metric.")
+    results = results[0]
+
+    predictions = results.result
 
     for metric in metrics:
         if metric.category in [MetricCategory.LLM_AS_JUDGE_MULTI_TURN, MetricCategory.LLM_AS_JUDGE]:
             outputs.update(metric.compute(predictions=predictions, formatted_doc=formatted_doc))
 
-    return results, outputs
+    return outputs

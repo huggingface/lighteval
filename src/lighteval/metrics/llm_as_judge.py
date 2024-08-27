@@ -62,7 +62,7 @@ class JudgeLM:
         __get_prompts_multi_turn: Generates prompts for multi-turn conversations.
         __get_prompts_single_turn: Generates prompts for single-turn conversations.
         __process_judge_response: Processes the judge's response and extracts the score.
-        __call_openai_api: Calls the OpenAI API to get the judge's response.
+        __call_api: Calls the API to get the judge's response.
         __lazy_load_client: Lazy loads the OpenAI client or Transformers pipeline.
     """
 
