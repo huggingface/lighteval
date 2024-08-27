@@ -148,6 +148,7 @@ class GeneralConfigLogger:
         self.total_evaluation_time_secondes = str(self.end_time - self.start_time)
 
 
+@dataclass()
 class DetailsLogger:
     """Logger for the experiment details.
 
@@ -296,13 +297,17 @@ class DetailsLogger:
         hash_input_tokens: str = ""
         hash_cont_tokens: str = ""
 
-    hashes: dict[str, list[Hash]] = collections.defaultdict(list)
-    compiled_hashes: dict[str, CompiledHash] = collections.defaultdict(CompiledHash)
+    hashes: dict[str, list[Hash]] = field(default_factory=lambda: collections.defaultdict(list))
+    compiled_hashes: dict[str, CompiledHash] = field(
+        default_factory=lambda: collections.defaultdict(DetailsLogger.CompiledHash)
+    )
 
     # dict of details for each task, i.e. winogrande: [example1_details, example2_details, ...]
-    details: dict[str, list[Detail]] = collections.defaultdict(list)
-    compiled_details: dict[str, CompiledDetail] = collections.defaultdict(CompiledDetail)
-    compiled_details_over_all_tasks: CompiledDetailOverAllTasks = CompiledDetailOverAllTasks()
+    details: dict[str, list[Detail]] = field(default_factory=lambda: collections.defaultdict(list))
+    compiled_details: dict[str, CompiledDetail] = field(
+        default_factory=lambda: collections.defaultdict(DetailsLogger.CompiledDetail)
+    )
+    compiled_details_over_all_tasks: CompiledDetailOverAllTasks = field(default_factory=CompiledDetailOverAllTasks)
 
     def log(
         self,
@@ -451,6 +456,7 @@ class DetailsLogger:
         )
 
 
+@dataclass
 class MetricsLogger:
     """Logs the actual scores for each metric of each task.
 
@@ -461,8 +467,12 @@ class MetricsLogger:
             Example: {"winogrande|winogrande_xl": {"accuracy": 0.5}}
     """
 
-    metrics_values: dict[str, dict[str, list[float]]] = collections.defaultdict(lambda: collections.defaultdict(list))
-    metric_aggregated: dict[str, dict[str, float]] = collections.defaultdict(lambda: collections.defaultdict(dict))
+    metrics_values: dict[str, dict[str, list[float]]] = field(
+        default_factory=lambda: collections.defaultdict(lambda: collections.defaultdict(list))
+    )
+    metric_aggregated: dict[str, dict[str, float]] = field(
+        default_factory=lambda: collections.defaultdict(lambda: collections.defaultdict(dict))
+    )
 
     def log(self, task_name: str, metrics: dict) -> None:
         for metric_name, metric_value in metrics.items():
@@ -547,6 +557,7 @@ class MetricsLogger:
         self.metric_aggregated["all"] = suite_average
 
 
+@dataclass
 class VersionsLogger:
     """Logger of the tasks versions.
 
@@ -559,12 +570,13 @@ class VersionsLogger:
 
     # the versions dict will be a dict of task_name: task_version
     # {"winogrande|winogrande_xl": 0}
-    versions: dict[str, int] = {}
+    versions: dict[str, int] = field(default_factory=dict)
 
     def log(self, task_name: str, task_version: int) -> None:
         self.versions[task_name] = task_version
 
 
+@dataclass
 class TaskConfigLogger:
     """Logs the different parameters of the current [`LightevalTask`] of interest.
 
@@ -573,7 +585,7 @@ class TaskConfigLogger:
 
     """
 
-    tasks_configs: dict[str, LightevalTaskConfig] = {}
+    tasks_configs: dict[str, LightevalTaskConfig] = field(default_factory=dict)
 
     def log(self, task_dict: dict[str, LightevalTask]) -> None:
         self.tasks_configs = {name: task.cfg for name, task in task_dict.items()}
