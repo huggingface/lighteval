@@ -61,4 +61,20 @@ accelerate launch --multi_gpu --num_processes=8 -m \
 
 ## Nanotron
 
-...
+To evaluate a model trained with nanotron on a single gpu.
+
+<Tip warning={true}>
+Nanotron models cannot be evaluated without torchrun.
+</Tip>
+
+```bash
+ torchrun --standalone --nnodes=1 --nproc-per-node=1  \
+ src/lighteval/__main__.py nanotron \
+ --checkpoint-config-path ../nanotron/checkpoints/10/config.yaml \
+ --lighteval-override examples/nanotron/lighteval_config_override_template.yaml
+ ```
+
+The `nproc-per-node` argument should match the data, tensor and pipeline
+parallelism confidured in the `lighteval_config_override_template.yaml` file.
+That is: `nproc-per-node = data_parallelism * tensor_parallelism *
+pipeline_parallelism`.
