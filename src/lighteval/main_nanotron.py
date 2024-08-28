@@ -94,6 +94,7 @@ def main(
         evaluation_tracker=evaluation_tracker,
         model_config=model_config,
     )
+    print(pipeline.model_config)
 
     pipeline.evaluate()
 
