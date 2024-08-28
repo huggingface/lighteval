@@ -30,6 +30,7 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 
+import torch
 from datasets import Dataset, load_dataset
 from datasets.utils.metadata import MetadataConfigs
 from huggingface_hub import DatasetCard, DatasetCardData, HfApi, HFSummaryWriter, hf_hub_url
@@ -42,7 +43,8 @@ from lighteval.logging.info_loggers import (
     TaskConfigLogger,
     VersionsLogger,
 )
-from lighteval.utils import NO_TENSORBOARDX_WARN_MSG, is_nanotron_available, is_tensorboardX_available, obj_to_markdown
+from lighteval.utils.imports import NO_TENSORBOARDX_WARN_MSG, is_nanotron_available, is_tensorboardX_available
+from lighteval.utils.utils import obj_to_markdown
 
 
 if is_nanotron_available():
@@ -63,6 +65,8 @@ class EnhancedJSONEncoder(json.JSONEncoder):
                 return str(o)
         if callable(o):
             return o.__name__
+        if isinstance(o, torch.dtype):
+            return str(o)
         if isinstance(o, Enum):
             return o.name
         return super().default(o)
@@ -167,6 +171,8 @@ class EvaluationTracker:
 
         config_general = copy.deepcopy(self.general_config_logger)
         config_general = asdict(config_general)
+        # We remove the config from logging, which contains context/accelerator objects
+        config_general.pop("config")
 
         to_dump = {
             "config_general": config_general,

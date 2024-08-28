@@ -65,7 +65,9 @@ class Metric:
     def get_doc(self):
         return self.sample_level_fn.__doc__
 
-    def compute(self, **kwargs) -> dict:  # result: Union[list[ModelReturn], ModelReturn], formatted_doc: Doc) -> dict:
+    def compute(
+        self, **kwargs
+    ) -> dict:  # result: Union[list[ModelResponse], ModelResponse], formatted_doc: Doc) -> dict:
         if self.category == MetricCategory.IGNORED:
             return {}
         if isinstance(self, MetricGrouping):

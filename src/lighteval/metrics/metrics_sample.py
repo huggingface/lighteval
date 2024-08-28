@@ -44,7 +44,7 @@ from lighteval.metrics.imports.summac import SummaCZS
 from lighteval.metrics.llm_as_judge import JudgeLM
 from lighteval.metrics.normalizations import remove_braces, remove_braces_and_strip
 from lighteval.tasks.requests import Doc
-from lighteval.utils import as_list
+from lighteval.utils.utils import as_list
 
 
 class ExactMatches:
