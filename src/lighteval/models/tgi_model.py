@@ -42,8 +42,8 @@ class ModelClient(InferenceEndpointModel):
     def __init__(self, address, auth_token=None, model_id=None) -> None:
         headers = {} if auth_token is None else {"Authorization": f"Bearer {auth_token}"}
 
-        self.client = InferenceClient(address, headers=headers, timeout=240)
-        self.async_client = AsyncInferenceClient(address, headers=headers, timeout=240)
+        self.client = InferenceClient(base_url=address, headers=headers, timeout=240)
+        self.async_client = AsyncInferenceClient(base_url=address, headers=headers, timeout=240)
         self._max_gen_toks = 256
         self.model_info = requests.get(f"{address}/info", headers=headers).json()
         if "model_id" not in self.model_info:
@@ -53,7 +53,7 @@ class ModelClient(InferenceEndpointModel):
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_info["model_id"])
         self._add_special_tokens = True
         self.use_async = True
-        self.name = address
+        self.name = self.model_info["model_id"]
 
     def set_cache_hook(self, cache_hook):
         self.cache_hook = cache_hook

@@ -168,9 +168,7 @@ class LightevalModel(ABC):
         if isinstance(input, str):
             return self.tokenizer.encode(input, add_special_tokens=add_special_tokens)
         elif isinstance(input, ChatCompletionInputMessage) or isinstance(input[0], ChatCompletionInputMessage):
-            return self.tokenizer.apply_chat_template(
-                as_list(input), add_generation_prompt=True, add_special_tokens=add_special_tokens
-            )
+            return self.tokenizer.apply_chat_template(as_list(input), add_special_tokens=add_special_tokens)
         elif isinstance(input, list) and isinstance(input[0], str):
             return self.tokenizer(
                 input,
@@ -181,7 +179,6 @@ class LightevalModel(ABC):
         else:
             return self.tokenizer.apply_chat_template(
                 input,
-                add_generation_prompt=True,
                 add_special_tokens=add_special_tokens,
                 padding=True,
                 return_tensors="pt",

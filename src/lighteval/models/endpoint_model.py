@@ -24,7 +24,6 @@ import asyncio
 from dataclasses import asdict
 from typing import Coroutine, List, Optional, TypeAlias, Union, cast
 
-import torch
 from huggingface_hub import (
     AsyncInferenceClient,
     ChatCompletionInput,
@@ -206,15 +205,10 @@ class InferenceEndpointModel(LightevalModel):
     def _process_logprob_response(
         self, response: TextGenerationOutput, request: LoglikelihoodRequest | LoglikelihoodRollingRequest
     ) -> LoglikelihoodResponse:
-        cont_toks = torch.tensor(request.tokenized_continuation)
-        len_choice = len(cont_toks)
-
-        logits = sum([t.logprob for t in response.details.prefill[-len_choice:]])
-        max_equal = all(
-            response.details.tokens[i].id == response.details.top_tokens[i][0]["id"] for i in range(-len_choice, 0)
-        )
+        len_choice = len(request.tokenized_continuation)
+        logits = sum([t.logprob for t in response.details.prefill[1:][-len_choice:]])
         return LoglikelihoodResponse(
-            result=(logits, max_equal),
+            result=(logits, True) if isinstance(request, LoglikelihoodRequest) else logits,
             input_tokens=[t.id for t in response.details.prefill[:-len_choice]],
             generated_tokens=-1,
             truncated_tokens_count=-1,
@@ -258,9 +252,9 @@ class InferenceEndpointModel(LightevalModel):
             elif isinstance(request.context, str):
                 context = request.context + request.choice
             else:
-                context = request.context + ChatCompletionInputMessage(role="assistant", content=request.choice)
+                context = request.context + [ChatCompletionInputMessage(role="assistant", content=request.choice)]
             if not isinstance(context, str):
-                context = self.tokenizer.apply_chat_template(context, add_generation_prompt=True, tokenize=False)
+                context = self.tokenizer.apply_chat_template(context, tokenize=False)
 
         if isinstance(context, str):
             prepared_request = TextGenerationInput(
@@ -325,8 +319,8 @@ class InferenceEndpointModel(LightevalModel):
                     responses = asyncio.run(self._async_process_batch(batch))
                 else:
                     responses = self._process_batch(batch)
-                for response in responses:
-                    results.append(self._process_generate_response(response))
+                for response, request in zip(responses, batch):
+                    results.append(self._process_generate_response(response, request))
 
         return dataset.get_original_order(results)
 

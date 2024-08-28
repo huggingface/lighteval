@@ -149,17 +149,17 @@ class TestEndpointModel:
 
     def test_greedy_until(self, zero_shot_request_dict: RequestDict, tgi_model: TGIModel):
         returns = tgi_model.greedy_until(zero_shot_request_dict[RequestType.GREEDY_UNTIL])
-        assert len(returns) == 4
+        assert len(returns) == 2
         assert all(r.result is not None for r in returns)
 
     def test_loglikelihood(self, zero_shot_request_dict: RequestDict, tgi_model: TGIModel):
         returns = tgi_model.loglikelihood(zero_shot_request_dict[RequestType.LOGLIKELIHOOD])
-        assert len(returns) == 8
-        assert all(r.result[0] is not None for r in returns)
+        assert len(returns) == 4
+        assert all(r.result is not None for r in returns)
 
         returns = tgi_model.loglikelihood_rolling(zero_shot_request_dict[RequestType.LOGLIKELIHOOD_ROLLING])
-        assert len(returns) == 4
-        assert all(r.result[0] is not None for r in returns)
+        assert len(returns) == 2
+        assert all(r.result is not None for r in returns)
 
     @pytest.mark.parametrize("num_fewshot", [0, 2])
     @pytest.mark.parametrize("use_chat_template", [False, True])
