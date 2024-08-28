@@ -109,7 +109,7 @@ class NanotronLightevalModel(LightevalModel):
         lighteval_config: LightEvalConfig = nanotron_config.lighteval
         parallel_config: ParallelContext = nanotron_config.lighteval.parallelism
 
-        self._batch_size = 1  # lighteval_config.batch_size
+        self._batch_size = lighteval_config.batch_size
         self._max_gen_toks = max_gen_toks
         self._max_length = max_length
         self.parallel_config = parallel_config
@@ -1155,7 +1155,9 @@ class NanotronLightevalModel(LightevalModel):
                 max_input_length = min(len(context_enc) + max_gen, self.max_length)
 
             batch_size = self._get_batch_size(
-                override_bs=1, max_input_length=max_input_length, starting_batch_size=starting_batch_size
+                override_bs=self._batch_size,
+                max_input_length=max_input_length,
+                starting_batch_size=starting_batch_size,
             )
             # For next iteration, since the batch will be smaller, we'll test a bigger batch size
             starting_batch_size = batch_size * 2
