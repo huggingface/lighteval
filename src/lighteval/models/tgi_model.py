@@ -24,6 +24,7 @@ import requests
 from huggingface_hub import AsyncInferenceClient, InferenceClient
 from transformers import AutoTokenizer
 
+from lighteval.models.abstract_model import ModelInfo
 from lighteval.models.endpoint_model import InferenceEndpointModel
 
 
@@ -45,15 +46,19 @@ class ModelClient(InferenceEndpointModel):
         self.client = InferenceClient(base_url=address, headers=headers, timeout=240)
         self.async_client = AsyncInferenceClient(base_url=address, headers=headers, timeout=240)
         self._max_gen_toks = 256
-        self.model_info = requests.get(f"{address}/info", headers=headers).json()
-        if "model_id" not in self.model_info:
+        info = requests.get(f"{address}/info", headers=headers).json()
+        if "model_id" not in info:
             raise ValueError("Error occured when fetching info: " + str(self.model_info))
-        if model_id:
-            self.model_info["model_id"] = model_id
-        self._tokenizer = AutoTokenizer.from_pretrained(self.model_info["model_id"])
+        self.name = info["model_id"]
+        self.model_info = ModelInfo(
+            model_name=model_id or self.name,
+            model_sha=info["model_sha"],
+            model_dtype=info["model_dtype"] or "default",
+            model_size=-1,
+        )
+        self._tokenizer = AutoTokenizer.from_pretrained(self.model_info.model_name)
         self._add_special_tokens = True
         self.use_async = True
-        self.name = self.model_info["model_id"]
 
     def set_cache_hook(self, cache_hook):
         self.cache_hook = cache_hook

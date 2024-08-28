@@ -22,15 +22,17 @@
 
 import os
 from typing import Iterator, TypeAlias
+from unittest.mock import patch
 
 import pytest
 from huggingface_hub import ChatCompletionInputMessage
 from transformers import BatchEncoding
 
-from lighteval.evaluator import EvaluationTracker, evaluate
+from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.metrics.metrics import Metrics
 from lighteval.models.base_model import BaseModel
 from lighteval.models.model_config import BaseModelConfig, EnvConfig
+from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig, create_requests_from_tasks
 from lighteval.tasks.requests import (
     Doc,
@@ -120,28 +122,40 @@ class TestBaseModel:
     def test_integration(self, task: LightevalTask, base_model: BaseModel, num_fewshot: int, use_chat_template: bool):
         base_model.use_chat_template = use_chat_template
 
+        env_config = EnvConfig(token=TOKEN, cache_dir=CACHE_PATH)
         evaluation_tracker = EvaluationTracker()
-        task_dict = {"custom|test": task}
-        evaluation_tracker.task_config_logger.log(task_dict)
-        requests_dict, docs = create_requests_from_tasks(
-            task_dict=task_dict,
-            fewshot_dict={"custom|test": [(num_fewshot, False)]},
-            num_fewshot_seeds=0,
-            lm=base_model,
-            max_samples=1,
-            evaluation_tracker=evaluation_tracker,
+        pipeline_params = PipelineParameters(
+            launcher_type=ParallelismManager.NONE,
+            env_config=env_config,
             use_chat_template=use_chat_template,
-            system_prompt=None,
+            override_batch_size=1,
         )
 
-        evaluation_tracker = evaluate(
-            lm=base_model,
-            requests_dict=requests_dict,
-            docs=docs,
+        with patch("lighteval.pipeline.Pipeline._init_tasks_and_requests"):
+            pipeline = Pipeline(
+                tasks=f"custom|test|{num_fewshot}|0",
+                pipeline_parameters=pipeline_params,
+                evaluation_tracker=evaluation_tracker,
+                model=base_model,
+            )
+        task_dict = {"custom|test": task}
+        evaluation_tracker.task_config_logger.log(task_dict)
+        fewshot_dict = {"custom|test": [(num_fewshot, False)]}
+        pipeline.task_names_list = ["custom|test"]
+        pipeline.task_dict = task_dict
+        pipeline.fewshot_dict = fewshot_dict
+        requests, docs = create_requests_from_tasks(
             task_dict=task_dict,
-            override_bs=1,
+            fewshot_dict=fewshot_dict,
+            num_fewshot_seeds=pipeline_params.num_fewshot_seeds,
+            lm=base_model,
+            max_samples=pipeline_params.max_samples,
             evaluation_tracker=evaluation_tracker,
+            use_chat_template=use_chat_template,
+            system_prompt=pipeline_params.system_prompt,
         )
-        evaluation_tracker.metrics_logger.aggregate(task_dict=task_dict)
-        evaluation_tracker.details_logger.aggregate()
-        evaluation_tracker.generate_final_dict()
+        pipeline.requests = requests
+        pipeline.docs = docs
+        evaluation_tracker.task_config_logger.log(task_dict)
+
+        pipeline.evaluate()
