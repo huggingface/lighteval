@@ -22,11 +22,12 @@
 
 import json
 import tempfile
+from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 from datasets import Dataset
+from huggingface_hub import HfApi
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.info_loggers import DetailsLogger
@@ -37,52 +38,41 @@ def mock_evaluation_tracker():
     with tempfile.TemporaryDirectory() as temp_dir:
         tracker = EvaluationTracker(
             output_dir=temp_dir,
-            save_results=True,
-            save_details=True,
-            save_tensorboard=True,
+            save_details=False,
+            push_to_hub=False,
+            push_results_to_tensorboard=False,
         )
         tracker.general_config_logger.model_name = "test_model"
         yield tracker
 
 
-def test_tensorboard_logging(mock_evaluation_tracker):
-    mock_evaluation_tracker.save_results = False
-    mock_evaluation_tracker.save_details = False
-    mock_evaluation_tracker.save_tensorboard = True
+@pytest.fixture
+def mock_datetime(monkeypatch):
+    mock_date = datetime(2023, 1, 1, 12, 0, 0)
 
-    mock_evaluation_tracker.metrics_logger.metric_aggregated = {
-        "task1": {"accuracy": 0.8, "f1": 0.75},
-        "task2": {"precision": 0.9, "recall": 0.85},
-    }
+    class MockDatetime:
+        @classmethod
+        def now(cls):
+            return mock_date
 
-    mock_evaluation_tracker.save()
+        @classmethod
+        def fromisoformat(cls, date_string: str):
+            return mock_date
 
-    with open(
-        Path(mock_evaluation_tracker.output_res.path) / "tensorboard" / "test_model" / "events.out.tfevents", "r"
-    ) as f:
-        content = f.read()
-    # Check if SummaryWriter was called
-    assert "SummaryWriter" in content, "SummaryWriter was not called"
-
-    # Check if scalar values were added
-    assert "add_scalar" in content, "Scalar values were not added"
-    assert "task1/accuracy" in content, "task1/accuracy was not logged"
-    assert "task1/f1" in content, "task1/f1 was not logged"
-    assert "task2/precision" in content, "task2/precision was not logged"
-    assert "task2/recall" in content, "task2/recall was not logged"
-
-    # Check if SummaryWriter was called
-
-    # Check if scalar values were added
+    monkeypatch.setattr("lighteval.logging.evaluation_tracker.datetime", MockDatetime)
+    return mock_date
 
 
 def test_results_logging(mock_evaluation_tracker: EvaluationTracker):
-    mock_evaluation_tracker.metrics_logger.log("task1", {"accuracy": 0.8, "f1": 0.75})
-    mock_evaluation_tracker.metrics_logger.log("task2", {"precision": 0.9, "recall": 0.85})
+    task_metrics = {
+        "task1": {"accuracy": 0.8, "f1": 0.75},
+        "task2": {"precision": 0.9, "recall": 0.85},
+    }
+    mock_evaluation_tracker.metrics_logger.metric_aggregated = task_metrics
 
     mock_evaluation_tracker.save()
 
-    results_dir = Path(mock_evaluation_tracker.output_res.path) / "results" / "test_model"
+    results_dir = Path(mock_evaluation_tracker.output_dir) / "results" / "test_model"
     assert results_dir.exists()
 
     result_files = list(results_dir.glob("results_*.json"))
@@ -92,47 +82,77 @@ def test_results_logging(mock_evaluation_tracker: EvaluationTracker):
         saved_results = json.load(f)
 
     assert "results" in saved_results
-    assert saved_results["results"] == mock_evaluation_tracker.metrics_logger.metric_aggregated
+    assert saved_results["results"] == task_metrics
+    assert saved_results["config_general"]["model_name"] == "test_model"
 
 
-def test_details_logging(mock_evaluation_tracker):
-    mock_evaluation_tracker.details_logger.details = {
-        "task1": [DetailsLogger.CompiledDetail(task_name="task1", num_samples=100)],
-        "task2": [DetailsLogger.CompiledDetail(task_name="task2", num_samples=200)],
+def test_details_logging(mock_evaluation_tracker, mock_datetime):
+    mock_evaluation_tracker.should_save_details = True
+    task_details = {
+        "task1": [DetailsLogger.CompiledDetail(truncated=10, padded=5)],
+        "task2": [DetailsLogger.CompiledDetail(truncated=20, padded=10)],
     }
+    mock_evaluation_tracker.details_logger.details = task_details
 
     mock_evaluation_tracker.save()
 
-    details_dir = Path(mock_evaluation_tracker.output_res.path) / "details" / "test_model"
+    date_id = mock_datetime.isoformat().replace(":", "-")
+    details_dir = Path(mock_evaluation_tracker.output_dir) / "details" / "test_model" / date_id
     assert details_dir.exists()
 
-    detail_files = list(details_dir.glob("details_*.parquet"))
-    assert len(detail_files) == 2
-
-    for file in detail_files:
-        dataset = Dataset.from_parquet(file)
+    for task in ["task1", "task2"]:
+        file_path = details_dir / f"details_{task}_{date_id}.parquet"
+        dataset = Dataset.from_parquet(str(file_path))
         assert len(dataset) == 1
-        assert "task_name" in dataset.column_names
-        assert "num_samples" in dataset.column_names
+        assert int(dataset[0]["truncated"]) == task_details[task][0].truncated
+        assert int(dataset[0]["padded"]) == task_details[task][0].padded
 
 
-@patch("lighteval.logging.evaluation_tracker.HfApi")
-@patch("lighteval.logging.evaluation_tracker.DatasetCard")
-def test_recreate_metadata_card(mock_dataset_card, mock_hf_api, mock_evaluation_tracker):
-    mock_api_instance = MagicMock()
-    mock_hf_api.return_value = mock_api_instance
-    mock_api_instance.list_repo_files.return_value = [
-        "results_2023-01-01T00-00-00.json",
-        "details_task1_2023-01-01T00-00-00.parquet",
-        "details_task2_2023-01-01T00-00-00.parquet",
-    ]
+def test_no_details_output(mock_evaluation_tracker: EvaluationTracker):
+    mock_evaluation_tracker.should_save_details = False
+    mock_evaluation_tracker.save()
 
-    mock_dataset = MagicMock()
-    mock_dataset.__getitem__.return_value = [{"results": {"task1": {"accuracy": 0.8}, "task2": {"precision": 0.9}}}]
+    details_dir = Path(mock_evaluation_tracker.output_dir) / "details" / "test_model"
+    assert not details_dir.exists()
 
-    with patch("lighteval.logging.evaluation_tracker.load_dataset", return_value=mock_dataset):
-        mock_evaluation_tracker.recreate_metadata_card("test/repo")
 
-    mock_dataset_card.from_template.assert_called_once()
-    mock_card = mock_dataset_card.from_template.return_value
-    mock_card.push_to_hub.assert_called_once_with("test/repo", repo_type="dataset")
+def test_push_to_hub_works(testing_empty_hf_org_id, mock_evaluation_tracker: EvaluationTracker, mock_datetime):
+    mock_evaluation_tracker.should_push_to_hub = True
+    mock_evaluation_tracker.hub_results_org = testing_empty_hf_org_id
+
+    # Prepare the dummy data
+    task_metrics = {
+        "task1": {"accuracy": 0.8, "f1": 0.75},
+        "task2": {"precision": 0.9, "recall": 0.85},
+    }
+    mock_evaluation_tracker.metrics_logger.metric_aggregated = task_metrics
+
+    task_details = {
+        "task1": [DetailsLogger.CompiledDetail(truncated=10, padded=5)],
+        "task2": [DetailsLogger.CompiledDetail(truncated=20, padded=10)],
+    }
+    mock_evaluation_tracker.details_logger.details = task_details
+
+    mock_evaluation_tracker.save()
+
+    # Verify using HfApi
+    api = HfApi()
+
+    # Check if repo exists and it's private
+    expected_repo_id = f"{testing_empty_hf_org_id}/details_test_model_private"
+    assert api.repo_exists(repo_id=expected_repo_id, repo_type="dataset")
+    assert api.repo_info(repo_id=expected_repo_id, repo_type="dataset").private
+
+    repo_files = api.list_repo_files(repo_id=expected_repo_id, repo_type="dataset")
+    # Check if README.md exists
+    assert any(file == "README.md" for file in repo_files)
+
+    # Check that both results files were uploaded
+    result_files = [file for file in repo_files if file.startswith("results_")]
+    assert len(result_files) == 2
+    assert len([file for file in result_files if file.endswith(".json")]) == 1
+    assert len([file for file in result_files if file.endswith(".parquet")]) == 1
+
+    # Check that the details dataset was uploaded
+    details_files = [file for file in repo_files if "details_" in file and file.endswith(".parquet")]
+    assert len(details_files) == 2

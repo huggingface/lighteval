@@ -66,6 +66,7 @@ def main(
         else:
             lighteval_config = model_config.lighteval
 
+    # TODO: Once lighteval config is owned by Ligteval fix this
     evaluation_tracker = EvaluationTracker(
         token=os.getenv("HF_TOKEN"),
         output_dir=lighteval_config.logging.local_output_path,
