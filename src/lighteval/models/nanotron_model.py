@@ -34,6 +34,7 @@ from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
 from transformers import AutoTokenizer, BatchEncoding
 
+from lighteval.config.lighteval_config import FullNanotronConfig
 from lighteval.data import (
     GenDistributedSampler,
     GenerativeTaskDatasetNanotron,
@@ -55,7 +56,7 @@ from lighteval.tasks.requests import (
 )
 from lighteval.utils.imports import is_nanotron_available
 from lighteval.utils.parallelism import find_executable_batch_size
-from lighteval.utils.utils import EnvConfig, as_list, boolstring_to_bool
+from lighteval.utils.utils import EnvConfig, as_list
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -63,10 +64,8 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 TokenSequence = Union[List[int], torch.LongTensor, torch.Tensor, BatchEncoding]
 
 if is_nanotron_available():
-    import nanotron
     from nanotron import distributed as dist
     from nanotron import logging
-    from nanotron.config import LightEvalConfig, ModelArgs, TokenizerArgs
     from nanotron.generation.decode import decode_tokenized
     from nanotron.logging import human_format, log_rank
     from nanotron.models import build_model
@@ -90,7 +89,7 @@ class NanotronLightevalModel(LightevalModel):
     def __init__(
         self,
         checkpoint_path: str,
-        nanotron_config: nanotron.config.Config,
+        nanotron_config: FullNanotronConfig,
         parallel_context: ParallelContext,
         max_gen_toks: Optional[int] = 256,
         max_length: Optional[int] = None,
@@ -104,10 +103,10 @@ class NanotronLightevalModel(LightevalModel):
         """Initializes a nanotron model for evaluation.
         Args:
         """
-        model_args: ModelArgs = nanotron_config.model
-        tokenizer: TokenizerArgs = nanotron_config.tokenizer
-        lighteval_config: LightEvalConfig = nanotron_config.lighteval
-        parallel_config: ParallelContext = nanotron_config.lighteval.parallelism
+        model_args = nanotron_config.nanotron_config.model
+        tokenizer = nanotron_config.nanotron_config.tokenizer
+        lighteval_config = nanotron_config.lighteval_config
+        parallel_config = nanotron_config.lighteval_config.parallelism
 
         self._batch_size = lighteval_config.batch_size
         self._max_gen_toks = max_gen_toks
@@ -120,9 +119,7 @@ class NanotronLightevalModel(LightevalModel):
             raise ValueError("PP parallelism is not supported yet")
 
         # multichoice_continuations_start_space can be True (forcing space), False (forcing no space) or None (no forcing)
-        multichoice_continuations_start_space = boolstring_to_bool(
-            lighteval_config.tasks.multichoice_continuations_start_space
-        )
+        multichoice_continuations_start_space = lighteval_config.tasks.multichoice_continuations_start_space
 
         self.generation_config = lighteval_config.generation
         if isinstance(self.generation_config, dict):

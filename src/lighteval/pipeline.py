@@ -75,15 +75,15 @@ class PipelineParameters:
     env_config: EnvConfig = field(default_factory=EnvConfig)
     job_id: int = 0
     dataset_loading_processes: int = 1
-    nanotron_checkpoint_path: str = None  # only for nanotron models
+    nanotron_checkpoint_path: str | None = None  # only for nanotron models
     # Dataset
-    custom_tasks_directory: str = None
+    custom_tasks_directory: str | None = None
     # Generation parameters
-    override_batch_size: int = None
+    override_batch_size: int | None = None
     num_fewshot_seeds: int = 1
-    max_samples: int = None
+    max_samples: int | None = None
     use_chat_template: bool = False
-    system_prompt: str = None
+    system_prompt: str | None = None
 
     def __post_init__(self):
         if self.launcher_type == ParallelismManager.ACCELERATE:
@@ -141,9 +141,9 @@ class Pipeline:
                     raise ValueError("You are trying to launch a nanotron model, but nanotron is not installed")
                 dist.initialize_torch_distributed()
                 parallel_context = ParallelContext(
-                    tensor_parallel_size=self.model_config.parallelism.tp,
-                    pipeline_parallel_size=self.model_config.parallelism.pp,
-                    data_parallel_size=self.model_config.parallelism.dp,
+                    tensor_parallel_size=self.model_config.lighteval_config.parallelism.tp,
+                    pipeline_parallel_size=self.model_config.lighteval_config.parallelism.pp,
+                    data_parallel_size=self.model_config.lighteval_config.parallelism.dp,
                 )
                 test_all_gather(parallel_context=parallel_context)
 
@@ -154,8 +154,10 @@ class Pipeline:
             if model_config is not None:
                 if self.parallel_context:
                     return NanotronLightevalModel(
-                        checkpoint_path=os.path.dirname(self.pipeline_parameters.nanotron_checkpoint_path),
-                        nanotron_config=self.model_config,
+                        checkpoint_path=os.path.dirname(self.pipeline_parameters.nanotron_checkpoint_path)
+                        if self.pipeline_parameters.nanotron_checkpoint_path
+                        else "",
+                        nanotron_config=self.model_config.nanotron_config,
                         parallel_context=self.accelerator,
                         debug_one_layer_model=False,
                         model_class=None,
