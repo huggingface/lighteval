@@ -22,7 +22,7 @@
 
 from lighteval.metrics.dynamic_metrics import loglikelihood_acc_metric
 from lighteval.metrics.metrics import Metrics
-from lighteval.metrics.normalizations import PMINorm
+from lighteval.metrics.normalizations import LogProbPMINorm
 from lighteval.metrics.utils import Metric
 from lighteval.models.model_output import GenerativeResponse, LoglikelihoodResponse
 from lighteval.tasks.default_tasks import xstory_cloze_en_lighteval
@@ -83,7 +83,7 @@ def test_pmi_request():
         ]
     )
 
-    metric = loglikelihood_acc_metric(normalization=PMINorm())
+    metric = loglikelihood_acc_metric(normalization=LogProbPMINorm())
     pmi_test_config = get_pmi_task(metrics=[metric])
     pmi_test_config.metric = (metric,)
     task = LightevalTask(pmi_test_config.name, pmi_test_config)
@@ -122,7 +122,7 @@ def test_pmi_request_with_logprob_metric():
         ]
     )
 
-    metrics = [loglikelihood_acc_metric(normalization=PMINorm()), loglikelihood_acc_metric(normalization=None)]
+    metrics = [loglikelihood_acc_metric(normalization=LogProbPMINorm()), loglikelihood_acc_metric(normalization=None)]
     pmi_test_config = get_pmi_task(metrics=metrics)
     task = LightevalTask(pmi_test_config.name, pmi_test_config)
     result = fake_evaluate_task(task, fake_model, max_samples=1)
@@ -170,7 +170,7 @@ def test_pmi_request_with_generative_metric():
         ],
     )
 
-    metrics = [loglikelihood_acc_metric(normalization=PMINorm()), Metrics.exact_match.value]
+    metrics = [loglikelihood_acc_metric(normalization=LogProbPMINorm()), Metrics.exact_match.value]
     pmi_test_config = get_pmi_task(metrics=metrics)
     task = LightevalTask(pmi_test_config.name, pmi_test_config)
     results = fake_evaluate_task(task, fake_model, max_samples=1)

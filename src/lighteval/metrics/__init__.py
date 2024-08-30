@@ -30,16 +30,22 @@ from lighteval.utils.utils import as_list
 
 def apply_target_perplexity_metric(results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
-    # We only consider the best choice, to check if its logprobs are above 0.5
-    results = results[formatted_doc.gold_index]
-    target_logprob = results.result[0]
-    target_acc = results.result[1]
-    reference_text = formatted_doc.get_golds()[0]
+
+    target_golds = formatted_doc.get_golds()
+    assert len(results) == len(target_golds), "You should return as many results as there are golds"
+    target_logprobs = [res.result[0] for res in results]
+    argmax_logits_eq_gold_list = [res.result[1] for res in results]
+    target_tokens = [res.generated_tokens for res in results]
 
     for metric in metrics:
         if metric.category == MetricCategory.TARGET_PERPLEXITY:
             outputs.update(
-                metric.compute(logprobs=target_logprob, target_acc=target_acc, reference_text=reference_text)
+                metric.compute(
+                    logprobs=target_logprobs,
+                    argmax_logits_eq_gold_list=argmax_logits_eq_gold_list,
+                    reference_texts=target_golds,
+                    target_tokens=target_tokens,
+                )
             )
 
     return outputs
@@ -61,7 +67,7 @@ def apply_perplexity_metric(results: list[ModelResponse], formatted_doc: Doc, me
 
     for metric in metrics:
         if metric.category == MetricCategory.PERPLEXITY:
-            outputs.update(metric.compute(logprobs=results.result, reference_text=reference_text))
+            outputs.update(metric.compute(logprobs=[results.result], reference_texts=[reference_text]))
 
     return outputs
 

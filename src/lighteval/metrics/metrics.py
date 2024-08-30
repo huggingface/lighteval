@@ -51,7 +51,7 @@ from lighteval.metrics.metrics_sample import (
     faithfulness,
 )
 from lighteval.metrics.normalizations import (
-    CharNorm,
+    LogProbCharNorm,
     bigbench_normalizer,
     gsm8k_normalizer,
     harness_triviaqa_normalizer,
@@ -289,7 +289,7 @@ class Metrics(Enum):
     )
     loglikelihood_acc = SampleLevelMetric(
         metric_name="acc",
-        sample_level_fn=LoglikelihoodAcc(normalization=None).compute,
+        sample_level_fn=LoglikelihoodAcc(logprob_normalization=None).compute,
         category=MetricCategory.MULTICHOICE,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=np.mean,
@@ -297,7 +297,7 @@ class Metrics(Enum):
     )
     loglikelihood_acc_norm = SampleLevelMetric(
         metric_name="acc_norm",
-        sample_level_fn=LoglikelihoodAcc(normalization=CharNorm()).compute,
+        sample_level_fn=LoglikelihoodAcc(logprob_normalization=LogProbCharNorm()).compute,
         category=MetricCategory.MULTICHOICE,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=np.mean,
@@ -305,7 +305,7 @@ class Metrics(Enum):
     )
     loglikelihood_acc_norm_nospace = SampleLevelMetric(
         metric_name="acc_norm",
-        sample_level_fn=LoglikelihoodAcc(normalization=CharNorm(ignore_first_space=True)).compute,
+        sample_level_fn=LoglikelihoodAcc(logprob_normalization=LogProbCharNorm(ignore_first_space=True)).compute,
         category=MetricCategory.MULTICHOICE,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=np.mean,
@@ -313,7 +313,7 @@ class Metrics(Enum):
     )
     loglikelihood_acc_norm_single_token = SampleLevelMetric(
         metric_name="acc_norm",
-        sample_level_fn=LoglikelihoodAcc(normalization=CharNorm()).compute,
+        sample_level_fn=LoglikelihoodAcc(logprob_normalization=LogProbCharNorm()).compute,
         category=MetricCategory.MULTICHOICE_ONE_TOKEN,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=np.mean,
@@ -321,7 +321,7 @@ class Metrics(Enum):
     )
     loglikelihood_acc_single_token = SampleLevelMetric(
         metric_name="acc",
-        sample_level_fn=LoglikelihoodAcc(normalization=None).compute,
+        sample_level_fn=LoglikelihoodAcc(logprob_normalization=None).compute,
         category=MetricCategory.MULTICHOICE_ONE_TOKEN,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=np.mean,

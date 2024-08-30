@@ -22,17 +22,17 @@
 
 import pytest
 
-from lighteval.metrics.normalizations import CharNorm, PMINorm, TokenNorm, normalize_log_probs
+from lighteval.metrics.normalizations import LogProbCharNorm, LogProbPMINorm, LogProbTokenNorm, normalize_log_probs
 
 
 def test_char_norm():
     choices_logprob = [10.0, 20.0]
     choices_text = [" hell", "world"]
 
-    result = normalize_log_probs(CharNorm(ignore_first_space=False), choices_logprob, None, choices_text, None)
+    result = normalize_log_probs(LogProbCharNorm(ignore_first_space=False), choices_logprob, None, choices_text, None)
     assert result == pytest.approx([2.0, 4.0])
 
-    result = normalize_log_probs(CharNorm(ignore_first_space=True), choices_logprob, None, choices_text, None)
+    result = normalize_log_probs(LogProbCharNorm(ignore_first_space=True), choices_logprob, None, choices_text, None)
     assert result == pytest.approx([2.5, 4.0])
 
 
@@ -40,7 +40,7 @@ def test_token_norm():
     choices_logprob = [10.0, 20.0]
     choices_tokens = [[1, 2, 3], [4, 5]]
 
-    result = normalize_log_probs(TokenNorm(), choices_logprob, None, None, choices_tokens)
+    result = normalize_log_probs(LogProbTokenNorm(), choices_logprob, None, None, choices_tokens)
     assert result == pytest.approx([3.333333, 10.0])
 
 
@@ -48,7 +48,7 @@ def test_pmi_norm():
     choices_logprob = [10.0, 20.0]
     unconditioned_logprob = [5.0, 8.0]
 
-    result = normalize_log_probs(PMINorm(), choices_logprob, unconditioned_logprob, None, None)
+    result = normalize_log_probs(LogProbPMINorm(), choices_logprob, unconditioned_logprob, None, None)
     assert result == pytest.approx([5.0, 12.0])
 
 
@@ -58,6 +58,6 @@ def test_empty_input():
     empty_tokens = []
 
     # Test with empty inputs
-    assert normalize_log_probs(CharNorm(), empty_logprob, None, empty_text, None) == []
-    assert normalize_log_probs(TokenNorm(), empty_logprob, None, None, empty_tokens) == []
-    assert normalize_log_probs(PMINorm(), empty_logprob, empty_logprob, None, None) == []
+    assert normalize_log_probs(LogProbCharNorm(), empty_logprob, None, empty_text, None) == []
+    assert normalize_log_probs(LogProbTokenNorm(), empty_logprob, None, None, empty_tokens) == []
+    assert normalize_log_probs(LogProbPMINorm(), empty_logprob, empty_logprob, None, None) == []

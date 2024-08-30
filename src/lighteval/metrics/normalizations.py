@@ -354,7 +354,7 @@ def gsm8k_normalizer(text: str) -> str:
 
 # Loglikelihood normalization
 @dataclass
-class PMINorm:
+class LogProbPMINorm:
     """
     Performs Pointwise mutual information normalization. log_likelihood_conditioned - log_likelihood_unconditioned.
     Useful when answer contains generally unlikely tokens.
@@ -366,7 +366,7 @@ class PMINorm:
 
 
 @dataclass
-class TokenNorm:
+class LogProbTokenNorm:
     """
     Performs token level normalization. log_likelihood/token_length.
     Useful for non-english languages.
@@ -377,7 +377,7 @@ class TokenNorm:
 
 
 @dataclass
-class CharNorm:
+class LogProbCharNorm:
     """
     Performs character level normalization. log_likelihood/char_length
     ignore_first_space (bool, optional): Whether to ignore the first token's log prob (if it's a space only). Defaults to False.
@@ -390,11 +390,11 @@ class CharNorm:
     ignore_first_space: bool = False
 
 
-Normalization = CharNorm | TokenNorm | PMINorm
+LogProbNormalization = LogProbCharNorm | LogProbTokenNorm | LogProbPMINorm
 
 
 def normalize_log_probs(
-    normalization: Normalization,
+    normalization: LogProbNormalization,
     choices_logprob: list[float],
     unconditioned_logprob: list[float] | None,
     choices_text: list[str] | None,
@@ -402,21 +402,21 @@ def normalize_log_probs(
 ) -> list[float]:
     normalized_log_probs = choices_logprob
     match normalization:
-        case CharNorm(ignore_first_space=True):
+        case LogProbCharNorm(ignore_first_space=True):
             assert choices_text is not None, "choices_text must be provided for character normalization"
             normalized_log_probs = [
                 choices_logprob[ix] / (len(choice) - 1 if choice[0] == " " else len(choice))
                 for ix, choice in enumerate(choices_text)
             ]
-        case CharNorm(ignore_first_space=False):
+        case LogProbCharNorm(ignore_first_space=False):
             assert choices_text is not None, "choices_text must be provided for character normalization"
             normalized_log_probs = [choices_logprob[ix] / len(choice) for ix, choice in enumerate(choices_text)]
-        case TokenNorm():
+        case LogProbTokenNorm():
             assert choices_tokens is not None, "choices_tokens must be provided for token normalization"
             normalized_log_probs = [
                 choices_logprob[ix] / len(choices_tokens[ix]) for ix in range(len(choices_logprob))
             ]
-        case PMINorm():
+        case LogProbPMINorm():
             assert unconditioned_logprob is not None, "unconditioned_logprob must be provided for PMI normalization"
             normalized_log_probs = [
                 choices_logprob[ix] - unconditioned_logprob[ix] for ix in range(len(choices_logprob))

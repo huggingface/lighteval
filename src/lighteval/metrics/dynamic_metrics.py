@@ -24,12 +24,12 @@ from typing import Callable
 
 import numpy as np
 
-from lighteval.metrics.metrics_sample import LoglikelihoodAcc, Probability
-from lighteval.metrics.normalizations import Normalization, PMINorm
+from lighteval.metrics.metrics_sample import LoglikelihoodAcc, NormalizedMultiChoiceProbability, Probability
+from lighteval.metrics.normalizations import LogProbNormalization, LogProbPMINorm, LogProbTokenNorm
 from lighteval.metrics.utils import MetricCategory, MetricUseCase, SampleLevelMetric
 
 
-def loglikelihood_acc_metric(normalization: Normalization | None = None) -> SampleLevelMetric:
+def loglikelihood_acc_metric(normalization: LogProbNormalization | None = None) -> SampleLevelMetric:
     """
     Creates a accuracy (loglikelihood) metric, which returns accuracy given normalization.
     """
@@ -38,8 +38,35 @@ def loglikelihood_acc_metric(normalization: Normalization | None = None) -> Samp
     metric_name = f"acc_{normalization_str}"
     return SampleLevelMetric(
         metric_name=metric_name,
-        sample_level_fn=LoglikelihoodAcc(normalization=normalization).compute,
-        category=MetricCategory.MULTICHOICE if not normalization == PMINorm() else MetricCategory.MULTICHOICE_PMI,
+        sample_level_fn=LoglikelihoodAcc(logprob_normalization=normalization).compute,
+        category=MetricCategory.MULTICHOICE
+        if not normalization == LogProbPMINorm()
+        else MetricCategory.MULTICHOICE_PMI,
+        use_case=MetricUseCase.ACCURACY,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+
+
+def normalized_multi_choice_prob_metric(
+    normalization: LogProbNormalization | None = None,
+    aggregation_function: Callable[[np.ndarray], float] = np.max,
+) -> SampleLevelMetric:
+    """
+    Creates a normalized multi-choice probability metric, which returns the probability of the gold choice / sum of probabilities of all choices (after logprobs are normalized).
+    """
+
+    normalization_str = normalization.name if normalization else ""
+    metric_name = "_".join(filter(None, ["normalized_mc_prob_", normalization_str]))
+
+    return SampleLevelMetric(
+        metric_name=metric_name,
+        sample_level_fn=NormalizedMultiChoiceProbability(
+            log_prob_normalization=normalization, aggregation_function=aggregation_function
+        ).compute,
+        category=MetricCategory.MULTICHOICE
+        if not normalization == LogProbPMINorm()
+        else MetricCategory.MULTICHOICE_PMI,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -47,25 +74,21 @@ def loglikelihood_acc_metric(normalization: Normalization | None = None) -> Samp
 
 
 def probability_metric(
-    normalization: Normalization | None = None,
-    return_mass: bool = False,
+    normalization: LogProbTokenNorm | None = None,
     aggregation_function: Callable[[np.ndarray], float] = np.max,
 ) -> SampleLevelMetric:
     """
-    Creates a probability metric, which returns the probability of the correct choice given normalization.
+    Creates a probability metric, which returns the probability of the gold choice given normalization.
     """
 
-    mass_str = "mass" if return_mass else ""
     normalization_str = normalization.name if normalization else ""
-    metric_name = "_".join(filter(None, ["prob", mass_str, normalization_str]))
+    metric_name = "_".join(filter(None, ["prob", normalization_str]))
 
     return SampleLevelMetric(
         metric_name=metric_name,
-        sample_level_fn=Probability(
-            normalization=normalization, return_mass=return_mass, aggregation_function=aggregation_function
-        ).compute,
-        category=MetricCategory.MULTICHOICE if not normalization == PMINorm() else MetricCategory.MULTICHOICE_PMI,
-        use_case=MetricUseCase.ACCURACY,
+        sample_level_fn=Probability(normalization=normalization, aggregation_function=aggregation_function).compute,
+        category=MetricCategory.TARGET_PERPLEXITY,
+        use_case=MetricUseCase.PERPLEXITY,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
