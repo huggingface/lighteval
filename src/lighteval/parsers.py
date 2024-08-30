@@ -70,6 +70,7 @@ def parser_accelerate(parser=None):
         "--results_org",
         type=str,
         help="Hub organisation where you want to store the results. Your current token must have write access to it",
+        default=None,
     )
     # Common parameters
     parser.add_argument(
