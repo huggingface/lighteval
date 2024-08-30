@@ -186,7 +186,7 @@ class Doc:
 
     # Uncoditioned query is used for PMI normalization, that's
     # log P(choice | Query) - log P(choice | Unconditioned Query)
-    # The uncoditiioned query shouldn't contain any information about the task, thus usually it's empty string or 'Answer:'.
+    # The uncoditioned query shouldn't contain any information about the task, thus usually it's empty string or 'Answer:'.
     unconditioned_query: Optional[str] = None
 
     def __post_init__(self):
