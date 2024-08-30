@@ -88,7 +88,7 @@ def test_pmi_request():
     pmi_test_config.metric = (metric,)
     task = LightevalTask(pmi_test_config.name, pmi_test_config)
     result = fake_evaluate_task(task, fake_model, max_samples=1)
-    # Correc choice after norm should be the second one so 0 acc
+    # Correct choice after norm should be the second one so 0 acc
     assert result[metric.metric_name][0] == 0
 
 
