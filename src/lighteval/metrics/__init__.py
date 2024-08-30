@@ -139,7 +139,7 @@ def apply_multichoice_metric(results: list[ModelResponse], formatted_doc: Doc, m
 
     if is_pmi_category and len(results) != n_choices * 2:
         raise Exception(
-            f"You shoud have returned as many model outputs as choices when using an multi choice metric. Returned {len(results)} instead of {n_choices * 2} (conditioned + unconditioned)"
+            f"You shoud have returned twice as many model outputs as choices when using an probability multi choice metric. Returned {len(results)} instead of {n_choices * 2} (conditioned and unconditioned)"
         )
 
     mc_results = results[:n_choices]
