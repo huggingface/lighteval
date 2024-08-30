@@ -111,15 +111,16 @@ def parser_nanotron(parser=None):
         )
 
     parser.add_argument(
-        "--checkpoint-config-path",
+        "--checkpoint_config_path",
         type=str,
         required=True,
-        help="Path to the brr checkpoint YAML or python config file, potentially on S3",
+        help="Path to the nanotron checkpoint YAML or python config file, potentially on S3",
     )
     parser.add_argument(
-        "--lighteval-override",
+        "--lighteval_config_path",
         type=str,
-        help="Path to an optional YAML or python Lighteval config to override part of the checkpoint Lighteval config",
+        help="Path to a YAML or python lighteval config to be used for the evaluation. Lighteval key in nanotron config is ignored!",
+        required=True,
     )
     parser.add_argument(
         "--cache_dir", type=str, default=CACHE_DIR, help="Cache directory used to store datasets and models"

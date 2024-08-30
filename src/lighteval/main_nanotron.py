@@ -62,11 +62,8 @@ def main(
             skip_null_keys=True,
         )
 
-        lighteval_config: LightEvalConfig
-        if lighteval_config_path:
-            lighteval_config = get_config_from_file(lighteval_config_path, config_class=LightEvalConfig)
-        else:
-            lighteval_config = model_config.lighteval
+        # We are getting an type error, because the get_config_from_file correctly typed,
+        lighteval_config: LightEvalConfig = get_config_from_file(lighteval_config_path, config_class=LightEvalConfig)  # type: ignore
 
         nanotron_config = FullNanotronConfig(lighteval_config, model_config)
 
