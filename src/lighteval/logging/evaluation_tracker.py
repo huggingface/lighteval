@@ -78,9 +78,12 @@ class EvaluationTracker:
     versions_logger: VersionsLogger
     general_config_logger: GeneralConfigLogger
     task_config_logger: TaskConfigLogger
+    private: bool
     hub_results_org: str
+    hub_repo_results: str
+    hub_repo_details: str
 
-    def __init__(self, hub_results_org: str = "", token: str = "") -> None:
+    def __init__(self, hub_results_org, private, hub_repo_details, hub_repo_results,token: str = "") -> None:
         """
         Creates all the necessary loggers for evaluation tracking.
 
@@ -97,8 +100,11 @@ class EvaluationTracker:
         self.general_config_logger = GeneralConfigLogger()
         self.task_config_logger = TaskConfigLogger()
         self.hub_results_org = hub_results_org
-        self.hub_results_repo = f"{hub_results_org}/results"
-        self.hub_private_results_repo = f"{hub_results_org}/private-results"
+        self.private = private
+        self.hub_repo_details = hub_repo_details
+        self.hub_repo_results = hub_repo_results
+        self.hub_results_repo = f"{self.hub_results_org}/{self.hub_repo_results}"
+        self.hub_details_repo = f"{self.hub_results_org}/{self.hub_repo_details}"
         self.api = HfApi(token=token)
 
     def save(
@@ -106,7 +112,6 @@ class EvaluationTracker:
         output_dir: str,
         push_results_to_hub: bool,
         push_details_to_hub: bool,
-        public: bool,
         push_results_to_tensorboard: bool = False,
     ) -> None:
         """Saves the experiment information and results to files, and to the hub if requested.
@@ -183,8 +188,28 @@ class EvaluationTracker:
             dataset.to_parquet(output_file_details.as_posix())
 
         if push_results_to_hub:
+            # Ensure the repository exists before uploading
+            repo_id = self.hub_results_repo
+            try:
+                self.api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True, private=self.private)
+            except Exception as e:
+                hlog(f"Warning: Failed to create or verify repository: {e}")
+                hlog("Attempting to upload anyway...")
+
+            # Ensure the folder for this model exists in the repo
+            try:
+                self.api.create_folder(
+                    repo_id=repo_id,
+                    folder_path=self.general_config_logger.model_name,
+                    repo_type="dataset",
+                    exist_ok=True
+                )
+            except Exception as e:
+                hlog(f"Warning: Failed to create folder in repository: {e}")
+                hlog("Attempting to upload anyway...")
+    
             self.api.upload_folder(
-                repo_id=self.hub_results_repo if public else self.hub_private_results_repo,
+                repo_id=self.hub_results_repo,
                 folder_path=output_dir_results,
                 path_in_repo=self.general_config_logger.model_name,
                 repo_type="dataset",
@@ -196,7 +221,6 @@ class EvaluationTracker:
                 model_name=self.general_config_logger.model_name,
                 results_file_path=output_results_in_details_file,
                 details_folder_path=output_dir_details_sub_folder,
-                push_as_public=public,
             )
 
         if push_results_to_tensorboard:
@@ -233,7 +257,6 @@ class EvaluationTracker:
         model_name: str,
         results_file_path: Path | str,
         details_folder_path: Path | str,
-        push_as_public: bool = False,
     ) -> None:
         """Pushes the experiment details (all the model predictions for every step) to the hub.
 
@@ -242,30 +265,48 @@ class EvaluationTracker:
             results_file_path (str or Path): Local path of the current's experiment aggregated results individual file
             details_folder_path (str or Path): Local path of the current's experiment details folder.
                 The details folder (created by [`EvaluationTracker.save`]) should contain one parquet file per task used during the evaluation run of the current model.
-            push_as_public (bool, optional): If True, the results will be pushed publicly, else the datasets will be private.
-
         """
         results_file_path = str(results_file_path)
         details_folder_path = str(details_folder_path)
 
+        push_as_public = not self.private
+
         sanitized_model_name = model_name.replace("/", "__")
 
-        # "Default" detail names are the public detail names (same as results vs private-results)
-        repo_id = f"{self.hub_results_org}/details_{sanitized_model_name}"
-        if not push_as_public:  # if not public, we add `_private`
-            repo_id = f"{repo_id}_private"
+        repo_id = f"{self.hub_results_org}/{self.hub_repo_details}"
 
-        sub_folder_path = os.path.basename(results_file_path).replace(".json", "").replace("results_", "")
-
-        paths_to_check = [os.path.basename(results_file_path)]
+        # Ensure the repository exists before uploading
         try:
-            checked_paths = list(self.api.get_paths_info(repo_id=repo_id, paths=paths_to_check, repo_type="dataset"))
-        except Exception:
-            checked_paths = []
+            self.api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True, private=not push_as_public)
+        except Exception as e:
+            hlog(f"Warning: Failed to create or verify repository: {e}")
+            hlog("Attempting to upload anyway...")
 
-        if len(checked_paths) == 0:
-            hlog(f"Repo {repo_id} not found for {results_file_path}. Creating it.")
-            self.api.create_repo(repo_id, private=not (push_as_public), repo_type="dataset", exist_ok=True)
+        # Create a folder for the sanitized model name
+        try:
+            self.api.create_folder(
+                repo_id=repo_id,
+                folder_path=sanitized_model_name,
+                repo_type="dataset",
+                exist_ok=True
+            )
+        except Exception as e:
+            hlog(f"Warning: Failed to create folder for model in repository: {e}")
+            hlog("Attempting to upload anyway...")
+
+        sub_folder_path = os.path.join(sanitized_model_name, os.path.basename(results_file_path).replace(".json", "").replace("results_", ""))
+
+        # Ensure the subfolder for this evaluation exists in the repo
+        try:
+            self.api.create_folder(
+                repo_id=repo_id,
+                folder_path=sub_folder_path,
+                repo_type="dataset",
+                exist_ok=True
+            )
+        except Exception as e:
+            hlog(f"Warning: Failed to create subfolder in repository: {e}")
+            hlog("Attempting to upload anyway...")
 
         # Create parquet version of results file as well
         results = load_dataset("json", data_files=results_file_path)
@@ -273,21 +314,31 @@ class EvaluationTracker:
         parquet_local_path = os.path.join(os.path.dirname(results_file_path), parquet_name)
         results["train"].to_parquet(parquet_local_path)
 
-        # Upload results file (json and parquet) and folder
-        self.api.upload_file(
-            repo_id=repo_id,
-            path_or_fileobj=results_file_path,
-            path_in_repo=os.path.basename(results_file_path),
-            repo_type="dataset",
-        )
-        self.api.upload_file(
-            repo_id=repo_id, path_or_fileobj=parquet_local_path, path_in_repo=parquet_name, repo_type="dataset"
-        )
-        self.api.upload_folder(
-            repo_id=repo_id, folder_path=details_folder_path, path_in_repo=sub_folder_path, repo_type="dataset"
-        )
+        # Modify the upload paths to include the sanitized_model_name
+        try:
+            self.api.upload_file(
+                repo_id=repo_id,
+                path_or_fileobj=results_file_path,
+                path_in_repo=os.path.join(sanitized_model_name, os.path.basename(results_file_path)),
+                repo_type="dataset",
+            )
+            self.api.upload_file(
+                repo_id=repo_id,
+                path_or_fileobj=parquet_local_path,
+                path_in_repo=os.path.join(sanitized_model_name, parquet_name),
+                repo_type="dataset"
+            )
+            self.api.upload_folder(
+                repo_id=repo_id,
+                folder_path=details_folder_path,
+                path_in_repo=sub_folder_path,
+                repo_type="dataset",
+                commit_message=f"Updating details for model {model_name}"
+            )
+        except Exception as e:
+            hlog(f"Warning: Failed to upload files to repository: {e}")
 
-        self.recreate_metadata_card(repo_id, model_name)
+        # self.recreate_metadata_card(repo_id, model_name)
 
     def recreate_metadata_card(self, repo_id: str, model_name: str = None) -> None:  # noqa: C901
         """Fully updates the details repository metadata card for the currently evaluated model

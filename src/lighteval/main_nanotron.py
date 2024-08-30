@@ -29,7 +29,7 @@ import numpy as np
 
 from lighteval.evaluator import evaluate, make_results_table
 from lighteval.logging.evaluation_tracker import EvaluationTracker
-from lighteval.logging.hierarchical_logger import hlog, htrack, htrack_block
+from lighteval.logging.hierarchical_logger import hlog, hlog_warn, htrack, htrack_block
 from lighteval.models.model_config import EnvConfig
 from lighteval.models.model_loader import ModelInfo
 from lighteval.models.nanotron_model import NanotronLightevalModel
@@ -96,7 +96,13 @@ def main(
             data_parallel_size=lighteval_config.parallelism.dp,
         )
 
-        evaluation_tracker = EvaluationTracker(token=TOKEN)
+        evaluation_tracker = EvaluationTracker(
+            token=TOKEN,
+            hub_results_org=lighteval_config.logging.hf_user_or_org,
+            private=lighteval_config.logging.private,
+            hub_repo_results=lighteval_config.logging.hub_repo_results,
+            hub_repo_details=lighteval_config.logging.hub_repo_details,
+        )
         evaluation_tracker.general_config_logger.log_args_info(
             num_fewshot_seeds=1,
             override_batch_size=None,
@@ -174,6 +180,8 @@ def main(
 
     if dist.get_rank(parallel_context.world_pg) == 0:
         with htrack_block("Compiling and saving results"):
+            if not lighteval_config.logging.private:
+                hlog_warn("Warning: Results are set to be public. Make sure this is intended.")
             evaluation_tracker.general_config_logger.log_end_time()
             evaluation_tracker.metrics_logger.aggregate(task_dict=task_dict, bootstrap_iters=1000)
             evaluation_tracker.details_logger.aggregate()
@@ -183,11 +191,11 @@ def main(
                     output_dir=lighteval_config.logging.local_output_path,
                     push_results_to_hub=lighteval_config.logging.push_results_to_hub,
                     push_details_to_hub=lighteval_config.logging.push_details_to_hub,
-                    public=False,
                     push_results_to_tensorboard=lighteval_config.logging.push_results_to_tensorboard,
                 )
 
-            final_dict = evaluation_tracker.generate_final_dict()
+
+        final_dict = evaluation_tracker.generate_final_dict()
 
         hlog(make_results_table(final_dict))
 
