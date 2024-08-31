@@ -20,16 +20,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Tuple, cast
-
-from lighteval.models.base_model import BaseModel
-from lighteval.models.model_config import BaseModelConfig, EnvConfig
-from lighteval.models.model_loader import ModelInfo, load_model
+from lighteval.models.model_config import BaseModelConfig
+from lighteval.utils.utils import EnvConfig
+from lighteval.models.model_loader import load_model
 
 
 def test_empty_requests():
-    model_config = BaseModelConfig("trl-internal-testing/tiny-random-LlamaForCausalLM")
-    model, _ = cast(Tuple[BaseModel, ModelInfo], load_model(config=model_config, env_config=EnvConfig()))
+    model_config = BaseModelConfig("hf-internal-testing/tiny-random-LlamaForCausalLM")
+    model, _ = load_model(config=model_config, env_config=EnvConfig())
 
     assert model.loglikelihood([]) == []
     assert model.loglikelihood_single_token([]) == []
