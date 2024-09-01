@@ -197,6 +197,51 @@ def main(
 
         final_dict = evaluation_tracker.generate_final_dict()
 
+        
         hlog(make_results_table(final_dict))
+
+        try:
+            import wandb
+            hlog("Logging to wandb")    
+        except ImportError:
+            hlog("Wandb is not installed, skipping wandb logging")
+            return final_dict
+
+        wandb.init(project=nanotron_config.general.wandb_project, id=nanotron_config.general.wandb_id, resume="allow")
+        
+        # Set custom x-axes for both main and detailed evals
+        wandb.define_metric("eval_main/step")
+        wandb.define_metric("eval_main/*", step_metric="eval_main/step")
+        wandb.define_metric("eval_details/step")
+        wandb.define_metric("eval_details/*", step_metric="eval_details/step")
+
+        # Extract step from the final_dict
+        eval_step = final_dict['config_general']['config']['general']['step']
+
+        # Process and categorize results
+        results = final_dict.get('results', {})
+        main_evals = {}
+        eval_details = {}
+
+        for key, value in results.items():
+            if isinstance(value, dict) and 'acc_norm' in value:
+                if 'average' in key or key.count(':') == 2:
+                    # This is a main eval
+                    main_evals[key] = value['acc_norm']
+                else:
+                    # This is a detailed eval
+                    eval_details[key] = value['acc_norm']
+
+        # Log main evals
+        if main_evals:
+            metrics_to_log = {"eval_main/step": eval_step}
+            metrics_to_log.update({f"eval_main/{key}": value for key, value in main_evals.items()})
+            wandb.log(metrics_to_log)
+
+        # Log detailed evals
+        if eval_details:
+            metrics_to_log = {"eval_details/step": eval_step}
+            metrics_to_log.update({f"eval_details/{key}": value for key, value in eval_details.items()})
+            wandb.log(metrics_to_log)
 
         return final_dict
