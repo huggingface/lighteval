@@ -574,7 +574,10 @@ class BaseModel(LightevalModel):
                     if max_new_tokens is None:  # If generation size is not set, we go all the way
                         max_new_tokens = self.max_length - context_size
                     else:
+                        print(self.max_length, context_size, max_new_tokens)
                         max_new_tokens = min(self.max_length - context_size, max_new_tokens)
+                        if max_new_tokens < 1:
+                            max_new_tokens = 1
 
                 prepared_batch = Batch(
                     input_ids=tokenized["input_ids"],
