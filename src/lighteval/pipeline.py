@@ -103,8 +103,8 @@ class Pipeline:
         tasks: str,
         pipeline_parameters: PipelineParameters,
         evaluation_tracker: EvaluationTracker,
-        model=None,
         model_config=None,
+        model=None,
     ):
         if not (model or model_config):
             raise ValueError("Must provide either a model or model config when creating a pipeline.")
@@ -116,10 +116,9 @@ class Pipeline:
                 "WARNING: --max_samples WAS SET. THESE NUMBERS ARE ONLY PARTIAL AND SHOULD NOT BE USED FOR COMPARISON UNLESS YOU KNOW WHAT YOU ARE DOING."
             )
 
-        self.accelerator, self.parallel_context = self._init_parallelism_manager()
-
-        self.evaluation_tracker = evaluation_tracker
         self.model_config = model_config
+        self.evaluation_tracker = evaluation_tracker
+        self.accelerator, self.parallel_context = self._init_parallelism_manager()
         self.model = self._init_model(model_config, model)
 
         self.evaluation_tracker.general_config_logger.log_model_info(self.model.model_info)
