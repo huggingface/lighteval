@@ -38,6 +38,7 @@ from lighteval.metrics import (
     apply_multichoice_metric,
     apply_multichoice_metric_one_token,
     apply_perplexity_metric,
+    apply_target_multicontext_perplexity_metric,
     apply_target_perplexity_metric,
 )
 from lighteval.metrics.metrics import Metric, MetricCategory, Metrics
@@ -360,6 +361,8 @@ class LightevalTask:
         request_types = []
         if self.has_metric_category[MetricCategory.TARGET_PERPLEXITY]:
             request_types.append(RequestType.LOGLIKELIHOOD)
+        if self.has_metric_category[MetricCategory.TARGET_PERPLEXITY_MULTI_CONTEXT]:
+            request_types.append(RequestType.LOGLIKELIHOOD)
         if self.has_metric_category[MetricCategory.MULTICHOICE]:
             request_types.append(RequestType.LOGLIKELIHOOD)
         if self.has_metric_category[MetricCategory.MULTICHOICE_ONE_TOKEN]:
@@ -411,6 +414,17 @@ class LightevalTask:
                     metric_categories=[MetricCategory.TARGET_PERPLEXITY],
                 )
                 for i, gold in enumerate(golds)
+            ]
+        if self.has_metric_category[MetricCategory.TARGET_PERPLEXITY_MULTI_CONTEXT]:
+            requests[RequestType.LOGLIKELIHOOD] += [
+                LoglikelihoodRequest(
+                    task_name=current_task_name,
+                    example_index=document_id_seed,
+                    request_index=i,
+                    context=context + local_context,
+                    choice=formatted_doc.choices[i],
+                )
+                for i, local_context in enumerate(formatted_doc.specific["local_contexts"])
             ]
         if self.has_metric_category[MetricCategory.PERPLEXITY]:
             requests[RequestType.LOGLIKELIHOOD_ROLLING] += [
@@ -508,25 +522,6 @@ class LightevalTask:
             raise ValueError(f"Requested a metric category {metric_category} absent from the task list.")
 
         return LightevalTask._get_metric_method_from_category(metric_category)
-
-    @staticmethod
-    def _get_metric_method_from_category(metric_category):
-        if metric_category == MetricCategory.TARGET_PERPLEXITY:
-            return apply_target_perplexity_metric
-        if metric_category == MetricCategory.MULTICHOICE:
-            return apply_multichoice_metric
-        if metric_category == MetricCategory.MULTICHOICE_ONE_TOKEN:
-            return apply_multichoice_metric_one_token
-        if metric_category == MetricCategory.PERPLEXITY:
-            return apply_perplexity_metric
-        if metric_category in [
-            MetricCategory.GENERATIVE,
-            MetricCategory.GENERATIVE_SAMPLING,
-            MetricCategory.GENERATIVE_LOGPROB,
-        ]:
-            return apply_generative_metric
-        if metric_category in [MetricCategory.LLM_AS_JUDGE_MULTI_TURN, MetricCategory.LLM_AS_JUDGE]:
-            return apply_llm_as_judge_metric
 
     def aggregation(self):
         """

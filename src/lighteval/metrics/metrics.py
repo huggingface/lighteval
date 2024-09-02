@@ -294,6 +294,14 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
+    loglikelihood_acc_multicontext = SampleLevelMetric(
+        metric_name="acc",
+        sample_level_fn=LoglikelihoodAcc().compute,
+        category=MetricCategory.TARGET_PERPLEXITY_MULTI_CONTEXT,
+        use_case=MetricUseCase.PERPLEXITY,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
     loglikelihood_acc_norm = SampleLevelMetric(
         metric_name="acc_norm",
         sample_level_fn=LoglikelihoodAcc(length_normalization=True).compute,

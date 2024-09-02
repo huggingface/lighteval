@@ -31,9 +31,9 @@ from lighteval.utils.utils import as_list
 def apply_target_perplexity_metric(results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
     # We only consider the best choice, to check if its logprobs are above 0.5
-    results = results[formatted_doc.gold_index]
-    target_logprob = results.result[0]
-    target_acc = results.result[1]
+    current_result = results.pop(0)
+    target_logprob = current_result.result[0]
+    target_acc = current_result.result[1]
     reference_text = formatted_doc.get_golds()[0]
 
     for metric in metrics:
@@ -43,6 +43,22 @@ def apply_target_perplexity_metric(results: list[ModelResponse], formatted_doc: 
             )
 
     return outputs
+
+
+def apply_target_multicontext_perplexity_metric(results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric]):
+    outputs = {}
+
+    current_results = [results.pop(0) for _ in range(len(formatted_doc.choices))]
+
+    gold_ixs = as_list(formatted_doc.gold_index)
+    choices_logprob = [r.result[0] for r in current_results]
+
+    for metric in metrics:
+        if metric.category == MetricCategory.TARGET_PERPLEXITY_MULTI_CONTEXT:
+            outputs.update(
+                metric.compute(choices_logprob=choices_logprob, gold_ixs=gold_ixs, formatted_doc=formatted_doc)
+            )
+    return current_results, outputs
 
 
 def apply_perplexity_metric(results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric]):
@@ -124,6 +140,7 @@ def apply_generative_metric(
 
 def apply_multichoice_metric(results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
+    mc_results = [results.pop(0) for _ in range(len(formatted_doc.choices))]
     if len(formatted_doc.choices) <= 1:
         raise ValueError(
             "You can't use a multi choice metric with only one choice. Use `acc_golds_likelihood` instead."
@@ -142,6 +159,7 @@ def apply_multichoice_metric(results: list[ModelResponse], formatted_doc: Doc, m
             outputs.update(
                 metric.compute(choices_logprob=choices_logprob, gold_ixs=gold_ixs, formatted_doc=formatted_doc)
             )
+
     return outputs
 
 
