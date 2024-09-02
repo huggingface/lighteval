@@ -310,7 +310,7 @@ class NanotronLightevalModel(LightevalModel):
         return "cuda"
 
     def _get_batch_size(self, max_input_length: int, override_bs: int = 0, starting_batch_size: int = 512) -> int:
-        if override_bs > 0:
+        if override_bs:
             return override_bs
         logger.warning("Detecting largest batch size")
 
@@ -1155,7 +1155,9 @@ class NanotronLightevalModel(LightevalModel):
                 max_input_length = min(len(context_enc) + max_gen, self.max_length)
 
             batch_size = self._get_batch_size(
-                override_bs=override_bs, max_input_length=max_input_length, starting_batch_size=starting_batch_size
+                override_bs=self._batch_size,
+                max_input_length=max_input_length,
+                starting_batch_size=starting_batch_size,
             )
             # For next iteration, since the batch will be smaller, we'll test a bigger batch size
             starting_batch_size = batch_size * 2
