@@ -26,9 +26,7 @@ from datetime import timedelta
 from logging import Logger
 from typing import Any, Callable
 
-from colorama import Fore, Style
-
-from lighteval.utils import is_accelerate_available, is_nanotron_available
+from lighteval.utils.imports import is_accelerate_available, is_nanotron_available
 
 
 if is_nanotron_available():
@@ -39,8 +37,10 @@ elif is_accelerate_available():
     from accelerate.logging import get_logger
 
     logger = get_logger(__name__, log_level="INFO")
+else:
+    logger = Logger(__name__, level="INFO")
 
-logger = Logger(__name__, level="INFO")
+from colorama import Fore, Style
 
 
 class HierarchicalLogger:
