@@ -34,9 +34,9 @@ from aenum import extend_enum
 from lighteval.metrics import Metrics
 from lighteval.metrics.metrics import SampleLevelMetric
 from lighteval.metrics.utils import MetricCategory, MetricUseCase
+from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
-from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 
 
 # DEFINE YOUR PROMPT FUNCTIONS

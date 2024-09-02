@@ -27,7 +27,7 @@ import torch
 
 
 @dataclass
-class ModelReturn:
+class ModelResponse:
     result: Union[tuple, list, str]
     input_tokens: list[int] = field(default_factory=list)  # model inputs
     generated_tokens: list[int] = field(default_factory=list)  # model generations
@@ -39,7 +39,7 @@ class ModelReturn:
 
 
 @dataclass
-class LoglikelihoodReturn(ModelReturn):
+class LoglikelihoodResponse(ModelResponse):
     # Float: Total log prob of the continuation
     # Optional(Bool): Whether the continuation is greedy (= all the tokens in the continuation are argmax of prob)
     result: Union[tuple[float, bool], float] = field(default_factory=tuple[float, bool])
@@ -49,7 +49,7 @@ class LoglikelihoodReturn(ModelReturn):
 
 
 @dataclass
-class LoglikelihoodSingleTokenReturn(ModelReturn):
+class LoglikelihoodSingleTokenResponse(ModelResponse):
     # Log probs of the various single token options
     result: list[float] = field(default_factory=list)
 
@@ -58,7 +58,7 @@ class LoglikelihoodSingleTokenReturn(ModelReturn):
 
 
 @dataclass
-class GenerateReturn(ModelReturn):
+class GenerativeResponse(ModelResponse):
     result: str = field(default_factory=str)  # generated text continuation
     logits: Optional[list[float]] = None  # Generated text logits
 
@@ -67,7 +67,7 @@ class GenerateReturn(ModelReturn):
 
 
 @dataclass
-class GenerateMultiTurnReturn(ModelReturn):
+class GenerativeMultiturnResponse(ModelResponse):
     result: list[str] = field(default_factory=list)
 
     def get_result_for_eval(self):

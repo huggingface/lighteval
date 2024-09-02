@@ -146,6 +146,18 @@ accelerate launch --multi_gpu --num_processes=<num_gpus> -m \
 
 You can find the template of the expected model configuration in [examples/model_configs/base_model.yaml_](./examples/model_configs/base_model.yaml).
 
+### Evaluating a quantized model
+
+If you want to evaluate a model by quantizing it, then the model can be loaded in `4bit` or `8bit`. Implicitly, this makes use of `BitsAndBytesConfig` and can drastically reduce memory requirements for consumer-grade hardware.
+
+An example configuration can be found in [examples/model_configs/quantized_model.yaml](./examples/model_configs/quantized_model.yaml).
+
+### Evaluating a PEFT model
+
+If you want to evaluate a model trained with `peft`, check out [examples/model_configs/peft_model.yaml](./examples/model_configs/peft_model.yaml).
+
+Currently, `lighteval` supports `adapter` and `delta` weights to be applied to the base model.
+
 ### Evaluating a large model with pipeline parallelism
 
 To evaluate models larger that ~40B parameters in 16-bit precision, you will need to shard the model across multiple GPUs to fit it in VRAM. You can do this by passing `model_parallel=True` and adapting `--num_processes` to be the number of processes to use for data parallel. For example, on a single node of 8 GPUs, you can run:
@@ -479,6 +491,12 @@ cd <path_to_your_lighteval>/lighteval
 export CUDA_LAUNCH_BLOCKING=1
 srun accelerate launch --multi_gpu --num_processes=8 -m lighteval accelerate --model_args "pretrained=your model name" --tasks examples/tasks/open_llm_leaderboard_tasks.txt --override_batch_size 1 --save_details --output_dir=your output dir
 ```
+
+## Authentication
+
+For authentication of HuggingFace models (i.e `base` models), a HuggingFace token is used. The `HF_TOKEN` used is picked up directly from the environment.
+
+For `tgi` models, authentication is provided in the config file. An example can be found at [tgi_model.yaml](./examples/model_configs/tgi_model.yaml).
 
 ## Releases
 
