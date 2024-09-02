@@ -33,6 +33,7 @@ class MetricCategory(str, Enum):
     LLM_AS_JUDGE_MULTI_TURN = auto()
     LLM_AS_JUDGE = auto()
     MULTICHOICE = auto()
+    MULTICHOICE_PMI = auto()
     MULTICHOICE_ONE_TOKEN = auto()
     IGNORED = auto()
 
