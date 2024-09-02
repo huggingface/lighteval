@@ -210,13 +210,14 @@ def main(
         wandb.init(project=nanotron_config.general.wandb_project, id=nanotron_config.general.wandb_id, resume="allow")
         
         # Set custom x-axes for both main and detailed evals
-        wandb.define_metric("eval_main/step")
-        wandb.define_metric("eval_main/*", step_metric="eval_main/step")
-        wandb.define_metric("eval_details/step")
-        wandb.define_metric("eval_details/*", step_metric="eval_details/step")
+        wandb.define_metric("eval_main/tokens")
+        wandb.define_metric("eval_main/*", step_metric="eval_main/tokens")
+        wandb.define_metric("eval_details/tokens")
+        wandb.define_metric("eval_details/*", step_metric="eval_details/tokens")
 
         # Extract step from the final_dict
         eval_step = final_dict['config_general']['config']['general']['step']
+        tokens = eval_step * nanotron_config.parallelism.dp * nanotron_config.tokens.micro_batch_size * nanotron_config.tokens.gradient_accumulation_steps
 
         # Process and categorize results
         results = final_dict.get('results', {})
@@ -234,13 +235,13 @@ def main(
 
         # Log main evals
         if main_evals:
-            metrics_to_log = {"eval_main/step": eval_step}
+            metrics_to_log = {"eval_main/tokens": eval_step}
             metrics_to_log.update({f"eval_main/{key}": value for key, value in main_evals.items()})
             wandb.log(metrics_to_log)
 
         # Log detailed evals
         if eval_details:
-            metrics_to_log = {"eval_details/step": eval_step}
+            metrics_to_log = {"eval_details/tokens": eval_step}
             metrics_to_log.update({f"eval_details/{key}": value for key, value in eval_details.items()})
             wandb.log(metrics_to_log)
 

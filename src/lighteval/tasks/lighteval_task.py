@@ -646,7 +646,7 @@ def download_dataset_worker(args):
         data_dir=None,
         cache_dir=None,
         download_mode=None,
-        trust_remote_code=trust_dataset,
+        trust_remote_code=True, # hardcoded bc idk why it's not working anymore if i pass it in the eval tasks
     )
     return dataset
 
