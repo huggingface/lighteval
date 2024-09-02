@@ -21,8 +21,8 @@
 # SOFTWARE.
 
 from lighteval.models.model_config import BaseModelConfig
-from lighteval.utils.utils import EnvConfig
 from lighteval.models.model_loader import load_model
+from lighteval.utils.utils import EnvConfig
 
 
 def test_empty_requests():
