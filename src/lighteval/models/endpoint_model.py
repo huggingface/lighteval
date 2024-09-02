@@ -21,15 +21,19 @@
 # SOFTWARE.
 
 import asyncio
-from typing import Coroutine, List, Optional, Union
+from dataclasses import asdict
+from typing import Coroutine, List, Optional, TypeAlias, Union, cast
 
-import torch
 from huggingface_hub import (
     AsyncInferenceClient,
+    ChatCompletionInput,
+    ChatCompletionInputMessage,
+    ChatCompletionOutput,
     InferenceClient,
     InferenceEndpoint,
     InferenceEndpointTimeoutError,
-    TextGenerationInputGrammarType,
+    TextGenerationInput,
+    TextGenerationInputGenerateParameters,
     TextGenerationOutput,
     create_inference_endpoint,
     get_inference_endpoint,
@@ -48,8 +52,13 @@ from lighteval.tasks.requests import (
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
     LoglikelihoodSingleTokenRequest,
+    Request,
 )
 from lighteval.utils.utils import EnvConfig, as_list
+
+
+EndpointInput: TypeAlias = TextGenerationInput | ChatCompletionInput
+EndpointOutput: TypeAlias = TextGenerationOutput | ChatCompletionOutput
 
 
 BATCH_SIZE = 50
@@ -76,7 +85,6 @@ class InferenceEndpointModel(LightevalModel):
                     repository=config.repository,
                     revision=config.revision,
                     framework=config.framework,
-                    task="text-generation",
                     accelerator=config.accelerator,
                     vendor=config.vendor,
                     region=config.region,
@@ -159,103 +167,122 @@ class InferenceEndpointModel(LightevalModel):
             self._max_length = 2048
         return self._max_length
 
-    def _async_process_request(
-        self,
-        context: str,
-        stop_tokens: list[str],
-        max_tokens: int,
-        grammar: Optional[TextGenerationInputGrammarType] = None,
-    ) -> Coroutine[None, list[TextGenerationOutput], str]:
-        # Todo: add an option to launch with conversational instead for chat prompts
-        # https://huggingface.co/docs/huggingface_hub/v0.20.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.conversational
-        generated_text = self.async_client.text_generation(
-            prompt=context,
-            details=True,
-            decoder_input_details=True,
-            grammar=grammar,
-            max_new_tokens=max_tokens,
-            stop_sequences=stop_tokens,
-            # truncate=,
-        )
-
-        return generated_text
-
     def _process_request(
-        self,
-        context: str,
-        stop_tokens: list[str],
-        max_tokens: int,
-        grammar: Optional[TextGenerationInputGrammarType] = None,
-    ) -> TextGenerationOutput:
-        # Todo: add an option to launch with conversational instead for chat prompts
-        # https://huggingface.co/docs/huggingface_hub/v0.20.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.conversational
-        generated_text = self.client.text_generation(
-            prompt=context,
-            details=True,
-            decoder_input_details=True,
-            grammar=grammar,
-            max_new_tokens=max_tokens,
-            stop_sequences=stop_tokens,
-            # truncate=,
+        self, prepared_request: EndpointInput, request: Request
+    ) -> EndpointOutput | Coroutine[None, None, EndpointOutput]:
+        client = self.async_client if self.use_async else self.client
+        if isinstance(prepared_request, TextGenerationInput):
+            # https://github.com/huggingface/huggingface_hub/issues/2471
+            request_as_dict = asdict(prepared_request)
+            request_as_dict["parameters"]["stop_sequences"] = request_as_dict["parameters"]["stop"]
+            del request_as_dict["parameters"]["stop"]
+
+            return client.text_generation(prepared_request.inputs, **request_as_dict["parameters"])
+        elif isinstance(prepared_request, ChatCompletionInput):
+            return client.chat_completion(**prepared_request)
+
+    def _process_generate_response(self, response: EndpointOutput, request: GreedyUntilRequest) -> GenerativeResponse:
+        is_chat = isinstance(response, ChatCompletionOutput)
+        if is_chat:
+            logits = [t.logprob for t in response.choices[0].logprobs.content]
+            input_tokens = request.tokenized_context
+            generated_tokens = self.tokenizer.convert_tokens_to_ids(
+                [t.token for t in response.choices[0].logprobs.content]
+            )
+        else:
+            logits = [t.logprob for t in response.details.tokens]
+            input_tokens = [t.id for t in response.details.prefill]
+            generated_tokens = [t.id for t in response.details.tokens]
+        return GenerativeResponse(
+            result=response.choices[0].message.content if is_chat else response.generated_text,
+            logits=logits if request.use_logits else None,
+            input_tokens=input_tokens,
+            generated_tokens=generated_tokens,
+            truncated_tokens_count=-1,
+            padded_tokens_count=-1,
         )
 
-        return generated_text
+    def _process_logprob_response(
+        self, response: TextGenerationOutput, request: LoglikelihoodRequest | LoglikelihoodRollingRequest
+    ) -> LoglikelihoodResponse:
+        len_choice = len(request.tokenized_continuation)
+        logits = sum([t.logprob for t in response.details.prefill[1:][-len_choice:]])
+        return LoglikelihoodResponse(
+            result=(logits, True) if isinstance(request, LoglikelihoodRequest) else logits,
+            input_tokens=[t.id for t in response.details.prefill[:-len_choice]],
+            generated_tokens=-1,
+            truncated_tokens_count=-1,
+            padded_tokens_count=-1,
+        )
 
-    async def _async_process_batch_generate(
+    async def _async_process_batch(
         self,
-        requests: list[GreedyUntilRequest],
-    ) -> list[TextGenerationOutput]:
+        requests: list[Request],
+    ) -> list[EndpointOutput]:
         return await asyncio.gather(
             *[
-                self._async_process_request(
-                    context=request.context,
-                    stop_tokens=as_list(request.stop_sequence),
-                    max_tokens=request.generation_size,
-                    grammar=request.generation_grammar,
+                cast(
+                    Coroutine[None, None, EndpointOutput],
+                    self._process_request(self._prepare_request(request), request),
                 )
                 for request in requests
             ]
         )
 
-    def _process_batch_generate(
+    def _process_batch(
         self,
-        requests: list[GreedyUntilRequest],
-    ) -> list[TextGenerationOutput]:
+        requests: list[Request],
+    ) -> list[EndpointOutput]:
         return [
-            self._process_request(
-                context=request.context,
-                stop_tokens=as_list(request.stop_sequence),
-                max_tokens=request.generation_size,
-                grammar=request.generation_grammar,
-            )
+            cast(EndpointOutput, self._process_request(self._prepare_request(request), request))
             for request in requests
         ]
 
-    async def _async_process_batch_logprob(
-        self, requests: list[LoglikelihoodRequest], rolling: bool = False
-    ) -> list[TextGenerationOutput]:
-        return await asyncio.gather(
-            *[
-                self._async_process_request(
-                    context=request.context if rolling else request.context + request.choice,
-                    stop_tokens=[],
-                    max_tokens=1,
-                )
-                for request in requests
-            ]
-        )
+    def _prepare_request(self, request: Request) -> EndpointInput:
+        if isinstance(request, GreedyUntilRequest):
+            stop = as_list(request.stop_sequence) or None
+            max_tokens = request.generation_size
+            context = request.context
+        elif isinstance(request, (LoglikelihoodRequest, LoglikelihoodRollingRequest)):
+            stop = None
+            max_tokens = 1
+            rolling = isinstance(request, LoglikelihoodRollingRequest)
+            if rolling:
+                context = request.context
+            elif isinstance(request.context, str):
+                context = request.context + request.choice
+            else:
+                context = request.context + [ChatCompletionInputMessage(role="assistant", content=request.choice)]
+            if not isinstance(context, str):
+                context = self.tokenizer.apply_chat_template(context, tokenize=False)
 
-    def _process_batch_logprob(
-        self, requests: list[LoglikelihoodRequest], rolling: bool = False
-    ) -> list[TextGenerationOutput]:
-        return [
-            self._process_request(
-                context=request.context if rolling else request.context + request.choice,
-                stop_tokens=[],
-                max_tokens=1,
+        if isinstance(context, str):
+            prepared_request = TextGenerationInput(
+                inputs=context,
+                parameters=TextGenerationInputGenerateParameters(
+                    details=True,
+                    decoder_input_details=True,
+                    do_sample=False,
+                    seed=42,
+                    max_new_tokens=max_tokens,
+                    stop=stop,
+                    return_full_text=False,
+                    top_n_tokens=1,
+                ),
             )
-            for request in requests
-        ]
+        else:
+            prepared_request = ChatCompletionInput(
+                messages=context,
+                model=self.name,
+                logprobs=True,
+                stop=stop,
+                max_tokens=max_tokens,
+                seed=42,
+                temperature=0.0,
+                top_logprobs=1,
+                stream=False,
+            )
+        return prepared_request
 
     def greedy_until(
         self,
@@ -282,8 +309,6 @@ class InferenceEndpointModel(LightevalModel):
             for batch in tqdm(
                 dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
             ):
-                # the `returns_logits` flag is only used to filter the results, we always request the full details.
-                returns_logits = batch[0].use_logits
                 num_samples = batch[0].num_samples
                 if num_samples > 1:
                     hlog_err(
@@ -291,18 +316,11 @@ class InferenceEndpointModel(LightevalModel):
                     )
 
                 if self.use_async:
-                    responses = asyncio.run(self._async_process_batch_generate(batch))
+                    responses = asyncio.run(self._async_process_batch(batch))
                 else:
-                    responses = self._process_batch_generate(batch)
-                for response in responses:
-                    results.append(
-                        GenerativeResponse(
-                            result=response.generated_text,
-                            logits=[item.logprob for item in response.details.prefill] if returns_logits else None,
-                            truncated_tokens_count=-1,
-                            padded_tokens_count=-1,
-                        )
-                    )
+                    responses = self._process_batch(batch)
+                for response, request in zip(responses, batch):
+                    results.append(self._process_generate_response(response, request))
 
         return dataset.get_original_order(results)
 
@@ -327,26 +345,11 @@ class InferenceEndpointModel(LightevalModel):
 
             for batch in tqdm(dataloader, desc="Loglikelihoods", position=1, leave=False, disable=self.disable_tqdm):
                 if self.use_async:
-                    responses = asyncio.run(self._async_process_batch_logprob(batch))
+                    responses = asyncio.run(self._async_process_batch(batch))
                 else:
-                    responses = self._process_batch_logprob(batch)
+                    responses = self._process_batch(batch)
                 for cur_request, response in zip(batch, responses):
-                    cont_toks = torch.tensor(cur_request.tokenized_continuation)
-                    len_choice = len(cont_toks)
-
-                    logits = [t.logprob for t in response.details.prefill[-len_choice:] if t.logprob is not None]
-
-                    greedy_tokens = torch.tensor(logits).argmax(dim=-1)
-                    max_equal = (greedy_tokens == cont_toks).all().squeeze(0)
-                    results.append(
-                        LoglikelihoodResponse(
-                            result=(sum(logits), bool(max_equal)),
-                            input_tokens=[t.id for t in response.details.prefill[:-len_choice]],
-                            generated_tokens=[t.id for t in response.details.prefill[-len_choice:]],
-                            truncated_tokens_count=-1,
-                            padded_tokens_count=-1,
-                        )
-                    )
+                    results.append(self._process_logprob_response(cast(TextGenerationOutput, response), cur_request))
 
         return dataset.get_original_order(results)
 
@@ -375,21 +378,11 @@ class InferenceEndpointModel(LightevalModel):
                 dataloader, desc="Loglikelihoods, rolling", position=1, leave=False, disable=self.disable_tqdm
             ):
                 if self.use_async:
-                    responses = asyncio.run(self._async_process_batch_logprob(batch, rolling=True))
+                    responses = asyncio.run(self._async_process_batch(batch))
                 else:
-                    responses = self._process_batch_logprob(batch, rolling=True)
-                for response in responses:
-                    logits = [t.logprob for t in response.details.tokens[:-1]]
-
-                    results.append(
-                        LoglikelihoodResponse(
-                            result=sum(logits),
-                            input_tokens=[t.id for t in response.details.prefill],
-                            generated_tokens=[t.id for t in response.details.tokens[:-1]],
-                            truncated_tokens_count=-1,
-                            padded_tokens_count=-1,
-                        )
-                    )
+                    responses = self._process_batch(batch)
+                for response, request in zip(responses, batch):
+                    results.append(self._process_logprob_response(cast(TextGenerationOutput, response), request))
 
         return dataset.get_original_order(results)
 

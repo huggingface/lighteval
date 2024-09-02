@@ -23,11 +23,15 @@
 import json
 from dataclasses import asdict, dataclass
 from enum import Enum, auto
-from typing import NamedTuple, Optional, Union
+from typing import List, NamedTuple, Optional, TypeAlias, Union
 
-from huggingface_hub import TextGenerationInputGrammarType
+from huggingface_hub import ChatCompletionInputMessage, TextGenerationInputGrammarType
 
 from lighteval.utils.utils import as_list
+
+
+# We later could move this and similar types to lighteval/types.py
+Conversation: TypeAlias = List[ChatCompletionInputMessage]
 
 
 class RequestType(Enum):
@@ -36,6 +40,9 @@ class RequestType(Enum):
     LOGLIKELIHOOD_ROLLING = auto()
     GREEDY_UNTIL = auto()
     GREEDY_UNTIL_MULTI_TURN = auto()
+
+
+Context: TypeAlias = object
 
 
 @dataclass
@@ -50,14 +57,14 @@ class Request:
         task_name (str): The name of the task.
         sample_index (int): The index of the example.
         request_index (int): The index of the request.
-        context (str): The context for the request.
+        context (Context): The context for the request.
         metric_categories (list[MetricCategory]): All the metric categories which concern this request
     """
 
     task_name: str
     sample_index: int
     request_index: int
-    context: str
+    context: Context
     metric_categories: list["MetricCategory"]  # noqa F821
 
 
@@ -124,7 +131,7 @@ class GreedyUntilRequest(Request):
     generation_size: Union[int, None]
     generation_grammar: Union[TextGenerationInputGrammarType, None] = None
     request_type = RequestType.GREEDY_UNTIL
-    tokenized_context: list[int] = None
+    tokenized_context: Optional[list[int]] = None
     num_samples: int = None
     use_logits: bool = False
 
@@ -142,6 +149,7 @@ class GreedyUntilMultiTurnRequest(Request):
 
     stop_sequence: str
     generation_size: int
+    context: Conversation
     request_type = RequestType.GREEDY_UNTIL_MULTI_TURN
     use_logits: bool = False
 
@@ -180,7 +188,7 @@ class Doc:
     target_for_fewshot_sorting: Optional[str] = None  # will probably have to be removed in the future
 
     # Filled when parsing and adding the few-shot context
-    ctx: Optional[str] = ""
+    ctx: Optional[Context] = ""
     num_asked_few_shots: int = -1
     num_effective_few_shots: int = -1
 

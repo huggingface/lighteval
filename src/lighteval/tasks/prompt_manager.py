@@ -27,9 +27,11 @@ from enum import Enum
 from itertools import cycle
 from typing import TYPE_CHECKING, Optional, Tuple, Union
 
+from huggingface_hub import ChatCompletionInputMessage
+
 from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.models.abstract_model import LightevalModel
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Conversation, Doc
 from lighteval.utils.utils import as_list
 
 
@@ -118,7 +120,6 @@ class PromptManager:
             doc (Doc): Formated document.
             use_chat_template (bool): wether or not to use chat template. Will fail if false.
             system_prompt (Optional[str]): The system prompt to use
-            tokenizer (PreTrainedTokenizer): The tokenizer used for the chat template
 
         Raises:
             ValueError: If use_chat_template is set to false.
@@ -157,18 +158,18 @@ class PromptManager:
         truncate_few_shots: bool = False,
         use_chat_template=False,
         system_prompt: str = None,
-    ):
-        """Returns a fewshot context string that is made up of a prepended description
+    ) -> str | Conversation:
+        """Returns a fewshot context that is made up of a prepended description
         (if provided), the `num_fewshot` number of examples, and an appended prompt example.
 
         :param doc: str
             The document as returned from training_docs, validation_docs, or test_docs - should be preformatted.
         :param num_fewshot: int
-            The number of fewshot examples to provide in the returned context string.
+            The number of fewshot examples to provide in the returned context.
         :param seed: seed
             The random seed used to randomly sample examples. If -1, no shuffling will occur, and the samples taken
             will be the `num_fewshot` firsts of the set.
-        :returns: str
+        :returns: str|Conversation
             The fewshot context.
         """
         if use_chat_template and self.model.tokenizer is None:
@@ -189,7 +190,7 @@ class PromptManager:
             system_prompt=system_prompt,
             use_chat_template=use_chat_template,
         )
-        toks = self.model.tokenizer(output)["input_ids"]
+        toks = self.model.tok_encode(output)
 
         # If we need to truncate few-shots to fit in the context
         if truncate_few_shots and self.model.max_length is not None and self.model.tokenizer is not None:
@@ -207,7 +208,7 @@ class PromptManager:
                     system_prompt=system_prompt,
                     use_chat_template=use_chat_template,
                 )
-                toks = self.model.tokenizer(output)["input_ids"]
+                toks = self.model.tok_encode(output)
 
         return output, num_effective_fewshots
 
@@ -218,29 +219,31 @@ class PromptManager:
         fewshot_ex: list[str],
         system_prompt: Union[str | None],
         use_chat_template: bool,
-    ):
-        examples = []
+    ) -> str | Conversation:
+        examples: Conversation = []
         # Few shot examples
         for ex in fewshot_ex:
             if use_chat_template:
-                examples.append({"role": "user", "content": self.doc_to_text(ex, return_instructions=False)})
-                examples.append({"role": "assistant", "content": self.doc_to_target(ex)})
+                examples.append(
+                    ChatCompletionInputMessage(role="user", content=self.doc_to_text(ex, return_instructions=False))
+                )
+                examples.append(ChatCompletionInputMessage(role="assistant", content=self.doc_to_target(ex)))
             else:
                 examples.append(self.doc_to_text(ex, return_instructions=False) + self.doc_to_target(ex))
 
         # Actual example
         if use_chat_template:
-            examples.append({"role": "user", "content": example})
+            examples.append(ChatCompletionInputMessage(role="user", content=example))
         else:
             examples.append(example)
 
         # System prompt and instruction
         if use_chat_template:
             if system_prompt is not None:  # We add system prompt and instruction jointly if possible
-                examples.insert(0, {"role": "system", "content": system_prompt + instruction})
+                examples.insert(0, ChatCompletionInputMessage(role="system", content=system_prompt + instruction))
             else:  # Else we add the instruction to the first example
-                examples[0]["content"] = instruction + examples[0]["content"]
-            return self.model.tokenizer.apply_chat_template(examples, tokenize=False, add_generation_prompt=True)
+                examples[0].content = instruction + examples[0].content
+            return examples
         else:
             if system_prompt is not None:
                 output = system_prompt + instruction + "\n\n".join(examples)
