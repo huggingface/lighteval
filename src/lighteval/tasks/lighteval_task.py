@@ -515,7 +515,7 @@ class LightevalTask:
     def _get_metric_method_from_category(metric_category):
         if metric_category == MetricCategory.TARGET_PERPLEXITY:
             return apply_target_perplexity_metric
-        if metric_category == MetricCategory.MULTICHOICE or metric_category == MetricCategory.MULTICHOICE_PMI:
+        if metric_category in [MetricCategory.MULTICHOICE, MetricCategory.MULTICHOICE_PMI]:
             return apply_multichoice_metric
         if metric_category == MetricCategory.MULTICHOICE_ONE_TOKEN:
             return apply_multichoice_metric_one_token
