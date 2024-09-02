@@ -43,10 +43,10 @@ from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
 )
-from lighteval.utils import as_list, is_accelerate_available
+from lighteval.utils import as_list, is_vllm_available
 
 
-if is_accelerate_available():
+if is_vllm_available():
     pass
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"

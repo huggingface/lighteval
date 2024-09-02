@@ -222,14 +222,14 @@ class AdapterModelConfig(BaseModelConfig):
 @dataclass
 class VLLMModelConfig:
     pretrained: str
-    gpu_memory_utilisation: float = 0.9
-    batch_size: int = 1
+    gpu_memory_utilisation: float = 0.8
+    batch_size: int = -1
     revision: str = "main"
-    dtype: str = "float16"
+    dtype: str | None = None
     tensor_parallel_size: int = 1
     data_parallel_size: int = 1
     max_model_length: int = 1024
-    swap_space: int = 4
+    swap_space: int = 4  # CPU swap space size (GiB) per GPU.
     seed: int = 1234
     trust_remote_code: bool = False
     use_chat_template: bool = False

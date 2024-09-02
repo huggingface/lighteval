@@ -225,6 +225,13 @@ def is_openai_available() -> bool:
 NO_OPENAI_ERROR_MSG = "You are trying to use an Open AI LLM as a judge, for which you need `openai`, which is not available in your environment. Please install it using pip."
 
 
+def is_vllm_available() -> bool:
+    return importlib.util.find_spec("vllm") is not None and importlib.util.find_spec("ray") is not None
+
+
+NO_VLLM_ERROR_MSG = "You are trying to use an VLLM model, for which you need `vllm` and `ray`, which are not available in your environment. Please install them using pip, `pip install vllm ray`."
+
+
 def can_load_extended_tasks() -> bool:
     imports = []
     for package in ["langdetect", "openai"]:
