@@ -24,11 +24,8 @@ import itertools
 import os
 from typing import Optional
 
-import ray
 from more_itertools import distribute
 from tqdm import tqdm
-from vllm import LLM, SamplingParams
-from vllm.transformers_utils.tokenizer import get_tokenizer
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.logging.hierarchical_logger import hlog_warn
@@ -43,8 +40,19 @@ from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
 )
+from lighteval.utils.imports import is_vllm_available
 from lighteval.utils.utils import EnvConfig, as_list
 
+
+if is_vllm_available():
+    import ray
+    from vllm import LLM, SamplingParams
+    from vllm.transformers_utils.tokenizer import get_tokenizer
+else:
+    LLM = None
+    SamplingParams = None
+    get_tokenizer = None
+    ray = None
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -242,11 +250,12 @@ class VLLMModel(LightevalModel):
                 num_samples=num_samples,
             )
 
+            print(f"{len(vllm_outputs)} vllm_outputs")
             for vllm_output in vllm_outputs:
-                output_token_ids = vllm_output.outputs[0].token_ids
-                logprobs = vllm_output.outputs[0].logprobs or []
-                logprobs = [logprob[token_id].logprob for token_id, logprob in zip(output_token_ids, logprobs)]
-                result = vllm_output.outputs[0].text
+                output_token_ids = [outputs.token_ids for outputs in vllm_output.outputs]
+                logprobs = [output.logprobs for output in vllm_output.outputs] or []
+                logprobs = [logprob[token_id].logprob for token_id, logprob in zip(output_token_ids[0], logprobs[0])]
+                result = [output.text for output in vllm_output.outputs]
                 input_token_ids = vllm_output.prompt_token_ids
 
                 cur_response = GenerativeResponse(
