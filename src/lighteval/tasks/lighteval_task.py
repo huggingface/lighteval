@@ -345,42 +345,20 @@ class LightevalTask:
                 self._docs = self.remove_duplicate_docs(self._docs)
         return self._docs
 
-    # Requests
-    def get_request_type(self) -> list[RequestType]:  # noqa C901
+    def doc_to_target(self, formatted_doc: Doc, few_shot: bool = False) -> str:
         """
-        Returns the request types for the task.
+        Returns the target of the given document.
+
+        Args:
+            formatted_doc (Doc): Formatted document.
+            few_shot (bool, optional): Whether the document is used for few
+                shot examples. Defaults to False.
 
         Returns:
-            list[RequestType]: Request types for the task.
-
-        Raises:
-            NotImplementedError: If the request type is not implemented for the
-                task.
+            str: Target of the document, which is the correct answer for a document.
         """
-        request_types = []
-        if self.has_metric_category[MetricCategory.TARGET_PERPLEXITY]:
-            request_types.append(RequestType.LOGLIKELIHOOD)
-        if self.has_metric_category[MetricCategory.MULTICHOICE]:
-            request_types.append(RequestType.LOGLIKELIHOOD)
-        if self.has_metric_category[MetricCategory.MULTICHOICE_ONE_TOKEN]:
-            request_types.append(RequestType.LOGLIKELIHOOD_SINGLE_TOKEN)
-        if self.has_metric_category[MetricCategory.PERPLEXITY]:
-            request_types.append(RequestType.LOGLIKELIHOOD_ROLLING)
-        if self.has_metric_category[MetricCategory.GENERATIVE]:
-            request_types.append(RequestType.GREEDY_UNTIL)
-        if self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]:
-            request_types.append(RequestType.GREEDY_UNTIL)
-        if self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]:
-            request_types.append(RequestType.GREEDY_UNTIL)
-        if self.has_metric_category[MetricCategory.LLM_AS_JUDGE]:
-            request_types.append(RequestType.GREEDY_UNTIL)
-        if self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]:
-            request_types.append(RequestType.GREEDY_UNTIL_MULTI_TURN)
-
-        if len(request_types) == 0:
-            raise NotImplementedError(f"Request type not implemented for task {self.name}")
-
-        return list(set(request_types))
+        # likely we mostly need one example not all
+        return as_list(formatted_doc.get_golds(few_shot=few_shot))[0]
 
     def construct_requests(
         self, formatted_doc: Doc, context: str, document_id_seed: str, current_task_name: str
@@ -397,7 +375,7 @@ class LightevalTask:
         Returns:
             dict[RequestType, List[Request]]: List of requests.
         """
-        requests = {type: [] for type in RequestType}
+        requests: dict[RequestType, list[Request]] = collections.defaultdict(list)
 
         if self.has_metric_category[MetricCategory.TARGET_PERPLEXITY]:
             golds = formatted_doc.get_golds()
@@ -451,7 +429,10 @@ class LightevalTask:
                     ],
                 )
             ]
-        if self.has_metric_category[MetricCategory.MULTICHOICE]:
+        if (
+            self.has_metric_category[MetricCategory.MULTICHOICE]
+            or self.has_metric_category[MetricCategory.MULTICHOICE_PMI]
+        ):
             requests[RequestType.LOGLIKELIHOOD] += [
                 LoglikelihoodRequest(
                     task_name=current_task_name,
@@ -459,7 +440,28 @@ class LightevalTask:
                     request_index=i,
                     context=context,
                     choice=choice,
-                    metric_categories=[MetricCategory.MULTICHOICE],
+                    metric_categories=[
+                        c
+                        for c in [MetricCategory.MULTICHOICE, MetricCategory.MULTICHOICE_PMI]
+                        if self.has_metric_category[c]
+                    ],
+                )
+                for i, choice in enumerate(formatted_doc.choices)
+            ]
+
+        if self.has_metric_category[MetricCategory.MULTICHOICE_PMI]:
+            assert (
+                formatted_doc.unconditioned_query is not None
+            ), "Unconditioned query is required for PMI normalization"
+            requests[RequestType.LOGLIKELIHOOD] += [
+                LoglikelihoodRequest(
+                    task_name=current_task_name,
+                    sample_index=document_id_seed,
+                    # The normalization should come after the choices
+                    request_index=i + len(formatted_doc.choices),
+                    context=formatted_doc.unconditioned_query,
+                    choice=choice,
+                    metric_categories=[MetricCategory.MULTICHOICE_PMI],
                 )
                 for i, choice in enumerate(formatted_doc.choices)
             ]
@@ -513,7 +515,7 @@ class LightevalTask:
     def _get_metric_method_from_category(metric_category):
         if metric_category == MetricCategory.TARGET_PERPLEXITY:
             return apply_target_perplexity_metric
-        if metric_category == MetricCategory.MULTICHOICE:
+        if metric_category in [MetricCategory.MULTICHOICE, MetricCategory.MULTICHOICE_PMI]:
             return apply_multichoice_metric
         if metric_category == MetricCategory.MULTICHOICE_ONE_TOKEN:
             return apply_multichoice_metric_one_token
@@ -607,7 +609,6 @@ def create_requests_from_tasks(  # noqa: C901
 
     # Get lists of each type of request
     for task_name, task in task_dict_items:
-        req_types = task.get_request_type()
         task_docs = list(task.eval_docs())
         n_samples = min(max_samples, len(task_docs)) if max_samples else len(task_docs)
         evaluation_tracker.task_config_logger.log_num_docs(task_name, len(task_docs), n_samples)
@@ -643,8 +644,8 @@ def create_requests_from_tasks(  # noqa: C901
                     # Constructing the requests
                     cur_task_name = f"{task_name}|{num_fewshot}"
                     docs[SampleUid(cur_task_name, doc_id_seed)] = doc
-                    reqs: dict = task.construct_requests(doc, doc.ctx, doc_id_seed, cur_task_name)
-                    for req_type in req_types:
-                        requests[req_type].extend(reqs[req_type])
+                    req_type_reqs_dict = task.construct_requests(doc, doc.ctx, doc_id_seed, cur_task_name)
+                    for req_type, reqs in req_type_reqs_dict.items():
+                        requests[req_type].extend(reqs)
 
     return requests, docs
