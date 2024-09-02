@@ -5,7 +5,7 @@ logging:
   hub_repo_details: null
   hub_repo_results: null
   hub_repo_tensorboard: null
-  local_output_path: /tmp
+  local_output_path: ./output_dir
   push_details_to_hub: false
   push_results_to_hub: false
   push_results_to_tensorboard: true
