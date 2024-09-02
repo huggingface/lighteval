@@ -282,7 +282,10 @@ class Pipeline:
             doc: Doc = self.docs[sample_id]
 
             compute_metric = task.get_metric_method_from_category(metric_category=metric_category)
-            metrics = compute_metric(results=sample_responses, formatted_doc=doc, metrics=task.metrics)
+            # This is important if two metric categories have non-zero intersection request-wise.
+            # Some might then only expect to get their requests.
+            metric_category_metrics = [metric for metric in task.metrics if metric.category == metric_category]
+            metrics = compute_metric(results=sample_responses, formatted_doc=doc, metrics=metric_category_metrics)
 
             self.evaluation_tracker.metrics_logger.log(sample_id.task_name, metrics)
             self.evaluation_tracker.details_logger.log(sample_id.task_name, task, doc, sample_responses, metrics)
