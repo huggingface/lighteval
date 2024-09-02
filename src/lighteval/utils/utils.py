@@ -220,3 +220,7 @@ def download_dataset_worker(args):
         trust_remote_code=trust_dataset,
     )
     return dataset
+
+
+def safe_divide(numerator: np.ndarray, denominator: float, default_value: float = 0.0) -> np.ndarray:
+    return np.where(denominator != 0, numerator / denominator, default_value)

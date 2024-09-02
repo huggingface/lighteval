@@ -30,16 +30,22 @@ from lighteval.utils.utils import as_list
 
 def apply_target_perplexity_metric(results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
-    # We only consider the best choice, to check if its logprobs are above 0.5
-    results = results[formatted_doc.gold_index]
-    target_logprob = results.result[0]
-    target_acc = results.result[1]
-    reference_text = formatted_doc.get_golds()[0]
+
+    target_golds = formatted_doc.get_golds()
+    assert len(results) == len(target_golds), "You should return as many results as there are golds"
+    target_logprobs = [res.result[0] for res in results]
+    argmax_logits_eq_gold_list = [res.result[1] for res in results]
+    target_tokens = [res.generated_tokens for res in results]
 
     for metric in metrics:
         if metric.category == MetricCategory.TARGET_PERPLEXITY:
             outputs.update(
-                metric.compute(logprobs=target_logprob, target_acc=target_acc, reference_text=reference_text)
+                metric.compute(
+                    logprobs=target_logprobs,
+                    argmax_logits_eq_gold_list=argmax_logits_eq_gold_list,
+                    reference_texts=target_golds,
+                    target_tokens=target_tokens,
+                )
             )
 
     return outputs
@@ -61,7 +67,7 @@ def apply_perplexity_metric(results: list[ModelResponse], formatted_doc: Doc, me
 
     for metric in metrics:
         if metric.category == MetricCategory.PERPLEXITY:
-            outputs.update(metric.compute(logprobs=results.result, reference_text=reference_text))
+            outputs.update(metric.compute(logprobs=[results.result], reference_texts=[reference_text]))
 
     return outputs
 
@@ -124,23 +130,44 @@ def apply_generative_metric(
 
 def apply_multichoice_metric(results: list[ModelResponse], formatted_doc: Doc, metrics: list[Metric]):
     outputs = {}
-    if len(formatted_doc.choices) <= 1:
+    n_choices = len(formatted_doc.choices)
+    is_pmi_category = all(metric.category == MetricCategory.MULTICHOICE_PMI for metric in metrics)
+
+    if n_choices <= 1:
         raise ValueError(
             "You can't use a multi choice metric with only one choice. Use `acc_golds_likelihood` instead."
         )
-    if len(results) != len(formatted_doc.choices):
+
+    if not is_pmi_category and len(results) != len(formatted_doc.choices):
         raise Exception(
             f"You shoud have returned as many model outputs as choices when using an multi choice metric. Returned {len(results)} instead of {len(formatted_doc.choices)}"
         )
 
+    if is_pmi_category and len(results) != n_choices * 2:
+        raise Exception(
+            f"You shoud have returned twice as many model outputs as choices when using an probability multi choice metric. Returned {len(results)} instead of {n_choices * 2} (conditioned and unconditioned)"
+        )
+
+    mc_results = results[:n_choices]
     # Todo: make better system with return_bool_score instead of taking first element
-    choices_logprob = [results[i].result[0] for i in range(len(formatted_doc.choices))]
+    conditioned_lp = [res.result[0] for res in mc_results]
+    unconditioned_lp = None
+    if is_pmi_category:
+        unconditioned_lp = [res.result[0] for res in results[n_choices : n_choices * 2]]
+
     gold_ixs = as_list(formatted_doc.gold_index)
+    choices_tokens = [res.generated_tokens for res in mc_results]
 
     for metric in metrics:
-        if metric.category == MetricCategory.MULTICHOICE:
+        if metric.category == MetricCategory.MULTICHOICE_PMI or metric.category == MetricCategory.MULTICHOICE:
             outputs.update(
-                metric.compute(choices_logprob=choices_logprob, gold_ixs=gold_ixs, formatted_doc=formatted_doc)
+                metric.compute(
+                    gold_ixs=gold_ixs,
+                    choices_logprob=conditioned_lp,
+                    unconditioned_logprob=unconditioned_lp,
+                    choices_tokens=choices_tokens,
+                    formatted_doc=formatted_doc,
+                )
             )
     return outputs
 
@@ -151,12 +178,21 @@ def apply_multichoice_metric_one_token(results: list[ModelResponse], formatted_d
         raise Exception("You returned more than one result for a sample with a gmultichoice metric on only one token.")
     results = results[0]
     choices_logprob = results.result
+    choices_texts = formatted_doc.choices
     gold_ixs = as_list(formatted_doc.gold_index)
 
     for metric in metrics:
         if metric.category == MetricCategory.MULTICHOICE_ONE_TOKEN:
             outputs.update(
-                metric.compute(choices_logprob=choices_logprob, gold_ixs=gold_ixs, formatted_doc=formatted_doc)
+                metric.compute(
+                    choices_logprob=choices_logprob,
+                    # Neither token or PMI are supported for this metric
+                    unconditioned_logprob=None,
+                    choices_tokens=None,
+                    choices_texts=choices_texts,
+                    gold_ixs=gold_ixs,
+                    formatted_doc=formatted_doc,
+                )
             )
 
     return outputs
