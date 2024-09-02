@@ -50,9 +50,10 @@ def main(args):
         output_dir=args.output_dir,
         save_details=args.save_details,
         push_to_hub=args.push_to_hub,
-        push_results_to_tensorboard=args.push_results_to_tensorboard,
+        push_to_tensorboard=args.push_to_tensorboard,
         public=args.public_run,
         token=TOKEN,
+        hub_results_org=args.results_org,
     )
     pipeline_params = PipelineParameters(
         launcher_type=ParallelismManager.ACCELERATE,

@@ -99,14 +99,14 @@ class EvaluationTracker:
         output_dir: str,
         save_details: bool = True,
         push_to_hub: bool = False,
-        push_results_to_tensorboard: bool = False,
+        push_to_tensorboard: bool = False,
         hub_results_org: str = "",
         tensorboard_metric_prefix: str = "eval",
         public: bool = False,
         token: str | None = None,
         nanotron_run_info: "GeneralArgs" = None,
     ) -> None:
-        """)
+        """
         Creates all the necessary loggers for evaluation tracking.
 
         Args:
@@ -136,7 +136,7 @@ class EvaluationTracker:
         self.fs, self.output_dir = url_to_fs(output_dir)
 
         self.hub_results_org = hub_results_org  # will also contain tensorboard results
-        if hub_results_org in ["", None] and any([push_to_hub, push_results_to_tensorboard]):
+        if hub_results_org in ["", None] and any([push_to_hub, push_to_tensorboard]):
             raise Exception(
                 "You need to select which org to push to, using `--results_org`, if you want to save information to the hub."
             )
@@ -144,7 +144,7 @@ class EvaluationTracker:
         self.should_push_to_hub = push_to_hub
         self.should_save_details = save_details
 
-        self.should_push_results_to_tensorboard = push_results_to_tensorboard
+        self.should_push_results_to_tensorboard = push_to_tensorboard
         self.tensorboard_repo = f"{hub_results_org}/tensorboard_logs"
         self.tensorboard_metric_prefix = tensorboard_metric_prefix
         self.nanotron_run_info = nanotron_run_info
@@ -502,6 +502,7 @@ class EvaluationTracker:
         if not is_nanotron_available():
             hlog_warn("You cannot push results to tensorboard without having nanotron installed. Skipping")
             return
+
         prefix = self.tensorboard_metric_prefix
 
         if self.nanotron_run_info is not None:
@@ -513,6 +514,7 @@ class EvaluationTracker:
 
         output_dir_tb = Path(self.output_dir) / "tb" / run
         output_dir_tb.mkdir(parents=True, exist_ok=True)
+
         tb_context = HFSummaryWriter(
             logdir=str(output_dir_tb),
             repo_id=self.tensorboard_repo,
@@ -558,7 +560,7 @@ class EvaluationTracker:
         for task_name, task_details in details.items():
             tb_context.add_text(
                 f"eval_details_{task_name}",
-                obj_to_markdown({"0": task_details[0], "1": task_details[1] if len(task_details) > 1 else {}}),
+                obj_to_markdown({"0": task_details}),
                 global_step=global_step,
             )
 
@@ -567,7 +569,7 @@ class EvaluationTracker:
         # See: https://github.com/tensorflow/tensorboard/issues/5958
         # But tensorboardX don't let us control the prefix of the files (only the suffix), so we need to do it ourselves before commiting the files
 
-        tb_context.close()  # flushes the unfinished write operations
+        # tb_context.close()  # flushes the unfinished write operations
         time.sleep(5)
         files = os.listdir(output_dir_tb)
         for file in files:
@@ -577,5 +579,5 @@ class EvaluationTracker:
         tb_context.scheduler.trigger()
         hlog(
             f"Pushed to tensorboard at https://huggingface.co/{self.tensorboard_repo}/{output_dir_tb}/tensorboard"
-            f"at global_step {global_step}"
+            f" at global_step {global_step}"
         )
