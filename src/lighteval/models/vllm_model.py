@@ -38,7 +38,7 @@ from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
 )
-from lighteval.models.utils import _simplify_name
+from lighteval.models.utils import _get_dtype, _simplify_name
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -76,9 +76,9 @@ class VLLMModel(LightevalModel):
 
         self.model_name = _simplify_name(config.pretrained)
         self.model_sha = ""  # config.get_model_sha()
-        self.precision = "float16"  # _get_dtype(config.dtype, config=self._config)
+        self.precision = _get_dtype(config.dtype, config=self._config)
 
-        self.model_info = ModelInfo()
+        self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
 
     @property
     def tokenizer(self):

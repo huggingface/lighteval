@@ -333,6 +333,9 @@ def create_model_config(  # noqa: C901
         if model_args.pop("dummy", False):
             return DummyModelConfig(**model_args)
 
+        if model_args.pop("vllm", False):
+            return VLLMModelConfig(**model_args)
+
         model_args["accelerator"] = accelerator
         model_args["use_chat_template"] = use_chat_template
         model_args["compile"] = bool(model_args["compile"]) if "compile" in model_args else False
