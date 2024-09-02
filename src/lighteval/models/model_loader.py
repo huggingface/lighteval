@@ -42,7 +42,13 @@ from lighteval.models.model_config import (
 )
 from lighteval.models.tgi_model import ModelClient
 from lighteval.models.vllm_model import VLLMModel
-from lighteval.utils import NO_TGI_ERROR_MSG, is_accelerate_available, is_tgi_available
+from lighteval.utils import (
+    NO_TGI_ERROR_MSG,
+    NO_VLLM_ERROR_MSG,
+    is_accelerate_available,
+    is_tgi_available,
+    is_vllm_available,
+)
 
 
 if is_accelerate_available():
@@ -142,6 +148,8 @@ def load_model_with_accelerate_or_default(
     elif isinstance(config, DeltaModelConfig):
         model = DeltaModel(config=config, env_config=env_config)
     elif isinstance(config, VLLMModelConfig):
+        if not is_vllm_available():
+            raise ImportError(NO_VLLM_ERROR_MSG)
         model = VLLMModel(config=config, env_config=env_config)
         return model, ModelInfo(model_name="vllm", model_sha=str(config.seed))
     else:
