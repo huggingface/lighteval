@@ -553,7 +553,7 @@ class BaseModel(LightevalModel):
                         max_length=self.max_length - 1,
                         add_special_tokens=self.add_special_tokens,
                         return_dict=True,
-                    )
+                    ).to(self.device)
                 else:
                     # See doc https://huggingface.co/docs/transformers/v4.38.2/en/pad_truncation#padding-and-truncation
                     # Will do left truncation and padding, as defined when creating the tokenizer
