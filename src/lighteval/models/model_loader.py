@@ -33,13 +33,15 @@ from lighteval.models.model_config import (
     BaseModelConfig,
     DeltaModelConfig,
     DummyModelConfig,
-    EnvConfig,
     InferenceEndpointModelConfig,
     InferenceModelConfig,
     TGIModelConfig,
+    VLLMModelConfig,
 )
 from lighteval.models.tgi_model import ModelClient
-from lighteval.utils.imports import NO_TGI_ERROR_MSG, is_tgi_available
+from lighteval.models.vllm_model import VLLMModel
+from lighteval.utils.imports import NO_TGI_ERROR_MSG, NO_VLLM_ERROR_MSG, is_tgi_available, is_vllm_available
+from lighteval.utils.utils import EnvConfig
 
 
 def load_model(  # noqa: C901
@@ -50,6 +52,7 @@ def load_model(  # noqa: C901
         TGIModelConfig,
         InferenceEndpointModelConfig,
         DummyModelConfig,
+        VLLMModelConfig,
     ],
     env_config: EnvConfig,
 ) -> Union[BaseModel, AdapterModel, DeltaModel, ModelClient, DummyModel]:
@@ -81,6 +84,9 @@ def load_model(  # noqa: C901
     if isinstance(config, DummyModelConfig):
         return load_dummy_model(config=config, env_config=env_config)
 
+    if isinstance(config, VLLMModelConfig):
+        return load_model_with_accelerate_or_default(config=config, env_config=env_config)
+
 
 def load_model_with_tgi(config: TGIModelConfig):
     if not is_tgi_available():
@@ -106,6 +112,11 @@ def load_model_with_accelerate_or_default(
         model = AdapterModel(config=config, env_config=env_config)
     elif isinstance(config, DeltaModelConfig):
         model = DeltaModel(config=config, env_config=env_config)
+    elif isinstance(config, VLLMModelConfig):
+        if not is_vllm_available():
+            raise ImportError(NO_VLLM_ERROR_MSG)
+        model = VLLMModel(config=config, env_config=env_config)
+        return model
     else:
         model = BaseModel(config=config, env_config=env_config)
 
