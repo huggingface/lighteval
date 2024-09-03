@@ -54,10 +54,11 @@ from lighteval.utils.utils import EnvConfig, make_results_table
 if is_accelerate_available():
     from accelerate import Accelerator, InitProcessGroupKwargs
 if is_nanotron_available():
-    from lighteval.models.nanotron_model import NanotronLightevalModel
     from nanotron import distributed as dist
     from nanotron.parallel.context import ParallelContext
     from nanotron.utils import local_ranks_zero_first
+
+    from lighteval.models.nanotron_model import NanotronLightevalModel
 
 
 class ParallelismManager(Enum):
