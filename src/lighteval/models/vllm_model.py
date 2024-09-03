@@ -78,7 +78,6 @@ class VLLMModel(LightevalModel):
 
         # If model_parallel is not set we compare the number of processes with the number of GPUs
         self.model = self._create_auto_model(config, env_config)
-        print(f"model: {self.model}")
 
         # self._device = config.accelerator.device if config.accelerator is not None else "cpu"
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
