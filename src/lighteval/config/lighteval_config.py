@@ -21,7 +21,6 @@
 # SOFTWARE.
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Dict, Optional, Union
 
 from nanotron.config import Config
@@ -65,6 +64,7 @@ class LightEvalLoggingArgs:
     public_run: bool = False
     results_org: str | None = None
     tensorboard_metric_prefix: str = "eval"
+
 
 @dataclass
 class LightEvalTasksArgs:
