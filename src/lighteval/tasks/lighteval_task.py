@@ -115,9 +115,6 @@ class LightevalTaskConfig:
 
     version: int = 0
 
-    def __doc__(self):
-        return """DOCUMENTAION"""
-
     def __post_init__(self):
         if self.suite is None:
             self.suite = ["custom"]

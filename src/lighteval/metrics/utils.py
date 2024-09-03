@@ -55,25 +55,6 @@ class MetricUseCase(str, Enum):
 
 @dataclass
 class Metric:
-    """
-    Array with associated photographic information.
-
-    ...
-
-    Attributes
-    ----------
-    exposure : float
-        Exposure in seconds.
-
-    Methods
-    -------
-    colorspace(c='rgb')
-        Represent the photo in the given colorspace.
-    gamma(n=1.0)
-        Change the photo's gamma exposure.
-
-    """
-
     metric_name: str
     higher_is_better: bool
     category: MetricCategory
@@ -130,8 +111,4 @@ class CorpusLevelMetricGrouping(MetricGrouping):
 class SampleLevelMetricGrouping(MetricGrouping):
     """MetricGrouping are computed per sample, then aggregated over the corpus"""
 
-    pass
-
-
-def hello(hi):
     pass

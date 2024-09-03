@@ -24,10 +24,6 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-"""
-default tasks
-"""
-
 abstract_narrative_understanding_bigbench = LightevalTaskConfig(
     name="abstract_narrative_understanding",
     suite=["bigbench", "bigbench_json"],
