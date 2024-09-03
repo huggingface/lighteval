@@ -62,7 +62,7 @@ def main(
             skip_null_keys=True,
         )
 
-        # We are getting an type error, because the get_config_from_file correctly typed,
+        # We are getting an type error, because the get_config_from_file is not correctly typed,
         lighteval_config: LightEvalConfig = get_config_from_file(lighteval_config_path, config_class=LightEvalConfig)  # type: ignore
         nanotron_config = FullNanotronConfig(lighteval_config, model_config)
 
@@ -80,7 +80,7 @@ def main(
         nanotron_checkpoint_path=checkpoint_config_path,
         dataset_loading_processes=lighteval_config.tasks.dataset_loading_processes,
         custom_tasks_directory=lighteval_config.tasks.custom_tasks,
-        override_batch_size=None,
+        override_batch_size=lighteval_config.batch_size,
         num_fewshot_seeds=1,
         max_samples=lighteval_config.tasks.max_samples,
         use_chat_template=False,

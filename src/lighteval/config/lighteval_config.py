@@ -57,7 +57,7 @@ class GenerationArgs:
 class LightEvalLoggingArgs:
     """Arguments related to logging for LightEval"""
 
-    output_dir: str | Path
+    output_dir: str
     save_details: bool = True
     push_results_to_hub: bool = False
     push_details_to_hub: bool = False
@@ -65,11 +65,6 @@ class LightEvalLoggingArgs:
     public_run: bool = False
     results_org: str | None = None
     tensorboard_metric_prefix: str = "eval"
-
-    def __post_init__(self):
-        if isinstance(self.output_dir, str):
-            self.output_dir = Path(self.output_dir)
-
 
 @dataclass
 class LightEvalTasksArgs:
@@ -94,8 +89,8 @@ class LightEvalConfig:
 
     logging: LightEvalLoggingArgs
     tasks: LightEvalTasksArgs
-    parallelism: Optional[ParallelismArgs] = None
-    batch_size: Optional[int] = None
+    parallelism: ParallelismArgs
+    batch_size: int = 0
     generation: Optional[Union[GenerationArgs, Dict[str, GenerationArgs]]] = None
 
 

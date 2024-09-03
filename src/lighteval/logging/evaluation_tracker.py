@@ -94,7 +94,7 @@ class EvaluationTracker:
 
     def __init__(
         self,
-        output_dir: str = None,
+        output_dir: str,
         hub_results_org: str | None = None,
         push_results_to_hub: bool = False,
         push_details_to_hub: bool = False,
