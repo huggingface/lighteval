@@ -14,9 +14,130 @@ community tasks, and add its dataset on the hub.
 
 A popular community evaluation can move to become an extended or core evaluation over time.
 
-[`lighteval.metrics.utils.CorpusLevelMetric`]
+<Tip>
+You can find examples of custom tasks in the <a
+href="https://github.com/huggingface/lighteval/tree/main/community_tasks">community_task</a>
+directory.
+</Tip>
 
-TODO: Add code snippet to show how to add a new task to lighteval.
+## Step by step creation of a custom task
+
+First, create a python file under the `community_tasks` directory.
+
+You need to define a prompt function that will convert a line from your
+dataset to a document to be used for evaluation.
 
 ```python
+# Define as many as you need for your different tasks
+def prompt_fn(line, task_name: str = None):
+    """Defines how to go from a dataset line to a doc object.
+    Follow examples in src/lighteval/tasks/tasks_prompt_formatting.py, or get more info
+    about what this function should do in the README.
+    """
+    return Doc(
+        task_name=task_name,
+        query="",
+        choices="",
+        gold_index=0,
+        instruction="",
+    )
+```
+
+Then, you need to choose a metric, you can either use an existing one (defined
+in `lighteval/metrics/metrics.py`) or [create a custom one](./adding_new_metric).
+
+```python
+custom_metric = SampleLevelMetric(
+    metric_name="my_custom_metric_name",
+    higher_is_better=True,
+    category=MetricCategory.IGNORED,
+    use_case=MetricUseCase.NONE,
+    sample_level_fn=lambda x: x,  # how to compute score for one sample
+    corpus_level_fn=np.mean,  # How to aggreagte the samples metrics
+)
+```
+
+Then, you need to define your task. You can define a task with or without subsets.
+To define a task with no subsets:
+
+```python
+# This is how you create a simple task (like hellaswag) which has one single subset
+# attached to it, and one evaluation possible.
+task = LightevalTaskConfig(
+    name="myothertask",
+    prompt_function=prompt_fn,  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
+    suite=["community"],
+    hf_repo="",
+    hf_subset="default",
+    hf_avail_splits=[],
+    evaluation_splits=[],
+    few_shots_split=None,
+    few_shots_select=None,
+    metric=[],  # select your metric in Metrics
+)
+```
+
+If you want to create a task with multiple subset, add them to the
+`SAMPLE_SUBSETS` list and create a task for each subset.
+
+```python
+SAMPLE_SUBSETS = []  # list of all the subsets to use for this eval
+
+
+class CustomSubsetTask(LightevalTaskConfig):
+    def __init__(
+        self,
+        name,
+        hf_subset,
+    ):
+        super().__init__(
+            name=name,
+            hf_subset=hf_subset,
+            prompt_function=prompt_fn,  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
+            hf_repo="",
+            metric=[custom_metric],  # select your metric in Metrics or use your custom_metric
+            hf_avail_splits=[],
+            evaluation_splits=[],
+            few_shots_split=None,
+            few_shots_select=None,
+            suite=["community"],
+            generation_size=-1,
+            stop_sequence=None,
+            output_regex=None,
+            frozen=False,
+        )
+SUBSET_TASKS = [CustomSubsetTask(name=f"mytask:{subset}", hf_subset=subset) for subset in SAMPLE_SUBSETS]
+```
+
+Then you need to add your task to the `TASKS_TABLE` list.
+
+```python
+# STORE YOUR EVALS
+
+# tasks with subset:
+TASKS_TABLE = SUBSET_TASKS
+
+# tasks without subset:
+# TASKS_TABLE = [task]
+```
+
+Finally, you need to add a module logic to convert your task to a dict for lighteval.
+
+```python
+# MODULE LOGIC
+# You should not need to touch this
+# Convert to dict for lighteval
+if __name__ == "__main__":
+    print(t.name for t in TASKS_TABLE)
+    print(len(TASKS_TABLE))
+```
+
+Once your file is created you can then run the evaluation with the following command:
+
+```bash
+lighteval accelerate \
+    --model_args "pretrained=HuggingFaceH4/zephyr-7b-beta" \
+    --tasks "community|{custom_task}|{fewshots}|{truncate_few_shot}" \
+    --custom_tasks {path_to_your_custom_task_file} \
+    --output_dir "./evals"
 ```

@@ -1,20 +1,24 @@
-- sections:
-  - title: Getting Started
-  - local: index
-    title: 🌤️ Lighteval
-  - local: installation
-    title: Installation
-  - local: quicktour
-    title: Quicktour
-- sections:
-  - title: Guides
-  - local: adding_new_task
-    title: Adding a Custom Task
-  - local: adding_new_metric
-    title: Adding a Custom Metric
-- sections:
-  - title: API Reference
-  - local: metric_list
-    title: Available Metrics
-  - local: task_list
-    title: Available Tasks
+- local: index
+  title: 🌤️ Lighteval
+- title: "Getting Started"
+  sections:
+    - local: installation
+      title: Installation
+    - local: quicktour
+      title: Quicktour
+- title: "Guides"
+  sections:
+    - local: use_vllm
+      title: Using VLLM as backend
+    - local: adding_new_task
+      title: Adding a Custom Task
+    - local: adding_new_metric
+      title: Adding a Custom Metric
+    - local: saving_results
+      title: Saving Results
+- title: "API Reference"
+  sections:
+    - local: metric_list
+      title: Available Metrics
+    - local: tasks
+      title: Available Tasks

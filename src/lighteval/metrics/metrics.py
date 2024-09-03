@@ -74,6 +74,8 @@ from lighteval.utils.utils import as_list
 
 
 class Metrics(Enum):
+    """hello"""
+
     acc_golds_likelihood = SampleLevelMetric(  # todo: we need a better name for this!
         metric_name="acc",
         sample_level_fn=acc_golds_likelihood,
@@ -606,6 +608,12 @@ class Metrics(Enum):
 
     def __str__(self):
         return self.name.replace("_at_", "@")
+
+    def __call__(self, **kwargs):
+        pass
+
+    def __name__(self):
+        return self.name
 
     @staticmethod
     def higher_is_better():
