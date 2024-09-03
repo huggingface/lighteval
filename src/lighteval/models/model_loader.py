@@ -20,8 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from dataclasses import dataclass
-from typing import Optional, Tuple, Union
+from typing import Union
 
 from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.adapter_model import AdapterModel
@@ -34,25 +33,15 @@ from lighteval.models.model_config import (
     BaseModelConfig,
     DeltaModelConfig,
     DummyModelConfig,
-    EnvConfig,
     InferenceEndpointModelConfig,
     InferenceModelConfig,
     TGIModelConfig,
+    VLLMModelConfig,
 )
 from lighteval.models.tgi_model import ModelClient
-from lighteval.utils import NO_TGI_ERROR_MSG, is_accelerate_available, is_tgi_available
-
-
-if is_accelerate_available():
-    from accelerate.utils import calculate_maximum_sizes, convert_bytes
-
-
-@dataclass
-class ModelInfo:
-    model_name: str
-    model_sha: Optional[str] = None
-    model_dtype: Optional[str] = None
-    model_size: Optional[str] = None
+from lighteval.models.vllm_model import VLLMModel
+from lighteval.utils.imports import NO_TGI_ERROR_MSG, NO_VLLM_ERROR_MSG, is_tgi_available, is_vllm_available
+from lighteval.utils.utils import EnvConfig
 
 
 def load_model(  # noqa: C901
@@ -63,9 +52,10 @@ def load_model(  # noqa: C901
         TGIModelConfig,
         InferenceEndpointModelConfig,
         DummyModelConfig,
+        VLLMModelConfig,
     ],
     env_config: EnvConfig,
-) -> Tuple[Union[BaseModel, AdapterModel, DeltaModel, ModelClient, DummyModel], ModelInfo]:
+) -> Union[BaseModel, AdapterModel, DeltaModel, ModelClient, DummyModel]:
     """Will load either a model from an inference server or a model from a checkpoint, depending
     on the config type.
 
@@ -94,6 +84,9 @@ def load_model(  # noqa: C901
     if isinstance(config, DummyModelConfig):
         return load_dummy_model(config=config, env_config=env_config)
 
+    if isinstance(config, VLLMModelConfig):
+        return load_model_with_accelerate_or_default(config=config, env_config=env_config)
+
 
 def load_model_with_tgi(config: TGIModelConfig):
     if not is_tgi_available():
@@ -103,29 +96,13 @@ def load_model_with_tgi(config: TGIModelConfig):
     model = ModelClient(
         address=config.inference_server_address, auth_token=config.inference_server_auth, model_id=config.model_id
     )
-    model_name = str(model.model_info["model_id"])
-    model_sha = model.model_info["model_sha"]
-    model_precision = model.model_info["model_dtype"]
-    model_size = -1
-    model_info = ModelInfo(
-        model_name=model_name,
-        model_sha=model_sha,
-        model_dtype=model_precision,
-        model_size=model_size,
-    )
-    return model, model_info
+    return model
 
 
 def load_model_with_inference_endpoints(config: InferenceEndpointModelConfig, env_config: EnvConfig):
     hlog("Spin up model using inference endpoint.")
     model = InferenceEndpointModel(config=config, env_config=env_config)
-    model_info = ModelInfo(
-        model_name=model.name,
-        model_sha=model.revision,
-        model_dtype=config.model_dtype or "default",
-        model_size=-1,
-    )
-    return model, model_info
+    return model
 
 
 def load_model_with_accelerate_or_default(
@@ -135,27 +112,16 @@ def load_model_with_accelerate_or_default(
         model = AdapterModel(config=config, env_config=env_config)
     elif isinstance(config, DeltaModelConfig):
         model = DeltaModel(config=config, env_config=env_config)
+    elif isinstance(config, VLLMModelConfig):
+        if not is_vllm_available():
+            raise ImportError(NO_VLLM_ERROR_MSG)
+        model = VLLMModel(config=config, env_config=env_config)
+        return model
     else:
         model = BaseModel(config=config, env_config=env_config)
 
-    model_name = model.model_name
-    model_sha = model.model_sha
-    model_precision = str(model.precision)
-    if is_accelerate_available():
-        model_size, _ = calculate_maximum_sizes(model.model)
-        model_size = convert_bytes(model_size)
-    else:
-        model_size = -1
-    model_info = ModelInfo(
-        model_name=model_name,
-        model_sha=model_sha,
-        model_dtype=model_precision,
-        model_size=model_size,
-    )
-    hlog(f"Model info: {model_info}")
-
-    return model, model_info
+    return model
 
 
 def load_dummy_model(config: DummyModelConfig, env_config: EnvConfig):
-    return DummyModel(config=config, env_config=env_config), ModelInfo(model_name="dummy", model_sha=str(config.seed))
+    return DummyModel(config=config, env_config=env_config)

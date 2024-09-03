@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from argparse import Namespace
 from dataclasses import dataclass
 from typing import Dict, Optional, Union
 
@@ -30,34 +29,20 @@ from transformers import AutoConfig, BitsAndBytesConfig, GPTQConfig, PretrainedC
 
 from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.utils import _get_model_sha
-from lighteval.utils import (
+from lighteval.utils.imports import (
     NO_AUTOGPTQ_ERROR_MSG,
     NO_BNB_ERROR_MSG,
     NO_PEFT_ERROR_MSG,
-    boolstring_to_bool,
     is_accelerate_available,
     is_autogptq_available,
     is_bnb_available,
     is_peft_available,
 )
+from lighteval.utils.utils import EnvConfig, boolstring_to_bool
 
 
 if is_accelerate_available():
     from accelerate import Accelerator
-
-
-@dataclass
-class EnvConfig:
-    """
-    Configuration class for environment settings.
-
-    Attributes:
-        cache_dir (str): directory for caching data.
-        token (str): authentication token used for accessing the HuggingFace Hub.
-    """
-
-    cache_dir: str = None
-    token: str = None
 
 
 @dataclass
@@ -220,6 +205,25 @@ class AdapterModelConfig(BaseModelConfig):
 
 
 @dataclass
+class VLLMModelConfig:
+    pretrained: str
+    gpu_memory_utilisation: float = 0.8
+    batch_size: int = -1
+    revision: str = "main"
+    dtype: str | None = None
+    tensor_parallel_size: int = 1
+    data_parallel_size: int = 1
+    max_model_length: int = 1024
+    swap_space: int = 4  # CPU swap space size (GiB) per GPU.
+    seed: int = 1234
+    trust_remote_code: bool = False
+    use_chat_template: bool = False
+    add_special_tokens: bool = True
+    multichoice_continuations_start_space: bool = True
+    subfolder: Optional[str] = None
+
+
+@dataclass
 class TGIModelConfig:
     inference_server_address: str
     inference_server_auth: str
@@ -282,7 +286,11 @@ class InferenceEndpointModelConfig:
 
 
 def create_model_config(  # noqa: C901
-    args: Namespace, accelerator: Union["Accelerator", None]
+    use_chat_template: bool,
+    override_batch_size: int,
+    accelerator: Union["Accelerator", None],
+    model_args: Union[str, dict] = None,
+    model_config_path: str = None,
 ) -> Union[
     BaseModelConfig,
     AdapterModelConfig,
@@ -290,13 +298,21 @@ def create_model_config(  # noqa: C901
     TGIModelConfig,
     InferenceEndpointModelConfig,
     DummyModelConfig,
+    VLLMModelConfig,
 ]:
     """
     Create a model configuration based on the provided arguments.
 
     Args:
-        args (Namespace): command-line arguments.
-        accelerator (Union[Accelerator, None]): accelerator to use for model training.
+        accelerator(Union[Accelerator, None]): accelerator to use for model training.
+        use_chat_template (bool): whether to use the chat template or not. Set to True for chat or ift models
+        override_batch_size (int): frozen batch size to use
+        model_args (Optional[Union[str, dict]]): Parameters to create the model, passed as a string (like the CLI kwargs or dict).
+            This option only allows to create a dummy model using `dummy` or a base model (using accelerate or no accelerator), in
+            which case corresponding full model args available are the arguments of the [[BaseModelConfig]].
+            Minimal configuration is `pretrained=<name_of_the_model_on_the_hub>`.
+        model_config_path (Optional[str]): Path to the parameters to create the model, passed as a config file. This allows to create
+            all possible model configurations (base, adapter, peft, inference endpoints, tgi...)
 
     Returns:
         Union[BaseModelConfig, AdapterModelConfig, DeltaModelConfig, TGIModelConfig, InferenceEndpointModelConfig, DummyModelConfig]: model configuration.
@@ -307,19 +323,26 @@ def create_model_config(  # noqa: C901
         ValueError: If a base model is not specified when using delta weights or adapter weights.
         ValueError: If a base model is specified when not using delta weights or adapter weights.
     """
-    if args.model_args:
-        args_dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.model_args.split(",")}
+    if model_args is None and model_config_path is None:
+        raise ValueError("You can't create a model without either a list of model_args or a model_config_path.")
 
-        if args_dict.pop("dummy", False):
-            return DummyModelConfig(**args_dict)
+    if model_args:
+        if isinstance(model_args, str):
+            model_args = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
 
-        args_dict["accelerator"] = accelerator
-        args_dict["use_chat_template"] = args.use_chat_template
-        args_dict["compile"] = bool(args_dict["compile"]) if "compile" in args_dict else False
+        if model_args.pop("dummy", False):
+            return DummyModelConfig(**model_args)
 
-        return BaseModelConfig(**args_dict)
+        if model_args.pop("vllm", False):
+            return VLLMModelConfig(**model_args)
 
-    with open(args.model_config_path, "r") as f:
+        model_args["accelerator"] = accelerator
+        model_args["use_chat_template"] = use_chat_template
+        model_args["compile"] = bool(model_args["compile"]) if "compile" in model_args else False
+
+        return BaseModelConfig(**model_args)
+
+    with open(model_config_path, "r") as f:
         config = yaml.safe_load(f)["model"]
 
     if config["type"] == "tgi":
@@ -388,9 +411,9 @@ def create_model_config(  # noqa: C901
         args_dict["dtype"] = config["base_params"]["dtype"]
         args_dict["accelerator"] = accelerator
         args_dict["quantization_config"] = quantization_config
-        args_dict["batch_size"] = args.override_batch_size
+        args_dict["batch_size"] = override_batch_size
         args_dict["multichoice_continuations_start_space"] = multichoice_continuations_start_space
-        args_dict["use_chat_template"] = args.use_chat_template
+        args_dict["use_chat_template"] = use_chat_template
 
         # Keeping only non null params
         args_dict = {k: v for k, v in args_dict.items() if v is not None}

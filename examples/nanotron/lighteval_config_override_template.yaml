@@ -1,29 +1,25 @@
-lighteval:
-  batch_size: 16
-  checkpoints_path: null
-  generation: null
-  logging:
-    hub_repo_details: null
-    hub_repo_results: null
-    hub_repo_tensorboard: HuggingFaceBR4/thomwolf-webdata-std-two
-    local_output_path: /scratch/thomwolf/lighteval/webdata-std-two-1p82G-wet_files_1-seed-5-698496
-    push_details_to_hub: false
-    push_results_to_hub: false
-    push_results_to_tensorboard: true
-    tensorboard_metric_prefix: e
-  parallelism:
-    dp: 1
-    pp: 1
-    pp_engine: 1f1b
-    recompute_granularity: null
-    tp: 1
-    tp_linear_async_communication: false
-    tp_mode: ALL_REDUCE
-  tasks:
-    custom_tasks: /fsx/thomwolf/github/lighteval/tasks_examples/custom_tasks/custom_evaluation_tasks.py
-    dataset_loading_processes: 8
-    max_samples: 10
-    multichoice_continuations_start_space: null
-    num_fewshot_seeds: null
-    tasks: early-signal
-    # tasks: custom|hellaswag|0
+batch_size: 16
+checkpoints_path: null
+generation: null
+logging:
+  hub_repo_details: null
+  hub_repo_results: null
+  hub_repo_tensorboard: null
+  local_output_path: ./output_dir
+  push_details_to_hub: false
+  push_results_to_hub: false
+  push_results_to_tensorboard: true
+  tensorboard_metric_prefix: e
+parallelism:
+  dp: 1
+  pp: 1
+  pp_engine: 1f1b
+  tp: 1
+  tp_linear_async_communication: false
+  tp_mode: ALL_REDUCE
+tasks:
+  dataset_loading_processes: 8
+  max_samples: 10
+  multichoice_continuations_start_space: null
+  num_fewshot_seeds: null
+  tasks: lighteval|gsm8k|5|1

@@ -25,7 +25,7 @@ import os
 
 import pytest
 
-import lighteval.tasks.tasks_prompt_formatting as tasks_prompt_formatting
+import lighteval.tasks.default_prompts as default_prompts
 from lighteval.tasks.requests import Doc
 
 
@@ -49,7 +49,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
             prompt_fn_to_examples = json.load(f)
 
             for prompt_fn_name, examples in prompt_fn_to_examples.items():
-                formatter_fn = getattr(tasks_prompt_formatting, prompt_fn_name)
+                formatter_fn = getattr(default_prompts, prompt_fn_name)
 
                 cur_params = []
 

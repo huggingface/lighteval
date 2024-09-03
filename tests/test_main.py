@@ -22,6 +22,8 @@
 
 """This file should be launched using `python -m pytest script_name.py`. It must stay at the same level or above as main"""
 import os
+from functools import lru_cache, partial
+from typing import Callable, List, Literal, Tuple
 
 import pytest
 from pytest import approx
@@ -44,9 +46,12 @@ os.environ["HF_HOME"] = "cache/models/"
 MODELS = ["gpt2"]
 TASKS = ALL_SUBSETS
 FULL_TEST = os.environ.get("LIGHTEVAL_FULL_TEST", False)
+ModelInput = Tuple[str, str, str, str, Callable[[], dict], float]
 
 
-def run_model_predictions_full(model: str, tasks: list):
+# Caching here to avoid re-running predictions for every single test, the size should be >= MODELS
+@lru_cache(maxsize=len(MODELS))
+def run_model_predictions_full(model: str, tasks: tuple):
     """Runs the full main as a black box, using the input model and tasks, on all samples without parallelism"""
     lighteval_args = ["--model_args", f"pretrained={model}", "--tasks", ",".join(tasks)]
     lighteval_args += [
@@ -64,7 +69,8 @@ def run_model_predictions_full(model: str, tasks: list):
     return results
 
 
-def run_model_predictions_lite(model: str, tasks: list):
+@lru_cache(maxsize=len(MODELS))
+def run_model_predictions_lite(model: str, tasks: tuple):
     """Runs the full main as a black box, using the input model and tasks, on 10 samples without parallelism"""
     lighteval_args = ["--model_args", f"pretrained={model}", "--tasks", ",".join(tasks)]
     lighteval_args += [
@@ -83,62 +89,53 @@ def run_model_predictions_lite(model: str, tasks: list):
     return results
 
 
-def pytest_generate_tests(metafunc: pytest.Metafunc):
-    """Initializes the main test setup. This function is automatically called by pytest and
-    should not be called manually.
+def generate_test_parameters(tasks: List[str]) -> List[ModelInput]:
+    """Generate test parameters for all models and tasks."""
 
-    Every function with "model_input" as arguments will be sent the "parameters".
-    This function will be run only once, ensuring that each model is run only once on the selected tasks.
-    (This is better than using fixtures as fixtures are re-run once for each test, which is not a behavior we want).
-    """
+    def generate_model_parameters(
+        model: str, test_type: Literal["full", "lite"], prediction_func: Callable
+    ) -> List[ModelInput]:
+        results = RESULTS_FULL if test_type == "full" else RESULTS_LITE
+        return [
+            (model, test_type, normalize_eval_name(eval_name), metric, prediction_func, reference)
+            for eval_name in tasks
+            for metric, reference in results[model][eval_name].items()
+        ]
+
     parameters = []
+    for model in MODELS:
+        if FULL_TEST:
+            # Don't call the function during collection!! Very expensive
+            predictions_full = partial(run_model_predictions_full, model, tuple(tasks))
+            parameters.extend(generate_model_parameters(model, "full", predictions_full))
+        else:
+            predictions_lite = partial(run_model_predictions_lite, model, tuple(tasks))
+            parameters.extend(generate_model_parameters(model, "lite", predictions_lite))
 
-    # If model_input is a test function argument
-    # (= the function requires a fixture)
-    if "model_input" in metafunc.fixturenames:
-        tasks = TASKS  # must be a list not a file name
-        for model in MODELS:
-            if FULL_TEST:
-                predictions_full = run_model_predictions_full(model, tasks)
-                for eval_name in tasks:
-                    for metric, reference in RESULTS_FULL[model][eval_name].items():
-                        if len(eval_name.split("|")) == 4:
-                            eval_name = "|".join(eval_name.split("|")[:-1])
-                        prediction = predictions_full["results"][eval_name.replace("|", ":")][metric]
-                        parameters.append((model, "all", eval_name, metric, prediction, reference))
-            else:
-                predictions_lite = run_model_predictions_lite(model, tasks)
-                for eval_name in tasks:
-                    for metric, reference in RESULTS_LITE[model][eval_name].items():
-                        if len(eval_name.split("|")) == 4:
-                            eval_name = "|".join(eval_name.split("|")[:-1])
-                        prediction = predictions_lite["results"][eval_name.replace("|", ":")][metric]
-                        parameters.append((model, "lite", eval_name, metric, prediction, reference))
-        metafunc.parametrize("model_input", parameters, scope="session")
+    return parameters
 
 
-def test_model_prediction(model_input: tuple):
+def normalize_eval_name(eval_name: str) -> str:
+    """Normalize evaluation name by removing the last part if it has 4 components."""
+    parts = eval_name.split("|")
+    return "|".join(parts[:3]) if len(parts) == 4 else eval_name
+
+
+# generates the model predictions parameters at test collection time
+parameters: list[ModelInput] = generate_test_parameters(TASKS)
+ids = [f"{model_input[0]}_{model_input[1]}_{model_input[2]}_{model_input[3]}" for model_input in parameters]
+
+
+@pytest.mark.parametrize("model_input", parameters, ids=ids)
+def test_model_prediction(model_input: ModelInput):
     """Evaluates a model on a full task - is parametrized using pytest_generate_test"""
-    model_name, test_type, eval_name, metric, source, prediction = model_input
-    assert source == approx(
+    model_name, test_type, eval_name, metric, get_predictions, reference = model_input
+    prediction = get_predictions()["results"][eval_name.replace("|", ":")][metric]
+    assert reference == approx(
         prediction, rel=1e-4
     ), f"Model {model_name} on {test_type} samples, for eval {eval_name}, metric {metric} incorrect"
 
 
 if __name__ == "__main__":
-    parameters = []
-    tasks = TASKS
-    for model in MODELS:
-        if FULL_TEST:
-            predictions_full = run_model_predictions_full(model, tasks)
-            for eval_name in tasks:
-                for metric, reference in RESULTS_FULL[model][eval_name].items():
-                    prediction = predictions_full["results"][eval_name.replace("|", ":")][metric]
-                    parameters.append((model, "all", eval_name, metric, prediction, reference))
-        else:
-            predictions_lite = run_model_predictions_lite(model, tasks)
-            for eval_name in tasks:
-                for metric, reference in RESULTS_LITE[model][eval_name].items():
-                    prediction = predictions_lite["results"][eval_name.replace("|", ":")][metric]
-                    parameters.append((model, "lite", eval_name, metric, prediction, reference))
+    parameters = generate_test_parameters(TASKS)
     print(parameters)
