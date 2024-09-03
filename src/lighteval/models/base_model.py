@@ -112,6 +112,8 @@ class BaseModel(LightevalModel):
             model_size=model_size,
         )
 
+        self.pair_wise_tokenization = config.pair_wise_tokenization
+
     @property
     def tokenizer(self):
         return self._tokenizer
@@ -699,7 +701,7 @@ class BaseModel(LightevalModel):
             else:
                 # The following line is mandatory for compatibility with the harness
                 request.tokenized_context, request.tokenized_continuation = self.tok_encode_pair(
-                    request.context, request.choice
+                    request.context, request.choice, pairwise=self.pair_wise_tokenization
                 )
 
         return self._loglikelihood_tokens(requests, override_bs=override_bs)

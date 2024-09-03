@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from typing import Optional, Union
 
 import torch
-from transformers import AutoTokenizer, BatchEncoding
+from transformers import BatchEncoding, PreTrainedTokenizerBase
 
 from lighteval.models.model_output import (
     GenerativeMultiturnResponse,
@@ -41,7 +41,6 @@ from lighteval.tasks.requests import (
     LoglikelihoodSingleTokenRequest,
     RequestType,
 )
-from lighteval.utils.utils import EnvConfig
 
 
 TokenSequence = Union[list[int], torch.LongTensor, torch.Tensor, BatchEncoding]
@@ -60,26 +59,18 @@ class LightevalModel(ABC):
 
     """Abstract model class defining the API that every model to plug into lighteval must follow."""
 
-    @abstractmethod
-    def __init__(
-        self,
-        config,
-        env_config: EnvConfig,
-    ):
-        return NotImplemented
-
     def cleanup(self):
         """Clean up operations if needed, such as closing an endpoint."""
         return
 
     @property
     @abstractmethod
-    def tokenizer(self) -> AutoTokenizer:
+    def tokenizer(self) -> PreTrainedTokenizerBase:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def add_special_tokens(self):
+    def add_special_tokens(self) -> bool:
         raise NotImplementedError
 
     @property
@@ -168,12 +159,44 @@ class LightevalModel(ABC):
             return_tensors="pt",
         )
 
-    def tok_encode_pair(self, context, continuation):
-        """Encodes a context, continuation pair by taking care of the spaces in between."""
+    def tok_encode_pair(self, context, continuation, pairwise: bool):
+        """Encodes a context, continuation pair by taking care of the spaces in between.
+        Args:
+            context (str): The context string to be encoded.
+            continuation (str): The continuation string to be encoded.
+            pairwise (bool):
+                If True, encode context and continuation separately.
+                If False, encode them together and then split.
+
+        Returns:
+            Tuple[TokenSequence, TokenSequence]: A tuple containing the encoded context and continuation.
+
+        The advantage of pairwise is:
+        1) It better aligns with how LLM predicts tokens
+        2) Works in case len(tok(context,cont)) != len(tok(context)) + len(tok(continuation)).
+        E.g this can happen for chinese if no space is used between context/continuation
+        """
+
         n_spaces = len(context) - len(context.rstrip())
         if n_spaces > 0:
             continuation = context[-n_spaces:] + continuation
             context = context[:-n_spaces]
+
+        if pairwise:
+            context_enc, continuation_enc = self.tok_encode(context), self.tok_encode(continuation)
+            if self.add_special_tokens:
+                tokenized_with_special_tokens = self.tokenizer.build_inputs_with_special_tokens(
+                    context_enc + continuation_enc
+                )
+                # If this fails something went wrong as the function above should only add special tokens
+                first_non_prefix_token_idx = tokenized_with_special_tokens.index(context_enc[0])
+                last_context_token_idx = first_non_prefix_token_idx + len(context_enc)
+                context_enc, continuation_enc = (
+                    tokenized_with_special_tokens[:last_context_token_idx],
+                    tokenized_with_special_tokens[last_context_token_idx:],
+                )
+            return context_enc, continuation_enc
+
         whole_enc = self.tok_encode(context + continuation)
         context_enc = self.tok_encode(context)
         context_enc_len = len(context_enc)
