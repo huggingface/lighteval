@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from typing import Optional, Union
 
 import torch
-from transformers import BatchEncoding
+from transformers import AutoTokenizer, BatchEncoding
 
 from lighteval.models.model_output import (
     GenerativeMultiturnResponse,
@@ -74,7 +74,7 @@ class LightevalModel(ABC):
 
     @property
     @abstractmethod
-    def tokenizer(self):
+    def tokenizer(self) -> AutoTokenizer:
         raise NotImplementedError
 
     @property
