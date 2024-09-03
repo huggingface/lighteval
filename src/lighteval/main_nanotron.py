@@ -217,7 +217,7 @@ def main(
 
         # Extract step from the final_dict
         eval_step = final_dict['config_general']['config']['general']['step']
-        tokens = eval_step * nanotron_config.parallelism.dp * nanotron_config.tokens.micro_batch_size * nanotron_config.tokens.gradient_accumulation_steps
+        tokens = eval_step * nanotron_config.parallelism.dp * nanotron_config.tokens.micro_batch_size * nanotron_config.tokens.batch_accumulation_per_replica
 
         # Process and categorize results
         results = final_dict.get('results', {})
