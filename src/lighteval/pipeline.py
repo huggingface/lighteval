@@ -119,7 +119,6 @@ class Pipeline:
         self.model_config = model_config
         self.evaluation_tracker = evaluation_tracker
         self.accelerator, self.parallel_context = self._init_parallelism_manager()
-        print(f"1\n{self.parallel_context=}")
         self.model = self._init_model(model_config, model)
 
         self.evaluation_tracker.general_config_logger.log_model_info(self.model.model_info)

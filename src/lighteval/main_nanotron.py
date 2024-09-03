@@ -65,7 +65,6 @@ def main(
         # We are getting an type error, because the get_config_from_file correctly typed,
         lighteval_config: LightEvalConfig = get_config_from_file(lighteval_config_path, config_class=LightEvalConfig)  # type: ignore
         nanotron_config = FullNanotronConfig(lighteval_config, model_config)
-        print(f"1\n{nanotron_config=}")
 
     evaluation_tracker = EvaluationTracker(
         output_dir=lighteval_config.logging.output_dir,
@@ -73,7 +72,6 @@ def main(
         tensorboard_metric_prefix=lighteval_config.logging.tensorboard_metric_prefix,
         nanotron_run_info=nanotron_config.nanotron_config.general,
     )
-    print(f"2\n{nanotron_config=}")
 
     pipeline_parameters = PipelineParameters(
         launcher_type=ParallelismManager.NANOTRON,
