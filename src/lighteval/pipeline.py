@@ -119,6 +119,7 @@ class Pipeline:
         self.model_config = model_config
         self.evaluation_tracker = evaluation_tracker
         self.accelerator, self.parallel_context = self._init_parallelism_manager()
+        print(f"1\n{self.parallel_context=}")
         self.model = self._init_model(model_config, model)
 
         self.evaluation_tracker.general_config_logger.log_model_info(self.model.model_info)
@@ -156,8 +157,8 @@ class Pipeline:
                         checkpoint_path=os.path.dirname(self.pipeline_parameters.nanotron_checkpoint_path)
                         if self.pipeline_parameters.nanotron_checkpoint_path
                         else "",
-                        nanotron_config=self.model_config.nanotron_config,
-                        parallel_context=self.accelerator,
+                        nanotron_config=self.model_config,
+                        parallel_context=self.parallel_context,
                         debug_one_layer_model=False,
                         model_class=None,
                         env_config=self.pipeline_parameters.env_config,

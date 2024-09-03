@@ -57,7 +57,7 @@ class GenerationArgs:
 class LightEvalLoggingArgs:
     """Arguments related to logging for LightEval"""
 
-    output_dir: str
+    output_dir: str | Path
     save_details: bool = True
     push_results_to_hub: bool = False
     push_details_to_hub: bool = False
@@ -67,8 +67,8 @@ class LightEvalLoggingArgs:
     tensorboard_metric_prefix: str = "eval"
 
     def __post_init__(self):
-        if isinstance(self.local_output_path, str):
-            self.local_output_path = Path(self.local_output_path)
+        if isinstance(self.output_dir, str):
+            self.output_dir = Path(self.output_dir)
 
 
 @dataclass

@@ -214,7 +214,9 @@ class NanotronLightevalModel(LightevalModel):
 
         self.multichoice_continuations_start_space = multichoice_continuations_start_space
 
-        self.model_info = ModelInfo(model_name=f"{nanotron_config.general.run}/{nanotron_config.general.step}")
+        self.model_info = ModelInfo(
+            model_name=f"{nanotron_config.nanotron_config.general.run}/{nanotron_config.nanotron_config.general.step}"
+        )
 
     @property
     def tokenizer(self):
