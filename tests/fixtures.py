@@ -25,10 +25,11 @@ from huggingface_hub import HfApi
 from huggingface_hub.hf_api import DatasetInfo
 
 
-@pytest.fixture
-def testing_empty_hf_org_id():
-    org_id = "lighteval-testing"
+TESTING_EMPTY_HF_ORG_ID = "lighteval-tests"
 
+
+@pytest.fixture
+def testing_empty_hf_org_id(org_id: str = TESTING_EMPTY_HF_ORG_ID):
     def list_repos(org_id: str):
         return list(hf_api.list_models(author=org_id)) + list(hf_api.list_datasets(author=org_id))
 
