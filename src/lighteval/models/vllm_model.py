@@ -24,7 +24,6 @@ import itertools
 import os
 from typing import Optional
 
-from more_itertools import distribute
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
@@ -46,6 +45,7 @@ from lighteval.utils.utils import EnvConfig, as_list
 
 if is_vllm_available():
     import ray
+    from more_itertools import distribute
     from vllm import LLM, SamplingParams
     from vllm.transformers_utils.tokenizer import get_tokenizer
 else:
@@ -53,6 +53,7 @@ else:
     SamplingParams = None
     get_tokenizer = None
     ray = None
+    distribute = None
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
