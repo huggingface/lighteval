@@ -10,6 +10,8 @@
   sections:
     - local: use_vllm
       title: Using VLLM as backend
+    - local: use_tgi
+      title: Using TGI as backend
     - local: adding_new_task
       title: Adding a Custom Task
     - local: adding_new_metric
