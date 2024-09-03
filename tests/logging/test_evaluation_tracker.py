@@ -40,7 +40,7 @@ def mock_evaluation_tracker():
             output_dir=temp_dir,
             save_details=False,
             push_to_hub=False,
-            push_results_to_tensorboard=False,
+            push_to_tensorboard=False,
         )
         tracker.general_config_logger.model_name = "test_model"
         yield tracker
