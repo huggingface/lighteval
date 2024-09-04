@@ -24,6 +24,7 @@
 import os
 from typing import Optional
 
+from lighteval.config.lighteval_config import FullNanotronConfig, LightEvalConfig
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import htrack, htrack_block
 from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
@@ -34,7 +35,7 @@ from lighteval.utils.utils import EnvConfig
 if not is_nanotron_available():
     raise ImportError(NO_NANOTRON_ERROR_MSG)
 
-from nanotron.config import Config, LightEvalConfig, get_config_from_file
+from nanotron.config import Config, get_config_from_file
 
 
 SEED = 1234
@@ -60,28 +61,26 @@ def main(
             skip_unused_config_keys=True,
             skip_null_keys=True,
         )
-        if lighteval_config_path:
-            lighteval_config = get_config_from_file(lighteval_config_path, config_class=LightEvalConfig)
-            model_config.lighteval = lighteval_config
-        else:
-            lighteval_config = model_config.lighteval
+
+        # We are getting an type error, because the get_config_from_file is not correctly typed,
+        lighteval_config: LightEvalConfig = get_config_from_file(lighteval_config_path, config_class=LightEvalConfig)  # type: ignore
+        nanotron_config = FullNanotronConfig(lighteval_config, model_config)
 
     evaluation_tracker = EvaluationTracker(
-        token=os.getenv("HF_TOKEN"),
-        output_dir=lighteval_config.logging.local_output_path,
-        hub_results_org=lighteval_config.logging.hub_repo_tensorboard,
+        output_dir=lighteval_config.logging.output_dir,
+        hub_results_org=lighteval_config.logging.results_org,
         tensorboard_metric_prefix=lighteval_config.logging.tensorboard_metric_prefix,
-        nanotron_run_info=model_config.general,
+        nanotron_run_info=nanotron_config.nanotron_config.general,
     )
 
     pipeline_parameters = PipelineParameters(
         launcher_type=ParallelismManager.NANOTRON,
         env_config=env_config,
-        job_id=os.environ.get("SLURM_JOB_ID", None),
+        job_id=os.environ.get("SLURM_JOB_ID", 0),
         nanotron_checkpoint_path=checkpoint_config_path,
         dataset_loading_processes=lighteval_config.tasks.dataset_loading_processes,
         custom_tasks_directory=lighteval_config.tasks.custom_tasks,
-        override_batch_size=None,
+        override_batch_size=lighteval_config.batch_size,
         num_fewshot_seeds=1,
         max_samples=lighteval_config.tasks.max_samples,
         use_chat_template=False,
@@ -92,7 +91,7 @@ def main(
         tasks=lighteval_config.tasks.tasks,
         pipeline_parameters=pipeline_parameters,
         evaluation_tracker=evaluation_tracker,
-        model_config=model_config,
+        model_config=nanotron_config,
     )
 
     pipeline.evaluate()
