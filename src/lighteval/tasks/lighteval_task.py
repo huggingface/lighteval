@@ -272,7 +272,13 @@ class LightevalTask:
             list[Doc]: List of documents.
         """
         if self.dataset is None:
-            self.dataset = download_dataset_worker((self.dataset_path, self.dataset_config_name, self.trust_dataset))
+            self.dataset = download_dataset_worker(
+                self.dataset_path,
+                self.dataset_config_name,
+                self.trust_dataset,
+                self.dataset_filter,
+                self.dataset_revision,
+            )
         splits = as_list(splits)
 
         docs = []
@@ -535,14 +541,29 @@ class LightevalTask:
 
         if dataset_loading_processes <= 1:
             datasets = [
-                download_dataset_worker((task.dataset_path, task.dataset_config_name, task.trust_dataset))
+                download_dataset_worker(
+                    task.dataset_path,
+                    task.dataset_config_name,
+                    task.trust_dataset,
+                    task.dataset_filter,
+                    task.dataset_revision,
+                )
                 for task in tasks
             ]
         else:
             with Pool(processes=dataset_loading_processes) as pool:
-                datasets = pool.map(
+                datasets = pool.starmap(
                     download_dataset_worker,
-                    [(task.dataset_path, task.dataset_config_name, task.trust_dataset) for task in tasks],
+                    [
+                        (
+                            task.dataset_path,
+                            task.dataset_config_name,
+                            task.trust_dataset,
+                            task.dataset_filter,
+                            task.dataset_revision,
+                        )
+                        for task in tasks
+                    ],
                 )
 
         for task, dataset in zip(tasks, datasets):
