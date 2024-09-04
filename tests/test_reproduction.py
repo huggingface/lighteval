@@ -20,49 +20,86 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from lighteval.evaluator import EvaluationTracker, evaluate
+from unittest.mock import patch
+
+from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.metrics.metrics import Metrics
-from lighteval.models.base_model import BaseModelConfig
-from lighteval.models.model_config import EnvConfig
+from lighteval.models.model_config import BaseModelConfig, EnvConfig
 from lighteval.models.model_loader import load_model
-from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
-from lighteval.tasks.requests import Doc, RequestType, TaskExampleId
-from lighteval.tasks.tasks_prompt_formatting import arc
+from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
+from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig, create_requests_from_tasks
+from lighteval.tasks.requests import Doc
 
 
 def run_evaluation() -> dict:
-    evaluation_tracker = EvaluationTracker()
-    model_config = BaseModelConfig("hf-internal-testing/tiny-random-LlamaForCausalLM")
-    model, _ = load_model(config=model_config, env_config=EnvConfig())
-
-    task_config = LightevalTaskConfig("test", arc, "", "", [Metrics.loglikelihood_acc])
+    task_config = LightevalTaskConfig(
+        name="test",
+        prompt_function=lambda _: _,
+        hf_repo="",
+        hf_subset="",
+        metric=[Metrics.loglikelihood_acc],
+        generation_size=5,
+        stop_sequence=[],
+    )
     task = LightevalTask("test", task_config)
+    task._docs = [
+        Doc(
+            query="Tell me:\n\nHow are you?",
+            choices=["Fine, thanks!", "Not bad!"],
+            instruction="Tell me:\n\n",
+            gold_index=0,
+        ),
+    ]
+    task._fewshot_docs = []
+
+    model_config = BaseModelConfig("hf-internal-testing/tiny-random-LlamaForCausalLM")
+    model = load_model(config=model_config, env_config=EnvConfig(cache_dir="."))
+
+    evaluation_tracker = EvaluationTracker()
+    pipeline_params = PipelineParameters(launcher_type=ParallelismManager.NONE, override_batch_size=0)
+
+    with patch("lighteval.pipeline.Pipeline._init_tasks_and_requests"):
+        pipeline = Pipeline(
+            tasks="custom|test|0|0",
+            pipeline_parameters=pipeline_params,
+            evaluation_tracker=evaluation_tracker,
+            model=model,
+        )
     task_dict = {"custom|test": task}
     evaluation_tracker.task_config_logger.log(task_dict)
-    doc = Doc("Who is the GOAT?", ["CR7", "Messi", "Pele", "Zizou"], gold_index=3)
-    doc.ctx = "Who is the GOAT?"
-    docs = {TaskExampleId("custom|test|0", "0_0"): doc}
-    requests_dict = task.construct_requests(doc, doc.ctx, "0_0", "custom|test|0")
-    # Because `task.construct_requests` has empty entries causing error in `evaluate`` currently.
-    requests_dict = {RequestType.LOGLIKELIHOOD: requests_dict[RequestType.LOGLIKELIHOOD]}
-
-    evaluation_tracker = evaluate(
-        lm=model,
-        requests_dict=requests_dict,
-        docs=docs,
+    fewshot_dict = {"custom|test": [(0, False)]}
+    pipeline.task_names_list = ["custom|test"]
+    pipeline.task_dict = task_dict
+    pipeline.fewshot_dict = fewshot_dict
+    requests, docs = create_requests_from_tasks(
         task_dict=task_dict,
-        override_bs=1,
+        fewshot_dict=fewshot_dict,
+        num_fewshot_seeds=pipeline_params.num_fewshot_seeds,
+        lm=model,
+        max_samples=pipeline_params.max_samples,
         evaluation_tracker=evaluation_tracker,
+        use_chat_template=False,
+        system_prompt=pipeline_params.system_prompt,
     )
-    evaluation_tracker.metrics_logger.aggregate(task_dict=task_dict)
-    evaluation_tracker.details_logger.aggregate()
-    model.cleanup()
-    return evaluation_tracker.generate_final_dict()
+    pipeline.requests = requests
+    pipeline.docs = docs
+    evaluation_tracker.task_config_logger.log(task_dict)
+
+    pipeline.evaluate()
+    return pipeline.get_results()
 
 
 def test_reproduction():
     result_1 = run_evaluation()
     del result_1["config_general"]["start_time"]
+    del result_1["config_general"]["end_time"]
+    del result_1["config_general"]["total_evaluation_time_secondes"]
     result_2 = run_evaluation()
     del result_2["config_general"]["start_time"]
-    assert result_2 == result_1
+    del result_2["config_general"]["end_time"]
+    del result_2["config_general"]["total_evaluation_time_secondes"]
+    assert result_2["config_general"] == result_1["config_general"]
+    assert result_2["results"] == result_1["results"]
+    assert result_2["summary_general"] == result_1["summary_general"]
+    assert result_2["versions"] == result_1["versions"]
+    assert result_2["summary_tasks"] == result_1["summary_tasks"]
