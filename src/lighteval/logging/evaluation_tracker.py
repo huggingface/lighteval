@@ -50,7 +50,7 @@ from lighteval.utils.utils import obj_to_markdown
 
 
 if is_nanotron_available():
-    from nanotron.config import GeneralArgs
+    from nanotron.config import GeneralArgs  # type: ignore
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
@@ -62,7 +62,7 @@ class EnhancedJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if is_dataclass(o):
             try:
-                return asdict(o)
+                return asdict(o)  # type: ignore
             except Exception:
                 return str(o)
         if callable(o):
@@ -87,23 +87,16 @@ class EvaluationTracker:
     requested.
     """
 
-    details_logger: DetailsLogger
-    metrics_logger: MetricsLogger
-    versions_logger: VersionsLogger
-    general_config_logger: GeneralConfigLogger
-    task_config_logger: TaskConfigLogger
-    hub_results_org: str
-
     def __init__(
         self,
         output_dir: str,
         save_details: bool = True,
         push_to_hub: bool = False,
         push_to_tensorboard: bool = False,
-        hub_results_org: str = "",
+        hub_results_org: str | None = "",
         tensorboard_metric_prefix: str = "eval",
         public: bool = False,
-        token: str | None = None,
+        hf_token: str | None = None,
         nanotron_run_info: "GeneralArgs" = None,
     ) -> None:
         """
@@ -131,9 +124,9 @@ class EvaluationTracker:
         self.general_config_logger = GeneralConfigLogger()
         self.task_config_logger = TaskConfigLogger()
 
-        self.api = HfApi(token=token)
-
-        self.fs, self.output_dir = url_to_fs(output_dir)
+        self.api = HfApi(token=hf_token)
+        self.fs, self.output_dir = url_to_fs(output_dir, token=hf_token)
+        self.hf_token = hf_token
 
         self.hub_results_org = hub_results_org  # will also contain tensorboard results
         if hub_results_org in ["", None] and any([push_to_hub, push_to_tensorboard]):
@@ -276,11 +269,13 @@ class EvaluationTracker:
         results_dataset = Dataset.from_dict(
             {key: [json.dumps(v, cls=EnhancedJSONEncoder, indent=2)] for key, v in results_dict.items()}
         )
-        results_dataset.to_parquet(f"{fsspec_repo_uri}/{result_file_base_name}.parquet")
+        results_dataset.to_parquet(
+            f"{fsspec_repo_uri}/{result_file_base_name}.parquet", storage_options={"token": self.hf_token}
+        )
 
         for task_name, dataset in details.items():
             output_file_details = Path(date_id) / f"details_{task_name}_{date_id}.parquet"
-            dataset.to_parquet(f"{fsspec_repo_uri}/{output_file_details}")
+            dataset.to_parquet(f"{fsspec_repo_uri}/{output_file_details}", storage_options={"token": self.hf_token})
 
         self.recreate_metadata_card(repo_id)
 
@@ -445,7 +440,7 @@ class EvaluationTracker:
         # Get the top results
         last_results_file = [f for f in results_files if max_last_eval_date_results.replace(":", "-") in f][0]
         last_results_file_path = hf_hub_url(repo_id=repo_id, filename=last_results_file, repo_type="dataset")
-        f = load_dataset("json", data_files=last_results_file_path, split="train")
+        f: Dataset = load_dataset("json", data_files=last_results_file_path, split="train", token=self.hf_token)  # type: ignore
         results_dict = f["results"][0]
         new_dictionary = {"all": results_dict}
         new_dictionary.update(results_dict)
@@ -490,7 +485,7 @@ class EvaluationTracker:
             card_data,
             pretty_name=card_data.pretty_name,
         )
-        card.push_to_hub(repo_id, repo_type="dataset")
+        card.push_to_hub(repo_id, repo_type="dataset", token=self.hf_token)
 
     def push_to_tensorboard(  # noqa: C901
         self, results: dict[str, dict[str, float]], details: dict[str, DetailsLogger.CompiledDetail]

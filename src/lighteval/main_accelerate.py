@@ -52,7 +52,7 @@ def main(args):
         push_to_hub=args.push_to_hub,
         push_to_tensorboard=args.push_to_tensorboard,
         public=args.public_run,
-        token=TOKEN,
+        hf_token=TOKEN,
         hub_results_org=args.results_org,
     )
     pipeline_params = PipelineParameters(
