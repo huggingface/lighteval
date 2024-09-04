@@ -31,17 +31,24 @@ from huggingface_hub import HfApi
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.info_loggers import DetailsLogger
+from tests.fixtures import TESTING_EMPTY_HF_ORG_ID
 
 
 @pytest.fixture
-def mock_evaluation_tracker():
+def mock_evaluation_tracker(request):
+    passed_params = {}
+    if request.keywords.get("evaluation_tracker"):
+        passed_params = request.keywords["evaluation_tracker"].kwargs
+
     with tempfile.TemporaryDirectory() as temp_dir:
-        tracker = EvaluationTracker(
-            output_dir=temp_dir,
-            save_details=False,
-            push_to_hub=False,
-            push_to_tensorboard=False,
-        )
+        kwargs = {
+            "output_dir": temp_dir,
+            "save_details": passed_params.get("save_details", False),
+            "push_to_hub": passed_params.get("push_to_hub", False),
+            "push_to_tensorboard": passed_params.get("push_to_tensorboard", False),
+            "hub_results_org": passed_params.get("hub_results_org", ""),
+        }
+        tracker = EvaluationTracker(**kwargs)
         tracker.general_config_logger.model_name = "test_model"
         yield tracker
 
@@ -86,8 +93,8 @@ def test_results_logging(mock_evaluation_tracker: EvaluationTracker):
     assert saved_results["config_general"]["model_name"] == "test_model"
 
 
+@pytest.mark.evaluation_tracker(save_details=True)
 def test_details_logging(mock_evaluation_tracker, mock_datetime):
-    mock_evaluation_tracker.should_save_details = True
     task_details = {
         "task1": [DetailsLogger.CompiledDetail(truncated=10, padded=5)],
         "task2": [DetailsLogger.CompiledDetail(truncated=20, padded=10)],
@@ -108,18 +115,16 @@ def test_details_logging(mock_evaluation_tracker, mock_datetime):
         assert int(dataset[0]["padded"]) == task_details[task][0].padded
 
 
+@pytest.mark.evaluation_tracker(save_details=False)
 def test_no_details_output(mock_evaluation_tracker: EvaluationTracker):
-    mock_evaluation_tracker.should_save_details = False
     mock_evaluation_tracker.save()
 
     details_dir = Path(mock_evaluation_tracker.output_dir) / "details" / "test_model"
     assert not details_dir.exists()
 
 
+@pytest.mark.evaluation_tracker(push_to_hub=True, hub_results_org=TESTING_EMPTY_HF_ORG_ID)
 def test_push_to_hub_works(testing_empty_hf_org_id, mock_evaluation_tracker: EvaluationTracker, mock_datetime):
-    mock_evaluation_tracker.should_push_to_hub = True
-    mock_evaluation_tracker.hub_results_org = testing_empty_hf_org_id
-
     # Prepare the dummy data
     task_metrics = {
         "task1": {"accuracy": 0.8, "f1": 0.75},

@@ -27,9 +27,11 @@ from huggingface_hub import HfApi
 from huggingface_hub.hf_api import DatasetInfo
 
 
+TESTING_EMPTY_HF_ORG_ID = "lighteval-tests"
+
+
 @pytest.fixture
-def testing_empty_hf_org_id():
-    org_id = "lighteval-tests"
+def testing_empty_hf_org_id(org_id: str = TESTING_EMPTY_HF_ORG_ID):
     token = os.getenv("HF_TEST_TOKEN")
     os.environ["HF_TOKEN"] = token
 

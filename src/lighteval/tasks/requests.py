@@ -184,6 +184,11 @@ class Doc:
     num_asked_few_shots: int = -1
     num_effective_few_shots: int = -1
 
+    # Uncoditioned query is used for PMI normalization, that's
+    # log P(choice | Query) - log P(choice | Unconditioned Query)
+    # The uncoditioned query shouldn't contain any information about the task, thus usually it's empty string or 'Answer:'.
+    unconditioned_query: Optional[str] = None
+
     def __post_init__(self):
         if self.instruction is None:
             self.instruction = ""
