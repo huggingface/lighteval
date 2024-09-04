@@ -57,4 +57,4 @@ def testing_empty_hf_org_id(org_id: str = TESTING_EMPTY_HF_ORG_ID):
     # Clean up: recreate any necessary default repositories after the test
     # This step is optional and depends on your specific needs
     clean_repos(org_id)
-    os.environ["HF_TOKEN"] = old_token
+    os.environ["HF_TOKEN"] = old_token if old_token is not None else ""
