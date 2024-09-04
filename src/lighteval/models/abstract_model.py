@@ -159,7 +159,7 @@ class LightevalModel(ABC):
             return_tensors="pt",
         )
 
-    def tok_encode_pair(self, context, continuation, pairwise: bool):
+    def tok_encode_pair(self, context, continuation, pairwise: bool = False):
         """Encodes a context, continuation pair by taking care of the spaces in between.
         Args:
             context (str): The context string to be encoded.

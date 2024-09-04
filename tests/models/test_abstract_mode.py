@@ -29,11 +29,11 @@ from lighteval.utils.utils import EnvConfig
 
 def test_tok_encode_pair():
     model = DummyModel(config=DummyModelConfig(seed=42), env_config=EnvConfig())
-    model._tokenizer = AutoTokenizer.from_pretrained("google/gemma-7b")
-    context = "的"
-    continuation = "速度"
+    model._tokenizer = AutoTokenizer.from_pretrained("facebook/xglm-564M")
+    context = "答案："
+    continuation = "1"
     non_pairwise_tokens = model.tok_encode_pair(context, continuation, pairwise=False)
     pairwise_tokens = model.tok_encode_pair(context, continuation, pairwise=True)
     # Problematic case where the completion tokens are empty despite the chars are non-empty
-    assert non_pairwise_tokens == ([235370], [])
-    assert pairwise_tokens == ([235370], [31884])
+    assert non_pairwise_tokens == ([6, 47873, 13], [])
+    assert pairwise_tokens == ([6, 47873, 13], [82])
