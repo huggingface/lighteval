@@ -134,7 +134,7 @@ def as_list(item: ListLike[ElementType] | ElementType) -> list[ElementType]:
     if isinstance(item, list):
         return item
 
-    if isinstance(item, tuple):
+    elif isinstance(item, tuple):
         return list(item)
 
     return [item]
