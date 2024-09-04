@@ -220,8 +220,8 @@ class LightevalTask:
 
             for metric_name in metric_names:
                 # If we do maj_at_ metrics, we need to use the correct number of samples
-                if "maj_at_" in metric_name:
-                    self.num_samples.append(int(metric_name.replace("maj_at_", "").split("_")[0]))
+                if "maj@" in metric_name:
+                    self.num_samples.append(int(metric_name.replace("maj@", "").split("_")[0]))
 
         if not isinstance(cfg.prompt_function, Callable):
             raise TypeError(
@@ -515,7 +515,7 @@ class LightevalTask:
     def _get_metric_method_from_category(metric_category):
         if metric_category == MetricCategory.TARGET_PERPLEXITY:
             return apply_target_perplexity_metric
-        if metric_category == MetricCategory.MULTICHOICE or metric_category == MetricCategory.MULTICHOICE_PMI:
+        if metric_category in [MetricCategory.MULTICHOICE, MetricCategory.MULTICHOICE_PMI]:
             return apply_multichoice_metric
         if metric_category == MetricCategory.MULTICHOICE_ONE_TOKEN:
             return apply_multichoice_metric_one_token

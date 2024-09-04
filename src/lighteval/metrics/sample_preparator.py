@@ -139,7 +139,6 @@ class PerplexityPreparator:
             PerplexityCorpusMetricInput: Stores the measured logprobs and associated text lengths, counted in the reference unit.
         """
 
-        print(logprobs)
         logprobs_flat = np.sum(logprobs)
         reference_text_flat = " ".join(reference_texts)
         return PerplexityCorpusMetricInput(logprobs=logprobs_flat, weights=self.count_units(reference_text_flat))

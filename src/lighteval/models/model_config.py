@@ -207,6 +207,25 @@ class AdapterModelConfig(BaseModelConfig):
 
 
 @dataclass
+class VLLMModelConfig:
+    pretrained: str
+    gpu_memory_utilisation: float = 0.8
+    batch_size: int = -1
+    revision: str = "main"
+    dtype: str | None = None
+    tensor_parallel_size: int = 1
+    data_parallel_size: int = 1
+    max_model_length: int = 1024
+    swap_space: int = 4  # CPU swap space size (GiB) per GPU.
+    seed: int = 1234
+    trust_remote_code: bool = False
+    use_chat_template: bool = False
+    add_special_tokens: bool = True
+    multichoice_continuations_start_space: bool = True
+    subfolder: Optional[str] = None
+
+
+@dataclass
 class TGIModelConfig:
     inference_server_address: str
     inference_server_auth: str
@@ -281,6 +300,7 @@ def create_model_config(  # noqa: C901
     TGIModelConfig,
     InferenceEndpointModelConfig,
     DummyModelConfig,
+    VLLMModelConfig,
 ]:
     """
     Create a model configuration based on the provided arguments.
@@ -314,6 +334,9 @@ def create_model_config(  # noqa: C901
 
         if model_args.pop("dummy", False):
             return DummyModelConfig(**model_args)
+
+        if model_args.pop("vllm", False):
+            return VLLMModelConfig(**model_args)
 
         model_args["accelerator"] = accelerator
         model_args["use_chat_template"] = use_chat_template
