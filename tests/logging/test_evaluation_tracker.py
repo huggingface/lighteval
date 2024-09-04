@@ -144,7 +144,6 @@ def test_push_to_hub_works(testing_empty_hf_org_id, mock_evaluation_tracker: Eva
         "task2": [DetailsLogger.CompiledDetail(truncated=20, padded=10)],
     }
     mock_evaluation_tracker.details_logger.details = task_details
-
     mock_evaluation_tracker.save()
 
     # Verify using HfApi
