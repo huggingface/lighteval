@@ -25,7 +25,7 @@ import inspect
 import random
 from dataclasses import asdict, dataclass, field
 from multiprocessing import Pool
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple
 
 from datasets import DatasetDict
 from huggingface_hub import TextGenerationInputGrammarType
@@ -54,7 +54,7 @@ from lighteval.tasks.requests import (
     RequestType,
     SampleUid,
 )
-from lighteval.utils.utils import as_list, download_dataset_worker
+from lighteval.utils.utils import ListLike, as_list, download_dataset_worker
 
 
 if TYPE_CHECKING:
@@ -90,27 +90,27 @@ class LightevalTaskConfig:
     prompt_function: Callable[[dict, str], Doc]
     hf_repo: str
     hf_subset: str
-    metric: Sequence[Metric | Metrics]
+    metric: ListLike[Metric | Metrics]
 
     # Additional hf dataset config
     hf_revision: Optional[str] = None
     hf_filter: Optional[Callable[[dict], bool]] = None
-    hf_avail_splits: Optional[Sequence[str]] = field(default_factory=lambda: ["train", "validation", "test"])
+    hf_avail_splits: Optional[ListLike[str]] = field(default_factory=lambda: ["train", "validation", "test"])
     # We default to false, to reduce security issues
     trust_dataset: bool = False
 
     # Splits
-    evaluation_splits: Sequence[str] = field(default_factory=lambda: ["validation"])
+    evaluation_splits: ListLike[str] = field(default_factory=lambda: ["validation"])
     few_shots_split: Optional[str] = None
     few_shots_select: Optional[str] = None
 
     # Generation args
     generation_size: Optional[int] = None
     generation_grammar: Optional[TextGenerationInputGrammarType] = None
-    stop_sequence: Optional[Sequence[str]] = None
+    stop_sequence: Optional[ListLike[str]] = None
     num_samples: Optional[list[int]] = None
 
-    suite: Sequence[str] = field(default_factory=lambda: ["custom"])
+    suite: ListLike[str] = field(default_factory=lambda: ["custom"])
 
     original_num_docs: int = -1
     effective_num_docs: int = -1
@@ -118,6 +118,10 @@ class LightevalTaskConfig:
     must_remove_duplicate_docs: bool = False
 
     version: int = 0
+
+    # Currently unused
+    frozen: bool = False
+    output_regex: Optional[str] = None
 
     def __post_init__(self):
         # If we got a Metrics enums instead of a Metric, we convert
@@ -228,7 +232,7 @@ class LightevalTask:
         return self._cfg
 
     def get_first_possible_fewshot_splits(
-        self, available_splits: Sequence[str], number_of_splits: int = 1
+        self, available_splits: ListLike[str], number_of_splits: int = 1
     ) -> list[str] | None:
         """
         Parses the possible fewshot split keys in order: train, then validation

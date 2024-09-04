@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from dataclasses import asdict, dataclass, is_dataclass
-from typing import Callable, Sequence, TypeVar, Union
+from typing import Callable, TypeVar, Union
 
 import numpy as np
 from datasets import DatasetDict, load_dataset
@@ -109,10 +109,14 @@ def sanitize_numpy(example_dict: dict) -> dict:
     return output_dict
 
 
+ListLikeTypeVar = TypeVar("ListLikeTypeVar")
+ListLike = list[ListLikeTypeVar] | tuple[ListLikeTypeVar, ...]
+
+
 ElementType = TypeVar("ElementType")
 
 
-def as_list(item: Union[Sequence[ElementType], ElementType]) -> list[ElementType]:
+def as_list(item: ListLike[ElementType] | ElementType) -> list[ElementType]:
     """
     Convert the given item into a list.
 
@@ -127,8 +131,12 @@ def as_list(item: Union[Sequence[ElementType], ElementType]) -> list[ElementType
         list: The converted list.
 
     """
-    if isinstance(item, Sequence):
+    if isinstance(item, list):
+        return item
+
+    if isinstance(item, tuple):
         return list(item)
+
     return [item]
 
 
