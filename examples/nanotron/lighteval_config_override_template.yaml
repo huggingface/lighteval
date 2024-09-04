@@ -1,15 +1,15 @@
-batch_size: 16
-checkpoints_path: null
+# As of right now auto batch size doesn't work, so we use some default
+batch_size: 8
 generation: null
 logging:
-  hub_repo_details: null
-  hub_repo_results: null
-  hub_repo_tensorboard: null
-  local_output_path: ./output_dir
-  push_details_to_hub: false
+  output_dir: "outputs"
+  save_details: false
   push_results_to_hub: false
-  push_results_to_tensorboard: true
-  tensorboard_metric_prefix: e
+  push_details_to_hub: false
+  push_results_to_tensorboard: false
+  public_run: false
+  results_org: null
+  tensorboard_metric_prefix: "eval"
 parallelism:
   dp: 1
   pp: 1
