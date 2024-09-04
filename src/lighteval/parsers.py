@@ -54,15 +54,15 @@ def parser_accelerate(parser=None):
     parser.add_argument("--job_id", type=str, help="Optional Job ID for future reference", default="")
 
     # Saving
-    parser.add_argument("--output_dir", required=True, type=str, help="Directory to save the results")
     parser.add_argument(
-        "--push_results_to_hub", default=False, action="store_true", help="Set to push the results to the hub"
+        "--output_dir",
+        required=True,
+        type=str,
+        help="Directory to save the results, fsspec compliant (e.g. s3://bucket/path)",
     )
     parser.add_argument("--save_details", action="store_true", help="Save the details of the run in the output_dir")
-    parser.add_argument(
-        "--push_details_to_hub", default=False, action="store_true", help="Set to push the details to the hub"
-    )
-    parser.add_argument("--push_results_to_tensorboard", default=False, action="store_true")
+    parser.add_argument("--push_to_hub", default=False, action="store_true", help="Set to push the details to the hub")
+    parser.add_argument("--push_to_tensorboard", default=False, action="store_true")
     parser.add_argument(
         "--public_run", default=False, action="store_true", help="Push results and details to a public repo"
     )
