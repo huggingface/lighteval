@@ -23,10 +23,10 @@
 import collections
 import inspect
 import random
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from multiprocessing import Pool
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from huggingface_hub import TextGenerationInputGrammarType
 from pytablewriter import MarkdownTableWriter
@@ -83,46 +83,46 @@ class LightevalTaskConfig:
         effective_num_docs (int): Number of documents used in a specific evaluation
         truncated_num_docs (bool): Whether less than the total number of documents were used
         output_regex (str)
-        frozen (bool)
         trust_dataset (bool): Whether to trust the dataset at execution or not
         version (int): The version of the task. Defaults to 0. Can be increased if the underlying dataset or the prompt changes.
     """
 
     name: str
-    prompt_function: Callable  # [[dict, str], Doc]
+    prompt_function: Callable[[dict, str], Doc]
     hf_repo: str
     hf_subset: str
-    metric: Tuple[Union[Metric, Metrics]]
-    hf_avail_splits: Optional[Tuple[str]] = None
-    evaluation_splits: Optional[Tuple[str]] = None
+    metric: Sequence[Union[Metric, Metrics]]
+
+    # Additional hf dataset config
+    hf_revision: Optional[str] = None
+    hf_filters: Optional[Callable[[dict], bool]] = None
+    hf_avail_splits: Optional[Sequence[str]] = field(default_factory=lambda: ["train", "validation", "test"])
+
+    # Splits
+    evaluation_splits: Optional[Sequence[str]] = field(default_factory=lambda: ["validation"])
     few_shots_split: Optional[str] = None
     few_shots_select: Optional[str] = None
+
+    # Generation args
     generation_size: Optional[int] = None
     generation_grammar: Optional[TextGenerationInputGrammarType] = None
-    stop_sequence: Optional[Tuple[str]] = None
+    stop_sequence: Optional[Sequence[str]] = None
     output_regex: Optional[str] = None
     num_samples: Optional[list[int]] = None
 
-    frozen: bool = False
-    suite: Optional[Tuple[str]] = None
+    suite: Optional[Sequence[str]] = field(default_factory=lambda: ["custom"])
 
     original_num_docs: int = -1
     effective_num_docs: int = -1
 
-    trust_dataset: bool = None
+    # We default to false, to reduce security issues
+    trust_dataset: bool = False
 
-    must_remove_duplicate_docs: bool = None
+    must_remove_duplicate_docs: bool = False
 
     version: int = 0
 
     def __post_init__(self):
-        if self.suite is None:
-            self.suite = ["custom"]
-        if self.hf_avail_splits is None:
-            self.hf_avail_splits = ["train", "validation", "test"]
-        if self.evaluation_splits is None:
-            self.evaluation_splits = ["validation"]
-
         # If we got a Metrics enums instead of a Metric, we convert
         self.metric = [metric.value if isinstance(metric, Metrics) else metric for metric in self.metric]
 
@@ -234,8 +234,6 @@ class LightevalTask:
         self.stop_sequence = cfg.stop_sequence
         self.output_regex = cfg.output_regex
         self.must_remove_duplicate_docs = cfg.must_remove_duplicate_docs
-        if self.must_remove_duplicate_docs is None:
-            self.must_remove_duplicate_docs = False
 
         # Save options
         self.save_queries: bool = False
