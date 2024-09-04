@@ -25,9 +25,9 @@ import inspect
 import random
 from dataclasses import asdict, dataclass, field
 from multiprocessing import Pool
-from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Sequence, Tuple
 
+from datasets import DatasetDict
 from huggingface_hub import TextGenerationInputGrammarType
 from pytablewriter import MarkdownTableWriter
 
@@ -82,7 +82,6 @@ class LightevalTaskConfig:
         original_num_docs (int): Number of documents in the task
         effective_num_docs (int): Number of documents used in a specific evaluation
         truncated_num_docs (bool): Whether less than the total number of documents were used
-        output_regex (str)
         trust_dataset (bool): Whether to trust the dataset at execution or not
         version (int): The version of the task. Defaults to 0. Can be increased if the underlying dataset or the prompt changes.
     """
@@ -91,15 +90,17 @@ class LightevalTaskConfig:
     prompt_function: Callable[[dict, str], Doc]
     hf_repo: str
     hf_subset: str
-    metric: Sequence[Union[Metric, Metrics]]
+    metric: Sequence[Metric | Metrics]
 
     # Additional hf dataset config
     hf_revision: Optional[str] = None
-    hf_filters: Optional[Callable[[dict], bool]] = None
+    hf_filter: Optional[Callable[[dict], bool]] = None
     hf_avail_splits: Optional[Sequence[str]] = field(default_factory=lambda: ["train", "validation", "test"])
+    # We default to false, to reduce security issues
+    trust_dataset: bool = False
 
     # Splits
-    evaluation_splits: Optional[Sequence[str]] = field(default_factory=lambda: ["validation"])
+    evaluation_splits: Sequence[str] = field(default_factory=lambda: ["validation"])
     few_shots_split: Optional[str] = None
     few_shots_select: Optional[str] = None
 
@@ -107,16 +108,12 @@ class LightevalTaskConfig:
     generation_size: Optional[int] = None
     generation_grammar: Optional[TextGenerationInputGrammarType] = None
     stop_sequence: Optional[Sequence[str]] = None
-    output_regex: Optional[str] = None
     num_samples: Optional[list[int]] = None
 
-    suite: Optional[Sequence[str]] = field(default_factory=lambda: ["custom"])
+    suite: Sequence[str] = field(default_factory=lambda: ["custom"])
 
     original_num_docs: int = -1
     effective_num_docs: int = -1
-
-    # We default to false, to reduce security issues
-    trust_dataset: bool = False
 
     must_remove_duplicate_docs: bool = False
 
@@ -129,8 +126,8 @@ class LightevalTaskConfig:
         # Convert list to tuple for hashing
         self.metric = tuple(self.metric)
         self.hf_avail_splits = tuple(self.hf_avail_splits) if self.hf_avail_splits is not None else None
-        self.evaluation_splits = tuple(self.evaluation_splits) if self.evaluation_splits is not None else None
-        self.suite = tuple(self.suite) if self.suite is not None else None
+        self.evaluation_splits = tuple(self.evaluation_splits)
+        self.suite = tuple(self.suite)
         self.stop_sequence = tuple(self.stop_sequence) if self.stop_sequence is not None else None
 
     def print(self):
@@ -175,31 +172,27 @@ class LightevalTask:
         """
         self.name = name
         self.version = cfg.version
-        self.is_main_process = False
         self.cache_dir = cache_dir
         self._cfg = cfg
 
         # Dataset info
-        self.hf_repo = cfg.hf_repo
-        self.hf_subset = cfg.hf_subset
-        self.dataset_path = self.hf_repo
-        self.dataset_config_name = self.hf_subset
-        self.dataset = None  # Delayed download
+        self.dataset_path = cfg.hf_repo
+        self.dataset_config_name = cfg.hf_subset
+        self.dataset_revision = cfg.hf_revision
+        self.dataset_filter = cfg.hf_filter
         self.trust_dataset = cfg.trust_dataset
-        hlog(f"{self.dataset_path} {self.dataset_config_name}")
+        self.dataset: Optional[DatasetDict] = None  # Delayed download
+        hlog(f"{self.cfg.hf_repo} {self.cfg.hf_subset}")
         self._fewshot_docs = None
         self._docs = None
 
-        # Managing splits and few shot
-        self.all_available_splits = as_list(cfg.hf_avail_splits)
-        if cfg.evaluation_splits is None:
-            raise ValueError(f"The evaluation split for task {self.name} is None. Please select a valid split.")
-
         self.evaluation_split = as_list(cfg.evaluation_splits)
+
+        self.fewshot_split: list[str] | None
         if cfg.few_shots_split is not None:
-            self.fewshot_split = as_list(cfg.few_shots_split)
+            self.fewshot_split = as_list(cfg.few_shots_split) if cfg.few_shots_split is not None else None
         else:
-            self.fewshot_split = as_list(self.get_first_possible_fewshot_splits())
+            self.fewshot_split = self.get_first_possible_fewshot_splits(cfg.hf_avail_splits or [])
         self.fewshot_selection = cfg.few_shots_select
 
         # Metrics
@@ -223,28 +216,20 @@ class LightevalTask:
                 if "maj@" in metric_name:
                     self.num_samples.append(int(metric_name.replace("maj@", "").split("_")[0]))
 
-        if not isinstance(cfg.prompt_function, Callable):
-            raise TypeError(
-                f"Prompt formatting function ({str(cfg.prompt_function)}) should have been passed as a callable, was {type(cfg.prompt_function)} instead."
-            )
         self.formatter = cfg.prompt_function
 
         self.generation_size = cfg.generation_size
         self.generation_grammar = cfg.generation_grammar
         self.stop_sequence = cfg.stop_sequence
-        self.output_regex = cfg.output_regex
         self.must_remove_duplicate_docs = cfg.must_remove_duplicate_docs
-
-        # Save options
-        self.save_queries: bool = False
-        self.logfile_name: Optional[Path] = None
-        self.is_main_process: bool = False
 
     @property
     def cfg(self):
         return self._cfg
 
-    def get_first_possible_fewshot_splits(self, number_of_splits: int = 1) -> list[str]:
+    def get_first_possible_fewshot_splits(
+        self, available_splits: Sequence[str], number_of_splits: int = 1
+    ) -> list[str] | None:
         """
         Parses the possible fewshot split keys in order: train, then validation
         keys and matches them with the available keys.  Returns the first
@@ -258,7 +243,7 @@ class LightevalTask:
             list[str]: List of the first available fewshot splits.
         """
         # Possible few shot splits are the available splits not used for evaluation
-        possible_fewshot_splits = [k for k in self.all_available_splits if k not in self.evaluation_split]
+        possible_fewshot_splits = [k for k in available_splits if k not in self.evaluation_split]
         stored_splits = []
 
         # We look at these keys in order (first the training sets, then the validation sets)
@@ -324,7 +309,7 @@ class LightevalTask:
             self._fewshot_docs = []
 
             # If we have no available few shot split, the few shot data is the eval data!
-            if self.fewshot_split in [None, [None]]:
+            if self.fewshot_split is None:
                 self._fewshot_docs = self._get_docs_from_split(self.evaluation_split, few_shots=True)
             else:  # Normal case
                 self._fewshot_docs = self._get_docs_from_split(self.fewshot_split, few_shots=True)

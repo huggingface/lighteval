@@ -272,7 +272,7 @@ ALLOWED_SELECTIONS = FewShotSelection._member_names_
 
 
 class FewShotSampler:
-    def __init__(self, task: "LightevalTask"):
+    def __init__(self, task: LightevalTask):
         self.task = task
 
         few_shots_select = task.fewshot_selection

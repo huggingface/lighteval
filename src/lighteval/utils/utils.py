@@ -13,10 +13,10 @@
 # limitations under the License.
 import os
 from dataclasses import asdict, dataclass, is_dataclass
-from typing import Any, Union
+from typing import Sequence, TypeVar, Union
 
 import numpy as np
-from datasets import load_dataset
+from datasets import DatasetDict, load_dataset
 from pytablewriter import MarkdownTableWriter
 
 
@@ -109,7 +109,10 @@ def sanitize_numpy(example_dict: dict) -> dict:
     return output_dict
 
 
-def as_list(item: Union[list, tuple, Any]) -> list:
+ElementType = TypeVar("ElementType")
+
+
+def as_list(item: Union[Sequence[ElementType], ElementType]) -> list[ElementType]:
     """
     Convert the given item into a list.
 
@@ -124,9 +127,7 @@ def as_list(item: Union[list, tuple, Any]) -> list:
         list: The converted list.
 
     """
-    if isinstance(item, list):
-        return item
-    elif isinstance(item, tuple):
+    if isinstance(item, Sequence):
         return list(item)
     return [item]
 
@@ -205,7 +206,7 @@ def boolstring_to_bool(x: Union[str, bool, int]) -> Union[bool, None]:
     raise ValueError(f"You tried to convert {x} to a boolean but it's not possible.")
 
 
-def download_dataset_worker(args):
+def download_dataset_worker(args) -> DatasetDict:
     """
     Worker function to download a dataset from the HuggingFace Hub.
     Used for parallel dataset loading.
@@ -219,6 +220,8 @@ def download_dataset_worker(args):
         download_mode=None,
         trust_remote_code=trust_dataset,
     )
+
+    # It returns DatasetDict because we don't specify a split
     return dataset
 
 
