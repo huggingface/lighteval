@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
+
 import pytest
 from huggingface_hub import HfApi
 from huggingface_hub.hf_api import DatasetInfo
@@ -27,7 +29,9 @@ from huggingface_hub.hf_api import DatasetInfo
 
 @pytest.fixture
 def testing_empty_hf_org_id():
-    org_id = "lighteval-testing"
+    org_id = "lighteval-tests"
+    token = os.getenv("HF_TEST_TOKEN")
+    os.environ["HF_TOKEN"] = token
 
     def list_repos(org_id: str):
         return list(hf_api.list_models(author=org_id)) + list(hf_api.list_datasets(author=org_id))
