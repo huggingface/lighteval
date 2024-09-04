@@ -48,12 +48,11 @@ def main(args):
     env_config = EnvConfig(token=TOKEN, cache_dir=args.cache_dir)
     evaluation_tracker = EvaluationTracker(
         output_dir=args.output_dir,
-        hub_results_org=args.results_org,
-        push_results_to_hub=args.push_results_to_hub,
-        push_details_to_hub=args.push_details_to_hub,
-        push_results_to_tensorboard=args.push_results_to_tensorboard,
+        save_details=args.save_details,
+        push_to_hub=args.push_to_hub,
+        push_to_tensorboard=args.push_to_tensorboard,
         public=args.public_run,
-        token=TOKEN,
+        hub_results_org=args.results_org,
     )
     pipeline_params = PipelineParameters(
         launcher_type=ParallelismManager.ACCELERATE,
