@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import tempfile
 from unittest.mock import patch
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
@@ -53,9 +54,10 @@ def run_evaluation() -> dict:
     task._fewshot_docs = []
 
     model_config = BaseModelConfig("hf-internal-testing/tiny-random-LlamaForCausalLM")
-    model = load_model(config=model_config, env_config=EnvConfig(cache_dir="."))
+    model = load_model(config=model_config, env_config=EnvConfig())
 
-    evaluation_tracker = EvaluationTracker()
+    with tempfile.TemporaryDirectory() as dir:
+        evaluation_tracker = EvaluationTracker(dir)
     pipeline_params = PipelineParameters(launcher_type=ParallelismManager.NONE, override_batch_size=0)
 
     with patch("lighteval.pipeline.Pipeline._init_tasks_and_requests"):
