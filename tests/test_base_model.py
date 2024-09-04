@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from lighteval.models.base_model import BaseModel
 from lighteval.models.model_config import BaseModelConfig
 from lighteval.models.model_loader import load_model
 from lighteval.utils.utils import EnvConfig
@@ -27,7 +28,7 @@ from lighteval.utils.utils import EnvConfig
 
 def test_empty_requests():
     model_config = BaseModelConfig("hf-internal-testing/tiny-random-LlamaForCausalLM")
-    model, _ = load_model(config=model_config, env_config=EnvConfig())
+    model: BaseModel = load_model(config=model_config, env_config=EnvConfig())
 
     assert model.loglikelihood([]) == []
     assert model.loglikelihood_single_token([]) == []
