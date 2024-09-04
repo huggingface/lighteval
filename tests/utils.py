@@ -122,7 +122,7 @@ def fake_evaluate_task(
     task_name = f"{task.suite[0]}|{task.name}"
 
     task_dict = {task_name: task}
-    evaluation_tracker = EvaluationTracker(output_dir="")
+    evaluation_tracker = EvaluationTracker(output_dir="outputs")
     evaluation_tracker.task_config_logger.log(task_dict)
     # Create a mock Registry class
 
