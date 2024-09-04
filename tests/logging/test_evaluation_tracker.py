@@ -37,9 +37,6 @@ from lighteval.logging.info_loggers import DetailsLogger
 from tests.fixtures import TESTING_EMPTY_HF_ORG_ID, testing_empty_hf_org_id
 
 
-HF_TEST_TOKEN = os.getenv("HF_TEST_TOKEN")
-
-
 @pytest.fixture
 def mock_evaluation_tracker(request):
     passed_params = {}
@@ -53,7 +50,6 @@ def mock_evaluation_tracker(request):
             "push_to_hub": passed_params.get("push_to_hub", False),
             "push_to_tensorboard": passed_params.get("push_to_tensorboard", False),
             "hub_results_org": passed_params.get("hub_results_org", ""),
-            "hf_token": passed_params.get("hf_token", None),
         }
         tracker = EvaluationTracker(**kwargs)
         tracker.general_config_logger.model_name = "test_model"
@@ -130,7 +126,7 @@ def test_no_details_output(mock_evaluation_tracker: EvaluationTracker):
     assert not details_dir.exists()
 
 
-@pytest.mark.evaluation_tracker(push_to_hub=True, hub_results_org=TESTING_EMPTY_HF_ORG_ID, hf_token=HF_TEST_TOKEN)
+@pytest.mark.evaluation_tracker(push_to_hub=True, hub_results_org=TESTING_EMPTY_HF_ORG_ID)
 def test_push_to_hub_works(testing_empty_hf_org_id, mock_evaluation_tracker: EvaluationTracker, mock_datetime):
     # Prepare the dummy data
     task_metrics = {
@@ -147,7 +143,7 @@ def test_push_to_hub_works(testing_empty_hf_org_id, mock_evaluation_tracker: Eva
     mock_evaluation_tracker.save()
 
     # Verify using HfApi
-    api = HfApi(token=HF_TEST_TOKEN)
+    api = HfApi()
 
     # Check if repo exists and it's private
     expected_repo_id = f"{testing_empty_hf_org_id}/details_test_model_private"

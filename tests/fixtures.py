@@ -21,6 +21,8 @@
 # SOFTWARE.
 
 
+import os
+
 import pytest
 from huggingface_hub import HfApi
 from huggingface_hub.hf_api import DatasetInfo
@@ -31,6 +33,9 @@ TESTING_EMPTY_HF_ORG_ID = "lighteval-tests"
 
 @pytest.fixture
 def testing_empty_hf_org_id(org_id: str = TESTING_EMPTY_HF_ORG_ID):
+    old_token = os.getenv("HF_TOKEN")
+    os.environ["HF_TOKEN"] = os.getenv("HF_TEST_TOKEN")
+
     def list_repos(org_id: str):
         return list(hf_api.list_models(author=org_id)) + list(hf_api.list_datasets(author=org_id))
 
@@ -52,3 +57,4 @@ def testing_empty_hf_org_id(org_id: str = TESTING_EMPTY_HF_ORG_ID):
     # Clean up: recreate any necessary default repositories after the test
     # This step is optional and depends on your specific needs
     clean_repos(org_id)
+    os.environ["HF_TOKEN"] = old_token
