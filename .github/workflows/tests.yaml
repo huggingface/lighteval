@@ -34,6 +34,8 @@ jobs:
          path: "cache"
          key: test-cache-HF
      - name: Test
+       env:
+        HF_TEST_SECRET: ${{ secrets.HF_TEST_SECRET }}
        run: | # PYTHONPATH="${PYTHONPATH}:src" HF_DATASETS_CACHE="cache/datasets" HF_HOME="cache/models"
         python -m pytest --disable-pytest-warnings
      - name: Write cache
