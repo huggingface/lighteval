@@ -84,6 +84,8 @@ class LightevalTaskConfig:
         truncated_num_docs (bool): Whether less than the total number of documents were used
         trust_dataset (bool): Whether to trust the dataset at execution or not
         version (int): The version of the task. Defaults to 0. Can be increased if the underlying dataset or the prompt changes.
+        output_regex (str)
+        frozen (bool)
     """
 
     name: str
@@ -108,6 +110,7 @@ class LightevalTaskConfig:
     generation_size: Optional[int] = None
     generation_grammar: Optional[TextGenerationInputGrammarType] = None
     stop_sequence: Optional[ListLike[str]] = None
+    output_regex: Optional[str] = None
     num_samples: Optional[list[int]] = None
 
     suite: ListLike[str] = field(default_factory=lambda: ["custom"])
@@ -121,7 +124,6 @@ class LightevalTaskConfig:
 
     # Currently unused
     frozen: bool = False
-    output_regex: Optional[str] = None
 
     def __post_init__(self):
         # If we got a Metrics enums instead of a Metric, we convert
@@ -186,7 +188,7 @@ class LightevalTask:
         self.dataset_filter = cfg.hf_filter
         self.trust_dataset = cfg.trust_dataset
         self.dataset: Optional[DatasetDict] = None  # Delayed download
-        hlog(f"{self.cfg.hf_repo} {self.cfg.hf_subset}")
+        hlog(f"{self.dataset_path} {self.dataset_config_name}")
         self._fewshot_docs = None
         self._docs = None
 
