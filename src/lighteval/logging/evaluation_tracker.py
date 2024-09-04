@@ -94,8 +94,8 @@ class EvaluationTracker:
 
     def __init__(
         self,
-        output_dir: str = None,
-        hub_results_org: str = "",
+        output_dir: str,
+        hub_results_org: str | None = None,
         push_results_to_hub: bool = False,
         push_details_to_hub: bool = False,
         push_results_to_tensorboard: bool = False,
@@ -133,13 +133,12 @@ class EvaluationTracker:
 
         self.output_dir = output_dir
 
-        self.hub_results_org = hub_results_org  # will also contain tensorboard results
-        if hub_results_org in ["", None] and any(
-            [push_details_to_hub, push_results_to_hub, push_results_to_tensorboard]
-        ):
+        if hub_results_org in [None] and any([push_details_to_hub, push_results_to_hub, push_results_to_tensorboard]):
             raise Exception(
                 "You need to select which org to push to, using `--results_org`, if you want to save information to the hub."
             )
+
+        self.hub_results_org = hub_results_org  # will also contain tensorboard results
 
         self.hub_results_repo = f"{hub_results_org}/results"
         self.hub_private_results_repo = f"{hub_results_org}/private-results"
