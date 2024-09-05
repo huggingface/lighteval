@@ -11,13 +11,15 @@
     - local: use_vllm
       title: Using VLLM as backend
     - local: use_tgi
-      title: Using TGI as backend
+      title: Evaluate on Server
     - local: adding_new_task
       title: Adding a Custom Task
     - local: adding_new_metric
       title: Adding a Custom Metric
     - local: saving_results
       title: Saving Results
+    - local: training_and_eval_loop
+      title: Training and Evaluation Loop
 - title: "API Reference"
   sections:
     - local: metric_list
