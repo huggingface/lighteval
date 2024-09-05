@@ -53,7 +53,7 @@ class ModelClient(InferenceEndpointModel):
         self.model_info = ModelInfo(
             model_name=model_id or self.name,
             model_sha=info["model_sha"],
-            model_dtype=info["model_dtype"] or "default",
+            model_dtype=info["model_dtype"] if "model_dtype" in info else "default",
             model_size=-1,
         )
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_info.model_name)

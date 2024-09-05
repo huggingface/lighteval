@@ -41,16 +41,6 @@ from lighteval.tasks.requests import (
 )
 
 
-TOKEN = os.environ.get("HF_TOKEN")
-CACHE_PATH = os.getenv("HF_HOME", ".")
-
-
-@pytest.fixture(scope="module")
-def base_model() -> Iterator[BaseModel]:
-    config = BaseModelConfig("hf-internal-testing/tiny-random-LlamaForCausalLM")
-    return BaseModel(config, EnvConfig(CACHE_PATH, TOKEN))
-
-
 RequestDict: TypeAlias = dict[RequestType, list[Request]]
 
 
@@ -122,11 +112,9 @@ class TestBaseModel:
     def test_integration(self, task: LightevalTask, base_model: BaseModel, num_fewshot: int, use_chat_template: bool):
         base_model.use_chat_template = use_chat_template
 
-        env_config = EnvConfig(token=TOKEN, cache_dir=CACHE_PATH)
         evaluation_tracker = EvaluationTracker()
         pipeline_params = PipelineParameters(
             launcher_type=ParallelismManager.NONE,
-            env_config=env_config,
             use_chat_template=use_chat_template,
             override_batch_size=1,
         )

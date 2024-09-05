@@ -205,11 +205,10 @@ class InferenceEndpointModel(LightevalModel):
     def _process_logprob_response(
         self, response: TextGenerationOutput, request: LoglikelihoodRequest | LoglikelihoodRollingRequest
     ) -> LoglikelihoodResponse:
-        len_choice = len(request.tokenized_continuation)
-        logits = sum([t.logprob for t in response.details.prefill[1:][-len_choice:]])
+        logits = sum([t.logprob for t in response.details.prefill[len(request.tokenized_context):]])
         return LoglikelihoodResponse(
             result=(logits, True) if isinstance(request, LoglikelihoodRequest) else logits,
-            input_tokens=[t.id for t in response.details.prefill[:-len_choice]],
+            input_tokens=[t.id for t in response.details.prefill[len(request.tokenized_context):]],
             generated_tokens=-1,
             truncated_tokens_count=-1,
             padded_tokens_count=-1,
@@ -255,6 +254,7 @@ class InferenceEndpointModel(LightevalModel):
                 context = request.context + [ChatCompletionInputMessage(role="assistant", content=request.choice)]
             if not isinstance(context, str):
                 context = self.tokenizer.apply_chat_template(context, tokenize=False)
+                context = context.split(self.tokenizer.bos_token, 1)[-1]
 
         if isinstance(context, str):
             prepared_request = TextGenerationInput(
@@ -290,6 +290,7 @@ class InferenceEndpointModel(LightevalModel):
         override_bs: Optional[int] = None,
     ) -> List[GenerativeResponse]:
         for request in requests:
+            # Why don't we set context to empty list here?
             request.tokenized_context = self.tok_encode(request.context)
             request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
 

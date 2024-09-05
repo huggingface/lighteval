@@ -27,27 +27,27 @@ from collections import defaultdict
 from typing import Iterator, TypeAlias
 from unittest.mock import patch
 
+import torch
 import docker
 import docker.errors
 import pytest
 import requests
 from huggingface_hub import ChatCompletionInputMessage
+from transformers import AutoModelForCausalLM, AutoTokenizer, LlamaForCausalLM, PreTrainedTokenizerFast
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.metrics.metrics import Metrics
 from lighteval.models.tgi_model import ModelClient as TGIModel
+from lighteval.models.base_model import BaseModel
 from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig, create_requests_from_tasks
 from lighteval.tasks.requests import (
+    LoglikelihoodRequest,
+    LoglikelihoodRollingRequest,
     Doc,
     Request,
     RequestType,
 )
-from lighteval.utils.utils import EnvConfig
-
-
-TOKEN = os.environ.get("HF_TOKEN")
-CACHE_PATH = os.getenv("HF_HOME", ".")
 
 
 @pytest.fixture(scope="module")
@@ -83,10 +83,17 @@ def tgi_model() -> Iterator[TGIModel]:
         raise RuntimeError("Couldn't setup TGI server.")
     model = TGIModel(address)
     yield model
-    container.stop()
-    container.wait()
-    container.remove()
+    # container.stop()
+    # container.wait()
+    # container.remove()
     model.cleanup()
+
+
+@pytest.fixture(scope="module")
+def reference_model_tokenizer() -> tuple[LlamaForCausalLM, PreTrainedTokenizerFast]:
+    model = AutoModelForCausalLM.from_pretrained("hf-internal-testing/tiny-random-LlamaForCausalLM")
+    tokenizer = AutoTokenizer.from_pretrained("hf-internal-testing/tiny-random-LlamaForCausalLM")
+    return model, tokenizer
 
 
 RequestDict: TypeAlias = dict[RequestType, list[Request]]
@@ -150,28 +157,62 @@ class TestEndpointModel:
                 result[req_type].extend(doc_result[req_type])
         return result
 
-    def test_greedy_until(self, zero_shot_request_dict: RequestDict, tgi_model: TGIModel):
-        returns = tgi_model.greedy_until(zero_shot_request_dict[RequestType.GREEDY_UNTIL])
+    def test_greedy_until(self, reference_model_tokenizer: tuple[LlamaForCausalLM, PreTrainedTokenizerFast], zero_shot_request_dict: RequestDict, tgi_model: TGIModel):
+        requests = zero_shot_request_dict[RequestType.GREEDY_UNTIL]
+        returns = tgi_model.greedy_until(requests)
+        model, tokenizer = reference_model_tokenizer
         assert len(returns) == 2
-        assert all(r.result is not None for r in returns)
+        for req, res in zip(requests, returns):
+            is_chat = not isinstance(req.context, str)
+            tokenized_context = tokenizer.apply_chat_template(req.context, return_tensors='pt') if is_chat else tokenizer(req.context, return_tensors='pt')['input_ids']
+            ref_context_continuaiton = model.generate(tokenized_context, tokenizer=tokenizer, stop_strings=req.stop_sequence, max_new_tokens=req.generation_size)[0].tolist()
+            continuation = tokenizer.decode(ref_context_continuaiton)[len(tokenizer.decode(tokenized_context[0].tolist())):]
+            assert continuation == res.result
 
-    def test_loglikelihood(self, zero_shot_request_dict: RequestDict, tgi_model: TGIModel):
-        returns = tgi_model.loglikelihood(zero_shot_request_dict[RequestType.LOGLIKELIHOOD])
+    def test_loglikelihood(self, reference_model_tokenizer: tuple[LlamaForCausalLM, PreTrainedTokenizerFast], zero_shot_request_dict: RequestDict, tgi_model: TGIModel):
+        requests: list[LoglikelihoodRequest] = zero_shot_request_dict[RequestType.LOGLIKELIHOOD]
+        returns = tgi_model.loglikelihood(requests)
+        model, tokenizer = reference_model_tokenizer
         assert len(returns) == 4
-        assert all(r.result is not None for r in returns)
+        for req, res in zip(requests, returns):
+            is_chat = not isinstance(req.context, str)
+            sequence = req.context + [ChatCompletionInputMessage(role='assistant',content=req.choice)] if is_chat else req.context+req.choice
+            tokenized_sequence = tokenizer.apply_chat_template(sequence, return_tensors='pt') if is_chat else tokenizer(sequence, return_tensors='pt')['input_ids']
+            
+            output = model.generate(tokenized_sequence, max_new_tokens=1, return_dict_in_generate=True, output_hidden_states=True)
+            with torch.no_grad():
+                logprobs = torch.log_softmax(model.lm_head(output.hidden_states[0][-1]),dim=-1)
+            logprobs = logprobs.gather(dim=-1, index=tokenized_sequence[:,1:].unsqueeze(-1))
+            context_length = len(tokenizer.apply_chat_template(req.context)) if is_chat else len(tokenizer.encode(req.context))
+            continuation_logprob = logprobs[:, context_length-1:].sum()
 
+            tokenized_choice = tokenized_sequence[:, context_length:]
+            assert tokenized_choice[0].tolist() == res.input_tokens
+            assert torch.allclose(torch.tensor(res.result[0]), continuation_logprob)
+
+    def test_loglikelihood_rolling(self, reference_model_tokenizer: tuple[LlamaForCausalLM, PreTrainedTokenizerFast], zero_shot_request_dict: RequestDict, tgi_model: TGIModel):
+        model, tokenizer = reference_model_tokenizer
+        requests: list[LoglikelihoodRollingRequest] = zero_shot_request_dict[RequestType.LOGLIKELIHOOD_ROLLING]
         returns = tgi_model.loglikelihood_rolling(zero_shot_request_dict[RequestType.LOGLIKELIHOOD_ROLLING])
         assert len(returns) == 2
-        assert all(r.result is not None for r in returns)
+        for req, res in zip(requests, returns):
+            is_chat = not isinstance(req.context, str)
+            tokenized_context = tokenizer.apply_chat_template(req.context, return_tensors='pt') if is_chat else tokenizer(req.context, return_tensors='pt')['input_ids']
+            output = model.generate(tokenized_context, max_new_tokens=1, return_dict_in_generate=True, output_hidden_states=True)
+            with torch.no_grad():
+                logprobs = torch.log_softmax(model.lm_head(output.hidden_states[0][-1]),dim=-1)
+            logprob = logprobs.gather(dim=-1, index=tokenized_context[:,1:].unsqueeze(-1)).sum()
+
+            assert tokenized_context[0, 1:].tolist() == res.input_tokens
+            assert torch.allclose(torch.tensor(res.result), logprob)
 
     @pytest.mark.parametrize("num_fewshot", [0, 2])
     @pytest.mark.parametrize("use_chat_template", [False, True])
-    def test_integration(self, task: LightevalTask, tgi_model: TGIModel, num_fewshot: int, use_chat_template: bool):
-        env_config = EnvConfig(token=TOKEN, cache_dir=CACHE_PATH)
+    def test_integration(self, task: LightevalTask, base_model: BaseModel, tgi_model: TGIModel, num_fewshot: int, use_chat_template: bool):
+        #TODO
         evaluation_tracker = EvaluationTracker()
         pipeline_params = PipelineParameters(
             launcher_type=ParallelismManager.NONE,
-            env_config=env_config,
             use_chat_template=use_chat_template,
         )
 
