@@ -22,7 +22,12 @@
 
 import re
 import string
+import sys
+import unicodedata
 from dataclasses import dataclass
+
+from lighteval.utils.language import Language
+from lighteval.utils.tokenizers import get_word_tokenizer
 
 
 # From HELM
@@ -350,6 +355,60 @@ def gsm8k_normalizer(text: str) -> str:
         return match_str
     else:
         return INVALID_ANS
+
+
+PUNCT = {chr(i) for i in range(sys.maxunicode) if unicodedata.category(chr(i)).startswith("P")}.union(
+    string.punctuation
+)
+
+_ARTICLE_PATTERNS = {
+    Language.english: r"\b(a|an|the)\b",
+    Language.spanish: r"\b(el|la|los|las|un|una|unos|unas)\b",
+    Language.portuguese: r"\b(o|a|os|as|um|uma|uns|umas)\b",
+    Language.italian: r"\b(il|lo|la|i|gli|le|un|uno|una)\b",
+    Language.french: r"\b(le|la|les|l'|un|une|des)\b",
+    Language.german: r"\b(der|die|das|den|dem|des|ein|eine|einer|eines|einem|einen)\b",
+    Language.finnish: r"\b(se|yksi|yks)\b",
+    Language.greek: r"\b(ὁ|οἱ|τοῦ|τῶν|τόν|τούς|ὦ|ἡ|αἱ|τῆς|τῶν|τήν|τάς|τό|τά|τοῦ|τῶν|τό|τά)\b",
+    Language.norwegian: r"\b(en|ei|et|den|det|de)\b",
+    Language.swedish: r"\b(en|ett|den|det|de)\b",
+    Language.turkish: r"\b(bir)\b",
+    Language.dutch: r"\b(de|het|een)\b",
+    Language.hungarian: r"\b(a|az|egy)\b",
+    Language.catalan: r"\b(el|la|els|les|un|una|uns|unes)\b",
+    Language.hebrew: r"\b(ה)\b",
+    Language.galician: r"\b(o|a|os|as|un|unha|uns|unhas)\b",
+}
+
+
+def remove_articles(text: str, lang: Language) -> str:
+    """
+    Removes definite and indefinite articles from the text.
+    Generated using LLM then manually checked by non-expert.
+    Only languages that don't blend the articles, if you are native speaker,
+    we would appreciate adding also languages that blend the articles.
+    """
+    pattern = _ARTICLE_PATTERNS.get(lang)
+    return re.sub(pattern, " ", text) if pattern else text
+
+
+def remove_punc(text: str) -> str:
+    return "".join(ch for ch in text if ch not in PUNCT)
+
+
+def get_multilingual_normalizer(lang: Language, lower: bool = True):
+    tokenizer = get_word_tokenizer(lang)
+
+    def _inner_normalizer(text: str) -> str:
+        text = remove_articles(text, lang)
+        text = remove_punc(text)
+        if lower:
+            text = text.lower()
+
+        tokens = tokenizer.word_tokenize(text)
+        return " ".join(tokens)
+
+    return _inner_normalizer
 
 
 # Loglikelihood normalization
