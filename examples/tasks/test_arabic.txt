@@ -1,0 +1,2 @@
+community|arabic_mmlu_ht:high_school_biology|5|1
+community|arabic_mmlu_mt:international_law|5|1
