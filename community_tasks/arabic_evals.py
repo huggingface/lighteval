@@ -90,6 +90,7 @@ class CustomArabicMMLUHTTask(LightevalTaskConfig):
             hf_avail_splits=["train"],
             evaluation_splits=["train"],
             few_shots_split=None,
+            few_shots_select=None,
             suite=["community"],
             generation_size=-1,
             stop_sequence=None,
