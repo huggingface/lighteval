@@ -39,9 +39,9 @@ from lighteval.tasks.requests import Doc
 LETTER_INDICES_AR = ["أ", "ب", "ج", "د", "هـ", "و", "ز", "ح", "ط", "ي", "ك", "ل", "م", "ن", "س", "ع", "ف", "ص", "ق", "ر", "ش", "ت", "ث", "خ", "ذ", "ض", "ظ", "غ"]
 # fmt: on
 
-# ARABIC MMLU ##
+# ARABIC MMLU HT##
 # fmt: off
-ARABIC_MMLU_SUBSETS = [
+ARABIC_MMLU_HT_SUBSETS = [
     "abstract_algebra", "anatomy", "astronomy", "business_ethics", "clinical_knowledge", "college_biology", "college_chemistry", "college_computer_science",
     "college_mathematics", "college_medicine", "college_physics", "computer_security", "conceptual_physics", "econometrics", "electrical_engineering",
     "elementary_mathematics", "formal_logic", "global_facts", "high_school_biology", "high_school_chemistry", "high_school_computer_science",
@@ -54,9 +54,74 @@ ARABIC_MMLU_SUBSETS = [
 # fmt: on
 
 
-def mmlu_arabic(line, task_name: str = None):
+def arabic_mmlu_ht(line, task_name: str = None):
+    instruction = f"السؤال التالي هو سؤال متعدد الإختيارات. اختر الإجابة الصحيحة: أ، ب، ج، أو د... إلخ. \n\n"
+    choices = line["choices"]
+    # Answers are provided with roman letters - we look for the correct index in LETTER_INDICES,
+    # it will then be applied to arabic letters
+    gold_ix = LETTER_INDICES.index(line["answer"])
+
+    query = f"{instruction}{line['question']}\n"
+    query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES_AR[:4], choices)])
+    query += "الإجابة:"
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=LETTER_INDICES_AR[:4],
+        gold_index=gold_ix,
+        instruction=instruction,
+        target_for_fewshot_sorting=LETTER_INDICES_AR[gold_ix],
+    )
+
+
+class CustomArabicMMLUHTTask(LightevalTaskConfig):
+    def __init__(
+        self,
+        name,
+        hf_subset,
+    ):
+        super().__init__(
+            name=name,
+            hf_subset=hf_subset,
+            prompt_function=arabic_mmlu_ht,
+            hf_repo="inceptionai/MMLU-HT",
+            metric=[Metrics.loglikelihood_acc_norm],
+            hf_avail_splits=["train"],
+            evaluation_splits=["train"],
+            few_shots_split=None,
+            suite=["community"],
+            generation_size=-1,
+            stop_sequence=None,
+            output_regex=None,
+            frozen=False,
+            trust_dataset=True,
+            version=0,
+        )
+
+
+ARABIC_MMLU_HT_TASKS = [
+    CustomArabicMMLUHTTask(name=f"arabic_mmlu_ht:{subset}", hf_subset=subset) for subset in ARABIC_MMLU_HT_SUBSETS
+]
+
+# ARABIC MMLU MT##
+# fmt: off
+ARABIC_MMLU_MT_SUBSETS = [
+    "abstract_algebra", "anatomy", "astronomy", "business_ethics", "clinical_knowledge", "college_biology", "college_chemistry", "college_computer_science",
+    "college_mathematics", "college_medicine", "college_physics", "computer_security", "conceptual_physics", "econometrics", "electrical_engineering",
+    "elementary_mathematics", "formal_logic", "global_facts", "high_school_biology", "high_school_chemistry", "high_school_computer_science",
+    "high_school_european_history", "high_school_geography", "high_school_government_and_politics", "high_school_macroeconomics", "high_school_mathematics",
+    "high_school_microeconomics", "high_school_physics", "high_school_psychology", "high_school_statistics", "high_school_us_history", "high_school_world_history",
+    "human_aging", "human_sexuality", "international_law", "jurisprudence", "logical_fallacies", "machine_learning", "management", "marketing", "medical_genetics",
+    "miscellaneous", "moral_disputes", "moral_scenarios", "nutrition", "philosophy", "prehistory", "professional_accounting", "professional_law",
+    "professional_medicine", "professional_psychology", "public_relations", "security_studies", "sociology", "us_foreign_policy", "virology", "world_religions"
+]
+# fmt: on
+
+
+def arabic_mmlu_mt(line, task_name: str = None):
     topic = line["subject"]
-    instruction = f"الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح حول {topic.replace('_', ' ')}. \n\n"
+    instruction = f"السؤال التالي هو سؤال متعدد الإختيارات. اختر الإجابة الصحيحة: أ، ب، ج، أو د... إلخ. \n\n"
     choices = [line["A"], line["B"], line["C"], line["D"]]
     # Answers are provided with roman letters - we look for the correct index in LETTER_INDICES,
     # it will then be applied to arabic letters
@@ -76,7 +141,7 @@ def mmlu_arabic(line, task_name: str = None):
     )
 
 
-class CustomArabicMMLUTask(LightevalTaskConfig):
+class CustomArabicMMLUMTTask(LightevalTaskConfig):
     def __init__(
         self,
         name,
@@ -85,7 +150,7 @@ class CustomArabicMMLUTask(LightevalTaskConfig):
         super().__init__(
             name=name,
             hf_subset=hf_subset,
-            prompt_function=mmlu_arabic,
+            prompt_function=arabic_mmlu_mt,
             hf_repo="OALL/Arabic_MMLU",
             metric=[Metrics.loglikelihood_acc_norm],
             hf_avail_splits=["test", "dev"],
@@ -102,8 +167,8 @@ class CustomArabicMMLUTask(LightevalTaskConfig):
         )
 
 
-ARABIC_MMLU_TASKS = [
-    CustomArabicMMLUTask(name=f"arabic_mmlu:{subset}", hf_subset=subset) for subset in ARABIC_MMLU_SUBSETS
+ARABIC_MMLU_MT_TASKS = [
+    CustomArabicMMLUMTTask(name=f"arabic_mmlu_mt:{subset}", hf_subset=subset) for subset in ARABIC_MMLU_MT_SUBSETS
 ]
 
 # ACVA ##
@@ -579,7 +644,8 @@ sciq_ar_task = LightevalTaskConfig(
 
 
 TASKS_TABLE = (
-    ARABIC_MMLU_TASKS
+    ARABIC_MMLU_HT_TASKS
+    + ARABIC_MMLU_MT_TASKS
     + ACVA_TASKS
     + ALGHAFA_TASKS
     + [arabic_exams_task]
