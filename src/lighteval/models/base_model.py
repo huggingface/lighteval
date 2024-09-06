@@ -73,7 +73,6 @@ class BaseModel(LightevalModel):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self._config = config.init_configs(env_config)
         self.accelerator = config.accelerator
-        self._batch_size = config.batch_size
         self._max_length = self._init_max_length(config.max_length)
         self.use_chat_template = config.use_chat_template
 
@@ -284,12 +283,6 @@ class BaseModel(LightevalModel):
         # Default max sequence length setting for when no `max_length` is provided
         # or no max length config setting is found in the model or tokenizer.
         return 2048
-
-    @property
-    def batch_size(self) -> int:
-        if self._batch_size >= 0:
-            self._batch_size = self._get_batch_size(max_input_length=self.max_length)
-        return self._batch_size  # * gpus
 
     @property
     def device(self) -> Union[int, str, torch.device]:
