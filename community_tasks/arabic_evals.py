@@ -39,6 +39,43 @@ from lighteval.tasks.requests import Doc
 LETTER_INDICES_AR = ["أ", "ب", "ج", "د", "هـ", "و", "ز", "ح", "ط", "ي", "ك", "ل", "م", "ن", "س", "ع", "ف", "ص", "ق", "ر", "ش", "ت", "ث", "خ", "ذ", "ض", "ظ", "غ"]
 # fmt: on
 
+# ArabicMMLU
+def arabic_mmlu_pfn(line, task_name: str = None):
+    text = line["text"]
+    label = 1 if ((line["toxicity_ai"] + line["toxicity_human"]) > 5.5) else 0
+    instruction = 'هل العبارة التالية تحض على الكراهية؟ قم بالرد بـ"نعم" أو "لا".'
+
+    query = f"""{instruction}
+    العبارة:
+    '{text}'
+    الإجابة:
+    """
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=["لا", "نعم"],
+        gold_index=label,
+        instruction=instruction,
+        target_for_fewshot_sorting="نعم" if label == 1 else "لا",
+    )
+
+
+arabic_mmlu_task = LightevalTaskConfig(
+    name="arabic_mmlu",
+    prompt_function=arabic_mmlu_pfn,
+    suite=["community"],
+    hf_repo="MBZUAI/ArabicMMLU",
+    hf_subset="default",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    metric=[Metrics.loglikelihood_acc_norm],
+    trust_dataset=True,
+    version=0,
+)
+
 # ARABIC MMLU HT##
 # fmt: off
 ARABIC_MMLU_HT_SUBSETS = [
@@ -54,7 +91,7 @@ ARABIC_MMLU_HT_SUBSETS = [
 # fmt: on
 
 
-def arabic_mmlu_ht(line, task_name: str = None):
+def arabic_mmlu_ht_pfn(line, task_name: str = None):
     instruction = f"السؤال التالي هو سؤال متعدد الإختيارات. اختر الإجابة الصحيحة: أ، ب، ج، أو د... إلخ. \n\n"
     choices = line["choices"]
     # Answers are provided with roman letters - we look for the correct index in LETTER_INDICES,
@@ -84,7 +121,7 @@ class CustomArabicMMLUHTTask(LightevalTaskConfig):
         super().__init__(
             name=name,
             hf_subset=hf_subset,
-            prompt_function=arabic_mmlu_ht,
+            prompt_function=arabic_mmlu_ht_pfn,
             hf_repo="inceptionai/MMLU-HT",
             metric=[Metrics.loglikelihood_acc_norm],
             hf_avail_splits=["train"],
@@ -120,7 +157,7 @@ ARABIC_MMLU_MT_SUBSETS = [
 # fmt: on
 
 
-def arabic_mmlu_mt(line, task_name: str = None):
+def arabic_mmlu_mt_pfn(line, task_name: str = None):
     topic = line["subject"]
     instruction = f"السؤال التالي هو سؤال متعدد الإختيارات. اختر الإجابة الصحيحة: أ، ب، ج، أو د... إلخ. \n\n"
     choices = [line["A"], line["B"], line["C"], line["D"]]
@@ -151,7 +188,7 @@ class CustomArabicMMLUMTTask(LightevalTaskConfig):
         super().__init__(
             name=name,
             hf_subset=hf_subset,
-            prompt_function=arabic_mmlu_mt,
+            prompt_function=arabic_mmlu_mt_pfn,
             hf_repo="OALL/Arabic_MMLU",
             metric=[Metrics.loglikelihood_acc_norm],
             hf_avail_splits=["test", "dev"],
@@ -187,7 +224,7 @@ ACVA_SUBSETS = [
 # fmt: on
 
 
-def acva(line, task_name: str = None):
+def acva_pfn(line, task_name: str = None):
     question = line["question"]
     answer = line["answer"]
 
@@ -208,7 +245,7 @@ class CustomACVATask(LightevalTaskConfig):
         super().__init__(
             name=name,
             hf_subset=hf_subset,
-            prompt_function=acva,
+            prompt_function=acva_pfn,
             hf_repo="OALL/ACVA",
             metric=[Metrics.loglikelihood_acc_norm],
             hf_avail_splits=["test", "validation"],
@@ -228,7 +265,7 @@ class CustomACVATask(LightevalTaskConfig):
 ACVA_TASKS = [CustomACVATask(name=f"acva:{subset}", hf_subset=subset) for subset in ACVA_SUBSETS]
 
 
-def arabic_exams(line, task_name: str = None):
+def arabic_exams_pfn(line, task_name: str = None):
     topic = line["subject"]
     question = line["question"]
     choices = [line["A"], line["B"], line["C"], line["D"]]
@@ -254,7 +291,7 @@ def arabic_exams(line, task_name: str = None):
 # ARABIC EXAMS ##
 arabic_exams_task = LightevalTaskConfig(
     name="arabic_exams",
-    prompt_function=arabic_exams,
+    prompt_function=arabic_exams_pfn,
     suite=["community"],
     hf_repo="OALL/Arabic_EXAMS",
     hf_subset="default",
@@ -278,7 +315,7 @@ ALGHAFA_SUBSETS = [
 # fmt: on
 
 
-def alghafa_prompt(line, task_name: str = None):
+def alghafa_pfn(line, task_name: str = None):
     question = line["query"]
     answer_index = int(line["label"])
     # Dynamically determining the choices by excluding '__few_shots', 'query' and 'label'
@@ -310,7 +347,7 @@ class CustomAlGhafaNativeTask(LightevalTaskConfig):
         super().__init__(
             name=name,
             hf_subset=hf_subset,
-            prompt_function=alghafa_prompt,
+            prompt_function=alghafa_pfn,
             hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Native",
             metric=[Metrics.loglikelihood_acc_norm],
             hf_avail_splits=["test", "validation"],
@@ -322,6 +359,7 @@ class CustomAlGhafaNativeTask(LightevalTaskConfig):
             stop_sequence=None,
             output_regex=None,
             frozen=False,
+            trust_dataset=True,
             version=0,
         )
 
@@ -332,7 +370,7 @@ ALGHAFA_TASKS = [CustomAlGhafaNativeTask(name=f"alghafa:{subset}", hf_subset=sub
 # race_ar
 race_ar_task = LightevalTaskConfig(
     name="race_ar",
-    prompt_function=alghafa_prompt,
+    prompt_function=alghafa_pfn,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
     hf_subset="race_ar",
@@ -349,7 +387,7 @@ race_ar_task = LightevalTaskConfig(
 # piqa_ar
 piqa_ar_task = LightevalTaskConfig(
     name="piqa_ar",
-    prompt_function=alghafa_prompt,
+    prompt_function=alghafa_pfn,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
     hf_subset="piqa_ar",
@@ -366,7 +404,7 @@ piqa_ar_task = LightevalTaskConfig(
 # arc_easy_ar
 arc_easy_ar_task = LightevalTaskConfig(
     name="arc_easy_ar",
-    prompt_function=alghafa_prompt,
+    prompt_function=alghafa_pfn,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
     hf_subset="arc_easy_ar",
@@ -383,7 +421,7 @@ arc_easy_ar_task = LightevalTaskConfig(
 # arc_challenge_okapi_ar
 arc_challenge_okapi_ar_task = LightevalTaskConfig(
     name="arc_challenge_okapi_ar",
-    prompt_function=alghafa_prompt,
+    prompt_function=alghafa_pfn,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
     hf_subset="arc_challenge_okapi_ar",
@@ -400,7 +438,7 @@ arc_challenge_okapi_ar_task = LightevalTaskConfig(
 # mmlu_okapi_ar
 mmlu_okapi_ar_task = LightevalTaskConfig(
     name="mmlu_okapi_ar",
-    prompt_function=alghafa_prompt,
+    prompt_function=alghafa_pfn,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
     hf_subset="mmlu_okapi_ar",
@@ -417,7 +455,7 @@ mmlu_okapi_ar_task = LightevalTaskConfig(
 # openbook_qa_ext_ar
 openbook_qa_ext_ar_task = LightevalTaskConfig(
     name="openbook_qa_ext_ar",
-    prompt_function=alghafa_prompt,
+    prompt_function=alghafa_pfn,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
     hf_subset="openbook_qa_ext_ar",
@@ -432,9 +470,7 @@ openbook_qa_ext_ar_task = LightevalTaskConfig(
 
 
 # boolq_ar
-
-
-def boolq_prompt_arabic(line, task_name: str = None):
+def boolq_arabic_pfn(line, task_name: str = None):
     question = line["question"]
     passage = line["passage"]
     answer = "نعم" if line["answer"] else "لا"
@@ -459,7 +495,7 @@ def boolq_prompt_arabic(line, task_name: str = None):
 
 boolq_ar_task = LightevalTaskConfig(
     name="boolq_ar",
-    prompt_function=boolq_prompt_arabic,
+    prompt_function=boolq_arabic_pfn,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
     hf_subset="boolq_ar",
@@ -474,7 +510,7 @@ boolq_ar_task = LightevalTaskConfig(
 
 
 # copa_ext_ar
-def copa_prompt_arabic(line, task_name: str = None):
+def copa_arabic_pfn(line, task_name: str = None):
     premise = line["premise"]
     choices = [line["choice1"], line["choice2"]]
     question_map = {"cause": "لأن", "effect": "لذلك"}
@@ -495,7 +531,7 @@ def copa_prompt_arabic(line, task_name: str = None):
 
 copa_ext_ar_task = LightevalTaskConfig(
     name="copa_ext_ar",
-    prompt_function=copa_prompt_arabic,
+    prompt_function=copa_arabic_pfn,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
     hf_subset="copa_ext_ar",
@@ -510,7 +546,7 @@ copa_ext_ar_task = LightevalTaskConfig(
 
 
 # hellaswag_okapi_ar
-def hellaswag_prompt_arabic(line, task_name: str = None):
+def hellaswag_arabic_pfn(line, task_name: str = None):
     ctx = re.sub(r"\[.*?\]", "", line["ctx"])  # Remove latin words within brackets
     endings = [
         re.sub(r"\[.*?\]", "", e) for e in eval(line["endings"])
@@ -540,7 +576,7 @@ def hellaswag_prompt_arabic(line, task_name: str = None):
 
 hellaswag_okapi_ar_task = LightevalTaskConfig(
     name="hellaswag_okapi_ar",
-    prompt_function=hellaswag_prompt_arabic,
+    prompt_function=hellaswag_arabic_pfn,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
     hf_subset="hellaswag_okapi_ar",
@@ -555,7 +591,7 @@ hellaswag_okapi_ar_task = LightevalTaskConfig(
 
 
 # toxigen_ar
-def toxigen_prompt_arabic(line, task_name: str = None):
+def toxigen_arabic_pfn(line, task_name: str = None):
     text = line["text"]
     label = 1 if ((line["toxicity_ai"] + line["toxicity_human"]) > 5.5) else 0
     instruction = 'هل العبارة التالية تحض على الكراهية؟ قم بالرد بـ"نعم" أو "لا".'
@@ -578,7 +614,7 @@ def toxigen_prompt_arabic(line, task_name: str = None):
 
 toxigen_ar_task = LightevalTaskConfig(
     name="toxigen_ar",
-    prompt_function=toxigen_prompt_arabic,
+    prompt_function=toxigen_arabic_pfn,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
     hf_subset="toxigen_ar",
@@ -593,7 +629,7 @@ toxigen_ar_task = LightevalTaskConfig(
 
 
 # sciq_ar
-def sciq_prompt_arabic(line, task_name: str = None):
+def sciq_arabic_pfn(line, task_name: str = None):
     support = line["support"]
     question = line["question"]
     correct_answer = line["correct_answer"]
@@ -630,7 +666,7 @@ def sciq_prompt_arabic(line, task_name: str = None):
 
 sciq_ar_task = LightevalTaskConfig(
     name="sciq_ar",
-    prompt_function=sciq_prompt_arabic,
+    prompt_function=sciq_arabic_pfn,
     suite=["community"],
     hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
     hf_subset="sciq_ar",
@@ -645,7 +681,8 @@ sciq_ar_task = LightevalTaskConfig(
 
 
 TASKS_TABLE = (
-    ARABIC_MMLU_HT_TASKS
+    [arabic_mmlu_task]
+    + ARABIC_MMLU_HT_TASKS
     + ARABIC_MMLU_MT_TASKS
     + ACVA_TASKS
     + ALGHAFA_TASKS
