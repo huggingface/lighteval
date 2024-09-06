@@ -41,23 +41,31 @@ LETTER_INDICES_AR = ["أ", "ب", "ج", "د", "هـ", "و", "ز", "ح", "ط", "ي
 
 # ArabicMMLU
 def arabic_mmlu_pfn(line, task_name: str = None):
-    text = line["text"]
-    label = 1 if ((line["toxicity_ai"] + line["toxicity_human"]) > 5.5) else 0
-    instruction = 'هل العبارة التالية تحض على الكراهية؟ قم بالرد بـ"نعم" أو "لا".'
+    instruction = f"السؤال التالي هو سؤال متعدد الإختيارات. اختر الإجابة الصحيحة:\n\n"
 
-    query = f"""{instruction}
-    العبارة:
-    '{text}'
-    الإجابة:
-    """
+    # Create a list of valid choices with corresponding keys
+    choices = []
+    valid_keys = []
+    for idx, key in enumerate(['A', 'B', 'C', 'D', 'E']):  # Work with Latin letters
+        option = line.get(f"Option {idx + 1}")
+        if option:  # Check if option is not null
+            choices.append(option)
+            valid_keys.append(key)  # Append the Latin key (A, B, C, D, E)
+
+    # Find the correct index for the answer key
+    gold_ix = valid_keys.index(line["Answer Key"])
+
+    query = f"{instruction}{line['Question']}\n"
+    query += "".join([f"{key}. {choice}\n" for key, choice in zip(valid_keys, choices)])
+    query += "الإجابة:"
 
     return Doc(
         task_name=task_name,
         query=query,
-        choices=["لا", "نعم"],
-        gold_index=label,
+        choices=valid_keys,  # Return only valid choices (Latin keys)
+        gold_index=gold_ix,  # Correct index in the valid keys
         instruction=instruction,
-        target_for_fewshot_sorting="نعم" if label == 1 else "لا",
+        target_for_fewshot_sorting=valid_keys[gold_ix],  # Correct answer in Latin form
     )
 
 
@@ -158,7 +166,6 @@ ARABIC_MMLU_MT_SUBSETS = [
 
 
 def arabic_mmlu_mt_pfn(line, task_name: str = None):
-    topic = line["subject"]
     instruction = f"السؤال التالي هو سؤال متعدد الإختيارات. اختر الإجابة الصحيحة: أ، ب، ج، أو د... إلخ. \n\n"
     choices = [line["A"], line["B"], line["C"], line["D"]]
     # Answers are provided with roman letters - we look for the correct index in LETTER_INDICES,
