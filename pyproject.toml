@@ -30,7 +30,7 @@ where = ["src"]
 
 [project]
 name = "lighteval"
-version = "0.4.0.dev0"
+version = "0.5.0.dev0"
 authors = [
   { name="Clémentine Fourrier", email="clementine@huggingface.com" },
   { name="Nathan Habib", email="nathan.habib@huggingface.com" },
@@ -66,7 +66,7 @@ dependencies = [
     # Extension of metrics
     "aenum==3.1.15",
     # Base metrics
-    "nltk==3.8.1",
+    "nltk==3.9.1",
     "scikit-learn",
     "spacy==3.7.2",
     "sacrebleu",
