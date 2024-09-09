@@ -102,9 +102,6 @@ ARABIC_MMLU_HT_SUBSETS = [
 def arabic_mmlu_ht_pfn(line, task_name: str = None):
     instruction = f"السؤال التالي هو سؤال متعدد الإختيارات. اختر الإجابة الصحيحة:\n\n"
     choices = line["choices"]
-    # Answers are provided with roman letters - we look for the correct index in LETTER_INDICES,
-    # it will then be applied to arabic letters
-    # gold_ix = LETTER_INDICES.index(line["answer"])
     gold_ix = line["answer"]
 
     query = f"{instruction}{line['question']}\n"
