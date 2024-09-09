@@ -72,7 +72,7 @@ class NLTKTokenizer(WordTokenizer):
         if self._tokenizer is None:
             from nltk import download, load
 
-            download("punkt")
+            download("punkt_tab")
             self._tokenizer = load(f"tokenizers/punkt/{self.punkt_language}.pickle")
         return self._tokenizer
 
