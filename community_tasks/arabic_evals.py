@@ -100,20 +100,21 @@ ARABIC_MMLU_HT_SUBSETS = [
 
 
 def arabic_mmlu_ht_pfn(line, task_name: str = None):
-    instruction = f"السؤال التالي هو سؤال متعدد الإختيارات. اختر الإجابة الصحيحة: أ، ب، ج، أو د... إلخ. \n\n"
+    instruction = f"السؤال التالي هو سؤال متعدد الإختيارات. اختر الإجابة الصحيحة:\n\n"
     choices = line["choices"]
     # Answers are provided with roman letters - we look for the correct index in LETTER_INDICES,
     # it will then be applied to arabic letters
-    gold_ix = LETTER_INDICES.index(line["answer"])
+    # gold_ix = LETTER_INDICES.index(line["answer"])
+    gold_ix = line["answer"]
 
     query = f"{instruction}{line['question']}\n"
-    query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES_AR[:4], choices)])
+    query += "".join([f"{idx}. {choice}\n" for idx, choice in enumerate(choices, start=1)])
     query += "الإجابة:"
 
     return Doc(
         task_name=task_name,
         query=query,
-        choices=LETTER_INDICES_AR[:4],
+        choices=list(range(1, len(choices) + 1)),
         gold_index=gold_ix,
         instruction=instruction,
         target_for_fewshot_sorting=LETTER_INDICES_AR[gold_ix],
