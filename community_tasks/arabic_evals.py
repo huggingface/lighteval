@@ -53,7 +53,7 @@ def arabic_mmlu_pfn(line, task_name: str = None):
             valid_keys.append(key)  # Append the Latin key (A, B, C, D, E)
 
     # Find the correct index for the answer key
-    gold_ix = valid_keys.index(line["Answer Key"])
+    answer_index = valid_keys.index(line["Answer Key"])
 
     query = f"{instruction}{line['Question']}\n"
     query += "".join([f"{key}. {choice}\n" for key, choice in zip(valid_keys, choices)])
@@ -63,7 +63,7 @@ def arabic_mmlu_pfn(line, task_name: str = None):
         task_name=task_name,
         query=query,
         choices=valid_keys,  # Return only valid choices (Latin keys)
-        gold_index=gold_ix,  # Correct index in the valid keys
+        gold_index=answer_index,  # Correct index in the valid keys
         instruction=instruction,
         target_for_fewshot_sorting=valid_keys[gold_ix],  # Correct answer in Latin form
     )
@@ -102,7 +102,7 @@ ARABIC_MMLU_HT_SUBSETS = [
 def arabic_mmlu_ht_pfn(line, task_name: str = None):
     instruction = f"السؤال التالي هو سؤال متعدد الإختيارات. اختر الإجابة الصحيحة:\n\n"
     choices = line["choices"]
-    gold_ix = line["answer"]
+    answer_index = line["answer"] # It is an int reflecting the index of correct answer in line["choices"]
 
     query = f"{instruction}{line['question']}\n"
     query += "".join([f"{idx}. {choice}\n" for idx, choice in enumerate(choices, start=1)])
@@ -112,7 +112,7 @@ def arabic_mmlu_ht_pfn(line, task_name: str = None):
         task_name=task_name,
         query=query,
         choices=[str(i) for i in range(1, len(choices) + 1)],  # List of strings instead of ints
-        gold_index=gold_ix,
+        gold_index=answer_index,
         instruction=instruction,
         target_for_fewshot_sorting=str(gold_ix),  # Assuming it's sorted based on the number
     )
@@ -168,7 +168,7 @@ def arabic_mmlu_mt_pfn(line, task_name: str = None):
     choices = [line["A"], line["B"], line["C"], line["D"]]
     # Answers are provided with roman letters - we look for the correct index in LETTER_INDICES,
     # it will then be applied to arabic letters
-    gold_ix = LETTER_INDICES.index(line["answer"])
+    answer_index = LETTER_INDICES.index(line["answer"]) # line["answer"] is the correct answer. That's why we need to index it !
 
     query = f"{instruction}{line['question']}\n"
     query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES_AR[:4], choices)])
@@ -178,7 +178,7 @@ def arabic_mmlu_mt_pfn(line, task_name: str = None):
         task_name=task_name,
         query=query,
         choices=LETTER_INDICES_AR[:4],
-        gold_index=gold_ix,
+        gold_index=answer_index,
         instruction=instruction,
         target_for_fewshot_sorting=LETTER_INDICES_AR[gold_ix],
     )
@@ -679,6 +679,43 @@ sciq_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
+    metric=[Metrics.loglikelihood_acc_norm],
+    trust_dataset=True,
+    version=0,
+)
+
+
+# madinah_qa
+def madinah_qa_pfn(line, task_name: str = None):
+    instruction = f"السؤال التالي هو سؤال متعدد الإختيارات. اختر الإجابة الصحيحة:\n\n"
+    choices = line["choices"]["text"]
+    valid_keys = line["choices"]["label"]
+    answer_index = valid_keys.index(line["answerKey"])
+
+    query = f"{instruction}{line['Question']}\n"
+    query += "".join([f"{key}. {choice}\n" for key, choice in zip(valid_keys, choices)])
+    query += "الإجابة:"
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=choices,
+        gold_index=answer_index,  # Correct index in the valid keys
+        instruction=instruction,
+        target_for_fewshot_sorting=valid_keys[answer_index],  # Correct answer in Latin form
+    )
+
+
+madinah_qa_task = LightevalTaskConfig(
+    name="madinah_qa",
+    prompt_function=madinah_qa_pfn,
+    suite=["community"],
+    hf_repo="inceptionai/MadinahQA",
+    hf_subset="default",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
     metric=[Metrics.loglikelihood_acc_norm],
     trust_dataset=True,
     version=0,
