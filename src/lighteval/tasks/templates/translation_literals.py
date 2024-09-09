@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import Literal, get_args
 
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.utils.language import Language
@@ -7,51 +6,63 @@ from lighteval.utils.language import Language
 
 @dataclass
 class TranslationLiterals:
-    question: str
-    options: str
-    answer: str
-    nli_assessment: str
-    nli_entailment: str
-    nli_contradiction: str
-    nli_neutral: str
-    cause: str
-    effect: str
+    # This is just to create nice error messages
+    language: Language
+
+    # I hate these type errors too but we are living in python world
+    # and typechecker is not respecting __getattribute__, where it would
+    # find out that the value can't be None.
+    question: str = None  # type: ignore
+    options: str = None  # type: ignore
+    answer: str = None  # type: ignore
+    assessive_right: str = None  # type: ignore
+    yes: str = None  # type: ignore
+    no: str = None  # type: ignore
+    entailment: str = None  # type: ignore
+    contradiction: str = None  # type: ignore
+    neutral: str = None  # type: ignore
+    also: str = None  # type: ignore
+    because: str = None  # type: ignore
+    therefore: str = None  # type: ignore
+    cause: str = None  # type: ignore
+    effect: str = None  # type: ignore
 
     # Punctuation
-    full_stop: str
-    comma: str
-    question_mark: str
-    exclamation_mark: str
-    word_space: str
-    sentence_space: str
-    colon: str
+    full_stop: str = None  # type: ignore
+    comma: str = None  # type: ignore
+    question_mark: str = None  # type: ignore
+    exclamation_mark: str = None  # type: ignore
+    word_space: str = None  # type: ignore
+    sentence_space: str = None  # type: ignore
+    colon: str = None  # type: ignore
 
     # Indices
     indices: list[str] = field(default_factory=lambda: LETTER_INDICES)
 
+    def __getattribute__(self, name: str) -> str:
+        value = super().__getattribute__(name)
+        if value is None:
+            raise AttributeError(
+                f"Translation for '{name}' is needed for {self.language}. Please provide it by editing TODO"
+            )
+        return value
 
-SUPPORTED_LANGUAGES = Literal[
-    Language.english,
-    Language.swahili,
-    Language.french,
-    Language.telugu,
-    Language.hindi,
-    Language.chinese,
-    Language.russian,
-    Language.thai,
-    Language.turkish,
-]
-TRANSLATION_LITERALS: dict[SUPPORTED_LANGUAGES, TranslationLiterals] = {
+
+TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
     Language.english: TranslationLiterals(
-        question="Question",
-        options="Options",
-        answer="Answer",
-        nli_assessment="right",
-        nli_entailment="Yes",
-        nli_contradiction="No",
-        nli_neutral="Also",
-        cause="because",
-        effect="therefore",
+        language=Language.english,
+        question="question",
+        options="options",
+        answer="answer",
+        entailment="entailment",
+        contradiction="contradiction",
+        neutral="neutral",
+        assessive_right="right",
+        yes="yes",
+        no="no",
+        also="also",
+        because="because",
+        therefore="therefore",
         full_stop=".",
         comma=",",
         question_mark="?",
@@ -61,15 +72,16 @@ TRANSLATION_LITERALS: dict[SUPPORTED_LANGUAGES, TranslationLiterals] = {
         colon=":",
     ),
     Language.swahili: TranslationLiterals(
-        question="Swali",
-        options="Chaguo",
-        answer="Jibu",
-        nli_assessment="sahihi",
-        nli_entailment="Ndiyo",
-        nli_contradiction="Hapana",
-        nli_neutral="Pia",
-        cause="kwa sababu",
-        effect="kwa hiyo",
+        language=Language.swahili,
+        question="swali",
+        options="chaguo",
+        answer="jibu",
+        assessive_right="sahihi",
+        yes="ndiyo",
+        no="hapana",
+        also="pia",
+        because="kwa sababu",
+        therefore="kwa hiyo",
         full_stop=".",
         comma=",",
         question_mark="?",
@@ -79,15 +91,16 @@ TRANSLATION_LITERALS: dict[SUPPORTED_LANGUAGES, TranslationLiterals] = {
         colon=":",
     ),
     Language.french: TranslationLiterals(
-        question="Question",
-        options="Possibilités",
-        answer="Réponse",
-        nli_assessment="n'est-ce pas",
-        nli_entailment="Oui",
-        nli_contradiction="Non",
-        nli_neutral="De plus",
-        cause="parce que",
-        effect="donc",
+        language=Language.french,
+        question="question",
+        options="possibilités",
+        answer="réponse",
+        assessive_right="n'est-ce pas",
+        yes="oui",
+        no="non",
+        also="de plus",
+        because="parce que",
+        therefore="donc",
         full_stop=".",
         comma=",",
         question_mark="?",
@@ -97,15 +110,16 @@ TRANSLATION_LITERALS: dict[SUPPORTED_LANGUAGES, TranslationLiterals] = {
         colon=":",
     ),
     Language.telugu: TranslationLiterals(
+        language=Language.telugu,
         question="ప్రశ్న",
         options="ఎంపికలు",
         answer="జవాబు",
-        nli_assessment="కదా",
-        nli_entailment="అవును",
-        nli_contradiction="కాదు",
-        nli_neutral="అలాగే",
-        cause="ఎందుకంటే",
-        effect="అందువలన",
+        assessive_right="కదా",
+        yes="అవును",
+        no="కాదు",
+        also="అలాగే",
+        because="ఎందుకంటే",
+        therefore="అందువలన",
         full_stop=".",
         comma=",",
         question_mark="?",
@@ -115,15 +129,16 @@ TRANSLATION_LITERALS: dict[SUPPORTED_LANGUAGES, TranslationLiterals] = {
         colon=":",
     ),
     Language.hindi: TranslationLiterals(
+        language=Language.hindi,
         question="सवाल",
         options="विकल्प",
         answer="उत्तर",
-        nli_assessment="है ना",
-        nli_entailment="हाँ",
-        nli_contradiction="नहीं",
-        nli_neutral="साथ ही",
-        cause="क्योंकि",
-        effect="इसलिए",
+        assessive_right="है ना",
+        yes="हाँ",
+        no="नहीं",
+        also="साथ ही",
+        because="क्योंकि",
+        therefore="इसलिए",
         full_stop="।",
         comma=",",
         question_mark="?",
@@ -133,15 +148,16 @@ TRANSLATION_LITERALS: dict[SUPPORTED_LANGUAGES, TranslationLiterals] = {
         colon=":",
     ),
     Language.chinese: TranslationLiterals(
+        language=Language.chinese,
         question="问题",
         options="选项",
         answer="答案",
-        nli_assessment="是不是",
-        nli_entailment="是的",
-        nli_contradiction="不是",
-        nli_neutral="而且",
-        cause="因为",
-        effect="所以",
+        assessive_right="是不是",
+        yes="是的",
+        no="不是",
+        also="而且",
+        because="因为",
+        therefore="所以",
         full_stop="。",
         comma="，",
         question_mark="？",
@@ -151,15 +167,16 @@ TRANSLATION_LITERALS: dict[SUPPORTED_LANGUAGES, TranslationLiterals] = {
         colon="：",
     ),
     Language.russian: TranslationLiterals(
-        question="Вопрос",
-        options="Варианты",
+        language=Language.russian,
+        question="вопрос",
+        options="варианты",
         answer="ответ",
-        nli_assessment="не так ли",
-        nli_entailment="Да",
-        nli_contradiction="Нет",
-        nli_neutral="К тому же",
-        cause="потому что",
-        effect="поэтому",
+        assessive_right="не так ли",
+        yes="да",
+        no="нет",
+        also="к тому же",
+        because="потому что",
+        therefore="поэтому",
         full_stop=".",
         comma=",",
         question_mark="?",
@@ -169,15 +186,16 @@ TRANSLATION_LITERALS: dict[SUPPORTED_LANGUAGES, TranslationLiterals] = {
         colon=":",
     ),
     Language.thai: TranslationLiterals(
+        language=Language.thai,
         question="คำถาม",
         options="ตัวเลือก",
         answer="คำตอบ",
-        nli_assessment="ใช่ไหม",
-        nli_entailment="ใช่",
-        nli_contradiction="ไม่",
-        nli_neutral="และ",
-        cause="เพราะ",
-        effect="ดังนั้น",
+        assessive_right="ใช่ไหม",
+        yes="ใช่",
+        no="ไม่",
+        also="และ",
+        because="เพราะ",
+        therefore="ดังนั้น",
         full_stop="",
         comma=",",
         question_mark="?",
@@ -187,15 +205,16 @@ TRANSLATION_LITERALS: dict[SUPPORTED_LANGUAGES, TranslationLiterals] = {
         colon=":",
     ),
     Language.turkish: TranslationLiterals(
-        question="Soru",
-        options="Seçenekler",
-        answer="Cevap",
-        nli_assessment="değil mi",
-        nli_entailment="Evet",
-        nli_contradiction="Hayır",
-        nli_neutral="Ayrıca",
-        cause="çünkü",
-        effect="bu yüzden",
+        language=Language.turkish,
+        question="soru",
+        options="seçenekler",
+        answer="cevap",
+        assessive_right="değil mi",
+        yes="evet",
+        no="hayır",
+        also="ayrıca",
+        because="çünkü",
+        therefore="bu yüzden",
         full_stop=".",
         comma=",",
         question_mark="?",
@@ -205,5 +224,3 @@ TRANSLATION_LITERALS: dict[SUPPORTED_LANGUAGES, TranslationLiterals] = {
         colon=":",
     ),
 }
-
-assert set(get_args(SUPPORTED_LANGUAGES)) == set(TRANSLATION_LITERALS)
