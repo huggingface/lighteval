@@ -21,17 +21,20 @@ lighteval accelerate \
      --output_dir="./evals/"
 ```
 
-Here, --tasks refers to either a comma-separated list of supported tasks from
-the `tasks_list` in the format: Tasks details can also be found in the file
-implementing them.
+Here, `--tasks` refers to either a comma-separated list of supported tasks from
+the [tasks_list](tasks) in the format:
 
 ```bash
 suite|task|num_few_shot|{0 or 1 to automatically reduce `num_few_shot` if prompt is too long}
 ```
 
-or a file path like ``examples/tasks/recommended_set.txt`` which specifies
-multiple task configurations. For example, to evaluate GPT-2 on the Truthful QA
-benchmark run:
+or a file path like
+[examples/tasks/recommended_set.txt](https://github.com/huggingface/lighteval/blob/main/examples/tasks/recommended_set.txt)
+which specifies multiple task configurations.
+
+Tasks details can be found in the
+[file](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/default_tasks.py)
+implementing them.
 
 ### Evaluate a model on one or more GPUs
 
@@ -88,8 +91,8 @@ Nanotron models cannot be evaluated without torchrun.
 ```bash
  torchrun --standalone --nnodes=1 --nproc-per-node=1  \
  src/lighteval/__main__.py nanotron \
- --checkpoint-config-path ../nanotron/checkpoints/10/config.yaml \
- --lighteval-override examples/nanotron/lighteval_config_override_template.yaml
+ --checkpoint_config_path ../nanotron/checkpoints/10/config.yaml \
+ --lighteval_config_path examples/nanotron/lighteval_config_override_template.yaml
  ```
 
 The `nproc-per-node` argument should match the data, tensor and pipeline

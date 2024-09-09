@@ -19,8 +19,8 @@ pip install -e .
 ### Extras
 
 Lighteval has optional dependencies that you can install by specifying the
-appropriate extras group. `pip install lighteval[<group>]` or `pip install -e
-.[<group>]`.
+appropriate extras group.
+`pip install lighteval[<group>]` or `pip install -e .[<group>]`.
 
 | extra name   | description                                                               |
 |--------------|---------------------------------------------------------------------------|
@@ -30,6 +30,7 @@ appropriate extras group. `pip install lighteval[<group>]` or `pip install -e
 | quantization | To evaluate quantized models                                              |
 | adapters     | To evaluate adapters models (delta and peft)                              |
 | tensorboardX | To upload your results to tensorboard                                     |
+| vllm         | To use vllm as backend for inference                                      |
 
 ## Hugging Face login
 

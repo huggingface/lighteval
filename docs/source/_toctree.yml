@@ -18,8 +18,6 @@
       title: Adding a Custom Metric
     - local: saving_results
       title: Saving Results
-    - local: training_and_eval_loop
-      title: Training and Evaluation Loop
 - title: "API Reference"
   sections:
     - local: metric_list
