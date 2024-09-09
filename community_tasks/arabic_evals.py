@@ -114,10 +114,10 @@ def arabic_mmlu_ht_pfn(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=query,
-        choices=list(range(1, len(choices) + 1)),
+        choices=[str(i) for i in range(1, len(choices) + 1)],  # List of strings instead of ints
         gold_index=gold_ix,
         instruction=instruction,
-        target_for_fewshot_sorting=LETTER_INDICES_AR[gold_ix],
+        target_for_fewshot_sorting=str(gold_ix),  # Assuming it's sorted based on the number
     )
 
 
