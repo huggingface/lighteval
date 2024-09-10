@@ -73,7 +73,6 @@ class BaseModel(LightevalModel):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self._config = config.init_configs(env_config)
         self.accelerator = config.accelerator
-        self._batch_size = config.batch_size
         self._max_length = self._init_max_length(config.max_length)
         self.use_chat_template = config.use_chat_template
 
@@ -93,6 +92,7 @@ class BaseModel(LightevalModel):
             hlog(f"Using Data Parallelism, putting model on device {self._device}")
             self.model = self.model.to(self._device)
         if config.compile:
+            hlog("Compiling the model")
             self.model.model.compile()
 
         self.model_name = _simplify_name(config.pretrained)
@@ -283,12 +283,6 @@ class BaseModel(LightevalModel):
         # Default max sequence length setting for when no `max_length` is provided
         # or no max length config setting is found in the model or tokenizer.
         return 2048
-
-    @property
-    def batch_size(self) -> int:
-        if self._batch_size >= 0:
-            self._batch_size = self._get_batch_size(max_input_length=self.max_length)
-        return self._batch_size  # * gpus
 
     @property
     def device(self) -> Union[int, str, torch.device]:
@@ -549,9 +543,9 @@ class BaseModel(LightevalModel):
                 tokenized = self.tokenizer(
                     context,
                     truncation="longest_first",  # we truncate to the model max length if needed
-                    padding="longest",  # we pad to the longest sequence
+                    padding="max_length",  # we pad to the longest sequence
                     return_tensors="pt",
-                    max_length=self.max_length - 1,  # we always allow minimum one token of generation
+                    max_length=max_context_continuation_size_allowed,  # we always allow minimum one token of generation
                     add_special_tokens=self.add_special_tokens,
                 ).to(self.device)
 
@@ -573,7 +567,10 @@ class BaseModel(LightevalModel):
                     if max_new_tokens is None:  # If generation size is not set, we go all the way
                         max_new_tokens = self.max_length - context_size
                     else:
+                        print(self.max_length, context_size, max_new_tokens)
                         max_new_tokens = min(self.max_length - context_size, max_new_tokens)
+                        if max_new_tokens < 1:
+                            max_new_tokens = 1
 
                 prepared_batch = Batch(
                     input_ids=tokenized["input_ids"],
