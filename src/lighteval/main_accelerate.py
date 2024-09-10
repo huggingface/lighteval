@@ -71,6 +71,7 @@ def main(args):
         use_chat_template=args.use_chat_template,
         override_batch_size=args.override_batch_size,
         model_args=args.model_args,
+        model_config_path=args.model_config_path,
         accelerator=accelerator,
     )
 
