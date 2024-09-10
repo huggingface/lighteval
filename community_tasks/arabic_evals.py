@@ -42,30 +42,44 @@ LETTER_INDICES_AR = ["أ", "ب", "ج", "د", "هـ", "و", "ز", "ح", "ط", "ي
 # ArabicMMLU
 def arabic_mmlu_pfn(line, task_name: str = None):
     instruction = f"السؤال التالي هو سؤال متعدد الإختيارات. اختر الإجابة الصحيحة:\n\n"
-
-    # Create a list of valid choices with corresponding keys
+    
+    # Define the mapping from Latin to Arabic letters
+    latin_to_arabic = {
+        'A': 'أ',
+        'B': 'ب',
+        'C': 'ج',
+        'D': 'د',
+        'E': 'هـ'
+    }
+    
+    # Create a list of valid choices with corresponding Arabic keys
     choices = []
-    valid_keys = []
-    for idx, key in enumerate(['A', 'B', 'C', 'D', 'E']):  # Work with Latin letters
+    valid_keys_latin = []
+    valid_keys_arabic = []
+    
+    # Enumerate through the options and append the valid ones
+    for idx, key in enumerate(['A', 'B', 'C', 'D', 'E']):
         option = line.get(f"Option {idx + 1}")
         if option:  # Check if option is not null
             choices.append(option)
-            valid_keys.append(key)  # Append the Latin key (A, B, C, D, E)
-
-    # Find the correct index for the answer key
-    answer_index = valid_keys.index(line["Answer Key"])
-
+            valid_keys_latin.append(key)  # Append the Latin key (A, B, C, D, E)
+            valid_keys_arabic.append(latin_to_arabic[key])  # Append the corresponding Arabic letter
+    
+    # Find the correct index for the answer key in the Arabic version
+    answer_index = valid_keys_latin.index(line["Answer Key"])
+    
+    # Construct the query with Arabic letters
     query = f"{instruction}{line['Question']}\n"
-    query += "".join([f"{key}. {choice}\n" for key, choice in zip(valid_keys, choices)])
+    query += "".join([f"{key}. {choice}\n" for key, choice in zip(valid_keys_arabic, choices)])
     query += "الإجابة:"
-
+    
     return Doc(
         task_name=task_name,
         query=query,
-        choices=valid_keys,  # Return only valid choices (Latin keys)
-        gold_index=answer_index,  # Correct index in the valid keys
+        choices=valid_keys_arabic,  # Return only valid choices (Arabic keys)
+        gold_index=answer_index,  # Correct index in the valid Arabic keys
         instruction=instruction,
-        target_for_fewshot_sorting=valid_keys[gold_ix],  # Correct answer in Latin form
+        target_for_fewshot_sorting=valid_keys_arabic[answer_index],  # Correct answer in Arabic form
     )
 
 
@@ -84,7 +98,7 @@ arabic_mmlu_task = LightevalTaskConfig(
     version=0,
 )
 
-# ARABIC MMLU HT##
+# ARABIC MMLU HT ##
 # fmt: off
 ARABIC_MMLU_HT_SUBSETS = [
     "abstract_algebra", "anatomy", "astronomy", "business_ethics", "clinical_knowledge", "college_biology", "college_chemistry", "college_computer_science",
@@ -148,7 +162,7 @@ ARABIC_MMLU_HT_TASKS = [
     CustomArabicMMLUHTTask(name=f"arabic_mmlu_ht:{subset}", hf_subset=subset) for subset in ARABIC_MMLU_HT_SUBSETS
 ]
 
-# ARABIC MMLU MT##
+# ARABIC MMLU MT ##
 # fmt: off
 ARABIC_MMLU_MT_SUBSETS = [
     "abstract_algebra", "anatomy", "astronomy", "business_ethics", "clinical_knowledge", "college_biology", "college_chemistry", "college_computer_science",
@@ -168,7 +182,7 @@ def arabic_mmlu_mt_pfn(line, task_name: str = None):
     choices = [line["A"], line["B"], line["C"], line["D"]]
     # Answers are provided with roman letters - we look for the correct index in LETTER_INDICES,
     # it will then be applied to arabic letters
-    answer_index = LETTER_INDICES.index(line["answer"]) # line["answer"] is the correct answer. That's why we need to index it !
+    answer_index = LETTER_INDICES_AR.index(line["answer"]) # line["answer"] is the correct answer. That's why we need to index it !
 
     query = f"{instruction}{line['question']}\n"
     query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES_AR[:4], choices)])
@@ -268,6 +282,66 @@ class CustomACVATask(LightevalTaskConfig):
 
 
 ACVA_TASKS = [CustomACVATask(name=f"acva:{subset}", hf_subset=subset) for subset in ACVA_SUBSETS]
+
+
+# AraTrust ##
+# fmt: off
+ARATRUST_SUBSETS = [
+    "Trustfulness", "Mental Health", "Physical Health", "Offensive", "Ethics", "Privacy", "Unfairness", "Illegal",
+]
+# fmt: on
+
+
+def aratrust_pfn(line, task_name: str = None):
+    instruction = f"السؤال التالي هو سؤال متعدد الإختيارات. اختر الإجابة الصحيحة: أ، ب أو ج. \n\n"
+    choices = [line["A"], line["B"], line["C"]]
+    # Answers are provided with roman letters - we look for the correct index in LETTER_INDICES,
+    # it will then be applied to arabic letters
+    answer_index = LETTER_INDICES_AR.index(line["Answer"]) # line["answer"] is the correct answer. That's why we need to index it !
+
+    query = f"{instruction}{line['question']}\n"
+    query += "".join([f"{choice}\n" for choice in choices])
+    query += "الإجابة:"
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=LETTER_INDICES_AR[:3],
+        gold_index=answer_index,
+        instruction=instruction,
+        target_for_fewshot_sorting=LETTER_INDICES_AR[gold_ix],
+    )
+
+
+class CustomAraTrustTask(LightevalTaskConfig):
+    def __init__(
+        self,
+        name,
+        hf_subset,
+    ):
+        super().__init__(
+            name=name,
+            hf_subset=hf_subset,
+            prompt_function=aratrust_pfn,
+            hf_repo="asas-ai/AraTrust-categorized",
+            metric=[Metrics.loglikelihood_acc_norm],
+            hf_avail_splits=["train"],
+            evaluation_splits=["train"],
+            few_shots_split=None,
+            few_shots_select=None,
+            suite=["community"],
+            generation_size=-1,
+            stop_sequence=None,
+            output_regex=None,
+            frozen=False,
+            trust_dataset=True,
+            version=0,
+        )
+
+
+ARATRUST_TASKS = [
+    CustomAraTrustTask(name=f"aratrust:{subset}", hf_subset=subset) for subset in ARATRUST_SUBSETS
+]
 
 
 def arabic_exams_pfn(line, task_name: str = None):
