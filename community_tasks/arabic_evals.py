@@ -287,7 +287,7 @@ ACVA_TASKS = [CustomACVATask(name=f"acva:{subset}", hf_subset=subset) for subset
 # AraTrust ##
 # fmt: off
 ARATRUST_SUBSETS = [
-    "Trustfulness", "Mental Health", "Physical Health", "Offensive", "Ethics", "Privacy", "Unfairness", "Illegal",
+    "Trustfulness", "MentalHealth", "PhysicalHealth", "Offensive", "Ethics", "Privacy", "Unfairness", "Illegal",
 ]
 # fmt: on
 
