@@ -206,6 +206,27 @@ class AdapterModelConfig(BaseModelConfig):
 
 @dataclass
 class VLLMModelConfig:
+    r"""
+    Docstring
+
+    **Atributes**:
+        - **pretrained** (str): HuggingFace Hub model ID name or the path to a pre-trained model to load.
+        - **gpu_memory_utilisation** (float): The fraction of GPU memory to use.
+        - **batch_size** (int): The batch size for model training.
+        - **revision** (str): The revision of the model.
+        - **dtype** (str, None): The data type to use for the model.
+        - **tensor_parallel_size** (int): The number of tensor parallel units to use.
+        - **data_parallel_size** (int): The number of data parallel units to use.
+        - **max_model_length** (int): The maximum length of the model.
+        - **swap_space** (int): The CPU swap space size (GiB) per GPU.
+        - **seed** (int): The seed to use for the model.
+        - **trust_remote_code** (bool): Whether to trust remote code during model loading.
+        - **use_chat_template** (bool): Whether to use the chat template or not.
+        - **add_special_tokens** (bool): Whether to add special tokens to the input sequences.
+        - **multichoice_continuations_start_space** (bool): Whether to add a space at the start of each continuation in multichoice generation.
+        - **subfolder** (Optional[str]): The subfolder within the model repository.
+    """
+
     pretrained: str
     gpu_memory_utilisation: float = 0.8
     batch_size: int = -1

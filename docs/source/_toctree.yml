@@ -8,16 +8,18 @@
       title: Quicktour
 - title: "Guides"
   sections:
-    - local: use_vllm
-      title: Using VLLM as backend
-    - local: use_tgi
-      title: Evaluate on Server
+    - local: saving_results
+      title: Saving Results
+    - local: use_python_api
+      title: Use The Python API
     - local: adding_new_task
       title: Adding a Custom Task
     - local: adding_new_metric
       title: Adding a Custom Metric
-    - local: saving_results
-      title: Saving Results
+    - local: use_vllm
+      title: Using VLLM as backend
+    - local: use_tgi
+      title: Evaluate on Server
 - title: "API Reference"
   sections:
     - local: metric_list

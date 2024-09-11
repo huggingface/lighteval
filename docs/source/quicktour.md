@@ -25,7 +25,7 @@ Here, `--tasks` refers to either a comma-separated list of supported tasks from
 the [tasks_list](tasks) in the format:
 
 ```bash
-suite|task|num_few_shot|{0 or 1 to automatically reduce `num_few_shot` if prompt is too long}
+{suite}|{task}|{num_few_shot}|{0 or 1 to automatically reduce `num_few_shot` if prompt is too long}
 ```
 
 or a file path like
@@ -65,7 +65,7 @@ batch size will be `override_batch_size * num_gpus`.
 To evaluate a model using pipeline parallelism on 2 or more GPUs, run:
 
 ```bash
-    lighteval accelerate \
+lighteval accelerate \
     --model_args "pretrained=gpt2,model_parallel=True" \
     --tasks "leaderboard|truthfulqa:mc|0|0" \
     --override_batch_size 1 \
