@@ -766,7 +766,7 @@ def madinah_qa_pfn(line, task_name: str = None):
     valid_keys = line["choices"]["label"]
     answer_index = valid_keys.index(line["answerKey"])
 
-    query = f"{instruction}{line['Question']}\n"
+    query = f"{instruction}{line['question']}\n"
     query += "".join([f"{key}. {choice}\n" for key, choice in zip(valid_keys, choices)])
     query += "الإجابة:"
 
