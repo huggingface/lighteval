@@ -331,7 +331,7 @@ class CustomAraTrustTask(LightevalTaskConfig):
             few_shots_select=None,
             suite=["community"],
             generation_size=-1,
-            stop_sequence=None,
+            stop_sequence=[],
             output_regex=None,
             frozen=False,
             trust_dataset=True,
