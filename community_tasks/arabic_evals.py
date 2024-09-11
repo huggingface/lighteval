@@ -309,7 +309,7 @@ def aratrust_pfn(line, task_name: str = None):
         choices=LETTER_INDICES_AR[:3],
         gold_index=answer_index,
         instruction=instruction,
-        target_for_fewshot_sorting=LETTER_INDICES_AR[gold_ix],
+        target_for_fewshot_sorting=LETTER_INDICES_AR[answer_index],
     )
 
 
