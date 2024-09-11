@@ -182,7 +182,7 @@ def arabic_mmlu_mt_pfn(line, task_name: str = None):
     choices = [line["A"], line["B"], line["C"], line["D"]]
     # Answers are provided with roman letters - we look for the correct index in LETTER_INDICES,
     # it will then be applied to arabic letters
-    answer_index = LETTER_INDICES_AR.index(line["answer"]) # line["answer"] is the correct answer. That's why we need to index it !
+    answer_index = LETTER_INDICES.index(line["answer"]) # line["answer"] is the correct answer. That's why we need to index it !
 
     query = f"{instruction}{line['question']}\n"
     query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES_AR[:4], choices)])
@@ -194,7 +194,7 @@ def arabic_mmlu_mt_pfn(line, task_name: str = None):
         choices=LETTER_INDICES_AR[:4],
         gold_index=answer_index,
         instruction=instruction,
-        target_for_fewshot_sorting=LETTER_INDICES_AR[gold_ix],
+        target_for_fewshot_sorting=LETTER_INDICES_AR[answer_index],
     )
 
 
