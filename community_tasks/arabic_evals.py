@@ -324,7 +324,7 @@ class CustomAraTrustTask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=aratrust_pfn,
             hf_repo="asas-ai/AraTrust-categorized",
-            metric=[Metrics.loglikelihood_acc_norm],
+            metric=[Metrics.f1_score], # Following the paper (AraTrust: An Evaluation of Trustworthiness for LLMs in Arabic)[https://arxiv.org/abs/2403.09017]
             hf_avail_splits=["train"],
             evaluation_splits=["train"],
             few_shots_split=None,
