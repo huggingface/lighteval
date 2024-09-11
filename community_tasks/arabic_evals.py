@@ -802,6 +802,7 @@ TASKS_TABLE = (
     + ARABIC_MMLU_MT_TASKS
     + ACVA_TASKS
     + ALGHAFA_TASKS
+    + ARATRUST_TASKS
     + [arabic_exams_task]
     + [race_ar_task]
     + [piqa_ar_task]
@@ -814,6 +815,7 @@ TASKS_TABLE = (
     + [hellaswag_okapi_ar_task]
     + [toxigen_ar_task]
     + [sciq_ar_task]
+    + [madinah_qa_task]
 )
 
 if __name__ == "__main__":
