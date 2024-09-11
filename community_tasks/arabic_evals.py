@@ -128,7 +128,7 @@ def arabic_mmlu_ht_pfn(line, task_name: str = None):
         choices=[str(i) for i in range(1, len(choices) + 1)],  # List of strings instead of ints
         gold_index=answer_index,
         instruction=instruction,
-        target_for_fewshot_sorting=str(gold_ix),  # Assuming it's sorted based on the number
+        target_for_fewshot_sorting=str(answer_index),  # Assuming it's sorted based on the number
     )
 
 
