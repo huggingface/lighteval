@@ -299,7 +299,7 @@ def aratrust_pfn(line, task_name: str = None):
     # it will then be applied to arabic letters
     answer_index = LETTER_INDICES_AR.index(line["Answer"]) # line["answer"] is the correct answer. That's why we need to index it !
 
-    query = f"{instruction}{line['question']}\n"
+    query = f"{instruction}{line['Question']}\n"
     query += "".join([f"{choice}\n" for choice in choices])
     query += "الإجابة:"
 
