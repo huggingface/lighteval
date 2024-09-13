@@ -396,7 +396,7 @@ def remove_punc(text: str) -> str:
     return "".join(ch for ch in text if ch not in PUNCT)
 
 
-def get_multilingual_normalizer(lang: Language, lower: bool = True):
+def get_multilingual_normalizer(lang: Language, lower: bool = True) -> Callable[[str], str]:
     tokenizer = get_word_tokenizer(lang)
 
     def _inner_normalizer(text: str) -> str:
