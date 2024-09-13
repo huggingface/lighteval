@@ -109,7 +109,7 @@ def check_required_dependencies(step_name: str, required_dependencies: list[str]
         _raise_error_for_missing_dependencies(step_name, missing_dependencies)
 
 
-def _raise_error_for_missing_dependencies(step_name: str, dependencies: dict[str, str]) -> NoReturn:
+def _raise_error_for_missing_dependencies(step_name: str, dependencies: dict[str, str]):
     """Helper to raise an ImportError for missing dependencies and prompt the user to install said dependencies
 
     Args:
