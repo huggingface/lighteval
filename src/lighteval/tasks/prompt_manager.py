@@ -25,7 +25,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
 from itertools import cycle
-from typing import TYPE_CHECKING, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Optional, Tuple, Union
 
 from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.models.abstract_model import LightevalModel
@@ -188,6 +188,7 @@ class PromptManager:
             fewshot_ex=fewshot_ex,
             system_prompt=system_prompt,
             use_chat_template=use_chat_template,
+            tools=doc.tools,
         )
         toks = self.model.tokenizer(output)["input_ids"]
 
@@ -218,6 +219,7 @@ class PromptManager:
         fewshot_ex: list[str],
         system_prompt: Union[str | None],
         use_chat_template: bool,
+        tools: Optional[Any] = None,
     ):
         examples = []
         # Few shot examples
@@ -240,7 +242,9 @@ class PromptManager:
                 examples.insert(0, {"role": "system", "content": system_prompt + instruction})
             else:  # Else we add the instruction to the first example
                 examples[0]["content"] = instruction + examples[0]["content"]
-            return self.model.tokenizer.apply_chat_template(examples, tokenize=False, add_generation_prompt=True)
+            return self.model.tokenizer.apply_chat_template(
+                examples, tokenize=False, add_generation_prompt=True, tools=tools
+            )
         else:
             if system_prompt is not None:
                 output = system_prompt + instruction + "\n\n".join(examples)
@@ -255,9 +259,7 @@ class PromptManager:
 class FewShotSelectionMethod:
     sorting: str  # sorting method for the overall few shot pool (balanced, random, sequential)
     with_sampling: bool  # samples item randomly from the few shot pool
-    fewshotpool_unique: (
-        bool
-    )  # set to true if you are CERTAIN there is no intersection between the few shot pool and your evaluation set
+    fewshotpool_unique: bool  # set to true if you are CERTAIN there is no intersection between the few shot pool and your evaluation set
 
 
 class FewShotSelection(Enum):

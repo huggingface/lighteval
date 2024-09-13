@@ -189,6 +189,9 @@ class Doc:
     # The uncoditioned query shouldn't contain any information about the task, thus usually it's empty string or 'Answer:'.
     unconditioned_query: Optional[str] = None
 
+    # For tools
+    tools: Optional[list[dict]] = None
+
     def __post_init__(self):
         if self.instruction is None:
             self.instruction = ""
