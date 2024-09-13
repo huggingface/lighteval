@@ -13,10 +13,10 @@
 # limitations under the License.
 import os
 from dataclasses import asdict, dataclass, is_dataclass
-from typing import Any, Union
+from typing import Callable, TypeVar, Union
 
 import numpy as np
-from datasets import load_dataset
+from datasets import DatasetDict, load_dataset
 from pytablewriter import MarkdownTableWriter
 
 
@@ -109,7 +109,14 @@ def sanitize_numpy(example_dict: dict) -> dict:
     return output_dict
 
 
-def as_list(item: Union[list, tuple, Any]) -> list:
+ListLikeTypeVar = TypeVar("ListLikeTypeVar")
+ListLike = list[ListLikeTypeVar] | tuple[ListLikeTypeVar, ...]
+
+
+ElementType = TypeVar("ElementType")
+
+
+def as_list(item: ListLike[ElementType] | ElementType) -> list[ElementType]:
     """
     Convert the given item into a list.
 
@@ -126,8 +133,10 @@ def as_list(item: Union[list, tuple, Any]) -> list:
     """
     if isinstance(item, list):
         return item
+
     elif isinstance(item, tuple):
         return list(item)
+
     return [item]
 
 
@@ -205,12 +214,17 @@ def boolstring_to_bool(x: Union[str, bool, int]) -> Union[bool, None]:
     raise ValueError(f"You tried to convert {x} to a boolean but it's not possible.")
 
 
-def download_dataset_worker(args):
+def download_dataset_worker(
+    dataset_path: str,
+    dataset_config_name: str,
+    trust_dataset: bool,
+    dataset_filter: Callable[[dict], bool] | None = None,
+    revision: str | None = None,
+) -> DatasetDict:
     """
     Worker function to download a dataset from the HuggingFace Hub.
     Used for parallel dataset loading.
     """
-    dataset_path, dataset_config_name, trust_dataset = args
     dataset = load_dataset(
         path=dataset_path,
         name=dataset_config_name,
@@ -218,8 +232,14 @@ def download_dataset_worker(args):
         cache_dir=None,
         download_mode=None,
         trust_remote_code=trust_dataset,
+        revision=revision,
     )
-    return dataset
+
+    if dataset_filter is not None:
+        dataset = dataset.filter(dataset_filter)
+
+    # It returns DatasetDict because we don't specify a split
+    return dataset  # type: ignore
 
 
 def safe_divide(numerator: np.ndarray, denominator: float, default_value: float = 0.0) -> np.ndarray:
