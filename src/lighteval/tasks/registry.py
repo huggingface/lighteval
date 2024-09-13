@@ -28,6 +28,7 @@ from pathlib import Path
 from pprint import pformat
 from types import ModuleType
 from typing import Dict, List, Optional, Tuple, Union
+import warnings
 
 from datasets.load import dataset_module_factory
 
@@ -179,7 +180,10 @@ def create_custom_tasks_module(custom_tasks: Union[str, Path, ModuleType]) -> Mo
     if isinstance(custom_tasks, ModuleType):
         return custom_tasks
     if isinstance(custom_tasks, (str, Path)) and os.path.exists(custom_tasks):
-        dataset_module = dataset_module_factory(str(custom_tasks))
+        warnings.warn(
+            "Loading dataset with `trust_remote_code=True`. Make sure you trust the source of the dataset you are loading."
+        )
+        dataset_module = dataset_module_factory(str(custom_tasks), trust_remote_code=True)
         return importlib.import_module(dataset_module.module_path)
     if isinstance(custom_tasks, (str, Path)):
         return importlib.import_module(custom_tasks)
