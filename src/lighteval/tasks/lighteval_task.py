@@ -196,7 +196,7 @@ class LightevalTask:
 
         self.fewshot_split: list[str] | None
         if cfg.few_shots_split is not None:
-            self.fewshot_split = as_list(cfg.few_shots_split) if cfg.few_shots_split is not None else None
+            self.fewshot_split = as_list(cfg.few_shots_split)
         else:
             self.fewshot_split = self.get_first_possible_fewshot_splits(cfg.hf_avail_splits or [])
         self.fewshot_selection = cfg.few_shots_select
