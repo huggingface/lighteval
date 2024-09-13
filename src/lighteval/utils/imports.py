@@ -14,7 +14,6 @@
 
 import importlib
 from functools import lru_cache
-from typing import NoReturn
 
 
 def is_accelerate_available() -> bool:
