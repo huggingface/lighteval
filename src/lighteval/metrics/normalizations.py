@@ -25,6 +25,7 @@ import string
 import sys
 import unicodedata
 from dataclasses import dataclass
+from typing import Callable
 
 from lighteval.utils.language import Language
 from lighteval.utils.tokenizers import get_word_tokenizer
