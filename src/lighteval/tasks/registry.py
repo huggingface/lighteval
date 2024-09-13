@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import collections
+from functools import partial
 import importlib
 import os
 from itertools import groupby
@@ -64,7 +65,7 @@ class Registry:
     The Registry class is used to manage the task registry and get task classes.
     """
 
-    def __init__(self, cache_dir: str):
+    def __init__(self, cache_dir: str, custom_tasks: Optional[Union[str, Path, ModuleType]] = None):
         """
         Initialize the Registry class.
 
@@ -76,7 +77,7 @@ class Registry:
             TASK_REGISTRY (dict[str, LightevalTask]): A dictionary containing the registered tasks.
         """
         self.cache_dir: str = cache_dir
-        self.TASK_REGISTRY: dict[str, LightevalTask] = {**create_config_tasks(cache_dir=cache_dir)}
+        self.custom_tasks = custom_tasks
 
     def get_task_class(
         self, task_name: str, custom_tasks_registry: Optional[dict[str, LightevalTask]] = None
@@ -107,7 +108,68 @@ class Registry:
         raise ValueError(
             f"Cannot find tasks {task_name} in task list or in custom task registry ({custom_tasks_registry})"
         )
+        
 
+    # 3 cases:
+    # task is normal tasks
+    # task is a group
+    # task is parent of subgroups
+
+    # How to handle this:
+    # We convert all cases to the first case
+    
+    @property
+    def task_groups_dict(self) -> dict[str, list[str]]:
+        """
+        In format {group: [tasks]}
+        """
+        pass
+    
+
+    @property
+    def task_subgroups_dict(self) -> dict[str, list[tuple[str, str]]]:
+        """
+        In format {subgroup: [tasks]}
+        """
+        pass
+    
+    
+    @property
+    def task_registry(self) -> dict[str, list[LightevalTask]]:
+        """
+        In format {subgroup: [tasks]}
+        """
+        return create_config_tasks(cache_dir=self.cache_dir)
+    
+    def get_task_id_shots(self, task_name: str) -> tuple[str, str]:
+        pass
+    
+    
+
+    def convert_to_tasks(self, task_name_list: List[str]):
+        """
+        Convert a list of tasks, groups and head groups to a list of tasks
+        """
+
+        # 1. Try group match
+        def process_task(task_name: str) -> list[str]:
+            tasks = None
+
+            # First try if it's a group
+            tasks = self.task_groups_dict.get(task_name, None)
+            if tasks is not None:
+                return tasks
+            
+            # The task now must be in task format suite|task|few_shot|truncate_few_shots
+            task_id, _ = self.get_task_id_shots(task_name)
+            tasks = self.task_subgroups_dict.get(task_id, None)
+            if tasks is not None:
+                return [f"{task_id}|{few_shots}" for task_id, few_shots in tasks]
+            
+            # Then it must be a single task
+            return [task_name]
+        
+    
     def get_task_dict(
         self, task_name_list: List[str], custom_tasks: Optional[Union[str, Path, ModuleType]] = None
     ) -> Dict[str, LightevalTask]:
@@ -157,7 +219,7 @@ class Registry:
         """
         Print all the tasks in the task registry.
         """
-        tasks_names = list(self.TASK_REGISTRY.keys())
+        tasks_names = list(self.task_registry.keys())
         tasks_names.sort()
         for suite, g in groupby(tasks_names, lambda x: x.split("|")[0]):
             tasks_names = list(g)
@@ -165,6 +227,12 @@ class Registry:
             print(f"\n- {suite}:")
             for task_name in tasks_names:
                 print(f"  - {task_name}")
+
+
+# Unwrap groups -> tasks
+# Unwrap joined groups -> tasks
+
+
 
 
 def create_custom_tasks_module(custom_tasks: Union[str, Path, ModuleType]) -> ModuleType:
@@ -186,7 +254,7 @@ def create_custom_tasks_module(custom_tasks: Union[str, Path, ModuleType]) -> Mo
     raise ValueError(f"Cannot import custom tasks from {custom_tasks}")
 
 
-def get_custom_tasks(custom_tasks: Union[str, ModuleType]) -> Tuple[ModuleType, str]:
+def get_groups(custom_tasks: Union[str, ModuleType]) -> Tuple[ModuleType, str]:
     """Get all the custom tasks available from the given custom tasks file or module.
 
     Args:
@@ -197,6 +265,11 @@ def get_custom_tasks(custom_tasks: Union[str, ModuleType]) -> Tuple[ModuleType, 
     if hasattr(custom_tasks_module, "TASKS_GROUPS"):
         tasks_string = custom_tasks_module.TASKS_GROUPS
     return custom_tasks_module, tasks_string
+
+def get_available_groups(custom_tasks: Union[str, ModuleType]) -> dict[str, str]:
+    """Get all the available groups from both the customs tasks and default tasks
+    """
+    
 
 
 def taskinfo_selector(
@@ -247,7 +320,7 @@ def taskinfo_selector(
 
 def create_config_tasks(
     meta_table: Optional[List[LightevalTaskConfig]] = None, cache_dir: Optional[str] = None
-) -> Dict[str, LightevalTask]:
+) -> Dict[str, list[LightevalTask]]:
     """
     Create configuration tasks based on the provided meta_table.
 
@@ -260,18 +333,10 @@ def create_config_tasks(
     Returns:
         Dict[str, LightevalTask]: A dictionary of task names mapped to their corresponding LightevalTask classes.
     """
-
-    def create_task(name, cfg: LightevalTaskConfig, cache_dir: str):
-        class LightevalTaskFromConfig(LightevalTask):
-            def __init__(self):
-                super().__init__(name, cfg, cache_dir=cache_dir)
-
-        return LightevalTaskFromConfig
-
     if meta_table is None:
         meta_table = [config for config in vars(default_tasks).values() if isinstance(config, LightevalTaskConfig)]
 
-    tasks_with_config = {}
+    tasks_with_config: dict[str, LightevalTaskConfig] = {}
     # Every task is renamed suite|task, if the suite is in DEFAULT_SUITE
     for config in meta_table:
         if not any(suite in config.suite for suite in DEFAULT_SUITES):
@@ -283,4 +348,4 @@ def create_config_tasks(
             if suite in DEFAULT_SUITES:
                 tasks_with_config[f"{suite}|{config.name}"] = config
 
-    return {task: create_task(task, cfg, cache_dir=cache_dir) for task, cfg in tasks_with_config.items()}
+    return {task: [LightevalTask(task, cfg, cache_dir=cache_dir)] for task, cfg in tasks_with_config.items()}

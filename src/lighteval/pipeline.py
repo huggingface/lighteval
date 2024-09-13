@@ -171,6 +171,10 @@ class Pipeline:
             with local_ranks_zero_first() if self.launcher_type == ParallelismManager.NANOTRON else nullcontext():
                 # If some tasks are provided as task groups, we load them separately
                 custom_tasks = self.pipeline_parameters.custom_tasks_directory
+                availale_groups = get_available_groups(self.pipeline_parameters.custom_tasks_directory)
+                tasks = unwrap_task_groups(tasks, availale_groups)
+
+
                 tasks_groups_dict = None
                 if custom_tasks:
                     _, tasks_groups_dict = get_custom_tasks(custom_tasks)
