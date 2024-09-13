@@ -212,6 +212,7 @@ class NanotronLightevalModel(LightevalModel):
         self.input_pp_rank, self.output_pp_rank = get_min_max_rank(module=self.model)
 
         self.multichoice_continuations_start_space = multichoice_continuations_start_space
+        self.pair_wise_tokenization = nanotron_config.lighteval_config.tasks.pair_wise_tokenization
 
         self.model_info = ModelInfo(
             model_name=f"{nanotron_config.nanotron_config.general.run}/{nanotron_config.nanotron_config.general.step}"
@@ -341,17 +342,6 @@ class NanotronLightevalModel(LightevalModel):
     def _model_call(self, inputs: torch.Tensor) -> torch.Tensor:
         return self.model(inputs)
 
-    def _encode_pair(self, context, continuation):
-        n_spaces = len(context) - len(context.rstrip())
-        if n_spaces > 0:
-            continuation = context[-n_spaces:] + continuation
-            context = context[:-n_spaces]
-        whole_enc = self.tok_encode(context + continuation)
-        context_enc = self.tok_encode(context)
-        context_enc_len = len(context_enc)
-        continuation_enc = whole_enc[context_enc_len:]
-        return context_enc, continuation_enc
-
     def homogeneize_ending_conditions(self, ending_condition: tuple | dict | list | str) -> tuple[list, int]:
         """Ending conditions are submitted in several possible formats.
         By default in lighteval we pass them as tuples (stop sequence, max number of items).
@@ -457,7 +447,7 @@ class NanotronLightevalModel(LightevalModel):
             else:
                 # The following line is mandatory for compatibility with the harness
                 request.tokenized_context, request.tokenized_continuation = self.tok_encode_pair(
-                    request.context, request.choice
+                    request.context, request.choice, self.pair_wise_tokenization
                 )
 
         return self._loglikelihood_tokens(
