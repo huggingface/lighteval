@@ -65,7 +65,7 @@ class AdapterModel(BaseModel):
             model_name=config.base_model,
             revision=config.revision,
             env_config=env_config,
-            tokenizer_name=config.tokenizer,
+            tokenizer_name=config.tokenizer or config.base_model,
             subfolder=config.subfolder,
             trust_remote_code=config.trust_remote_code,
         )
