@@ -21,7 +21,36 @@ We're releasing it with the community in the spirit of building in the open.
 Note that it is still very much early so don't expect 100% stability ^^'
 In case of problems or questions, feel free to open an issue!
 
-## Installation
+## Installation from pip
+Create a virtual environment using virtualenv or conda depending on your preferences. We require Python 3.10 or above:
+
+```bash
+conda create -n lighteval python=3.10 && conda activate lighteval
+```
+
+Install using: `pip install lighteval` 
+
+To add some needed extras, you can `pip install lighteval[extra]`
+
+| extra name   | description                                                               |
+|--------------|---------------------------------------------------------------------------|
+| accelerate   | To use accelerate for model and data parallelism with transformers models |
+| tgi          | To use Text Generation Inference API to evaluate your model               |
+| nanotron     | To evaluate nanotron models                                               |
+| quantization | To evaluate quantized models                                              |
+| adapters     | To evaluate adapters models (delta and peft)                              |
+| tensorboardX | To upload your results to tensorboard                                     |
+| vllm         | To use vllm as backend for inference                                      |
+
+If you want to push your results to the Hugging Face Hub, don't forget to add your access token to the environment variable `HF_TOKEN`. You can do this by running:
+
+```shell
+huggingface-cli login
+```
+
+and pasting your access token.
+
+## Editable installation for development
 
 Clone the repo:
 
@@ -39,13 +68,13 @@ conda create -n lighteval python=3.10 && conda activate lighteval
 Install the dependencies. For the default installation, you just need:
 
 ```bash
-pip install .
+pip install -e .
 ```
 
 If you want to evaluate models with frameworks like `accelerate` or `peft`, you will need to specify the optional dependencies group that fits your use case (`accelerate`,`tgi`,`optimum`,`quantization`,`adapters`,`nanotron`,`tensorboardX`):
 
 ```bash
-pip install '.[optional1,optional2]'
+pip install -e '.[optional1,optional2]'
 ```
 
 The setup tested most is:
