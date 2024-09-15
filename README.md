@@ -252,10 +252,10 @@ For example, to launch `lighteval` on `arabic_mmlu:abstract_algebra` for `Huggin
 
 ```shell
 lighteval accelerate \
-    --model_args "pretrained=HuggingFaceH4/zephyr-7b-beta" \
+    --model_args "pretrained=HuggingFaceH4/zephyr-7b-beta,trust_remote_code=True" \
     --use_chat_template \ # optional, if you want to run the evaluation with the chat template
     --tasks "community|arabic_mmlu:abstract_algebra|5|1" \
-    --custom_tasks "community_tasks/arabic_evals" \
+    --custom_tasks "community_tasks/arabic_evals.py" \
     --output_dir "./evals"
 ```
 
