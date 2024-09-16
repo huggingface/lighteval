@@ -566,7 +566,7 @@ class BertScore:
         self.normalize_gold = normalize_gold
         self.normalize_pred = normalize_pred
 
-    def compute(self, golds: list[str], predictions: list[str]) -> dict:
+    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> dict:
         """Computes the prediction, recall and f1 score using the bert scorer.
 
         Args:
@@ -580,7 +580,7 @@ class BertScore:
             hlog_warn("The first metric computation step might be a bit longer as we need to download the model.")
             # We only initialize on first compute
             self.bert_scorer = BERTScorer(
-                model_type="microsoft/deberta-large-mnli", lang="en", rescale_with_baseline=True, num_layers=9
+                model_type="microsoft/deberta-large-mnli", lang="en", rescale_with_baseline=False, num_layers=9
             )
         golds = as_list(golds)
         predictions = as_list(predictions)
