@@ -123,12 +123,14 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
+    def compute_mean(x):
+        return np.mean(np.asarray(x).flatten()) # flatten, then average
     bleurt = SampleLevelMetric(
         metric_name="bleurt",
-        sample_level_fn=BLEURT.compute,
+        sample_level_fn=BLEURT().compute,
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.TRANSLATION,
-        corpus_level_fn=lambda x: np.mean(x.flatten()),  # flatten, then average
+        corpus_level_fn = compute_mean,
         higher_is_better=True,
     )
     byte_perplexity = CorpusLevelMetric(
