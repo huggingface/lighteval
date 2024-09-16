@@ -34,7 +34,7 @@ TESTING_EMPTY_HF_ORG_ID = "lighteval-tests"
 @pytest.fixture
 def testing_empty_hf_org_id(org_id: str = TESTING_EMPTY_HF_ORG_ID):
     old_token = os.getenv("HF_TOKEN")
-    os.environ["HF_TOKEN"] = os.getenv("HF_TEST_TOKEN")
+    os.environ["HF_TOKEN"] = os.getenv("HF_TEST_TOKEN") or ""
 
     def list_repos(org_id: str):
         return list(hf_api.list_models(author=org_id)) + list(hf_api.list_datasets(author=org_id))
