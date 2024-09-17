@@ -347,17 +347,21 @@ class VLLMModel(LightevalModel):
         for _ in tqdm(dataset.splits_start_end_iterator()):
             # the last token is an eos token, so we don't need to add it
             inputs = [
-                dataset[i].tokenized_context + dataset[i].tokenized_continuation[:-1] for i in range(len(dataset))
+                dataset[i].tokenized_context + dataset[i].tokenized_continuation for i in range(len(dataset))
             ]
+            # Left truncate the inputs to the maximum length
+            inputs = [input[-self.max_length:] for input in inputs]
             outputs = self._generate(inputs, generate=False)
 
             for output, input in zip(outputs, dataset):
                 continuation_logprobs = []
-                for token, logprobs in zip(input.tokenized_continuation[-2::-1], output.prompt_logprobs[::-1]):
+                for token, logprobs in zip(input.tokenized_continuation[::-1], output.prompt_logprobs[::-1]):
                     continuation_logprobs.append(logprobs[token])
                 bool_score = all(logprob.rank == 1 for logprob in continuation_logprobs)
                 continuation_logprobs = [logprob.logprob for logprob in continuation_logprobs]
                 answer = LoglikelihoodResponse(
+                    input_tokens=input.tokenized_context + input.tokenized_continuation,
+                    generated_tokens=input.tokenized_continuation,
                     result=(sum(continuation_logprobs), bool_score if return_bool_score else None)
                 )
                 res.append(answer)
