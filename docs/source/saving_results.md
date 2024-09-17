@@ -1,15 +1,15 @@
 # Saving results
 
-## Saving results locally
+## Saving results elsewhere
 
 Lighteval will automatically save results and evaluation details in the directory
 set with the `--output_dir` argument. The results will be saved in
-`{output_dir}/results/{model_org}/{model_name}/results_{timestamp}.json`.
-[Here is an example of a result file](#example-of-a-result-file).
+`{output_dir}/results/{model_name}/results_{timestamp}.json`.
+[Here is an example of a result file](#example-of-a-result-file). The output path can be any [fsspec](https://filesystem-spec.readthedocs.io/en/latest/index.html) compliant path (local, s3, hf hub, gdrive, ftp, etc).
 
 To save the details of the evaluation, you can use the `--save_details`
 argument. The details will be saved in a parquet file
-`{output_dir}/details/{model_org}/{model_name}/{timestamp}/details_{task}_{timestamp}.parquet`.
+`{output_dir}/details/{model_name}/{timestamp}/details_{task}_{timestamp}.parquet`.
 
 ## Pushing results to the HuggingFace hub
 
