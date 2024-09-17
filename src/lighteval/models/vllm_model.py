@@ -120,11 +120,12 @@ class VLLMModel(LightevalModel):
         """
         self.model_args = {
             "model": config.pretrained,
-            "gpu_memory_utilization": float(0.8),
+            "gpu_memory_utilization": float(config.gpu_memory_utilisation),
             "revision": config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
             "dtype": config.dtype,
             "trust_remote_code": config.trust_remote_code,
-            "tensor_parallel_size": int(1),
+            "tensor_parallel_size": int(config.tensor_parallel_size),
+            "pipeline_parallel_size": int(config.pipeline_parallel_size),
             "max_model_len": int(self._max_length) if self._max_length else None,
             "swap_space": 4,
             "seed": 1234,
@@ -283,7 +284,7 @@ class VLLMModel(LightevalModel):
                 n=num_samples, max_tokens=max_new_tokens, stop=stop_tokens, logprobs=1 if returns_logits else 0
             )
         else:
-            sampling_params = SamplingParams(temperature=0, prompt_logprobs=1, max_tokens=1, detokenize=False)
+            sampling_params = SamplingParams(temperature=0.6, prompt_logprobs=1, max_tokens=1, detokenize=False, top_p=0.9, skip_special_tokens=False)
 
         if self.data_parallel_size > 1:
             # vLLM hangs if tensor_parallel > 1 and resources are set in ray.remote

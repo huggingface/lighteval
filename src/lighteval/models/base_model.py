@@ -88,7 +88,7 @@ class BaseModel(LightevalModel):
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
 
         # We are in DP (and launch the script with `accelerate launch`)
-        if not config.model_parallel and not isinstance(config.quantization_config, BitsAndBytesConfig):
+        if False:#not config.model_parallel and not isinstance(config.quantization_config, BitsAndBytesConfig):
             hlog(f"Using Data Parallelism, putting model on device {self._device}")
             self.model = self.model.to(self._device)
         if config.compile:

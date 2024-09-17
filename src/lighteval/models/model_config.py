@@ -116,6 +116,8 @@ class BaseModelConfig:
     def __post_init__(self):
         # Making sure this parameter is a boolean
         self.multichoice_continuations_start_space = boolstring_to_bool(self.multichoice_continuations_start_space)
+        self.model_parallel = boolstring_to_bool(self.model_parallel)
+        self.compile = boolstring_to_bool(self.compile)
 
         if self.quantization_config is not None and not is_bnb_available():
             raise ImportError(NO_BNB_ERROR_MSG)
@@ -207,14 +209,15 @@ class AdapterModelConfig(BaseModelConfig):
 @dataclass
 class VLLMModelConfig:
     pretrained: str
-    gpu_memory_utilisation: float = 0.8
+    gpu_memory_utilisation: float = 0.9
     batch_size: int = -1
     revision: str = "main"
     dtype: str | None = None
     tensor_parallel_size: int = 1
+    pipeline_parallel_size: int = 1
     data_parallel_size: int = 1
     max_model_length: int = 1024
-    swap_space: int = 4  # CPU swap space size (GiB) per GPU.
+    swap_space: int = 10  # CPU swap space size (GiB) per GPU.
     seed: int = 1234
     trust_remote_code: bool = False
     use_chat_template: bool = False
