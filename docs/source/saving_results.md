@@ -36,13 +36,11 @@ from datasets import load_dataset
 import os
 
 output_dir = "evals_doc"
-model = "HuggingFaceH4/zephyr-7b-beta"
-model_org = model.split("/")[0]
-model_name = model.split("/")[1]
+model_name = "HuggingFaceH4/zephyr-7b-beta"
 timestamp = "2024-09-03T15-06-11.234678"
 task = "lighteval|gsm8k|0"
 
-details_path = f"{output_dir}/details/{model_org}/{model_name}/{timestamp}/details_{task}_{timestamp}.parquet"
+details_path = f"{output_dir}/details/{model_name}/{timestamp}/details_{task}_{timestamp}.parquet"
 
 # Load the details
 details = load_dataset("parquet", data_files=details_path, split="train")
