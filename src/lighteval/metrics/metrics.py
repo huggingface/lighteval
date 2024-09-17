@@ -23,6 +23,7 @@
 import os
 
 import numpy as np
+import torch
 from aenum import Enum
 
 from lighteval.metrics.harness_compatibility.drop import drop_metrics
