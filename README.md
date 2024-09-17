@@ -236,7 +236,7 @@ lighteval accelerate \
 An alternative to launching the evaluation locally is to serve the model on a TGI-compatible server/container and then run the evaluation by sending requests to the server. The command is the same as before, except you specify a path to a yaml config file (detailed below):
 
 ```shell
-python run_evals_accelerate.py \
+lighteval accelerate \
     --model_config_path="/path/to/config/file"\
     --tasks <task parameters> \
     --output_dir output_dir
@@ -281,17 +281,17 @@ For example, to launch `lighteval` on `arabic_mmlu:abstract_algebra` for `Huggin
 
 ```shell
 lighteval accelerate \
-    --model_args "pretrained=HuggingFaceH4/zephyr-7b-beta" \
+    --model_args "pretrained=HuggingFaceH4/zephyr-7b-beta,trust_remote_code=True" \
     --use_chat_template \ # optional, if you want to run the evaluation with the chat template
     --tasks "community|arabic_mmlu:abstract_algebra|5|1" \
-    --custom_tasks "community_tasks/arabic_evals" \
+    --custom_tasks "community_tasks/arabic_evals.py" \
     --output_dir "./evals"
 ```
 
 ### Using the dummy model
 To debug or obtain random baseline scores for a given set of tasks, you can use the `dummy` model:
 ```shell
-python run_evals_accelerate.py \
+lighteval accelerate \
     --model_args "dummy"\
     --tasks <task parameters> \
     --output_dir output_dir
@@ -308,7 +308,7 @@ However, we are very grateful to the Harness and HELM teams for their continued 
 
 ## How to navigate this project
 `lighteval` is supposed to be used as a standalone evaluation library.
-- To run the evaluations, you can use `run_evals_accelerate.py` or `run_evals_nanotron.py`.
+- To run the evaluations, you can use `lighteval accelerate` or `lighteval nanotron`.
 - [src/lighteval](https://github.com/huggingface/lighteval/tree/main/src/lighteval) contains the core of the lib itself
     - [lighteval](https://github.com/huggingface/lighteval/tree/main/src/lighteval) contains the core of the library, divided in the following section
         - [main_accelerate.py](https://github.com/huggingface/lighteval/blob/main/src/lighteval/main_accelerate.py) and [main_nanotron.py](https://github.com/huggingface/lighteval/blob/main/src/lighteval/main_nanotron.py) are our entry points to run evaluation
