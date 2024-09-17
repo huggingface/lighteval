@@ -35,7 +35,7 @@ def custom_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dict:
     return {"accuracy": response == formatted_doc.choices[formatted_doc.gold_index], "other_metric": 0.5}
 ```
 
-Then, you can define an aggreagtion function if needed, a comon aggregation function is `np.mean`.
+Then, you can define an aggregation function if needed, a common aggregation function is `np.mean`.
 
 ```python
 def agg_function(items):
