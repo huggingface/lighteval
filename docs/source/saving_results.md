@@ -24,7 +24,7 @@ setting the `--public_run` argument.
 
 ## Pushing results to Tensorboard
 
-You can push the results to Tensorboard by setting the `--push_results_to_tensorboard`.
+You can push the results to Tensorboard by setting `--push_to_tensorboard`.
 
 
 ## How to load and investigate details
