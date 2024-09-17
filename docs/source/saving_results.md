@@ -14,10 +14,10 @@ argument. The details will be saved in a parquet file
 ## Pushing results to the HuggingFace hub
 
 You can push the results and evaluation details to the HuggingFace hub. To do
-so, you need to set the `--push_results_to_hub` as well as the `--results_org`
+so, you need to set the `--push_to_hub` as well as the `--results_org`
 argument. The results will be saved in a dataset with the name at
 `{results_org}/{model_org}/{model_name}`. To push the details, you need to set
-the `--push_details_to_hub` argument.
+the `--save_details` argument.
 The dataset created will be private by default, you can make it public by
 setting the `--public_run` argument.
 
