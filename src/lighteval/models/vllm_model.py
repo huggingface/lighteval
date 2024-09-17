@@ -228,30 +228,24 @@ class VLLMModel(LightevalModel):
             # of losing some meaning, or have some generations that are exceedingly short?
             # The choice we go for here is to avoid truncating the prompt if we can, since it
             # should have been managed by the prompt creator/few shot manager if requested by the user.
-            context_size = len(tokenized["input_ids"][0])
-            if context_size > self.max_length:
+            inputs = tokenized["input_ids"]
+            context_size = len(inputs[0])
+
+            if context_size + max_new_tokens > self.max_length:
                 hlog_warn(
-                    f"The context size of your batch ({context_size}) is bigger than the maximum context size allowed by the model ({self.max_length}) for a task in"
-                    + str({dataset[0].task_name})
-                    + ". This is likely to lead to some errors."  # noqa C401
+                    f"{context_size + max_new_tokens=} which is greather than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
                 )
-                # There will be truncation of at least one sample, maximum generation size will be one
-                max_new_tokens = 1
-            else:  # We can't allow generation of more than max_length
-                if max_new_tokens is None:  # If generation size is not set, we go all the way
-                    max_new_tokens = self.max_length - context_size
-                else:
-                    max_new_tokens = min(self.max_length - context_size, max_new_tokens)
+                context_size = self.max_length - max_new_tokens
+                inputs = [input[:context_size] for input in inputs]
 
             vllm_outputs = self._generate(
-                inputs=tokenized["input_ids"],
+                inputs=inputs,
                 max_new_tokens=max_new_tokens,
                 stop_tokens=stop_tokens,
                 returns_logits=returns_logits,
                 num_samples=num_samples,
             )
 
-            print(f"{len(vllm_outputs)} vllm_outputs")
             for vllm_output in vllm_outputs:
                 output_token_ids = [outputs.token_ids for outputs in vllm_output.outputs]
                 logprobs = [output.logprobs for output in vllm_output.outputs] or []
@@ -346,11 +340,9 @@ class VLLMModel(LightevalModel):
 
         for _ in tqdm(dataset.splits_start_end_iterator()):
             # the last token is an eos token, so we don't need to add it
-            inputs = [
-                dataset[i].tokenized_context + dataset[i].tokenized_continuation for i in range(len(dataset))
-            ]
+            inputs = [dataset[i].tokenized_context + dataset[i].tokenized_continuation for i in range(len(dataset))]
             # Left truncate the inputs to the maximum length
-            inputs = [input[-self.max_length:] for input in inputs]
+            inputs = [input[-self.max_length :] for input in inputs]
             outputs = self._generate(inputs, generate=False)
 
             for output, input in zip(outputs, dataset):
@@ -362,7 +354,7 @@ class VLLMModel(LightevalModel):
                 answer = LoglikelihoodResponse(
                     input_tokens=input.tokenized_context + input.tokenized_continuation,
                     generated_tokens=input.tokenized_continuation,
-                    result=(sum(continuation_logprobs), bool_score if return_bool_score else None)
+                    result=(sum(continuation_logprobs), bool_score if return_bool_score else None),
                 )
                 res.append(answer)
 
