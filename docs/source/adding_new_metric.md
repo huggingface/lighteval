@@ -19,7 +19,7 @@ from aenum import extend_enum
 from lighteval.metrics import Metrics
 ```
 
-You need to define sample level metric:
+You need to define a sample level metric:
 
 ```python
 def custom_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> bool:
