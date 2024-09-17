@@ -56,14 +56,13 @@ from datasets import load_dataset
 
 output_dir = "evals_doc"
 results_org = "SaylorTwift"
-model = "HuggingFaceH4/zephyr-7b-beta"
-model_org = model.split("/")[0]
-model_name = model.split("/")[1]
+model_name = "HuggingFaceH4/zephyr-7b-beta"
+sanitized_model_name = model_name.replace("/", "__")
 timestamp = "2024-09-03T15-06-11.234678"
 task = "lighteval|gsm8k|0"
 public_run = False
 
-dataset_path = f"{results_org}/details_{model_name}{'_private' if not public_run else ''}"
+dataset_path = f"{results_org}/details_{sanitized_model_name}{'_private' if not public_run else ''}"
 details = load_dataset(dataset_path, task.replace("|", "_"), split="latest")
 
 for detail in details:
