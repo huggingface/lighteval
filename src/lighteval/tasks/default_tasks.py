@@ -8675,7 +8675,7 @@ gsm8k_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling_from_train",
     generation_size=256,
-    metric=[Metrics.quasi_exact_match_gsm8k],
+    metric=[Metrics.quasi_exact_match_gsm8k, Metrics.maj_at_8_gsm8k],
     stop_sequence=["Question="],
     output_regex=None,
     frozen=False,

@@ -217,7 +217,7 @@ class VLLMModelConfig:
     pipeline_parallel_size: int = 1
     data_parallel_size: int = 1
     max_model_length: int = 1024
-    swap_space: int = 10  # CPU swap space size (GiB) per GPU.
+    swap_space: int = 4  # CPU swap space size (GiB) per GPU.
     seed: int = 1234
     trust_remote_code: bool = False
     use_chat_template: bool = False

@@ -284,7 +284,7 @@ class VLLMModel(LightevalModel):
                 n=num_samples, max_tokens=max_new_tokens, stop=stop_tokens, logprobs=1 if returns_logits else 0
             )
         else:
-            sampling_params = SamplingParams(temperature=0.6, prompt_logprobs=1, max_tokens=1, detokenize=False, top_p=0.9, skip_special_tokens=False)
+            sampling_params = SamplingParams(temperature=0.0, prompt_logprobs=1, max_tokens=1, detokenize=False)
 
         if self.data_parallel_size > 1:
             # vLLM hangs if tensor_parallel > 1 and resources are set in ray.remote
