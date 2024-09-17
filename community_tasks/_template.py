@@ -28,11 +28,11 @@ This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then im
 
 Author:
 """
+
 import numpy as np
 from aenum import extend_enum
 
-from lighteval.metrics.metrics import Metrics
-from lighteval.metrics.metrics import SampleLevelMetric
+from lighteval.metrics.metrics import Metrics, SampleLevelMetric
 from lighteval.metrics.utils import MetricCategory, MetricUseCase
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
