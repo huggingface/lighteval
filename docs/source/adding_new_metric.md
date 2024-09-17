@@ -27,7 +27,7 @@ def custom_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> bool:
     return response == formatted_doc.choices[formatted_doc.gold_index]
 ```
 
-Here the sample level metric only return one metric, if you want to return multiple metrics per sample you need to return a dictionary with the metrics as keys and the values as values.
+Here the sample level metric only returns one metric, if you want to return multiple metrics per sample you need to return a dictionary with the metrics as keys and the values as values.
 
 ```python
 def custom_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dict:
