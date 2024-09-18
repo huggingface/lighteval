@@ -73,7 +73,7 @@ custom_metric = SampleLevelMetricGrouping(
 )
 ```
 
-And to end with the following, so that it adds your metric to our metrics list
+To finish, add the following, so that it adds your metric to our metrics list
 when loaded as a module.
 
 ```python
