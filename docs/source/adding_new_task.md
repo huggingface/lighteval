@@ -31,7 +31,7 @@ dataset to a document to be used for evaluation.
 # Define as many as you need for your different tasks
 def prompt_fn(line, task_name: str = None):
     """Defines how to go from a dataset line to a doc object.
-    Follow examples in src/lighteval/tasks/tasks_prompt_formatting.py, or get more info
+    Follow examples in src/lighteval/tasks/default_prompts.py, or get more info
     about what this function should do in the README.
     """
     return Doc(
