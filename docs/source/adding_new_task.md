@@ -36,9 +36,9 @@ def prompt_fn(line, task_name: str = None):
     """
     return Doc(
         task_name=task_name,
-        query="",
-        choices="",
-        gold_index=0,
+        query=line["question"],
+        choices=[f" {c}" for c in line["choices"]],
+        gold_index=line["gold"],
         instruction="",
     )
 ```
