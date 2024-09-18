@@ -69,12 +69,12 @@ class VLLMModel(LightevalModel):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self._config = config
         self._batch_size = config.batch_size
-        self._max_length = self._init_max_length(config.max_model_length)
         self.use_chat_template = config.use_chat_template
         self.data_parallel_size = int(config.data_parallel_size)
 
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
         self._tokenizer = self._create_auto_tokenizer(config, env_config)
+        self._max_length = self._tokenizer.model_max_length or self.tokenizer.max_position_embeddings
 
         # If model_parallel is not set we compare the number of processes with the number of GPUs
         self.model = self._create_auto_model(config, env_config)
@@ -126,7 +126,6 @@ class VLLMModel(LightevalModel):
             "trust_remote_code": config.trust_remote_code,
             "tensor_parallel_size": int(config.tensor_parallel_size),
             "pipeline_parallel_size": int(config.pipeline_parallel_size),
-            "max_model_len": int(self._max_length) if self._max_length else None,
             "swap_space": 4,
             "seed": 1234,
         }
