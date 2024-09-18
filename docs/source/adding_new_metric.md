@@ -19,7 +19,7 @@ from aenum import extend_enum
 from lighteval.metrics import Metrics
 ```
 
-You need to define sample level metric:
+You need to define a sample level metric:
 
 ```python
 def custom_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> bool:
@@ -27,7 +27,7 @@ def custom_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> bool:
     return response == formatted_doc.choices[formatted_doc.gold_index]
 ```
 
-Here the sample level metric only return one metric, if you want to return multiple metrics per sample you need to return a dictionary with the metrics as keys and the values as values.
+Here the sample level metric only returns one metric, if you want to return multiple metrics per sample you need to return a dictionary with the metrics as keys and the values as values.
 
 ```python
 def custom_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dict:
@@ -35,7 +35,7 @@ def custom_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dict:
     return {"accuracy": response == formatted_doc.choices[formatted_doc.gold_index], "other_metric": 0.5}
 ```
 
-Then, you can define an aggreagtion function if needed, a comon aggregation function is `np.mean`.
+Then, you can define an aggregation function if needed, a common aggregation function is `np.mean`.
 
 ```python
 def agg_function(items):
@@ -73,7 +73,7 @@ custom_metric = SampleLevelMetricGrouping(
 )
 ```
 
-And to end with the following, so that it adds your metric to our metrics list
+To finish, add the following, so that it adds your metric to our metrics list
 when loaded as a module.
 
 ```python

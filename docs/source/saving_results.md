@@ -1,30 +1,30 @@
 # Saving results
 
-## Saving results locally
+## Saving results elsewhere
 
 Lighteval will automatically save results and evaluation details in the directory
 set with the `--output_dir` argument. The results will be saved in
-`{output_dir}/results/{model_org}/{model_name}/results_{timestamp}.json`.
-[Here is an example of a result file](#example-of-a-result-file).
+`{output_dir}/results/{model_name}/results_{timestamp}.json`.
+[Here is an example of a result file](#example-of-a-result-file). The output path can be any [fsspec](https://filesystem-spec.readthedocs.io/en/latest/index.html) compliant path (local, s3, hf hub, gdrive, ftp, etc).
 
 To save the details of the evaluation, you can use the `--save_details`
 argument. The details will be saved in a parquet file
-`{output_dir}/details/{model_org}/{model_name}/{timestamp}/details_{task}_{timestamp}.parquet`.
+`{output_dir}/details/{model_name}/{timestamp}/details_{task}_{timestamp}.parquet`.
 
 ## Pushing results to the HuggingFace hub
 
 You can push the results and evaluation details to the HuggingFace hub. To do
-so, you need to set the `--push_results_to_hub` as well as the `--results_org`
+so, you need to set the `--push_to_hub` as well as the `--results_org`
 argument. The results will be saved in a dataset with the name at
 `{results_org}/{model_org}/{model_name}`. To push the details, you need to set
-the `--push_details_to_hub` argument.
+the `--save_details` argument.
 The dataset created will be private by default, you can make it public by
 setting the `--public_run` argument.
 
 
 ## Pushing results to Tensorboard
 
-You can push the results to Tensorboard by setting the `--push_results_to_tensorboard`.
+You can push the results to Tensorboard by setting `--push_to_tensorboard`.
 
 
 ## How to load and investigate details
@@ -36,13 +36,11 @@ from datasets import load_dataset
 import os
 
 output_dir = "evals_doc"
-model = "HuggingFaceH4/zephyr-7b-beta"
-model_org = model.split("/")[0]
-model_name = model.split("/")[1]
+model_name = "HuggingFaceH4/zephyr-7b-beta"
 timestamp = "2024-09-03T15-06-11.234678"
 task = "lighteval|gsm8k|0"
 
-details_path = f"{output_dir}/details/{model_org}/{model_name}/{timestamp}/details_{task}_{timestamp}.parquet"
+details_path = f"{output_dir}/details/{model_name}/{timestamp}/details_{task}_{timestamp}.parquet"
 
 # Load the details
 details = load_dataset("parquet", data_files=details_path, split="train")
@@ -58,14 +56,13 @@ from datasets import load_dataset
 
 output_dir = "evals_doc"
 results_org = "SaylorTwift"
-model = "HuggingFaceH4/zephyr-7b-beta"
-model_org = model.split("/")[0]
-model_name = model.split("/")[1]
+model_name = "HuggingFaceH4/zephyr-7b-beta"
+sanitized_model_name = model_name.replace("/", "__")
 timestamp = "2024-09-03T15-06-11.234678"
 task = "lighteval|gsm8k|0"
 public_run = False
 
-dataset_path = f"{results_org}/details_{model_name}{'_private' if not public_run else ''}"
+dataset_path = f"{results_org}/details_{sanitized_model_name}{'_private' if not public_run else ''}"
 details = load_dataset(dataset_path, task.replace("|", "_"), split="latest")
 
 for detail in details:
