@@ -431,8 +431,8 @@ These metrics need the model to generate an output. They are therefore slower.
 - LLM-as-Judge:
     - `llm_judge_gpt3p5`: Can be used for any generative task, the model will be scored by a GPT3.5 model using the OpenAI API
     - `llm_judge_llama_3_405b`: Can be used for any generative task, the model will be scored by a Llama 3.405B model using the HuggingFace API
-    - `llm_judge_multi_turn_gpt3p5`: Can be used for any generative task, the model will be scored by a GPT3.5 model using the HuggingFace API. It is used for multiturn tasks like mt-bench.
-    - `llm_judge_multi_turn_llama_3_405b`: Can be used for any generative task, the model will be scored by a Llama 3.405B model using the OpenAI API. It is used for multiturn tasks like mt-bench.
+    - `llm_judge_multi_turn_gpt3p5`: Can be used for any generative task, the model will be scored by a GPT3.5 model using the OpenAI API. It is used for multiturn tasks like mt-bench.
+    - `llm_judge_multi_turn_llama_3_405b`: Can be used for any generative task, the model will be scored by a Llama 3.405B model using the HuggingFace API. It is used for multiturn tasks like mt-bench.
 
 ### Metrics for specific tasks
 To keep compatibility with the Harness for some specific tasks, we ported their evaluations more or less as such. They include `drop` (for the DROP dataset) and `truthfulqa_mc_metrics` (for TruthfulQA). In general, except for tasks where the dataset has very different formatting than usual (another language, programming language, math, ...), we want to use standard implementations of the above metrics. It makes little sense to have 10 different versions of an exact match depending on the task. However, most of the above metrics are parametrizable so that you can change the normalization applied easily for experimental purposes.
