@@ -8,5 +8,6 @@ datatrove and LLM training library nanotron.
 
 We're releasing it with the community in the spirit of building in the open.
 
-Note that it is still very much early so don't expect 100% stability ^^' In
-case of problems or questions, feel free to open an issue!
+Even though it has been used in a variety of projects, keep in mind that parts
+of lighteval are still unstable and might break ! In case of any problem or
+question, feel free to open an issue.

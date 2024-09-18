@@ -50,49 +50,42 @@ class BaseModelConfig:
     """
     Base configuration class for models.
 
-    Attributes:
-        pretrained (str):
+    **Attributes**:
+        - **pretrained** (str):
             HuggingFace Hub model ID name or the path to a pre-trained
             model to load. This is effectively the `pretrained_model_name_or_path`
             argument of `from_pretrained` in the HuggingFace `transformers` API.
-        accelerator (Accelerator): accelerator to use for model training.
-        tokenizer (Optional[str]): HuggingFace Hub tokenizer ID that will be
+        - **accelerator** (Accelerator): accelerator to use for model training.
+        - **tokenizer** (Optional[str]): HuggingFace Hub tokenizer ID that will be
             used for tokenization.
-        multichoice_continuations_start_space (Optional[bool]): Whether to add a
+        - **multichoice_continuations_start_space** (Optional[bool]): Whether to add a
             space at the start of each continuation in multichoice generation.
             For example, context: "What is the capital of France?" and choices: "Paris", "London".
             Will be tokenized as: "What is the capital of France? Paris" and "What is the capital of France? London".
             True adds a space, False strips a space, None does nothing
-        subfolder (Optional[str]): The subfolder within the model repository.
-        revision (str): The revision of the model.
-        batch_size (int): The batch size for model training.
-        max_gen_toks (Optional[int]): The maximum number of tokens to generate.
-        max_length (Optional[int]): The maximum length of the generated output.
-        add_special_tokens (bool, optional, defaults to True): Whether to add special tokens to the input sequences.
+        - **subfolder** (Optional[str]): The subfolder within the model repository.
+        - **revision** (str): The revision of the model.
+        - **batch_size** (int): The batch size for model training.
+        - **max_gen_toks** (Optional[int]): The maximum number of tokens to generate.
+        - **max_length** (Optional[int]): The maximum length of the generated output.
+        - **add_special_tokens** (bool, optional, defaults to True): Whether to add special tokens to the input sequences.
            If `None`, the default value will be set to `True` for seq2seq models (e.g. T5) and
             `False` for causal models.
-        model_parallel (bool, optional, defaults to False):
+        - **model_parallel** (bool, optional, defaults to False):
             True/False: force to use or not the `accelerate` library to load a large
             model across multiple devices.
             Default: None which corresponds to comparing the number of processes with
                 the number of GPUs. If it's smaller => model-parallelism, else not.
-        dtype (Union[str, torch.dtype], optional, defaults to None):):
+        - **dtype** (Union[str, torch.dtype], optional, defaults to None):):
             Converts the model weights to `dtype`, if specified. Strings get
             converted to `torch.dtype` objects (e.g. `float16` -> `torch.float16`).
             Use `dtype="auto"` to derive the type from the model's weights.
-        device (Union[int, str]): device to use for model training.
-        quantization_config (Optional[BitsAndBytesConfig]): quantization
+        - **device** (Union[int, str]): device to use for model training.
+        - **quantization_config** (Optional[BitsAndBytesConfig]): quantization
             configuration for the model, manually provided to load a normally floating point
             model at a quantized precision. Needed for 4-bit and 8-bit precision.
-        trust_remote_code (bool): Whether to trust remote code during model
+        - **trust_remote_code** (bool): Whether to trust remote code during model
             loading.
-
-    Methods:
-        __post_init__(): Performs post-initialization checks on the configuration.
-        _init_configs(model_name, env_config): Initializes the model configuration.
-        init_configs(env_config): Initializes the model configuration using the environment configuration.
-        get_model_sha(): Retrieves the SHA of the model.
-
     """
 
     pretrained: str
