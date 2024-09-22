@@ -595,16 +595,53 @@ class BertScore:
         return {"BERTScore-P": p[0].item(), "BERTScore-R": r[0].item(), "BERTScore-F": f[0].item()}
 
 
-# todo: make into clean classes with call to normalizer
-def extractiveness(formatted_doc: Doc, predictions: list[str], **kwargs):
-    inp = remove_braces(formatted_doc.specific["text"])
-    pred = remove_braces_and_strip(predictions[0])
-    stats = DataStatsMetric().evaluate_example(pred, inp)
-    return {
-        "summarization_coverage": stats["coverage"],
-        "summarization_density": stats["density"],
-        "summarization_compression": stats["compression"],
-    }
+class Extractiveness:
+    def __init__(
+        self,
+        normalize_input: callable = remove_braces,
+        normalize_pred: callable = remove_braces_and_strip,
+        input_column: str = "text"):
+        """
+        Extractiveness metric class.
+
+        Args:
+            normalize_input (callable, optional): Function to normalize the input strings.
+                Defaults to remove_braces from lighteval.metrics.normalizations if no normalization is applied.
+            normalize_pred (callable, optional): Function to use to normalize the predicted strings.
+                Defaults to remove_braces_and_strip from lighteval.metrics.normalizations if no normalization is applied.
+            input_column (str): Column in the formatted_doc to use for the input. Defaults to "text".
+        """
+        self.normalize_input = normalize_input
+        self.normalize_pred = normalize_pred
+        self.input_column = input_column
+        self.stats_metric = DataStatsMetric()
+
+    def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
+        """
+        Compute the extractiveness of the predictions.
+
+        This method calculates coverage, density, and compression scores for a single
+        prediction against the input text.
+
+        Args:
+            predictions (list[str]): Predicted strings, a list of length 1.
+            formatted_doc (Doc): The formatted document.
+
+        Returns:
+            dict[str, float]: The extractiveness scores.
+        """
+        inp = formatted_doc.specific[self.input_column]
+        prediction = predictions[0]
+        if self.normalize_input:
+            inp = self.normalize_input(inp)
+        if self.normalize_pred:
+            pred = self.normalize_pred(prediction)
+        stats = self.stats_metric.evaluate_example(pred, inp)
+        return {
+            "summarization_coverage": stats["coverage"],
+            "summarization_density": stats["density"],
+            "summarization_compression": stats["compression"],
+        }
 
 
 # todo: make into clean classes with call to normalizer
