@@ -42,13 +42,13 @@ from lighteval.metrics.metrics_sample import (
     ExactMatches,
     Extractiveness,
     F1_score,
+    Faithfulness,
     JudgeLLM,
     LoglikelihoodAcc,
     MajAtK,
     Recall,
     StringDistance,
     acc_golds_likelihood,
-    faithfulness,
 )
 from lighteval.metrics.normalizations import (
     LogProbCharNorm,
@@ -225,7 +225,9 @@ class Metrics(Enum):
     )
     faithfulness = SampleLevelMetric(
         metric_name="summac",
-        sample_level_fn=faithfulness,
+        sample_level_fn=Faithfulness(normalize_input=remove_braces,
+                                       normalize_pred=remove_braces_and_strip,
+                                       input_column="text").compute,
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.SUMMARIZATION,
         corpus_level_fn=np.mean,
