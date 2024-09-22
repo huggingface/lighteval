@@ -668,7 +668,7 @@ class Faithfulness:
         """
         Compute the faithfulness of the predictions.
 
-        The SummaCZA (Summary Content Zero-Shot) model is used with configurable granularity and model variation.
+        The SummaCZS (Summary Content Zero-Shot) model is used with configurable granularity and model variation.
 
         Args:
             predictions (list[str]): Predicted strings, a list of length 1.
