@@ -17,7 +17,12 @@ from functools import lru_cache
 from typing import Callable, Iterator
 
 from lighteval.logging.hierarchical_logger import hlog_warn
-from lighteval.utils.imports import check_required_dependencies
+from lighteval.utils.imports import (
+    NO_SPACY_TOKENIZER_ERROR_MSG,
+    NO_STANZA_TOKENIZER_ERROR_MSG,
+    can_load_spacy_tokenizer,
+    can_load_stanza_tokenizer,
+)
 from lighteval.utils.language import Language
 
 
@@ -63,7 +68,6 @@ class WhitespaceTokenizer(WordTokenizer):
 class NLTKTokenizer(WordTokenizer):
     def __init__(self, punkt_language: str):
         super().__init__()
-        check_required_dependencies(f"{punkt_language} word tokenizer", ["nltk"])
         self.punkt_language = punkt_language
         self._tokenizer = None
 
@@ -95,11 +99,8 @@ class NLTKTokenizer(WordTokenizer):
 class SpaCyTokenizer(WordTokenizer):
     def __init__(self, spacy_language: str, config=None):
         super().__init__()
-        check_required_dependencies(f"{spacy_language} word tokenizer", ["spacy"])
-        if spacy_language == "vi":
-            check_required_dependencies(f"{spacy_language} word tokenizer", ["pyvi"])
-        elif spacy_language == "zh":
-            check_required_dependencies(f"{spacy_language} word tokenizer", ["jieba"])
+        if not can_load_spacy_tokenizer(spacy_language):
+            raise ImportError(NO_SPACY_TOKENIZER_ERROR_MSG)
         self.spacy_language = spacy_language
         self.config = config
         self._tokenizer = None
@@ -136,7 +137,8 @@ class SpaCyTokenizer(WordTokenizer):
 class StanzaTokenizer(WordTokenizer):
     def __init__(self, stanza_language: str, **stanza_kwargs):
         super().__init__()
-        check_required_dependencies(f"{stanza_language} word tokenizer", ["stanza"])
+        if not can_load_stanza_tokenizer():
+            raise ImportError(NO_STANZA_TOKENIZER_ERROR_MSG)
         self.stanza_language = stanza_language
         self.stanza_kwargs = stanza_kwargs
         self._tokenizer = None

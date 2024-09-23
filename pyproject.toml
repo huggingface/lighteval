@@ -99,7 +99,9 @@ extended_tasks = [
 s3 = ["s3fs"]
 multilingual = [
     "stanza",
-    "spacy[ja,ko]"
+    "spacy[ja,ko]",
+    "jieba", # for chinese tokenizer
+    "pyvi", # for vietnamese tokenizer
 ]
 
 [project.urls]
