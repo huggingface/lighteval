@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
 from typing import Iterator, TypeAlias
 from unittest.mock import patch
 
@@ -39,6 +38,12 @@ from lighteval.tasks.requests import (
     Request,
     RequestType,
 )
+
+
+@pytest.fixture(scope="module")
+def base_model() -> Iterator[BaseModel]:
+    config = BaseModelConfig("hf-internal-testing/tiny-random-LlamaForCausalLM")
+    return BaseModel(config, EnvConfig(cache_dir="."))
 
 
 RequestDict: TypeAlias = dict[RequestType, list[Request]]
