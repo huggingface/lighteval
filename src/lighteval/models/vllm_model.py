@@ -230,12 +230,20 @@ class VLLMModel(LightevalModel):
             inputs = tokenized["input_ids"]
             context_size = len(inputs[0])
 
-            if context_size + max_new_tokens > self.max_length:
-                hlog_warn(
-                    f"{context_size + max_new_tokens=} which is greather than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
-                )
-                context_size = self.max_length - max_new_tokens
-                inputs = [input[:context_size] for input in inputs]
+            if max_new_tokens is not None:
+                if context_size + max_new_tokens > self.max_length:
+                    hlog_warn(
+                        f"{context_size + max_new_tokens=} which is greather than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
+                    )
+                    context_size = self.max_length - max_new_tokens
+                    inputs = [input[:context_size] for input in inputs]
+            else:
+                if context_size > self.max_length:
+                    hlog_warn(
+                        f"{context_size=} which is greather than {self.max_length=}. Truncating context to {self.max_length} tokens."
+                    )
+                    context_size = self.max_length
+                    inputs = [input[:context_size] for input in inputs]
 
             vllm_outputs = self._generate(
                 inputs=inputs,
@@ -277,7 +285,7 @@ class VLLMModel(LightevalModel):
                 n=num_samples, max_tokens=max_new_tokens, stop=stop_tokens, logprobs=1 if returns_logits else 0
             )
         else:
-            sampling_params = SamplingParams(temperature=0.0, prompt_logprobs=1, max_tokens=1, detokenize=False)
+            sampling_params = SamplingParams(temperature=0, prompt_logprobs=1, max_tokens=1, detokenize=False)
 
         if self.data_parallel_size > 1:
             # vLLM hangs if tensor_parallel > 1 and resources are set in ray.remote
