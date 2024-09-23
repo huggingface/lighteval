@@ -42,13 +42,13 @@ tasks](https://github.com/huggingface/lighteval/wiki/Adding-a-Custom-Task) and
 tailored to your needs.
 
 Seamlessly experiment, benchmark, and store your results on the Hugging Face
-Hub, S3, or locally. Empower your AI research with precision and flexibility.
-
+Hub, S3, or locally.
 
 
 ## 🔑 Key Features
 
 - **Speed**: [Use vllm as backend for fast evals](https://github.com/huggingface/lighteval/wiki/Use-VLLM-as-backend).
+- **Exhaustivity**: [Use the accelerate backend to launch any models hosted on hugging face](https://github.com/huggingface/lighteval/wiki/Quicktour#accelerate).
 - **Seamless Storage**: [Save results in S3 or Hugging Face Datasets](https://github.com/huggingface/lighteval/wiki/Saving-results).
 - **Python API**: [Simple integration with the Python API](https://github.com/huggingface/lighteval/wiki/Use-the-Python-API).
 - **Custom Tasks**: [Easily add custom tasks](https://github.com/huggingface/lighteval/wiki/Adding-a-Custom-Task).
