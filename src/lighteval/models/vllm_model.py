@@ -230,20 +230,21 @@ class VLLMModel(LightevalModel):
             inputs = tokenized["input_ids"]
             context_size = len(inputs[0])
 
+            # left truncate the inputs to the maximum length
             if max_new_tokens is not None:
                 if context_size + max_new_tokens > self.max_length:
                     hlog_warn(
                         f"{context_size + max_new_tokens=} which is greather than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
                     )
                     context_size = self.max_length - max_new_tokens
-                    inputs = [input[:context_size] for input in inputs]
+                    inputs = [input[-context_size:] for input in inputs]
             else:
                 if context_size > self.max_length:
                     hlog_warn(
                         f"{context_size=} which is greather than {self.max_length=}. Truncating context to {self.max_length} tokens."
                     )
                     context_size = self.max_length
-                    inputs = [input[:context_size] for input in inputs]
+                    inputs = [input[-context_size:] for input in inputs]
 
             vllm_outputs = self._generate(
                 inputs=inputs,

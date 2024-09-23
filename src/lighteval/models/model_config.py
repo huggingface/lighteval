@@ -209,7 +209,7 @@ class AdapterModelConfig(BaseModelConfig):
 @dataclass
 class VLLMModelConfig:
     pretrained: str
-    gpu_memory_utilisation: float = 0.9
+    gpu_memory_utilisation: float = 0.7
     batch_size: int = -1
     revision: str = "main"
     dtype: str | None = None
