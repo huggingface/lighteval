@@ -27,18 +27,28 @@ PUNCT = "᪩？⁈𑩂．꩞𑅃﹗𑂾\u1b7d፧𑅂꡶꘎⁉࠾᪨𑊩𑱂᱿�
 
 
 def decapitalize(word: str):
+    """
+    Decapitalize the first letter of the string
+    """
     if len(word) == 0:
         return word
     return word[0].lower() + word[1:]
 
 
 def capitalize(word: str):
+    """
+    Capitalize the first letter of the string
+    """
     if len(word) == 0:
         return word
     return word[0].upper() + word[1:]
 
 
 def fix_ending_punct(ctx: str, translation_literals: TranslationLiterals):
+    """
+    Fixes the ending punctuation so that it uses the correct punctuation for the language.
+    E.g in Chinese the "?" is written as "？"
+    """
     ctx = ctx.strip()
     if len(ctx) == 0:
         return ctx
@@ -54,23 +64,29 @@ def fix_ending_punct(ctx: str, translation_literals: TranslationLiterals):
 
 
 def is_ended_sentence(text: str, translation_literals: TranslationLiterals):
-    return text.strip().endswith(
+    """
+    Check if the string ends with a sentence-ending punctuation mark.
+    That's .?!:
+    It's not perfect method as some languages don't have full stops etc..
+    """
+    return text.rstrip().endswith(
         (
             translation_literals.question_mark,
             translation_literals.full_stop,
             translation_literals.exclamation_mark,
             translation_literals.colon,
+            translation_literals.semicolon,
         )
     )
 
 
-def should_follow_sentence_space(prefix: str, translation_literals: TranslationLiterals):
-    return prefix.strip().endswith(
-        (translation_literals.question_mark, translation_literals.full_stop, translation_literals.exclamation_mark)
-    )
-
-
 def fix_capitalization(prefix: str, text: str, translation_literals: TranslationLiterals):
+    """
+    Fixes the capitalization of the text based on the prefix.
+    It's based on simple heuristics:
+    - If the prefix ends with a sentence-ending punctuation mark, the text should be capitalized.
+    - If the prefix ends with a newline, the text should be capitalized.
+    """
     if len(prefix) == 0:
         return capitalize(text)
 

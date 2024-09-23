@@ -59,7 +59,8 @@ class TranslationLiterals:
     exclamation_mark: str = None  # type: ignore
     word_space: str = None  # type: ignore
     sentence_space: str = None  # type: ignore
-    colon: str = None  # type: ignore
+    colon: str = ":"  # type: ignore
+    semicolon: str = ";"  # type: ignore
 
     # Indices
     indices: list[str] = field(default_factory=lambda: LETTER_INDICES)

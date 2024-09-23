@@ -29,7 +29,7 @@ from lighteval.tasks.templates.utils.formatting_utils import (
     capitalize,
     fix_capitalization,
     fix_ending_punct,
-    should_follow_sentence_space,
+    is_ended_sentence,
 )
 from lighteval.tasks.templates.utils.formulation import (
     CFFormulation,
@@ -113,7 +113,7 @@ def get_continuation_prompt_function(
     def prompt_fn_cf(line, task_name: str):
         cont_input, instruction, context, continuations = prepare_prompt(line)
 
-        context_follows_sentence_space = should_follow_sentence_space(context, translation_literals)
+        context_follows_sentence_space = is_ended_sentence(context, translation_literals)
         answers = build_answers(continuations, formulation, translation_literals, context_follows_sentence_space)
 
         query = CONTINUATION_QUERY_CF.format(
