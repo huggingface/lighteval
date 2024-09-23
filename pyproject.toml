@@ -99,11 +99,7 @@ extended_tasks = [
 s3 = ["s3fs"]
 multilingual = [
     "stanza",
-    "pyvi",
-    "pythainlp",
-    "jieba",
-    "indic-nlp-library",
-    "kiwipiepy",
+    "spacy[ja,ko]"
 ]
 
 [project.urls]
