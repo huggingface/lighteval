@@ -25,7 +25,7 @@ from aenum import extend_enum
 
 import lighteval.tasks.extended.ifeval.instructions_registry as instructions_registry
 from lighteval.metrics.metrics import Metrics
-from lighteval.metrics.utils import (
+from lighteval.metrics.utils.utils import (
     MetricCategory,
     MetricUseCase,
     SampleLevelMetricGrouping,
