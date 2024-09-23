@@ -60,21 +60,10 @@ Hub, S3, or locally.
 ```bash
 git clone https://github.com/huggingface/lighteval.git
 cd lighteval
-pip install -e .[{extras}]
+pip install -e .[accelerate]
 ```
 
-| extra name   | description                                                               |
-|--------------|---------------------------------------------------------------------------|
-| accelerate   | To use accelerate for model and data parallelism with transformers models |
-| tgi          | To use Text Generation Inference API to evaluate your model               |
-| nanotron     | To evaluate nanotron models                                               |
-| quantization | To evaluate quantized models                                              |
-| adapters     | To evaluate adapters models (delta and peft)                              |
-| tensorboardX | To upload your results to tensorboard                                     |
-| vllm         | To use vllm as backend for inference                                      |
-| s3           | To push your results to s3                                                |
-| dev          | Will download all the tools necessary for contributing to the lib         |
-
+Lighteval allows for many extras when installing, see [here](https://github.com/huggingface/lighteval/wiki/Installation) for a complete list.
 
 If you want to push results to the Hugging Face Hub, add your access token as
 an environment variable:
