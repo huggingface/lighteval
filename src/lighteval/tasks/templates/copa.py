@@ -55,6 +55,25 @@ class COPAAdapter(TypedDict):
 def get_copa_prompt_function(
     language: Language, adapter: Callable[[dict], COPAInput] | COPAAdapter, formulation: Formulation = MCFFormulation()
 ):
+    """
+    Create a templated prompt function for a COPA task.
+    Example tasks:
+    - COPA
+    - PARUS
+
+    Format:
+    Context Premise thefore/cause | (Continuation 1, Continuation 2, Continuation 3)
+
+    Args:
+        language (Language): The language of the COPA task.
+        adapter (Callable[[dict], COPAInput] | COPAAdapter): A function or dictionary to adapt the input data to the required COPAInput format.
+            Must map data from the dataset row to the COPAInput format.
+            Note: The gold_idx must be an index or list of indices in the continuations list, indicating the correct continuation(s).
+        formulation (Formulation, optional): The formulation to use for the task. Defaults to MCFFormulation().
+
+    Returns:
+        Callable: A function that generates COPA prompts based on the given parameters.
+    """
     adapter_fn: Callable[[dict], COPAInput] = (
         create_adapter_from_dict(adapter) if isinstance(adapter, dict) else adapter
     )  # type: ignore

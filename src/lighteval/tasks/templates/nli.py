@@ -61,6 +61,12 @@ def get_nli_prompt_function_natural(
 ):
     """
     Create a templated prompt function for a Natural Language Inference (NLI) task.
+    Example tasks:
+    - ANLI
+    - XNLI
+
+    Format:
+    Premies right? | (Yes,No,Also), hypothesis
 
     Args:
         language (Language): The language of the NLI task.
@@ -140,6 +146,27 @@ def get_nli_prompt_function(
     relations: list[RelationType],
     formulation: Formulation = MCFFormulation(),
 ):
+    """
+    Create a templated prompt function for a Natural Language Inference (NLI) task.
+    Example tasks:
+    - ANLI
+    - XNLI
+
+    Format:
+    Premise
+    Hypoothesis True,False,Neither? | (True,False,Neither)
+
+    Args:
+        language (Language): The language of the NLI task.
+        adapter (Callable[[dict], NLIInput] | NLIAdapter): A function or dictionary to adapt the input data to the required NLIInput format.
+            Must map data from the dataset row to the NLIInput format.
+            Note: The gold_idx must be an index in the relations list, indicating the correct relation.
+        relations (list[RelationType]): List of relation types to use for the task (e.g., ["entailment", "contradiction", "neutral"]).
+        formulation (Formulation, optional): The formulation to use for the task. Defaults to MCFFormulation().
+
+    Returns:
+        Callable: A function that generates NLI prompts based on the given parameters.
+    """
     translation_literals = TRANSLATION_LITERALS[language]
 
     def get_relation_label(label: RelationType, translation_literals: TranslationLiterals):

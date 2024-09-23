@@ -72,6 +72,24 @@ def get_continuation_prompt_function(
     adapter: Callable[[dict], ContinuationInput] | ContinuationDictAdapter,
     formulation: Formulation = MCFFormulation(),
 ):
+    """
+    Create a templated prompt function for a Continuation task.
+    Example tasks:
+    - Hellaswag
+    - XStoryCloze
+
+    Format:
+    Context xxx | Continuation 1 | Continuation 2 | Continuation 3
+
+    Args:
+        language (Language): The language of the Continuation task.
+        adapter (Callable[[dict], ContinuationInput] | ContinuationDictAdapter): A function or dictionary to adapt the input data to the required ContinuationInput format.
+            Must map data from the dataset row to the ContinuationInput format.
+            Note: The gold_idx must be an index or list of indices in the continuations list, indicating the correct continuation(s).
+        formulation (Formulation, optional): The formulation to use for the task. Defaults to MCFFormulation().
+    Returns:
+        Callable: A function that generates Continuation prompts based on the given parameters.
+    """
     adapter_fn: Callable[[dict], ContinuationInput] = (
         create_adapter_from_dict(adapter) if isinstance(adapter, dict) else adapter  # type: ignore
     )

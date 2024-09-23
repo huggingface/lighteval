@@ -64,12 +64,28 @@ def get_mcq_prompt_function(
     formulation: Formulation = MCFFormulation(),
 ):
     """
-    Create a prompt function for a multichoice question.
+    Create a templated prompt function for a Multiple Choice Question (MCQ) task.
+    Example tasks:
+    - ARC
+    - TruthfulQA
+
+    Format:
+    Question: xxx
+    Answer: | Answer
+
+    Args:
+        language (Language): The language of the MCQ task.
+        adapter (Callable[[dict], MCQInput] | MCQDictAdapter): A function or dictionary to adapt the input data to the required MCQInput format.
+            Must map data from the dataset row to the MCQInput format.
+        formulation (Formulation, optional): The formulation to use for the task. Defaults to MCFFormulation().
+
+    Returns:
+        Callable: A function that generates MCQ prompts based on the given parameters.
     """
 
     adapter_fn: Callable[[dict], MCQInput] = (
-        create_adapter_from_dict(adapter) if isinstance(adapter, dict) else adapter
-    )  # type: ignore
+        create_adapter_from_dict(adapter) if isinstance(adapter, dict) else adapter  # type: ignore
+    )
 
     def prompt_fn(line, task_name: str):
         mcq_input = adapter_fn(line)

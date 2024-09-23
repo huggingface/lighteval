@@ -36,7 +36,7 @@ class TranslationLiterals:
     # I hate these type errors too but we are living in python world
     # and typechecker is not respecting __getattribute__ all the time, where it would
     # find out that the value can't be None.
-    question_word: str | None = None  # type: ignore
+    question_word: str = None  # type: ignore
     options: str = None  # type: ignore
     answer: str = None  # type: ignore
     confirmation_word: str = None  # type: ignore

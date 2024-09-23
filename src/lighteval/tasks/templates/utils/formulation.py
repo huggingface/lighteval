@@ -32,17 +32,40 @@ ChoicePrefix = Literal["Letters", "NativeLetters", "Numbers"]
 
 @dataclass
 class MCFFormulation:
+    """
+    MCF Formulation
+    Presenting the choices as A. B. C.
+    The target is A, B, C
+
+    Args:
+        choice_prefix (ChoicePrefix, optional): The choice prefix to use for the task. Defaults to "Letters".
+    """
+
     choice_prefix: ChoicePrefix = "Letters"
 
 
 @dataclass
 class HybridFormulation:
+    """
+    Hybrid Formulation
+    Presenting the choices as A. B. C.
+    The target is then the answer itself not A, B, C
+
+    Args:
+        choice_prefix (ChoicePrefix, optional): The choice prefix to use for the task. Defaults to "Letters".
+    """
+
     choice_prefix: ChoicePrefix = "Letters"
 
 
 @dataclass
 class CFFormulation:
-    pass
+    """
+    CF Formulation
+    No choices are presented, the target is the answer itself
+    """
+
+    choice_prefix: ChoicePrefix = "Letters"
 
 
 Formulation = CFFormulation | HybridFormulation | MCFFormulation
