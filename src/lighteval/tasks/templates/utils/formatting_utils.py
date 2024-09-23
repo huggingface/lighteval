@@ -49,7 +49,7 @@ def fix_ending_punct(ctx: str, translation_literals: TranslationLiterals):
     Fixes the ending punctuation so that it uses the correct punctuation for the language.
     E.g in Chinese the "?" is written as "？"
     """
-    ctx = ctx.strip()
+    ctx = ctx.rstrip()
     if len(ctx) == 0:
         return ctx
     if ctx.endswith("?"):
