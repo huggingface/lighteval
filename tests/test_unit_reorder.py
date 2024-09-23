@@ -24,7 +24,7 @@ import pytest
 from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset
-from lighteval.metrics.utils import MetricCategory
+from lighteval.metrics.utils.utils import MetricCategory
 from lighteval.tasks.requests import GreedyUntilRequest
 
 

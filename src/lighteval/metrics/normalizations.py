@@ -25,9 +25,10 @@ import string
 import sys
 import unicodedata
 from dataclasses import dataclass
+from typing import Callable
 
+from lighteval.metrics.utils.linguistic_tokenizers import get_word_tokenizer
 from lighteval.utils.language import Language
-from lighteval.utils.tokenizers import get_word_tokenizer
 
 
 # From HELM
@@ -362,22 +363,22 @@ PUNCT = {chr(i) for i in range(sys.maxunicode) if unicodedata.category(chr(i)).s
 )
 
 _ARTICLE_PATTERNS = {
-    Language.english: r"\b(a|an|the)\b",
-    Language.spanish: r"\b(el|la|los|las|un|una|unos|unas)\b",
-    Language.portuguese: r"\b(o|a|os|as|um|uma|uns|umas)\b",
-    Language.italian: r"\b(il|lo|la|i|gli|le|un|uno|una)\b",
-    Language.french: r"\b(le|la|les|l'|un|une|des)\b",
-    Language.german: r"\b(der|die|das|den|dem|des|ein|eine|einer|eines|einem|einen)\b",
-    Language.finnish: r"\b(se|yksi|yks)\b",
-    Language.greek: r"\b(ὁ|οἱ|τοῦ|τῶν|τόν|τούς|ὦ|ἡ|αἱ|τῆς|τῶν|τήν|τάς|τό|τά|τοῦ|τῶν|τό|τά)\b",
-    Language.norwegian: r"\b(en|ei|et|den|det|de)\b",
-    Language.swedish: r"\b(en|ett|den|det|de)\b",
-    Language.turkish: r"\b(bir)\b",
-    Language.dutch: r"\b(de|het|een)\b",
-    Language.hungarian: r"\b(a|az|egy)\b",
-    Language.catalan: r"\b(el|la|els|les|un|una|uns|unes)\b",
-    Language.hebrew: r"\b(ה)\b",
-    Language.galician: r"\b(o|a|os|as|un|unha|uns|unhas)\b",
+    Language.ENGLISH: r"\b(a|an|the)\b",
+    Language.SPANISH: r"\b(el|la|los|las|un|una|unos|unas)\b",
+    Language.PORTUGUESE: r"\b(o|a|os|as|um|uma|uns|umas)\b",
+    Language.ITALIAN: r"\b(il|lo|la|i|gli|le|un|uno|una)\b",
+    Language.FRENCH: r"\b(le|la|les|l'|un|une|des)\b",
+    Language.GERMAN: r"\b(der|die|das|den|dem|des|ein|eine|einer|eines|einem|einen)\b",
+    Language.FINNISH: r"\b(se|yksi|yks)\b",
+    Language.GREEK: r"\b(ὁ|οἱ|τοῦ|τῶν|τόν|τούς|ὦ|ἡ|αἱ|τῆς|τῶν|τήν|τάς|τό|τά|τοῦ|τῶν|τό|τά)\b",
+    Language.NORWEGIAN: r"\b(en|ei|et|den|det|de)\b",
+    Language.SWEDISH: r"\b(en|ett|den|det|de)\b",
+    Language.TURKISH: r"\b(bir)\b",
+    Language.DUTCH: r"\b(de|het|een)\b",
+    Language.HUNGARIAN: r"\b(a|az|egy)\b",
+    Language.CATALAN: r"\b(el|la|els|les|un|una|uns|unes)\b",
+    Language.HEBREW: r"\b(ה)\b",
+    Language.GALICIAN: r"\b(o|a|os|as|un|unha|uns|unhas)\b",
 }
 
 
@@ -396,7 +397,7 @@ def remove_punc(text: str) -> str:
     return "".join(ch for ch in text if ch not in PUNCT)
 
 
-def get_multilingual_normalizer(lang: Language, lower: bool = True):
+def get_multilingual_normalizer(lang: Language, lower: bool = True) -> Callable[[str], str]:
     tokenizer = get_word_tokenizer(lang)
 
     def _inner_normalizer(text: str) -> str:

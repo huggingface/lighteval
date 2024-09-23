@@ -30,7 +30,7 @@ where = ["src"]
 
 [project]
 name = "lighteval"
-version = "0.4.0.dev0"
+version = "0.5.0.dev0"
 authors = [
   { name="Clémentine Fourrier", email="clementine@huggingface.com" },
   { name="Nathan Habib", email="nathan.habib@huggingface.com" },
@@ -99,11 +99,9 @@ extended_tasks = [
 s3 = ["s3fs"]
 multilingual = [
     "stanza",
-    "pyvi",
-    "pythainlp",
-    "jieba",
-    "indic-nlp-library",
-    "kiwipiepy",
+    "spacy[ja,ko]",
+    "jieba", # for chinese tokenizer
+    "pyvi", # for vietnamese tokenizer
 ]
 
 [project.urls]
