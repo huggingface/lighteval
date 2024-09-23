@@ -26,8 +26,8 @@ from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.utils.language import Language
 
 
-# TODO: The typing still sucks here, it should be able to infer that you can't access the
-# attributes that are not defined in the class. Don't want to waste time on this though
+# TODO(hynky1999): The typing still is not great, it should be able to infer that you can't access the
+# attributes that are not defined in the class. Don't want to waste time on this though.
 @dataclass
 class TranslationLiterals:
     # This is just to create nice error messages
