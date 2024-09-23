@@ -34,7 +34,6 @@ def test_copa_prompt_cf(cause_effect):
     Since it's pretty much a wrapper around continuation template we just test single formulation.
 
     """
-    # Define test input
     test_input = {
         "cause_effect": cause_effect,
         "context": "He is strong",
@@ -42,9 +41,8 @@ def test_copa_prompt_cf(cause_effect):
         "gold_idx": 0,
     }
 
-    # Generate prompt using mcq_prompt_functions
     prompt_fn = get_copa_prompt_function(
-        Language.english,
+        Language.ENGLISH,
         {
             "cause_effect": "cause_effect",
             "context": "context",
@@ -54,7 +52,6 @@ def test_copa_prompt_cf(cause_effect):
         CFFormulation(),
     )
 
-    # Test mcq_prompt_functions directly
     doc = prompt_fn(test_input, "test_task")
 
     cause_effect_word = "because" if cause_effect == "cause" else "therefore"

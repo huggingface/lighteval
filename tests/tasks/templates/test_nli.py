@@ -26,48 +26,41 @@ from lighteval.utils.language import Language
 
 
 def test_nli_prompt_natural():
-    # Define test input
+    """Test natural language NLI prompt generation."""
     test_input = {
         "premise": "The cat is sleeping on the couch.",
         "hypothesis": "The cat is awake.",
-        "gold_idx": 2,  # Assuming 2 represents "contradiction"
+        "gold_idx": 2,
     }
 
-    # Generate prompt using nli_prompt_function
     prompt_fn = get_nli_prompt_function_natural(
-        Language.english,
+        Language.ENGLISH,
         {"hypothesis": "hypothesis", "premise": "premise", "gold_idx": "gold_idx"},
         ["entailment", "neutral", "contradiction"],
     )
 
-    # Test nli_prompt_function
     doc = prompt_fn(test_input, "test_nli_task")
 
     assert doc.query == "The cat is sleeping on the couch right?"
-
     assert doc.unconditioned_query == "right?"
     assert doc.choices == [" Yes, the cat is awake", " Also, the cat is awake", " No, the cat is awake"]
-    assert doc.gold_index == 2  # Assuming "False" (contradiction) is at index 2
-
-    # Generate prompt using nli_prompt_function_natural with optional keys
+    assert doc.gold_index == 2
 
 
 def test_nli_prompt_mcf():
-    # Define test input
+    """Test multiple-choice format NLI prompt generation."""
     test_input = {
         "premise": "The cat is sleeping on the couch.",
         "hypothesis": "The cat is awake.",
-        "gold_idx": 2,  # Assuming 2 represents "contradiction"
+        "gold_idx": 2,
     }
 
-    # Generate prompt using nli_prompt_function
     prompt_fn = get_nli_prompt_function(
-        Language.english,
+        Language.ENGLISH,
         {"hypothesis": "hypothesis", "premise": "premise", "gold_idx": "gold_idx"},
         ["entailment", "neutral", "contradiction"],
     )
 
-    # Test nli_prompt_function
     doc = prompt_fn(test_input, "test_nli_task")
 
     assert (
@@ -81,29 +74,26 @@ Question: The cat is awake.
 Answer:\
 """
     )
-
     assert doc.unconditioned_query == "Answer:"
     assert doc.choices == [" A", " B", " C"]
-    assert doc.gold_index == [2]  # Assuming "False" (contradiction) is at index 2
+    assert doc.gold_index == [2]
 
 
 def test_nli_prompt_cf():
-    # Define test input
+    """Test cloze format NLI prompt generation."""
     test_input = {
         "premise": "The cat is sleeping on the couch.",
         "hypothesis": "The cat is awake.",
-        "gold_idx": 2,  # Assuming 2 represents "contradiction"
+        "gold_idx": 2,
     }
 
-    # Generate prompt using nli_prompt_function
     prompt_fn = get_nli_prompt_function(
-        Language.english,
+        Language.ENGLISH,
         {"hypothesis": "hypothesis", "premise": "premise", "gold_idx": "gold_idx"},
         ["entailment", "neutral", "contradiction"],
         formulation=CFFormulation(),
     )
 
-    # Test nli_prompt_function
     doc = prompt_fn(test_input, "test_nli_task")
 
     assert (
@@ -114,7 +104,6 @@ Question: The cat is awake True, False or Neither?
 Answer:\
 """
     )
-
     assert doc.unconditioned_query == "Answer:"
     assert doc.choices == [" True", " Neither", " False"]
-    assert doc.gold_index == [2]  # Assuming "False" (contradiction) is at index 2
+    assert doc.gold_index == [2]

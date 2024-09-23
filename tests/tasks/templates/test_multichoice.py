@@ -26,36 +26,28 @@ from lighteval.utils.language import Language
 
 
 def test_multichoice_prompt_mcf():
-    # Define test input
+    """Test multiple-choice format (MCF) prompt generation for multichoice questions."""
     test_input = {
         "question": "What is the capital of France?",
         "choices": ["London", "Paris", "Berlin", "Madrid"],
-        "gold_idxs": 1,
-        "context": "France is a country in Western Europe.",
-        "instruction": "Please answer the following question about geography.",
+        "gold_idx": 1,
     }
 
-    # Generate prompt using mcq_prompt_functions
     prompt_fn = get_mcq_prompt_function(
-        Language.english,
+        Language.ENGLISH,
         {
             "question": "question",
             "choices": "choices",
-            "gold_idxs": "gold_idxs",
-            "context": "context",
-            "instruction": "instruction",
+            "gold_idx": "gold_idx",
         },
         MCFFormulation(),
     )
 
-    # Test mcq_prompt_functions directly
     doc = prompt_fn(test_input, "test_task")
 
     assert (
         doc.query
         == """\
-Please answer the following question about geography.
-France is a country in Western Europe.
 Question: What is the capital of France?
  A. London
  B. Paris
@@ -70,30 +62,19 @@ Answer:\
 
 
 def test_multichoice_prompt_nli_cf():
-    """
-    Test that the NLI prompt with CF formulation works.
-    """
-
-    # Define test input
+    """Test cloze format (CF) prompt generation for multichoice questions."""
     test_input = {
         "question": "What is the capital of France?",
         "choices": ["London", "Paris", "Berlin", "Madrid"],
-        "gold_idxs": 1,
-        "context": "France is a country in Western Europe.",
-        "instruction": "Please answer the following question about geography.",
+        "gold_idx": 1,
     }
 
-    # Test mcq_prompt_functions directly
-
-    # Generate prompt using mcq_prompt_functions
     prompt_fn = get_mcq_prompt_function(
-        Language.english,
+        Language.ENGLISH,
         {
             "question": "question",
             "choices": "choices",
-            "gold_idxs": "gold_idxs",
-            "context": "context",
-            "instruction": "instruction",
+            "gold_idx": "gold_idx",
         },
         CFFormulation(),
     )
@@ -102,8 +83,6 @@ def test_multichoice_prompt_nli_cf():
     assert (
         doc.query
         == """\
-Please answer the following question about geography.
-France is a country in Western Europe.
 Question: What is the capital of France?
 Answer:\
 """
@@ -114,22 +93,15 @@ Answer:\
 
 
 def test_chinese_multichoice_prompt():
-    """
-    Test that the multichoice prompt works for Chinese.
-    This means that:
-    - No spaces are used for separating words/sequneces
-    - Correct punctuation characters are used
-    """
-
-    # Define test input
+    """Test multichoice prompt generation for Chinese language."""
     test_input = {
         "question": "什么是中国的首都?",
         "choices": ["北京", "上海", "广州", "深圳"],
-        "gold_idxs": 0,
+        "gold_idx": 0,
     }
 
     prompt_fn = get_mcq_prompt_function(
-        Language.chinese, {"question": "question", "choices": "choices", "gold_idxs": "gold_idxs"}, MCFFormulation()
+        Language.CHINESE, {"question": "question", "choices": "choices", "gold_idx": "gold_idx"}, MCFFormulation()
     )
 
     doc = prompt_fn(test_input, "test_task")
@@ -148,21 +120,15 @@ D。深圳
 
 
 def test_thai_multichoice_prompt():
-    """
-    Test that the multichoice prompt works for Thai.
-    This means that:
-    - No spaces are used for separating words
-    """
-
-    # Define test input
+    """Test multichoice prompt generation for Thai language."""
     test_input = {
         "question": "สิ่งใดต่อไปนี้เป็นสิ่งที่คุณชอบมากที่สุด?",
         "choices": ["รถยนต์", "รถจักรยานยนต์", "รถจักรยานยนต์", "รถยนต์"],
-        "gold_idxs": 0,
+        "gold_idx": 0,
     }
 
     prompt_fn = get_mcq_prompt_function(
-        Language.thai, {"question": "question", "choices": "choices", "gold_idxs": "gold_idxs"}, MCFFormulation()
+        Language.THAI, {"question": "question", "choices": "choices", "gold_idx": "gold_idx"}, MCFFormulation()
     )
 
     doc = prompt_fn(test_input, "test_task")
@@ -184,27 +150,21 @@ def test_thai_multichoice_prompt():
 
 
 def test_multichoice_optional_keys():
-    """
-    Test that the multichoice prompt works when the input dict has optional keys.
-    - context
-    - instruction
-    """
-
-    # Define test input with all keys
+    """Test multichoice prompt generation with optional keys (context and instruction)."""
     test_input = {
         "question": "What is the capital of France?",
         "choices": ["London", "Paris", "Berlin", "Madrid"],
         "context": "France is big.",
         "instruction": "Please answer the following question about geography.",
-        "gold_idxs": 1,
+        "gold_idx": 1,
     }
 
     prompt_fn = get_mcq_prompt_function(
-        Language.english,
+        Language.ENGLISH,
         {
             "question": "question",
             "choices": "choices",
-            "gold_idxs": "gold_idxs",
+            "gold_idx": "gold_idx",
             "context": "context",
             "instruction": "instruction",
         },

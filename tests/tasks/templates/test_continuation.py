@@ -26,21 +26,19 @@ from lighteval.utils.language import Language
 
 
 def test_continuation_prompt_mcf():
-    # Define test input
+    """Test multiple-choice format continuation prompt generation."""
     test_input = {
         "context": "The quick brown fox",
         "continuations": ["jumps over the lazy dog", "Runs through the forest", "Chases a rabbit"],
-        "gold_idxs": 0,
+        "gold_idx": 0,
     }
 
-    # Generate prompt using continuation_prompt_function
     prompt_fn = get_continuation_prompt_function(
-        Language.english,
+        Language.ENGLISH,
         {"context": "context", "continuations": "continuations", "gold_idx": "gold_idx"},
         MCFFormulation(),
     )
 
-    # Test continuation_prompt_function
     doc = prompt_fn(test_input, "test_continuation_task")
 
     assert (
@@ -60,21 +58,19 @@ Answer:\
 
 
 def test_continuation_prompt_cf():
-    # Define test input
+    """Test cloze format continuation prompt generation."""
     test_input = {
         "context": "The sun is",
         "continuations": ["shining brightly", "setting in the west", "hidden behind clouds"],
-        "gold_idxs": 1,
+        "gold_idx": 1,
     }
 
-    # Generate prompt using continuation_prompt_function with CF formulation
     prompt_fn = get_continuation_prompt_function(
-        Language.english,
+        Language.ENGLISH,
         {"context": "context", "continuations": "continuations", "gold_idx": "gold_idx"},
         CFFormulation(),
     )
 
-    # Test continuation_prompt_function
     doc = prompt_fn(test_input, "test_continuation_task")
 
     assert doc.query == "The sun is"
@@ -85,17 +81,15 @@ def test_continuation_prompt_cf():
 
 
 def test_continuation_prompt_sequence_end():
-    """
-    Test that the continuations are properly adjusted when the context is a finite sequence.
-    """
+    """Test continuation prompt generation when the context ends with a period."""
     test_input = {
         "context": "the sun is.",
         "continuations": ["shining brightly", "setting in the west", "hidden behind clouds"],
-        "gold_idxs": 1,
+        "gold_idx": 1,
     }
 
     prompt_fn = get_continuation_prompt_function(
-        Language.english,
+        Language.ENGLISH,
         {"context": "context", "continuations": "continuations", "gold_idx": "gold_idx"},
         CFFormulation(),
     )
@@ -110,21 +104,16 @@ def test_continuation_prompt_sequence_end():
 
 
 def test_continuation_optional_keys():
-    """
-    Test that the continuation_prompt_function can handle optional keys:
-    - instruction
-    """
-    # Define test input with optional keys
+    """Test continuation prompt generation with optional instruction key."""
     test_input = {
         "context": "In the morning, I like to",
         "continuations": ["drink coffee", "go for a run", "read the news"],
-        "gold_idxs": 0,
+        "gold_idx": 0,
         "instruction": "Choose the most likely continuation:",
     }
 
-    # Generate prompt using continuation_prompt_function with optional keys
     prompt_fn = get_continuation_prompt_function(
-        Language.english,
+        Language.ENGLISH,
         {
             "context": "context",
             "continuations": "continuations",
@@ -134,7 +123,6 @@ def test_continuation_optional_keys():
         MCFFormulation(),
     )
 
-    # Test continuation_prompt_function
     doc = prompt_fn(test_input, "test_continuation_task")
 
     assert (

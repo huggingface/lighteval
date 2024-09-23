@@ -77,8 +77,8 @@ the 'src/lighteval/tasks/templates/utils/translation_literals.py'
 
 
 TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
-    Language.english: TranslationLiterals(
-        language=Language.english,
+    Language.ENGLISH: TranslationLiterals(
+        language=Language.ENGLISH,
         question_word="question",
         options="options",
         answer="answer",
@@ -100,8 +100,8 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         colon=":",
         or_word="or",
     ),
-    Language.swahili: TranslationLiterals(
-        language=Language.swahili,
+    Language.SWAHILI: TranslationLiterals(
+        language=Language.SWAHILI,
         question_word="swali",
         options="chaguo",
         answer="jibu",
@@ -119,8 +119,8 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
     ),
-    Language.french: TranslationLiterals(
-        language=Language.french,
+    Language.FRENCH: TranslationLiterals(
+        language=Language.FRENCH,
         question_word="question",
         options="possibilités",
         answer="réponse",
@@ -138,8 +138,8 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
     ),
-    Language.telugu: TranslationLiterals(
-        language=Language.telugu,
+    Language.TELUGU: TranslationLiterals(
+        language=Language.TELUGU,
         question_word="ప్రశ్న",
         options="ఎంపికలు",
         answer="జవాబు",
@@ -157,8 +157,8 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
     ),
-    Language.hindi: TranslationLiterals(
-        language=Language.hindi,
+    Language.HINDI: TranslationLiterals(
+        language=Language.HINDI,
         question_word="सवाल",
         options="विकल्प",
         answer="उत्तर",
@@ -176,8 +176,8 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
     ),
-    Language.chinese: TranslationLiterals(
-        language=Language.chinese,
+    Language.CHINESE: TranslationLiterals(
+        language=Language.CHINESE,
         question_word="问题",
         options="选项",
         answer="答案",
@@ -195,8 +195,8 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space="",
         colon="：",
     ),
-    Language.russian: TranslationLiterals(
-        language=Language.russian,
+    Language.RUSSIAN: TranslationLiterals(
+        language=Language.RUSSIAN,
         question_word="вопрос",
         options="варианты",
         answer="ответ",
@@ -214,8 +214,8 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
     ),
-    Language.thai: TranslationLiterals(
-        language=Language.thai,
+    Language.THAI: TranslationLiterals(
+        language=Language.THAI,
         question_word="คำถาม",
         options="ตัวเลือก",
         answer="คำตอบ",
@@ -233,8 +233,8 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
     ),
-    Language.turkish: TranslationLiterals(
-        language=Language.turkish,
+    Language.TURKISH: TranslationLiterals(
+        language=Language.TURKISH,
         question_word="soru",
         options="seçenekler",
         answer="cevap",
