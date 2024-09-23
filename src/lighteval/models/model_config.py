@@ -209,20 +209,21 @@ class AdapterModelConfig(BaseModelConfig):
 @dataclass
 class VLLMModelConfig:
     pretrained: str
-    gpu_memory_utilisation: float = 0.7
-    batch_size: int = -1
-    revision: str = "main"
+    gpu_memory_utilisation: float = 0.9  # lower this if you are running out of memory
+    revision: str = "main"  # revision of the model
     dtype: str | None = None
-    tensor_parallel_size: int = 1
-    pipeline_parallel_size: int = 1
-    data_parallel_size: int = 1
-    max_model_length: int | None = None
+    tensor_parallel_size: int = 1  # how many GPUs to use for tensor parallelism
+    pipeline_parallel_size: int = 1  # how many GPUs to use for pipeline parallelism
+    data_parallel_size: int = 1  # how many GPUs to use for data parallelism
+    max_model_length: int | None = None  # maximum length of the model, ussually infered automatically
     swap_space: int = 4  # CPU swap space size (GiB) per GPU.
     seed: int = 1234
     trust_remote_code: bool = False
     use_chat_template: bool = False
     add_special_tokens: bool = True
-    multichoice_continuations_start_space: bool = True
+    multichoice_continuations_start_space: bool = (
+        True  # whether to add a space at the start of each continuation in multichoice generation
+    )
     subfolder: Optional[str] = None
 
 
