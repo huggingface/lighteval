@@ -107,7 +107,9 @@ lighteval accelerate \
 
 Lighteval started as an extension of the fantastic [Eleuther AI
 Harness](https://github.com/EleutherAI/lm-evaluation-harness) (which powers the
-Open LLM Leaderboard) and draws inspiration from the amazing
+[Open LLM
+Leaderboard](https://huggingface.co/spaces/open-llm-leaderboard/open_llm_leaderboard))
+and draws inspiration from the amazing
 [HELM](https://crfm.stanford.edu/helm/latest/) framework.
 
 While evolving Lighteval into its own standalone tool, we are grateful to the
