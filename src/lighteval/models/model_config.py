@@ -118,6 +118,8 @@ class BaseModelConfig:
     def __post_init__(self):
         # Making sure this parameter is a boolean
         self.multichoice_continuations_start_space = boolstring_to_bool(self.multichoice_continuations_start_space)
+        self.model_parallel = boolstring_to_bool(self.model_parallel)
+        self.compile = boolstring_to_bool(self.compile)
 
         if self.quantization_config is not None and not is_bnb_available():
             raise ImportError(NO_BNB_ERROR_MSG)
@@ -209,19 +211,21 @@ class AdapterModelConfig(BaseModelConfig):
 @dataclass
 class VLLMModelConfig:
     pretrained: str
-    gpu_memory_utilisation: float = 0.8
-    batch_size: int = -1
-    revision: str = "main"
+    gpu_memory_utilisation: float = 0.9  # lower this if you are running out of memory
+    revision: str = "main"  # revision of the model
     dtype: str | None = None
-    tensor_parallel_size: int = 1
-    data_parallel_size: int = 1
-    max_model_length: int = 1024
+    tensor_parallel_size: int = 1  # how many GPUs to use for tensor parallelism
+    pipeline_parallel_size: int = 1  # how many GPUs to use for pipeline parallelism
+    data_parallel_size: int = 1  # how many GPUs to use for data parallelism
+    max_model_length: int | None = None  # maximum length of the model, ussually infered automatically. reduce this if you encouter OOM issues, 4096 is usually enough
     swap_space: int = 4  # CPU swap space size (GiB) per GPU.
     seed: int = 1234
     trust_remote_code: bool = False
     use_chat_template: bool = False
     add_special_tokens: bool = True
-    multichoice_continuations_start_space: bool = True
+    multichoice_continuations_start_space: bool = (
+        True  # whether to add a space at the start of each continuation in multichoice generation
+    )
     subfolder: Optional[str] = None
 
 
