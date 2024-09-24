@@ -600,7 +600,8 @@ class Extractiveness:
         self,
         normalize_input: callable = remove_braces,
         normalize_pred: callable = remove_braces_and_strip,
-        input_column: str = "text"):
+        input_column: str = "text",
+    ):
         """
         Extractiveness metric class.
 
@@ -614,7 +615,6 @@ class Extractiveness:
         self.normalize_input = normalize_input
         self.normalize_pred = normalize_pred
         self.input_column = input_column
-        self.stats_metric = DataStatsMetric()
 
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
         """
@@ -636,7 +636,7 @@ class Extractiveness:
             inp = self.normalize_input(inp)
         if self.normalize_pred:
             pred = self.normalize_pred(prediction)
-        stats = self.stats_metric.evaluate_example(pred, inp)
+        stats = DataStatsMetric().evaluate_example(pred, inp)
         return {
             "summarization_coverage": stats["coverage"],
             "summarization_density": stats["density"],
@@ -645,10 +645,12 @@ class Extractiveness:
 
 
 class Faithfulness:
-    def __init__(self,
-    normalize_input: callable = remove_braces,
-    normalize_pred: callable = remove_braces_and_strip,
-    input_column: str = "text"):
+    def __init__(
+        self,
+        normalize_input: callable = remove_braces,
+        normalize_pred: callable = remove_braces_and_strip,
+        input_column: str = "text",
+    ):
         """
         Faithfulness metric class.
 
