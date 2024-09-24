@@ -612,6 +612,7 @@ class Extractiveness:
                 Defaults to remove_braces_and_strip from lighteval.metrics.normalizations if no normalization is applied.
             input_column (str): Column in the formatted_doc to use for the input. Defaults to "text".
         """
+        self.stats_metric = None
         self.normalize_input = normalize_input
         self.normalize_pred = normalize_pred
         self.input_column = input_column
@@ -630,13 +631,17 @@ class Extractiveness:
         Returns:
             dict[str, float]: The extractiveness scores.
         """
+        if self.stats_metric is None:
+            self.stats_metric = DataStatsMetric()
+
         inp = formatted_doc.specific[self.input_column]
         prediction = predictions[0]
         if self.normalize_input:
             inp = self.normalize_input(inp)
         if self.normalize_pred:
-            pred = self.normalize_pred(prediction)
-        stats = DataStatsMetric().evaluate_example(pred, inp)
+            prediction = self.normalize_pred(prediction)
+
+        stats = self.stats_metric.evaluate_example(prediction, inp)
         return {
             "summarization_coverage": stats["coverage"],
             "summarization_density": stats["density"],
