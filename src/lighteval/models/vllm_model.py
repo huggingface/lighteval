@@ -68,7 +68,6 @@ class VLLMModel(LightevalModel):
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self._config = config
-        self._batch_size = config.batch_size
         self.use_chat_template = config.use_chat_template
         self.data_parallel_size = int(config.data_parallel_size)
 
