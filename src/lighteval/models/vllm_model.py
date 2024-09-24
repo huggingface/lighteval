@@ -68,13 +68,16 @@ class VLLMModel(LightevalModel):
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self._config = config
-        self._batch_size = config.batch_size
-        self._max_length = self._init_max_length(config.max_model_length)
         self.use_chat_template = config.use_chat_template
         self.data_parallel_size = int(config.data_parallel_size)
 
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
         self._tokenizer = self._create_auto_tokenizer(config, env_config)
+
+        if config.max_model_length is not None:
+            self._max_length = int(config.max_model_length)
+        else:
+            self._max_length = self.tokenizer.model_max_length or self.tokenizer.max_position_embeddings
 
         # If model_parallel is not set we compare the number of processes with the number of GPUs
         self.model = self._create_auto_model(config, env_config)
@@ -120,12 +123,13 @@ class VLLMModel(LightevalModel):
         """
         self.model_args = {
             "model": config.pretrained,
-            "gpu_memory_utilization": float(0.8),
+            "gpu_memory_utilization": float(config.gpu_memory_utilisation),
             "revision": config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
             "dtype": config.dtype,
             "trust_remote_code": config.trust_remote_code,
-            "tensor_parallel_size": int(1),
-            "max_model_len": int(self._max_length) if self._max_length else None,
+            "tensor_parallel_size": int(config.tensor_parallel_size),
+            "pipeline_parallel_size": int(config.pipeline_parallel_size),
+            "max_model_len": self._max_length,
             "swap_space": 4,
             "seed": 1234,
         }
@@ -227,30 +231,33 @@ class VLLMModel(LightevalModel):
             # of losing some meaning, or have some generations that are exceedingly short?
             # The choice we go for here is to avoid truncating the prompt if we can, since it
             # should have been managed by the prompt creator/few shot manager if requested by the user.
-            context_size = len(tokenized["input_ids"][0])
-            if context_size > self.max_length:
-                hlog_warn(
-                    f"The context size of your batch ({context_size}) is bigger than the maximum context size allowed by the model ({self.max_length}) for a task in"
-                    + str({dataset[0].task_name})
-                    + ". This is likely to lead to some errors."  # noqa C401
-                )
-                # There will be truncation of at least one sample, maximum generation size will be one
-                max_new_tokens = 1
-            else:  # We can't allow generation of more than max_length
-                if max_new_tokens is None:  # If generation size is not set, we go all the way
-                    max_new_tokens = self.max_length - context_size
-                else:
-                    max_new_tokens = min(self.max_length - context_size, max_new_tokens)
+            inputs = tokenized["input_ids"]
+            context_size = len(inputs[0])
+
+            # left truncate the inputs to the maximum length
+            if max_new_tokens is not None:
+                if context_size + max_new_tokens > self.max_length:
+                    hlog_warn(
+                        f"{context_size + max_new_tokens=} which is greather than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
+                    )
+                    context_size = self.max_length - max_new_tokens
+                    inputs = [input[-context_size:] for input in inputs]
+            else:
+                if context_size > self.max_length:
+                    hlog_warn(
+                        f"{context_size=} which is greather than {self.max_length=}. Truncating context to {self.max_length} tokens."
+                    )
+                    context_size = self.max_length
+                    inputs = [input[-context_size:] for input in inputs]
 
             vllm_outputs = self._generate(
-                inputs=tokenized["input_ids"],
+                inputs=inputs,
                 max_new_tokens=max_new_tokens,
                 stop_tokens=stop_tokens,
                 returns_logits=returns_logits,
                 num_samples=num_samples,
             )
 
-            print(f"{len(vllm_outputs)} vllm_outputs")
             for vllm_output in vllm_outputs:
                 output_token_ids = [outputs.token_ids for outputs in vllm_output.outputs]
                 logprobs = [output.logprobs for output in vllm_output.outputs] or []
@@ -345,19 +352,21 @@ class VLLMModel(LightevalModel):
 
         for _ in tqdm(dataset.splits_start_end_iterator()):
             # the last token is an eos token, so we don't need to add it
-            inputs = [
-                dataset[i].tokenized_context + dataset[i].tokenized_continuation[:-1] for i in range(len(dataset))
-            ]
+            inputs = [dataset[i].tokenized_context + dataset[i].tokenized_continuation for i in range(len(dataset))]
+            # Left truncate the inputs to the maximum length
+            inputs = [input[-self.max_length :] for input in inputs]
             outputs = self._generate(inputs, generate=False)
 
             for output, input in zip(outputs, dataset):
                 continuation_logprobs = []
-                for token, logprobs in zip(input.tokenized_continuation[-2::-1], output.prompt_logprobs[::-1]):
+                for token, logprobs in zip(input.tokenized_continuation[::-1], output.prompt_logprobs[::-1]):
                     continuation_logprobs.append(logprobs[token])
                 bool_score = all(logprob.rank == 1 for logprob in continuation_logprobs)
                 continuation_logprobs = [logprob.logprob for logprob in continuation_logprobs]
                 answer = LoglikelihoodResponse(
-                    result=(sum(continuation_logprobs), bool_score if return_bool_score else None)
+                    input_tokens=input.tokenized_context + input.tokenized_continuation,
+                    generated_tokens=input.tokenized_continuation,
+                    result=(sum(continuation_logprobs), bool_score if return_bool_score else None),
                 )
                 res.append(answer)
 
