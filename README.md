@@ -36,7 +36,7 @@ backends—whether it's
 ease. Dive deep into your model’s performance by saving and exploring detailed,
 sample-by-sample results to debug and see how your models stack-up.
 
-Customization at your fingertips: letting you effortlessly create [new
+Customization at your fingertips: letting you either browse all our existing [tasks](https://github.com/huggingface/lighteval/wiki/Available-Tasks) and [metrics](https://github.com/huggingface/lighteval/wiki/Metric-List) or effortlessly create [new
 tasks](https://github.com/huggingface/lighteval/wiki/Adding-a-Custom-Task) and
 [metrics](https://github.com/huggingface/lighteval/wiki/Adding-a-New-Metric)
 tailored to your needs.
