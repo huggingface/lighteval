@@ -58,9 +58,7 @@ Hub, S3, or locally.
 ## ⚡️ Installation
 
 ```bash
-git clone https://github.com/huggingface/lighteval.git
-cd lighteval
-pip install -e .[accelerate]
+pip install lighteval[accelerate]
 ```
 
 Lighteval allows for many extras when installing, see [here](https://github.com/huggingface/lighteval/wiki/Installation) for a complete list.
@@ -119,7 +117,7 @@ welcomed!
   author = {Fourrier, Clémentine and Habib, Nathan and Wolf, Thomas and Tunstall, Lewis},
   title = {LightEval: A lightweight framework for LLM evaluation},
   year = {2023},
-  version = {0.4.0},
+  version = {0.5.0},
   url = {https://github.com/huggingface/lighteval}
 }
 ```
