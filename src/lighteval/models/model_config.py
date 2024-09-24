@@ -217,7 +217,7 @@ class VLLMModelConfig:
     tensor_parallel_size: int = 1  # how many GPUs to use for tensor parallelism
     pipeline_parallel_size: int = 1  # how many GPUs to use for pipeline parallelism
     data_parallel_size: int = 1  # how many GPUs to use for data parallelism
-    max_model_length: int | None = None  # maximum length of the model, ussually infered automatically
+    max_model_length: int | None = None  # maximum length of the model, ussually infered automatically. reduce this if you encouter OOM issues, 4096 is usually enough
     swap_space: int = 4  # CPU swap space size (GiB) per GPU.
     seed: int = 1234
     trust_remote_code: bool = False
