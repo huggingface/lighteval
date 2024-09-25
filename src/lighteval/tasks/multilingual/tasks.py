@@ -402,32 +402,6 @@ hellaswag_tha_tasks = [
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
 
-
-hellaswag_hin_tasks = [
-    LightevalTaskConfig(
-        name=f"hellaswag_{Language.HINDI.value}_{formulation.name.lower()}",
-        suite=["custom"],
-        prompt_function=get_hellaswag_prompt_function(
-            language=Language.HINDI,
-            adapter=lambda line: {
-                "ctx_a": line["ctx"],
-                "ctx_b": line["ctx_b"],
-                "continuations": line["endings"],
-                "gold_idx": int(line["label"]),
-            },
-            formulation=formulation,
-        ),
-        hf_repo="ai4bharat/hellaswag-translated",
-        hf_subset="hi",
-        evaluation_splits=["validation"],
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-        ],
-    )
-    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
-]
-
-
 TASKS_TABLE = [
     *xnli_tasks,
     *xnli2_tasks,
@@ -438,5 +412,4 @@ TASKS_TABLE = [
     *mlmm_hellaswag_tasks,
     *hellaswag_tur_tasks,
     *hellaswag_tha_tasks,
-    *hellaswag_hin_tasks,
 ]
