@@ -27,6 +27,7 @@ from lighteval.metrics.dynamic_metrics import loglikelihood_acc_metric
 from lighteval.metrics.normalizations import LogProbTokenNorm
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.templates.copa import get_copa_prompt_function
+from lighteval.tasks.templates.hellaswag import get_hellaswag_prompt_function
 from lighteval.tasks.templates.nli import get_nli_prompt_function
 from lighteval.tasks.templates.utils.formulation import (
     CFFormulation,
@@ -286,4 +287,183 @@ parus_tasks = [
 ]
 
 
-TASKS_TABLE = [*xnli_tasks, *xnli2_tasks, *xnli_indic_tasks, *copa_tasks, *copa_indic_tasks, *parus_tasks]
+# ------------------------------- Hellaswag Tasks ------------------------------- #
+
+mlmm_hellaswag_tasks = [
+    LightevalTaskConfig(
+        name=f"hellaswag_{lang.value}_{formulation.name.lower()}",
+        suite=["custom"],
+        prompt_function=get_hellaswag_prompt_function(
+            language=lang,
+            adapter=lambda line: {
+                # We don't use activity_label they are not available
+                "ctx_a": line["ctx_a"],
+                "ctx_b": line["ctx_b"],
+                "continuations": line["endings"],
+                "gold_idx": int(line["label"]),
+            },
+            formulation=formulation,
+        ),
+        hf_repo="jon-tow/okapi_hellaswag",
+        hf_subset=standardize_tag(lang.value),
+        hf_revision="96ed8e0dfc6172dad1d3df338d7b8ba6c1ff9d83",
+        trust_dataset=True,
+        evaluation_splits=["validation"],
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+    )
+    for lang in [
+        Language.ENGLISH,
+        Language.ARABIC,
+        Language.BENGALI,
+        Language.CATALAN,
+        Language.DANISH,
+        Language.GERMAN,
+        Language.SPANISH,
+        Language.BASQUE,
+        Language.FRENCH,
+        Language.GUJARATI,
+        Language.HINDI,
+        Language.CROATIAN,
+        Language.HUNGARIAN,
+        Language.ARMENIAN,
+        Language.INDONESIAN,
+        Language.ICELANDIC,
+        Language.ITALIAN,
+        Language.KANNADA,
+        Language.MALAYALAM,
+        Language.MARATHI,
+        Language.NORWEGIAN,
+        Language.NEPALI,
+        Language.DUTCH,
+        Language.PORTUGUESE,
+        Language.ROMANIAN,
+        Language.RUSSIAN,
+        Language.SLOVAK,
+        Language.SERBIAN,
+        Language.SWEDISH,
+        Language.TAMIL,
+        Language.TELUGU,
+        Language.UKRAINIAN,
+        Language.VIETNAMESE,
+        Language.CHINESE,
+    ]
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+]
+
+hellaswag_tur_tasks = [
+    LightevalTaskConfig(
+        name=f"hellaswag_{Language.TURKISH.value}_{formulation.name.lower()}",
+        suite=["custom"],
+        prompt_function=get_hellaswag_prompt_function(
+            language=Language.TURKISH,
+            adapter=lambda line: {
+                "ctx_a": line["ctx_a"],
+                "ctx_b": line["ctx_b"],
+                "continuations": line["endings"],
+                "gold_idx": int(line["label"]),
+            },
+            formulation=formulation,
+            # https://github.com/malhajar17/lm-evaluation-harness_turkish/blob/main/lm_eval/tasks/hellaswag_tr-v0.2/utils.py
+            dot_replacement=[" [title]", " [başlık]", " [adım]", " [header]"],
+        ),
+        hf_repo="malhajar/hellaswag_tr-v0.2",
+        hf_subset="default",
+        evaluation_splits=["validation"],
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+    )
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+]
+
+hellaswag_tel_tasks = [
+    LightevalTaskConfig(
+        name=f"hellaswag_{Language.TELUGU.value}_{formulation.name.lower()}",
+        suite=["custom"],
+        prompt_function=get_hellaswag_prompt_function(
+            language=Language.TELUGU,
+            adapter=lambda line: {
+                "ctx_a": line["ctx_a"],
+                "ctx_b": line["ctx_b"],
+                "continuations": line["endings"],
+                "gold_idx": int(line["label"]),
+            },
+            formulation=formulation,
+        ),
+        hf_repo="LightFury9/hellaswag-telugu",
+        hf_subset="default",
+        evaluation_splits=["valid"],
+        few_shots_split="train",
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+    )
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+]
+
+hellaswag_tha_tasks = [
+    LightevalTaskConfig(
+        name=f"hellaswag_{Language.THAI.value}_{formulation.name.lower()}",
+        suite=["custom"],
+        prompt_function=get_hellaswag_prompt_function(
+            language=Language.THAI,
+            adapter=lambda line: {
+                "ctx_a": line["ctx_a"],
+                "ctx_b": line["ctx_b"],
+                "continuations": line["endings"],
+                "gold_idx": int(line["label"]),
+            },
+            formulation=formulation,
+        ),
+        hf_repo="HuggingFaceFW-Dev/hellaswag_thai",
+        hf_subset="default",
+        evaluation_splits=["validation"],
+        few_shots_split="train",
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+    )
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+]
+
+
+hellaswag_hin_tasks = [
+    LightevalTaskConfig(
+        name=f"hellaswag_{Language.HINDI.value}_{formulation.name.lower()}",
+        suite=["custom"],
+        prompt_function=get_hellaswag_prompt_function(
+            language=Language.HINDI,
+            adapter=lambda line: {
+                "ctx_a": line["ctx"],
+                "ctx_b": line["ctx_b"],
+                "continuations": line["endings"],
+                "gold_idx": int(line["label"]),
+            },
+            formulation=formulation,
+        ),
+        hf_repo="ai4bharat/hellaswag-translated",
+        hf_subset="hi",
+        evaluation_splits=["validation"],
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+    )
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+]
+
+
+TASKS_TABLE = [
+    *xnli_tasks,
+    *xnli2_tasks,
+    *xnli_indic_tasks,
+    *copa_tasks,
+    *copa_indic_tasks,
+    *parus_tasks,
+    *mlmm_hellaswag_tasks,
+    *hellaswag_tur_tasks,
+    *hellaswag_tel_tasks,
+    *hellaswag_tha_tasks,
+    *hellaswag_hin_tasks,
+]
