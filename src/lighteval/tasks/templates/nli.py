@@ -27,7 +27,7 @@ from typing_extensions import NotRequired, TypedDict
 from lighteval.tasks.requests import Doc
 from lighteval.tasks.templates.multichoice import get_mcq_prompt_function
 from lighteval.tasks.templates.utils.formatting_utils import PUNCT, capitalize, decapitalize, fix_ending_punct
-from lighteval.tasks.templates.utils.formulation import CFFormulation, Formulation, MCFFormulation
+from lighteval.tasks.templates.utils.formulation import CFFormulation, Formulation, HybridFormulation, MCFFormulation
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS, TranslationLiterals
 from lighteval.tasks.templates.utils.utils import create_adapter_from_dict
 from lighteval.utils.language import Language
@@ -90,10 +90,10 @@ def get_nli_prompt_function_natural(
             return translation_literals.also
 
     translation_literals = TRANSLATION_LITERALS[language]
-    labels = [capitalize(get_relation_label(label, translation_literals)) for label in relations]
     adapter_fn = create_adapter_from_dict(adapter) if isinstance(adapter, dict) else adapter  # type: ignore
 
     def nli_natural_prompt(line: dict, task_name: str):
+        labels = [capitalize(get_relation_label(label, translation_literals)) for label in relations]
         input_data = adapter_fn(line)
         premise, hypothesis, label = input_data["premise"], input_data["hypothesis"], input_data["gold_idx"]
 
@@ -167,6 +167,10 @@ def get_nli_prompt_function(
     Returns:
         Callable: A function that generates NLI prompts based on the given parameters.
     """
+    # We use natural implementation for CF formulation to comply with standard evaluation formats
+    if isinstance(formulation, CFFormulation):
+        return get_nli_prompt_function_natural(language, adapter, relations)
+
     translation_literals = TRANSLATION_LITERALS[language]
 
     def get_relation_label(label: RelationType, translation_literals: TranslationLiterals):
@@ -177,24 +181,32 @@ def get_nli_prompt_function(
         elif label == "neutral":
             return translation_literals.neither
 
-    labels = [capitalize(get_relation_label(label, translation_literals)) for label in relations]
     adapter_fn = create_adapter_from_dict(adapter) if isinstance(adapter, dict) else adapter  # type: ignore
 
+    # For hybrid we use inlined choices so we use the cf formulation in multichoice prompt fn
     mcq_prompt_fn = get_mcq_prompt_function(
         language,
         {"context": "premise", "question": "hypothesis", "choices": "choices", "gold_idx": "gold_idx"},
-        formulation,
+        CFFormulation() if isinstance(formulation, HybridFormulation) else formulation,
     )
 
     def prompt_fn(line: dict, task_name: str):
         # Template based on dicussion here: https://github.com/EleutherAI/lm-evaluation-harness/issues/450
+        labels = [capitalize(get_relation_label(label, translation_literals)) for label in relations]
+
         input_data = adapter_fn(line)
         premise, hypothesis, gold_idx = input_data["premise"], input_data["hypothesis"], input_data["gold_idx"]
         premise = fix_ending_punct(capitalize(input_data["premise"]), translation_literals)
         hypothesis = input_data["hypothesis"]
-        if isinstance(formulation, CFFormulation):
-            # We inline the options into the hypothesis
-            hypothesis = f"{hypothesis.rstrip(PUNCT)}{translation_literals.sentence_space}{capitalize(translation_literals.true)}{translation_literals.comma}{translation_literals.word_space}{capitalize(translation_literals.false)}{translation_literals.word_space}{translation_literals.or_word}{translation_literals.word_space}{capitalize(translation_literals.neither)}{translation_literals.question_mark}"
+        if isinstance(formulation, HybridFormulation):
+            # If we have the neither option move it to the end to be consistent with standard NLI evaluation
+            rearanged_labales = labels
+            if "neutral" in relations:
+                neutral_idx = relations.index("neutral")
+                rearanged_labales = labels[:neutral_idx] + labels[neutral_idx + 1 :] + [labels[neutral_idx]]
+
+            choices_str = f"{translation_literals.comma}{translation_literals.word_space}".join(rearanged_labales[:-1])
+            hypothesis = f"{hypothesis.rstrip(PUNCT)}{translation_literals.sentence_space}{choices_str}{translation_literals.word_space}{translation_literals.or_word}{translation_literals.word_space}{rearanged_labales[-1]}{translation_literals.question_mark}"
 
         row = {
             "instruction": input_data.get("instruction", ""),

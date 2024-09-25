@@ -20,31 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from lighteval.tasks.templates.nli import get_nli_prompt_function, get_nli_prompt_function_natural
-from lighteval.tasks.templates.utils.formulation import CFFormulation
+from lighteval.tasks.templates.nli import get_nli_prompt_function
+from lighteval.tasks.templates.utils.formulation import CFFormulation, HybridFormulation
 from lighteval.utils.language import Language
-
-
-def test_nli_prompt_natural():
-    """Test natural language NLI prompt generation."""
-    test_input = {
-        "premise": "The cat is sleeping on the couch.",
-        "hypothesis": "The cat is awake.",
-        "gold_idx": 2,
-    }
-
-    prompt_fn = get_nli_prompt_function_natural(
-        Language.ENGLISH,
-        {"hypothesis": "hypothesis", "premise": "premise", "gold_idx": "gold_idx"},
-        ["entailment", "neutral", "contradiction"],
-    )
-
-    doc = prompt_fn(test_input, "test_nli_task")
-
-    assert doc.query == "The cat is sleeping on the couch right?"
-    assert doc.unconditioned_query == "right?"
-    assert doc.choices == [" Yes, the cat is awake", " Also, the cat is awake", " No, the cat is awake"]
-    assert doc.gold_index == 2
 
 
 def test_nli_prompt_mcf():
@@ -92,6 +70,35 @@ def test_nli_prompt_cf():
         {"hypothesis": "hypothesis", "premise": "premise", "gold_idx": "gold_idx"},
         ["entailment", "neutral", "contradiction"],
         formulation=CFFormulation(),
+    )
+
+    doc = prompt_fn(test_input, "test_nli_task")
+
+    assert doc.query == "The cat is sleeping on the couch right?"
+    assert doc.unconditioned_query == "right?"
+    assert doc.choices == [" Yes, the cat is awake", " Also, the cat is awake", " No, the cat is awake"]
+    assert doc.gold_index == 2
+
+    test_input = {
+        "premise": "The cat is sleeping on the couch.",
+        "hypothesis": "The cat is awake.",
+        "gold_idx": 2,
+    }
+
+
+def test_nli_prompt_hybrid():
+    """Test hybrid format NLI prompt generation."""
+
+    test_input = {
+        "premise": "The cat is sleeping on the couch.",
+        "hypothesis": "The cat is awake.",
+        "gold_idx": 2,
+    }
+    prompt_fn = get_nli_prompt_function(
+        Language.ENGLISH,
+        {"hypothesis": "hypothesis", "premise": "premise", "gold_idx": "gold_idx"},
+        ["entailment", "neutral", "contradiction"],
+        formulation=HybridFormulation(),
     )
 
     doc = prompt_fn(test_input, "test_nli_task")

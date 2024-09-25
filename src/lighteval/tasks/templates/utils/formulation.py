@@ -42,6 +42,7 @@ class MCFFormulation:
     """
 
     choice_prefix: ChoicePrefix = "Letters"
+    name: str = "MCF"
 
 
 @dataclass
@@ -56,6 +57,7 @@ class HybridFormulation:
     """
 
     choice_prefix: ChoicePrefix = "Letters"
+    name: str = "Hybrid"
 
 
 @dataclass
@@ -66,6 +68,7 @@ class CFFormulation:
     """
 
     choice_prefix: ChoicePrefix = "Letters"
+    name: str = "CF"
 
 
 Formulation = CFFormulation | HybridFormulation | MCFFormulation
