@@ -26,6 +26,7 @@ from langcodes import standardize_tag
 from lighteval.metrics.dynamic_metrics import loglikelihood_acc_metric
 from lighteval.metrics.normalizations import LogProbTokenNorm
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.templates.copa import get_copa_prompt_function
 from lighteval.tasks.templates.nli import get_nli_prompt_function
 from lighteval.tasks.templates.utils.formulation import (
     CFFormulation,
@@ -176,4 +177,113 @@ xnli_indic_tasks = [
 ]
 
 
-TASKS_TABLE = [*xnli_tasks, *xnli2_tasks, *xnli_indic_tasks]
+# ------------------------------- Copa Tasks ------------------------------- #
+
+copa_tasks = [
+    LightevalTaskConfig(
+        name=f"xcopa_{language.value}_{formulation.name.lower()}",
+        suite=["custom"],
+        prompt_function=get_copa_prompt_function(
+            language,
+            adapter=lambda line: {
+                "context": line["premise"],
+                "cause_effect": line["question"],
+                "continuations": [line["choice1"], line["choice2"]],
+                "gold_idx": int(line["label"]),
+            },
+            formulation=formulation,
+        ),
+        hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated" if language == Language.ARABIC else "xcopa",
+        hf_subset="copa_ext_ar" if language == Language.ARABIC else standardize_tag(language.value),
+        evaluation_splits=["test"],
+        few_shots_split="validation",
+        generation_size=-1,
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+    )
+    for language in [
+        Language.ESTONIAN,
+        Language.INDONESIAN,
+        Language.ITALIAN,
+        Language.SWAHILI,
+        Language.TAMIL,
+        Language.THAI,
+        Language.TURKISH,
+        Language.VIETNAMESE,
+        Language.CHINESE,
+        # Optionally: Haitian, Quechu
+    ]
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+]
+
+copa_indic_tasks = [
+    LightevalTaskConfig(
+        name=f"indicxcopa_{language.value}_{formulation.name.lower()}",
+        suite=["custom"],
+        prompt_function=get_copa_prompt_function(
+            language,
+            adapter=lambda line: {
+                "context": line["premise"],
+                "cause_effect": line["question"],
+                "continuations": [line["choice1"], line["choice2"]],
+                "gold_idx": int(line["label"]),
+            },
+            formulation=formulation,
+        ),
+        hf_repo="ai4bharat/IndicCOPA",
+        hf_subset=f"translation-{standardize_tag(language.value)}",
+        evaluation_splits=["test"],
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+        trust_dataset=True,
+    )
+    for language in [
+        Language.ASSAMESE,
+        Language.BENGALI,
+        Language.GUJARATI,
+        Language.HINDI,
+        Language.KANNADA,
+        Language.MALAYALAM,
+        Language.MARATHI,
+        Language.NEPALI,
+        Language.ORIYA,
+        Language.PUNJABI,
+        Language.SANSKRIT,
+        Language.SINDHI,
+        Language.TAMIL,
+        Language.TELUGU,
+        Language.URDU,
+        # Optionally: Maithili, Santali, Sindhi, Konkani
+    ]
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+]
+
+parus_tasks = [
+    LightevalTaskConfig(
+        name=f"parus_{Language.RUSSIAN.value}_{formulation.name.lower()}",
+        suite=["custom"],
+        prompt_function=get_copa_prompt_function(
+            language=Language.RUSSIAN,
+            adapter=lambda line: {
+                "context": line["inputs"]["premise"],
+                "cause_effect": line["meta"]["task"],
+                "continuations": [line["inputs"]["choice1"], line["inputs"]["choice2"]],
+                "gold_idx": int(line["outputs"]) - 1,
+            },
+            formulation=formulation,
+        ),
+        hf_repo="ai-forever/MERA",
+        hf_subset="parus",
+        evaluation_splits=["train"],
+        few_shots_split="validation",
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+    )
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+]
+
+
+TASKS_TABLE = [*xnli_tasks, *xnli2_tasks, *xnli_indic_tasks, *copa_tasks, *copa_indic_tasks, *parus_tasks]
