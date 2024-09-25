@@ -103,15 +103,15 @@ def math_normalizer(text: str) -> str:  # noqa C901
                 left = "\\boxed "
                 assert text[: len(left)] == left
                 return text[len(left) :]
-    
+
             left = "\\boxed{"
-    
+
             assert text[: len(left)] == left
             assert text[-1] == "}"
-    
+
             return text[len(left) : -1]
         except Exception:
-            return None
+            return ""
 
     def _last_boxed_only_string(text: str) -> str | None:
         """Extract the last \\boxed{...} or \\fbox{...} element from a string."""
