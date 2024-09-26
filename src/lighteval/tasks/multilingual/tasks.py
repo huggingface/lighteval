@@ -23,20 +23,27 @@
 from langcodes import Language as LangCodeLanguage
 from langcodes import standardize_tag
 
-from lighteval.metrics.dynamic_metrics import loglikelihood_acc_metric
+from lighteval.metrics.dynamic_metrics import (
+    loglikelihood_acc_metric,
+    multilingual_quasi_exact_match_metric,
+    multilingual_quasi_f1_score_metric,
+)
 from lighteval.metrics.normalizations import LogProbTokenNorm
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.templates.copa import get_copa_prompt_function
 from lighteval.tasks.templates.hellaswag import get_hellaswag_prompt_function
+from lighteval.tasks.templates.multichoice import get_mcq_prompt_function
 from lighteval.tasks.templates.nli import get_nli_prompt_function
+from lighteval.tasks.templates.qa import get_qa_prompt_function
 from lighteval.tasks.templates.utils.formulation import (
     CFFormulation,
     HybridFormulation,
     MCFFormulation,
 )
-from lighteval.utils.language import Language
+from lighteval.utils.language import Language, iso_639_3_ind_to_iso_639_3_macro
 
 
+TASKS_TABLE = []
 # ------------------------------- NLI Tasks ------------------------------- #
 
 xnli_tasks = [
@@ -178,6 +185,7 @@ xnli_indic_tasks = [
 ]
 
 
+TASKS_TABLE.extend([*xnli_tasks, *xnli2_tasks, *xnli_indic_tasks])
 # ------------------------------- Copa Tasks ------------------------------- #
 
 copa_tasks = [
@@ -194,8 +202,8 @@ copa_tasks = [
             },
             formulation=formulation,
         ),
-        hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated" if language == Language.ARABIC else "xcopa",
-        hf_subset="copa_ext_ar" if language == Language.ARABIC else standardize_tag(language.value),
+        hf_repo=("OALL/AlGhafa-Arabic-LLM-Benchmark-Translated" if language == Language.ARABIC else "xcopa"),
+        hf_subset=("copa_ext_ar" if language == Language.ARABIC else standardize_tag(language.value)),
         evaluation_splits=["test"],
         few_shots_split="validation",
         generation_size=-1,
@@ -287,6 +295,7 @@ parus_tasks = [
 ]
 
 
+TASKS_TABLE.extend([*copa_tasks, *copa_indic_tasks, *parus_tasks])
 # ------------------------------- Hellaswag Tasks ------------------------------- #
 
 mlmm_hellaswag_tasks = [
@@ -402,14 +411,500 @@ hellaswag_tha_tasks = [
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
 
-TASKS_TABLE = [
-    *xnli_tasks,
-    *xnli2_tasks,
-    *xnli_indic_tasks,
-    *copa_tasks,
-    *copa_indic_tasks,
-    *parus_tasks,
-    *mlmm_hellaswag_tasks,
-    *hellaswag_tur_tasks,
-    *hellaswag_tha_tasks,
+TASKS_TABLE.extend(
+    [
+        *mlmm_hellaswag_tasks,
+        *hellaswag_tur_tasks,
+        *hellaswag_tha_tasks,
+    ]
+)
+# ------------------------------- RC Tasks ------------------------------- #
+
+# SQuAD - like
+
+xquad_tasks = [
+    LightevalTaskConfig(
+        name=f"xquad_{language.value}",
+        prompt_function=get_qa_prompt_function(
+            language,
+            lambda line: {
+                "question": line["question"],
+                "context": line["context"],
+                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+            },
+        ),
+        suite=("custom",),
+        hf_repo="google/xquad",
+        hf_subset=f"xquad.{standardize_tag(language.value)}",
+        evaluation_splits=("validation",),
+        few_shots_split="validation",
+        generation_size=400,
+        stop_sequence=("\n",),
+        metric=(
+            multilingual_quasi_exact_match_metric(language, "prefix"),
+            multilingual_quasi_f1_score_metric(language),
+        ),
+    )
+    for language in [
+        Language.ARABIC,
+        Language.GERMAN,
+        Language.GREEK,
+        Language.ENGLISH,
+        Language.SPANISH,
+        Language.HINDI,
+        Language.ROMANIAN,
+        Language.RUSSIAN,
+        Language.THAI,
+        Language.TURKISH,
+        Language.VIETNAMESE,
+        Language.CHINESE,
+    ]
 ]
+
+thaiqa_tasks = [
+    LightevalTaskConfig(
+        name=f"thaiqa_{Language.THAI.value}",
+        prompt_function=get_qa_prompt_function(
+            Language.THAI,
+            lambda line: {
+                "question": line["question"],
+                "context": line["context"],
+                "choices": [ans for ans in line["answers"]["answer"] if len(ans) > 0],
+            },
+        ),
+        suite=("custom",),
+        hf_repo="HuggingFaceFW-Dev/thaiqa_squad_fixed",
+        hf_subset="default",
+        evaluation_splits=("train",),
+        few_shots_split="validation",
+        generation_size=400,
+        stop_sequence=("\n",),
+        metric=(
+            multilingual_quasi_exact_match_metric(Language.THAI, "prefix"),
+            multilingual_quasi_f1_score_metric(Language.THAI),
+        ),
+    )
+]
+
+sber_squad_tasks = [
+    LightevalTaskConfig(
+        name=f"sber_squad_{Language.RUSSIAN.value}",
+        prompt_function=get_qa_prompt_function(
+            Language.RUSSIAN,
+            lambda line: {
+                "question": line["question"],
+                "context": line["context"],
+                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+            },
+        ),
+        suite=("custom",),
+        hf_repo="kuznetsoffandrey/sberquad",
+        hf_subset="sberquad",
+        evaluation_splits=("validation",),
+        few_shots_split="train",
+        metric=(
+            multilingual_quasi_exact_match_metric(Language.RUSSIAN, "prefix"),
+            multilingual_quasi_f1_score_metric(Language.RUSSIAN),
+        ),
+        generation_size=400,
+        stop_sequence=("\n",),
+    )
+]
+
+arcd_tasks = [
+    LightevalTaskConfig(
+        name=f"arcd_{Language.ARABIC.value}",
+        prompt_function=get_qa_prompt_function(
+            Language.ARABIC,
+            lambda line: {
+                "question": line["question"],
+                "context": line["context"],
+                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+            },
+        ),
+        suite=("custom",),
+        hf_repo="hsseinmz/arcd",
+        hf_subset="plain_text",
+        evaluation_splits=("train", "validation"),
+        trust_dataset=True,
+        metric=(
+            multilingual_quasi_exact_match_metric(Language.ARABIC, "prefix"),
+            multilingual_quasi_f1_score_metric(Language.ARABIC),
+        ),
+        generation_size=400,
+        stop_sequence=("\n",),
+    )
+]
+
+kenswquad_tasks = [
+    LightevalTaskConfig(
+        name=f"kenswquad_{Language.SWAHILI.value}",
+        prompt_function=get_qa_prompt_function(
+            Language.SWAHILI,
+            lambda line: {
+                "question": line["question"],
+                "context": line["context"],
+                "choices": [line["answer"]],
+            },
+        ),
+        suite=("custom",),
+        hf_repo="HuggingFaceFW-Dev/KenSwQuAD",
+        hf_subset="default",
+        evaluation_splits=("test",),
+        few_shots_split="validation",
+        metric=(
+            multilingual_quasi_exact_match_metric(Language.SWAHILI, "prefix"),
+            multilingual_quasi_f1_score_metric(Language.SWAHILI),
+        ),
+        generation_size=400,
+        stop_sequence=("\n",),
+    )
+]
+
+chinese_squad_tasks = [
+    LightevalTaskConfig(
+        name=f"chinese_squad_{Language.CHINESE.value}",
+        prompt_function=get_qa_prompt_function(
+            Language.CHINESE,
+            lambda line: {
+                "question": line["question"],
+                "context": line["context"],
+                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+            },
+        ),
+        suite=("custom",),
+        hf_repo="HuggingFaceFW-Dev/ChineseSquad",
+        hf_subset="default",
+        evaluation_splits=("validation",),
+        few_shots_split="train",
+        metric=(
+            multilingual_quasi_exact_match_metric(Language.CHINESE, "prefix"),
+            multilingual_quasi_f1_score_metric(Language.CHINESE),
+        ),
+        generation_size=400,
+        stop_sequence=("\n",),
+    )
+]
+
+cmrc2018_tasks = [
+    LightevalTaskConfig(
+        name=f"cmrc2018_{Language.CHINESE.value}",
+        prompt_function=get_qa_prompt_function(
+            Language.CHINESE,
+            lambda line: {
+                "question": line["question"],
+                "context": line["context"],
+                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+            },
+        ),
+        suite=("custom",),
+        hf_repo="clue/clue",
+        hf_subset="cmrc2018",
+        evaluation_splits=("trial",),
+        few_shots_split="train",
+        generation_size=400,
+        metric=(
+            multilingual_quasi_exact_match_metric(Language.CHINESE, "prefix"),
+            multilingual_quasi_f1_score_metric(Language.CHINESE),
+        ),
+        stop_sequence=("\n",),
+    )
+]
+
+indicqa_tasks = [
+    LightevalTaskConfig(
+        name=f"indicqa_{language.value}",
+        prompt_function=get_qa_prompt_function(
+            language,
+            lambda line: {
+                "question": line["question"],
+                "context": line["context"],
+                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+            },
+        ),
+        suite=("custom",),
+        hf_repo="ai4bharat/IndicQA",
+        hf_subset=f"indicqa.{LangCodeLanguage.get(language.value).language}",
+        hf_revision="92d96092ae229950973dac3b9998f8b3a8949b0a",
+        hf_filter=lambda line: any(len(ans) > 0 for ans in line["answers"]["text"]),
+        trust_dataset=True,
+        evaluation_splits=("test",),
+        few_shots_split="test",
+        generation_size=400,
+        metric=(
+            multilingual_quasi_exact_match_metric(language, "prefix"),
+            multilingual_quasi_f1_score_metric(language),
+        ),
+        stop_sequence=("\n",),
+    )
+    for language in [
+        Language.ASSAMESE,
+        Language.BENGALI,
+        Language.GUJARATI,
+        Language.HINDI,
+        Language.KANNADA,
+        Language.MALAYALAM,
+        Language.MARATHI,
+        Language.ORIYA,
+        Language.PUNJABI,
+        Language.TAMIL,
+        Language.TELUGU,
+    ]
+]
+
+
+fquad_v2_tasks = [
+    LightevalTaskConfig(
+        name=f"fquadv2_{Language.FRENCH.value}",
+        prompt_function=get_qa_prompt_function(
+            Language.FRENCH,
+            lambda line: {
+                "question": line["question"],
+                "context": line["context"],
+                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+            },
+        ),
+        suite=("custom",),
+        hf_repo="manu/fquad2_test",
+        hf_subset="default",
+        evaluation_splits=("test_hasAns",),
+        few_shots_split="valid_hasAns",
+        generation_size=400,
+        stop_sequence=("\n",),
+        metric=(
+            multilingual_quasi_exact_match_metric(Language.FRENCH, "prefix"),
+            multilingual_quasi_f1_score_metric(Language.FRENCH),
+        ),
+    )
+]
+
+tquad_v2_tasks = [
+    LightevalTaskConfig(
+        name=f"tquadv2_{Language.TURKISH.value}",
+        prompt_function=get_qa_prompt_function(
+            Language.TURKISH,
+            lambda line: {
+                "question": line["question"],
+                "context": line["context"],
+                "choices": [a["text"] for a in line["answers"]],
+            },
+        ),
+        suite=("custom",),
+        hf_repo="erdometo/tquad2",
+        hf_subset="default",
+        evaluation_splits=("validation",),
+        few_shots_split="train",
+        generation_size=400,
+        stop_sequence=("\n",),
+        metric=(
+            multilingual_quasi_exact_match_metric(Language.TURKISH, "prefix"),
+            multilingual_quasi_f1_score_metric(Language.TURKISH),
+        ),
+    )
+]
+
+
+# Other QA tasks for RC
+tydiqa_tasks = [
+    LightevalTaskConfig(
+        name=f"tydiqa_{language.value}",
+        prompt_function=get_qa_prompt_function(
+            language,
+            lambda line: {
+                "question": line["question"],
+                "context": line["context"],
+                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+            },
+        ),
+        suite=("custom",),
+        hf_repo="google-research-datasets/tydiqa",
+        hf_subset="secondary_task",
+        evaluation_splits=("validation",),
+        few_shots_split="train",
+        generation_size=400,
+        stop_sequence=("\n",),
+        metric=(
+            multilingual_quasi_exact_match_metric(language, "prefix"),
+            multilingual_quasi_f1_score_metric(language),
+        ),
+    )
+    for language in [
+        Language.ENGLISH,
+        Language.ARABIC,
+        Language.BENGALI,
+        Language.FINNISH,
+        Language.INDONESIAN,
+        Language.JAPANESE,
+        Language.KOREAN,
+        Language.SWAHILI,
+        Language.RUSSIAN,
+        Language.TELUGU,
+        Language.THAI,
+    ]
+]
+
+# Other MCF tasks for RC
+
+beleble_tasks = [
+    LightevalTaskConfig(
+        name=f"belebele_{language}_{formulation.name.lower()}",
+        prompt_function=get_mcq_prompt_function(
+            iso_639_3_ind_to_iso_639_3_macro[LangCodeLanguage.get(language).to_alpha3()],
+            lambda line: {
+                "question": line["question"],
+                "context": line["flores_passage"],
+                "choices": [line[f"mc_answer{i}"] for i in range(1, 5)],
+                "gold_idx": int(line["correct_answer_num"]) - 1,
+            },
+        ),
+        suite=("custom",),
+        hf_repo="facebook/belebele",
+        hf_subset=language,
+        evaluation_splits=("test",),
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+    )
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+    for language in [
+        "acm_Arab",
+        "arz_Arab",
+        "ceb_Latn",
+        "fin_Latn",
+        "hin_Deva",
+        "ita_Latn",
+        "khm_Khmr",
+        "lvs_Latn",
+        "npi_Deva",
+        "pol_Latn",
+        "slv_Latn",
+        "swe_Latn",
+        # "tso_Latn",
+        # "xho_Latn",
+        "afr_Latn",
+        "asm_Beng",
+        "ces_Latn",
+        "fra_Latn",
+        "hin_Latn",
+        "jav_Latn",
+        # "kin_Latn",
+        "mal_Mlym",
+        "npi_Latn",
+        "por_Latn",
+        # "sna_Latn",
+        "swh_Latn",
+        "tur_Latn",
+        "yor_Latn",
+        "als_Latn",
+        "azj_Latn",
+        "ckb_Arab",
+        # "fuv_Latn",
+        "hrv_Latn",
+        "jpn_Jpan",
+        "kir_Cyrl",
+        "mar_Deva",
+        # "nso_Latn",
+        "snd_Arab",
+        "tam_Taml",
+        "ukr_Cyrl",
+        "zho_Hans",
+        "amh_Ethi",
+        # "bam_Latn",
+        "dan_Latn",
+        # "gaz_Latn",
+        "hun_Latn",
+        # "kac_Latn",
+        "kor_Hang",
+        "mkd_Cyrl",
+        # "nya_Latn",
+        "ron_Latn",
+        "som_Latn",
+        "tel_Telu",
+        "urd_Arab",
+        "zho_Hant",
+        "apc_Arab",
+        "ben_Beng",
+        "deu_Latn",
+        # "grn_Latn",
+        "hye_Armn",
+        "kan_Knda",
+        "lao_Laoo",
+        "mlt_Latn",
+        "ory_Orya",
+        "rus_Cyrl",
+        # "sot_Latn",
+        "tgk_Cyrl",
+        "urd_Latn",
+        "zsm_Latn",
+        "arb_Arab",
+        "ben_Latn",
+        "ell_Grek",
+        "guj_Gujr",
+        # "ibo_Latn",
+        "kat_Geor",
+        # "lin_Latn",
+        # "mri_Latn",
+        "pan_Guru",
+        # "shn_Mymr",
+        "spa_Latn",
+        "tgl_Latn",
+        "uzn_Latn",
+        # "zul_Latn",
+        "arb_Latn",
+        # "bod_Tibt",
+        "eng_Latn",
+        # "hat_Latn",
+        # "ilo_Latn",
+        "kaz_Cyrl",
+        "lit_Latn",
+        "mya_Mymr",
+        "pbt_Arab",
+        "sin_Latn",
+        "srp_Cyrl",
+        "tha_Thai",
+        "vie_Latn",
+        "ars_Arab",
+        "bul_Cyrl",
+        "est_Latn",
+        # "hau_Latn",
+        "ind_Latn",
+        # "kea_Latn",
+        # "lug_Latn",
+        "nld_Latn",
+        "pes_Arab",
+        "sin_Sinh",
+        # "ssw_Latn",
+        # "tir_Ethi",
+        "war_Latn",
+        "ary_Arab",
+        "cat_Latn",
+        "eus_Latn",
+        "heb_Hebr",
+        "isl_Latn",
+        # "khk_Cyrl",
+        # "luo_Latn",
+        "nob_Latn",
+        "plt_Latn",
+        "slk_Latn",
+        # "sun_Latn",
+        # "tsn_Latn",
+        # "wol_Latn",
+    ]
+]
+
+TASKS_TABLE.extend(
+    [
+        *xquad_tasks,
+        *thaiqa_tasks,
+        *sber_squad_tasks,
+        *arcd_tasks,
+        *kenswquad_tasks,
+        *chinese_squad_tasks,
+        *cmrc2018_tasks,
+        *indicqa_tasks,
+        *fquad_v2_tasks,
+        *tquad_v2_tasks,
+        *tydiqa_tasks,
+        *beleble_tasks,
+    ]
+)
