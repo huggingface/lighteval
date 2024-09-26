@@ -281,14 +281,14 @@ class TestBaseMetrics:
         """
 
         # Normalization test
-        f1_metric = multilingual_quasi_f1_score_metric(language=Language.english)
+        f1_metric = multilingual_quasi_f1_score_metric(language=Language.ENGLISH)
         result = f1_metric.sample_level_fn(
             golds=["hello world"],
             predictions=["hello, the world"],
         )
         assert result == 1
 
-        f1_metric = multilingual_quasi_f1_score_metric(language=Language.english, aggregation_function=np.min)
+        f1_metric = multilingual_quasi_f1_score_metric(language=Language.ENGLISH, aggregation_function=np.min)
         result = f1_metric.sample_level_fn(
             golds=["hello world"],
             predictions=["hello, the world how"],
@@ -302,14 +302,14 @@ class TestBaseMetrics:
         """
 
         # Normalization test
-        em_metric = multilingual_quasi_exact_match_metric(language=Language.english, match_type="full")
+        em_metric = multilingual_quasi_exact_match_metric(language=Language.ENGLISH, match_type="full")
         result = em_metric.sample_level_fn(
             golds=["hello world"],
             predictions=["hello, the world"],
         )
         assert result == 1
 
-        em_metric = multilingual_quasi_exact_match_metric(language=Language.english, match_type="full")
+        em_metric = multilingual_quasi_exact_match_metric(language=Language.ENGLISH, match_type="full")
         result = em_metric.sample_level_fn(
             golds=["hello world"],
             predictions=["hello, the world how"],
