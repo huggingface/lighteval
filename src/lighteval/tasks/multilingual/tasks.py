@@ -184,8 +184,128 @@ xnli_indic_tasks = [
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
 
+paws_x_tasks = [
+    LightevalTaskConfig(
+        name=f"pawsx_{language.value}_{formulation.name.lower()}",
+        suite=("custom",),
+        prompt_function=get_nli_prompt_function(
+            language=language,
+            adapter=lambda line: {
+                "premise": line["sentence1"],
+                "hypothesis": line["sentence2"],
+                # Since we ignore the neural label
+                "gold_idx": int(line["label"]),
+            },
+            relations=["entailment", "contradiction"],
+            formulation=formulation,
+        ),
+        hf_repo="google-research-datasets/paws-x",
+        hf_subset=standardize_tag(language.value),
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+    )
+    for language in [
+        Language.GERMAN,
+        Language.ENGLISH,
+        Language.SPANISH,
+        Language.FRENCH,
+        Language.JAPANESE,
+        Language.KOREAN,
+        Language.CHINESE,
+    ]
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+]
 
-TASKS_TABLE.extend([*xnli_tasks, *xnli2_tasks, *xnli_indic_tasks])
+rcb_tasks = [
+    LightevalTaskConfig(
+        name=f"rcb_{Language.RUSSIAN.value}_{formulation.name.lower()}",
+        prompt_function=get_nli_prompt_function(
+            language=Language.RUSSIAN,
+            adapter=lambda line: {
+                "premise": line["inputs"]["premise"],
+                "hypothesis": line["inputs"]["hypothesis"],
+                # Since we ignore the neural label
+                "gold_idx": int(line["outputs"]) - 1,
+            },
+            relations=["entailment", "contradiction"],
+            formulation=formulation,
+        ),
+        suite=("custom",),
+        hf_repo="ai-forever/MERA",
+        hf_subset="rcb",
+        # Ignore neutral label
+        hf_filter=lambda x: int(x["outputs"] or "0") in [1, 2],
+        evaluation_splits=("train", "validation"),
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+    )
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+]
+
+# Non translated chinese task
+ocnli_tasks = [
+    LightevalTaskConfig(
+        name=f"ocnli_{Language.CHINESE.value}_{formulation.name.lower()}",
+        prompt_function=get_nli_prompt_function(
+            language=Language.CHINESE,
+            adapter=lambda line: {
+                "premise": line["sentence1"],
+                "hypothesis": line["sentence2"],
+                # Since we ignore the neural label
+                "gold_idx": {1: 0, 2: 1}[line["label"]],
+            },
+            relations=["entailment", "contradiction"],
+            formulation=formulation,
+        ),
+        suite=("custom",),
+        hf_repo="clue/clue",
+        hf_subset="ocnli",
+        # Only keep the positive and negative examples
+        hf_filter=lambda x: int(x["label"]) in [1, 2],
+        evaluation_splits=("validation",),
+        few_shots_split="train",
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+    )
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+]
+
+cmnli_tasks = [
+    LightevalTaskConfig(
+        name=f"cmnli_{Language.CHINESE.value}_{formulation.name.lower()}",
+        prompt_function=get_nli_prompt_function(
+            language=Language.CHINESE,
+            adapter=lambda line: {
+                "premise": line["sentence1"],
+                "hypothesis": line["sentence2"],
+                # Since we ignore the neural label
+                "gold_idx": {"entailment": 0, "contradiction": 1}[line["label"]],
+            },
+            relations=["entailment", "contradiction"],
+            formulation=formulation,
+        ),
+        suite=("custom",),
+        hf_repo="fenffef/cmnli",
+        hf_subset="default",
+        hf_filter=lambda x: x["label"] in ["entailment", "contradiction"],
+        # Only keep the positive and negative examples
+        evaluation_splits=("validation",),
+        few_shots_split="train",
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+    )
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+]
+
+TASKS_TABLE.extend(
+    [*xnli_tasks, *xnli2_tasks, *xnli_indic_tasks, *paws_x_tasks, *rcb_tasks, *ocnli_tasks, *cmnli_tasks]
+)
 # ------------------------------- Copa Tasks ------------------------------- #
 
 copa_tasks = [
