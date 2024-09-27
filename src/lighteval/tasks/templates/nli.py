@@ -175,7 +175,7 @@ def get_nli_prompt_function(
 
     *Hybrid*
     Premise
-    Question: Hypothesis? True,False,Neither?
+    Question: Hypothesis True,False or Neither?
     | True/False/Neither
 
     *MCF*

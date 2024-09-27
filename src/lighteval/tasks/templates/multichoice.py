@@ -90,8 +90,25 @@ def get_mcq_prompt_function(
     - TruthfulQA
 
     Format:
+    *CF*
     Question: xxx
     Answer: | Answer
+
+    *Hybrid*
+    Question: xxx
+    A. Answer
+    B. Answer
+    C. Answer
+    D. Answer
+    Answer: | Answer
+
+    *MCF*
+    Question: xxx
+    A. Answer
+    B. Answer
+    C. Answer
+    D. Answer
+    Answer: | A/B/C/D
 
     Args:
         language (Language): The language of the MCQ task.

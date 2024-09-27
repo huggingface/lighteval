@@ -83,7 +83,22 @@ def get_copa_prompt_function(
     - PARUS
 
     Format:
+    *CF*
     Context Premise thefore/cause | (Continuation 1, Continuation 2, Continuation 3)
+
+    *Hybrid*
+    Context Premise thefore/cause
+    A. Continuation 1
+    B. Continuation 2
+    C. Continuation 3
+    Answer: | Continuation 1/Continuation 2/Continuation 3
+
+    *MCF*
+    Context Premise thefore/cause
+    A. Continuation 1
+    B. Continuation 2
+    C. Continuation 3
+    Answer: | A/B/C
 
     Args:
         language (Language): The language of the COPA task.

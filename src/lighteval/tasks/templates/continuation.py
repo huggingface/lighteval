@@ -94,7 +94,22 @@ def get_continuation_prompt_function(
     - XStoryCloze
 
     Format:
-    Context xxx | Continuation 1 | Continuation 2 | Continuation 3
+    *CF*
+    Context | Continuation 1/Continuation 2/Continuation 3
+
+    *Hybrid*
+    Context
+    A. Continuation 1
+    B. Continuation 2
+    C. Continuation 3
+    Answer: Continuation 1/Continuation 2/Continuation 3
+
+    *MCF*
+    Context
+    A. Continuation 1
+    B. Continuation 2
+    C. Continuation 3
+    Answer: A/B/C
 
     This template is very similar to the `Multiple Choice` template, except that it only takes context/continuations as input and don't use the anchor labels (Question/Answer)
 
