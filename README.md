@@ -107,6 +107,12 @@ Got ideas? Found a bug? Want to add a
 Contributions are warmly
 welcomed!
 
+Install the precommit hook for styling tests when pushing to the codebase:
+```bash
+pip install .[dev]
+pre-commit install
+```
+
 ## 📜 Citation
 
 ```bibtex
