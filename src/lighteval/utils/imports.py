@@ -115,4 +115,4 @@ def can_load_stanza_tokenizer() -> bool:
     return importlib.util.find_spec("stanza") is not None
 
 
-NO_STANZA_TOKENIZER_ERROR_MSG = "You are trying to load a stanza tokenizer, for which you need `stanza`, which are not available in your environment. Please install them using pip install `lighteval[multilingual]`."
+NO_STANZA_TOKENIZER_ERROR_MSG = "You are trying to load a stanza tokenizer, for which you need `stanza`, which is not available in your environment. Please install it using `pip install lighteval[multilingual]`."
