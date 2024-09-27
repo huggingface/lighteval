@@ -126,7 +126,7 @@ class BaseModel(LightevalModel):
     def max_length(self) -> int:
         return self._max_length
 
-    def init_model_parallel(self, model_parallel: bool = None) -> Tuple[bool, Optional[dict], Optional[str]]:
+    def init_model_parallel(self, model_parallel: bool | None = None) -> Tuple[bool, Optional[dict], Optional[str]]:
         """Compute all the parameters related to model_parallel"""
         if not is_accelerate_available():
             return False, None, None
@@ -147,7 +147,7 @@ class BaseModel(LightevalModel):
                 f"the number of local processes is {self.num_local_processes} "
                 f"and the number of GPUs is {len(max_memory_all_gpus)}"
             )
-        if model_parallel:
+        if model_parallel is True:
             max_memory_all_gpus = get_max_memory()  # A dict of the max memory for all the gpus
             if "cpu" in max_memory_all_gpus:
                 del max_memory_all_gpus["cpu"]
@@ -569,7 +569,6 @@ class BaseModel(LightevalModel):
                     if max_new_tokens is None:  # If generation size is not set, we go all the way
                         max_new_tokens = self.max_length - context_size
                     else:
-                        print(self.max_length, context_size, max_new_tokens)
                         max_new_tokens = min(self.max_length - context_size, max_new_tokens)
                         if max_new_tokens < 1:
                             max_new_tokens = 1
