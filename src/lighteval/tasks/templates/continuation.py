@@ -49,7 +49,7 @@ CONTINUATION_QUERY_CF = "{instruction}{context}"
 CONTINUATION_QUERY_MCF = "{instruction}{context}\n{options}{answer_word}{colon}"
 
 
-# NO idea how to ensure we have the same keys in these typedicts in python :(
+# Defined for type hinting only
 class ContinuationInput(TypedDict):
     context: str
     continuations: list[str]
