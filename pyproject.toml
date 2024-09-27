@@ -91,7 +91,7 @@ tensorboardX = ["tensorboardX"]
 vllm = ["vllm", "ray", "more_itertools"]
 quality = ["ruff==v0.2.2","pre-commit"]
 tests = ["pytest==7.4.0"]
-dev = ["lighteval[accelerate,quality,tests,multilingual]"]
+dev = ["lighteval[accelerate,quality,tests]"]
 extended_tasks = [
   "langdetect", # ifeval
   "openai", # llm as a judge using openai models
@@ -99,7 +99,7 @@ extended_tasks = [
 s3 = ["s3fs"]
 multilingual = [
     "stanza",
-    "spacy[ja,ko]",
+    "spacy[ja,ko,th]",
     "jieba", # for chinese tokenizer
     "pyvi", # for vietnamese tokenizer
 ]
