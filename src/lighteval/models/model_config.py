@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from argparse import Namespace
 from dataclasses import dataclass
 from typing import Dict, Optional, Union
 
@@ -30,7 +29,7 @@ from transformers import AutoConfig, BitsAndBytesConfig, GPTQConfig, PretrainedC
 
 from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.utils import _get_model_sha
-from lighteval.utils import (
+from lighteval.utils.imports import (
     NO_AUTOGPTQ_ERROR_MSG,
     NO_BNB_ERROR_MSG,
     NO_PEFT_ERROR_MSG,
@@ -39,24 +38,11 @@ from lighteval.utils import (
     is_bnb_available,
     is_peft_available,
 )
+from lighteval.utils.utils import EnvConfig, boolstring_to_bool
 
 
 if is_accelerate_available():
     from accelerate import Accelerator
-
-
-@dataclass
-class EnvConfig:
-    """
-    Configuration class for environment settings.
-
-    Attributes:
-        cache_dir (str): directory for caching data.
-        token (str): authentication token used for accessing the HuggingFace Hub.
-    """
-
-    cache_dir: str = None
-    token: str = None
 
 
 @dataclass
@@ -76,6 +62,8 @@ class BaseModelConfig:
             space at the start of each continuation in multichoice generation.
             For example, context: "What is the capital of France?" and choices: "Paris", "London".
             Will be tokenized as: "What is the capital of France? Paris" and "What is the capital of France? London".
+            True adds a space, False strips a space, None does nothing
+        pair_wise_tokenization (bool): Whether to tokenize the context and continuation as separately or together.
         subfolder (Optional[str]): The subfolder within the model repository.
         revision (str): The revision of the model.
         batch_size (int): The batch size for model training.
@@ -95,7 +83,8 @@ class BaseModelConfig:
             Use `dtype="auto"` to derive the type from the model's weights.
         device (Union[int, str]): device to use for model training.
         quantization_config (Optional[BitsAndBytesConfig]): quantization
-            configuration for the model. Needed for 4-bit and 8-bit precision.
+            configuration for the model, manually provided to load a normally floating point
+            model at a quantized precision. Needed for 4-bit and 8-bit precision.
         trust_remote_code (bool): Whether to trust remote code during model
             loading.
 
@@ -111,6 +100,7 @@ class BaseModelConfig:
     accelerator: "Accelerator" = None
     tokenizer: Optional[str] = None
     multichoice_continuations_start_space: Optional[bool] = None
+    pair_wise_tokenization: bool = False
     subfolder: Optional[str] = None
     revision: str = "main"
     batch_size: int = -1
@@ -123,8 +113,14 @@ class BaseModelConfig:
     quantization_config: Optional[BitsAndBytesConfig] = None
     trust_remote_code: bool = False
     use_chat_template: bool = False
+    compile: bool = False
 
     def __post_init__(self):
+        # Making sure this parameter is a boolean
+        self.multichoice_continuations_start_space = boolstring_to_bool(self.multichoice_continuations_start_space)
+        self.model_parallel = boolstring_to_bool(self.model_parallel)
+        self.compile = boolstring_to_bool(self.compile)
+
         if self.quantization_config is not None and not is_bnb_available():
             raise ImportError(NO_BNB_ERROR_MSG)
 
@@ -144,13 +140,29 @@ class BaseModelConfig:
             cache_dir=env_config.cache_dir,
             token=env_config.token,
         )
-        if getattr(auto_config, "quantization_config", False) and self.quantization_config is None:
-            if not is_autogptq_available():
-                raise ImportError(NO_AUTOGPTQ_ERROR_MSG)
-            hlog(
-                "`quantization_config` is None but was found in the model's config, using the one found in config.json"
-            )
-            self.quantization_config = GPTQConfig(**auto_config.quantization_config, disable_exllama=True)
+
+        # Gathering the model's automatic quantization config, if available
+        try:
+            model_auto_quantization_config = auto_config.quantization_config
+            hlog("An automatic quantization config was found in the model's config. Using it to load the model")
+        except (AttributeError, KeyError):
+            model_auto_quantization_config = None
+
+        if model_auto_quantization_config is not None:
+            if self.quantization_config is not None:
+                # We don't load models quantized by default with a different user provided conf
+                raise ValueError("You manually requested quantization on a model already quantized!")
+
+            # We add the quantization to the model params we store
+            if model_auto_quantization_config["quant_method"] == "gptq":
+                if not is_autogptq_available():
+                    raise ImportError(NO_AUTOGPTQ_ERROR_MSG)
+                auto_config.quantization_config["use_exllama"] = None
+                self.quantization_config = GPTQConfig(**auto_config.quantization_config, disable_exllama=True)
+            elif model_auto_quantization_config["quant_method"] == "bitsandbytes":
+                if not is_bnb_available():
+                    raise ImportError(NO_BNB_ERROR_MSG)
+                self.quantization_config = BitsAndBytesConfig(**auto_config.quantization_config)
 
         return auto_config
 
@@ -194,6 +206,27 @@ class AdapterModelConfig(BaseModelConfig):
 
     def init_configs(self, env_config: EnvConfig):
         return self._init_configs(self.base_model, env_config)
+
+
+@dataclass
+class VLLMModelConfig:
+    pretrained: str
+    gpu_memory_utilisation: float = 0.9  # lower this if you are running out of memory
+    revision: str = "main"  # revision of the model
+    dtype: str | None = None
+    tensor_parallel_size: int = 1  # how many GPUs to use for tensor parallelism
+    pipeline_parallel_size: int = 1  # how many GPUs to use for pipeline parallelism
+    data_parallel_size: int = 1  # how many GPUs to use for data parallelism
+    max_model_length: int | None = None  # maximum length of the model, ussually infered automatically. reduce this if you encouter OOM issues, 4096 is usually enough
+    swap_space: int = 4  # CPU swap space size (GiB) per GPU.
+    seed: int = 1234
+    trust_remote_code: bool = False
+    use_chat_template: bool = False
+    add_special_tokens: bool = True
+    multichoice_continuations_start_space: bool = (
+        True  # whether to add a space at the start of each continuation in multichoice generation
+    )
+    subfolder: Optional[str] = None
 
 
 @dataclass
@@ -259,7 +292,11 @@ class InferenceEndpointModelConfig:
 
 
 def create_model_config(  # noqa: C901
-    args: Namespace, accelerator: Union["Accelerator", None]
+    use_chat_template: bool,
+    override_batch_size: int,
+    accelerator: Union["Accelerator", None],
+    model_args: Union[str, dict] = None,
+    model_config_path: str = None,
 ) -> Union[
     BaseModelConfig,
     AdapterModelConfig,
@@ -267,13 +304,21 @@ def create_model_config(  # noqa: C901
     TGIModelConfig,
     InferenceEndpointModelConfig,
     DummyModelConfig,
+    VLLMModelConfig,
 ]:
     """
     Create a model configuration based on the provided arguments.
 
     Args:
-        args (Namespace): command-line arguments.
-        accelerator (Union[Accelerator, None]): accelerator to use for model training.
+        accelerator(Union[Accelerator, None]): accelerator to use for model training.
+        use_chat_template (bool): whether to use the chat template or not. Set to True for chat or ift models
+        override_batch_size (int): frozen batch size to use
+        model_args (Optional[Union[str, dict]]): Parameters to create the model, passed as a string (like the CLI kwargs or dict).
+            This option only allows to create a dummy model using `dummy` or a base model (using accelerate or no accelerator), in
+            which case corresponding full model args available are the arguments of the [[BaseModelConfig]].
+            Minimal configuration is `pretrained=<name_of_the_model_on_the_hub>`.
+        model_config_path (Optional[str]): Path to the parameters to create the model, passed as a config file. This allows to create
+            all possible model configurations (base, adapter, peft, inference endpoints, tgi...)
 
     Returns:
         Union[BaseModelConfig, AdapterModelConfig, DeltaModelConfig, TGIModelConfig, InferenceEndpointModelConfig, DummyModelConfig]: model configuration.
@@ -284,18 +329,26 @@ def create_model_config(  # noqa: C901
         ValueError: If a base model is not specified when using delta weights or adapter weights.
         ValueError: If a base model is specified when not using delta weights or adapter weights.
     """
-    if args.model_args:
-        args_dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.model_args.split(",")}
+    if model_args is None and model_config_path is None:
+        raise ValueError("You can't create a model without either a list of model_args or a model_config_path.")
 
-        if args_dict.pop("dummy", False):
-            return DummyModelConfig(**args_dict)
+    if model_args:
+        if isinstance(model_args, str):
+            model_args = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
 
-        args_dict["accelerator"] = accelerator
-        args_dict["use_chat_template"] = args.use_chat_template
+        if model_args.pop("dummy", False):
+            return DummyModelConfig(**model_args)
 
-        return BaseModelConfig(**args_dict)
+        if model_args.pop("vllm", False):
+            return VLLMModelConfig(**model_args)
 
-    with open(args.model_config_path, "r") as f:
+        model_args["accelerator"] = accelerator
+        model_args["use_chat_template"] = use_chat_template
+        model_args["compile"] = bool(model_args["compile"]) if "compile" in model_args else False
+
+        return BaseModelConfig(**model_args)
+
+    with open(model_config_path, "r") as f:
         config = yaml.safe_load(f)["model"]
 
     if config["type"] == "tgi":
@@ -306,10 +359,10 @@ def create_model_config(  # noqa: C901
         )
 
     if config["type"] == "endpoint":
-        reuse_existing_endpoint = config["base_params"]["reuse_existing"]
+        reuse_existing_endpoint = config["base_params"].get("reuse_existing", None)
         complete_config_endpoint = all(
             val not in [None, ""]
-            for key, val in config["instance"].items()
+            for key, val in config.get("instance", {}).items()
             if key not in InferenceEndpointModelConfig.nullable_keys()
         )
         if reuse_existing_endpoint or complete_config_endpoint:
@@ -331,15 +384,21 @@ def create_model_config(  # noqa: C901
         return InferenceModelConfig(model=config["base_params"]["endpoint_name"])
 
     if config["type"] == "base":
-        # Tests on the multichoice space parameters
-        multichoice_continuations_start_space = config["generation"]["multichoice_continuations_start_space"]
-        no_multichoice_continuations_start_space = config["generation"]["no_multichoice_continuations_start_space"]
-        if not multichoice_continuations_start_space and not no_multichoice_continuations_start_space:
-            multichoice_continuations_start_space = None
-        if multichoice_continuations_start_space and no_multichoice_continuations_start_space:
-            raise ValueError(
-                "You cannot force both the multichoice continuations to start with a space and not to start with a space"
-            )
+        # Creating the multichoice space parameters
+        # We need to take into account possible conversion issues from our different input formats
+        multichoice_continuations_start_space = boolstring_to_bool(
+            config["generation"]["multichoice_continuations_start_space"]
+        )
+
+        if multichoice_continuations_start_space is not None:
+            if multichoice_continuations_start_space:
+                hlog(
+                    "You set `multichoice_continuations_start_space` to true. This will force multichoice continuations to use a starting space"
+                )
+            else:
+                hlog(
+                    "You set `multichoice_continuations_start_space` to false. This will remove a leading space from multichoice continuations, if present."
+                )
 
         # Creating optional quantization configuration
         if config["base_params"]["dtype"] == "4bit":
@@ -354,12 +413,13 @@ def create_model_config(  # noqa: C901
 
         # We store the relevant other args
         args_dict["base_model"] = config["merged_weights"]["base_model"]
+        args_dict["compile"] = bool(config["base_params"]["compile"])
         args_dict["dtype"] = config["base_params"]["dtype"]
         args_dict["accelerator"] = accelerator
         args_dict["quantization_config"] = quantization_config
-        args_dict["batch_size"] = args.override_batch_size
+        args_dict["batch_size"] = override_batch_size
         args_dict["multichoice_continuations_start_space"] = multichoice_continuations_start_space
-        args_dict["use_chat_template"] = args.use_chat_template
+        args_dict["use_chat_template"] = use_chat_template
 
         # Keeping only non null params
         args_dict = {k: v for k, v in args_dict.items() if v is not None}

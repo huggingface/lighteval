@@ -22,6 +22,7 @@
 
 import re
 import string
+from dataclasses import dataclass
 
 
 # From HELM
@@ -97,17 +98,20 @@ def math_normalizer(text: str) -> str:  # noqa C901
         """
         if text is None:
             return ""
-        if "\\boxed " in text:
-            left = "\\boxed "
+        try:
+            if "\\boxed " in text:
+                left = "\\boxed "
+                assert text[: len(left)] == left
+                return text[len(left) :]
+
+            left = "\\boxed{"
+
             assert text[: len(left)] == left
-            return text[len(left) :]
+            assert text[-1] == "}"
 
-        left = "\\boxed{"
-
-        assert text[: len(left)] == left
-        assert text[-1] == "}"
-
-        return text[len(left) : -1]
+            return text[len(left) : -1]
+        except Exception:
+            return ""
 
     def _last_boxed_only_string(text: str) -> str | None:
         """Extract the last \\boxed{...} or \\fbox{...} element from a string."""
@@ -349,3 +353,76 @@ def gsm8k_normalizer(text: str) -> str:
         return match_str
     else:
         return INVALID_ANS
+
+
+# Loglikelihood normalization
+@dataclass
+class LogProbPMINorm:
+    """
+    Performs Pointwise mutual information normalization. log_likelihood_conditioned - log_likelihood_unconditioned.
+    Useful when answer contains generally unlikely tokens.
+    """
+
+    name: str = "norm_pmi"
+
+    pass
+
+
+@dataclass
+class LogProbTokenNorm:
+    """
+    Performs token level normalization. log_likelihood/token_length.
+    Useful for non-english languages.
+    """
+
+    name: str = "norm_token"
+    pass
+
+
+@dataclass
+class LogProbCharNorm:
+    """
+    Performs character level normalization. log_likelihood/char_length
+    ignore_first_space (bool, optional): Whether to ignore the first token's log prob (if it's a space only). Defaults to False.
+        The only case when it should be True is when the possible choices (for example `A`,`B` ...) have an extra
+        space added in front of them to manage tokenization issues (` A`, ` B`, ...) for some models.
+    """
+
+    name: str = "norm"
+
+    ignore_first_space: bool = False
+
+
+LogProbNormalization = LogProbCharNorm | LogProbTokenNorm | LogProbPMINorm
+
+
+def normalize_log_probs(
+    normalization: LogProbNormalization,
+    choices_logprob: list[float],
+    unconditioned_logprob: list[float] | None,
+    choices_text: list[str] | None,
+    choices_tokens: list[list[int]] | None,
+) -> list[float]:
+    normalized_log_probs = choices_logprob
+    match normalization:
+        case LogProbCharNorm(ignore_first_space=True):
+            assert choices_text is not None, "choices_text must be provided for character normalization"
+            normalized_log_probs = [
+                choices_logprob[ix] / (len(choice) - 1 if choice[0] == " " else len(choice))
+                for ix, choice in enumerate(choices_text)
+            ]
+        case LogProbCharNorm(ignore_first_space=False):
+            assert choices_text is not None, "choices_text must be provided for character normalization"
+            normalized_log_probs = [choices_logprob[ix] / len(choice) for ix, choice in enumerate(choices_text)]
+        case LogProbTokenNorm():
+            assert choices_tokens is not None, "choices_tokens must be provided for token normalization"
+            normalized_log_probs = [
+                choices_logprob[ix] / len(choices_tokens[ix]) for ix in range(len(choices_logprob))
+            ]
+        case LogProbPMINorm():
+            assert unconditioned_logprob is not None, "unconditioned_logprob must be provided for PMI normalization"
+            normalized_log_probs = [
+                choices_logprob[ix] - unconditioned_logprob[ix] for ix in range(len(choices_logprob))
+            ]
+
+    return normalized_log_probs

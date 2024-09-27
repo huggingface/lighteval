@@ -29,18 +29,18 @@ import transformers
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
 from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
-from lighteval.models.abstract_model import LightevalModel
-from lighteval.models.model_config import BaseModelConfig, EnvConfig
+from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.model_config import BaseModelConfig
 from lighteval.models.model_output import (
     Batch,
-    GenerateMultiTurnReturn,
-    GenerateReturn,
-    LoglikelihoodReturn,
-    LoglikelihoodSingleTokenReturn,
+    GenerativeMultiturnResponse,
+    GenerativeResponse,
+    LoglikelihoodResponse,
+    LoglikelihoodSingleTokenResponse,
 )
 from lighteval.models.utils import _get_dtype, _simplify_name, batched
 from lighteval.tasks.requests import (
@@ -51,12 +51,13 @@ from lighteval.tasks.requests import (
     LoglikelihoodSingleTokenRequest,
     Request,
 )
-from lighteval.utils import as_list, is_accelerate_available
-from lighteval.utils_parallelism import find_executable_batch_size
+from lighteval.utils.imports import is_accelerate_available
+from lighteval.utils.parallelism import find_executable_batch_size
+from lighteval.utils.utils import EnvConfig, as_list
 
 
 if is_accelerate_available():
-    from accelerate.utils import get_max_memory
+    from accelerate.utils import calculate_maximum_sizes, convert_bytes, get_max_memory
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -72,7 +73,6 @@ class BaseModel(LightevalModel):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self._config = config.init_configs(env_config)
         self.accelerator = config.accelerator
-        self._batch_size = config.batch_size
         self._max_length = self._init_max_length(config.max_length)
         self.use_chat_template = config.use_chat_template
 
@@ -88,16 +88,31 @@ class BaseModel(LightevalModel):
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
 
         # We are in DP (and launch the script with `accelerate launch`)
-        if not config.model_parallel and config.quantization_config is None:
-            # might need to use accelerate instead
-            # self.model = config.accelerator.prepare(self.model)
+        if not config.model_parallel and not isinstance(config.quantization_config, BitsAndBytesConfig):
             hlog(f"Using Data Parallelism, putting model on device {self._device}")
             self.model = self.model.to(self._device)
+        if config.compile:
+            hlog("Compiling the model")
+            self.model.model.compile()
 
         self.model_name = _simplify_name(config.pretrained)
         self.model_sha = config.get_model_sha()
 
         self.precision = _get_dtype(config.dtype, config=self._config)
+
+        if is_accelerate_available():
+            model_size, _ = calculate_maximum_sizes(self.model)
+            model_size = convert_bytes(model_size)
+        else:
+            model_size = -1
+        self.model_info = ModelInfo(
+            model_name=self.model_name,
+            model_sha=self.model_sha,
+            model_dtype=self.precision,
+            model_size=model_size,
+        )
+
+        self.pair_wise_tokenization = config.pair_wise_tokenization
 
     @property
     def tokenizer(self):
@@ -111,7 +126,7 @@ class BaseModel(LightevalModel):
     def max_length(self) -> int:
         return self._max_length
 
-    def init_model_parallel(self, model_parallel: bool = None) -> Tuple[bool, Optional[dict], Optional[str]]:
+    def init_model_parallel(self, model_parallel: bool | None = None) -> Tuple[bool, Optional[dict], Optional[str]]:
         """Compute all the parameters related to model_parallel"""
         if not is_accelerate_available():
             return False, None, None
@@ -132,7 +147,7 @@ class BaseModel(LightevalModel):
                 f"the number of local processes is {self.num_local_processes} "
                 f"and the number of GPUs is {len(max_memory_all_gpus)}"
             )
-        if model_parallel:
+        if model_parallel is True:
             max_memory_all_gpus = get_max_memory()  # A dict of the max memory for all the gpus
             if "cpu" in max_memory_all_gpus:
                 del max_memory_all_gpus["cpu"]
@@ -272,12 +287,6 @@ class BaseModel(LightevalModel):
         return 2048
 
     @property
-    def batch_size(self) -> int:
-        if self._batch_size >= 0:
-            self._batch_size = self._get_batch_size(max_input_length=self.max_length)
-        return self._batch_size  # * gpus
-
-    @property
     def device(self) -> Union[int, str, torch.device]:
         return self._device
 
@@ -296,10 +305,11 @@ class BaseModel(LightevalModel):
         - None (Don't touch - default)
         Todo: find a way to add this back WITHOUT breaking compatibility with the harness
         """
-        if self.multichoice_continuations_start_space is True and continuation[0] != " ":
-            continuation = " " + continuation
-        if self.multichoice_continuations_start_space is False and continuation[0] == " ":
-            continuation = continuation.lstrip()
+        if self.multichoice_continuations_start_space is not None:
+            if self.multichoice_continuations_start_space and continuation[0] != " ":
+                continuation = " " + continuation
+            if not self.multichoice_continuations_start_space and continuation[0] == " ":
+                continuation = continuation.lstrip()
         return continuation
 
     def _model_call(self, inputs: torch.Tensor) -> torch.Tensor:
@@ -326,7 +336,7 @@ class BaseModel(LightevalModel):
 
     def greedy_until_multi_turn(  # noqa: C901
         self, requests: list[GreedyUntilMultiTurnRequest], override_bs: Optional[int] = None
-    ) -> GenerateMultiTurnReturn:
+    ) -> GenerativeMultiturnResponse:
         for request in requests:
             request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
             request.tokenized_context = self.tok_encode(request.context)["input_ids"]
@@ -448,7 +458,7 @@ class BaseModel(LightevalModel):
 
             for answers in batched(model_answers, len(request.context)):
                 results.append(
-                    GenerateMultiTurnReturn(
+                    GenerativeMultiturnResponse(
                         result=answers,
                         input_tokens=[],
                         generated_tokens=[],
@@ -463,7 +473,7 @@ class BaseModel(LightevalModel):
         self,
         requests: list[GreedyUntilRequest],
         override_bs: Optional[int] = None,
-    ) -> list[GenerateReturn]:
+    ) -> list[GenerativeResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
@@ -472,7 +482,7 @@ class BaseModel(LightevalModel):
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
 
         Returns:
-            list[GenerateReturn]: list of generated responses.
+            list[GenerativeResponse]: list of generated responses.
         """
         for request in requests:
             request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
@@ -535,9 +545,9 @@ class BaseModel(LightevalModel):
                 tokenized = self.tokenizer(
                     context,
                     truncation="longest_first",  # we truncate to the model max length if needed
-                    padding="longest",  # we pad to the longest sequence
+                    padding="max_length",  # we pad to the longest sequence
                     return_tensors="pt",
-                    max_length=self.max_length - 1,  # we always allow minimum one token of generation
+                    max_length=max_context_continuation_size_allowed,  # we always allow minimum one token of generation
                     add_special_tokens=self.add_special_tokens,
                 ).to(self.device)
 
@@ -556,7 +566,12 @@ class BaseModel(LightevalModel):
                     # There will be truncation of at least one sample, maximum generation size will be one
                     max_new_tokens = 1
                 else:  # We can't allow generation of more than max_length
-                    max_new_tokens = min(self.max_length - context_size, max_new_tokens)
+                    if max_new_tokens is None:  # If generation size is not set, we go all the way
+                        max_new_tokens = self.max_length - context_size
+                    else:
+                        max_new_tokens = min(self.max_length - context_size, max_new_tokens)
+                        if max_new_tokens < 1:
+                            max_new_tokens = 1
 
                 prepared_batch = Batch(
                     input_ids=tokenized["input_ids"],
@@ -587,9 +602,9 @@ class BaseModel(LightevalModel):
         stop_tokens: list[str],
         returns_logits: Optional[bool] = False,
         num_samples: Optional[int] = 1,
-    ) -> list[GenerateReturn]:
+    ) -> list[GenerativeResponse]:
         """Contains the actual logic of the generation.
-        First computes the stop sequences, then generates the predictions, then converts the outputs to GenerateReturn.
+        First computes the stop sequences, then generates the predictions, then converts the outputs to GenerativeResponse.
         """
         stopping_criteria = stop_sequences_criteria(self.tokenizer, stop_sequences=stop_tokens, batch=batch)
         batch_size, _ = batch.input_ids.shape
@@ -627,7 +642,7 @@ class BaseModel(LightevalModel):
         if self.accelerator:
             batch.padded = self.accelerator.gather_for_metrics(batch.padded)
 
-        # We convert to GenerateReturn outputs
+        # We convert to GenerativeResponse outputs
         all_responses = []
         for ix, (batched_generations, batched_input, trunc, padded) in enumerate(
             zip(generations, batch.input_ids, batch.truncated, batch.padded)
@@ -649,7 +664,7 @@ class BaseModel(LightevalModel):
                 result_generations = result_generations[0]
                 decoded_generations = decoded_generations[0]
 
-            cur_response = GenerateReturn(
+            cur_response = GenerativeResponse(
                 result=decoded_generations,
                 logits=logits[ix][: len_logits[ix]] if returns_logits else None,
                 generated_tokens=result_generations,
@@ -665,7 +680,7 @@ class BaseModel(LightevalModel):
         self,
         requests: list[LoglikelihoodRequest],
         override_bs: Optional[int] = None,
-    ) -> list[LoglikelihoodReturn]:
+    ) -> list[LoglikelihoodResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
 
@@ -682,7 +697,7 @@ class BaseModel(LightevalModel):
             else:
                 # The following line is mandatory for compatibility with the harness
                 request.tokenized_context, request.tokenized_continuation = self.tok_encode_pair(
-                    request.context, request.choice
+                    request.context, request.choice, pairwise=self.pair_wise_tokenization
                 )
 
         return self._loglikelihood_tokens(requests, override_bs=override_bs)
@@ -691,7 +706,7 @@ class BaseModel(LightevalModel):
         self,
         requests: list[LoglikelihoodRollingRequest],
         override_bs=None,
-    ) -> list[LoglikelihoodReturn]:
+    ) -> list[LoglikelihoodResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
 
         for request in requests:  # tuple of one elem
@@ -712,7 +727,7 @@ class BaseModel(LightevalModel):
         override_bs: int = -1,
         return_bool_score: bool = True,
         rolling: bool = False,
-    ) -> list[LoglikelihoodReturn]:
+    ) -> list[LoglikelihoodResponse]:
         dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
         res = []
@@ -804,7 +819,7 @@ class BaseModel(LightevalModel):
                 for ix, (logit, cont_tokens, maxe, batched_input, trunc, padded) in enumerate(
                     zip(logits, batch_cont_tokens, max_equal, batched_inputs, batch_truncated, batch_padded)
                 ):
-                    answer = LoglikelihoodReturn(
+                    answer = LoglikelihoodResponse(
                         # todo: we might want to store the logits unsummed
                         result=(float(logit.sum()), bool(maxe)) if return_bool_score else float(logit.sum()),
                         input_tokens=batched_input[: len_inputs[ix]].cpu().tolist(),
@@ -922,7 +937,7 @@ class BaseModel(LightevalModel):
 
     def loglikelihood_single_token(
         self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodSingleTokenReturn]:
+    ) -> list[LoglikelihoodSingleTokenResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
 
@@ -946,7 +961,7 @@ class BaseModel(LightevalModel):
             if any(len(c) > 1 for c in continuations_enc):
                 raise ValueError(
                     f"Trying to do single token multiple choice but one choice has several tokens: {continuations_enc}. "
-                    "If the additional pre-token is a space, try to set --no_multichoice_continuations_start_space "
+                    "If the additional pre-token is a space, try to set `multichoice_continuations_start_space=False` in the model parameters "
                 )
             request.tokenized_continuation = continuations_enc
 
@@ -954,7 +969,7 @@ class BaseModel(LightevalModel):
 
     def _loglikelihood_single_token(
         self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: int = -1
-    ) -> list[LoglikelihoodSingleTokenReturn]:
+    ) -> list[LoglikelihoodSingleTokenResponse]:
         dataset = LoglikelihoodSingleTokenDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
         res = []
@@ -1016,7 +1031,7 @@ class BaseModel(LightevalModel):
                 for ix, (probs, cont_tokens, batched_input, trunc, padded) in enumerate(
                     zip(batch_probs, batch_cont_tokens, batched_inputs, batch_truncated, batch_padded)
                 ):
-                    answer = LoglikelihoodSingleTokenReturn(
+                    answer = LoglikelihoodSingleTokenResponse(
                         result=probs[: len_probs[ix]].detach().cpu().tolist(),
                         input_tokens=batched_input[: len_inputs[ix]].cpu().tolist(),
                         generated_tokens=cont_tokens[: len_cont[ix]].cpu().tolist(),

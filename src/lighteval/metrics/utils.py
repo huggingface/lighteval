@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 
-class MetricCategory(Enum):
+class MetricCategory(str, Enum):
     TARGET_PERPLEXITY = auto()
     PERPLEXITY = auto()
     GENERATIVE = auto()
@@ -33,11 +33,12 @@ class MetricCategory(Enum):
     LLM_AS_JUDGE_MULTI_TURN = auto()
     LLM_AS_JUDGE = auto()
     MULTICHOICE = auto()
+    MULTICHOICE_PMI = auto()
     MULTICHOICE_ONE_TOKEN = auto()
     IGNORED = auto()
 
 
-class MetricUseCase(Enum):
+class MetricUseCase(str, Enum):
     # General
     ACCURACY = auto()
     PERPLEXITY = auto()
@@ -64,7 +65,9 @@ class Metric:
     def get_doc(self):
         return self.sample_level_fn.__doc__
 
-    def compute(self, **kwargs) -> dict:  # result: Union[list[ModelReturn], ModelReturn], formatted_doc: Doc) -> dict:
+    def compute(
+        self, **kwargs
+    ) -> dict:  # result: Union[list[ModelResponse], ModelResponse], formatted_doc: Doc) -> dict:
         if self.category == MetricCategory.IGNORED:
             return {}
         if isinstance(self, MetricGrouping):
