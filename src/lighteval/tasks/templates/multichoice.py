@@ -38,7 +38,7 @@ MULTI_CHOICE_QA_QUERY = (
 )
 
 
-# NO idea how to ensure we have the same keys in these typedicts in python :(
+# Defined for type hinting only
 class MCQInput(TypedDict):
     question: str
     choices: list[str]
