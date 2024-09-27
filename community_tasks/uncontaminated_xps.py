@@ -39,13 +39,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-# DEFINE YOUR PROMPT FUNCTIONS
-# Define as many as you need for your different tasks
 def nocha_prompt(line, task_name: str = None):
-    """Defines how to go from a dataset line to a doc object.
-    Follow examples in src/lighteval/tasks/tasks_prompt_formatting.py, or get more info
-    about what this function should do in the README.
-    """
     instruction = "According to the previous text, is the following claim True or False?"
     choices_true = random.sample(["True", "False"], 2)
     choices_false = random.sample(["True", "False"], 2)
@@ -67,14 +61,9 @@ def nocha_prompt(line, task_name: str = None):
     ]
 
 
-# EVAL WITH NO SUBSET ##
-# This is how you create a simple task (like hellaswag) which has one single subset
-# attached to it, and one evaluation possible.
-
-
 nocha_task = LightevalTaskConfig(
     name="nocha",
-    prompt_function=nocha_prompt,  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
+    prompt_function=nocha_prompt,
     suite=["community"],
     hf_repo="novelchallenge/nocha",
     hf_subset="default",
@@ -86,7 +75,35 @@ nocha_task = LightevalTaskConfig(
     trust_dataset=True,
 )
 
-TASKS_TABLE = [nocha_task]
+
+def musr2_prompt(line, task_name: str = None):
+    # choices = [choice.split("- ")[-1] for choice in line["choices"].split("\n")]
+    return (
+        Doc(
+            task_name=task_name,
+            query=f"{line['prompt']}\nQuestion: {line['question']}\nChoices: {line['choices']}\nAnswer: ",
+            choices=["1", "2", "3"],
+            gold_index=str(line["answer"]),
+            instruction="",
+        ),
+    )
+
+
+musr2 = LightevalTaskConfig(
+    name="musr2",
+    prompt_function=musr2_prompt,
+    suite=["community"],
+    hf_repo="lighteval/MuSR2",
+    hf_subset="default",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split="train",
+    few_shots_select="sequential",  # should not be possible to run in few shot
+    metric=[Metrics.loglikelihood_acc],
+    trust_dataset=True,
+)
+
+TASKS_TABLE = [nocha_task, musr2]
 
 # MODULE LOGIC
 # You should not need to touch this
