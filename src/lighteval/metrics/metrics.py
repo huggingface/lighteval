@@ -61,7 +61,7 @@ from lighteval.metrics.normalizations import (
     remove_braces_and_strip,
 )
 from lighteval.metrics.sample_preparator import GenerativePreparator, LoglikelihoodPreparator, PerplexityPreparator
-from lighteval.metrics.utils import (
+from lighteval.metrics.utils.metric_utils import (
     CorpusLevelMetric,
     CorpusLevelMetricGrouping,
     Metric,
