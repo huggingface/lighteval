@@ -159,6 +159,8 @@ class F1_score:
                 Defaults to None if no normalization is applied.
             strip_strings (bool, optional): Whether to strip both reference and predictions. Defaults to False.
         """
+        if aggregation_function is None:
+            aggregation_function = max
 
         self.aggregation_function = aggregation_function
         self.normalize_gold = normalize_gold
