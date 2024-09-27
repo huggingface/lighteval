@@ -26,10 +26,10 @@ from typing_extensions import NotRequired, TypedDict
 
 from lighteval.tasks.requests import Doc
 from lighteval.tasks.templates.multichoice import get_mcq_prompt_function
+from lighteval.tasks.templates.utils.adapter_utils import create_adapter_from_dict
 from lighteval.tasks.templates.utils.formatting_utils import PUNCT, capitalize, decapitalize, fix_ending_punct
 from lighteval.tasks.templates.utils.formulation import CFFormulation, Formulation, HybridFormulation, MCFFormulation
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS, TranslationLiterals
-from lighteval.tasks.templates.utils.utils import create_adapter_from_dict
 from lighteval.utils.language import Language
 
 
@@ -38,6 +38,15 @@ NLI_TEMPLATE_CONT_CF = "{sentence_space}{label}{comma}{word_space}{hypothesis}"
 
 
 class NLIInput(TypedDict):
+    """
+    Input for the Natural Language Inference (NLI) task.
+    Args:
+        premise: The premise of the NLI task (e.g. He can speak French)
+        hypothesis: The hypothesis of the NLI task (e.g. He can speak anglo-saxon language)
+        gold_idx: The index of the correct relation
+        instruction (optional): The instruction of the task (e.g. Choose the correct relation between the premise and hypothesis)
+    """
+
     premise: str
     hypothesis: str
     gold_idx: int
@@ -45,6 +54,15 @@ class NLIInput(TypedDict):
 
 
 class NLIAdapter(TypedDict):
+    """
+    Adapter for mapping from the dataset row into the NLIInput format.
+    Args:
+        premise: Column name in the row that contains the premise of the NLI task (e.g. He can speak French)
+        hypothesis: Column name in the row that contains the hypothesis of the NLI task (e.g. He can speak anglo-saxon language)
+        gold_idx: Column name in the row that contains the index of the correct relation
+        instruction (optional): Column name in the row that contains the instruction of the task (e.g. Choose the correct relation between the premise and hypothesis)
+    """
+
     premise: str
     hypothesis: str
     gold_idx: str
@@ -54,7 +72,7 @@ class NLIAdapter(TypedDict):
 RelationType = Literal["entailment", "neutral", "contradiction"]
 
 
-def get_nli_prompt_function_natural(
+def _nli_prompt_function_natural(
     language: Language,
     adapter: Callable[[dict], NLIInput] | NLIAdapter,
     relations: list[RelationType],
@@ -66,16 +84,15 @@ def get_nli_prompt_function_natural(
     - XNLI
 
     Format:
-    Premies right? | (Yes,No,Also), hypothesis
+    Premise right? | (Yes,No,Also), hypothesis
 
     Args:
         language (Language): The language of the NLI task.
-        adapter (Callable[[dict], NLIInput] | NLIAdapter): A function or dictionary to adapt the input data to the required NLIInput format.
-            Must map data from the dataset row to the NLIInput format.
-            Note: The label must be a index in the relations list, based on the correct relation between the premise and hypothesis.
+        adapter (Callable[[dict], NLIInput] | NLIAdapter): Either a function that takes a dataset row and returns a NLIInput, or a dictionary with keys corresponding to the field names in the dataset row.
+            Note: Both NLIAdapter and NLIInput are TypeDicts, this means that the caller provides dictionary and doesn't initialize any class!
+            Note: The gold_idx must be an index in the relations list, indicating the correct relation. The order of relations is important!
 
         relations (list[Literal["entailment", "neutral", "contradiction"]]): The list of possible relations for the NLI task.
-        formulation (MCFFormulation, optional): The formulation to use for multiple-choice questions. Defaults to MCFFormulation().
 
     Returns:
         Callable: A function that generates NLI prompts based on the given parameters.
@@ -90,7 +107,7 @@ def get_nli_prompt_function_natural(
             return translation_literals.also
 
     translation_literals = TRANSLATION_LITERALS[language]
-    adapter_fn = create_adapter_from_dict(adapter) if isinstance(adapter, dict) else adapter  # type: ignore
+    adapter_fn = create_adapter_from_dict(adapter)  # type: ignore
 
     def nli_natural_prompt(line: dict, task_name: str):
         labels = [capitalize(get_relation_label(label, translation_literals)) for label in relations]
@@ -153,14 +170,27 @@ def get_nli_prompt_function(
     - XNLI
 
     Format:
+    *CF*
+    Premise, right? | Yes/No/False Hypothesis
+
+    *Hybrid*
     Premise
-    Hypoothesis True,False,Neither? | (True,False,Neither)
+    Question: Hypothesis? True,False,Neither?
+    | True/False/Neither
+
+    *MCF*
+    Premise
+    Question: Hypothesis?
+    A. True
+    B. False
+    C. Neither
+    | A/B/C
 
     Args:
         language (Language): The language of the NLI task.
-        adapter (Callable[[dict], NLIInput] | NLIAdapter): A function or dictionary to adapt the input data to the required NLIInput format.
-            Must map data from the dataset row to the NLIInput format.
-            Note: The gold_idx must be an index in the relations list, indicating the correct relation.
+        adapter (Callable[[dict], NLIInput] | NLIAdapter): Either a function that takes a dataset row and returns a NLIInput, or a dictionary with keys corresponding to the field names in the dataset row.
+            Note: Both NLIAdapter and NLIInput are TypeDicts, this means that the caller provides dictionary and doesn't initialize any class!
+            Note: The gold_idx must be an index in the relations list, indicating the correct relation. The order of relations is important!
         relations (list[RelationType]): List of relation types to use for the task (e.g., ["entailment", "contradiction", "neutral"]).
         formulation (Formulation, optional): The formulation to use for the task. Defaults to MCFFormulation().
 
@@ -169,7 +199,7 @@ def get_nli_prompt_function(
     """
     # We use natural implementation for CF formulation to comply with standard evaluation formats
     if isinstance(formulation, CFFormulation):
-        return get_nli_prompt_function_natural(language, adapter, relations)
+        return _nli_prompt_function_natural(language, adapter, relations)
 
     translation_literals = TRANSLATION_LITERALS[language]
 
@@ -181,7 +211,7 @@ def get_nli_prompt_function(
         elif label == "neutral":
             return translation_literals.neither
 
-    adapter_fn = create_adapter_from_dict(adapter) if isinstance(adapter, dict) else adapter  # type: ignore
+    adapter_fn = create_adapter_from_dict(adapter)  # type: ignore
 
     # For hybrid we use inlined choices so we use the cf formulation in multichoice prompt fn
     mcq_prompt_fn = get_mcq_prompt_function(

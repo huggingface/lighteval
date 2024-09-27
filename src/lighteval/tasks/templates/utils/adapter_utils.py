@@ -21,13 +21,19 @@
 # SOFTWARE.
 
 
-def create_adapter_from_dict(adapter: dict[str, str | None]):
+from typing import Any, Callable
+
+
+def create_adapter_from_dict(adapter: dict[str, str | None] | Callable[[dict], Any]):
     """
     Creates adapter function for the template input from a dict.
     Args:
         adapter: Dict of the form {key: value} where value is key in the input dict to get.
 
     """
+
+    if not isinstance(adapter, dict):
+        return adapter
 
     def adapter_fn(line: dict):
         return {key: line[value] for key, value in adapter.items()}  # type: ignore
