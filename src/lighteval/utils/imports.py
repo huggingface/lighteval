@@ -108,7 +108,7 @@ def can_load_spacy_tokenizer(language: str) -> bool:
     return all(cur_import is not None for cur_import in imports)
 
 
-NO_SPACY_TOKENIZER_ERROR_MSG = "You are trying to load a spacy tokenizer, for which you need `spacy` and it's dependencies, which are not available in your environment. Please install them using pip install `lighteval[multilingual]`."
+NO_SPACY_TOKENIZER_ERROR_MSG = "You are trying to load a spacy tokenizer, for which you need `spacy` and its dependencies, which are not available in your environment. Please install them using `pip install lighteval[multilingual]`."
 
 
 def can_load_stanza_tokenizer() -> bool:
