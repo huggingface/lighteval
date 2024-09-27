@@ -56,9 +56,9 @@ from lighteval.utils.utils import as_list, safe_divide
 class ExactMatches:
     def __init__(
         self,
-        aggregation_function: callable = None,
-        normalize_gold: callable = None,
-        normalize_pred: callable = None,
+        aggregation_function: Callable[[list[float]], float] = max,
+        normalize_gold: Callable[[str], str] | None = None,
+        normalize_pred: Callable[[str], str] | None = None,
         strip_strings: bool = False,
         type_exact_match: str = "full",
     ):
@@ -78,8 +78,6 @@ class ExactMatches:
                 `suffix` if the prediction ends with the gold,
                 `full` if the prediction and gold are equal
         """
-        if aggregation_function is None:
-            aggregation_function = max
         self.aggregation_function = aggregation_function
         self.normalize_gold = normalize_gold
         self.normalize_pred = normalize_pred
@@ -145,9 +143,9 @@ class ExactMatches:
 class F1_score:
     def __init__(
         self,
-        aggregation_function: callable = None,
-        normalize_gold: callable = None,
-        normalize_pred: callable = None,
+        aggregation_function: Callable[[list[float]], float] = max,
+        normalize_gold: Callable[[str], str] | None = None,
+        normalize_pred: Callable[[str], str] | None = None,
         strip_strings: bool = False,
     ):
         """An F1 score class. F1 is computed over the bag of words of the golds and predictions.
@@ -163,8 +161,8 @@ class F1_score:
         """
         if aggregation_function is None:
             aggregation_function = max
-        self.aggregation_function = aggregation_function
 
+        self.aggregation_function = aggregation_function
         self.normalize_gold = normalize_gold
         self.normalize_pred = normalize_pred
         self.strip_strings = strip_strings
