@@ -93,3 +93,26 @@ def can_load_extended_tasks() -> bool:
 
 
 CANNOT_USE_EXTENDED_TASKS_MSG = "If you want to use extended_tasks, make sure you installed their dependencies using `pip install -e .[extended_tasks]`."
+
+
+def can_load_spacy_tokenizer(language: str) -> bool:
+    imports = []
+    packages = ["spacy", "stanza"]
+    if language == "vi":
+        packages.append("pyvi")
+    elif language == "zh":
+        packages.append("jieba")
+
+    for package in packages:
+        imports.append(importlib.util.find_spec(package))
+    return all(cur_import is not None for cur_import in imports)
+
+
+NO_SPACY_TOKENIZER_ERROR_MSG = "You are trying to load a spacy tokenizer, for which you need `spacy` and its dependencies, which are not available in your environment. Please install them using `pip install lighteval[multilingual]`."
+
+
+def can_load_stanza_tokenizer() -> bool:
+    return importlib.util.find_spec("stanza") is not None
+
+
+NO_STANZA_TOKENIZER_ERROR_MSG = "You are trying to load a stanza tokenizer, for which you need `stanza`, which is not available in your environment. Please install it using `pip install lighteval[multilingual]`."

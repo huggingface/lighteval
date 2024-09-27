@@ -97,6 +97,12 @@ extended_tasks = [
   "openai", # llm as a judge using openai models
 ]
 s3 = ["s3fs"]
+multilingual = [
+    "stanza",
+    "spacy[ja,ko,th]",
+    "jieba", # for chinese tokenizer
+    "pyvi", # for vietnamese tokenizer
+]
 
 [project.urls]
 Homepage = "https://github.com/huggingface/lighteval"
