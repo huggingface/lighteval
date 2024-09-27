@@ -23,7 +23,7 @@
 from lighteval.metrics.dynamic_metrics import loglikelihood_acc_metric
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.normalizations import LogProbPMINorm
-from lighteval.metrics.utils import Metric
+from lighteval.metrics.utils.metric_utils import Metric
 from lighteval.models.model_output import GenerativeResponse, LoglikelihoodResponse
 from lighteval.tasks.default_tasks import xstory_cloze_en_lighteval
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
