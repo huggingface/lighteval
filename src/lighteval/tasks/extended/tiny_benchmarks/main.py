@@ -39,7 +39,7 @@ import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import CorpusLevelMetricGrouping, Metrics
 from lighteval.metrics.metrics_sample import ExactMatches, LoglikelihoodAcc
 from lighteval.metrics.normalizations import gsm8k_normalizer
-from lighteval.metrics.utils import MetricCategory, MetricUseCase
+from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
