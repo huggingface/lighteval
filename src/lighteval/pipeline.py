@@ -33,7 +33,7 @@ import numpy as np
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog, htrack_block
-from lighteval.metrics.utils import MetricCategory
+from lighteval.metrics.utils.metric_utils import MetricCategory
 from lighteval.models.model_loader import load_model
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_tasks
