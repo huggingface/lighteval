@@ -20,13 +20,25 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Callable
+from typing import Callable, Literal
 
 import numpy as np
 
-from lighteval.metrics.metrics_sample import LoglikelihoodAcc, NormalizedMultiChoiceProbability, Probability
-from lighteval.metrics.normalizations import LogProbNormalization, LogProbPMINorm, LogProbTokenNorm
-from lighteval.metrics.utils import MetricCategory, MetricUseCase, SampleLevelMetric
+from lighteval.metrics.metrics_sample import (
+    ExactMatches,
+    F1_score,
+    LoglikelihoodAcc,
+    NormalizedMultiChoiceProbability,
+    Probability,
+)
+from lighteval.metrics.normalizations import (
+    LogProbNormalization,
+    LogProbPMINorm,
+    LogProbTokenNorm,
+    get_multilingual_normalizer,
+)
+from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase, SampleLevelMetric
+from lighteval.utils.language import Language
 
 
 def loglikelihood_acc_metric(normalization: LogProbNormalization | None = None) -> SampleLevelMetric:
@@ -89,6 +101,70 @@ def probability_metric(
         sample_level_fn=Probability(normalization=normalization, aggregation_function=aggregation_function).compute,
         category=MetricCategory.TARGET_PERPLEXITY,
         use_case=MetricUseCase.PERPLEXITY,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+
+
+def multilingual_quasi_f1_score_metric(
+    language: Language, aggregation_function: Callable[[list[float]], float] = max
+) -> SampleLevelMetric:
+    """
+    Creates a language-aware F1 score metric, which returns the F1 score.
+
+    Args:
+        language: The language of the samples.
+        aggregation_function: Aggregation samples to use when multiple golds are present.
+
+    Returns:
+        F1 score metric.
+    """
+    metric_name = f"f1_{language}"
+
+    multilang_normalizer = get_multilingual_normalizer(language)
+    return SampleLevelMetric(
+        metric_name=metric_name,
+        sample_level_fn=F1_score(
+            normalize_gold=multilang_normalizer,
+            normalize_pred=multilang_normalizer,
+            aggregation_function=aggregation_function,
+        ).compute,
+        category=MetricCategory.GENERATIVE,
+        use_case=MetricUseCase.ACCURACY,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+
+
+def multilingual_quasi_exact_match_metric(
+    language: Language,
+    match_type: Literal["prefix", "suffix", "full"] = "full",
+    aggregation_function: Callable[[list[float]], float] = max,
+) -> SampleLevelMetric:
+    """
+    Creates a language-aware exact match metric, which returns the exact match score
+    Args:
+        language: The language of the samples.
+        match_type: The type of match to use
+            - "prefix": Prefixes must match
+            - "suffix": Suffixes must match
+            - "full": Full strings must match
+        aggregation_function: Aggregation samples to use when multiple golds are present.
+    Returns:
+        Exact match metric.
+    """
+    metric_name = f"exact_match_{language}_{match_type}"
+    multilang_normalizer = get_multilingual_normalizer(language)
+    return SampleLevelMetric(
+        metric_name=metric_name,
+        sample_level_fn=ExactMatches(
+            normalize_gold=multilang_normalizer,
+            normalize_pred=multilang_normalizer,
+            aggregation_function=aggregation_function,
+            type_exact_match=match_type,
+        ).compute,
+        category=MetricCategory.GENERATIVE,
+        use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )

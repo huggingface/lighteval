@@ -33,7 +33,7 @@ import numpy as np
 from aenum import extend_enum
 
 from lighteval.metrics.metrics import Metrics, SampleLevelMetric
-from lighteval.metrics.utils import MetricCategory, MetricUseCase
+from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
