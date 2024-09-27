@@ -66,7 +66,7 @@ def get_nli_prompt_function_natural(
     - XNLI
 
     Format:
-    Premies right? | (Yes,No,Also), hypothesis
+    Premise right? | (Yes,No,Also), hypothesis
 
     Args:
         language (Language): The language of the NLI task.
