@@ -389,8 +389,8 @@ def remove_articles(text: str, lang: Language) -> str:
     """
     Removes definite and indefinite articles from the text.
     Generated using LLM then manually checked by non-expert.
-    We currently only support languages that don't blend articles. 
-    If you are a native speaker of a language where articles are blended, 
+    We currently only support languages that don't blend articles.
+    If you are a native speaker of a language where articles are blended,
     we would appreciate your contribution!
     """
     pattern = _ARTICLE_PATTERNS.get(lang)
