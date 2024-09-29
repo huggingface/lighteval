@@ -60,7 +60,7 @@ class MCQDictAdapter(TypedDict):
 
 def get_mcq_prompt_function(
     language: Language,
-    adapter: Callable[[dict], MCQInput] | MCQDictAdapter,
+    adapter: Callable[[dict], MCQInput | None] | MCQDictAdapter,
     formulation: Formulation = MCFFormulation(),
 ):
     """
@@ -89,6 +89,9 @@ def get_mcq_prompt_function(
 
     def prompt_fn(line, task_name: str):
         mcq_input = adapter_fn(line)
+        if mcq_input is None:
+            return None
+
         translation_literals = TRANSLATION_LITERALS[language]
 
         instruction_val = mcq_input.get("instruction")

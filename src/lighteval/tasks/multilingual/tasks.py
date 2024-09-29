@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from functools import partial
+
 from langcodes import Language as LangCodeLanguage
 from langcodes import standardize_tag
 
@@ -28,8 +30,16 @@ from lighteval.metrics.dynamic_metrics import (
     multilingual_quasi_exact_match_metric,
     multilingual_quasi_f1_score_metric,
 )
-from lighteval.metrics.normalizations import LogProbTokenNorm
+from lighteval.metrics.normalizations import LogProbPMINorm, LogProbTokenNorm
+from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.multilingual.adapters import (
+    agieval_prompt,
+    alghafa_adapter,
+    ceval_adapter,
+    get_m3exam_adapter,
+    thai_exams_adapter,
+)
 from lighteval.tasks.templates.copa import get_copa_prompt_function
 from lighteval.tasks.templates.hellaswag import get_hellaswag_prompt_function
 from lighteval.tasks.templates.multichoice import get_mcq_prompt_function
@@ -324,6 +334,7 @@ copa_tasks = [
         ),
         hf_repo=("OALL/AlGhafa-Arabic-LLM-Benchmark-Translated" if language == Language.ARABIC else "xcopa"),
         hf_subset=("copa_ext_ar" if language == Language.ARABIC else standardize_tag(language.value)),
+        hf_revision="a31ebd34ca311d7e0cfc6ad7f458b3435af280f5" if language == Language.ARABIC else None,
         evaluation_splits=["test"],
         few_shots_split="validation",
         generation_size=-1,
@@ -1028,3 +1039,1185 @@ TASKS_TABLE.extend(
         *beleble_tasks,
     ]
 )
+
+# ------------------------------- GK ------------------------------- #
+
+# MMLU
+# We have definition for 3 types of MMMLU suites
+# From out experience native_mmlu >> meta_mmlu > mlmm_mmlu
+
+MMLU_SUBSETS = [
+    "abstract_algebra",
+    "anatomy",
+    "astronomy",
+    "business_ethics",
+    "clinical_knowledge",
+    "college_biology",
+    "college_chemistry",
+    "college_computer_science",
+    "college_mathematics",
+    "college_medicine",
+    "college_physics",
+    "computer_security",
+    "conceptual_physics",
+    "econometrics",
+    "electrical_engineering",
+    "elementary_mathematics",
+    "formal_logic",
+    "global_facts",
+    "high_school_biology",
+    "high_school_chemistry",
+    "high_school_computer_science",
+    "high_school_european_history",
+    "high_school_geography",
+    "high_school_government_and_politics",
+    "high_school_macroeconomics",
+    "high_school_mathematics",
+    "high_school_microeconomics",
+    "high_school_physics",
+    "high_school_psychology",
+    "high_school_statistics",
+    "high_school_us_history",
+    "high_school_world_history",
+    "human_aging",
+    "human_sexuality",
+    "international_law",
+    "jurisprudence",
+    "logical_fallacies",
+    "machine_learning",
+    "management",
+    "marketing",
+    "medical_genetics",
+    "miscellaneous",
+    "moral_disputes",
+    "moral_scenarios",
+    "nutrition",
+    "philosophy",
+    "prehistory",
+    "professional_accounting",
+    "professional_law",
+    "professional_medicine",
+    "professional_psychology",
+    "public_relations",
+    "security_studies",
+    "sociology",
+    "us_foreign_policy",
+    "virology",
+    "world_religions",
+]
+
+meta_mmlu_tasks = [
+    LightevalTaskConfig(
+        name=f"meta_mmlu_{language.name}_{formulation.name.lower()}:{subset}",
+        prompt_function=get_mcq_prompt_function(
+            language,
+            lambda line: {
+                "question": line["input_question"],
+                "choices": [v for _, v in sorted(line["input_choice_list"].items(), key=lambda x: x[0])],
+                "gold_idx": LETTER_INDICES.index(line["input_correct_responses"][0]),
+            },
+        ),
+        suite=("custom",),
+        hf_repo="meta-llama/Meta-Llama-3.1-8B-Instruct-evals",
+        hf_subset=f"Meta-Llama-3.1-8B-Instruct-evals__multilingual_mmlu_{standardize_tag(language.value)}__details",
+        hf_filter=partial(
+            lambda language, subset, line: line["subtask_name"]
+            == f"mmlu_{standardize_tag(language.value)}_chat.{subset}",
+            language,
+            subset,
+        ),
+        evaluation_splits=("latest",),
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+    )
+    for subset in MMLU_SUBSETS
+    for language in [
+        Language.GERMAN,
+        Language.SPANISH,
+        Language.FRENCH,
+        Language.HINDI,
+        Language.ITALIAN,
+        Language.PORTUGUESE,
+        Language.THAI,
+    ]
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+mlmm_mmlu_tasks = [
+    LightevalTaskConfig(
+        name=f"mlmm_mmlu_{language.name}_{formulation.name.lower()}:{subset}",
+        prompt_function=get_mcq_prompt_function(
+            language,
+            lambda line: {
+                "question": line["question"],
+                "choices": line["choices"],
+                "gold_idx": LETTER_INDICES.index(line["answer"]),
+            },
+        ),
+        suite=("custom",),
+        hf_repo="jon-tow/okapi_mmlu",
+        hf_subset=standardize_tag(language.value),
+        hf_revision="refs/pr/1",
+        hf_filter=partial(lambda subset, line: line["id"].split("/")[0] == subset, subset),
+        trust_dataset=True,
+        evaluation_splits=("test",),
+        few_shots_split="dev",
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+    )
+    for subset in MMLU_SUBSETS
+    for language in [
+        Language.ENGLISH,
+        Language.RUSSIAN,
+        Language.GERMAN,
+        Language.CHINESE,
+        Language.FRENCH,
+        Language.SPANISH,
+        Language.ITALIAN,
+        Language.DUTCH,
+        Language.VIETNAMESE,
+        Language.INDONESIAN,
+        Language.ARABIC,
+        Language.HUNGARIAN,
+        Language.ROMANIAN,
+        Language.DANISH,
+        Language.SLOVAK,
+        Language.UKRAINIAN,
+        Language.CATALAN,
+        Language.SERBIAN,
+        Language.CROATIAN,
+        Language.HINDI,
+        Language.BENGALI,
+        Language.TAMIL,
+        Language.NEPALI,
+        Language.MALAYALAM,
+        Language.MARATHI,
+        Language.TELUGU,
+        Language.KANNADA,
+    ]
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+rummlu = [
+    LightevalTaskConfig(
+        name=f"rummlu_{Language.RUSSIAN.value}_{formulation.name.lower()}:{subset}",
+        prompt_function=get_mcq_prompt_function(
+            Language.RUSSIAN,
+            lambda line: {
+                "question": line["inputs"]["text"],
+                "choices": [line["inputs"][f"option_{i.lower()}"] for i in LETTER_INDICES[:4]],
+                "gold_idx": LETTER_INDICES.index(line["outputs"]),
+            },
+        ),
+        suite=("custom",),
+        hf_repo="ai-forever/MERA",
+        hf_subset="rummlu",
+        hf_filter=lambda x: x["meta"]["domain"] == subset,
+        evaluation_splits=("public_test",),
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+    )
+    for subset in MMLU_SUBSETS
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+mmlu_turkish = [
+    LightevalTaskConfig(
+        name=f"tr_leaderboard_mmlu_{Language.TURKISH.value}_{formulation.name.lower()}:{subset}",
+        prompt_function=get_mcq_prompt_function(
+            Language.TURKISH,
+            lambda line: {"question": line["question"], "choices": line["choices"], "gold_idx": int(line["answer"])},
+        ),
+        suite=("custom",),
+        hf_repo="malhajar/mmlu_tr-v0.2",
+        hf_subset=subset,
+        evaluation_splits=("test",),
+        few_shots_split="dev",
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for subset in MMLU_SUBSETS
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+# They are almost the same as MMLU subsets, but they are not exactly the same
+CMMLU_SUBSETS = [
+    "agronomy",
+    "anatomy",
+    "ancient_chinese",
+    "arts",
+    "astronomy",
+    "business_ethics",
+    "chinese_civil_service_exam",
+    "chinese_driving_rule",
+    "chinese_food_culture",
+    "chinese_foreign_policy",
+    "chinese_history",
+    "chinese_literature",
+    "chinese_teacher_qualification",
+    "clinical_knowledge",
+    "college_actuarial_science",
+    "college_education",
+    "college_engineering_hydrology",
+    "college_law",
+    "college_mathematics",
+    "college_medical_statistics",
+    "college_medicine",
+    "computer_science",
+    "computer_security",
+    "conceptual_physics",
+    "construction_project_management",
+    "economics",
+    "education",
+    "electrical_engineering",
+    "elementary_chinese",
+    "elementary_commonsense",
+    "elementary_information_and_technology",
+    "elementary_mathematics",
+    "ethnology",
+    "food_science",
+    "genetics",
+    "global_facts",
+    "high_school_biology",
+    "high_school_chemistry",
+    "high_school_geography",
+    "high_school_mathematics",
+    "high_school_physics",
+    "high_school_politics",
+    "human_sexuality",
+    "international_law",
+    "journalism",
+    "jurisprudence",
+    "legal_and_moral_basis",
+    "logical",
+    "machine_learning",
+    "management",
+    "marketing",
+    "marxist_theory",
+    "modern_chinese",
+    "nutrition",
+    "philosophy",
+    "professional_accounting",
+    "professional_law",
+    "professional_medicine",
+    "professional_psychology",
+    "public_relations",
+    "security_study",
+    "sociology",
+    "sports_science",
+    "traditional_chinese_medicine",
+    "virology",
+    "world_history",
+    "world_religions",
+]
+
+cmmlu_tasks = [
+    LightevalTaskConfig(
+        name=f"cmmlu_{Language.CHINESE.value}_{formulation.name.lower()}:{subset}",
+        prompt_function=get_mcq_prompt_function(
+            Language.CHINESE,
+            lambda line: {
+                "question": line["Question"],
+                "choices": [line["A"], line["B"], line["C"], line["D"]],
+                "gold_idx": LETTER_INDICES.index(line["Answer"]),
+            },
+        ),
+        suite=("custom",),
+        hf_repo="haonan-li/cmmlu",
+        hf_subset=subset,
+        evaluation_splits=("test",),
+        few_shots_split="dev",
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for subset in CMMLU_SUBSETS
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+ARABIC_MMLU_SUBSETS = [
+    "Driving Test",
+    "High Geography",
+    "High History",
+    "Islamic Studies",
+    "Univ Accounting",
+    "Primary General Knowledge",
+    "Univ Political Science",
+    "Primary Math",
+    "Middle General Knowledge",
+    "High Biology",
+    "Primary Natural Science",
+    "High Economics",
+    "Middle Natural Science",
+    "Middle Geography",
+    "Primary Social Science",
+    "Middle Computer Science",
+    "Middle Islamic Studies",
+    "Primary Computer Science",
+    "High Physics",
+    "Middle Social Science",
+    "Middle Civics",
+    "High Computer Science",
+    "General Knowledge",
+    "High Civics",
+    "Prof Law",
+    "High Islamic Studies",
+    "Primary Arabic Language",
+    "High Arabic Language",
+    "Arabic Language (Grammar)",
+    "Primary History",
+    "Middle History",
+    "Univ Economics",
+    "Arabic Language (General)",
+    "Univ Computer Science",
+    "Primary Islamic Studies",
+    "Primary Geography",
+    "High Philosophy",
+    "Middle Arabic Language",
+    "Middle Economics",
+    "Univ Management",
+]
+
+arabic_mmlu_tasks = [
+    LightevalTaskConfig(
+        name=f"arabic_mmlu_native_{Language.ARABIC.value}_{formulation.name.lower()}:{subset.lower().replace(' ', '_').replace('(', '').replace(')', '')}",
+        prompt_function=get_mcq_prompt_function(
+            Language.ARABIC,
+            lambda line: {
+                "context": line["Context"],
+                "question": line["Question"],
+                "choices": [o for o in [line[f"Option {i}"] for i in range(1, 6)] if o],
+                "gold_idx": LETTER_INDICES.index(line["Answer Key"]),
+            },
+        ),
+        suite=("custom",),
+        hf_repo="yazeed7/ArabicMMLU",
+        hf_subset=subset,
+        evaluation_splits=("test",),
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for subset in ARABIC_MMLU_SUBSETS
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+CEVAL_SUBSET = [
+    "computer_network",
+    "operating_system",
+    "computer_architecture",
+    "college_programming",
+    "college_physics",
+    "college_chemistry",
+    "advanced_mathematics",
+    "probability_and_statistics",
+    "discrete_mathematics",
+    "electrical_engineer",
+    "metrology_engineer",
+    "high_school_mathematics",
+    "high_school_physics",
+    "high_school_chemistry",
+    "high_school_biology",
+    "middle_school_mathematics",
+    "middle_school_biology",
+    "middle_school_physics",
+    "middle_school_chemistry",
+    "veterinary_medicine",
+    "college_economics",
+    "business_administration",
+    "marxism",
+    "mao_zedong_thought",
+    "education_science",
+    "teacher_qualification",
+    "high_school_politics",
+    "high_school_geography",
+    "middle_school_politics",
+    "middle_school_geography",
+    "modern_chinese_history",
+    "ideological_and_moral_cultivation",
+    "logic",
+    "law",
+    "chinese_language_and_literature",
+    "art_studies",
+    "professional_tour_guide",
+    "legal_professional",
+    "high_school_chinese",
+    "high_school_history",
+    "middle_school_history",
+    "civil_servant",
+    "sports_science",
+    "plant_protection",
+    "basic_medicine",
+    "clinical_medicine",
+    "urban_and_rural_planner",
+    "accountant",
+    "fire_engineer",
+    "environmental_impact_assessment_engineer",
+    "tax_accountant",
+    "physician",
+]
+
+ceval_tasks = [
+    LightevalTaskConfig(
+        name=f"ceval_{Language.CHINESE.value}_{formulation.name.lower()}",
+        # for CF the new line has the best results, however it's not really compatible with options presentation
+        prompt_function=get_mcq_prompt_function(
+            Language.CHINESE,
+            partial(
+                ceval_adapter,
+                Language.CHINESE,
+                join_variant="NEW_LINE" if isinstance(formulation, CFFormulation) else "COMMA",
+            ),
+        ),
+        suite=("custom",),
+        hf_repo="ceval/ceval-exam",
+        hf_subset=task,
+        evaluation_splits=("val",),
+        few_shots_split="dev",
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for task in CEVAL_SUBSET
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+CHINESE_AGIEVAL_SUBSET = [
+    "gaokao-biology",
+    "gaokao-chinese",
+    "gaokao-chemistry",
+    "gaokao-geography",
+    "gaokao-history",
+    "gaokao-mathqa",
+    "gaokao-physics",
+    "logiqa-zh",
+    "jec-qa-kd",
+    "jec-qa-ca",
+]
+
+agieval_tasks_zh = [
+    LightevalTaskConfig(
+        name=f"agieval_{Language.CHINESE.value}_{formulation.name.lower()}:{subset}",
+        prompt_function=get_mcq_prompt_function(
+            Language.CHINESE,
+            partial(
+                agieval_prompt,
+                Language.CHINESE,
+                join_variant="NEW_LINE" if isinstance(formulation, CFFormulation) else "COMMA",
+            ),
+        ),
+        suite=("custom",),
+        hf_repo=f"hails/agieval-{subset}",
+        hf_subset="default",
+        evaluation_splits=("test",),
+        few_shots_split=None,
+        metric=(loglikelihood_acc_metric(normalization=LogProbPMINorm()),),
+    )
+    for subset in CHINESE_AGIEVAL_SUBSET
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+# Arc
+mlmm_arc_challenge_tasks = [
+    LightevalTaskConfig(
+        name=f"mlmm_arc_{language.value}_{formulation.name.lower()}:challenge",
+        prompt_function=get_mcq_prompt_function(
+            language,
+            lambda line: {
+                "question": line["question"],
+                "choices": line["choices"],
+                "gold_idx": int(line["answerKey"]) - 1
+                if line["answerKey"].isdigit()
+                else LETTER_INDICES.index(line["answerKey"]),
+            },
+        ),
+        suite=("custom",),
+        hf_repo="jon-tow/okapi_arc_challenge",
+        hf_subset=standardize_tag(language.value),
+        hf_revision="823d5d7bfaf8974a3ab52a825b6cf4903b35dbc4",
+        trust_dataset=True,
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        metric=(loglikelihood_acc_metric(normalization=LogProbPMINorm()),),
+    )
+    for language in [
+        Language.ENGLISH,
+        Language.RUSSIAN,
+        Language.GERMAN,
+        Language.CHINESE,
+        Language.FRENCH,
+        Language.SPANISH,
+        Language.ITALIAN,
+        Language.DUTCH,
+        Language.VIETNAMESE,
+        Language.INDONESIAN,
+        Language.ARABIC,
+        Language.HUNGARIAN,
+        Language.ROMANIAN,
+        Language.DANISH,
+        Language.SLOVAK,
+        Language.UKRAINIAN,
+        Language.CATALAN,
+        Language.SERBIAN,
+        Language.CROATIAN,
+        Language.HINDI,
+        Language.BENGALI,
+        Language.TAMIL,
+        Language.NEPALI,
+        Language.MALAYALAM,
+        Language.MARATHI,
+        Language.TELUGU,
+        Language.KANNADA,
+    ]
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+arabic_ledarboard_arc_easy = [
+    LightevalTaskConfig(
+        name=f"arc_{Language.ARABIC.value}_{formulation.name.lower()}:easy",
+        prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter),
+        suite=["custom"],
+        hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
+        hf_subset="arc_easy_ar",
+        hf_revision="a31ebd34ca311d7e0cfc6ad7f458b3435af280f5",
+        trust_dataset=True,
+        evaluation_splits=["test"],
+        few_shots_split="validation",
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+turkish_arc = [
+    LightevalTaskConfig(
+        name=f"arc_{Language.TURKISH.value}_{formulation.name.lower()}:{subset}",
+        prompt_function=get_mcq_prompt_function(
+            Language.TURKISH,
+            lambda line: {
+                "question": line["question"],
+                "choices": line["choices"]["text"],
+                "gold_idx": int(line["answerKey"]) - 1
+                if line["answerKey"].isdigit()
+                else LETTER_INDICES.index(line["answerKey"]),
+            },
+        ),
+        suite=("custom",),
+        hf_repo="malhajar/arc-tr",
+        hf_subset=f"ARC-{subset.capitalize()}",
+        evaluation_splits=("test",),
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for subset in ["easy", "challenge"]
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+
+# Thruthful-QA
+mlmm_truthfulqa_tasks = [
+    LightevalTaskConfig(
+        name=f"mlmm_truthfulqa_{language.value}_{formulation.name.lower()}:{subset}",
+        prompt_function=get_mcq_prompt_function(
+            language,
+            partial(
+                lambda subset, line: {
+                    "question": line["question"],
+                    "choices": line[f"{subset}_targets"]["choices"],
+                    "gold_idx": [ix for ix, label in enumerate(line[f"{subset}_targets"]["labels"]) if label == 1],  # type: ignore
+                },
+                subset,
+            ),
+        ),
+        suite=("custom",),
+        hf_repo="jon-tow/okapi_truthfulqa",
+        hf_subset=language.value,
+        hf_revision="cdd5db1a66fd04105622109d1c2a5cbc8cde7586",
+        trust_dataset=True,
+        evaluation_splits=("validation",),
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for subset in ["mc1", "mc2"]
+    for language in [
+        Language.ARABIC,
+        Language.BENGALI,
+        Language.CATALAN,
+        Language.DANISH,
+        Language.GERMAN,
+        Language.SPANISH,
+        Language.BASQUE,
+        Language.FRENCH,
+        Language.GUJARATI,
+        Language.HINDI,
+        Language.CROATIAN,
+        Language.HUNGARIAN,
+        Language.ARMENIAN,
+        Language.INDONESIAN,
+        Language.ICELANDIC,
+        Language.ITALIAN,
+        Language.KANNADA,
+        Language.MALAYALAM,
+        Language.MARATHI,
+        Language.NORWEGIAN,
+        Language.NEPALI,
+        Language.DUTCH,
+        Language.PORTUGUESE,
+        Language.ROMANIAN,
+        Language.RUSSIAN,
+        Language.SLOVAK,
+        Language.SERBIAN,
+        Language.SWEDISH,
+        Language.TAMIL,
+        Language.TELUGU,
+        Language.UKRAINIAN,
+        Language.VIETNAMESE,
+        Language.CHINESE,
+    ]
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+turkish_truthfulqa = [
+    LightevalTaskConfig(
+        name=f"truthfulqa_{Language.TURKISH.value}_{formulation.name.lower()}",
+        prompt_function=get_mcq_prompt_function(
+            Language.TURKISH,
+            partial(
+                lambda subset, line: {
+                    "question": line["question"],
+                    "choices": line[f"{subset}_targets"]["choices"],
+                    "gold_idx": [ix for ix, label in enumerate(line[f"{subset}_targets"]["labels"]) if label == 1],  # type: ignore
+                },
+                subset,
+            ),
+        ),
+        suite=("custom",),
+        hf_repo="malhajar/truthful_qa-tr-v0.2",
+        hf_subset="default",
+        evaluation_splits=("validation",),
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for subset in ["mc1", "mc2"]
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+
+exams_subjects_by_lang: dict[Language, set[str]] = {
+    Language.ARABIC: {"Biology", "Islamic Studies", "Physics", "Science", "Social"},
+    Language.BULGARIAN: {"Biology", "Chemistry", "Geography", "History", "Philosophy", "Physics"},
+    Language.CROATIAN: {
+        "Biology",
+        "Chemistry",
+        "Ethics",
+        "Fine Arts",
+        "Geography",
+        "Geology",
+        "History",
+        "Informatics",
+        "Philosophy",
+        "Physics",
+        "Politics",
+        "Psychology",
+        "Religion",
+        "Sociology",
+    },
+    Language.HUNGARIAN: {
+        "Agriculture",
+        "Agriculture (Mechanical knowledge)",
+        "Biology",
+        "Chemistry",
+        "Economics",
+        "Economics & Marketing",
+        "Economics Basics (Business)",
+        "Economics Basics (Theoretical)",
+        "Forestry",
+        "Geography",
+        "Landscaping",
+        "Physics",
+        "Politics",
+        "Tourism",
+    },
+    Language.ITALIAN: {
+        "Biology",
+        "Chemistry",
+        "Ethics",
+        "Geography",
+        "Geology",
+        "History",
+        "Informatics",
+        "Philosophy",
+        "Physics",
+        "Politics",
+        "Psychology",
+        "Sociology",
+    },
+    Language.SERBIAN: {
+        "Biology",
+        "Chemistry",
+        "Ethics",
+        "Geography",
+        "Geology",
+        "History",
+        "Informatics",
+        "Philosophy",
+        "Physics",
+        "Politics",
+        "Psychology",
+        "Religion",
+        "Sociology",
+    },
+    Language.FRENCH: {"Economics", "Economics & Marketing", "Economics Basics (Theoretical)", "Geography", "Physics"},
+    Language.GERMAN: {
+        "Chemistry",
+        "Economics",
+        "Economics & Marketing",
+        "Economics Basics (Theoretical)",
+        "Geography",
+        "Physics",
+        "Tourism",
+    },
+    Language.SPANISH: {"Geography", "Physics"},
+    Language.LITHUANIAN: {"Geology", "History"},
+    Language.ALBANIAN: {
+        "Biology",
+        "Business",
+        "Chemistry",
+        "Fine Arts",
+        "History",
+        "Philosophy",
+        "Physics",
+        "Sociology",
+    },
+    Language.MACEDONIAN: {
+        "Biology",
+        "Business",
+        "Chemistry",
+        "Fine Arts",
+        "History",
+        "Philosophy",
+        "Physics",
+        "Sociology",
+    },
+    Language.TURKISH: {
+        "Biology",
+        "Business",
+        "Chemistry",
+        "Geography",
+        "History",
+        "Philosophy",
+        "Physics",
+        "Sociology",
+    },
+    Language.POLISH: {"Professional"},
+    Language.PORTUGUESE: {"Biology", "Economics", "Geology", "Philosophy"},
+    Language.VIETNAMESE: {"Biology", "Chemistry", "Citizenship", "Geography", "History", "Physics"},
+}
+
+exams_tasks = [
+    LightevalTaskConfig(
+        name=f"exams_{language.value}_{formulation.name.lower()}",
+        prompt_function=get_mcq_prompt_function(
+            language,
+            lambda line: {
+                "question": line["question"]["stem"],
+                "choices": line["question"]["choices"]["text"],
+                "gold_idx": line["question"]["choices"]["label"].index(line["answerKey"]),
+            },
+        ),
+        suite=("custom",),
+        hf_repo="mhardalov/exams",
+        hf_subset="multilingual",
+        # Weird bug in dataset
+        hf_filter=partial(
+            lambda language, subject, line: line["answerKey"] != "@"
+            and line["info"]["language"] == LangCodeLanguage(standardize_tag(language.value)).language_name().lower()
+            and line["info"]["subject"] == subject,
+            language,
+            subject,
+        ),
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for language in exams_subjects_by_lang.keys()
+    for subject in exams_subjects_by_lang[language]
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+m3exam_tasks = [
+    LightevalTaskConfig(
+        name=f"m3exam_{language.name}_{formulation.name.lower()}",
+        suite=("custom",),
+        prompt_function=get_mcq_prompt_function(
+            language,
+            partial(get_m3exam_adapter, language),
+        ),
+        hf_repo="chiayewken/m3exam",
+        hf_subset=LangCodeLanguage(standardize_tag(language.value)).language_name().lower(),
+        evaluation_splits=("test",),
+        few_shots_split="dev",
+        generation_size=-1,
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for language in [
+        Language.AFRIKAANS,
+        Language.CHINESE,
+        Language.ENGLISH,
+        Language.ITALIAN,
+        Language.JAVANESE,
+        Language.PORTUGUESE,
+        Language.SWAHILI,
+        Language.THAI,
+        Language.VIETNAMESE,
+    ]
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+c3_tasks = [
+    LightevalTaskConfig(
+        name=f"c3_{Language.CHINESE.name}_{formulation.name.lower()}",
+        suite=("custom",),
+        prompt_function=get_mcq_prompt_function(
+            Language.CHINESE,
+            lambda line: {
+                "question": line["question"],
+                "choices": line["choice"],
+                "gold_idx": line["choice"].index(line["answer"]),
+                "context": " ".join(line["context"]),
+            },
+        ),
+        hf_repo="clue/clue",
+        hf_subset="c3",
+        evaluation_splits=("validation",),
+        few_shots_split="train",
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+# Thai Exams
+THAI_EXAMS_SUBSETS = ["a_level", "ic", "onet", "tgat", "tpat1"]
+
+# If too hard we can add help with para
+thai_exams_tasks = [
+    LightevalTaskConfig(
+        name=f"thai_exams_{Language.THAI.value}_{formulation.name.lower()}:{subset}",
+        prompt_function=get_mcq_prompt_function(Language.THAI, thai_exams_adapter),
+        suite=("custom",),
+        hf_repo="scb10x/thai_exam",
+        hf_subset=subset,
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for subset in THAI_EXAMS_SUBSETS
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+xcsqa_tasks = [
+    LightevalTaskConfig(
+        name=f"xcsqa_{language.value}_{formulation.name.lower()}",
+        prompt_function=get_mcq_prompt_function(
+            language,
+            lambda line: {
+                "question": line["question"]["stem"],
+                "choices": line["question"]["choices"]["text"],
+                "gold_idx": line["question"]["choices"]["label"].index(line["answerKey"]),
+            },
+        ),
+        suite=("custom",),
+        hf_repo="INK-USC/xcsr",
+        hf_subset=f"X-CSQA-{lang}",
+        hf_filter=lambda x: all(
+            len(x["question"]["choices"]["text"][i].strip()) > 0 for i in range(len(x["question"]["choices"]["text"]))
+        ),
+        evaluation_splits=("validation",),
+        few_shots_split="train",
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+        ],
+    )
+    for language in [
+        Language.ARABIC,
+        Language.GERMAN,
+        Language.ENGLISH,
+        Language.SPANISH,
+        Language.FRENCH,
+        Language.HINDI,
+        Language.ITALIAN,
+        Language.JAPANESE,
+        Language.DUTCH,
+        Language.POLISH,
+        Language.PORTUGUESE,
+        Language.RUSSIAN,
+        Language.SWAHILI,
+        Language.URDU,
+        Language.VIETNAMESE,
+        Language.CHINESE,
+    ]
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+    for lang in [language.value]
+]
+
+
+ALGHAFA_SUBSETS = [
+    "mcq_exams_test_ar",
+    "meta_ar_dialects",
+    "meta_ar_msa",
+    "multiple_choice_facts_truefalse_balanced_task",
+    "multiple_choice_grounded_statement_soqal_task",
+    "multiple_choice_grounded_statement_xglue_mlqa_task",
+    "multiple_choice_rating_sentiment_no_neutral_task",
+    "multiple_choice_rating_sentiment_task",
+    "multiple_choice_sentiment_task",
+]
+
+alghafa_native_tasks = [
+    LightevalTaskConfig(
+        name=f"alghafa_{Language.ARABIC.value}_{formulation.name.lower()}:{subset}",
+        hf_subset=subset,
+        prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter),
+        evaluation_splits=["test"],
+        few_shots_split="validation",
+        suite=["custom"],
+        hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Native",
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for subset in ALGHAFA_SUBSETS
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+race_ar_task = [
+    LightevalTaskConfig(
+        name=f"race_{Language.ARABIC.value}_{formulation.name.lower()}",
+        prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter),
+        suite=["custom"],
+        hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
+        hf_subset="race_ar",
+        hf_revision="a31ebd34ca311d7e0cfc6ad7f458b3435af280f5",
+        hf_avail_splits=["test", "validation"],
+        evaluation_splits=["test"],
+        few_shots_split="validation",
+        trust_dataset=True,
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+piqa_ar_tasks = [
+    LightevalTaskConfig(
+        name=f"piqa_{Language.ARABIC.value}_{formulation.name.lower()}",
+        prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter),
+        suite=["custom"],
+        hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
+        hf_revision="a31ebd34ca311d7e0cfc6ad7f458b3435af280f5",
+        hf_subset="piqa_ar",
+        hf_avail_splits=["test", "validation"],
+        evaluation_splits=["test"],
+        few_shots_split="validation",
+        trust_dataset=True,
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+openbook_ara_tasks = [
+    LightevalTaskConfig(
+        name=f"openbookqa_{Language.ARABIC.value}_{formulation.name.lower()}",
+        prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter),
+        suite=["custom"],
+        hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
+        hf_subset="openbook_qa_ext_ar",
+        hf_revision="a31ebd34ca311d7e0cfc6ad7f458b3435af280f5",
+        trust_dataset=True,
+        evaluation_splits=["test"],
+        few_shots_split="validation",
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+openbook_rus_tasks = [
+    LightevalTaskConfig(
+        name=f"openbookqa_{Language.RUSSIAN.value}_{formulation.name.lower()}",
+        prompt_function=get_mcq_prompt_function(
+            Language.RUSSIAN,
+            lambda line: {
+                "question": line["inputs"]["question"],
+                "choices": [line["inputs"][f"option_{i.lower()}"] for i in LETTER_INDICES[:4]],
+                "gold_idx": LETTER_INDICES.index(line["outputs"]),
+            },
+        ),
+        suite=["custom"],
+        hf_repo="ai-forever/MERA",
+        hf_subset="ruopenbookqa",
+        evaluation_splits=("train",),
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+sciq_ar_task = [
+    LightevalTaskConfig(
+        name=f"sciq_{Language.ARABIC.value}_{formulation.name.lower()}",
+        prompt_function=get_mcq_prompt_function(
+            Language.ARABIC,
+            lambda line: {
+                "question": line["question"],
+                "choices": line["choices"],
+                "gold_idx": line["choices"].index(line["answer"]),
+            },
+        ),
+        suite=["custom"],
+        hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
+        hf_subset="sciq_ar",
+        hf_revision="a31ebd34ca311d7e0cfc6ad7f458b3435af280f5",
+        hf_avail_splits=["test", "validation"],
+        evaluation_splits=["test"],
+        few_shots_split="validation",
+        few_shots_select="sequential",
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+        trust_dataset=True,
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+worldtree_rus_tasks = [
+    LightevalTaskConfig(
+        name=f"worldtree_{Language.RUSSIAN.value}_{formulation.name.lower()}",
+        prompt_function=get_mcq_prompt_function(
+            Language.RUSSIAN,
+            lambda line: {
+                "question": line["inputs"]["question"],
+                "choices": [line["inputs"][f"option_{i.lower()}"] for i in LETTER_INDICES[:4]],
+                "gold_idx": LETTER_INDICES.index(line["outputs"]),
+            },
+        ),
+        suite=("custom",),
+        hf_repo="ai-forever/MERA",
+        hf_subset="ruworldtree",
+        evaluation_splits=("train",),
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+
+# ------------------------------- Math Tasks ------------------------------- #
+
+mathqa_rus_tasks = [
+    LightevalTaskConfig(
+        name=f"mathlogic_qa_{Language.RUSSIAN.value}_{formulation.name.lower()}",
+        prompt_function=get_mcq_prompt_function(
+            Language.RUSSIAN,
+            lambda line: {
+                "question": line["inputs"]["text"],
+                "choices": [line["inputs"][f"option_{i.lower()}"] for i in LETTER_INDICES[:4]],
+                "gold_idx": LETTER_INDICES.index(line["outputs"]),
+            },
+        ),
+        suite=("custom",),
+        hf_repo="ai-forever/MERA",
+        hf_subset="mathlogicqa",
+        evaluation_splits=("train",),
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
