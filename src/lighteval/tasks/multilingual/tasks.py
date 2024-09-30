@@ -387,6 +387,7 @@ copa_indic_tasks = [
         ),
         hf_repo="ai4bharat/IndicCOPA",
         hf_subset=f"translation-{standardize_tag(language.value)}",
+        hf_revision="d356ef19a4eb287e88a51d07a56b73ba88c7f188",
         evaluation_splits=["test"],
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
@@ -445,7 +446,14 @@ parus_tasks = [
 
 
 # ------------------------------- Hellaswag Tasks ------------------------------- #
+# Hellaswag is a commonsense reasoning task that requires models to complete a given scenario
+# with the most plausible ending. It tests the model's ability to understand and reason about
+# everyday situations and human behavior.
 
+# MLMM-Hellaswag: Multilingual adaptation of Hellaswag
+# Paper: https://arxiv.org/abs/2306.07610
+# This is a multilingual version of Hellaswag, part of the MLMM (Massive Language Model Meta-Evaluation) benchmark.
+# It evaluates commonsense reasoning abilities across multiple languages.
 mlmm_hellaswag_tasks = [
     LightevalTaskConfig(
         name=f"hellaswag_{lang.value}_{formulation.name.lower()}",
@@ -508,6 +516,10 @@ mlmm_hellaswag_tasks = [
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
 
+# Hellaswag Turkish
+# This is a Turkish adaptation of the Hellaswag task.
+# While there's no specific paper for this version, it has been found to work well for evaluating
+# Turkish language models on commonsense reasoning tasks.
 hellaswag_tur_tasks = [
     LightevalTaskConfig(
         name=f"hellaswag_{Language.TURKISH.value}_{formulation.name.lower()}",
@@ -534,6 +546,10 @@ hellaswag_tur_tasks = [
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
 
+# Hellaswag Thai
+# This is a Thai adaptation of the Hellaswag task.
+# Similar to the Turkish version, there's no specific paper, but it has been found to be effective
+# for evaluating Thai language models on commonsense reasoning tasks.
 hellaswag_tha_tasks = [
     LightevalTaskConfig(
         name=f"hellaswag_{Language.THAI.value}_{formulation.name.lower()}",
