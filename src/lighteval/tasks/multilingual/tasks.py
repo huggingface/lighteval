@@ -246,7 +246,7 @@ ocnli_tasks = [
             adapter=lambda line: {
                 "premise": line["sentence1"],
                 "hypothesis": line["sentence2"],
-                # Since we ignore the neural label
+                # Since we ignore the neutral label
                 "gold_idx": {1: 0, 2: 1}[line["label"]],
             },
             relations=["entailment", "contradiction"],
