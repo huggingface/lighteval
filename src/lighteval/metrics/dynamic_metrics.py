@@ -37,7 +37,7 @@ from lighteval.metrics.normalizations import (
     LogProbTokenNorm,
     get_multilingual_normalizer,
 )
-from lighteval.metrics.utils.utils import MetricCategory, MetricUseCase, SampleLevelMetric
+from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase, SampleLevelMetric
 from lighteval.utils.language import Language
 
 

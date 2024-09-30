@@ -25,21 +25,21 @@ from typing import Callable
 from typing_extensions import NotRequired, TypedDict
 
 from lighteval.tasks.requests import Doc
+from lighteval.tasks.templates.utils.adapter_utils import create_adapter_from_dict
 from lighteval.tasks.templates.utils.formatting_utils import (
     capitalize,
     fix_capitalization,
     fix_ending_punct,
-    is_ended_sentence,
+    punctuation_ends_sentence,
 )
 from lighteval.tasks.templates.utils.formulation import (
     CFFormulation,
     Formulation,
     MCFFormulation,
     build_answers,
-    build_options,
+    build_choices,
 )
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
-from lighteval.tasks.templates.utils.utils import create_adapter_from_dict
 from lighteval.utils.language import Language
 from lighteval.utils.utils import as_list
 
@@ -49,8 +49,17 @@ CONTINUATION_QUERY_CF = "{instruction}{context}"
 CONTINUATION_QUERY_MCF = "{instruction}{context}\n{options}{answer_word}{colon}"
 
 
-# NO idea how to ensure we have the same keys in these typedicts in python :(
+# Defined for type hinting only
 class ContinuationInput(TypedDict):
+    """
+    Input for the continuation task.
+    Args:
+        context: The contextualization of choices (e.g. If I ask you a question, you should answer it)
+        continuations: Possible continuations of the context (e.g. [you should answer it, you should leave])
+        gold_idx: The index of the correct continuation
+        instruction (optional): The instruction of the task (e.g. Following is the snippet of a dialogue, choose the most appropriate continuation)
+    """
+
     context: str
     continuations: list[str]
     gold_idx: list[int] | int
@@ -58,18 +67,24 @@ class ContinuationInput(TypedDict):
 
 
 class ContinuationDictAdapter(TypedDict):
+    """
+    Adapter for mapping from the dataset row into the ContinuationInput format.
+    Args:
+        context: Column name in the row that contains the contextualization of choices (e.g. If I ask you a question, you should answer it)
+        continuations: Column name in the row that contains the possible continuations of the context (e.g. [you should answer it, you should leave])
+        gold_idx: Column name in the row that contains the index of the correct continuation
+        instruction (optional): Column name in the row that contains the instruction of the task (e.g. Following is the snippet of a dialogue, choose the most appropriate continuation)
+    """
+
     context: str
     continuations: str
     gold_idx: str
     instruction: NotRequired[str]
 
 
-# Python too dumb to do fancy inference :(
-
-
 def get_continuation_prompt_function(
     language: Language,
-    adapter: Callable[[dict], ContinuationInput] | ContinuationDictAdapter,
+    adapter: Callable[[dict], ContinuationInput | None] | ContinuationDictAdapter,
     formulation: Formulation = MCFFormulation(),
 ):
     """
@@ -79,24 +94,40 @@ def get_continuation_prompt_function(
     - XStoryCloze
 
     Format:
-    Context xxx | Continuation 1 | Continuation 2 | Continuation 3
+    *CF*
+    Context | Continuation 1/Continuation 2/Continuation 3
+
+    *Hybrid*
+    Context
+    A. Continuation 1
+    B. Continuation 2
+    C. Continuation 3
+    Answer: Continuation 1/Continuation 2/Continuation 3
+
+    *MCF*
+    Context
+    A. Continuation 1
+    B. Continuation 2
+    C. Continuation 3
+    Answer: A/B/C
+
+    This template is very similar to the `Multiple Choice` template, except that it only takes context/continuations as input and don't use the anchor labels (Question/Answer)
 
     Args:
         language (Language): The language of the Continuation task.
-        adapter (Callable[[dict], ContinuationInput] | ContinuationDictAdapter): A function or dictionary to adapt the input data to the required ContinuationInput format.
-            Must map data from the dataset row to the ContinuationInput format.
-            Note: The gold_idx must be an index or list of indices in the continuations list, indicating the correct continuation(s).
-        formulation (Formulation, optional): The formulation to use for the task. Defaults to MCFFormulation().
+        adapter (Callable[[dict], ContinuationInput] | ContinuationDictAdapter): Either a function that takes a dataset row and returns a ContinuationInput, or a dictionary with keys corresponding to the field names in the dataset row.
+            Note: Both ContinuationDictAdapter and ContinuationInput are TypeDicts, this means that the caller provides dictionary and doesn't initialize any class!
+        formulation (Formulation, optional): The formulation (MCF/Hybrid/CF) to use for the task. Defaults to MCFFormulation().
     Returns:
-        Callable: A function that generates Continuation prompts based on the given parameters.
+        Callable: A function that generates Continuation prompt based on the given parameters.
     """
-    adapter_fn: Callable[[dict], ContinuationInput] = (
-        create_adapter_from_dict(adapter) if isinstance(adapter, dict) else adapter  # type: ignore
-    )
+    adapter_fn = create_adapter_from_dict(adapter)
     translation_literals = TRANSLATION_LITERALS[language]
 
     def prepare_prompt(line: dict):
         cont_input = adapter_fn(line)
+        if cont_input is None:
+            return None
 
         instruction_val = cont_input.get("instruction")
         instruction = f"{instruction_val}\n" if instruction_val else ""
@@ -111,9 +142,13 @@ def get_continuation_prompt_function(
         return cont_input, instruction, context, continuations
 
     def prompt_fn_cf(line, task_name: str):
-        cont_input, instruction, context, continuations = prepare_prompt(line)
+        prepared_prompt = prepare_prompt(line)
+        if prepared_prompt is None:
+            return None
 
-        context_follows_sentence_space = is_ended_sentence(context, translation_literals)
+        cont_input, instruction, context, continuations = prepared_prompt
+
+        context_follows_sentence_space = punctuation_ends_sentence(context, translation_literals)
         answers = build_answers(continuations, formulation, translation_literals, context_follows_sentence_space)
 
         query = CONTINUATION_QUERY_CF.format(
@@ -131,9 +166,13 @@ def get_continuation_prompt_function(
         )
 
     def prompt_fn_mcf(line, task_name: str):
-        cont_input, instruction, context, continuations = prepare_prompt(line)
+        prepared_prompt = prepare_prompt(line)
+        if prepared_prompt is None:
+            return None
 
-        options = build_options(continuations, formulation, translation_literals)
+        cont_input, instruction, context, continuations = prepared_prompt
+
+        options = build_choices(continuations, formulation, translation_literals)
         options = f"{options}\n" if options else ""
         answers = build_answers(continuations, formulation, translation_literals)
 
