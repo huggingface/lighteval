@@ -30,6 +30,7 @@ from datetime import timedelta
 from enum import Enum, auto
 
 import numpy as np
+from tqdm import tqdm
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog, htrack_block
@@ -275,7 +276,9 @@ class Pipeline:
         # 2. Running the metric on each sample on its own.
         # Note: some samples are associated with several responses, like the multichoice samples
         # and some metrics will parse all samples at once in a second step during aggregation
-        for (sample_id, metric_category), sample_responses in sample_id_to_responses.items():
+        for (sample_id, metric_category), sample_responses in tqdm(
+            sample_id_to_responses.items(), desc="Computing metrics"
+        ):
             short_task_name = sample_id.task_name.rsplit("|", 1)[0]
 
             task: LightevalTask = self.task_dict[short_task_name]

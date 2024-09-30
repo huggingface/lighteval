@@ -25,7 +25,7 @@ using simple function (min, mean, max, ...) at the corpus level. Most metrics fa
 """
 
 import os
-from typing import Callable
+from typing import Callable, Literal
 
 import nltk
 import numpy as np
@@ -766,31 +766,78 @@ class JudgeLLM:
     available_models_openai = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo", "gpt-4"]
 
     def __init__(
-        self, judge_model_name: str, template_path: str, multi_turn: bool = False, use_transformers: bool = False
+        self,
+        judge_model_name: str,
+        template: Callable,
+        process_judge_response: Callable,
+        judge_backend: Literal["openai", "transformers", "vllm", "tgi"],
     ) -> None:
-        if judge_model_name in self.available_models_openai:
-            api_key = os.getenv("OPENAI_API_KEY")
-            url = None
-        elif not use_transformers:
-            api_key = os.getenv("HF_TOKEN")
-            url = "https://api-inference.huggingface.co/v1/"
-        else:
-            api = HfApi()
-            models = api.list_models(model_name=judge_model_name)
-            url = None
-            api_key = None
-            if not models:
-                raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
+        match judge_backend:
+            case "openai":
+                if judge_model_name not in self.available_models_openai:
+                    raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
+                else:
+                    api_key = os.getenv("OPENAI_API_KEY")
+                    url = None
+            case "tgi":
+                api_key = os.getenv("HF_TOKEN")
+                url = "https://api-inference.huggingface.co/v1/"
+            case "transformers" | "vllm":
+                api = HfApi()
+                models = api.list_models(model_name=judge_model_name)
+                url = None
+                api_key = None
+                if not models:
+                    raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
+            case _:
+                raise ValueError(f"{judge_backend} is not a valid backend for llm as a judge metric")
 
-        self.multi_turn = multi_turn
         self.judge = JudgeLM(
             model=judge_model_name,
-            templates_path=template_path,
-            multi_turn=multi_turn,
+            templates=template,
+            process_judge_response=process_judge_response,
             api_key=api_key,
             url=url,
+            judge_backend=judge_backend,
         )
 
+    def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
+        raise NotImplementedError("This method should be implemented in the subclass.")
+
+
+class JudgeLLMMTBench(JudgeLLM):
+    def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs):
+        """
+        Compute the score of a generative task using a llm as a judge.
+        The generative task can be multiturn with 2 turns max, in that case, we
+        return scores for turn 1 and 2. Also returns user_prompt and judgement
+        which are ignored later by the aggregator.
+        """
+        import json
+
+        # If we are evaluating a multiturn task, we need to have specific field in the formatted doc
+        questions = formatted_doc.specific["multi_turn_queries"]
+        golds = formatted_doc.specific.get("reference", None)
+
+        query_context_1 = {"query": questions[0], "context": ""}
+        query_context_2 = {"query": questions[1], "context": predictions[0]}
+
+        score_turn_1, message_turn_1, judgement_turn_1 = self.judge.evaluate_answer(
+            question=json.dumps(query_context_1, indent=2), answer=predictions[0], gold=golds[0] if golds else None
+        )
+        score_turn_2, message_turn_2, judgement_turn_2 = self.judge.evaluate_answer(
+            question=json.dumps(query_context_2, indent=2), answer=predictions[1], gold=golds[1] if golds else None
+        )
+
+        return {
+            "judge_score_turn_1": score_turn_1,
+            "judge_score_turn_2": score_turn_2,
+            "user_prompt": [message_turn_1, message_turn_2],
+            "judgement": [judgement_turn_1, judgement_turn_2],
+        }
+
+
+class JudgeLLMMixEval(JudgeLLM):
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
         """
         Compute the score of a generative task using a llm as a judge.
@@ -798,28 +845,14 @@ class JudgeLLM:
         return scores for turn 1 and 2. Also returns user_prompt and judgement
         which are ignored later by the aggregator.
         """
+        question = formatted_doc.specific["question"]
+        options = formatted_doc.choices
+        gold = formatted_doc.choices[formatted_doc.gold_index[0]]
 
-        # If we are evaluating a multiturn task, we need to have specific field in the formatted doc
-        if self.multi_turn:
-            questions = formatted_doc.specific["multi_turn_queries"]
-            ref_answers = formatted_doc.specific.get("reference", None) if formatted_doc.specific is not None else None
-        else:
-            questions = [formatted_doc.query]
-            ref_answers = [formatted_doc.choices[formatted_doc.gold_index]]
-
-        scores, messages, judgements = self.judge.evaluate_answer(questions, predictions, ref_answers)
-
-        # Multi turn only has 2 turns
-        if self.multi_turn:
-            return {
-                "single_turn": scores[0],
-                "multi_turn": scores[1],
-                "user_prompt": [messages[0], messages[1]],
-                "judgement": [judgements[0], judgements[1]],
-            }
+        score, messages, judgements = self.judge.evaluate_answer(question, predictions[0], options, gold)
 
         return {
-            "judge_score": scores[0],
+            "judge_score": score,
             "user_prompt": messages[0],
             "judgement": judgements[0],
         }
