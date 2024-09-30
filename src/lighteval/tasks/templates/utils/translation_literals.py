@@ -299,7 +299,6 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
     Language.GALICIAN: TranslationLiterals(language=Language.GALICIAN),
     Language.ARMENIAN: TranslationLiterals(language=Language.ARMENIAN),
     Language.BASQUE: TranslationLiterals(language=Language.BASQUE),
-    Language.SWAHILI: TranslationLiterals(language=Language.SWAHILI),
     Language.MALAY: TranslationLiterals(language=Language.MALAY),
     Language.TAGALOG: TranslationLiterals(language=Language.TAGALOG),
     Language.JAVANESE: TranslationLiterals(language=Language.JAVANESE),
