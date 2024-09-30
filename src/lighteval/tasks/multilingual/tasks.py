@@ -55,7 +55,7 @@ xnli_tasks = [
             adapter=lambda line: {
                 "premise": line["premise"],
                 "hypothesis": line["hypothesis"],
-                # Since we ignore the neural label
+                # Since we ignore the neutral label
                 "gold_idx": {0: 0, 2: 1}[line["label"]],
             },
             relations=["entailment", "contradiction"],
@@ -102,7 +102,7 @@ xnli2_tasks = [
             adapter=lambda line: {
                 "premise": line["premise"],
                 "hypothesis": line["hypothesis"],
-                # Since we ignore the neural label
+                # Since we ignore the neutral label
                 "gold_idx": {0: 0, 2: 1}[line["label"]],
             },
             relations=["entailment", "contradiction"],
@@ -154,7 +154,7 @@ xnli_indic_tasks = [
             adapter=lambda line: {
                 "premise": line["premise"],
                 "hypothesis": line["hypothesis"],
-                # Since we ignore the neural label
+                # Since we ignore the neutral label
                 "gold_idx": {0: 0, 2: 1}[line["label"]],
             },
             relations=["entailment", "contradiction"],
@@ -203,7 +203,7 @@ paws_x_tasks = [
             adapter=lambda line: {
                 "premise": line["sentence1"],
                 "hypothesis": line["sentence2"],
-                # Since we ignore the neural label
+                # Since we ignore the neutral label
                 "gold_idx": int(line["label"]),
             },
             relations=["entailment", "contradiction"],
@@ -240,7 +240,7 @@ rcb_tasks = [
             adapter=lambda line: {
                 "premise": line["inputs"]["premise"],
                 "hypothesis": line["inputs"]["hypothesis"],
-                # Since we ignore the neural label
+                # Since we ignore the neutral label
                 "gold_idx": int(line["outputs"]) - 1,
             },
             relations=["entailment", "contradiction"],
@@ -270,7 +270,7 @@ ocnli_tasks = [
             adapter=lambda line: {
                 "premise": line["sentence1"],
                 "hypothesis": line["sentence2"],
-                # Since we ignore the neural label
+                # Since we ignore the neutral label
                 "gold_idx": {1: 0, 2: 1}[line["label"]],
             },
             relations=["entailment", "contradiction"],
@@ -300,7 +300,7 @@ cmnli_tasks = [
             adapter=lambda line: {
                 "premise": line["sentence1"],
                 "hypothesis": line["sentence2"],
-                # Since we ignore the neural label
+                # Since we ignore the neutral label
                 "gold_idx": {"entailment": 0, "contradiction": 1}[line["label"]],
             },
             relations=["entailment", "contradiction"],
