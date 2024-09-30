@@ -564,7 +564,7 @@ class BertScore:
         self.normalize_gold = normalize_gold
         self.normalize_pred = normalize_pred
 
-    def compute(self, golds: list[str], predictions: list[str]) -> dict:
+    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> dict:
         """Computes the prediction, recall and f1 score using the bert scorer.
 
         Args:
