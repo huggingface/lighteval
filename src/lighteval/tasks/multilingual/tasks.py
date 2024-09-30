@@ -461,7 +461,7 @@ mlmm_hellaswag_tasks = [
         prompt_function=get_hellaswag_prompt_function(
             language=lang,
             adapter=lambda line: {
-                # We don't use activity_label they are not available
+                # We don't use activity_label as they are not available
                 "ctx_a": line["ctx_a"],
                 "ctx_b": line["ctx_b"],
                 "continuations": line["endings"],
