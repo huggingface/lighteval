@@ -23,6 +23,7 @@
 from lighteval.tasks.templates.utils.translation_literals import TranslationLiterals
 
 
+# Contains punctuation covering most of the languages big chunk took from https://stackoverflow.com/questions/9506869/are-there-character-collections-for-all-international-full-stop-punctuations
 PUNCT = "᪩？⁈𑩂．꩞𑅃﹗𑂾\u1b7d፧𑅂꡶꘎⁉࠾᪨𑊩𑱂᱿𖩮᥅\U00011f43\U00011f44﹒𑈹𑈸።܂؞꛳\U00010f88𑗍𐩖𑙂\u061d꩟᠉\u1b7e𑗗᰼𑻸؟𑪜꧉𑗉𐽙𖫵𖬷܀꓿᜵𑗏𑁇𑗓𑥄៖𑥆𑗑𑗒꯫'۔𐩗\U00010f86꡷\u2e54｡៕߹⸮.𑇅࠹𛲟꫰ល꤯𐽗᭞𑜼፨𑃁꣏𑇟𖬸𑪛𑜾࠷𝪈?𑃀𑗃！։꣎॥𑗖᭛᠃!၊𖺘⁇𑗌𑑋𖭄᭟\"𑅁𑙁⸼꩝𑗋。꧈꫱𑜽𐽖𑂿᙮។꛷\U00010f89៚᥄𑗕𑗎᪪᭚࠽𑇞𑗊𐽘\u2e53𑗔𖩯𑇍𑻷𐽕𑩃।𑗂𑇆𑁈။᱾𑱁꘏܁᜶‼𑈻‽᪫﹖𑑌𑈼\U00010f87𑗐៙᰻"
 
 
@@ -63,7 +64,7 @@ def fix_ending_punct(ctx: str, translation_literals: TranslationLiterals):
     return ctx
 
 
-def is_ended_sentence(text: str, translation_literals: TranslationLiterals):
+def punctuation_ends_sentence(text: str, translation_literals: TranslationLiterals):
     """
     Check if the string ends with a sentence-ending punctuation mark.
     That's .?!:
@@ -93,4 +94,4 @@ def fix_capitalization(prefix: str, text: str, translation_literals: Translation
     if prefix.endswith("\n"):
         return capitalize(text)
 
-    return capitalize(text) if is_ended_sentence(prefix, translation_literals) else decapitalize(text)
+    return capitalize(text) if punctuation_ends_sentence(prefix, translation_literals) else decapitalize(text)
