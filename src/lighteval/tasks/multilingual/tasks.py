@@ -519,6 +519,9 @@ mlmm_hellaswag_tasks = [
 # This is a Turkish adaptation of the Hellaswag task.
 # While there's no specific paper for this version, it has been found to work well for evaluating
 # Turkish language models on commonsense reasoning tasks.
+
+# We don't handle them in single task as there is quite a lot of differences (dataset/subset, dot replacement, etc.)
+# which would make it hard to read
 hellaswag_tur_tasks = [
     LightevalTaskConfig(
         name=f"hellaswag_{Language.TURKISH.value}_{formulation.name.lower()}",

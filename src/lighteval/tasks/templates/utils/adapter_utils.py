@@ -21,10 +21,15 @@
 # SOFTWARE.
 
 
-from typing import Any, Callable
+from typing import Any, Callable, Mapping, TypeVar
 
 
-def create_adapter_from_dict(adapter: dict[str, str | None] | Callable[[dict], Any]):
+AdapterReturnTypeVar = TypeVar("AdapterReturnTypeVar")
+
+
+def create_adapter_from_dict(
+    adapter: Mapping[str, Any] | Callable[[dict], AdapterReturnTypeVar],
+) -> Callable[[dict], AdapterReturnTypeVar]:
     """
     Creates adapter function for the template input from a dict.
     Args:
@@ -32,10 +37,10 @@ def create_adapter_from_dict(adapter: dict[str, str | None] | Callable[[dict], A
 
     """
 
-    if not isinstance(adapter, dict):
+    if not isinstance(adapter, Mapping):
         return adapter
 
     def adapter_fn(line: dict):
-        return {key: line[value] for key, value in adapter.items()}  # type: ignore
+        return {key: line[value] for key, value in adapter.items()}
 
-    return adapter_fn
+    return adapter_fn  # type: ignore
