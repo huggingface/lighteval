@@ -218,7 +218,7 @@ rcb_tasks = [
             adapter=lambda line: {
                 "premise": line["inputs"]["premise"],
                 "hypothesis": line["inputs"]["hypothesis"],
-                # Since we ignore the neural label
+                # Since we ignore the neutral label
                 "gold_idx": int(line["outputs"]) - 1,
             },
             relations=["entailment", "contradiction"],
