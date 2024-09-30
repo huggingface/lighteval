@@ -56,9 +56,9 @@ from lighteval.utils.utils import as_list, safe_divide
 class ExactMatches:
     def __init__(
         self,
-        aggregation_function: callable = None,
-        normalize_gold: callable = None,
-        normalize_pred: callable = None,
+        aggregation_function: Callable[[list[float]], float] = max,
+        normalize_gold: Callable[[str], str] | None = None,
+        normalize_pred: Callable[[str], str] | None = None,
         strip_strings: bool = False,
         type_exact_match: str = "full",
     ):
@@ -78,8 +78,6 @@ class ExactMatches:
                 `suffix` if the prediction ends with the gold,
                 `full` if the prediction and gold are equal
         """
-        if aggregation_function is None:
-            aggregation_function = max
         self.aggregation_function = aggregation_function
         self.normalize_gold = normalize_gold
         self.normalize_pred = normalize_pred
@@ -145,9 +143,9 @@ class ExactMatches:
 class F1_score:
     def __init__(
         self,
-        aggregation_function: callable = None,
-        normalize_gold: callable = None,
-        normalize_pred: callable = None,
+        aggregation_function: Callable[[list[float]], float] = max,
+        normalize_gold: Callable[[str], str] | None = None,
+        normalize_pred: Callable[[str], str] | None = None,
         strip_strings: bool = False,
     ):
         """An F1 score class. F1 is computed over the bag of words of the golds and predictions.
@@ -163,8 +161,8 @@ class F1_score:
         """
         if aggregation_function is None:
             aggregation_function = max
-        self.aggregation_function = aggregation_function
 
+        self.aggregation_function = aggregation_function
         self.normalize_gold = normalize_gold
         self.normalize_pred = normalize_pred
         self.strip_strings = strip_strings
@@ -566,7 +564,7 @@ class BertScore:
         self.normalize_gold = normalize_gold
         self.normalize_pred = normalize_pred
 
-    def compute(self, golds: list[str], predictions: list[str]) -> dict:
+    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> dict:
         """Computes the prediction, recall and f1 score using the bert scorer.
 
         Args:
@@ -595,24 +593,104 @@ class BertScore:
         return {"BERTScore-P": p[0].item(), "BERTScore-R": r[0].item(), "BERTScore-F": f[0].item()}
 
 
-# todo: make into clean classes with call to normalizer
-def extractiveness(formatted_doc: Doc, predictions: list[str], **kwargs):
-    inp = remove_braces(formatted_doc.specific["text"])
-    pred = remove_braces_and_strip(predictions[0])
-    stats = DataStatsMetric().evaluate_example(pred, inp)
-    return {
-        "summarization_coverage": stats["coverage"],
-        "summarization_density": stats["density"],
-        "summarization_compression": stats["compression"],
-    }
+class Extractiveness:
+    def __init__(
+        self,
+        normalize_input: callable = remove_braces,
+        normalize_pred: callable = remove_braces_and_strip,
+        input_column: str = "text",
+    ):
+        """
+        Extractiveness metric class.
+
+        Args:
+            normalize_input (callable, optional): Function to normalize the input strings.
+                Defaults to remove_braces from lighteval.metrics.normalizations if no normalization is applied.
+            normalize_pred (callable, optional): Function to use to normalize the predicted strings.
+                Defaults to remove_braces_and_strip from lighteval.metrics.normalizations if no normalization is applied.
+            input_column (str): Column in the formatted_doc to use for the input. Defaults to "text".
+        """
+        self.stats_metric = None
+        self.normalize_input = normalize_input
+        self.normalize_pred = normalize_pred
+        self.input_column = input_column
+
+    def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
+        """
+        Compute the extractiveness of the predictions.
+
+        This method calculates coverage, density, and compression scores for a single
+        prediction against the input text.
+
+        Args:
+            predictions (list[str]): Predicted strings, a list of length 1.
+            formatted_doc (Doc): The formatted document.
+
+        Returns:
+            dict[str, float]: The extractiveness scores.
+        """
+        if self.stats_metric is None:
+            self.stats_metric = DataStatsMetric()
+
+        inp = formatted_doc.specific[self.input_column]
+        prediction = predictions[0]
+        if self.normalize_input:
+            inp = self.normalize_input(inp)
+        if self.normalize_pred:
+            prediction = self.normalize_pred(prediction)
+
+        stats = self.stats_metric.evaluate_example(prediction, inp)
+        return {
+            "summarization_coverage": stats["coverage"],
+            "summarization_density": stats["density"],
+            "summarization_compression": stats["compression"],
+        }
 
 
-# todo: make into clean classes with call to normalizer
-def faithfulness(formatted_doc: Doc, predictions: list[str], **kwargs):
-    inp = remove_braces(formatted_doc.specific["text"])
-    pred = remove_braces_and_strip(predictions[0])
-    summac = SummaCZS(granularity="sentence", model_name="vitc", imager_load_cache=False)  # , device=device)
-    return summac.score_one(inp, pred)["score"]
+class Faithfulness:
+    def __init__(
+        self,
+        normalize_input: callable = remove_braces,
+        normalize_pred: callable = remove_braces_and_strip,
+        input_column: str = "text",
+    ):
+        """
+        Faithfulness metric class.
+
+        Args:
+            normalize_input (callable, optional): Function to normalize the input strings.
+                Defaults to remove_braces from lighteval.metrics.normalizations if no normalization is applied.
+            normalize_pred (callable, optional): Function to use to normalize the predicted strings.
+                Defaults to remove_braces_and_strip from lighteval.metrics.normalizations if no normalization is applied.
+            input_column (str): Column in the formatted_doc to use for the input. Defaults to "text".
+        """
+        self.summac = None
+        self.normalize_input = normalize_input
+        self.normalize_pred = normalize_pred
+        self.input_column = input_column
+
+    def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
+        """
+        Compute the faithfulness of the predictions.
+
+        The SummaCZS (Summary Content Zero-Shot) model is used with configurable granularity and model variation.
+
+        Args:
+            predictions (list[str]): Predicted strings, a list of length 1.
+            formatted_doc (Doc): The formatted document.
+
+        Returns:
+            dict[str, float]: The faithfulness scores.
+        """
+        if self.summac is None:
+            SummaCZS(granularity="sentence", model_name="vitc", imager_load_cache=False)  # , device=device)
+        inp = formatted_doc.specific[self.input_column]
+        prediction = predictions[0]
+        if self.normalize_input:
+            inp = self.normalize_input(inp)
+        if self.normalize_pred:
+            prediction = self.normalize_pred(prediction)
+        return self.summac.score_one(inp, prediction)["score"]
 
 
 class BLEURT:

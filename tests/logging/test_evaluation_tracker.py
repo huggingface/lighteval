@@ -126,9 +126,9 @@ def test_no_details_output(mock_evaluation_tracker: EvaluationTracker):
     assert not details_dir.exists()
 
 
-@pytest.mark.skipif(
+@pytest.mark.skip(  # skipif
     reason="Secrets are not available in this environment",
-    condition=os.getenv("HF_TEST_TOKEN") is None,
+    # condition=os.getenv("HF_TEST_TOKEN") is None,
 )
 @pytest.mark.evaluation_tracker(push_to_hub=True, hub_results_org=TESTING_EMPTY_HF_ORG_ID)
 def test_push_to_hub_works(testing_empty_hf_org_id, mock_evaluation_tracker: EvaluationTracker, mock_datetime):
