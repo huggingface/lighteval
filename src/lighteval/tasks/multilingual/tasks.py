@@ -539,9 +539,14 @@ TASKS_TABLE.extend(
     ]
 )
 # ------------------------------- RC Tasks ------------------------------- #
+# Reading Comprehension (RC) tasks evaluate a model's ability to understand and extract information from text passages.
+# These tasks typically involve answering questions based on given contexts, spanning multiple languages and formats.
+# Add RC tasks supporting about 130 unique languages/scripts.
 
 # SQuAD - like
 
+# XQuAD: Cross-lingual Question Answering Dataset, extending SQuAD to 11 languages.
+# https://arxiv.org/abs/1910.11856
 xquad_tasks = [
     LightevalTaskConfig(
         name=f"xquad_{language.value}",
@@ -553,7 +558,7 @@ xquad_tasks = [
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="google/xquad",
         hf_subset=f"xquad.{standardize_tag(language.value)}",
         evaluation_splits=("validation",),
@@ -581,6 +586,7 @@ xquad_tasks = [
     ]
 ]
 
+# ThaiQA: A question answering dataset for the Thai language.
 thaiqa_tasks = [
     LightevalTaskConfig(
         name=f"thaiqa_{Language.THAI.value}",
@@ -592,7 +598,7 @@ thaiqa_tasks = [
                 "choices": [ans for ans in line["answers"]["answer"] if len(ans) > 0],
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="HuggingFaceFW-Dev/thaiqa_squad_fixed",
         hf_subset="default",
         evaluation_splits=("train",),
@@ -606,6 +612,8 @@ thaiqa_tasks = [
     )
 ]
 
+# SberQuAD: A large-scale Russian reading comprehension dataset.
+# https://arxiv.org/abs/1912.09723
 sber_squad_tasks = [
     LightevalTaskConfig(
         name=f"sber_squad_{Language.RUSSIAN.value}",
@@ -617,7 +625,7 @@ sber_squad_tasks = [
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="kuznetsoffandrey/sberquad",
         hf_subset="sberquad",
         evaluation_splits=("validation",),
@@ -631,6 +639,8 @@ sber_squad_tasks = [
     )
 ]
 
+# ARCD: Arabic Reading Comprehension Dataset.
+# https://arxiv.org/pdf/1906.05394
 arcd_tasks = [
     LightevalTaskConfig(
         name=f"arcd_{Language.ARABIC.value}",
@@ -642,7 +652,7 @@ arcd_tasks = [
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="hsseinmz/arcd",
         hf_subset="plain_text",
         evaluation_splits=("train", "validation"),
@@ -656,6 +666,8 @@ arcd_tasks = [
     )
 ]
 
+# KenSwQuAD: A question answering dataset for Kenyan Swahili.
+# https://arxiv.org/abs/2205.02364
 kenswquad_tasks = [
     LightevalTaskConfig(
         name=f"kenswquad_{Language.SWAHILI.value}",
@@ -667,7 +679,7 @@ kenswquad_tasks = [
                 "choices": [line["answer"]],
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="HuggingFaceFW-Dev/KenSwQuAD",
         hf_subset="default",
         evaluation_splits=("test",),
@@ -681,6 +693,8 @@ kenswquad_tasks = [
     )
 ]
 
+# ChineseSquad: A reading comprehension dataset for Chinese.
+# https://github.com/pluto-junzeng/ChineseSquad
 chinese_squad_tasks = [
     LightevalTaskConfig(
         name=f"chinese_squad_{Language.CHINESE.value}",
@@ -692,7 +706,7 @@ chinese_squad_tasks = [
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="HuggingFaceFW-Dev/ChineseSquad",
         hf_subset="default",
         evaluation_splits=("validation",),
@@ -706,6 +720,8 @@ chinese_squad_tasks = [
     )
 ]
 
+# CMRC 2018: A span-extraction machine reading comprehension dataset for Chinese.
+# https://arxiv.org/abs/1810.07366
 cmrc2018_tasks = [
     LightevalTaskConfig(
         name=f"cmrc2018_{Language.CHINESE.value}",
@@ -717,7 +733,7 @@ cmrc2018_tasks = [
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="clue/clue",
         hf_subset="cmrc2018",
         evaluation_splits=("trial",),
@@ -731,6 +747,8 @@ cmrc2018_tasks = [
     )
 ]
 
+# IndicQA: A reading comprehension dataset for 11 Indian languages.
+# https://arxiv.org/abs/2407.13522
 indicqa_tasks = [
     LightevalTaskConfig(
         name=f"indicqa_{language.value}",
@@ -742,7 +760,7 @@ indicqa_tasks = [
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="ai4bharat/IndicQA",
         hf_subset=f"indicqa.{LangCodeLanguage.get(language.value).language}",
         hf_revision="92d96092ae229950973dac3b9998f8b3a8949b0a",
@@ -772,7 +790,8 @@ indicqa_tasks = [
     ]
 ]
 
-
+# FQuAD v2: French Question Answering Dataset version 2.
+# https://arxiv.org/abs/2002.06071
 fquad_v2_tasks = [
     LightevalTaskConfig(
         name=f"fquadv2_{Language.FRENCH.value}",
@@ -784,7 +803,7 @@ fquad_v2_tasks = [
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="manu/fquad2_test",
         hf_subset="default",
         evaluation_splits=("test_hasAns",),
@@ -798,6 +817,7 @@ fquad_v2_tasks = [
     )
 ]
 
+# TQuAD v2: Turkish Question Answering Dataset version 2.
 tquad_v2_tasks = [
     LightevalTaskConfig(
         name=f"tquadv2_{Language.TURKISH.value}",
@@ -809,7 +829,7 @@ tquad_v2_tasks = [
                 "choices": [a["text"] for a in line["answers"]],
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="erdometo/tquad2",
         hf_subset="default",
         evaluation_splits=("validation",),
@@ -823,8 +843,10 @@ tquad_v2_tasks = [
     )
 ]
 
-
 # Other QA tasks for RC
+
+# TyDi QA: A benchmark for information-seeking question answering in typologically diverse languages.
+# https://arxiv.org/abs/2003.05002
 tydiqa_tasks = [
     LightevalTaskConfig(
         name=f"tydiqa_{language.value}",
@@ -836,7 +858,7 @@ tydiqa_tasks = [
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="google-research-datasets/tydiqa",
         hf_subset="secondary_task",
         evaluation_splits=("validation",),
@@ -865,7 +887,9 @@ tydiqa_tasks = [
 
 # Other MCF tasks for RC
 
-beleble_tasks = [
+# Belebele: A large-scale reading comprehension dataset covering 122 languages.
+# https://arxiv.org/abs/2308.16884
+belebele_tasks = [
     LightevalTaskConfig(
         name=f"belebele_{language}_{formulation.name.lower()}",
         prompt_function=get_mcq_prompt_function(
@@ -877,7 +901,7 @@ beleble_tasks = [
                 "gold_idx": int(line["correct_answer_num"]) - 1,
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="facebook/belebele",
         hf_subset=language,
         evaluation_splits=("test",),
@@ -1025,6 +1049,6 @@ TASKS_TABLE.extend(
         *fquad_v2_tasks,
         *tquad_v2_tasks,
         *tydiqa_tasks,
-        *beleble_tasks,
+        *belebele_tasks,
     ]
 )
