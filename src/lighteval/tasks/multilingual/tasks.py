@@ -457,7 +457,7 @@ parus_tasks = [
 mlmm_hellaswag_tasks = [
     LightevalTaskConfig(
         name=f"hellaswag_{lang.value}_{formulation.name.lower()}",
-        suite=["custom"],
+        suite=["lighteval"],
         prompt_function=get_hellaswag_prompt_function(
             language=lang,
             adapter=lambda line: {
@@ -523,7 +523,7 @@ mlmm_hellaswag_tasks = [
 hellaswag_tur_tasks = [
     LightevalTaskConfig(
         name=f"hellaswag_{Language.TURKISH.value}_{formulation.name.lower()}",
-        suite=["custom"],
+        suite=["lighteval"],
         prompt_function=get_hellaswag_prompt_function(
             language=Language.TURKISH,
             adapter=lambda line: {
@@ -553,7 +553,7 @@ hellaswag_tur_tasks = [
 hellaswag_tha_tasks = [
     LightevalTaskConfig(
         name=f"hellaswag_{Language.THAI.value}_{formulation.name.lower()}",
-        suite=["custom"],
+        suite=["lighteval"],
         prompt_function=get_hellaswag_prompt_function(
             language=Language.THAI,
             adapter=lambda line: {
