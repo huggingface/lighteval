@@ -104,17 +104,20 @@ def math_normalizer(text: str) -> str:  # noqa C901
         """
         if text is None:
             return ""
-        if "\\boxed " in text:
-            left = "\\boxed "
+        try:
+            if "\\boxed " in text:
+                left = "\\boxed "
+                assert text[: len(left)] == left
+                return text[len(left) :]
+
+            left = "\\boxed{"
+
             assert text[: len(left)] == left
-            return text[len(left) :]
+            assert text[-1] == "}"
 
-        left = "\\boxed{"
-
-        assert text[: len(left)] == left
-        assert text[-1] == "}"
-
-        return text[len(left) : -1]
+            return text[len(left) : -1]
+        except Exception:
+            return ""
 
     def _last_boxed_only_string(text: str) -> str | None:
         """Extract the last \\boxed{...} or \\fbox{...} element from a string."""
@@ -386,8 +389,9 @@ def remove_articles(text: str, lang: Language) -> str:
     """
     Removes definite and indefinite articles from the text.
     Generated using LLM then manually checked by non-expert.
-    Only languages that don't blend the articles, if you are native speaker,
-    we would appreciate adding also languages that blend the articles.
+    We currently only support languages that don't blend articles.
+    If you are a native speaker of a language where articles are blended,
+    we would appreciate your contribution!
     """
     pattern = _ARTICLE_PATTERNS.get(lang)
     return re.sub(pattern, " ", text) if pattern else text
