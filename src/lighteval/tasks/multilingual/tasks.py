@@ -322,11 +322,16 @@ cmnli_tasks = [
 ]
 
 # ------------------------------- Copa Tasks ------------------------------- #
+# COPA (Choice of Plausible Alternatives) tasks involve determining the most plausible cause or effect
+# for a given premise. These tasks test common sense reasoning and causal inference abilities.
 
-copa_tasks = [
+# XCOPA: Cross-lingual Choice of Plausible Alternatives
+# Paper: https://aclanthology.org/2020.emnlp-main.185/
+# XCOPA extends the original English COPA task to 11 typologically diverse languages.
+xcopa_tasks = [
     LightevalTaskConfig(
         name=f"xcopa_{language.value}_{formulation.name.lower()}",
-        suite=["custom"],
+        suite=["lighteval"],
         prompt_function=get_copa_prompt_function(
             language,
             adapter=lambda line: {
@@ -361,10 +366,14 @@ copa_tasks = [
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
 
+# IndicCOPA: COPA for Indic Languages
+# Paper: https://arxiv.org/pdf/2212.05409
+# IndicCOPA extends COPA to 15 Indic languages, providing a valuable resource for
+# evaluating common sense reasoning in these languages.
 copa_indic_tasks = [
     LightevalTaskConfig(
         name=f"indicxcopa_{language.value}_{formulation.name.lower()}",
-        suite=["custom"],
+        suite=["lighteval"],
         prompt_function=get_copa_prompt_function(
             language,
             adapter=lambda line: {
@@ -404,10 +413,14 @@ copa_indic_tasks = [
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
 
+# PARus: Plausible Alternatives for Russian
+# Paper: https://russiansuperglue.com/tasks/task_info/PARus
+# PARus is the Russian adaptation of the COPA task, part of the Russian SuperGLUE benchmark.
+# It evaluates common sense reasoning and causal inference abilities in Russian language models.
 parus_tasks = [
     LightevalTaskConfig(
         name=f"parus_{Language.RUSSIAN.value}_{formulation.name.lower()}",
-        suite=["custom"],
+        suite=["lighteval"],
         prompt_function=get_copa_prompt_function(
             language=Language.RUSSIAN,
             adapter=lambda line: {
@@ -438,7 +451,7 @@ TASKS_TABLE = [
     *rcb_tasks,
     *ocnli_tasks,
     *cmnli_tasks,
-    *copa_tasks,
+    *xcopa_tasks,
     *copa_indic_tasks,
     *parus_tasks,
 ]
