@@ -25,10 +25,10 @@ from typing import Callable
 from typing_extensions import NotRequired, TypedDict
 
 from lighteval.tasks.requests import Doc
+from lighteval.tasks.templates.utils.adapter_utils import create_adapter_from_dict
 from lighteval.tasks.templates.utils.formatting_utils import capitalize, fix_ending_punct
-from lighteval.tasks.templates.utils.formulation import Formulation, MCFFormulation, build_answers, build_options
+from lighteval.tasks.templates.utils.formulation import Formulation, MCFFormulation, build_answers, build_choices
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
-from lighteval.tasks.templates.utils.utils import create_adapter_from_dict
 from lighteval.utils.language import Language
 from lighteval.utils.utils import as_list
 
@@ -38,8 +38,18 @@ MULTI_CHOICE_QA_QUERY = (
 )
 
 
-# NO idea how to ensure we have the same keys in these typedicts in python :(
+# Defined for type hinting only
 class MCQInput(TypedDict):
+    """
+    Input for the multiple choice task.
+    Args:
+        question: The question to be answered (e.g. What is the capital of France?)
+        choices: Possible choices for the question (e.g. [Paris, London, Berlin, Rome])
+        gold_idx: The index of the correct choice
+        context (optional): The context of the question (e.g. Capital of France starts with P)
+        instruction (optional): The instruction of the task (e.g. Answer the following question)
+    """
+
     question: str
     choices: list[str]
     gold_idx: list[int] | int
@@ -48,6 +58,16 @@ class MCQInput(TypedDict):
 
 
 class MCQDictAdapter(TypedDict):
+    """
+    Adapter for mapping from the dataset row into the MCQInput format.
+    Args:
+        question: Column name in the row that contains the question to be answered (e.g. What is the capital of France?)
+        choices: Column name in the row that contains the possible choices for the question (e.g. [Paris, London, Berlin, Rome])
+        gold_idx: Column name in the row that contains the index of the correct choice
+        context (optional): Column name in the row that contains the context of the question (e.g. Capital of France starts with P)
+        instruction (optional): Column name in the row that contains the instruction of the task (e.g. Answer the following question)
+    """
+
     question: str
     choices: str
     gold_idx: str
@@ -70,8 +90,25 @@ def get_mcq_prompt_function(
     - TruthfulQA
 
     Format:
+    *CF*
     Question: xxx
     Answer: | Answer
+
+    *Hybrid*
+    Question: xxx
+    A. Answer
+    B. Answer
+    C. Answer
+    D. Answer
+    Answer: | Answer
+
+    *MCF*
+    Question: xxx
+    A. Answer
+    B. Answer
+    C. Answer
+    D. Answer
+    Answer: | A/B/C/D
 
     Args:
         language (Language): The language of the MCQ task.
@@ -83,9 +120,7 @@ def get_mcq_prompt_function(
         Callable: A function that generates MCQ prompts based on the given parameters.
     """
 
-    adapter_fn: Callable[[dict], MCQInput] = (
-        create_adapter_from_dict(adapter) if isinstance(adapter, dict) else adapter  # type: ignore
-    )
+    adapter_fn: Callable[[dict], MCQInput] = create_adapter_from_dict(adapter)  # type: ignore
 
     def prompt_fn(line, task_name: str):
         mcq_input = adapter_fn(line)
@@ -100,7 +135,7 @@ def get_mcq_prompt_function(
         question = capitalize(fix_ending_punct(mcq_input["question"], translation_literals))
         answers = [capitalize(fix_ending_punct(answer, translation_literals)) for answer in mcq_input["choices"]]
 
-        options = build_options(answers, formulation, translation_literals)
+        options = build_choices(answers, formulation, translation_literals)
         options = f"{options}\n" if options else ""
         answers = build_answers(answers, formulation, translation_literals)
 

@@ -48,7 +48,7 @@ from lighteval.utils.language import Language
 xnli_tasks = [
     LightevalTaskConfig(
         name=f"xnli_{language.value}_{formulation.name.lower()}",
-        suite=["custom"],
+        suite=["lighteval"],
         metric=[loglikelihood_acc_metric(normalization=LogProbTokenNorm())],
         prompt_function=get_nli_prompt_function(
             language=language,
@@ -95,7 +95,7 @@ xnli_tasks = [
 xnli2_tasks = [
     LightevalTaskConfig(
         name=f"xnli2.0_{language.value}_{formulation.name.lower()}",
-        suite=["custom"],
+        suite=["lighteval"],
         metric=[loglikelihood_acc_metric(normalization=LogProbTokenNorm())],
         prompt_function=get_nli_prompt_function(
             language=language,
@@ -148,7 +148,7 @@ xnli2_tasks = [
 xnli_indic_tasks = [
     LightevalTaskConfig(
         name=f"indicnxnli_{language.value}_{formulation.name.lower()}",
-        suite=["custom"],
+        suite=["lighteval"],
         prompt_function=get_nli_prompt_function(
             language=language,
             adapter=lambda line: {
@@ -197,7 +197,7 @@ xnli_indic_tasks = [
 paws_x_tasks = [
     LightevalTaskConfig(
         name=f"pawsx_{language.value}_{formulation.name.lower()}",
-        suite=("custom",),
+        suite=("lighteval",),
         prompt_function=get_nli_prompt_function(
             language=language,
             adapter=lambda line: {
@@ -246,7 +246,7 @@ rcb_tasks = [
             relations=["entailment", "contradiction"],
             formulation=formulation,
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="ai-forever/MERA",
         hf_subset="rcb",
         # Ignore neutral label
@@ -276,7 +276,7 @@ ocnli_tasks = [
             relations=["entailment", "contradiction"],
             formulation=formulation,
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="clue/clue",
         hf_subset="ocnli",
         # Only keep the positive and negative examples
@@ -306,7 +306,7 @@ cmnli_tasks = [
             relations=["entailment", "contradiction"],
             formulation=formulation,
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="fenffef/cmnli",
         hf_subset="default",
         hf_filter=lambda x: x["label"] in ["entailment", "contradiction"],
