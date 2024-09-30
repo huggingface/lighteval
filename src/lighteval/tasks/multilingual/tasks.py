@@ -184,7 +184,7 @@ paws_x_tasks = [
             adapter=lambda line: {
                 "premise": line["sentence1"],
                 "hypothesis": line["sentence2"],
-                # Since we ignore the neural label
+                # Since we ignore the neutral label
                 "gold_idx": int(line["label"]),
             },
             relations=["entailment", "contradiction"],
