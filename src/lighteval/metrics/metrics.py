@@ -40,7 +40,6 @@ from lighteval.metrics.metrics_sample import (
     BertScore,
     ExactMatches,
     F1_score,
-    # JudgeLLMMixEval,
     LoglikelihoodAcc,
     MajAtK,
     Recall,
