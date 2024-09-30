@@ -953,6 +953,35 @@ tydiqa_tasks = [
     ]
 ]
 
+# C3: A Chinese Challenge Corpus for Cross-lingual and Cross-modal Tasks
+# Reading comprehension task part of clue
+# Paper: https://arxiv.org/abs/2004.05986
+c3_tasks = [
+    LightevalTaskConfig(
+        name=f"c3_{Language.CHINESE.name}_{formulation.name.lower()}",
+        suite=("custom",),
+        prompt_function=get_mcq_prompt_function(
+            Language.CHINESE,
+            lambda line: {
+                "question": line["question"],
+                "choices": line["choice"],
+                "gold_idx": line["choice"].index(line["answer"]),
+                "context": " ".join(line["context"]),
+            },
+        ),
+        hf_repo="clue/clue",
+        hf_subset="c3",
+        evaluation_splits=("validation",),
+        few_shots_split="train",
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
 # Other MCF tasks for RC
 
 # Belebele: A large-scale reading comprehension dataset covering 122 languages.
@@ -1121,12 +1150,13 @@ TASKS_TABLE.extend(
     ]
 )
 
-# ------------------------------- GK ------------------------------- #
+# ------------------------------- GK Tasks ------------------------------- #
+# General Knowledge (GK) tasks evaluate a model's broad understanding across various domains.
+# These tasks typically involve answering questions on diverse subjects, testing the model's ability to recall and apply general information.
 
-# MMLU
-# We have definition for 3 types of MMMLU suites
-# From out experience native_mmlu >> meta_mmlu > mlmm_mmlu
-
+# MMLU (Massive Multitask Language Understanding)
+# A comprehensive test of world knowledge, covering 57 subjects across STEM, humanities, social sciences, and more.
+# Paper: https://arxiv.org/abs/2009.03300
 MMLU_SUBSETS = [
     "abstract_algebra",
     "anatomy",
@@ -1187,6 +1217,8 @@ MMLU_SUBSETS = [
     "world_religions",
 ]
 
+# Meta MMLU: A multilingual version of MMLU (using google translation)
+# Paper: https://arxiv.org/abs/2407.21783
 meta_mmlu_tasks = [
     LightevalTaskConfig(
         name=f"meta_mmlu_{language.name}_{formulation.name.lower()}:{subset}",
@@ -1198,7 +1230,7 @@ meta_mmlu_tasks = [
                 "gold_idx": LETTER_INDICES.index(line["input_correct_responses"][0]),
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="meta-llama/Meta-Llama-3.1-8B-Instruct-evals",
         hf_subset=f"Meta-Llama-3.1-8B-Instruct-evals__multilingual_mmlu_{standardize_tag(language.value)}__details",
         hf_filter=partial(
@@ -1229,6 +1261,8 @@ meta_mmlu_tasks = [
     ]
 ]
 
+# MLMM MMLU: Another multilingual version of MMLU
+# Paper: https://github.com/nlp-uoregon/mlmm-evaluation
 mlmm_mmlu_tasks = [
     LightevalTaskConfig(
         name=f"mlmm_mmlu_{language.name}_{formulation.name.lower()}:{subset}",
@@ -1240,7 +1274,7 @@ mlmm_mmlu_tasks = [
                 "gold_idx": LETTER_INDICES.index(line["answer"]),
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="jon-tow/okapi_mmlu",
         hf_subset=standardize_tag(language.value),
         hf_revision="refs/pr/1",
@@ -1289,6 +1323,8 @@ mlmm_mmlu_tasks = [
     ]
 ]
 
+# RUMMLU: Russian Massive Multitask Language Understanding
+# Paper: https://arxiv.org/html/2401.04531v2
 rummlu = [
     LightevalTaskConfig(
         name=f"rummlu_{Language.RUSSIAN.value}_{formulation.name.lower()}:{subset}",
@@ -1300,7 +1336,7 @@ rummlu = [
                 "gold_idx": LETTER_INDICES.index(line["outputs"]),
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="ai-forever/MERA",
         hf_subset="rummlu",
         hf_filter=lambda x: x["meta"]["domain"] == subset,
@@ -1317,6 +1353,8 @@ rummlu = [
     ]
 ]
 
+# MMLU Turkish: Turkish version of MMLU
+# Translated using openai GPT
 mmlu_turkish = [
     LightevalTaskConfig(
         name=f"tr_leaderboard_mmlu_{Language.TURKISH.value}_{formulation.name.lower()}:{subset}",
@@ -1324,7 +1362,7 @@ mmlu_turkish = [
             Language.TURKISH,
             lambda line: {"question": line["question"], "choices": line["choices"], "gold_idx": int(line["answer"])},
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="malhajar/mmlu_tr-v0.2",
         hf_subset=subset,
         evaluation_splits=("test",),
@@ -1339,7 +1377,9 @@ mmlu_turkish = [
     ]
 ]
 
-# They are almost the same as MMLU subsets, but they are not exactly the same
+# CMMLU: Chinese Massive Multitask Language Understanding
+# Native translation with some new categories
+# Paper: https://arxiv.org/abs/2306.09212
 CMMLU_SUBSETS = [
     "agronomy",
     "anatomy",
@@ -1421,7 +1461,7 @@ cmmlu_tasks = [
                 "gold_idx": LETTER_INDICES.index(line["Answer"]),
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="haonan-li/cmmlu",
         hf_subset=subset,
         evaluation_splits=("test",),
@@ -1436,6 +1476,9 @@ cmmlu_tasks = [
     ]
 ]
 
+# Arabic MMLU: Arabic version of MMLU
+# Native translation with some new categories
+# Paper: https://arxiv.org/html/2402.12840v1
 ARABIC_MMLU_SUBSETS = [
     "Driving Test",
     "High Geography",
@@ -1491,7 +1534,7 @@ arabic_mmlu_tasks = [
                 "gold_idx": LETTER_INDICES.index(line["Answer Key"]),
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="yazeed7/ArabicMMLU",
         hf_subset=subset,
         evaluation_splits=("test",),
@@ -1505,6 +1548,9 @@ arabic_mmlu_tasks = [
     ]
 ]
 
+# C-Eval: Chinese Evaluation suite
+# Similar to MMLu but with different categories
+# Paper: https://arxiv.org/abs/2305.08322
 CEVAL_SUBSET = [
     "computer_network",
     "operating_system",
@@ -1572,7 +1618,7 @@ ceval_tasks = [
                 join_variant="NEW_LINE" if isinstance(formulation, CFFormulation) else "COMMA",
             ),
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="ceval/ceval-exam",
         hf_subset=task,
         evaluation_splits=("val",),
@@ -1587,6 +1633,8 @@ ceval_tasks = [
     ]
 ]
 
+# AGIEval: Chinese AGI Evaluation suite (Excluding the english subsets)
+# Paper: https://arxiv.org/abs/2304.06364
 CHINESE_AGIEVAL_SUBSET = [
     "gaokao-biology",
     "gaokao-chinese",
@@ -1611,7 +1659,7 @@ agieval_tasks_zh = [
                 join_variant="NEW_LINE" if isinstance(formulation, CFFormulation) else "COMMA",
             ),
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo=f"hails/agieval-{subset}",
         hf_subset="default",
         evaluation_splits=("test",),
@@ -1626,7 +1674,9 @@ agieval_tasks_zh = [
     ]
 ]
 
-# Arc
+# ARC: AI2 Reasoning Challenge
+# The main difference between ARC-Easy and ARC-Challenge is the level of difficulty and the reasoning skills required
+# Paper: https://arxiv.org/abs/1803.05457
 mlmm_arc_challenge_tasks = [
     LightevalTaskConfig(
         name=f"mlmm_arc_{language.value}_{formulation.name.lower()}:challenge",
@@ -1640,7 +1690,7 @@ mlmm_arc_challenge_tasks = [
                 else LETTER_INDICES.index(line["answerKey"]),
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="jon-tow/okapi_arc_challenge",
         hf_subset=standardize_tag(language.value),
         hf_revision="823d5d7bfaf8974a3ab52a825b6cf4903b35dbc4",
@@ -1685,11 +1735,15 @@ mlmm_arc_challenge_tasks = [
     ]
 ]
 
+# Arabic ARC Easy
+# It's based on the community arabic leaderboard task but uses
+# the multilingual template
+# Paper: https://aclanthology.org/2023.arabicnlp-1.21/
 arabic_ledarboard_arc_easy = [
     LightevalTaskConfig(
         name=f"arc_{Language.ARABIC.value}_{formulation.name.lower()}:easy",
         prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter),
-        suite=["custom"],
+        suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
         hf_subset="arc_easy_ar",
         hf_revision="a31ebd34ca311d7e0cfc6ad7f458b3435af280f5",
@@ -1705,6 +1759,8 @@ arabic_ledarboard_arc_easy = [
     ]
 ]
 
+# Turkish ARC
+# Comes from the Turkish leaderboard
 turkish_arc = [
     LightevalTaskConfig(
         name=f"arc_{Language.TURKISH.value}_{formulation.name.lower()}:{subset}",
@@ -1718,7 +1774,7 @@ turkish_arc = [
                 else LETTER_INDICES.index(line["answerKey"]),
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="malhajar/arc-tr",
         hf_subset=f"ARC-{subset.capitalize()}",
         evaluation_splits=("test",),
@@ -1732,8 +1788,9 @@ turkish_arc = [
     ]
 ]
 
-
-# Thruthful-QA
+# TruthfulQA: Measuring How Models Mimic Human Falsehoods
+# Translated using openai GPT
+# https://github.com/nlp-uoregon/mlmm-evaluation
 mlmm_truthfulqa_tasks = [
     LightevalTaskConfig(
         name=f"mlmm_truthfulqa_{language.value}_{formulation.name.lower()}:{subset}",
@@ -1748,7 +1805,7 @@ mlmm_truthfulqa_tasks = [
                 subset,
             ),
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="jon-tow/okapi_truthfulqa",
         hf_subset=language.value,
         hf_revision="cdd5db1a66fd04105622109d1c2a5cbc8cde7586",
@@ -1799,6 +1856,8 @@ mlmm_truthfulqa_tasks = [
     ]
 ]
 
+# Turkish TruthfulQA
+# Based on turkish leaderboard
 turkish_truthfulqa = [
     LightevalTaskConfig(
         name=f"truthfulqa_{Language.TURKISH.value}_{formulation.name.lower()}",
@@ -1813,7 +1872,7 @@ turkish_truthfulqa = [
                 subset,
             ),
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="malhajar/truthful_qa-tr-v0.2",
         hf_subset="default",
         evaluation_splits=("validation",),
@@ -1827,7 +1886,8 @@ turkish_truthfulqa = [
     ]
 ]
 
-
+# Exams: A collection of exam questions from various countries and subjects
+# Paper: https://arxiv.org/abs/2011.03080
 exams_subjects_by_lang: dict[Language, set[str]] = {
     Language.ARABIC: {"Biology", "Islamic Studies", "Physics", "Science", "Social"},
     Language.BULGARIAN: {"Biology", "Chemistry", "Geography", "History", "Philosophy", "Physics"},
@@ -1950,7 +2010,7 @@ exams_tasks = [
                 "gold_idx": line["question"]["choices"]["label"].index(line["answerKey"]),
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="mhardalov/exams",
         hf_subset="multilingual",
         # Weird bug in dataset
@@ -1974,10 +2034,13 @@ exams_tasks = [
     ]
 ]
 
+# M3Exam: Multitask Multilingual Multimodal Evaluation Benchmark
+# It also contains a multimodal version but we don't support that
+# Paper: https://arxiv.org/abs/2306.05179
 m3exam_tasks = [
     LightevalTaskConfig(
         name=f"m3exam_{language.name}_{formulation.name.lower()}",
-        suite=("custom",),
+        suite=("lighteval",),
         prompt_function=get_mcq_prompt_function(
             language,
             partial(get_m3exam_adapter, language),
@@ -2007,33 +2070,11 @@ m3exam_tasks = [
     ]
 ]
 
-c3_tasks = [
-    LightevalTaskConfig(
-        name=f"c3_{Language.CHINESE.name}_{formulation.name.lower()}",
-        suite=("custom",),
-        prompt_function=get_mcq_prompt_function(
-            Language.CHINESE,
-            lambda line: {
-                "question": line["question"],
-                "choices": line["choice"],
-                "gold_idx": line["choice"].index(line["answer"]),
-                "context": " ".join(line["context"]),
-            },
-        ),
-        hf_repo="clue/clue",
-        hf_subset="c3",
-        evaluation_splits=("validation",),
-        few_shots_split="train",
-        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
-    )
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
-]
-
 # Thai Exams
+# We noticed very bad performance of models on this dataset
+# However, it may just be because quality of the models themselves
+# Paper: https://arxiv.org/abs/2312.13951
+
 THAI_EXAMS_SUBSETS = ["a_level", "ic", "onet", "tgat", "tpat1"]
 
 # If too hard we can add help with para
@@ -2056,6 +2097,11 @@ thai_exams_tasks = [
     ]
 ]
 
+# Part of XCSR
+# XCSQA (Cross-lingual Commonsense QA) is part of the XCSR (Cross-lingual Commonsense Reasoning) benchmark
+# It is a multilingual extension of the CommonsenseQA dataset, covering 16 languages
+# The task involves answering multiple-choice questions that require commonsense reasoning
+# Paper: https://arxiv.org/abs/2110.08462
 xcsqa_tasks = [
     LightevalTaskConfig(
         name=f"xcsqa_{language.value}_{formulation.name.lower()}",
@@ -2118,6 +2164,10 @@ ALGHAFA_SUBSETS = [
     "multiple_choice_sentiment_task",
 ]
 
+# Alghafa: Arabic LLM Benchmark Native
+# It's taken from the community arabic tasks but it uses
+# multilingual template
+# Paper: https://aclanthology.org/2023.arabicnlp-1.21/
 alghafa_native_tasks = [
     LightevalTaskConfig(
         name=f"alghafa_{Language.ARABIC.value}_{formulation.name.lower()}:{subset}",
@@ -2137,6 +2187,10 @@ alghafa_native_tasks = [
     ]
 ]
 
+# RACE: Reading Comprehension from Examinations
+# RACE is a large-scale reading comprehension dataset collected from English exams for middle and high school Chinese students.
+# This Arabic version is a translation of the original RACE dataset, adapted for Arabic language evaluation.
+# Paper: https://aclanthology.org/2023.arabicnlp-1.21/
 race_ar_task = [
     LightevalTaskConfig(
         name=f"race_{Language.ARABIC.value}_{formulation.name.lower()}",
@@ -2158,6 +2212,13 @@ race_ar_task = [
     ]
 ]
 
+
+# PIQA: Physical Interaction Question Answering
+# PIQA is a benchmark for testing physical commonsense reasoning.
+# This Arabic version is a translation of the original PIQA dataset, adapted for Arabic language evaluation.
+# It tests the ability to reason about physical interactions in everyday situations.
+# Paper: https://arxiv.org/abs/1911.11641
+# Arabic version: https://aclanthology.org/2023.arabicnlp-1.21/
 piqa_ar_tasks = [
     LightevalTaskConfig(
         name=f"piqa_{Language.ARABIC.value}_{formulation.name.lower()}",
@@ -2179,6 +2240,13 @@ piqa_ar_tasks = [
     ]
 ]
 
+# OpenBookQA: A Question-Answering Dataset for Open-Book Exams
+# OpenBookQA is a question-answering dataset modeled after open-book exams for assessing human understanding of a subject.
+# It consists of multiple-choice questions that require combining facts from a given open book with broad common knowledge.
+# The task tests language models' ability to leverage provided information and apply common sense reasoning.
+# Original paper: https://arxiv.org/abs/1809.02789
+
+# Arabic version: https://aclanthology.org/2023.arabicnlp-1.21/
 openbook_ara_tasks = [
     LightevalTaskConfig(
         name=f"openbookqa_{Language.ARABIC.value}_{formulation.name.lower()}",
@@ -2199,6 +2267,8 @@ openbook_ara_tasks = [
     ]
 ]
 
+# The Russian version is part of the MERA (Multilingual Enhanced Russian NLP Architectures) project.
+# Paper: https://arxiv.org/abs/2401.04531
 openbook_rus_tasks = [
     LightevalTaskConfig(
         name=f"openbookqa_{Language.RUSSIAN.value}_{formulation.name.lower()}",
@@ -2223,6 +2293,8 @@ openbook_rus_tasks = [
     ]
 ]
 
+# The Arabic version is part of the AlGhafa Arabic LLM Benchmark, a translation and adaptation of various English datasets.
+# Paper: https://aclanthology.org/2023.arabicnlp-1.21/
 sciq_ar_task = [
     LightevalTaskConfig(
         name=f"sciq_{Language.ARABIC.value}_{formulation.name.lower()}",
@@ -2252,6 +2324,10 @@ sciq_ar_task = [
     ]
 ]
 
+# WorldTree is a dataset for multi-hop inference in science question answering.
+# It provides explanations for elementary science questions by combining facts from a semi-structured knowledge base.
+# This Russian version is part of the MERA (Multilingual Evaluation of Reasoning Abilities) benchmark.
+# MERA: https://github.com/ai-forever/MERA
 worldtree_rus_tasks = [
     LightevalTaskConfig(
         name=f"worldtree_{Language.RUSSIAN.value}_{formulation.name.lower()}",
@@ -2279,7 +2355,11 @@ worldtree_rus_tasks = [
 
 # ------------------------------- Math Tasks ------------------------------- #
 
-mathqa_rus_tasks = [
+# MathLogicQA is a dataset for evaluating mathematical reasoning in language models.
+# It consists of multiple-choice questions that require logical reasoning and mathematical problem-solving.
+# This Russian version is part of the MERA (Multilingual Evaluation of Reasoning Abilities) benchmark.
+# MERA: https://github.com/ai-forever/MERA
+mathlogicqa_rus_tasks = [
     LightevalTaskConfig(
         name=f"mathlogic_qa_{Language.RUSSIAN.value}_{formulation.name.lower()}",
         prompt_function=get_mcq_prompt_function(
