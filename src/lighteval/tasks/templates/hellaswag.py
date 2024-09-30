@@ -31,7 +31,7 @@ from lighteval.tasks.templates.utils.formatting_utils import (
     capitalize,
     fix_capitalization,
     fix_ending_punct,
-    is_ended_sentence,
+    punctuation_ends_sentence,
 )
 from lighteval.tasks.templates.utils.formulation import Formulation, MCFFormulation
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
@@ -62,7 +62,7 @@ class HellaswagAdapter(TypedDict):
 
 def get_hellaswag_prompt_function(
     language: Language,
-    adapter: Callable[[dict], HellaswagInput] | HellaswagAdapter,
+    adapter: Callable[[dict], HellaswagInput | None] | HellaswagAdapter,
     formulation: Formulation = MCFFormulation(),
     dot_replacement: list[str] = [" [title]"],
 ):
@@ -106,14 +106,12 @@ def get_hellaswag_prompt_function(
     def join_ctxs(ctx_a, ctx_b):
         space = (
             translation_literals.sentence_space
-            if is_ended_sentence(ctx_a, translation_literals)
+            if punctuation_ends_sentence(ctx_a, translation_literals)
             else translation_literals.word_space
         )
         return f"{ctx_a.rstrip()}{space}{fix_capitalization(ctx_a, ctx_b, translation_literals)}"
 
-    adapter_fn: Callable[[dict], HellaswagInput] = (
-        create_adapter_from_dict(adapter) if isinstance(adapter, dict) else adapter  # type: ignore
-    )
+    adapter_fn = create_adapter_from_dict(adapter)
     continuation_prompt_fn = get_continuation_prompt_function(
         language, {"context": "context", "continuations": "continuations", "gold_idx": "gold_idx"}, formulation
     )
@@ -123,6 +121,9 @@ def get_hellaswag_prompt_function(
         task_name: str,
     ):
         input_data = adapter_fn(line)
+        if input_data is None:
+            return None
+
         activity_label = input_data.get("activity_label", "")
         activity_label = f"{capitalize(activity_label)}:\n" if activity_label else ""
 
@@ -136,8 +137,8 @@ def get_hellaswag_prompt_function(
         choices = [preprocess(continuation) for continuation in input_data["continuations"]]
 
         # It can happen that the continuations are empty we thus skip the task
-        # if any(len(c.strip()) == 0 for c in choices):
-        #     return None
+        if any(len(c.strip()) == 0 for c in choices):
+            return None
 
         return continuation_prompt_fn(
             {

@@ -36,7 +36,18 @@ from lighteval.utils.language import Language
 COPA_QUERY = "{context}{word_space}{cause_or_effect}"
 
 
+# Defined for type hinting only
 class COPAInput(TypedDict):
+    """
+    Input for the COPA task.
+    Args:
+        cause_effect: The type of the COPA task (X therefore Y / X because Y)
+        context: The contextualization of choices (e.g. You are young)
+        continuations: The possible continuations of the context (e.g. You are old, You are a child)
+        gold_idx: The index of the correct continuation
+        instruction (optional): The instruction of the COPA task (e.g. Choose the most appropriate continuation)
+    """
+
     cause_effect: Literal["cause", "effect"]
     context: str
     continuations: list[str]
@@ -45,6 +56,16 @@ class COPAInput(TypedDict):
 
 
 class COPAAdapter(TypedDict):
+    """
+    Adapter for mapping from the dataset row into the COPAInput format.
+    Args:
+        cause_effect: Column name in the row that contains the type of the COPA task (X therefore Y / X because Y)
+        context: Column name in the row that contains the contextualization of choices (e.g. You are young)
+        continuations: Column name in the row that contains the possible continuations of the context (e.g. You are old, You are a child)
+        gold_idx: Column name in the row that contains the index of the correct continuation
+        instruction (optional): Column name in the row that contains the instruction of the task (e.g. Choose the most appropriate continuation)
+    """
+
     cause_effect: str
     context: str
     continuations: str
@@ -53,7 +74,9 @@ class COPAAdapter(TypedDict):
 
 
 def get_copa_prompt_function(
-    language: Language, adapter: Callable[[dict], COPAInput] | COPAAdapter, formulation: Formulation = MCFFormulation()
+    language: Language,
+    adapter: Callable[[dict], COPAInput | None] | COPAAdapter,
+    formulation: Formulation = MCFFormulation(),
 ):
     """
     Create a templated prompt function for a COPA task.
@@ -62,21 +85,33 @@ def get_copa_prompt_function(
     - PARUS
 
     Format:
+    *CF*
     Context Premise thefore/cause | (Continuation 1, Continuation 2, Continuation 3)
+
+    *Hybrid*
+    Context Premise thefore/cause
+    A. Continuation 1
+    B. Continuation 2
+    C. Continuation 3
+    Answer: | Continuation 1/Continuation 2/Continuation 3
+
+    *MCF*
+    Context Premise thefore/cause
+    A. Continuation 1
+    B. Continuation 2
+    C. Continuation 3
+    Answer: | A/B/C
 
     Args:
         language (Language): The language of the COPA task.
-        adapter (Callable[[dict], COPAInput] | COPAAdapter): A function or dictionary to adapt the input data to the required COPAInput format.
-            Must map data from the dataset row to the COPAInput format.
+        adapter (Callable[[dict], COPAInput] | COPAAdapter): Either a function that takes a dataset row and returns a COPAInput, or a dictionary with keys corresponding to the field names in the dataset row.
+            Note: Both COPAAdapter and COPAInput are TypeDicts, this means that the caller provides dictionary and doesn't initialize any class!
             Note: The gold_idx must be an index or list of indices in the continuations list, indicating the correct continuation(s).
         formulation (Formulation, optional): The formulation to use for the task. Defaults to MCFFormulation().
-
     Returns:
         Callable: A function that generates COPA prompts based on the given parameters.
     """
-    adapter_fn: Callable[[dict], COPAInput] = (
-        create_adapter_from_dict(adapter) if isinstance(adapter, dict) else adapter
-    )  # type: ignore
+    adapter_fn = create_adapter_from_dict(adapter)
     continuation_prompt_fn = get_continuation_prompt_function(
         language, {"context": "context", "continuations": "continuations", "gold_idx": "gold_idx"}, formulation
     )
@@ -87,6 +122,9 @@ def get_copa_prompt_function(
         task_name: str,
     ):
         input_data = adapter_fn(line)
+        if input_data is None:
+            return None
+
         context = capitalize(input_data["context"].rstrip(PUNCT))
         cause_or_effect_trans = (
             translation_literals.cause_word
