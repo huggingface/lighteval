@@ -91,7 +91,7 @@ xnli2_tasks = [
             adapter=lambda line: {
                 "premise": line["premise"],
                 "hypothesis": line["hypothesis"],
-                # Since we ignore the neural label
+                # Since we ignore the neutral label
                 "gold_idx": {0: 0, 2: 1}[line["label"]],
             },
             relations=["entailment", "contradiction"],
