@@ -274,7 +274,7 @@ cmnli_tasks = [
             adapter=lambda line: {
                 "premise": line["sentence1"],
                 "hypothesis": line["sentence2"],
-                # Since we ignore the neural label
+                # Since we ignore the neutral label
                 "gold_idx": {"entailment": 0, "contradiction": 1}[line["label"]],
             },
             relations=["entailment", "contradiction"],
