@@ -69,7 +69,7 @@ class ContinuationDictAdapter(TypedDict):
 
 def get_continuation_prompt_function(
     language: Language,
-    adapter: Callable[[dict], ContinuationInput] | ContinuationDictAdapter,
+    adapter: Callable[[dict], ContinuationInput | None] | ContinuationDictAdapter,
     formulation: Formulation = MCFFormulation(),
 ):
     """
@@ -90,13 +90,16 @@ def get_continuation_prompt_function(
     Returns:
         Callable: A function that generates Continuation prompts based on the given parameters.
     """
-    adapter_fn: Callable[[dict], ContinuationInput] = (
+    adapter_fn: Callable[[dict], ContinuationInput | None] = (
         create_adapter_from_dict(adapter) if isinstance(adapter, dict) else adapter  # type: ignore
     )
     translation_literals = TRANSLATION_LITERALS[language]
 
     def prepare_prompt(line: dict):
         cont_input = adapter_fn(line)
+
+        if cont_input is None:
+            return None
 
         instruction_val = cont_input.get("instruction")
         instruction = f"{instruction_val}\n" if instruction_val else ""

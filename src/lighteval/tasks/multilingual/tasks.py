@@ -38,8 +38,12 @@ from lighteval.tasks.multilingual.adapters import (
     alghafa_adapter,
     ceval_adapter,
     get_m3exam_adapter,
+    get_mkqa_adapter,
     thai_exams_adapter,
+    winogrand_adapter,
+    xcodah_adapter,
 )
+from lighteval.tasks.templates.continuation import get_continuation_prompt_function
 from lighteval.tasks.templates.copa import get_copa_prompt_function
 from lighteval.tasks.templates.hellaswag import get_hellaswag_prompt_function
 from lighteval.tasks.templates.multichoice import get_mcq_prompt_function
@@ -50,10 +54,12 @@ from lighteval.tasks.templates.utils.formulation import (
     HybridFormulation,
     MCFFormulation,
 )
+from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
 from lighteval.utils.language import Language, iso_639_3_ind_to_iso_639_3_macro
 
 
 TASKS_TABLE = []
+
 # ------------------------------- NLI Tasks ------------------------------- #
 
 xnli_tasks = [
@@ -2214,6 +2220,311 @@ mathqa_rus_tasks = [
         hf_subset="mathlogicqa",
         evaluation_splits=("train",),
         metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+cmath_tasks = [
+    LightevalTaskConfig(
+        name=f"cmath_{Language.CHINESE.value}_{formulation.name.lower()}",
+        prompt_function=get_qa_prompt_function(
+            Language.CHINESE,
+            lambda line: {
+                "question": line["question"],
+                "choices": [line["golden"]],
+            },
+        ),
+        suite=("custom",),
+        hf_repo="weitianwen/cmath",
+        hf_subset="default",
+        evaluation_splits=("test",),
+        few_shots_split="validation",
+        generation_size=25,
+        metric=[
+            multilingual_quasi_exact_match_metric(Language.CHINESE, "full"),
+        ],
+        stop_sequence=("\n",),
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+
+# ------------------------------- Continuation Tasks ------------------------------- #
+xcodah_tasks = [
+    LightevalTaskConfig(
+        name=f"xcodah_{language.value}_{formulation.name.lower()}",
+        prompt_function=get_mcq_prompt_function(language, partial(xcodah_adapter, language)),
+        suite=("custom",),
+        hf_repo="INK-USC/xcsr",
+        hf_subset=f"X-CODAH-{standardize_tag(language.value)}",
+        evaluation_splits=("validation",),
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+    )
+    for language in [
+        Language.ARABIC,
+        Language.GERMAN,
+        Language.ENGLISH,
+        Language.SPANISH,
+        Language.FRENCH,
+        Language.HINDI,
+        Language.ITALIAN,
+        Language.JAPANESE,
+        Language.DUTCH,
+        Language.POLISH,
+        Language.PORTUGUESE,
+        Language.RUSSIAN,
+        Language.SWAHILI,
+        Language.URDU,
+        Language.VIETNAMESE,
+        Language.CHINESE,
+    ]
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+xstory_tasks = [
+    LightevalTaskConfig(
+        name=f"xstory_cloze_{lang.value}_{formulation.name.lower()}",
+        prompt_function=get_continuation_prompt_function(
+            lang,
+            partial(
+                lambda lang, line: {
+                    "context": TRANSLATION_LITERALS[lang].sentence_space.join(
+                        [
+                            line["input_sentence_1"],
+                            line["input_sentence_2"],
+                            line["input_sentence_3"],
+                            line["input_sentence_4"],
+                        ]
+                    ),
+                    "continuations": [line["sentence_quiz1"], line["sentence_quiz2"]],
+                    "gold_idx": int(line["answer_right_ending"]) - 1,  # type: ignore
+                },
+                lang,
+            ),
+        ),
+        hf_repo="juletxara/xstory_cloze",
+        hf_subset=standardize_tag(lang.value),
+        evaluation_splits=["eval"],
+        few_shots_split="training",
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+        version=0,
+    )
+    for lang in [
+        Language.RUSSIAN,
+        Language.CHINESE,
+        Language.SPANISH,
+        Language.ARABIC,
+        Language.HINDI,
+        Language.INDONESIAN,
+        Language.TELUGU,
+        Language.SWAHILI,
+        Language.BASQUE,
+        Language.BURMESE,
+    ]
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+
+# ------------------------------- Winogrande Tasks ------------------------------- #
+
+xwinograd_tasks = [
+    LightevalTaskConfig(
+        name=f"xwinograd_{language.value}_{formulation.name.lower()}",
+        suite=("custom",),
+        prompt_function=get_continuation_prompt_function(language, partial(winogrand_adapter, language)),
+        hf_repo="Muennighoff/xwinograd",
+        hf_subset=standardize_tag(language.value),
+        evaluation_splits=("test",),
+        generation_size=-1,
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for language in [
+        Language.ENGLISH,
+        Language.FRENCH,
+        Language.JAPANESE,
+        Language.PORTUGUESE,
+        Language.RUSSIAN,
+        Language.CHINESE,
+    ]
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+winograd_turkish_task = [
+    LightevalTaskConfig(
+        name=f"xwinograd_{Language.TURKISH.value}_{formulation.name.lower()}",
+        suite=("custom",),
+        prompt_function=get_continuation_prompt_function(
+            Language.TURKISH, partial(winogrand_adapter, Language.TURKISH)
+        ),
+        hf_repo="malhajar/winogrande-tr-v0.2",
+        hf_subset="default",
+        evaluation_splits=("validation",),
+        few_shots_split="train",
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+# ------------------------------- General QA tasks ------------------------------- #
+
+MKQA_TASK_TO_ID = {
+    "entity": 0,
+    "long_answer": 1,
+    # "unanswerable": 2,
+    "date": 3,
+    "number": 4,
+    "number_with_unit": 5,
+    "short_phrase": 6,
+    "binary": 7,
+}
+
+mkqa_tasks = [
+    LightevalTaskConfig(
+        name=f"mkqa_{language.value}_{formulation.name.lower()}:{subset}",
+        prompt_function=get_qa_prompt_function(language, partial(get_mkqa_adapter, language)),
+        suite=("custom",),
+        hf_repo="apple/mkqa",
+        hf_subset="mkqa",
+        hf_revision="325131889721ae0ed885b76ecb8011369d75abad",
+        hf_filter=partial(
+            lambda language, line: line["answers"][standardize_tag(language.value)][0]["type"]
+            == MKQA_TASK_TO_ID[subset],
+            language,
+        ),
+        trust_dataset=True,
+        evaluation_splits=("train",),
+        stop_sequence=("\n",),
+        metric=[
+            multilingual_quasi_exact_match_metric(language, "prefix"),
+            multilingual_quasi_f1_score_metric(language),
+        ]
+        if subset in ["entity", "long_answer", "short_phrase"]
+        else [
+            multilingual_quasi_exact_match_metric(language, "full"),
+        ],
+    )
+    for subset in MKQA_TASK_TO_ID.keys()
+    for language in [
+        Language.ARABIC,
+        Language.DANISH,
+        Language.GERMAN,
+        Language.ENGLISH,
+        Language.SPANISH,
+        Language.FINNISH,
+        Language.FRENCH,
+        Language.HEBREW,
+        Language.HUNGARIAN,
+        Language.ITALIAN,
+        Language.JAPANESE,
+        Language.KOREAN,
+        Language.KHMER,
+        Language.MALAY,
+        Language.DUTCH,
+        Language.NORWEGIAN,
+        Language.POLISH,
+        Language.PORTUGUESE,
+        Language.RUSSIAN,
+        Language.SWEDISH,
+        Language.THAI,
+        Language.TURKISH,
+        Language.VIETNAMESE,
+        Language.CHINESE,  # Simplified
+        # Language.CHINESE_HONG_KONG,
+        # Language.CHINESE_TRADITIONAL,
+    ]
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+
+mlqa_tasks = [
+    LightevalTaskConfig(
+        name=f"mlqa_{lang.value}_{formulation.name.lower()}",
+        prompt_function=get_qa_prompt_function(
+            lang,
+            lambda line: {
+                "context": line["context"],
+                "question": line["question"],
+                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+            },
+        ),
+        suite=("custom",),
+        hf_repo="facebook/mlqa",
+        hf_subset=f"mlqa.{lang}.{lang}",
+        hf_revision="397ed406c1a7902140303e7faf60fff35b58d285",
+        trust_dataset=True,
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        generation_size=400,
+        stop_sequence=("\n",),
+        metric=[
+            multilingual_quasi_exact_match_metric(lang, "prefix"),
+            multilingual_quasi_f1_score_metric(lang),
+        ],
+    )
+    for lang in [
+        Language.ARABIC,
+        Language.GERMAN,
+        Language.SPANISH,
+        Language.HINDI,
+        Language.VIETNAMESE,
+    ]
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+chekega_tasks = [
+    LightevalTaskConfig(
+        name=f"chegeka_{Language.RUSSIAN.value}_{formulation.name.lower()}",
+        prompt_function=get_qa_prompt_function(
+            Language.RUSSIAN,
+            lambda line: {
+                "question": line["inputs"]["text"],
+                "choices": line["inputs"]["outputs"],
+            },
+        ),
+        suite=("custom",),
+        hf_repo="ai-forever/MERA",
+        hf_subset="chegeka",
+        evaluation_splits=("train",),
+        generation_size=90,
+        stop_sequence=("\n",),
+        metric=[
+            multilingual_quasi_exact_match_metric(Language.RUSSIAN, "prefix"),
+            multilingual_quasi_f1_score_metric(Language.RUSSIAN),
+        ],
     )
     for formulation in [
         MCFFormulation(),
