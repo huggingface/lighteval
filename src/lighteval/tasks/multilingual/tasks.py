@@ -958,8 +958,8 @@ tydiqa_tasks = [
 # Paper: https://arxiv.org/abs/2004.05986
 c3_tasks = [
     LightevalTaskConfig(
-        name=f"c3_{Language.CHINESE.name}_{formulation.name.lower()}",
-        suite=("custom",),
+        name=f"c3_{Language.CHINESE.value}_{formulation.name.lower()}",
+        suite=("lighteval",),
         prompt_function=get_mcq_prompt_function(
             Language.CHINESE,
             lambda line: {
@@ -983,6 +983,49 @@ c3_tasks = [
 ]
 
 # Other MCF tasks for RC
+# RACE: Reading Comprehension from Examinations
+# RACE is a large-scale reading comprehension dataset collected from English exams for middle and high school Chinese students.
+# This Arabic version is a translation of the original RACE dataset, adapted for Arabic language evaluation.
+# Paper: https://aclanthology.org/2023.arabicnlp-1.21/
+race_ar_task = [
+    LightevalTaskConfig(
+        name=f"race_{Language.ARABIC.value}_{formulation.name.lower()}",
+        prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter),
+        suite=["lighteval"],
+        hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
+        hf_subset="race_ar",
+        hf_revision="08663706ee7cab30c4b7dc1bb00042a3227ce1ff",
+        hf_avail_splits=["test", "validation"],
+        evaluation_splits=["test"],
+        few_shots_split="validation",
+        trust_dataset=True,
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+# SOQAL: A large-scale Arabic reading comprehension dataset.
+# https://arxiv.org/abs/1906.05394
+soqal_tasks = [
+    LightevalTaskConfig(
+        name=f"soqal_{Language.ARABIC.value}_{formulation.name.lower()}",
+        hf_subset="multiple_choice_grounded_statement_soqal_task",
+        prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter),
+        evaluation_splits=["test"],
+        few_shots_split="validation",
+        suite=["lighteval"],
+        hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Native",
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
 
 # Belebele: A large-scale reading comprehension dataset covering 122 languages.
 # https://arxiv.org/abs/2308.16884
@@ -1146,7 +1189,10 @@ TASKS_TABLE.extend(
         *fquad_v2_tasks,
         *tquad_v2_tasks,
         *tydiqa_tasks,
+        *soqal_tasks,
+        *race_ar_task,
         *belebele_tasks,
+        *c3_tasks,
     ]
 )
 
@@ -1154,6 +1200,8 @@ TASKS_TABLE.extend(
 # General Knowledge (GK) tasks evaluate a model's broad understanding across various domains.
 # These tasks typically involve answering questions on diverse subjects, testing the model's ability to recall and apply general information.
 
+
+# -------------------------------- MMLU -------------------------------- #
 # MMLU (Massive Multitask Language Understanding)
 # A comprehensive test of world knowledge, covering 57 subjects across STEM, humanities, social sciences, and more.
 # Paper: https://arxiv.org/abs/2009.03300
@@ -1221,7 +1269,7 @@ MMLU_SUBSETS = [
 # Paper: https://arxiv.org/abs/2407.21783
 meta_mmlu_tasks = [
     LightevalTaskConfig(
-        name=f"meta_mmlu_{language.name}_{formulation.name.lower()}:{subset}",
+        name=f"meta_mmlu_{language.value}_{formulation.name.lower()}:{subset}",
         prompt_function=get_mcq_prompt_function(
             language,
             lambda line: {
@@ -1265,7 +1313,7 @@ meta_mmlu_tasks = [
 # Paper: https://github.com/nlp-uoregon/mlmm-evaluation
 mlmm_mmlu_tasks = [
     LightevalTaskConfig(
-        name=f"mlmm_mmlu_{language.name}_{formulation.name.lower()}:{subset}",
+        name=f"mlmm_mmlu_{language.value}_{formulation.name.lower()}:{subset}",
         prompt_function=get_mcq_prompt_function(
             language,
             lambda line: {
@@ -1357,7 +1405,7 @@ rummlu = [
 # Translated using openai GPT
 mmlu_turkish = [
     LightevalTaskConfig(
-        name=f"tr_leaderboard_mmlu_{Language.TURKISH.value}_{formulation.name.lower()}:{subset}",
+        name=f"tur_leaderboard_mmlu_{Language.TURKISH.value}_{formulation.name.lower()}:{subset}",
         prompt_function=get_mcq_prompt_function(
             Language.TURKISH,
             lambda line: {"question": line["question"], "choices": line["choices"], "gold_idx": int(line["answer"])},
@@ -1633,50 +1681,28 @@ ceval_tasks = [
     ]
 ]
 
-# AGIEval: Chinese AGI Evaluation suite (Excluding the english subsets)
-# Paper: https://arxiv.org/abs/2304.06364
-CHINESE_AGIEVAL_SUBSET = [
-    "gaokao-biology",
-    "gaokao-chinese",
-    "gaokao-chemistry",
-    "gaokao-geography",
-    "gaokao-history",
-    "gaokao-mathqa",
-    "gaokao-physics",
-    "logiqa-zh",
-    "jec-qa-kd",
-    "jec-qa-ca",
-]
-
-agieval_tasks_zh = [
-    LightevalTaskConfig(
-        name=f"agieval_{Language.CHINESE.value}_{formulation.name.lower()}:{subset}",
-        prompt_function=get_mcq_prompt_function(
-            Language.CHINESE,
-            partial(
-                agieval_prompt,
-                Language.CHINESE,
-                join_variant="NEW_LINE" if isinstance(formulation, CFFormulation) else "COMMA",
-            ),
-        ),
-        suite=("lighteval",),
-        hf_repo=f"hails/agieval-{subset}",
-        hf_subset="default",
-        evaluation_splits=("test",),
-        few_shots_split=None,
-        metric=(loglikelihood_acc_metric(normalization=LogProbPMINorm()),),
-    )
-    for subset in CHINESE_AGIEVAL_SUBSET
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
+TASKS_TABLE.extend(
+    [
+        *meta_mmlu_tasks,
+        *mlmm_mmlu_tasks,
+        *rummlu,
+        *mmlu_turkish,
+        *cmmlu_tasks,
+        *arabic_mmlu_tasks,
+        *ceval_tasks,
     ]
-]
+)
 
-# ARC: AI2 Reasoning Challenge
-# The main difference between ARC-Easy and ARC-Challenge is the level of difficulty and the reasoning skills required
-# Paper: https://arxiv.org/abs/1803.05457
+
+# ---------------------------- ARC ---------------------------- #
+# ARC (AI2 Reasoning Challenge) is a dataset for question answering that requires reasoning.
+# It consists of multiple-choice science questions from 3rd to 9th grade exams.
+# The dataset is split into two parts: ARC-Easy and ARC-Challenge.
+# ARC-Easy contains questions that can be answered correctly by both humans and simple baseline models.
+# ARC-Challenge contains questions that are difficult for both humans and current AI systems.
+
+
+# github: https://github.com/nlp-uoregon/mlmm-evaluation
 mlmm_arc_challenge_tasks = [
     LightevalTaskConfig(
         name=f"mlmm_arc_{language.value}_{formulation.name.lower()}:challenge",
@@ -1788,9 +1814,23 @@ turkish_arc = [
     ]
 ]
 
+
+TASKS_TABLE.extend(
+    [
+        *mlmm_arc_challenge_tasks,
+        *arabic_ledarboard_arc_easy,
+        *turkish_arc,
+    ]
+)
+
+# ---------------------------- TruthfulQA ---------------------------- #
 # TruthfulQA: Measuring How Models Mimic Human Falsehoods
-# Translated using openai GPT
-# https://github.com/nlp-uoregon/mlmm-evaluation
+# Paper: https://arxiv.org/abs/2109.07958
+# TruthfulQA is a benchmark dataset designed to measure the truthfulness of language models.
+# It consists of questions that humans might answer incorrectly due to false beliefs or misconceptions.
+# The task evaluates a model's ability to provide truthful answers and avoid common human biases.
+
+# github: https://github.com/nlp-uoregon/mlmm-evaluation
 mlmm_truthfulqa_tasks = [
     LightevalTaskConfig(
         name=f"mlmm_truthfulqa_{language.value}_{formulation.name.lower()}:{subset}",
@@ -1885,6 +1925,15 @@ turkish_truthfulqa = [
         HybridFormulation(),
     ]
 ]
+
+TASKS_TABLE.extend(
+    [
+        *mlmm_truthfulqa_tasks,
+        *turkish_truthfulqa,
+    ]
+)
+
+# ---------------------------- Exams like tasks ---------------------------- #
 
 # Exams: A collection of exam questions from various countries and subjects
 # Paper: https://arxiv.org/abs/2011.03080
@@ -2039,7 +2088,7 @@ exams_tasks = [
 # Paper: https://arxiv.org/abs/2306.05179
 m3exam_tasks = [
     LightevalTaskConfig(
-        name=f"m3exam_{language.name}_{formulation.name.lower()}",
+        name=f"m3exam_{language.value}_{formulation.name.lower()}",
         suite=("lighteval",),
         prompt_function=get_mcq_prompt_function(
             language,
@@ -2082,7 +2131,7 @@ thai_exams_tasks = [
     LightevalTaskConfig(
         name=f"thai_exams_{Language.THAI.value}_{formulation.name.lower()}:{subset}",
         prompt_function=get_mcq_prompt_function(Language.THAI, thai_exams_adapter),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="scb10x/thai_exam",
         hf_subset=subset,
         evaluation_splits=("test",),
@@ -2097,7 +2146,15 @@ thai_exams_tasks = [
     ]
 ]
 
-# Part of XCSR
+TASKS_TABLE.extend(
+    [
+        *exams_tasks,
+        *m3exam_tasks,
+        *thai_exams_tasks,
+    ]
+)
+
+# ------------------------------- XCSQA ------------------------------- #
 # XCSQA (Cross-lingual Commonsense QA) is part of the XCSR (Cross-lingual Commonsense Reasoning) benchmark
 # It is a multilingual extension of the CommonsenseQA dataset, covering 16 languages
 # The task involves answering multiple-choice questions that require commonsense reasoning
@@ -2113,7 +2170,7 @@ xcsqa_tasks = [
                 "gold_idx": line["question"]["choices"]["label"].index(line["answerKey"]),
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="INK-USC/xcsr",
         hf_subset=f"X-CSQA-{lang}",
         hf_filter=lambda x: all(
@@ -2151,68 +2208,13 @@ xcsqa_tasks = [
     for lang in [language.value]
 ]
 
-
-ALGHAFA_SUBSETS = [
-    "mcq_exams_test_ar",
-    "meta_ar_dialects",
-    "meta_ar_msa",
-    "multiple_choice_facts_truefalse_balanced_task",
-    "multiple_choice_grounded_statement_soqal_task",
-    "multiple_choice_grounded_statement_xglue_mlqa_task",
-    "multiple_choice_rating_sentiment_no_neutral_task",
-    "multiple_choice_rating_sentiment_task",
-    "multiple_choice_sentiment_task",
-]
-
-# Alghafa: Arabic LLM Benchmark Native
-# It's taken from the community arabic tasks but it uses
-# multilingual template
-# Paper: https://aclanthology.org/2023.arabicnlp-1.21/
-alghafa_native_tasks = [
-    LightevalTaskConfig(
-        name=f"alghafa_{Language.ARABIC.value}_{formulation.name.lower()}:{subset}",
-        hf_subset=subset,
-        prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter),
-        evaluation_splits=["test"],
-        few_shots_split="validation",
-        suite=["custom"],
-        hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Native",
-        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
-    )
-    for subset in ALGHAFA_SUBSETS
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
+TASKS_TABLE.extend(
+    [
+        *xcsqa_tasks,
     ]
-]
+)
 
-# RACE: Reading Comprehension from Examinations
-# RACE is a large-scale reading comprehension dataset collected from English exams for middle and high school Chinese students.
-# This Arabic version is a translation of the original RACE dataset, adapted for Arabic language evaluation.
-# Paper: https://aclanthology.org/2023.arabicnlp-1.21/
-race_ar_task = [
-    LightevalTaskConfig(
-        name=f"race_{Language.ARABIC.value}_{formulation.name.lower()}",
-        prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter),
-        suite=["custom"],
-        hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
-        hf_subset="race_ar",
-        hf_revision="a31ebd34ca311d7e0cfc6ad7f458b3435af280f5",
-        hf_avail_splits=["test", "validation"],
-        evaluation_splits=["test"],
-        few_shots_split="validation",
-        trust_dataset=True,
-        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
-    )
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
-]
-
-
+# ------------------------------- PIQA ------------------------------- #
 # PIQA: Physical Interaction Question Answering
 # PIQA is a benchmark for testing physical commonsense reasoning.
 # This Arabic version is a translation of the original PIQA dataset, adapted for Arabic language evaluation.
@@ -2223,7 +2225,7 @@ piqa_ar_tasks = [
     LightevalTaskConfig(
         name=f"piqa_{Language.ARABIC.value}_{formulation.name.lower()}",
         prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter),
-        suite=["custom"],
+        suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
         hf_revision="a31ebd34ca311d7e0cfc6ad7f458b3435af280f5",
         hf_subset="piqa_ar",
@@ -2240,18 +2242,24 @@ piqa_ar_tasks = [
     ]
 ]
 
+TASKS_TABLE.extend(
+    [
+        *piqa_ar_tasks,
+    ]
+)
+
+# ------------------------------- OpenBookQA ------------------------------- #
 # OpenBookQA: A Question-Answering Dataset for Open-Book Exams
 # OpenBookQA is a question-answering dataset modeled after open-book exams for assessing human understanding of a subject.
 # It consists of multiple-choice questions that require combining facts from a given open book with broad common knowledge.
 # The task tests language models' ability to leverage provided information and apply common sense reasoning.
 # Original paper: https://arxiv.org/abs/1809.02789
-
 # Arabic version: https://aclanthology.org/2023.arabicnlp-1.21/
 openbook_ara_tasks = [
     LightevalTaskConfig(
         name=f"openbookqa_{Language.ARABIC.value}_{formulation.name.lower()}",
         prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter),
-        suite=["custom"],
+        suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
         hf_subset="openbook_qa_ext_ar",
         hf_revision="a31ebd34ca311d7e0cfc6ad7f458b3435af280f5",
@@ -2280,7 +2288,7 @@ openbook_rus_tasks = [
                 "gold_idx": LETTER_INDICES.index(line["outputs"]),
             },
         ),
-        suite=["custom"],
+        suite=["lighteval"],
         hf_repo="ai-forever/MERA",
         hf_subset="ruopenbookqa",
         evaluation_splits=("train",),
@@ -2292,6 +2300,18 @@ openbook_rus_tasks = [
         HybridFormulation(),
     ]
 ]
+
+TASKS_TABLE.extend(
+    [
+        *openbook_rus_tasks,
+        *openbook_ara_tasks,
+    ]
+)
+
+# ------------------------------- SciQ ------------------------------- #
+# SciQ: Science Question Answering
+# SciQ is a question-answering dataset designed to evaluate the ability of language models to answer science questions.
+# It consists of multiple-choice questions that require scientific reasoning and factual knowledge.
 
 # The Arabic version is part of the AlGhafa Arabic LLM Benchmark, a translation and adaptation of various English datasets.
 # Paper: https://aclanthology.org/2023.arabicnlp-1.21/
@@ -2306,7 +2326,7 @@ sciq_ar_task = [
                 "gold_idx": line["choices"].index(line["answer"]),
             },
         ),
-        suite=["custom"],
+        suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
         hf_subset="sciq_ar",
         hf_revision="a31ebd34ca311d7e0cfc6ad7f458b3435af280f5",
@@ -2317,6 +2337,91 @@ sciq_ar_task = [
         metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
         trust_dataset=True,
     )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+TASKS_TABLE.extend(
+    [
+        *sciq_ar_task,
+    ]
+)
+
+# ------------------------------- Math Tasks ------------------------------- #
+
+# MathLogicQA is a dataset for evaluating mathematical reasoning in language models.
+# It consists of multiple-choice questions that require logical reasoning and mathematical problem-solving.
+# This Russian version is part of the MERA (Multilingual Evaluation of Reasoning Abilities) benchmark.
+# MERA: https://github.com/ai-forever/MERA
+mathlogicqa_rus_tasks = [
+    LightevalTaskConfig(
+        name=f"mathlogic_qa_{Language.RUSSIAN.value}_{formulation.name.lower()}",
+        prompt_function=get_mcq_prompt_function(
+            Language.RUSSIAN,
+            lambda line: {
+                "question": line["inputs"]["text"],
+                "choices": [line["inputs"][f"option_{i.lower()}"] for i in LETTER_INDICES[:4]],
+                "gold_idx": LETTER_INDICES.index(line["outputs"]),
+            },
+        ),
+        suite=("lighteval",),
+        hf_repo="ai-forever/MERA",
+        hf_subset="mathlogicqa",
+        evaluation_splits=("train",),
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+TASKS_TABLE.extend(
+    [
+        *mathlogicqa_rus_tasks,
+    ]
+)
+
+# ------------------------------- Misc ------------------------------- #
+
+# AGIEval: Chinese AGI Evaluation suite (Excluding the english subsets)
+# Paper: https://arxiv.org/abs/2304.06364
+CHINESE_AGIEVAL_SUBSET = [
+    "gaokao-biology",
+    "gaokao-chinese",
+    "gaokao-chemistry",
+    "gaokao-geography",
+    "gaokao-history",
+    "gaokao-mathqa",
+    "gaokao-physics",
+    "logiqa-zh",
+    "jec-qa-kd",
+    "jec-qa-ca",
+]
+
+agieval_tasks_zh = [
+    LightevalTaskConfig(
+        name=f"agieval_{Language.CHINESE.value}_{formulation.name.lower()}:{subset}",
+        prompt_function=get_mcq_prompt_function(
+            Language.CHINESE,
+            partial(
+                agieval_prompt,
+                Language.CHINESE,
+                join_variant="NEW_LINE" if isinstance(formulation, CFFormulation) else "COMMA",
+            ),
+        ),
+        suite=("lighteval",),
+        hf_repo=f"hails/agieval-{subset}",
+        hf_subset="default",
+        evaluation_splits=("test",),
+        few_shots_split=None,
+        metric=(loglikelihood_acc_metric(normalization=LogProbPMINorm()),),
+    )
+    for subset in CHINESE_AGIEVAL_SUBSET
     for formulation in [
         MCFFormulation(),
         CFFormulation(),
@@ -2339,7 +2444,7 @@ worldtree_rus_tasks = [
                 "gold_idx": LETTER_INDICES.index(line["outputs"]),
             },
         ),
-        suite=("custom",),
+        suite=("lighteval",),
         hf_repo="ai-forever/MERA",
         hf_subset="ruworldtree",
         evaluation_splits=("train",),
@@ -2352,33 +2457,9 @@ worldtree_rus_tasks = [
     ]
 ]
 
-
-# ------------------------------- Math Tasks ------------------------------- #
-
-# MathLogicQA is a dataset for evaluating mathematical reasoning in language models.
-# It consists of multiple-choice questions that require logical reasoning and mathematical problem-solving.
-# This Russian version is part of the MERA (Multilingual Evaluation of Reasoning Abilities) benchmark.
-# MERA: https://github.com/ai-forever/MERA
-mathlogicqa_rus_tasks = [
-    LightevalTaskConfig(
-        name=f"mathlogic_qa_{Language.RUSSIAN.value}_{formulation.name.lower()}",
-        prompt_function=get_mcq_prompt_function(
-            Language.RUSSIAN,
-            lambda line: {
-                "question": line["inputs"]["text"],
-                "choices": [line["inputs"][f"option_{i.lower()}"] for i in LETTER_INDICES[:4]],
-                "gold_idx": LETTER_INDICES.index(line["outputs"]),
-            },
-        ),
-        suite=("custom",),
-        hf_repo="ai-forever/MERA",
-        hf_subset="mathlogicqa",
-        evaluation_splits=("train",),
-        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
-    )
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
+TASKS_TABLE.extend(
+    [
+        *agieval_tasks_zh,
+        *worldtree_rus_tasks,
     ]
-]
+)
