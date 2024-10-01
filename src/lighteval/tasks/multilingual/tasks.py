@@ -726,7 +726,6 @@ arcd_tasks = [
         hf_repo="hsseinmz/arcd",
         hf_subset="plain_text",
         evaluation_splits=("train", "validation"),
-        trust_dataset=True,
         metric=(
             multilingual_quasi_exact_match_metric(Language.ARABIC, "prefix"),
             multilingual_quasi_f1_score_metric(Language.ARABIC),
@@ -833,8 +832,10 @@ indicqa_tasks = [
         suite=("lighteval",),
         hf_repo="ai4bharat/IndicQA",
         hf_subset=f"indicqa.{LangCodeLanguage.get(language.value).language}",
-        hf_revision="92d96092ae229950973dac3b9998f8b3a8949b0a",
         hf_filter=lambda line: any(len(ans) > 0 for ans in line["answers"]["text"]),
+        # Since we use trust_dataset, we have to be careful about what is inside the dataset
+        # script. We thus lock the revision to ensure that the script doesn't change
+        hf_revision="92d96092ae229950973dac3b9998f8b3a8949b0a",
         trust_dataset=True,
         evaluation_splits=("test",),
         few_shots_split="test",
@@ -996,6 +997,8 @@ race_ar_task = [
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
         hf_subset="race_ar",
+        # Since we use trust_dataset, we have to be careful about what is inside the dataset
+        # script. We thus lock the revision to ensure that the script doesn't change
         hf_revision="08663706ee7cab30c4b7dc1bb00042a3227ce1ff",
         hf_avail_splits=["test", "validation"],
         evaluation_splits=["test"],
