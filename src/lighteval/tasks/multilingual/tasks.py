@@ -469,7 +469,7 @@ TASKS_TABLE.extend([*xcopa_tasks, *copa_indic_tasks, *parus_tasks])
 # It evaluates commonsense reasoning abilities across multiple languages.
 mlmm_hellaswag_tasks = [
     LightevalTaskConfig(
-        name=f"hellaswag_{lang.value}_{formulation.name.lower()}",
+        name=f"mlmm_hellaswag_{lang.value}_{formulation.name.lower()}",
         suite=["lighteval"],
         prompt_function=get_hellaswag_prompt_function(
             language=lang,
@@ -718,7 +718,6 @@ arcd_tasks = [
         hf_repo="hsseinmz/arcd",
         hf_subset="plain_text",
         evaluation_splits=("train", "validation"),
-        trust_dataset=True,
         metric=(
             multilingual_quasi_exact_match_metric(Language.ARABIC, "prefix"),
             multilingual_quasi_f1_score_metric(Language.ARABIC),
