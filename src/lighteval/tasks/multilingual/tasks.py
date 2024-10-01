@@ -410,6 +410,9 @@ copa_indic_tasks = [
         ),
         hf_repo="ai4bharat/IndicCOPA",
         hf_subset=f"translation-{standardize_tag(language.value)}",
+        # Since we use trust_dataset, we have to be careful about what is inside the dataset
+        # script. We thus lock the revision to ensure that the script doesn't change
+        hf_revision="d356ef19a4eb287e88a51d07a56b73ba88c7f188",
         evaluation_splits=["test"],
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
@@ -479,7 +482,7 @@ TASKS_TABLE.extend([*xcopa_tasks, *copa_indic_tasks, *parus_tasks])
 # It evaluates commonsense reasoning abilities across multiple languages.
 mlmm_hellaswag_tasks = [
     LightevalTaskConfig(
-        name=f"hellaswag_{lang.value}_{formulation.name.lower()}",
+        name=f"mlmm_hellaswag_{lang.value}_{formulation.name.lower()}",
         suite=["lighteval"],
         prompt_function=get_hellaswag_prompt_function(
             language=lang,
@@ -494,12 +497,14 @@ mlmm_hellaswag_tasks = [
         ),
         hf_repo="jon-tow/okapi_hellaswag",
         hf_subset=standardize_tag(lang.value),
+        # Since we use trust_dataset, we have to be careful about what is inside the dataset
+        # script. We thus lock the revision to ensure that the script doesn't change
         hf_revision="96ed8e0dfc6172dad1d3df338d7b8ba6c1ff9d83",
-        trust_dataset=True,
         evaluation_splits=["validation"],
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
         ],
+        trust_dataset=True,
     )
     for lang in [
         Language.ARABIC,
@@ -548,7 +553,7 @@ mlmm_hellaswag_tasks = [
 # which would make it hard to read
 hellaswag_tur_tasks = [
     LightevalTaskConfig(
-        name=f"hellaswag_{Language.TURKISH.value}_{formulation.name.lower()}",
+        name=f"community_hellaswag_{Language.TURKISH.value}_{formulation.name.lower()}",
         suite=["lighteval"],
         prompt_function=get_hellaswag_prompt_function(
             language=Language.TURKISH,
@@ -560,7 +565,7 @@ hellaswag_tur_tasks = [
             },
             formulation=formulation,
             # https://github.com/malhajar17/lm-evaluation-harness_turkish/blob/main/lm_eval/tasks/hellaswag_tr-v0.2/utils.py
-            dot_replacement=[" [title]", " [başlık]", " [adım]", " [header]"],
+            wikihow_artifacts=[" [title]", " [başlık]", " [adım]", " [header]"],
         ),
         hf_repo="malhajar/hellaswag_tr-v0.2",
         hf_subset="default",
@@ -578,7 +583,7 @@ hellaswag_tur_tasks = [
 # for evaluating Thai language models on commonsense reasoning tasks.
 hellaswag_tha_tasks = [
     LightevalTaskConfig(
-        name=f"hellaswag_{Language.THAI.value}_{formulation.name.lower()}",
+        name=f"community_hellaswag_{Language.THAI.value}_{formulation.name.lower()}",
         suite=["lighteval"],
         prompt_function=get_hellaswag_prompt_function(
             language=Language.THAI,
@@ -1285,7 +1290,7 @@ meta_mmlu_tasks = [
         ),
         suite=("lighteval",),
         hf_repo="meta-llama/Meta-Llama-3.1-8B-Instruct-evals",
-        hf_subset=f"Meta-Llama-3.1-8B-Instruct-evals__multilingual_mmlu_{standardize_tag(language.value)}__details",
+        hf_subset=f"Llama-3.1-8B-Instruct-evals__multilingual_mmlu_{standardize_tag(language.value)}__details",
         hf_filter=partial(
             lambda language, subset, line: line["subtask_name"]
             == f"mmlu_{standardize_tag(language.value)}_chat.{subset}",
@@ -1409,7 +1414,7 @@ rummlu = [
 # Translated using openai GPT
 mmlu_turkish = [
     LightevalTaskConfig(
-        name=f"tur_leaderboard_mmlu_{Language.TURKISH.value}_{formulation.name.lower()}:{subset}",
+        name=f"community_mmlu_{Language.TURKISH.value}_{formulation.name.lower()}:{subset}",
         prompt_function=get_mcq_prompt_function(
             Language.TURKISH,
             lambda line: {"question": line["question"], "choices": line["choices"], "gold_idx": int(line["answer"])},

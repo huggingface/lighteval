@@ -755,21 +755,29 @@ def headqa(line, task_name: str = None):
     )
 
 
-def hellaswag_harness(line, task_name: str = None):
-    def preprocess(text):
-        """Comes from AiHarness"""
-        # text = text.strip()
-        # NOTE: Brackets are artifacts of the WikiHow dataset portion of HellaSwag.
-        text = text.replace(" [title]", ". ")
-        text = re.sub("\\[.*?\\]", "", text)
-        text = text.replace("  ", " ")
-        return text
+def hellaswag_preprocess(
+    text: str, wikihow_artifacts: list[str] = [" [title]"], truncate_dots: bool = False, strip_text: bool = False
+):
+    """Comes from AiHarness"""
+    # text = text.strip()
+    # NOTE: Brackets are artifacts of the WikiHow dataset portion of HellaSwag.
+    for dot_repl in wikihow_artifacts:
+        text = text.replace(dot_repl, ". ")
+    text = re.sub("\\[.*?\\]", "", text)
+    text = text.replace("  ", " ")
+    if truncate_dots:
+        text = text.replace(r"\.+", r"\.")
+    if strip_text:
+        text = text.strip()
+    return text
 
+
+def hellaswag_harness(line, task_name: str = None):
     ctx = f"{line['ctx_a']} {line['ctx_b'].capitalize()} "
     return Doc(
         task_name=task_name,
-        query=preprocess(line["activity_label"] + ": " + ctx),
-        choices=[preprocess(ending) for ending in line["endings"]],
+        query=hellaswag_preprocess(line["activity_label"] + ": " + ctx),
+        choices=[hellaswag_preprocess(ending) for ending in line["endings"]],
         gold_index=int(line["label"]) if line["label"] != "" else -1,  # -1 for test
         # "metric": "choices_loglikelihood",
     )
