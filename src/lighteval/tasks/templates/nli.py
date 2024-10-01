@@ -74,7 +74,7 @@ RelationType = Literal["entailment", "neutral", "contradiction"]
 
 def _nli_prompt_function_natural(
     language: Language,
-    adapter: Callable[[dict], NLIInput] | NLIAdapter,
+    adapter: Callable[[dict], NLIInput | None] | NLIAdapter,
     relations: list[RelationType],
 ):
     """
@@ -107,11 +107,14 @@ def _nli_prompt_function_natural(
             return translation_literals.also
 
     translation_literals = TRANSLATION_LITERALS[language]
-    adapter_fn = create_adapter_from_dict(adapter)  # type: ignore
+    adapter_fn = create_adapter_from_dict(adapter)
 
     def nli_natural_prompt(line: dict, task_name: str):
         labels = [capitalize(get_relation_label(label, translation_literals)) for label in relations]
         input_data = adapter_fn(line)
+        if input_data is None:
+            return None
+
         premise, hypothesis, label = input_data["premise"], input_data["hypothesis"], input_data["gold_idx"]
 
         premise = capitalize(input_data["premise"].rstrip(PUNCT))
@@ -159,7 +162,7 @@ def _nli_prompt_function_natural(
 
 def get_nli_prompt_function(
     language: Language,
-    adapter: Callable[[dict], NLIInput] | NLIAdapter,
+    adapter: Callable[[dict], NLIInput | None] | NLIAdapter,
     relations: list[RelationType],
     formulation: Formulation = MCFFormulation(),
 ):
@@ -211,7 +214,7 @@ def get_nli_prompt_function(
         elif label == "neutral":
             return translation_literals.neither
 
-    adapter_fn = create_adapter_from_dict(adapter)  # type: ignore
+    adapter_fn = create_adapter_from_dict(adapter)
 
     # For hybrid we use inlined choices so we use the cf formulation in multichoice prompt fn
     mcq_prompt_fn = get_mcq_prompt_function(
@@ -221,10 +224,13 @@ def get_nli_prompt_function(
     )
 
     def prompt_fn(line: dict, task_name: str):
+        input_data = adapter_fn(line)
+        if input_data is None:
+            return None
+
         # Template based on dicussion here: https://github.com/EleutherAI/lm-evaluation-harness/issues/450
         labels = [capitalize(get_relation_label(label, translation_literals)) for label in relations]
 
-        input_data = adapter_fn(line)
         premise, hypothesis, gold_idx = input_data["premise"], input_data["hypothesis"], input_data["gold_idx"]
         premise = fix_ending_punct(capitalize(input_data["premise"]), translation_literals)
         hypothesis = input_data["hypothesis"]

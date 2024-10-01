@@ -27,6 +27,7 @@ from lighteval.metrics.dynamic_metrics import loglikelihood_acc_metric
 from lighteval.metrics.normalizations import LogProbTokenNorm
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.templates.copa import get_copa_prompt_function
+from lighteval.tasks.templates.hellaswag import get_hellaswag_prompt_function
 from lighteval.tasks.templates.nli import get_nli_prompt_function
 from lighteval.tasks.templates.utils.formulation import (
     CFFormulation,
@@ -386,6 +387,9 @@ copa_indic_tasks = [
         ),
         hf_repo="ai4bharat/IndicCOPA",
         hf_subset=f"translation-{standardize_tag(language.value)}",
+        # Since we use trust_dataset, we have to be careful about what is inside the dataset
+        # script. We thus lock the revision to ensure that the script doesn't change
+        hf_revision="d356ef19a4eb287e88a51d07a56b73ba88c7f188",
         evaluation_splits=["test"],
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
@@ -443,6 +447,141 @@ parus_tasks = [
 ]
 
 
+# ------------------------------- Hellaswag Tasks ------------------------------- #
+# Hellaswag is a commonsense reasoning task that requires models to complete a given scenario
+# with the most plausible ending. It tests the model's ability to understand and reason about
+# everyday situations and human behavior.
+
+# MLMM-Hellaswag: Multilingual adaptation of Hellaswag
+# Paper: https://arxiv.org/abs/2306.07610
+# This is a multilingual version of Hellaswag, part of the MLMM (Massive Language Model Meta-Evaluation) benchmark.
+# It evaluates commonsense reasoning abilities across multiple languages.
+mlmm_hellaswag_tasks = [
+    LightevalTaskConfig(
+        name=f"hellaswag_{lang.value}_{formulation.name.lower()}",
+        suite=["lighteval"],
+        prompt_function=get_hellaswag_prompt_function(
+            language=lang,
+            adapter=lambda line: {
+                # We don't use activity_label as they are not available
+                "ctx_a": line["ctx_a"],
+                "ctx_b": line["ctx_b"],
+                "continuations": line["endings"],
+                "gold_idx": int(line["label"]),
+            },
+            formulation=formulation,
+        ),
+        hf_repo="jon-tow/okapi_hellaswag",
+        hf_subset=standardize_tag(lang.value),
+        # Since we use trust_dataset, we have to be careful about what is inside the dataset
+        # script. We thus lock the revision to ensure that the script doesn't change
+        hf_revision="96ed8e0dfc6172dad1d3df338d7b8ba6c1ff9d83",
+        evaluation_splits=["validation"],
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+        trust_dataset=True,
+    )
+    for lang in [
+        Language.ARABIC,
+        Language.BENGALI,
+        Language.CATALAN,
+        Language.DANISH,
+        Language.GERMAN,
+        Language.SPANISH,
+        Language.BASQUE,
+        Language.FRENCH,
+        Language.GUJARATI,
+        Language.HINDI,
+        Language.CROATIAN,
+        Language.HUNGARIAN,
+        Language.ARMENIAN,
+        Language.INDONESIAN,
+        Language.ICELANDIC,
+        Language.ITALIAN,
+        Language.KANNADA,
+        Language.MALAYALAM,
+        Language.MARATHI,
+        Language.NORWEGIAN,
+        Language.NEPALI,
+        Language.DUTCH,
+        Language.PORTUGUESE,
+        Language.ROMANIAN,
+        Language.RUSSIAN,
+        Language.SLOVAK,
+        Language.SERBIAN,
+        Language.SWEDISH,
+        Language.TAMIL,
+        Language.TELUGU,
+        Language.UKRAINIAN,
+        Language.VIETNAMESE,
+        Language.CHINESE,
+    ]
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+]
+
+# Hellaswag Turkish
+# This is a Turkish adaptation of the Hellaswag task.
+# While there's no specific paper for this version, it has been found to work well for evaluating
+# Turkish language models on commonsense reasoning tasks.
+
+# We don't handle them in single task as there is quite a lot of differences (dataset/subset, dot replacement, etc.)
+# which would make it hard to read
+hellaswag_tur_tasks = [
+    LightevalTaskConfig(
+        name=f"community_hellaswag_{Language.TURKISH.value}_{formulation.name.lower()}",
+        suite=["lighteval"],
+        prompt_function=get_hellaswag_prompt_function(
+            language=Language.TURKISH,
+            adapter=lambda line: {
+                "ctx_a": line["ctx_a"],
+                "ctx_b": line["ctx_b"],
+                "continuations": line["endings"],
+                "gold_idx": int(line["label"]),
+            },
+            formulation=formulation,
+            # https://github.com/malhajar17/lm-evaluation-harness_turkish/blob/main/lm_eval/tasks/hellaswag_tr-v0.2/utils.py
+            wikihow_artifacts=[" [title]", " [başlık]", " [adım]", " [header]"],
+        ),
+        hf_repo="malhajar/hellaswag_tr-v0.2",
+        hf_subset="default",
+        evaluation_splits=["validation"],
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+    )
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+]
+
+# Hellaswag Thai
+# This is a Thai adaptation of the Hellaswag task.
+# Similar to the Turkish version, there's no specific paper, but it has been found to be effective
+# for evaluating Thai language models on commonsense reasoning tasks.
+hellaswag_tha_tasks = [
+    LightevalTaskConfig(
+        name=f"community_hellaswag_{Language.THAI.value}_{formulation.name.lower()}",
+        suite=["lighteval"],
+        prompt_function=get_hellaswag_prompt_function(
+            language=Language.THAI,
+            adapter=lambda line: {
+                "ctx_a": line["ctx_a"],
+                "ctx_b": line["ctx_b"],
+                "continuations": line["endings"],
+                "gold_idx": int(line["label"]),
+            },
+            formulation=formulation,
+        ),
+        hf_repo="HuggingFaceFW-Dev/hellaswag_thai",
+        hf_subset="default",
+        evaluation_splits=["validation"],
+        few_shots_split="train",
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+    )
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+]
+
 TASKS_TABLE = [
     *xnli_tasks,
     *xnli2_tasks,
@@ -454,4 +593,7 @@ TASKS_TABLE = [
     *xcopa_tasks,
     *copa_indic_tasks,
     *parus_tasks,
+    *mlmm_hellaswag_tasks,
+    *hellaswag_tur_tasks,
+    *hellaswag_tha_tasks,
 ]
