@@ -989,7 +989,7 @@ c3_tasks = [
 # Paper: https://aclanthology.org/2023.arabicnlp-1.21/
 race_ar_task = [
     LightevalTaskConfig(
-        name=f"race_{Language.ARABIC.value}_{formulation.name.lower()}",
+        name=f"community_race_{Language.ARABIC.value}_{formulation.name.lower()}",
         prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter),
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
@@ -1572,7 +1572,7 @@ ARABIC_MMLU_SUBSETS = [
 
 arabic_mmlu_tasks = [
     LightevalTaskConfig(
-        name=f"arabic_mmlu_native_{Language.ARABIC.value}_{formulation.name.lower()}:{subset.lower().replace(' ', '_').replace('(', '').replace(')', '')}",
+        name=f"mmlu_{Language.ARABIC.value}_{formulation.name.lower()}:{subset.lower().replace(' ', '_').replace('(', '').replace(')', '')}",
         prompt_function=get_mcq_prompt_function(
             Language.ARABIC,
             lambda line: {
