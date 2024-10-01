@@ -349,4 +349,5 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
     Language.SORANI: TranslationLiterals(language=Language.SORANI),
     Language.CEBUANO: TranslationLiterals(language=Language.CEBUANO),
     Language.WAR: TranslationLiterals(language=Language.WAR),
+    Language.SWEDISH: TranslationLiterals(language=Language.SWEDISH),
 }
