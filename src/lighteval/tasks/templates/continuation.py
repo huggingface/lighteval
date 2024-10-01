@@ -84,7 +84,7 @@ class ContinuationDictAdapter(TypedDict):
 
 def get_continuation_prompt_function(
     language: Language,
-    adapter: Callable[[dict], ContinuationInput] | ContinuationDictAdapter,
+    adapter: Callable[[dict], ContinuationInput | None] | ContinuationDictAdapter,
     formulation: Formulation = MCFFormulation(),
 ):
     """
@@ -121,11 +121,13 @@ def get_continuation_prompt_function(
     Returns:
         Callable: A function that generates Continuation prompt based on the given parameters.
     """
-    adapter_fn: Callable[[dict], ContinuationInput] = create_adapter_from_dict(adapter)  # type: ignore
+    adapter_fn = create_adapter_from_dict(adapter)
     translation_literals = TRANSLATION_LITERALS[language]
 
     def prepare_prompt(line: dict):
         cont_input = adapter_fn(line)
+        if cont_input is None:
+            return None
 
         instruction_val = cont_input.get("instruction")
         instruction = f"{instruction_val}\n" if instruction_val else ""
@@ -140,7 +142,11 @@ def get_continuation_prompt_function(
         return cont_input, instruction, context, continuations
 
     def prompt_fn_cf(line, task_name: str):
-        cont_input, instruction, context, continuations = prepare_prompt(line)
+        prepared_prompt = prepare_prompt(line)
+        if prepared_prompt is None:
+            return None
+
+        cont_input, instruction, context, continuations = prepared_prompt
 
         context_follows_sentence_space = punctuation_ends_sentence(context, translation_literals)
         answers = build_answers(continuations, formulation, translation_literals, context_follows_sentence_space)
@@ -160,7 +166,11 @@ def get_continuation_prompt_function(
         )
 
     def prompt_fn_mcf(line, task_name: str):
-        cont_input, instruction, context, continuations = prepare_prompt(line)
+        prepared_prompt = prepare_prompt(line)
+        if prepared_prompt is None:
+            return None
+
+        cont_input, instruction, context, continuations = prepared_prompt
 
         options = build_choices(continuations, formulation, translation_literals)
         options = f"{options}\n" if options else ""
