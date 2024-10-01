@@ -756,13 +756,17 @@ def headqa(line, task_name: str = None):
 
 
 def hellaswag_preprocess(
-    text: str, wikihow_artifacts: list[str] = [" [title]"], truncate_dots: bool = False, strip_text: bool = False
+    text: str,
+    wikihow_artifacts: list[str] = [" [title]"],
+    truncate_dots: bool = False,
+    strip_text: bool = False,
+    dot_replacement: str = ". ",
 ):
     """Comes from AiHarness"""
     # text = text.strip()
     # NOTE: Brackets are artifacts of the WikiHow dataset portion of HellaSwag.
-    for dot_repl in wikihow_artifacts:
-        text = text.replace(dot_repl, ". ")
+    for wikihow_artifact in wikihow_artifacts:
+        text = text.replace(wikihow_artifact, dot_replacement)
     text = re.sub("\\[.*?\\]", "", text)
     text = text.replace("  ", " ")
     if truncate_dots:

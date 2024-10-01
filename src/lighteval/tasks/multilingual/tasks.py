@@ -2411,14 +2411,13 @@ mathlogicqa_rus_tasks = [
 
 cmath_tasks = [
     LightevalTaskConfig(
-        name=f"cmath_{Language.CHINESE.value}_{formulation.name.lower()}",
+        name=f"cmath_{Language.CHINESE.value}",
         prompt_function=get_qa_prompt_function(
             Language.CHINESE,
             lambda line: {
                 "question": line["question"],
                 "choices": [line["golden"]],
             },
-            formulation=formulation,
         ),
         suite=("lighteval",),
         hf_repo="weitianwen/cmath",
@@ -2431,11 +2430,6 @@ cmath_tasks = [
         ],
         stop_sequence=("\n",),
     )
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
 ]
 
 
