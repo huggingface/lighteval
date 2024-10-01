@@ -20,11 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import re
 from typing import Callable
 
 from typing_extensions import NotRequired, TypedDict
 
+from lighteval.tasks.default_prompts import hellaswag_preprocess
 from lighteval.tasks.templates.continuation import get_continuation_prompt_function
 from lighteval.tasks.templates.multichoice import create_adapter_from_dict
 from lighteval.tasks.templates.utils.formatting_utils import (
@@ -64,7 +64,7 @@ def get_hellaswag_prompt_function(
     language: Language,
     adapter: Callable[[dict], HellaswagInput | None] | HellaswagAdapter,
     formulation: Formulation = MCFFormulation(),
-    dot_replacement: list[str] = [" [title]"],
+    wikihow_artifacts: list[str] = [" [title]"],
 ):
     """
     Create a templated prompt function for a Hellaswag task.
@@ -78,7 +78,7 @@ def get_hellaswag_prompt_function(
             Must map data from the dataset row to the HellaswagInput format.
             Note: The gold_idx must be an index or list of indices in the continuations list, indicating the correct continuation(s).
         formulation (Formulation, optional): The formulation to use for the task. Defaults to MCFFormulation().
-        dot_replacement (list[str], optional): A list of strings to replace with dot. We have to replace the the texts with dots because
+        wikihow_artifacts (list[str], optional): A list of strings to replace with dot. We have to replace the the texts with dots because
             of wikihow source.
 
     Returns:
@@ -87,21 +87,15 @@ def get_hellaswag_prompt_function(
 
     translation_literals = TRANSLATION_LITERALS[language]
 
-    def preprocess(text):
-        """Comes from AiHarness"""
-        # text = text.strip()
-        # NOTE: Brackets are artifacts of the WikiHow dataset portion of HellaSwag.
-        for dot_repl in dot_replacement:
-            text = text.replace(dot_repl, ". ")
-        text = re.sub("\\[.*?\\]", "", text)
-        text = text.replace("  ", " ")
-        text = text.replace(r"\.+", r"\.")
-        return text.strip()
-
     def process_context(ctx):
         if ctx == "":
             return ""
-        return capitalize(fix_ending_punct(preprocess(ctx), translation_literals))
+        return capitalize(
+            fix_ending_punct(
+                hellaswag_preprocess(ctx, truncate_dots=True, wikihow_artifacts=wikihow_artifacts),
+                translation_literals,
+            )
+        )
 
     def join_ctxs(ctx_a, ctx_b):
         space = (
@@ -134,7 +128,10 @@ def get_hellaswag_prompt_function(
 
         # Removoal of the [header] can happen and we need the first letter to be capital afterwards
         full_context = HELLASWAG_QUERY.format(activity_label=activity_label, ctx=ctx_a)
-        choices = [preprocess(continuation) for continuation in input_data["continuations"]]
+        choices = [
+            hellaswag_preprocess(continuation, wikihow_artifacts=wikihow_artifacts, truncate_dots=True)
+            for continuation in input_data["continuations"]
+        ]
 
         # It can happen that the continuations are empty we thus skip the task
         if any(len(c.strip()) == 0 for c in choices):
