@@ -24,16 +24,16 @@
 """
 Custom evaluation tasks for lighteval. Copy this file and complete it with the info for your task.
 
-This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
+This file generally creates just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
 
 Author:
 """
+
 import numpy as np
 from aenum import extend_enum
 
-from lighteval.metrics import Metrics
-from lighteval.metrics.metrics import SampleLevelMetric
-from lighteval.metrics.utils.utils import MetricCategory, MetricUseCase
+from lighteval.metrics.metrics import Metrics, SampleLevelMetric
+from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc

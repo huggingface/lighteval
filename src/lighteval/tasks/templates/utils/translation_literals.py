@@ -33,9 +33,6 @@ class TranslationLiterals:
     # This is just to create nice error messages
     language: Language
 
-    # I hate these type errors too but we are living in python world
-    # and typechecker is not respecting __getattribute__ all the time, where it would
-    # find out that the value can't be None.
     question_word: str = None  # type: ignore
     answer: str = None  # type: ignore
     confirmation_word: str = None  # type: ignore
@@ -52,12 +49,12 @@ class TranslationLiterals:
     neither: str = None  # type: ignore
 
     # Punctuation
-    full_stop: str = None  # type: ignore
-    comma: str = None  # type: ignore
-    question_mark: str = None  # type: ignore
-    exclamation_mark: str = None  # type: ignore
-    word_space: str = None  # type: ignore
-    sentence_space: str = None  # type: ignore
+    full_stop: str = "."  # type: ignore
+    comma: str = ","  # type: ignore
+    question_mark: str = "?"  # type: ignore
+    exclamation_mark: str = "!"  # type: ignore
+    word_space: str = " "  # type: ignore
+    sentence_space: str = " "  # type: ignore
     colon: str = ":"  # type: ignore
     semicolon: str = ";"  # type: ignore
 
@@ -69,7 +66,7 @@ class TranslationLiterals:
         if value is None:
             raise AttributeError(
                 f"""
-Translation for '{name}' is needed for {self.language}. Please provide it's implementation by editing
+Translation for '{name}' is needed for {self.language}. Please provide its implementation by editing
 the 'src/lighteval/tasks/templates/utils/translation_literals.py'
 """
             )

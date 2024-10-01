@@ -28,15 +28,15 @@ from langcodes import standardize_tag
 
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.multilingual.utils.adapters_utils import (
-    MULTICHOICE_JOIN_VARIANT,
     extract_answers_from_string,
-    multichoice_compose,
     multichoice_join,
+    multichoice_to_single_choice,
 )
 from lighteval.tasks.templates.continuation import ContinuationInput
 from lighteval.tasks.templates.multichoice import MCQInput
 from lighteval.tasks.templates.qa import QAInput
 from lighteval.tasks.templates.utils.formatting_utils import PUNCT
+from lighteval.tasks.templates.utils.formulation import CFFormulation, Formulation
 from lighteval.tasks.templates.utils.translation_literals import TranslationLiterals
 from lighteval.utils.language import Language
 
@@ -64,14 +64,14 @@ def get_m3exam_adapter(lang: Language, line: dict) -> MCQInput | None:
 def thai_exams_adapter(line: dict) -> MCQInput | None:
     pos_letters = [letter.lower() for letter in LETTER_INDICES[:5]]
 
-    choices = [line[letter] for letter in pos_letters if letter in line]
-    if any(opt.strip() == "" for opt in choices):
+    lettr_to_choices = {letter: line[letter] for letter in pos_letters if letter in line}
+    if any(opt.strip() == "" for opt in lettr_to_choices.values()):
         return None
 
-    gold_index = choices.index(line["answer"])
+    gold_index = list(lettr_to_choices.keys()).index(line["answer"])
     return {
         "question": line["question"],
-        "choices": choices,
+        "choices": list(lettr_to_choices.values()),
         "gold_idx": gold_index,
     }
 
@@ -87,7 +87,7 @@ def alghafa_adapter(line: dict) -> MCQInput | None:
     }
 
 
-def sciq_adapter(line: dict) -> MCQInput | None:
+def sciqa_adapter(line: dict) -> MCQInput | None:
     # Randomly generate the correct answer index
     gold_idx = np.random.randint(0, 4)
     incorrect_answers = [line["distractor1"], line["distractor2"], line["distractor3"]]
@@ -100,7 +100,7 @@ def sciq_adapter(line: dict) -> MCQInput | None:
     }
 
 
-def ceval_adapter(lang: Language, join_variant: MULTICHOICE_JOIN_VARIANT, line: dict) -> MCQInput | None:
+def ceval_adapter(lang: Language, formulation: Formulation, line: dict) -> MCQInput | None:
     # All ceval tasks ends with ____(。?)
     # Some can follow with with possible answers in format
     # (①|②|③|④)text
@@ -109,27 +109,35 @@ def ceval_adapter(lang: Language, join_variant: MULTICHOICE_JOIN_VARIANT, line: 
     translation_literals = TranslationLiterals(lang)
     choices = [line["A"], line["B"], line["C"], line["D"]]
 
+    # We found the new line variant to be the best for CF formulation, however for MCF this doesn't work well
+    # because possible options presentation
+    join_variant = "NEW_LINE" if isinstance(formulation, CFFormulation) else "COMMA"
+
     parts = line["question"].rsplit("____", maxsplit=1)
     cleaned_question = parts[0].rstrip(PUNCT).strip()
     possible_answers_part = parts[1].lstrip(PUNCT)
     gold_index = LETTER_INDICES.index(line["answer"])
-    # Sometimes there can be choose one of the following from options.
-    # In this case we want to extract the answer from the question to comply with CF format.
 
+    # We only attempt to extract answers if the answers are a chinese numbers
     answer_prefixes = [answer.replace("和", "").strip() for answer in choices]
-    answer_prefixes = set("".join(answer_prefixes))
+    answer_prefixes_set = set("".join(answer_prefixes))
 
-    # We only attempt to extract answers if the answers are numbers
     maybe_extracted_answers = (
-        extract_answers_from_string(possible_answers_part, list(answer_prefixes))
-        if answer_prefixes.issubset("①②③④⑤⑥")
+        extract_answers_from_string(possible_answers_part, list(answer_prefixes_set))
+        if answer_prefixes_set.issubset("①②③④⑤⑥")
         else None
     )
     if maybe_extracted_answers:
-        start_index, multi_choices = maybe_extracted_answers
+        start_index, prefix_answer_map = maybe_extracted_answers
         # Here we don't expect anything to be in front of the answers from second part
         assert start_index == 0, f"Start index is not 0: {start_index}"
-        choices = [multichoice_join(mc, join_variant, translation_literals) for mc in multi_choices]
+
+        choices_groups = [[prefix_answer_map.get(prefix) for prefix in prefixes] for prefixes in answer_prefixes]
+        # If we failed to extract some of the answers we discard the sample
+        if any(choice is None for choices in choices_groups for choice in choices):
+            return None
+
+        choices = [multichoice_join(mc, join_variant, translation_literals) for mc in choices_groups]
     else:
         # If the second part is not list of answers we put it back
         cleaned_question = f"{cleaned_question} {possible_answers_part}" if possible_answers_part else cleaned_question
@@ -148,8 +156,12 @@ def ceval_adapter(lang: Language, join_variant: MULTICHOICE_JOIN_VARIANT, line: 
     }
 
 
-def agieval_prompt(lang: Language, join_variant: MULTICHOICE_JOIN_VARIANT, line: dict) -> MCQInput | None:
+def agieval_adapter(lang: Language, formulation: Formulation, line: dict) -> MCQInput | None:
     translation_literals = TranslationLiterals(lang)
+
+    # We found the new line variant to be the best for CF formulation, however for MCF this doesn't work well
+    # because of possible options presentation
+    join_variant = "NEW_LINE" if isinstance(formulation, CFFormulation) else "COMMA"
 
     # Remove the question at the start as it's added by template
     context, rest = line["query"].split("问题：", maxsplit=1)
@@ -166,25 +178,30 @@ def agieval_prompt(lang: Language, join_variant: MULTICHOICE_JOIN_VARIANT, line:
     # Quesiton: 问题：在中美关系的发展中，台湾问题是一大障碍，在扫除这一障碍的过程中，取得突破性进展的事件包括（　　）①中国恢复联合国席位 ②尼克松总统访华③中美两国正式建交 ④邓小平访问美国。 选项：(A)①② (B)①③ (C)②③ (D)③④ 答案：从A到D, 我们应选择
     # Answers: [ "(A)①②", "(B)①③", "(C)②③", "(D)③④" ]
 
-    answer_prefixes = [answer.replace("和", "").strip() for answer in original_choices]
-    answer_prefixes = set("".join(answer_prefixes))
+    answer_prefixes = [answer.replace("和", "").strip() for answer in cleaned_choices]
+    answer_prefixes_set = set("".join(answer_prefixes))
 
     # We only attempt to extract answers if the answers are chinese numbers
     maybe_extracted_answers = (
-        extract_answers_from_string(question.strip().rstrip(PUNCT), list(answer_prefixes))
-        if answer_prefixes.issubset("①②③④⑤⑥")
+        extract_answers_from_string(question.strip().rstrip(PUNCT), list(answer_prefixes_set))
+        if answer_prefixes_set.issubset("①②③④⑤⑥")
         else None
     )
     if maybe_extracted_answers:
-        start_index, multi_choices = maybe_extracted_answers
+        start_index, prefix_answer_map = maybe_extracted_answers
         question = question[:start_index]
-        cleaned_choices = [multichoice_join(mc, join_variant, translation_literals) for mc in multi_choices]
+        choices_groups = [[prefix_answer_map.get(prefix) for prefix in prefixes] for prefixes in answer_prefixes]
+        if any(choice is None for choices in choices_groups for choice in choices):
+            return None
+        cleaned_choices = [multichoice_join(mc, join_variant, translation_literals) for mc in choices_groups]
 
     # Agi-eval is multi-choice but we convert it to single choice
-    cleaned_choices, gold_index = multichoice_compose(cleaned_choices, gold_index, join_variant, translation_literals)
+    cleaned_choices, gold_index = multichoice_to_single_choice(
+        cleaned_choices, gold_index, join_variant, translation_literals
+    )
     question = question.strip()
 
-    # If the answers are still only contian the chinese numbers or we have just single choice we discard this sample
+    # If the answers still only contian the chinese numbers or we have just single choice we discard this sample
     if set("".join(cleaned_choices).replace("和", "").strip()).issubset("①②③④⑤⑥") or len(cleaned_choices) <= 1:
         return None
 

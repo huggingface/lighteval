@@ -41,6 +41,7 @@ def test_continuation_prompt_mcf():
 
     doc = prompt_fn(test_input, "test_continuation_task")
 
+    # We expect the contuation to be decapitalized as it's continuation of non-ended sentence
     assert (
         doc.query
         == """\
@@ -98,6 +99,7 @@ def test_continuation_prompt_sequence_end():
 
     assert doc.query == "The sun is."
 
+    # Here we expect the continuation to be capitalized as it's a standalone sentence
     assert doc.unconditioned_query == ""
     assert doc.choices == [" Shining brightly", " Setting in the west", " Hidden behind clouds"]
     assert doc.gold_index == [1]
