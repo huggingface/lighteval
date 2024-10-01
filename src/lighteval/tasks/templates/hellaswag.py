@@ -92,7 +92,7 @@ def get_hellaswag_prompt_function(
             return ""
         return capitalize(
             fix_ending_punct(
-                hellaswag_preprocess(ctx, truncate_dots=True, wikihow_artifacts=wikihow_artifacts),
+                hellaswag_preprocess(ctx, truncate_dots=True, wikihow_artifacts=wikihow_artifacts, strip_text=True),
                 translation_literals,
             )
         )
@@ -129,7 +129,9 @@ def get_hellaswag_prompt_function(
         # Removoal of the [header] can happen and we need the first letter to be capital afterwards
         full_context = HELLASWAG_QUERY.format(activity_label=activity_label, ctx=ctx_a)
         choices = [
-            hellaswag_preprocess(continuation, wikihow_artifacts=wikihow_artifacts, truncate_dots=True)
+            hellaswag_preprocess(
+                continuation, wikihow_artifacts=wikihow_artifacts, truncate_dots=True, strip_text=True
+            )
             for continuation in input_data["continuations"]
         ]
 
