@@ -60,14 +60,14 @@ def get_m3exam_adapter(lang: Language, line: dict) -> MCQInput | None:
 def thai_exams_adapter(line: dict) -> MCQInput | None:
     pos_letters = [letter.lower() for letter in LETTER_INDICES[:5]]
 
-    choices = [line[letter] for letter in pos_letters if letter in line]
-    if any(opt.strip() == "" for opt in choices):
+    lettr_to_choices = {letter: line[letter] for letter in pos_letters if letter in line}
+    if any(opt.strip() == "" for opt in lettr_to_choices.values()):
         return None
 
-    gold_index = choices.index(line["answer"])
+    gold_index = list(lettr_to_choices.keys()).index(line["answer"])
     return {
         "question": line["question"],
-        "choices": choices,
+        "choices": list(lettr_to_choices.values()),
         "gold_idx": gold_index,
     }
 

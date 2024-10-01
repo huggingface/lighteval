@@ -49,12 +49,12 @@ class TranslationLiterals:
     neither: str = None  # type: ignore
 
     # Punctuation
-    full_stop: str = None  # type: ignore
-    comma: str = None  # type: ignore
-    question_mark: str = None  # type: ignore
-    exclamation_mark: str = None  # type: ignore
-    word_space: str = None  # type: ignore
-    sentence_space: str = None  # type: ignore
+    full_stop: str = "."  # type: ignore
+    comma: str = ","  # type: ignore
+    question_mark: str = "?"  # type: ignore
+    exclamation_mark: str = "!"  # type: ignore
+    word_space: str = " "  # type: ignore
+    sentence_space: str = " "  # type: ignore
     colon: str = ":"  # type: ignore
     semicolon: str = ";"  # type: ignore
 

@@ -40,6 +40,7 @@ from lighteval.tasks.multilingual.adapters import (
     get_m3exam_adapter,
     thai_exams_adapter,
 )
+from lighteval.tasks.multilingual.utils.task_utils import normalize_subset
 from lighteval.tasks.templates.copa import get_copa_prompt_function
 from lighteval.tasks.templates.hellaswag import get_hellaswag_prompt_function
 from lighteval.tasks.templates.multichoice import get_mcq_prompt_function
@@ -365,7 +366,7 @@ xcopa_tasks = [
         ),
         hf_repo=("OALL/AlGhafa-Arabic-LLM-Benchmark-Translated" if language == Language.ARABIC else "xcopa"),
         hf_subset=("copa_ext_ar" if language == Language.ARABIC else standardize_tag(language.value)),
-        hf_revision="a31ebd34ca311d7e0cfc6ad7f458b3435af280f5" if language == Language.ARABIC else None,
+        hf_revision="08663706ee7cab30c4b7dc1bb00042a3227ce1ff" if language == Language.ARABIC else None,
         evaluation_splits=["test"],
         few_shots_split="validation",
         generation_size=-1,
@@ -1336,7 +1337,6 @@ mlmm_mmlu_tasks = [
     )
     for subset in MMLU_SUBSETS
     for language in [
-        Language.ENGLISH,
         Language.RUSSIAN,
         Language.GERMAN,
         Language.CHINESE,
@@ -1572,7 +1572,7 @@ ARABIC_MMLU_SUBSETS = [
 
 arabic_mmlu_tasks = [
     LightevalTaskConfig(
-        name=f"mmlu_{Language.ARABIC.value}_{formulation.name.lower()}:{subset.lower().replace(' ', '_').replace('(', '').replace(')', '')}",
+        name=f"mmlu_{Language.ARABIC.value}_{formulation.name.lower()}:{normalize_subset(subset)}",
         prompt_function=get_mcq_prompt_function(
             Language.ARABIC,
             lambda line: {
@@ -1656,24 +1656,24 @@ CEVAL_SUBSET = [
 
 ceval_tasks = [
     LightevalTaskConfig(
-        name=f"ceval_{Language.CHINESE.value}_{formulation.name.lower()}",
+        name=f"ceval_{Language.CHINESE.value}_{formulation.name.lower()}:{subset}",
         # for CF the new line has the best results, however it's not really compatible with options presentation
         prompt_function=get_mcq_prompt_function(
             Language.CHINESE,
             partial(
                 ceval_adapter,
                 Language.CHINESE,
-                join_variant="NEW_LINE" if isinstance(formulation, CFFormulation) else "COMMA",
+                "NEW_LINE" if isinstance(formulation, CFFormulation) else "COMMA",
             ),
         ),
         suite=("lighteval",),
         hf_repo="ceval/ceval-exam",
-        hf_subset=task,
+        hf_subset=subset,
         evaluation_splits=("val",),
         few_shots_split="dev",
         metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
     )
-    for task in CEVAL_SUBSET
+    for subset in CEVAL_SUBSET
     for formulation in [
         MCFFormulation(),
         CFFormulation(),
@@ -1726,7 +1726,6 @@ mlmm_arc_challenge_tasks = [
         metric=(loglikelihood_acc_metric(normalization=LogProbPMINorm()),),
     )
     for language in [
-        Language.ENGLISH,
         Language.RUSSIAN,
         Language.GERMAN,
         Language.CHINESE,
@@ -1767,12 +1766,12 @@ mlmm_arc_challenge_tasks = [
 # Paper: https://aclanthology.org/2023.arabicnlp-1.21/
 arabic_ledarboard_arc_easy = [
     LightevalTaskConfig(
-        name=f"arc_{Language.ARABIC.value}_{formulation.name.lower()}:easy",
+        name=f"community_arc_{Language.ARABIC.value}_{formulation.name.lower()}:easy",
         prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter),
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
         hf_subset="arc_easy_ar",
-        hf_revision="a31ebd34ca311d7e0cfc6ad7f458b3435af280f5",
+        hf_revision="08663706ee7cab30c4b7dc1bb00042a3227ce1ff",
         trust_dataset=True,
         evaluation_splits=["test"],
         few_shots_split="validation",
@@ -1789,7 +1788,7 @@ arabic_ledarboard_arc_easy = [
 # Comes from the Turkish leaderboard
 turkish_arc = [
     LightevalTaskConfig(
-        name=f"arc_{Language.TURKISH.value}_{formulation.name.lower()}:{subset}",
+        name=f"community_arc_{Language.TURKISH.value}_{formulation.name.lower()}:{subset}",
         prompt_function=get_mcq_prompt_function(
             Language.TURKISH,
             lambda line: {
@@ -1847,7 +1846,7 @@ mlmm_truthfulqa_tasks = [
         ),
         suite=("lighteval",),
         hf_repo="jon-tow/okapi_truthfulqa",
-        hf_subset=language.value,
+        hf_subset=standardize_tag(language.value),
         hf_revision="cdd5db1a66fd04105622109d1c2a5cbc8cde7586",
         trust_dataset=True,
         evaluation_splits=("validation",),
@@ -1900,7 +1899,7 @@ mlmm_truthfulqa_tasks = [
 # Based on turkish leaderboard
 turkish_truthfulqa = [
     LightevalTaskConfig(
-        name=f"truthfulqa_{Language.TURKISH.value}_{formulation.name.lower()}",
+        name=f"community_truthfulqa_{Language.TURKISH.value}_{formulation.name.lower()}:{subset}",
         prompt_function=get_mcq_prompt_function(
             Language.TURKISH,
             partial(
@@ -2050,7 +2049,7 @@ exams_subjects_by_lang: dict[Language, set[str]] = {
 
 exams_tasks = [
     LightevalTaskConfig(
-        name=f"exams_{language.value}_{formulation.name.lower()}",
+        name=f"exams_{language.value}_{formulation.name.lower()}:{normalize_subset(subject)}",
         prompt_function=get_mcq_prompt_function(
             language,
             lambda line: {
@@ -2065,7 +2064,7 @@ exams_tasks = [
         # Weird bug in dataset
         hf_filter=partial(
             lambda language, subject, line: line["answerKey"] != "@"
-            and line["info"]["language"] == LangCodeLanguage(standardize_tag(language.value)).language_name().lower()
+            and line["info"]["language"] == LangCodeLanguage(standardize_tag(language.value)).language_name()
             and line["info"]["subject"] == subject,
             language,
             subject,
@@ -2086,9 +2085,9 @@ exams_tasks = [
 # M3Exam: Multitask Multilingual Multimodal Evaluation Benchmark
 # It also contains a multimodal version but we don't support that
 # Paper: https://arxiv.org/abs/2306.05179
-m3exam_tasks = [
+m3exams_tasks = [
     LightevalTaskConfig(
-        name=f"m3exam_{language.value}_{formulation.name.lower()}",
+        name=f"m3exams_{language.value}_{formulation.name.lower()}",
         suite=("lighteval",),
         prompt_function=get_mcq_prompt_function(
             language,
@@ -2149,7 +2148,7 @@ thai_exams_tasks = [
 TASKS_TABLE.extend(
     [
         *exams_tasks,
-        *m3exam_tasks,
+        *m3exams_tasks,
         *thai_exams_tasks,
     ]
 )
@@ -2227,7 +2226,7 @@ piqa_ar_tasks = [
         prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter),
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
-        hf_revision="a31ebd34ca311d7e0cfc6ad7f458b3435af280f5",
+        hf_revision="08663706ee7cab30c4b7dc1bb00042a3227ce1ff",
         hf_subset="piqa_ar",
         hf_avail_splits=["test", "validation"],
         evaluation_splits=["test"],
@@ -2262,7 +2261,7 @@ openbook_ara_tasks = [
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
         hf_subset="openbook_qa_ext_ar",
-        hf_revision="a31ebd34ca311d7e0cfc6ad7f458b3435af280f5",
+        hf_revision="08663706ee7cab30c4b7dc1bb00042a3227ce1ff",
         trust_dataset=True,
         evaluation_splits=["test"],
         few_shots_split="validation",
@@ -2329,7 +2328,7 @@ sciq_ar_task = [
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
         hf_subset="sciq_ar",
-        hf_revision="a31ebd34ca311d7e0cfc6ad7f458b3435af280f5",
+        hf_revision="08663706ee7cab30c4b7dc1bb00042a3227ce1ff",
         hf_avail_splits=["test", "validation"],
         evaluation_splits=["test"],
         few_shots_split="validation",
