@@ -613,11 +613,37 @@ hellaswag_tha_tasks = [
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
 
+hellaswag_hin_tasks = [
+    LightevalTaskConfig(
+        name=f"community_hellaswag_{Language.HINDI.value}_{formulation.name.lower()}",
+        suite=["lighteval"],
+        prompt_function=get_hellaswag_prompt_function(
+            language=Language.HINDI,
+            adapter=lambda line: {
+                "ctx_a": line["ctx_a"],
+                "continuations": line["endings"],
+                "gold_idx": int(line["label"]),
+            },
+            formulation=formulation,
+        ),
+        hf_repo="ai4bharat/hellaswag-hi",
+        hf_filter=lambda line: all(len(choice.strip()) > 0 for choice in line["endings"]),
+        hf_subset="hi",
+        evaluation_splits=("validation",),
+        few_shots_split="train",
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+    )
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+]
+
 TASKS_TABLE.extend(
     [
         *mlmm_hellaswag_tasks,
         *hellaswag_tur_tasks,
         *hellaswag_tha_tasks,
+        *hellaswag_hin_tasks,
     ]
 )
 # ------------------------------- RC Tasks ------------------------------- #
@@ -1042,6 +1068,44 @@ soqal_tasks = [
         MCFFormulation(),
         CFFormulation(),
         HybridFormulation(),
+    ]
+]
+
+# MLQA (MultiLingual Question Answering) is a benchmark dataset for evaluating cross-lingual question answering performance.
+# It consists of QA instances in 7 languages: English, Arabic, German, Spanish, Hindi, Vietnamese, and Chinese.
+# The dataset is derived from the SQuAD v1.1 dataset, with questions and contexts translated by professional translators.
+# Paper: https://arxiv.org/abs/1910.07475
+mlqa_tasks = [
+    LightevalTaskConfig(
+        name=f"mlqa_{lang.value}",
+        prompt_function=get_qa_prompt_function(
+            lang,
+            lambda line: {
+                "context": line["context"],
+                "question": line["question"],
+                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+            },
+        ),
+        suite=("lighteval",),
+        hf_repo="facebook/mlqa",
+        hf_subset=f"mlqa.{standardize_tag(lang.value)}.{standardize_tag(lang.value)}",
+        hf_revision="397ed406c1a7902140303e7faf60fff35b58d285",
+        trust_dataset=True,
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        generation_size=400,
+        stop_sequence=("\n",),
+        metric=[
+            multilingual_quasi_exact_match_metric(lang, "prefix"),
+            multilingual_quasi_f1_score_metric(lang),
+        ],
+    )
+    for lang in [
+        Language.ARABIC,
+        Language.GERMAN,
+        Language.SPANISH,
+        Language.HINDI,
+        Language.VIETNAMESE,
     ]
 ]
 
@@ -1681,7 +1745,6 @@ CEVAL_SUBSET = [
 ceval_tasks = [
     LightevalTaskConfig(
         name=f"ceval_{Language.CHINESE.value}_{formulation.name.lower()}:{subset}",
-        # for CF the new line has the best results, however it's not really compatible with options presentation
         prompt_function=get_mcq_prompt_function(
             Language.CHINESE,
             partial(
@@ -1735,7 +1798,7 @@ mlmm_arc_challenge_tasks = [
             language,
             lambda line: {
                 "question": line["question"],
-                "choices": line["choices"],
+                "choices": line["choices"]["text"],
                 "gold_idx": int(line["answerKey"]) - 1
                 if line["answerKey"].isdigit()
                 else LETTER_INDICES.index(line["answerKey"]),
@@ -1840,12 +1903,75 @@ turkish_arc = [
     ]
 ]
 
+hindi_arc = [
+    LightevalTaskConfig(
+        name=f"community_arc_{Language.HINDI.value}_{formulation.name.lower()}:{subset}",
+        prompt_function=get_mcq_prompt_function(
+            Language.HINDI,
+            lambda line: {
+                "question": line["question"],
+                "choices": line["choices"]["text"],
+                "gold_idx": int(line["answerKey"]) - 1
+                if line["answerKey"].isdigit()
+                else LETTER_INDICES.index(line["answerKey"]),
+            },
+            formulation=formulation,
+        ),
+        suite=("lighteval",),
+        hf_repo="ai4bharat/ai2_arc-hi",
+        hf_subset=f"ARC-{subset.capitalize()}",
+        evaluation_splits=("test",),
+        few_shots_split="validation",
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for subset in ["easy", "challenge"]
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+swahili_arc = [
+    LightevalTaskConfig(
+        name=f"community_arc_{Language.SWAHILI.value}_{formulation.name.lower()}:{subset}",
+        prompt_function=get_mcq_prompt_function(
+            Language.SWAHILI,
+            lambda line: {
+                "question": line["question"],
+                "choices": line["choices"]["text"],
+                "gold_idx": int(line["answerKey"]) - 1
+                if line["answerKey"].isdigit()
+                else LETTER_INDICES.index(line["answerKey"]),
+            },
+            formulation=formulation,
+        ),
+        suite=("lighteval",),
+        hf_repo=f"Mollel/ARC_{subset.capitalize()}_SWH",
+        hf_subset="default",
+        hf_revision="5347439d3193c8a0dabaab3819914bf076dc94d4"
+        if subset == "easy"
+        else "dc1df9df632d14c251594d9129fb833d2ca4429c",
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for subset in ["easy", "challenge"]
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
 
 TASKS_TABLE.extend(
     [
         *mlmm_arc_challenge_tasks,
         *arabic_ledarboard_arc_easy,
         *turkish_arc,
+        *hindi_arc,
+        *swahili_arc,
     ]
 )
 
@@ -2739,23 +2865,19 @@ mkqa_tasks = [
     ]
 ]
 
-
-mlqa_tasks = [
+mintaka_tasks = [
     LightevalTaskConfig(
-        name=f"mlqa_{lang.value}",
+        name=f"mintaka_{lang.value}",
         prompt_function=get_qa_prompt_function(
             lang,
             lambda line: {
-                "context": line["context"],
                 "question": line["question"],
-                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+                "choices": [line["answerText"]],
             },
         ),
         suite=("lighteval",),
-        hf_repo="facebook/mlqa",
-        hf_subset=f"mlqa.{standardize_tag(lang.value)}.{standardize_tag(lang.value)}",
-        hf_revision="397ed406c1a7902140303e7faf60fff35b58d285",
-        trust_dataset=True,
+        hf_repo="AmazonScience/mintaka",
+        hf_subset=standardize_tag(lang.value),
         evaluation_splits=("test",),
         few_shots_split="train",
         generation_size=400,
@@ -2768,13 +2890,41 @@ mlqa_tasks = [
     for lang in [
         Language.ARABIC,
         Language.GERMAN,
+        Language.ENGLISH,
         Language.SPANISH,
+        Language.FRENCH,
         Language.HINDI,
-        Language.VIETNAMESE,
+        Language.ITALIAN,
+        Language.JAPANESE,
+        Language.PORTUGUESE,
     ]
 ]
 
-chekega_tasks = [
+french_triviqa_tasks = [
+    LightevalTaskConfig(
+        name=f"community_triviaqa_{Language.FRENCH.value}",
+        prompt_function=get_qa_prompt_function(
+            Language.FRENCH,
+            lambda line: {
+                "question": line["Question"],
+                "choices": [line["Answer"]],
+            },
+        ),
+        suite=("lighteval",),
+        hf_repo="manu/french-trivia",
+        hf_subset="default",
+        evaluation_splits=("train",),
+        generation_size=400,
+        stop_sequence=("\n",),
+        metric=[
+            multilingual_quasi_exact_match_metric(Language.FRENCH, "prefix"),
+            multilingual_quasi_f1_score_metric(Language.FRENCH),
+        ],
+    )
+]
+
+
+chegeka_tasks = [
     LightevalTaskConfig(
         name=f"chegeka_{Language.RUSSIAN.value}",
         prompt_function=get_qa_prompt_function(
@@ -2801,6 +2951,8 @@ TASKS_TABLE.extend(
     [
         *mkqa_tasks,
         *mlqa_tasks,
-        *chekega_tasks,
+        *chegeka_tasks,
+        *mintaka_tasks,
+        *french_triviqa_tasks,
     ]
 )
