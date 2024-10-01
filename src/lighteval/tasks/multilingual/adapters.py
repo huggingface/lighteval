@@ -26,13 +26,13 @@ import numpy as np
 
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.multilingual.utils.adapters_utils import (
-    MULTICHOICE_JOIN_VARIANT,
     extract_answers_from_string,
     multichoice_compose,
     multichoice_join,
 )
 from lighteval.tasks.templates.multichoice import MCQInput
 from lighteval.tasks.templates.utils.formatting_utils import PUNCT
+from lighteval.tasks.templates.utils.formulation import CFFormulation, Formulation
 from lighteval.tasks.templates.utils.translation_literals import TranslationLiterals
 from lighteval.utils.language import Language
 
@@ -83,7 +83,7 @@ def alghafa_adapter(line: dict) -> MCQInput | None:
     }
 
 
-def sciq_adapter(line: dict) -> MCQInput | None:
+def sciqa_adapter(line: dict) -> MCQInput | None:
     # Randomly generate the correct answer index
     gold_idx = np.random.randint(0, 4)
     incorrect_answers = [line["distractor1"], line["distractor2"], line["distractor3"]]
@@ -96,7 +96,7 @@ def sciq_adapter(line: dict) -> MCQInput | None:
     }
 
 
-def ceval_adapter(lang: Language, join_variant: MULTICHOICE_JOIN_VARIANT, line: dict) -> MCQInput | None:
+def ceval_adapter(lang: Language, formulation: Formulation, line: dict) -> MCQInput | None:
     # All ceval tasks ends with ____(。?)
     # Some can follow with with possible answers in format
     # (①|②|③|④)text
@@ -104,6 +104,10 @@ def ceval_adapter(lang: Language, join_variant: MULTICHOICE_JOIN_VARIANT, line: 
 
     translation_literals = TranslationLiterals(lang)
     choices = [line["A"], line["B"], line["C"], line["D"]]
+
+    # We found the new line variant to be the best for CF formulation, however for MCF this doesn't work well
+    # because possible options presentation
+    join_variant = "NEW_LINE" if isinstance(formulation, CFFormulation) else "COMMA"
 
     parts = line["question"].rsplit("____", maxsplit=1)
     cleaned_question = parts[0].rstrip(PUNCT).strip()
@@ -144,9 +148,12 @@ def ceval_adapter(lang: Language, join_variant: MULTICHOICE_JOIN_VARIANT, line: 
     }
 
 
-def agieval_prompt(lang: Language, join_variant: MULTICHOICE_JOIN_VARIANT, line: dict) -> MCQInput | None:
+def agieval_prompt(lang: Language, formulation: Formulation, line: dict) -> MCQInput | None:
     translation_literals = TranslationLiterals(lang)
 
+    # We found the new line variant to be the best for CF formulation, however for MCF this doesn't work well
+    # because possible options presentation
+    join_variant = "NEW_LINE" if isinstance(formulation, CFFormulation) else "COMMA"
     # Remove the question at the start as it's added by template
     context, rest = line["query"].split("问题：", maxsplit=1)
 

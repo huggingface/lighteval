@@ -38,6 +38,7 @@ from lighteval.tasks.multilingual.adapters import (
     alghafa_adapter,
     ceval_adapter,
     get_m3exam_adapter,
+    sciqa_adapter,
     thai_exams_adapter,
 )
 from lighteval.tasks.multilingual.utils.task_utils import normalize_subset
@@ -990,7 +991,7 @@ c3_tasks = [
 # Paper: https://aclanthology.org/2023.arabicnlp-1.21/
 race_ar_task = [
     LightevalTaskConfig(
-        name=f"community_race_{Language.ARABIC.value}_{formulation.name.lower()}",
+        name=f"alghafa_race_{Language.ARABIC.value}_{formulation.name.lower()}",
         prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter),
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
@@ -1766,7 +1767,7 @@ mlmm_arc_challenge_tasks = [
 # Paper: https://aclanthology.org/2023.arabicnlp-1.21/
 arabic_ledarboard_arc_easy = [
     LightevalTaskConfig(
-        name=f"community_arc_{Language.ARABIC.value}_{formulation.name.lower()}:easy",
+        name=f"alghafa_arc_{Language.ARABIC.value}_{formulation.name.lower()}:easy",
         prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter),
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
@@ -2171,7 +2172,7 @@ xcsqa_tasks = [
         ),
         suite=("lighteval",),
         hf_repo="INK-USC/xcsr",
-        hf_subset=f"X-CSQA-{lang}",
+        hf_subset=f"X-CSQA-{standardize_tag(language.value)}",
         hf_filter=lambda x: all(
             len(x["question"]["choices"]["text"][i].strip()) > 0 for i in range(len(x["question"]["choices"]["text"]))
         ),
@@ -2204,7 +2205,6 @@ xcsqa_tasks = [
         CFFormulation(),
         HybridFormulation(),
     ]
-    for lang in [language.value]
 ]
 
 TASKS_TABLE.extend(
@@ -2222,7 +2222,7 @@ TASKS_TABLE.extend(
 # Arabic version: https://aclanthology.org/2023.arabicnlp-1.21/
 piqa_ar_tasks = [
     LightevalTaskConfig(
-        name=f"piqa_{Language.ARABIC.value}_{formulation.name.lower()}",
+        name=f"alghafa_piqa_{Language.ARABIC.value}_{formulation.name.lower()}",
         prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter),
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
@@ -2256,7 +2256,7 @@ TASKS_TABLE.extend(
 # Arabic version: https://aclanthology.org/2023.arabicnlp-1.21/
 openbook_ara_tasks = [
     LightevalTaskConfig(
-        name=f"openbookqa_{Language.ARABIC.value}_{formulation.name.lower()}",
+        name=f"alghafa_openbookqa_{Language.ARABIC.value}_{formulation.name.lower()}",
         prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter),
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
@@ -2278,7 +2278,7 @@ openbook_ara_tasks = [
 # Paper: https://arxiv.org/abs/2401.04531
 openbook_rus_tasks = [
     LightevalTaskConfig(
-        name=f"openbookqa_{Language.RUSSIAN.value}_{formulation.name.lower()}",
+        name=f"mera_openbookqa_{Language.RUSSIAN.value}_{formulation.name.lower()}",
         prompt_function=get_mcq_prompt_function(
             Language.RUSSIAN,
             lambda line: {
@@ -2314,16 +2314,12 @@ TASKS_TABLE.extend(
 
 # The Arabic version is part of the AlGhafa Arabic LLM Benchmark, a translation and adaptation of various English datasets.
 # Paper: https://aclanthology.org/2023.arabicnlp-1.21/
-sciq_ar_task = [
+sciqa_ar_task = [
     LightevalTaskConfig(
-        name=f"sciq_{Language.ARABIC.value}_{formulation.name.lower()}",
+        name=f"alghafa_sciqa_{Language.ARABIC.value}_{formulation.name.lower()}",
         prompt_function=get_mcq_prompt_function(
             Language.ARABIC,
-            lambda line: {
-                "question": line["question"],
-                "choices": line["choices"],
-                "gold_idx": line["choices"].index(line["answer"]),
-            },
+            sciqa_adapter,
         ),
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
@@ -2345,7 +2341,7 @@ sciq_ar_task = [
 
 TASKS_TABLE.extend(
     [
-        *sciq_ar_task,
+        *sciqa_ar_task,
     ]
 )
 
@@ -2410,7 +2406,7 @@ agieval_tasks_zh = [
             partial(
                 agieval_prompt,
                 Language.CHINESE,
-                join_variant="NEW_LINE" if isinstance(formulation, CFFormulation) else "COMMA",
+                "NEW_LINE" if isinstance(formulation, CFFormulation) else "COMMA",
             ),
         ),
         suite=("lighteval",),
@@ -2434,7 +2430,7 @@ agieval_tasks_zh = [
 # MERA: https://github.com/ai-forever/MERA
 worldtree_rus_tasks = [
     LightevalTaskConfig(
-        name=f"worldtree_{Language.RUSSIAN.value}_{formulation.name.lower()}",
+        name=f"mera_worldtree_{Language.RUSSIAN.value}_{formulation.name.lower()}",
         prompt_function=get_mcq_prompt_function(
             Language.RUSSIAN,
             lambda line: {
