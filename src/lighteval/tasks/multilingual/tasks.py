@@ -34,7 +34,7 @@ from lighteval.metrics.normalizations import LogProbPMINorm, LogProbTokenNorm
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.multilingual.adapters import (
-    agieval_prompt,
+    agieval_adapter,
     alghafa_adapter,
     ceval_adapter,
     get_m3exam_adapter,
@@ -1667,7 +1667,7 @@ ceval_tasks = [
             partial(
                 ceval_adapter,
                 Language.CHINESE,
-                "NEW_LINE" if isinstance(formulation, CFFormulation) else "COMMA",
+                formulation,
             ),
         ),
         suite=("lighteval",),
@@ -2407,9 +2407,9 @@ agieval_tasks_zh = [
         prompt_function=get_mcq_prompt_function(
             Language.CHINESE,
             partial(
-                agieval_prompt,
+                agieval_adapter,
                 Language.CHINESE,
-                "NEW_LINE" if isinstance(formulation, CFFormulation) else "COMMA",
+                formulation,
             ),
         ),
         suite=("lighteval",),
