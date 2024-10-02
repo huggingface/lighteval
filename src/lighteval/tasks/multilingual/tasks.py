@@ -1455,6 +1455,50 @@ mlmm_mmlu_tasks = [
     ]
 ]
 
+openai_mmlu_tasks = [
+    LightevalTaskConfig(
+        name=f"openai_mmlu_{language[0].value}_{formulation.name.lower()}:{subset}",
+        prompt_function=get_mcq_prompt_function(
+            language[0],
+            lambda line: {
+                "question": line["Question"],
+                "choices": [line["A"], line["B"], line["C"], line["D"]],
+                "gold_idx": LETTER_INDICES.index(line["Answer"]),
+            },
+            formulation=formulation,
+        ),
+        suite=("lighteval",),
+        hf_repo="openai/MMMLU",
+        hf_subset="by_language",
+        evaluation_splits=(language[1],),
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+        ],
+    )
+    for subset in MMLU_SUBSETS
+    for language in [
+        (Language.ARABIC, "AR_XY"),
+        (Language.BENGALI, "BN_BD"),
+        (Language.GERMAN, "DE_DE"),
+        (Language.SPANISH, "ES_LA"),
+        (Language.FRENCH, "FR_FR"),
+        (Language.HINDI, "HI_IN"),
+        (Language.INDONESIAN, "ID_ID"),
+        (Language.ITALIAN, "IT_IT"),
+        (Language.JAPANESE, "JA_JP"),
+        (Language.KOREAN, "KO_KR"),
+        (Language.PORTUGUESE, "PT_BR"),
+        (Language.SWAHILI, "SW_KE"),
+        (Language.YORUBA, "YO_NG"),
+        (Language.CHINESE, "ZH_CN"),
+    ]
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
 # RUMMLU: Russian Massive Multitask Language Understanding
 # Paper: https://arxiv.org/html/2401.04531v2
 rummlu = [
@@ -1684,6 +1728,45 @@ arabic_mmlu_tasks = [
     ]
 ]
 
+TURKISH_MMLU_SUBSET = [
+    "Biology",
+    "Chemistry",
+    "Geography",
+    "History",
+    "Mathematics",
+    "Philosophy",
+    "Physics",
+    "Religion_and_Ethics",
+    "Turkish_Language_and_Literature",
+]
+
+turkish_mmlu_tasks = [
+    LightevalTaskConfig(
+        name=f"mmlu_{Language.TURKISH.value}_{formulation.name.lower()}:{normalize_subset(subset)}",
+        prompt_function=get_mcq_prompt_function(
+            Language.TURKISH,
+            lambda line: {
+                "question": line["question"],
+                "choices": line["choices"],
+                "gold_idx": LETTER_INDICES.index(line["answer"]),
+            },
+            formulation=formulation,
+        ),
+        suite=("lighteval",),
+        hf_repo="AYueksel/TurkishMMLU",
+        hf_subset=subset,
+        evaluation_splits=("test",),
+        few_shots_split="dev",
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for subset in TURKISH_MMLU_SUBSET
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
 # C-Eval: Chinese Evaluation suite
 # Similar to MMLu but with different categories
 # Paper: https://arxiv.org/abs/2305.08322
@@ -1776,8 +1859,10 @@ TASKS_TABLE.extend(
         *rummlu,
         *mmlu_turkish,
         *cmmlu_tasks,
+        *openai_mmlu_tasks,
         *arabic_mmlu_tasks,
         *ceval_tasks,
+        *turkish_mmlu_tasks,
     ]
 )
 
@@ -1870,6 +1955,48 @@ arabic_ledarboard_arc_easy = [
         MCFFormulation(),
         CFFormulation(),
         HybridFormulation(),
+    ]
+]
+
+
+lumi_arc = [
+    LightevalTaskConfig(
+        name=f"lumi_arc_{language.value}_{formulation.name.lower()}:challenge",
+        prompt_function=get_mcq_prompt_function(
+            language,
+            lambda line: {
+                "question": line["question"],
+                "choices": line["choices"]["text"],
+                "gold_idx": int(line["answerKey"]) - 1
+                if line["answerKey"].isdigit()
+                else LETTER_INDICES.index(line["answerKey"]),
+            },
+            formulation=formulation,
+        ),
+        suite=["lighteval"],
+        hf_repo="LumiOpen/arc_challenge_mt",
+        hf_subset=standardize_tag(language.value),
+        evaluation_splits=["test"],
+        few_shots_split="validation",
+        metric=(loglikelihood_acc_metric(normalization=LogProbTokenNorm()),),
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+    for language in [
+        Language.DANISH,
+        Language.GERMAN,
+        Language.GREEK,
+        Language.SPANISH,
+        Language.FINNISH,
+        Language.HUNGARIAN,
+        Language.ITALIAN,
+        # Language.NORWEGIAN_BOKMAL,
+        Language.POLISH,
+        Language.PORTUGUESE,
+        Language.SWEDISH,
     ]
 ]
 
@@ -1969,6 +2096,7 @@ TASKS_TABLE.extend(
     [
         *mlmm_arc_challenge_tasks,
         *arabic_ledarboard_arc_easy,
+        *lumi_arc,
         *turkish_arc,
         *hindi_arc,
         *swahili_arc,
@@ -2558,11 +2686,48 @@ cmath_tasks = [
     )
 ]
 
+mgsm_tasks = [
+    LightevalTaskConfig(
+        name=f"mgsm_{language.value}",
+        prompt_function=get_qa_prompt_function(
+            language,
+            lambda line: {
+                "question": line["question"],
+                # The cot is available but we have no use:
+                # line["answer"]
+                "choices": [str(line["answer_number"])],
+            },
+        ),
+        suite=("lighteval",),
+        hf_repo="juletxara/mgsm",
+        hf_subset=standardize_tag(language.value),
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        generation_size=25,
+        metric=[
+            multilingual_quasi_exact_match_metric(Language.CHINESE, "full"),
+        ],
+        stop_sequence=("\n",),
+    )
+    for language in [
+        Language.SPANISH,
+        Language.FRENCH,
+        Language.GERMAN,
+        Language.RUSSIAN,
+        Language.CHINESE,
+        Language.JAPANESE,
+        Language.THAI,
+        Language.SWAHILI,
+        Language.BENGALI,
+        Language.TELUGU,
+    ]
+]
 
 TASKS_TABLE.extend(
     [
         *cmath_tasks,
         *mathlogicqa_rus_tasks,
+        *mgsm_tasks,
     ]
 )
 
