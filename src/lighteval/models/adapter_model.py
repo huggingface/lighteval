@@ -41,7 +41,7 @@ class AdapterModel(BaseModel):
     def _create_auto_tokenizer(self, config: AdapterModelConfig, env_config: EnvConfig) -> PreTrainedTokenizer:
         # By default, we look at the model config for the model stored in `base_model`
         # (= the parent model, not the model of interest)
-        return self._create_auto_tokenizer_with_name(config.base_model, config=config, env_config=env_config)
+        return self._create_auto_tokenizer_with_name(config.tokenizer or config.base_model, config=config, env_config=env_config)
 
     def _create_auto_model(self, config: AdapterModelConfig, env_config: EnvConfig) -> AutoModelForCausalLM:
         """Returns a PeftModel from a base model and a version fined tuned using PEFT."""
@@ -57,6 +57,10 @@ class AdapterModel(BaseModel):
             base = AutoModelForCausalLM.from_pretrained(
                 config.base_model, torch_dtype=torch.float16, low_cpu_mem_usage=True, token=env_config.token
             )
+            # resize model for adapters with added tokens
+            if base.config.vocab_size != len(self._tokenizer):
+                base.resize_token_embeddings(len(self._tokenizer))
+                hlog("Resizing model for adapter's tokenizer")
             # Should pass revision
             model = PeftModel.from_pretrained(base, adapter_weights)
             model = model.merge_and_unload()
