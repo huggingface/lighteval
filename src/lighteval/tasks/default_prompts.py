@@ -36,6 +36,7 @@ from lighteval.utils.utils import as_list
 
 # fmt: off
 LETTER_INDICES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+INTEGER_INDICES = list(map(str, list(range(1, 27))))
 # fmt: on
 
 
