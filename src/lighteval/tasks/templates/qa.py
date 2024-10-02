@@ -63,9 +63,7 @@ def get_qa_prompt_function(language: Language, adapter: Callable[[dict], QAInput
         Callable: A function that generates QA prompts based on the given parameters.
     """
 
-    adapter_fn: Callable[[dict], QAInput | None] = (
-        create_adapter_from_dict(adapter) if isinstance(adapter, dict) else adapter  # type: ignore
-    )
+    adapter_fn = create_adapter_from_dict(adapter)
 
     def adapter_for_mcq(line: dict) -> MCQInput | None:
         input_data = adapter_fn(line)
