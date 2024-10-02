@@ -27,7 +27,16 @@ from typing import Callable, Literal
 from lighteval.logging.hierarchical_logger import hlog_warn
 
 
-class JudgeLM:
+class Singleton(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
+class JudgeLM(metaclass=Singleton):
     """
     A class representing a judge for evaluating answers using either the OpeanAI or Transformers library.
 
@@ -112,12 +121,33 @@ class JudgeLM:
             case "vllm":
                 if self.pipe is None:
                     from vllm import LLM, SamplingParams
+                    from vllm.transformers_utils.tokenizer import get_tokenizer
 
                     self.sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=512)
-                    self.pipe = LLM(model=self.model, max_model_len=4096, gpu_memory_utilization=0.5)
+                    self.tokenizer = get_tokenizer(self.model, tokenizer_mode="auto")
+                    self.pipe = LLM(model=self.model, max_model_len=2048, gpu_memory_utilization=0.5)
                 return self.__call_vllm
             case _:
                 return lambda x: x
+
+    def evaluate_answer_batch(
+        self,
+        questions: list[str],
+        answers: list[str],
+        options: list[list[str]] | list[None],
+        golds: list[str] | list[None],
+    ):
+        judge_function = self.__lazy_load_client()
+
+        # enumerate over questions answers options and golds to make the
+        prompts = [
+            self.template(question=q, answer=a, options=o, gold=g)
+            for q, a, o, g in zip(questions, answers, options, golds)
+        ]
+        responses = judge_function(prompts)
+        scores = [self.process_judge_response(response) for response in responses]
+
+        return scores, prompts, responses
 
     def evaluate_answer(self, question: str, answer: str, options: list[str] | None = None, gold: str | None = None):
         """
@@ -145,8 +175,10 @@ class JudgeLM:
         return response
 
     def __call_vllm(self, prompt):
-        output = self.pipe.chat(prompt, self.sampling_params, use_tqdm=False)[0]
-        return output.outputs[0].text
+        tokenized = [self.tokenizer.apply_chat_template(p) for p in prompt]
+        output = self.pipe.generate(prompt_token_ids=tokenized, sampling_params=self.sampling_params, use_tqdm=True)
+        outputs = [output.outputs[0].text for output in output]
+        return outputs
 
     def __call_api(self, prompt):
         for _ in range(self.API_MAX_RETRY):

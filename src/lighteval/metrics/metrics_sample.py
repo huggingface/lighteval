@@ -838,24 +838,31 @@ class JudgeLLMMTBench(JudgeLLM):
 
 
 class JudgeLLMMixEval(JudgeLLM):
-    def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
+    def compute(self, sample_ids: list[str], responses: list, formatted_docs: list[Doc], **kwargs) -> dict[str, float]:
         """
         Compute the score of a generative task using a llm as a judge.
         The generative task can be multiturn with 2 turns max, in that case, we
         return scores for turn 1 and 2. Also returns user_prompt and judgement
         which are ignored later by the aggregator.
         """
-        question = formatted_doc.specific["question"]
-        options = formatted_doc.choices
-        gold = formatted_doc.choices[formatted_doc.gold_index[0]]
+        questions = [formatted_doc.specific["question"] for formatted_doc in formatted_docs]
+        options = [formatted_doc.choices for formatted_doc in formatted_docs]
+        golds = [formatted_doc.choices[formatted_doc.gold_index[0]] for formatted_doc in formatted_docs]
+        predictions = [response[0].result[0] for response in responses]
 
-        score, messages, judgements = self.judge.evaluate_answer(question, predictions[0], options, gold)
+        scores, messages, judgements = self.judge.evaluate_answer_batch(questions, predictions, options, golds)
 
-        return {
-            "judge_score": score,
-            "user_prompt": messages[0],
-            "judgement": judgements[0],
-        }
+        metrics = []
+        for i in range(len(sample_ids)):
+            metrics.append(
+                {
+                    "judge_score": scores[i],
+                    "user_prompt": messages[i],
+                    "judgement": judgements[i],
+                }
+            )
+
+        return metrics
 
 
 class MajAtK:

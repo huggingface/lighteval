@@ -30,7 +30,6 @@ from datetime import timedelta
 from enum import Enum, auto
 
 import numpy as np
-from tqdm import tqdm
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog, htrack_block
@@ -39,7 +38,7 @@ from lighteval.models.model_loader import load_model
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_tasks
 from lighteval.tasks.registry import Registry, get_custom_tasks, taskinfo_selector
-from lighteval.tasks.requests import Doc, SampleUid
+from lighteval.tasks.requests import SampleUid
 from lighteval.utils.imports import (
     NO_ACCELERATE_ERROR_MSG,
     NO_NANOTRON_ERROR_MSG,
@@ -276,22 +275,36 @@ class Pipeline:
         # 2. Running the metric on each sample on its own.
         # Note: some samples are associated with several responses, like the multichoice samples
         # and some metrics will parse all samples at once in a second step during aggregation
-        for (sample_id, metric_category), sample_responses in tqdm(
-            sample_id_to_responses.items(), desc="Computing metrics"
-        ):
+
+        tmp = collections.defaultdict(lambda: collections.defaultdict(list))
+        # group by task_name
+        for (sample_id, metric_category), sample_responses in sample_id_to_responses.items():
             short_task_name = sample_id.task_name.rsplit("|", 1)[0]
-
             task: LightevalTask = self.task_dict[short_task_name]
-            doc: Doc = self.docs[sample_id]
+            compute_metric_function = task.get_metric_method_from_category(metric_category=metric_category)
 
-            compute_metric = task.get_metric_method_from_category(metric_category=metric_category)
-            # This is important if two metric categories have non-zero intersection request-wise.
-            # Some might then only expect to get their requests.
-            metric_category_metrics = [metric for metric in task.metrics if metric.category == metric_category]
-            metrics = compute_metric(results=sample_responses, formatted_doc=doc, metrics=metric_category_metrics)
+            tmp[sample_id.task_name]["ids"].append(sample_id.doc_id_seed)
+            tmp[sample_id.task_name]["responses"].append(sample_responses)
+            tmp[sample_id.task_name]["docs"].append(self.docs[sample_id])
+            tmp[sample_id.task_name]["metrics"].append(compute_metric_function)
 
-            self.evaluation_tracker.metrics_logger.log(sample_id.task_name, metrics)
-            self.evaluation_tracker.details_logger.log(sample_id.task_name, task, doc, sample_responses, metrics)
+        for task_name, samples in tmp.items():
+            short_task_name = task_name.rsplit("|", 1)[0]
+            task: LightevalTask = self.task_dict[short_task_name]
+
+            sample_ids = samples["ids"]
+            responses = samples["responses"]
+            docs = samples["docs"]
+            metric_functions = samples["metrics"]
+
+            for metric_function in set(metric_functions):
+                outputs = metric_function(
+                    sample_ids=sample_ids, responses=responses, formatted_docs=docs, metrics=task.metrics
+                )
+
+                for output, doc, response in zip(outputs, docs, responses):
+                    self.evaluation_tracker.metrics_logger.log(task_name, output)
+                    self.evaluation_tracker.details_logger.log(task_name, task, doc, response, output)
 
     def save_and_push_results(self):
         if self.is_main_process():

@@ -107,7 +107,7 @@ llm_judge_mixeval_freeform_flow_judge = SampleLevelMetricGrouping(
 
 
 mixeval_freeform_easy = LightevalTaskConfig(
-    name="mixeval:freeform-easy",
+    name="mixeval_easy:freeform",
     prompt_function=mixeval_freeform_prompt,
     suite=["extended"],
     hf_repo="MixEval/MixEval",
@@ -124,7 +124,7 @@ mixeval_freeform_easy = LightevalTaskConfig(
 
 
 mixeval_multichoice_easy = LightevalTaskConfig(
-    name="mixeval:multichoice-easy",
+    name="mixeval_easy:multichoice",
     prompt_function=mixeval_multichoice_prompt,
     suite=["extended"],
     hf_repo="MixEval/MixEval",
@@ -140,7 +140,7 @@ mixeval_multichoice_easy = LightevalTaskConfig(
 )
 
 mixeval_freeform_hard = LightevalTaskConfig(
-    name="mixeval:freeform-hard",
+    name="mixeval_hard:freeform",
     prompt_function=mixeval_freeform_prompt,
     suite=["extended"],
     hf_repo="MixEval/MixEval",
@@ -157,7 +157,7 @@ mixeval_freeform_hard = LightevalTaskConfig(
 
 
 mixeval_multichoice_hard = LightevalTaskConfig(
-    name="mixeval:multichoice-hard",
+    name="mixeval_hard:multichoice",
     prompt_function=mixeval_multichoice_prompt,
     suite=["extended"],
     hf_repo="MixEval/MixEval",
@@ -167,7 +167,7 @@ mixeval_multichoice_hard = LightevalTaskConfig(
     evaluation_splits=["multiple_choice"],
     few_shots_split=None,
     few_shots_select="random_sampling",
-    generation_size=-1,
+    generation_size=100,
     stop_sequence=[],  # no stop sequence, will use eot token
     version="0.1",
 )
