@@ -26,7 +26,7 @@ jobs:
          cache: 'pip'
      - name: Install lighteval in editable mode
        run: |
-         pip install -e .[dev,extended_tasks]
+         pip install -e .[dev,extended_tasks,multilingual]
      - name: Get cached files
        uses: actions/cache@v2
        id: get-cache

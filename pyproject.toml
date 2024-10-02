@@ -91,12 +91,18 @@ tensorboardX = ["tensorboardX"]
 vllm = ["vllm", "ray", "more_itertools"]
 quality = ["ruff==v0.2.2","pre-commit"]
 tests = ["pytest==7.4.0"]
-dev = ["lighteval[accelerate,quality,tests]"]
+dev = ["lighteval[accelerate,quality,tests,multilingual]"]
 extended_tasks = [
   "langdetect", # ifeval
   "openai", # llm as a judge using openai models
 ]
 s3 = ["s3fs"]
+multilingual = [
+    "stanza",
+    "spacy[ja,ko,th]",
+    "jieba", # for chinese tokenizer
+    "pyvi", # for vietnamese tokenizer
+]
 
 [project.urls]
 Homepage = "https://github.com/huggingface/lighteval"
