@@ -66,7 +66,12 @@ class EnhancedJSONEncoder(json.JSONEncoder):
             except Exception:
                 return str(o)
         if callable(o):
-            return o.__name__
+            if hasattr(o, "__name__"):
+                return o.__name__
+            # https://stackoverflow.com/questions/20594193/dynamically-created-method-and-decorator-got-error-functools-partial-object-h
+            # partial functions don't have __name__ so we have to unwrap the wrapped function
+            elif hasattr(o, "func"):
+                return o.func.__name__
         if isinstance(o, torch.dtype):
             return str(o)
         if isinstance(o, Enum):
