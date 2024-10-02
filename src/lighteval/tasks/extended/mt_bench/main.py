@@ -24,7 +24,7 @@
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 from lighteval.metrics.metrics_sample import JudgeLLMMTBench
-from lighteval.metrics.utils import SampleLevelMetricGrouping, MetricCategory, MetricUseCase
+from lighteval.metrics.utils.metric_utils import SampleLevelMetricGrouping, MetricCategory, MetricUseCase
 from lighteval.tasks.extended.mt_bench.judge_prompt_templates import (
     flow_judge_prompt_mt_bench_with_ref,
     flow_judge_prompt_mt_bench_without_ref,

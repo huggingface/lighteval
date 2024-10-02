@@ -25,7 +25,7 @@ import re
 import numpy as np
 
 from lighteval.metrics.metrics_sample import JudgeLLMMixEval
-from lighteval.metrics.utils import MetricCategory, MetricUseCase, SampleLevelMetricGrouping
+from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase, SampleLevelMetricGrouping
 from lighteval.tasks.extended.mix_eval.judge_prompts import (
     flow_judge_for_freeform_template,
     flow_judge_for_multichoice_template,
