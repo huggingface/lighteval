@@ -367,7 +367,6 @@ xcopa_tasks = [
         ),
         hf_repo=("OALL/AlGhafa-Arabic-LLM-Benchmark-Translated" if language == Language.ARABIC else "xcopa"),
         hf_subset=("copa_ext_ar" if language == Language.ARABIC else standardize_tag(language.value)),
-        hf_revision="08663706ee7cab30c4b7dc1bb00042a3227ce1ff" if language == Language.ARABIC else None,
         evaluation_splits=["test"],
         few_shots_split="validation",
         generation_size=-1,
@@ -837,10 +836,10 @@ indicqa_tasks = [
         suite=("lighteval",),
         hf_repo="ai4bharat/IndicQA",
         hf_subset=f"indicqa.{LangCodeLanguage.get(language.value).language}",
-        hf_filter=lambda line: any(len(ans) > 0 for ans in line["answers"]["text"]),
         # Since we use trust_dataset, we have to be careful about what is inside the dataset
         # script. We thus lock the revision to ensure that the script doesn't change
         hf_revision="92d96092ae229950973dac3b9998f8b3a8949b0a",
+        hf_filter=lambda line: any(len(ans) > 0 for ans in line["answers"]["text"]),
         trust_dataset=True,
         evaluation_splits=("test",),
         few_shots_split="test",
