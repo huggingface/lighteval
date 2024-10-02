@@ -119,7 +119,7 @@ def multilingual_quasi_f1_score_metric(
     Returns:
         F1 score metric.
     """
-    metric_name = f"f1_{language}"
+    metric_name = f"f1_{language.value}"
 
     multilang_normalizer = get_multilingual_normalizer(language)
     return SampleLevelMetric(
@@ -153,7 +153,7 @@ def multilingual_quasi_exact_match_metric(
     Returns:
         Exact match metric.
     """
-    metric_name = f"exact_match_{language}_{match_type}"
+    metric_name = f"exact_match_{language.value}_{match_type}"
     multilang_normalizer = get_multilingual_normalizer(language)
     return SampleLevelMetric(
         metric_name=metric_name,
