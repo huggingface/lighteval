@@ -29,6 +29,7 @@ from huggingface_hub import (
     InferenceClient,
     InferenceEndpoint,
     InferenceEndpointTimeoutError,
+    TextGenerationInputGrammarType,
     TextGenerationOutput,
     create_inference_endpoint,
     get_inference_endpoint,
@@ -39,16 +40,16 @@ from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
-from lighteval.models.abstract_model import LightevalModel
-from lighteval.models.model_config import EnvConfig, InferenceEndpointModelConfig, InferenceModelConfig
-from lighteval.models.model_output import GenerateReturn, LoglikelihoodReturn, LoglikelihoodSingleTokenReturn
+from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.model_config import InferenceEndpointModelConfig, InferenceModelConfig
+from lighteval.models.model_output import GenerativeResponse, LoglikelihoodResponse, LoglikelihoodSingleTokenResponse
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
     LoglikelihoodSingleTokenRequest,
 )
-from lighteval.utils import as_list
+from lighteval.utils.utils import EnvConfig, as_list
 
 
 BATCH_SIZE = 50
@@ -91,9 +92,11 @@ class InferenceEndpointModel(LightevalModel):
                             "MAX_INPUT_LENGTH": "2047",
                             "MAX_TOTAL_TOKENS": "2048",
                             "MODEL_ID": "/repository",
+                            "HF_MODEL_TRUST_REMOTE_CODE": "true",
                             **config.get_dtype_args(),
+                            **config.get_custom_env_vars(),
                         },
-                        "url": "ghcr.io/huggingface/text-generation-inference:1.1.0",
+                        "url": (config.image_url or "ghcr.io/huggingface/text-generation-inference:latest"),
                     },
                 )
             hlog("Deploying your endpoint. Please wait.")
@@ -119,6 +122,13 @@ class InferenceEndpointModel(LightevalModel):
 
         self._tokenizer = AutoTokenizer.from_pretrained(self.name)
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
+
+        self.model_info = ModelInfo(
+            model_name=self.name,
+            model_sha=self.revision,
+            model_dtype=config.model_dtype or "default",
+            model_size=-1,
+        )
 
     @property
     def tokenizer(self):
@@ -149,8 +159,12 @@ class InferenceEndpointModel(LightevalModel):
             self._max_length = 2048
         return self._max_length
 
-    def __async_process_request(
-        self, context: str, stop_tokens: list[str], max_tokens: int
+    def _async_process_request(
+        self,
+        context: str,
+        stop_tokens: list[str],
+        max_tokens: int,
+        grammar: Optional[TextGenerationInputGrammarType] = None,
     ) -> Coroutine[None, list[TextGenerationOutput], str]:
         # Todo: add an option to launch with conversational instead for chat prompts
         # https://huggingface.co/docs/huggingface_hub/v0.20.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.conversational
@@ -158,6 +172,7 @@ class InferenceEndpointModel(LightevalModel):
             prompt=context,
             details=True,
             decoder_input_details=True,
+            grammar=grammar,
             max_new_tokens=max_tokens,
             stop_sequences=stop_tokens,
             # truncate=,
@@ -165,13 +180,20 @@ class InferenceEndpointModel(LightevalModel):
 
         return generated_text
 
-    def __process_request(self, context: str, stop_tokens: list[str], max_tokens: int) -> TextGenerationOutput:
+    def _process_request(
+        self,
+        context: str,
+        stop_tokens: list[str],
+        max_tokens: int,
+        grammar: Optional[TextGenerationInputGrammarType] = None,
+    ) -> TextGenerationOutput:
         # Todo: add an option to launch with conversational instead for chat prompts
         # https://huggingface.co/docs/huggingface_hub/v0.20.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.conversational
         generated_text = self.client.text_generation(
             prompt=context,
             details=True,
             decoder_input_details=True,
+            grammar=grammar,
             max_new_tokens=max_tokens,
             stop_sequences=stop_tokens,
             # truncate=,
@@ -179,40 +201,42 @@ class InferenceEndpointModel(LightevalModel):
 
         return generated_text
 
-    async def __async_process_batch_generate(
+    async def _async_process_batch_generate(
         self,
         requests: list[GreedyUntilRequest],
     ) -> list[TextGenerationOutput]:
         return await asyncio.gather(
             *[
-                self.__async_process_request(
+                self._async_process_request(
                     context=request.context,
                     stop_tokens=as_list(request.stop_sequence),
                     max_tokens=request.generation_size,
+                    grammar=request.generation_grammar,
                 )
                 for request in requests
             ]
         )
 
-    def __process_batch_generate(
+    def _process_batch_generate(
         self,
         requests: list[GreedyUntilRequest],
     ) -> list[TextGenerationOutput]:
         return [
-            self.__process_request(
+            self._process_request(
                 context=request.context,
                 stop_tokens=as_list(request.stop_sequence),
                 max_tokens=request.generation_size,
+                grammar=request.generation_grammar,
             )
             for request in requests
         ]
 
-    async def __async_process_batch_logprob(
+    async def _async_process_batch_logprob(
         self, requests: list[LoglikelihoodRequest], rolling: bool = False
     ) -> list[TextGenerationOutput]:
         return await asyncio.gather(
             *[
-                self.__async_process_request(
+                self._async_process_request(
                     context=request.context if rolling else request.context + request.choice,
                     stop_tokens=[],
                     max_tokens=1,
@@ -221,11 +245,11 @@ class InferenceEndpointModel(LightevalModel):
             ]
         )
 
-    def __process_batch_logprob(
+    def _process_batch_logprob(
         self, requests: list[LoglikelihoodRequest], rolling: bool = False
     ) -> list[TextGenerationOutput]:
         return [
-            self.__process_request(
+            self._process_request(
                 context=request.context if rolling else request.context + request.choice,
                 stop_tokens=[],
                 max_tokens=1,
@@ -237,12 +261,12 @@ class InferenceEndpointModel(LightevalModel):
         self,
         requests: List[GreedyUntilRequest],
         override_bs: Optional[int] = None,
-    ) -> List[GenerateReturn]:
+    ) -> List[GenerativeResponse]:
         for request in requests:
             request.tokenized_context = self.tok_encode(request.context)
             request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
 
-        dataset = GenerativeTaskDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
+        dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         batch_size = override_bs if override_bs is not None else BATCH_SIZE
         results: List[str] = []
 
@@ -267,12 +291,12 @@ class InferenceEndpointModel(LightevalModel):
                     )
 
                 if self.use_async:
-                    responses = asyncio.run(self.__async_process_batch_generate(batch))
+                    responses = asyncio.run(self._async_process_batch_generate(batch))
                 else:
-                    responses = self.__process_batch_generate(batch)
+                    responses = self._process_batch_generate(batch)
                 for response in responses:
                     results.append(
-                        GenerateReturn(
+                        GenerativeResponse(
                             result=response.generated_text,
                             logits=[item.logprob for item in response.details.prefill] if returns_logits else None,
                             truncated_tokens_count=-1,
@@ -284,11 +308,11 @@ class InferenceEndpointModel(LightevalModel):
 
     def loglikelihood(
         self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodReturn]:
+    ) -> list[LoglikelihoodResponse]:
         for request in requests:
             request.tokenized_context = self.tok_encode(request.context)
             request.tokenized_continuation = self.tok_encode(request.choice)
-        dataset = LoglikelihoodDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
+        dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         batch_size = override_bs if override_bs is not None else BATCH_SIZE
         results: List[str] = []
 
@@ -303,9 +327,9 @@ class InferenceEndpointModel(LightevalModel):
 
             for batch in tqdm(dataloader, desc="Loglikelihoods", position=1, leave=False, disable=self.disable_tqdm):
                 if self.use_async:
-                    responses = asyncio.run(self.__async_process_batch_logprob(batch))
+                    responses = asyncio.run(self._async_process_batch_logprob(batch))
                 else:
-                    responses = self.__process_batch_logprob(batch)
+                    responses = self._process_batch_logprob(batch)
                 for cur_request, response in zip(batch, responses):
                     cont_toks = torch.tensor(cur_request.tokenized_continuation)
                     len_choice = len(cont_toks)
@@ -315,7 +339,7 @@ class InferenceEndpointModel(LightevalModel):
                     greedy_tokens = torch.tensor(logits).argmax(dim=-1)
                     max_equal = (greedy_tokens == cont_toks).all().squeeze(0)
                     results.append(
-                        LoglikelihoodReturn(
+                        LoglikelihoodResponse(
                             result=(sum(logits), bool(max_equal)),
                             input_tokens=[t.id for t in response.details.prefill[:-len_choice]],
                             generated_tokens=[t.id for t in response.details.prefill[-len_choice:]],
@@ -328,13 +352,13 @@ class InferenceEndpointModel(LightevalModel):
 
     def loglikelihood_rolling(
         self, requests: list[LoglikelihoodRollingRequest], override_bs=None
-    ) -> list[LoglikelihoodReturn]:
+    ) -> list[LoglikelihoodResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         for request in requests:
             request.tokenized_context = [self.tokenizer.eos_token_id]
             request.tokenized_continuation = self.tok_encode(request.context)
 
-        dataset = LoglikelihoodDataset(requests=requests, dataset_splits=self.DATASET_SPLITS)
+        dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         batch_size = override_bs if override_bs is not None else BATCH_SIZE
         results: List[str] = []
 
@@ -351,14 +375,14 @@ class InferenceEndpointModel(LightevalModel):
                 dataloader, desc="Loglikelihoods, rolling", position=1, leave=False, disable=self.disable_tqdm
             ):
                 if self.use_async:
-                    responses = asyncio.run(self.__async_process_batch_logprob(batch, rolling=True))
+                    responses = asyncio.run(self._async_process_batch_logprob(batch, rolling=True))
                 else:
-                    responses = self.__process_batch_logprob(batch, rolling=True)
+                    responses = self._process_batch_logprob(batch, rolling=True)
                 for response in responses:
                     logits = [t.logprob for t in response.details.tokens[:-1]]
 
                     results.append(
-                        LoglikelihoodReturn(
+                        LoglikelihoodResponse(
                             result=sum(logits),
                             input_tokens=[t.id for t in response.details.prefill],
                             generated_tokens=[t.id for t in response.details.tokens[:-1]],
@@ -373,5 +397,5 @@ class InferenceEndpointModel(LightevalModel):
         self,
         requests: list[LoglikelihoodSingleTokenRequest],
         override_bs: Optional[int] = None,
-    ) -> list[LoglikelihoodSingleTokenReturn]:
+    ) -> list[LoglikelihoodSingleTokenResponse]:
         raise ValueError("Endpoint models can't use single token metrics. Change the metric to the standard version")

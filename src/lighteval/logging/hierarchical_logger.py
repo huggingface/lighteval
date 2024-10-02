@@ -23,9 +23,10 @@
 import sys
 import time
 from datetime import timedelta
+from logging import Logger
 from typing import Any, Callable
 
-from lighteval.utils import is_accelerate_available, is_nanotron_available
+from lighteval.utils.imports import is_accelerate_available, is_nanotron_available
 
 
 if is_nanotron_available():
@@ -37,8 +38,6 @@ elif is_accelerate_available():
 
     logger = get_logger(__name__, log_level="INFO")
 else:
-    from logging import Logger
-
     logger = Logger(__name__, level="INFO")
 
 from colorama import Fore, Style
@@ -76,6 +75,7 @@ class HierarchicalLogger:
 
 
 HIERARCHICAL_LOGGER = HierarchicalLogger()
+BACKUP_LOGGER = Logger(__name__, level="INFO")
 
 
 # Exposed public methods
@@ -84,7 +84,10 @@ def hlog(x: Any) -> None:
 
     Logs a string version of x through the singleton [`HierarchicalLogger`].
     """
-    HIERARCHICAL_LOGGER.log(x)
+    try:
+        HIERARCHICAL_LOGGER.log(x)
+    except RuntimeError:
+        BACKUP_LOGGER.warning(x)
 
 
 def hlog_warn(x: Any) -> None:
@@ -92,7 +95,10 @@ def hlog_warn(x: Any) -> None:
 
     Logs a string version of x, which will appear in a yellow color, through the singleton [`HierarchicalLogger`].
     """
-    HIERARCHICAL_LOGGER.log(Fore.YELLOW + str(x) + Style.RESET_ALL)
+    try:
+        HIERARCHICAL_LOGGER.log(Fore.YELLOW + str(x) + Style.RESET_ALL)
+    except RuntimeError:
+        BACKUP_LOGGER.warning(Fore.YELLOW + str(x) + Style.RESET_ALL)
 
 
 def hlog_err(x: Any) -> None:
@@ -100,7 +106,10 @@ def hlog_err(x: Any) -> None:
 
     Logs a string version of x, which will appear in a red color, through the singleton [`HierarchicalLogger`].
     """
-    HIERARCHICAL_LOGGER.log(Fore.RED + str(x) + Style.RESET_ALL)
+    try:
+        HIERARCHICAL_LOGGER.log(Fore.RED + str(x) + Style.RESET_ALL)
+    except RuntimeError:
+        BACKUP_LOGGER.warning(Fore.RED + str(x) + Style.RESET_ALL)
 
 
 class htrack_block:

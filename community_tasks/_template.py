@@ -24,19 +24,35 @@
 """
 Custom evaluation tasks for lighteval. Copy this file and complete it with the info for your task.
 
-This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
+This file generally creates just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
 
 Author:
 """
+
 import numpy as np
 from aenum import extend_enum
 
-from lighteval.metrics import Metrics
-from lighteval.metrics.metrics import SampleLevelMetric
-from lighteval.metrics.utils import MetricCategory, MetricUseCase
+from lighteval.metrics.metrics import Metrics, SampleLevelMetric
+from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase
+from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
-from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
+
+
+# DEFINE YOUR PROMPT FUNCTIONS
+# Define as many as you need for your different tasks
+def prompt_fn(line, task_name: str = None):
+    """Defines how to go from a dataset line to a doc object.
+    Follow examples in src/lighteval/tasks/tasks_prompt_formatting.py, or get more info
+    about what this function should do in the README.
+    """
+    return Doc(
+        task_name=task_name,
+        query="",
+        choices="",
+        gold_index=0,
+        instruction="",
+    )
 
 
 # EVAL WITH NO SUBSET ##
@@ -44,7 +60,7 @@ from lighteval.tasks.tasks_prompt_formatting import LETTER_INDICES
 # attached to it, and one evaluation possible.
 task = LightevalTaskConfig(
     name="myothertask",
-    prompt_function="prompt_fn",  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
+    prompt_function=prompt_fn,  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
     suite=["community"],
     hf_repo="",
     hf_subset="default",
@@ -52,7 +68,7 @@ task = LightevalTaskConfig(
     evaluation_splits=[],
     few_shots_split="",
     few_shots_select="",
-    metric=[""],
+    metric=[],  # select your metric in Metrics
 )
 
 # EVALS WITH SUBSET
@@ -73,9 +89,9 @@ class CustomSubsetTask(LightevalTaskConfig):
         super().__init__(
             name=name,
             hf_subset=hf_subset,
-            prompt_function="prompt_fn",  # must be defined in the file
+            prompt_function=prompt_fn,  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
             hf_repo="",
-            metric=[""],
+            metric=[custom_metric],  # select your metric in Metrics or use your custom_metric
             hf_avail_splits=[],
             evaluation_splits=[],
             few_shots_split="",
@@ -88,30 +104,14 @@ class CustomSubsetTask(LightevalTaskConfig):
         )
 
 
-# DEFINE YOUR PROMPT FUNCTIONS
-# Define as many as you need for your different tasks
-def prompt_fn(line, task_name: str = None):
-    """Defines how to go from a dataset line to a doc object.
-    Follow examples in src/lighteval/tasks/tasks_prompt_formatting.py, or get more info
-    about what this function should do in the README.
-    """
-    return Doc(
-        task_name=task_name,
-        query="",
-        choices="",
-        gold_index=0,
-        instruction="",
-    )
-
-
 # STORE YOUR EVALS
 SUBSET_TASKS = [CustomSubsetTask(name=f"mytask:{subset}", hf_subset=subset) for subset in SAMPLE_SUBSETS]
-_TASKS = SUBSET_TASKS + [task]
+TASKS_TABLE = SUBSET_TASKS + [task]
 
 
 # CUSTOM METRIC IF NEEDED
 custom_metric = SampleLevelMetric(
-    metric="my_custom_metric_name",
+    metric_name="my_custom_metric_name",
     higher_is_better=True,
     category=MetricCategory.IGNORED,
     use_case=MetricUseCase.NONE,
@@ -119,13 +119,9 @@ custom_metric = SampleLevelMetric(
     corpus_level_fn=np.mean,  # aggregation
 )
 
-extend_enum(Metrics, "my_custom_metric_name", custom_metric)
-
 # MODULE LOGIC
 # You should not need to touch this
 # Convert to dict for lighteval
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
-
 if __name__ == "__main__":
-    print(t["name"] for t in TASKS_TABLE)
+    print(t.name for t in TASKS_TABLE)
     print(len(TASKS_TABLE))

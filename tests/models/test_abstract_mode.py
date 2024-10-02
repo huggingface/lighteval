@@ -20,36 +20,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# flake8: noqa: C901
-import argparse
+from transformers import AutoTokenizer
 
-from lighteval.main_nanotron import main
-
-
-def get_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--checkpoint-config-path",
-        type=str,
-        required=True,
-        help="Path to the brr checkpoint YAML or python config file, potentially on S3",
-    )
-    parser.add_argument(
-        "--lighteval-override",
-        type=str,
-        help="Path to an optional YAML or python Lighteval config to override part of the checkpoint Lighteval config",
-    )
-    parser.add_argument(
-        "--cache-dir",
-        type=str,
-        default=None,
-        help="Cache directory",
-    )
-
-    return parser
+from lighteval.models.dummy_model import DummyModel
+from lighteval.models.model_config import DummyModelConfig
+from lighteval.utils.utils import EnvConfig
 
 
-if __name__ == "__main__":
-    parser = get_parser()
-    args, unknowns = parser.parse_known_args()
-    main(args.checkpoint_config_path, args.lighteval_override, args.cache_dir)
+def test_tok_encode_pair():
+    model = DummyModel(config=DummyModelConfig(seed=42), env_config=EnvConfig())
+    model._tokenizer = AutoTokenizer.from_pretrained("facebook/xglm-564M")
+    context = "答案："
+    continuation = "1"
+    non_pairwise_tokens = model.tok_encode_pair(context, continuation, pairwise=False)
+    pairwise_tokens = model.tok_encode_pair(context, continuation, pairwise=True)
+    # Problematic case where the completion tokens are empty despite the chars are non-empty
+    assert non_pairwise_tokens == ([6, 47873, 13], [])
+    assert pairwise_tokens == ([6, 47873, 13], [82])

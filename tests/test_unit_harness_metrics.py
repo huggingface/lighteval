@@ -25,22 +25,16 @@ import os
 
 import pytest
 
-from lighteval.metrics import (
-    apply_generative_metric,
-    apply_multichoice_metric,
-    apply_multichoice_metric_one_token,
-    apply_perplexity_metric,
-    apply_target_perplexity_metric,
-)
-from lighteval.metrics.metrics import MetricCategory, Metrics
+from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.sample_preparator import (
     GenerativeCorpusMetricInput,
     LogprobCorpusMetricInput,
     PerplexityCorpusMetricInput,
 )
-from lighteval.models.model_output import ModelReturn
+from lighteval.models.model_output import ModelResponse
+from lighteval.tasks.lighteval_task import LightevalTask
 from lighteval.tasks.requests import Doc
-from lighteval.utils import as_list
+from lighteval.utils.utils import as_list
 
 
 PATH_TO_HARNESS_METRICS = os.path.join(os.path.dirname(__file__), "reference_scores/harness_metrics.json")
@@ -73,7 +67,9 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
 def test_model_prediction(prompt_inputs: tuple[str, str, list]):
     """Evaluates a model on a full task - is parametrized using pytest_generate_test"""
     metric, task_name, examples = prompt_inputs
-    print(metric, task_name)
+    metric_name = metric
+    metric = Metrics[metric].value
+    print(metric_name, task_name)
     for example in examples:
         formatted_doc = {
             k: v
@@ -83,9 +79,9 @@ def test_model_prediction(prompt_inputs: tuple[str, str, list]):
         print(formatted_doc)
         formatted_doc["query"] = formatted_doc.pop("full_prompt")
         formatted_doc = Doc(**formatted_doc)
-        error_msg = f"Metric {metric} failed on input {formatted_doc} from task {task_name}.\n"
+        error_msg = f"Metric {metric_name} failed on input {formatted_doc} from task {task_name}.\n"
 
-        results = [ModelReturn(result=i, input_tokens=[], generated_tokens=[]) for i in example["predictions"]]
+        results = [ModelResponse(result=i, input_tokens=[], generated_tokens=[]) for i in example["predictions"]]
         # todo: update to create list of ModelResults in results
         metric_result = apply_metric(metric=metric, results=results, formatted_doc=formatted_doc)
         assert metric_result is not None, error_msg
@@ -122,26 +118,6 @@ def test_model_prediction(prompt_inputs: tuple[str, str, list]):
 
 
 def apply_metric(metric, results, formatted_doc: Doc):
-    if Metrics[metric].value.category == MetricCategory.TARGET_PERPLEXITY:
-        _, cur_outputs = apply_target_perplexity_metric(results=results, formatted_doc=formatted_doc, metrics=[metric])
-        return cur_outputs
-    if Metrics[metric].value.category == MetricCategory.PERPLEXITY:
-        _, cur_outputs = apply_perplexity_metric(results=results, formatted_doc=formatted_doc, metrics=[metric])
-        return cur_outputs
-    if Metrics[metric].value.category in [
-        MetricCategory.GENERATIVE,
-        MetricCategory.GENERATIVE_LOGPROB,
-        MetricCategory.GENERATIVE_SAMPLING,
-    ]:
-        _, cur_outputs = apply_generative_metric(results=results, formatted_doc=formatted_doc, metrics=[metric])
-        return cur_outputs
-    if Metrics[metric].value.category == MetricCategory.MULTICHOICE:
-        _, cur_outputs = apply_multichoice_metric(results=results, formatted_doc=formatted_doc, metrics=[metric])
-        return cur_outputs
-    if Metrics[metric].value.category == MetricCategory.MULTICHOICE_ONE_TOKEN:
-        _, cur_outputs = apply_multichoice_metric_one_token(
-            results=results, formatted_doc=formatted_doc, metrics=[metric]
-        )
-        return cur_outputs
-    else:
-        raise Exception(f"Metric {metric} not found.")
+    method = LightevalTask._get_metric_method_from_category(metric.category)
+    cur_outputs = method(results=results, formatted_doc=formatted_doc, metrics=[metric])
+    return cur_outputs

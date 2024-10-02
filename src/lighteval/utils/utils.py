@@ -11,11 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import importlib
-from dataclasses import asdict, is_dataclass
-from typing import Any, Union
+import os
+from dataclasses import asdict, dataclass, is_dataclass
+from typing import Callable, TypeVar, Union
 
 import numpy as np
+from datasets import DatasetDict, load_dataset
+from pytablewriter import MarkdownTableWriter
 
 
 def flatten_dict(nested: dict, sep="/") -> dict:
@@ -107,7 +109,14 @@ def sanitize_numpy(example_dict: dict) -> dict:
     return output_dict
 
 
-def as_list(item: Union[list, tuple, Any]) -> list:
+ListLikeTypeVar = TypeVar("ListLikeTypeVar")
+ListLike = list[ListLikeTypeVar] | tuple[ListLikeTypeVar, ...]
+
+
+ElementType = TypeVar("ElementType")
+
+
+def as_list(item: ListLike[ElementType] | ElementType) -> list[ElementType]:
     """
     Convert the given item into a list.
 
@@ -124,8 +133,10 @@ def as_list(item: Union[list, tuple, Any]) -> list:
     """
     if isinstance(item, list):
         return item
+
     elif isinstance(item, tuple):
         return list(item)
+
     return [item]
 
 
@@ -145,58 +156,91 @@ def flatten(item: list[Union[list, str]]) -> list[str]:
     return flat_item
 
 
-def is_accelerate_available() -> bool:
-    return importlib.util.find_spec("accelerate") is not None
+def make_results_table(result_dict):
+    """Generate table of results."""
+    md_writer = MarkdownTableWriter()
+    md_writer.headers = ["Task", "Version", "Metric", "Value", "", "Stderr"]
+
+    values = []
+
+    for k in sorted(result_dict["results"].keys()):
+        dic = result_dict["results"][k]
+        version = result_dict["versions"][k] if k in result_dict["versions"] else ""
+        for m, v in dic.items():
+            if m.endswith("_stderr"):
+                continue
+
+            if m + "_stderr" in dic:
+                se = dic[m + "_stderr"]
+                values.append([k, version, m, "%.4f" % v, "±", "%.4f" % se])
+            else:
+                values.append([k, version, m, "%.4f" % v, "", ""])
+            k = ""
+            version = ""
+    md_writer.value_matrix = values
+
+    return md_writer.dumps()
 
 
-NO_ACCELERATE_ERROR_MSG = "You requested the use of accelerate for this evaluation, but it is not available in your current environement. Please install it using pip."
+@dataclass
+class EnvConfig:
+    """
+    Configuration class for environment settings.
+
+    Attributes:
+        cache_dir (str): directory for caching data.
+        token (str): authentication token used for accessing the HuggingFace Hub.
+    """
+
+    cache_dir: str = os.getenv("HF_HOME", "/scratch")
+    token: str = os.getenv("HF_TOKEN")
 
 
-def is_tgi_available() -> bool:
-    return importlib.util.find_spec("text-generation") is not None
+def boolstring_to_bool(x: Union[str, bool, int]) -> Union[bool, None]:
+    """Allows to manage string or bool to bool conversion, in case a configuration input is badly formatted.
+
+    Args:
+        x (str): A string (true, false, True, False, ...)
+
+    Returns:
+        Union[bool, None]: the corresponding boolean
+    """
+    if x in [None, "None", "null", ""]:
+        return None
+    if x in ["True", "true", True, 1]:
+        return True
+    if x in ["False", "false", False, 0]:
+        return False
+    raise ValueError(f"You tried to convert {x} to a boolean but it's not possible.")
 
 
-NO_TGI_ERROR_MSG = "You are trying to start a text generation inference endpoint, but text-generation is not present in your local environement. Please install it using pip."
+def download_dataset_worker(
+    dataset_path: str,
+    dataset_config_name: str,
+    trust_dataset: bool,
+    dataset_filter: Callable[[dict], bool] | None = None,
+    revision: str | None = None,
+) -> DatasetDict:
+    """
+    Worker function to download a dataset from the HuggingFace Hub.
+    Used for parallel dataset loading.
+    """
+    dataset = load_dataset(
+        path=dataset_path,
+        name=dataset_config_name,
+        data_dir=None,
+        cache_dir=None,
+        download_mode=None,
+        trust_remote_code=trust_dataset,
+        revision=revision,
+    )
+
+    if dataset_filter is not None:
+        dataset = dataset.filter(dataset_filter)
+
+    # It returns DatasetDict because we don't specify a split
+    return dataset  # type: ignore
 
 
-def is_nanotron_available() -> bool:
-    return importlib.util.find_spec("nanotron") is not None
-
-
-NO_NANOTRON_ERROR_MSG = "You requested the use of nanotron for this evaluation, but it is not available in your current environement. Please install it using pip."
-
-
-def is_optimum_available() -> bool:
-    return importlib.util.find_spec("optimum") is not None
-
-
-def is_bnb_available() -> bool:
-    return importlib.util.find_spec("bitsandbytes") is not None
-
-
-NO_BNB_ERROR_MSG = "You are trying to load a model quantized with `bitsandbytes`, which is not available in your local environement. Please install it using pip."
-
-
-def is_autogptq_available() -> bool:
-    return importlib.util.find_spec("auto_gptq") is not None
-
-
-NO_AUTOGPTQ_ERROR_MSG = "You are trying to load a model quantized with `auto-gptq`, which is not available in your local environement. Please install it using pip."
-
-
-def is_peft_available() -> bool:
-    return importlib.util.find_spec("peft") is not None
-
-
-NO_PEFT_ERROR_MSG = "You are trying to use adapter weights models, for which you need `peft`, which is not available in your environment. Please install it using pip."
-
-
-def can_load_extended_tasks() -> bool:
-    imports = []
-    for package in ["langdetect"]:
-        imports.append(importlib.util.find_spec(package))
-
-    return all(cur_import is not None for cur_import in imports)
-
-
-CANNOT_USE_EXTENDED_TASKS_MSG = "If you want to use extended_tasks, make sure you installed their dependencies using `pip install -e .[extended_tasks]`."
+def safe_divide(numerator: np.ndarray, denominator: float, default_value: float = 0.0) -> np.ndarray:
+    return np.where(denominator != 0, numerator / denominator, default_value)

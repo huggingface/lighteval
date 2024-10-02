@@ -21,15 +21,16 @@
 # SOFTWARE.
 
 import collections
+import inspect
 import random
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, field
 from multiprocessing import Pool
-from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple
 
-from datasets import load_dataset
+from datasets import DatasetDict
+from huggingface_hub import TextGenerationInputGrammarType
+from pytablewriter import MarkdownTableWriter
 
-from lighteval.few_shot_manager import FewShotSampler
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.metrics import (
     apply_generative_metric,
@@ -39,9 +40,9 @@ from lighteval.metrics import (
     apply_perplexity_metric,
     apply_target_perplexity_metric,
 )
-from lighteval.metrics.metrics import MetricCategory, Metrics
+from lighteval.metrics.metrics import Metric, MetricCategory, Metrics
 from lighteval.models.base_model import BaseModel
-from lighteval.models.model_output import ModelReturn
+from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import (
     Doc,
     GreedyUntilMultiTurnRequest,
@@ -51,11 +52,9 @@ from lighteval.tasks.requests import (
     LoglikelihoodSingleTokenRequest,
     Request,
     RequestType,
-    TaskExampleId,
+    SampleUid,
 )
-from lighteval.utils import as_list
-
-from . import tasks_prompt_formatting
+from lighteval.utils.utils import ListLike, as_list, download_dataset_worker
 
 
 if TYPE_CHECKING:
@@ -69,7 +68,7 @@ class LightevalTaskConfig:
     Arguments:
         name (str): Short name of the evaluation task.
         suite (list[str]): Evaluation suites to which the task belongs.
-        prompt_function (str): Name of the function used to create the [`Doc`] samples from each line of the evaluation dataset.
+        prompt_function (Callable[[dict, str], Doc]): Function used to create the [`Doc`] samples from each line of the evaluation dataset.
         hf_repo (str): Path of the hub dataset repository containing the evaluation information.
         hf_subset (str): Subset used for the current task, will be default if none is selected.
         hf_avail_splits (list[str]): All the available splits in the evaluation dataset
@@ -77,81 +76,95 @@ class LightevalTaskConfig:
         few_shots_split (str): Name of the split from which to sample few-shot examples
         few_shots_select (str): Method with which to sample few-shot examples
         generation_size (int): Maximum allowed size of the generation
+        generation_grammar (TextGenerationInputGrammarType): The grammar to generate completion according to. Currently only available for TGI and Inference Endpoint models.
         metric (list[str]): List of all the metrics for the current task.
         stop_sequence (list[str]): Stop sequence which interrupts the generation for generative metrics.
         original_num_docs (int): Number of documents in the task
         effective_num_docs (int): Number of documents used in a specific evaluation
         truncated_num_docs (bool): Whether less than the total number of documents were used
-        output_regex (str)
-        frozen (bool)
         trust_dataset (bool): Whether to trust the dataset at execution or not
         version (int): The version of the task. Defaults to 0. Can be increased if the underlying dataset or the prompt changes.
+        output_regex (str)
+        frozen (bool)
     """
 
     name: str
-    prompt_function: str
+    prompt_function: Callable[[dict, str], Doc | None]
     hf_repo: str
     hf_subset: str
-    metric: Tuple[Union[str, Metrics]]
-    hf_avail_splits: Optional[Tuple[str]] = None
-    evaluation_splits: Optional[Tuple[str]] = None
+    metric: ListLike[Metric | Metrics]
+
+    # Additional hf dataset config
+    hf_revision: Optional[str] = None
+    hf_filter: Optional[Callable[[dict], bool]] = None
+    hf_avail_splits: Optional[ListLike[str]] = field(default_factory=lambda: ["train", "validation", "test"])
+    # We default to false, to reduce security issues
+    trust_dataset: bool = False
+
+    # Splits
+    evaluation_splits: ListLike[str] = field(default_factory=lambda: ["validation"])
     few_shots_split: Optional[str] = None
     few_shots_select: Optional[str] = None
-    generation_size: int = None
-    stop_sequence: Optional[Tuple[str]] = None
+
+    # Generation args
+    generation_size: Optional[int] = None
+    generation_grammar: Optional[TextGenerationInputGrammarType] = None
+    stop_sequence: Optional[ListLike[str]] = None
     output_regex: Optional[str] = None
     num_samples: Optional[list[int]] = None
 
-    frozen: bool = False
-    suite: Optional[Tuple[str]] = None
+    suite: ListLike[str] = field(default_factory=lambda: ["custom"])
 
     original_num_docs: int = -1
     effective_num_docs: int = -1
 
-    trust_dataset: bool = None
-
-    must_remove_duplicate_docs: bool = None
+    must_remove_duplicate_docs: bool = False
 
     version: int = 0
 
-    def as_dict(self):
-        return {
-            "name": self.name,
-            "prompt_function": self.prompt_function,
-            "hf_repo": self.hf_repo,
-            "hf_subset": self.hf_subset,
-            "metric": tuple(str(m) for m in self.metric),
-            "hf_avail_splits": self.hf_avail_splits,
-            "evaluation_splits": self.evaluation_splits,
-            "few_shots_split": self.few_shots_split,
-            "few_shots_select": self.few_shots_select,
-            "generation_size": self.generation_size,
-            "stop_sequence": self.stop_sequence,
-            "output_regex": self.output_regex,
-            "frozen": self.frozen,
-            "suite": self.suite,
-            "version": self.version,
-        }
+    # Currently unused
+    frozen: bool = False
 
     def __post_init__(self):
-        if self.suite is None:
-            self.suite = ["custom"]
-        if self.hf_avail_splits is None:
-            self.hf_avail_splits = ["train", "validation", "test"]
-        if self.evaluation_splits is None:
-            self.evaluation_splits = ["validation"]
+        # If we got a Metrics enums instead of a Metric, we convert
+        self.metric = [metric.value if isinstance(metric, Metrics) else metric for metric in self.metric]
 
         # Convert list to tuple for hashing
         self.metric = tuple(self.metric)
         self.hf_avail_splits = tuple(self.hf_avail_splits) if self.hf_avail_splits is not None else None
-        self.evaluation_splits = tuple(self.evaluation_splits) if self.evaluation_splits is not None else None
-        self.suite = tuple(self.suite) if self.suite is not None else None
+        self.evaluation_splits = tuple(self.evaluation_splits)
+        self.suite = tuple(self.suite)
         self.stop_sequence = tuple(self.stop_sequence) if self.stop_sequence is not None else None
+
+    def print(self):
+        md_writer = MarkdownTableWriter()
+        md_writer.headers = ["Key", "Value"]
+
+        values = []
+
+        for k, v in asdict(self).items():
+            if k == "metric":
+                for ix, metrics in enumerate(v):
+                    for metric_k, metric_v in metrics.items():
+                        if inspect.ismethod(metric_v):
+                            values.append([f"{k} {ix}: {metric_k}", metric_v.__qualname__])
+                        else:
+                            values.append([f"{k} {ix}: {metric_k}", repr(metric_v)])
+
+            else:
+                if isinstance(v, Callable):
+                    values.append([k, v.__name__])
+                else:
+                    values.append([k, repr(v)])
+
+        md_writer.value_matrix = values
+
+        print(md_writer.dumps())
 
 
 class LightevalTask:
     def __init__(  # noqa: C901
-        self, name: str, cfg: LightevalTaskConfig, cache_dir: Optional[str] = None, custom_tasks_module: list = None
+        self, name: str, cfg: LightevalTaskConfig, cache_dir: Optional[str] = None
     ):
         """
         Initialize a LightEval task.
@@ -162,132 +175,67 @@ class LightevalTask:
                 task-specific settings (from the task_table.json file).
             cache_dir (Optional[str], optional): directory to cache the
                 dataset. Defaults to None.
-            custom_tasks_module ([type], optional): A custom module
-                containing task-specific functions. Defaults to None.
         """
         self.name = name
         self.version = cfg.version
-        self.is_main_process = False
         self.cache_dir = cache_dir
         self._cfg = cfg
 
         # Dataset info
-        self.hf_repo = cfg.hf_repo
-        self.hf_subset = cfg.hf_subset
-        self.dataset_path = self.hf_repo
-        self.dataset_config_name = self.hf_subset
-        self.dataset = None  # Delayed download
+        self.dataset_path = cfg.hf_repo
+        self.dataset_config_name = cfg.hf_subset
+        self.dataset_revision = cfg.hf_revision
+        self.dataset_filter = cfg.hf_filter
         self.trust_dataset = cfg.trust_dataset
+        self.dataset: Optional[DatasetDict] = None  # Delayed download
         hlog(f"{self.dataset_path} {self.dataset_config_name}")
         self._fewshot_docs = None
         self._docs = None
 
-        # Managing splits and few shot
-        self.all_available_splits = as_list(cfg.hf_avail_splits)
-        if cfg.evaluation_splits is None:
-            raise ValueError(f"The evaluation split for task {self.name} is None. Please select a valid split.")
-
         self.evaluation_split = as_list(cfg.evaluation_splits)
+
+        self.fewshot_split: list[str] | None
         if cfg.few_shots_split is not None:
             self.fewshot_split = as_list(cfg.few_shots_split)
         else:
-            self.fewshot_split = as_list(self.get_first_possible_fewshot_splits())
-        self.fewshot_sampler = FewShotSampler(
-            few_shots_select=cfg.few_shots_select, few_shots_split=self.fewshot_split
-        )
+            self.fewshot_split = self.get_first_possible_fewshot_splits(cfg.hf_avail_splits or [])
+        self.fewshot_selection = cfg.few_shots_select
 
         # Metrics
         self.metrics = as_list(cfg.metric)
         self.suite = as_list(cfg.suite)
-        ignored = [metric for metric in self.metrics if Metrics[metric].value.category == MetricCategory.IGNORED]
+        ignored = [metric for metric in self.metrics if metric.category == MetricCategory.IGNORED]
+
         if len(ignored) > 0:
             hlog_warn(f"[WARNING] Not implemented yet: ignoring the metric {' ,'.join(ignored)} for task {self.name}.")
-        current_categories = [Metrics[metric].value.category for metric in self.metrics]
+
+        current_categories = [metric.category for metric in self.metrics]
         self.has_metric_category = {category: (category in current_categories) for category in MetricCategory}
-        # Sub-optimal system - we might want to store metric parametrisation in a yaml conf for example
+
         # We assume num_samples always contains 1 (for base generative evals)
-        self.num_samples = [1] + [
-            int(metric.replace("maj_at_", "").split("_")[0]) for metric in self.metrics if "maj_at_" in metric
-        ]
+        self.num_samples = [1]
+        for metric in self.metrics:
+            metric_names = as_list(metric.metric_name)
 
-        # Data processing
-        # to use once prompt formatting is managed as a module
-        if custom_tasks_module is None:
-            self.formatter = getattr(tasks_prompt_formatting, cfg.prompt_function)
-        else:
-            formatter = []
-            for module in custom_tasks_module:
-                if hasattr(module, cfg.prompt_function):
-                    formatter.append(getattr(module, cfg.prompt_function))
+            for metric_name in metric_names:
+                # If we do maj_at_ metrics, we need to use the correct number of samples
+                if "maj@" in metric_name:
+                    self.num_samples.append(int(metric_name.replace("maj@", "").split("_")[0]))
 
-            if len(formatter) == 0:  # Default version
-                self.formatter = getattr(tasks_prompt_formatting, cfg.prompt_function)
-            elif len(formatter) == 1:
-                # If we have a prompt in both the module and our tasks_prompt_formatting
-                # We take the prompt from the module
-                if hasattr(tasks_prompt_formatting, cfg.prompt_function):
-                    hlog_warn(
-                        f"Be careful you are using custom prompt function {cfg.prompt_function} and not the default one."
-                    )
-                self.formatter = formatter[0]
-            else:
-                raise Exception(
-                    f"You defined the prompt function {cfg.prompt_function} several times in the different custom modules you are loading."
-                )
+        self.formatter = cfg.prompt_function
+
         self.generation_size = cfg.generation_size
+        self.generation_grammar = cfg.generation_grammar
         self.stop_sequence = cfg.stop_sequence
-        self.output_regex = cfg.output_regex
         self.must_remove_duplicate_docs = cfg.must_remove_duplicate_docs
-        if self.must_remove_duplicate_docs is None:
-            self.must_remove_duplicate_docs = False
-
-        # Save options
-        self.save_queries: bool = False
-        self.logfile_name: Optional[Path] = None
-        self.is_main_process: bool = False
 
     @property
     def cfg(self):
         return self._cfg
 
-    def doc_to_text_without_instructions(self, doc: Doc) -> str:
-        """
-        Returns the query of the document without the instructions. If the
-        document has instructions, it removes them from the query:
-
-        Args:
-            doc (Doc): document class, containing the query and the
-                instructions.
-
-        Returns:
-            str: Query of the document without the instructions.
-        """
-        if doc.instruction is not None:
-            if not doc.query.startswith(doc.instruction):
-                raise ValueError(f"Prompt query {doc.query} is not starting with instruction {doc.instruction}")
-            return doc.query[len(doc.instruction) :]
-        return doc.query
-
-    def doc_to_text_and_instructions(self, doc: Doc) -> Tuple[str, str]:
-        """
-        Returns a tuple with the query of the document and the instructions.
-        If the document has no instructions, the second element of the tuple is
-        an empty string.
-
-        Args:
-            doc (Doc): document, containing the query and the instructions.
-
-        Returns:
-            Tuple[str, str]: A tuple with the query of the document and the
-                instructions.
-        """
-        if doc.instruction is not None:
-            if not doc.query.startswith(doc.instruction):
-                raise ValueError(f"Prompt query {doc.query} is not starting with instruction {doc.instruction}")
-            return (doc.query[len(doc.instruction) :], doc.instruction)
-        return (doc.query, "")
-
-    def get_first_possible_fewshot_splits(self, number_of_splits: int = 1) -> list[str]:
+    def get_first_possible_fewshot_splits(
+        self, available_splits: ListLike[str], number_of_splits: int = 1
+    ) -> list[str] | None:
         """
         Parses the possible fewshot split keys in order: train, then validation
         keys and matches them with the available keys.  Returns the first
@@ -301,7 +249,7 @@ class LightevalTask:
             list[str]: List of the first available fewshot splits.
         """
         # Possible few shot splits are the available splits not used for evaluation
-        possible_fewshot_splits = [k for k in self.all_available_splits if k not in self.evaluation_split]
+        possible_fewshot_splits = [k for k in available_splits if k not in self.evaluation_split]
         stored_splits = []
 
         # We look at these keys in order (first the training sets, then the validation sets)
@@ -330,7 +278,13 @@ class LightevalTask:
             list[Doc]: List of documents.
         """
         if self.dataset is None:
-            self.dataset = download_dataset_worker((self.dataset_path, self.dataset_config_name, self.trust_dataset))
+            self.dataset = download_dataset_worker(
+                self.dataset_path,
+                self.dataset_config_name,
+                self.trust_dataset,
+                self.dataset_filter,
+                self.dataset_revision,
+            )
         splits = as_list(splits)
 
         docs = []
@@ -367,7 +321,7 @@ class LightevalTask:
             self._fewshot_docs = []
 
             # If we have no available few shot split, the few shot data is the eval data!
-            if self.fewshot_split in [None, [None]]:
+            if self.fewshot_split is None:
                 self._fewshot_docs = self._get_docs_from_split(self.evaluation_split, few_shots=True)
             else:  # Normal case
                 self._fewshot_docs = self._get_docs_from_split(self.fewshot_split, few_shots=True)
@@ -401,46 +355,9 @@ class LightevalTask:
         # likely we mostly need one example not all
         return as_list(formatted_doc.get_golds(few_shot=few_shot))[0]
 
-    # Requests
-    def get_request_type(self) -> list[RequestType]:  # noqa C901
-        """
-        Returns the request types for the task.
-
-        Returns:
-            list[RequestType]: Request types for the task.
-
-        Raises:
-            NotImplementedError: If the request type is not implemented for the
-                task.
-        """
-        request_types = []
-        if self.has_metric_category[MetricCategory.TARGET_PERPLEXITY]:
-            request_types.append(RequestType.LOGLIKELIHOOD)
-        if self.has_metric_category[MetricCategory.MULTICHOICE]:
-            request_types.append(RequestType.LOGLIKELIHOOD)
-        if self.has_metric_category[MetricCategory.MULTICHOICE_ONE_TOKEN]:
-            request_types.append(RequestType.LOGLIKELIHOOD_SINGLE_TOKEN)
-        if self.has_metric_category[MetricCategory.PERPLEXITY]:
-            request_types.append(RequestType.LOGLIKELIHOOD_ROLLING)
-        if self.has_metric_category[MetricCategory.GENERATIVE]:
-            request_types.append(RequestType.GREEDY_UNTIL)
-        if self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]:
-            request_types.append(RequestType.GREEDY_UNTIL)
-        if self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]:
-            request_types.append(RequestType.GREEDY_UNTIL)
-        if self.has_metric_category[MetricCategory.LLM_AS_JUDGE]:
-            request_types.append(RequestType.GREEDY_UNTIL)
-        if self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]:
-            request_types.append(RequestType.GREEDY_UNTIL_MULTI_TURN)
-
-        if len(request_types) == 0:
-            raise NotImplementedError(f"Request type not implemented for task {self.name}")
-
-        return list(set(request_types))
-
     def construct_requests(
         self, formatted_doc: Doc, context: str, document_id_seed: str, current_task_name: str
-    ) -> List[Request]:
+    ) -> Dict[RequestType, List[Request]]:
         """
         Constructs a list of requests from the task based on the given parameters.
 
@@ -453,24 +370,29 @@ class LightevalTask:
         Returns:
             dict[RequestType, List[Request]]: List of requests.
         """
-        requests = {type: [] for type in RequestType}
+        requests: dict[RequestType, list[Request]] = collections.defaultdict(list)
 
         if self.has_metric_category[MetricCategory.TARGET_PERPLEXITY]:
             golds = formatted_doc.get_golds()
             requests[RequestType.LOGLIKELIHOOD] += [
                 LoglikelihoodRequest(
                     task_name=current_task_name,
-                    example_index=document_id_seed,
+                    sample_index=document_id_seed,
                     request_index=i,
                     context=context,
                     choice=gold,
+                    metric_categories=[MetricCategory.TARGET_PERPLEXITY],
                 )
                 for i, gold in enumerate(golds)
             ]
         if self.has_metric_category[MetricCategory.PERPLEXITY]:
             requests[RequestType.LOGLIKELIHOOD_ROLLING] += [
                 LoglikelihoodRollingRequest(
-                    task_name=current_task_name, example_index=document_id_seed, request_index=0, context=context
+                    task_name=current_task_name,
+                    sample_index=document_id_seed,
+                    request_index=0,
+                    context=context,
+                    metric_categories=[MetricCategory.PERPLEXITY],
                 )
             ]
         if (
@@ -483,23 +405,58 @@ class LightevalTask:
             requests[RequestType.GREEDY_UNTIL] += [
                 GreedyUntilRequest(
                     task_name=current_task_name,
-                    example_index=document_id_seed,
+                    sample_index=document_id_seed,
                     request_index=0,
                     context=context,
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
+                    generation_grammar=self.generation_grammar,
                     num_samples=max(self.num_samples),  # If we have several samplings to apply, we use the max
                     use_logits=use_logits,
+                    metric_categories=[
+                        c
+                        for c in [
+                            MetricCategory.GENERATIVE_SAMPLING,
+                            MetricCategory.GENERATIVE,
+                            MetricCategory.GENERATIVE_LOGPROB,
+                        ]
+                        if self.has_metric_category[c]
+                    ],
                 )
             ]
-        if self.has_metric_category[MetricCategory.MULTICHOICE]:
+        if (
+            self.has_metric_category[MetricCategory.MULTICHOICE]
+            or self.has_metric_category[MetricCategory.MULTICHOICE_PMI]
+        ):
             requests[RequestType.LOGLIKELIHOOD] += [
                 LoglikelihoodRequest(
                     task_name=current_task_name,
-                    example_index=document_id_seed,
+                    sample_index=document_id_seed,
                     request_index=i,
                     context=context,
                     choice=choice,
+                    metric_categories=[
+                        c
+                        for c in [MetricCategory.MULTICHOICE, MetricCategory.MULTICHOICE_PMI]
+                        if self.has_metric_category[c]
+                    ],
+                )
+                for i, choice in enumerate(formatted_doc.choices)
+            ]
+
+        if self.has_metric_category[MetricCategory.MULTICHOICE_PMI]:
+            assert (
+                formatted_doc.unconditioned_query is not None
+            ), "Unconditioned query is required for PMI normalization"
+            requests[RequestType.LOGLIKELIHOOD] += [
+                LoglikelihoodRequest(
+                    task_name=current_task_name,
+                    sample_index=document_id_seed,
+                    # The normalization should come after the choices
+                    request_index=i + len(formatted_doc.choices),
+                    context=formatted_doc.unconditioned_query,
+                    choice=choice,
+                    metric_categories=[MetricCategory.MULTICHOICE_PMI],
                 )
                 for i, choice in enumerate(formatted_doc.choices)
             ]
@@ -507,82 +464,66 @@ class LightevalTask:
             requests[RequestType.LOGLIKELIHOOD_SINGLE_TOKEN] += [
                 LoglikelihoodSingleTokenRequest(
                     task_name=current_task_name,
-                    example_index=document_id_seed,
+                    sample_index=document_id_seed,
                     request_index=0,
                     context=context,
                     choices=formatted_doc.choices,
+                    metric_categories=[MetricCategory.MULTICHOICE_ONE_TOKEN],
                 )
             ]
         if self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]:
             requests[RequestType.GREEDY_UNTIL_MULTI_TURN] += [
                 GreedyUntilMultiTurnRequest(
                     task_name=current_task_name,
-                    example_index=document_id_seed,
+                    sample_index=document_id_seed,
                     request_index=0,
                     context=context,
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
+                    metric_categories=[MetricCategory.LLM_AS_JUDGE_MULTI_TURN],
+                )
+            ]
+        if self.has_metric_category[MetricCategory.LLM_AS_JUDGE]:
+            requests[RequestType.GREEDY_UNTIL] += [
+                GreedyUntilRequest(
+                    task_name=current_task_name,
+                    sample_index=document_id_seed,
+                    request_index=0,
+                    context=context,
+                    stop_sequence=self.stop_sequence,
+                    generation_size=self.generation_size,
+                    generation_grammar=self.generation_grammar,
+                    num_samples=1,
+                    metric_categories=[MetricCategory.LLM_AS_JUDGE],
                 )
             ]
 
         return requests
 
-    def process_results(self, formatted_doc: Doc, results: list[ModelReturn]) -> dict[str, float]:
-        """
-        Processes the results of the task, and stores them in the output dict.
+    def get_metric_method_from_category(self, metric_category):
+        if not self.has_metric_category[metric_category]:
+            raise ValueError(f"Requested a metric category {metric_category} absent from the task list.")
 
-        Args:
-            formatted_doc (Doc): formatted document of the task.
-            results (list[ModelReturn]): results of the task, returned by the model class after evaluation.
+        return LightevalTask._get_metric_method_from_category(metric_category)
 
-        Returns:
-            dict[str, float]: output dictionary containing the results of the task.
-        """
-        # Metrics management is done in metrics.__init__
-        outputs = {}
-        if self.has_metric_category[MetricCategory.TARGET_PERPLEXITY]:
-            results, cur_outputs = apply_target_perplexity_metric(
-                results=results, formatted_doc=formatted_doc, metrics=self.metrics
-            )
-            outputs.update(cur_outputs)
-        if self.has_metric_category[MetricCategory.PERPLEXITY]:
-            results, cur_outputs = apply_perplexity_metric(
-                results=results, formatted_doc=formatted_doc, metrics=self.metrics
-            )
-            outputs.update(cur_outputs)
-        if (
-            self.has_metric_category[MetricCategory.GENERATIVE]
-            or self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]
-            or self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]
-        ):
-            results, cur_outputs = apply_generative_metric(
-                results=results,
-                formatted_doc=formatted_doc,
-                metrics=self.metrics,
-                output_regex=self.output_regex,
-                max_num_samples=max(self.num_samples),
-            )
-            outputs.update(cur_outputs)
-        if self.has_metric_category[MetricCategory.MULTICHOICE]:
-            results, cur_outputs = apply_multichoice_metric(
-                results=results, formatted_doc=formatted_doc, metrics=self.metrics
-            )
-            outputs.update(cur_outputs)
-        if self.has_metric_category[MetricCategory.MULTICHOICE_ONE_TOKEN]:
-            results, cur_outputs = apply_multichoice_metric_one_token(
-                results=results, formatted_doc=formatted_doc, metrics=self.metrics
-            )
-            outputs.update(cur_outputs)
-        if (
-            self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]
-            or self.has_metric_category[MetricCategory.LLM_AS_JUDGE]
-        ):
-            results, cur_outputs = apply_llm_as_judge_metric(
-                results=results, formatted_doc=formatted_doc, metrics=self.metrics
-            )
-            outputs.update(cur_outputs)
-
-        return outputs
+    @staticmethod
+    def _get_metric_method_from_category(metric_category):
+        if metric_category == MetricCategory.TARGET_PERPLEXITY:
+            return apply_target_perplexity_metric
+        if metric_category in [MetricCategory.MULTICHOICE, MetricCategory.MULTICHOICE_PMI]:
+            return apply_multichoice_metric
+        if metric_category == MetricCategory.MULTICHOICE_ONE_TOKEN:
+            return apply_multichoice_metric_one_token
+        if metric_category == MetricCategory.PERPLEXITY:
+            return apply_perplexity_metric
+        if metric_category in [
+            MetricCategory.GENERATIVE,
+            MetricCategory.GENERATIVE_SAMPLING,
+            MetricCategory.GENERATIVE_LOGPROB,
+        ]:
+            return apply_generative_metric
+        if metric_category in [MetricCategory.LLM_AS_JUDGE_MULTI_TURN, MetricCategory.LLM_AS_JUDGE]:
+            return apply_llm_as_judge_metric
 
     def aggregation(self):
         """
@@ -606,35 +547,33 @@ class LightevalTask:
 
         if dataset_loading_processes <= 1:
             datasets = [
-                download_dataset_worker((task.dataset_path, task.dataset_config_name, task.trust_dataset))
+                download_dataset_worker(
+                    task.dataset_path,
+                    task.dataset_config_name,
+                    task.trust_dataset,
+                    task.dataset_filter,
+                    task.dataset_revision,
+                )
                 for task in tasks
             ]
         else:
             with Pool(processes=dataset_loading_processes) as pool:
-                datasets = pool.map(
+                datasets = pool.starmap(
                     download_dataset_worker,
-                    [(task.dataset_path, task.dataset_config_name, task.trust_dataset) for task in tasks],
+                    [
+                        (
+                            task.dataset_path,
+                            task.dataset_config_name,
+                            task.trust_dataset,
+                            task.dataset_filter,
+                            task.dataset_revision,
+                        )
+                        for task in tasks
+                    ],
                 )
 
         for task, dataset in zip(tasks, datasets):
             task.dataset = dataset
-
-
-def download_dataset_worker(args):
-    """
-    Worker function to download a dataset from the HuggingFace Hub.
-    Used for parallel dataset loading.
-    """
-    dataset_path, dataset_config_name, trust_dataset = args
-    dataset = load_dataset(
-        path=dataset_path,
-        name=dataset_config_name,
-        data_dir=None,
-        cache_dir=None,
-        download_mode=None,
-        trust_remote_code=trust_dataset,
-    )
-    return dataset
 
 
 def create_requests_from_tasks(  # noqa: C901
@@ -642,14 +581,14 @@ def create_requests_from_tasks(  # noqa: C901
     fewshot_dict: dict[str, list[Tuple[int, bool]]],
     num_fewshot_seeds: int,
     lm: BaseModel,
-    max_samples: int,
+    max_samples: int | None,
     evaluation_tracker: "EvaluationTracker",
     use_chat_template: bool,
-    system_prompt: str,
-) -> Tuple[dict[RequestType, list[Request]], dict[TaskExampleId, Doc]]:
+    system_prompt: str | None,
+) -> Tuple[dict[RequestType, list[Request]], dict[SampleUid, Doc]]:
     """
     Takes a task dict and a fewshot dict and returns a dict of requests, a dict
-    of docs, and a dict of requests origins.  The construction of prompts and
+    of docs, and a dict of requests origins. The construction of prompts and
     thus the managing of few shots is done here.
 
     Args:
@@ -669,10 +608,10 @@ def create_requests_from_tasks(  # noqa: C901
             task.
 
     Returns:
-        Tuple[dict[RequestType, list[Request]], dict[TaskExampleId, Doc]]: A
+        Tuple[dict[RequestType, list[Request]], dict[SampleUid, Doc]]: A
             tuple containing the requests and the documents.
     """
-    docs: dict[TaskExampleId, Doc] = {}
+    docs: dict[SampleUid, Doc] = {}
     requests: dict[RequestType, list[Request]] = collections.defaultdict(list)
 
     # Filter out tasks that don't have any docs
@@ -680,7 +619,6 @@ def create_requests_from_tasks(  # noqa: C901
 
     # Get lists of each type of request
     for task_name, task in task_dict_items:
-        req_types = task.get_request_type()
         task_docs = list(task.eval_docs())
         n_samples = min(max_samples, len(task_docs)) if max_samples else len(task_docs)
         evaluation_tracker.task_config_logger.log_num_docs(task_name, len(task_docs), n_samples)
@@ -694,46 +632,30 @@ def create_requests_from_tasks(  # noqa: C901
         rnd.seed(42)
         rnd.shuffle(task_docs)
 
-        seeds = task.fewshot_sampler.get_fewshot_seeds(num_fewshot_seeds)
+        prompt_manager = PromptManager(lm=lm, task=task)
+        seeds = prompt_manager.few_shot_sampler.get_fewshot_seeds(num_fewshot_seeds)
 
         # We can do several round of fewshots sampling to get some variance informations
         for seed in seeds:
             for doc_id in range(n_samples):
                 doc_id_seed = f"{doc_id}_{seed}"  # if we do several rounds of few shot sampling we have several seeds
                 for num_fewshot, truncate_few_shots in fewshot_dict[task_name]:
-                    # @clefourrier this mechanism does not work if we have the same task n times with different few shot numbers
-                    # to fix!!
-                    cur_task_name = f"{task_name}|{num_fewshot}"
                     doc = task_docs[doc_id]
-                    is_multi_turn = doc.specific is not None and len(doc.specific.get("multi_turn_queries", [])) > 0
-
-                    if is_multi_turn:
-                        ctx, num_effective_few_shots = task.fewshot_sampler.create_multi_turn_contexts(
-                            doc, use_chat_template, system_prompt, lm.tokenizer
-                        )
-                        doc.specific["multi_turn_queries_context"] = ctx
-                    else:
-                        ctx, num_effective_few_shots = task.fewshot_sampler.fewshot_context(
-                            task=task,
-                            doc=doc,
-                            num_fewshot=num_fewshot,
-                            seed=seed,
-                            truncate_few_shots=truncate_few_shots,
-                            max_model_length=lm.max_length,
-                            sampler=rnd,
-                            tokenizer=lm.tokenizer,
-                            use_chat_template=use_chat_template,
-                            system_prompt=system_prompt,
-                        )
-
-                    doc.num_effective_few_shots = num_effective_few_shots
-                    doc.num_asked_few_shots = num_fewshot
-                    doc.ctx = ctx
+                    doc = prompt_manager.add_context_to_doc(
+                        doc,
+                        num_fewshot=num_fewshot,
+                        seed=seed,
+                        sampler=rnd,
+                        truncate_few_shots=truncate_few_shots,
+                        use_chat_template=use_chat_template,
+                        system_prompt=system_prompt,
+                    )
 
                     # Constructing the requests
-                    docs[TaskExampleId(cur_task_name, doc_id_seed)] = doc
-                    reqs = task.construct_requests(doc, ctx, doc_id_seed, cur_task_name)
-                    for req_type in req_types:
-                        requests[req_type].extend(reqs[req_type])
+                    cur_task_name = f"{task_name}|{num_fewshot}"
+                    docs[SampleUid(cur_task_name, doc_id_seed)] = doc
+                    req_type_reqs_dict = task.construct_requests(doc, doc.ctx, doc_id_seed, cur_task_name)
+                    for req_type, reqs in req_type_reqs_dict.items():
+                        requests[req_type].extend(reqs)
 
     return requests, docs

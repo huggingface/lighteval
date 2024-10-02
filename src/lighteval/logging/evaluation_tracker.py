@@ -27,10 +27,14 @@ import re
 import time
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
+from enum import Enum
+from io import BytesIO
 from pathlib import Path
 
+import torch
 from datasets import Dataset, load_dataset
 from datasets.utils.metadata import MetadataConfigs
+from fsspec import url_to_fs
 from huggingface_hub import DatasetCard, DatasetCardData, HfApi, HFSummaryWriter, hf_hub_url
 
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
@@ -41,11 +45,12 @@ from lighteval.logging.info_loggers import (
     TaskConfigLogger,
     VersionsLogger,
 )
-from lighteval.utils import is_nanotron_available, obj_to_markdown
+from lighteval.utils.imports import NO_TENSORBOARDX_WARN_MSG, is_nanotron_available, is_tensorboardX_available
+from lighteval.utils.utils import obj_to_markdown
 
 
 if is_nanotron_available():
-    from nanotron.config import Config
+    from nanotron.config import GeneralArgs  # type: ignore
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
@@ -56,7 +61,16 @@ class EnhancedJSONEncoder(json.JSONEncoder):
 
     def default(self, o):
         if is_dataclass(o):
-            return asdict(o)
+            try:
+                return asdict(o)  # type: ignore
+            except Exception:
+                return str(o)
+        if callable(o):
+            return o.__name__
+        if isinstance(o, torch.dtype):
+            return str(o)
+        if isinstance(o, Enum):
+            return o.name
         return super().default(o)
 
 
@@ -73,79 +87,71 @@ class EvaluationTracker:
     requested.
     """
 
-    details_logger: DetailsLogger
-    metrics_logger: MetricsLogger
-    versions_logger: VersionsLogger
-    general_config_logger: GeneralConfigLogger
-    task_config_logger: TaskConfigLogger
-    hub_results_org: str
-
-    def __init__(self, hub_results_org: str = "", token: str = "") -> None:
+    def __init__(
+        self,
+        output_dir: str,
+        save_details: bool = True,
+        push_to_hub: bool = False,
+        push_to_tensorboard: bool = False,
+        hub_results_org: str | None = "",
+        tensorboard_metric_prefix: str = "eval",
+        public: bool = False,
+        nanotron_run_info: "GeneralArgs" = None,
+    ) -> None:
         """
         Creates all the necessary loggers for evaluation tracking.
 
         Args:
+            output_dir (str): Local folder path where you want results to be saved
+            save_details (bool): If True, details are saved to the output_dir
+            push_to_hub (bool): If True, details are pushed to the hub.
+                Results are pushed to `{hub_results_org}/details__{sanitized model_name}` for the model `model_name`, a public dataset,
+                if `public` is True else `{hub_results_org}/details__{sanitized model_name}_private`, a private dataset.
+            push_results_to_tensorboard (bool): If True, will create and push the results for a tensorboard folder on the hub
             hub_results_org (str): The organisation to push the results to. See
                 more details about the datasets organisation in
                 [`EvaluationTracker.save`]
-            token (str): Token to use when pushing to the hub. This token should
-                have write access to `hub_results_org`.
+            tensorboard_metric_prefix (str): Prefix for the metrics in the tensorboard logs
+            public (bool): If True, results and details are pushed in private orgs
+            nanotron_run_info (GeneralArgs): Reference to informations about Nanotron models runs
         """
         self.details_logger = DetailsLogger()
         self.metrics_logger = MetricsLogger()
         self.versions_logger = VersionsLogger()
         self.general_config_logger = GeneralConfigLogger()
         self.task_config_logger = TaskConfigLogger()
-        self.hub_results_org = hub_results_org
-        self.hub_results_repo = f"{hub_results_org}/results"
-        self.hub_private_results_repo = f"{hub_results_org}/private-results"
-        self.api = HfApi(token=token)
 
-    def save(
-        self,
-        output_dir: str,
-        push_results_to_hub: bool,
-        push_details_to_hub: bool,
-        public: bool,
-        push_results_to_tensorboard: bool = False,
-    ) -> None:
-        """Saves the experiment information and results to files, and to the hub if requested.
+        self.api = HfApi()
+        self.fs, self.output_dir = url_to_fs(output_dir)
 
-        Note:
-            In case of save failure, this function will only print a warning, with the error message.
+        self.hub_results_org = hub_results_org  # will also contain tensorboard results
+        if hub_results_org in ["", None] and any([push_to_hub, push_to_tensorboard]):
+            raise Exception(
+                "You need to select which org to push to, using `--results_org`, if you want to save information to the hub."
+            )
 
-        Args:
-            output_dir (str): Local folder path where you want results to be saved
-            push_results_to_hub (bool): If True, results are pushed to the hub.
-                Results will be pushed either to `{hub_results_org}/results`, a public dataset, if `public` is True else to `{hub_results_org}/private-results`, a private dataset.
-            push_details_to_hub (bool): If True, details are pushed to the hub.
-                Results are pushed to `{hub_results_org}/details__{sanitized model_name}` for the model `model_name`, a public dataset,
-                if `public` is True else `{hub_results_org}/details__{sanitized model_name}_private`, a private dataset.
-            public (bool): If True, results and details are pushed in private orgs
+        self.should_push_to_hub = push_to_hub
+        self.should_save_details = save_details
 
-        """
+        self.should_push_results_to_tensorboard = push_to_tensorboard
+        self.tensorboard_repo = f"{hub_results_org}/tensorboard_logs"
+        self.tensorboard_metric_prefix = tensorboard_metric_prefix
+        self.nanotron_run_info = nanotron_run_info
+
+        self.public = public
+
+    def save(self) -> None:
+        """Saves the experiment information and results to files, and to the hub if requested."""
         hlog("Saving experiment tracker")
-        # try:
         date_id = datetime.now().isoformat().replace(":", "-")
 
-        output_dir_results = Path(output_dir) / "results" / self.general_config_logger.model_name
-        output_dir_details = Path(output_dir) / "details" / self.general_config_logger.model_name
-        output_dir_details_sub_folder = output_dir_details / date_id
-        output_dir_results.mkdir(parents=True, exist_ok=True)
-        output_dir_details_sub_folder.mkdir(parents=True, exist_ok=True)
-
-        output_results_file = output_dir_results / f"results_{date_id}.json"
-        output_results_in_details_file = output_dir_details / f"results_{date_id}.json"
-
-        hlog(f"Saving results to {output_results_file} and {output_results_in_details_file}")
-
+        # We first prepare data to save
         config_general = copy.deepcopy(self.general_config_logger)
-        config_general.config = (
-            config_general.config.as_dict() if is_dataclass(config_general.config) else config_general.config
-        )
         config_general = asdict(config_general)
+        # We remove the config from logging, which contains context/accelerator objects
+        config_general.pop("config")
 
-        to_dump = {
+        results_dict = {
             "config_general": config_general,
             "results": self.metrics_logger.metric_aggregated,
             "versions": self.versions_logger.versions,
@@ -153,24 +159,12 @@ class EvaluationTracker:
             "summary_tasks": self.details_logger.compiled_details,
             "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
         }
-        dumped = json.dumps(to_dump, cls=EnhancedJSONEncoder, indent=2)
 
-        with open(output_results_file, "w") as f:
-            f.write(dumped)
-
-        with open(output_results_in_details_file, "w") as f:
-            f.write(dumped)
-
+        # Create the details datasets for later upload
+        details_datasets: dict[str, Dataset] = {}
         for task_name, task_details in self.details_logger.details.items():
-            output_file_details = output_dir_details_sub_folder / f"details_{task_name}_{date_id}.parquet"
-            # Create a dataset from the dictionary
-            try:
-                dataset = Dataset.from_list([asdict(detail) for detail in task_details])
-            except Exception:
-                # We force cast to str to avoid formatting problems for nested objects
-                dataset = Dataset.from_list(
-                    [{k: str(v) for k, v in asdict(detail).items()} for detail in task_details]
-                )
+            # Create a dataset from the dictionary - we force cast to str to avoid formatting problems for nested objects
+            dataset = Dataset.from_list([{k: str(v) for k, v in asdict(detail).items()} for detail in task_details])
 
             # We don't keep 'id' around if it's there
             column_names = dataset.column_names
@@ -179,33 +173,43 @@ class EvaluationTracker:
 
             # Sort column names to make it easier later
             dataset = dataset.select_columns(sorted(column_names))
-            # Save the dataset to a Parquet file
-            dataset.to_parquet(output_file_details.as_posix())
+            details_datasets[task_name] = dataset
 
-        if push_results_to_hub:
-            self.api.upload_folder(
-                repo_id=self.hub_results_repo if public else self.hub_private_results_repo,
-                folder_path=output_dir_results,
-                path_in_repo=self.general_config_logger.model_name,
-                repo_type="dataset",
-                commit_message=f"Updating model {self.general_config_logger.model_name}",
+        # We save results at every case
+        self.save_results(date_id, results_dict)
+
+        if self.should_save_details:
+            self.save_details(date_id, details_datasets)
+
+        if self.should_push_to_hub:
+            self.push_to_hub(
+                date_id=date_id,
+                details=details_datasets,
+                results_dict=results_dict,
             )
 
-        if push_details_to_hub:
-            self.details_to_hub(
-                model_name=self.general_config_logger.model_name,
-                results_file_path=output_results_in_details_file,
-                details_folder_path=output_dir_details_sub_folder,
-                push_as_public=public,
+        if self.should_push_results_to_tensorboard:
+            self.push_to_tensorboard(
+                results=self.metrics_logger.metric_aggregated, details=self.details_logger.compiled_details
             )
 
-        if push_results_to_tensorboard:
-            self.push_results_to_tensorboard(
-                results=self.metrics_logger.metric_aggregated, details=self.details_logger.details
-            )
-        # except Exception as e:
-        #     hlog("WARNING: Could not save results")
-        #     hlog(repr(e))
+    def save_results(self, date_id: str, results_dict: dict):
+        output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name
+        self.fs.mkdirs(output_dir_results, exist_ok=True)
+        output_results_file = output_dir_results / f"results_{date_id}.json"
+        hlog(f"Saving results to {output_results_file}")
+        with self.fs.open(output_results_file, "w") as f:
+            f.write(json.dumps(results_dict, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False))
+
+    def save_details(self, date_id: str, details_datasets: dict[str, Dataset]):
+        output_dir_details = Path(self.output_dir) / "details" / self.general_config_logger.model_name
+        output_dir_details_sub_folder = output_dir_details / date_id
+        self.fs.mkdirs(output_dir_details_sub_folder, exist_ok=True)
+        hlog(f"Saving details to {output_dir_details_sub_folder}")
+        for task_name, dataset in details_datasets.items():
+            output_file_details = output_dir_details_sub_folder / f"details_{task_name}_{date_id}.parquet"
+            with self.fs.open(str(output_file_details), "wb") as f:
+                dataset.to_parquet(f)
 
     def generate_final_dict(self) -> dict:
         """Aggregates and returns all the logger's experiment information in a dictionary.
@@ -228,102 +232,86 @@ class EvaluationTracker:
 
         return final_dict
 
-    def details_to_hub(
+    def push_to_hub(
         self,
-        model_name: str,
-        results_file_path: Path | str,
-        details_folder_path: Path | str,
-        push_as_public: bool = False,
+        date_id: str,
+        details: dict[str, Dataset],
+        results_dict: dict,
     ) -> None:
-        """Pushes the experiment details (all the model predictions for every step) to the hub.
-
-        Args:
-            model_name (str): Name of the currently evaluated model
-            results_file_path (str or Path): Local path of the current's experiment aggregated results individual file
-            details_folder_path (str or Path): Local path of the current's experiment details folder.
-                The details folder (created by [`EvaluationTracker.save`]) should contain one parquet file per task used during the evaluation run of the current model.
-            push_as_public (bool, optional): If True, the results will be pushed publicly, else the datasets will be private.
-
-        """
-        results_file_path = str(results_file_path)
-        details_folder_path = str(details_folder_path)
-
-        sanitized_model_name = model_name.replace("/", "__")
+        """Pushes the experiment details (all the model predictions for every step) to the hub."""
+        sanitized_model_name = self.general_config_logger.model_name.replace("/", "__")
 
         # "Default" detail names are the public detail names (same as results vs private-results)
         repo_id = f"{self.hub_results_org}/details_{sanitized_model_name}"
-        if not push_as_public:  # if not public, we add `_private`
+        if not self.public:  # if not public, we add `_private`
             repo_id = f"{repo_id}_private"
 
-        sub_folder_path = os.path.basename(results_file_path).replace(".json", "").replace("results_", "")
+        fsspec_repo_uri = f"hf://datasets/{repo_id}"
 
-        paths_to_check = [os.path.basename(results_file_path)]
-        try:
-            checked_paths = list(self.api.get_paths_info(repo_id=repo_id, paths=paths_to_check, repo_type="dataset"))
-        except Exception:
-            checked_paths = []
+        if not self.api.repo_exists(repo_id):
+            self.api.create_repo(repo_id, private=not (self.public), repo_type="dataset", exist_ok=True)
+            hlog(f"Repository {repo_id} not found, creating it.")
 
-        if len(checked_paths) == 0:
-            hlog(f"Repo {repo_id} not found for {results_file_path}. Creating it.")
-            self.api.create_repo(repo_id, private=not (push_as_public), repo_type="dataset", exist_ok=True)
-
-        # Create parquet version of results file as well
-        results = load_dataset("json", data_files=results_file_path)
-        parquet_name = os.path.basename(results_file_path).replace(".json", ".parquet")
-        parquet_local_path = os.path.join(os.path.dirname(results_file_path), parquet_name)
-        results["train"].to_parquet(parquet_local_path)
-
-        # Upload results file (json and parquet) and folder
+        # We upload it both as a json and a parquet file
+        result_file_base_name = f"results_{date_id}"
+        results_json = json.dumps(results_dict, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False)
         self.api.upload_file(
             repo_id=repo_id,
-            path_or_fileobj=results_file_path,
-            path_in_repo=os.path.basename(results_file_path),
+            path_or_fileobj=BytesIO(results_json.encode("utf-8")),
+            path_in_repo=f"{result_file_base_name}.json",
             repo_type="dataset",
         )
-        self.api.upload_file(
-            repo_id=repo_id, path_or_fileobj=parquet_local_path, path_in_repo=parquet_name, repo_type="dataset"
-        )
-        self.api.upload_folder(
-            repo_id=repo_id, folder_path=details_folder_path, path_in_repo=sub_folder_path, repo_type="dataset"
-        )
 
-        self.recreate_metadata_card(repo_id, model_name)
+        results_dataset = Dataset.from_dict(
+            {key: [json.dumps(v, cls=EnhancedJSONEncoder, indent=2)] for key, v in results_dict.items()}
+        )
+        results_dataset.to_parquet(f"{fsspec_repo_uri}/{result_file_base_name}.parquet")
 
-    def recreate_metadata_card(self, repo_id: str, model_name: str = None) -> None:  # noqa: C901
+        for task_name, dataset in details.items():
+            output_file_details = Path(date_id) / f"details_{task_name}_{date_id}.parquet"
+            dataset.to_parquet(f"{fsspec_repo_uri}/{output_file_details}")
+
+        self.recreate_metadata_card(repo_id)
+
+    def recreate_metadata_card(self, repo_id: str) -> None:  # noqa: C901
         """Fully updates the details repository metadata card for the currently evaluated model
 
         Args:
             repo_id (str): Details dataset repository path on the hub (`org/dataset`)
-            model_name (str): Name of the currently evaluated model.
-
         """
         # Add a nice dataset card and the configuration YAML
         files_in_repo = self.api.list_repo_files(repo_id=repo_id, repo_type="dataset")
         results_files = [f for f in files_in_repo if ".json" in f]
-        parquet_results_files = [f for f in files_in_repo if ".parquet" in f and "results_" in f]
-        parquet_files = [f for f in files_in_repo if ".parquet" in f and "results_" not in f]
+        parquet_files = [f for f in files_in_repo if ".parquet" in f]
+
+        details_file_regex = re.compile(r"details_(?P<task_name>.*?)_(?P<date>\d+-\d+-\d+T.*)\.parquet$")
         multiple_results = len(results_files) > 1
 
         # Get last eval results date for each task (evals might be non overlapping)
         last_eval_date_results = {}
         for sub_file in parquet_files:
+            # We focus on details only
+            if "results_" in sub_file:
+                continue
+
             # subfile have this general format:
             # `2023-09-03T10-57-04.203304/details_harness|hendrycksTest-us_foreign_policy|5_2023-09-03T10-57-04.203304.parquet`
             # in the iso date, the `:` are replaced by `-` because windows does not allow `:` in their filenames
-
-            task_name = os.path.basename(sub_file).replace("details_", "").split("_2023")[0].split("_2024")[0]
+            task_name = (
+                details_file_regex.match(os.path.basename(sub_file)).group("task_name")  # type: ignore
+            )
             # task_name is then equal to `leaderboard|mmlu:us_foreign_policy|5`
 
-            iso_date = os.path.dirname(sub_file)
             # to be able to parse the filename as iso dates, we need to re-replace the `-` with `:`
             # iso_date[13] = iso_date[16] = ':'
-            iso_date = iso_date[:13] + ":" + iso_date[14:16] + ":" + iso_date[17:]
-
+            dir_name = os.path.dirname(sub_file)
+            iso_date = ":".join(dir_name.rsplit("-", 2))
             eval_date = datetime.fromisoformat(iso_date)
 
             last_eval_date_results[task_name] = (
                 max(last_eval_date_results[task_name], eval_date) if task_name in last_eval_date_results else eval_date
             )
+
         max_last_eval_date_results = list(last_eval_date_results.values())[0]
         # Now we convert them in iso-format
         for task in last_eval_date_results:
@@ -336,43 +324,26 @@ class EvaluationTracker:
         card_metadata = MetadataConfigs()
 
         # Add the results config and add the result file as a parquet file
-        for sub_file in parquet_results_files:
-            eval_date = os.path.basename(sub_file).replace("results_", "").replace(".parquet", "")
-            sanitized_eval_date = re.sub(r"[^\w\.]", "_", eval_date)
-            sanitized_last_eval_date_results = re.sub(r"[^\w\.]", "_", max_last_eval_date_results)
-
-            repo_file_name = os.path.basename(sub_file)
-
-            if multiple_results:
-                if "results" not in card_metadata:
-                    card_metadata["results"] = {
-                        "data_files": [{"split": sanitized_eval_date, "path": [repo_file_name]}]
-                    }
-                else:
-                    former_entry = card_metadata["results"]
-                    card_metadata["results"] = {
-                        "data_files": former_entry["data_files"]
-                        + [{"split": sanitized_eval_date, "path": [repo_file_name]}]
-                    }
-            else:
-                if "results" in card_metadata:
-                    raise ValueError(
-                        f"Entry for results already exists in {former_entry} for repo {repo_id} and file {sub_file}"
-                    )
-                card_metadata["results"] = {"data_files": [{"split": sanitized_eval_date, "path": [repo_file_name]}]}
-
-            if sanitized_eval_date == sanitized_last_eval_date_results:
-                all_entry = card_metadata["results"]["data_files"]
-                card_metadata["results"] = {"data_files": all_entry + [{"split": "latest", "path": [repo_file_name]}]}
-
-        # Add the tasks details configs
         for sub_file in parquet_files:
-            task_name = os.path.basename(sub_file).replace("details_", "").split("_2023")[0].split("_2024")[0]
-            sanitized_task = re.sub(r"\W", "_", task_name)
-            eval_date = os.path.dirname(sub_file)
+            if "results_" in sub_file:
+                eval_date = os.path.basename(sub_file).replace("results_", "").replace(".parquet", "")
+                sanitized_task = "results"
+                sanitized_last_eval_date_results = re.sub(r"[^\w\.]", "_", max_last_eval_date_results)
+                repo_file_name = os.path.basename(sub_file)
+            else:
+                filename = os.path.basename(sub_file)
+
+                task_name_match = details_file_regex.match(filename)  # type: ignore
+                if not task_name_match:
+                    raise ValueError(f"Could not parse task name from filename: {filename}")
+                task_name = task_name_match.group("task_name")
+                eval_date = task_name_match.group("date")
+
+                sanitized_task = re.sub(r"\W", "_", task_name)
+                sanitized_last_eval_date_results = re.sub(r"[^\w\.]", "_", last_eval_date_results[task_name])
+                repo_file_name = os.path.join("**", os.path.basename(sub_file))
+
             sanitized_eval_date = re.sub(r"[^\w\.]", "_", eval_date)
-            repo_file_name = os.path.join("**", os.path.basename(sub_file))
-            sanitized_last_eval_date_results = re.sub(r"[^\w\.]", "_", last_eval_date_results[task_name])
 
             if multiple_results:
                 if sanitized_task not in card_metadata:
@@ -399,6 +370,9 @@ class EvaluationTracker:
                 card_metadata[sanitized_task] = {
                     "data_files": all_entry + [{"split": "latest", "path": [repo_file_name]}]
                 }
+
+            if "results_" in sub_file:
+                continue
 
             # Special case for MMLU with a single split covering it all
             # We add another config with all MMLU splits results together for easy inspection
@@ -460,7 +434,7 @@ class EvaluationTracker:
         # Get the top results
         last_results_file = [f for f in results_files if max_last_eval_date_results.replace(":", "-") in f][0]
         last_results_file_path = hf_hub_url(repo_id=repo_id, filename=last_results_file, repo_type="dataset")
-        f = load_dataset("json", data_files=last_results_file_path, split="train")
+        f: Dataset = load_dataset("json", data_files=last_results_file_path, split="train")  # type: ignore
         results_dict = f["results"][0]
         new_dictionary = {"all": results_dict}
         new_dictionary.update(results_dict)
@@ -481,7 +455,7 @@ class EvaluationTracker:
 
         card_data = DatasetCardData(
             dataset_summary=f"Dataset automatically created during the evaluation run of model "
-            f"[{model_name}](https://huggingface.co/{model_name})"
+            f"[{self.general_config_logger.model_name}](https://huggingface.co/{self.general_config_logger.model_name})"
             f"{org_string}.\n\n"
             f"The dataset is composed of {len(card_metadata) - 1} configuration, each one coresponding to one of the evaluated task.\n\n"
             f"The dataset has been created from {len(results_files)} run(s). Each run can be found as a specific split in each "
@@ -494,8 +468,8 @@ class EvaluationTracker:
             f"(note that their might be results for other tasks in the repos if successive evals didn't cover the same tasks. "
             f'You find each in the results and the "latest" split for each eval):\n\n'
             f"```python\n{results_string}\n```",
-            repo_url=f"https://huggingface.co/{model_name}",
-            pretty_name=f"Evaluation run of {model_name}",
+            repo_url=f"https://huggingface.co/{self.general_config_logger.model_name}",
+            pretty_name=f"Evaluation run of {self.general_config_logger.model_name}",
             leaderboard_url=leaderboard_url,
             point_of_contact=point_of_contact,
         )
@@ -507,27 +481,32 @@ class EvaluationTracker:
         )
         card.push_to_hub(repo_id, repo_type="dataset")
 
-    def push_results_to_tensorboard(  # noqa: C901
+    def push_to_tensorboard(  # noqa: C901
         self, results: dict[str, dict[str, float]], details: dict[str, DetailsLogger.CompiledDetail]
     ):
-        if not is_nanotron_available():
-            hlog_warn("You cannot push results to tensorboard with having nanotron installed. Skipping")
+        if not is_tensorboardX_available:
+            hlog_warn(NO_TENSORBOARDX_WARN_MSG)
             return
-        config: Config = self.general_config_logger.config
-        lighteval_config = config.lighteval
-        try:
-            global_step = config.general.step
-        except ValueError:
-            global_step = 0
-        if config.lighteval.logging.tensorboard_metric_prefix is not None:
-            prefix = config.lighteval.logging.tensorboard_metric_prefix
+
+        if not is_nanotron_available():
+            hlog_warn("You cannot push results to tensorboard without having nanotron installed. Skipping")
+            return
+
+        prefix = self.tensorboard_metric_prefix
+
+        if self.nanotron_run_info is not None:
+            global_step = self.nanotron_run_info.step
+            run = f"{self.nanotron_run_info.run}_{prefix}"
         else:
-            prefix = "eval"
-        output_dir_tb = Path(lighteval_config.logging.local_output_path) / "tb" / (config.general.run + "_" + prefix)
+            global_step = 0
+            run = prefix
+
+        output_dir_tb = Path(self.output_dir) / "tb" / run
         output_dir_tb.mkdir(parents=True, exist_ok=True)
+
         tb_context = HFSummaryWriter(
             logdir=str(output_dir_tb),
-            repo_id=lighteval_config.logging.hub_repo_tensorboard,
+            repo_id=self.tensorboard_repo,
             repo_private=True,
             path_in_repo="tb",
             commit_every=6000,  # Very long time so that we can change our files names and trigger push ourselves (see below)
@@ -559,19 +538,18 @@ class EvaluationTracker:
                     )
                 else:
                     tb_context.add_scalar(f"{prefix}/{task_name}/{metric}", value, global_step=global_step)
-        # e.g. MMLU
+        # Tasks with subtasks
         for name, values in bench_averages.items():
             for metric, values in values.items():
                 hlog(f"Pushing average {name} {metric} {sum(values) / len(values)} to tensorboard")
                 tb_context.add_scalar(f"{prefix}/{name}/{metric}", sum(values) / len(values), global_step=global_step)
 
         tb_context.add_text("eval_config", obj_to_markdown(results), global_step=global_step)
-        # tb_context.add_text("eval_sizes", obj_to_markdown(sizes), global_step=global_step)
 
         for task_name, task_details in details.items():
             tb_context.add_text(
                 f"eval_details_{task_name}",
-                obj_to_markdown({"0": task_details[0], "1": task_details[1] if len(task_details) > 1 else {}}),
+                obj_to_markdown({"0": task_details}),
                 global_step=global_step,
             )
 
@@ -580,7 +558,7 @@ class EvaluationTracker:
         # See: https://github.com/tensorflow/tensorboard/issues/5958
         # But tensorboardX don't let us control the prefix of the files (only the suffix), so we need to do it ourselves before commiting the files
 
-        tb_context.close()  # flushes the unfinished write operations
+        # tb_context.close()  # flushes the unfinished write operations
         time.sleep(5)
         files = os.listdir(output_dir_tb)
         for file in files:
@@ -589,8 +567,6 @@ class EvaluationTracker:
         # Now we can push to the hub
         tb_context.scheduler.trigger()
         hlog(
-            f"Pushed to tensorboard at https://huggingface.co/tensorboard/{lighteval_config.logging.hub_repo_tensorboard}/"
-            f" at {output_dir_tb} and global_step {global_step}"
+            f"Pushed to tensorboard at https://huggingface.co/{self.tensorboard_repo}/{output_dir_tb}/tensorboard"
+            f" at global_step {global_step}"
         )
-        # except Exception as e:
-        #     logger.warning(f"Could not push to tensorboard\n{e}")

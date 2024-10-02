@@ -26,7 +26,7 @@ jobs:
          cache: 'pip'
      - name: Install lighteval in editable mode
        run: |
-         pip install -e .[dev,extended_tasks]
+         pip install -e .[dev,extended_tasks,multilingual]
      - name: Get cached files
        uses: actions/cache@v2
        id: get-cache
@@ -34,6 +34,8 @@ jobs:
          path: "cache"
          key: test-cache-HF
      - name: Test
+       env:
+        HF_TEST_TOKEN: ${{ secrets.HF_TEST_TOKEN }}
        run: | # PYTHONPATH="${PYTHONPATH}:src" HF_DATASETS_CACHE="cache/datasets" HF_HOME="cache/models"
         python -m pytest --disable-pytest-warnings
      - name: Write cache

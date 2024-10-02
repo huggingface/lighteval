@@ -163,7 +163,7 @@ def greedy_cos_idf(
         - :param: `ref_masks` (torch.LongTensor): BxKxK, BERT attention mask for
                    reference sentences.
         - :param: `ref_idf` (torch.Tensor): BxK, idf score of each word
-                   piece in the reference setence
+                   piece in the reference sentence
         - :param: `hyp_embedding` (torch.Tensor):
                    embeddings of candidate sentences, BxKxd,
                    B: batch size, K: longest length, d: bert dimenison
@@ -375,17 +375,14 @@ class BERTScorer:
         self._model_type = model_type
         self._num_layers = num_layers
 
-        # Building model and tokenizer
-        self._tokenizer = AutoTokenizer.from_pretrained(model_type)
-        self._model = AutoModel.from_pretrained(model_type)
-        self._model.eval()
-        self._model.to(self.device)
+        # Model and tokenizer are lazily loaded in `score()`.
+        self._tokenizer = None
+        self._model = None
 
         self._idf_dict = None
 
         self._baseline_vals = None
         self.baseline_path = baseline_path
-        self.use_custom_baseline = self.baseline_path is not None
         if self.baseline_path is None:
             self.baseline_path = os.path.join(
                 os.path.dirname(__file__),
@@ -442,6 +439,13 @@ class BERTScorer:
                       multiple references, the returned score of this candidate is
                       the *best* score among all references.
         """
+
+        if self._model is None:
+            hlog(f"Loading BERTScorer model `{self._model_type}`")
+            self._tokenizer = AutoTokenizer.from_pretrained(self._model_type)
+            self._model = AutoModel.from_pretrained(self._model_type)
+            self._model.eval()
+            self._model.to(self.device)
 
         ref_group_boundaries = None
         if not isinstance(refs[0], str):
