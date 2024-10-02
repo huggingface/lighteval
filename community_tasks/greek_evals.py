@@ -28,8 +28,11 @@ This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then im
 """
 import re
 import numpy as np
+import copy
 
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.metrics.metrics import Metrics
+from lighteval.tasks.default_prompts import hellaswag_preprocess
 from lighteval.tasks.requests import Doc
 
 
@@ -60,20 +63,21 @@ class MMLUELTask(LightevalTaskConfig):
     ):
         super().__init__(
             name=name,
-            hf_subset=hf_subset,
-            prompt_function="mmlu_el_prompt",
+            suite=["community"],
+            prompt_function=mmlu_el_prompt,
             hf_repo="ilsp/mmlu_greek",
-            metric=["loglikelihood_acc_norm"],
+            hf_subset=hf_subset,
             hf_avail_splits=["test", "dev", "validation"],
             evaluation_splits=["test"],
             few_shots_split="dev",
             few_shots_select="sequential",
-            suite=["community"],
-            generation_size=-1,
-            stop_sequence=None,
+            generation_size=1,
+            metric=[Metrics.loglikelihood_acc],
+            stop_sequence=["\n"],
             output_regex=None,
             frozen=False,
             trust_dataset=True,
+            version=0
         )
 
 def mmlu_el_prompt(line, topic, task_name: str = None):
@@ -84,12 +88,12 @@ def mmlu_el_prompt(line, topic, task_name: str = None):
     query += "Απάντηση:"
 
     gold_ix = GREEK_LETTER_INDICES.index(line["answer"]) if isinstance(line["answer"], str) else line["answer"]
-    is_few_shots = line.get("__few_shots", False)  # They are adding few shots
+    "__few_shots" in line and line["__few_shots"] is True  # They are adding few shots
 
     return Doc(
         task_name=task_name,
         query=query,
-        choices=[" Α", " Β", " Γ", " Δ"] if is_few_shots else ["Α", "Β", "Γ", "Δ"],
+        choices=[" Α", " Β", " Γ", " Δ"],
         gold_index=gold_ix,
         instruction=f"Οι ακόλουθες ερωτήσεις πολλαπλής επιλογής (που παρουσιάζονται μαζί με της απαντήσεις τους) έχουν να κάνουν με {line['subject'].replace('_', ' ')}.\n\n",
         target_for_fewshot_sorting=[" Α", " Β", " Γ", " Δ"][gold_ix],
@@ -112,19 +116,21 @@ class ARCELTask(LightevalTaskConfig):
     ):
         super().__init__(
             name=name,
-            hf_subset=hf_subset,
-            prompt_function="arc_el_prompt",
+            suite=["community"],
+            prompt_function=arc_el_prompt,
             hf_repo="ilsp/arc_greek",
-            metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+            hf_subset=hf_subset,
             hf_avail_splits=["train","validation","test"],
             evaluation_splits=["test"],
             few_shots_split=None,
             few_shots_select="random_sampling_from_train",
-            suite=["community"],
             generation_size=1,
+            metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
             stop_sequence=["\n"],
             output_regex=None,
             frozen=False,
+            trust_dataset=True,
+            version=0
         )
 
 def arc_el_prompt(line, task_name: str = None):
@@ -145,24 +151,6 @@ ARC_EL_TASKS = [
 
 
 # TruthfulQA
-
-thruthfulqa_mc_el_task = LightevalTaskConfig(
-    name="truthfulqa_el:mc",
-    prompt_function="truthfulqa_mc_prompt_el",
-    suite=["community"],
-    hf_repo="ilsp/truthful_qa_greek",
-    hf_subset="multiple_choice",
-    hf_avail_splits=["train"],
-    evaluation_splits=["train"],
-    few_shots_split=None,
-    few_shots_select=None,
-    generation_size=-1,
-    metric=["truthfulqa_mc_metrics"],
-    stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
-    trust_dataset=True,
-)
 
 def truthfulqa_mc_prompt_el(line, task_name: str = None):
     pre_query = """Ερώτηση: Ποιο είναι το προσδόκιμο ζωής στις Ηνωμένες Πολιτείες;\n
@@ -189,23 +177,6 @@ def truthfulqa_mc_prompt_el(line, task_name: str = None):
         specific={"len_mc1": len(line["mc1_targets"]["choices"])},
     )
 
-thruthfulqa_gen_el_task = LightevalTaskConfig(
-    name="truthfulqa_el:gen",
-    prompt_function="truthfulqa_gen_prompt_el",
-    suite=["community"],
-    hf_repo="ilsp/truthful_qa_greek",
-    hf_subset="generation",
-    hf_avail_splits=["train"],
-    evaluation_splits=["train"],
-    few_shots_split=None,
-    few_shots_select=None,
-    generation_size=200,
-    metric=["bleu"],
-    stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
-    trust_dataset=True,
-)
 
 def truthfulqa_gen_prompt_el(line, task_name: str = None):
     # TODO Not needed? LMHarness uses it. Maybe uncomment once for direct comparison
@@ -243,20 +214,52 @@ def truthfulqa_gen_prompt_el(line, task_name: str = None):
         gold_index=list(range(len(correct_answers)))
     )
 
+thruthfulqa_mc_el_task = LightevalTaskConfig(
+    name="truthfulqa_el:mc",
+    suite=["community"],
+    prompt_function=truthfulqa_mc_prompt_el,
+    hf_repo="ilsp/truthful_qa_greek",
+    hf_subset="multiple_choice",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=-1,
+    metric=[Metrics.truthfulqa_mc_metrics],
+    stop_sequence=["\n"],
+    output_regex=None,
+    frozen=False,
+    trust_dataset=True,
+    version=0
+)
+
+
+thruthfulqa_gen_el_task = LightevalTaskConfig(
+    name="truthfulqa_el:gen",
+    suite=["community"],
+    prompt_function=truthfulqa_gen_prompt_el,
+    hf_repo="ilsp/truthful_qa_greek",
+    hf_subset="generation",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=200,
+    metric=[Metrics.bleu],
+    stop_sequence=["\n"],
+    output_regex=None,
+    frozen=False,
+    trust_dataset=True,
+    version=0
+)
+
 TRUTHFULQA_TASKS = [thruthfulqa_mc_el_task, thruthfulqa_gen_el_task]
 
 
-#######################################################
-import copy
+#################### FIXED MT TRUTHFULQA ####################
+ 
 thruthfulqa_mc_el_mt_task = copy.deepcopy(thruthfulqa_mc_el_task)
 thruthfulqa_gen_el_mt_task = copy.deepcopy(thruthfulqa_gen_el_task)
-
-thruthfulqa_mc_el_mt_task.name = "truthfulqa_el:mc_mt"
-thruthfulqa_mc_el_mt_task.prompt_function="truthfulqa_mc_mt_prompt_el"
-
-thruthfulqa_gen_el_mt_task.name = "truthfulqa_el:gen_mt"
-thruthfulqa_gen_el_mt_task.prompt_function="truthfulqa_gen_mt_prompt_el"
-
 
 def truthfulqa_mc_mt_prompt_el(line, task_name: str = None, use_mt_columns=True):
     pre_query = """Ερώτηση: Ποιο είναι το προσδόκιμο ζωής στις Ηνωμένες Πολιτείες;\n
@@ -336,24 +339,16 @@ def truthfulqa_gen_mt_prompt_el(line, task_name: str = None, use_mt_columns=True
         gold_index=list(range(len(correct_answers)))
     )
 
+thruthfulqa_mc_el_mt_task.name = "truthfulqa_el:mc_mt"
+thruthfulqa_mc_el_mt_task.prompt_function=truthfulqa_mc_mt_prompt_el
+
+thruthfulqa_gen_el_mt_task.name = "truthfulqa_el:gen_mt"
+thruthfulqa_gen_el_mt_task.prompt_function=truthfulqa_gen_mt_prompt_el
+
 TRUTHFULQA_TASKS = TRUTHFULQA_TASKS + [thruthfulqa_mc_el_mt_task, thruthfulqa_gen_el_mt_task]
 
-greek_civics_qa_task = LightevalTaskConfig(
-    name="greek_civics_qa",
-    prompt_function="greek_civics_qa_prompt",
-    suite=["community"],
-    hf_repo="ilsp/greek_civics_qa",
-    hf_avail_splits=["default"],
-    evaluation_splits=["default"],
-    few_shots_split=None,
-    few_shots_select=None,
-    # generation_size=6000,
-    metric=["bleu","rouge_t5"],
-    stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
-    trust_dataset=True,
-)
+
+# Greek Civics QA
 
 def greek_civics_qa_prompt(line, task_name: str = None):
     query = "Απάντησε στην παρακάτω ερώτηση που σχετίζεται με το μάθημα της κοινωνικής και πολιτικής αγωγής.\n\n"
@@ -366,16 +361,41 @@ def greek_civics_qa_prompt(line, task_name: str = None):
         gold_index=0
     )
 
-
-#######################################################
+greek_civics_qa_task = LightevalTaskConfig(
+    name="greek_civics_qa",
+    suite=["community"],
+    prompt_function=greek_civics_qa_prompt,
+    hf_repo="ilsp/greek_civics_qa",
+    hf_subset="default",
+    hf_avail_splits=["default"],
+    evaluation_splits=["default"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=100,
+    metric=[Metrics.bleu],
+    stop_sequence=["\n"],
+    output_regex=None,
+    frozen=False,
+    trust_dataset=True,
+    version=0
+)
 
 
 # Hellaswag
 
+def hellaswag_prompt_el(line, task_name: str = None):
+    ctx = f"{line['ctx_a']} {line['ctx_b'].capitalize()} "
+    return Doc(
+        task_name=task_name,
+        query=hellaswag_preprocess(line["activity_label"] + ": " + ctx),
+        choices=[hellaswag_preprocess(ending) for ending in line["endings"]],
+        gold_index=int(line["label"]) if line["label"] != "" else -1,
+    )
+
 hellaswag_el_task = LightevalTaskConfig(
     name="hellaswag_el",
-    prompt_function="hellaswag_prompt_el",
     suite=["community"],
+    prompt_function=hellaswag_prompt_el,
     hf_repo="ilsp/hellaswag_greek",
     hf_subset="default",
     hf_avail_splits=["train","test","validation"],
@@ -383,48 +403,16 @@ hellaswag_el_task = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling_from_train",
     generation_size=-1,
-    metric=["loglikelihood_acc","loglikelihood_acc_norm"],
+    metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
     output_regex=None,
     frozen=False,
     trust_dataset=True,
+    version=0
 )
 
-def hellaswag_prompt_el(line, task_name: str = None):
-    def preprocess(text):
-        text = text.replace(" [τίτλος]", ". ")
-        text = re.sub("\\[.*?\\]", "", text)
-        text = text.replace("  ", " ")
-        return text
 
-    ctx = f"{line['ctx_a']} {line['ctx_b'].capitalize()} "
-    return Doc(
-        task_name=task_name,
-        query=preprocess(line["activity_label"] + ": " + ctx),
-        choices=[preprocess(ending) for ending in line["endings"]],
-        gold_index=int(line["label"]) if line["label"] != "" else -1,
-    )
-
-# XNLI EL
-
-xnli_el_task = LightevalTaskConfig(
-    name="xnli:el",
-    prompt_function="xnli_prompt_el",
-    suite=["community"],
-    hf_repo="xnli",
-    hf_subset="el",
-    hf_avail_splits=["train", "validation", "test"],
-    evaluation_splits=["test"],
-    few_shots_split="validation",
-    few_shots_select="sequential",
-    generation_size=1,
-    metric=["loglikelihood_acc_single_token"],
-    stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
-    trust_dataset=True,
-)
-
+# # XNLI EL
 
 def xnli_prompt_el(line, task_name: str = None):
 
@@ -436,27 +424,27 @@ def xnli_prompt_el(line, task_name: str = None):
         gold_index=int(line["label"]),
     )
 
-
-# MedicalMCQA
-
-medical_mc_qa_el_task = LightevalTaskConfig(
-    name="medicalmcqa",
-    prompt_function="medical_mc_qa_prompt_el",
+xnli_el_task = LightevalTaskConfig(
+    name="xnli:el",
     suite=["community"],
-    hf_repo="ilsp/medical_mcqa_greek",
-    hf_subset="default",
-    hf_avail_splits=["train", "validation"],
-    evaluation_splits=["train"],
+    prompt_function=xnli_prompt_el,
+    hf_repo="xnli",
+    hf_subset="el",
+    hf_avail_splits=["train", "validation", "test"],
+    evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
     generation_size=1,
-    metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+    metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
     output_regex=None,
     frozen=False,
     trust_dataset=True,
+    version=0
 )
 
+
+# MedicalMCQA
 
 def medical_mc_qa_prompt_el(line, task_name: str = None):
     mcs = '\n'.join(line["multiple_choice_targets"])
@@ -467,6 +455,25 @@ def medical_mc_qa_prompt_el(line, task_name: str = None):
         gold_index=int(np.argmax(np.array(line["multiple_choice_scores"]))),
     )
 
+medical_mc_qa_el_task = LightevalTaskConfig(
+    name="medicalmcqa",
+    suite=["community"],
+    prompt_function=medical_mc_qa_prompt_el,
+    hf_repo="ilsp/medical_mcqa_greek",
+    hf_subset="default",
+    hf_avail_splits=["train", "validation"],
+    evaluation_splits=["train"],
+    few_shots_split="validation",
+    few_shots_select="sequential",
+    generation_size=1,
+    metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
+    stop_sequence=["\n"],
+    output_regex=None,
+    frozen=False,
+    trust_dataset=True,
+    version=0
+)
+
 
 # BELEBELE el
 
@@ -476,25 +483,26 @@ class BELEBELETask(LightevalTaskConfig):
     def __init__(
         self,
         name,
-        hf_split,
+        hf_subset,
         prompt_fn
     ):
         super().__init__(
             name=name,
-            prompt_function=prompt_fn,
             suite=["community"],
+            prompt_function=prompt_fn,
             hf_repo="facebook/belebele",
-            hf_subset="default",
+            hf_subset=hf_subset,
             hf_avail_splits=BELEBELE_SPLITS,
-            evaluation_splits=[hf_split],
-            few_shots_split=hf_split,
+            evaluation_splits=["test"],
+            few_shots_split="test",
             few_shots_select="sequential",
             generation_size=1,
-            metric=["loglikelihood_acc", "loglikelihood_acc_norm_nospace"],
+            metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
             stop_sequence=["\n"],
             output_regex=None,
             frozen=False,
             trust_dataset=True,
+            version=0
         )
 
 
@@ -516,14 +524,13 @@ def belebele_prompt_en(line, task_name: str = None):
         gold_index=int(line['correct_answer_num']) - 1,
     )
 
-
 BELEBELE_SPLIT_MAPPER = {
-    'ell_Grek': {'split': 'el', 'prompt_fn': "belebele_prompt_el"},
-    'eng_Latn': {'split': 'en', 'prompt_fn': "belebele_prompt_en"}
+    'ell_Grek': {'split': 'el', 'prompt_fn': belebele_prompt_el},
+    'eng_Latn': {'split': 'en', 'prompt_fn': belebele_prompt_en}
 }
 
 BELEBELE_TASKS = [
-    BELEBELETask(name=f"belebele:{BELEBELE_SPLIT_MAPPER[split]['split']}", hf_split=split, prompt_fn=BELEBELE_SPLIT_MAPPER[split]['prompt_fn']) for split in BELEBELE_SPLITS
+    BELEBELETask(name=f"belebele:{BELEBELE_SPLIT_MAPPER[split]['split']}", hf_subset=split, prompt_fn=BELEBELE_SPLIT_MAPPER[split]['prompt_fn']) for split in BELEBELE_SPLITS
 ]
 
 
@@ -539,8 +546,8 @@ class Flores200Task(LightevalTaskConfig):
     ):
         super().__init__(
             name=name,
-            prompt_function=prompt_fn,
             suite=["community"],
+            prompt_function=prompt_fn,
             hf_repo="ilsp/flores200_en-el",
             hf_subset="default",
             hf_avail_splits=["validation", "test"],
@@ -548,11 +555,12 @@ class Flores200Task(LightevalTaskConfig):
             few_shots_split="validation",
             few_shots_select="sequential",
             generation_size=100,
-            metric=["bleu"],
+            metric=[Metrics.bleu],
             stop_sequence=["\n"],
             output_regex=None,
             frozen=False,
             trust_dataset=True,
+            version=0
         )
 
 def flores200_en_to_el_prompt(line, task_name: str = None):
@@ -580,15 +588,28 @@ def flores200_el_to_en_prompt(line, task_name: str = None):
     )
 
 FLORES200_PROMPT_FN_MAPPER = {
-    'en->el': 'flores200_en_to_el_prompt',
-    'el->en': 'flores200_el_to_en_prompt'
+    'en->el': flores200_en_to_el_prompt,
+    'el->en': flores200_el_to_en_prompt
 }
 
 FLORES200_TASKS = [
     Flores200Task(name=f"flores200:{direction}", prompt_fn=FLORES200_PROMPT_FN_MAPPER[direction]) for direction in FLORES200_DIRECTIONS
 ]
 
+
 # Task registration
+
+# _TASKS = (
+#     MMLU_EL_TASKS +
+#     ARC_EL_TASKS +
+#     TRUTHFULQA_TASKS +
+#     BELEBELE_TASKS +
+#     FLORES200_TASKS +
+#     [hellaswag_el_task] +
+#     [xnli_el_task] +
+#     [greek_civics_qa_task] +
+#     [medical_mc_qa_el_task]
+# )
 
 _TASKS = (
     MMLU_EL_TASKS +
@@ -598,12 +619,14 @@ _TASKS = (
     FLORES200_TASKS +
     [hellaswag_el_task] +
     [xnli_el_task] +
-    [greek_civics_qa_task] +
-    [medical_mc_qa_el_task]
+    [medical_mc_qa_el_task] +
+    [greek_civics_qa_task]
 )
 
-TASKS_TABLE = [task.as_dict() for task in _TASKS]
+# TODO test the ones in the commented out _TASKS that are not in the new one
+
+TASKS_TABLE = list(_TASKS)
 
 if __name__ == "__main__":
-    print(t["name"] for t in TASKS_TABLE)
+    print(t.name for t in TASKS_TABLE)
     print(len(TASKS_TABLE))
