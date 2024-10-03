@@ -34,14 +34,15 @@ OpenBookQA,PIQA, Winogrande and a custom OZ Eval.
 from enum import Enum
 from typing import List, Optional
 
+from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
-from lighteval.logging.hierarchical_logger import hlog_warn
 
 
 class HFSubsets(Enum):
     """Enum for all available Hugging Face dataset subsets in Serbian evaluation tasks."""
+
     ARC_EASY = "arc_easy_serbian"
     ARC_CHALLENGE = "arc_challenge_serbian"
     BOOLQ = "boolq_serbian"
@@ -50,6 +51,7 @@ class HFSubsets(Enum):
     PIQA = "piqa_serbian"
     OZ_EVAL = "oz_eval_serbian"
     WINOGRANDE = "winogrande_serbian"
+
 
 def serbian_eval_prompt(line: dict, task_name: Optional[str] = None) -> Doc:
     """
@@ -62,15 +64,20 @@ def serbian_eval_prompt(line: dict, task_name: Optional[str] = None) -> Doc:
     Returns:
         A `Doc` object containing the formatted prompt, choices, and correct answer.
     """
-    question: str = line["query"]
-    answer_index: int = int(line["answer"])
-    choices: List[str] = line["choices"]
+    question = line["query"]
+    answer_index = int(line["answer"])
+    choices = line["choices"]
 
-    instruction: str = "Na osnovu sledećeg pitanja, izaberite tačanu opciju iz ponuđenih odgovora:\n\n"
-    query: str = f"{instruction}Pitanje: {question}\n\n"
+    instruction = "Na osnovu sledećeg pitanja, izaberite tačanu opciju iz ponuđenih odgovora.\n"
+
+    query = instruction
+    query += f"Pitanje: {question}\n\n"
+    query += "Ponuđeni odgovori:\n"
 
     for index, choice in enumerate(choices):
-        query += f"{index}) {choice}\n"
+        query += f"{index}. {choice}\n"
+
+    query += "\n\nKrajnji odgovor:"
 
     return Doc(
         task_name=task_name,
@@ -81,6 +88,7 @@ def serbian_eval_prompt(line: dict, task_name: Optional[str] = None) -> Doc:
         target_for_fewshot_sorting=choices[answer_index],
     )
 
+
 def create_task_config(
     task_name: str,
     prompt_function,
@@ -90,11 +98,11 @@ def create_task_config(
     evaluation_splits: List[str] = ["test"],
     suite: List[str] = ["community"],
     hf_avail_splits: List[str] = ["test", "validation"],
-    few_shots_split: str = "validation"
+    few_shots_split: str = "validation",
 ) -> LightevalTaskConfig:
     """
     Creates a task configuration using dependency injection for flexible task creation.
-    
+
     Args:
         task_name: The name of the task.
         prompt_function: The function to generate task prompts.
@@ -124,12 +132,13 @@ def create_task_config(
         version=0,
     )
 
+
 arc_easy_serbian_task = create_task_config(
     task_name="serbian_evals:arc_easy",
     prompt_function=serbian_eval_prompt,
     hf_repo="datatab/serbian-llm-benchmark",
     hf_subset=HFSubsets.ARC_EASY.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 arc_challenge_serbian_task = create_task_config(
@@ -137,7 +146,7 @@ arc_challenge_serbian_task = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo="datatab/serbian-llm-benchmark",
     hf_subset=HFSubsets.ARC_CHALLENGE.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 boolq_serbian_task = create_task_config(
@@ -145,7 +154,7 @@ boolq_serbian_task = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo="datatab/serbian-llm-benchmark",
     hf_subset=HFSubsets.BOOLQ.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 hellaswag_serbian_task = create_task_config(
@@ -153,7 +162,7 @@ hellaswag_serbian_task = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo="datatab/serbian-llm-benchmark",
     hf_subset=HFSubsets.HELLASWAG.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 openbook_qa_serbian_task = create_task_config(
@@ -161,7 +170,7 @@ openbook_qa_serbian_task = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo="datatab/serbian-llm-benchmark",
     hf_subset=HFSubsets.OPENBOOK.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 piqa_serbian_task = create_task_config(
@@ -169,7 +178,7 @@ piqa_serbian_task = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo="datatab/serbian-llm-benchmark",
     hf_subset=HFSubsets.PIQA.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 oz_eval_task = create_task_config(
@@ -177,7 +186,7 @@ oz_eval_task = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo="datatab/serbian-llm-benchmark",
     hf_subset=HFSubsets.OZ_EVAL.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc],
 )
 
 winogrande_task = create_task_config(
@@ -185,7 +194,7 @@ winogrande_task = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo="datatab/serbian-llm-benchmark",
     hf_subset=HFSubsets.WINOGRANDE.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 
