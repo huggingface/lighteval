@@ -74,7 +74,9 @@ class COPAAdapter(TypedDict):
 
 
 def get_copa_prompt_function(
-    language: Language, adapter: Callable[[dict], COPAInput] | COPAAdapter, formulation: Formulation = MCFFormulation()
+    language: Language,
+    adapter: Callable[[dict], COPAInput | None] | COPAAdapter,
+    formulation: Formulation = MCFFormulation(),
 ):
     """
     Create a templated prompt function for a COPA task.
@@ -109,7 +111,7 @@ def get_copa_prompt_function(
     Returns:
         Callable: A function that generates COPA prompts based on the given parameters.
     """
-    adapter_fn: Callable[[dict], COPAInput] = create_adapter_from_dict(adapter)  # type: ignore
+    adapter_fn = create_adapter_from_dict(adapter)
     continuation_prompt_fn = get_continuation_prompt_function(
         language, {"context": "context", "continuations": "continuations", "gold_idx": "gold_idx"}, formulation
     )
@@ -120,6 +122,9 @@ def get_copa_prompt_function(
         task_name: str,
     ):
         input_data = adapter_fn(line)
+        if input_data is None:
+            return None
+
         context = capitalize(input_data["context"].rstrip(PUNCT))
         cause_or_effect_trans = (
             translation_literals.cause_word

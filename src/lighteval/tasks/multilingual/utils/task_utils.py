@@ -21,26 +21,5 @@
 # SOFTWARE.
 
 
-from typing import Any, Callable, Mapping, TypeVar
-
-
-AdapterReturnTypeVar = TypeVar("AdapterReturnTypeVar")
-
-
-def create_adapter_from_dict(
-    adapter: Mapping[str, Any] | Callable[[dict], AdapterReturnTypeVar],
-) -> Callable[[dict], AdapterReturnTypeVar]:
-    """
-    Creates adapter function for the template input from a dict.
-    Args:
-        adapter: Dict of the form {key: value} where value is key in the input dict to get.
-
-    """
-
-    if not isinstance(adapter, Mapping):
-        return adapter
-
-    def adapter_fn(line: dict):
-        return {key: line[value] for key, value in adapter.items()}
-
-    return adapter_fn  # type: ignore
+def normalize_subset(subset: str) -> str:
+    return subset.replace(" ", "_").replace("(", "").replace(")", "").lower()
