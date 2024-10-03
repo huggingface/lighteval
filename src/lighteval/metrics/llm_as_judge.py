@@ -21,22 +21,21 @@
 # SOFTWARE.
 
 
+import logging
 import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import Callable, Literal
+
+from tqdm import tqdm
 
 from lighteval.logging.hierarchical_logger import hlog_warn
 
 
-class Singleton(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
+logging.getLogger("openai").setLevel(logging.ERROR)
+logging.getLogger("httpx").setLevel(logging.ERROR)
 
 
-class JudgeLM(metaclass=Singleton):
+class JudgeLM:
     """
     A class representing a judge for evaluating answers using either the OpeanAI or Transformers library.
 
@@ -101,7 +100,7 @@ class JudgeLM(metaclass=Singleton):
                         self.client = OpenAI(api_key=self.api_key)
                     else:
                         self.client = OpenAI(base_url=self.url, api_key=self.api_key)
-                return self.__call_api
+                return self.__call_api_parallel
             case "transformers":
                 if self.pipe is None:
                     import torch
@@ -147,6 +146,9 @@ class JudgeLM(metaclass=Singleton):
         responses = judge_function(prompts)
         scores = [self.process_judge_response(response) for response in responses]
 
+        if self.pipe is not None:
+            self.pipe = None
+
         return scores, prompts, responses
 
     def evaluate_answer(self, question: str, answer: str, options: list[str] | None = None, gold: str | None = None):
@@ -180,16 +182,29 @@ class JudgeLM(metaclass=Singleton):
         outputs = [output.outputs[0].text for output in output]
         return outputs
 
+    def __call_api_parallel(self, prompts):
+        results = []
+        with ThreadPoolExecutor(100) as executor:
+            for entry in tqdm(executor.map(self.__call_api, prompts), total=len(prompts)):
+                results.append(entry)
+
+        if None in results:
+            raise ValueError("Some entries are not annotated due to errors in annotate_p, please inspect and retry.")
+
+        return results
+
     def __call_api(self, prompt):
         for _ in range(self.API_MAX_RETRY):
             try:
                 response = self.client.chat.completions.create(
                     model=self.model,
                     messages=prompt,
+                    response_format={"type": "text"},
                     max_tokens=512,
                     n=1,
                 )
-                return response.choices[0].message.content
+                text = response.choices[0].message.content
+                return text
             except Exception as e:
                 hlog_warn(f"{type(e), e}")
                 time.sleep(self.API_RETRY_SLEEP)

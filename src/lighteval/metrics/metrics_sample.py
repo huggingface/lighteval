@@ -849,6 +849,7 @@ class JudgeLLM:
         template: Callable,
         process_judge_response: Callable,
         judge_backend: Literal["openai", "transformers", "vllm", "tgi"],
+        short_judge_name: str | None = None,
     ) -> None:
         match judge_backend:
             case "openai":
@@ -870,6 +871,7 @@ class JudgeLLM:
             case _:
                 raise ValueError(f"{judge_backend} is not a valid backend for llm as a judge metric")
 
+        self.short_judge_name = short_judge_name
         self.judge = JudgeLM(
             model=judge_model_name,
             templates=template,
@@ -934,9 +936,9 @@ class JudgeLLMMixEval(JudgeLLM):
         for i in range(len(sample_ids)):
             metrics.append(
                 {
-                    "judge_score": scores[i],
-                    "user_prompt": messages[i],
-                    "judgement": judgements[i],
+                    f"judge_score_{self.short_judge_name}": scores[i],
+                    f"user_prompt_{self.short_judge_name}": messages[i],
+                    f"judgement_{self.short_judge_name}": judgements[i],
                 }
             )
 

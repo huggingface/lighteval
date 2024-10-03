@@ -29,6 +29,8 @@ from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase, 
 from lighteval.tasks.extended.mix_eval.judge_prompts import (
     flow_judge_for_freeform_template,
     flow_judge_for_multichoice_template,
+    gpt_judge_for_closeended_freeform,
+    gpt_judge_for_closeended_multiplechoice,
 )
 from lighteval.tasks.extended.mix_eval.prompts import construct_prompt_freeform, construct_prompt_multichoice
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
@@ -73,9 +75,20 @@ def process_judge_response(x):
     return int(search.group(1)) if search else 0
 
 
+def process_judge_response_multichoice_gpt(x):
+    search = re.search(r"\[\[([01])\]\]", x)
+    return int(search.group(1)) if search else 0
+
+
+def process_judge_response_freeform_gpt(x):
+    search = re.search(r"\[\[(\d.\d)\]\]", x)
+    answer = float(search.group(1) if search else 0)
+    return answer
+
+
 llm_judge_mixeval_multichoice_flow_judge = SampleLevelMetricGrouping(
     metric_name=["llm_judge_mixeval_flow"],
-    higher_is_better={"judge_score": True},
+    higher_is_better={"judge_score_flow": True},
     category=MetricCategory.LLM_AS_JUDGE,
     use_case=MetricUseCase.SUMMARIZATION,
     sample_level_fn=JudgeLLMMixEval(
@@ -83,11 +96,34 @@ llm_judge_mixeval_multichoice_flow_judge = SampleLevelMetricGrouping(
         template=flow_judge_for_multichoice_template,
         process_judge_response=process_judge_response,
         judge_backend="vllm",
+        short_judge_name="flow",
     ).compute,
     corpus_level_fn={
-        "judge_score": np.mean,
+        "judge_score_flow": np.mean,
     },
 )
+
+llm_judge_mixeval_multichoice_gpt_judge = SampleLevelMetricGrouping(
+    metric_name=["llm_judge_mixeval_gpt3"],
+    higher_is_better={"judge_score_gpt-3.5": True},
+    category=MetricCategory.LLM_AS_JUDGE,
+    use_case=MetricUseCase.SUMMARIZATION,
+    sample_level_fn=JudgeLLMMixEval(
+        judge_model_name="gpt-3.5-turbo",
+        template=gpt_judge_for_closeended_multiplechoice,
+        process_judge_response=process_judge_response_multichoice_gpt,
+        judge_backend="openai",
+        short_judge_name="gpt-3.5",
+    ).compute,
+    corpus_level_fn={
+        "judge_score_gpt-3.5": np.mean,
+    },
+)
+
+
+def mean_dv_5(x):
+    return np.mean(x) / 5
+
 
 llm_judge_mixeval_freeform_flow_judge = SampleLevelMetricGrouping(
     metric_name=["llm_judge_mixeval_flow"],
@@ -99,9 +135,27 @@ llm_judge_mixeval_freeform_flow_judge = SampleLevelMetricGrouping(
         template=flow_judge_for_freeform_template,
         process_judge_response=process_judge_response,
         judge_backend="vllm",
+        short_judge_name="flow",
     ).compute,
     corpus_level_fn={
-        "judge_score": np.mean,
+        "judge_score_flow": mean_dv_5,
+    },
+)
+
+llm_judge_mixeval_freeform_gpt_judge = SampleLevelMetricGrouping(
+    metric_name=["llm_judge_mixeval_gpt3"],
+    higher_is_better={"judge_score_gpt-3.5": True},
+    category=MetricCategory.LLM_AS_JUDGE,
+    use_case=MetricUseCase.SUMMARIZATION,
+    sample_level_fn=JudgeLLMMixEval(
+        judge_model_name="gpt-3.5-turbo",
+        template=gpt_judge_for_closeended_freeform,
+        process_judge_response=process_judge_response_freeform_gpt,
+        judge_backend="openai",
+        short_judge_name="gpt-3.5",
+    ).compute,
+    corpus_level_fn={
+        "judge_score_gpt-3.5": np.mean,
     },
 )
 
@@ -112,7 +166,7 @@ mixeval_freeform_easy = LightevalTaskConfig(
     suite=["extended"],
     hf_repo="MixEval/MixEval",
     hf_subset="MixEval",
-    metric=[llm_judge_mixeval_freeform_flow_judge],
+    metric=[llm_judge_mixeval_freeform_flow_judge, llm_judge_mixeval_freeform_gpt_judge],
     hf_avail_splits=["free_form"],
     evaluation_splits=["free_form"],
     few_shots_split=None,
@@ -129,7 +183,7 @@ mixeval_multichoice_easy = LightevalTaskConfig(
     suite=["extended"],
     hf_repo="MixEval/MixEval",
     hf_subset="MixEval",
-    metric=[llm_judge_mixeval_multichoice_flow_judge],
+    metric=[llm_judge_mixeval_multichoice_flow_judge, llm_judge_mixeval_multichoice_gpt_judge],
     hf_avail_splits=["multiple_choice"],
     evaluation_splits=["multiple_choice"],
     few_shots_split=None,
@@ -145,7 +199,7 @@ mixeval_freeform_hard = LightevalTaskConfig(
     suite=["extended"],
     hf_repo="MixEval/MixEval",
     hf_subset="MixEval_Hard",
-    metric=[llm_judge_mixeval_freeform_flow_judge],
+    metric=[llm_judge_mixeval_freeform_flow_judge, llm_judge_mixeval_freeform_gpt_judge],
     hf_avail_splits=["free_form"],
     evaluation_splits=["free_form"],
     few_shots_split=None,
@@ -162,7 +216,7 @@ mixeval_multichoice_hard = LightevalTaskConfig(
     suite=["extended"],
     hf_repo="MixEval/MixEval",
     hf_subset="MixEval_Hard",
-    metric=[llm_judge_mixeval_multichoice_flow_judge],
+    metric=[llm_judge_mixeval_multichoice_flow_judge, llm_judge_mixeval_multichoice_gpt_judge],
     hf_avail_splits=["multiple_choice"],
     evaluation_splits=["multiple_choice"],
     few_shots_split=None,
