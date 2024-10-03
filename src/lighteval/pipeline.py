@@ -276,30 +276,26 @@ class Pipeline:
         # Note: some samples are associated with several responses, like the multichoice samples
         # and some metrics will parse all samples at once in a second step during aggregation
 
-        tmp = collections.defaultdict(lambda: collections.defaultdict(list))
+        tmp = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(list)))
         # group by task_name
         for (sample_id, metric_category), sample_responses in sample_id_to_responses.items():
-            short_task_name = sample_id.task_name.rsplit("|", 1)[0]
-            task: LightevalTask = self.task_dict[short_task_name]
-            compute_metric_function = task.get_metric_method_from_category(metric_category=metric_category)
+            tmp[sample_id.task_name][metric_category]["ids"].append(sample_id.doc_id_seed)
+            tmp[sample_id.task_name][metric_category]["responses"].append(sample_responses)
+            tmp[sample_id.task_name][metric_category]["docs"].append(self.docs[sample_id])
 
-            tmp[sample_id.task_name]["ids"].append(sample_id.doc_id_seed)
-            tmp[sample_id.task_name]["responses"].append(sample_responses)
-            tmp[sample_id.task_name]["docs"].append(self.docs[sample_id])
-            tmp[sample_id.task_name]["metrics"].append(compute_metric_function)
-
-        for task_name, samples in tmp.items():
+        for task_name, samples_per_metric in tmp.items():
             short_task_name = task_name.rsplit("|", 1)[0]
             task: LightevalTask = self.task_dict[short_task_name]
 
-            sample_ids = samples["ids"]
-            responses = samples["responses"]
-            docs = samples["docs"]
-            metric_functions = samples["metrics"]
+            for metric_category, samples in samples_per_metric.items():
+                sample_ids = samples["ids"]
+                responses = samples["responses"]
+                docs = samples["docs"]
+                metric_function = task.get_metric_method_from_category(metric_category=metric_category)
+                metric_category_metrics = [metric for metric in task.metrics if metric.category == metric_category]
 
-            for metric_function in set(metric_functions):
                 outputs = metric_function(
-                    sample_ids=sample_ids, responses=responses, formatted_docs=docs, metrics=task.metrics
+                    sample_ids=sample_ids, responses=responses, formatted_docs=docs, metrics=metric_category_metrics
                 )
 
                 for output, doc, response in zip(outputs, docs, responses):
