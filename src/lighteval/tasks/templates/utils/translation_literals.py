@@ -49,14 +49,14 @@ class TranslationLiterals:
     neither: str = None  # type: ignore
 
     # Punctuation
-    full_stop: str = None  # type: ignore
-    comma: str = None  # type: ignore
-    question_mark: str = None  # type: ignore
-    exclamation_mark: str = None  # type: ignore
-    word_space: str = None  # type: ignore
-    sentence_space: str = None  # type: ignore
-    colon: str = ":"  # type: ignore
-    semicolon: str = ";"  # type: ignore
+    full_stop: str = "."
+    comma: str = ","
+    question_mark: str = "?"
+    exclamation_mark: str = "!"
+    word_space: str = " "
+    sentence_space: str = " "
+    colon: str = ":"
+    semicolon: str = ";"
 
     # Indices
     indices: list[str] = field(default_factory=lambda: LETTER_INDICES)
@@ -299,7 +299,6 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
     Language.GALICIAN: TranslationLiterals(language=Language.GALICIAN),
     Language.ARMENIAN: TranslationLiterals(language=Language.ARMENIAN),
     Language.BASQUE: TranslationLiterals(language=Language.BASQUE),
-    Language.SWAHILI: TranslationLiterals(language=Language.SWAHILI),
     Language.MALAY: TranslationLiterals(language=Language.MALAY),
     Language.TAGALOG: TranslationLiterals(language=Language.TAGALOG),
     Language.JAVANESE: TranslationLiterals(language=Language.JAVANESE),
@@ -350,4 +349,5 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
     Language.SORANI: TranslationLiterals(language=Language.SORANI),
     Language.CEBUANO: TranslationLiterals(language=Language.CEBUANO),
     Language.WAR: TranslationLiterals(language=Language.WAR),
+    Language.SWEDISH: TranslationLiterals(language=Language.SWEDISH),
 }

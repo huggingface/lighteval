@@ -89,7 +89,7 @@ class LightevalTaskConfig:
     """
 
     name: str
-    prompt_function: Callable[[dict, str], Doc]
+    prompt_function: Callable[[dict, str], Doc | None]
     hf_repo: str
     hf_subset: str
     metric: ListLike[Metric | Metrics]
