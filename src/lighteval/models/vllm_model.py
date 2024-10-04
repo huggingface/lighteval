@@ -298,7 +298,11 @@ class VLLMModel(LightevalModel):
         """Contains the actual logic of the generation."""
         if generate:
             sampling_params = SamplingParams(
-                n=num_samples, max_tokens=max_new_tokens, stop=stop_tokens, logprobs=1 if returns_logits else 0
+                temperature=1.0 if num_samples > 1 else 0.0,
+                n=num_samples,
+                max_tokens=max_new_tokens,
+                stop=stop_tokens,
+                logprobs=1 if returns_logits else 0,
             )
         else:
             sampling_params = SamplingParams(temperature=0, prompt_logprobs=1, max_tokens=1, detokenize=False)
