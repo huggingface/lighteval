@@ -1133,7 +1133,7 @@ class NanotronLightevalModel(LightevalModel):
             else:
                 # Longest context in the current split is the first item (since we sort reversed)
                 context_enc = dataset[0][1].tokenized_context
-                max_gen = max(item[1].generation_size for item in dataset)
+                max_gen = max(item.generation_size for item in dataset)
                 max_input_length = min(len(context_enc) + max_gen, self.max_length)
 
             batch_size = self._get_batch_size(
