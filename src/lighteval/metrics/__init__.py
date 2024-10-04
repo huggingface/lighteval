@@ -29,7 +29,7 @@ from lighteval.utils.utils import as_list
 
 
 def apply_target_perplexity_metric(
-    sample_ids, responses: list[list[ModelResponse]], formatted_docs: list[Doc], metrics: list[Metric]
+    sample_ids: list[str], responses: list[list[ModelResponse]], formatted_docs: list[Doc], metrics: list[Metric]
 ):
     outputs = []
 
@@ -58,7 +58,7 @@ def apply_target_perplexity_metric(
 
 
 def apply_perplexity_metric(
-    sample_ids, responses: list[list[ModelResponse]], formatted_docs: list[Doc], metrics: list[Metric]
+    sample_ids: list[str], responses: list[list[ModelResponse]], formatted_docs: list[Doc], metrics: list[Metric]
 ):
     outputs = []
     for sample_id, results, formatted_doc in zip(sample_ids, responses, formatted_docs):
@@ -238,16 +238,26 @@ def apply_multichoice_metric_one_token(
 def apply_llm_as_judge_metric(
     sample_ids: list[str], responses: list[list[ModelResponse]], formatted_docs: list[Doc], metrics: list[Metric]
 ):
-    tmp = []
+    """
+    Apply the LLM as judge metric to the responses. The batching is managed at the judge level.
+    """
+    # outputs per metric is a list containing a list of dict for each metric
+    # example: [[{metric1_sample1}, {metric1_sample2}], [{metric2_sample1}, {metric2_sample2}]]
+    outputs_per_metrics: list[list[dict]] = []
 
     for metric in metrics:
         if metric.category in [MetricCategory.LLM_AS_JUDGE_MULTI_TURN, MetricCategory.LLM_AS_JUDGE]:
-            tmp.append(metric.compute(sample_ids=sample_ids, responses=responses, formatted_docs=formatted_docs))
+            outputs_per_metrics.append(
+                metric.compute(sample_ids=sample_ids, responses=responses, formatted_docs=formatted_docs)
+            )
 
-    outputs = [{} for _ in range(len(sample_ids))]
-
-    for t in tmp:
-        for i, k in enumerate(t):
-            outputs[i].update(k)
+    # We merge the outputs per metric in a list of dict for each sample
+    # example: [{metric1_sample1, metric2_sample1}, {metric1_sample2, metric2_sample2}]
+    outputs = []
+    for i in range(len(sample_ids)):
+        output = {}
+        for metric_outputs in outputs_per_metrics:
+            output.update(metric_outputs[i])
+        outputs.append(output)
 
     return outputs

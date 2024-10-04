@@ -29,6 +29,7 @@ from typing import Callable, Literal
 from tqdm import tqdm
 
 from lighteval.logging.hierarchical_logger import hlog_warn
+from lighteval.utils.imports import is_openai_available, is_vllm_available
 
 
 logging.getLogger("openai").setLevel(logging.ERROR)
@@ -52,8 +53,8 @@ class JudgeLM:
         template (Callable): A function taking into account the question, options, answer, and gold and returning the judge prompt.
         API_MAX_RETRY (int): The maximum number of retries for the API.
         API_RETRY_SLEEP (int): The time to sleep between retries.
-        client (Any): The OpenAI client.
-        pipe (Any): The Transformers or vllm pipeline.
+        client (OpenAI | None): The OpenAI client.
+        pipe (LLM | AutoModel | None): The Transformers or vllm pipeline.
         process_judge_response (Callable): A function for processing the judge's response.
         url (str | None): The URL for the OpenAI API.
         api_key (str | None): The API key for the OpenAI API (either OpenAI or HF key).
@@ -92,7 +93,9 @@ class JudgeLM:
 
     def __lazy_load_client(self):
         match self.backend:
-            case "openai" | "tgi":
+            # Wether we use openai or TGI models, we go trhough the openai API
+            # to route to the endpoint
+            case "openai" | "tgi" if is_openai_available():
                 if self.client is None:
                     from openai import OpenAI
 
@@ -101,6 +104,15 @@ class JudgeLM:
                     else:
                         self.client = OpenAI(base_url=self.url, api_key=self.api_key)
                 return self.__call_api_parallel
+            case "vllm" if is_vllm_available():
+                if self.pipe is None:
+                    from vllm import LLM, SamplingParams
+                    from vllm.transformers_utils.tokenizer import get_tokenizer
+
+                    self.sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=512)
+                    self.tokenizer = get_tokenizer(self.model, tokenizer_mode="auto")
+                    self.pipe = LLM(model=self.model, max_model_len=2048, gpu_memory_utilization=0.5)
+                return self.__call_vllm
             case "transformers":
                 if self.pipe is None:
                     import torch
@@ -117,15 +129,6 @@ class JudgeLM:
                         max_new_tokens=256,
                     )
                 return self.__call_transformers
-            case "vllm":
-                if self.pipe is None:
-                    from vllm import LLM, SamplingParams
-                    from vllm.transformers_utils.tokenizer import get_tokenizer
-
-                    self.sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=512)
-                    self.tokenizer = get_tokenizer(self.model, tokenizer_mode="auto")
-                    self.pipe = LLM(model=self.model, max_model_len=2048, gpu_memory_utilization=0.5)
-                return self.__call_vllm
             case _:
                 return lambda x: x
 
@@ -146,7 +149,9 @@ class JudgeLM:
         responses = judge_function(prompts)
         scores = [self.process_judge_response(response) for response in responses]
 
-        if self.pipe is not None:
+        # clean up the vllm pipeline and free up memory
+        if self.pipe is not None and self.backend == "vllm":
+            del self.pipe
             self.pipe = None
 
         return scores, prompts, responses
