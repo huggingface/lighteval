@@ -128,6 +128,9 @@ def create_task_config(
         few_shots_split=few_shots_split,
         few_shots_select="sequential",
         metric=metric,
+        # Since we use trust_dataset, we have to be careful about what is inside the dataset
+        # script. We thus lock the revision to ensure that the script doesn't change
+        hf_revision="d356ef19a4eb287e88a51d07a56b73ba88c7f188",
         trust_dataset=True,
         version=0,
     )
@@ -210,18 +213,15 @@ TASKS_TABLE = [
 ]
 
 
-hello_message = """
------------------------------------
------- Serbian LLM benchmark ------
------------------------------------
-
-Available tasks:
------------------
-{}
-"""
-task_names = "\n".join([t.name for t in TASKS_TABLE])
-hlog_warn(f"{hello_message.format(task_names)}")
-
 if __name__ == "__main__":
-    print(t.name for t in TASKS_TABLE)
-    print(len(TASKS_TABLE))
+    hello_message = """
+    -----------------------------------
+    ------ Serbian LLM benchmark ------
+    -----------------------------------
+
+    Available tasks:
+    -----------------
+    {}
+    """
+    task_names = "\n".join([t.name for t in TASKS_TABLE])
+    hlog_warn(f"{hello_message.format(task_names)}")
