@@ -43,7 +43,7 @@ class HFSubsets(Enum):
     """Enum for all available Hugging Face dataset subsets in Serbian evaluation tasks."""
 
     HF_BASE_REPO = "datatab/serbian-llm-benchmark"
-    HF_REVISION = "ad62b26ce8b050bcd0cf0cdfe3fd89a8907bca43"
+    HF_REVISION = "209c5b5f999cae5c02eef5735eb817ead18ac214"
 
     # STANDARD EVAL TASKS
     ARC_EASY = "arc_easy_serbian"
