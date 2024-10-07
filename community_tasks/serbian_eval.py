@@ -224,6 +224,7 @@ def create_task_config(
         version=0,
     )
 
+
 # ============================================
 # =========== STANDARAD Task Setup ===========
 # ============================================
@@ -302,7 +303,7 @@ mmlu_abstract_algebra = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_ABSTRACT_ALGEBRA.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_anatomy = create_task_config(
@@ -310,7 +311,7 @@ mmlu_anatomy = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_ANATOMY.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_astronomy = create_task_config(
@@ -318,7 +319,7 @@ mmlu_astronomy = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_ASTRONOMY.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_business_ethics = create_task_config(
@@ -326,7 +327,7 @@ mmlu_business_ethics = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_BUSINESS_ETHICS.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_clinical_knowledge = create_task_config(
@@ -334,7 +335,7 @@ mmlu_clinical_knowledge = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_CLINICAL_KNOWLEDGE.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_college_biology = create_task_config(
@@ -342,7 +343,7 @@ mmlu_college_biology = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_COLLEGE_BIOLOGY.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_college_chemistry = create_task_config(
@@ -350,7 +351,7 @@ mmlu_college_chemistry = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_COLLEGE_CHEMISTRY.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_college_computer_science = create_task_config(
@@ -358,7 +359,7 @@ mmlu_college_computer_science = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_COLLEGE_COMPUTER_SCIENCE.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_college_mathematics = create_task_config(
@@ -366,7 +367,7 @@ mmlu_college_mathematics = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_COLLEGE_MATHEMATICS.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_college_medicine = create_task_config(
@@ -374,7 +375,7 @@ mmlu_college_medicine = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_COLLEGE_MEDICINE.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_college_physics = create_task_config(
@@ -382,7 +383,7 @@ mmlu_college_physics = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_COLLEGE_PHYSICS.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_computer_security = create_task_config(
@@ -390,7 +391,7 @@ mmlu_computer_security = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_COLLEGE_COMPUTER_SECURITY.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_conceptual_physics = create_task_config(
@@ -398,7 +399,7 @@ mmlu_conceptual_physics = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_CONCEPTUAL_PHYSICS.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_econometrics = create_task_config(
@@ -406,7 +407,7 @@ mmlu_econometrics = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_ECONOMETRICS.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_electrical_engineering = create_task_config(
@@ -414,7 +415,7 @@ mmlu_electrical_engineering = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_ELECTRONIC_ENGINEERING.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_elementary_mathematics = create_task_config(
@@ -422,7 +423,7 @@ mmlu_elementary_mathematics = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_ELEMENTARY_MATHEMATICS.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_formal_logic = create_task_config(
@@ -430,7 +431,7 @@ mmlu_formal_logic = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_FORMAL_LOGIC.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_global_facts = create_task_config(
@@ -438,7 +439,7 @@ mmlu_global_facts = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_GLOBAL_FACT.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_high_school_biology = create_task_config(
@@ -446,7 +447,7 @@ mmlu_high_school_biology = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_BIOLOGY.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_high_school_chemistry = create_task_config(
@@ -454,7 +455,7 @@ mmlu_high_school_chemistry = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_CHEMISTRY.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_high_school_computer_science = create_task_config(
@@ -462,7 +463,7 @@ mmlu_high_school_computer_science = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_COMPUTER_SCIENCE.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_high_school_european_history = create_task_config(
@@ -470,7 +471,7 @@ mmlu_high_school_european_history = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_EURO_HISTORY.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_high_school_geography = create_task_config(
@@ -478,7 +479,7 @@ mmlu_high_school_geography = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_GEOGRAPHY.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_high_school_mathematics = create_task_config(
@@ -486,7 +487,7 @@ mmlu_high_school_mathematics = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_MATHEMATICS.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_high_school_microeconomics = create_task_config(
@@ -494,7 +495,7 @@ mmlu_high_school_microeconomics = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_MICROECONOMICS.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_high_school_physics = create_task_config(
@@ -502,7 +503,7 @@ mmlu_high_school_physics = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_PHYSICS.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_high_school_psychology = create_task_config(
@@ -510,7 +511,7 @@ mmlu_high_school_psychology = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_PSYCHOLOGY.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_high_school_statistics = create_task_config(
@@ -518,7 +519,7 @@ mmlu_high_school_statistics = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_STATISTICS.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_high_school_world_history = create_task_config(
@@ -526,7 +527,7 @@ mmlu_high_school_world_history = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HIGH_SCHOOL_WORLD_HISTORY.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_human_aging = create_task_config(
@@ -534,7 +535,7 @@ mmlu_human_aging = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_HUMAN_AGING.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_logical_fallacies = create_task_config(
@@ -542,7 +543,7 @@ mmlu_logical_fallacies = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_LOGICAL_FALLACIES.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_marketing = create_task_config(
@@ -550,7 +551,7 @@ mmlu_marketing = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_MARKETING.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_machine_learning = create_task_config(
@@ -558,7 +559,7 @@ mmlu_machine_learning = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_MACHINE_LEARNING.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_management = create_task_config(
@@ -566,7 +567,7 @@ mmlu_management = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_MANAGEMENT.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_moral_disputes = create_task_config(
@@ -574,7 +575,7 @@ mmlu_moral_disputes = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_MORAL_DISPUTES.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_miscellaneous = create_task_config(
@@ -582,7 +583,7 @@ mmlu_miscellaneous = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_MISCELLANEOUS.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_moral_scenarios = create_task_config(
@@ -590,7 +591,7 @@ mmlu_moral_scenarios = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_MORAL_SCENARIOS.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_sociology = create_task_config(
@@ -598,7 +599,7 @@ mmlu_sociology = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_SOCIOLOGY.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_philosophy = create_task_config(
@@ -606,7 +607,7 @@ mmlu_philosophy = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_PHILOSOPHY.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_world_religions = create_task_config(
@@ -614,7 +615,7 @@ mmlu_world_religions = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_WORLD_RELIGIONS.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 mmlu_all = create_task_config(
@@ -622,7 +623,7 @@ mmlu_all = create_task_config(
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.MMLU_SERBIAN_ALL.value,
-    metric=[Metrics.loglikelihood_acc_norm]
+    metric=[Metrics.loglikelihood_acc_norm],
 )
 
 TASKS_TABLE = [
