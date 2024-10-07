@@ -94,7 +94,8 @@ def test_pmi_request():
 
 def test_pmi_request_with_logprob_metric():
     """
-    Test that the PMI requests are correctly routed and computed, this ensures that metrics categories producing same requests are handled correctly
+    Test that the PMI requests are correctly routed and computed, this ensures
+    that metrics categories producing same requests are handled correctly
     """
     fake_model = FakeModel(
         loglikelihood_responses=[
