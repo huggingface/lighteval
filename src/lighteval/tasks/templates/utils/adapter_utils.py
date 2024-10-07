@@ -20,16 +20,27 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from lighteval.utils.imports import can_load_extended_tasks
+
+from typing import Any, Callable, Mapping, TypeVar
 
 
-if can_load_extended_tasks():
-    import lighteval.tasks.extended.ifeval.main as ifeval
-    import lighteval.tasks.extended.mix_eval.main as mix_eval
-    import lighteval.tasks.extended.mt_bench.main as mt_bench
-    import lighteval.tasks.extended.tiny_benchmarks.main as tiny_benchmarks
+AdapterReturnTypeVar = TypeVar("AdapterReturnTypeVar")
 
-    AVAILABLE_EXTENDED_TASKS_MODULES = [ifeval, tiny_benchmarks, mt_bench, mix_eval]
 
-else:
-    AVAILABLE_EXTENDED_TASKS_MODULES = []
+def create_adapter_from_dict(
+    adapter: Mapping[str, Any] | Callable[[dict], AdapterReturnTypeVar],
+) -> Callable[[dict], AdapterReturnTypeVar]:
+    """
+    Creates adapter function for the template input from a dict.
+    Args:
+        adapter: Dict of the form {key: value} where value is key in the input dict to get.
+
+    """
+
+    if not isinstance(adapter, Mapping):
+        return adapter
+
+    def adapter_fn(line: dict):
+        return {key: line[value] for key, value in adapter.items()}
+
+    return adapter_fn  # type: ignore

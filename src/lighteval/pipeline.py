@@ -33,12 +33,12 @@ import numpy as np
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog, htrack_block
-from lighteval.metrics.utils import MetricCategory
+from lighteval.metrics.utils.metric_utils import MetricCategory
 from lighteval.models.model_loader import load_model
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_tasks
 from lighteval.tasks.registry import Registry, get_custom_tasks, taskinfo_selector
-from lighteval.tasks.requests import Doc, SampleUid
+from lighteval.tasks.requests import SampleUid
 from lighteval.utils.imports import (
     NO_ACCELERATE_ERROR_MSG,
     NO_NANOTRON_ERROR_MSG,
@@ -251,7 +251,6 @@ class Pipeline:
                         hlog(f"Removed {tmp_weights_dir}")
                     except OSError:
                         pass
-                self.model.cleanup()
 
     def _run_model(self):
         # Running all requests depending on the model call type (log likelihood, generative, ...)
@@ -269,26 +268,51 @@ class Pipeline:
                     sample_id = SampleUid(request.task_name, request.sample_index)
                     sample_id_to_responses[(sample_id, metric_category)].append(response)
 
+        # Cleaning up the model before running metrics
+        self.model.cleanup()
+
         return sample_id_to_responses
 
     def _compute_metrics(self, sample_id_to_responses):
-        # 2. Running the metric on each sample on its own.
-        # Note: some samples are associated with several responses, like the multichoice samples
-        # and some metrics will parse all samples at once in a second step during aggregation
+        # To compute the metrics we first group the samples and task and then by metrics.
+        # This way we can batch the metrics computation for each task and metric category
+
+        # This variable will hold the samples grouped by task and metric category
+        # example:
+        # task_metric_category_groups = {
+        #     "task_name": {
+        #         "metric_category": {
+        #             "ids": [sample_id1, sample_id2, ...],
+        #             "responses": [[response1_1, response1_2, ...], [response2_1, response2_2, ...], ...],
+        #             "docs": [doc1, doc2, ...]
+        #         }
+        task_metric_category_groups = collections.defaultdict(
+            lambda: collections.defaultdict(lambda: collections.defaultdict(list))
+        )
+
         for (sample_id, metric_category), sample_responses in sample_id_to_responses.items():
-            short_task_name = sample_id.task_name.rsplit("|", 1)[0]
+            task_metric_category_groups[sample_id.task_name][metric_category]["ids"].append(sample_id.doc_id_seed)
+            task_metric_category_groups[sample_id.task_name][metric_category]["responses"].append(sample_responses)
+            task_metric_category_groups[sample_id.task_name][metric_category]["docs"].append(self.docs[sample_id])
 
+        for task_name, samples_per_metric in task_metric_category_groups.items():
+            short_task_name = task_name.rsplit("|", 1)[0]
             task: LightevalTask = self.task_dict[short_task_name]
-            doc: Doc = self.docs[sample_id]
 
-            compute_metric = task.get_metric_method_from_category(metric_category=metric_category)
-            # This is important if two metric categories have non-zero intersection request-wise.
-            # Some might then only expect to get their requests.
-            metric_category_metrics = [metric for metric in task.metrics if metric.category == metric_category]
-            metrics = compute_metric(results=sample_responses, formatted_doc=doc, metrics=metric_category_metrics)
+            for metric_category, samples in samples_per_metric.items():
+                sample_ids = samples["ids"]
+                responses = samples["responses"]
+                docs = samples["docs"]
+                metric_function = task.get_metric_method_from_category(metric_category=metric_category)
+                metric_category_metrics = [metric for metric in task.metrics if metric.category == metric_category]
 
-            self.evaluation_tracker.metrics_logger.log(sample_id.task_name, metrics)
-            self.evaluation_tracker.details_logger.log(sample_id.task_name, task, doc, sample_responses, metrics)
+                outputs = metric_function(
+                    sample_ids=sample_ids, responses=responses, formatted_docs=docs, metrics=metric_category_metrics
+                )
+
+                for output, doc, response in zip(outputs, docs, responses):
+                    self.evaluation_tracker.metrics_logger.log(task_name, output)
+                    self.evaluation_tracker.details_logger.log(task_name, task, doc, response, output)
 
     def save_and_push_results(self):
         if self.is_main_process():

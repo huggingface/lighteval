@@ -20,16 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from lighteval.utils.imports import can_load_extended_tasks
 
-
-if can_load_extended_tasks():
-    import lighteval.tasks.extended.ifeval.main as ifeval
-    import lighteval.tasks.extended.mix_eval.main as mix_eval
-    import lighteval.tasks.extended.mt_bench.main as mt_bench
-    import lighteval.tasks.extended.tiny_benchmarks.main as tiny_benchmarks
-
-    AVAILABLE_EXTENDED_TASKS_MODULES = [ifeval, tiny_benchmarks, mt_bench, mix_eval]
-
-else:
-    AVAILABLE_EXTENDED_TASKS_MODULES = []
+def normalize_subset(subset: str) -> str:
+    return subset.replace(" ", "_").replace("(", "").replace(")", "").lower()
