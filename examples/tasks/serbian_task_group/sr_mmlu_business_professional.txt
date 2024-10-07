@@ -1,0 +1,3 @@
+# MMLU (Business Professional)
+community|serbian_evals:mmlu_marketing|0|0
+community|serbian_evals:mmlu_manadzment|0|0

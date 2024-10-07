@@ -45,21 +45,29 @@ class HFSubsets(Enum):
     HF_BASE_REPO = "datatab/serbian-llm-benchmark"
     HF_REVISION = "209c5b5f999cae5c02eef5735eb817ead18ac214"
 
-    # STANDARD EVAL TASKS
+    # ARC (AI2 Reasoning Challenge)
     ARC_EASY = "arc_easy_serbian"
     ARC_CHALLENGE = "arc_challenge_serbian"
+    # Question Answering and Knowledge
     BOOLQ = "boolq_serbian"
-    HELLASWAG = "hellaswag_serbian"
     OPENBOOK = "openbookq_serbian"
+    # Commonsense Reasoning
+    HELLASWAG = "hellaswag_serbian"
     PIQA = "piqa_serbian"
-    OZ_EVAL = "oz_eval_serbian"
     WINOGRANDE = "winogrande_serbian"
-    # MMLU EVAL TASKS
-    MMLU_ABSTRACT_ALGEBRA = "mmlu_abstract_algebra_serbian"
+    # Custom/Other Task
+    OZ_EVAL = "oz_eval_serbian"
+    # MMLU (Miscellaneous)
     MMLU_ANATOMY = "mmlu_anatomija_serbian"
     MMLU_ASTRONOMY = "mmlu_astronomija_serbian"
     MMLU_BUSINESS_ETHICS = "mmlu_poslovna_etika_serbian"
     MMLU_CLINICAL_KNOWLEDGE = "mmlu_kliničko_znanje_serbian"
+    MMLU_MISCELLANEOUS = "mmlu_miscellaneous_serbian"
+    MMLU_ELECTRONIC_ENGINEERING = "mmlu_electrical_engineering_serbian"
+    # MMLU (Business Professional)
+    MMLU_MARKETING = "mmlu_marketing_serbian"
+    MMLU_MANAGEMENT = "mmlu_management_serbian"
+    # MMLU (College Level Tasks)
     MMLU_COLLEGE_BIOLOGY = "mmlu_college_biology_serbian"
     MMLU_COLLEGE_CHEMISTRY = "mmlu_college_chemistry_serbian"
     MMLU_COLLEGE_COMPUTER_SCIENCE = "mmlu_college_computer_science_serbian"
@@ -67,12 +75,12 @@ class HFSubsets(Enum):
     MMLU_COLLEGE_MEDICINE = "mmlu_college_medicine_serbian"
     MMLU_COLLEGE_PHYSICS = "mmlu_college_physics_serbian"
     MMLU_COLLEGE_COMPUTER_SECURITY = "mmlu_computer_security_serbian"
-    MMLU_CONCEPTUAL_PHYSICS = "mmlu_conceptual_physics_serbian"
-    MMLU_ECONOMETRICS = "mmlu_econometrics_serbian"
-    MMLU_ELECTRONIC_ENGINEERING = "mmlu_electrical_engineering_serbian"
-    MMLU_ELEMENTARY_MATHEMATICS = "mmlu_osnovna_matematika_serbian"
-    MMLU_FORMAL_LOGIC = "mmlu_formalna_logika_serbian"
-    MMLU_GLOBAL_FACT = "mmlu_global_facts_serbian"
+    # MMLU (Ethics, Philosophy)
+    MMLU_MORAL_DISPUTES = "mmlu_moral_disputes_serbian"
+    MMLU_MORAL_SCENARIOS = "mmlu_moral_scenarios_serbian"
+    MMLU_PHILOSOPHY = "mmlu_philosophy_serbian"
+    MMLU_WORLD_RELIGIONS = "mmlu_world_religions_serbian"
+    # MMLU (High School Level Tasks)
     MMLU_HIGH_SCHOOL_BIOLOGY = "mmlu_high_school_biology_serbian"
     MMLU_HIGH_SCHOOL_CHEMISTRY = "mmlu_high_school_chemistry_serbian"
     MMLU_HIGH_SCHOOL_COMPUTER_SCIENCE = "mmlu_high_school_computer_science_serbian"
@@ -84,17 +92,19 @@ class HFSubsets(Enum):
     MMLU_HIGH_SCHOOL_PSYCHOLOGY = "mmlu_high_school_psychology_serbian"
     MMLU_HIGH_SCHOOL_STATISTICS = "mmlu_high_school_statistics_serbian"
     MMLU_HIGH_SCHOOL_WORLD_HISTORY = "mmlu_high_school_world_history"
-    MMLU_HUMAN_AGING = "mmlu_human_aging_serbian"
-    MMLU_LOGICAL_FALLACIES = "mmlu_logicke_zablude_serbian"
-    MMLU_MARKETING = "mmlu_marketing_serbian"
+    # MMLU (Math, Logic)
+    MMLU_ABSTRACT_ALGEBRA = "mmlu_abstract_algebra_serbian"
+    MMLU_ELEMENTARY_MATHEMATICS = "mmlu_osnovna_matematika_serbian"
+    MMLU_FORMAL_LOGIC = "mmlu_formalna_logika_serbian"
+    MMLU_CONCEPTUAL_PHYSICS = "mmlu_conceptual_physics_serbian"
+    MMLU_ECONOMETRICS = "mmlu_econometrics_serbian"
     MMLU_MACHINE_LEARNING = "mmlu_machine_learning_serbian"
-    MMLU_MANAGEMENT = "mmlu_management_serbian"
-    MMLU_MORAL_DISPUTES = "mmlu_moral_disputes_serbian"
-    MMLU_MISCELLANEOUS = "mmlu_miscellaneous_serbian"
-    MMLU_MORAL_SCENARIOS = "mmlu_moral_scenarios_serbian"
+    # MMLU (Social Sciences)
+    MMLU_GLOBAL_FACT = "mmlu_global_facts_serbian"
+    MMLU_LOGICAL_FALLACIES = "mmlu_logicke_zablude_serbian"
     MMLU_SOCIOLOGY = "mmlu_sociology_serbian"
-    MMLU_PHILOSOPHY = "mmlu_philosophy_serbian"
-    MMLU_WORLD_RELIGIONS = "mmlu_world_religions_serbian"
+    MMLU_HUMAN_AGING = "mmlu_human_aging_serbian"
+    # MMLU (All-inclusive Task Entry)
     MMLU_SERBIAN_ALL = "mmlu_all_serbian"
 
 
@@ -226,10 +236,8 @@ def create_task_config(
 
 
 # ============================================
-# =========== STANDARAD Task Setup ===========
+# ===== ARC (AI2 Reasoning Challenge)=========
 # ============================================
-
-
 arc_easy = create_task_config(
     task_name="serbian_evals:arc_easy",
     prompt_function=serbian_eval_prompt,
@@ -247,14 +255,9 @@ arc_challenge = create_task_config(
 )
 
 
-boolq = create_task_config(
-    task_name="serbian_evals:boolq",
-    prompt_function=boolq_serbian,
-    hf_repo=HFSubsets.HF_BASE_REPO.value,
-    hf_subset=HFSubsets.BOOLQ.value,
-    metric=[Metrics.loglikelihood_acc_norm],
-)
-
+# ============================================
+# ========= Commonsense Reasoning ============
+# ============================================
 hellaswag = create_task_config(
     task_name="serbian_evals:hellaswag",
     prompt_function=serbian_eval_prompt,
@@ -262,29 +265,12 @@ hellaswag = create_task_config(
     hf_subset=HFSubsets.HELLASWAG.value,
     metric=[Metrics.loglikelihood_acc_norm],
 )
-
-openbook_qa = create_task_config(
-    task_name="serbian_evals:openbook",
-    prompt_function=serbian_eval_prompt,
-    hf_repo=HFSubsets.HF_BASE_REPO.value,
-    hf_subset=HFSubsets.OPENBOOK.value,
-    metric=[Metrics.loglikelihood_acc_norm],
-)
-
 piqa = create_task_config(
     task_name="serbian_evals:piqa",
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.PIQA.value,
     metric=[Metrics.loglikelihood_acc_norm],
-)
-
-oz_eval = create_task_config(
-    task_name="serbian_evals:oz_task",
-    prompt_function=serbian_eval_prompt,
-    hf_repo=HFSubsets.HF_BASE_REPO.value,
-    hf_subset=HFSubsets.OZ_EVAL.value,
-    metric=[Metrics.loglikelihood_acc],
 )
 
 winogrande = create_task_config(
@@ -295,17 +281,22 @@ winogrande = create_task_config(
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
+
 # ============================================
-# ============== MMLU Task Setup =============
+# =========== Custom/Other Task ==============
 # ============================================
-mmlu_abstract_algebra = create_task_config(
-    task_name="serbian_evals:mmlu_abstract_algebra",
+oz_eval = create_task_config(
+    task_name="serbian_evals:oz_task",
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
-    hf_subset=HFSubsets.MMLU_ABSTRACT_ALGEBRA.value,
-    metric=[Metrics.loglikelihood_acc_norm],
+    hf_subset=HFSubsets.OZ_EVAL.value,
+    metric=[Metrics.loglikelihood_acc],
 )
 
+
+# ============================================
+# ========== MMLU (Miscellaneous) ============
+# ============================================
 mmlu_anatomy = create_task_config(
     task_name="serbian_evals:mmlu_anatomija",
     prompt_function=serbian_eval_prompt,
@@ -338,6 +329,58 @@ mmlu_clinical_knowledge = create_task_config(
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
+mmlu_miscellaneous = create_task_config(
+    task_name="serbian_evals:mmlu_razno",
+    prompt_function=serbian_eval_prompt,
+    hf_repo=HFSubsets.HF_BASE_REPO.value,
+    hf_subset=HFSubsets.MMLU_MISCELLANEOUS.value,
+    metric=[Metrics.loglikelihood_acc_norm],
+)
+
+mmlu_electrical_engineering = create_task_config(
+    task_name="serbian_evals:mmlu_elektrotehnika",
+    prompt_function=serbian_eval_prompt,
+    hf_repo=HFSubsets.HF_BASE_REPO.value,
+    hf_subset=HFSubsets.MMLU_ELECTRONIC_ENGINEERING.value,
+    metric=[Metrics.loglikelihood_acc_norm],
+)
+
+
+# ============================================
+# ====== MMLU (All-inclusive Task Entry) =====
+# ============================================
+mmlu_all = create_task_config(
+    task_name="serbian_evals:mmlu",
+    prompt_function=serbian_eval_prompt,
+    hf_repo=HFSubsets.HF_BASE_REPO.value,
+    hf_subset=HFSubsets.MMLU_SERBIAN_ALL.value,
+    metric=[Metrics.loglikelihood_acc_norm],
+)
+
+
+# ============================================
+# ======= MMLU (Business Professional) =======
+# ============================================
+mmlu_marketing = create_task_config(
+    task_name="serbian_evals:mmlu_marketing",
+    prompt_function=serbian_eval_prompt,
+    hf_repo=HFSubsets.HF_BASE_REPO.value,
+    hf_subset=HFSubsets.MMLU_MARKETING.value,
+    metric=[Metrics.loglikelihood_acc_norm],
+)
+
+mmlu_management = create_task_config(
+    task_name="serbian_evals:mmlu_manadzment",
+    prompt_function=serbian_eval_prompt,
+    hf_repo=HFSubsets.HF_BASE_REPO.value,
+    hf_subset=HFSubsets.MMLU_MANAGEMENT.value,
+    metric=[Metrics.loglikelihood_acc_norm],
+)
+
+
+# ============================================
+# ======== MMLU (College Level Tasks) ========
+# ============================================
 mmlu_college_biology = create_task_config(
     task_name="serbian_evals:mmlu_fakultet_biologija",
     prompt_function=serbian_eval_prompt,
@@ -394,54 +437,46 @@ mmlu_computer_security = create_task_config(
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
-mmlu_conceptual_physics = create_task_config(
-    task_name="serbian_evals:mmlu_konceptualna_fizika",
+
+# ============================================
+# ======== MMLU (Ethics, Philosophy) =========
+# ============================================
+mmlu_moral_disputes = create_task_config(
+    task_name="serbian_evals:mmlu_moralni_sporovi",
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
-    hf_subset=HFSubsets.MMLU_CONCEPTUAL_PHYSICS.value,
+    hf_subset=HFSubsets.MMLU_MORAL_DISPUTES.value,
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
-mmlu_econometrics = create_task_config(
-    task_name="serbian_evals:mmlu_metrika_ekonomije",
+mmlu_moral_scenarios = create_task_config(
+    task_name="serbian_evals:mmlu_moralne_dileme",
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
-    hf_subset=HFSubsets.MMLU_ECONOMETRICS.value,
+    hf_subset=HFSubsets.MMLU_MORAL_SCENARIOS.value,
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
-mmlu_electrical_engineering = create_task_config(
-    task_name="serbian_evals:mmlu_elektrotehnika",
+mmlu_philosophy = create_task_config(
+    task_name="serbian_evals:mmlu_filozofija",
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
-    hf_subset=HFSubsets.MMLU_ELECTRONIC_ENGINEERING.value,
+    hf_subset=HFSubsets.MMLU_PHILOSOPHY.value,
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
-mmlu_elementary_mathematics = create_task_config(
-    task_name="serbian_evals:mmlu_osnovna_matematika",
+mmlu_world_religions = create_task_config(
+    task_name="serbian_evals:mmlu_svetska_religija",
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
-    hf_subset=HFSubsets.MMLU_ELEMENTARY_MATHEMATICS.value,
+    hf_subset=HFSubsets.MMLU_WORLD_RELIGIONS.value,
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
-mmlu_formal_logic = create_task_config(
-    task_name="serbian_evals:mmlu_formalna_logika",
-    prompt_function=serbian_eval_prompt,
-    hf_repo=HFSubsets.HF_BASE_REPO.value,
-    hf_subset=HFSubsets.MMLU_FORMAL_LOGIC.value,
-    metric=[Metrics.loglikelihood_acc_norm],
-)
 
-mmlu_global_facts = create_task_config(
-    task_name="serbian_evals:mmlu_globalne_cinjenice",
-    prompt_function=serbian_eval_prompt,
-    hf_repo=HFSubsets.HF_BASE_REPO.value,
-    hf_subset=HFSubsets.MMLU_GLOBAL_FACT.value,
-    metric=[Metrics.loglikelihood_acc_norm],
-)
-
+# ============================================
+# ====== MMLU (High School Level Tasks) ======
+# ============================================
 mmlu_high_school_biology = create_task_config(
     task_name="serbian_evals:mmlu_srednja_skola_biologija",
     prompt_function=serbian_eval_prompt,
@@ -530,27 +565,44 @@ mmlu_high_school_world_history = create_task_config(
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
-mmlu_human_aging = create_task_config(
-    task_name="serbian_evals:mmlu_human_aging",
+# ============================================
+# ============ MMLU (Math, Logic) ============
+# ============================================
+mmlu_abstract_algebra = create_task_config(
+    task_name="serbian_evals:mmlu_abstract_algebra",
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
-    hf_subset=HFSubsets.MMLU_HUMAN_AGING.value,
+    hf_subset=HFSubsets.MMLU_ABSTRACT_ALGEBRA.value,
+    metric=[Metrics.loglikelihood_acc_norm],
+)
+mmlu_elementary_mathematics = create_task_config(
+    task_name="serbian_evals:mmlu_osnovna_matematika",
+    prompt_function=serbian_eval_prompt,
+    hf_repo=HFSubsets.HF_BASE_REPO.value,
+    hf_subset=HFSubsets.MMLU_ELEMENTARY_MATHEMATICS.value,
+    metric=[Metrics.loglikelihood_acc_norm],
+)
+mmlu_formal_logic = create_task_config(
+    task_name="serbian_evals:mmlu_formalna_logika",
+    prompt_function=serbian_eval_prompt,
+    hf_repo=HFSubsets.HF_BASE_REPO.value,
+    hf_subset=HFSubsets.MMLU_FORMAL_LOGIC.value,
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
-mmlu_logical_fallacies = create_task_config(
-    task_name="serbian_evals:mmlu_logicke_zablude",
+mmlu_conceptual_physics = create_task_config(
+    task_name="serbian_evals:mmlu_konceptualna_fizika",
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
-    hf_subset=HFSubsets.MMLU_LOGICAL_FALLACIES.value,
+    hf_subset=HFSubsets.MMLU_CONCEPTUAL_PHYSICS.value,
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
-mmlu_marketing = create_task_config(
-    task_name="serbian_evals:mmlu_marketing",
+mmlu_econometrics = create_task_config(
+    task_name="serbian_evals:mmlu_metrika_ekonomije",
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
-    hf_subset=HFSubsets.MMLU_MARKETING.value,
+    hf_subset=HFSubsets.MMLU_ECONOMETRICS.value,
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
@@ -562,35 +614,23 @@ mmlu_machine_learning = create_task_config(
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
-mmlu_management = create_task_config(
-    task_name="serbian_evals:mmlu_manadzment",
+# ============================================
+# ========== MMLU (Social Sciences) ==========
+# ============================================
+
+mmlu_global_facts = create_task_config(
+    task_name="serbian_evals:mmlu_globalne_cinjenice",
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
-    hf_subset=HFSubsets.MMLU_MANAGEMENT.value,
+    hf_subset=HFSubsets.MMLU_GLOBAL_FACT.value,
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
-mmlu_moral_disputes = create_task_config(
-    task_name="serbian_evals:mmlu_moralni_sporovi",
+mmlu_logical_fallacies = create_task_config(
+    task_name="serbian_evals:mmlu_logicke_zablude",
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
-    hf_subset=HFSubsets.MMLU_MORAL_DISPUTES.value,
-    metric=[Metrics.loglikelihood_acc_norm],
-)
-
-mmlu_miscellaneous = create_task_config(
-    task_name="serbian_evals:mmlu_razno",
-    prompt_function=serbian_eval_prompt,
-    hf_repo=HFSubsets.HF_BASE_REPO.value,
-    hf_subset=HFSubsets.MMLU_MISCELLANEOUS.value,
-    metric=[Metrics.loglikelihood_acc_norm],
-)
-
-mmlu_moral_scenarios = create_task_config(
-    task_name="serbian_evals:mmlu_moralne_dileme",
-    prompt_function=serbian_eval_prompt,
-    hf_repo=HFSubsets.HF_BASE_REPO.value,
-    hf_subset=HFSubsets.MMLU_MORAL_SCENARIOS.value,
+    hf_subset=HFSubsets.MMLU_LOGICAL_FALLACIES.value,
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
@@ -602,29 +642,34 @@ mmlu_sociology = create_task_config(
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
-mmlu_philosophy = create_task_config(
-    task_name="serbian_evals:mmlu_filozofija",
+mmlu_human_aging = create_task_config(
+    task_name="serbian_evals:mmlu_human_aging",
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
-    hf_subset=HFSubsets.MMLU_PHILOSOPHY.value,
+    hf_subset=HFSubsets.MMLU_HUMAN_AGING.value,
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
-mmlu_world_religions = create_task_config(
-    task_name="serbian_evals:mmlu_svetska_religija",
-    prompt_function=serbian_eval_prompt,
+# ============================================
+# ===== Question Answering and Knowledge =====
+# ============================================
+
+boolq = create_task_config(
+    task_name="serbian_evals:boolq",
+    prompt_function=boolq_serbian,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
-    hf_subset=HFSubsets.MMLU_WORLD_RELIGIONS.value,
+    hf_subset=HFSubsets.BOOLQ.value,
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
-mmlu_all = create_task_config(
-    task_name="serbian_evals:mmlu",
+openbook_qa = create_task_config(
+    task_name="serbian_evals:openbook",
     prompt_function=serbian_eval_prompt,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
-    hf_subset=HFSubsets.MMLU_SERBIAN_ALL.value,
+    hf_subset=HFSubsets.OPENBOOK.value,
     metric=[Metrics.loglikelihood_acc_norm],
 )
+
 
 TASKS_TABLE = [
     arc_easy,

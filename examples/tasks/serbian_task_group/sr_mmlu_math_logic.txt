@@ -1,0 +1,7 @@
+# MMLU (Math, Logic)
+community|serbian_evals:mmlu_abstract_algebra|0|0
+community|serbian_evals:mmlu_osnovna_matematika|0|0
+community|serbian_evals:mmlu_formalna_logika|0|0
+community|serbian_evals:mmlu_konceptualna_fizika|0|0
+community|serbian_evals:mmlu_metrika_ekonomije|0|0
+community|serbian_evals:mmlu_masinsko_ucenje|0|0

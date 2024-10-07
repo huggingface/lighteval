@@ -1,0 +1,3 @@
+# Question Answering and Knowledge
+community|serbian_evals:boolq|0|0
+community|serbian_evals:openbook|0|0

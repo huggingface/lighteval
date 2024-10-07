@@ -1,0 +1,5 @@
+# MMLU (Social Sciences)
+community|serbian_evals:mmlu_globalne_cinjenice|0|0
+community|serbian_evals:mmlu_logicke_zablude|0|0
+community|serbian_evals:mmlu_sociologija|0|0
+community|serbian_evals:mmlu_human_aging|0|0

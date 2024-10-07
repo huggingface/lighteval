@@ -1,0 +1,2 @@
+# MMLU (All-inclusive Task Entry)
+community|serbian_evals:mmlu|0|0
