@@ -119,7 +119,7 @@ class JudgeLM:
                     from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
                     transformers_model = AutoModelForCausalLM.from_pretrained(
-                        self.model, torch_dtype=torch.bfloat16, trust_remote_code=False, device_map="cuda"
+                        self.model, torch_dtype=torch.float16, trust_remote_code=False, device_map="cuda"
                     )
                     tokenizer = AutoTokenizer.from_pretrained(self.model)
                     self.pipe = pipeline(
