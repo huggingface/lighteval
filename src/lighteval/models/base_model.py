@@ -602,6 +602,7 @@ class BaseModel(LightevalModel):
         stop_tokens: list[str],
         returns_logits: Optional[bool] = False,
         num_samples: Optional[int] = 1,
+        do_sample: Optional[bool] = False,
     ) -> list[GenerativeResponse]:
         """Contains the actual logic of the generation.
         First computes the stop sequences, then generates the predictions, then converts the outputs to GenerativeResponse.
@@ -619,7 +620,7 @@ class BaseModel(LightevalModel):
             return_dict_in_generate=True,
             output_scores=True,
             eos_token_id=self.tokenizer.eos_token_id,
-            do_sample=num_samples > 1,
+            do_sample=do_sample,
             num_return_sequences=num_samples,
         )
         if returns_logits:

@@ -116,7 +116,7 @@ class GreedyUntilRequest(Request):
         stop_sequence (str): The sequence of tokens that indicates when to stop generating text.
         generation_size (int): The maximum number of tokens to generate.
         generation_grammar (TextGenerationInputGrammarType): The grammar to generate completion according to.
-            Currently only available for TGI models.
+            Currently only availablgeneration_size: e for TGI models.
         request_type (RequestType): The type of the request, set to RequestType.GREEDY_UNTIL.
     """
 
@@ -126,6 +126,7 @@ class GreedyUntilRequest(Request):
     request_type = RequestType.GREEDY_UNTIL
     tokenized_context: list[int] = None
     num_samples: int = None
+    do_sample: bool = False
     use_logits: bool = False
 
 

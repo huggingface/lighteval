@@ -395,38 +395,51 @@ class LightevalTask:
                     metric_categories=[MetricCategory.PERPLEXITY],
                 )
             ]
+        if self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]:
+            # All these tasks require the same generation process - we can do them in one step
+            # so we select the maximum number of samples and the metrics will select only the
+            # relevant number of tiems
+            requests[RequestType.GREEDY_UNTIL] += [
+                GreedyUntilRequest(
+                    task_name=current_task_name,
+                    sample_index=document_id_seed,
+                    request_index=0,
+                    context=context,
+                    stop_sequence=self.stop_sequence,
+                    generation_size=self.generation_size,
+                    generation_grammar=self.generation_grammar,
+                    num_samples=max(self.num_samples),
+                    do_sample=True,
+                    use_logits=False,
+                    metric_categories=[MetricCategory.GENERATIVE_SAMPLING],
+                )
+            ]
         if (
-            self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]
-            or self.has_metric_category[MetricCategory.GENERATIVE]
+            self.has_metric_category[MetricCategory.GENERATIVE]
             or self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]
         ):
-            # All these tasks require the same generation process - we can do them in one step
-            # Except if we have num_samples = 1 (greedy generative) vs > 1 (sampling)
-            # in which case we'll create 2 request types
             use_logits = self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]
-            for num_samples in {1, max(self.num_samples)}:
-                requests[RequestType.GREEDY_UNTIL] += [
-                    GreedyUntilRequest(
-                        task_name=current_task_name,
-                        sample_index=document_id_seed,
-                        request_index=0,
-                        context=context,
-                        stop_sequence=self.stop_sequence,
-                        generation_size=self.generation_size,
-                        generation_grammar=self.generation_grammar,
-                        num_samples=num_samples,
-                        use_logits=use_logits,
-                        metric_categories=[
-                            c
-                            for c in [
-                                MetricCategory.GENERATIVE_SAMPLING,
-                                MetricCategory.GENERATIVE,
-                                MetricCategory.GENERATIVE_LOGPROB,
-                            ]
-                            if self.has_metric_category[c]
-                        ],
-                    )
-                ]
+            requests[RequestType.GREEDY_UNTIL] += [
+                GreedyUntilRequest(
+                    task_name=current_task_name,
+                    sample_index=document_id_seed,
+                    request_index=0,
+                    context=context,
+                    stop_sequence=self.stop_sequence,
+                    generation_size=self.generation_size,
+                    generation_grammar=self.generation_grammar,
+                    num_samples=1,
+                    use_logits=use_logits,
+                    metric_categories=[
+                        c
+                        for c in [
+                            MetricCategory.GENERATIVE,
+                            MetricCategory.GENERATIVE_LOGPROB,
+                        ]
+                        if self.has_metric_category[c]
+                    ],
+                )
+            ]
         if (
             self.has_metric_category[MetricCategory.MULTICHOICE]
             or self.has_metric_category[MetricCategory.MULTICHOICE_PMI]
@@ -446,7 +459,6 @@ class LightevalTask:
                 )
                 for i, choice in enumerate(formatted_doc.choices)
             ]
-
         if self.has_metric_category[MetricCategory.MULTICHOICE_PMI]:
             assert (
                 formatted_doc.unconditioned_query is not None
