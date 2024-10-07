@@ -234,10 +234,10 @@ def create_task_config(
         version=0,
     )
 
-
 # ============================================
 # ===== ARC (AI2 Reasoning Challenge)=========
 # ============================================
+
 arc_easy = create_task_config(
     task_name="serbian_evals:arc_easy",
     prompt_function=serbian_eval_prompt,
@@ -254,10 +254,10 @@ arc_challenge = create_task_config(
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
-
 # ============================================
 # ========= Commonsense Reasoning ============
 # ============================================
+
 hellaswag = create_task_config(
     task_name="serbian_evals:hellaswag",
     prompt_function=serbian_eval_prompt,
@@ -281,10 +281,10 @@ winogrande = create_task_config(
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
-
 # ============================================
 # =========== Custom/Other Task ==============
 # ============================================
+
 oz_eval = create_task_config(
     task_name="serbian_evals:oz_task",
     prompt_function=serbian_eval_prompt,
@@ -293,10 +293,10 @@ oz_eval = create_task_config(
     metric=[Metrics.loglikelihood_acc],
 )
 
-
 # ============================================
 # ========== MMLU (Miscellaneous) ============
 # ============================================
+
 mmlu_anatomy = create_task_config(
     task_name="serbian_evals:mmlu_anatomija",
     prompt_function=serbian_eval_prompt,
@@ -345,10 +345,10 @@ mmlu_electrical_engineering = create_task_config(
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
-
 # ============================================
 # ====== MMLU (All-inclusive Task Entry) =====
 # ============================================
+
 mmlu_all = create_task_config(
     task_name="serbian_evals:mmlu",
     prompt_function=serbian_eval_prompt,
@@ -357,10 +357,10 @@ mmlu_all = create_task_config(
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
-
 # ============================================
 # ======= MMLU (Business Professional) =======
 # ============================================
+
 mmlu_marketing = create_task_config(
     task_name="serbian_evals:mmlu_marketing",
     prompt_function=serbian_eval_prompt,
@@ -377,10 +377,10 @@ mmlu_management = create_task_config(
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
-
 # ============================================
 # ======== MMLU (College Level Tasks) ========
 # ============================================
+
 mmlu_college_biology = create_task_config(
     task_name="serbian_evals:mmlu_fakultet_biologija",
     prompt_function=serbian_eval_prompt,
@@ -437,10 +437,10 @@ mmlu_computer_security = create_task_config(
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
-
 # ============================================
 # ======== MMLU (Ethics, Philosophy) =========
 # ============================================
+
 mmlu_moral_disputes = create_task_config(
     task_name="serbian_evals:mmlu_moralni_sporovi",
     prompt_function=serbian_eval_prompt,
@@ -473,10 +473,10 @@ mmlu_world_religions = create_task_config(
     metric=[Metrics.loglikelihood_acc_norm],
 )
 
-
 # ============================================
 # ====== MMLU (High School Level Tasks) ======
 # ============================================
+
 mmlu_high_school_biology = create_task_config(
     task_name="serbian_evals:mmlu_srednja_skola_biologija",
     prompt_function=serbian_eval_prompt,
@@ -568,6 +568,7 @@ mmlu_high_school_world_history = create_task_config(
 # ============================================
 # ============ MMLU (Math, Logic) ============
 # ============================================
+
 mmlu_abstract_algebra = create_task_config(
     task_name="serbian_evals:mmlu_abstract_algebra",
     prompt_function=serbian_eval_prompt,
@@ -575,6 +576,7 @@ mmlu_abstract_algebra = create_task_config(
     hf_subset=HFSubsets.MMLU_ABSTRACT_ALGEBRA.value,
     metric=[Metrics.loglikelihood_acc_norm],
 )
+
 mmlu_elementary_mathematics = create_task_config(
     task_name="serbian_evals:mmlu_osnovna_matematika",
     prompt_function=serbian_eval_prompt,
@@ -582,6 +584,7 @@ mmlu_elementary_mathematics = create_task_config(
     hf_subset=HFSubsets.MMLU_ELEMENTARY_MATHEMATICS.value,
     metric=[Metrics.loglikelihood_acc_norm],
 )
+
 mmlu_formal_logic = create_task_config(
     task_name="serbian_evals:mmlu_formalna_logika",
     prompt_function=serbian_eval_prompt,
