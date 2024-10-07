@@ -537,6 +537,7 @@ class BaseModel(LightevalModel):
                 max_new_tokens = batch[0].generation_size
                 returns_logits = batch[0].use_logits
                 num_samples = batch[0].num_samples
+                do_sample = batch[0].do_sample
 
                 context = [c.context for c in batch]
 
@@ -590,6 +591,7 @@ class BaseModel(LightevalModel):
                     stop_tokens=stop_tokens,
                     returns_logits=returns_logits,
                     num_samples=num_samples,
+                    do_sample=do_sample,
                 )
                 results.extend(cur_reponses)
 

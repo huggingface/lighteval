@@ -119,15 +119,10 @@ def apply_generative_metric(  # noqa: C901
             golds = None
 
         for metric in metrics:
-            if metric.category == MetricCategory.GENERATIVE_SAMPLING:
-                cur_preds = preds
-            else:
-                cur_preds = as_list(preds[0]) if max_num_samples > 1 else preds
-
             output.update(
                 metric.compute(
                     golds=golds,
-                    predictions=cur_preds,
+                    predictions=preds,
                     formatted_doc=formatted_doc,
                 )
             )
