@@ -660,10 +660,6 @@ class BaseModel(LightevalModel):
 
                 decoded_generations.append(decoded_generation)
 
-            if num_samples == 1:  # We only return one item
-                result_generations = result_generations[0]
-                decoded_generations = decoded_generations[0]
-
             cur_response = GenerativeResponse(
                 result=decoded_generations,
                 logits=logits[ix][: len_logits[ix]] if returns_logits else None,

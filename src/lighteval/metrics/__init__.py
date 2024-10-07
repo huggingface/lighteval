@@ -118,32 +118,19 @@ def apply_generative_metric(  # noqa: C901
         except (KeyError, IndexError):
             golds = None
 
-        # Specific process for HELM like evals # hrm
-        # if "label_to_choices" in formatted_doc:
-        if formatted_doc.specific is not None and "label_to_choices" in formatted_doc.specific:
-            # Helm predicts on labels keys (A/B/C/D), but computes metrics on choices
-            preds = [formatted_doc.specific["label_to_choices"].get(p) for p in preds]
-            golds = [formatted_doc.specific["label_to_choices"][g] for g in golds]
-
         for metric in metrics:
-            if metric.category == MetricCategory.GENERATIVE:
-                output.update(
-                    metric.compute(
-                        golds=golds,
-                        predictions=as_list(preds[0]) if max_num_samples > 1 else preds,
-                        formatted_doc=formatted_doc,
-                    )
-                )
-            if metric.category == MetricCategory.GENERATIVE_LOGPROB:
-                output.update(
-                    metric.compute(
-                        golds=golds,
-                        predictions=as_list(preds[0]) if max_num_samples > 1 else preds,
-                        formatted_doc=formatted_doc,
-                    )
-                )
             if metric.category == MetricCategory.GENERATIVE_SAMPLING:
-                output.update(metric.compute(golds=golds, predictions=preds, formatted_doc=formatted_doc))
+                cur_preds = preds
+            else:
+                cur_preds = as_list(preds[0]) if max_num_samples > 1 else preds
+
+            output.update(
+                metric.compute(
+                    golds=golds,
+                    predictions=cur_preds,
+                    formatted_doc=formatted_doc,
+                )
+            )
         outputs.append(output)
 
     return outputs
