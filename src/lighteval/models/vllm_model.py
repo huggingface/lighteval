@@ -20,10 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import gc
 import itertools
 import os
 from typing import Optional
 
+import torch
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
@@ -47,6 +49,7 @@ if is_vllm_available():
     import ray
     from more_itertools import distribute
     from vllm import LLM, SamplingParams
+    from vllm.distributed.parallel_state import destroy_distributed_environment, destroy_model_parallel
     from vllm.transformers_utils.tokenizer import get_tokenizer
 else:
     LLM = None
@@ -94,6 +97,14 @@ class VLLMModel(LightevalModel):
     @property
     def tokenizer(self):
         return self._tokenizer
+
+    def cleanup(self):
+        destroy_model_parallel()
+        del self.model.llm_engine.model_executor.driver_worker
+        gc.collect()
+        ray.shutdown()
+        destroy_distributed_environment()
+        torch.cuda.empty_cache()
 
     @property
     def add_special_tokens(self):
