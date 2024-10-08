@@ -34,6 +34,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.default_prompts import hellaswag_preprocess
 from lighteval.tasks.requests import Doc
+from lighteval.tasks.default_prompts import mgsm
 
 
 # MMLU
@@ -597,6 +598,35 @@ FLORES200_TASKS = [
 ]
 
 
+# MGSM EL
+
+def mgsm_el_prompt(line, task_name: str = None):
+    question_key = "Ερώτηση:"
+    answer_key = "Απάντηση βήμα προς βήμα:"
+    return mgsm(line, question_key, answer_key, task_name)
+
+mgsm_el_task = LightevalTaskConfig(
+    name="mgsm:el",
+    suite=["community"],
+    prompt_function=mgsm_el_prompt,
+    hf_repo="ilsp/mgsm_greek",
+    hf_subset="default",
+    hf_avail_splits=["train", "test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=5,
+    metric=[Metrics.exact_match, Metrics.quasi_exact_match],
+    stop_sequence=["\n", "=", "Ερώτηση="],
+    output_regex=None,
+    frozen=False,
+    trust_dataset=True,
+    version=0,
+)
+
+# TODO create metric that extracts actual answer from model answer
+
+
 _TASKS = (
     MMLU_EL_TASKS +
     ARC_EL_TASKS +
@@ -606,7 +636,8 @@ _TASKS = (
     [hellaswag_el_task] +
     [xnli_el_task] +
     [medical_mc_qa_el_task] +
-    [greek_civics_qa_task]
+    [greek_civics_qa_task] +
+    [mgsm_el_task]
 )
 
 # TODO test the ones in the commented out _TASKS that are not in the new one
