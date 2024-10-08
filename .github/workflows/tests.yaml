@@ -1,10 +1,13 @@
 name: Tests
 
 on:
-  workflow_run:
-    workflows: ["Quality"]
-    types:
-      - completed
+  push:
+    branches:
+      - main
+      - v*-release
+  pull_request:
+    branches:
+      - main
 
 jobs:
   run_tests:
