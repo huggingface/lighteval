@@ -111,7 +111,7 @@ class JudgeLM:
 
                     self.sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=512)
                     self.tokenizer = get_tokenizer(self.model, tokenizer_mode="auto")
-                    self.pipe = LLM(model=self.model, max_model_len=2048, gpu_memory_utilization=0.5)
+                    self.pipe = LLM(model=self.model, max_model_len=2048, gpu_memory_utilization=0.5, dtype="float16")
                 return self.__call_vllm
             case "transformers":
                 if self.pipe is None:
@@ -119,7 +119,7 @@ class JudgeLM:
                     from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
                     transformers_model = AutoModelForCausalLM.from_pretrained(
-                        self.model, torch_dtype=torch.bfloat16, trust_remote_code=False, device_map="cuda"
+                        self.model, torch_dtype=torch.float16, trust_remote_code=False, device_map="cuda"
                     )
                     tokenizer = AutoTokenizer.from_pretrained(self.model)
                     self.pipe = pipeline(
