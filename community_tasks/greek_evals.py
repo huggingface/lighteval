@@ -37,6 +37,7 @@ from lighteval.tasks.requests import Doc
 from lighteval.tasks.default_prompts import mgsm
 from lighteval.metrics.dynamic_metrics import loglikelihood_acc_metric
 from lighteval.metrics.normalizations import LogProbTokenNorm
+from lighteval.tasks.extended.mt_bench.main import mt_bench_prompt
 
 # MMLU
 
@@ -438,6 +439,7 @@ xnli_el_task = LightevalTaskConfig(
     few_shots_select="sequential",
     generation_size=1,
     metric=[loglikelihood_acc_metric(normalization=LogProbTokenNorm())],
+    stop_sequence=[],
     output_regex=None,
     frozen=False,
     trust_dataset=True,
@@ -457,6 +459,7 @@ xnli_2_el_task = LightevalTaskConfig(
     few_shots_select="sequential",
     generation_size=1,
     metric=[loglikelihood_acc_metric(normalization=LogProbTokenNorm())],
+    stop_sequence=[],
     output_regex=None,
     frozen=False,
     trust_dataset=True,
@@ -646,6 +649,26 @@ mgsm_el_task = LightevalTaskConfig(
 # TODO create metric or just output regex that extracts actual answer from model answer
 
 
+# MT-Bench EL
+
+mt_bench_el_task = LightevalTaskConfig(
+    name="mt_bench",
+    prompt_function=mt_bench_prompt,
+    suite=["extended"],
+    hf_repo="lighteval/mt-bench",
+    hf_subset="default",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split="",
+    few_shots_select="random",
+    metric=[Metrics.llm_judge_multi_turn_gpt3p5],
+    generation_size=1024,
+    stop_sequence=[],
+)
+
+# TODO create prompt to judge to make sure they know it's greek. Also maybe make prompt in greek? Depending on judge. We shall see
+
+
 _TASKS = (
     MMLU_EL_TASKS +
     ARC_EL_TASKS +
@@ -657,7 +680,8 @@ _TASKS = (
     [xnli_2_el_task] +
     [medical_mc_qa_el_task] +
     [greek_civics_qa_task] +
-    [mgsm_el_task]
+    [mgsm_el_task] +
+    [mt_bench_el_task]
 )
 
 # TODO test the ones in the commented out _TASKS that are not in the new one
