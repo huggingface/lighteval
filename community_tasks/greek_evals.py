@@ -35,7 +35,8 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.default_prompts import hellaswag_preprocess
 from lighteval.tasks.requests import Doc
 from lighteval.tasks.default_prompts import mgsm
-
+from lighteval.metrics.dynamic_metrics import loglikelihood_acc_metric
+from lighteval.metrics.normalizations import LogProbTokenNorm
 
 # MMLU
 
@@ -429,15 +430,33 @@ xnli_el_task = LightevalTaskConfig(
     name="xnli:el",
     suite=["community"],
     prompt_function=xnli_prompt_el,
-    hf_repo="xnli",
+    hf_repo="facebook/xnli",
     hf_subset="el",
     hf_avail_splits=["train", "validation", "test"],
-    evaluation_splits=["test"],
-    few_shots_split="validation",
+    evaluation_splits=["validation"],
+    few_shots_split="train",
     few_shots_select="sequential",
     generation_size=1,
-    metric=[Metrics.loglikelihood_acc_single_token],
-    stop_sequence=["\n"],
+    metric=[loglikelihood_acc_metric(normalization=LogProbTokenNorm())],
+    output_regex=None,
+    frozen=False,
+    trust_dataset=True,
+    version=0
+)
+
+
+xnli_2_el_task = LightevalTaskConfig(
+    name="xnli2.0:el",
+    suite=["community"],
+    prompt_function=xnli_prompt_el,
+    hf_repo="Harsit/xnli2.0_greek",
+    hf_subset="default",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split="test",
+    few_shots_select="sequential",
+    generation_size=1,
+    metric=[loglikelihood_acc_metric(normalization=LogProbTokenNorm())],
     output_regex=None,
     frozen=False,
     trust_dataset=True,
@@ -624,7 +643,7 @@ mgsm_el_task = LightevalTaskConfig(
     version=0,
 )
 
-# TODO create metric that extracts actual answer from model answer
+# TODO create metric or just output regex that extracts actual answer from model answer
 
 
 _TASKS = (
@@ -635,6 +654,7 @@ _TASKS = (
     FLORES200_TASKS +
     [hellaswag_el_task] +
     [xnli_el_task] +
+    [xnli_2_el_task] +
     [medical_mc_qa_el_task] +
     [greek_civics_qa_task] +
     [mgsm_el_task]
