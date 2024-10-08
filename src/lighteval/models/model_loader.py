@@ -28,6 +28,7 @@ from lighteval.models.base_model import BaseModel
 from lighteval.models.delta_model import DeltaModel
 from lighteval.models.dummy_model import DummyModel
 from lighteval.models.endpoint_model import InferenceEndpointModel
+from lighteval.models.external_endpoint_model import ExternalEndpointModel
 from lighteval.models.model_config import (
     AdapterModelConfig,
     BaseModelConfig,
@@ -35,6 +36,7 @@ from lighteval.models.model_config import (
     DummyModelConfig,
     InferenceEndpointModelConfig,
     InferenceModelConfig,
+    ExternalEndpointModelConfig,
     TGIModelConfig,
     VLLMModelConfig,
 )
@@ -51,11 +53,12 @@ def load_model(  # noqa: C901
         DeltaModelConfig,
         TGIModelConfig,
         InferenceEndpointModelConfig,
+        ExternalEndpointModelConfig,
         DummyModelConfig,
         VLLMModelConfig,
     ],
     env_config: EnvConfig,
-) -> Union[BaseModel, AdapterModel, DeltaModel, ModelClient, DummyModel]:
+) -> Union[BaseModel, AdapterModel, DeltaModel, ModelClient, DummyModel, InferenceEndpointModel, ExternalEndpointModelConfig]:
     """Will load either a model from an inference server or a model from a checkpoint, depending
     on the config type.
 
@@ -76,6 +79,9 @@ def load_model(  # noqa: C901
         return load_model_with_tgi(config)
 
     if isinstance(config, InferenceEndpointModelConfig) or isinstance(config, InferenceModelConfig):
+        return load_model_with_inference_endpoints(config, env_config=env_config)
+
+    if isinstance(config, ExternalEndpointModelConfig):
         return load_model_with_inference_endpoints(config, env_config=env_config)
 
     if isinstance(config, BaseModelConfig):
@@ -104,6 +110,10 @@ def load_model_with_inference_endpoints(config: InferenceEndpointModelConfig, en
     model = InferenceEndpointModel(config=config, env_config=env_config)
     return model
 
+def load_model_with_external_inference_endpoints(config: ExternalEndpointModelConfig, env_config: EnvConfig):
+    hlog("Spin up model using inference endpoint.")
+    model = ExternalEndpointModel(config=config, env_config=env_config)
+    return model
 
 def load_model_with_accelerate_or_default(
     config: Union[AdapterModelConfig, BaseModelConfig, DeltaModelConfig], env_config: EnvConfig

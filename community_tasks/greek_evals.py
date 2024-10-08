@@ -597,20 +597,6 @@ FLORES200_TASKS = [
 ]
 
 
-# Task registration
-
-# _TASKS = (
-#     MMLU_EL_TASKS +
-#     ARC_EL_TASKS +
-#     TRUTHFULQA_TASKS +
-#     BELEBELE_TASKS +
-#     FLORES200_TASKS +
-#     [hellaswag_el_task] +
-#     [xnli_el_task] +
-#     [greek_civics_qa_task] +
-#     [medical_mc_qa_el_task]
-# )
-
 _TASKS = (
     MMLU_EL_TASKS +
     ARC_EL_TASKS +
