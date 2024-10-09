@@ -90,7 +90,7 @@ class Registry:
         self._cache_dir = cache_dir
         self._custom_tasks = custom_tasks
 
-    def get_task_class(self, task_name: str):
+    def get_task_instance(self, task_name: str):
         """
         Get the task class based on the task name (suite|task).
 
@@ -108,7 +108,7 @@ class Registry:
             hlog_warn(pformat(self.task_registry))
             raise ValueError(f"Cannot find tasks {task_name} in task list or in custom task registry)")
 
-        return task_class
+        return task_class()
 
     @property
     @lru_cache
@@ -209,7 +209,7 @@ class Registry:
             - Each task in the task_name_list will be instantiated with the corresponding task class.
         """
         # Select relevant tasks given the subset asked for by the user
-        return {task_name: self.get_task_class(task_name)() for task_name in task_names}
+        return {task_name: self.get_task_instance(task_name) for task_name in task_names}
 
     def expand_task_definition(self, task_definition: str):
         """
@@ -267,8 +267,8 @@ def taskinfo_selector(tasks: str, task_registry: Registry) -> tuple[list[str], d
     Converts a input string of tasks name to task information usable by lighteval.
 
     Args:
-        tasks (str): A string containing a comma-separated list of tasks definition in the
-            format "suite|task|few_shot|truncate_few_shots" or a path to a file
+        tasks (str): A string containing a comma-separated list of tasks definitions in the
+            format "task_definition|few_shot|truncate_few_shots" or a path to a file
             containing a list of tasks.
             where task_definition can be:
             - path to a file containing a list of tasks (one per line)

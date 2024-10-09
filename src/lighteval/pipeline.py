@@ -169,7 +169,6 @@ class Pipeline:
     def _init_tasks_and_requests(self, tasks: str):
         with htrack_block("Tasks loading"):
             with local_ranks_zero_first() if self.launcher_type == ParallelismManager.NANOTRON else nullcontext():
-                # If some tasks are provided as task groups, we load them separately
                 registry = Registry(
                     cache_dir=self.pipeline_parameters.env_config.cache_dir,
                     custom_tasks=self.pipeline_parameters.custom_tasks_directory,
