@@ -49,14 +49,14 @@ class TranslationLiterals:
     neither: str = None  # type: ignore
 
     # Punctuation
-    full_stop: str = "."  # type: ignore
-    comma: str = ","  # type: ignore
-    question_mark: str = "?"  # type: ignore
-    exclamation_mark: str = "!"  # type: ignore
-    word_space: str = " "  # type: ignore
-    sentence_space: str = " "  # type: ignore
-    colon: str = ":"  # type: ignore
-    semicolon: str = ";"  # type: ignore
+    full_stop: str = "."
+    comma: str = ","
+    question_mark: str = "?"
+    exclamation_mark: str = "!"
+    word_space: str = " "
+    sentence_space: str = " "
+    colon: str = ":"
+    semicolon: str = ";"
 
     # Indices
     indices: list[str] = field(default_factory=lambda: LETTER_INDICES)

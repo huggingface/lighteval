@@ -83,7 +83,9 @@ def test_model_prediction(prompt_inputs: tuple[str, str, list]):
 
         results = [ModelResponse(result=i, input_tokens=[], generated_tokens=[]) for i in example["predictions"]]
         # todo: update to create list of ModelResults in results
-        metric_result = apply_metric(metric=metric, results=results, formatted_doc=formatted_doc)
+        metric_result = apply_metric(
+            sample_ids=["0"], metric=metric, responses=[results], formatted_docs=[formatted_doc]
+        )[0]
         assert metric_result is not None, error_msg
         metric_result = {k: list(v) if isinstance(v, tuple) else v for k, v in metric_result.items()}
 
@@ -117,7 +119,7 @@ def test_model_prediction(prompt_inputs: tuple[str, str, list]):
                     assert False, error_msg + "\n" + str(e)
 
 
-def apply_metric(metric, results, formatted_doc: Doc):
+def apply_metric(sample_ids, metric, responses, formatted_docs: list[Doc]):
     method = LightevalTask._get_metric_method_from_category(metric.category)
-    cur_outputs = method(results=results, formatted_doc=formatted_doc, metrics=[metric])
+    cur_outputs = method(sample_ids=sample_ids, metrics=[metric], responses=responses, formatted_docs=formatted_docs)
     return cur_outputs

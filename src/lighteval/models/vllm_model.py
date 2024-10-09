@@ -20,10 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import gc
 import itertools
 import os
 from typing import Optional
 
+import torch
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
@@ -47,6 +49,7 @@ if is_vllm_available():
     import ray
     from more_itertools import distribute
     from vllm import LLM, SamplingParams
+    from vllm.distributed.parallel_state import destroy_distributed_environment, destroy_model_parallel
     from vllm.transformers_utils.tokenizer import get_tokenizer
 else:
     LLM = None
@@ -94,6 +97,15 @@ class VLLMModel(LightevalModel):
     @property
     def tokenizer(self):
         return self._tokenizer
+
+    def cleanup(self):
+        destroy_model_parallel()
+        del self.model.llm_engine.model_executor.driver_worker
+        self.model = None
+        gc.collect()
+        ray.shutdown()
+        destroy_distributed_environment()
+        torch.cuda.empty_cache()
 
     @property
     def add_special_tokens(self):
@@ -287,7 +299,11 @@ class VLLMModel(LightevalModel):
         """Contains the actual logic of the generation."""
         if generate:
             sampling_params = SamplingParams(
-                n=num_samples, max_tokens=max_new_tokens, stop=stop_tokens, logprobs=1 if returns_logits else 0
+                temperature=1.0 if num_samples > 1 else 0.0,
+                n=num_samples,
+                max_tokens=max_new_tokens,
+                stop=stop_tokens,
+                logprobs=1 if returns_logits else 0,
             )
         else:
             sampling_params = SamplingParams(temperature=0, prompt_logprobs=1, max_tokens=1, detokenize=False)

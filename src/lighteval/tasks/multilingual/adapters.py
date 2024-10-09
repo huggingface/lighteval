@@ -41,13 +41,13 @@ from lighteval.tasks.templates.utils.translation_literals import TranslationLite
 from lighteval.utils.language import Language
 
 
-m3_exam_answer_prefix_re = re.compile(r"^\([A-Da-d1-5๑๒๓๔๕]\)\s*|^[A-Da-e1-5๑๒๓๔๕][.．।。]\s*")
+M3_EXAM_ANSWER_PREFIX_RE = re.compile(r"^\([A-Da-d1-5๑๒๓๔๕]\)\s*|^[A-Da-e1-5๑๒๓๔๕][.．।。]\s*")
 
 
 def get_m3exam_adapter(lang: Language, line: dict) -> MCQInput | None:
     letter_indices = "๑๒๓๔๕" if lang == "th" else LETTER_INDICES
     is_number_based = line["answer_text"].isdigit()
-    clean_options = [m3_exam_answer_prefix_re.sub("", c) for c in line["options"]]
+    clean_options = [M3_EXAM_ANSWER_PREFIX_RE.sub("", c) for c in line["options"]]
     gold_idx = int(line["answer_text"]) - 1 if is_number_based else letter_indices.index(line["answer_text"].upper())
 
     if not all(len(c) > 0 for c in clean_options) or gold_idx >= len(clean_options):
@@ -169,7 +169,7 @@ def agieval_adapter(lang: Language, formulation: Formulation, line: dict) -> MCQ
     # Remove the options as we build them ourselves
     question, _ = rest.split(" 选项：", maxsplit=1)
     original_choices = line["choices"]
-    cleaned_choices = [m3_exam_answer_prefix_re.sub("", c).strip() for c in original_choices]
+    cleaned_choices = [M3_EXAM_ANSWER_PREFIX_RE.sub("", c).strip() for c in original_choices]
     gold_index = line["gold"]
 
     # Here is the most tricky part. In some subsets (e.g. gaokai-history) the answers can be the chinese digits only.
