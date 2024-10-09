@@ -3307,7 +3307,7 @@ TASKS_TABLE.extend(
 )
 
 
-# ------------------------------- BoolQA Tasks (yes/no) ------------------------------- #
+# ------------------------------- BoolQ Tasks (yes/no) ------------------------------- #
 ACVA_SUBSET = [
     "Algeria",
     "Ancient_Egypt",
@@ -3393,9 +3393,9 @@ acva_tasks = [
 ]
 
 
-french_boolqa_tasks = [
+french_boolq_tasks = [
     LightevalTaskConfig(
-        name=f"community_boolqa_{Language.FRENCH.value}",
+        name=f"community_boolq_{Language.FRENCH.value}",
         prompt_function=get_boolq_prompt_function(
             Language.FRENCH,
             lambda line: {
@@ -3416,9 +3416,9 @@ french_boolqa_tasks = [
     )
 ]
 
-hindi_boolqa_tasks = [
+hindi_boolq_tasks = [
     LightevalTaskConfig(
-        name=f"community_boolqa_{language.value}",
+        name=f"community_boolq_{language.value}",
         prompt_function=get_boolq_prompt_function(
             language,
             lambda line: {
@@ -3450,7 +3450,7 @@ hindi_boolqa_tasks = [
 TASKS_TABLE.extend(
     [
         *acva_tasks,
-        *french_boolqa_tasks,
-        *hindi_boolqa_tasks,
+        *french_boolq_tasks,
+        *hindi_boolq_tasks,
     ]
 )
