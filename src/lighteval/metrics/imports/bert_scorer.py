@@ -383,7 +383,6 @@ class BERTScorer:
 
         self._baseline_vals = None
         self.baseline_path = baseline_path
-        self.use_custom_baseline = self.baseline_path is not None
         if self.baseline_path is None:
             self.baseline_path = os.path.join(
                 os.path.dirname(__file__),

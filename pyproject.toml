@@ -30,7 +30,7 @@ where = ["src"]
 
 [project]
 name = "lighteval"
-version = "0.5.0.dev0"
+version = "0.6.0.dev0"
 authors = [
   { name="Clémentine Fourrier", email="clementine@huggingface.com" },
   { name="Nathan Habib", email="nathan.habib@huggingface.com" },
@@ -91,7 +91,7 @@ tensorboardX = ["tensorboardX"]
 vllm = ["vllm", "ray", "more_itertools"]
 quality = ["ruff==v0.2.2","pre-commit"]
 tests = ["pytest==7.4.0"]
-dev = ["lighteval[accelerate,quality,tests]"]
+dev = ["lighteval[accelerate,quality,tests,multilingual]"]
 extended_tasks = [
   "langdetect", # ifeval
   "openai", # llm as a judge using openai models
