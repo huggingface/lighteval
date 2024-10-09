@@ -194,7 +194,7 @@ class LightevalModel(ABC):
         context_enc_len = len(context_enc)
         # In case continuation tokens merge with context tokens we use the merged token as continuation
         if len(context_enc) == len(whole_enc):
-            context_enc_len = len(context) - 1
+            context_enc_len = len(context_enc) - 1
             context_enc = whole_enc[:context_enc_len]
 
         continuation_enc = whole_enc[context_enc_len:]

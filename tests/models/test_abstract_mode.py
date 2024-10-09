@@ -34,6 +34,7 @@ def test_tok_encode_pair():
     continuation = "1"
     non_pairwise_tokens = model.tok_encode_pair(context, continuation, pairwise=False)
     pairwise_tokens = model.tok_encode_pair(context, continuation, pairwise=True)
-    # Problematic case where the completion tokens are empty despite the chars are non-empty
-    assert non_pairwise_tokens == ([6, 47873, 13], [])
+    # Non-pairwise merged "：1" to one token
+    assert non_pairwise_tokens == ([6, 47873], [34871])
+    # Pairwise separated "：" and "1"
     assert pairwise_tokens == ([6, 47873, 13], [82])
