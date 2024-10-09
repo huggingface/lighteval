@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
 
 import numpy as np
 from aenum import Enum
@@ -40,15 +39,14 @@ from lighteval.metrics.metrics_sample import (
     ROUGE,
     BertScore,
     ExactMatches,
+    Extractiveness,
     F1_score,
-    JudgeLLM,
+    Faithfulness,
     LoglikelihoodAcc,
     MajAtK,
     Recall,
     StringDistance,
     acc_golds_likelihood,
-    extractiveness,
-    faithfulness,
 )
 from lighteval.metrics.normalizations import (
     LogProbCharNorm,
@@ -61,7 +59,7 @@ from lighteval.metrics.normalizations import (
     remove_braces_and_strip,
 )
 from lighteval.metrics.sample_preparator import GenerativePreparator, LoglikelihoodPreparator, PerplexityPreparator
-from lighteval.metrics.utils import (
+from lighteval.metrics.utils.metric_utils import (
     CorpusLevelMetric,
     CorpusLevelMetricGrouping,
     Metric,
@@ -175,7 +173,9 @@ class Metrics(Enum):
     )
     extractiveness = SampleLevelMetricGrouping(
         metric_name=["summarization_coverage", "summarization_density", "summarization_compression"],
-        sample_level_fn=extractiveness,
+        sample_level_fn=Extractiveness(
+            normalize_input=remove_braces, normalize_pred=remove_braces_and_strip, input_column="text"
+        ).compute,
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.SUMMARIZATION,
         corpus_level_fn={
@@ -223,69 +223,13 @@ class Metrics(Enum):
     )
     faithfulness = SampleLevelMetric(
         metric_name="summac",
-        sample_level_fn=faithfulness,
+        sample_level_fn=Faithfulness(
+            normalize_input=remove_braces, normalize_pred=remove_braces_and_strip, input_column="text"
+        ).compute,
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.SUMMARIZATION,
         corpus_level_fn=np.mean,
         higher_is_better=True,
-    )
-    llm_judge_multi_turn_gpt3p5 = SampleLevelMetricGrouping(
-        metric_name=["single_turn", "multi_turn"],
-        higher_is_better={"single_turn": True, "multi_turn": True},
-        category=MetricCategory.LLM_AS_JUDGE_MULTI_TURN,
-        use_case=MetricUseCase.SUMMARIZATION,
-        sample_level_fn=JudgeLLM(
-            judge_model_name="gpt-3.5-turbo",
-            template_path=os.path.join(os.path.dirname(__file__), "judge_prompts.jsonl"),
-            multi_turn=True,
-        ).compute,
-        corpus_level_fn={
-            "single_turn": np.mean,
-            "multi_turn": np.mean,
-        },
-    )
-    llm_judge_multi_turn_llama_3_405b = SampleLevelMetricGrouping(
-        metric_name=["single_turn", "multi_turn"],
-        higher_is_better={"single_turn": True, "multi_turn": True},
-        category=MetricCategory.LLM_AS_JUDGE_MULTI_TURN,
-        use_case=MetricUseCase.SUMMARIZATION,
-        sample_level_fn=JudgeLLM(
-            judge_model_name="meta-llama/Meta-Llama-3.1-405B-Instruct-FP8",
-            template_path=os.path.join(os.path.dirname(__file__), "judge_prompts.jsonl"),
-            multi_turn=True,
-        ).compute,
-        corpus_level_fn={
-            "single_turn": np.mean,
-            "multi_turn": np.mean,
-        },
-    )
-    llm_judge_gpt3p5 = SampleLevelMetricGrouping(
-        metric_name=["judge_score"],
-        higher_is_better={"judge_score": True},
-        category=MetricCategory.LLM_AS_JUDGE,
-        use_case=MetricUseCase.SUMMARIZATION,
-        sample_level_fn=JudgeLLM(
-            judge_model_name="gpt-3.5-turbo",
-            template_path=os.path.join(os.path.dirname(__file__), "judge_prompts.jsonl"),
-            multi_turn=False,
-        ).compute,
-        corpus_level_fn={
-            "judge_score": np.mean,
-        },
-    )
-    llm_judge_llama_3_405b = SampleLevelMetricGrouping(
-        metric_name=["judge_score"],
-        higher_is_better={"judge_score": True},
-        category=MetricCategory.LLM_AS_JUDGE,
-        use_case=MetricUseCase.SUMMARIZATION,
-        sample_level_fn=JudgeLLM(
-            judge_model_name="meta-llama/Meta-Llama-3.1-405B-Instruct-FP8",
-            template_path=os.path.join(os.path.dirname(__file__), "judge_prompts.jsonl"),
-            multi_turn=False,
-        ).compute,
-        corpus_level_fn={
-            "judge_score": np.mean,
-        },
     )
     loglikelihood_acc = SampleLevelMetric(
         metric_name="acc",
