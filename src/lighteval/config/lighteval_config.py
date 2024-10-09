@@ -58,9 +58,8 @@ class LightEvalLoggingArgs:
 
     output_dir: str
     save_details: bool = True
-    push_results_to_hub: bool = False
-    push_details_to_hub: bool = False
-    push_results_to_tensorboard: bool = False
+    push_to_hub: bool = False
+    push_to_tensorboard: bool = False
     public_run: bool = False
     results_org: str | None = None
     tensorboard_metric_prefix: str = "eval"
@@ -77,6 +76,7 @@ class LightEvalTasksArgs:
 
     dataset_loading_processes: int = 8
     multichoice_continuations_start_space: Optional[bool] = None
+    pair_wise_tokenization: bool = False
 
 
 @dataclass
