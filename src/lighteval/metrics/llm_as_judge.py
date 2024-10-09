@@ -21,16 +21,19 @@
 # SOFTWARE.
 
 
-import ast
-import json
-import re
+import logging
 import time
-from typing import Any, Optional
+from concurrent.futures import ThreadPoolExecutor
+from typing import Callable, Literal
 
-import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+from tqdm import tqdm
 
 from lighteval.logging.hierarchical_logger import hlog_warn
+from lighteval.utils.imports import is_openai_available, is_vllm_available
+
+
+logging.getLogger("openai").setLevel(logging.ERROR)
+logging.getLogger("httpx").setLevel(logging.ERROR)
 
 
 class JudgeLM:
@@ -38,210 +41,162 @@ class JudgeLM:
     A class representing a judge for evaluating answers using either the OpeanAI or Transformers library.
 
     Args:
-        model (str): The name of the model to use.
-        templates_path (str): The path to the JSON file containing the templates for prompts.
-        multi_turn (bool): Whether to use multi-turn prompts
-        url (Optional[str]): The URL for the OpenAI API.
-        api_key (Optional[str]): The API key for the OpenAI API (either OpenAI or HF key).
+        model (str): The name of the model.
+        templates (Callable): A function taking into account the question, options, answer, and gold and returning the judge prompt.
+        process_judge_response (Callable): A function for processing the judge's response.
+        judge_backend (Literal["openai", "transformers", "tgi", "vllm"]): The backend for the judge.
+        url (str | None): The URL for the OpenAI API.
+        api_key (str | None): The API key for the OpenAI API (either OpenAI or HF key).
 
     Attributes:
         model (str): The name of the model.
-        templates (dict): A dictionary containing the templates for prompts.
-        one_score_pattern (re.Pattern): A regular expression pattern for extracting scores from the response.
-        one_score_pattern_backup (re.Pattern): A backup regular expression pattern for extracting scores.
+        template (Callable): A function taking into account the question, options, answer, and gold and returning the judge prompt.
         API_MAX_RETRY (int): The maximum number of retries for the API.
-        API_RETRY_SLEEP (int): The sleep time between retries.
-        client (Optional[OpenAI]): The OpenAI client.
-        pipe (Optional[pipeline]): The Transformers pipeline.
-        use_transformers (bool): Whether to use the Transformers library.
-        url (Optional[str]): The URL for the OpenAI API.
-        api_key (Optional[str]): The API key for the OpenAI API (either OpenAI or HF key).
+        API_RETRY_SLEEP (int): The time to sleep between retries.
+        client (OpenAI | None): The OpenAI client.
+        pipe (LLM | AutoModel | None): The Transformers or vllm pipeline.
+        process_judge_response (Callable): A function for processing the judge's response.
+        url (str | None): The URL for the OpenAI API.
+        api_key (str | None): The API key for the OpenAI API (either OpenAI or HF key).
+        backend (Literal["openai", "transformers", "tgi", "vllm"]): The backend for the judge
 
     Methods:
         evaluate_answer: Evaluates an answer using the OpenAI API or Transformers library.
-        __get_prompts_multi_turn: Generates prompts for multi-turn conversations.
-        __get_prompts_single_turn: Generates prompts for single-turn conversations.
-        __process_judge_response: Processes the judge's response and extracts the score.
-        __call_api: Calls the API to get the judge's response.
         __lazy_load_client: Lazy loads the OpenAI client or Transformers pipeline.
+        __call_api: Calls the API to get the judge's response.
+        __call_transformers: Calls the Transformers pipeline to get the judge's response.
+        __call_vllm: Calls the VLLM pipeline to get the judge's response.
     """
 
     def __init__(
         self,
         model: str,
-        templates_path: str,
-        multi_turn: bool = False,
-        url: Optional[str] = None,
-        api_key: Optional[str] = None,
+        templates: Callable,
+        process_judge_response: Callable,
+        judge_backend: Literal["openai", "transformers", "tgi", "vllm"],
+        url: str | None = None,
+        api_key: str | None = None,
     ):
-        self.multi_turn = multi_turn
         self.model = model
+        self.template = templates
 
-        data = []
-        with open(templates_path, "r") as f:
-            for line in f:
-                tmp = json.loads(line)
-                data.append(tmp)
-
-        self.templates = {d["name"]: d for d in data}
-
-        # Patterns for extracting scores from the response
-        # The first pattern is for the default case: [[score]],
-        # the second is for the backup case: [score]
-        self.one_score_pattern = re.compile(r"\[\[(\d+\.?\d*)\]\]")
-        self.one_score_pattern_backup = re.compile(r"\[(\d+\.?\d*)\]")
         self.API_MAX_RETRY = 3
         self.API_RETRY_SLEEP = 1
 
         self.client = None
         self.pipe = None
-
-        self.use_transformers = url is None and api_key is None
+        self.process_judge_response = process_judge_response
 
         self.url = url
         self.api_key = api_key
+        self.backend = judge_backend
 
     def __lazy_load_client(self):
-        if self.use_transformers:
-            if self.pipe is None:
-                transformers_model = AutoModelForCausalLM.from_pretrained(
-                    self.model, torch_dtype=torch.bfloat16, trust_remote_code=False, device_map="cuda"
-                )
-                tokenizer = AutoTokenizer.from_pretrained(self.model)
-                self.pipe = pipeline(
-                    "text-generation",
-                    model=transformers_model,
-                    tokenizer=tokenizer,
-                    max_new_tokens=50,
-                )
-        else:
-            if self.client is None:
-                from openai import OpenAI
+        match self.backend:
+            # Wether we use openai or TGI models, we go trhough the openai API
+            # to route to the endpoint
+            case "openai" | "tgi" if is_openai_available():
+                if self.client is None:
+                    from openai import OpenAI
 
-                if self.url is None:
-                    self.client = OpenAI(api_key=self.api_key)
-                else:
-                    self.client = OpenAI(base_url=self.url, api_key=self.api_key)
+                    if self.url is None:
+                        self.client = OpenAI(api_key=self.api_key)
+                    else:
+                        self.client = OpenAI(base_url=self.url, api_key=self.api_key)
+                return self.__call_api_parallel
+            case "vllm" if is_vllm_available():
+                if self.pipe is None:
+                    from vllm import LLM, SamplingParams
+                    from vllm.transformers_utils.tokenizer import get_tokenizer
 
-    def evaluate_answer(
-        self, questions: list[str], answers: list[str], references: list[str]
-    ) -> tuple[list[int], list[list[dict[str, str]]], list[str | None | Any]]:
+                    self.sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=512)
+                    self.tokenizer = get_tokenizer(self.model, tokenizer_mode="auto")
+                    self.pipe = LLM(model=self.model, max_model_len=2048, gpu_memory_utilization=0.5, dtype="float16")
+                return self.__call_vllm
+            case "transformers":
+                if self.pipe is None:
+                    import torch
+                    from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+
+                    transformers_model = AutoModelForCausalLM.from_pretrained(
+                        self.model, torch_dtype=torch.float16, trust_remote_code=False, device_map="cuda"
+                    )
+                    tokenizer = AutoTokenizer.from_pretrained(self.model)
+                    self.pipe = pipeline(
+                        "text-generation",
+                        model=transformers_model,
+                        tokenizer=tokenizer,
+                        max_new_tokens=256,
+                    )
+                return self.__call_transformers
+            case _:
+                return lambda x: x
+
+    def evaluate_answer_batch(
+        self,
+        questions: list[str],
+        answers: list[str],
+        options: list[list[str]] | list[None],
+        golds: list[str] | list[None],
+    ):
+        judge_function = self.__lazy_load_client()
+
+        # enumerate over questions answers options and golds to make the
+        prompts = [
+            self.template(question=q, answer=a, options=o, gold=g)
+            for q, a, o, g in zip(questions, answers, options, golds)
+        ]
+        responses = judge_function(prompts)
+        scores = [self.process_judge_response(response) for response in responses]
+
+        # clean up the vllm pipeline and free up memory
+        if self.pipe is not None and self.backend == "vllm":
+            del self.pipe
+            self.pipe = None
+
+        return scores, prompts, responses
+
+    def evaluate_answer(self, question: str, answer: str, options: list[str] | None = None, gold: str | None = None):
         """
         Evaluates an answer using either Transformers or OpenAI API.
 
         Args:
-            questions (list[str]): A list of questions (can be a list because of multi-turn conversations)
-            answers (list[str]): A list of answers, one for each question.
-            references (list[str]): A list of reference answers, one for each question (sometimes not available)
+            questions (list[str]): The prompt asked to the evaluated model
+            answers (list[str]): Answer given by the evaluated model
+            references (list[str]): A list of reference answers
 
         Returns:
             A tuple containing the score, prompts, and judgment.
         """
         # lazy loading of the pipeline
-        self.__lazy_load_client()
+        judge_function = self.__lazy_load_client()
+        prompt = self.template(question=question, options=options, answer=answer, gold=gold)
+        response = judge_function(prompt)
+        score = self.process_judge_response(response)
 
-        prompts = [
-            self.__get_prompts_single_turn(
-                questions[0], answers[0], references[0] if references and len(references) > 0 else None
-            )
-        ]
+        return score, prompt, response
 
-        if self.multi_turn:
-            prompts_multi_turn = self.__get_prompts_multi_turn(
-                questions, answers, references if len(references) > 1 else None
-            )
-            prompts.append(prompts_multi_turn)
+    def __call_transformers(self, prompt):
+        response = self.pipe(prompt)[0]["generated_text"]
+        response = response[-1]["content"]
+        return response
 
-        judgments = []
-        for prompt in prompts:
-            if self.client is not None:
-                response = self.__call_api(prompt)
-            else:
-                response = self.pipe(prompt)[0]["generated_text"]
-                response = response[-1]["content"]
-            judgments.append(response)
+    def __call_vllm(self, prompt):
+        tokenized = [self.tokenizer.apply_chat_template(p) for p in prompt]
+        output = self.pipe.generate(prompt_token_ids=tokenized, sampling_params=self.sampling_params, use_tqdm=True)
+        outputs = [output.outputs[0].text for output in output]
+        return outputs
 
-        scores = [self.__process_judge_response(judgment) for judgment in judgments]
+    def __call_api_parallel(self, prompts):
+        results = []
+        with ThreadPoolExecutor(100) as executor:
+            for entry in tqdm(executor.map(self.__call_api, prompts), total=len(prompts)):
+                results.append(entry)
 
-        return scores, prompts, judgments
+        if None in results:
+            raise ValueError("Some entries are not annotated due to errors in annotate_p, please inspect and retry.")
 
-    def __get_prompts_multi_turn(
-        self, questions: list[str], answers: list[str], references: Optional[list[str]]
-    ) -> list[dict[str, str]]:
-        """
-        Generates prompts for multi-turn conversations. The prompts are generated based on the templates.
-        The prompt is different for the case where reference answers are available.
-
-        Args:
-            questions (list[str]): A list of questions.
-            answers (list[str]): A list of answers.
-            references (Optional[list[str]]): A list of reference answers.
-
-        Returns:
-            A list of prompts.
-        """
-        if references is None:
-            system_prompt = {"role": "system", "content": self.templates["single-v1-multi-turn"]["system_prompt"]}
-            user_prompt_str = self.templates["single-v1-multi-turn"]["prompt_template"].format(
-                question_1=questions[0], answer_1=answers[0], question_2=questions[1], answer_2=answers[1]
-            )
-        else:
-            system_prompt = {"role": "system", "content": self.templates["single-math-v1-multi-turn"]["system_prompt"]}
-            user_prompt_str = self.templates["single-math-v1-multi-turn"]["prompt_template"].format(
-                question_1=questions[0],
-                answer_1=answers[0],
-                ref_answer_1=references[0],
-                question_2=questions[1],
-                answer_2=answers[1],
-                ref_answer_2=references[1],
-            )
-        user_prompt = {"role": "user", "content": user_prompt_str}
-        return [system_prompt, user_prompt]
-
-    def __get_prompts_single_turn(self, question: str, answer: str, reference: Optional[str]) -> list[dict[str, str]]:
-        """
-        Generates prompts for single-turn conversations. The prompts are generated based on the templates.
-        The prompt is different for the case where a reference answer is available.
-
-        Args:
-            question (str): The question.
-            answer (str): The answer.
-            reference (Optional[str]): The reference answer.
-
-        Returns:
-            A list of prompts.
-        """
-        if reference is None:
-            system_prompt = {"role": "system", "content": self.templates["single-v1"]["system_prompt"]}
-            user_prompt_str = self.templates["single-v1"]["prompt_template"].format(question=question, answer=answer)
-        else:
-            system_prompt = {"role": "system", "content": self.templates["single-math-v1"]["system_prompt"]}
-            user_prompt_str = self.templates["single-math-v1"]["prompt_template"].format(
-                question=question, answer=answer, ref_answer_1=reference
-            )
-        user_prompt = {"role": "user", "content": user_prompt_str}
-        return [system_prompt, user_prompt]
-
-    def __process_judge_response(self, judgment: str) -> int:
-        """
-        Processes the judge's response and extracts the score.
-        Returns -1 if the score cannot be extracted.
-
-        Args:
-            judgment (str): The judge's response.
-
-        Returns:
-            The extracted score.
-        """
-        match = re.search(self.one_score_pattern, judgment)
-        if not match:
-            match = re.search(self.one_score_pattern_backup, judgment)
-        if match:
-            rating = ast.literal_eval(match.groups()[0])
-        else:
-            rating = -1
-
-        return rating
+        return results
 
     def __call_api(self, prompt):
         for _ in range(self.API_MAX_RETRY):
@@ -249,10 +204,12 @@ class JudgeLM:
                 response = self.client.chat.completions.create(
                     model=self.model,
                     messages=prompt,
+                    response_format={"type": "text"},
                     max_tokens=512,
                     n=1,
                 )
-                return response.choices[0].message.content
+                text = response.choices[0].message.content
+                return text
             except Exception as e:
                 hlog_warn(f"{type(e), e}")
                 time.sleep(self.API_RETRY_SLEEP)

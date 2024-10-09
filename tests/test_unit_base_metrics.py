@@ -25,12 +25,15 @@ import pytest
 
 from lighteval.metrics.dynamic_metrics import (
     loglikelihood_acc_metric,
+    multilingual_quasi_exact_match_metric,
+    multilingual_quasi_f1_score_metric,
     normalized_multi_choice_prob_metric,
     probability_metric,
 )
 from lighteval.metrics.metrics_sample import ExactMatches
 from lighteval.metrics.normalizations import LogProbCharNorm, helm_normalizer
 from lighteval.tasks.requests import Doc
+from lighteval.utils.language import Language
 
 
 class TestBaseMetrics:
@@ -271,6 +274,47 @@ class TestBaseMetrics:
             formatted_doc=Doc(choices=["A", "B", "C", "D"], gold_index=[1, 3], query=""),
         )
         assert result_incorrect == 0
+
+    def test_f1_dynamic_metric(self):
+        """
+        Tests that normalization works correctly. We don't test the behavior of the F1_score class as it should be already tested.
+        """
+
+        # Normalization test
+        f1_metric = multilingual_quasi_f1_score_metric(language=Language.ENGLISH)
+        result = f1_metric.sample_level_fn(
+            golds=["hello world"],
+            predictions=["hello, the world"],
+        )
+        assert result == 1
+
+        f1_metric = multilingual_quasi_f1_score_metric(language=Language.ENGLISH, aggregation_function=np.min)
+        result = f1_metric.sample_level_fn(
+            golds=["hello world"],
+            predictions=["hello, the world how"],
+        )
+        # 2 * (precision * recall) / (precision + recall) = 2 * (1 * 2/3) / (1 + 2/3) = 0.8
+        assert result == 0.8
+
+    def test_exact_match_dynamic_metric(self):
+        """
+        Tests that normalization works correctly. We don't test the behavior of the ExactMatch class as it should be already tested.
+        """
+
+        # Normalization test
+        em_metric = multilingual_quasi_exact_match_metric(language=Language.ENGLISH, match_type="full")
+        result = em_metric.sample_level_fn(
+            golds=["hello world"],
+            predictions=["hello, the world"],
+        )
+        assert result == 1
+
+        em_metric = multilingual_quasi_exact_match_metric(language=Language.ENGLISH, match_type="full")
+        result = em_metric.sample_level_fn(
+            golds=["hello world"],
+            predictions=["hello, the world how"],
+        )
+        assert result == 0
 
     @pytest.mark.skip(reason="Need to understand what it does.")
     def test_pass_at_k_estimator(self):

@@ -22,7 +22,13 @@
 
 import re
 import string
+import sys
+import unicodedata
 from dataclasses import dataclass
+from typing import Callable
+
+from lighteval.metrics.utils.linguistic_tokenizers import get_word_tokenizer
+from lighteval.utils.language import Language
 
 
 # From HELM
@@ -98,17 +104,20 @@ def math_normalizer(text: str) -> str:  # noqa C901
         """
         if text is None:
             return ""
-        if "\\boxed " in text:
-            left = "\\boxed "
+        try:
+            if "\\boxed " in text:
+                left = "\\boxed "
+                assert text[: len(left)] == left
+                return text[len(left) :]
+
+            left = "\\boxed{"
+
             assert text[: len(left)] == left
-            return text[len(left) :]
+            assert text[-1] == "}"
 
-        left = "\\boxed{"
-
-        assert text[: len(left)] == left
-        assert text[-1] == "}"
-
-        return text[len(left) : -1]
+            return text[len(left) : -1]
+        except Exception:
+            return ""
 
     def _last_boxed_only_string(text: str) -> str | None:
         """Extract the last \\boxed{...} or \\fbox{...} element from a string."""
@@ -350,6 +359,61 @@ def gsm8k_normalizer(text: str) -> str:
         return match_str
     else:
         return INVALID_ANS
+
+
+PUNCT = {chr(i) for i in range(sys.maxunicode) if unicodedata.category(chr(i)).startswith("P")}.union(
+    string.punctuation
+)
+
+_ARTICLE_PATTERNS = {
+    Language.ENGLISH: r"\b(a|an|the)\b",
+    Language.SPANISH: r"\b(el|la|los|las|un|una|unos|unas)\b",
+    Language.PORTUGUESE: r"\b(o|a|os|as|um|uma|uns|umas)\b",
+    Language.ITALIAN: r"\b(il|lo|la|i|gli|le|un|uno|una)\b",
+    Language.FRENCH: r"\b(le|la|les|l'|un|une|des)\b",
+    Language.GERMAN: r"\b(der|die|das|den|dem|des|ein|eine|einer|eines|einem|einen)\b",
+    Language.FINNISH: r"\b(se|yksi|yks)\b",
+    Language.GREEK: r"\b(ὁ|οἱ|τοῦ|τῶν|τόν|τούς|ὦ|ἡ|αἱ|τῆς|τῶν|τήν|τάς|τό|τά|τοῦ|τῶν|τό|τά)\b",
+    Language.NORWEGIAN: r"\b(en|ei|et|den|det|de)\b",
+    Language.SWEDISH: r"\b(en|ett|den|det|de)\b",
+    Language.TURKISH: r"\b(bir)\b",
+    Language.DUTCH: r"\b(de|het|een)\b",
+    Language.HUNGARIAN: r"\b(a|az|egy)\b",
+    Language.CATALAN: r"\b(el|la|els|les|un|una|uns|unes)\b",
+    Language.HEBREW: r"\b(ה)\b",
+    Language.GALICIAN: r"\b(o|a|os|as|un|unha|uns|unhas)\b",
+}
+
+
+def remove_articles(text: str, lang: Language) -> str:
+    """
+    Removes definite and indefinite articles from the text.
+    Generated using LLM then manually checked by non-expert.
+    We currently only support languages that don't blend articles.
+    If you are a native speaker of a language where articles are blended,
+    we would appreciate your contribution!
+    """
+    pattern = _ARTICLE_PATTERNS.get(lang)
+    return re.sub(pattern, " ", text) if pattern else text
+
+
+def remove_punc(text: str) -> str:
+    return "".join(ch for ch in text if ch not in PUNCT)
+
+
+def get_multilingual_normalizer(lang: Language, lower: bool = True) -> Callable[[str], str]:
+    tokenizer = get_word_tokenizer(lang)
+
+    def _inner_normalizer(text: str) -> str:
+        text = remove_articles(text, lang)
+        text = remove_punc(text)
+        if lower:
+            text = text.lower()
+
+        tokens = tokenizer.word_tokenize(text)
+        return " ".join(tokens)
+
+    return _inner_normalizer
 
 
 # Loglikelihood normalization

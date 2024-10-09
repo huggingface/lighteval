@@ -69,6 +69,10 @@ def main(
     evaluation_tracker = EvaluationTracker(
         output_dir=lighteval_config.logging.output_dir,
         hub_results_org=lighteval_config.logging.results_org,
+        public=lighteval_config.logging.public_run,
+        push_to_hub=lighteval_config.logging.push_to_hub,
+        push_to_tensorboard=lighteval_config.logging.push_to_tensorboard,
+        save_details=lighteval_config.logging.save_details,
         tensorboard_metric_prefix=lighteval_config.logging.tensorboard_metric_prefix,
         nanotron_run_info=nanotron_config.nanotron_config.general,
     )
