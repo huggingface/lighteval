@@ -45,6 +45,7 @@ from lighteval.tasks.multilingual.adapters import (
     xcodah_adapter,
 )
 from lighteval.tasks.multilingual.utils.task_utils import normalize_subset
+from lighteval.tasks.templates.boolq import get_boolq_prompt_function
 from lighteval.tasks.templates.continuation import get_continuation_prompt_function
 from lighteval.tasks.templates.copa import get_copa_prompt_function
 from lighteval.tasks.templates.hellaswag import get_hellaswag_prompt_function
@@ -140,10 +141,13 @@ xnli2_tasks = [
             relations=["entailment", "contradiction"],
             formulation=formulation,
         ),
-        hf_filter=lambda line: line["label"] in [0, 2],
+        hf_filter=lambda line: line["label"] in [0, 2]
+        and line["premise"] is not None
+        and line["hypothesis"] is not None,
         hf_repo=f"Harsit/xnli2.0_train_{LangCodeLanguage(standardize_tag(language.value)).language_name().lower()}",
         hf_subset="default",
         evaluation_splits=["train"],
+        hf_avail_splits=["train"],
     )
     for language in [
         Language.ENGLISH,
@@ -198,8 +202,6 @@ xnli_indic_tasks = [
         hf_filter=lambda x: int(x["label"]) in [0, 2],
         evaluation_splits=["validation"],
         few_shots_split="train",
-        few_shots_select=None,
-        generation_size=-1,
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -285,7 +287,8 @@ rcb_tasks = [
         hf_subset="rcb",
         # Ignore neutral label
         hf_filter=lambda x: int(x["outputs"] or "0") in [1, 2],
-        evaluation_splits=("train", "validation"),
+        evaluation_splits=("train",),
+        few_shots_split="validation",
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -392,6 +395,7 @@ xcopa_tasks = [
         ],
     )
     for language in [
+        Language.ARABIC,
         Language.ESTONIAN,
         Language.INDONESIAN,
         Language.ITALIAN,
@@ -430,6 +434,7 @@ copa_indic_tasks = [
         # script. We thus lock the revision to ensure that the script doesn't change
         hf_revision="d356ef19a4eb287e88a51d07a56b73ba88c7f188",
         evaluation_splits=["test"],
+        hf_avail_splits=["test"],
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -519,6 +524,7 @@ mlmm_hellaswag_tasks = [
         # script. We thus lock the revision to ensure that the script doesn't change
         hf_revision="96ed8e0dfc6172dad1d3df338d7b8ba6c1ff9d83",
         evaluation_splits=["validation"],
+        hf_avail_splits=["validation"],
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -589,6 +595,7 @@ hellaswag_tur_tasks = [
         hf_repo="malhajar/hellaswag_tr-v0.2",
         hf_subset="default",
         evaluation_splits=["validation"],
+        hf_avail_splits=["validation"],
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -645,7 +652,7 @@ hellaswag_hin_tasks = [
         hf_filter=lambda line: all(len(choice.strip()) > 0 for choice in line["endings"]),
         hf_subset="hi",
         evaluation_splits=("validation",),
-        few_shots_split="train",
+        few_shots_split="validation",
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
         ],
@@ -778,7 +785,8 @@ arcd_tasks = [
         suite=("lighteval",),
         hf_repo="hsseinmz/arcd",
         hf_subset="plain_text",
-        evaluation_splits=("train", "validation"),
+        evaluation_splits=("validation",),
+        few_shots_split="train",
         metric=(
             multilingual_quasi_exact_match_metric(Language.ARABIC, "prefix"),
             multilingual_quasi_f1_score_metric(Language.ARABIC),
@@ -885,13 +893,13 @@ indicqa_tasks = [
         suite=("lighteval",),
         hf_repo="ai4bharat/IndicQA",
         hf_subset=f"indicqa.{LangCodeLanguage.get(language.value).language}",
+        hf_filter=lambda line: any(len(ans) > 0 for ans in line["answers"]["text"]),
         # Since we use trust_dataset, we have to be careful about what is inside the dataset
         # script. We thus lock the revision to ensure that the script doesn't change
         hf_revision="92d96092ae229950973dac3b9998f8b3a8949b0a",
-        hf_filter=lambda line: any(len(ans) > 0 for ans in line["answers"]["text"]),
         trust_dataset=True,
         evaluation_splits=("test",),
-        few_shots_split="test",
+        hf_avail_splits=("test",),
         generation_size=400,
         metric=(
             multilingual_quasi_exact_match_metric(language, "prefix"),
@@ -1116,7 +1124,7 @@ mlqa_tasks = [
         hf_revision="397ed406c1a7902140303e7faf60fff35b58d285",
         trust_dataset=True,
         evaluation_splits=("test",),
-        few_shots_split="train",
+        hf_avail_splits=["test"],
         generation_size=400,
         stop_sequence=("\n",),
         metric=[
@@ -1128,6 +1136,7 @@ mlqa_tasks = [
         Language.ARABIC,
         Language.GERMAN,
         Language.SPANISH,
+        Language.CHINESE,
         Language.HINDI,
         Language.VIETNAMESE,
     ]
@@ -1152,6 +1161,7 @@ belebele_tasks = [
         hf_repo="facebook/belebele",
         hf_subset=language,
         evaluation_splits=("test",),
+        hf_avail_splits=["test"],
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -1398,6 +1408,7 @@ meta_mmlu_tasks = [
             subset,
         ),
         evaluation_splits=("latest",),
+        hf_avail_splits=["latest"],
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -1499,8 +1510,11 @@ openai_mmlu_tasks = [
         ),
         suite=("lighteval",),
         hf_repo="openai/MMMLU",
-        hf_subset="by_language",
-        evaluation_splits=(language[1],),
+        hf_subset=language[1],
+        evaluation_splits=("test",),
+        hf_avail_splits=["test"],
+        hf_filter=partial(lambda subset, x: x["Subject"].lower() == subset, subset),
+        hf_revision="038c7808122969ead7456361af05cb8f47d247f8",
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -1550,6 +1564,7 @@ rummlu = [
         hf_subset="rummlu",
         hf_filter=lambda x: x["meta"]["domain"] == subset,
         evaluation_splits=("public_test",),
+        hf_avail_splits=["public_test"],
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -1701,46 +1716,46 @@ cmmlu_tasks = [
 # Native translation with some new categories
 # Paper: https://arxiv.org/html/2402.12840v1
 ARABIC_MMLU_SUBSETS = [
-    "Driving Test",
-    "High Geography",
-    "High History",
     "Islamic Studies",
-    "Univ Accounting",
-    "Primary General Knowledge",
-    "Univ Political Science",
-    "Primary Math",
-    "Middle General Knowledge",
-    "High Biology",
-    "Primary Natural Science",
-    "High Economics",
-    "Middle Natural Science",
-    "Middle Geography",
-    "Primary Social Science",
-    "Middle Computer Science",
-    "Middle Islamic Studies",
-    "Primary Computer Science",
-    "High Physics",
-    "Middle Social Science",
-    "Middle Civics",
-    "High Computer Science",
+    "Islamic Studies (Middle School)",
+    "Islamic Studies (Primary School)",
+    "Islamic Studies (High School)",
+    "Driving Test",
+    "Natural Science (Middle School)",
+    "Natural Science (Primary School)",
+    "History (Middle School)",
+    "History (Primary School)",
+    "History (High School)",
     "General Knowledge",
-    "High Civics",
-    "Prof Law",
-    "High Islamic Studies",
-    "Primary Arabic Language",
-    "High Arabic Language",
-    "Arabic Language (Grammar)",
-    "Primary History",
-    "Middle History",
-    "Univ Economics",
+    "General Knowledge (Middle School)",
+    "General Knowledge (Primary School)",
+    "Law (Professional)",
+    "Physics (High School)",
+    "Social Science (Middle School)",
+    "Social Science (Primary School)",
+    "Management (University)",
+    "Arabic Language (Middle School)",
+    "Arabic Language (Primary School)",
+    "Arabic Language (High School)",
+    "Political Science (University)",
+    "Philosophy (High School)",
+    "Accounting (University)",
+    "Computer Science (Middle School)",
+    "Computer Science (Primary School)",
+    "Computer Science (High School)",
+    "Computer Science (University)",
+    "Geography (Middle School)",
+    "Geography (Primary School)",
+    "Geography (High School)",
+    "Math (Primary School)",
+    "Biology (High School)",
+    "Economics (Middle School)",
+    "Economics (High School)",
+    "Economics (University)",
     "Arabic Language (General)",
-    "Univ Computer Science",
-    "Primary Islamic Studies",
-    "Primary Geography",
-    "High Philosophy",
-    "Middle Arabic Language",
-    "Middle Economics",
-    "Univ Management",
+    "Arabic Language (Grammar)",
+    "Civics (Middle School)",
+    "Civics (High School)",
 ]
 
 arabic_mmlu_tasks = [
@@ -1751,15 +1766,16 @@ arabic_mmlu_tasks = [
             lambda line: {
                 "context": line["Context"],
                 "question": line["Question"],
-                "choices": [o for o in [line[f"Option {i}"] for i in range(1, 6)] if o],
+                "choices": [str(o) for o in [line[f"Option {i}"] for i in range(1, 6)] if o],
                 "gold_idx": LETTER_INDICES.index(line["Answer Key"]),
             },
             formulation=formulation,
         ),
         suite=("lighteval",),
-        hf_repo="yazeed7/ArabicMMLU",
+        hf_repo="MBZUAI/ArabicMMLU",
         hf_subset=subset,
         evaluation_splits=("test",),
+        hf_avail_splits=["dev"],
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -1979,7 +1995,7 @@ lumi_arc = [
 
 # Turkish ARC
 # Comes from the Turkish leaderboard
-turkish_arc = [
+turkish_arc_tasks = [
     LightevalTaskConfig(
         name=f"community_arc_{Language.TURKISH.value}_{formulation.name.lower()}:{subset}",
         prompt_function=get_mcq_prompt_function(
@@ -1997,6 +2013,7 @@ turkish_arc = [
         hf_repo="malhajar/arc-tr",
         hf_subset=f"ARC-{subset.capitalize()}",
         evaluation_splits=("test",),
+        hf_avail_splits=["train"],
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -2011,7 +2028,7 @@ turkish_arc = [
     ]
 ]
 
-hindi_arc = [
+hindi_arc_tasks = [
     LightevalTaskConfig(
         name=f"community_arc_{Language.HINDI.value}_{formulation.name.lower()}:{subset}",
         prompt_function=get_mcq_prompt_function(
@@ -2044,7 +2061,31 @@ hindi_arc = [
     ]
 ]
 
-swahili_arc = [
+arabic_arc_tasks = [
+    LightevalTaskConfig(
+        name=f"alghafa_arc_{Language.ARABIC.value}_{formulation.name.lower()}:easy",
+        prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter, formulation=formulation),
+        suite=["lighteval"],
+        hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
+        hf_revision="08663706ee7cab30c4b7dc1bb00042a3227ce1ff",
+        hf_subset="arc_easy_ar",
+        evaluation_splits=["test"],
+        few_shots_split="validation",
+        few_shots_select="sequential",
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+        ],
+        trust_dataset=True,
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+swahili_arc_tasks = [
     LightevalTaskConfig(
         name=f"community_arc_{Language.SWAHILI.value}_{formulation.name.lower()}:{subset}",
         prompt_function=get_mcq_prompt_function(
@@ -2086,9 +2127,10 @@ TASKS_TABLE.extend(
         *mlmm_arc_challenge_tasks,
         *arabic_ledarboard_arc_easy,
         *lumi_arc,
-        *turkish_arc,
-        *hindi_arc,
-        *swahili_arc,
+        *turkish_arc_tasks,
+        *hindi_arc_tasks,
+        *swahili_arc_tasks,
+        *arabic_arc_tasks,
     ]
 )
 
@@ -2121,6 +2163,7 @@ mlmm_truthfulqa_tasks = [
         hf_revision="cdd5db1a66fd04105622109d1c2a5cbc8cde7586",
         trust_dataset=True,
         evaluation_splits=("validation",),
+        hf_avail_splits=["validation"],
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -2190,6 +2233,7 @@ turkish_truthfulqa = [
         hf_repo="malhajar/truthful_qa-tr-v0.2",
         hf_subset="default",
         evaluation_splits=("validation",),
+        hf_avail_splits=["validation"],
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -2466,7 +2510,7 @@ xcsqa_tasks = [
             len(x["question"]["choices"]["text"][i].strip()) > 0 for i in range(len(x["question"]["choices"]["text"]))
         ),
         evaluation_splits=("validation",),
-        few_shots_split="train",
+        hf_avail_splits=["validation"],
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -2589,6 +2633,7 @@ openbook_rus_tasks = [
         hf_repo="ai-forever/MERA",
         hf_subset="ruopenbookqa",
         evaluation_splits=("train",),
+        hf_avail_splits=["train"],
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -2672,6 +2717,7 @@ mathlogicqa_rus_tasks = [
         hf_repo="ai-forever/MERA",
         hf_subset="mathlogicqa",
         evaluation_splits=("train",),
+        hf_avail_splits=["train"],
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -2786,6 +2832,7 @@ agieval_tasks_zh = [
         hf_repo=f"hails/agieval-{subset}",
         hf_subset="default",
         evaluation_splits=("test",),
+        hf_avail_splits=["test"],
         few_shots_split=None,
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
@@ -2909,6 +2956,7 @@ worldtree_rus_tasks = [
         hf_repo="ai-forever/MERA",
         hf_subset="ruworldtree",
         evaluation_splits=("train",),
+        hf_avail_splits=["train"],
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -2939,6 +2987,7 @@ xcodah_tasks = [
         hf_repo="INK-USC/xcsr",
         hf_subset=f"X-CODAH-{standardize_tag(language.value)}",
         evaluation_splits=("validation",),
+        hf_avail_splits=["validation"],
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -2995,7 +3044,7 @@ xstory_tasks = [
         hf_repo="juletxara/xstory_cloze",
         hf_subset=standardize_tag(lang.value),
         evaluation_splits=["eval"],
-        few_shots_split="training",
+        few_shots_split="train",
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -3039,6 +3088,7 @@ xwinograd_tasks = [
         hf_repo="Muennighoff/xwinograd",
         hf_subset=standardize_tag(language.value),
         evaluation_splits=("test",),
+        hf_avail_splits=["test"],
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -3111,12 +3161,16 @@ mkqa_tasks = [
         hf_subset="mkqa",
         hf_revision="325131889721ae0ed885b76ecb8011369d75abad",
         hf_filter=partial(
-            lambda language, line: line["answers"][standardize_tag(language.value)][0]["type"]
+            lambda language, subset, line: line["answers"][
+                "zh_cn" if language == Language.CHINESE else standardize_tag(language.value)
+            ][0]["type"]
             == MKQA_TASK_TO_ID[subset],
             language,
+            subset,
         ),
         trust_dataset=True,
         evaluation_splits=("train",),
+        hf_avail_splits=["train"],
         stop_sequence=("\n",),
         metric=[
             multilingual_quasi_exact_match_metric(language, "prefix"),
@@ -3207,6 +3261,7 @@ french_triviqa_tasks = [
         hf_repo="manu/french-trivia",
         hf_subset="default",
         evaluation_splits=("train",),
+        hf_avail_splits=["train"],
         generation_size=400,
         stop_sequence=("\n",),
         metric=[
@@ -3231,6 +3286,7 @@ chegeka_tasks = [
         hf_repo="ai-forever/MERA",
         hf_subset="chegeka",
         evaluation_splits=("train",),
+        hf_avail_splits=["train"],
         generation_size=400,
         stop_sequence=("\n",),
         metric=[
@@ -3247,5 +3303,154 @@ TASKS_TABLE.extend(
         *chegeka_tasks,
         *mintaka_tasks,
         *french_triviqa_tasks,
+    ]
+)
+
+
+# ------------------------------- BoolQA Tasks (yes/no) ------------------------------- #
+ACVA_SUBSET = [
+    "Algeria",
+    "Ancient_Egypt",
+    "Arab_Empire",
+    "Arabic_Architecture",
+    "Arabic_Art",
+    "Arabic_Astronomy",
+    "Arabic_Calligraphy",
+    "Arabic_Ceremony",
+    "Arabic_Clothing",
+    "Arabic_Culture",
+    "Arabic_Food",
+    "Arabic_Funeral",
+    "Arabic_Geography",
+    "Arabic_History",
+    "Arabic_Language_Origin",
+    "Arabic_Literature",
+    "Arabic_Math",
+    "Arabic_Medicine",
+    "Arabic_Music",
+    "Arabic_Ornament",
+    "Arabic_Philosophy",
+    "Arabic_Physics_and_Chemistry",
+    "Arabic_Wedding",
+    "Bahrain",
+    "Comoros",
+    "Egypt_modern",
+    "InfluenceFromAncientEgypt",
+    "InfluenceFromByzantium",
+    "InfluenceFromChina",
+    "InfluenceFromGreece",
+    "InfluenceFromIslam",
+    "InfluenceFromPersia",
+    "InfluenceFromRome",
+    "Iraq",
+    "Islam_Education",
+    "Islam_branches_and_schools",
+    "Islamic_law_system",
+    "Jordan",
+    "Kuwait",
+    "Lebanon",
+    "Libya",
+    "Mauritania",
+    "Mesopotamia_civilization",
+    "Morocco",
+    "Oman",
+    "Palestine",
+    "Qatar",
+    "Saudi_Arabia",
+    "Somalia",
+    "Sudan",
+    "Syria",
+    "Tunisia",
+    "United_Arab_Emirates",
+    "Yemen",
+    "communication",
+    "computer_and_phone",
+    "daily_life",
+    "entertainment",
+]
+
+acva_tasks = [
+    LightevalTaskConfig(
+        name=f"acva_{Language.ARABIC.value}:{subset}",
+        prompt_function=get_boolq_prompt_function(
+            Language.ARABIC,
+            lambda line: {
+                "question": line["question"],
+                "answer": line["answer"] == "صح",
+            },
+            formulation=CFFormulation(),
+        ),
+        suite=("lighteval",),
+        hf_repo="OALL/ACVA",
+        hf_subset=subset,
+        evaluation_splits=("test",),
+        few_shots_split="validation",
+        metric=[multilingual_quasi_exact_match_metric(Language.ARABIC, "full"), loglikelihood_acc_metric()],
+        generation_size=5,
+        stop_sequence=("\n",),
+    )
+    for subset in ACVA_SUBSET
+]
+
+
+french_boolqa_tasks = [
+    LightevalTaskConfig(
+        name=f"community_boolqa_{Language.FRENCH.value}",
+        prompt_function=get_boolq_prompt_function(
+            Language.FRENCH,
+            lambda line: {
+                "question": line["question"],
+                "answer": line["label"] == 1,
+                "context": line["passage"],
+            },
+            formulation=CFFormulation(),
+        ),
+        suite=("lighteval",),
+        hf_repo="manu/french_boolq",
+        hf_subset="default",
+        evaluation_splits=("test",),
+        few_shots_split="valid",
+        generation_size=5,
+        stop_sequence=["\n"],
+        metric=[multilingual_quasi_exact_match_metric(Language.FRENCH, "full"), loglikelihood_acc_metric()],
+    )
+]
+
+hindi_boolqa_tasks = [
+    LightevalTaskConfig(
+        name=f"community_boolqa_{language.value}",
+        prompt_function=get_boolq_prompt_function(
+            language,
+            lambda line: {
+                "question": line["question"],
+                "answer": line["answer"],
+                "context": line["passage"],
+            },
+            formulation=CFFormulation(),
+        ),
+        suite=("lighteval",),
+        hf_repo="ai4bharat/boolq-hi",
+        hf_subset=standardize_tag(language.value),
+        evaluation_splits=("validation",),
+        few_shots_split="train",
+        generation_size=5,
+        stop_sequence=["\n"],
+        metric=[multilingual_quasi_exact_match_metric(language, "full"), loglikelihood_acc_metric()],
+    )
+    for language in [
+        Language.HINDI,
+        Language.GUJARATI,
+        Language.MALAYALAM,
+        Language.MARATHI,
+        Language.TAMIL,
+    ]
+]
+
+
+TASKS_TABLE.extend(
+    [
+        *acva_tasks,
+        *french_boolqa_tasks,
+        *hindi_boolqa_tasks,
     ]
 )

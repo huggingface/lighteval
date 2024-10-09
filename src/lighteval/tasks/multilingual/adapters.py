@@ -115,7 +115,7 @@ def ceval_adapter(lang: Language, formulation: Formulation, line: dict) -> MCQIn
 
     parts = line["question"].rsplit("____", maxsplit=1)
     cleaned_question = parts[0].rstrip(PUNCT).strip()
-    possible_answers_part = parts[1].lstrip(PUNCT)
+    possible_answers_part = parts[1].strip().lstrip(PUNCT)
     gold_index = LETTER_INDICES.index(line["answer"])
 
     # We only attempt to extract answers if the answers are a chinese numbers
@@ -243,7 +243,7 @@ def xcodah_adapter(lang: Language, line: dict) -> MCQInput | None:
 
 def winogrand_adapter(lang: Language, line: dict) -> ContinuationInput | None:
     translation_literals = TranslationLiterals(lang)
-    if "_".count(line["sentence"]) != 1:
+    if line["sentence"].count("_") != 1:
         return None
 
     query, end_of_target = line["sentence"].split("_")
@@ -259,8 +259,8 @@ def winogrand_adapter(lang: Language, line: dict) -> ContinuationInput | None:
 
 
 def get_mkqa_adapter(lang: Language, line: dict) -> QAInput | None:
-    lang_key = standardize_tag(lang.value)
-    text = line["answers"][standardize_tag(lang.value)][0]["text"]
+    lang_key = "zh_cn" if lang == Language.CHINESE else standardize_tag(lang.value)
+    text = line["answers"][lang_key][0]["text"]
     if text is None:
         return None
 
