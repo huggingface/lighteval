@@ -23,12 +23,12 @@
 import collections
 import importlib
 import os
-from functools import lru_cache
+from functools import lru_cache, partial
 from itertools import groupby
 from pathlib import Path
 from pprint import pformat
 from types import ModuleType
-from typing import Dict, List, Optional, Type, Union
+from typing import Callable, Dict, List, Optional, Union
 
 from datasets.load import dataset_module_factory
 
@@ -60,6 +60,9 @@ DEFAULT_SUITES = [
 TRUNCATE_FEW_SHOTS_DEFAULTS = True
 
 
+LazyLightevalTask = Callable[[], LightevalTask]
+
+
 class Registry:
     """
     The Registry class is used to manage the task registry and get task classes.
@@ -89,10 +92,10 @@ class Registry:
 
     def get_task_class(self, task_name: str):
         """
-        Get the task class based on the task name.
+        Get the task class based on the task name (suite|task).
 
         Args:
-            task_name (str): Name of the task.
+            task_name (str): Name of the task (suite|task).
         Returns:
             LightevalTask: Task class.
 
@@ -112,12 +115,12 @@ class Registry:
     def task_registry(self):
         """
         Returns:
-            dict[str, LightevalTask]: A dictionary mapping task names to their corresponding LightevalTask classes.
+            dict[str, LazyLightevalTask]: A dictionary mapping task names (suite|task) to their corresponding LightevalTask classes.
 
         Example:
-        {
-            "lighteval|arc_easy": LightevalTask(name="lighteval|arc_easy"...)
-        }
+            {
+                "lighteval|arc_easy": lambda: LightevalTask(name="lighteval|arc_easy", ...)
+            }
         """
 
         # Import custom tasks provided by the user
@@ -138,9 +141,9 @@ class Registry:
             hlog(f"Found {len(module.TASKS_TABLE)} custom tasks in {module.__file__}")
 
         if len(TASKS_TABLE) > 0:
-            custom_tasks_registry = create_config_tasks(meta_table=TASKS_TABLE, cache_dir=self._cache_dir)
+            custom_tasks_registry = create_lazy_tasks(meta_table=TASKS_TABLE, cache_dir=self._cache_dir)
 
-        default_tasks_registry = create_config_tasks(cache_dir=self._cache_dir)
+        default_tasks_registry = create_lazy_tasks(cache_dir=self._cache_dir)
         # Check the overlap between default_tasks_registry and custom_tasks_registry
         intersection = set(default_tasks_registry.keys()).intersection(set(custom_tasks_registry.keys()))
         if len(intersection) > 0:
@@ -156,7 +159,7 @@ class Registry:
     def _task_superset_dict(self):
         """
         Returns:
-            dict[str, list[str]]: A dictionary where keys are task group names and values are lists of task names.
+            dict[str, list[str]]: A dictionary where keys are task super set names (suite|task) and values are lists of task subset names (suite|task).
 
         Example:
             {
@@ -174,7 +177,7 @@ class Registry:
     def task_groups_dict(self) -> dict[str, list[str]]:
         """
         Returns:
-            dict[str, list[str]]: A dictionary where keys are task group names and values are lists of task names.
+            dict[str, list[str]]: A dictionary where keys are task group names and values are lists of task names (suite|task).
 
         Example:
             {
@@ -188,22 +191,21 @@ class Registry:
         tasks_group_dict = {}
         if hasattr(custom_tasks_module, "TASKS_GROUPS"):
             tasks_group_dict = custom_tasks_module.TASKS_GROUPS
-        return tasks_group_dict
+
+        # We should allow defining task groups as comma-separated strings or lists of tasks
+        return {k: v if isinstance(v, list) else v.split(",") for k, v in tasks_group_dict.items()}
 
     def get_task_dict(self, task_names: list[str]) -> dict[str, LightevalTask]:
         """
-        Get a dictionary of tasks based on the task name list.
+        Get a dictionary of tasks based on the task name list (suite|task).
 
         Args:
-            task_name_list (List[str]): A list of task names.
-            custom_tasks (Optional[Union[str, ModuleType]]): Path to the custom tasks file or name of a module to import containing custom tasks or the module itself
-            extended_tasks (Optional[str]): The path to the extended tasks group of submodules
+            task_name_list (List[str]): A list of task names (suite|task).
 
         Returns:
             Dict[str, LightevalTask]: A dictionary containing the tasks.
 
         Notes:
-            - If custom_tasks is provided, it will import the custom tasks module and create a custom tasks registry.
             - Each task in the task_name_list will be instantiated with the corresponding task class.
         """
         # Select relevant tasks given the subset asked for by the user
@@ -216,7 +218,7 @@ class Registry:
                 - suite|task
                 - suite|task_superset (e.g lighteval|mmlu, which runs all the mmlu subtasks)
         Returns:
-            list[str]: List of task names
+            list[str]: List of task names (suite|task)
         """
 
         # Try if it's a task superset
@@ -256,7 +258,7 @@ def create_custom_tasks_module(custom_tasks: Union[str, Path, ModuleType]) -> Mo
         dataset_module = dataset_module_factory(str(custom_tasks))
         return importlib.import_module(dataset_module.module_path)
     if isinstance(custom_tasks, (str, Path)):
-        return importlib.import_module(custom_tasks)
+        return importlib.import_module(str(custom_tasks))
     raise ValueError(f"Cannot import custom tasks from {custom_tasks}")
 
 
@@ -265,9 +267,15 @@ def taskinfo_selector(tasks: str, task_registry: Registry) -> tuple[list[str], d
     Converts a input string of tasks name to task information usable by lighteval.
 
     Args:
-        tasks (str): A string containing a comma-separated list of tasks in the
+        tasks (str): A string containing a comma-separated list of tasks definition in the
             format "suite|task|few_shot|truncate_few_shots" or a path to a file
             containing a list of tasks.
+            where task_definition can be:
+            - path to a file containing a list of tasks (one per line)
+            - task group defined in TASKS_GROUPS dict in custom tasks file
+            - task name with few shot in format "suite|task|few_shot|truncate_few_shots"
+            - task superset in format "suite|task_superset|few_shot|truncate_few_shots" (superset will run all tasks with format "suite|task_superset:{subset}|few_shot|truncate_few_shots")
+
 
     Returns:
         tuple[list[str], dict[str, list[tuple[int, bool]]]]: A tuple containing:
@@ -276,17 +284,22 @@ def taskinfo_selector(tasks: str, task_registry: Registry) -> tuple[list[str], d
     """
     few_shot_dict = collections.defaultdict(list)
 
-    # We can provide a path to a file with a list of tasks
+    # We can provide a path to a file with a list of tasks or a string of comma-separated tasks
     if "." in tasks and os.path.exists(tasks):
-        tasks = ",".join([line for line in open(tasks, "r").read().splitlines() if not line.startswith("#")])
+        with open(tasks, "r") as f:
+            tasks_list = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+    else:
+        tasks_list = tasks.split(",")
 
-    # First we unwrap all task groups in tasks (we have to do split after unwrapping as the groups can contain multiple tasks)
-    tasks_list = [
-        task
-        for maybe_task_group in tasks.split(",")
-        for task in task_registry.task_groups_dict.get(maybe_task_group, maybe_task_group).split(",")
-    ]
-    for task in tasks_list:
+    # At this point the strings are either task name/superset name or group names
+    # Here we deal with group names and map them to corresponding tasks
+    expanded_tasks_list: list[str] = []
+    for maybe_task_group in tasks_list:
+        # We either expand the group (in case it's a group name), or we keep it as is (in case it's a task name or superset name)
+        expanded_tasks = task_registry.task_groups_dict.get(maybe_task_group, [maybe_task_group])
+        expanded_tasks_list.extend(expanded_tasks)
+
+    for task in expanded_tasks_list:
         try:
             suite_name, task_name, few_shot, truncate_few_shots = tuple(task.split("|"))
             truncate_few_shots = int(truncate_few_shots)
@@ -312,9 +325,9 @@ def taskinfo_selector(tasks: str, task_registry: Registry) -> tuple[list[str], d
     return sorted(few_shot_dict.keys()), {k: list(set(v)) for k, v in few_shot_dict.items()}
 
 
-def create_config_tasks(
+def create_lazy_tasks(
     meta_table: Optional[List[LightevalTaskConfig]] = None, cache_dir: Optional[str] = None
-) -> Dict[str, Type[LightevalTask]]:
+) -> Dict[str, LazyLightevalTask]:
     """
     Create configuration tasks based on the provided meta_table.
 
@@ -327,13 +340,6 @@ def create_config_tasks(
     Returns:
         Dict[str, LightevalTask]: A dictionary of task names mapped to their corresponding LightevalTask classes.
     """
-
-    def create_task(name, cfg: LightevalTaskConfig, cache_dir: str | None):
-        class LightevalTaskFromConfig(LightevalTask):
-            def __init__(self):
-                super().__init__(name, cfg, cache_dir=cache_dir)
-
-        return LightevalTaskFromConfig
 
     if meta_table is None:
         meta_table = [config for config in vars(default_tasks).values() if isinstance(config, LightevalTaskConfig)]
@@ -350,4 +356,4 @@ def create_config_tasks(
             if suite in DEFAULT_SUITES:
                 tasks_with_config[f"{suite}|{config.name}"] = config
 
-    return {task: create_task(task, cfg, cache_dir=cache_dir) for task, cfg in tasks_with_config.items()}
+    return {task: partial(LightevalTask, task, cfg, cache_dir=cache_dir) for task, cfg in tasks_with_config.items()}

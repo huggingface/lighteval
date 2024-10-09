@@ -40,6 +40,7 @@ TASKS_TABLE = [
 
 TASKS_GROUPS = {
     "zero_and_one": "custom|test_task_revision|0|0,custom|test_task_revision|1|0",
+    "all_mmlu": "original|mmlu|3|0",
 }
 
 
@@ -78,6 +79,31 @@ def test_superset_expansion():
     assert all(task_info[task] == [(0, False)] for task in tasks)
 
 
+def test_superset_with_subset_task():
+    """
+    Tests that task info selector correctly handles if both superset and one of subset tasks are provided.
+    """
+    registry = Registry()
+
+    tasks, task_info = taskinfo_selector("original|mmlu|3|0,original|mmlu:abstract_algebra|5|0", registry)
+
+    # We have all mmlu tasks
+    assert len(tasks) == 57
+    # Since it's defined twice
+    assert task_info["original|mmlu:abstract_algebra"] == [(5, False), (3, False)]
+
+
+def test_task_group_expansion_with_subset_expansion():
+    """
+    Tests that task info selector correctly handles a group with task superset is provided.
+    """
+    registry = Registry(custom_tasks="tests.tasks.test_registry")
+
+    tasks = taskinfo_selector("all_mmlu", registry)[0]
+
+    assert len(tasks) == 57
+
+
 def test_invalid_task_creation():
     """
     Tests that tasks info registry correctly raises errors for invalid tasks
@@ -87,9 +113,21 @@ def test_invalid_task_creation():
         registry.get_task_dict(["custom|task_revision"])
 
 
+def test_task_duplicates():
+    """
+    Tests that task info selector correctly handles if duplicate tasks are provided.
+    """
+    registry = Registry()
+
+    tasks, task_info = taskinfo_selector("custom|test_task_revision|0|0,custom|test_task_revision|0|0", registry)
+
+    assert tasks == ["custom|test_task_revision"]
+    assert task_info["custom|test_task_revision"] == [(0, False)]
+
+
 def test_task_creation():
     """
-    Tests that tasks registry correctly create tasks
+    Tests that tasks registry correctly creates tasks
     """
     registry = Registry()
     task_info = registry.get_task_dict(["lighteval|storycloze:2016"])["lighteval|storycloze:2016"]
