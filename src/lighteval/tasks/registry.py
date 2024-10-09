@@ -70,11 +70,17 @@ class Registry:
         Initialize the Registry class.
 
         Args:
-            cache_dir (str): Directory path for caching.
-
-        Attributes:
-            cache_dir (str): Directory path for caching.
-            TASK_REGISTRY (dict[str, LightevalTask]): A dictionary containing the registered tasks.
+            cache_dir (Optional[str]): Directory path for caching. Defaults to None.
+            custom_tasks (Optional[Union[str, Path, ModuleType]]): Custom tasks to be included in registry. Can be a string path, Path object, or a module.
+                Each custom task should be a module with a TASKS_TABLE exposing a list of LightevalTaskConfig.
+                E.g:
+                TASKS_TABLE = [
+                    LightevalTaskConfig(
+                        name="custom_task",
+                        suite="custom",
+                        ...
+                    )
+                ]
         """
 
         # Private attributes, not expected to be mutated after initialization
@@ -105,7 +111,13 @@ class Registry:
     @lru_cache
     def task_registry(self):
         """
-        Returns dict mapping all available suite|task into LightevalTask
+        Returns:
+            dict[str, LightevalTask]: A dictionary mapping task names to their corresponding LightevalTask classes.
+
+        Example:
+        {
+            "lighteval|arc_easy": LightevalTask(name="lighteval|arc_easy"...)
+        }
         """
 
         # Import custom tasks provided by the user
@@ -122,10 +134,11 @@ class Registry:
 
         for module in custom_tasks_module:
             TASKS_TABLE.extend(module.TASKS_TABLE)
+            # We don't log the tasks themselves as it makes the logs unreadable
+            hlog(f"Found {len(module.TASKS_TABLE)} custom tasks in {module.__file__}")
 
         if len(TASKS_TABLE) > 0:
             custom_tasks_registry = create_config_tasks(meta_table=TASKS_TABLE, cache_dir=self._cache_dir)
-            hlog(custom_tasks_registry)
 
         default_tasks_registry = create_config_tasks(cache_dir=self._cache_dir)
         # Check the overlap between default_tasks_registry and custom_tasks_registry
@@ -142,20 +155,32 @@ class Registry:
     @lru_cache
     def _task_superset_dict(self):
         """
-        Returns a dict mapping each superset to its tasks:
-        eg: mmlu -> [mmlu:abstract_algebra, mmlu:college_biology, ...]
-        """
+        Returns:
+            dict[str, list[str]]: A dictionary where keys are task group names and values are lists of task names.
 
-        superset_dict = {k: list(v) for k, v in groupby(list(self.task_registry.keys()), lambda x: x.split(":")[0])}
+        Example:
+            {
+                "lighteval|mmlu" -> ["lighteval|mmlu:abstract_algebra", "lighteval|mmlu:college_biology", ...]
+            }
+        """
+        # Note: sorted before groupby is imporant as the python implementation of groupby does not
+        # behave like sql groupby. For more info see the docs of itertools.groupby
+        superset_dict = {k: list(v) for k, v in groupby(sorted(self.task_registry.keys()), lambda x: x.split(":")[0])}
         # Only consider supersets with more than one task
         return {k: v for k, v in superset_dict.items() if len(v) > 1}
 
     @property
     @lru_cache
-    def task_groups_dict(self) -> dict[str, str]:
+    def task_groups_dict(self) -> dict[str, list[str]]:
         """
-        Returns a dict mapping each task group to its tasks
-        eg: all_cusotm -> custom|task1,custom|task2,custom|task3
+        Returns:
+            dict[str, list[str]]: A dictionary where keys are task group names and values are lists of task names.
+
+        Example:
+            {
+                "all_custom": ["custom|task1", "custom|task2", "custom|task3"],
+                "group1": ["custom|task1", "custom|task2"],
+            }
         """
         if self._custom_tasks is None:
             return {}
