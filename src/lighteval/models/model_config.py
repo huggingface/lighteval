@@ -226,6 +226,7 @@ class VLLMModelConfig:
     multichoice_continuations_start_space: bool = (
         True  # whether to add a space at the start of each continuation in multichoice generation
     )
+    pair_wise_tokenization: bool = False
     subfolder: Optional[str] = None
 
 
