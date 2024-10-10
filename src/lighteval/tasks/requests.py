@@ -126,6 +126,7 @@ class GreedyUntilRequest(Request):
     request_type = RequestType.GREEDY_UNTIL
     tokenized_context: list[int] = None
     num_samples: int = None
+    do_sample: bool = False
     use_logits: bool = False
 
 

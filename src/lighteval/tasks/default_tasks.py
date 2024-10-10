@@ -8708,10 +8708,10 @@ hellaswag_leaderboard = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-hellaswag_helm = LightevalTaskConfig(
+hellaswag_generative = LightevalTaskConfig(
     name="hellaswag",
     suite=["helm", "helm_general"],
-    prompt_function=prompt.hellaswag_helm,
+    prompt_function=prompt.hellaswag_generative,
     hf_repo="hellaswag",
     hf_subset="default",
     hf_avail_splits=["train", "test", "validation"],
