@@ -108,6 +108,70 @@ class HFSubsets(Enum):
     MMLU_SERBIAN_ALL = "mmlu_all_serbian"
 
 
+def prompt_fn_oz_eval_task(line, task_name: str = None):
+    """
+    Prepares a question and answer set in Serbian from the OZ Eval (Opšte Znanje Evaluacija) dataset
+    for use in a LightEval task. This dataset, specifically designed for evaluating general knowledge
+    in Serbian, contains questions derived from entrance exams at the University of Belgrade's Faculty
+    of Philosophy and Faculty of Organizational Sciences, covering enrollment periods from 2003 to 2024.
+
+    The function accepts a dictionary with a question, five answer choices, and a correct answer
+    designation, returning a structured `Doc` object formatted for LightEval's TASKS_TABLE or TASKS_GROUPS.
+
+    Args:
+        line (dict): A dictionary with required keys:
+            - 'query' (str): The main question string.
+            - 'choices' (list of str): A list containing exactly five answer options.
+            - 'answer_str' (str): A single character from "A" to "E" representing the correct answer.
+        task_name (str, optional): An optional string specifying the evaluation task name.
+
+    Returns:
+        Doc: A structured object for LightEval containing:
+            - task_name (str): The task name, if provided.
+            - query (str): Formatted question with embedded answer choices.
+            - choices (list of str): List of option identifiers ["A", "B", "C", "D", "E"].
+            - gold_index (int): Index of the correct answer within the 'choices' list.
+
+    Raises:
+        ValueError: If the 'choices' list does not contain exactly five items,
+                    or if 'answer_str' is not one of ["A", "B", "C", "D", "E"].
+
+    Note:
+        This function is part of the LightEval setup, specifically for loading OZ Eval dataset questions
+        into the evaluation environment. For consistent evaluation results, run the task with
+        `--use_chat_template`. The OZ Eval dataset is available at https://huggingface.co/datasets/DjMel/oz-eval.
+
+    """
+    query_template = """Pitanje: {question}\n
+    Ponuđeni odgovori:
+    A. {choice_a}
+    B. {choice_b}
+    C. {choice_c}
+    D. {choice_d}
+    E. {choice_e}
+
+    Krajnji odgovor:"""
+
+    options = line["choices"]
+
+    query = query_template.format(
+        question=line["query"],
+        choice_a=options[0],
+        choice_b=options[1],
+        choice_c=options[2],
+        choice_d=options[3],
+        choice_e=options[4],
+    )
+
+    choices = ["A", "B", "C", "D", "E"]
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=choices,
+        gold_index=choices.index(line["answer_str"]),
+    )
+
+
 def serbian_eval_prompt(line: dict, task_name: Optional[str] = None) -> Doc:
     """
     Creates a prompt for a multiple-choice task in Serbian. This function formats the prompt
@@ -287,8 +351,8 @@ winogrande = create_task_config(
 # ============================================
 
 oz_eval = create_task_config(
-    task_name="serbian_evals:oz_task",
-    prompt_function=serbian_eval_prompt,
+    task_name="serbian_evals:oz_eval",
+    prompt_function=prompt_fn_oz_eval_task,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.OZ_EVAL.value,
     metric=[Metrics.loglikelihood_acc],

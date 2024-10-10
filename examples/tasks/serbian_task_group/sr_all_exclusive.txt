@@ -6,7 +6,7 @@ community|serbian_evals:hellaswag|0|0
 community|serbian_evals:piqa|0|0
 community|serbian_evals:winogrande|0|0
 # Serbian Evaluations - Custom/Other Task
-community|serbian_evals:oz_task|0|0
+community|serbian_evals:oz_eval|0|0
 # MMLU (Miscellaneous)
 community|serbian_evals:mmlu_anatomija|0|0
 community|serbian_evals:mmlu_astronomija|0|0
@@ -22,7 +22,7 @@ community|serbian_evals:hellaswag|0|0
 community|serbian_evals:piqa|0|0
 community|serbian_evals:winogrande|0|0
 # Serbian Evaluations - Custom/Other Task
-community|serbian_evals:oz_task|0|0
+community|serbian_evals:oz_eval|0|0
 # MMLU (Miscellaneous)
 community|serbian_evals:mmlu_anatomija|0|0
 community|serbian_evals:mmlu_astronomija|0|0
@@ -30,8 +30,6 @@ community|serbian_evals:mmlu_poslovna_etika|0|0
 community|serbian_evals:mmlu_kliničko_znanje|0|0
 community|serbian_evals:mmlu_razno|0|0
 community|serbian_evals:mmlu_elektrotehnika|0|0
-# MMLU (All-inclusive Task Entry)
-community|serbian_evals:mmlu|0|0
 # MMLU (Business Professional)
 community|serbian_evals:mmlu_marketing|0|0
 community|serbian_evals:mmlu_manadzment|0|0
