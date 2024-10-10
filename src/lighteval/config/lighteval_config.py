@@ -76,7 +76,7 @@ class LightEvalTasksArgs:
 
     dataset_loading_processes: int = 8
     multichoice_continuations_start_space: Optional[bool] = None
-    pair_wise_tokenization: bool = False
+    pairwise_tokenization: bool = False
 
 
 @dataclass
