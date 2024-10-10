@@ -183,10 +183,18 @@ class LightevalModel(ABC):
             context = context[:-n_spaces]
 
         if pairwise:
+            # We don't add special tokens to the continuation as if bos is added
+            # models tend to to completely ignore a context
             context_enc, continuation_enc = (
                 self.tok_encode(context, add_special_tokens=self.add_special_tokens),
-                self.tok_encode(continuation, add_special_tokens=self.add_special_tokens),
+                self.tok_encode(continuation, add_special_tokens=False),
             )
+
+            # In theory the context_enc can be ended with eos token, this would again
+            # cause the model to ignore the context. We thus strip the eos token from context_enc
+            if len(context_enc) > 0 and context_enc[-1] == self.tokenizer.eos_token_id:
+                context_enc = context_enc[:-1]
+
             return context_enc, continuation_enc
 
         whole_enc = self.tok_encode(context + continuation)
