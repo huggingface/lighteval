@@ -1,0 +1,12 @@
+# MMLU (High School Level Tasks)
+community|serbian_evals:mmlu_srednja_skola_biologija|0|0
+community|serbian_evals:mmlu_srednja_skola_hemija|0|0
+community|serbian_evals:mmlu_srednja_skola_racunari|0|0
+community|serbian_evals:mmlu_srednja_skola_istorija_evrope|0|0
+community|serbian_evals:mmlu_srednja_skola_geografija|0|0
+community|serbian_evals:mmlu_srednja_skola_matematika|0|0
+community|serbian_evals:mmlu_srednja_skola_mikroekonomija|0|0
+community|serbian_evals:mmlu_srednja_skola_fizika|0|0
+community|serbian_evals:mmlu_srednja_skola_psihologija|0|0
+community|serbian_evals:mmlu_srednja_skola_statistika|0|0
+community|serbian_evals:mmlu_srednja_skola_svetska_istorija|0|0

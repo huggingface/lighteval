@@ -1,0 +1,4 @@
+# Commonsense Reasoning
+community|serbian_evals:hellaswag|0|0
+community|serbian_evals:piqa|0|0
+community|serbian_evals:winogrande|0|0
