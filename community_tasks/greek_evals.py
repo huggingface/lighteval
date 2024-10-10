@@ -26,7 +26,8 @@ Custom evaluation tasks for lighteval
 
 This file generally create just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
 """
-import re
+import regex as re
+from aenum import extend_enum
 import numpy as np
 import copy
 
@@ -37,6 +38,12 @@ from lighteval.tasks.requests import Doc
 from lighteval.tasks.default_prompts import mgsm
 from lighteval.metrics.dynamic_metrics import loglikelihood_acc_metric
 from lighteval.metrics.normalizations import LogProbTokenNorm
+from lighteval.metrics.metrics import Metrics
+from lighteval.metrics.utils.metric_utils import (
+    MetricCategory,
+    MetricUseCase,
+    SampleLevelMetric,
+)
 from lighteval.tasks.extended.mt_bench.main import mt_bench_prompt
 
 # MMLU
@@ -622,10 +629,46 @@ FLORES200_TASKS = [
 
 # MGSM EL
 
+def parsed_answer_acc(predictions: list[str], formatted_doc: Doc, **kwargs) -> dict:
+    number_regex = re.compile(r"(\-?(\d*[.,])*\d+)")
+    response = predictions[0]
+    parsed_response = ""
+    try:
+        for line in response.split("\n"):
+            line = line.strip()
+            all_numbers = re.findall(number_regex, line)
+            if all_numbers:
+                parsed_response = all_numbers[-1][0]
+    except:
+        pass
+    return parsed_response == formatted_doc.choices[formatted_doc.gold_index].strip()
+
+mgsm_el_metric = SampleLevelMetric(
+    metric_name="mgsm_el_parsed_exact_match",
+    higher_is_better=True,
+    category=MetricCategory.GENERATIVE,
+    use_case=MetricUseCase.ACCURACY,
+    sample_level_fn=parsed_answer_acc,
+    corpus_level_fn=np.mean,
+)
+
 def mgsm_el_prompt(line, task_name: str = None):
     question_key = "Ερώτηση:"
     answer_key = "Απάντηση βήμα προς βήμα:"
-    return mgsm(line, question_key, answer_key, task_name)
+
+    # TODO go back to return mgsm(line, question_key, answer_key, task_name)
+    # TODO when dataset is fixed
+
+    if line["answer"] not in ["nan", None]:
+        query = f"{line['question']}\n{answer_key}"
+        gold = f" {line['answer'][len(answer_key) + 1:]}"
+    else:
+        query = f"{question_key} {line['question']}\n{answer_key}"
+        gold = f"{str(line['answer_number'])}"
+    print('query', query)
+    print('gold', gold)
+    return Doc(task_name=task_name, query=query, choices=[gold], gold_index=0)
+
 
 mgsm_el_task = LightevalTaskConfig(
     name="mgsm:el",
@@ -637,16 +680,14 @@ mgsm_el_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split=None,
     few_shots_select=None,
-    generation_size=5,
-    metric=[Metrics.exact_match, Metrics.quasi_exact_match],
-    stop_sequence=["\n", "=", "Ερώτηση="],
+    generation_size=250,
+    metric=[mgsm_el_metric],
+    stop_sequence=[],
     output_regex=None,
     frozen=False,
     trust_dataset=True,
     version=0,
 )
-
-# TODO create metric or just output regex that extracts actual answer from model answer
 
 
 # MT-Bench EL
@@ -687,6 +728,7 @@ _TASKS = (
 # TODO test the ones in the commented out _TASKS that are not in the new one
 
 TASKS_TABLE = list(_TASKS)
+extend_enum(Metrics, "mgsm_el_parsed_exact_match", mgsm_el_metric)
 
 if __name__ == "__main__":
     print(t.name for t in TASKS_TABLE)
