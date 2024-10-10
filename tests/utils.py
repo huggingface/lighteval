@@ -20,9 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Optional
+from types import ModuleType
+from typing import Optional, Union
 from unittest.mock import patch
 
+from anyio import Path
 from transformers import AutoTokenizer
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
@@ -34,6 +36,7 @@ from lighteval.models.model_output import (
 )
 from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 from lighteval.tasks.lighteval_task import LightevalTask
+from lighteval.tasks.registry import Registry
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -126,11 +129,13 @@ def fake_evaluate_task(
     evaluation_tracker.task_config_logger.log(task_dict)
     # Create a mock Registry class
 
-    class MockRegistry:
-        def __init__(self, cache_dir=None):
-            self.cache_dir = cache_dir
+    class FakeRegistry(Registry):
+        def __init__(
+            self, cache_dir: Optional[str] = None, custom_tasks: Optional[Union[str, Path, ModuleType]] = None
+        ):
+            super().__init__(cache_dir=cache_dir, custom_tasks=custom_tasks)
 
-        def get_task_dict(self, task_names_list, custom_tasks=None):
+        def get_task_dict(self, task_names: list[str]):
             return task_dict
 
     # This is due to logger complaining we have no initialised the accelerator
@@ -143,7 +148,7 @@ def fake_evaluate_task(
     # This is a bit hacky, because there is no way to run end to end, with
     # dynamic task :(, so we just mock the registry
     task_run_string = f"{task_name}|{n_fewshot}|{n_fewshot_seeds}"
-    with patch("lighteval.pipeline.Registry", MockRegistry):
+    with patch("lighteval.pipeline.Registry", FakeRegistry):
         pipeline = Pipeline(
             tasks=task_run_string,
             pipeline_parameters=PipelineParameters(max_samples=max_samples, launcher_type=ParallelismManager.NONE),

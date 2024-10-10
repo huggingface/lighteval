@@ -476,7 +476,7 @@ class MetricsLogger:
         default_factory=lambda: collections.defaultdict(lambda: collections.defaultdict(list))
     )
     metric_aggregated: dict[str, dict[str, float]] = field(
-        default_factory=lambda: collections.defaultdict(lambda: collections.defaultdict(dict))
+        default_factory=lambda: collections.defaultdict(lambda: collections.defaultdict(float))
     )
 
     def log(self, task_name: str, metrics: dict) -> None:
