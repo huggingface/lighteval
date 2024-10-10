@@ -659,7 +659,7 @@ def mgsm_el_prompt(line, task_name: str = None):
     # TODO go back to return mgsm(line, question_key, answer_key, task_name)
     # TODO when dataset is fixed
 
-    if line["answer"] not in ["nan", None]:
+    if line["answer"] not in ["nan", "None", None]:
         query = f"{line['question']}\n{answer_key}"
         gold = f" {line['answer'][len(answer_key) + 1:]}"
     else:
