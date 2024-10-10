@@ -24,11 +24,11 @@ import collections
 import inspect
 import random
 from dataclasses import asdict, dataclass, field
-from multiprocessing import Pool
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple
 
 from datasets import DatasetDict
 from huggingface_hub import TextGenerationInputGrammarType
+from multiprocess import Pool
 from pytablewriter import MarkdownTableWriter
 
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn

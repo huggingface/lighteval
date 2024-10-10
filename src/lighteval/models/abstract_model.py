@@ -183,23 +183,28 @@ class LightevalModel(ABC):
             context = context[:-n_spaces]
 
         if pairwise:
-            context_enc, continuation_enc = self.tok_encode(context), self.tok_encode(continuation)
-            if self.add_special_tokens:
-                tokenized_with_special_tokens = self.tokenizer.build_inputs_with_special_tokens(
-                    context_enc + continuation_enc
-                )
-                # If this fails something went wrong as the function above should only add special tokens
-                first_non_prefix_token_idx = tokenized_with_special_tokens.index(context_enc[0])
-                last_context_token_idx = first_non_prefix_token_idx + len(context_enc)
-                context_enc, continuation_enc = (
-                    tokenized_with_special_tokens[:last_context_token_idx],
-                    tokenized_with_special_tokens[last_context_token_idx:],
-                )
+            # We don't add special tokens to the continuation as if bos is added
+            # models tend to to completely ignore a context
+            context_enc, continuation_enc = (
+                self.tok_encode(context, add_special_tokens=self.add_special_tokens),
+                self.tok_encode(continuation, add_special_tokens=False),
+            )
+
+            # In theory the context_enc can be ended with eos token, this would again
+            # cause the model to ignore the context. We thus strip the eos token from context_enc
+            if len(context_enc) > 0 and context_enc[-1] == self.tokenizer.eos_token_id:
+                context_enc = context_enc[:-1]
+
             return context_enc, continuation_enc
 
         whole_enc = self.tok_encode(context + continuation)
         context_enc = self.tok_encode(context)
         context_enc_len = len(context_enc)
+        # In case continuation tokens merge with context tokens we use the merged token as continuation
+        if len(context_enc) == len(whole_enc):
+            context_enc_len = len(context_enc) - 1
+            context_enc = whole_enc[:context_enc_len]
+
         continuation_enc = whole_enc[context_enc_len:]
         return context_enc, continuation_enc
 
