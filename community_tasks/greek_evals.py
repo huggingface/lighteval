@@ -665,8 +665,6 @@ def mgsm_el_prompt(line, task_name: str = None):
     else:
         query = f"{question_key} {line['question']}\n{answer_key}"
         gold = f"{str(line['answer_number'])}"
-    print('query', query)
-    print('gold', gold)
     return Doc(task_name=task_name, query=query, choices=[gold], gold_index=0)
 
 
