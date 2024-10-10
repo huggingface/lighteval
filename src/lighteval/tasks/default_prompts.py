@@ -763,7 +763,6 @@ def hellaswag_preprocess(
     dot_replacement: str = ". ",
 ):
     """Comes from AiHarness"""
-    # text = text.strip()
     # NOTE: Brackets are artifacts of the WikiHow dataset portion of HellaSwag.
     for wikihow_artifact in wikihow_artifacts:
         text = text.replace(wikihow_artifact, dot_replacement)
