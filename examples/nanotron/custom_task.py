@@ -82,7 +82,7 @@ TASKS_TABLE = [
         generation_size=5,
         metric=[Metrics.loglikelihood_acc_single_token],
         stop_sequence=["\n"],
-        output_regex=None,
+        answer_extractor=None,
         frozen=False,
     ),
     LightevalTaskConfig(
@@ -98,7 +98,7 @@ TASKS_TABLE = [
         generation_size=5,
         metric=[Metrics.loglikelihood_acc_single_token],
         stop_sequence=["\n"],
-        output_regex=None,
+        answer_extractor=None,
         frozen=False,
     ),
 ]

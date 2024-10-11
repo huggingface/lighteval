@@ -20,8 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import random
+import re
+from abc import abstractmethod
 from dataclasses import dataclass, field
-from typing import Optional, Union
+from typing import Any, Literal, Optional, Union
 
 import torch
 
@@ -81,3 +84,46 @@ class Batch:
     input_lengths: list[int]
     truncated: list[int]
     padded: list[int]
+
+
+class AnswerExtractor:
+    @abstractmethod
+    def __call__(self, result: str):
+        ...
+
+    @abstractmethod
+    def as_dict() -> dict:
+        ...
+
+    # Bad hack. Thanks to LightevalTaskConfig's becoming dict in the beginning of the evaluation!
+    # Maybe it's fixed now in main branch.
+    @classmethod
+    def from_dict(cls, properties: dict[str, Any]) -> "AnswerExtractor":
+        return RegexAnswerExtractor(properties["regex_list"], properties["fallback"])
+
+
+class RegexAnswerExtractor(AnswerExtractor):
+    def __init__(
+        self,
+        regex_list: list[re.Pattern | str],
+        fallback: int | Literal["random", "keep", "empty_string"] = "empty_string",
+    ):
+        self.regex_list: list[re.Pattern] = list(map(re.compile, regex_list))
+        self.fallback = fallback
+
+    def __call__(self, result: str, choices: list[str]) -> str:
+        for pattern in self.regex_list:
+            choice = next(iter(re.findall(pattern, result)), "")
+            if choice in choices:
+                return choice
+        if self.fallback == "random":
+            return random.choice(choices)
+        elif self.fallback == "keep":
+            return result
+        elif self.fallback == "empty_string":
+            return ""
+        else:
+            return choices[self.fallback]
+
+    def as_dict(self) -> dict:
+        return {"regex_list": [p.pattern for p in self.regex_list], "fallback": self.fallback}

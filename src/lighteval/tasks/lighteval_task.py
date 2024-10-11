@@ -24,6 +24,7 @@ import collections
 import inspect
 import random
 from dataclasses import asdict, dataclass, field
+from functools import partial
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple
 
 from datasets import DatasetDict
@@ -42,6 +43,7 @@ from lighteval.metrics import (
 )
 from lighteval.metrics.metrics import Metric, MetricCategory, Metrics
 from lighteval.models.base_model import BaseModel
+from lighteval.models.model_output import AnswerExtractor
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import (
     Doc,
@@ -84,7 +86,7 @@ class LightevalTaskConfig:
         truncated_num_docs (bool): Whether less than the total number of documents were used
         trust_dataset (bool): Whether to trust the dataset at execution or not
         version (int): The version of the task. Defaults to 0. Can be increased if the underlying dataset or the prompt changes.
-        output_regex (str)
+        answer_extractor (AnswerExtractor): The method by which we extract the model answer from its generated output. Defaults to None.
         frozen (bool)
     """
 
@@ -110,7 +112,7 @@ class LightevalTaskConfig:
     generation_size: Optional[int] = None
     generation_grammar: Optional[TextGenerationInputGrammarType] = None
     stop_sequence: Optional[ListLike[str]] = None
-    output_regex: Optional[str] = None
+    answer_extractor: Optional[AnswerExtractor] = None
     num_samples: Optional[list[int]] = None
 
     suite: ListLike[str] = field(default_factory=lambda: ["custom"])
@@ -227,6 +229,7 @@ class LightevalTask:
         self.generation_size = cfg.generation_size
         self.generation_grammar = cfg.generation_grammar
         self.stop_sequence = cfg.stop_sequence
+        self.answer_extractor = cfg.answer_extractor
         self.must_remove_duplicate_docs = cfg.must_remove_duplicate_docs
 
     @property
@@ -504,7 +507,19 @@ class LightevalTask:
         if not self.has_metric_category[metric_category]:
             raise ValueError(f"Requested a metric category {metric_category} absent from the task list.")
 
-        return LightevalTask._get_metric_method_from_category(metric_category)
+        metric_method = LightevalTask._get_metric_method_from_category(metric_category)
+        # Bad hack. I had no other way.
+        if (
+            metric_category
+            in [
+                MetricCategory.GENERATIVE,
+                MetricCategory.GENERATIVE_SAMPLING,
+                MetricCategory.GENERATIVE_LOGPROB,
+            ]
+            and self.answer_extractor
+        ):
+            metric_method = partial(metric_method, answer_extractor=self.answer_extractor)
+        return metric_method
 
     @staticmethod
     def _get_metric_method_from_category(metric_category):

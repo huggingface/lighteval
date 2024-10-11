@@ -20,10 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import re
+from typing import Optional
 
 from lighteval.metrics.metrics import Metric, MetricCategory
-from lighteval.models.model_output import ModelResponse
+from lighteval.models.model_output import AnswerExtractor, ModelResponse
 from lighteval.tasks.requests import Doc
 from lighteval.utils.utils import as_list
 
@@ -89,7 +89,7 @@ def apply_generative_metric(  # noqa: C901
     responses: list[list[ModelResponse]],
     formatted_docs: list[Doc],
     metrics: list[Metric],
-    output_regex: str = None,
+    answer_extractor: Optional[AnswerExtractor] = None,
     max_num_samples: int = 1,
 ):
     outputs = []
@@ -106,8 +106,8 @@ def apply_generative_metric(  # noqa: C901
         preds = []
 
         for pred_raw in preds_raw:
-            if output_regex is not None:
-                pred = next(iter(re.findall(output_regex, pred_raw)), "")
+            if answer_extractor:
+                pred = answer_extractor(pred_raw, formatted_doc.choices)
             else:
                 pred = pred_raw
             preds.append(pred)
