@@ -242,9 +242,11 @@ class InferenceEndpointModel(LightevalModel):
             stop = as_list(request.stop_sequence) or None
             max_tokens = request.generation_size
             context = request.context
+            grammar = request.generation_grammar
         elif isinstance(request, (LoglikelihoodRequest, LoglikelihoodRollingRequest)):
             stop = None
             max_tokens = 1
+            grammar = None
             rolling = isinstance(request, LoglikelihoodRollingRequest)
             if rolling:
                 context = request.context
@@ -267,6 +269,7 @@ class InferenceEndpointModel(LightevalModel):
                     max_new_tokens=max_tokens,
                     stop=stop,
                     return_full_text=False,
+                    grammar=grammar,
                     top_n_tokens=1,
                 ),
             )
@@ -280,6 +283,7 @@ class InferenceEndpointModel(LightevalModel):
                 seed=42,
                 temperature=0.0,
                 top_logprobs=1,
+                response_format=grammar,
                 stream=False,
             )
         return prepared_request
