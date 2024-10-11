@@ -122,15 +122,19 @@ def get_hellaswag_prompt_function(
         activity_label = f"{capitalize(activity_label)}:\n" if activity_label else ""
 
         # Last one should be left as is
-        ctx_a, ctx_b = capitalize(input_data["ctx_a"]), input_data.get("ctx_b", "")
+        ctx_a, ctx_b = process_context(input_data["ctx_a"]), process_context(input_data.get("ctx_b", ""))
         if ctx_b:
-            ctx_a = join_ctxs(process_context(ctx_a), process_context(ctx_b))
+            ctx_a = join_ctxs(ctx_a, ctx_b)
 
         # Removoal of the [header] can happen and we need the first letter to be capital afterwards
         full_context = HELLASWAG_QUERY.format(activity_label=activity_label, ctx=ctx_a)
         choices = [
             hellaswag_preprocess(
-                continuation, wikihow_artifacts=wikihow_artifacts, truncate_dots=True, strip_text=True
+                continuation,
+                wikihow_artifacts=wikihow_artifacts,
+                truncate_dots=True,
+                strip_text=True,
+                dot_replacement=f"{translation_literals.full_stop}{translation_literals.sentence_space}",
             )
             for continuation in input_data["continuations"]
         ]

@@ -63,7 +63,7 @@ class BaseModelConfig:
             For example, context: "What is the capital of France?" and choices: "Paris", "London".
             Will be tokenized as: "What is the capital of France? Paris" and "What is the capital of France? London".
             True adds a space, False strips a space, None does nothing
-        pair_wise_tokenization (bool): Whether to tokenize the context and continuation as separately or together.
+        pairwise_tokenization (bool): Whether to tokenize the context and continuation as separately or together.
         subfolder (Optional[str]): The subfolder within the model repository.
         revision (str): The revision of the model.
         batch_size (int): The batch size for model training.
@@ -100,7 +100,7 @@ class BaseModelConfig:
     accelerator: "Accelerator" = None
     tokenizer: Optional[str] = None
     multichoice_continuations_start_space: Optional[bool] = None
-    pair_wise_tokenization: bool = False
+    pairwise_tokenization: bool = False
     subfolder: Optional[str] = None
     revision: str = "main"
     batch_size: int = -1
@@ -226,6 +226,8 @@ class VLLMModelConfig:
     multichoice_continuations_start_space: bool = (
         True  # whether to add a space at the start of each continuation in multichoice generation
     )
+    pairwise_tokenization: bool = False  # whether to tokenize the context and continuation separately or together.
+
     subfolder: Optional[str] = None
 
 
