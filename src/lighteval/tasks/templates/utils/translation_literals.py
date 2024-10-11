@@ -132,7 +132,9 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
     Language.BIHARI: TranslationLiterals(language=Language.BIHARI),  # Deprecated
     Language.BOSNIAN: TranslationLiterals(language=Language.BOSNIAN),
     Language.BRETON: TranslationLiterals(language=Language.BRETON),
+    Language.BULGARIAN: TranslationLiterals(language=Language.BULGARIAN),
     Language.BURMESE: TranslationLiterals(language=Language.BURMESE),
+    Language.CATALAN: TranslationLiterals(language=Language.CATALAN),
     Language.CEBUANO: TranslationLiterals(language=Language.CEBUANO),
     Language.CHINESE: TranslationLiterals(
         language=Language.CHINESE,
@@ -357,6 +359,7 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         cause_word="poukisa",
         effect_word="donk sa",
     ),
+    Language.HEBREW: TranslationLiterals(language=Language.HEBREW),
     Language.HINDI: TranslationLiterals(
         language=Language.HINDI,
         question_word="सवाल",
@@ -488,6 +491,8 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
     Language.KURDISH: TranslationLiterals(language=Language.KURDISH),
     Language.LAO: TranslationLiterals(language=Language.LAO),
     Language.LATIN: TranslationLiterals(language=Language.LATIN),
+    Language.LATVIAN: TranslationLiterals(language=Language.LATVIAN),
+    Language.LITHUANIAN: TranslationLiterals(language=Language.LITHUANIAN),
     Language.LUXEMBOURGISH: TranslationLiterals(language=Language.LUXEMBOURGISH),
     Language.MACEDONIAN: TranslationLiterals(language=Language.MACEDONIAN),
     Language.MALAGASY: TranslationLiterals(language=Language.MALAGASY),
@@ -523,6 +528,7 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
     Language.OCCITAN: TranslationLiterals(language=Language.OCCITAN),
     Language.ORIYA: TranslationLiterals(language=Language.ORIYA),
     Language.PASHTO: TranslationLiterals(language=Language.PASHTO),
+    Language.PERSIAN: TranslationLiterals(language=Language.PERSIAN),
     Language.POLISH: TranslationLiterals(
         language=Language.POLISH,
         question_word="pytanie",
