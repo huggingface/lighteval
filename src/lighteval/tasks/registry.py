@@ -105,7 +105,7 @@ class Registry:
         task_class = self.task_registry.get(task_name)
         if task_class is None:
             hlog_warn(f"{task_name} not found in provided tasks")
-            hlog_warn(pformat(self.task_registry))
+            hlog_warn(pformat(list(self.task_registry.keys())))
             raise ValueError(f"Cannot find tasks {task_name} in task list or in custom task registry)")
 
         return task_class()
