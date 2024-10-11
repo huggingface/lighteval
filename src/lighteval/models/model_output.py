@@ -24,7 +24,7 @@ import random
 import re
 from abc import abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Literal, Optional, Union
+from typing import Literal, Optional, Union
 
 import torch
 
@@ -91,16 +91,6 @@ class AnswerExtractor:
     def __call__(self, result: str):
         ...
 
-    @abstractmethod
-    def as_dict() -> dict:
-        ...
-
-    # Bad hack. Thanks to LightevalTaskConfig's becoming dict in the beginning of the evaluation!
-    # Maybe it's fixed now in main branch.
-    @classmethod
-    def from_dict(cls, properties: dict[str, Any]) -> "AnswerExtractor":
-        return RegexAnswerExtractor(properties["regex_list"], properties["fallback"])
-
 
 class RegexAnswerExtractor(AnswerExtractor):
     def __init__(
@@ -124,6 +114,3 @@ class RegexAnswerExtractor(AnswerExtractor):
             return ""
         else:
             return choices[self.fallback]
-
-    def as_dict(self) -> dict:
-        return {"regex_list": [p.pattern for p in self.regex_list], "fallback": self.fallback}
