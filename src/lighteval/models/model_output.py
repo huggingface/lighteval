@@ -88,7 +88,7 @@ class Batch:
 
 class AnswerExtractor:
     @abstractmethod
-    def __call__(self, result: str):
+    def __call__(self, result: str, choices: list[str]) -> str:
         ...
 
 
