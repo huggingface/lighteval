@@ -232,6 +232,11 @@ class VLLMModelConfig:
 
 
 @dataclass
+class OpenAIModelConfig:
+    model: str
+
+
+@dataclass
 class TGIModelConfig:
     inference_server_address: str
     inference_server_auth: str
@@ -307,6 +312,7 @@ def create_model_config(  # noqa: C901
     InferenceEndpointModelConfig,
     DummyModelConfig,
     VLLMModelConfig,
+    OpenAIModelConfig,
 ]:
     """
     Create a model configuration based on the provided arguments.
@@ -343,6 +349,9 @@ def create_model_config(  # noqa: C901
 
         if model_args.pop("vllm", False):
             return VLLMModelConfig(**model_args)
+
+        if model_args.pop("openai", False):
+            return OpenAIModelConfig(**model_args)
 
         model_args["accelerator"] = accelerator
         model_args["use_chat_template"] = use_chat_template
