@@ -176,7 +176,6 @@ def bbh_harness(line, task_name: str = None):
         query=query,
         choices=choices,
         gold_index=correct_index,
-        target_for_fewshot_sorting=choices,
         instruction=line.get("task_prefix", None),
     )
 
@@ -196,7 +195,6 @@ def bbh_lighteval(line, task_name: str = None):
         query=query,
         choices=LETTER_INDICES[: len(line["choices"])],
         gold_index=line["target_idx"],
-        target_for_fewshot_sorting=LETTER_INDICES[: len(line["choices"])],
         instruction=line.get("task_prefix", None),
     )
 
@@ -205,9 +203,8 @@ def bbh(line, instruction, choices, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"{instruction}Q: {line['input']}\nA:",
-        choices=choices,
+        choices=[(" " if line["__few_shots"] else "") + c for c in choices],
         gold_index=choices.index(line["target"]),
-        target_for_fewshot_sorting=[f" {c}" for c in choices],
         instruction=instruction,
     )
 
@@ -796,10 +793,9 @@ def hellaswag_helm(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=query,
-        choices=[" " + i for i in LETTER_INDICES[: len(line["endings"])]],
+        choices=[" " + i for i in LETTER_INDICES[: len(line["endings"])]] + ([""] if line["__few_shot"] else []),
         gold_index=gold_ix,  # -1 for test,
         instruction="The following are multiple choice questions (with answers) about common sense.\n\n",
-        target_for_fewshot_sorting=line["endings"][gold_ix] if gold_ix > -1 else "",
         specific={
             "label_to_choices": {f" {key}": choice for key, choice in zip(LETTER_INDICES, line["endings"])},
         },
@@ -1355,7 +1351,6 @@ def mmlu(line, topic, task_name: str = None):
         choices=[" A", " B", " C", " D"] if is_few_shots else ["A", "B", "C", "D"],
         gold_index=gold_ix,
         instruction=f"The following are multiple choice questions (with answers) about  {topic.replace('_', ' ')}.\n\n",
-        target_for_fewshot_sorting=[" A", " B", " C", " D"][gold_ix],
     )
 
 
@@ -1376,7 +1371,6 @@ def custom_mmlu_thom(line, task_name: str = None):
         choices=[" A", " B", " C", " D"] if is_few_shots else ["A", "B", "C", "D"],
         gold_index=gold_ix,
         instruction=f"The following are multiple choice questions (with answers) about  {topic.replace('_', ' ')}.\n\n",
-        target_for_fewshot_sorting=[" A", " B", " C", " D"][gold_ix],
     )
 
 
@@ -1616,7 +1610,6 @@ def mmlu_harness(line, task_name: str = None):
     query += "Answer:"
 
     gold_ix = LETTER_INDICES.index(line["answer"]) if isinstance(line["answer"], str) else line["answer"]
-    "__few_shots" in line and line["__few_shots"] is True  # We are adding few shots
 
     return Doc(
         task_name=task_name,
@@ -1624,7 +1617,6 @@ def mmlu_harness(line, task_name: str = None):
         choices=[" A", " B", " C", " D"],
         gold_index=gold_ix,
         instruction=f"The following are multiple choice questions (with answers) about {topic.replace('_', ' ')}.\n\n",
-        target_for_fewshot_sorting=[" A", " B", " C", " D"][gold_ix],
     )
 
 
@@ -1635,14 +1627,14 @@ def mmlu_helm(line, task_name: str = None):
     query += "\nAnswer:"
 
     gold_ix = LETTER_INDICES.index(line["answer"]) if isinstance(line["answer"], str) else line["answer"]
+    is_few_shots = line.get("__few_shots", False)  # We are adding few shots
 
     return Doc(
         task_name=task_name,
         query=query,
-        choices=[" A", " B", " C", " D"],
+        choices=[" A", " B", " C", " D"] if not is_few_shots else ["A", "B", "C", "D"],  # specific to HELM evals
         gold_index=gold_ix,
         instruction=f"The following are multiple choice questions (with answers) about {subject.replace('_', ' ')}.\n\n",
-        target_for_fewshot_sorting=line["choices"][gold_ix],  # specific to HELM evals
     )
 
 
@@ -1807,7 +1799,6 @@ def openbookqa_helm(line, task_name: str = None):
         choices=["A", "B", "C", "D", "E"],
         gold_index=gold_ix,
         instruction="The following are multiple choice questions (with answers) about common sense.\n",
-        target_for_fewshot_sorting=line["choices"]["text"][gold_ix],  # specific to HELM evals
     )
 
 
@@ -1828,14 +1819,12 @@ def piqa_helm(line, task_name: str = None):
     query += "Answer: "
 
     gold_ix = int(line["label"])
-
     return Doc(
         task_name=task_name,
         query=query,
         choices=["A", "B"],
         gold_index=gold_ix,
         instruction="The following are multiple choice questions (with answers) about common sense.\n",
-        target_for_fewshot_sorting=[line["sol1"], line["sol2"]][gold_ix],
     )
 
 
@@ -1868,13 +1857,11 @@ def pubmed_qa_helm(line, task_name: str = None):
     )
     query += f"\n\nQuestion: {line['question']}\nAnswer: "
     gold_ix = ["yes", "no", "maybe"].index(line["final_decision"])
-
     return Doc(
         task_name=task_name,
         query=query,
         choices=["A", "B", "C"],
         gold_index=gold_ix,
-        target_for_fewshot_sorting=["yes", "no", "maybe"][gold_ix],
     )
 
 
@@ -2254,13 +2241,11 @@ def truthful_qa_helm(line, task_name: str = None):
     query = f"Question: {line['question']}\n"
     query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, line["choices"])])
     query += "Answer:"
-
     return Doc(
         task_name=task_name,
         query=query,
         choices=LETTER_INDICES[: len(line["choices"])],
         gold_index=line["gold_index"],
-        target_for_fewshot_sorting=line["choices"][line["gold_index"]],
     )
 
 
