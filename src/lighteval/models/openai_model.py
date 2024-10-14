@@ -78,7 +78,6 @@ class OpenAIClient(LightevalModel):
     def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, logit_bias):
         for _ in range(self.API_MAX_RETRY):
             try:
-                print(prompt)
                 response = self.client.chat.completions.create(
                     model=self.model,
                     messages=[{"role": "user", "content": prompt}],
@@ -149,11 +148,9 @@ class OpenAIClient(LightevalModel):
             contexts = [c.context for c in dataset]
 
             responses = self.__call_api_parallel(contexts, return_logits, max_new_tokens, num_samples)
-            # pprint(responses)
 
             for response in responses:
                 result: list[str] = [output.message.content for output in response.choices]
-                # pprint(result)
 
                 cur_response = GenerativeResponse(
                     result=result,
@@ -194,7 +191,7 @@ class OpenAIClient(LightevalModel):
             else:
                 # The following line is mandatory for compatibility with the harness
                 request.tokenized_context, request.tokenized_continuation = self.tok_encode_pair(
-                    request.context, request.choice.strip(), pairwise=self.pairwise_tokenization
+                    request.context, request.choice, pairwise=self.pairwise_tokenization
                 )
         return self._loglikelihood_tokens(requests)
 
@@ -214,34 +211,18 @@ class OpenAIClient(LightevalModel):
                 logit_bias = {tok: 100 for tok in dataset[i].tokenized_continuation}
                 logit_biass.append(logit_bias)
 
-            from pprint import pprint
-
             outputs = self.__call_api_parallel(
                 inputs, return_logits=True, max_new_tokens=max_new_tokens, num_samples=1, logit_bias=logit_biass
             )
 
-            # pprint(outputs)
-
             for output, input in zip(outputs, dataset):
-                pprint(output.choices[0].logprobs)
-                pprint(output.choices[0].message)
-                pprint(input.choice)
-                pprint(input.tokenized_continuation)
-                print("=======")
-
-                # continuation_logprobs = []
-
-                # for token, logprobs in zip(input.tokenized_continuation[::-1], output.prompt_logprobs[::-1]):
-                #    continuation_logprobs.append(logprobs[token])
-
-                # bool_score = all(logprob.rank == 1 for logprob in continuation_logprobs)
-                # continuation_logprobs = [logprob.logprob for logprob in continuation_logprobs]
-                # answer = LoglikelihoodResponse(
-                #    input_tokens=input.tokenized_context + input.tokenized_continuation,
-                #    generated_tokens=input.tokenized_continuation,
-                #    result=(sum(continuation_logprobs), bool_score if return_bool_score else None),
-                # )
-                # res.append(answer)
+                continuation_logprobs = [content.logprob for content in output.choices[0].logprobs.content]
+                answer = LoglikelihoodResponse(
+                    input_tokens=input.tokenized_context + input.tokenized_continuation,
+                    generated_tokens=input.tokenized_continuation,
+                    result=(sum(continuation_logprobs), None),
+                )
+                results.append(answer)
 
         return dataset.get_original_order(results)
 
@@ -249,7 +230,7 @@ class OpenAIClient(LightevalModel):
         self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
     ) -> list[LoglikelihoodResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
-        return NotImplemented
+        raise NotImplementedError
 
     def loglikelihood_single_token(
         self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: Optional[int] = None
@@ -257,4 +238,4 @@ class OpenAIClient(LightevalModel):
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
-        return NotImplemented
+        raise NotImplementedError
