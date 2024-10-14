@@ -82,9 +82,8 @@ class OpenAIClient(LightevalModel):
                     model=self.model,
                     messages=[{"role": "user", "content": prompt}],
                     response_format={"type": "text"},
-                    max_tokens=max_new_tokens if max_new_tokens > 0 else 100,
+                    max_tokens=max_new_tokens if max_new_tokens > 0 else None,
                     logprobs=return_logits,
-                    top_logprobs=3,
                     logit_bias=logit_bias,
                     n=num_samples,
                 )
@@ -94,8 +93,16 @@ class OpenAIClient(LightevalModel):
                 time.sleep(self.API_RETRY_SLEEP)
         raise Exception("Failed to get response from the API")
 
-    def __call_api_parallel(self, prompts, return_logits, max_new_tokens, num_samples, logit_bias=None):
+    def __call_api_parallel(
+        self,
+        prompts,
+        return_logits: bool | list[bool],
+        max_new_tokens: int | list[int],
+        num_samples: int | list[int],
+        logit_bias: list[dict[int, float]] | None = None,
+    ):
         results = []
+
         return_logitss = [return_logits for _ in prompts] if not isinstance(return_logits, list) else return_logits
         max_new_tokenss = [max_new_tokens for _ in prompts] if not isinstance(max_new_tokens, list) else max_new_tokens
         num_sampless = [num_samples for _ in prompts] if not isinstance(num_samples, list) else num_samples
