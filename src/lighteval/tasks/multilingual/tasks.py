@@ -223,6 +223,55 @@ xnli_indic_tasks = [
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
 
+# African XNLI: African XNLI
+# From https://arxiv.org/abs/2406.03368. Human translated MMLU.
+afri_xnli_tasks = [
+    LightevalTaskConfig(
+        name=f"afri_xnli_{language.value}_{formulation.name.lower()}",
+        suite=("lighteval",),
+        prompt_function=get_nli_prompt_function(
+            language=language,
+            adapter=lambda line: {
+                "premise": line["premise"],
+                "hypothesis": line["hypothesis"],
+                # Since we ignore the neutral label
+                "gold_idx": {0: 0, 2: 1}[line["label"]],
+            },
+            relations=["entailment", "contradiction"],
+            formulation=formulation,
+        ),
+        hf_repo="masakhane/afrixnli",
+        hf_subset=language.value,
+        hf_filter=lambda x: int(x["label"]) in [0, 2],
+        evaluation_splits=("test",),
+        few_shots_split="validation",
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+        ],
+    )
+    for language in [
+        Language.AMHARIC,
+        # Language.EWE,
+        Language.FRENCH,
+        # Language.HAUSA,
+        # Language.IGBO,
+        # Language.KINYARWANDA,
+        # Language.LINGALA,
+        # Language.LUGANDA,
+        # Language.OROMO,
+        # Language.SHONA,
+        # Language.SOTHO,
+        Language.SWAHILI,
+        # Language.TWI,
+        # Language.WOLOF,
+        # Language.XHOSA,
+        Language.YORUBA,
+        # Language.ZULU,
+    ]
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+]
+
 # PAWS-X: A Cross-lingual Adversarial Dataset for Paraphrase Identification
 # This dataset contains paraphrase identification pairs in multiple languages.
 # It's derived from PAWS (Paraphrase Adversaries from Word Scrambling) and
@@ -361,7 +410,16 @@ cmnli_tasks = [
 ]
 
 TASKS_TABLE.extend(
-    [*xnli_tasks, *xnli2_tasks, *xnli_indic_tasks, *paws_x_tasks, *rcb_tasks, *ocnli_tasks, *cmnli_tasks]
+    [
+        *xnli_tasks,
+        *xnli2_tasks,
+        *xnli_indic_tasks,
+        *paws_x_tasks,
+        *rcb_tasks,
+        *ocnli_tasks,
+        *cmnli_tasks,
+        *afri_xnli_tasks,
+    ]
 )
 # ------------------------------- Copa Tasks ------------------------------- #
 # COPA (Choice of Plausible Alternatives) tasks involve determining the most plausible cause or effect
@@ -1545,6 +1603,70 @@ openai_mmlu_tasks = [
     ]
 ]
 
+# There are only these subsets in the African MMLU
+AFRI_MMLU_SUBSETS = [
+    "elementary_mathematics",
+    "high_school_mathematics",
+    "high_school_geography",
+    "high_school_microeconomics",
+    "international_law",
+    "global_facts",
+]
+# African MMLU: African Massive Multitask Language Understanding
+# From https://arxiv.org/abs/2406.03368. Human translated MMLU.
+afri_mmlu_tasks = [
+    LightevalTaskConfig(
+        name=f"afri_mmlu_{language.value}_{formulation.name.lower()}:{subset}",
+        prompt_function=get_mcq_prompt_function(
+            language,
+            lambda line: {
+                "question": line["question"],
+                "choices": line["choices"],
+                "gold_idx": LETTER_INDICES.index(line["answer"]),
+            },
+            formulation=formulation,
+        ),
+        suite=("lighteval",),
+        hf_repo="masakhane/afrimmlu",
+        # Temporary until the pr is merged
+        hf_revision="refs/pr/1",
+        hf_subset=language.value,
+        hf_filter=partial(lambda subset, line: line["subject"] == subset, subset),
+        evaluation_splits=("test",),
+        few_shots_split="dev",
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+        ],
+    )
+    for subset in AFRI_MMLU_SUBSETS
+    for language in [
+        Language.AMHARIC,
+        # Language.EWE,
+        Language.FRENCH,
+        # Language.HAUSA,
+        # Language.IGBO,
+        # Language.KINYARWANDA,
+        # Language.LINGALA,
+        # Language.LUGANDA,
+        # Language.OROMO,
+        # Language.SHONA,
+        # Language.SOTHO,
+        Language.SWAHILI,
+        # Language.TWI,
+        # Language.WOLOF,
+        # Language.XHOSA,
+        Language.YORUBA,
+        # Language.ZULU,
+    ]
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
 # RUMMLU: Russian Massive Multitask Language Understanding
 # Paper: https://arxiv.org/html/2401.04531v2
 rummlu = [
@@ -1843,6 +1965,7 @@ TASKS_TABLE.extend(
         *openai_mmlu_tasks,
         *arabic_mmlu_tasks,
         *turkish_mmlu_tasks,
+        *afri_mmlu_tasks,
     ]
 )
 
@@ -2772,7 +2895,7 @@ mgsm_tasks = [
         few_shots_split="train",
         generation_size=25,
         metric=[
-            multilingual_quasi_exact_match_metric(Language.CHINESE, "full"),
+            multilingual_quasi_exact_match_metric(language, "full"),
         ],
         stop_sequence=("\n",),
     )
@@ -2789,12 +2912,57 @@ mgsm_tasks = [
         Language.TELUGU,
     ]
 ]
-
+# African MGSM: MGSM for African Languages
+# From https://arxiv.org/abs/2406.03368. Human translated MGSM.
+afri_mgsm_tasks = [
+    LightevalTaskConfig(
+        name=f"afri_mgsm_{language.value}",
+        prompt_function=get_qa_prompt_function(
+            language,
+            lambda line: {
+                "question": line["question"],
+                # The cot is available but we have no use:
+                # line["answer"]
+                "choices": [str(line["answer_number"])],
+            },
+        ),
+        suite=("lighteval",),
+        hf_repo="masakhane/afrimgsm",
+        hf_subset=language.value,
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        generation_size=25,
+        metric=[
+            multilingual_quasi_exact_match_metric(language, "full"),
+        ],
+        stop_sequence=("\n",),
+    )
+    for language in [
+        Language.AMHARIC,
+        # Language.EWE,
+        Language.FRENCH,
+        # Language.HAUSA,
+        # Language.IGBO,
+        # Language.KINYARWANDA,
+        # Language.LINGALA,
+        # Language.LUGANDA,
+        # Language.OROMO,
+        # Language.SHONA,
+        # Language.SOTHO,
+        Language.SWAHILI,
+        # Language.TWI,
+        # Language.WOLOF,
+        # Language.XHOSA,
+        Language.YORUBA,
+        # Language.ZULU,
+    ]
+]
 TASKS_TABLE.extend(
     [
         *cmath_tasks,
         *mathlogicqa_rus_tasks,
         *mgsm_tasks,
+        *afri_mgsm_tasks,
     ]
 )
 
