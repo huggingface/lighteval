@@ -106,7 +106,7 @@ def apply_generative_metric(  # noqa: C901
         preds = []
 
         for pred_raw in preds_raw:
-            if answer_extractor:
+            if answer_extractor is not None:
                 pred = answer_extractor(pred_raw, formatted_doc.choices)
             else:
                 pred = pred_raw
