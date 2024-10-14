@@ -99,7 +99,7 @@ def apply_generative_metric(  # noqa: C901
 
         if len(results) > 1:
             raise Exception("You returned more than one result for a sample with a generative metric.")
-        results = results[0]
+        results = results[:max_num_samples]
 
         # Post processing prediction
         preds_raw = as_list(results.result)

@@ -396,7 +396,7 @@ class LightevalTask:
                 )
             ]
         if self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]:
-            # All these tasks require the same generation process - we can do them in one step
+            # All the possible sampling tasks require the same generation process - we can do them in one step
             # so we select the maximum number of samples and the metrics will select only the
             # relevant number of tiems
             requests[RequestType.GREEDY_UNTIL] += [
