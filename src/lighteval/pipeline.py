@@ -37,7 +37,7 @@ from lighteval.metrics.utils.metric_utils import MetricCategory
 from lighteval.models.model_loader import load_model
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_tasks
-from lighteval.tasks.registry import Registry, get_custom_tasks, taskinfo_selector
+from lighteval.tasks.registry import Registry, taskinfo_selector
 from lighteval.tasks.requests import SampleUid
 from lighteval.utils.imports import (
     NO_ACCELERATE_ERROR_MSG,
@@ -166,23 +166,18 @@ class Pipeline:
                     return load_model(config=model_config, env_config=self.pipeline_parameters.env_config)
             return model
 
-    def _init_tasks_and_requests(self, tasks):
+    def _init_tasks_and_requests(self, tasks: str):
         with htrack_block("Tasks loading"):
             with local_ranks_zero_first() if self.launcher_type == ParallelismManager.NANOTRON else nullcontext():
-                # If some tasks are provided as task groups, we load them separately
-                custom_tasks = self.pipeline_parameters.custom_tasks_directory
-                tasks_groups_dict = None
-                if custom_tasks:
-                    _, tasks_groups_dict = get_custom_tasks(custom_tasks)
-                if tasks_groups_dict and tasks in tasks_groups_dict:
-                    tasks = tasks_groups_dict[tasks]
-
-                # Loading all tasks
-                task_names_list, fewshots_dict = taskinfo_selector(tasks)
-                task_dict = Registry(cache_dir=self.pipeline_parameters.env_config.cache_dir).get_task_dict(
-                    task_names_list, custom_tasks=custom_tasks
+                registry = Registry(
+                    cache_dir=self.pipeline_parameters.env_config.cache_dir,
+                    custom_tasks=self.pipeline_parameters.custom_tasks_directory,
                 )
-                LightevalTask.load_datasets(task_dict.values(), self.pipeline_parameters.dataset_loading_processes)
+                task_names_list, fewshots_dict = taskinfo_selector(tasks, registry)
+                task_dict = registry.get_task_dict(task_names_list)
+                LightevalTask.load_datasets(
+                    list(task_dict.values()), self.pipeline_parameters.dataset_loading_processes
+                )
 
                 self.evaluation_tracker.task_config_logger.log(task_dict)
 
@@ -307,7 +302,10 @@ class Pipeline:
                 metric_category_metrics = [metric for metric in task.metrics if metric.category == metric_category]
 
                 outputs = metric_function(
-                    sample_ids=sample_ids, responses=responses, formatted_docs=docs, metrics=metric_category_metrics
+                    sample_ids=sample_ids,
+                    responses=responses,
+                    formatted_docs=docs,
+                    metrics=metric_category_metrics,
                 )
 
                 for output, doc, response in zip(outputs, docs, responses):

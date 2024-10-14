@@ -24,11 +24,11 @@ import collections
 import inspect
 import random
 from dataclasses import asdict, dataclass, field
-from multiprocessing import Pool
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple
 
 from datasets import DatasetDict
 from huggingface_hub import TextGenerationInputGrammarType
+from multiprocess import Pool
 from pytablewriter import MarkdownTableWriter
 
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
@@ -396,7 +396,7 @@ class LightevalTask:
                 )
             ]
         if self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]:
-            # All these tasks require the same generation process - we can do them in one step
+            # All the possible sampling tasks require the same generation process - we can do them in one step
             # so we select the maximum number of samples and the metrics will select only the
             # relevant number of tiems
             requests[RequestType.GREEDY_UNTIL] += [
