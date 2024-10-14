@@ -90,16 +90,23 @@ def apply_generative_metric(  # noqa: C901
     formatted_docs: list[Doc],
     metrics: list[Metric],
     output_regex: str = None,
-    max_num_samples: int = 1,
 ):
     outputs = []
 
     for sample_id, results, formatted_doc in zip(sample_ids, responses, formatted_docs):
         output = {}
 
+        # Extracting gold
+        try:
+            golds = formatted_doc.get_golds()
+        except (KeyError, IndexError):
+            golds = None
+
+        # Post processing prediction
         if len(results) > 1:
+            # In case of sampling, it's a list of one list of n samples
             raise Exception("You returned more than one result for a sample with a generative metric.")
-        results = results[:max_num_samples]
+        results = results[0]
 
         # Post processing prediction
         preds_raw = as_list(results.result)
@@ -111,12 +118,6 @@ def apply_generative_metric(  # noqa: C901
             else:
                 pred = pred_raw
             preds.append(pred)
-
-        # Extracting gold
-        try:
-            golds = formatted_doc.get_golds()
-        except (KeyError, IndexError):
-            golds = None
 
         for metric in metrics:
             output.update(
