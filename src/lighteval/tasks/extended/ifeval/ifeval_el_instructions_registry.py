@@ -15,7 +15,7 @@
 # Adaptation of the IFEVAL instructions_registry.py to a greek counterpart
 
 """Registry of all instructions."""
-import ifeval_el_instructions as instructions
+from lighteval.tasks.extended.ifeval import ifeval_el_instructions as instructions
 
 
 _KEYWORD = "keywords:"
@@ -70,6 +70,8 @@ INSTRUCTION_DICT = {
     _CHANGE_CASES + "capital_word_frequency": instructions.CapitalWordFrequencyChecker,
     _CHANGE_CASES + "english_capital": instructions.CapitalLettersEnglishChecker,
     _CHANGE_CASES + "english_lowercase": instructions.LowercaseLettersEnglishChecker,
+    _CHANGE_CASES + "capital": instructions.CapitalLettersGreekChecker,
+    _CHANGE_CASES + "lowercase": instructions.LowercaseLettersGreekChecker,
     _PUNCTUATION + "no_comma": instructions.CommaChecker,
     _STARTEND + "quotation": instructions.QuotationChecker,
 }

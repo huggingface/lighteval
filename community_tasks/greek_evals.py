@@ -51,9 +51,7 @@ from lighteval.tasks.extended.ifeval.main import (
     submetric_names,
     agg_inst_level_acc
 )
-from ifeval_el_helpers import (
-    ifeval_el_instructions_registry as instructions_registry
-)
+from lighteval.tasks.extended.ifeval import ifeval_el_instructions_registry as instructions_registry
 # MMLU
 
 GREEK_LETTER_INDICES = ['Α', 'Β', 'Γ', 'Δ', 'Ε', 'Ζ', 'Η', 'Θ', 'Ι', 'Κ', 'Λ', 'Μ', 'Ν', 'Ξ', 'Ο', 'Π', 'Ρ', 'Σ', 'Τ', 'Υ', 'Φ', 'Χ', 'Ψ', 'Ω']
@@ -666,8 +664,7 @@ def mgsm_el_prompt(line, task_name: str = None):
 
     # TODO go back to return mgsm(line, question_key, answer_key, task_name)
     # TODO when dataset is fixed
-
-    if line["answer"] not in ["nan", "None", None]:
+    if line["answer"] not in ["nan", "None", None, ""]:
         query = f"{line['question']}\n{answer_key}"
         gold = f" {line['answer'][len(answer_key) + 1:]}"
     else:
@@ -718,6 +715,28 @@ mt_bench_el_task = LightevalTaskConfig(
 
 # IFEVAL EL
 
+def cast_input(value):
+    if value is None:
+        return None
+    
+    if isinstance(value, str):
+        value = value.strip()
+        
+        if value.lower() == 'none':
+            return None
+        
+        if value.lower() == 'true':
+            return True
+        elif value.lower() == 'false':
+            return False
+        
+        try:
+            return float(value)
+        except ValueError:
+            pass
+    
+    return value
+
 # retrieve IFEVAL metric to provide greek instruction heuristics
 def ifeval_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dict:
     response = predictions[0]
@@ -752,10 +771,15 @@ def ifeval_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dict:
 
     for index, instruction_id in enumerate(instruction_list):
         instruction_cls = instructions_registry.INSTRUCTION_DICT[instruction_id]
+        print(index)
+        print(instruction_cls)
+        print(instruction_id)
         instruction = instruction_cls(instruction_id)
 
         # Remove None values from kwargs to avoid unexpected keyword argument errors in build_description method.
-        task_kwargs = {k: v for k, v in all_kwargs[index].items() if v}
+        task_kwargs = {k: cast_input(v) for k, v in all_kwargs[index].items() if (v and v != 'None')}
+        print(task_kwargs)
+        print(type(v) for _,v in task_kwargs)
         instruction.build_description(**task_kwargs)
         args = instruction.get_instruction_args()
         if args and "prompt" in args:
