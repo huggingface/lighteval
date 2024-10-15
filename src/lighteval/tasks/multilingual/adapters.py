@@ -20,9 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
 import re
 
 import numpy as np
+from langcodes import standardize_tag
 
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.multilingual.utils.adapters_utils import (
@@ -30,7 +32,9 @@ from lighteval.tasks.multilingual.utils.adapters_utils import (
     multichoice_join,
     multichoice_to_single_choice,
 )
+from lighteval.tasks.templates.continuation import ContinuationInput
 from lighteval.tasks.templates.multichoice import MCQInput
+from lighteval.tasks.templates.qa import QAInput
 from lighteval.tasks.templates.utils.formatting_utils import PUNCT
 from lighteval.tasks.templates.utils.formulation import CFFormulation, Formulation
 from lighteval.tasks.templates.utils.translation_literals import TranslationLiterals
@@ -60,14 +64,14 @@ def get_m3exam_adapter(lang: Language, line: dict) -> MCQInput | None:
 def thai_exams_adapter(line: dict) -> MCQInput | None:
     pos_letters = [letter.lower() for letter in LETTER_INDICES[:5]]
 
-    lettr_to_choices = {letter: line[letter] for letter in pos_letters if letter in line}
-    if any(opt.strip() == "" for opt in lettr_to_choices.values()):
+    letter_to_choices = {letter: line[letter] for letter in pos_letters if letter in line}
+    if any(opt.strip() == "" for opt in letter_to_choices.values()):
         return None
 
-    gold_index = list(lettr_to_choices.keys()).index(line["answer"])
+    gold_index = list(letter_to_choices.keys()).index(line["answer"])
     return {
         "question": line["question"],
-        "choices": list(lettr_to_choices.values()),
+        "choices": list(letter_to_choices.values()),
         "gold_idx": gold_index,
     }
 
@@ -111,7 +115,7 @@ def ceval_adapter(lang: Language, formulation: Formulation, line: dict) -> MCQIn
 
     parts = line["question"].rsplit("____", maxsplit=1)
     cleaned_question = parts[0].rstrip(PUNCT).strip()
-    possible_answers_part = parts[1].lstrip(PUNCT)
+    possible_answers_part = parts[1].strip().lstrip(PUNCT)
     gold_index = LETTER_INDICES.index(line["answer"])
 
     # We only attempt to extract answers if the answers are a chinese numbers
@@ -206,4 +210,69 @@ def agieval_adapter(lang: Language, formulation: Formulation, line: dict) -> MCQ
         "choices": cleaned_choices,
         "gold_idx": gold_index,
         "context": context,
+    }
+
+
+def xcodah_adapter(lang: Language, line: dict) -> MCQInput | None:
+    translation_literals = TranslationLiterals(lang)
+
+    gold_index = line["question"]["choices"]["label"].index(line["answerKey"])
+    # All the choices have already common prefix "baken in" so we have to remove to get clearer signal
+    # Extract common prefix from choices
+    choices = line["question"]["choices"]["text"]
+    common_prefix = os.path.commonprefix(choices)
+
+    # Backtract to first space to get good tokenization
+    first_word = common_prefix.rfind(translation_literals.word_space)
+
+    # If there is no word_space we shouldn't remove the common prefix
+    common_prefix = common_prefix[:first_word] if first_word != -1 else ""
+
+    # Remove common prefix from each choice
+    cleaned_choices = [choice[len(common_prefix) :] for choice in choices]
+
+    if any(len(c.strip()) == 0 for c in cleaned_choices):
+        return None
+
+    return {
+        "question": common_prefix,
+        "choices": cleaned_choices,
+        "gold_idx": gold_index,
+    }
+
+
+def winogrand_adapter(lang: Language, line: dict) -> ContinuationInput | None:
+    translation_literals = TranslationLiterals(lang)
+    if line["sentence"].count("_") != 1:
+        return None
+
+    query, end_of_target = line["sentence"].split("_")
+    if len(query.strip()) == 0:
+        return None
+
+    options = [line["option1"], line["option2"]]
+    return {
+        "context": query,
+        "continuations": [f"{o}{translation_literals.word_space}{end_of_target}" for o in options],
+        "gold_idx": int(line["answer"]) - 1,
+    }
+
+
+def get_mkqa_adapter(lang: Language, line: dict) -> QAInput | None:
+    lang_key = "zh_cn" if lang == Language.CHINESE else standardize_tag(lang.value)
+    text = line["answers"][lang_key][0]["text"]
+    if text is None:
+        return None
+
+    aliases = line["answers"][lang_key][0]["aliases"]
+    answers = list(filter(lambda x: len(x.strip()) > 0, [text] + aliases))
+    # Some samples are broken so this is heuristic
+    # e. g   'text': '七月 20, 1969',
+    #        'aliases': ['1', 'u', ',', '2', ' ', '6', 'l', 'y', '9', '0', 'j']}],
+    if len(answers) == 0 or len(answers) > 5:
+        return None
+
+    return {
+        "question": line["queries"][lang_key],
+        "choices": answers,
     }

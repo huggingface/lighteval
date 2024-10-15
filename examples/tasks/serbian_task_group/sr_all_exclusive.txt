@@ -1,0 +1,75 @@
+# Serbian Evaluations - ARC (AI2 Reasoning Challenge)
+community|serbian_evals:arc_easy|0|0
+community|serbian_evals:arc_challenge|0|0
+# Commonsense Reasoning
+community|serbian_evals:hellaswag|0|0
+community|serbian_evals:piqa|0|0
+community|serbian_evals:winogrande|0|0
+# Serbian Evaluations - Custom/Other Task
+community|serbian_evals:oz_eval|0|0
+# MMLU (Miscellaneous)
+community|serbian_evals:mmlu_anatomija|0|0
+community|serbian_evals:mmlu_astronomija|0|0
+community|serbian_evals:mmlu_poslovna_etika|0|0
+community|serbian_evals:mmlu_kliničko_znanje|0|0
+community|serbian_evals:mmlu_razno|0|0
+community|serbian_evals:mmlu_elektrotehnika|0|0
+# Serbian Evaluations - ARC (AI2 Reasoning Challenge)
+community|serbian_evals:arc_easy|0|0
+community|serbian_evals:arc_challenge|0|0
+# Commonsense Reasoning
+community|serbian_evals:hellaswag|0|0
+community|serbian_evals:piqa|0|0
+community|serbian_evals:winogrande|0|0
+# Serbian Evaluations - Custom/Other Task
+community|serbian_evals:oz_eval|0|0
+# MMLU (Miscellaneous)
+community|serbian_evals:mmlu_anatomija|0|0
+community|serbian_evals:mmlu_astronomija|0|0
+community|serbian_evals:mmlu_poslovna_etika|0|0
+community|serbian_evals:mmlu_kliničko_znanje|0|0
+community|serbian_evals:mmlu_razno|0|0
+community|serbian_evals:mmlu_elektrotehnika|0|0
+# MMLU (Business Professional)
+community|serbian_evals:mmlu_marketing|0|0
+community|serbian_evals:mmlu_manadzment|0|0
+# MMLU (College Level Tasks)
+community|serbian_evals:mmlu_fakultet_biologija|0|0
+community|serbian_evals:mmlu_fakultet_hemija|0|0
+community|serbian_evals:mmlu_fakultet_racunari|0|0
+community|serbian_evals:mmlu_fakultet_matematika|0|0
+community|serbian_evals:mmlu_fakultet_medicina|0|0
+community|serbian_evals:mmlu_fakultet_fizika|0|0
+community|serbian_evals:mmlu_sigurnost_racunara|0|0
+# MMLU (Ethics, Philosophy)
+community|serbian_evals:mmlu_moralni_sporovi|0|0
+community|serbian_evals:mmlu_moralne_dileme|0|0
+community|serbian_evals:mmlu_filozofija|0|0
+community|serbian_evals:mmlu_svetska_religija|0|0
+# MMLU (High School Level Tasks)
+community|serbian_evals:mmlu_srednja_skola_biologija|0|0
+community|serbian_evals:mmlu_srednja_skola_hemija|0|0
+community|serbian_evals:mmlu_srednja_skola_racunari|0|0
+community|serbian_evals:mmlu_srednja_skola_istorija_evrope|0|0
+community|serbian_evals:mmlu_srednja_skola_geografija|0|0
+community|serbian_evals:mmlu_srednja_skola_matematika|0|0
+community|serbian_evals:mmlu_srednja_skola_mikroekonomija|0|0
+community|serbian_evals:mmlu_srednja_skola_fizika|0|0
+community|serbian_evals:mmlu_srednja_skola_psihologija|0|0
+community|serbian_evals:mmlu_srednja_skola_statistika|0|0
+community|serbian_evals:mmlu_srednja_skola_svetska_istorija|0|0
+# MMLU (Math, Logic)
+community|serbian_evals:mmlu_abstract_algebra|0|0
+community|serbian_evals:mmlu_osnovna_matematika|0|0
+community|serbian_evals:mmlu_formalna_logika|0|0
+community|serbian_evals:mmlu_konceptualna_fizika|0|0
+community|serbian_evals:mmlu_metrika_ekonomije|0|0
+community|serbian_evals:mmlu_masinsko_ucenje|0|0
+# MMLU (Social Sciences)
+community|serbian_evals:mmlu_globalne_cinjenice|0|0
+community|serbian_evals:mmlu_logicke_zablude|0|0
+community|serbian_evals:mmlu_sociologija|0|0
+community|serbian_evals:mmlu_human_aging|0|0
+# Question Answering and Knowledge
+community|serbian_evals:boolq|0|0
+community|serbian_evals:openbook|0|0

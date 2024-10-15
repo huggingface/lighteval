@@ -24,11 +24,11 @@ import collections
 import inspect
 import random
 from dataclasses import asdict, dataclass, field
-from multiprocessing import Pool
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple
 
 from datasets import DatasetDict
 from huggingface_hub import TextGenerationInputGrammarType
+from multiprocess import Pool
 from pytablewriter import MarkdownTableWriter
 
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
@@ -395,12 +395,29 @@ class LightevalTask:
                     metric_categories=[MetricCategory.PERPLEXITY],
                 )
             ]
+        if self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]:
+            # All the possible sampling tasks require the same generation process - we can do them in one step
+            # so we select the maximum number of samples and the metrics will select only the
+            # relevant number of tiems
+            requests[RequestType.GREEDY_UNTIL] += [
+                GreedyUntilRequest(
+                    task_name=current_task_name,
+                    sample_index=document_id_seed,
+                    request_index=0,
+                    context=context,
+                    stop_sequence=self.stop_sequence,
+                    generation_size=self.generation_size,
+                    generation_grammar=self.generation_grammar,
+                    num_samples=max(self.num_samples),
+                    do_sample=True,
+                    use_logits=False,
+                    metric_categories=[MetricCategory.GENERATIVE_SAMPLING],
+                )
+            ]
         if (
-            self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]
-            or self.has_metric_category[MetricCategory.GENERATIVE]
+            self.has_metric_category[MetricCategory.GENERATIVE]
             or self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]
         ):
-            # All these tasks require the same generation process - we can do them in one step
             use_logits = self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]
             requests[RequestType.GREEDY_UNTIL] += [
                 GreedyUntilRequest(
@@ -411,12 +428,11 @@ class LightevalTask:
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
                     generation_grammar=self.generation_grammar,
-                    num_samples=max(self.num_samples),  # If we have several samplings to apply, we use the max
+                    num_samples=1,
                     use_logits=use_logits,
                     metric_categories=[
                         c
                         for c in [
-                            MetricCategory.GENERATIVE_SAMPLING,
                             MetricCategory.GENERATIVE,
                             MetricCategory.GENERATIVE_LOGPROB,
                         ]
@@ -443,7 +459,6 @@ class LightevalTask:
                 )
                 for i, choice in enumerate(formatted_doc.choices)
             ]
-
         if self.has_metric_category[MetricCategory.MULTICHOICE_PMI]:
             assert (
                 formatted_doc.unconditioned_query is not None
