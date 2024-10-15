@@ -1,0 +1,5 @@
+# MMLU (Ethics, Philosophy)
+community|serbian_evals:mmlu_moralni_sporovi|0|0
+community|serbian_evals:mmlu_moralne_dileme|0|0
+community|serbian_evals:mmlu_filozofija|0|0
+community|serbian_evals:mmlu_svetska_religija|0|0
