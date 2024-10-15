@@ -229,6 +229,7 @@ class VLLMModelConfig:
     pairwise_tokenization: bool = False  # whether to tokenize the context and continuation separately or together.
 
     subfolder: Optional[str] = None
+    temperature: float = 0.6  # will be used for multi sampling tasks, for tasks requiring no sampling, this will be ignored and set to 0.
 
 
 @dataclass
