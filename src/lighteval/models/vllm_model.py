@@ -155,6 +155,7 @@ class VLLMModel(LightevalModel):
         # config and tk config, like mistralai/Mistral-7B-v0.1
         if self._max_length is None:
             self._max_length = model.llm_engine.model_config.max_seq_len_to_capture
+
         return model
 
     def _create_auto_tokenizer(self, config: VLLMModelConfig, env_config: EnvConfig):
@@ -273,7 +274,7 @@ class VLLMModel(LightevalModel):
         """Contains the actual logic of the generation."""
         if generate:
             sampling_params = SamplingParams(
-                temperature=1.0 if num_samples > 1 else 0.0,
+                temperature=float(self._config.temperature) if num_samples > 1 else 0.0,
                 n=num_samples,
                 max_tokens=max_new_tokens,
                 stop=stop_tokens,
