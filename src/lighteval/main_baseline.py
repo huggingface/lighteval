@@ -55,7 +55,7 @@ def main(args):
     )
     evaluation_tracker.general_config_logger.log_model_info(
         ModelInfo(
-            model_name="baseline",
+            model_name="lighteval/baseline",
             model_sha=None,
             model_dtype=None,
             model_size=None,
