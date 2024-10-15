@@ -302,7 +302,10 @@ class Pipeline:
                 metric_category_metrics = [metric for metric in task.metrics if metric.category == metric_category]
 
                 outputs = metric_function(
-                    sample_ids=sample_ids, responses=responses, formatted_docs=docs, metrics=metric_category_metrics
+                    sample_ids=sample_ids,
+                    responses=responses,
+                    formatted_docs=docs,
+                    metrics=metric_category_metrics,
                 )
 
                 for output, doc, response in zip(outputs, docs, responses):
