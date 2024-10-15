@@ -29,6 +29,18 @@ from lighteval.utils.utils import as_list
 
 
 def main(args):
+    """
+    Compute baselines for given tasks.
+
+    It has been tested with generative and accuracy tasks, but may not work correctly for other task types.
+
+    The baseline is computed as follows:
+    - For multiple-choice tasks: It assumes random guessing, so the score is n_correct/number_of_choices.
+    - For other metrics: It assigns a score of 0, which may not be appropriate for all task types.
+
+    Note:
+        This baseline computation may not be suitable for all task types and should be used with caution.
+    """
     task_registry = Registry(cache_dir=args.cache_dir, custom_tasks=args.custom_tasks)
     task_names_list, fewshots_dict = taskinfo_selector(args.tasks, task_registry)
     task_dict = task_registry.get_task_dict(task_names_list)
@@ -62,7 +74,10 @@ def main(args):
         ]
 
         metric_results = {
-            metric.metric_name: p_correct_score if metric.category in [MetricCategory.MULTICHOICE] else 0
+            metric.metric_name: p_correct_score
+            if metric.category
+            in [MetricCategory.MULTICHOICE, MetricCategory.MULTICHOICE_PMI, MetricCategory.MULTICHOICE_ONE_TOKEN]
+            else 0
             for metric in task.metrics
         }
 
