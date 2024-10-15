@@ -821,7 +821,6 @@ ifeval_metrics = SampleLevelMetricGrouping(
     },
 )
 
-
 ifeval_el_task = LightevalTaskConfig(
     name="ifeval_el",
     prompt_function=ifeval_prompt,
@@ -839,12 +838,180 @@ ifeval_el_task = LightevalTaskConfig(
 )
 
 
+# MMLU-PRO EL
+# Alot of the following logic is logic adapted from the original MMLU-PRO repo https://github.com/TIGER-AI-Lab/MMLU-Pro
+
+MMLU_PRO_CHOICES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
+
+def preprocess(test_df):
+    res_df = []
+    for each in test_df:
+        options = []
+        for opt in each["options"]:
+            if opt == "N/A":
+                continue
+            options.append(opt)
+        each["options"] = options
+        res_df.append(each)
+    return res_df
+
+def select_by_category(df, subject):
+    res = []
+    for each in df:
+        if each["category"] == subject:
+            res.append(each)
+    return res
+
+# TODO including_answer part of MMLU PRO not yet implemented in Greek
+def format_cot_example(example, including_answer=True):
+    prompt = "Question:\n"
+    question = example["question"]
+    options = example["options"]
+    prompt += question + "\n"
+    prompt += "Options:\n"
+    for i, opt in enumerate(options):
+        prompt += "{}. {}\n".format(MMLU_PRO_CHOICES[i], opt)
+    if including_answer:
+        cot_content = example["cot_content"].replace("Α: Σκέψου βήμα προς βήμα.",
+                                                     "Απάντηση: Σκέψου βήμα προς βήμα.")
+        prompt += cot_content + "\n\n"
+    else:
+        prompt += "Απάντηση: Σκέψου βήμα προς βήμα."
+    return prompt
+
+def format_example(example):
+    prompt = "Ερώτηση:\n"
+    question = example["question"]
+    options = example["options"]
+    prompt += question + "\n"
+    prompt += "Επιλογές:\n"
+    for i, opt in enumerate(options):
+        prompt += "{}. {}\n".format(MMLU_PRO_CHOICES[i], opt)
+    prompt += "Απάντηση: "
+    return prompt
+
+def mmlu_pro_el_prompt(line, task_name: str = None):
+    # TODO probably have to change choice labels. And fix prompt (maybe add subject in prompt)
+    prompt = '''Οι ακόλουθες ερωτήσεις πολλαπλής επιλογής παρουσιάζονται μαζί με της απαντήσεις τους. 
+    Σκέψου βήμα προς βήμα και τέλειωσε την απάντηση σου με "η απάντηση είναι (Χ)" 
+    όπου Χ είναι το γράμμα που αντιστοιχτεί στην σωστή επιλογή.\n'''
+    query = prompt + format_example(line)
+    gold_ix = MMLU_PRO_CHOICES.index(line["answer"]) if isinstance(line["answer"], str) else line["answer"]
+    choices = MMLU_PRO_CHOICES[:len(line["options"])] 
+    print("Query\n")
+    print(query)
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=choices,
+        gold_index=gold_ix,
+        instruction=prompt,
+        target_for_fewshot_sorting=choices[gold_ix],
+    )
+
+def mmlu_pro_el_cot_prompt(line, task_name: str = None):
+    prompt = '''Οι ακόλουθες ερωτήσεις πολλαπλής επιλογής παρουσιάζονται μαζί με της απαντήσεις τους. 
+    Σκέψου βήμα προς βήμα και τέλειωσε την απάντηση σου με "η απάντηση είναι (Χ)" 
+    όπου Χ είναι το γράμμα που αντιστοιχτεί στην σωστή επιλογή.\n'''
+    # TODO probably have to change choice labels.
+    query = prompt + format_cot_example(line)
+    gold_ix = MMLU_PRO_CHOICES.index(line["answer"]) if isinstance(line["answer"], str) else line["answer"]
+    choices = MMLU_PRO_CHOICES[:len(line["options"])] 
+    print("Query\n")
+    print(query)
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=choices,
+        gold_index=gold_ix,
+        instruction=prompt,
+        target_for_fewshot_sorting=choices[gold_ix],
+    )
+
+def extract_answer(text):
+    pattern = r"απάντηση είναι \(?([A-J])\)?"
+    match = re.search(pattern, text)
+    if match:
+        return match.group(1)
+    else:
+        print("1st answer extract failed\n" + text)
+        return extract_again(text)
+
+
+def extract_again(text):
+    match = re.search(r'.*[αΑ]πάντηση:\s*([A-J])', text)
+    if match:
+        return match.group(1)
+    else:
+        return extract_final(text)
+
+
+def extract_final(text):
+    pattern = r"\b[A-J]\b(?!.*\b[A-J]\b)"
+    match = re.search(pattern, text, re.DOTALL)
+    if match:
+        return match.group(0)
+    else:
+        return None
+
+def parsed_mmlu_pro_answer_acc(predictions: list[str], formatted_doc: Doc, **kwargs) -> dict:
+    parsed_response = extract_answer(predictions[0])
+    print("initial response\n")
+    print(predictions[0])
+    print("parsed response\n")
+    print(parsed_response)
+    return parsed_response == formatted_doc.choices[formatted_doc.gold_index].strip()
+
+mmlupro_el_metric = SampleLevelMetric(
+    metric_name="mmlupro_el_accuracy",
+    higher_is_better=True,
+    category=MetricCategory.GENERATIVE,
+    use_case=MetricUseCase.ACCURACY,
+    sample_level_fn=parsed_mmlu_pro_answer_acc,
+    corpus_level_fn=np.mean,
+)
+
+MMLU_PRO_EL_PROMPT_FNS = {
+    "el": mmlu_pro_el_prompt, 
+    "cot_el": mmlu_pro_el_cot_prompt
+}
+
+class MMLUProELTask(LightevalTaskConfig):
+    def __init__(
+        self,
+        name,
+        prompt_fn,
+    ):
+        super().__init__(
+            name=name,
+            suite=["community"],
+            prompt_function=prompt_fn,
+            hf_repo="ilsp/MMLU-Pro_greek",
+            hf_subset="default",
+            hf_avail_splits=["test"],
+            evaluation_splits=["test"],
+            few_shots_split="test",
+            few_shots_select="random_sampling",
+            generation_size=2048,
+            metric=[mmlupro_el_metric],
+            stop_sequence=[], # no stop sequence, will use eot token
+            output_regex=None,
+            frozen=False,
+            trust_dataset=True,
+            version=0
+        )
+
+MMLU_PRO_EL_TASKS = [
+    MMLUProELTask(name=f"mmlu_pro_{prompt_strat}", prompt_fn=MMLU_PRO_EL_PROMPT_FNS[prompt_strat]) for prompt_strat in MMLU_PRO_EL_PROMPT_FNS
+]
+
 _TASKS = (
     MMLU_EL_TASKS +
     ARC_EL_TASKS +
     TRUTHFULQA_TASKS +
     BELEBELE_TASKS +
     FLORES200_TASKS +
+    MMLU_PRO_EL_TASKS +
     [hellaswag_el_task] +
     [xnli_el_task] +
     [xnli_2_el_task] +
@@ -859,6 +1026,8 @@ _TASKS = (
 
 TASKS_TABLE = list(_TASKS)
 extend_enum(Metrics, "mgsm_el_parsed_exact_match", mgsm_el_metric)
+extend_enum(Metrics, "ifeval_el_metrics", ifeval_metrics)
+extend_enum(Metrics, "mmlupro_el_accuracy", mmlupro_el_metric)
 
 if __name__ == "__main__":
     print(t.name for t in TASKS_TABLE)
