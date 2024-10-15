@@ -898,8 +898,6 @@ def mmlu_pro_el_prompt(line, task_name: str = None):
     query = prompt + format_example(line)
     gold_ix = MMLU_PRO_CHOICES.index(line["answer"]) if isinstance(line["answer"], str) else line["answer"]
     choices = MMLU_PRO_CHOICES[:len(line["options"])] 
-    print("Query\n")
-    print(query)
     return Doc(
         task_name=task_name,
         query=query,
@@ -917,8 +915,6 @@ def mmlu_pro_el_cot_prompt(line, task_name: str = None):
     query = prompt + format_cot_example(line)
     gold_ix = MMLU_PRO_CHOICES.index(line["answer"]) if isinstance(line["answer"], str) else line["answer"]
     choices = MMLU_PRO_CHOICES[:len(line["options"])] 
-    print("Query\n")
-    print(query)
     return Doc(
         task_name=task_name,
         query=query,
@@ -956,10 +952,6 @@ def extract_final(text):
 
 def parsed_mmlu_pro_answer_acc(predictions: list[str], formatted_doc: Doc, **kwargs) -> dict:
     parsed_response = extract_answer(predictions[0])
-    print("initial response\n")
-    print(predictions[0])
-    print("parsed response\n")
-    print(parsed_response)
     return parsed_response == formatted_doc.choices[formatted_doc.gold_index].strip()
 
 mmlupro_el_metric = SampleLevelMetric(
