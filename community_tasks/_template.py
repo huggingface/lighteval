@@ -99,7 +99,7 @@ class CustomSubsetTask(LightevalTaskConfig):
             suite=["community"],
             generation_size=-1,
             stop_sequence=None,
-            output_regex=None,
+            answer_extractor=None,
             frozen=False,
         )
 

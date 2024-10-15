@@ -267,7 +267,7 @@ class CustomMathEvaluationTask(LightevalTaskConfig):
         generation_size=40,
         trust_dataset=True,
         stop_sequence=None,
-        output_regex=None,
+        answer_extractor=None,
         frozen=False,
     ):
         super().__init__(
@@ -282,7 +282,7 @@ class CustomMathEvaluationTask(LightevalTaskConfig):
             few_shots_select=few_shots_select,
             suite=suite,
             generation_size=generation_size,
-            output_regex=output_regex,
+            answer_extractor=answer_extractor,
             frozen=frozen,
             trust_dataset=trust_dataset,
             stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
@@ -371,7 +371,7 @@ class CustomMMLUEvaluationTask(LightevalTaskConfig):
         generation_size=-1,
         trust_dataset=True,
         stop_sequence=None,
-        output_regex=None,
+        answer_extractor=None,
         frozen=False,
     ):
         super().__init__(
@@ -388,7 +388,7 @@ class CustomMMLUEvaluationTask(LightevalTaskConfig):
             generation_size=generation_size,
             trust_dataset=trust_dataset,
             stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
-            output_regex=output_regex,
+            answer_extractor=answer_extractor,
             frozen=frozen,
         )
 
@@ -488,7 +488,7 @@ class CustomBBHEvaluationTask(LightevalTaskConfig):
         generation_size=4,
         trust_dataset=True,
         stop_sequence=None,
-        output_regex=None,
+        answer_extractor=None,
         frozen=False,
     ):
         super().__init__(
@@ -505,7 +505,7 @@ class CustomBBHEvaluationTask(LightevalTaskConfig):
             generation_size=generation_size,
             trust_dataset=trust_dataset,
             stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
-            output_regex=output_regex,
+            answer_extractor=answer_extractor,
             frozen=frozen,
         )
 
@@ -624,7 +624,7 @@ class CustomAGIEvalEvaluationTask(LightevalTaskConfig):
         generation_size=-1,
         trust_dataset=True,
         stop_sequence=None,
-        output_regex=None,
+        answer_extractor=None,
         frozen=False,
     ):
         super().__init__(
@@ -641,7 +641,7 @@ class CustomAGIEvalEvaluationTask(LightevalTaskConfig):
             generation_size=generation_size,
             trust_dataset=trust_dataset,
             stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
-            output_regex=output_regex,
+            answer_extractor=answer_extractor,
             frozen=frozen,
         )
 
