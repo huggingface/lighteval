@@ -95,6 +95,7 @@ dev = ["lighteval[accelerate,quality,tests,multilingual]"]
 extended_tasks = [
   "langdetect", # ifeval
   "openai", # llm as a judge using openai models
+  "tiktoken"
 ]
 s3 = ["s3fs"]
 multilingual = [
