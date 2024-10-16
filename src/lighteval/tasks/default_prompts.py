@@ -786,7 +786,7 @@ def hellaswag_harness(line, task_name: str = None):
     )
 
 
-def hellaswag_helm(line, task_name: str = None):
+def hellaswag_generative(line, task_name: str = None):
     query = "The following are multiple choice questions (with answers) about common sense.\n\n"
     query += f"Question: {line['activity_label']}: {line['ctx_a']} {line['ctx_b'].capitalize()}\n"
     query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, line["endings"])])
@@ -800,9 +800,6 @@ def hellaswag_helm(line, task_name: str = None):
         gold_index=gold_ix,  # -1 for test,
         instruction="The following are multiple choice questions (with answers) about common sense.\n\n",
         target_for_fewshot_sorting=line["endings"][gold_ix] if gold_ix > -1 else "",
-        specific={
-            "label_to_choices": {f" {key}": choice for key, choice in zip(LETTER_INDICES, line["endings"])},
-        },
     )
 
 
