@@ -702,7 +702,7 @@ class BLEURT:
         self.model = AutoModelForSequenceClassification.from_pretrained("Elron/bleurt-tiny-512")
         self.model.eval()
 
-    def compute(self, golds: list[str], predictions: list[str]) -> float:
+    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float:
         """Uses the stored BLEURT scorer to compute the score on the current sample.
 
         Args:
@@ -715,8 +715,7 @@ class BLEURT:
         if len(predictions) == 1:
             predictions = predictions * len(golds)
         scores = self.model(**self.tokenizer(golds, predictions, return_tensors="pt"))[0].squeeze()
-
-        return scores
+        return scores.item()
 
 
 class BLEU:
