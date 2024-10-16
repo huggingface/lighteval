@@ -110,6 +110,10 @@ class OpenAIClient(LightevalModel):
         num_sampless = [num_samples for _ in prompts] if not isinstance(num_samples, list) else num_samples
         logit_biass = [logit_bias for _ in prompts] if logit_bias is None else logit_bias
 
+        assert (
+            len(prompts) == len(return_logitss) == len(max_new_tokenss) == len(num_sampless) == len(logit_biass)
+        ), "Length of prompts, return_logitss, max_new_tokenss, num_sampless, logit_biass should be same"
+
         with ThreadPoolExecutor(self.CONCURENT_CALLS) as executor:
             for entry in tqdm(
                 executor.map(self.__call_api, prompts, return_logitss, max_new_tokenss, num_sampless, logit_biass),
