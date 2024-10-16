@@ -70,6 +70,7 @@ class OpenAIClient(LightevalModel):
         )
         self.API_MAX_RETRY = 5
         self.API_RETRY_SLEEP = 3
+        self.API_RETRY_MULTIPLIER = 2
         self.CONCURENT_CALLS = 100
         self.model = config.model
         self._tokenizer = tiktoken.encoding_for_model(self.model)
@@ -91,6 +92,7 @@ class OpenAIClient(LightevalModel):
             except Exception as e:
                 hlog_warn(f"{type(e), e}")
                 time.sleep(self.API_RETRY_SLEEP)
+                self.API_RETRY_SLEEP = self.API_RETRY_SLEEP**self.API_RETRY_MULTIPLIER
         raise Exception("Failed to get response from the API")
 
     def __call_api_parallel(
@@ -213,6 +215,10 @@ class OpenAIClient(LightevalModel):
             inputs = [dataset[i].context for i in range(len(dataset))]
             logit_biass = []
             max_new_tokens = [len(dataset[i].tokenized_continuation) for i in range(len(dataset))]
+
+            assert all(
+                new_tokens == 1 for new_tokens in max_new_tokens
+            ), "Only single token continuations are supported when using openai API."
 
             for i in range(len(dataset)):
                 logit_bias = {tok: 100 for tok in dataset[i].tokenized_continuation}
