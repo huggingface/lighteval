@@ -149,6 +149,7 @@ class InferenceEndpointModel(LightevalModel):
                 "You deleted your endpoint after using it. You'll need to create it again if you need to reuse it."
             )
 
+    @property
     def max_length(self):
         if self._max_length is not None:
             return self._max_length

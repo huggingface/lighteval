@@ -255,7 +255,7 @@ def create_custom_tasks_module(custom_tasks: Union[str, Path, ModuleType]) -> Mo
     if isinstance(custom_tasks, ModuleType):
         return custom_tasks
     if isinstance(custom_tasks, (str, Path)) and os.path.exists(custom_tasks):
-        dataset_module = dataset_module_factory(str(custom_tasks))
+        dataset_module = dataset_module_factory(str(custom_tasks), trust_remote_code=True)
         return importlib.import_module(dataset_module.module_path)
     if isinstance(custom_tasks, (str, Path)):
         return importlib.import_module(str(custom_tasks))
