@@ -64,6 +64,7 @@ class InferenceEndpointModel(LightevalModel):
         self, config: Union[InferenceEndpointModelConfig, InferenceModelConfig], env_config: EnvConfig
     ) -> None:
         self.reuse_existing = getattr(config, "should_reuse_existing", True)
+        self._max_length = None
         if isinstance(config, InferenceEndpointModelConfig):
             if config.should_reuse_existing:
                 self.endpoint = get_inference_endpoint(
