@@ -78,6 +78,7 @@ class Language(Enum):
     URDU = "urd"
     AMHARIC = "amh"
     TELUGU = "tel"
+    HAITIAN = "hti"
     MALAYALAM = "mal"
     KANNADA = "kan"
     NEPALI = "nep"
@@ -113,6 +114,7 @@ class Language(Enum):
     SOMALI = "som"
     SANSKRIT = "san"
     SINDHI = "snd"
+    QUECHUA = "que"
     TURKMEN = "tuk"
     SOUTH_AZERBAIJANI = "azb"
     SORANI = "ckb"
@@ -216,7 +218,7 @@ iso_639_3_ind_to_iso_639_3_macro = {
     #  'zul': Language.ZULU,
     #  'bod': Language.TIBETAN,
     "eng": Language.ENGLISH,
-    #  'hat': Language.HAITIAN,
+    "hat": Language.HAITIAN,
     #  'ilo': Language.ILOCANO,
     "kaz": Language.KAZAKH,
     "lit": Language.LITHUANIAN,
@@ -241,6 +243,7 @@ iso_639_3_ind_to_iso_639_3_macro = {
     "ary": Language.ARABIC,
     "cat": Language.CATALAN,
     "eus": Language.BASQUE,
+    "que": Language.QUECHUA,
     "heb": Language.HEBREW,
     "isl": Language.ICELANDIC,
     #  'khk': Language.MONGOLIAN,

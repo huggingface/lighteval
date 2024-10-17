@@ -463,7 +463,8 @@ xcopa_tasks = [
         Language.TURKISH,
         Language.VIETNAMESE,
         Language.CHINESE,
-        # Optionally: Haitian, Quechu
+        Language.HAITIAN,
+        Language.QUECHUA,
     ]
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
