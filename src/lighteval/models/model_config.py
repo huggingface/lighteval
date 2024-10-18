@@ -229,6 +229,12 @@ class VLLMModelConfig:
     pairwise_tokenization: bool = False  # whether to tokenize the context and continuation separately or together.
 
     subfolder: Optional[str] = None
+    temperature: float = 0.6  # will be used for multi sampling tasks, for tasks requiring no sampling, this will be ignored and set to 0.
+
+
+@dataclass
+class OpenAIModelConfig:
+    model: str
 
 
 @dataclass
@@ -307,6 +313,7 @@ def create_model_config(  # noqa: C901
     InferenceEndpointModelConfig,
     DummyModelConfig,
     VLLMModelConfig,
+    OpenAIModelConfig,
 ]:
     """
     Create a model configuration based on the provided arguments.
@@ -343,6 +350,9 @@ def create_model_config(  # noqa: C901
 
         if model_args.pop("vllm", False):
             return VLLMModelConfig(**model_args)
+
+        if model_args.pop("openai", False):
+            return OpenAIModelConfig(**model_args)
 
         model_args["accelerator"] = accelerator
         model_args["use_chat_template"] = use_chat_template

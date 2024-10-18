@@ -35,12 +35,20 @@ from lighteval.models.model_config import (
     DummyModelConfig,
     InferenceEndpointModelConfig,
     InferenceModelConfig,
+    OpenAIModelConfig,
     TGIModelConfig,
     VLLMModelConfig,
 )
+from lighteval.models.openai_model import OpenAIClient
 from lighteval.models.tgi_model import ModelClient
 from lighteval.models.vllm_model import VLLMModel
-from lighteval.utils.imports import NO_TGI_ERROR_MSG, NO_VLLM_ERROR_MSG, is_tgi_available, is_vllm_available
+from lighteval.utils.imports import (
+    NO_TGI_ERROR_MSG,
+    NO_VLLM_ERROR_MSG,
+    is_openai_available,
+    is_tgi_available,
+    is_vllm_available,
+)
 from lighteval.utils.utils import EnvConfig
 
 
@@ -53,6 +61,7 @@ def load_model(  # noqa: C901
         InferenceEndpointModelConfig,
         DummyModelConfig,
         VLLMModelConfig,
+        OpenAIModelConfig,
     ],
     env_config: EnvConfig,
 ) -> Union[BaseModel, AdapterModel, DeltaModel, ModelClient, DummyModel]:
@@ -87,6 +96,9 @@ def load_model(  # noqa: C901
     if isinstance(config, VLLMModelConfig):
         return load_model_with_accelerate_or_default(config=config, env_config=env_config)
 
+    if isinstance(config, OpenAIModelConfig):
+        return load_openai_model(config=config, env_config=env_config)
+
 
 def load_model_with_tgi(config: TGIModelConfig):
     if not is_tgi_available():
@@ -96,6 +108,15 @@ def load_model_with_tgi(config: TGIModelConfig):
     model = ModelClient(
         address=config.inference_server_address, auth_token=config.inference_server_auth, model_id=config.model_id
     )
+    return model
+
+
+def load_openai_model(config: OpenAIModelConfig, env_config: EnvConfig):
+    if not is_openai_available():
+        raise ImportError()
+
+    model = OpenAIClient(config, env_config)
+
     return model
 
 
