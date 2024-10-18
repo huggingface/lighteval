@@ -104,6 +104,44 @@ def parser_accelerate(parser=None):
     return parser
 
 
+def parser_baseline(parser=None):
+    if parser is None:
+        parser = argparse.ArgumentParser(
+            description="CLI tool for lighteval, a lightweight framework for LLM evaluation"
+        )
+
+    parser.add_argument(
+        "--custom_tasks",
+        type=str,
+        default=None,
+        help="Path to a file with custom tasks (a TASK list of dict and potentially prompt formating functions)",
+    )
+
+    parser.add_argument(
+        "--tasks",
+        type=str,
+        required=True,
+        help="Task to compute the baseline for",
+    )
+    parser.add_argument("--max_samples", type=int, default=None, help="Maximum number of samples to evaluate on")
+    parser.add_argument(
+        "--dataset_loading_processes", type=int, default=1, help="Number of processes to use for loading the datasets"
+    )
+
+    parser.add_argument(
+        "--cache_dir", type=str, default=CACHE_DIR, help="Cache directory used to store datasets and models"
+    )
+    # Ooutput related
+    parser.add_argument(
+        "--output_dir",
+        required=True,
+        type=str,
+        help="Directory to save the results, fsspec compliant (e.g. s3://bucket/path)",
+    )
+
+    return parser
+
+
 def parser_nanotron(parser=None):
     if parser is None:
         parser = argparse.ArgumentParser(
@@ -142,6 +180,7 @@ def parser_utils_tasks(parser=None):
         default=None,
         help="Id of tasks or path to a text file with a list of tasks (e.g. 'original|mmlu:abstract_algebra|5') for which you want to manually inspect samples.",
     )
+    parser.add_argument("--custom_tasks", type=str, default=None, help="Path to a file with custom tasks")
     parser.add_argument("--num_samples", type=int, default=10, help="Number of samples to display")
     parser.add_argument("--show_config", default=False, action="store_true", help="Will display the full task config")
     parser.add_argument(
