@@ -21,13 +21,13 @@
 # SOFTWARE.
 
 import os
-import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
+from tenacity import retry, stop_after_attempt, wait_random_exponential
 from tqdm import tqdm
 
-from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
+from lighteval.data import GenerativeTaskDataset
 from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.endpoint_model import ModelInfo
@@ -55,6 +55,12 @@ if is_openai_available():
     logging.getLogger("httpx").setLevel(logging.ERROR)
 
 
+API_MAX_RETRY = 5
+API_RETRY_SLEEP = 3
+API_RETRY_MULTIPLIER = 2
+CONCURENT_CALLS = 100
+
+
 class OpenAIClient(LightevalModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
@@ -68,32 +74,33 @@ class OpenAIClient(LightevalModel):
             model_dtype=None,
             model_size="",
         )
-        self.API_MAX_RETRY = 5
-        self.API_RETRY_SLEEP = 3
-        self.API_RETRY_MULTIPLIER = 2
-        self.CONCURENT_CALLS = 100
         self.model = config.model
         self._tokenizer = tiktoken.encoding_for_model(self.model)
         self.pairwise_tokenization = False
 
+    @retry(
+        stop=stop_after_attempt(API_MAX_RETRY),
+        wait=wait_random_exponential(multiplier=API_RETRY_SLEEP, exp_base=API_RETRY_MULTIPLIER),
+        before_sleep=lambda retry_state: hlog_warn(
+            f"API call failed, retrying... ({retry_state.attempt_number}/{API_MAX_RETRY})"
+        ),
+        reraise=True,
+    )
     def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, logit_bias):
-        for _ in range(self.API_MAX_RETRY):
-            try:
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[{"role": "user", "content": prompt}],
-                    response_format={"type": "text"},
-                    max_tokens=max_new_tokens if max_new_tokens > 0 else None,
-                    logprobs=return_logits,
-                    logit_bias=logit_bias,
-                    n=num_samples,
-                )
-                return response
-            except Exception as e:
-                hlog_warn(f"{type(e), e}")
-                time.sleep(self.API_RETRY_SLEEP)
-                self.API_RETRY_SLEEP = self.API_RETRY_SLEEP**self.API_RETRY_MULTIPLIER
-        raise Exception("Failed to get response from the API")
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "text"},
+                max_tokens=max_new_tokens if max_new_tokens > 0 else None,
+                logprobs=return_logits,
+                logit_bias=logit_bias,
+                n=num_samples,
+            )
+            return response
+        except Exception as e:
+            hlog_warn(f"API call failed: {type(e).__name__}: {str(e)}")
+            raise
 
     def __call_api_parallel(
         self,
@@ -114,7 +121,7 @@ class OpenAIClient(LightevalModel):
             len(prompts) == len(return_logitss) == len(max_new_tokenss) == len(num_sampless) == len(logit_biass)
         ), "Length of prompts, return_logitss, max_new_tokenss, num_sampless, logit_biass should be same"
 
-        with ThreadPoolExecutor(self.CONCURENT_CALLS) as executor:
+        with ThreadPoolExecutor(CONCURENT_CALLS) as executor:
             for entry in tqdm(
                 executor.map(self.__call_api, prompts, return_logitss, max_new_tokenss, num_sampless, logit_biass),
                 total=len(prompts),
@@ -212,36 +219,55 @@ class OpenAIClient(LightevalModel):
         self,
         requests: list[LoglikelihoodRequest],
     ) -> list[LoglikelihoodResponse]:
-        dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=1)
-        results = []
+        original_requests = requests
 
-        for _ in tqdm(dataset.splits_start_end_iterator()):
-            inputs = [dataset[i].context for i in range(len(dataset))]
+        # First group the requests by context, use itertools.groupby
+        from itertools import groupby
+
+        assert all(len(req.tokenized_continuation) == 1 for req in requests)
+        grouped_requests = [list(g) for k, g in groupby(requests, lambda x: x.sample_index)]
+        assert all(
+            all(requests[0].tokenized_context == request.tokenized_context for request in requests)
+            for requests in grouped_requests
+        )
+
+        results = {}
+
+        # Then for each group, call the API
+        for i in tqdm(range(0, len(grouped_requests), 100)):
+            batch = grouped_requests[i : i + 100]
+            contexts = [request[0].context for request in batch]
+            continuation_tokens = [[request.tokenized_continuation[0] for request in requests] for requests in batch]
+
             logit_biass = []
-            max_new_tokens = [len(dataset[i].tokenized_continuation) for i in range(len(dataset))]
-
-            assert all(
-                new_tokens == 1 for new_tokens in max_new_tokens
-            ), "Only single token continuations are supported when using openai API."
-
-            for i in range(len(dataset)):
-                logit_bias = {tok: 100 for tok in dataset[i].tokenized_continuation}
+            for toks in continuation_tokens:
+                logit_bias = {tok: 100 for tok in toks}
                 logit_biass.append(logit_bias)
 
             outputs = self.__call_api_parallel(
-                inputs, return_logits=True, max_new_tokens=max_new_tokens, num_samples=1, logit_bias=logit_biass
+                contexts, return_logits=True, max_new_tokens=1, num_samples=1, logit_bias=logit_biass
             )
 
-            for output, input in zip(outputs, dataset):
-                continuation_logprobs = [content.logprob for content in output.choices[0].logprobs.content]
-                answer = LoglikelihoodResponse(
-                    input_tokens=input.tokenized_context + input.tokenized_continuation,
-                    generated_tokens=input.tokenized_continuation,
-                    result=(sum(continuation_logprobs), None),
-                )
-                results.append(answer)
+            for requests, outs in zip(batch, outputs):
+                # First find which token we got
+                output_chars = outs.choices[0].message.content
+                logprob = outs.choices[0].logprobs.content[0].logprob
 
-        return dataset.get_original_order(results)
+                # Get index of the matching choice
+                chosen_index = [request.choice for request in requests].index(output_chars)
+                if chosen_index == -1:
+                    raise ValueError("Choice not found in the list of choices")
+                results[requests[0].sample_index] = {
+                    request.request_index: LoglikelihoodResponse(
+                        input_tokens=request.tokenized_context,
+                        generated_tokens=request.tokenized_continuation,
+                        result=(float("-inf") if chosen_index != i else logprob, None),
+                    )
+                    for i, request in enumerate(requests)
+                }
+        sorted_results = [results[request.sample_index][request.request_index] for request in original_requests]
+
+        return sorted_results
 
     def loglikelihood_rolling(
         self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None

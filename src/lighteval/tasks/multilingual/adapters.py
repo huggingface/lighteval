@@ -115,7 +115,7 @@ def ceval_adapter(lang: Language, formulation: Formulation, line: dict) -> MCQIn
 
     parts = line["question"].rsplit("____", maxsplit=1)
     cleaned_question = parts[0].rstrip(PUNCT).strip()
-    possible_answers_part = parts[1].strip().lstrip(PUNCT)
+    possible_answers_part = parts[1].strip().lstrip(PUNCT).lstrip()
     gold_index = LETTER_INDICES.index(line["answer"])
 
     # We only attempt to extract answers if the answers are a chinese numbers
