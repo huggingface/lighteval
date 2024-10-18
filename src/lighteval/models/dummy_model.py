@@ -55,7 +55,7 @@ class DummyModel(LightevalModel):
 
     @property
     def tokenizer(self):
-        if not self._tokenizer:
+        if self._tokenizer is None:
             self._tokenizer = AutoTokenizer.from_pretrained("gpt2")
         return self._tokenizer
 
@@ -65,17 +65,31 @@ class DummyModel(LightevalModel):
 
     @property
     def max_length(self) -> int:
-        return 2048
+        return 4096
 
     def greedy_until(
         self, requests: list[GreedyUntilRequest], override_bs: Optional[int] = None
     ) -> list[GenerativeResponse]:
-        return [GenerativeResponse(result="random baseline") for _ in range(len(requests))]
+        return [
+            GenerativeResponse(
+                result="random baseline",
+                generated_tokens=[0 for _ in range(req.generation_size or 100)],
+                input_tokens=[0 for _ in range(min(len(req.context), self.max_length))],
+            )
+            for req in requests
+        ]
 
     def loglikelihood(
         self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
     ) -> list[LoglikelihoodResponse]:
-        return [LoglikelihoodResponse((-self._random.random(), False)) for _ in requests]
+        return [
+            LoglikelihoodResponse(
+                (-self._random.random(), False),
+                generated_tokens=[0],
+                input_tokens=[0 for _ in range(min(len(req.context), self.max_length))],
+            )
+            for req in requests
+        ]
 
     def loglikelihood_rolling(
         self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None

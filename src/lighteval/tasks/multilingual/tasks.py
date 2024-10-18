@@ -288,7 +288,7 @@ paws_x_tasks = [
                 "premise": line["sentence1"],
                 "hypothesis": line["sentence2"],
                 # Since we ignore the neutral label
-                "gold_idx": int(line["label"]),
+                "gold_idx": 1 - int(line["label"]),
             },
             relations=["entailment", "contradiction"],
             formulation=formulation,
@@ -714,6 +714,32 @@ hellaswag_hin_tasks = [
         few_shots_split="validation",
         metric=[
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+        ],
+    )
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+]
+
+hellaswag_te_tasks = [
+    LightevalTaskConfig(
+        name=f"community_hellaswag_{Language.TELUGU.value}_{formulation.name.lower()}",
+        suite=["lighteval"],
+        prompt_function=get_hellaswag_prompt_function(
+            language=Language.TELUGU,
+            adapter=lambda line: {
+                "ctx_a": line["ctx_a"],
+                "continuations": line["endings"],
+                "gold_idx": int(line["label"]),
+            },
+            formulation=formulation,
+        ),
+        hf_repo="LightFury9/hellaswag-telugu",
+        hf_subset="default",
+        evaluation_splits=("valid",),
+        few_shots_split="train",
+        metric=[
+            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
         ],
     )
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
@@ -725,6 +751,7 @@ TASKS_TABLE.extend(
         *hellaswag_tur_tasks,
         *hellaswag_tha_tasks,
         *hellaswag_hin_tasks,
+        *hellaswag_te_tasks,
     ]
 )
 # ------------------------------- RC Tasks ------------------------------- #

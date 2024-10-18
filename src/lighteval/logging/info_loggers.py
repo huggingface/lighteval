@@ -235,6 +235,8 @@ class DetailsLogger:
         non_padded: int = 0
         effective_few_shots: float = 0
         num_truncated_few_shots: int = 0
+        num_input_tokens: int = 0
+        num_cont_tokens: int = 0
 
     @dataclass
     class CompiledDetailOverAllTasks:
@@ -261,6 +263,8 @@ class DetailsLogger:
         padded: int = 0
         non_padded: int = 0
         num_truncated_few_shots: int = 0
+        num_input_tokens: int = 0
+        num_cont_tokens: int = 0
 
     @dataclass
     class Hash:
@@ -440,6 +444,8 @@ class DetailsLogger:
             self.compiled_details[task_name].num_truncated_few_shots = sum(
                 d.num_effective_few_shots != d.num_asked_few_shots for d in task_examples
             )
+            self.compiled_details[task_name].num_input_tokens = sum(len(d.input_tokens[0]) for d in task_examples)
+            self.compiled_details[task_name].num_cont_tokens = sum(len(d.cont_tokens[0]) for d in task_examples)
 
         hash_types: list[str] = list(self.compiled_details.values())[0].hashes.keys()
 
@@ -458,6 +464,12 @@ class DetailsLogger:
         self.compiled_details_over_all_tasks.non_padded = sum(d.non_padded for d in self.compiled_details.values())
         self.compiled_details_over_all_tasks.num_truncated_few_shots = sum(
             d.num_truncated_few_shots for d in self.compiled_details.values()
+        )
+        self.compiled_details_over_all_tasks.num_input_tokens = sum(
+            d.num_input_tokens for d in self.compiled_details.values()
+        )
+        self.compiled_details_over_all_tasks.num_cont_tokens = sum(
+            d.num_cont_tokens for d in self.compiled_details.values()
         )
 
 
