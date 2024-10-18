@@ -38,7 +38,7 @@ logging.getLogger("httpx").setLevel(logging.ERROR)
 
 class JudgeLM:
     """
-    A class representing a judge for evaluating answers using either the OpeanAI or Transformers library.
+    A class representing a judge for evaluating answers using either the OpenAI or Transformers library.
 
     Args:
         model (str): The name of the model.
