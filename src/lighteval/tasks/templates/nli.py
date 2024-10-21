@@ -244,6 +244,8 @@ def get_nli_prompt_function(
             choices_str = f"{translation_literals.comma}{translation_literals.word_space}".join(rearanged_labales[:-1])
             hypothesis = f"{hypothesis.rstrip(PUNCT)}{translation_literals.sentence_space}{choices_str}{translation_literals.word_space}{translation_literals.or_word}{translation_literals.word_space}{rearanged_labales[-1]}{translation_literals.question_mark}"
 
+        # (hynky1999): Ideally we would not compute logprobs of the Yes/No/Also in CF fomulation. However as of right now lighteval doesn't allow to
+        # use multi-context.
         row = {
             "instruction": input_data.get("instruction", ""),
             "premise": premise,
