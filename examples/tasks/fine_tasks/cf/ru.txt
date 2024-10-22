@@ -1,0 +1,20 @@
+# General Knowledge (GK)
+lighteval|mlmm_arc_rus_cf:challenge|0|1
+lighteval|rummlu_rus_cf|0|1
+lighteval|mera_openbookqa_rus_cf|0|1
+
+# Reading Comprehension (RC)
+lighteval|belebele_rus_Cyrl_cf|0|1
+lighteval|tydiqa_rus|0|1
+lighteval|sber_squad_rus|0|1
+lighteval|xquad_rus|0|1
+
+# Reasoning (RES)
+lighteval|parus_rus_cf|0|1
+lighteval|xcodah_rus_cf|0|1
+lighteval|xcsqa_rus_cf|0|1
+
+# Natural Language Understanding (NLU)
+lighteval|mlmm_hellaswag_rus_cf|0|1
+lighteval|xnli2.0_rus_cf|0|1
+lighteval|xstory_cloze_rus_cf|0|1

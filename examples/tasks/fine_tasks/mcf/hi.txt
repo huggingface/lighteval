@@ -1,0 +1,17 @@
+# General Knowledge (GK)
+lighteval|meta_mmlu_hin_mcf|5|1
+lighteval|community_arc_hin_mcf:easy|5|1
+
+# Reading Comprehension (RC)
+lighteval|belebele_hin_Deva_mcf|5|1
+lighteval|indicqa_hin|5|1
+
+# Reasoning (RES)
+lighteval|xcodah_hin_mcf|5|1
+lighteval|indicxcopa_hin_mcf|5|1
+lighteval|xcsqa_hin_mcf|5|1
+
+# Natural Language Understanding (NLU)
+lighteval|mlmm_hellaswag_hin_mcf|5|1
+lighteval|indicnxnli_hin_mcf|5|1
+lighteval|xstory_cloze_hin_mcf|5|1
