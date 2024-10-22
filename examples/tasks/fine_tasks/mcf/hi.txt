@@ -1,5 +1,5 @@
 # General Knowledge (GK)
-lighteval|meta_mmlu_hin_mcf:_average|5|1
+lighteval|meta_mmlu_hin_mcf|5|1
 lighteval|community_arc_hin_mcf:easy|5|1
 
 # Reading Comprehension (RC)

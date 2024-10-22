@@ -1,5 +1,5 @@
 # General Knowledge (GK)
-lighteval|mlmm_mmlu_tel_mcf:_average|5|1
+lighteval|mlmm_mmlu_tel_mcf|5|1
 
 # Reading Comprehension (RC)
 lighteval|belebele_tel_Telu_mcf|5|1

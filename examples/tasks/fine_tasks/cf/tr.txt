@@ -1,7 +1,7 @@
 # General Knowledge (GK)
 lighteval|community_arc_tur_cf:easy|0|1
-lighteval|exams_tur_cf:_average|0|1
-lighteval|community_mmlu_tur_cf:_average|0|1
+lighteval|exams_tur_cf|0|1
+lighteval|community_mmlu_tur_cf|0|1
 
 # Reading Comprehension (RC)
 lighteval|belebele_tur_Latn_cf|0|1

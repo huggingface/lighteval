@@ -1,6 +1,6 @@
 # General Knowledge (GK)
 lighteval|mlmm_arc_rus_cf:challenge|0|1
-lighteval|rummlu_rus_cf:_average|0|1
+lighteval|rummlu_rus_cf|0|1
 lighteval|mera_openbookqa_rus_cf|0|1
 
 # Reading Comprehension (RC)

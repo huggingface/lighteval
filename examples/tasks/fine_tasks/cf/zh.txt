@@ -1,7 +1,7 @@
 # General Knowledge (GK)
-lighteval|agieval_zho_cf:_average|0|1
-lighteval|ceval_zho_cf:_average|0|1
-lighteval|cmmlu_zho_cf:_average|0|1
+lighteval|agieval_zho_cf|0|1
+lighteval|ceval_zho_cf|0|1
+lighteval|cmmlu_zho_cf|0|1
 lighteval|m3exams_zho_cf|0|1
 
 # Reading Comprehension (RC)

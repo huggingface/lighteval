@@ -1,5 +1,5 @@
 # General Knowledge (GK)
-lighteval|meta_mmlu_fra_mcf:_average|5|1
+lighteval|meta_mmlu_fra_mcf|5|1
 lighteval|mlmm_arc_fra_mcf:challenge|5|1
 lighteval|mintaka_fra|5|1
 
