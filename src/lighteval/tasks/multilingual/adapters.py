@@ -42,6 +42,7 @@ from lighteval.utils.language import Language
 
 
 M3_EXAM_ANSWER_PREFIX_RE = re.compile(r"^\([A-Da-d1-5๑๒๓๔๕]\)\s*|^[A-Da-e1-5๑๒๓๔๕][.．।。]\s*")
+WHITESPACES = " \t\n\r\f\v"
 
 
 def get_m3exam_adapter(lang: Language, line: dict) -> MCQInput | None:
@@ -114,8 +115,8 @@ def ceval_adapter(lang: Language, formulation: Formulation, line: dict) -> MCQIn
     join_variant = "NEW_LINE" if isinstance(formulation, CFFormulation) else "COMMA"
 
     parts = line["question"].rsplit("____", maxsplit=1)
-    cleaned_question = parts[0].rstrip(PUNCT).strip()
-    possible_answers_part = parts[1].strip().lstrip(PUNCT)
+    cleaned_question = parts[0].rstrip(WHITESPACES)
+    possible_answers_part = parts[1].lstrip(PUNCT + WHITESPACES).rstrip()
     gold_index = LETTER_INDICES.index(line["answer"])
 
     # We only attempt to extract answers if the answers are a chinese numbers
@@ -168,6 +169,7 @@ def agieval_adapter(lang: Language, formulation: Formulation, line: dict) -> MCQ
 
     # Remove the options as we build them ourselves
     question, _ = rest.split(" 选项：", maxsplit=1)
+    question = question.lstrip()
     original_choices = line["choices"]
     cleaned_choices = [M3_EXAM_ANSWER_PREFIX_RE.sub("", c).strip() for c in original_choices]
     gold_index = line["gold"]
@@ -182,8 +184,9 @@ def agieval_adapter(lang: Language, formulation: Formulation, line: dict) -> MCQ
     answer_prefixes_set = set("".join(answer_prefixes))
 
     # We only attempt to extract answers if the answers are chinese numbers
+    # We don't want to rstrip original question as we might have failed the extraction
     maybe_extracted_answers = (
-        extract_answers_from_string(question.strip().rstrip(PUNCT), list(answer_prefixes_set))
+        extract_answers_from_string(question.rstrip(PUNCT + WHITESPACES), list(answer_prefixes_set))
         if answer_prefixes_set.issubset("①②③④⑤⑥")
         else None
     )
@@ -202,7 +205,11 @@ def agieval_adapter(lang: Language, formulation: Formulation, line: dict) -> MCQ
     question = question.strip()
 
     # If the answers still only contian the chinese numbers or we have just single choice we discard this sample
-    if set("".join(cleaned_choices).replace("和", "").strip()).issubset("①②③④⑤⑥") or len(cleaned_choices) <= 1:
+    if (
+        set("".join(cleaned_choices).replace("和", "").strip()).issubset("①②③④⑤⑥")
+        or len(cleaned_choices) <= 1
+        or any(len(choice.strip()) == 0 for choice in cleaned_choices)
+    ):
         return None
 
     return {

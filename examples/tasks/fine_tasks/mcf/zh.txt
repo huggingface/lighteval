@@ -1,0 +1,22 @@
+# General Knowledge (GK)
+lighteval|agieval_zho_mcf|5|1
+lighteval|ceval_zho_mcf|5|1
+lighteval|cmmlu_zho_mcf|5|1
+lighteval|m3exams_zho_mcf|5|1
+
+# Reading Comprehension (RC)
+lighteval|belebele_zho_Hans_mcf|5|1
+lighteval|c3_zho_mcf|5|1
+lighteval|cmrc2018_zho|5|1
+lighteval|chinese_squad_zho|5|1
+
+# Reasoning (RES)
+lighteval|xcodah_zho_mcf|5|1
+lighteval|xcopa_zho_mcf|5|1
+lighteval|xcsqa_zho_mcf|5|1
+
+# Natural Language Understanding (NLU)
+lighteval|mlmm_hellaswag_zho_mcf|5|1
+lighteval|ocnli_zho_mcf|5|1
+lighteval|xwinograd_zho_mcf|5|1
+lighteval|xstory_cloze_zho_mcf|5|1

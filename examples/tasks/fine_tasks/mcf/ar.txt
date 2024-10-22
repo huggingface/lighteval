@@ -1,0 +1,23 @@
+# General Knowledge (GK)
+lighteval|exams_ara_mcf|5|1
+lighteval|mmlu_ara_mcf|5|1
+lighteval|alghafa_arc_ara_mcf:easy|5|1
+lighteval|alghafa_sciqa_ara_mcf|5|1
+
+# Reading Comprehension (RC)
+lighteval|belebele_arb_Arab_mcf|5|1
+lighteval|soqal_ara_mcf|5|1
+lighteval|mlqa_ara|5|1
+lighteval|tydiqa_ara|5|1
+lighteval|alghafa_race_ara_mcf|5|1
+lighteval|arcd_ara|5|1
+
+# Reasoning (RES)
+lighteval|xcodah_ara_mcf|5|1
+lighteval|alghafa_piqa_ara_mcf|5|1
+lighteval|xcsqa_ara_mcf|5|1
+
+# Natural Language Understanding (NLU)
+lighteval|xnli2.0_ara_mcf|5|1
+lighteval|mlmm_hellaswag_ara_mcf|5|1
+lighteval|xstory_cloze_ara_mcf|5|1
