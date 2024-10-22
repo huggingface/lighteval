@@ -1,0 +1,12 @@
+# General Knowledge (GK)
+lighteval|meta_mmlu_tha_cf|0|1
+lighteval|m3exams_tha_cf|0|1
+
+# Reading Comprehension (RC)
+lighteval|belebele_tha_Thai_cf|0|1
+lighteval|thaiqa_tha|0|1
+lighteval|xquad_tha|0|1
+
+# Natural Language Understanding (NLU)
+lighteval|community_hellaswag_tha_cf|0|1
+lighteval|xnli2.0_tha_cf|0|1
