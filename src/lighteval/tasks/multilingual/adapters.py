@@ -202,10 +202,13 @@ def agieval_adapter(lang: Language, formulation: Formulation, line: dict) -> MCQ
     cleaned_choices, gold_index = multichoice_to_single_choice(
         cleaned_choices, gold_index, join_variant, translation_literals
     )
-    question = question.strip()
 
     # If the answers still only contian the chinese numbers or we have just single choice we discard this sample
-    if set("".join(cleaned_choices).replace("和", "").strip()).issubset("①②③④⑤⑥") or len(cleaned_choices) <= 1:
+    if (
+        set("".join(cleaned_choices).replace("和", "").strip()).issubset("①②③④⑤⑥")
+        or len(cleaned_choices) <= 1
+        or any(len(choice.strip()) == 0 for choice in cleaned_choices)
+    ):
         return None
 
     return {
