@@ -202,6 +202,7 @@ def agieval_adapter(lang: Language, formulation: Formulation, line: dict) -> MCQ
     cleaned_choices, gold_index = multichoice_to_single_choice(
         cleaned_choices, gold_index, join_variant, translation_literals
     )
+    question = question.strip()
 
     # If the answers still only contian the chinese numbers or we have just single choice we discard this sample
     if (
