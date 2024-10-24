@@ -1709,6 +1709,18 @@ def multirc(line, task_name: str = None):
     )
 
 
+def musr(line, task_name: str = None):
+    choices = ast.literal_eval(line["choices"])
+
+    query = line["narrative"] + "\n\n"
+    query += line["question"] + "\n\n"
+    for i, choice in enumerate(choices):
+        query += f"{i + 1} - {choice}\n"
+    query += "Answer:"
+
+    return Doc(task_name=task_name, query=query, choices=choices, gold_index=line["answer_index"])
+
+
 def mutual(line, task_name: str = None):
     def clean(text):
         replace_list = [(" '", "'"), (" \n", "\n"), ("\n ", "\n"), (" n't", "n't"), ("`` ", '"'), ("''", '"')]
