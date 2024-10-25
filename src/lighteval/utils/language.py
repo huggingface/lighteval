@@ -120,6 +120,7 @@ class Language(Enum):
     SORANI = "ckb"
     CEBUANO = "ceb"
     WAR = "war"
+    SHAN = "shn"
 
 
 # This mapping was created for beleble, it converts iso_639_3 individual codes to iso_639_3 macro codes
@@ -211,7 +212,7 @@ iso_639_3_ind_to_iso_639_3_macro = {
     #  'lin': Language.LINGALA,
     #  'mri': Language.MAORI,
     "pan": Language.PUNJABI,
-    #  'shn': Language.SHAN,
+    "shn": Language.SHAN,
     "spa": Language.SPANISH,
     "fil": Language.TAGALOG,
     "uzn": Language.UZBEK,
