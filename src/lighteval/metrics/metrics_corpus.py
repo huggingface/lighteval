@@ -25,6 +25,7 @@ Some metrics (such as corpus BLEU) are not computed at the individual item level
 A number of these aggregations come from the EleutherAIHarness
 """
 import math
+from typing import Literal
 
 import numpy as np
 import sacrebleu
@@ -108,7 +109,7 @@ class CorpusLevelTranslationMetric:
 
 
 class CorpusLevelPerplexityMetric:
-    def __init__(self, metric_type: str):
+    def __init__(self, metric_type: Literal["perplexity", "weighted_perplexity", "bits_per_byte"]):
         """Stores the relevant parameter for a corpus level perplexity metric.
         Perplexity metrics compute more or less the same thing, which is a variation on the
         average of log-probabilities over a sequence, but the normalization and processing applied

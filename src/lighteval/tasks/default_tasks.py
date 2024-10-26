@@ -22,6 +22,7 @@
 import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
 
 
 abstract_narrative_understanding_bigbench = LightevalTaskConfig(
@@ -23982,3 +23983,40 @@ xwinograd_zh_lighteval = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
+
+
+paloma_tasks = [
+    LightevalTaskConfig(
+        name=f"paloma:{domain}",
+        suite=["lighteval"],
+        prompt_function=lambda line, task_name: Doc(
+            task_name=task_name, query=line["text"], gold_index=0, specific={"text": line["text"]}, choices=None
+        ),
+        hf_repo="allenai/paloma",
+        hf_subset=domain,
+        hf_avail_splits=["test", "val"],
+        evaluation_splits=["test"],
+        metric=[Metrics.perplexity_tokens],
+    )
+    for domain in [
+        "4chan_meta_sep",
+        "c4_100_domains",
+        "c4_en",
+        "dolma-v1_5",
+        "dolma_100_programing_languages",
+        "dolma_100_subreddits",
+        "falcon-refinedweb",
+        "gab",
+        "m2d2_s2orc_unsplit",
+        "m2d2_wikipedia_unsplit",
+        "manosphere_meta_sep",
+        "mc4",
+        "ptb",
+        "redpajama",
+        "twitterAAE_HELM_fixed",
+        "wikitext_103",
+    ]
+]
+
+# Add to vars
+vars().update({task.name: task for task in paloma_tasks})

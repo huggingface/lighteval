@@ -97,6 +97,14 @@ class Metrics(Enum):
         corpus_level_fn=CorpusLevelPerplexityMetric("bits_per_byte").compute,
         higher_is_better=False,
     )
+    perplexity_tokens = CorpusLevelMetric(
+        metric_name="perplexity_tokens",
+        sample_level_fn=PerplexityPreparator(units_type="tokens").prepare,
+        category=MetricCategory.PERPLEXITY,
+        use_case=MetricUseCase.PERPLEXITY,
+        corpus_level_fn=CorpusLevelPerplexityMetric("weighted_perplexity").compute,
+        higher_is_better=False,
+    )
     bleu = CorpusLevelMetric(
         metric_name="bleu",
         sample_level_fn=GenerativePreparator().prepare,

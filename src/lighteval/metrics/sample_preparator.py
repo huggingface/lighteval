@@ -24,6 +24,7 @@ import re
 from dataclasses import asdict, dataclass
 
 import numpy as np
+from gguf import Literal
 
 from lighteval.logging.hierarchical_logger import hlog_warn
 
@@ -50,8 +51,8 @@ class LogprobCorpusMetricInput(CorpusMetricInput):
 
 @dataclass
 class PerplexityCorpusMetricInput(CorpusMetricInput):
-    logprobs: list[float]
-    weights: list[int]
+    logprobs: float
+    weights: int
 
 
 class GenerativePreparator:
@@ -99,8 +100,11 @@ class LoglikelihoodPreparator:
         return LogprobCorpusMetricInput(golds=gold_ixs, preds=np.argmax(choices_logprob))
 
 
+PerplexityUnitsType = Literal["words", "bytes", "tokens"]
+
+
 class PerplexityPreparator:
-    def __init__(self, units_type: str) -> None:
+    def __init__(self, units_type: PerplexityUnitsType) -> None:
         """Init.
 
         Args:
@@ -110,11 +114,9 @@ class PerplexityPreparator:
         Raises:
             ValueError: If the unit type is not words or byte, raises a ValueError
         """
-        if units_type not in ["words", "bytes"]:
-            raise ValueError("Perplexity must be used with either words or bytes.")
         self.units_type = units_type
 
-    def count_units(self, text: str) -> int:
+    def count_units(self, text: str, target_tokens: list[list[int]]) -> int:
         """Counts the given number of unit in the input text.
 
         Args:
@@ -125,10 +127,12 @@ class PerplexityPreparator:
         """
         if self.units_type == "words":
             return len(re.split(r"\s+", text))
+        if self.units_type == "tokens":
+            return sum(len(toks) for toks in target_tokens)
         if self.units_type == "bytes":
             return len(text.encode("utf-8"))
 
-    def prepare(self, logprobs: list[float], reference_texts: list[str], **kwargs):
+    def prepare(self, logprobs: list[float], reference_texts: list[str], target_tokens: list[list[int]], **kwargs):
         """Prepares an individual perplexity example to the format expected by metrics computed at the corpus level (aggregated).
 
         Args:
@@ -139,6 +143,8 @@ class PerplexityPreparator:
             PerplexityCorpusMetricInput: Stores the measured logprobs and associated text lengths, counted in the reference unit.
         """
 
-        logprobs_flat = np.sum(logprobs)
+        logprobs_flat: float = np.sum(logprobs)
         reference_text_flat = " ".join(reference_texts)
-        return PerplexityCorpusMetricInput(logprobs=logprobs_flat, weights=self.count_units(reference_text_flat))
+        return PerplexityCorpusMetricInput(
+            logprobs=logprobs_flat, weights=self.count_units(reference_text_flat, target_tokens)
+        )

@@ -77,7 +77,9 @@ def apply_perplexity_metric(
 
         for metric in metrics:
             if metric.category == MetricCategory.PERPLEXITY:
-                output.update(metric.compute(logprobs=[results.result], reference_texts=[reference_text]))
+                output.update(
+                    metric.compute(logprobs=[results.result], reference_texts=[reference_text], target_tokens=[])
+                )
 
         outputs.append(output)
 
