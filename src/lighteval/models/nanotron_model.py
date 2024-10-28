@@ -941,7 +941,13 @@ class NanotronLightevalModel(LightevalModel):
                 )
                 # batched_inputs, batch_attention, input_lengths, truncated, padded
                 with torch.no_grad():
-                    out = self.model(input_ids=batch_model.input_ids, input_mask=batch_model.input_mask)
+                    input_splits = torch.split(batch_model.input_ids, self.max_length, dim=1)
+                    mask_splits = torch.split(batch_model.input_mask, self.max_length, dim=1)
+                    out_list = [
+                        self.model(input_ids=input_split, input_mask=mask_split).logits
+                        for input_split, mask_split in zip(input_splits, mask_splits)
+                    ]
+                    out = torch.cat(out_list, dim=1)
 
                 if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
                     # This process got outputs

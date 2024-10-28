@@ -313,7 +313,9 @@ class BaseModel(LightevalModel):
         return continuation
 
     def _model_call(self, inputs: torch.Tensor) -> torch.Tensor:
-        return self.model(inputs).logits
+        input_splits = torch.split(inputs, self.max_length, dim=1)
+        logits_list = [self.model(input_split).logits for input_split in input_splits]
+        return torch.cat(logits_list, dim=1)
 
     def _get_batch_size(self, max_input_length: int, override_bs: int = 0, starting_batch_size: int = 512) -> int:
         if override_bs > 0:

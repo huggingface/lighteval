@@ -23985,6 +23985,24 @@ xwinograd_zh_lighteval = LightevalTaskConfig(
 )
 
 
+test_task = LightevalTaskConfig(
+    name="dummy",
+    suite=["lighteval"],
+    prompt_function=lambda line, task_name: Doc(
+        task_name=task_name, query=" ".join(["hello"] * 3000), gold_index=0, choices=None
+    ),
+    hf_repo="Muennighoff/xwinograd",
+    hf_subset="en",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    metric=[Metrics.perplexity_tokens],
+    stop_sequence=["\n"],
+    output_regex=None,
+    frozen=False,
+    trust_dataset=True,
+    version=0,
+)
+
 paloma_tasks = [
     LightevalTaskConfig(
         name=f"paloma:{domain}",
