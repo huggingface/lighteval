@@ -290,21 +290,6 @@ class InferenceEndpointModelConfig:
         """
         return ["namespace", "env_vars", "image_url"]
 
-@dataclass
-class ExternalEndpointModelConfig:
-    client: str
-    base_url: str
-    api_key: str
-    model: str
-    client_kwargs: dict
-    env_vars: dict
-
-    def get_custom_env_vars(self) -> Dict[str, str]:
-        return {k: str(v) for k, v in self.env_vars.items()} if self.env_vars else {}
-
-    def get_client_kwargs(self) -> Dict[str, str]:
-            return {k: str(v) for k, v in self.client_kwargs.items()} if self.client_kwargs else {}
-
 
 def create_model_config(  # noqa: C901
     use_chat_template: bool,
@@ -318,7 +303,6 @@ def create_model_config(  # noqa: C901
     DeltaModelConfig,
     TGIModelConfig,
     InferenceEndpointModelConfig,
-    ExternalEndpointModelConfig,
     DummyModelConfig,
     VLLMModelConfig,
 ]:
@@ -398,16 +382,6 @@ def create_model_config(  # noqa: C901
                 env_vars=config["instance"].get("env_vars", None),
             )
         return InferenceModelConfig(model=config["base_params"]["endpoint_name"])
-
-    if config["type"] == "external_endpoint":
-        return ExternalEndpointModelConfig(
-            client=config['base_params']['client'],
-            base_url=config['client']['base_url'],
-            api_key=config["base_params"]["api_key"],
-            model=config["base_params"]["model"],
-            client_kwargs=config['client']['client_kwargs'],
-            env_vars=config['client']['env_vars'],
-        )
 
     if config["type"] == "base":
         # Creating the multichoice space parameters
