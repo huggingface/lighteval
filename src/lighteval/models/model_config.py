@@ -238,6 +238,12 @@ class OpenAIModelConfig:
 
 
 @dataclass
+class LiteLLMModelConfig:
+    provider: str
+    model: str
+
+
+@dataclass
 class TGIModelConfig:
     inference_server_address: str
     inference_server_auth: str
@@ -353,6 +359,9 @@ def create_model_config(  # noqa: C901
 
         if model_args.pop("openai", False):
             return OpenAIModelConfig(**model_args)
+
+        if model_args.pop("litellm", False):
+            return LiteLLMModelConfig(**model_args)
 
         model_args["accelerator"] = accelerator
         model_args["use_chat_template"] = use_chat_template

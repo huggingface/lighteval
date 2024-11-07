@@ -28,6 +28,7 @@ from lighteval.models.base_model import BaseModel
 from lighteval.models.delta_model import DeltaModel
 from lighteval.models.dummy_model import DummyModel
 from lighteval.models.endpoint_model import InferenceEndpointModel
+from lighteval.models.litellm_model import LiteLLMClient
 from lighteval.models.model_config import (
     AdapterModelConfig,
     BaseModelConfig,
@@ -35,6 +36,7 @@ from lighteval.models.model_config import (
     DummyModelConfig,
     InferenceEndpointModelConfig,
     InferenceModelConfig,
+    LiteLLMModelConfig,
     OpenAIModelConfig,
     TGIModelConfig,
     VLLMModelConfig,
@@ -43,8 +45,10 @@ from lighteval.models.openai_model import OpenAIClient
 from lighteval.models.tgi_model import ModelClient
 from lighteval.models.vllm_model import VLLMModel
 from lighteval.utils.imports import (
+    NO_LITELLM_ERROR_MSG,
     NO_TGI_ERROR_MSG,
     NO_VLLM_ERROR_MSG,
+    is_litellm_available,
     is_openai_available,
     is_tgi_available,
     is_vllm_available,
@@ -62,6 +66,7 @@ def load_model(  # noqa: C901
         DummyModelConfig,
         VLLMModelConfig,
         OpenAIModelConfig,
+        LiteLLMModelConfig,
     ],
     env_config: EnvConfig,
 ) -> Union[BaseModel, AdapterModel, DeltaModel, ModelClient, DummyModel]:
@@ -99,6 +104,9 @@ def load_model(  # noqa: C901
     if isinstance(config, OpenAIModelConfig):
         return load_openai_model(config=config, env_config=env_config)
 
+    if isinstance(config, LiteLLMModelConfig):
+        return load_litellm_model(config=config, env_config=env_config)
+
 
 def load_model_with_tgi(config: TGIModelConfig):
     if not is_tgi_available():
@@ -108,6 +116,14 @@ def load_model_with_tgi(config: TGIModelConfig):
     model = ModelClient(
         address=config.inference_server_address, auth_token=config.inference_server_auth, model_id=config.model_id
     )
+    return model
+
+
+def load_litellm_model(config: LiteLLMModelConfig, env_config: EnvConfig):
+    if not is_litellm_available():
+        raise ImportError(NO_LITELLM_ERROR_MSG)
+
+    model = LiteLLMClient(config, env_config)
     return model
 
 
