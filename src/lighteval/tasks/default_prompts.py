@@ -31,11 +31,12 @@ import pycountry
 
 from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.tasks.requests import Doc
-from lighteval.utils import as_list
+from lighteval.utils.utils import as_list
 
 
 # fmt: off
 LETTER_INDICES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+INTEGER_INDICES = list(map(str, list(range(1, 27))))
 # fmt: on
 
 
@@ -754,27 +755,38 @@ def headqa(line, task_name: str = None):
     )
 
 
-def hellaswag_harness(line, task_name: str = None):
-    def preprocess(text):
-        """Comes from AiHarness"""
-        # text = text.strip()
-        # NOTE: Brackets are artifacts of the WikiHow dataset portion of HellaSwag.
-        text = text.replace(" [title]", ". ")
-        text = re.sub("\\[.*?\\]", "", text)
-        text = text.replace("  ", " ")
-        return text
+def hellaswag_preprocess(
+    text: str,
+    wikihow_artifacts: list[str] = [" [title]"],
+    truncate_dots: bool = False,
+    strip_text: bool = False,
+    dot_replacement: str = ". ",
+):
+    """Comes from LM Eval Harness"""
+    # NOTE: Brackets are artifacts of the WikiHow dataset portion of HellaSwag.
+    for wikihow_artifact in wikihow_artifacts:
+        text = text.replace(wikihow_artifact, dot_replacement)
+    text = re.sub("\\[.*?\\]", "", text)
+    text = text.replace("  ", " ")
+    if truncate_dots:
+        text = text.replace(r"\.+", r"\.")
+    if strip_text:
+        text = text.strip()
+    return text
 
+
+def hellaswag_harness(line, task_name: str = None):
     ctx = f"{line['ctx_a']} {line['ctx_b'].capitalize()} "
     return Doc(
         task_name=task_name,
-        query=preprocess(line["activity_label"] + ": " + ctx),
-        choices=[preprocess(ending) for ending in line["endings"]],
+        query=hellaswag_preprocess(line["activity_label"] + ": " + ctx),
+        choices=[hellaswag_preprocess(ending) for ending in line["endings"]],
         gold_index=int(line["label"]) if line["label"] != "" else -1,  # -1 for test
         # "metric": "choices_loglikelihood",
     )
 
 
-def hellaswag_helm(line, task_name: str = None):
+def hellaswag_generative(line, task_name: str = None):
     query = "The following are multiple choice questions (with answers) about common sense.\n\n"
     query += f"Question: {line['activity_label']}: {line['ctx_a']} {line['ctx_b'].capitalize()}\n"
     query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, line["endings"])])
@@ -788,9 +800,6 @@ def hellaswag_helm(line, task_name: str = None):
         gold_index=gold_ix,  # -1 for test,
         instruction="The following are multiple choice questions (with answers) about common sense.\n\n",
         target_for_fewshot_sorting=line["endings"][gold_ix] if gold_ix > -1 else "",
-        specific={
-            "label_to_choices": {f" {key}": choice for key, choice in zip(LETTER_INDICES, line["endings"])},
-        },
     )
 
 
@@ -1698,6 +1707,18 @@ def multirc(line, task_name: str = None):
         choices=[f" {line['answer']}\nIs the answer correct? yes", f" {line['answer']}\nIs the answer correct? no"],
         gold_index=0 if line["label"] else 1,
     )
+
+
+def musr(line, task_name: str = None):
+    choices = ast.literal_eval(line["choices"])
+
+    query = line["narrative"] + "\n\n"
+    query += line["question"] + "\n\n"
+    for i, choice in enumerate(choices):
+        query += f"{i + 1} - {choice}\n"
+    query += "Answer:"
+
+    return Doc(task_name=task_name, query=query, choices=choices, gold_index=line["answer_index"])
 
 
 def mutual(line, task_name: str = None):
