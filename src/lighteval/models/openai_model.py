@@ -26,6 +26,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
 from tqdm import tqdm
+from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.logging.hierarchical_logger import hlog_warn
@@ -60,7 +61,16 @@ class OpenAIClient(LightevalModel):
 
     def __init__(self, config, env_config) -> None:
         api_key = os.environ["OPENAI_API_KEY"]
+        
+        self.litellm_proxy_request = False
+        if config.base_url:
+            self.litellm_proxy_request = True
+
+
         self.client = OpenAI(api_key=api_key)
+        if self.litellm_proxy_request:
+            self.client.base_url = config.base_url
+
 
         self.model_info = ModelInfo(
             model_name=config.model,
@@ -73,16 +83,31 @@ class OpenAIClient(LightevalModel):
         self.API_RETRY_MULTIPLIER = 2
         self.CONCURENT_CALLS = 100
         self.model = config.model
-        self._tokenizer = tiktoken.encoding_for_model(self.model)
+
+        if not config.tokenizer:
+            self._tokenizer = tiktoken.encoding_for_model(self.model)
+        else:
+            self._tokenizer = AutoTokenizer.from_pretrained(config.tokenizer)
+
         self.pairwise_tokenization = False
 
     def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, logit_bias):
+        
+        completion_request = self.client.chat.completions.create
+        if not self.litellm_proxy_request:
+            hlog_warn(f"Not a litellm proxy request -> setting response format to `text`.")
+            # TODO check if works -> fix import and remove test logging
+            from functools import partial
+            completion_request = partial(self.client.chat.completions.create, response_format = {"type":"text"})
+        else:
+            hlog_warn(f"litellm proxy request -> no response format necessary.")
+
         for _ in range(self.API_MAX_RETRY):
-            try:
-                response = self.client.chat.completions.create(
+            try:               
+                response = completion_request(
                     model=self.model,
                     messages=[{"role": "user", "content": prompt}],
-                    response_format={"type": "text"},
+                    # TODO check if implementation is fine and then remove response_format={"type": "text"},
                     max_tokens=max_new_tokens if max_new_tokens > 0 else None,
                     logprobs=return_logits,
                     logit_bias=logit_bias,

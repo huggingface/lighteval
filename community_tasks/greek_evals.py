@@ -45,7 +45,10 @@ from lighteval.metrics.utils.metric_utils import (
     SampleLevelMetric,
     SampleLevelMetricGrouping
 )
-from lighteval.tasks.extended.mt_bench.main import mt_bench_prompt
+from lighteval.tasks.extended.mt_bench.main import (
+    mt_bench_prompt,
+    llm_judge_mt_bench
+)
 from lighteval.tasks.extended.ifeval.main import (
     ifeval_prompt, 
     submetric_names,
@@ -698,14 +701,14 @@ mgsm_el_task = LightevalTaskConfig(
 mt_bench_el_task = LightevalTaskConfig(
     name="mt_bench",
     prompt_function=mt_bench_prompt,
-    suite=["extended"],
+    suite=["community"],
     hf_repo="ilsp/mt-bench-greek",
     hf_subset="default",
     hf_avail_splits=["train"],
     evaluation_splits=["train"],
     few_shots_split="",
     few_shots_select="random",
-    metric=[Metrics.llm_judge_multi_turn_gpt3p5],
+    metric=[llm_judge_mt_bench],
     generation_size=1024,
     stop_sequence=[],
 )
