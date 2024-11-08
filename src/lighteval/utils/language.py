@@ -121,6 +121,7 @@ class Language(Enum):
     CEBUANO = "ceb"
     WAR = "war"
     SHAN = "shn"
+    UDMURT = "udm"
 
 
 # This mapping was created for beleble, it converts iso_639_3 individual codes to iso_639_3 macro codes
@@ -232,6 +233,7 @@ iso_639_3_ind_to_iso_639_3_macro = {
     "ars": Language.ARABIC,
     "bul": Language.BULGARIAN,
     "est": Language.ESTONIAN,
+    "udm": Language.UDMURT,
     #  'hau': Language.HAUSA,
     "ind": Language.INDONESIAN,
     #  'kea': Language.KABUVERDIANU,
