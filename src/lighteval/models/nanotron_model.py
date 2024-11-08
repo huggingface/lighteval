@@ -212,7 +212,7 @@ class NanotronLightevalModel(LightevalModel):
         self.input_pp_rank, self.output_pp_rank = get_min_max_rank(module=self.model)
 
         self.multichoice_continuations_start_space = multichoice_continuations_start_space
-        self.pair_wise_tokenization = nanotron_config.lighteval_config.tasks.pair_wise_tokenization
+        self.pairwise_tokenization = nanotron_config.lighteval_config.tasks.pairwise_tokenization
 
         self.model_info = ModelInfo(
             model_name=f"{nanotron_config.nanotron_config.general.run}/{nanotron_config.nanotron_config.general.step}"
@@ -447,7 +447,7 @@ class NanotronLightevalModel(LightevalModel):
             else:
                 # The following line is mandatory for compatibility with the harness
                 request.tokenized_context, request.tokenized_continuation = self.tok_encode_pair(
-                    request.context, request.choice, self.pair_wise_tokenization
+                    request.context, request.choice, self.pairwise_tokenization
                 )
 
         return self._loglikelihood_tokens(

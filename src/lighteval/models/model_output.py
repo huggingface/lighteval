@@ -59,7 +59,7 @@ class LoglikelihoodSingleTokenResponse(ModelResponse):
 
 @dataclass
 class GenerativeResponse(ModelResponse):
-    result: str = field(default_factory=str)  # generated text continuation
+    result: list[str] = field(default_factory=str)  # generated text continuation
     logits: Optional[list[float]] = None  # Generated text logits
 
     def get_result_for_eval(self):

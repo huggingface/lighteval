@@ -90,14 +90,21 @@ def apply_generative_metric(  # noqa: C901
     formatted_docs: list[Doc],
     metrics: list[Metric],
     output_regex: str = None,
-    max_num_samples: int = 1,
 ):
     outputs = []
 
     for sample_id, results, formatted_doc in zip(sample_ids, responses, formatted_docs):
         output = {}
 
+        # Extracting gold
+        try:
+            golds = formatted_doc.get_golds()
+        except (KeyError, IndexError):
+            golds = None
+
+        # Post processing prediction
         if len(results) > 1:
+            # In case of sampling, it's a list of one list of n samples
             raise Exception("You returned more than one result for a sample with a generative metric.")
         results = results[0]
 
@@ -112,38 +119,14 @@ def apply_generative_metric(  # noqa: C901
                 pred = pred_raw
             preds.append(pred)
 
-        # Extracting gold
-        try:
-            golds = formatted_doc.get_golds()
-        except (KeyError, IndexError):
-            golds = None
-
-        # Specific process for HELM like evals # hrm
-        # if "label_to_choices" in formatted_doc:
-        if formatted_doc.specific is not None and "label_to_choices" in formatted_doc.specific:
-            # Helm predicts on labels keys (A/B/C/D), but computes metrics on choices
-            preds = [formatted_doc.specific["label_to_choices"].get(p) for p in preds]
-            golds = [formatted_doc.specific["label_to_choices"][g] for g in golds]
-
         for metric in metrics:
-            if metric.category == MetricCategory.GENERATIVE:
-                output.update(
-                    metric.compute(
-                        golds=golds,
-                        predictions=as_list(preds[0]) if max_num_samples > 1 else preds,
-                        formatted_doc=formatted_doc,
-                    )
+            output.update(
+                metric.compute(
+                    golds=golds,
+                    predictions=preds,
+                    formatted_doc=formatted_doc,
                 )
-            if metric.category == MetricCategory.GENERATIVE_LOGPROB:
-                output.update(
-                    metric.compute(
-                        golds=golds,
-                        predictions=as_list(preds[0]) if max_num_samples > 1 else preds,
-                        formatted_doc=formatted_doc,
-                    )
-                )
-            if metric.category == MetricCategory.GENERATIVE_SAMPLING:
-                output.update(metric.compute(golds=golds, predictions=preds, formatted_doc=formatted_doc))
+            )
         outputs.append(output)
 
     return outputs

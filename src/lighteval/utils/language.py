@@ -78,6 +78,7 @@ class Language(Enum):
     URDU = "urd"
     AMHARIC = "amh"
     TELUGU = "tel"
+    HAITIAN = "hti"
     MALAYALAM = "mal"
     KANNADA = "kan"
     NEPALI = "nep"
@@ -113,11 +114,14 @@ class Language(Enum):
     SOMALI = "som"
     SANSKRIT = "san"
     SINDHI = "snd"
+    QUECHUA = "que"
     TURKMEN = "tuk"
     SOUTH_AZERBAIJANI = "azb"
     SORANI = "ckb"
     CEBUANO = "ceb"
     WAR = "war"
+    SHAN = "shn"
+    UDMURT = "udm"
 
 
 # This mapping was created for beleble, it converts iso_639_3 individual codes to iso_639_3 macro codes
@@ -209,14 +213,14 @@ iso_639_3_ind_to_iso_639_3_macro = {
     #  'lin': Language.LINGALA,
     #  'mri': Language.MAORI,
     "pan": Language.PUNJABI,
-    #  'shn': Language.SHAN,
+    "shn": Language.SHAN,
     "spa": Language.SPANISH,
     "fil": Language.TAGALOG,
     "uzn": Language.UZBEK,
     #  'zul': Language.ZULU,
     #  'bod': Language.TIBETAN,
     "eng": Language.ENGLISH,
-    #  'hat': Language.HAITIAN,
+    "hat": Language.HAITIAN,
     #  'ilo': Language.ILOCANO,
     "kaz": Language.KAZAKH,
     "lit": Language.LITHUANIAN,
@@ -229,6 +233,7 @@ iso_639_3_ind_to_iso_639_3_macro = {
     "ars": Language.ARABIC,
     "bul": Language.BULGARIAN,
     "est": Language.ESTONIAN,
+    "udm": Language.UDMURT,
     #  'hau': Language.HAUSA,
     "ind": Language.INDONESIAN,
     #  'kea': Language.KABUVERDIANU,
@@ -241,6 +246,7 @@ iso_639_3_ind_to_iso_639_3_macro = {
     "ary": Language.ARABIC,
     "cat": Language.CATALAN,
     "eus": Language.BASQUE,
+    "que": Language.QUECHUA,
     "heb": Language.HEBREW,
     "isl": Language.ICELANDIC,
     #  'khk': Language.MONGOLIAN,
