@@ -111,7 +111,7 @@ class BaseModel(LightevalModel):
             model_size=model_size,
         )
 
-        self.pair_wise_tokenization = config.pair_wise_tokenization
+        self.pairwise_tokenization = config.pairwise_tokenization
 
     @property
     def tokenizer(self):
@@ -536,6 +536,7 @@ class BaseModel(LightevalModel):
                 max_new_tokens = batch[0].generation_size
                 returns_logits = batch[0].use_logits
                 num_samples = batch[0].num_samples
+                do_sample = batch[0].do_sample
 
                 context = [c.context for c in batch]
 
@@ -589,6 +590,7 @@ class BaseModel(LightevalModel):
                     stop_tokens=stop_tokens,
                     returns_logits=returns_logits,
                     num_samples=num_samples,
+                    do_sample=do_sample,
                 )
                 results.extend(cur_reponses)
 
@@ -601,6 +603,7 @@ class BaseModel(LightevalModel):
         stop_tokens: list[str],
         returns_logits: Optional[bool] = False,
         num_samples: Optional[int] = 1,
+        do_sample: Optional[bool] = False,
     ) -> list[GenerativeResponse]:
         """Contains the actual logic of the generation.
         First computes the stop sequences, then generates the predictions, then converts the outputs to GenerativeResponse.
@@ -618,7 +621,7 @@ class BaseModel(LightevalModel):
             return_dict_in_generate=True,
             output_scores=True,
             eos_token_id=self.tokenizer.eos_token_id,
-            do_sample=num_samples > 1,
+            do_sample=do_sample,
             num_return_sequences=num_samples,
         )
         if returns_logits:
@@ -659,10 +662,6 @@ class BaseModel(LightevalModel):
 
                 decoded_generations.append(decoded_generation)
 
-            if num_samples == 1:  # We only return one item
-                result_generations = result_generations[0]
-                decoded_generations = decoded_generations[0]
-
             cur_response = GenerativeResponse(
                 result=decoded_generations,
                 logits=logits[ix][: len_logits[ix]] if returns_logits else None,
@@ -696,7 +695,7 @@ class BaseModel(LightevalModel):
             else:
                 # The following line is mandatory for compatibility with the harness
                 request.tokenized_context, request.tokenized_continuation = self.tok_encode_pair(
-                    request.context, request.choice, pairwise=self.pair_wise_tokenization
+                    request.context, request.choice, pairwise=self.pairwise_tokenization
                 )
 
         return self._loglikelihood_tokens(requests, override_bs=override_bs)

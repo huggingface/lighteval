@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
 
 import numpy as np
 from aenum import Enum
@@ -43,7 +42,6 @@ from lighteval.metrics.metrics_sample import (
     Extractiveness,
     F1_score,
     Faithfulness,
-    JudgeLLM,
     LoglikelihoodAcc,
     MajAtK,
     Recall,
@@ -123,12 +121,13 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
+
     bleurt = SampleLevelMetric(
         metric_name="bleurt",
-        sample_level_fn=BLEURT.compute,
+        sample_level_fn=BLEURT().compute,
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.TRANSLATION,
-        corpus_level_fn=lambda x: np.mean(x.flatten()),  # flatten, then average
+        corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     byte_perplexity = CorpusLevelMetric(
@@ -232,64 +231,6 @@ class Metrics(Enum):
         use_case=MetricUseCase.SUMMARIZATION,
         corpus_level_fn=np.mean,
         higher_is_better=True,
-    )
-    llm_judge_multi_turn_gpt3p5 = SampleLevelMetricGrouping(
-        metric_name=["single_turn", "multi_turn"],
-        higher_is_better={"single_turn": True, "multi_turn": True},
-        category=MetricCategory.LLM_AS_JUDGE_MULTI_TURN,
-        use_case=MetricUseCase.SUMMARIZATION,
-        sample_level_fn=JudgeLLM(
-            judge_model_name="gpt-3.5-turbo",
-            template_path=os.path.join(os.path.dirname(__file__), "judge_prompts.jsonl"),
-            multi_turn=True,
-        ).compute,
-        corpus_level_fn={
-            "single_turn": np.mean,
-            "multi_turn": np.mean,
-        },
-    )
-    llm_judge_multi_turn_llama_3_405b = SampleLevelMetricGrouping(
-        metric_name=["single_turn", "multi_turn"],
-        higher_is_better={"single_turn": True, "multi_turn": True},
-        category=MetricCategory.LLM_AS_JUDGE_MULTI_TURN,
-        use_case=MetricUseCase.SUMMARIZATION,
-        sample_level_fn=JudgeLLM(
-            judge_model_name="meta-llama/Meta-Llama-3.1-405B-Instruct-FP8",
-            template_path=os.path.join(os.path.dirname(__file__), "judge_prompts.jsonl"),
-            multi_turn=True,
-        ).compute,
-        corpus_level_fn={
-            "single_turn": np.mean,
-            "multi_turn": np.mean,
-        },
-    )
-    llm_judge_gpt3p5 = SampleLevelMetricGrouping(
-        metric_name=["judge_score"],
-        higher_is_better={"judge_score": True},
-        category=MetricCategory.LLM_AS_JUDGE,
-        use_case=MetricUseCase.SUMMARIZATION,
-        sample_level_fn=JudgeLLM(
-            judge_model_name="gpt-3.5-turbo",
-            template_path=os.path.join(os.path.dirname(__file__), "judge_prompts.jsonl"),
-            multi_turn=False,
-        ).compute,
-        corpus_level_fn={
-            "judge_score": np.mean,
-        },
-    )
-    llm_judge_llama_3_405b = SampleLevelMetricGrouping(
-        metric_name=["judge_score"],
-        higher_is_better={"judge_score": True},
-        category=MetricCategory.LLM_AS_JUDGE,
-        use_case=MetricUseCase.SUMMARIZATION,
-        sample_level_fn=JudgeLLM(
-            judge_model_name="meta-llama/Meta-Llama-3.1-405B-Instruct-FP8",
-            template_path=os.path.join(os.path.dirname(__file__), "judge_prompts.jsonl"),
-            multi_turn=False,
-        ).compute,
-        corpus_level_fn={
-            "judge_score": np.mean,
-        },
     )
     loglikelihood_acc = SampleLevelMetric(
         metric_name="acc",

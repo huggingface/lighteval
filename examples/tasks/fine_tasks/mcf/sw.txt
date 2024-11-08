@@ -1,0 +1,17 @@
+# General Knowledge (GK)
+lighteval|community_arc_swa_mcf:easy|5|1
+lighteval|m3exams_swa_mcf|5|1
+lighteval|openai_mmlu_swa_mcf|5|1
+
+# Reading Comprehension (RC)
+lighteval|belebele_swh_Latn_mcf|5|1
+lighteval|kenswquad_swa|5|1
+lighteval|tydiqa_swa|5|1
+
+# Reasoning (RES)
+lighteval|xcsqa_swa_mcf|5|1
+lighteval|xcopa_swa_mcf|5|1
+
+# Natural Language Understanding (NLU)
+lighteval|xnli2.0_swa_mcf|5|1
+lighteval|xstory_cloze_swa_mcf|5|1
