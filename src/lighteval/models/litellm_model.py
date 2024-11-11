@@ -59,14 +59,18 @@ class LiteLLMClient(LightevalModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
     def __init__(self, config, env_config) -> None:
-        # IMPORTANT: Your API keys should be set in the environment variables
-
+        """
+        IMPORTANT: Your API keys should be set in the environment variables.
+        If a base_url is not set, it will default to the public API.
+        """
         self.model_info = ModelInfo(
             model_name=config.model,
             model_sha="",
             model_dtype=None,
             model_size="",
         )
+        self.provider = config.provider
+        self.base_url = os.getenv(f"{config.provider.upper()}_BASE_URL", None)
         self.API_MAX_RETRY = 5
         self.API_RETRY_SLEEP = 3
         self.API_RETRY_MULTIPLIER = 2
@@ -81,11 +85,14 @@ class LiteLLMClient(LightevalModel):
                 response = litellm.completion(
                     model=self.model,
                     messages=[{"role": "user", "content": prompt}],
-                    response_format={"type": "text"},
                     max_tokens=max_new_tokens if max_new_tokens > 0 else None,
-                    logprobs=return_logits,
+                    logprobs=return_logits if self.provider == "openai" else None,
                     logit_bias=logit_bias,
+                    base_url=self.base_url,
                     n=num_samples,
+                    temperature=0.7,
+                    top_p=0.95,
+                    stop=None,
                 )
                 return response
             except Exception as e:
