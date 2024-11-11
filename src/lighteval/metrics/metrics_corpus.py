@@ -103,7 +103,7 @@ class CorpusLevelTranslationMetric:
     def compute(self, items: list[GenerativeCorpusMetricInput]) -> float:
         """Computes the metric score over all the corpus generated items, by using the sacrebleu implementation."""
         golds = [i.golds for i in items]
-        preds = [as_list(i.preds) for i in items]
+        preds = [pred for i in items for pred in i.preds]
         return float(self.metric(hypotheses=preds, references=golds).score)
 
 
