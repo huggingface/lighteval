@@ -30,6 +30,7 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
 from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
@@ -68,8 +69,8 @@ STARTING_BATCH_SIZE = 512
 class BaseModel(LightevalModel):
     def __init__(
         self,
-        config: BaseModelConfig,
         env_config: EnvConfig,
+        config: BaseModelConfig,
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self._config = config.init_configs(env_config)
@@ -117,32 +118,37 @@ class BaseModel(LightevalModel):
 
     @classmethod
     def from_model(
-        self,
+        cls,
         model: Union[AutoModelForCausalLM, "BaseModel"],
         env_config: EnvConfig,
         accelerator: "Accelerator" = None,
+        tokenizer_name: str = None,  # custom tokenizer
         trust_remote_code: bool = False,
         use_chat_template: bool = False,
         add_special_tokens: bool = True,
         pairwise_tokenization: bool = False,
         multichoice_continuations_start_space: bool = None,
     ):
-        assert isinstance(model, AutoModelForCausalLM) or isinstance(model, BaseModel)
+        # Slightly hackish way to test if the model is a AutoModelForCausalLM, since the instances don't
+        # derive from this class explicitely
+        assert isinstance(model, BaseModel) or type(model).__name__ in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.values()
 
         if isinstance(model, BaseModel):
-            self = model
-            return
+            return model
 
+        # Instanciate the object without using __init__
+        self = cls.__new__(cls)
         self._config = model.config
-        self._max_length = self._init_max_length(model.config.max_length)
-        self.model_name = _simplify_name(model.name_or_path)
-        self.model_sha = model.config._commit_hash
+        self._max_length = self._init_max_length(max_length=model.config.max_length)
         self._tokenizer = self._create_auto_tokenizer_with_name(
-            model_name=self.model_name,
-            revision=self.model_sha,
+            model_name=model.name_or_path,
+            revision=model.config._commit_hash,
             env_config=env_config,
             trust_remote_code=trust_remote_code,
+            tokenizer_name=tokenizer_name,
         )
+        self.model_name = _simplify_name(model.name_or_path)
+        self.model_sha = model.config._commit_hash
 
         # If model_parallel is not set we compare the number of processes with the number of GPUs
         self.model = model
@@ -170,6 +176,7 @@ class BaseModel(LightevalModel):
             model_dtype=self.precision,
             model_size=model_size,
         )
+        return self
 
     @property
     def tokenizer(self):
@@ -299,6 +306,9 @@ class BaseModel(LightevalModel):
         Raises:
             RecursionError: If an error occurs during tokenization, a fallback tokenizer with "<unk>" token will be created.
         """
+        print(model_name if tokenizer_name is None else tokenizer_name)
+        print(revision + (f"/{subfolder}" if subfolder is not None else ""))
+        print(env_config.cache_dir)
         try:
             tokenizer = AutoTokenizer.from_pretrained(
                 model_name if tokenizer_name is None else tokenizer_name,
@@ -317,6 +327,16 @@ class BaseModel(LightevalModel):
                 token=env_config.token,
                 trust_remote_code=trust_remote_code,
                 unk_token="<unk>",
+                padding_side="left",
+                truncation_side="left",
+            )
+        except FileNotFoundError:
+            hlog_warn("Problem when loading the tokenizer in the cache - discarding the provided cache path value.")
+            tokenizer = AutoTokenizer.from_pretrained(
+                model_name if tokenizer_name is None else tokenizer_name,
+                revision=revision + (f"/{subfolder}" if subfolder is not None else ""),
+                token=env_config.token,
+                trust_remote_code=trust_remote_code,
                 padding_side="left",
                 truncation_side="left",
             )

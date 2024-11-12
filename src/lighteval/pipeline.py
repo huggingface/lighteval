@@ -34,7 +34,7 @@ import numpy as np
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import hlog, htrack_block
 from lighteval.metrics.utils.metric_utils import MetricCategory
-from lighteval.models.model_loader import load_model
+from lighteval.models.model_loader import BaseModel, load_model
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_tasks
 from lighteval.tasks.registry import Registry, taskinfo_selector
@@ -164,7 +164,10 @@ class Pipeline:
                     )
                 else:
                     return load_model(config=model_config, env_config=self.pipeline_parameters.env_config)
-            return model
+            if isinstance(model, BaseModel):
+                return model
+            else:
+                return BaseModel.from_model(model, env_config=self.pipeline_parameters.env_config)
 
     def _init_tasks_and_requests(self, tasks: str):
         with htrack_block("Tasks loading"):
