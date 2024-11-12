@@ -838,7 +838,7 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         word_space=" ",
         sentence_space=" ",
         colon=":",
-        indices=["А", "Б", "В", "Г", "Д", "Е"],                                
+        indices=["А", "Б", "В", "Г", "Д", "Е"],
     ),
     Language.TELUGU: TranslationLiterals(
         language=Language.TELUGU,
