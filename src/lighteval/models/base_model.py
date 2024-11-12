@@ -57,6 +57,7 @@ from lighteval.utils.utils import EnvConfig, as_list
 
 
 if is_accelerate_available():
+    from accelerate import Accelerator
     from accelerate.utils import calculate_maximum_sizes, convert_bytes, get_max_memory
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -113,6 +114,62 @@ class BaseModel(LightevalModel):
         )
 
         self.pairwise_tokenization = config.pairwise_tokenization
+
+    @classmethod
+    def from_model(
+        self,
+        model: Union[AutoModelForCausalLM, "BaseModel"],
+        env_config: EnvConfig,
+        accelerator: "Accelerator" = None,
+        trust_remote_code: bool = False,
+        use_chat_template: bool = False,
+        add_special_tokens: bool = True,
+        pairwise_tokenization: bool = False,
+        multichoice_continuations_start_space: bool = None,
+    ):
+        assert isinstance(model, AutoModelForCausalLM) or isinstance(model, BaseModel)
+
+        if isinstance(model, BaseModel):
+            self = model
+            return
+
+        self._config = model.config
+        self._max_length = self._init_max_length(model.config.max_length)
+        self.model_name = _simplify_name(model.name_or_path)
+        self.model_sha = model.config._commit_hash
+        self._tokenizer = self._create_auto_tokenizer_with_name(
+            model_name=self.model_name,
+            revision=self.model_sha,
+            env_config=env_config,
+            trust_remote_code=trust_remote_code,
+        )
+
+        # If model_parallel is not set we compare the number of processes with the number of GPUs
+        self.model = model
+        self.model.eval()
+        torch.set_grad_enabled(False)
+
+        self.accelerator = accelerator
+        self._device = accelerator.device if accelerator is not None else "cpu"
+
+        self.use_chat_template = use_chat_template
+        self._add_special_tokens = add_special_tokens if add_special_tokens is not None else False
+        self.pairwise_tokenization = pairwise_tokenization
+        self.multichoice_continuations_start_space = multichoice_continuations_start_space
+
+        self.precision = _get_dtype(model.dtype, config=self._config)
+
+        if is_accelerate_available():
+            model_size, _ = calculate_maximum_sizes(self.model)
+            model_size = convert_bytes(model_size)
+        else:
+            model_size = -1
+        self.model_info = ModelInfo(
+            model_name=self.model_name,
+            model_sha=self.model_sha,
+            model_dtype=self.precision,
+            model_size=model_size,
+        )
 
     @property
     def tokenizer(self):
@@ -207,10 +264,23 @@ class BaseModel(LightevalModel):
     def _create_auto_tokenizer(
         self, config: BaseModelConfig, env_config: EnvConfig
     ) -> transformers.PreTrainedTokenizer:
-        return self._create_auto_tokenizer_with_name(config.pretrained, config=config, env_config=env_config)
+        return self._create_auto_tokenizer_with_name(
+            model_name=config.pretrained,
+            revision=config.revision,
+            env_config=env_config,
+            tokenizer_name=config.tokenizer,
+            subfolder=config.subfolder,
+            trust_remote_code=config.trust_remote_code,
+        )
 
     def _create_auto_tokenizer_with_name(
-        self, model_name: str, config: BaseModelConfig, env_config: EnvConfig
+        self,
+        model_name: str,
+        revision: str,
+        env_config: EnvConfig,
+        tokenizer_name: str = None,
+        subfolder: str = None,
+        trust_remote_code: bool = False,
     ) -> transformers.PreTrainedTokenizer:
         """
         Create a Hugging Face AutoTokenizer for language model.
@@ -231,21 +301,21 @@ class BaseModel(LightevalModel):
         """
         try:
             tokenizer = AutoTokenizer.from_pretrained(
-                model_name if config.tokenizer is None else config.tokenizer,
-                revision=config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
+                model_name if tokenizer_name is None else tokenizer_name,
+                revision=revision + (f"/{subfolder}" if subfolder is not None else ""),
                 cache_dir=env_config.cache_dir,
                 token=env_config.token,
-                trust_remote_code=config.trust_remote_code,
+                trust_remote_code=trust_remote_code,
                 padding_side="left",
                 truncation_side="left",
             )
         except RecursionError:
             tokenizer = AutoTokenizer.from_pretrained(
-                model_name if config.tokenizer is None else config.tokenizer,
-                revision=config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
+                model_name if tokenizer_name is None else tokenizer_name,
+                revision=revision + (f"/{subfolder}" if subfolder is not None else ""),
                 cache_dir=env_config.cache_dir,
                 token=env_config.token,
-                trust_remote_code=config.trust_remote_code,
+                trust_remote_code=trust_remote_code,
                 unk_token="<unk>",
                 padding_side="left",
                 truncation_side="left",
