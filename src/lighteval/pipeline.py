@@ -167,7 +167,11 @@ class Pipeline:
             if isinstance(model, BaseModel):
                 return model
             else:
-                return BaseModel.from_model(model, env_config=self.pipeline_parameters.env_config)
+                return BaseModel.from_model(
+                    model=model,
+                    use_chat_template=self.pipeline_parameters.use_chat_template,
+                    env_config=self.pipeline_parameters.env_config,
+                )
 
     def _init_tasks_and_requests(self, tasks: str):
         with htrack_block("Tasks loading"):
