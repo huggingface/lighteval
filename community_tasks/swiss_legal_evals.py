@@ -236,6 +236,7 @@ class DatasetConfig:
         self.translation_pairs = create_translation_pairs(self.languages)
 
 
+# Translation of Swiss Federal Supreme Court Decision Summaries on three levels: the entire decision, the regeste level and the text level.
 SwissDecisionSummaryTranslations = DatasetConfig(
     name="sdst",
     hf_repo="joelniklaus/SwissDecisionSummaryTranslations",
@@ -262,7 +263,7 @@ SwissDecisionSummaryTranslations = DatasetConfig(
     },
 )
 
-
+# Translation of Swiss Federal Laws on three levels: the entire law, the article level and the paragraph level.
 SwissLawTranslations = DatasetConfig(
     name="slt",
     hf_repo="joelniklaus/SwissLawTranslations",
@@ -289,6 +290,7 @@ SwissLawTranslations = DatasetConfig(
     },
 )
 
+# Translation of Swiss Federal Supreme Court Press Releases on one level: the entire press release.
 SwissSupremeCourtPressReleaseTranslations = DatasetConfig(
     name="sscprt",
     hf_repo="joelniklaus/SwissSupremeCourtPressReleaseTranslations",
