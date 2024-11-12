@@ -31,12 +31,8 @@ and press releases.
 Author: Joel Niklaus
 """
 from lighteval.logging.hierarchical_logger import hlog_warn
-import nltk
 
-nltk.download("punkt_tab")
-
-
-import numpy as np
+import statistics
 import re
 from dataclasses import dataclass
 
@@ -86,7 +82,7 @@ def freeform_flow_judge():
             short_judge_name="flow",
         ).compute,
         corpus_level_fn={
-            "judge_score_flow": np.mean,
+            "judge_score_flow": statistics.mean,
         },
     )
 
@@ -105,7 +101,7 @@ def freeform_gpt_judge(judge_model_name: str = "gpt-4o"):
             short_judge_name=judge_model_name,
         ).compute,
         corpus_level_fn={
-            f"judge_score_{judge_model_name}": np.mean,
+            f"judge_score_{judge_model_name}": statistics.mean,
         },
     )
 
@@ -128,9 +124,9 @@ def bert_score(model_type: str = "xlm-roberta-large"):
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.SUMMARIZATION,
         corpus_level_fn={
-            "BERTScore-P": np.mean,
-            "BERTScore-R": np.mean,
-            "BERTScore-F": np.mean,
+            "BERTScore-P": statistics.mean,
+            "BERTScore-R": statistics.mean,
+            "BERTScore-F": statistics.mean,
         },
         higher_is_better={
             "BERTScore-P": True,
@@ -193,7 +189,7 @@ def bleurt(model_size: str = "tiny", seq_len: int = 512):
         sample_level_fn=BLEURT(model_size=model_size, seq_len=seq_len).compute,
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.TRANSLATION,
-        corpus_level_fn=np.mean,
+        corpus_level_fn=statistics.mean,
         higher_is_better=True,
     )
 
