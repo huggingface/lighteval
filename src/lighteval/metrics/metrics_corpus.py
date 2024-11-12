@@ -26,6 +26,7 @@ A number of these aggregations come from the EleutherAIHarness
 """
 import math
 
+from lighteval.logging.hierarchical_logger import hlog_warn
 import numpy as np
 import sacrebleu
 import sklearn.metrics
@@ -35,7 +36,6 @@ from lighteval.metrics.sample_preparator import (
     LogprobCorpusMetricInput,
     PerplexityCorpusMetricInput,
 )
-from lighteval.utils.utils import as_list
 
 
 # General aggregations
@@ -103,7 +103,11 @@ class CorpusLevelTranslationMetric:
     def compute(self, items: list[GenerativeCorpusMetricInput]) -> float:
         """Computes the metric score over all the corpus generated items, by using the sacrebleu implementation."""
         golds = [i.golds for i in items]
-        preds = [pred for i in items for pred in i.preds]
+        preds = []
+        for i in items:
+            if len(i.preds) > 1:
+                hlog_warn("Multiple predictions present, keeping only the first prediction.")
+            preds.append(i.preds[0])
         return float(self.metric(hypotheses=preds, references=golds).score)
 
 
