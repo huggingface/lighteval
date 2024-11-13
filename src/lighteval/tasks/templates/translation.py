@@ -33,6 +33,10 @@ from lighteval.utils.language import Language
 from lighteval.utils.utils import as_list
 
 
+# Template chosen so that it's not very language-dependent, as it's not clear whether one should use the target or source language.
+# It's also the best template based on https://arxiv.org/pdf/2301.07069.
+
+
 TRANSLATION_CONTEXT = (
     "{source_label}{colon}{sentence_space}{source_text}{sentence_space}{target_label}{colon}{sentence_space}"
 )
