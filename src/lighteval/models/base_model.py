@@ -119,7 +119,7 @@ class BaseModel(LightevalModel):
     @classmethod
     def from_model(
         cls,
-        model: Union[AutoModelForCausalLM, "BaseModel"],
+        model: Union[AutoModelForCausalLM, LightevalModel],
         env_config: EnvConfig,
         accelerator: "Accelerator" = None,
         tokenizer_name: str = None,  # custom tokenizer
@@ -131,9 +131,9 @@ class BaseModel(LightevalModel):
     ):
         # Slightly hackish way to test if the model is a AutoModelForCausalLM, since the instances don't
         # derive from this class explicitely
-        assert isinstance(model, BaseModel) or type(model).__name__ in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.values()
+        assert isinstance(model, LightevalModel) or type(model).__name__ in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.values()
 
-        if isinstance(model, BaseModel):
+        if isinstance(model, LightevalModel):
             return model
 
         # Instanciate the object without using __init__
