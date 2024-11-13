@@ -50,9 +50,13 @@ from lighteval.utils.imports import is_litellm_available
 if is_litellm_available():
     import logging
     import litellm
+    from litellm.caching.caching import Cache
+
 
     logging.getLogger("litellm").setLevel(logging.ERROR)
     logging.getLogger("httpx").setLevel(logging.ERROR)
+
+    litellm.cache = Cache(type="disk")
 
 
 class LiteLLMClient(LightevalModel):
@@ -93,6 +97,7 @@ class LiteLLMClient(LightevalModel):
                     temperature=0.7,
                     top_p=0.95,
                     stop=None,
+                    caching=True,
                 )
                 return response
             except Exception as e:
