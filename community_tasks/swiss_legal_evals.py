@@ -30,14 +30,20 @@ and press releases.
 
 Author: Joel Niklaus
 """
-from lighteval.logging.hierarchical_logger import hlog_warn
 
 import statistics
-import re
 from dataclasses import dataclass
+from packaging import version
+import importlib.metadata as importlib_metadata
 
+import nltk
+from nltk import word_tokenize
+from nltk.translate import meteor_score
+
+from comet import download_model, load_from_checkpoint
 
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 from lighteval.metrics.metrics import Metrics
@@ -50,46 +56,19 @@ from lighteval.metrics.utils.metric_utils import (
 )
 from lighteval.metrics.imports.bert_scorer import BERTScorer
 from lighteval.metrics.normalizations import remove_braces, remove_braces_and_strip
+from lighteval.tasks.extended.mix_eval.main import process_judge_response_freeform_gpt
 from lighteval.tasks.extended.mix_eval.judge_prompts import (
-    flow_judge_for_freeform_template,
     gpt_judge_for_closeended_freeform,
 )
 
 
 # CUSTOM METRICS
-def process_judge_response(x):
-    search = re.search(r"<score>\s(\d)\s</score>", x)
-    return int(search.group(1)) if search else 0
-
-
-def process_judge_response_freeform_gpt(x):
-    search = re.search(r"\[\[(\d.\d)\]\]", x)
-    answer = float(search.group(1) if search else 0)
-    return answer
-
-
-def freeform_flow_judge():
-    return SampleLevelMetricGrouping(
-        metric_name=["llm_judge_mixeval_flow"],
-        higher_is_better={"judge_score_flow": True},
-        category=MetricCategory.LLM_AS_JUDGE,
-        use_case=MetricUseCase.SUMMARIZATION,
-        sample_level_fn=JudgeLLMMixEval(
-            judge_model_name="flowaicom/Flow-Judge-v0.1",
-            template=flow_judge_for_freeform_template,
-            process_judge_response=process_judge_response,
-            judge_backend="vllm",
-            short_judge_name="flow",
-        ).compute,
-        corpus_level_fn={
-            "judge_score_flow": statistics.mean,
-        },
-    )
+# TODO: adjust prompt
 
 
 def freeform_gpt_judge(judge_model_name: str = "gpt-4o"):
     return SampleLevelMetricGrouping(
-        metric_name=[f"llm_judge_mixeval_{judge_model_name}"],
+        metric_name=[f"llm_judge_{judge_model_name}"],
         higher_is_better={"judge_score_{judge_model_name}": True},
         category=MetricCategory.LLM_AS_JUDGE,
         use_case=MetricUseCase.SUMMARIZATION,
@@ -106,7 +85,7 @@ def freeform_gpt_judge(judge_model_name: str = "gpt-4o"):
     )
 
 
-def bert_score(model_type: str = "xlm-roberta-large"):
+def get_bert_score(model_type: str = "xlm-roberta-large"):
     score = BertScore(
         normalize_gold=remove_braces, normalize_pred=remove_braces_and_strip
     )
@@ -134,6 +113,9 @@ def bert_score(model_type: str = "xlm-roberta-large"):
             "BERTScore-F": True,
         },
     )
+
+
+bert_score = get_bert_score(model_type="xlm-roberta-large")
 
 
 class BLEURT:
@@ -183,16 +165,105 @@ class BLEURT:
         return scores.item()
 
 
-def bleurt(model_size: str = "tiny", seq_len: int = 512):
-    return SampleLevelMetric(
-        metric_name="bleurt",
-        sample_level_fn=BLEURT(model_size=model_size, seq_len=seq_len).compute,
-        category=MetricCategory.GENERATIVE,
-        use_case=MetricUseCase.TRANSLATION,
-        corpus_level_fn=statistics.mean,
-        higher_is_better=True,
-    )
+bleurt = SampleLevelMetric(
+    metric_name="bleurt",
+    sample_level_fn=BLEURT(model_size="tiny", seq_len=512).compute,
+    category=MetricCategory.GENERATIVE,
+    use_case=MetricUseCase.TRANSLATION,
+    corpus_level_fn=statistics.mean,
+    higher_is_better=True,
+)
 
+
+class COMET:
+    def __init__(
+        self,
+        model_name: str = "Unbabel/wmt22-comet-da",
+        batch_size: int = 1,
+        gpus: int = 1,
+        accelerator: str = "cpu",  # "mps" leads to errors
+    ):
+        model_path = download_model(model_name)
+        self.model = load_from_checkpoint(model_path)
+        self.batch_size = batch_size
+        self.gpus = gpus
+        self.accelerator = accelerator
+
+    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float:
+        data = [
+            {"src": src, "mt": pred, "ref": gold}
+            for src, pred, gold in zip(
+                [kwargs["formatted_doc"].specific["source"]] * len(predictions),
+                predictions,
+                golds,
+            )
+        ]
+        model_output = self.model.predict(
+            data,
+            batch_size=self.batch_size,
+            gpus=self.gpus,
+            accelerator=self.accelerator,
+        )
+        # model_output["scores"] contains the sentence level scores
+        return model_output["system_score"]
+
+
+comet = SampleLevelMetric(
+    metric_name="comet",
+    sample_level_fn=COMET(accelerator="cpu").compute,
+    category=MetricCategory.GENERATIVE,
+    use_case=MetricUseCase.TRANSLATION,
+    corpus_level_fn=statistics.mean,
+    higher_is_better=True,
+)
+
+
+class METEOR:
+    def __init__(self, alpha=0.9, beta=3, gamma=0.5):
+        self.alpha = alpha
+        self.beta = beta
+        self.gamma = gamma
+
+        NLTK_VERSION = version.parse(importlib_metadata.version("nltk"))
+        assert NLTK_VERSION >= version.Version("3.9.0"), "NLTK version must be >= 3.9.0"
+        nltk.download("punkt_tab")
+        nltk.download("wordnet")
+
+    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float:
+        if isinstance(golds[0], list):  # multiple references
+            scores = [
+                meteor_score.meteor_score(
+                    [word_tokenize(ref) for ref in refs],
+                    word_tokenize(pred),
+                    alpha=self.alpha,
+                    beta=self.beta,
+                    gamma=self.gamma,
+                )
+                for refs, pred in zip(golds, predictions)
+            ]
+        else:
+            scores = [
+                meteor_score.single_meteor_score(
+                    word_tokenize(ref),
+                    word_tokenize(pred),
+                    alpha=self.alpha,
+                    beta=self.beta,
+                    gamma=self.gamma,
+                )
+                for ref, pred in zip(golds, predictions)
+            ]
+
+        return statistics.mean(scores)
+
+
+meteor = SampleLevelMetric(
+    metric_name="meteor",
+    sample_level_fn=METEOR().compute,
+    category=MetricCategory.GENERATIVE,
+    use_case=MetricUseCase.TRANSLATION,
+    corpus_level_fn=statistics.mean,
+    higher_is_better=True,
+)
 
 # EVALS WITH SUBSET
 # This is how you create a subset task (like MMLU), which has several subset
@@ -315,6 +386,7 @@ def create_prompt_fn(level_config: LevelConfig, src_lang: str, target_lang: str)
     target_text_col = f"{target_lang}_{text_col}"
 
     def prompt_fn(line: dict, task_name: str = None):
+        # TODO: replace this with the prompt template
         custom_query = f"{level_config.prompt_prefix}: {line[src_text_col]}\nTranslate from {src_lang} to {target_lang}.\nTranslation: "
 
         return Doc(
@@ -325,6 +397,7 @@ def create_prompt_fn(level_config: LevelConfig, src_lang: str, target_lang: str)
             specific={
                 **{col: line[col] for col in level_config.metadata_cols},
                 "question": custom_query,
+                "source": line[src_text_col],
             },
         )
 
@@ -359,11 +432,14 @@ class TranslationTask(LightevalTaskConfig):
                 Metrics.bleu_4,
                 Metrics.chrf,
                 Metrics.ter,
-                bert_score(model_type="xlm-roberta-large"),
-                bleurt(model_size="tiny", seq_len=512),
+                bert_score,
+                bleurt,
+                comet,
+                meteor,
                 freeform_gpt_judge(judge_model_name="gpt-4o"),
-                # freeform_flow_judge(), # TODO: Needs to be tested on GPU machine
-                # TODO: add prometheus eval
+                # Additionally we could consider adding the following open source judge models:
+                # flowaicom/Flow-Judge-v0.1, prometheus-eval/prometheus-7b-v2.0
+                # However, these are only fine-tuned on English data and we need multilingual support.
             ],
             stop_sequence=["\n"],
             trust_dataset=True,
