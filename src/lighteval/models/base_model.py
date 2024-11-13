@@ -156,7 +156,11 @@ class BaseModel(LightevalModel):
         torch.set_grad_enabled(False)
 
         self.accelerator = accelerator
-        self._device = accelerator.device if accelerator is not None else "cpu"
+        if accelerator is not None:
+            self._device = accelerator.device
+            self.model = self.accelerator.prepare(self.model.to(accelerator.device))
+        else:
+            self._device = "cpu"
 
         self.use_chat_template = use_chat_template
         self._add_special_tokens = add_special_tokens if add_special_tokens is not None else False

@@ -171,6 +171,7 @@ class Pipeline:
                     model=model,
                     use_chat_template=self.pipeline_parameters.use_chat_template,
                     env_config=self.pipeline_parameters.env_config,
+                    accelerator=self.accelerator,
                 )
 
     def _init_tasks_and_requests(self, tasks: str):
