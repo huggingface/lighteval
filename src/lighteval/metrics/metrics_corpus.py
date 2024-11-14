@@ -108,7 +108,9 @@ class CorpusLevelTranslationMetric:
         for i in items:
             pred = as_list(i.preds)
             if len(pred) > 1:
-                hlog_warn(f"Multiple predictions present, keeping only the first prediction (when computing sacrebleu.{self.metric.__name__}).")
+                hlog_warn(
+                    f"Multiple predictions present, keeping only the first prediction (when computing sacrebleu.{self.metric.__name__})."
+                )
             preds.append(pred[0])
         return float(self.metric(hypotheses=preds, references=golds).score)
 
