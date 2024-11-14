@@ -269,7 +269,7 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         splits_indices = [tuple(e) for e in splits_indices]
         return num_dataset_splits, splits_indices
 
-    def _sorting_criteria(self, request: GreedyUntilRequest) -> tuple[bool, list, int]:
+    def _sorting_criteria(self, request: GreedyUntilRequest) -> tuple[bool, bool, list, int]:
         """
         Collate function for generating batches.
 
@@ -284,7 +284,7 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         # The generative task has no limit except the model context
         if gen_length is None:
             gen_length = 0
-        return request.use_logits, request.stop_sequence, -(len(toks) + gen_length)
+        return request.do_sample, request.use_logits, request.stop_sequence, -(len(toks) + gen_length)
 
 
 class GenerativeTaskDatasetNanotron(GenerativeTaskDataset):

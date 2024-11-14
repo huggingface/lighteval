@@ -43,7 +43,7 @@ class QAAdapter(TypedDict):
     instruction: NotRequired[str]
 
 
-def get_qa_prompt_function(language: Language, adapter: Callable[[dict], QAInput] | QAAdapter):
+def get_qa_prompt_function(language: Language, adapter: Callable[[dict], QAInput | None] | QAAdapter):
     """
     Create a templated prompt function for a QA task.
     Example tasks:
@@ -63,12 +63,13 @@ def get_qa_prompt_function(language: Language, adapter: Callable[[dict], QAInput
         Callable: A function that generates QA prompts based on the given parameters.
     """
 
-    adapter_fn: Callable[[dict], QAInput] = (
-        create_adapter_from_dict(adapter) if isinstance(adapter, dict) else adapter  # type: ignore
-    )
+    adapter_fn = create_adapter_from_dict(adapter)
 
-    def adapter_for_mcq(line: dict) -> MCQInput:
+    def adapter_for_mcq(line: dict) -> MCQInput | None:
         input_data = adapter_fn(line)
+        if input_data is None:
+            return None
+
         return {
             **input_data,
             "gold_idx": list(range(len(input_data["choices"]))),

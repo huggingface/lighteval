@@ -192,7 +192,7 @@ class EnvConfig:
         token (str): authentication token used for accessing the HuggingFace Hub.
     """
 
-    cache_dir: str = os.getenv("HF_HOME", "/scratch")
+    cache_dir: str = os.getenv("HF_HUB_CACHE", "/scratch")
     token: str = os.getenv("HF_TOKEN")
 
 
