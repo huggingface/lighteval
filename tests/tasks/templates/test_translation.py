@@ -89,3 +89,32 @@ Answer:\
     assert doc.unconditioned_query == "Answer:"
     assert doc.choices == [" A", " B"]
     assert doc.gold_index == [0]
+
+
+def test_translation_prompt_cf_formatting():
+    """
+    Tests that translation prompt function works correctly for CF formulation with formatting.
+    """
+    test_input = {
+        "source_text": "How are you?",
+        "target_text": ["你好吗?"],
+    }
+
+    prompt_fn = get_translation_prompt_function(
+        source_language=Language.ENGLISH,
+        target_language=Language.CHINESE,
+        adapter=lambda x: {
+            "source_text": x["source_text"],
+            "target_text": x["target_text"],
+            "gold_idx": 0,
+        },
+        formulation=CFFormulation(),
+    )
+
+    doc = prompt_fn(test_input, "test_task")
+    assert doc is not None
+
+    assert doc.query == "EN: How are you? ZH:"
+    assert doc.unconditioned_query == ""
+    assert doc.choices == [" 你好吗？"]
+    assert doc.gold_index == [0]

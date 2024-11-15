@@ -27,6 +27,7 @@ from typing_extensions import NotRequired, TypedDict
 
 from lighteval.tasks.templates.continuation import get_continuation_prompt_function
 from lighteval.tasks.templates.multichoice import create_adapter_from_dict
+from lighteval.tasks.templates.utils.formatting_utils import capitalize, fix_ending_punct
 from lighteval.tasks.templates.utils.formulation import Formulation, MCFFormulation
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
 from lighteval.utils.language import Language
@@ -37,9 +38,7 @@ from lighteval.utils.utils import as_list
 # It's also the best template based on https://arxiv.org/pdf/2301.07069.
 
 
-TRANSLATION_CONTEXT = (
-    "{source_label}{colon}{sentence_space}{source_text}{sentence_space}{target_label}{colon}{sentence_space}"
-)
+TRANSLATION_CONTEXT = "{source_label}{colon}{sentence_space}{source_text}{sentence_space}{target_label}{colon}"
 
 
 # Defined for type hinting only
@@ -110,9 +109,13 @@ def get_translation_prompt_function(
     """
     adapter_fn = create_adapter_from_dict(adapter)
     continuation_prompt_fn = get_continuation_prompt_function(
-        Language.ENGLISH, {"context": "context", "continuations": "continuations", "gold_idx": "gold_idx"}, formulation
+        Language.ENGLISH,
+        {"context": "context", "continuations": "continuations", "gold_idx": "gold_idx"},
+        formulation,
+        fix_formatting=False,
     )
-    translation_literals = TRANSLATION_LITERALS[source_language]
+    source_translation_literals = TRANSLATION_LITERALS[source_language]
+    target_translation_literals = TRANSLATION_LITERALS[target_language]
 
     source_label_string = standardize_tag(source_language.value).upper()
     target_label_string = standardize_tag(target_language.value).upper()
@@ -125,16 +128,20 @@ def get_translation_prompt_function(
         if input_data is None:
             return None
 
+        source_text = capitalize(fix_ending_punct(input_data["source_text"], source_translation_literals))
+
         context = TRANSLATION_CONTEXT.format(
             source_label=source_label_string,
-            source_text=input_data["source_text"],
+            source_text=source_text,
             target_label=target_label_string,
-            target_text=input_data["target_text"],
-            colon=translation_literals.colon,
-            sentence_space=translation_literals.sentence_space,
+            colon=":",
+            sentence_space=" ",
         )
 
-        continuations = as_list(input_data["target_text"])
+        continuations = [
+            capitalize(fix_ending_punct(text, target_translation_literals))
+            for text in as_list(input_data["target_text"])
+        ]
 
         return continuation_prompt_fn(
             {
