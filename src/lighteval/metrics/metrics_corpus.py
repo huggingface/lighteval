@@ -31,12 +31,12 @@ import sacrebleu
 import sklearn.metrics
 
 from lighteval.logging.hierarchical_logger import hlog_warn
-from lighteval.utils.utils import as_list
 from lighteval.metrics.sample_preparator import (
     GenerativeCorpusMetricInput,
     LogprobCorpusMetricInput,
     PerplexityCorpusMetricInput,
 )
+from lighteval.utils.utils import as_list
 
 
 # General aggregations
