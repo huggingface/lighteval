@@ -235,8 +235,8 @@ class VLLMModelConfig:
 @dataclass
 class OpenAIModelConfig:
     model: str
-    base_url: str
-    tokenizer: str
+    base_url: Optional[str] = None
+    tokenizer: Optional[str] = None
 
 
 @dataclass
