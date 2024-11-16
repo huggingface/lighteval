@@ -1819,12 +1819,14 @@ def piqa_helm(line, task_name: str = None):
     query += "Answer: "
 
     gold_ix = int(line["label"])
+    is_few_shots = line.get("__few_shots", False)
     return Doc(
         task_name=task_name,
         query=query,
-        choices=["A", "B"],
+        choices=["A", "B"] if not is_few_shots else [line["sol1"], line["sol2"]],
         gold_index=gold_ix,
         instruction="The following are multiple choice questions (with answers) about common sense.\n",
+        target_for_fewshot_sorting=["A", "B"][gold_ix],
     )
 
 
