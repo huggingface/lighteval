@@ -36,7 +36,7 @@ def mmlu_signs(line, topic):
     return {
         "query": prompt,
         "choices": [" +", " *", " =", " #"] if is_few_shots else ["+", "*", "=", "#"],
-        "target_for_fewshot_sorting": [" +", " *", " =", " #"][gold_ix],
+        "fewshot_sorting_class": [" +", " *", " =", " #"][gold_ix],
         "gold_index": gold_ix,
         "instruction": f"The following are multiple choice questions (with answers) about  {topic.replace('_', ' ')}.\n\n",
     }
@@ -58,7 +58,7 @@ def mmlu_numbers(line, topic):
     return {
         "query": prompt,
         "choices": [" 1", " 2", " 3", " 4"] if is_few_shots else ["1", "2", "3", "4"],
-        "target_for_fewshot_sorting": [" 1", " 2", " 3", " 4"][gold_ix],
+        "fewshot_sorting_class": [" 1", " 2", " 3", " 4"][gold_ix],
         "gold_index": gold_ix,
         "instruction": f"The following are multiple choice questions (with answers) about  {topic.replace('_', ' ')}.\n\n",
     }
