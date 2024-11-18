@@ -104,7 +104,7 @@ Harness and HELM teams for their pioneering work on LLM evaluations.
 Got ideas? Found a bug? Want to add a
 [task](https://github.com/huggingface/lighteval/wiki/Adding-a-Custom-Task) or
 [metric](https://github.com/huggingface/lighteval/wiki/Adding-a-New-Metric)?
-Contributions are warmly welcomed! 
+Contributions are warmly welcomed!
 
 If you're adding a new feature, please open an issue first.
 
