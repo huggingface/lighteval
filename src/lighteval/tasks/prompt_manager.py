@@ -75,8 +75,23 @@ class PromptManager:
         Returns:
             str: Target of the document, which is the correct answer for a document.
         """
-        # likely we mostly need one example not all
         return as_list(formatted_doc.get_golds())[0]
+
+    @staticmethod
+    def doc_to_fewshot_sorting_class(formatted_doc: Doc) -> str:
+        """
+        In some cases, when selecting few-shot samples, we want to use specific document classes
+        which need to be specified separately from the target.
+        For example, a document where the gold is a json might want to use only one of the keys of
+        the json to define sorting classes in few shot samples. Else we take the gold.
+
+        Args:
+            formatted_doc (Doc): Formatted document.
+
+        Returns:
+            str: Class of the
+        """
+        return formatted_doc.fewshot_sorting_class or PromptManager.doc_to_target(formatted_doc)
 
     def add_context_to_doc(
         self,
@@ -352,16 +367,16 @@ class FewShotSampler:
     ):
         fewshotpool = self.task.fewshot_docs()
 
-        # rnd = random.Random(variance_seed)
         random.seed(variance_seed)
 
-        # Build up balanced selection based on labels
-        # Sort by counts of labels
+        # Build up balanced selection based on fewshot_sorting_class
+        # (or the gold target, if the class is undefined)
         label_to_instances = defaultdict(list)
         for instance in fewshotpool:
-            target = PromptManager.doc_to_target(instance)
+            target = PromptManager.doc_to_fewshot_sorting_class(instance)
             label_to_instances[target].append(instance)
 
+        # Sort by counts of class labels
         counts_to_labels = defaultdict(list)
         for label, instances in sorted(label_to_instances.items()):
             counts_to_labels[len(instances)].append(label)
