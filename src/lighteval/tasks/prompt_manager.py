@@ -359,7 +359,7 @@ class FewShotSampler:
         # Sort by counts of labels
         label_to_instances = defaultdict(list)
         for instance in fewshotpool:
-            target = instance.get_target_for_fewshot_sorting()
+            target = PromptManager.doc_to_target(instance)
             label_to_instances[target].append(instance)
 
         counts_to_labels = defaultdict(list)
