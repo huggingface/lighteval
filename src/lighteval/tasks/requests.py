@@ -177,7 +177,6 @@ class Doc:
 
     # For few-shot
     instruction: Optional[str] = ""
-    target_for_fewshot_sorting: Optional[str] = None
 
     # Filled when parsing and adding the few-shot context
     ctx: Optional[str] = ""
@@ -200,9 +199,6 @@ class Doc:
         for gold_ix in gold_indices:
             golds.extend(as_list(self.choices[gold_ix]))
         return golds
-
-    def get_target_for_fewshot_sorting(self) -> str:
-        return self.target_for_fewshot_sorting or as_list(self.get_golds())[0]
 
     def __repr__(self):
         doc_dict = asdict(self)
