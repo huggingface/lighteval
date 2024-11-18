@@ -30,6 +30,7 @@ import numpy as np
 import sacrebleu
 import sklearn.metrics
 
+from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.sample_preparator import (
     GenerativeCorpusMetricInput,
     LogprobCorpusMetricInput,
@@ -103,7 +104,14 @@ class CorpusLevelTranslationMetric:
     def compute(self, items: list[GenerativeCorpusMetricInput]) -> float:
         """Computes the metric score over all the corpus generated items, by using the sacrebleu implementation."""
         golds = [i.golds for i in items]
-        preds = [as_list(i.preds) for i in items]
+        preds = []
+        for i in items:
+            pred = as_list(i.preds)
+            if len(pred) > 1:
+                hlog_warn(
+                    f"Multiple predictions present, keeping only the first prediction (when computing sacrebleu.{self.metric.__name__})."
+                )
+            preds.append(pred[0])
         return float(self.metric(hypotheses=preds, references=golds).score)
 
 
