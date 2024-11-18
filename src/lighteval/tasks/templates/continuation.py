@@ -88,6 +88,7 @@ def get_continuation_prompt_function(
     language: Language,
     adapter: Callable[[dict], ContinuationInput | None] | ContinuationDictAdapter,
     formulation: Formulation = MCFFormulation(),
+    fix_formatting: bool = True,
 ):
     """
     Create a templated prompt function for a Continuation task.
@@ -120,6 +121,7 @@ def get_continuation_prompt_function(
         adapter (Callable[[dict], ContinuationInput] | ContinuationDictAdapter): Either a function that takes a dataset row and returns a ContinuationInput, or a dictionary with keys corresponding to the field names in the dataset row.
             Note: Both ContinuationDictAdapter and ContinuationInput are TypeDicts, this means that the caller provides dictionary and doesn't initialize any class!
         formulation (Formulation, optional): The formulation (MCF/Hybrid/CF) to use for the task. Defaults to MCFFormulation().
+        fix_formatting (bool, optional): Whether to fix the formatting of the text by capitalizing and fixing punctuation based on language. If False, the text will be used as-is. Defaults to True.
     Returns:
         Callable: A function that generates Continuation prompt based on the given parameters.
     """
@@ -134,12 +136,17 @@ def get_continuation_prompt_function(
         instruction_val = cont_input.get("instruction")
         instruction = f"{instruction_val}\n" if instruction_val else ""
 
-        context = f"{capitalize(fix_ending_punct(cont_input['context'], translation_literals))}"
-        continuations = cont_input["continuations"]
+        context = (
+            f"{capitalize(fix_ending_punct(cont_input['context'], translation_literals))}"
+            if fix_formatting
+            else cont_input["context"]
+        )
 
         continuations = [
             fix_capitalization(context, fix_ending_punct(continuation, translation_literals), translation_literals)
-            for continuation in continuations
+            if fix_formatting
+            else continuation
+            for continuation in cont_input["continuations"]
         ]
 
         return cont_input, instruction, context, continuations
