@@ -77,10 +77,7 @@ class VLLMModel(LightevalModel):
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
         self._tokenizer = self._create_auto_tokenizer(config, env_config)
 
-        if config.max_model_length is not None:
-            self._max_length = int(config.max_model_length)
-        else:
-            self._max_length = self.tokenizer.model_max_length or self.tokenizer.max_position_embeddings
+        self._max_length = int(config.max_model_length) if config.max_model_length is not None else None
 
         # If model_parallel is not set we compare the number of processes with the number of GPUs
         self.model = self._create_auto_model(config, env_config)
@@ -93,6 +90,7 @@ class VLLMModel(LightevalModel):
         self.precision = _get_dtype(config.dtype, config=self._config)
 
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
+        self.pairwise_tokenization = config.pairwise_tokenization
 
     @property
     def tokenizer(self):
@@ -151,6 +149,13 @@ class VLLMModel(LightevalModel):
             return None
 
         model = LLM(**self.model_args)
+
+        # If the max_length can't get extracted from the config, it will be inferred from the model
+        # Inferring from the tokenizer will cause vllm to bug for models with mismatches between model
+        # config and tk config, like mistralai/Mistral-7B-v0.1
+        if self._max_length is None:
+            self._max_length = model.llm_engine.model_config.max_seq_len_to_capture
+
         return model
 
     def _create_auto_tokenizer(self, config: VLLMModelConfig, env_config: EnvConfig):
@@ -162,36 +167,6 @@ class VLLMModel(LightevalModel):
         )
         tokenizer.pad_token = tokenizer.eos_token
         return tokenizer
-
-    def _init_max_length(self, max_length) -> int:
-        """Return the maximum sequence length of the model.
-        NOTE: Different model configurations have different max sequence length
-        attribute names.
-            - n_positions: (CTRLConfig)
-            - max_position_embeddings: (BartConfig, RoFormerConfig)
-            - n_ctx: (GPT2Config)
-        NOTE: For relative position encoded models you should specify the max
-        sequence length of the model in the constructor via `max_length`.
-
-        Args:
-            max_length (Optional[int]): The maximum length of the input sequence. If not provided, it will be determined
-                based on the model's configuration or tokenizer's model_max_length attribute.
-
-        Returns:
-            int: Max length to use depending on the available args and config
-        """
-        if max_length is not None:
-            return int(max_length)
-        # Try to get the sequence length from the model config.
-        seqlen_config_attrs = ("n_positions", "max_position_embeddings", "n_ctx")
-
-        for attr in seqlen_config_attrs:
-            if hasattr(self._config, attr):
-                return getattr(self._config, attr)
-
-        # Default max sequence length setting for when no `max_length` is provided
-        # or no max length config setting is found in the model or tokenizer.
-        return 2048
 
     def greedy_until(
         self,
@@ -299,7 +274,7 @@ class VLLMModel(LightevalModel):
         """Contains the actual logic of the generation."""
         if generate:
             sampling_params = SamplingParams(
-                temperature=1.0 if num_samples > 1 else 0.0,
+                temperature=float(self._config.temperature) if num_samples > 1 else 0.0,
                 n=num_samples,
                 max_tokens=max_new_tokens,
                 stop=stop_tokens,
@@ -352,7 +327,7 @@ class VLLMModel(LightevalModel):
             else:
                 # The following line is mandatory for compatibility with the harness
                 request.tokenized_context, request.tokenized_continuation = self.tok_encode_pair(
-                    request.context, request.choice
+                    request.context, request.choice, pairwise=self.pairwise_tokenization
                 )
         return self._loglikelihood_tokens(requests, override_bs=override_bs)
 

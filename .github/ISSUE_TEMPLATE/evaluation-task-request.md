@@ -13,6 +13,6 @@ assignees: ''
 
 ## Evaluation metadata
 Provide all available
-- Paper url: 
-- Github url: 
+- Paper url:
+- Github url:
 - Dataset url:

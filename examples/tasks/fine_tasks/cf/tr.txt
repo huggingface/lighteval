@@ -1,0 +1,16 @@
+# General Knowledge (GK)
+lighteval|community_arc_tur_cf:easy|0|1
+lighteval|exams_tur_cf|0|1
+lighteval|community_mmlu_tur_cf|0|1
+
+# Reading Comprehension (RC)
+lighteval|belebele_tur_Latn_cf|0|1
+lighteval|tquadv2_tur|0|1
+lighteval|xquad_tur|0|1
+
+# Reasoning (RES)
+lighteval|xcopa_tur_cf|0|1
+
+# Natural Language Understanding (NLU)
+lighteval|community_hellaswag_tur_cf|0|1
+lighteval|xnli2.0_tur_cf|0|1

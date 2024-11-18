@@ -1,0 +1,8 @@
+# MMLU (College Level Tasks)
+community|serbian_evals:mmlu_fakultet_biologija|0|0
+community|serbian_evals:mmlu_fakultet_hemija|0|0
+community|serbian_evals:mmlu_fakultet_racunari|0|0
+community|serbian_evals:mmlu_fakultet_matematika|0|0
+community|serbian_evals:mmlu_fakultet_medicina|0|0
+community|serbian_evals:mmlu_fakultet_fizika|0|0
+community|serbian_evals:mmlu_sigurnost_racunara|0|0

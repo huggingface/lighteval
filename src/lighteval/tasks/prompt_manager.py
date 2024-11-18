@@ -187,7 +187,7 @@ class PromptManager:
             system_prompt=system_prompt,
             use_chat_template=use_chat_template,
         )
-        toks = self.model.tokenizer(output)["input_ids"]
+        toks = self.model.tok_encode(output)
 
         # If we need to truncate few-shots to fit in the context
         if truncate_few_shots and self.model.max_length is not None and self.model.tokenizer is not None:

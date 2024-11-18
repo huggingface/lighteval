@@ -1,0 +1,7 @@
+# MMLU (Miscellaneous)
+community|serbian_evals:mmlu_anatomija|0|0
+community|serbian_evals:mmlu_astronomija|0|0
+community|serbian_evals:mmlu_poslovna_etika|0|0
+community|serbian_evals:mmlu_kliničko_znanje|0|0
+community|serbian_evals:mmlu_razno|0|0
+community|serbian_evals:mmlu_elektrotehnika|0|0
