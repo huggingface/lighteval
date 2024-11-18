@@ -310,9 +310,6 @@ class BaseModel(LightevalModel):
         Raises:
             RecursionError: If an error occurs during tokenization, a fallback tokenizer with "<unk>" token will be created.
         """
-        print(model_name if tokenizer_name is None else tokenizer_name)
-        print(revision + (f"/{subfolder}" if subfolder is not None else ""))
-        print(env_config.cache_dir)
         try:
             tokenizer = AutoTokenizer.from_pretrained(
                 model_name if tokenizer_name is None else tokenizer_name,
