@@ -204,7 +204,7 @@ def bbh(line, instruction, choices, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"{instruction}Q: {line['input']}\nA:",
-        choices=[(" " if is_few_shots else "") + c for c in choices],
+        choices=choices,
         gold_index=choices.index(line["target"]),
         instruction=instruction,
     )
