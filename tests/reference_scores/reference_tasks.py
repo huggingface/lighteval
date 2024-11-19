@@ -59,7 +59,6 @@ STABLE_SUBSET = [
 
 HELM_SUBSET = [
     "helm|boolq|5|0",
-    "helm|hellaswag|5|0",
 ]
 
 AGIEVAL_SUBSET = [

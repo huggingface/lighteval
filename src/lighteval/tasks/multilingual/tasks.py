@@ -44,7 +44,7 @@ from lighteval.tasks.multilingual.adapters import (
     winogrand_adapter,
     xcodah_adapter,
 )
-from lighteval.tasks.multilingual.utils.task_utils import normalize_subset
+from lighteval.tasks.multilingual.utils.task_utils import get_metrics_for_formulation, normalize_subset
 from lighteval.tasks.templates.boolq import get_boolq_prompt_function
 from lighteval.tasks.templates.continuation import get_continuation_prompt_function
 from lighteval.tasks.templates.copa import get_copa_prompt_function
@@ -76,10 +76,14 @@ xnli_tasks = [
     LightevalTaskConfig(
         name=f"xnli_{language.value}_{formulation.name.lower()}",
         suite=["lighteval"],
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=None),
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
         prompt_function=get_nli_prompt_function(
             language=language,
             adapter=lambda line: {
@@ -126,10 +130,14 @@ xnli2_tasks = [
     LightevalTaskConfig(
         name=f"xnli2.0_{language.value}_{formulation.name.lower()}",
         suite=["lighteval"],
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=None),
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
         prompt_function=get_nli_prompt_function(
             language=language,
             adapter=lambda line: {
@@ -202,10 +210,14 @@ xnli_indic_tasks = [
         hf_filter=lambda x: int(x["label"]) in [0, 2],
         evaluation_splits=["validation"],
         few_shots_split="train",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=None),
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for language in [
         Language.ASSAMESE,
@@ -245,10 +257,14 @@ afri_xnli_tasks = [
         hf_filter=lambda x: int(x["label"]) in [0, 2],
         evaluation_splits=("test",),
         few_shots_split="validation",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=None),
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for language in [
         Language.AMHARIC,
@@ -297,10 +313,14 @@ paws_x_tasks = [
         hf_subset=standardize_tag(language.value),
         evaluation_splits=("test",),
         few_shots_split="train",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=None),
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for language in [
         Language.GERMAN,
@@ -338,10 +358,14 @@ rcb_tasks = [
         hf_filter=lambda x: int(x["outputs"] or "0") in [1, 2],
         evaluation_splits=("train",),
         few_shots_split="validation",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=None),
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
@@ -370,10 +394,14 @@ ocnli_tasks = [
         hf_filter=lambda x: int(x["label"]) in [1, 2],
         evaluation_splits=("validation",),
         few_shots_split="train",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=None),
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
@@ -401,10 +429,14 @@ cmnli_tasks = [
         # Only keep the positive and negative examples
         evaluation_splits=("validation",),
         few_shots_split="train",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=None),
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
@@ -446,11 +478,13 @@ xcopa_tasks = [
         hf_subset=("copa_ext_ar" if language == Language.ARABIC else standardize_tag(language.value)),
         evaluation_splits=["test"],
         few_shots_split="validation",
-        generation_size=-1,
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for language in [
         Language.ARABIC,
@@ -463,7 +497,8 @@ xcopa_tasks = [
         Language.TURKISH,
         Language.VIETNAMESE,
         Language.CHINESE,
-        # Optionally: Haitian, Quechu
+        Language.HAITIAN,
+        Language.QUECHUA,
     ]
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
@@ -493,10 +528,13 @@ copa_indic_tasks = [
         hf_revision="d356ef19a4eb287e88a51d07a56b73ba88c7f188",
         evaluation_splits=["test"],
         hf_avail_splits=["test"],
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
         trust_dataset=True,
     )
     for language in [
@@ -542,10 +580,13 @@ parus_tasks = [
         hf_subset="parus",
         evaluation_splits=["train"],
         few_shots_split="validation",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
@@ -583,10 +624,13 @@ mlmm_hellaswag_tasks = [
         hf_revision="96ed8e0dfc6172dad1d3df338d7b8ba6c1ff9d83",
         evaluation_splits=["validation"],
         hf_avail_splits=["validation"],
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
         trust_dataset=True,
     )
     for lang in [
@@ -654,10 +698,13 @@ hellaswag_tur_tasks = [
         hf_subset="default",
         evaluation_splits=["validation"],
         hf_avail_splits=["validation"],
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
@@ -685,10 +732,13 @@ hellaswag_tha_tasks = [
         hf_subset="default",
         evaluation_splits=["validation"],
         few_shots_split="train",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
@@ -711,9 +761,41 @@ hellaswag_hin_tasks = [
         hf_subset="hi",
         evaluation_splits=("validation",),
         few_shots_split="validation",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+            ],
+        ),
+    )
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+]
+
+hellaswag_tel_tasks = [
+    LightevalTaskConfig(
+        name=f"community_hellaswag_{Language.TELUGU.value}_{formulation.name.lower()}",
+        suite=["lighteval"],
+        prompt_function=get_hellaswag_prompt_function(
+            language=Language.TELUGU,
+            adapter=lambda line: {
+                "ctx_a": line["ctx_a"],
+                "continuations": line["endings"],
+                "gold_idx": int(line["label"]),
+            },
+            formulation=formulation,
+        ),
+        hf_repo="LightFury9/hellaswag-telugu",
+        hf_subset="default",
+        evaluation_splits=("valid",),
+        few_shots_split="train",
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
@@ -724,6 +806,7 @@ TASKS_TABLE.extend(
         *hellaswag_tur_tasks,
         *hellaswag_tha_tasks,
         *hellaswag_hin_tasks,
+        *hellaswag_tel_tasks,
     ]
 )
 # ------------------------------- RC Tasks ------------------------------- #
@@ -1096,10 +1179,13 @@ c3_tasks = [
         hf_subset="c3",
         evaluation_splits=("validation",),
         few_shots_split="train",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for formulation in [
         MCFFormulation(),
@@ -1127,10 +1213,13 @@ race_ar_task = [
         evaluation_splits=["test"],
         few_shots_split="validation",
         trust_dataset=True,
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for formulation in [
         MCFFormulation(),
@@ -1149,10 +1238,13 @@ soqal_tasks = [
         few_shots_split="validation",
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Native",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for formulation in [
         MCFFormulation(),
@@ -1220,10 +1312,13 @@ belebele_tasks = [
         hf_subset=language,
         evaluation_splits=("test",),
         hf_avail_splits=["test"],
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
     for language in [
@@ -1467,11 +1562,14 @@ meta_mmlu_tasks = [
         ),
         evaluation_splits=("latest",),
         hf_avail_splits=["latest"],
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-            loglikelihood_acc_metric(normalization=LogProbPMINorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+            ],
+        ),
     )
     for subset in MMLU_SUBSETS
     for language in [
@@ -1512,11 +1610,14 @@ mlmm_mmlu_tasks = [
         trust_dataset=True,
         evaluation_splits=("test",),
         few_shots_split="dev",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-            loglikelihood_acc_metric(normalization=LogProbPMINorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+            ],
+        ),
     )
     for subset in MMLU_SUBSETS
     for language in [
@@ -1573,11 +1674,14 @@ openai_mmlu_tasks = [
         hf_avail_splits=["test"],
         hf_filter=partial(lambda subset, x: x["Subject"].lower() == subset, subset),
         hf_revision="038c7808122969ead7456361af05cb8f47d247f8",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-            loglikelihood_acc_metric(normalization=LogProbPMINorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+            ],
+        ),
     )
     for subset in MMLU_SUBSETS
     for language in [
@@ -1634,11 +1738,14 @@ afri_mmlu_tasks = [
         hf_filter=partial(lambda subset, line: line["subject"] == subset, subset),
         evaluation_splits=("test",),
         few_shots_split="dev",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-            loglikelihood_acc_metric(normalization=LogProbPMINorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+            ],
+        ),
     )
     for subset in AFRI_MMLU_SUBSETS
     for language in [
@@ -1687,11 +1794,14 @@ rummlu = [
         hf_filter=lambda x: x["meta"]["domain"] == subset,
         evaluation_splits=("public_test",),
         hf_avail_splits=["public_test"],
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-            loglikelihood_acc_metric(normalization=LogProbPMINorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+            ],
+        ),
     )
     for subset in MMLU_SUBSETS
     for formulation in [
@@ -1716,11 +1826,14 @@ mmlu_turkish = [
         hf_subset=subset,
         evaluation_splits=("test",),
         few_shots_split="dev",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-            loglikelihood_acc_metric(normalization=LogProbPMINorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+            ],
+        ),
     )
     for subset in MMLU_SUBSETS
     for formulation in [
@@ -1820,11 +1933,14 @@ cmmlu_tasks = [
         hf_subset=subset,
         evaluation_splits=("test",),
         few_shots_split="dev",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-            loglikelihood_acc_metric(normalization=LogProbPMINorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+            ],
+        ),
     )
     for subset in CMMLU_SUBSETS
     for formulation in [
@@ -1898,11 +2014,14 @@ arabic_mmlu_tasks = [
         hf_subset=subset,
         evaluation_splits=("test",),
         hf_avail_splits=["dev"],
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-            loglikelihood_acc_metric(normalization=LogProbPMINorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+            ],
+        ),
     )
     for subset in ARABIC_MMLU_SUBSETS
     for formulation in [
@@ -1941,11 +2060,14 @@ turkish_mmlu_tasks = [
         hf_subset=subset,
         evaluation_splits=("test",),
         few_shots_split="dev",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-            loglikelihood_acc_metric(normalization=LogProbPMINorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+            ],
+        ),
     )
     for subset in TURKISH_MMLU_SUBSET
     for formulation in [
@@ -2002,11 +2124,14 @@ mlmm_arc_challenge_tasks = [
         trust_dataset=True,
         evaluation_splits=("test",),
         few_shots_split="train",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-            loglikelihood_acc_metric(normalization=LogProbPMINorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+            ],
+        ),
     )
     for language in [
         Language.RUSSIAN,
@@ -2058,10 +2183,13 @@ arabic_ledarboard_arc_easy = [
         trust_dataset=True,
         evaluation_splits=["test"],
         few_shots_split="validation",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for formulation in [
         MCFFormulation(),
@@ -2090,11 +2218,14 @@ lumi_arc = [
         hf_subset=standardize_tag(language.value),
         evaluation_splits=["test"],
         few_shots_split="validation",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-            loglikelihood_acc_metric(normalization=LogProbPMINorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+            ],
+        ),
     )
     for formulation in [
         MCFFormulation(),
@@ -2137,11 +2268,14 @@ turkish_arc_tasks = [
         hf_subset=f"ARC-{subset.capitalize()}",
         evaluation_splits=("test",),
         hf_avail_splits=["train"],
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ]
-        + ([loglikelihood_acc_metric(normalization=LogProbPMINorm())] if subset == "challenge" else []),  # type: ignore
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ]
+            + ([loglikelihood_acc_metric(normalization=LogProbPMINorm())] if subset == "challenge" else []),  # type: ignore
+        ),
     )
     for subset in ["easy", "challenge"]
     for formulation in [
@@ -2170,11 +2304,14 @@ hindi_arc_tasks = [
         hf_subset=f"ARC-{subset.capitalize()}",
         evaluation_splits=("test",),
         few_shots_split="validation",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ]
-        + ([loglikelihood_acc_metric(normalization=LogProbPMINorm())] if subset == "challenge" else []),  # type: ignore
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ]
+            + ([loglikelihood_acc_metric(normalization=LogProbPMINorm())] if subset == "challenge" else []),  # type: ignore
+        ),
     )
     for subset in ["easy", "challenge"]
     for formulation in [
@@ -2195,10 +2332,13 @@ arabic_arc_tasks = [
         evaluation_splits=["test"],
         few_shots_split="validation",
         few_shots_select="sequential",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
         trust_dataset=True,
     )
     for formulation in [
@@ -2230,11 +2370,14 @@ swahili_arc_tasks = [
         else "dc1df9df632d14c251594d9129fb833d2ca4429c",
         evaluation_splits=("test",),
         few_shots_split="train",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ]
-        + ([loglikelihood_acc_metric(normalization=LogProbPMINorm())] if subset == "challenge" else []),  # type: ignore
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ]
+            + ([loglikelihood_acc_metric(normalization=LogProbPMINorm())] if subset == "challenge" else []),  # type: ignore
+        ),
     )
     for subset in ["easy", "challenge"]
     for formulation in [
@@ -2287,10 +2430,13 @@ mlmm_truthfulqa_tasks = [
         trust_dataset=True,
         evaluation_splits=("validation",),
         hf_avail_splits=["validation"],
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for subset in ["mc1", "mc2"]
     for language in [
@@ -2357,10 +2503,13 @@ turkish_truthfulqa = [
         hf_subset="default",
         evaluation_splits=("validation",),
         hf_avail_splits=["validation"],
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for subset in ["mc1", "mc2"]
     for formulation in [
@@ -2517,10 +2666,13 @@ exams_tasks = [
         ),
         evaluation_splits=("test",),
         few_shots_split="train",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for language in exams_subjects_by_lang.keys()
     for subject in exams_subjects_by_lang[language]
@@ -2548,10 +2700,13 @@ m3exams_tasks = [
         evaluation_splits=("test",),
         few_shots_split="dev",
         generation_size=-1,
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for language in [
         Language.AFRIKAANS,
@@ -2587,10 +2742,13 @@ thai_exams_tasks = [
         hf_subset=subset,
         evaluation_splits=("test",),
         few_shots_split="train",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for subset in THAI_EXAMS_SUBSETS
     for formulation in [
@@ -2634,11 +2792,14 @@ xcsqa_tasks = [
         ),
         evaluation_splits=("validation",),
         hf_avail_splits=["validation"],
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-            loglikelihood_acc_metric(normalization=LogProbPMINorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+            ],
+        ),
     )
     for language in [
         Language.ARABIC,
@@ -2690,10 +2851,13 @@ piqa_ar_tasks = [
         evaluation_splits=["test"],
         few_shots_split="validation",
         trust_dataset=True,
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for formulation in [
         MCFFormulation(),
@@ -2726,10 +2890,13 @@ openbook_ara_tasks = [
         trust_dataset=True,
         evaluation_splits=["test"],
         few_shots_split="validation",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for formulation in [
         MCFFormulation(),
@@ -2757,10 +2924,13 @@ openbook_rus_tasks = [
         hf_subset="ruopenbookqa",
         evaluation_splits=("train",),
         hf_avail_splits=["train"],
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for formulation in [
         MCFFormulation(),
@@ -2799,10 +2969,13 @@ sciqa_ar_task = [
         evaluation_splits=["test"],
         few_shots_split="validation",
         few_shots_select="sequential",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
         trust_dataset=True,
     )
     for formulation in [
@@ -2841,10 +3014,13 @@ mathlogicqa_rus_tasks = [
         hf_subset="mathlogicqa",
         evaluation_splits=("train",),
         hf_avail_splits=["train"],
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for formulation in [
         CFFormulation(),
@@ -3002,11 +3178,14 @@ agieval_tasks_zh = [
         evaluation_splits=("test",),
         hf_avail_splits=["test"],
         few_shots_split=None,
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-            loglikelihood_acc_metric(normalization=LogProbPMINorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+            ],
+        ),
     )
     for subset in CHINESE_AGIEVAL_SUBSET
     for formulation in [
@@ -3090,10 +3269,13 @@ ceval_tasks = [
         hf_subset=subset,
         evaluation_splits=("val",),
         few_shots_split="dev",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for subset in CEVAL_SUBSET
     for formulation in [
@@ -3125,10 +3307,13 @@ worldtree_rus_tasks = [
         hf_subset="ruworldtree",
         evaluation_splits=("train",),
         hf_avail_splits=["train"],
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for formulation in [
         MCFFormulation(),
@@ -3156,10 +3341,13 @@ xcodah_tasks = [
         hf_subset=f"X-CODAH-{standardize_tag(language.value)}",
         evaluation_splits=("validation",),
         hf_avail_splits=["validation"],
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for language in [
         Language.ARABIC,
@@ -3213,10 +3401,13 @@ xstory_tasks = [
         hf_subset=standardize_tag(lang.value),
         evaluation_splits=["eval"],
         few_shots_split="train",
-        metric=[
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
     )
     for lang in [
         Language.RUSSIAN,
@@ -3258,6 +3449,7 @@ xwinograd_tasks = [
         evaluation_splits=("test",),
         hf_avail_splits=["test"],
         metric=[
+            loglikelihood_acc_metric(normalization=None),
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
         ],
@@ -3289,6 +3481,7 @@ winograd_turkish_task = [
         evaluation_splits=("validation",),
         few_shots_split="train",
         metric=[
+            loglikelihood_acc_metric(normalization=None),
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
         ],

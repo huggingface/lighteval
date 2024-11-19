@@ -30,6 +30,7 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
 from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
@@ -57,6 +58,7 @@ from lighteval.utils.utils import EnvConfig, as_list
 
 
 if is_accelerate_available():
+    from accelerate import Accelerator
     from accelerate.utils import calculate_maximum_sizes, convert_bytes, get_max_memory
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -67,8 +69,8 @@ STARTING_BATCH_SIZE = 512
 class BaseModel(LightevalModel):
     def __init__(
         self,
-        config: BaseModelConfig,
         env_config: EnvConfig,
+        config: BaseModelConfig,
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self._config = config.init_configs(env_config)
@@ -113,6 +115,72 @@ class BaseModel(LightevalModel):
         )
 
         self.pairwise_tokenization = config.pairwise_tokenization
+
+    @classmethod
+    def from_model(
+        cls,
+        model: Union[AutoModelForCausalLM, LightevalModel],
+        env_config: EnvConfig,
+        accelerator: "Accelerator" = None,
+        tokenizer_name: str = None,  # custom tokenizer
+        trust_remote_code: bool = False,
+        use_chat_template: bool = False,
+        add_special_tokens: bool = True,
+        pairwise_tokenization: bool = False,
+        multichoice_continuations_start_space: bool = None,
+    ):
+        # Slightly hackish way to test if the model is a AutoModelForCausalLM, since the instances don't
+        # derive from this class explicitely
+        assert isinstance(model, LightevalModel) or type(model).__name__ in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.values()
+
+        if isinstance(model, LightevalModel):
+            return model
+
+        # Instanciate the object without using __init__
+        self = cls.__new__(cls)
+        self._config = model.config
+        self._max_length = self._init_max_length(max_length=model.config.max_length)
+        self._tokenizer = self._create_auto_tokenizer_with_name(
+            model_name=model.name_or_path,
+            revision=model.config._commit_hash,
+            env_config=env_config,
+            trust_remote_code=trust_remote_code,
+            tokenizer_name=tokenizer_name,
+        )
+        self.model_name = _simplify_name(model.name_or_path)
+        self.model_sha = model.config._commit_hash
+
+        # If model_parallel is not set we compare the number of processes with the number of GPUs
+        self.model = model
+        self.model.eval()
+        torch.set_grad_enabled(False)
+
+        self.accelerator = accelerator
+        if accelerator is not None:
+            self._device = accelerator.device
+            self.model = self.accelerator.prepare(self.model.to(accelerator.device))
+        else:
+            self._device = "cpu"
+
+        self.use_chat_template = use_chat_template
+        self._add_special_tokens = add_special_tokens if add_special_tokens is not None else False
+        self.pairwise_tokenization = pairwise_tokenization
+        self.multichoice_continuations_start_space = multichoice_continuations_start_space
+
+        self.precision = _get_dtype(model.dtype, config=self._config)
+
+        if is_accelerate_available():
+            model_size, _ = calculate_maximum_sizes(self.model)
+            model_size = convert_bytes(model_size)
+        else:
+            model_size = -1
+        self.model_info = ModelInfo(
+            model_name=self.model_name,
+            model_sha=self.model_sha,
+            model_dtype=self.precision,
+            model_size=model_size,
+        )
+        return self
 
     @property
     def tokenizer(self):
@@ -207,10 +275,23 @@ class BaseModel(LightevalModel):
     def _create_auto_tokenizer(
         self, config: BaseModelConfig, env_config: EnvConfig
     ) -> transformers.PreTrainedTokenizer:
-        return self._create_auto_tokenizer_with_name(config.pretrained, config=config, env_config=env_config)
+        return self._create_auto_tokenizer_with_name(
+            model_name=config.pretrained,
+            revision=config.revision,
+            env_config=env_config,
+            tokenizer_name=config.tokenizer,
+            subfolder=config.subfolder,
+            trust_remote_code=config.trust_remote_code,
+        )
 
     def _create_auto_tokenizer_with_name(
-        self, model_name: str, config: BaseModelConfig, env_config: EnvConfig
+        self,
+        model_name: str,
+        revision: str,
+        env_config: EnvConfig,
+        tokenizer_name: str = None,
+        subfolder: str = None,
+        trust_remote_code: bool = False,
     ) -> transformers.PreTrainedTokenizer:
         """
         Create a Hugging Face AutoTokenizer for language model.
@@ -231,22 +312,32 @@ class BaseModel(LightevalModel):
         """
         try:
             tokenizer = AutoTokenizer.from_pretrained(
-                model_name if config.tokenizer is None else config.tokenizer,
-                revision=config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
+                model_name if tokenizer_name is None else tokenizer_name,
+                revision=revision + (f"/{subfolder}" if subfolder is not None else ""),
                 cache_dir=env_config.cache_dir,
                 token=env_config.token,
-                trust_remote_code=config.trust_remote_code,
+                trust_remote_code=trust_remote_code,
                 padding_side="left",
                 truncation_side="left",
             )
         except RecursionError:
             tokenizer = AutoTokenizer.from_pretrained(
-                model_name if config.tokenizer is None else config.tokenizer,
-                revision=config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
+                model_name if tokenizer_name is None else tokenizer_name,
+                revision=revision + (f"/{subfolder}" if subfolder is not None else ""),
                 cache_dir=env_config.cache_dir,
                 token=env_config.token,
-                trust_remote_code=config.trust_remote_code,
+                trust_remote_code=trust_remote_code,
                 unk_token="<unk>",
+                padding_side="left",
+                truncation_side="left",
+            )
+        except FileNotFoundError:
+            hlog_warn("Problem when loading the tokenizer in the cache - discarding the provided cache path value.")
+            tokenizer = AutoTokenizer.from_pretrained(
+                model_name if tokenizer_name is None else tokenizer_name,
+                revision=revision + (f"/{subfolder}" if subfolder is not None else ""),
+                token=env_config.token,
+                trust_remote_code=trust_remote_code,
                 padding_side="left",
                 truncation_side="left",
             )
@@ -537,6 +628,7 @@ class BaseModel(LightevalModel):
                 max_new_tokens = batch[0].generation_size
                 returns_logits = batch[0].use_logits
                 num_samples = batch[0].num_samples
+                do_sample = batch[0].do_sample
 
                 context = [c.context for c in batch]
 
@@ -590,6 +682,7 @@ class BaseModel(LightevalModel):
                     stop_tokens=stop_tokens,
                     returns_logits=returns_logits,
                     num_samples=num_samples,
+                    do_sample=do_sample,
                 )
                 results.extend(cur_reponses)
 
@@ -602,6 +695,7 @@ class BaseModel(LightevalModel):
         stop_tokens: list[str],
         returns_logits: Optional[bool] = False,
         num_samples: Optional[int] = 1,
+        do_sample: Optional[bool] = False,
     ) -> list[GenerativeResponse]:
         """Contains the actual logic of the generation.
         First computes the stop sequences, then generates the predictions, then converts the outputs to GenerativeResponse.
@@ -619,7 +713,7 @@ class BaseModel(LightevalModel):
             return_dict_in_generate=True,
             output_scores=True,
             eos_token_id=self.tokenizer.eos_token_id,
-            do_sample=num_samples > 1,
+            do_sample=do_sample,
             num_return_sequences=num_samples,
         )
         if returns_logits:
@@ -659,10 +753,6 @@ class BaseModel(LightevalModel):
                     decoded_generation = decoded_generation.split(term)[0]
 
                 decoded_generations.append(decoded_generation)
-
-            if num_samples == 1:  # We only return one item
-                result_generations = result_generations[0]
-                decoded_generations = decoded_generations[0]
 
             cur_response = GenerativeResponse(
                 result=decoded_generations,

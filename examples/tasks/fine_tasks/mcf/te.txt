@@ -1,0 +1,14 @@
+# General Knowledge (GK)
+lighteval|mlmm_mmlu_tel_mcf|5|1
+
+# Reading Comprehension (RC)
+lighteval|belebele_tel_Telu_mcf|5|1
+lighteval|indicqa_tel|5|1
+
+# Reasoning (RES)
+lighteval|indicxcopa_tel_mcf|5|1
+
+# Natural Language Understanding (NLU)
+lighteval|community_hellaswag_tel_mcf|5|1
+lighteval|indicnxnli_tel_mcf|5|1
+lighteval|xstory_cloze_tel_mcf|5|1
