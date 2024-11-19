@@ -41,7 +41,14 @@ class AdapterModel(BaseModel):
     def _create_auto_tokenizer(self, config: AdapterModelConfig, env_config: EnvConfig) -> PreTrainedTokenizer:
         # By default, we look at the model config for the model stored in `base_model`
         # (= the parent model, not the model of interest)
-        return self._create_auto_tokenizer_with_name(config.base_model, config=config, env_config=env_config)
+        return self._create_auto_tokenizer_with_name(
+            model_name=config.base_model,
+            revision=config.revision,
+            env_config=env_config,
+            tokenizer_name=config.tokenizer,
+            subfolder=config.subfolder,
+            trust_remote_code=config.trust_remote_code,
+        )
 
     def _create_auto_model(self, config: AdapterModelConfig, env_config: EnvConfig) -> AutoModelForCausalLM:
         """Returns a PeftModel from a base model and a version fined tuned using PEFT."""
