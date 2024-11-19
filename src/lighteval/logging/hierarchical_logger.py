@@ -34,8 +34,11 @@ if is_nanotron_available():
 
     logger = get_logger(__name__, log_level="INFO")
 elif is_accelerate_available():
+    from accelerate import Accelerator, InitProcessGroupKwargs
     from accelerate.logging import get_logger
 
+    # We must init the accelerator before using the logger
+    accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
     logger = get_logger(__name__, log_level="INFO")
 else:
     logger = Logger(__name__, level="INFO")
