@@ -200,7 +200,6 @@ def bbh_lighteval(line, task_name: str = None):
 
 
 def bbh(line, instruction, choices, task_name: str = None):
-    is_few_shots = line.get("__few_shots", False)
     return Doc(
         task_name=task_name,
         query=f"{instruction}Q: {line['input']}\nA:",
