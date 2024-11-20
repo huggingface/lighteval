@@ -72,7 +72,6 @@ def mmlu_arabic(line, task_name: str = None):
         choices=LETTER_INDICES_AR[:4],
         gold_index=gold_ix,
         instruction=instruction,
-        target_for_fewshot_sorting=LETTER_INDICES_AR[gold_ix],
     )
 
 
@@ -181,7 +180,6 @@ def arabic_exams(line, task_name: str = None):
         choices=LETTER_INDICES_AR[:4],
         gold_index=answer_index,
         instruction=instruction,
-        target_for_fewshot_sorting=choices[answer_index],
     )
 
 
@@ -231,7 +229,6 @@ def alghafa_prompt(line, task_name: str = None):
         choices=choices,
         gold_index=answer_index,
         instruction=instruction,
-        target_for_fewshot_sorting=choices[answer_index],
     )
 
 
@@ -371,7 +368,6 @@ openbook_qa_ext_ar_task = LightevalTaskConfig(
 def boolq_prompt_arabic(line, task_name: str = None):
     question = line["question"]
     passage = line["passage"]
-    answer = "نعم" if line["answer"] else "لا"
     instruction = "بناء على المقطع التالي، أجب عن السؤال ب نعم أو لا"
     query = f"""{instruction}
     المقطع :
@@ -387,7 +383,6 @@ def boolq_prompt_arabic(line, task_name: str = None):
         choices=["نعم", "لا"],
         gold_index=0 if line["answer"] else 1,
         instruction=instruction,
-        target_for_fewshot_sorting=answer,
     )
 
 
@@ -423,7 +418,6 @@ def copa_prompt_arabic(line, task_name: str = None):
         choices=choices,
         gold_index=answer,
         instruction="",
-        target_for_fewshot_sorting=choices[answer],
     )
 
 
@@ -468,7 +462,6 @@ def hellaswag_prompt_arabic(line, task_name: str = None):
         choices=endings,
         gold_index=answer_index,
         instruction=instruction,
-        target_for_fewshot_sorting=endings[answer_index],
     )
 
 
@@ -506,7 +499,6 @@ def toxigen_prompt_arabic(line, task_name: str = None):
         choices=["لا", "نعم"],
         gold_index=label,
         instruction=instruction,
-        target_for_fewshot_sorting="نعم" if label == 1 else "لا",
     )
 
 
@@ -558,7 +550,6 @@ def sciq_prompt_arabic(line, task_name: str = None):
         choices=choices,
         gold_index=answer_index,
         instruction=instruction,
-        target_for_fewshot_sorting=choices[answer_index],
     )
 
 
