@@ -283,7 +283,6 @@ def create_translation_pairs(langs_list: list) -> list[tuple]:
 class LevelConfig:
     name: str
     text_col_name: str
-    prompt_prefix: str
     metadata_cols: list[str]
 
 
@@ -307,19 +306,16 @@ SwissDecisionSummaryTranslations = DatasetConfig(
         "bge_level": LevelConfig(
             name="bge_level",
             text_col_name="bgeText",
-            prompt_prefix="Consider the following summary of a Swiss leading court decision",
             metadata_cols=["bge"],
         ),
         "regeste_level": LevelConfig(
             name="regeste_level",
             text_col_name="regesteText",
-            prompt_prefix="Consider the following paragraph of a summary of a Swiss leading court decision",
             metadata_cols=["bge"],
         ),
         "text_level": LevelConfig(
             name="text_level",
             text_col_name="text",
-            prompt_prefix="Consider the following sentence of a summary of a Swiss leading court decision",
             metadata_cols=["bge"],
         ),
     },
@@ -334,19 +330,16 @@ SwissLawTranslations = DatasetConfig(
         "law_level": LevelConfig(
             name="law_level",
             text_col_name="lawText",
-            prompt_prefix="Consider the following Swiss federal law",
             metadata_cols=["abbreviation", "url", "dateApplicability", "rsNr"],
         ),
         "article_level": LevelConfig(
             name="article_level",
             text_col_name="articleText",
-            prompt_prefix="Consider the following Swiss federal law article",
             metadata_cols=["abbreviation", "url", "dateApplicability", "rsNr"],
         ),
         "paragraph_level": LevelConfig(
             name="paragraph_level",
             text_col_name="paragraphText",
-            prompt_prefix="Consider the following Swiss federal law paragraph",
             metadata_cols=["abbreviation", "url", "dateApplicability", "rsNr"],
         ),
     },
@@ -361,7 +354,6 @@ SwissSupremeCourtPressReleaseTranslations = DatasetConfig(
         "press_release": LevelConfig(
             name="press_release",
             text_col_name="text",
-            prompt_prefix="Consider the following Swiss Supreme Court press release",
             metadata_cols=["filename"],
         )
     },
@@ -377,8 +369,8 @@ def create_prompt_fn(level_config: LevelConfig, src_lang: str, target_lang: str)
     target_text_col = f"{target_lang}_{text_col}"
 
     def prompt_fn(line: dict, task_name: str = None):
-        # TODO: replace this with the prompt template
-        custom_query = f"{level_config.prompt_prefix}: {line[src_text_col]}\nTranslate from {src_lang} to {target_lang}.\nTranslation: "
+        # Following Template A from https://github.com/huggingface/lighteval/pull/389#issuecomment-2471580177
+        custom_query = f"{src_lang.upper()}: {line[src_text_col]}\n{target_lang.upper()}:"
 
         return Doc(
             task_name=task_name,
