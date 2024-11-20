@@ -1,0 +1,22 @@
+model:
+  type: "endpoint"
+  base_params:
+    endpoint_name: "smollm-360m-instruct-v0-2-q8-lvy" # needs to be lower case without special characters
+    model: HuggingFaceTB/SmolLM-360M-Instruct
+    revision: "main"
+    dtype: "default" # can be any of "awq", "eetq", "gptq", "4bit' or "8bit" (will use bitsandbytes), "bfloat16" or "float16"
+    reuse_existing: true # if true, ignore all params in instance, and don't delete the endpoint after evaluation
+  instance:
+    accelerator: "gpu"
+    region: "eu-west-1"
+    vendor: "aws"
+    instance_size: "medium"
+    instance_type: "g5.2xlarge"
+    framework: "pytorch"
+    endpoint_type: "protected"
+    namespace: null # The namespace under which to launch the endopint. Defaults to the current user's namespace
+    image_url: null # Optionally specify the docker image to use when launching the endpoint model. E.g., launching models with later releases of the TGI container with support for newer models.
+    env_vars:
+      null # Optional environment variables to include when launching the endpoint. e.g., `MAX_INPUT_LENGTH: 2048`
+  generation:
+    add_special_tokens: true
