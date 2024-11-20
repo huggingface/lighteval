@@ -340,21 +340,6 @@ class LightevalTask:
                 self._docs = self.remove_duplicate_docs(self._docs)
         return self._docs
 
-    def doc_to_target(self, formatted_doc: Doc, few_shot: bool = False) -> str:
-        """
-        Returns the target of the given document.
-
-        Args:
-            formatted_doc (Doc): Formatted document.
-            few_shot (bool, optional): Whether the document is used for few
-                shot examples. Defaults to False.
-
-        Returns:
-            str: Target of the document, which is the correct answer for a document.
-        """
-        # likely we mostly need one example not all
-        return as_list(formatted_doc.get_golds(few_shot=few_shot))[0]
-
     def construct_requests(
         self, formatted_doc: Doc, context: str, document_id_seed: str, current_task_name: str
     ) -> Dict[RequestType, List[Request]]:
