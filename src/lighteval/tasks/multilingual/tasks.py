@@ -30,6 +30,7 @@ from lighteval.metrics.dynamic_metrics import (
     multilingual_quasi_exact_match_metric,
     multilingual_quasi_f1_score_metric,
 )
+from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.normalizations import LogProbCharNorm, LogProbPMINorm, LogProbTokenNorm
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
@@ -3070,9 +3071,9 @@ mgsm_tasks = [
         hf_subset=standardize_tag(language.value),
         evaluation_splits=("test",),
         few_shots_split="train",
-        generation_size=25,
+        generation_size=60,
         metric=[
-            multilingual_quasi_exact_match_metric(language, "full"),
+            Metrics.quasi_exact_match_math,
         ],
         stop_sequence=("\n",),
     )
@@ -3109,9 +3110,9 @@ afri_mgsm_tasks = [
         hf_subset=language.value,
         evaluation_splits=("test",),
         few_shots_split="train",
-        generation_size=25,
+        generation_size=60,
         metric=[
-            multilingual_quasi_exact_match_metric(language, "full"),
+            Metrics.quasi_exact_match_math,
         ],
         stop_sequence=("\n",),
     )
@@ -3919,10 +3920,8 @@ math23k_tasks = [
         hf_subset="default",
         evaluation_splits=("test",),
         few_shots_split="train",
-        generation_size=25,  # Similar to other math tasks like msvamp
-        metric=[
-            multilingual_quasi_exact_match_metric(Language.CHINESE, "full"),
-        ],
+        generation_size=60,  # Similar to other math tasks like msvamp
+        metric=[Metrics.quasi_exact_match_gsm8k],
         stop_sequence=("\n",),
     )
 ]
@@ -3955,8 +3954,7 @@ tal_scq5k_tasks = [
         metric=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                Metrics.quasi_exact_match_math,
             ],
         ),
     )
@@ -3988,7 +3986,7 @@ mathqa_tr_tasks = [
         few_shots_split="train",
         generation_size=25,  # Similar to other math tasks
         metric=[
-            multilingual_quasi_exact_match_metric(Language.TURKISH, "full"),
+            Metrics.quasi_exact_match_math,
         ],
         stop_sequence=("\n",),
     )
@@ -4011,7 +4009,7 @@ mwp_tr_tasks = [
         few_shots_split="train",
         generation_size=25,  # Similar to other math tasks
         metric=[
-            multilingual_quasi_exact_match_metric(Language.TURKISH, "full"),
+            Metrics.quasi_exact_match_math,
         ],
         stop_sequence=("\n",),
     )
@@ -4038,7 +4036,7 @@ mera_arithmetic_tasks = [
         hf_avail_splits=["public_test"] if subset == "rumodar" else ["train"],
         generation_size=25,  # Similar to other math tasks
         metric=[
-            multilingual_quasi_exact_match_metric(Language.RUSSIAN, "full"),
+            Metrics.quasi_exact_match_math,
         ],
         stop_sequence=("\n",),
     )
@@ -4073,8 +4071,7 @@ qazuntv2_tasks = [
         metric=get_metrics_for_formulation(
             MCFFormulation(),
             [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                Metrics.quasi_exact_match_math,
             ],
         ),
     )
@@ -4106,7 +4103,7 @@ armath_tasks = [
         few_shots_split="validation",
         generation_size=25,  # Similar to other math tasks
         metric=[
-            multilingual_quasi_exact_match_metric(Language.ARABIC, "full"),
+            Metrics.quasi_exact_match_math,
         ],
         stop_sequence=("\n",),
     )
@@ -4131,9 +4128,9 @@ hawp_tasks = [
         hf_subset="default",
         evaluation_splits=("test",),
         few_shots_split="dev",
-        generation_size=25,  # Similar to other math tasks
+        generation_size=30,
         metric=[
-            multilingual_quasi_exact_match_metric(Language.HINDI, "full"),
+            Metrics.quasi_exact_match_math,
         ],
         stop_sequence=("\n",),
     )

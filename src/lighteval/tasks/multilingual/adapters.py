@@ -285,6 +285,9 @@ def get_mkqa_adapter(lang: Language, line: dict) -> QAInput | None:
     }
 
 
+CMM_MATH_ANSWER_RE = re.compile(r"([A-D])\.(.*?)(?=[A-D]\.|$)")
+
+
 def cmm_math_adapter(line: dict) -> MCQInput | None:
     """Adapter for CMM-Math dataset.
 
@@ -297,7 +300,7 @@ def cmm_math_adapter(line: dict) -> MCQInput | None:
 
     # Split options and store as dict with letter keys
     choices = {}
-    for match in re.finditer(r"([A-D])\.(.*?)(?=[A-D]\.|$)", line["options"]):
+    for match in CMM_MATH_ANSWER_RE.finditer(line["options"]):
         letter, choice = match.groups()
         choices[letter] = choice.strip()
 
