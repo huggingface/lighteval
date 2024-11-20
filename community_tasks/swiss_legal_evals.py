@@ -23,43 +23,42 @@
 # ruff: noqa: F405, F403, F401
 """
 This module contains task configurations and prompt functions for evaluating
-LLM models on Swiss legal datasets. Each task is defined using the 
-`LightevalTaskConfig` class with its respective prompt function. The tasks 
-cover a variety of benchmarks, including: translation of laws, court decisions 
+LLM models on Swiss legal datasets. Each task is defined using the
+`LightevalTaskConfig` class with its respective prompt function. The tasks
+cover a variety of benchmarks, including: translation of laws, court decisions
 and press releases.
 
 Author: Joel Niklaus
 """
 
+import importlib.metadata as importlib_metadata
 import statistics
 from dataclasses import dataclass
-from packaging import version
-import importlib.metadata as importlib_metadata
 
 import nltk
+from comet import download_model, load_from_checkpoint
 from nltk import word_tokenize
 from nltk.translate import meteor_score
+from packaging import version
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-from comet import download_model, load_from_checkpoint
-
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from lighteval.logging.hierarchical_logger import hlog_warn
-from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc
+from lighteval.metrics.imports.bert_scorer import BERTScorer
 from lighteval.metrics.metrics import Metrics
-from lighteval.metrics.metrics_sample import JudgeLLMMixEval, BertScore
+from lighteval.metrics.metrics_sample import BertScore, JudgeLLMMixEval
+from lighteval.metrics.normalizations import remove_braces, remove_braces_and_strip
 from lighteval.metrics.utils.metric_utils import (
     MetricCategory,
     MetricUseCase,
     SampleLevelMetric,
     SampleLevelMetricGrouping,
 )
-from lighteval.metrics.imports.bert_scorer import BERTScorer
-from lighteval.metrics.normalizations import remove_braces, remove_braces_and_strip
-from lighteval.tasks.extended.mix_eval.main import process_judge_response_freeform_gpt
 from lighteval.tasks.extended.mix_eval.judge_prompts import (
     gpt_judge_for_closeended_freeform,
 )
+from lighteval.tasks.extended.mix_eval.main import process_judge_response_freeform_gpt
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc
 
 
 # CUSTOM METRICS
@@ -86,9 +85,7 @@ def freeform_gpt_judge(judge_model_name: str = "gpt-4o"):
 
 
 def get_bert_score(model_type: str = "xlm-roberta-large"):
-    score = BertScore(
-        normalize_gold=remove_braces, normalize_pred=remove_braces_and_strip
-    )
+    score = BertScore(normalize_gold=remove_braces, normalize_pred=remove_braces_and_strip)
     score.bert_scorer = BERTScorer(
         # We could download the files from here and set the baseline_path ourselves:
         # https://github.com/Tiiiger/bert_score/tree/master/bert_score/rescale_baseline
@@ -128,12 +125,8 @@ class BLEURT:
         ], "Model size must be either tiny, base, or large"
         assert seq_len in [128, 512], "Sequence length must be either 128 or 512"
 
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            f"Elron/bleurt-{model_size}-{seq_len}"
-        )
-        self.model = AutoModelForSequenceClassification.from_pretrained(
-            f"Elron/bleurt-{model_size}-{seq_len}"
-        )
+        self.tokenizer = AutoTokenizer.from_pretrained(f"Elron/bleurt-{model_size}-{seq_len}")
+        self.model = AutoModelForSequenceClassification.from_pretrained(f"Elron/bleurt-{model_size}-{seq_len}")
         self.max_length = seq_len
         self.model.eval()
 
@@ -158,9 +151,7 @@ class BLEURT:
             max_length=self.max_length,
         )
         if any(len(encoding) == self.max_length for encoding in inputs["input_ids"]):
-            hlog_warn(
-                f"Some inputs were truncated to max_length={self.max_length} in BLEURT scoring"
-            )
+            hlog_warn(f"Some inputs were truncated to max_length={self.max_length} in BLEURT scoring")
         scores = self.model(**inputs)[0].squeeze()
         return scores.item()
 
@@ -415,9 +406,7 @@ class TranslationTask(LightevalTaskConfig):
         super().__init__(
             name=f"{dataset_config.name}-{level_name}:{src_lang}-{target_lang}",
             suite=["community"],
-            prompt_function=create_prompt_fn(
-                dataset_config.subsets[level_name], src_lang, target_lang
-            ),
+            prompt_function=create_prompt_fn(dataset_config.subsets[level_name], src_lang, target_lang),
             hf_repo=dataset_config.hf_repo,
             hf_subset=level_name,
             hf_filter=None,
