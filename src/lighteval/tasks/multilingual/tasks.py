@@ -3136,12 +3136,337 @@ afri_mgsm_tasks = [
         # Language.ZULU,
     ]
 ]
+
+# MSVAMP - Math Word Problems (Translated from SVAMP using Google Translate)
+msvamp_tasks = [
+    LightevalTaskConfig(
+        name=f"msvamp_{language.value}",
+        prompt_function=get_qa_prompt_function(
+            language,
+            lambda line: {
+                "question": line["m_query"],  # Using the translated version of the question
+                "choices": [float_to_choice_string(line["response"])],  # The answer as a string
+            },
+        ),
+        suite=("lighteval",),
+        hf_repo="Mathoctopus/MSVAMP",
+        hf_subset=standardize_tag(language.value),
+        evaluation_splits=("test",),
+        hf_avail_splits=["test"],
+        generation_size=25,
+        metric=[
+            multilingual_quasi_exact_match_metric(language, "full"),
+        ],
+        stop_sequence=("\n",),
+    )
+    for language in [
+        Language.BENGALI,
+        Language.GERMAN,
+        Language.ENGLISH,
+        Language.SPANISH,
+        Language.FRENCH,
+        Language.JAPANESE,
+        Language.RUSSIAN,
+        Language.SWAHILI,
+        Language.THAI,
+        Language.CHINESE,
+    ]
+]
+
+
+# CMM-Math - Chinese Multimodal Math Dataset
+# CMM-Math is a comprehensive Chinese mathematical reasoning dataset containing over 28,000 high-quality samples
+# across 12 grade levels from elementary to high school. It includes multiple-choice and fill-in-the-blank questions
+# with detailed solutions. The dataset features both text-only and multimodal problems (with visual context in
+# questions/options). It consists of 22k+ training samples and 5k+ evaluation samples, designed to evaluate and
+# enhance mathematical reasoning capabilities of large language and multimodal models.
+# Note: Only the MCQ subset is implemented
+cmm_math_mc_tasks = [
+    LightevalTaskConfig(
+        name=f"cmm_math_{Language.CHINESE.value}_{formulation.name.lower()}",
+        prompt_function=get_mcq_prompt_function(
+            Language.CHINESE,
+            cmm_math_adapter,
+            formulation=formulation,
+        ),
+        suite=("lighteval",),
+        hf_repo="ecnu-icalk/cmm-math",
+        hf_subset="default",
+        hf_filter=lambda x: x["image"] == "[]"
+        and x["options"]
+        != "[]",  # Only include examples without images (it's a string for some reason) and mcq questions
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+
+# Math23K - Chinese Math Word Problem Dataset
+# Math23K is a dataset containing 23,162 Chinese math word problems crawled from the internet.
+# Originally introduced in "Deep Neural Solver for Math Word Problems", it consists of math word
+# problems in Chinese text along with their corresponding numerical answers. The dataset is split
+# into training and test sets and is commonly used to evaluate mathematical reasoning capabilities
+# of language models on Chinese text. Each example contains the original Chinese problem text and
+# its corresponding numerical solution.
+math23k_tasks = [
+    LightevalTaskConfig(
+        name=f"math23k_{Language.CHINESE.value}",
+        prompt_function=get_qa_prompt_function(
+            Language.CHINESE,
+            lambda line: {
+                "question": line["original_text"],  # Use the original Chinese text
+                "choices": [str(line["ans"])],  # Answer has computed number while ans is symbolic
+            },
+        ),
+        suite=("lighteval",),
+        hf_repo="Gxg/Math23K",
+        hf_subset="default",
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        generation_size=60,  # Similar to other math tasks like msvamp
+        metric=[Metrics.quasi_exact_match_gsm8k],
+        stop_sequence=("\n",),
+    )
+]
+
+# TAL-SCQ5K - Chinese Math Word Problem Dataset
+# TAL-SCQ5K is a high-quality mathematical competition dataset created by TAL Education Group,
+# consisting of 5K multiple-choice questions (3K training, 2K testing) covering math topics from
+# primary through high school levels. The dataset includes detailed solution steps and standardized
+# LaTeX expressions.
+
+tal_scq5k_tasks = [
+    LightevalTaskConfig(
+        name=f"tal_scq5k_{Language.CHINESE.value}_{formulation.name.lower()}",
+        prompt_function=get_mcq_prompt_function(
+            Language.CHINESE,
+            lambda line: {
+                "question": line["problem"].strip(),
+                "choices": [
+                    opt[0]["content"] for opt in sorted(line["answer_option_list"], key=lambda x: x[0]["aoVal"])
+                ],
+                "gold_idx": LETTER_INDICES.index(line["answer_value"]),
+            },
+            formulation=formulation,
+        ),
+        suite=("lighteval",),
+        hf_repo="math-eval/TAL-SCQ5K",
+        hf_subset="default",
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                Metrics.quasi_exact_match_math,
+            ],
+        ),
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+# MathQA-TR - Turkish Math Question Answering Dataset
+# Sourced from https://github.com/esingedik/Turkish-MWP-Corpora-and-Code
+# Translated using Google Translate
+# MWP is collected from MAWPS, ASDiv-A, SVAMP.
+mathqa_tr_tasks = [
+    LightevalTaskConfig(
+        name=f"mathqa_{Language.TURKISH.value}",
+        prompt_function=get_qa_prompt_function(
+            Language.TURKISH,
+            lambda line: {
+                "question": line["question"],
+                "choices": [line["answer"]],
+            },
+        ),
+        suite=("lighteval",),
+        hf_repo="lighteval/MathQA-TR",
+        hf_subset="default",
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        generation_size=25,  # Similar to other math tasks
+        metric=[
+            Metrics.quasi_exact_match_math,
+        ],
+        stop_sequence=("\n",),
+    )
+]
+
+mwp_tr_tasks = [
+    LightevalTaskConfig(
+        name=f"mwp_{Language.TURKISH.value}",
+        prompt_function=get_qa_prompt_function(
+            Language.TURKISH,
+            lambda line: {
+                "question": line["question"],
+                "choices": [line["answer"]],
+            },
+        ),
+        suite=("lighteval",),
+        hf_repo="lighteval/MWP-TR",
+        hf_subset="default",
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        generation_size=25,  # Similar to other math tasks
+        metric=[
+            Metrics.quasi_exact_match_math,
+        ],
+        stop_sequence=("\n",),
+    )
+]
+
+# MERA Arithmetic Tasks
+# Paper: https://arxiv.org/abs/2401.04531
+mera_arithmetic_tasks = [
+    LightevalTaskConfig(
+        name=f"mera_arithmetic_{Language.RUSSIAN.value}:{subset}",
+        prompt_function=get_qa_prompt_function(
+            Language.RUSSIAN,
+            lambda line: {
+                "question": line["inputs"],
+                "choices": [str(line["outputs"])],
+            },
+        ),
+        suite=("lighteval",),
+        hf_repo="ai-forever/MERA",
+        hf_subset=subset,
+        evaluation_splits=("public_test",)
+        if subset == "rumodar"
+        else ("train",),  # MERA uses train split for evaluation
+        hf_avail_splits=["public_test"] if subset == "rumodar" else ["train"],
+        generation_size=25,  # Similar to other math tasks
+        metric=[
+            Metrics.quasi_exact_match_math,
+        ],
+        stop_sequence=("\n",),
+    )
+    for subset in ["rumodar", "rumultiar", "simplear"]
+]
+
+# QazUNTv2 Tasks - High school math problems in English and Russian
+# A bilingual dataset for evaluating LLMs on high school math problems covering:
+# - Algebra (436 problems)
+# - Logic (312 problems)
+# - Probability (163 problems)
+# Each problem includes multiple choice options and detailed solutions.
+# The dataset was manually curated, with English translations via Google Translate.
+# Paper: https://doi.org/10.17632/52vc6v4czj.1
+
+qazuntv2_tasks = [
+    LightevalTaskConfig(
+        name=f"qazuntv2_{lang.value}:{subset}",
+        prompt_function=get_mcq_prompt_function(
+            lang,
+            lambda line: {
+                "question": line["question"],
+                "choices": line["options"],
+                "gold_idx": LETTER_INDICES.index(line["answer"]),
+            },
+        ),
+        suite=("lighteval",),
+        hf_repo="lighteval/QazUNTv2",
+        hf_subset=standardize_tag(lang.value),
+        hf_filter=lambda x: x["section"].lower() == subset,
+        evaluation_splits=("train",),  # Dataset only has train split
+        metric=get_metrics_for_formulation(
+            MCFFormulation(),
+            [
+                Metrics.quasi_exact_match_math,
+            ],
+        ),
+    )
+    for lang in [
+        Language.ENGLISH,
+        Language.RUSSIAN,
+    ]
+    for subset in ["algebra", "logic", "probability"]
+]
+
+
+# ArMATH - Arabic Math Word Problems
+# A dataset of 6,000 primary-school math word problems in Modern Standard Arabic (MSA).
+# Paper: https://github.com/reem-codes/ArMATH
+armath_tasks = [
+    LightevalTaskConfig(
+        name=f"armath_{Language.ARABIC.value}",
+        prompt_function=get_qa_prompt_function(
+            Language.ARABIC,
+            lambda line: {
+                "question": line["question"],
+                "choices": [float_to_choice_string(line["answer"])],  # Evaluate the equation to get answer
+            },
+        ),
+        suite=("lighteval",),
+        hf_repo="khalidalt/arMath",
+        hf_subset="default",
+        evaluation_splits=("test",),  # Dataset only has test split
+        few_shots_split="validation",
+        generation_size=25,  # Similar to other math tasks
+        metric=[
+            Metrics.quasi_exact_match_math,
+        ],
+        stop_sequence=("\n",),
+    )
+]
+
+# HAWP - Hindi Arithmetic Word Problems
+# A dataset containing 2.3k arithmetic word problems in Hindi, designed to evaluate
+# mathematical reasoning capabilities of language models. Each problem includes the
+# question text, equation, and numerical answer.
+hawp_tasks = [
+    LightevalTaskConfig(
+        name=f"hawp_{Language.HINDI.value}",
+        prompt_function=get_qa_prompt_function(
+            Language.HINDI,
+            lambda line: {
+                "question": line["Problem"],
+                "choices": [str(line["answer"])],
+            },
+        ),
+        suite=("lighteval",),
+        hf_repo="lighteval/HAWP",
+        hf_subset="default",
+        evaluation_splits=("test",),
+        few_shots_split="dev",
+        generation_size=30,
+        metric=[
+            Metrics.quasi_exact_match_math,
+        ],
+        stop_sequence=("\n",),
+    )
+]
+
 TASKS_TABLE.extend(
     [
         *cmath_tasks,
         *mathlogicqa_rus_tasks,
         *mgsm_tasks,
         *afri_mgsm_tasks,
+        *armath_tasks,
+        *msvamp_tasks,
+        *cmm_math_mc_tasks,
+        *math23k_tasks,
+        *tal_scq5k_tasks,
+        *mathqa_tr_tasks,
+        *mwp_tr_tasks,
+        *mera_arithmetic_tasks,
+        *qazuntv2_tasks,
+        *hawp_tasks,
     ]
 )
 
@@ -3815,339 +4140,5 @@ TASKS_TABLE.extend(
         *acva_tasks,
         *french_boolq_tasks,
         *hindi_boolq_tasks,
-    ]
-)
-
-
-# ------------------------------- Math Tasks ------------------------------- #
-
-
-# MSVAMP - Math Word Problems (Translated from SVAMP using Google Translate)
-msvamp_tasks = [
-    LightevalTaskConfig(
-        name=f"msvamp_{language.value}",
-        prompt_function=get_qa_prompt_function(
-            language,
-            lambda line: {
-                "question": line["m_query"],  # Using the translated version of the question
-                "choices": [float_to_choice_string(line["response"])],  # The answer as a string
-            },
-        ),
-        suite=("lighteval",),
-        hf_repo="Mathoctopus/MSVAMP",
-        hf_subset=standardize_tag(language.value),
-        evaluation_splits=("test",),
-        hf_avail_splits=["test"],
-        generation_size=25,
-        metric=[
-            multilingual_quasi_exact_match_metric(language, "full"),
-        ],
-        stop_sequence=("\n",),
-    )
-    for language in [
-        Language.BENGALI,
-        Language.GERMAN,
-        Language.ENGLISH,
-        Language.SPANISH,
-        Language.FRENCH,
-        Language.JAPANESE,
-        Language.RUSSIAN,
-        Language.SWAHILI,
-        Language.THAI,
-        Language.CHINESE,
-    ]
-]
-
-
-# CMM-Math - Chinese Multimodal Math Dataset
-# CMM-Math is a comprehensive Chinese mathematical reasoning dataset containing over 28,000 high-quality samples
-# across 12 grade levels from elementary to high school. It includes multiple-choice and fill-in-the-blank questions
-# with detailed solutions. The dataset features both text-only and multimodal problems (with visual context in
-# questions/options). It consists of 22k+ training samples and 5k+ evaluation samples, designed to evaluate and
-# enhance mathematical reasoning capabilities of large language and multimodal models.
-# Note: Only the MCQ subset is implemented
-cmm_math_mc_tasks = [
-    LightevalTaskConfig(
-        name=f"cmm_math_{Language.CHINESE.value}_{formulation.name.lower()}",
-        prompt_function=get_mcq_prompt_function(
-            Language.CHINESE,
-            cmm_math_adapter,
-            formulation=formulation,
-        ),
-        suite=("lighteval",),
-        hf_repo="ecnu-icalk/cmm-math",
-        hf_subset="default",
-        hf_filter=lambda x: x["image"] == "[]"
-        and x["options"]
-        != "[]",  # Only include examples without images (it's a string for some reason) and mcq questions
-        evaluation_splits=("test",),
-        few_shots_split="train",
-        metric=get_metrics_for_formulation(
-            formulation,
-            [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-            ],
-        ),
-    )
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
-]
-
-
-# Math23K - Chinese Math Word Problem Dataset
-# Math23K is a dataset containing 23,162 Chinese math word problems crawled from the internet.
-# Originally introduced in "Deep Neural Solver for Math Word Problems", it consists of math word
-# problems in Chinese text along with their corresponding numerical answers. The dataset is split
-# into training and test sets and is commonly used to evaluate mathematical reasoning capabilities
-# of language models on Chinese text. Each example contains the original Chinese problem text and
-# its corresponding numerical solution.
-math23k_tasks = [
-    LightevalTaskConfig(
-        name=f"math23k_{Language.CHINESE.value}",
-        prompt_function=get_qa_prompt_function(
-            Language.CHINESE,
-            lambda line: {
-                "question": line["original_text"],  # Use the original Chinese text
-                "choices": [str(line["ans"])],  # Answer has computed number while ans is symbolic
-            },
-        ),
-        suite=("lighteval",),
-        hf_repo="Gxg/Math23K",
-        hf_subset="default",
-        evaluation_splits=("test",),
-        few_shots_split="train",
-        generation_size=60,  # Similar to other math tasks like msvamp
-        metric=[Metrics.quasi_exact_match_gsm8k],
-        stop_sequence=("\n",),
-    )
-]
-
-# TAL-SCQ5K - Chinese Math Word Problem Dataset
-# TAL-SCQ5K is a high-quality mathematical competition dataset created by TAL Education Group,
-# consisting of 5K multiple-choice questions (3K training, 2K testing) covering math topics from
-# primary through high school levels. The dataset includes detailed solution steps and standardized
-# LaTeX expressions.
-
-tal_scq5k_tasks = [
-    LightevalTaskConfig(
-        name=f"tal_scq5k_{Language.CHINESE.value}_{formulation.name.lower()}",
-        prompt_function=get_mcq_prompt_function(
-            Language.CHINESE,
-            lambda line: {
-                "question": line["problem"].strip(),
-                "choices": [
-                    opt[0]["content"] for opt in sorted(line["answer_option_list"], key=lambda x: x[0]["aoVal"])
-                ],
-                "gold_idx": LETTER_INDICES.index(line["answer_value"]),
-            },
-            formulation=formulation,
-        ),
-        suite=("lighteval",),
-        hf_repo="math-eval/TAL-SCQ5K",
-        hf_subset="default",
-        evaluation_splits=("test",),
-        few_shots_split="train",
-        metric=get_metrics_for_formulation(
-            formulation,
-            [
-                Metrics.quasi_exact_match_math,
-            ],
-        ),
-    )
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
-]
-
-# MathQA-TR - Turkish Math Question Answering Dataset
-# Sourced from https://github.com/esingedik/Turkish-MWP-Corpora-and-Code
-# Translated using Google Translate
-# MWP is collected from MAWPS, ASDiv-A, SVAMP.
-mathqa_tr_tasks = [
-    LightevalTaskConfig(
-        name=f"mathqa_{Language.TURKISH.value}",
-        prompt_function=get_qa_prompt_function(
-            Language.TURKISH,
-            lambda line: {
-                "question": line["question"],
-                "choices": [line["answer"]],
-            },
-        ),
-        suite=("lighteval",),
-        hf_repo="lighteval/MathQA-TR",
-        hf_subset="default",
-        evaluation_splits=("test",),
-        few_shots_split="train",
-        generation_size=25,  # Similar to other math tasks
-        metric=[
-            Metrics.quasi_exact_match_math,
-        ],
-        stop_sequence=("\n",),
-    )
-]
-
-mwp_tr_tasks = [
-    LightevalTaskConfig(
-        name=f"mwp_{Language.TURKISH.value}",
-        prompt_function=get_qa_prompt_function(
-            Language.TURKISH,
-            lambda line: {
-                "question": line["question"],
-                "choices": [line["answer"]],
-            },
-        ),
-        suite=("lighteval",),
-        hf_repo="lighteval/MWP-TR",
-        hf_subset="default",
-        evaluation_splits=("test",),
-        few_shots_split="train",
-        generation_size=25,  # Similar to other math tasks
-        metric=[
-            Metrics.quasi_exact_match_math,
-        ],
-        stop_sequence=("\n",),
-    )
-]
-
-# MERA Arithmetic Tasks
-# Paper: https://arxiv.org/abs/2401.04531
-mera_arithmetic_tasks = [
-    LightevalTaskConfig(
-        name=f"mera_arithmetic_{Language.RUSSIAN.value}:{subset}",
-        prompt_function=get_qa_prompt_function(
-            Language.RUSSIAN,
-            lambda line: {
-                "question": line["inputs"],
-                "choices": [str(line["outputs"])],
-            },
-        ),
-        suite=("lighteval",),
-        hf_repo="ai-forever/MERA",
-        hf_subset=subset,
-        evaluation_splits=("public_test",)
-        if subset == "rumodar"
-        else ("train",),  # MERA uses train split for evaluation
-        hf_avail_splits=["public_test"] if subset == "rumodar" else ["train"],
-        generation_size=25,  # Similar to other math tasks
-        metric=[
-            Metrics.quasi_exact_match_math,
-        ],
-        stop_sequence=("\n",),
-    )
-    for subset in ["rumodar", "rumultiar", "simplear"]
-]
-
-# QazUNTv2 Tasks - High school math problems in English and Russian
-# A bilingual dataset for evaluating LLMs on high school math problems covering:
-# - Algebra (436 problems)
-# - Logic (312 problems)
-# - Probability (163 problems)
-# Each problem includes multiple choice options and detailed solutions.
-# The dataset was manually curated, with English translations via Google Translate.
-# Paper: https://doi.org/10.17632/52vc6v4czj.1
-
-qazuntv2_tasks = [
-    LightevalTaskConfig(
-        name=f"qazuntv2_{lang.value}:{subset}",
-        prompt_function=get_mcq_prompt_function(
-            lang,
-            lambda line: {
-                "question": line["question"],
-                "choices": line["options"],
-                "gold_idx": LETTER_INDICES.index(line["answer"]),
-            },
-        ),
-        suite=("lighteval",),
-        hf_repo="lighteval/QazUNTv2",
-        hf_subset=standardize_tag(lang.value),
-        hf_filter=lambda x: x["section"].lower() == subset,
-        evaluation_splits=("train",),  # Dataset only has train split
-        metric=get_metrics_for_formulation(
-            MCFFormulation(),
-            [
-                Metrics.quasi_exact_match_math,
-            ],
-        ),
-    )
-    for lang in [
-        Language.ENGLISH,
-        Language.RUSSIAN,
-    ]
-    for subset in ["algebra", "logic", "probability"]
-]
-
-
-# ArMATH - Arabic Math Word Problems
-# A dataset of 6,000 primary-school math word problems in Modern Standard Arabic (MSA).
-# Paper: https://github.com/reem-codes/ArMATH
-armath_tasks = [
-    LightevalTaskConfig(
-        name=f"armath_{Language.ARABIC.value}",
-        prompt_function=get_qa_prompt_function(
-            Language.ARABIC,
-            lambda line: {
-                "question": line["question"],
-                "choices": [float_to_choice_string(line["answer"])],  # Evaluate the equation to get answer
-            },
-        ),
-        suite=("lighteval",),
-        hf_repo="khalidalt/arMath",
-        hf_subset="default",
-        evaluation_splits=("test",),  # Dataset only has test split
-        few_shots_split="validation",
-        generation_size=25,  # Similar to other math tasks
-        metric=[
-            Metrics.quasi_exact_match_math,
-        ],
-        stop_sequence=("\n",),
-    )
-]
-
-# HAWP - Hindi Arithmetic Word Problems
-# A dataset containing 2.3k arithmetic word problems in Hindi, designed to evaluate
-# mathematical reasoning capabilities of language models. Each problem includes the
-# question text, equation, and numerical answer.
-hawp_tasks = [
-    LightevalTaskConfig(
-        name=f"hawp_{Language.HINDI.value}",
-        prompt_function=get_qa_prompt_function(
-            Language.HINDI,
-            lambda line: {
-                "question": line["Problem"],
-                "choices": [str(line["answer"])],
-            },
-        ),
-        suite=("lighteval",),
-        hf_repo="lighteval/HAWP",
-        hf_subset="default",
-        evaluation_splits=("test",),
-        few_shots_split="dev",
-        generation_size=30,
-        metric=[
-            Metrics.quasi_exact_match_math,
-        ],
-        stop_sequence=("\n",),
-    )
-]
-
-
-TASKS_TABLE.extend(
-    [
-        *armath_tasks,
-        *msvamp_tasks,
-        *cmm_math_mc_tasks,
-        *math23k_tasks,
-        *tal_scq5k_tasks,
-        *mathqa_tr_tasks,
-        *mwp_tr_tasks,
-        *mera_arithmetic_tasks,
-        *qazuntv2_tasks,
-        *hawp_tasks,
     ]
 )
