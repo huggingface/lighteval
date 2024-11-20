@@ -29,10 +29,16 @@ This file generally creates just a TASKS_TABLE and TASKS_GROUPS which are then i
 import random
 import re
 
+from lighteval.metrics.dynamic_metrics import loglikelihood_acc_metric
 from lighteval.metrics.metrics import Metrics
+from lighteval.metrics.normalizations import LogProbCharNorm, LogProbTokenNorm
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.multilingual.utils.task_utils import get_metrics_for_formulation, normalize_subset
 from lighteval.tasks.requests import Doc
+from lighteval.tasks.templates.multichoice import get_mcq_prompt_function
+from lighteval.tasks.templates.utils.formulation import MCFFormulation
+from lighteval.utils.language import Language
 
 
 # fmt: off
@@ -118,6 +124,40 @@ class CustomArabicMMLUTask(LightevalTaskConfig):
 
 ARABIC_MMLU_TASKS = [
     CustomArabicMMLUTask(name=f"arabic_mmlu:{subset}", hf_subset=subset) for subset in ARABIC_MMLU_SUBSETS
+]
+
+# TODO: Choose the implementation
+arabic_mmlu_templated_tasks = [
+    LightevalTaskConfig(
+        name=f"templated_mmlu_{Language.ARABIC.value}_{formulation.name.lower()}:{normalize_subset(subset)}",
+        prompt_function=get_mcq_prompt_function(
+            Language.ARABIC,
+            lambda line: {
+                "instruction": "السؤال التالي هو سؤال متعدد الإختيارات. اختر الإجابة الصحيحة:",
+                "context": line["Context"],
+                "question": line["Question"],
+                "choices": [str(o) for o in [line[f"Option {i}"] for i in range(1, 6)] if o],
+                "gold_idx": LETTER_INDICES.index(line["Answer Key"]),
+            },
+            formulation=formulation,
+        ),
+        suite=("lighteval",),
+        hf_repo="MBZUAI/ArabicMMLU",
+        hf_subset=subset,
+        evaluation_splits=("test",),
+        hf_avail_splits=["dev"],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
+    )
+    for subset in ARABIC_MMLU_SUBSETS
+    for formulation in [
+        MCFFormulation("NativeLetters"),
+    ]
 ]
 
 
@@ -902,6 +942,8 @@ MADINAH_QA_TASKS = [
 
 TASKS_TABLE = (
     ARABIC_MMLU_TASKS
+    # TODO: Choose the implmenetaion
+    + arabic_mmlu_templated_tasks
     + ARABIC_MMLU_HT_TASKS
     + ARABIC_MMLU_MT_TASKS
     + [arabic_mmmlu_task]
