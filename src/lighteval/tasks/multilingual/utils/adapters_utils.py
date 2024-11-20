@@ -133,3 +133,7 @@ def extract_answers_from_string(answer_string: str, answer_prefixes: list[str]) 
         answer[: len(prefix)]: answer[len(prefix) :].strip() for answer, prefix in zip(found_answers, answer_prefixes)
     }
     return last_index, prefix_answer_dict
+
+
+def float_to_choice_string(answer: float) -> str:
+    return str(int(answer)) if float(answer).is_integer() else str(float(answer))

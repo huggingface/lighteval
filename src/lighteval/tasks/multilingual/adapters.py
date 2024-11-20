@@ -283,3 +283,31 @@ def get_mkqa_adapter(lang: Language, line: dict) -> QAInput | None:
         "question": line["queries"][lang_key],
         "choices": answers,
     }
+
+
+def cmm_math_adapter(line: dict) -> MCQInput | None:
+    """Adapter for CMM-Math dataset.
+
+    Processes questions and options, handling cases where:
+    - Question ends with parentheses that need to be stripped
+    - Options are space-separated strings starting with A./B./C./D.
+    """
+    # Strip ending parentheses from question
+    question = line["question"].strip().rstrip("( )")
+
+    # Split options and store as dict with letter keys
+    choices = {}
+    for match in re.finditer(r"([A-D])\.(.*?)(?=[A-D]\.|$)", line["options"]):
+        letter, choice = match.groups()
+        choices[letter] = choice.strip()
+
+    try:
+        gold_idx = list(choices.keys()).index(line["answer"])
+    except ValueError:
+        gold_idx = None
+
+    # Validate we have enough options and answer
+    if len(choices) <= 1 or not line.get("answer") or gold_idx is None:
+        return None
+
+    return {"question": question, "choices": list(choices.values()), "gold_idx": gold_idx}
