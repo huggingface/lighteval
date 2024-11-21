@@ -41,6 +41,7 @@ from lighteval.tasks.multilingual.adapters import (
     cmm_math_adapter,
     get_m3exam_adapter,
     get_mkqa_adapter,
+    qazuntv2_adapter,
     sciqa_adapter,
     thai_exams_adapter,
     winogrand_adapter,
@@ -3372,16 +3373,13 @@ qazuntv2_tasks = [
         name=f"qazuntv2_{lang.value}:{subset}",
         prompt_function=get_mcq_prompt_function(
             lang,
-            lambda line: {
-                "question": line["question"],
-                "choices": line["options"],
-                "gold_idx": LETTER_INDICES.index(line["answer"]),
-            },
+            qazuntv2_adapter,
         ),
         suite=("lighteval",),
         hf_repo="lighteval/QazUNTv2",
         hf_subset=standardize_tag(lang.value),
         hf_filter=lambda x: x["section"].lower() == subset,
+        hf_avail_splits=["train"],
         evaluation_splits=("train",),  # Dataset only has train split
         metric=get_metrics_for_formulation(
             MCFFormulation(),
