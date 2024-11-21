@@ -141,6 +141,7 @@ class VLLMModel(LightevalModel):
             "pipeline_parallel_size": int(config.pipeline_parallel_size),
             "max_model_len": self._max_length,
             "swap_space": 4,
+            "enable_chunked_prefill": True,
             "seed": 1234,
         }
         if int(config.data_parallel_size) > 1:

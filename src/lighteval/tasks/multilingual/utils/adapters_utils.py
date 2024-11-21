@@ -136,4 +136,5 @@ def extract_answers_from_string(answer_string: str, answer_prefixes: list[str]) 
 
 
 def float_to_choice_string(answer: float) -> str:
-    return str(int(answer)) if float(answer).is_integer() else str(float(answer))
+    answer = float(answer)
+    return str(int(answer)) if answer.is_integer() else str(answer)
