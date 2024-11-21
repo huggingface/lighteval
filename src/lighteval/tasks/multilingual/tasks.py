@@ -3381,6 +3381,7 @@ qazuntv2_tasks = [
         hf_filter=lambda x: x["section"].lower() == subset,
         hf_avail_splits=["train"],
         evaluation_splits=("train",),  # Dataset only has train split
+        hf_avail_splits=["train"],
         metric=get_metrics_for_formulation(
             MCFFormulation(),
             [
