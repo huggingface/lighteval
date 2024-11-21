@@ -20,14 +20,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
+import anthropic
 from tqdm import tqdm
 
-from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
+from lighteval.data import GenerativeTaskDataset
 from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.endpoint_model import ModelInfo
@@ -46,21 +46,18 @@ from lighteval.utils.imports import is_openai_available
 
 
 if is_openai_available():
-    import logging
+    pass
 
-    import tiktoken
-    from openai import OpenAI
-
-    logging.getLogger("openai").setLevel(logging.ERROR)
-    logging.getLogger("httpx").setLevel(logging.ERROR)
+    # logging.getLogger("openai").setLevel(logging.ERROR)
+    # logging.getLogger("httpx").setLevel(logging.ERROR)
 
 
-class OpenAIClient(LightevalModel):
+class AnthropicClient(LightevalModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
     def __init__(self, config, env_config) -> None:
-        api_key = os.environ["OPENAI_API_KEY"]
-        self.client = OpenAI(api_key=api_key)
+        # api_key = os.environ["ANTHROPIC_API_KEY"]
+        self.client = anthropic.Anthropic()
 
         self.model_info = ModelInfo(
             model_name=config.model,
@@ -73,19 +70,16 @@ class OpenAIClient(LightevalModel):
         self.API_RETRY_MULTIPLIER = 2
         self.CONCURENT_CALLS = 100
         self.model = config.model
-        self._tokenizer = tiktoken.encoding_for_model(self.model)
+        # self._tokenizer = tiktoken.encoding_for_model(self.model)
         self.pairwise_tokenization = False
 
-    def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, logit_bias):
+    def __call_api(self, prompt, max_new_tokens, num_samples):
         for _ in range(self.API_MAX_RETRY):
             try:
-                response = self.client.chat.completions.create(
+                response = self.client.messages.create(
                     model=self.model,
                     messages=[{"role": "user", "content": prompt}],
-                    response_format={"type": "text"},
                     max_tokens=max_new_tokens if max_new_tokens > 0 else None,
-                    logprobs=return_logits,
-                    logit_bias=logit_bias,
                     n=num_samples,
                 )
                 return response
@@ -98,31 +92,27 @@ class OpenAIClient(LightevalModel):
     def __call_api_parallel(
         self,
         prompts,
-        return_logits: bool | list[bool],
         max_new_tokens: int | list[int],
         num_samples: int | list[int],
-        logit_bias: list[dict[int, float]] | None = None,
     ):
         results = []
 
-        return_logitss = [return_logits for _ in prompts] if not isinstance(return_logits, list) else return_logits
         max_new_tokenss = [max_new_tokens for _ in prompts] if not isinstance(max_new_tokens, list) else max_new_tokens
         num_sampless = [num_samples for _ in prompts] if not isinstance(num_samples, list) else num_samples
-        logit_biass = [logit_bias for _ in prompts] if logit_bias is None else logit_bias
 
         assert (
-            len(prompts) == len(return_logitss) == len(max_new_tokenss) == len(num_sampless) == len(logit_biass)
-        ), "Length of prompts, return_logitss, max_new_tokenss, num_sampless, logit_biass should be same"
+            len(prompts) == len(max_new_tokenss) == len(num_sampless)
+        ), "Length of prompts, max_new_tokenss, num_sampless, should be the same"
 
         with ThreadPoolExecutor(self.CONCURENT_CALLS) as executor:
             for entry in tqdm(
-                executor.map(self.__call_api, prompts, return_logitss, max_new_tokenss, num_sampless, logit_biass),
+                executor.map(self.__call_api, prompts, max_new_tokenss, num_sampless),
                 total=len(prompts),
             ):
                 results.append(entry)
 
         if None in results:
-            raise ValueError("Some entries are not annotated due to errors in annotate_p, please inspect and retry.")
+            raise ValueError("Some entries are not annotated due to errors in __call_api, please inspect and retry.")
 
         return results
 
@@ -156,16 +146,15 @@ class OpenAIClient(LightevalModel):
             disable=False,  # self.disable_tqdm,
         ):
             max_new_tokens = dataset[0].generation_size  # could be none
-            return_logits = dataset[0].use_logits
             num_samples = dataset[0].num_samples
             contexts = [c.context for c in dataset]
 
-            responses = self.__call_api_parallel(contexts, return_logits, max_new_tokens, num_samples)
+            responses = self.__call_api_parallel(contexts, max_new_tokens, num_samples)
 
             breakpoint()
 
             for response in responses:
-                result: list[str] = [output.message.content for output in response.choices]
+                result: list[str] = [output.content for output in response]
 
                 cur_response = GenerativeResponse(
                     result=result,
@@ -199,51 +188,16 @@ class OpenAIClient(LightevalModel):
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
-        for request in requests:
-            if request.context == "":
-                request.tokenized_context = [" "]
-                request.tokenized_continuation = self.tok_encode(request.choice)
-            else:
-                # The following line is mandatory for compatibility with the harness
-                request.tokenized_context, request.tokenized_continuation = self.tok_encode_pair(
-                    request.context, request.choice, pairwise=self.pairwise_tokenization
-                )
-        return self._loglikelihood_tokens(requests)
+        raise NotImplementedError
 
     def _loglikelihood_tokens(
         self,
         requests: list[LoglikelihoodRequest],
     ) -> list[LoglikelihoodResponse]:
-        dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=1)
-        results = []
-
-        for _ in tqdm(dataset.splits_start_end_iterator()):
-            inputs = [dataset[i].context for i in range(len(dataset))]
-            logit_biass = []
-            max_new_tokens = [len(dataset[i].tokenized_continuation) for i in range(len(dataset))]
-
-            assert all(
-                new_tokens == 1 for new_tokens in max_new_tokens
-            ), "Only single token continuations are supported when using openai API."
-
-            for i in range(len(dataset)):
-                logit_bias = {tok: 100 for tok in dataset[i].tokenized_continuation}
-                logit_biass.append(logit_bias)
-
-            outputs = self.__call_api_parallel(
-                inputs, return_logits=True, max_new_tokens=max_new_tokens, num_samples=1, logit_bias=logit_biass
-            )
-
-            for output, input in zip(outputs, dataset):
-                continuation_logprobs = [content.logprob for content in output.choices[0].logprobs.content]
-                answer = LoglikelihoodResponse(
-                    input_tokens=input.tokenized_context + input.tokenized_continuation,
-                    generated_tokens=input.tokenized_continuation,
-                    result=(sum(continuation_logprobs), None),
-                )
-                results.append(answer)
-
-        return dataset.get_original_order(results)
+        """Tokenize the context and continuation and compute the log likelihood of those
+        tokenized sequences.
+        """
+        raise NotImplementedError
 
     def loglikelihood_rolling(
         self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
