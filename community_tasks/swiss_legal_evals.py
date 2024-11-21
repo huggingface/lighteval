@@ -151,12 +151,13 @@ Your Judgment:""",
     ]
 
 
-def freeform_gpt_judge(judge_model_name: str = "gpt-4o"):
+def get_swiss_legal_translation_judge(judge_model_name: str = "gpt-4o"):
+    name = f"swiss_legal_translation_judge_{judge_model_name}"
     return SampleLevelMetricGrouping(
-        metric_name=[f"llm_judge_{judge_model_name}"],
-        higher_is_better={"judge_score_{judge_model_name}": True},
+        metric_name=[name],
+        higher_is_better={name: True},
         category=MetricCategory.LLM_AS_JUDGE,
-        use_case=MetricUseCase.SUMMARIZATION,
+        use_case=MetricUseCase.TRANSLATION,
         sample_level_fn=JudgeLLMMixEval(
             judge_model_name=judge_model_name,
             template=swiss_legal_translation_judge,
@@ -165,9 +166,12 @@ def freeform_gpt_judge(judge_model_name: str = "gpt-4o"):
             short_judge_name=judge_model_name,
         ).compute,
         corpus_level_fn={
-            f"judge_score_{judge_model_name}": statistics.mean,
+            name: statistics.mean,
         },
     )
+
+
+swiss_legal_translation_judge_gpt_4o = get_swiss_legal_translation_judge(judge_model_name="gpt-4o")
 
 
 def get_bert_score(model_type: str = "xlm-roberta-large"):
@@ -184,7 +188,7 @@ def get_bert_score(model_type: str = "xlm-roberta-large"):
         metric_name=["BERTScore-P", "BERTScore-R", "BERTScore-F"],
         sample_level_fn=score.compute,
         category=MetricCategory.GENERATIVE,
-        use_case=MetricUseCase.SUMMARIZATION,
+        use_case=MetricUseCase.TRANSLATION,
         corpus_level_fn={
             "BERTScore-P": statistics.mean,
             "BERTScore-R": statistics.mean,
@@ -242,14 +246,20 @@ class BLEURT:
         return scores.item()
 
 
-bleurt = SampleLevelMetric(
-    metric_name="bleurt",
-    sample_level_fn=BLEURT(model_size="tiny", seq_len=512).compute,
-    category=MetricCategory.GENERATIVE,
-    use_case=MetricUseCase.TRANSLATION,
-    corpus_level_fn=statistics.mean,
-    higher_is_better=True,
-)
+def get_bleurt(model_size: str = "tiny", seq_len: int = 512):
+    return SampleLevelMetric(
+        metric_name=f"bleurt_{model_size}",
+        sample_level_fn=BLEURT(model_size=model_size, seq_len=seq_len).compute,
+        category=MetricCategory.GENERATIVE,
+        use_case=MetricUseCase.TRANSLATION,
+        corpus_level_fn=statistics.mean,
+        higher_is_better=True,
+    )
+
+
+# bleurt_tiny = get_bleurt(model_size="tiny", seq_len=512)
+# bleurt_base = get_bleurt(model_size="base", seq_len=512)
+bleurt_large = get_bleurt(model_size="large", seq_len=512)
 
 
 class COMET:
@@ -285,14 +295,31 @@ class COMET:
         return model_output["system_score"]
 
 
-comet = SampleLevelMetric(
-    metric_name="comet",
-    sample_level_fn=COMET(accelerator="cpu").compute,
-    category=MetricCategory.GENERATIVE,
-    use_case=MetricUseCase.TRANSLATION,
-    corpus_level_fn=statistics.mean,
-    higher_is_better=True,
-)
+def get_comet(
+    model_name: str = "Unbabel/wmt22-comet-da",
+    batch_size: int = 1,
+    gpus: int = 1,
+    accelerator: str = "cpu",
+):
+    return SampleLevelMetric(
+        metric_name=model_name.split("/")[-1],
+        sample_level_fn=COMET(
+            model_name=model_name,
+            batch_size=batch_size,
+            gpus=gpus,
+            accelerator=accelerator,
+        ).compute,
+        category=MetricCategory.GENERATIVE,
+        use_case=MetricUseCase.TRANSLATION,
+        corpus_level_fn=statistics.mean,
+        higher_is_better=True,
+    )
+
+
+# There are also reference-free models (e.g., Unbabel/wmt22-cometkiwi-da), but since we have reference gold labels, we use the reference-based models.
+comet_wmt22_da = get_comet(model_name="Unbabel/wmt22-comet-da", batch_size=1, gpus=1, accelerator="cpu")
+# xcomet_xl = get_comet(model_name="Unbabel/XCOMET-XL", batch_size=1, gpus=1, accelerator="cpu")
+xcomet_xxl = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=1, gpus=1, accelerator="cpu")
 
 
 class METEOR:
@@ -495,15 +522,15 @@ class TranslationTask(LightevalTaskConfig):
             generation_size=10,
             metric=[
                 Metrics.bleu,
-                Metrics.bleu_1,
-                Metrics.bleu_4,
+                # Metrics.bleu_4,
                 Metrics.chrf,
                 Metrics.ter,
-                bert_score,
-                bleurt,
-                comet,
                 meteor,
-                freeform_gpt_judge(judge_model_name="gpt-4o"),
+                bert_score,
+                bleurt_large,
+                comet_wmt22_da,
+                xcomet_xxl,
+                swiss_legal_translation_judge_gpt_4o,
                 # Additionally we could consider adding the following open source judge models:
                 # flowaicom/Flow-Judge-v0.1, prometheus-eval/prometheus-7b-v2.0
                 # However, these are only fine-tuned on English data and we need multilingual support.
