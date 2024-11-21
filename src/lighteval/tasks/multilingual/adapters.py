@@ -314,3 +314,11 @@ def cmm_math_adapter(line: dict) -> MCQInput | None:
         return None
 
     return {"question": question, "choices": list(choices.values()), "gold_idx": gold_idx}
+
+
+def qazuntv2_adapter(line: dict) -> MCQInput | None:
+    gold_idx = LETTER_INDICES.index(line["answer"])
+    choices = line["options"]
+    if gold_idx >= len(choices):
+        return None
+    return {"question": line["question"], "choices": choices, "gold_idx": gold_idx}
