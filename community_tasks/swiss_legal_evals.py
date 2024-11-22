@@ -36,6 +36,7 @@ import statistics
 from dataclasses import dataclass
 
 import nltk
+import torch
 from comet import download_model, load_from_checkpoint
 from nltk import word_tokenize
 from nltk.translate import meteor_score
@@ -57,6 +58,8 @@ from lighteval.tasks.extended.mix_eval.main import process_judge_response_freefo
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
+
+device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
 
 # CUSTOM METRICS
 
@@ -171,10 +174,10 @@ def get_swiss_legal_translation_judge(judge_model_name: str = "gpt-4o"):
     )
 
 
-swiss_legal_translation_judge_gpt_4o = get_swiss_legal_translation_judge(judge_model_name="gpt-4o")
-
-
-def get_bert_score(model_type: str = "xlm-roberta-large"):
+def get_bert_score(model_type: str = "xlm-roberta-large", device: str = "cpu"):
+    if device == "mps":
+        raise ValueError("MPS is not supported for BERTScore")
+    print(f"Loading BERTScore with model_type={model_type}, and device={device}...")
     score = BertScore(normalize_gold=remove_braces, normalize_pred=remove_braces_and_strip)
     score.bert_scorer = BERTScorer(
         # We could download the files from here and set the baseline_path ourselves:
@@ -183,6 +186,7 @@ def get_bert_score(model_type: str = "xlm-roberta-large"):
         lang=None,  # Needs to be set if rescale_with_baseline is True
         rescale_with_baseline=False,
         baseline_path=None,
+        device=device,
     )
     return SampleLevelMetricGrouping(
         metric_name=["BERTScore-P", "BERTScore-R", "BERTScore-F"],
@@ -202,11 +206,13 @@ def get_bert_score(model_type: str = "xlm-roberta-large"):
     )
 
 
-bert_score = get_bert_score(model_type="xlm-roberta-large")
-
-
 class BLEURT:
-    def __init__(self, model_size: str = "tiny", seq_len: int = 512):
+    def __init__(
+        self,
+        model_size: str = "tiny",
+        seq_len: int = 512,
+        device: str = "cpu",
+    ):
         """Creates a BLEURT scorer based on the model size (tiny, base, large) and sequence length (128, 512)."""
         assert model_size in [
             "tiny",
@@ -214,11 +220,14 @@ class BLEURT:
             "large",
         ], "Model size must be either tiny, base, or large"
         assert seq_len in [128, 512], "Sequence length must be either 128 or 512"
+        if device == "mps":
+            raise ValueError("MPS is not supported for BLEURT")
 
         self.tokenizer = AutoTokenizer.from_pretrained(f"Elron/bleurt-{model_size}-{seq_len}")
         self.model = AutoModelForSequenceClassification.from_pretrained(f"Elron/bleurt-{model_size}-{seq_len}")
-        self.max_length = seq_len
+        self.model = self.model.to(device)
         self.model.eval()
+        self.max_length = seq_len
 
     def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float:
         """Uses the stored BLEURT scorer to compute the score on the current sample.
@@ -246,20 +255,16 @@ class BLEURT:
         return scores.item()
 
 
-def get_bleurt(model_size: str = "tiny", seq_len: int = 512):
+def get_bleurt(model_size: str = "tiny", seq_len: int = 512, device: str = "cpu"):
+    print(f"Loading BLEURT with model_size={model_size}, seq_len={seq_len}, and device={device}...")
     return SampleLevelMetric(
         metric_name=f"bleurt_{model_size}",
-        sample_level_fn=BLEURT(model_size=model_size, seq_len=seq_len).compute,
+        sample_level_fn=BLEURT(model_size=model_size, seq_len=seq_len, device=device).compute,
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.TRANSLATION,
         corpus_level_fn=statistics.mean,
         higher_is_better=True,
     )
-
-
-# bleurt_tiny = get_bleurt(model_size="tiny", seq_len=512)
-# bleurt_base = get_bleurt(model_size="base", seq_len=512)
-bleurt_large = get_bleurt(model_size="large", seq_len=512)
 
 
 class COMET:
@@ -268,8 +273,10 @@ class COMET:
         model_name: str = "Unbabel/wmt22-comet-da",
         batch_size: int = 1,
         gpus: int = 1,
-        accelerator: str = "cpu",  # "mps" leads to errors
+        accelerator: str = "cpu",
     ):
+        if accelerator == "mps":
+            raise ValueError("MPS is not supported for COMET")
         model_path = download_model(model_name)
         self.model = load_from_checkpoint(model_path)
         self.batch_size = batch_size
@@ -299,27 +306,22 @@ def get_comet(
     model_name: str = "Unbabel/wmt22-comet-da",
     batch_size: int = 1,
     gpus: int = 1,
-    accelerator: str = "cpu",
+    device: str = "cpu",
 ):
+    print(f"Loading COMET with model_name={model_name}, batch_size={batch_size}, gpus={gpus}, and device={device}...")
     return SampleLevelMetric(
         metric_name=model_name.split("/")[-1],
         sample_level_fn=COMET(
             model_name=model_name,
             batch_size=batch_size,
             gpus=gpus,
-            accelerator=accelerator,
+            accelerator=device,
         ).compute,
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.TRANSLATION,
         corpus_level_fn=statistics.mean,
         higher_is_better=True,
     )
-
-
-# There are also reference-free models (e.g., Unbabel/wmt22-cometkiwi-da), but since we have reference gold labels, we use the reference-based models.
-comet_wmt22_da = get_comet(model_name="Unbabel/wmt22-comet-da", batch_size=1, gpus=1, accelerator="cpu")
-# xcomet_xl = get_comet(model_name="Unbabel/XCOMET-XL", batch_size=1, gpus=1, accelerator="cpu")
-xcomet_xxl = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=1, gpus=1, accelerator="cpu")
 
 
 class METEOR:
@@ -508,6 +510,25 @@ def create_prompt_fn(level_config: LevelConfig, src_lang: str, target_lang: str)
     return prompt_fn
 
 
+bert_score = get_bert_score(model_type="xlm-roberta-large", device="cpu")
+
+# Only take the largest version
+bleurt_large = get_bleurt(model_size="large", seq_len=512, device="cpu")
+
+# There are also reference-free models (e.g., Unbabel/wmt22-cometkiwi-da), but since we have reference gold labels, we use the reference-based models.
+comet_wmt22_da = get_comet(
+    model_name="Unbabel/wmt22-comet-da",
+    batch_size=1,
+    gpus=1,
+    device="cpu",
+)
+xcomet_xl = get_comet(model_name="Unbabel/XCOMET-XL", batch_size=1, gpus=1, device="cpu")
+# XXL is likely too large for local evaluation
+# xcomet_xxl = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=1, gpus=1, device="cpu")
+
+swiss_legal_translation_judge_gpt_4o = get_swiss_legal_translation_judge(judge_model_name="gpt-4o")
+
+
 class TranslationTask(LightevalTaskConfig):
     def __init__(
         self,
@@ -538,7 +559,7 @@ class TranslationTask(LightevalTaskConfig):
                 bert_score,
                 bleurt_large,
                 comet_wmt22_da,
-                xcomet_xxl,
+                xcomet_xl,
                 swiss_legal_translation_judge_gpt_4o,
                 # Additionally we could consider adding the following open source judge models:
                 # flowaicom/Flow-Judge-v0.1, prometheus-eval/prometheus-7b-v2.0
