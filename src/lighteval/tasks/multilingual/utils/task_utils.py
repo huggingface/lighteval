@@ -21,21 +21,30 @@
 # SOFTWARE.
 
 
+from typing import Literal
+
 from lighteval.metrics.dynamic_metrics import loglikelihood_acc_metric
+from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.utils.metric_utils import Metric
 from lighteval.tasks.templates.utils.formulation import Formulation, MCFFormulation
+
+
+EvalType = Literal["generative", "logprobs"]
 
 
 def normalize_subset(subset: str) -> str:
     return subset.replace(" ", "_").replace("(", "").replace(")", "").lower()
 
 
-def get_metrics_for_formulation(formulation: Formulation, metrics: list[Metric]) -> list[Metric]:
+def get_metrics_for_formulation(formulation: Formulation, eval_type: EvalType, metrics: list[Metric]) -> list[Metric]:
     """
     Choose the appropriate metrics for the given formulation otherwise fallback to the original metrics.
     """
-    match formulation:
-        case MCFFormulation(choice_prefix="Letters"):
+    match (formulation, eval_type):
+        # In case of
+        case MCFFormulation(choice_prefix=("Letters" | "Numbers")), "logprobs":
             return [loglikelihood_acc_metric(normalization=None)]
+        case (_, "generative"):
+            return [Metrics.exact_match, Metrics.prefix_exact_match]
         case _:
             return metrics
