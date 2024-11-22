@@ -47,7 +47,7 @@ def loglikelihood_acc_metric(normalization: LogProbNormalization | None = None) 
     """
 
     normalization_str = normalization.name if normalization else ""
-    metric_name = f"acc_{normalization_str}"
+    metric_name = f"acc{'_' + normalization_str if normalization_str else ''}"
     return SampleLevelMetric(
         metric_name=metric_name,
         sample_level_fn=LoglikelihoodAcc(logprob_normalization=normalization).compute,
@@ -69,7 +69,7 @@ def normalized_multi_choice_prob_metric(
     """
 
     normalization_str = normalization.name if normalization else ""
-    metric_name = "_".join(filter(None, ["normalized_mc_prob_", normalization_str]))
+    metric_name = f"normalized_mc_prob{'_' + normalization_str if normalization_str else ''}"
 
     return SampleLevelMetric(
         metric_name=metric_name,
@@ -94,7 +94,7 @@ def probability_metric(
     """
 
     normalization_str = normalization.name if normalization else ""
-    metric_name = "_".join(filter(None, ["prob", normalization_str]))
+    metric_name = f"prob{'_' + normalization_str if normalization_str else ''}"
 
     return SampleLevelMetric(
         metric_name=metric_name,
