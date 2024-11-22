@@ -447,19 +447,19 @@ SwissLawTranslations = DatasetConfig(
         "law_level": LevelConfig(
             name="law_level",
             text_col_name="lawText",
-            metadata_cols=["abbreviation", "url", "dateApplicability", "rsNr"],
+            metadata_cols=["rsNr"],
             generation_size=16384,
         ),
         "article_level": LevelConfig(
             name="article_level",
             text_col_name="artText",
-            metadata_cols=["abbreviation", "url", "dateApplicability", "rsNr"],
+            metadata_cols=["rsNr"],
             generation_size=1024,
         ),
         "paragraph_level": LevelConfig(
             name="paragraph_level",
             text_col_name="parText",
-            metadata_cols=["abbreviation", "url", "dateApplicability", "rsNr"],
+            metadata_cols=["rsNr"],
             generation_size=256,
         ),
     },
