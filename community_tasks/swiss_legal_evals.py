@@ -397,6 +397,7 @@ class LevelConfig:
     name: str
     text_col_name: str
     metadata_cols: list[str]
+    generation_size: int
 
 
 @dataclass
@@ -420,16 +421,19 @@ SwissDecisionSummaryTranslations = DatasetConfig(
             name="bge_level",
             text_col_name="bgeText",
             metadata_cols=["bge"],
+            generation_size=2048,
         ),
         "regeste_level": LevelConfig(
             name="regeste_level",
             text_col_name="regesteText",
             metadata_cols=["bge"],
+            generation_size=512,
         ),
         "text_level": LevelConfig(
             name="text_level",
             text_col_name="text",
             metadata_cols=["bge"],
+            generation_size=256,
         ),
     },
 )
@@ -444,16 +448,19 @@ SwissLawTranslations = DatasetConfig(
             name="law_level",
             text_col_name="lawText",
             metadata_cols=["abbreviation", "url", "dateApplicability", "rsNr"],
+            generation_size=16384,
         ),
         "article_level": LevelConfig(
             name="article_level",
             text_col_name="articleText",
             metadata_cols=["abbreviation", "url", "dateApplicability", "rsNr"],
+            generation_size=1024,
         ),
         "paragraph_level": LevelConfig(
             name="paragraph_level",
             text_col_name="paragraphText",
             metadata_cols=["abbreviation", "url", "dateApplicability", "rsNr"],
+            generation_size=256,
         ),
     },
 )
@@ -468,6 +475,7 @@ SwissSupremeCourtPressReleaseTranslations = DatasetConfig(
             name="press_release",
             text_col_name="text",
             metadata_cols=["filename"],
+            generation_size=1024,
         )
     },
 )
@@ -508,10 +516,11 @@ class TranslationTask(LightevalTaskConfig):
         src_lang: str,
         target_lang: str,
     ):
+        level_config = dataset_config.subsets[level_name]
         super().__init__(
             name=f"{dataset_config.name}-{level_name}:{src_lang}-{target_lang}",
             suite=["community"],
-            prompt_function=create_prompt_fn(dataset_config.subsets[level_name], src_lang, target_lang),
+            prompt_function=create_prompt_fn(level_config, src_lang, target_lang),
             hf_repo=dataset_config.hf_repo,
             hf_subset=level_name,
             hf_filter=None,
@@ -519,7 +528,7 @@ class TranslationTask(LightevalTaskConfig):
             evaluation_splits=["test"],  # ["validation", "test"],
             few_shots_split="validation",
             few_shots_select=None,
-            generation_size=10,
+            generation_size=level_config.generation_size,
             metric=[
                 Metrics.bleu,
                 # Metrics.bleu_4,
