@@ -333,7 +333,6 @@ def mmlu_harness(line, task_name: str = None):
         task_name=task_name,
         query=prompt,
         choices=[" A", " B", " C", " D"],
-        target_for_fewshot_sorting=[" A", " B", " C", " D"][gold_ix],
         gold_index=gold_ix,
         instruction=f"The following are multiple choice questions (with answers) about {topic.replace('_', ' ')}.\n\n",
     )
