@@ -232,7 +232,6 @@ community|arabic_mmlu:Arabic Language (General)|0|0
 community|arabic_mmlu:Arabic Language (Grammar)|0|0
 community|arabic_mmlu:Civics (Middle School)|0|0
 community|arabic_mmlu:Civics (High School)|0|0
-community|arabic_mmmlu|0|0
 community|madinah_qa:Arabic Language (General)|0|0
 community|madinah_qa:Arabic Language (Grammar)|0|0
 community|aratrust:Trustfulness|0|0
