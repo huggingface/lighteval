@@ -254,46 +254,6 @@ ARABIC_MMLU_MT_TASKS = [
 ]
 
 
-def arabic_mmmlu_pfn(line, task_name: str = None):
-    instruction = "السؤال التالي هو سؤال متعدد الإختيارات. اختر الإجابة الصحيحة: أ، ب، ج، أو د... إلخ. \n\n"
-    choices = [line["A"], line["B"], line["C"], line["D"]]
-    # Answers are provided with roman letters - we look for the correct index in LETTER_INDICES,
-    # it will then be applied to arabic letters
-    answer_index = LETTER_INDICES.index(
-        line["Answer"]
-    )  # line["answer"] is the correct answer. That's why we need to index it !
-
-    query = f"{instruction}{line['Question']}\n"
-    query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES_AR[:4], choices)])
-    query += "الإجابة:"
-
-    return Doc(
-        task_name=task_name,
-        query=query,
-        choices=LETTER_INDICES_AR[:4],
-        gold_index=answer_index,
-        instruction=instruction,
-        target_for_fewshot_sorting=LETTER_INDICES_AR[answer_index],
-    )
-
-
-# ARABIC MMMLU (OpenAI) ##
-arabic_mmmlu_task = LightevalTaskConfig(
-    name="arabic_mmmlu",
-    prompt_function=arabic_mmmlu_pfn,
-    suite=["community"],
-    hf_repo="openai/MMMLU",
-    hf_subset="AR_XY",
-    hf_avail_splits=["test"],
-    evaluation_splits=["test"],
-    few_shots_split=None,
-    few_shots_select=None,
-    metric=[Metrics.loglikelihood_acc_norm],
-    trust_dataset=True,
-    version=0,
-)
-
-
 # ACVA ##
 # fmt: off
 ACVA_SUBSETS = [
@@ -904,7 +864,6 @@ TASKS_TABLE = (
     ARABIC_MMLU_TASKS
     + ARABIC_MMLU_HT_TASKS
     + ARABIC_MMLU_MT_TASKS
-    + [arabic_mmmlu_task]
     + ACVA_TASKS
     + ALGHAFA_TASKS
     + ARATRUST_TASKS
