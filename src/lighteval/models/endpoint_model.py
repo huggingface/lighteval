@@ -302,7 +302,9 @@ class InferenceEndpointModel(LightevalModel):
                             result=response.generated_text,
                             logits=[item.logprob for item in response.details.prefill] if returns_logits else None,
                             generated_tokens=[token.id for token in response.details.tokens],
-                            truncated_tokens_count=max(len(self.tokenizer.encode(batch[i].context))-self.max_length, 0),
+                            truncated_tokens_count=max(
+                                len(self.tokenizer.encode(batch[i].context)) - self.max_length, 0
+                            ),
                             padded_tokens_count=-1,
                         )
                     )

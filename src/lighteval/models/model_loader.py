@@ -120,8 +120,9 @@ def load_openai_model(config: OpenAIModelConfig, env_config: EnvConfig):
     return model
 
 
-def load_model_with_inference_endpoints(config: Union[InferenceEndpointModelConfig, InferenceModelConfig],
-                                        env_config: EnvConfig):
+def load_model_with_inference_endpoints(
+    config: Union[InferenceEndpointModelConfig, InferenceModelConfig], env_config: EnvConfig
+):
     hlog("Spin up model using inference endpoint.")
     model = InferenceEndpointModel(config=config, env_config=env_config)
     return model

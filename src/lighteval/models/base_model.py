@@ -669,10 +669,7 @@ class BaseModel(LightevalModel):
                     input_ids=tokenized["input_ids"],
                     input_lengths=[len(item == 1) for item in tokenized["attention_mask"]],
                     input_mask=tokenized["attention_mask"],
-                    truncated=[
-                        max(len(c) - tokenized["input_ids"].shape[1], 0)
-                        for c in context
-                    ],
+                    truncated=[max(len(c) - tokenized["input_ids"].shape[1], 0) for c in context],
                     padded=[sum(mask == 0) for mask in tokenized["attention_mask"]],
                 )
 

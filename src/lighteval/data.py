@@ -23,7 +23,6 @@
 import math
 from typing import Iterator, Tuple
 
-import math
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data.distributed import DistributedSampler, T_co
