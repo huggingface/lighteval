@@ -214,7 +214,7 @@ class EvaluationTracker:
         for task_name, dataset in details_datasets.items():
             output_file_details = output_dir_details_sub_folder / f"details_{task_name}_{date_id}.json"
             with self.fs.open(str(output_file_details), "wb") as f:
-                dataset.to_json(f)
+                dataset.to_json(f, force_ascii=False)
 
     def generate_final_dict(self) -> dict:
         """Aggregates and returns all the logger's experiment information in a dictionary.

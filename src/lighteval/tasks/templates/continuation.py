@@ -192,11 +192,17 @@ def get_continuation_prompt_function(
         )
 
         few_shot_cot = cont_input.get("few_shot_cot", None)
-        if formulation.cot and few_shot_cot and line.get("__few_shots", False):
+        is_few_shot = line.get("__few_shots", False)
+        if formulation.cot and few_shot_cot and is_few_shot:
             continuations = [
                 capitalize(fix_ending_punct(answer, translation_literals)) for answer in as_list(few_shot_cot)
             ]
-        answers = build_answers(continuations, formulation, translation_literals)
+        answers = build_answers(
+            continuations,
+            formulation,
+            translation_literals,
+            is_few_shot=is_few_shot and bool(few_shot_cot),
+        )
 
         return Doc(
             task_name=task_name,

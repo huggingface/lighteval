@@ -226,7 +226,7 @@ class LightevalTask:
 
         self.generation_size = cfg.generation_size
         self.generation_grammar = cfg.generation_grammar
-        self.stop_sequence = cfg.stop_sequence
+        self.stop_sequence = cfg.stop_sequence or []
         self.must_remove_duplicate_docs = cfg.must_remove_duplicate_docs
 
     @property

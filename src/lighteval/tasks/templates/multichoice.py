@@ -163,13 +163,16 @@ def get_mcq_prompt_function(
 
         # If we are in few-shot mode, then we want to use cot-answers instead of the actual answers
         # NOTE: it's important to do it after query formatting, because otherwise the options will contain cot
+        is_few_shot = line.get("__few_shots", False)
         few_shot_cot = mcq_input.get("few_shot_cot", None)
-        if few_shot_cot and formulation.cot and line.get("__few_shots", False):
+        if few_shot_cot and formulation.cot and is_few_shot:
             answers = [capitalize(fix_ending_punct(answer, translation_literals)) for answer in as_list(few_shot_cot)]
             gold_idx = list(range(len(answers)))
         gold_idx = as_list(gold_idx)
 
-        answers = build_answers(answers, formulation, translation_literals)
+        answers = build_answers(
+            answers, formulation, translation_literals, is_few_shot=is_few_shot and bool(few_shot_cot)
+        )
 
         return Doc(
             task_name=task_name,
