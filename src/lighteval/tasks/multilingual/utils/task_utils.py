@@ -60,9 +60,9 @@ def get_metrics_for_mcq_formulation(
             return metrics
 
 
-def get_cot_generaion_size(cot: bool, generation_size: int) -> int:
+def get_cot_generaion_size(cot: bool, generation_size: int) -> int | None:
     if cot:
-        return -1
+        return None
     return generation_size
 
 

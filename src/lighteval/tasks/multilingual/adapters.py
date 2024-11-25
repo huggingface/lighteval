@@ -29,6 +29,7 @@ from langcodes import standardize_tag
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.multilingual.utils.adapters_utils import (
     extract_answers_from_string,
+    float_to_choice_string,
     multichoice_join,
     multichoice_to_single_choice,
 )
@@ -322,3 +323,11 @@ def qazuntv2_adapter(line: dict) -> MCQInput | None:
     if gold_idx >= len(choices):
         return None
     return {"question": line["question"], "choices": choices, "gold_idx": gold_idx}
+
+MGSM_COT_PREFIX_RE = re.compile(r"\s*(ধাপে ধাপে উত্তর|Schritt-für-Schritt-Antwort|Step-by-Step Answer|Respuesta paso a paso|Réponse étape par étape|ステップごとの答え|Пошаговое решение|Jibu la Hatua kwa Hatua|దశలవారీగా సమాధానంi|คำตอบทีละขั้นตอน|逐步解答)\s*:\s*")
+MGSM_QUESTION_RE = re.compile(r"\s*(প্রশ্ন|Frage|Question|Pregunta|Question|問題|Задача|Swali|ప్రశ్న|โจทย์|问题)\s*:\s*")
+def mgsm_adapter(line: dict) -> QAInput | None:
+    question = MGSM_QUESTION_RE.sub("", line["question"])
+    answer_cot = MGSM_COT_PREFIX_RE.sub("", line["answer"]) if line["answer"] else ""
+    answer_number = line["answer_number"]
+    return {"question": question, "few_shot_cot": answer_cot, "choices": [float_to_choice_string(answer_number)]}
