@@ -59,7 +59,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # CUSTOM METRICS
 
@@ -249,6 +249,7 @@ class BLEURT:
             truncation=True,
             max_length=self.max_length,
         )
+        inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
         if any(len(encoding) == self.max_length for encoding in inputs["input_ids"]):
             hlog_warn(f"Some inputs were truncated to max_length={self.max_length} in BLEURT scoring")
         scores = self.model(**inputs)[0].squeeze()
@@ -510,21 +511,20 @@ def create_prompt_fn(level_config: LevelConfig, src_lang: str, target_lang: str)
     return prompt_fn
 
 
-bert_score = get_bert_score(model_type="xlm-roberta-large", device="cpu")
+bert_score = get_bert_score(model_type="xlm-roberta-large", device=device)
 
 # Only take the largest version
-bleurt_large = get_bleurt(model_size="large", seq_len=512, device="cpu")
+bleurt_large = get_bleurt(model_size="large", seq_len=512, device=device)
 
 # There are also reference-free models (e.g., Unbabel/wmt22-cometkiwi-da), but since we have reference gold labels, we use the reference-based models.
 comet_wmt22_da = get_comet(
     model_name="Unbabel/wmt22-comet-da",
-    batch_size=1,
+    batch_size=32,
     gpus=1,
-    device="cpu",
+    device=device,
 )
-xcomet_xl = get_comet(model_name="Unbabel/XCOMET-XL", batch_size=1, gpus=1, device="cpu")
-# XXL is likely too large for local evaluation
-# xcomet_xxl = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=1, gpus=1, device="cpu")
+xcomet_xl = get_comet(model_name="Unbabel/XCOMET-XL", batch_size=8, gpus=1, device=device)
+xcomet_xxl = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=8, gpus=1, device=device)
 
 swiss_legal_translation_judge_gpt_4o = get_swiss_legal_translation_judge(judge_model_name="gpt-4o")
 
@@ -560,6 +560,7 @@ class TranslationTask(LightevalTaskConfig):
                 bleurt_large,
                 comet_wmt22_da,
                 xcomet_xl,
+                xcomet_xxl,
                 swiss_legal_translation_judge_gpt_4o,
                 # Additionally we could consider adding the following open source judge models:
                 # flowaicom/Flow-Judge-v0.1, prometheus-eval/prometheus-7b-v2.0
