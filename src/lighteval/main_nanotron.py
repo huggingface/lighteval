@@ -35,7 +35,9 @@ from lighteval.utils.utils import EnvConfig
 if not is_nanotron_available():
     raise ImportError(NO_NANOTRON_ERROR_MSG)
 
-from nanotron.config import Config, get_config_from_file
+from nanotron.config import get_config_from_file
+
+from brrr.config import Config as BrrrConfig
 
 
 SEED = 1234
@@ -56,8 +58,8 @@ def main(
 
         model_config = get_config_from_file(
             checkpoint_config_path,
-            config_class=Config,
-            model_config_class=None,
+            config_class=BrrrConfig,
+            model_config_class=BrrrConfig,
             skip_unused_config_keys=True,
             skip_null_keys=True,
         )

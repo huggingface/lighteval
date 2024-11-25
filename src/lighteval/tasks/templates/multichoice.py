@@ -37,6 +37,8 @@ MULTI_CHOICE_QA_QUERY = (
     "{instruction}{context}{question_word}{colon}{sentence_space}{question}\n{options}{answer_word}{colon}"
 )
 
+OPTIONS_QUERY = "\n{options_word}{colon}\n{options}\n"
+
 
 # Defined for type hinting only
 class MCQInput(TypedDict):
@@ -55,6 +57,7 @@ class MCQInput(TypedDict):
     gold_idx: list[int] | int
     context: NotRequired[str]
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 class MCQDictAdapter(TypedDict):
@@ -73,6 +76,7 @@ class MCQDictAdapter(TypedDict):
     gold_idx: str
     context: NotRequired[str]
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 # Python too dumb to do fancy inference :(
@@ -136,13 +140,29 @@ def get_mcq_prompt_function(
         context = f"{capitalize(fix_ending_punct(context_val, translation_literals))}\n" if context_val else ""
 
         question = capitalize(fix_ending_punct(mcq_input["question"], translation_literals))
-        answers = [capitalize(fix_ending_punct(answer, translation_literals)) for answer in mcq_input["choices"]]
+        answers = mcq_input["choices"]
+
+        use_cot = isinstance(formulation, MCFFormulation) and formulation.cot
+
+        few_shot_cot = mcq_input.get("few_shot_cot", None)
+        if use_cot and few_shot_cot and line.get("__few_shots", False):
+            answers = as_list(few_shot_cot)
+
+        answers = [capitalize(fix_ending_punct(answer, translation_literals)) for answer in answers]
 
         options = build_choices(answers, formulation, translation_literals)
-        options = f"{options}\n" if options else ""
+        options = (
+            OPTIONS_QUERY.format(
+                options_word=capitalize(translation_literals.options_word),
+                options=options,
+                colon=translation_literals.colon,
+            )
+            if options
+            else ""
+        )
         answers = build_answers(answers, formulation, translation_literals)
 
-        answer_word = capitalize(translation_literals.answer)
+        answer_word = capitalize(translation_literals.answer if not use_cot else translation_literals.answer_cot)
         question_word = capitalize(translation_literals.question_word)
 
         query = MULTI_CHOICE_QA_QUERY.format(

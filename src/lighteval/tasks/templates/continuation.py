@@ -46,7 +46,7 @@ from lighteval.utils.utils import as_list
 
 CONTINUATION_QUERY_CF = "{instruction}{context}"
 
-CONTINUATION_QUERY_MCF = "{instruction}{context}\n{options}{answer_word}{colon}"
+CONTINUATION_QUERY_MCF = "{instruction}{context}\n\n{options_word}{colon}\n{options}{answer_word}{colon}"
 
 
 # Defined for type hinting only
@@ -64,6 +64,7 @@ class ContinuationInput(TypedDict):
     continuations: list[str]
     gold_idx: list[int] | int
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 class ContinuationDictAdapter(TypedDict):
@@ -80,12 +81,14 @@ class ContinuationDictAdapter(TypedDict):
     continuations: str
     gold_idx: str
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 def get_continuation_prompt_function(
     language: Language,
     adapter: Callable[[dict], ContinuationInput | None] | ContinuationDictAdapter,
     formulation: Formulation = MCFFormulation(),
+    cot: bool,
 ):
     """
     Create a templated prompt function for a Continuation task.
@@ -124,7 +127,7 @@ def get_continuation_prompt_function(
     adapter_fn = create_adapter_from_dict(adapter)
     translation_literals = TRANSLATION_LITERALS[language]
 
-    def prepare_prompt(line: dict):
+    def prepare_prompt(line: dict, cot: bool):
         cont_input = adapter_fn(line)
         if cont_input is None:
             return None
@@ -133,10 +136,15 @@ def get_continuation_prompt_function(
         instruction = f"{instruction_val}\n" if instruction_val else ""
 
         context = f"{capitalize(fix_ending_punct(cont_input['context'], translation_literals))}"
+        continuations = cont_input["continuations"]
+
+        few_shot_cot = cont_input.get("few_shot_cot", None)
+        if cot and few_shot_cot and line.get("__few_shots", False):
+            continuations = as_list(few_shot_cot)
 
         continuations = [
             fix_capitalization(context, fix_ending_punct(continuation, translation_literals), translation_literals)
-            for continuation in cont_input["continuations"]
+            for continuation in continuations
         ]
 
         return cont_input, instruction, context, continuations
@@ -177,13 +185,14 @@ def get_continuation_prompt_function(
         answers = build_answers(continuations, formulation, translation_literals)
 
         answer_word = capitalize(translation_literals.answer)
-
+        options_word = capitalize(translation_literals.options_word)
         query = CONTINUATION_QUERY_MCF.format(
             instruction=instruction,
             context=context,
             options=options,
             answer_word=answer_word,
             colon=translation_literals.colon,
+            options_word=options_word,
         )
 
         return Doc(

@@ -165,6 +165,7 @@ def get_nli_prompt_function(
     adapter: Callable[[dict], NLIInput | None] | NLIAdapter,
     relations: list[RelationType],
     formulation: Formulation = MCFFormulation(),
+    cot: bool,
 ):
     """
     Create a templated prompt function for a Natural Language Inference (NLI) task.
@@ -221,6 +222,7 @@ def get_nli_prompt_function(
         language,
         {"context": "premise", "question": "hypothesis", "choices": "choices", "gold_idx": "gold_idx"},
         CFFormulation() if isinstance(formulation, HybridFormulation) else formulation,
+        cot,
     )
 
     def prompt_fn(line: dict, task_name: str):

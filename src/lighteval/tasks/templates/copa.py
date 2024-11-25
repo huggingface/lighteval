@@ -77,6 +77,7 @@ def get_copa_prompt_function(
     language: Language,
     adapter: Callable[[dict], COPAInput | None] | COPAAdapter,
     formulation: Formulation = MCFFormulation(),
+    cot: bool,
 ):
     """
     Create a templated prompt function for a COPA task.
@@ -113,7 +114,7 @@ def get_copa_prompt_function(
     """
     adapter_fn = create_adapter_from_dict(adapter)
     continuation_prompt_fn = get_continuation_prompt_function(
-        language, {"context": "context", "continuations": "continuations", "gold_idx": "gold_idx"}, formulation
+        language, {"context": "context", "continuations": "continuations", "gold_idx": "gold_idx"}, formulation, cot=cot
     )
     translation_literals = TRANSLATION_LITERALS[language]
 

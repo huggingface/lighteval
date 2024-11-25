@@ -23,20 +23,23 @@
 
 from typing import Literal
 
-from lighteval.metrics.dynamic_metrics import loglikelihood_acc_metric
+from lighteval.metrics.dynamic_metrics import loglikelihood_acc_metric, multilingual_extractive_match_metric
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.utils.metric_utils import Metric
 from lighteval.tasks.templates.utils.formulation import Formulation, MCFFormulation
+from lighteval.utils.language import Language
 
 
-EvalType = Literal["generative", "logprobs"]
+EvalType = Literal["generative", "logprobs", "generative_cot"]
 
 
 def normalize_subset(subset: str) -> str:
     return subset.replace(" ", "_").replace("(", "").replace(")", "").lower()
 
 
-def get_metrics_for_formulation(formulation: Formulation, eval_type: EvalType, metrics: list[Metric]) -> list[Metric]:
+def get_metrics_for_mcq_formulation(
+    formulation: Formulation, language: Language, metrics: list[Metric], eval_type: EvalType
+) -> list[Metric]:
     """
     Choose the appropriate metrics for the given formulation otherwise fallback to the original metrics.
     """
@@ -44,7 +47,26 @@ def get_metrics_for_formulation(formulation: Formulation, eval_type: EvalType, m
         # In case of
         case MCFFormulation(choice_prefix=("Letters" | "Numbers")), "logprobs":
             return [loglikelihood_acc_metric(normalization=None)]
-        case (_, "generative"):
-            return [Metrics.exact_match, Metrics.prefix_exact_match]
-        case _:
+        case _, "logprobs":
             return metrics
+        case MCFFormulation(), "generative":
+            return [Metrics.exact_match, Metrics.prefix_exact_match]
+        case MCFFormulation(), "generative_cot":
+            return [
+                multilingual_extractive_match_metric(language, target_for_extraction=formulation.choice_prefix),
+                Metrics.prefix_exact_match,
+            ]
+        case _:
+            raise ValueError(f"Unsupported formulation {formulation} and eval type {eval_type}")
+
+
+def get_cot_generaion_size(eval_type: EvalType, generation_size: int) -> int:
+    if eval_type == "generative_cot":
+        return -1
+    return generation_size
+
+
+def get_cot_stop_sequence(eval_type: EvalType, stop_sequence: list[str]) -> list[str] | None:
+    if eval_type == "generative_cot":
+        return None
+    return stop_sequence

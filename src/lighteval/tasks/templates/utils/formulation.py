@@ -39,10 +39,12 @@ class MCFFormulation:
 
     Args:
         choice_prefix (ChoicePrefix, optional): The choice prefix to use for the task. Defaults to "Letters".
+        cot (bool, optional): Whether to use COT for the task. Defaults to False.
     """
 
     choice_prefix: ChoicePrefix = "Letters"
     name: str = "MCF"
+    cot: bool
 
 
 @dataclass
