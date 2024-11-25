@@ -436,11 +436,11 @@ def create_model_config(  # noqa: C901
         # Keeping only non null params
         args_dict = {k: v for k, v in args_dict.items() if v is not None}
 
-        if config["merged_weights"]["delta_weights"]:
+        if config["merged_weights"].get("delta_weights", False):
             if config["merged_weights"]["base_model"] is None:
                 raise ValueError("You need to specify a base model when using delta weights")
             return DeltaModelConfig(**args_dict)
-        if config["merged_weights"]["adapter_weights"]:
+        if config["merged_weights"].get("adapter_weights", False):
             if config["merged_weights"]["base_model"] is None:
                 raise ValueError("You need to specify a base model when using adapter weights")
             return AdapterModelConfig(**args_dict)
