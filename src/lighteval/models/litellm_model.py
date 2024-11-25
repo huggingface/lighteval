@@ -25,11 +25,10 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
+from tqdm import tqdm
 from transformers import AutoTokenizer
 
-from tqdm import tqdm
-
-from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
+from lighteval.data import GenerativeTaskDataset
 from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.endpoint_model import ModelInfo
@@ -49,9 +48,9 @@ from lighteval.utils.imports import is_litellm_available
 
 if is_litellm_available():
     import logging
+
     import litellm
     from litellm.caching.caching import Cache
-
 
     logging.getLogger("litellm").setLevel(logging.ERROR)
     logging.getLogger("httpx").setLevel(logging.ERROR)
@@ -82,6 +81,7 @@ class LiteLLMClient(LightevalModel):
         self.model = config.model
         self._tokenizer = AutoTokenizer.from_pretrained("gpt2")  # Use a dummy tokenizer for compatibility
         self.pairwise_tokenization = False
+        litellm.drop_params = True
 
     def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, logit_bias):
         for _ in range(self.API_MAX_RETRY):
