@@ -196,19 +196,19 @@ def multilingual_extractive_match_metric(
     def lazy_indices_regex(target_for_extraction: ChoicePrefix, len_gold: int):
         # First get indices to predict
         indices = get_prefix(target_for_extraction, translation_literal)[:len_gold]
-        indice_str_re = f"(?P<target>{''.join(indices)})"
+        indice_str_re = f"(?P<target>[{''.join([re.escape(i) for i in indices])}])"
 
         # The answer keys are either surrounded with <space>**answer**., or '<space>answer.' or the same without the dot
         # Same version for comma
 
         # We try with and without translation literals of punctuation
-        full_stop_re = rf"[{translation_literal.full_stop}\.]"
-        comma_re = rf"[{translation_literal.comma},]"
-        colon_re = rf"[{translation_literal.colon}\:]"
-        space_re = rf"[\s{translation_literal.sentence_space}]"
+        full_stop_re = rf"[{re.escape(translation_literal.full_stop)}\.]"
+        comma_re = rf"[{re.escape(translation_literal.comma)}\,]"
+        colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
+        space_re = rf"(?:\s|[{re.escape(translation_literal.sentence_space)}])"
 
         answer_prefix_re = rf"{space_re}(?:\*\*)?"
-        answer_suffix_re = rf"(?:\*\*)?({full_stop_re}|{comma_re}|{colon_re}|{space_re})"
+        answer_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|$)"
         answer_re = f"{answer_prefix_re}{indice_str_re}{answer_suffix_re}"
 
         # First we try to extract if by searching for answer followed by a colon, then just answer without any colon, then we just search for answer
@@ -232,7 +232,6 @@ def multilingual_extractive_match_metric(
         return 0
 
     def extract_target(
-        target_for_extraction: Literal["number"] | ChoicePrefix,
         golds: list[str],
         predictions: list[str],
         formatted_doc: Doc,
