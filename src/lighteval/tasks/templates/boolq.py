@@ -46,6 +46,7 @@ class BoolQInput(TypedDict):
     answer: bool
     instruction: NotRequired[str]
     context: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 class BoolQAdapter(TypedDict):
@@ -62,6 +63,7 @@ class BoolQAdapter(TypedDict):
     answer: str
     instruction: NotRequired[str]
     context: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 def get_boolq_prompt_function(
@@ -90,6 +92,7 @@ def get_boolq_prompt_function(
             "context": "context",
             "instruction": "instruction",
             "gold_idx": "gold_idx",
+            "few_shot_cot": "few_shot_cot",
         },
         formulation,
     )
@@ -105,11 +108,13 @@ def get_boolq_prompt_function(
         choices = [translation_literals.yes, translation_literals.no]
         return mcq_prompt_fn(
             {
+                **{x: line[x] for x in line if x.startswith("__")},
                 "instruction": input_data.get("instruction", ""),
                 "question": input_data["question"],
                 "context": input_data.get("context", ""),
                 "choices": choices,
                 "gold_idx": 0 if input_data["answer"] else 1,
+                "few_shot_cot": input_data.get("few_shot_cot", ""),
             },
             task_name,
         )

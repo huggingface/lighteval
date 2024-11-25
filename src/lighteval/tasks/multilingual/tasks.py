@@ -89,11 +89,14 @@ TASKS_TABLE = []
 def get_formulation_name(formulation: Formulation) -> str:
     match formulation:
         case MCFFormulation("NativeLetters") | HybridFormulation("NativeLetters"):
-            return formulation.name.lower() + "_native"
+            name = formulation.name.lower() + "_native"
         case MCFFormulation("Numbers") | HybridFormulation("Numbers"):
-            return formulation.name.lower() + "_numbers"
+            name = formulation.name.lower() + "_numbers"
         case _:
-            return formulation.name.lower()
+            name = formulation.name.lower()
+    if formulation.cot:
+        name += "_cot"
+    return name
 
 
 def get_task_name(base_name: str, language: Language | str, formulation: Formulation | None, eval_type: str) -> str:
@@ -102,7 +105,7 @@ def get_task_name(base_name: str, language: Language | str, formulation: Formula
 
     language_name = language.value if isinstance(language, Language) else language
 
-    eval_type_name = "_gen" if eval_type == "generative" else ("_gen_cot" if eval_type == "generative_cot" else "")
+    eval_type_name = "_gen" if eval_type == "generative" else ""
 
     return f"{base_name}_{language_name}{formulation_name}{eval_type_name}"
 
@@ -131,7 +134,6 @@ xnli_tasks = [
             },
             relations=["entailment", "contradiction"],
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         hf_filter=lambda line: line["label"] in [0, 2],
         hf_repo="facebook/xnli",
@@ -161,10 +163,11 @@ xnli_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "logprobs", "generative_cot")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # Improvement on XNLI with better translation, from our experience models tend to
@@ -194,7 +197,6 @@ xnli2_tasks = [
             },
             relations=["entailment", "contradiction"],
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         hf_filter=lambda line: line["label"] in [0, 2]
         and line["premise"] is not None
@@ -234,10 +236,11 @@ xnli2_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # Another variant of XNLI, with emphasis on Indic languages
@@ -256,7 +259,6 @@ xnli_indic_tasks = [
             },
             relations=["entailment", "contradiction"],
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         hf_repo="Divyanshu/indicxnli",
         hf_subset=standardize_tag(language.value),
@@ -291,10 +293,11 @@ xnli_indic_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # African XNLI: African XNLI
@@ -313,7 +316,6 @@ afri_xnli_tasks = [
             },
             relations=["entailment", "contradiction"],
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         hf_repo="masakhane/afrixnli",
         hf_subset=language.value,
@@ -353,10 +355,11 @@ afri_xnli_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # PAWS-X: A Cross-lingual Adversarial Dataset for Paraphrase Identification
@@ -379,7 +382,6 @@ paws_x_tasks = [
             },
             relations=["entailment", "contradiction"],
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         hf_repo="google-research-datasets/paws-x",
         hf_subset=standardize_tag(language.value),
@@ -408,10 +410,11 @@ paws_x_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # Russian Commitment Bank (RCB) is a large-scale NLI dataset with Russian sentences,
@@ -429,7 +432,6 @@ rcb_tasks = [
             },
             relations=["entailment", "contradiction"],
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="ai-forever/MERA",
@@ -451,10 +453,11 @@ rcb_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # Native Chinese NLI dataset based.
@@ -472,7 +475,6 @@ ocnli_tasks = [
             },
             relations=["entailment", "contradiction"],
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="clue/clue",
@@ -494,10 +496,11 @@ ocnli_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # https://arxiv.org/abs/2004.05986
@@ -514,7 +517,6 @@ cmnli_tasks = [
             },
             relations=["entailment", "contradiction"],
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="fenffef/cmnli",
@@ -536,10 +538,11 @@ cmnli_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 TASKS_TABLE.extend(
@@ -574,7 +577,6 @@ xcopa_tasks = [
                 "gold_idx": int(line["label"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         hf_repo=("OALL/AlGhafa-Arabic-LLM-Benchmark-Translated" if language == Language.ARABIC else "xcopa"),
         hf_subset=("copa_ext_ar" if language == Language.ARABIC else standardize_tag(language.value)),
@@ -607,10 +609,11 @@ xcopa_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # IndicCOPA: COPA for Indic Languages
@@ -630,7 +633,6 @@ copa_indic_tasks = [
                 "gold_idx": int(line["label"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         hf_repo="ai4bharat/IndicCOPA",
         hf_subset=f"translation-{standardize_tag(language.value)}",
@@ -671,10 +673,11 @@ copa_indic_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # PARus: Plausible Alternatives for Russian
@@ -694,7 +697,6 @@ parus_tasks = [
                 "gold_idx": int(line["outputs"]) - 1,
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         hf_repo="ai-forever/MERA",
         hf_subset="parus",
@@ -713,10 +715,11 @@ parus_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # Rerun hellaswag tasks
@@ -746,7 +749,6 @@ mlmm_hellaswag_tasks = [
                 "gold_idx": int(line["label"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         hf_repo="jon-tow/okapi_hellaswag",
         hf_subset=standardize_tag(lang.value),
@@ -804,10 +806,11 @@ mlmm_hellaswag_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # Hellaswag Turkish
@@ -829,7 +832,6 @@ hellaswag_tur_tasks = [
                 "gold_idx": int(line["label"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
             # https://github.com/malhajar17/lm-evaluation-harness_turkish/blob/main/lm_eval/tasks/hellaswag_tr-v0.2/utils.py
             wikihow_artifacts=[" [title]", " [başlık]", " [adım]", " [header]"],
         ),
@@ -850,10 +852,11 @@ hellaswag_tur_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # Hellaswag Thai
@@ -875,7 +878,6 @@ hellaswag_tha_tasks = [
             },
             formulation=formulation,
             wikihow_artifacts=[" [ชื่อ]", " [ส่วนหัว]", " [ขั้นตอน]", " [header]", " [Header]"],
-            cot=eval_type == "generative_cot",
         ),
         hf_repo="lighteval/hellaswag_thai",
         hf_subset="default",
@@ -894,10 +896,11 @@ hellaswag_tha_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 hellaswag_tel_tasks = [
@@ -914,7 +917,6 @@ hellaswag_tel_tasks = [
             },
             formulation=formulation,
             wikihow_artifacts=[" [శీర్షిక]", " [హెడర్]", " [header]", " [Header]"],
-            cot=eval_type == "generative_cot",
         ),
         hf_repo="indiehackers/hellaswag-telugu-custom-2k",
         hf_subset="default",
@@ -933,10 +935,11 @@ hellaswag_tel_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 TASKS_TABLE.extend(
@@ -1312,7 +1315,6 @@ c3_tasks = [
                 "context": " ".join(line["context"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         hf_repo="clue/clue",
         hf_subset="c3",
@@ -1331,6 +1333,7 @@ c3_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
@@ -1345,9 +1348,7 @@ c3_tasks = [
 race_ar_task = [
     LightevalTaskConfig(
         name=get_task_name("alghafa_race", Language.ARABIC, formulation, eval_type),
-        prompt_function=get_mcq_prompt_function(
-            Language.ARABIC, alghafa_adapter, formulation=formulation, cot=eval_type == "generative_cot"
-        ),
+        prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter, formulation=formulation),
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
         hf_subset="race_ar",
@@ -1371,10 +1372,11 @@ race_ar_task = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 # SOQAL: A large-scale Arabic reading comprehension dataset.
 # https://arxiv.org/abs/1906.05394
@@ -1382,9 +1384,7 @@ soqal_tasks = [
     LightevalTaskConfig(
         name=get_task_name("soqal", Language.ARABIC, formulation, eval_type),
         hf_subset="multiple_choice_grounded_statement_soqal_task",
-        prompt_function=get_mcq_prompt_function(
-            Language.ARABIC, alghafa_adapter, formulation=formulation, cot=eval_type == "generative_cot"
-        ),
+        prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter, formulation=formulation),
         evaluation_splits=["test"],
         few_shots_split="validation",
         suite=["lighteval"],
@@ -1402,10 +1402,11 @@ soqal_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # MLQA (MultiLingual Question Answering) is a benchmark dataset for evaluating cross-lingual question answering performance.
@@ -1466,7 +1467,6 @@ belebele_tasks = [
                 "gold_idx": int(line["correct_answer_num"]) - 1,
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="facebook/belebele",
@@ -1486,10 +1486,11 @@ belebele_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
     for language in [
         "acm_Arab",
         "arz_Arab",
@@ -1719,7 +1720,6 @@ meta_mmlu_tasks = [
                 "gold_idx": LETTER_INDICES.index(line["input_correct_responses"][0]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="meta-llama/Meta-Llama-3.1-8B-Instruct-evals",
@@ -1756,10 +1756,11 @@ meta_mmlu_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # MLMM MMLU: Another multilingual version of MMLU
@@ -1775,7 +1776,6 @@ mlmm_mmlu_tasks = [
                 "gold_idx": LETTER_INDICES.index(line["answer"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="jon-tow/okapi_mmlu",
@@ -1828,10 +1828,11 @@ mlmm_mmlu_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 openai_mmlu_tasks = [
@@ -1845,7 +1846,6 @@ openai_mmlu_tasks = [
                 "gold_idx": LETTER_INDICES.index(line["Answer"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="openai/MMMLU",
@@ -1885,10 +1885,11 @@ openai_mmlu_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # There are only these subsets in the African MMLU
@@ -1913,7 +1914,6 @@ afri_mmlu_tasks = [
                 "gold_idx": LETTER_INDICES.index(line["answer"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="masakhane/afrimmlu",
@@ -1957,10 +1957,11 @@ afri_mmlu_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # RUMMLU: Russian Massive Multitask Language Understanding
@@ -1976,7 +1977,6 @@ rummlu = [
                 "gold_idx": LETTER_INDICES.index(line["outputs"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="ai-forever/MERA",
@@ -1999,10 +1999,11 @@ rummlu = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # MMLU Turkish: Turkish version of MMLU
@@ -2014,7 +2015,6 @@ mmlu_turkish = [
             Language.TURKISH,
             lambda line: {"question": line["question"], "choices": line["choices"], "gold_idx": int(line["answer"])},
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="malhajar/mmlu_tr-v0.2",
@@ -2036,10 +2036,11 @@ mmlu_turkish = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # CMMLU: Chinese Massive Multitask Language Understanding
@@ -2126,7 +2127,6 @@ cmmlu_tasks = [
                 "gold_idx": LETTER_INDICES.index(line["Answer"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="haonan-li/cmmlu",
@@ -2148,10 +2148,11 @@ cmmlu_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # Arabic MMLU: Arabic version of MMLU
@@ -2212,7 +2213,6 @@ arabic_mmlu_tasks = [
                 "gold_idx": LETTER_INDICES.index(line["Answer Key"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="MBZUAI/ArabicMMLU",
@@ -2234,10 +2234,11 @@ arabic_mmlu_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 TURKISH_MMLU_SUBSET = [
@@ -2263,7 +2264,6 @@ turkish_mmlu_tasks = [
                 "gold_idx": LETTER_INDICES.index(line["answer"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="AYueksel/TurkishMMLU",
@@ -2285,10 +2285,11 @@ turkish_mmlu_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 TASKS_TABLE.extend(
@@ -2330,7 +2331,6 @@ mlmm_arc_challenge_tasks = [
                 else LETTER_INDICES.index(line["answerKey"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="jon-tow/okapi_arc_challenge",
@@ -2381,10 +2381,11 @@ mlmm_arc_challenge_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # Arabic ARC Easy
@@ -2394,9 +2395,7 @@ mlmm_arc_challenge_tasks = [
 arabic_ledarboard_arc_easy = [
     LightevalTaskConfig(
         name=f"{get_task_name('alghafa_arc', Language.ARABIC, formulation, eval_type)}:easy",
-        prompt_function=get_mcq_prompt_function(
-            Language.ARABIC, alghafa_adapter, formulation=formulation, cot=eval_type == "generative_cot"
-        ),
+        prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter, formulation=formulation),
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
         hf_subset="arc_easy_ar",
@@ -2417,10 +2416,11 @@ arabic_ledarboard_arc_easy = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 
@@ -2437,7 +2437,6 @@ lumi_arc = [
                 else LETTER_INDICES.index(line["answerKey"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=["lighteval"],
         hf_repo="LumiOpen/arc_challenge_mt",
@@ -2458,6 +2457,7 @@ lumi_arc = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
@@ -2474,7 +2474,7 @@ lumi_arc = [
         Language.PORTUGUESE,
         Language.SWEDISH,
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # Turkish ARC
@@ -2492,7 +2492,6 @@ turkish_arc_tasks = [
                 else LETTER_INDICES.index(line["answerKey"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="malhajar/arc-tr",
@@ -2501,22 +2500,24 @@ turkish_arc_tasks = [
         hf_avail_splits=["train"],
         metric=get_metrics_for_mcq_formulation(
             formulation,
-            eval_type,
+            Language.TURKISH,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ]
             + ([loglikelihood_acc_metric(normalization=LogProbPMINorm())] if subset == "challenge" else []),  # type: ignore
+            eval_type,
         ),
     )
     for subset in ["easy", "challenge"]
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 hindi_arc_tasks = [
@@ -2532,7 +2533,6 @@ hindi_arc_tasks = [
                 else LETTER_INDICES.index(line["answerKey"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="ai4bharat/ai2_arc-hi",
@@ -2541,30 +2541,30 @@ hindi_arc_tasks = [
         few_shots_split="validation",
         metric=get_metrics_for_mcq_formulation(
             formulation,
-            eval_type,
+            Language.HINDI,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ]
             + ([loglikelihood_acc_metric(normalization=LogProbPMINorm())] if subset == "challenge" else []),  # type: ignore
+            eval_type,
         ),
     )
     for subset in ["easy", "challenge"]
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 arabic_arc_tasks = [
     LightevalTaskConfig(
         name=f"{get_task_name('alghafa_arc', Language.ARABIC, formulation, eval_type)}:easy",
-        prompt_function=get_mcq_prompt_function(
-            Language.ARABIC, alghafa_adapter, formulation=formulation, cot=eval_type == "generative_cot"
-        ),
+        prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter, formulation=formulation),
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
         hf_revision="08663706ee7cab30c4b7dc1bb00042a3227ce1ff",
@@ -2586,10 +2586,11 @@ arabic_arc_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 swahili_arc_tasks = [
@@ -2605,7 +2606,6 @@ swahili_arc_tasks = [
                 else LETTER_INDICES.index(line["answerKey"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo=f"Mollel/ARC_{subset.capitalize()}_SWH",
@@ -2630,10 +2630,11 @@ swahili_arc_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 
@@ -2671,7 +2672,6 @@ mlmm_truthfulqa_tasks = [
                 subset,
             ),
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="jon-tow/okapi_truthfulqa",
@@ -2729,10 +2729,11 @@ mlmm_truthfulqa_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # Turkish TruthfulQA
@@ -2751,7 +2752,6 @@ turkish_truthfulqa = [
                 subset,
             ),
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="malhajar/truthful_qa-tr-v0.2",
@@ -2772,10 +2772,11 @@ turkish_truthfulqa = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 TASKS_TABLE.extend(
@@ -2911,7 +2912,6 @@ exams_tasks = [
                 "gold_idx": line["question"]["choices"]["label"].index(line["answerKey"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="mhardalov/exams",
@@ -2941,10 +2941,11 @@ exams_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # M3Exam: Multitask Multilingual Multimodal Evaluation Benchmark
@@ -2958,7 +2959,6 @@ m3exams_tasks = [
             language,
             partial(get_m3exam_adapter, language),
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         hf_repo="chiayewken/m3exam",
         hf_subset=LangCodeLanguage(standardize_tag(language.value)).language_name().lower(),
@@ -2988,10 +2988,11 @@ m3exams_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # Thai Exams
@@ -3008,7 +3009,6 @@ thai_exams_tasks = [
             Language.THAI,
             thai_exams_adapter,
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="scb10x/thai_exam",
@@ -3029,10 +3029,11 @@ thai_exams_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 TASKS_TABLE.extend(
@@ -3060,7 +3061,6 @@ xcsqa_tasks = [
                 "gold_idx": line["question"]["choices"]["label"].index(line["answerKey"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="INK-USC/xcsr",
@@ -3102,6 +3102,7 @@ xcsqa_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
@@ -3128,7 +3129,6 @@ piqa_ar_tasks = [
             Language.ARABIC,
             alghafa_adapter,
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
@@ -3150,10 +3150,11 @@ piqa_ar_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 TASKS_TABLE.extend(
@@ -3176,7 +3177,6 @@ openbook_ara_tasks = [
             Language.ARABIC,
             alghafa_adapter,
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
@@ -3198,10 +3198,11 @@ openbook_ara_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # The Russian version is part of the MERA (Multilingual Enhanced Russian NLP Architectures) project.
@@ -3217,7 +3218,6 @@ openbook_rus_tasks = [
                 "gold_idx": LETTER_INDICES.index(line["outputs"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=["lighteval"],
         hf_repo="ai-forever/MERA",
@@ -3237,10 +3237,11 @@ openbook_rus_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 TASKS_TABLE.extend(
@@ -3264,7 +3265,6 @@ sciqa_ar_task = [
             Language.ARABIC,
             sciqa_adapter,
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
@@ -3288,10 +3288,11 @@ sciqa_ar_task = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 TASKS_TABLE.extend(
@@ -3317,7 +3318,6 @@ mathlogicqa_rus_tasks = [
                 "gold_idx": LETTER_INDICES.index(line["outputs"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="ai-forever/MERA",
@@ -3338,39 +3338,40 @@ mathlogicqa_rus_tasks = [
         CFFormulation(),
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 cmath_tasks = [
     LightevalTaskConfig(
-        name=get_task_name("cmath", Language.CHINESE, None, eval_type),
+        name=f"cmath_{Language.CHINESE.value}{'_cot' if cot else ''}",
         prompt_function=get_qa_prompt_function(
             Language.CHINESE,
             lambda line: {
                 "question": line["question"],
                 "choices": [line["golden"]],
             },
-            cot=eval_type == "generative_cot",
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="weitianwen/cmath",
         hf_subset="default",
         evaluation_splits=("test",),
         few_shots_split="validation",
-        generation_size=get_cot_generaion_size(eval_type, 100),
+        generation_size=get_cot_generaion_size(cot, 100),
         metric=[
             multilingual_extractive_match_metric(Language.CHINESE),
         ],
-        stop_sequence=get_cot_stop_sequence(eval_type, ["\n"]),
+        stop_sequence=get_cot_stop_sequence(cot, ["\n"]),
     )
-    for eval_type in ("generative", "generative_cot")
+    for cot in (False, True)
 ]
 
 mgsm_tasks = [
     LightevalTaskConfig(
-        name=get_task_name("mgsm", language, None, eval_type),
+        name=f"mgsm_{language.value}{'_cot' if cot else ''}",
         prompt_function=get_qa_prompt_function(
             language,
             partial(
@@ -3386,7 +3387,6 @@ mgsm_tasks = [
                     "few_shot_cot": line["answer"],  # type: ignore
                 },
                 language,
-                eval_type == "generative_cot",
             ),
         ),
         suite=("lighteval",),
@@ -3394,11 +3394,11 @@ mgsm_tasks = [
         hf_subset=standardize_tag(language.value),
         evaluation_splits=("test",),
         few_shots_split="train",
-        generation_size=get_cot_generaion_size(eval_type, 100),
+        generation_size=get_cot_generaion_size(cot, 100),
         metric=[
             multilingual_extractive_match_metric(language),
         ],
-        stop_sequence=get_cot_stop_sequence(eval_type, ["\n"]),
+        stop_sequence=get_cot_stop_sequence(cot, ["\n"]),
     )
     for language in [
         Language.SPANISH,
@@ -3412,14 +3412,14 @@ mgsm_tasks = [
         Language.BENGALI,
         Language.TELUGU,
     ]
-    for eval_type in ("generative", "generative_cot")
+    for cot in (False, True)
 ]
 
 # African MGSM: MGSM for African Languages
 # From https://arxiv.org/abs/2406.03368. Human translated MGSM.
 afri_mgsm_tasks = [
     LightevalTaskConfig(
-        name=get_task_name("afri_mgsm", language, None, eval_type),
+        name=f"afri_mgsm_{language.value}{'_cot' if cot else ''}",
         prompt_function=get_qa_prompt_function(
             language,
             lambda line: {
@@ -3429,18 +3429,18 @@ afri_mgsm_tasks = [
                 "choices": [str(line["answer_number"])],
                 "few_shot_cot": line["answer"],
             },
-            cot=eval_type == "generative_cot",
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="masakhane/afrimgsm",
         hf_subset=language.value,
         evaluation_splits=("test",),
         few_shots_split="train",
-        generation_size=get_cot_generaion_size(eval_type, 100),
+        generation_size=get_cot_generaion_size(cot, 100),
         metric=[
             multilingual_extractive_match_metric(language),
         ],
-        stop_sequence=get_cot_stop_sequence(eval_type, ["\n"]),
+        stop_sequence=get_cot_stop_sequence(cot, ["\n"]),
     )
     for language in [
         Language.AMHARIC,
@@ -3461,31 +3461,31 @@ afri_mgsm_tasks = [
         Language.YORUBA,
         # Language.ZULU,
     ]
-    for eval_type in ("generative", "generative_cot")
+    for cot in (False, True)
 ]
 
 # MSVAMP - Math Word Problems (Translated from SVAMP using Google Translate)
 msvamp_tasks = [
     LightevalTaskConfig(
-        name=get_task_name("msvamp", language, None, eval_type),
+        name=f"msvamp_{language.value}{'_cot' if cot else ''}",
         prompt_function=get_qa_prompt_function(
             language,
             lambda line: {
                 "question": line["m_query"],  # Using the translated version of the question
                 "choices": [float_to_choice_string(line["response"])],  # The answer as a string
             },
-            cot=eval_type == "generative_cot",
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="Mathoctopus/MSVAMP",
         hf_subset=standardize_tag(language.value),
         evaluation_splits=("test",),
         hf_avail_splits=["test"],
-        generation_size=get_cot_generaion_size(eval_type, 100),
+        generation_size=get_cot_generaion_size(cot, 100),
         metric=[
             multilingual_extractive_match_metric(language),
         ],
-        stop_sequence=get_cot_stop_sequence(eval_type, ["\n"]),
+        stop_sequence=get_cot_stop_sequence(cot, ["\n"]),
     )
     for language in [
         Language.BENGALI,
@@ -3499,7 +3499,7 @@ msvamp_tasks = [
         Language.THAI,
         Language.CHINESE,
     ]
-    for eval_type in ("generative", "generative_cot")
+    for cot in (False, True)
 ]
 
 
@@ -3517,7 +3517,6 @@ cmm_math_mc_tasks = [
             Language.CHINESE,
             cmm_math_adapter,
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="ecnu-icalk/cmm-math",
@@ -3540,10 +3539,11 @@ cmm_math_mc_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 
@@ -3556,25 +3556,25 @@ cmm_math_mc_tasks = [
 # its corresponding numerical solution.
 math23k_tasks = [
     LightevalTaskConfig(
-        name=get_task_name("math23k", Language.CHINESE, None, eval_type),
+        name=f"math23k_{Language.CHINESE.value}{'_cot' if cot else ''}",
         prompt_function=get_qa_prompt_function(
             Language.CHINESE,
             lambda line: {
                 "question": line["original_text"],  # Use the original Chinese text
                 "choices": [str(line["ans"])],  # Answer has computed number while ans is symbolic
             },
-            cot=eval_type == "generative_cot",
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="Gxg/Math23K",
         hf_subset="default",
         evaluation_splits=("test",),
         few_shots_split="train",
-        generation_size=get_cot_generaion_size(eval_type, 100),  # Similar to other math tasks like msvamp
+        generation_size=get_cot_generaion_size(cot, 100),  # Similar to other math tasks like msvamp
         metric=[multilingual_extractive_match_metric(Language.CHINESE)],
-        stop_sequence=get_cot_stop_sequence(eval_type, ["\n"]),
+        stop_sequence=get_cot_stop_sequence(cot, ["\n"]),
     )
-    for eval_type in ("generative", "generative_cot")
+    for cot in (False, True)
 ]
 
 # TAL-SCQ5K - Chinese Math Word Problem Dataset
@@ -3596,7 +3596,6 @@ tal_scq5k_tasks = [
                 "gold_idx": LETTER_INDICES.index(line["answer_value"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="math-eval/TAL-SCQ5K",
@@ -3616,10 +3615,11 @@ tal_scq5k_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 # MathQA-TR - Turkish Math Question Answering Dataset
@@ -3628,66 +3628,66 @@ tal_scq5k_tasks = [
 # MWP is collected from MAWPS, ASDiv-A, SVAMP.
 mathqa_tr_tasks = [
     LightevalTaskConfig(
-        name=get_task_name("mathqa", Language.TURKISH, None, eval_type),
+        name=f"mathqa_{Language.TURKISH.value}{'_cot' if cot else ''}",
         prompt_function=get_qa_prompt_function(
             Language.TURKISH,
             lambda line: {
                 "question": line["question"],
                 "choices": [line["answer"]],
             },
-            cot=eval_type == "generative_cot",
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="lighteval/MathQA-TR",
         hf_subset="default",
         evaluation_splits=("test",),
         few_shots_split="train",
-        generation_size=get_cot_generaion_size(eval_type, 100),  # Similar to other math tasks
+        generation_size=get_cot_generaion_size(cot, 100),  # Similar to other math tasks
         metric=[
             multilingual_extractive_match_metric(Language.TURKISH),
         ],
-        stop_sequence=get_cot_stop_sequence(eval_type, ["\n"]),
+        stop_sequence=get_cot_stop_sequence(cot, ["\n"]),
     )
-    for eval_type in ("generative", "generative_cot")
+    for cot in (False, True)
 ]
 
 mwp_tr_tasks = [
     LightevalTaskConfig(
-        name=get_task_name("mwp", Language.TURKISH, None, eval_type),
+        name=f"mwp_{Language.TURKISH.value}{'_cot' if cot else ''}",
         prompt_function=get_qa_prompt_function(
             Language.TURKISH,
             lambda line: {
                 "question": line["question"],
                 "choices": [line["answer"]],
             },
-            cot=eval_type == "generative_cot",
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="lighteval/MWP-TR",
         hf_subset="default",
         evaluation_splits=("test",),
         few_shots_split="train",
-        generation_size=get_cot_generaion_size(eval_type, 100),  # Similar to other math tasks
+        generation_size=get_cot_generaion_size(cot, 100),  # Similar to other math tasks
         metric=[
             multilingual_extractive_match_metric(Language.TURKISH),
         ],
-        stop_sequence=get_cot_stop_sequence(eval_type, ["\n"]),
+        stop_sequence=get_cot_stop_sequence(cot, ["\n"]),
     )
-    for eval_type in ("generative", "generative_cot")
+    for cot in (False, True)
 ]
 
 # MERA Arithmetic Tasks
 # Paper: https://arxiv.org/abs/2401.04531
 mera_arithmetic_tasks = [
     LightevalTaskConfig(
-        name=f"{get_task_name('mera_arithmetic', Language.RUSSIAN, None, eval_type)}:{subset}",
+        name=f"mera_arithmetic_{Language.RUSSIAN.value}{'_cot' if cot else ''}",
         prompt_function=get_qa_prompt_function(
             Language.RUSSIAN,
             lambda line: {
                 "question": line["inputs"],
                 "choices": [str(line["outputs"])],
             },
-            cot=eval_type == "generative_cot",
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="ai-forever/MERA",
@@ -3696,14 +3696,14 @@ mera_arithmetic_tasks = [
         if subset == "rumodar"
         else ("train",),  # MERA uses train split for evaluation
         hf_avail_splits=["public_test"] if subset == "rumodar" else ["train"],
-        generation_size=get_cot_generaion_size(eval_type, 100),  # Similar to other math tasks
+        generation_size=get_cot_generaion_size(cot, 100),  # Similar to other math tasks
         metric=[
             Metrics.quasi_exact_match_math,
         ],
-        stop_sequence=get_cot_stop_sequence(eval_type, ["\n"]),
+        stop_sequence=get_cot_stop_sequence(cot, ["\n"]),
     )
     for subset in ["rumodar", "rumultiar", "simplear"]
-    for eval_type in ("generative", "generative_cot")
+    for cot in (False, True)
 ]
 
 # QazUNTv2 Tasks - High school math problems in English and Russian
@@ -3722,7 +3722,6 @@ qazuntv2_tasks = [
             lang,
             qazuntv2_adapter,
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="lighteval/QazUNTv2",
@@ -3748,10 +3747,11 @@ qazuntv2_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation("NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 
@@ -3760,27 +3760,27 @@ qazuntv2_tasks = [
 # Paper: https://github.com/reem-codes/ArMATH
 armath_tasks = [
     LightevalTaskConfig(
-        name=f"{get_task_name('armath', Language.ARABIC, None, eval_type)}",
+        name=f"armath_{Language.ARABIC.value}{'_cot' if cot else ''}",
         prompt_function=get_qa_prompt_function(
             Language.ARABIC,
             lambda line: {
                 "question": line["question"],
                 "choices": [float_to_choice_string(line["answer"])],  # Evaluate the equation to get answer
             },
-            cot=eval_type == "generative_cot",
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="khalidalt/arMath",
         hf_subset="default",
         evaluation_splits=("test",),  # Dataset only has test split
         few_shots_split="validation",
-        generation_size=get_cot_generaion_size(eval_type, 100),  # Similar to other math tasks
+        generation_size=get_cot_generaion_size(cot, 100),  # Similar to other math tasks
         metric=[
             multilingual_extractive_match_metric(Language.ARABIC),
         ],
-        stop_sequence=get_cot_stop_sequence(eval_type, ["\n"]),
+        stop_sequence=get_cot_stop_sequence(cot, ["\n"]),
     )
-    for eval_type in ("generative", "generative_cot")
+    for cot in (False, True)
 ]
 
 # HAWP - Hindi Arithmetic Word Problems
@@ -3789,25 +3789,25 @@ armath_tasks = [
 # question text, equation, and numerical answer.
 hawp_tasks = [
     LightevalTaskConfig(
-        name=f"{get_task_name('hawp', Language.HINDI, None, eval_type)}",
+        name=f"hawp_{Language.HINDI.value}{'_cot' if cot else ''}",
         prompt_function=get_qa_prompt_function(
             Language.HINDI,
             lambda line: {
                 "question": line["Problem"],
                 "choices": [str(line["answer"])],
             },
-            cot=eval_type == "generative_cot",
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="lighteval/HAWP",
         hf_subset="default",
         evaluation_splits=("test",),
         few_shots_split="dev",
-        generation_size=get_cot_generaion_size(eval_type, 100),
+        generation_size=get_cot_generaion_size(cot, 100),
         metric=[multilingual_extractive_match_metric(Language.HINDI)],
-        stop_sequence=get_cot_stop_sequence(eval_type, ["\n"]),
+        stop_sequence=get_cot_stop_sequence(cot, ["\n"]),
     )
-    for eval_type in ("generative", "generative_cot")
+    for cot in (False, True)
 ]
 
 TASKS_TABLE.extend(
@@ -3858,7 +3858,6 @@ agieval_tasks_zh = [
                 formulation,
             ),
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo=f"hails/agieval-{subset}",
@@ -3881,10 +3880,11 @@ agieval_tasks_zh = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 # C-Eval: Chinese Evaluation suite
 # Similar to MMLu but with different categories
@@ -3954,7 +3954,6 @@ ceval_tasks = [
                 formulation,
             ),
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="ceval/ceval-exam",
@@ -3975,10 +3974,11 @@ ceval_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 
@@ -3997,7 +3997,6 @@ worldtree_rus_tasks = [
                 "gold_idx": LETTER_INDICES.index(line["outputs"]),
             },
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="ai-forever/MERA",
@@ -4017,10 +4016,11 @@ worldtree_rus_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation("NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 TASKS_TABLE.extend(
@@ -4036,9 +4036,7 @@ TASKS_TABLE.extend(
 xcodah_tasks = [
     LightevalTaskConfig(
         name=f"{get_task_name('xcodah', language, formulation, eval_type)}",
-        prompt_function=get_mcq_prompt_function(
-            language, partial(xcodah_adapter, language), formulation=formulation, cot=eval_type == "generative_cot"
-        ),
+        prompt_function=get_mcq_prompt_function(language, partial(xcodah_adapter, language), formulation=formulation),
         suite=("lighteval",),
         hf_repo="INK-USC/xcsr",
         hf_subset=f"X-CODAH-{standardize_tag(language.value)}",
@@ -4075,10 +4073,11 @@ xcodah_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation("NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 xstory_tasks = [
@@ -4102,7 +4101,6 @@ xstory_tasks = [
                 lang,
             ),
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         suite=("lighteval",),
         hf_repo="juletxara/xstory_cloze",
@@ -4134,10 +4132,11 @@ xstory_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 TASKS_TABLE.extend(
@@ -4157,7 +4156,6 @@ xwinograd_tasks = [
             language,
             partial(winogrand_adapter, language),
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         hf_repo="Muennighoff/xwinograd",
         hf_subset=standardize_tag(language.value),
@@ -4180,10 +4178,11 @@ xwinograd_tasks = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation(choice_prefix="NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 winograd_turkish_task = [
@@ -4194,7 +4193,6 @@ winograd_turkish_task = [
             Language.TURKISH,
             partial(winogrand_adapter, Language.TURKISH),
             formulation=formulation,
-            cot=eval_type == "generative_cot",
         ),
         hf_repo="malhajar/winogrande-tr-v0.2",
         hf_subset="default",
@@ -4209,10 +4207,11 @@ winograd_turkish_task = [
     for formulation in [
         MCFFormulation(),
         MCFFormulation("NativeLetters"),
+        MCFFormulation(choice_prefix="NativeLetters", cot=True),
         CFFormulation(),
         HybridFormulation(),
     ]
-    for eval_type in ("generative", "generative_cot", "logprobs")
+    for eval_type in ("generative", "logprobs")
 ]
 
 TASKS_TABLE.extend(

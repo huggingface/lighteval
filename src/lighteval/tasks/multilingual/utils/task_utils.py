@@ -30,7 +30,7 @@ from lighteval.tasks.templates.utils.formulation import Formulation, MCFFormulat
 from lighteval.utils.language import Language
 
 
-EvalType = Literal["generative", "logprobs", "generative_cot"]
+EvalType = Literal["generative", "logprobs"]
 
 
 def normalize_subset(subset: str) -> str:
@@ -49,24 +49,24 @@ def get_metrics_for_mcq_formulation(
             return [loglikelihood_acc_metric(normalization=None)]
         case _, "logprobs":
             return metrics
-        case MCFFormulation(), "generative":
+        case MCFFormulation(cot=False), "generative":
             return [Metrics.exact_match, Metrics.prefix_exact_match]
-        case MCFFormulation(), "generative_cot":
+        case MCFFormulation(cot=True), "generative":
             return [
                 multilingual_extractive_match_metric(language, target_for_extraction=formulation.choice_prefix),
                 Metrics.prefix_exact_match,
             ]
         case _:
-            raise ValueError(f"Unsupported formulation {formulation} and eval type {eval_type}")
+            return metrics
 
 
-def get_cot_generaion_size(eval_type: EvalType, generation_size: int) -> int:
-    if eval_type == "generative_cot":
+def get_cot_generaion_size(cot: bool, generation_size: int) -> int:
+    if cot:
         return -1
     return generation_size
 
 
-def get_cot_stop_sequence(eval_type: EvalType, stop_sequence: list[str]) -> list[str] | None:
-    if eval_type == "generative_cot":
+def get_cot_stop_sequence(cot: bool, stop_sequence: list[str]) -> list[str] | None:
+    if cot:
         return None
     return stop_sequence

@@ -46,6 +46,8 @@ def test_continuation_prompt_mcf():
         doc.query
         == """\
 The quick brown fox
+
+Options:
  A. jumps over the lazy dog
  B. runs through the forest
  C. chases a rabbit
@@ -132,6 +134,8 @@ def test_continuation_optional_keys():
         == """\
 Choose the most likely continuation:
 In the morning, I like to
+
+Options:
  A. drink coffee
  B. go for a run
  C. read the news
@@ -141,4 +145,46 @@ Answer:\
 
     assert doc.unconditioned_query == "Answer:"
     assert doc.choices == [" A", " B", " C"]
+    assert doc.gold_index == [0]
+
+
+def test_continuation_prompt_mcf_cot():
+    """Test multiple-choice format continuation prompt generation with cot."""
+    test_input = {
+        "context": "The quick brown fox",
+        "continuations": ["jumps over the lazy dog", "Runs through the forest", "Chases a rabbit"],
+        "gold_idx": 0,
+        "__few_shots": True,
+        "few_shot_cot": "i think it's A. jumps over the lazy dog",
+    }
+
+    prompt_fn = get_continuation_prompt_function(
+        Language.ENGLISH,
+        {
+            "context": "context",
+            "continuations": "continuations",
+            "gold_idx": "gold_idx",
+            "few_shot_cot": "few_shot_cot",
+        },
+        MCFFormulation(cot=True),
+    )
+
+    doc = prompt_fn(test_input, "test_continuation_task")
+
+    # We expect the contuation to be decapitalized as it's continuation of non-ended sentence
+    assert (
+        doc.query
+        == """\
+The quick brown fox
+
+Options:
+ A. jumps over the lazy dog
+ B. runs through the forest
+ C. chases a rabbit
+Step-by-Step Answer:\
+"""
+    )
+
+    assert doc.unconditioned_query == "Step-by-Step Answer:"
+    assert doc.choices == [" I think it's A. jumps over the lazy dog"]
     assert doc.gold_index == [0]

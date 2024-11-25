@@ -45,7 +45,9 @@ class QAAdapter(TypedDict):
     few_shot_cot: NotRequired[str]
 
 
-def get_qa_prompt_function(language: Language, adapter: Callable[[dict], QAInput | None] | QAAdapter, cot: bool):
+def get_qa_prompt_function(
+    language: Language, adapter: Callable[[dict], QAInput | None] | QAAdapter, cot: bool = False
+):
     """
     Create a templated prompt function for a QA task.
     Example tasks:
@@ -79,5 +81,7 @@ def get_qa_prompt_function(language: Language, adapter: Callable[[dict], QAInput
             "gold_idx": list(range(len(choices))),
         }
 
-    multichoice_prompt_fn = get_mcq_prompt_function(language, adapter=adapter_for_mcq, formulation=CFFormulation())
+    multichoice_prompt_fn = get_mcq_prompt_function(
+        language, adapter=adapter_for_mcq, formulation=CFFormulation(cot=cot)
+    )
     return multichoice_prompt_fn
