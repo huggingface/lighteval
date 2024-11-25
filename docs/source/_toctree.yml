@@ -7,7 +7,7 @@
     title: Quicktour
   title: Getting started
 - sections:
-  - local: saving-and-reading-result
+  - local: saving-and-reading-results
     title: Save and read results
   - local: using-the-python-api
     title: Use the Python API
