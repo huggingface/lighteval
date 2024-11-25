@@ -23,10 +23,11 @@
 from dataclasses import dataclass
 from typing import Dict, Optional, Union
 
-from nanotron.config import Config
 from nanotron.config.parallelism_config import ParallelismArgs
 from nanotron.generation.sampler import SamplerType
 from nanotron.logging import get_logger
+
+from brrr.config import Config
 
 
 logger = get_logger(__name__)

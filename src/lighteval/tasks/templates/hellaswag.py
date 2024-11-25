@@ -65,6 +65,7 @@ def get_hellaswag_prompt_function(
     adapter: Callable[[dict], HellaswagInput | None] | HellaswagAdapter,
     formulation: Formulation = MCFFormulation(),
     wikihow_artifacts: list[str] = [" [title]"],
+    cot: bool,
 ):
     """
     Create a templated prompt function for a Hellaswag task.
@@ -107,7 +108,7 @@ def get_hellaswag_prompt_function(
 
     adapter_fn = create_adapter_from_dict(adapter)
     continuation_prompt_fn = get_continuation_prompt_function(
-        language, {"context": "context", "continuations": "continuations", "gold_idx": "gold_idx"}, formulation
+        language, {"context": "context", "continuations": "continuations", "gold_idx": "gold_idx"}, formulation, cot=cot
     )
 
     def hellaswag_prompt(

@@ -75,7 +75,12 @@ class DummyModel(LightevalModel):
     def loglikelihood(
         self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
     ) -> list[LoglikelihoodResponse]:
-        return [LoglikelihoodResponse((-self._random.random(), False)) for _ in requests]
+        return [
+            LoglikelihoodResponse(
+                (-self._random.random(), False), generated_tokens=[0 for _ in range(len(req.choice))]
+            )
+            for req in requests
+        ]
 
     def loglikelihood_rolling(
         self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
