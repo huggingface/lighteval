@@ -206,6 +206,8 @@ class VLLMModel(LightevalModel):
                 # stop_tokens and max_tokens genrated) which is not necessarily
                 # the case! Because of that we only use batch size of 1
                 stop_tokens = dataset[0].stop_sequence
+                print(dataset[0].stop_sequence)
+                print(dataset[0].task_name)
 
             max_new_tokens = dataset[0].generation_size  # could be none
             returns_logits = dataset[0].use_logits

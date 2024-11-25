@@ -68,5 +68,5 @@ def get_cot_generaion_size(cot: bool, generation_size: int) -> int:
 
 def get_cot_stop_sequence(cot: bool, stop_sequence: list[str]) -> list[str] | None:
     if cot:
-        return None
+        return []
     return stop_sequence

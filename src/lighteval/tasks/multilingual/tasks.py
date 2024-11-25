@@ -870,7 +870,6 @@ hellaswag_tha_tasks = [
         prompt_function=get_hellaswag_prompt_function(
             language=Language.THAI,
             adapter=lambda line: {
-                "instruction": "เลือกตัวเลือกที่ดีที่สุดจากตัวเลือกต่อไปนี้",
                 "activity_label": line["activity_label"],
                 "ctx_a": line["ctx"],
                 "continuations": line["endings"],
@@ -883,6 +882,7 @@ hellaswag_tha_tasks = [
         hf_subset="default",
         evaluation_splits=["validation"],
         few_shots_split="train",
+        stop_sequence=["\n"],
         metric=get_metrics_for_mcq_formulation(
             formulation,
             Language.THAI,
