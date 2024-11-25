@@ -43,6 +43,7 @@ from lighteval.tasks.multilingual.adapters import (
     cmm_math_adapter,
     get_m3exam_adapter,
     get_mkqa_adapter,
+    mgsm_adapter,
     qazuntv2_adapter,
     sciqa_adapter,
     thai_exams_adapter,
@@ -882,7 +883,6 @@ hellaswag_tha_tasks = [
         hf_subset="default",
         evaluation_splits=["validation"],
         few_shots_split="train",
-        stop_sequence=["\n"],
         metric=get_metrics_for_mcq_formulation(
             formulation,
             Language.THAI,
@@ -3374,20 +3374,8 @@ mgsm_tasks = [
         name=f"mgsm_{language.value}{'_cot' if cot else ''}",
         prompt_function=get_qa_prompt_function(
             language,
-            partial(
-                lambda language, line: {
-                    # Some of the questions start with the question word (e.g. "Question:"), so we remove it
-                    "question": re.sub(
-                        rf"^\s*{TRANSLATION_LITERALS[language].question_word}\s*{TRANSLATION_LITERALS[language].colon}\s*",
-                        "",
-                        line["question"],
-                        flags=re.IGNORECASE,
-                    ),
-                    "choices": [str(line["answer_number"])],
-                    "few_shot_cot": line["answer"],  # type: ignore
-                },
-                language,
-            ),
+            mgsm_adapter,
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="juletxara/mgsm",
@@ -3422,13 +3410,7 @@ afri_mgsm_tasks = [
         name=f"afri_mgsm_{language.value}{'_cot' if cot else ''}",
         prompt_function=get_qa_prompt_function(
             language,
-            lambda line: {
-                "question": line["question"],
-                # The cot is available but we have no use:
-                # line["answer"]
-                "choices": [str(line["answer_number"])],
-                "few_shot_cot": line["answer"],
-            },
+            mgsm_adapter,
             cot=cot,
         ),
         suite=("lighteval",),
