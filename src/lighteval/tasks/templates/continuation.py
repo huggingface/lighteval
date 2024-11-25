@@ -88,7 +88,6 @@ def get_continuation_prompt_function(
     language: Language,
     adapter: Callable[[dict], ContinuationInput | None] | ContinuationDictAdapter,
     formulation: Formulation = MCFFormulation(),
-    cot: bool,
 ):
     """
     Create a templated prompt function for a Continuation task.
@@ -127,7 +126,7 @@ def get_continuation_prompt_function(
     adapter_fn = create_adapter_from_dict(adapter)
     translation_literals = TRANSLATION_LITERALS[language]
 
-    def prepare_prompt(line: dict, cot: bool):
+    def prepare_prompt(line: dict):
         cont_input = adapter_fn(line)
         if cont_input is None:
             return None
@@ -137,10 +136,6 @@ def get_continuation_prompt_function(
 
         context = f"{capitalize(fix_ending_punct(cont_input['context'], translation_literals))}"
         continuations = cont_input["continuations"]
-
-        few_shot_cot = cont_input.get("few_shot_cot", None)
-        if cot and few_shot_cot and line.get("__few_shots", False):
-            continuations = as_list(few_shot_cot)
 
         continuations = [
             fix_capitalization(context, fix_ending_punct(continuation, translation_literals), translation_literals)
@@ -182,9 +177,10 @@ def get_continuation_prompt_function(
 
         options = build_choices(continuations, formulation, translation_literals)
         options = f"{options}\n" if options else ""
-        answers = build_answers(continuations, formulation, translation_literals)
 
-        answer_word = capitalize(translation_literals.answer)
+        answer_word = capitalize(
+            translation_literals.answer if not formulation.cot else translation_literals.answer_cot
+        )
         options_word = capitalize(translation_literals.options_word)
         query = CONTINUATION_QUERY_MCF.format(
             instruction=instruction,
@@ -194,6 +190,13 @@ def get_continuation_prompt_function(
             colon=translation_literals.colon,
             options_word=options_word,
         )
+
+        few_shot_cot = cont_input.get("few_shot_cot", None)
+        if formulation.cot and few_shot_cot and line.get("__few_shots", False):
+            continuations = [
+                capitalize(fix_ending_punct(answer, translation_literals)) for answer in as_list(few_shot_cot)
+            ]
+        answers = build_answers(continuations, formulation, translation_literals)
 
         return Doc(
             task_name=task_name,

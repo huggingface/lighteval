@@ -186,3 +186,43 @@ Question: What is the capital of France?
 Answer:\
 """
     )
+
+
+def test_multichoice_prompt_mcf_cot():
+    """Test multiple-choice format (MCF) with COT prompt generation for multichoice questions."""
+    test_input = {
+        "question": "What is the capital of France?",
+        "choices": ["London", "Paris", "Berlin", "Madrid"],
+        "gold_idx": 1,
+        "__few_shots": True,
+        "few_shot_cot": "i think it's D",
+    }
+
+    prompt_fn = get_mcq_prompt_function(
+        Language.ENGLISH,
+        {
+            "question": "question",
+            "choices": "choices",
+            "gold_idx": "gold_idx",
+            "few_shot_cot": "few_shot_cot",
+        },
+        MCFFormulation(cot=True),
+    )
+
+    doc = prompt_fn(test_input, "test_task")
+    pass
+
+    assert (
+        doc.query
+        == """\
+Question: What is the capital of France?
+ A. London
+ B. Paris
+ C. Berlin
+ D. Madrid
+Step-by-Step Answer:\
+"""
+    )
+
+    assert doc.unconditioned_query == "Step-by-Step Answer:"
+    assert doc.choices == [" I think it's D"]

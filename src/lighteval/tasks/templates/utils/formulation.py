@@ -44,7 +44,7 @@ class MCFFormulation:
 
     choice_prefix: ChoicePrefix = "Letters"
     name: str = "MCF"
-    cot: bool
+    cot: bool = False
 
 
 @dataclass
@@ -60,6 +60,7 @@ class HybridFormulation:
 
     choice_prefix: ChoicePrefix = "Letters"
     name: str = "Hybrid"
+    cot: bool = False
 
 
 @dataclass
@@ -70,6 +71,7 @@ class CFFormulation:
     """
 
     name: str = "CF"
+    cot: bool = False
 
 
 Formulation = CFFormulation | HybridFormulation | MCFFormulation
@@ -146,7 +148,7 @@ def build_answers(
         use_sentence_space (bool, optional): Whether to use sentence or word space in front of the answer. Defaults to True.
             The same value should be passed to `build_choices` function to ensure consistent tokenization.
     """
-    if isinstance(formulation, MCFFormulation):
+    if isinstance(formulation, MCFFormulation) and not formulation.cot:
         prefixes = get_prefix(formulation.choice_prefix, translation_literals)
         answers = [prefixes[i] for i in range(len(answers))]
 

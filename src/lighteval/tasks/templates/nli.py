@@ -51,6 +51,7 @@ class NLIInput(TypedDict):
     hypothesis: str
     gold_idx: int
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 class NLIAdapter(TypedDict):
@@ -67,6 +68,7 @@ class NLIAdapter(TypedDict):
     hypothesis: str
     gold_idx: str
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 RelationType = Literal["entailment", "neutral", "contradiction"]
@@ -165,7 +167,6 @@ def get_nli_prompt_function(
     adapter: Callable[[dict], NLIInput | None] | NLIAdapter,
     relations: list[RelationType],
     formulation: Formulation = MCFFormulation(),
-    cot: bool,
 ):
     """
     Create a templated prompt function for a Natural Language Inference (NLI) task.
@@ -220,9 +221,14 @@ def get_nli_prompt_function(
     # For hybrid we use inlined choices so we use the cf formulation in multichoice prompt fn
     mcq_prompt_fn = get_mcq_prompt_function(
         language,
-        {"context": "premise", "question": "hypothesis", "choices": "choices", "gold_idx": "gold_idx"},
-        CFFormulation() if isinstance(formulation, HybridFormulation) else formulation,
-        cot,
+        {
+            "context": "premise",
+            "question": "hypothesis",
+            "choices": "choices",
+            "gold_idx": "gold_idx",
+            "few_shot_cot": "few_shot_cot",
+        },
+        CFFormulation(cot=formulation.cot) if isinstance(formulation, HybridFormulation) else formulation,
     )
 
     def prompt_fn(line: dict, task_name: str):
@@ -249,11 +255,13 @@ def get_nli_prompt_function(
         # (hynky1999): Ideally we would not compute logprobs of the Yes/No/Also in CF fomulation. However as of right now lighteval doesn't allow to
         # use multi-context.
         row = {
+            **{x: line[x] for x in line if x.startswith("__")},
             "instruction": input_data.get("instruction", ""),
             "premise": premise,
             "hypothesis": hypothesis,
             "gold_idx": gold_idx,
             "choices": labels,
+            "few_shot_cot": input_data.get("few_shot_cot", ""),
         }
 
         return mcq_prompt_fn(row, task_name)

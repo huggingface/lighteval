@@ -37,8 +37,6 @@ MULTI_CHOICE_QA_QUERY = (
     "{instruction}{context}{question_word}{colon}{sentence_space}{question}\n{options}{answer_word}{colon}"
 )
 
-OPTIONS_QUERY = "\n{options_word}{colon}\n{options}\n"
-
 
 # Defined for type hinting only
 class MCQInput(TypedDict):
@@ -141,28 +139,15 @@ def get_mcq_prompt_function(
 
         question = capitalize(fix_ending_punct(mcq_input["question"], translation_literals))
         answers = mcq_input["choices"]
-
-        use_cot = isinstance(formulation, MCFFormulation) and formulation.cot
-
-        few_shot_cot = mcq_input.get("few_shot_cot", None)
-        if use_cot and few_shot_cot and line.get("__few_shots", False):
-            answers = as_list(few_shot_cot)
-
+        gold_idx = mcq_input["gold_idx"]
         answers = [capitalize(fix_ending_punct(answer, translation_literals)) for answer in answers]
 
         options = build_choices(answers, formulation, translation_literals)
-        options = (
-            OPTIONS_QUERY.format(
-                options_word=capitalize(translation_literals.options_word),
-                options=options,
-                colon=translation_literals.colon,
-            )
-            if options
-            else ""
-        )
-        answers = build_answers(answers, formulation, translation_literals)
+        options = f"{options}\n" if options else ""
 
-        answer_word = capitalize(translation_literals.answer if not use_cot else translation_literals.answer_cot)
+        answer_word = capitalize(
+            translation_literals.answer if not formulation.cot else translation_literals.answer_cot
+        )
         question_word = capitalize(translation_literals.question_word)
 
         query = MULTI_CHOICE_QA_QUERY.format(
@@ -176,10 +161,20 @@ def get_mcq_prompt_function(
             options=options,
         )
 
+        # If we are in few-shot mode, then we want to use cot-answers instead of the actual answers
+        # NOTE: it's important to do it after query formatting, because otherwise the options will contain cot
+        few_shot_cot = mcq_input.get("few_shot_cot", None)
+        if few_shot_cot and formulation.cot and line.get("__few_shots", False):
+            answers = [capitalize(fix_ending_punct(answer, translation_literals)) for answer in as_list(few_shot_cot)]
+            gold_idx = list(range(len(answers)))
+        gold_idx = as_list(gold_idx)
+
+        answers = build_answers(answers, formulation, translation_literals)
+
         return Doc(
             task_name=task_name,
             query=query,
-            gold_index=as_list(mcq_input["gold_idx"]),
+            gold_index=gold_idx,
             choices=answers,
             instruction=instruction_val,
             unconditioned_query=f"{answer_word}{translation_literals.colon}",
