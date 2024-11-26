@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from itertools import product
 import re
 from functools import lru_cache
 from typing import Callable, Literal
@@ -205,7 +206,7 @@ def multilingual_extractive_match_metric(
         full_stop_re = rf"[{re.escape(translation_literal.full_stop)}\.]"
         comma_re = rf"[{re.escape(translation_literal.comma)}\,]"
         colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
-        space_re = rf"(?:\s|[{re.escape(translation_literal.sentence_space)}])"
+        space_re = rf"(?:\s|{re.escape(translation_literal.sentence_space)})"
 
         answer_prefix_re = rf"{space_re}(?:\*\*)?"
         answer_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|$)"
@@ -222,14 +223,13 @@ def multilingual_extractive_match_metric(
             indice_str_re,
         ]
         return list(map(re.compile, prefixed_res))
-
-    def evaluate_one_item(gold: str, pred: str, target_re: list[re.Pattern]) -> float:
+    
+    def extract_target_from_pred(pred: str, target_re: list[re.Pattern]) -> str | None:
         for re_pattern in target_re:
             matches = re_pattern.findall(pred)
             if matches:
-                return 1 if matches[-1].strip() == gold.strip() else 0
-
-        return 0
+                return matches[-1]
+        return None
 
     def extract_target(
         golds: list[str],
@@ -240,9 +240,11 @@ def multilingual_extractive_match_metric(
             target_re = lazy_number_regex()
         else:
             target_re = lazy_indices_regex(target_for_extraction, len(formatted_doc.choices))
+        
+        extracted_predictions = list(filter(lambda x: x is not None, [extract_target_from_pred(pred, target_re) for pred in predictions]))
 
-        results = [evaluate_one_item(gold, pred, target_re) for gold, pred in zip(golds, predictions)]
-        return aggregation_function(results)
+        results = [1 if gold.strip() == extracted_pred.strip() else 0 for gold, extracted_pred in product(golds, extracted_predictions)]
+        return aggregation_function(results or [0])
 
     return SampleLevelMetric(
         metric_name="extractive_match",
