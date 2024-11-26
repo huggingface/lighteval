@@ -13,5 +13,5 @@ Is your feature request related to a problem? Please provide a clear and concise
 ## Solution/Feature
 A clear and concise description of what you want to happen.
 
-## Posssible alternatives
+## Possible alternatives
 A clear and concise description of any alternative solutions or features you've considered.
