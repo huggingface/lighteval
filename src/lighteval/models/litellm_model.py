@@ -78,12 +78,14 @@ class LiteLLMClient(LightevalModel):
         self.API_RETRY_SLEEP = 3
         self.API_RETRY_MULTIPLIER = 2
         self.CONCURENT_CALLS = 100
+        self.TEMPERATURE = 0.7
+        self.TOP_P = 0.95
         self.model = config.model
         self._tokenizer = AutoTokenizer.from_pretrained("gpt2")  # Use a dummy tokenizer for compatibility
         self.pairwise_tokenization = False
         litellm.drop_params = True
 
-    def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, logit_bias):
+    def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, stop_sequence, generation_size):
         for _ in range(self.API_MAX_RETRY):
             try:
                 response = litellm.completion(
@@ -91,12 +93,12 @@ class LiteLLMClient(LightevalModel):
                     messages=[{"role": "user", "content": prompt}],
                     max_tokens=max_new_tokens if max_new_tokens > 0 else None,
                     logprobs=return_logits if self.provider == "openai" else None,
-                    logit_bias=logit_bias,
                     base_url=self.base_url,
                     n=num_samples,
-                    temperature=0.7,
-                    top_p=0.95,
-                    stop=None,
+                    temperature=self.TEMPERATURE,
+                    top_p=self.TOP_P,
+                    stop=["\n"] if stop_sequence is None else stop_sequence,
+                    max_completion_tokens=generation_size if generation_size > 0 else None,
                     caching=True,
                 )
                 return response
@@ -112,22 +114,37 @@ class LiteLLMClient(LightevalModel):
         return_logits: bool | list[bool],
         max_new_tokens: int | list[int],
         num_samples: int | list[int],
-        logit_bias: list[dict[int, float]] | None = None,
+        stop_sequence: list[str] | None = None,
+        generation_size: int | None = None,
     ):
         results = []
 
         return_logitss = [return_logits for _ in prompts] if not isinstance(return_logits, list) else return_logits
         max_new_tokenss = [max_new_tokens for _ in prompts] if not isinstance(max_new_tokens, list) else max_new_tokens
         num_sampless = [num_samples for _ in prompts] if not isinstance(num_samples, list) else num_samples
-        logit_biass = [logit_bias for _ in prompts] if logit_bias is None else logit_bias
+        stop_sequencess = [stop_sequence for _ in prompts]
+        generation_sizess = [generation_size for _ in prompts]
 
         assert (
-            len(prompts) == len(return_logitss) == len(max_new_tokenss) == len(num_sampless) == len(logit_biass)
-        ), "Length of prompts, return_logitss, max_new_tokenss, num_sampless, logit_biass should be same"
+            len(prompts)
+            == len(return_logitss)
+            == len(max_new_tokenss)
+            == len(num_sampless)
+            == len(stop_sequencess)
+            == len(generation_sizess)
+        ), f"Length of prompts, return_logitss, max_new_tokenss, num_sampless, stop_sequences, generation_sizes should be the same but are {len(prompts)}, {len(return_logitss)}, {len(max_new_tokenss)}, {len(num_sampless)}, {len(stop_sequencess)}, {len(generation_sizess)}"
 
         with ThreadPoolExecutor(self.CONCURENT_CALLS) as executor:
             for entry in tqdm(
-                executor.map(self.__call_api, prompts, return_logitss, max_new_tokenss, num_sampless, logit_biass),
+                executor.map(
+                    self.__call_api,
+                    prompts,
+                    return_logitss,
+                    max_new_tokenss,
+                    num_sampless,
+                    stop_sequencess,
+                    generation_sizess,
+                ),
                 total=len(prompts),
             ):
                 results.append(entry)
@@ -166,12 +183,16 @@ class LiteLLMClient(LightevalModel):
             position=0,
             disable=False,  # self.disable_tqdm,
         ):
+            contexts = [c.context for c in dataset]
             max_new_tokens = dataset[0].generation_size  # could be none
             return_logits = dataset[0].use_logits
             num_samples = dataset[0].num_samples
-            contexts = [c.context for c in dataset]
+            stop_sequence = requests[0].stop_sequence
+            generation_size = requests[0].generation_size
 
-            responses = self.__call_api_parallel(contexts, return_logits, max_new_tokens, num_samples)
+            responses = self.__call_api_parallel(
+                contexts, return_logits, max_new_tokens, num_samples, stop_sequence, generation_size
+            )
 
             for response in responses:
                 result: list[str] = [choice.message.content for choice in response.choices]
