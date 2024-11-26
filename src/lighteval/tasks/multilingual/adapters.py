@@ -80,7 +80,7 @@ def thai_exams_adapter(line: dict) -> MCQInput | None:
 
 def alghafa_adapter(line: dict) -> MCQInput | None:
     answer_index = int(line["label"])
-    choices_keys = [key for key in line.keys() if key not in ["query", "label", "__few_shots"]]
+    choices_keys = [key for key in line.keys() if key not in ["query", "label", "__index", "__few_shots"]]
     choices = [line[key] for key in choices_keys]
     return {
         "question": line["query"],
@@ -324,8 +324,13 @@ def qazuntv2_adapter(line: dict) -> MCQInput | None:
         return None
     return {"question": line["question"], "choices": choices, "gold_idx": gold_idx}
 
-MGSM_COT_PREFIX_RE = re.compile(r"\s*(ধাপে ধাপে উত্তর|Schritt-für-Schritt-Antwort|Step-by-Step Answer|Respuesta paso a paso|Réponse étape par étape|ステップごとの答え|Пошаговое решение|Jibu la Hatua kwa Hatua|దశలవారీగా సమాధానంi|คำตอบทีละขั้นตอน|逐步解答)\s*:\s*")
+
+MGSM_COT_PREFIX_RE = re.compile(
+    r"\s*(ধাপে ধাপে উত্তর|Schritt-für-Schritt-Antwort|Step-by-Step Answer|Respuesta paso a paso|Réponse étape par étape|ステップごとの答え|Пошаговое решение|Jibu la Hatua kwa Hatua|దశలవారీగా సమాధానంi|คำตอบทีละขั้นตอน|逐步解答)\s*:\s*"
+)
 MGSM_QUESTION_RE = re.compile(r"\s*(প্রশ্ন|Frage|Question|Pregunta|Question|問題|Задача|Swali|ప్రశ్న|โจทย์|问题)\s*:\s*")
+
+
 def mgsm_adapter(line: dict) -> QAInput | None:
     question = MGSM_QUESTION_RE.sub("", line["question"])
     answer_cot = MGSM_COT_PREFIX_RE.sub("", line["answer"]) if line["answer"] else ""

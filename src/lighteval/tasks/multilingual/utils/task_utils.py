@@ -27,6 +27,7 @@ from lighteval.metrics.dynamic_metrics import loglikelihood_acc_metric, multilin
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.utils.metric_utils import Metric
 from lighteval.tasks.templates.utils.formulation import Formulation, MCFFormulation
+from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
 from lighteval.utils.language import Language
 
 
@@ -61,12 +62,12 @@ def get_metrics_for_mcq_formulation(
 
 
 def get_cot_generaion_size(cot: bool, generation_size: int) -> int | None:
-    if cot:
+    return 1024
+
+
+def get_cot_stop_sequence(language: Language) -> list[str] | None:
+    try:
+        trans = TRANSLATION_LITERALS[language]
+        return [f"{trans.question_word}{trans.colon}"]
+    except (AttributeError, KeyError):
         return None
-    return generation_size
-
-
-def get_cot_stop_sequence(cot: bool, stop_sequence: list[str]) -> list[str] | None:
-    if cot:
-        return []
-    return stop_sequence
