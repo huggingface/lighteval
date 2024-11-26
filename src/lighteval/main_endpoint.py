@@ -49,25 +49,15 @@ def main(args):
         public=args.public_run,
         hub_results_org=args.results_org,
     )
-    pipeline_params = PipelineParameters(
-        launcher_type=ParallelismManager.ACCELERATE,
-        env_config=env_config,
-        job_id=args.job_id,
-        dataset_loading_processes=args.dataset_loading_processes,
-        custom_tasks_directory=args.custom_tasks,
-        override_batch_size=args.override_batch_size,
-        num_fewshot_seeds=args.num_fewshot_seeds,
-        max_samples=args.max_samples,
-        use_chat_template=args.use_chat_template,
-        system_prompt=args.system_prompt,
-    )
 
     # TODO (nathan): better handling of model_args
 
     if args.provider == "openai":
+        parallelism_manager = ParallelismManager.OPENAI
         model_args: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.model_args.split(",")}
         model_config = OpenAIModelConfig(**model_args)
     elif args.provider == "tgi":
+        parallelism_manager = ParallelismManager.TGI
         with open(args.model_config_path, "r") as f:
             config = yaml.safe_load(f)["model"]
         model_config = TGIModelConfig(
@@ -76,6 +66,7 @@ def main(args):
             model_id=config["instance"]["model_id"],
         )
     elif args.provider == "inference_endpoints":
+        parallelism_manager = ParallelismManager.TGI
         with open(args.model_config_path, "r") as f:
             config = yaml.safe_load(f)["model"]
         reuse_existing_endpoint = config["base_params"].get("reuse_existing", None)
@@ -105,6 +96,18 @@ def main(args):
     else:
         raise ValueError(f"Unsupported provider for lighteval endpoint: {args.provider}")
 
+    pipeline_params = PipelineParameters(
+        launcher_type=parallelism_manager,
+        env_config=env_config,
+        job_id=args.job_id,
+        dataset_loading_processes=args.dataset_loading_processes,
+        custom_tasks_directory=args.custom_tasks,
+        override_batch_size=args.override_batch_size,
+        num_fewshot_seeds=args.num_fewshot_seeds,
+        max_samples=args.max_samples,
+        use_chat_template=args.use_chat_template,
+        system_prompt=args.system_prompt,
+    )
     pipeline = Pipeline(
         tasks=args.tasks,
         pipeline_parameters=pipeline_params,
