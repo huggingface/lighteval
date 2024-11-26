@@ -46,7 +46,7 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.imports.bert_scorer import BERTScorer
 from lighteval.metrics.metrics import Metrics
-from lighteval.metrics.metrics_sample import BertScore, JudgeLLMMixEval
+from lighteval.metrics.metrics_sample import BertScore, JudgeLLM
 from lighteval.metrics.normalizations import remove_braces, remove_braces_and_strip
 from lighteval.metrics.utils.metric_utils import (
     MetricCategory,
@@ -154,6 +154,24 @@ Your Judgment:""",
     ]
 
 
+class JudgeSwissLegalTranslation(JudgeLLM):
+    def compute(self, sample_ids: list[str], responses: list, formatted_docs: list[Doc], **kwargs) -> dict[str, float]:
+        """
+        Compute the score of a generative task using a llm as a judge.
+        """
+        questions = [formatted_doc.specific["question"] for formatted_doc in formatted_docs]
+        options = [formatted_doc.choices for formatted_doc in formatted_docs]
+        golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
+        predictions = [response[0].result[0] for response in responses]
+
+        scores, _, judgements = self.judge.evaluate_answer_batch(questions, predictions, options, golds)
+        # Exclude the messages (user prompt) because they are too long
+        return [
+            {f"judge_score_{self.short_judge_name}": score * 100, f"judgement_{self.short_judge_name}": judgment}
+            for score, judgment in zip(scores, judgements)
+        ]
+
+
 def get_swiss_legal_translation_judge(judge_model_name: str = "gpt-4o"):
     name = f"swiss_legal_translation_judge_{judge_model_name}"
     return SampleLevelMetricGrouping(
@@ -161,16 +179,13 @@ def get_swiss_legal_translation_judge(judge_model_name: str = "gpt-4o"):
         higher_is_better={name: True},
         category=MetricCategory.LLM_AS_JUDGE,
         use_case=MetricUseCase.TRANSLATION,
-        sample_level_fn=lambda *args, **kwargs: [
-            {k: v * 100 if k == f"judge_score_{judge_model_name}" else v for k, v in score_dict.items()}
-            for score_dict in JudgeLLMMixEval(
-                judge_model_name=judge_model_name,
-                template=swiss_legal_translation_judge,
-                process_judge_response=process_judge_response_freeform_gpt,
-                judge_backend="openai",
-                short_judge_name=judge_model_name,
-            ).compute(*args, **kwargs)
-        ],
+        sample_level_fn=JudgeSwissLegalTranslation(
+            judge_model_name=judge_model_name,
+            template=swiss_legal_translation_judge,
+            process_judge_response=process_judge_response_freeform_gpt,
+            judge_backend="openai",
+            short_judge_name=judge_model_name,
+        ).compute,
         corpus_level_fn={name: statistics.mean},
     )
 
