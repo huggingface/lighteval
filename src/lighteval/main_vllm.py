@@ -21,24 +21,19 @@
 # SOFTWARE.
 
 import os
-from datetime import timedelta
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import htrack
-from lighteval.models.model_config import BaseModelConfig, create_model_config
+from lighteval.models.model_config import VLLMModelConfig
 from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
-
-
-TOKEN = os.getenv("HF_TOKEN")
 
 
 @htrack()
 def main(args):
-    from accelerate import Accelerator, InitProcessGroupKwargs
-
-    accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
+    TOKEN = os.getenv("HF_TOKEN")
 
     env_config = EnvConfig(token=TOKEN, cache_dir=args.cache_dir)
+
     evaluation_tracker = EvaluationTracker(
         output_dir=args.output_dir,
         save_details=args.save_details,
@@ -47,8 +42,9 @@ def main(args):
         public=args.public_run,
         hub_results_org=args.results_org,
     )
+
     pipeline_params = PipelineParameters(
-        launcher_type=ParallelismManager.ACCELERATE,
+        launcher_type=ParallelismManager.VLLM,
         env_config=env_config,
         job_id=args.job_id,
         dataset_loading_processes=args.dataset_loading_processes,
@@ -60,20 +56,8 @@ def main(args):
         system_prompt=args.system_prompt,
     )
 
-    model_config = create_model_config(
-        use_chat_template=args.use_chat_template,
-        override_batch_size=args.override_batch_size,
-        model_args=args.model_args,
-        model_config_path=args.model_config_path,
-        accelerator=accelerator,
-    )
-
-    # TODO (nathan): better handling of model_args
     model_args: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.model_args.split(",")}
-    model_args["accelerator"] = accelerator
-    model_args["use_chat_template"] = args.use_chat_template
-    model_args["compile"] = bool(model_args["compile"]) if "compile" in model_args else False
-    model_config = BaseModelConfig(**model_args)
+    model_config = VLLMModelConfig(**model_args)
 
     pipeline = Pipeline(
         tasks=args.tasks,

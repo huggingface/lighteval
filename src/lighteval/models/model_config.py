@@ -348,9 +348,6 @@ def create_model_config(  # noqa: C901
         if model_args.pop("dummy", False):
             return DummyModelConfig(**model_args)
 
-        if model_args.pop("vllm", False):
-            return VLLMModelConfig(**model_args)
-
         if model_args.pop("openai", False):
             return OpenAIModelConfig(**model_args)
 

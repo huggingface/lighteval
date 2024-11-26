@@ -162,8 +162,6 @@ class OpenAIClient(LightevalModel):
 
             responses = self.__call_api_parallel(contexts, return_logits, max_new_tokens, num_samples)
 
-            breakpoint()
-
             for response in responses:
                 result: list[str] = [output.message.content for output in response.choices]
 

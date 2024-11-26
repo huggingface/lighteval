@@ -43,9 +43,11 @@ from lighteval.utils.imports import (
     NO_ACCELERATE_ERROR_MSG,
     NO_NANOTRON_ERROR_MSG,
     NO_TGI_ERROR_MSG,
+    NO_VLLM_ERROR_MSG,
     is_accelerate_available,
     is_nanotron_available,
     is_tgi_available,
+    is_vllm_available,
 )
 from lighteval.utils.parallelism import test_all_gather
 from lighteval.utils.utils import EnvConfig, make_results_table
@@ -65,6 +67,7 @@ class ParallelismManager(Enum):
     ACCELERATE = auto()
     NANOTRON = auto()
     TGI = auto()
+    VLLM = auto()
     NONE = auto()
 
 
@@ -89,6 +92,9 @@ class PipelineParameters:
         if self.launcher_type == ParallelismManager.ACCELERATE:
             if not is_accelerate_available():
                 raise ImportError(NO_ACCELERATE_ERROR_MSG)
+        elif self.launcher_type == ParallelismManager.VLLM:
+            if not is_vllm_available():
+                raise ImportError(NO_VLLM_ERROR_MSG)
         elif self.launcher_type == ParallelismManager.TGI:
             if not is_tgi_available():
                 raise ImportError(NO_TGI_ERROR_MSG)

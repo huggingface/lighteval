@@ -28,7 +28,7 @@ import os
 from dataclasses import asdict
 from pprint import pformat
 
-from lighteval.parsers import parser_accelerate, parser_baseline, parser_nanotron, parser_utils_tasks
+from lighteval.parsers import parser_accelerate, parser_baseline, parser_endpoint, parser_nanotron, parser_utils_tasks
 from lighteval.tasks.registry import Registry, taskinfo_selector
 
 
@@ -54,18 +54,32 @@ def cli_evaluate():  # noqa: C901
     parser_d = subparsers.add_parser("tasks", help="display information about available tasks and samples.")
     parser_utils_tasks(parser_d)
 
+    # Subparser for endpoint models
+    parser_e = subparsers.add_parser("endpoint", help="use endpoint model as backend for evaluation.")
+    parser_endpoint(parser_e)
+
+    # Subparser for vllm models
+    parser_f = subparsers.add_parser("vllm", help="use vllm model as backend for evaluation.")
+    parser_accelerate(parser_f)
+
     args = parser.parse_args()
 
     if args.subcommand == "accelerate":
         from lighteval.main_accelerate import main as main_accelerate
 
         main_accelerate(args)
-
     elif args.subcommand == "nanotron":
         from lighteval.main_nanotron import main as main_nanotron
 
         main_nanotron(args.checkpoint_config_path, args.lighteval_config_path, args.cache_dir)
+    elif args.subcommand == "endpoint":
+        from lighteval.main_endpoint import main as main_endpoint
 
+        main_endpoint(args)
+    elif args.subcommand == "vllm":
+        from lighteval.main_vllm import main as main_vllm
+
+        main_vllm(args)
     elif args.subcommand == "baseline":
         from lighteval.main_baseline import main as main_baseline
 

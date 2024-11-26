@@ -21,11 +21,17 @@
 # SOFTWARE.
 
 import os
-from datetime import timedelta
+
+import yaml
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.hierarchical_logger import htrack
-from lighteval.models.model_config import BaseModelConfig, create_model_config
+from lighteval.models.model_config import (
+    InferenceEndpointModelConfig,
+    InferenceModelConfig,
+    OpenAIModelConfig,
+    TGIModelConfig,
+)
 from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
 
@@ -34,10 +40,6 @@ TOKEN = os.getenv("HF_TOKEN")
 
 @htrack()
 def main(args):
-    from accelerate import Accelerator, InitProcessGroupKwargs
-
-    accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
-
     env_config = EnvConfig(token=TOKEN, cache_dir=args.cache_dir)
     evaluation_tracker = EvaluationTracker(
         output_dir=args.output_dir,
@@ -60,20 +62,48 @@ def main(args):
         system_prompt=args.system_prompt,
     )
 
-    model_config = create_model_config(
-        use_chat_template=args.use_chat_template,
-        override_batch_size=args.override_batch_size,
-        model_args=args.model_args,
-        model_config_path=args.model_config_path,
-        accelerator=accelerator,
-    )
-
     # TODO (nathan): better handling of model_args
-    model_args: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.model_args.split(",")}
-    model_args["accelerator"] = accelerator
-    model_args["use_chat_template"] = args.use_chat_template
-    model_args["compile"] = bool(model_args["compile"]) if "compile" in model_args else False
-    model_config = BaseModelConfig(**model_args)
+
+    if args.provider == "openai":
+        model_args: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.model_args.split(",")}
+        model_config = OpenAIModelConfig(**model_args)
+    elif args.provider == "tgi":
+        with open(args.model_config_path, "r") as f:
+            config = yaml.safe_load(f)["model"]
+        model_config = TGIModelConfig(
+            inference_server_address=config["instance"]["inference_server_address"],
+            inference_server_auth=config["instance"]["inference_server_auth"],
+            model_id=config["instance"]["model_id"],
+        )
+    elif args.provider == "inference_endpoints":
+        with open(args.model_config_path, "r") as f:
+            config = yaml.safe_load(f)["model"]
+        reuse_existing_endpoint = config["base_params"].get("reuse_existing", None)
+        complete_config_endpoint = all(
+            val not in [None, ""]
+            for key, val in config.get("instance", {}).items()
+            if key not in InferenceEndpointModelConfig.nullable_keys()
+        )
+        if reuse_existing_endpoint or complete_config_endpoint:
+            model_config = InferenceEndpointModelConfig(
+                name=config["base_params"]["endpoint_name"].replace(".", "-").lower(),
+                repository=config["base_params"]["model"],
+                model_dtype=config["base_params"]["dtype"],
+                revision=config["base_params"]["revision"] or "main",
+                should_reuse_existing=reuse_existing_endpoint,
+                accelerator=config["instance"]["accelerator"],
+                region=config["instance"]["region"],
+                vendor=config["instance"]["vendor"],
+                instance_size=config["instance"]["instance_size"],
+                instance_type=config["instance"]["instance_type"],
+                namespace=config["instance"]["namespace"],
+                image_url=config["instance"].get("image_url", None),
+                env_vars=config["instance"].get("env_vars", None),
+            )
+        else:
+            model_config = InferenceModelConfig(model=config["base_params"]["endpoint_name"])
+    else:
+        raise ValueError(f"Unsupported provider for lighteval endpoint: {args.provider}")
 
     pipeline = Pipeline(
         tasks=args.tasks,

@@ -151,8 +151,6 @@ class AnthropicClient(LightevalModel):
 
             responses = self.__call_api_parallel(contexts, max_new_tokens, num_samples)
 
-            breakpoint()
-
             for response in responses:
                 result: list[str] = [output.content for output in response]
 
