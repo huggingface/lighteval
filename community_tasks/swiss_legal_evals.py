@@ -167,13 +167,13 @@ class JudgeSwissLegalTranslation(JudgeLLM):
         scores, _, judgements = self.judge.evaluate_answer_batch(questions, predictions, options, golds)
         # Exclude the messages (user prompt) because they are too long
         return [
-            {f"judge_score_{self.short_judge_name}": score * 100, f"judgement_{self.short_judge_name}": judgment}
+            {self.short_judge_name: score * 100, f"{self.short_judge_name}_judgment": judgment}
             for score, judgment in zip(scores, judgements)
         ]
 
 
 def get_swiss_legal_translation_judge(judge_model_name: str = "gpt-4o"):
-    name = f"swiss_legal_translation_judge_{judge_model_name}"
+    name = f"slt_judge_{judge_model_name}"
     return SampleLevelMetricGrouping(
         metric_name=[name],
         higher_is_better={name: True},
@@ -184,7 +184,7 @@ def get_swiss_legal_translation_judge(judge_model_name: str = "gpt-4o"):
             template=swiss_legal_translation_judge,
             process_judge_response=process_judge_response_freeform_gpt,
             judge_backend="openai",
-            short_judge_name=judge_model_name,
+            short_judge_name=name,
         ).compute,
         corpus_level_fn={name: statistics.mean},
     )
@@ -536,12 +536,12 @@ def create_prompt_fn(level_config: LevelConfig, src_lang: str, target_lang: str)
 bert_score = get_bert_score(model_type="xlm-roberta-large", device=device)
 
 # Only take the largest version
-bleurt_large = get_bleurt(model_size="large", seq_len=512, device=device)
+bleurt_large = get_bleurt(model_size="large", seq_len=512, batch_size=64, device=device)
 
 # There are also reference-free models (e.g., Unbabel/wmt22-cometkiwi-da), but since we have reference gold labels, we use the reference-based models.
-comet_wmt22_da = get_comet(model_name="Unbabel/wmt22-comet-da", batch_size=32, gpus=1, device=device)
-# xcomet_xl = get_comet(model_name="Unbabel/XCOMET-XL", batch_size=8, gpus=1, device=device)
-# xcomet_xxl = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=8, gpus=1, device=device)
+comet_wmt22_da = get_comet(model_name="Unbabel/wmt22-comet-da", batch_size=64, gpus=1, device=device)
+xcomet_xl = get_comet(model_name="Unbabel/XCOMET-XL", batch_size=16, gpus=1, device=device)
+xcomet_xxl = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=8, gpus=1, device=device)
 
 swiss_legal_translation_judge_gpt_4o = get_swiss_legal_translation_judge(judge_model_name="gpt-4o")
 
@@ -573,12 +573,12 @@ class TranslationTask(LightevalTaskConfig):
                 Metrics.chrf,
                 Metrics.ter,
                 meteor,
-                bert_score,
+                bert_score,  # TODO: think about allowing parallelization as well if slow
                 bleurt_large,
-                comet_wmt22_da,  # TODO: debug why this is not saved in the details
-                # xcomet_xl,
-                # xcomet_xxl,
-                swiss_legal_translation_judge_gpt_4o,  # TODO: debug why this is not showing up in the results
+                comet_wmt22_da,
+                xcomet_xl,
+                xcomet_xxl,
+                swiss_legal_translation_judge_gpt_4o,
                 # Additionally we could consider adding the following open source judge models:
                 # flowaicom/Flow-Judge-v0.1, prometheus-eval/prometheus-7b-v2.0
                 # However, these are only fine-tuned on English data and we need multilingual support.
