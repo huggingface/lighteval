@@ -200,8 +200,6 @@ def serbian_eval_prompt(line: dict, task_name: Optional[str] = None) -> Doc:
             - choices (list of str): The list of available answer choices.
             - gold_index (int): The index of the correct answer.
             - instruction (str): The instruction shown to the user in Serbian.
-            - target_for_fewshot_sorting (Union[str, list of str]): The correct answer, either as a
-              string (for regular tasks) or a list of strings (for MMLU tasks).
     """
 
     question = line["query"]
@@ -226,16 +224,12 @@ def serbian_eval_prompt(line: dict, task_name: Optional[str] = None) -> Doc:
 
     query += "\n\nKrajnji odgovor:"
 
-    # Finalize target_for_fewshot_sorting as we handle mmlu task group as string
-    target_for_fewshot_sorting = [choices[gold_index]] if task_name and "mmlu" in task_name else choices[gold_index]
-
     return Doc(
         task_name=task_name,
         query=query,
         choices=choices,
         gold_index=gold_index,
         instruction=instruction,
-        target_for_fewshot_sorting=target_for_fewshot_sorting,
     )
 
 
