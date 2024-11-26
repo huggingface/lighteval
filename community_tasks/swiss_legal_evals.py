@@ -501,7 +501,7 @@ def create_prompt_fn(level_config: LevelConfig, src_lang: str, target_lang: str)
 
     def prompt_fn(line: dict, task_name: str = None):
         # Following Template A from https://github.com/huggingface/lighteval/pull/389#issuecomment-2471580177
-        custom_query = f"{src_lang.upper()}: {line[src_text_col]}\n{target_lang.upper()}:"
+        custom_query = f"{src_lang.upper()}: {line[src_text_col]}\n{target_lang.upper()}: "
 
         return Doc(
             task_name=task_name,
@@ -536,21 +536,21 @@ class TranslationTask(LightevalTaskConfig):
         self,
         dataset_config: DatasetConfig,
         level_name: str,
-        src_lang: str,
+        source_lang: str,
         target_lang: str,
     ):
         level_config = dataset_config.subsets[level_name]
         super().__init__(
-            name=f"{dataset_config.name}-{level_name}:{src_lang}-{target_lang}",
+            name=f"{dataset_config.name}-{level_name}:{source_lang}-{target_lang}",
             suite=["community"],
-            prompt_function=create_prompt_fn(level_config, src_lang, target_lang),
+            prompt_function=create_prompt_fn(level_config, source_lang, target_lang),
             hf_repo=dataset_config.hf_repo,
             hf_subset=level_name,
             hf_filter=None,
             hf_avail_splits=["train", "validation", "test"],
             evaluation_splits=["test"],
             few_shots_split="validation",
-            few_shots_select=None,  # TODO: add few-shot selection
+            few_shots_select="sequential",
             generation_size=level_config.generation_size,
             metric=[
                 Metrics.bleu,
@@ -560,16 +560,19 @@ class TranslationTask(LightevalTaskConfig):
                 meteor,
                 bert_score,
                 bleurt_large,
-                comet_wmt22_da,
+                comet_wmt22_da,  # TODO: debug why this is not saved in the details
                 # xcomet_xl,
                 # xcomet_xxl,
-                swiss_legal_translation_judge_gpt_4o,
+                swiss_legal_translation_judge_gpt_4o,  # TODO: debug why this is not showing up in the results
                 # Additionally we could consider adding the following open source judge models:
                 # flowaicom/Flow-Judge-v0.1, prometheus-eval/prometheus-7b-v2.0
                 # However, these are only fine-tuned on English data and we need multilingual support.
             ],
-            stop_sequence=["\n"],  # TODO: Debug why this is not working for litellm inference
+            stop_sequence=[".\n"],  # just "\n" leads to problems for anthropic models
             trust_dataset=True,
+            # Remove the target language in the beginning if it exists: e.g., FR: {translation}
+            # Is only applied to the generative metrics, but also there seems not to be invoked, maybe not passed through?
+            # output_regex=f"(?:{target_lang.upper()}:\s*?)?(.*)",
         )
 
 
@@ -586,12 +589,12 @@ TASKS_TABLE = [
     TranslationTask(
         dataset_config=dataset,
         level_name=subset,
-        src_lang=src_lang,
+        source_lang=source_lang,
         target_lang=target_lang,
     )
     for dataset in DATASETS
     for subset in dataset.subsets
-    for src_lang, target_lang in dataset.translation_pairs
+    for source_lang, target_lang in dataset.translation_pairs
 ]
 
 
