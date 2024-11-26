@@ -58,23 +58,26 @@ class HierarchicalLogger:
 
     def indent(self) -> str:
         """Manages the block level text indentation for nested blocks"""
+        return ""
         return "  " * len(self.start_times)
 
     def track_begin(self, x: Any) -> None:
         """Starts a block level tracker, stores the step begin time"""
+        return
         logger.warning(f"{self.indent()}{str(x)} \u007b")  # \u007b is {
         sys.stdout.flush()
         self.start_times.append(time.time())
 
     def track_end(self) -> None:
         """Ends a block level tracker, prints the elapsed time for the associated step"""
+        return
         duration = time.time() - self.start_times.pop()
         logger.warning(f"{self.indent()}\u007d [{str(timedelta(seconds=duration))}]")  # \u007d is }
         sys.stdout.flush()
 
     def log(self, x: Any) -> None:
-        logger.warning(self.indent() + str(x))
-        sys.stdout.flush()
+        logger.info(self.indent() + str(x))
+        # sys.stdout.flush()
 
 
 HIERARCHICAL_LOGGER = HierarchicalLogger()

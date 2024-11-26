@@ -21,62 +21,87 @@
 # SOFTWARE.
 
 import os
-from datetime import timedelta
+from typing import Optional
 
-from lighteval.logging.evaluation_tracker import EvaluationTracker
-from lighteval.logging.hierarchical_logger import htrack
-from lighteval.models.model_config import BaseModelConfig, create_model_config
-from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
+import typer
+from typer import Argument, Option
+from typing_extensions import Annotated
 
+
+app = typer.Typer()
 
 TOKEN = os.getenv("HF_TOKEN")
+CACHE_DIR: str = os.getenv("HF_HOME", "/scratch")
 
 
-@htrack()
-def main(args):
+@app.command()
+def accelerate(
+    # === general ===
+    model_args: Annotated[str, Argument(help="Model arguments in the form key1=value1,key2=value2,...")],
+    tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
+    # === Common parameters ===
+    output_dir: Annotated[str, Option(help="Output directory for evaluation results.")] = "results",
+    use_chat_template: Annotated[bool, Option(help="Use chat template for evaluation.")] = False,
+    system_prompt: Annotated[Optional[str], Option(help="Use system prompt for evaluation.")] = None,
+    dataset_loading_processes: Annotated[int, Option(help="Number of processes to use for dataset loading.")] = 1,
+    custom_tasks: Annotated[Optional[str], Option(help="Path to custom tasks directory.")] = None,
+    cache_dir: Annotated[str, Option(help="Cache directory for datasets and models.")] = CACHE_DIR,
+    num_fewshot_seeds: Annotated[int, Option(help="Number of seeds to use for few-shot evaluation.")] = 1,
+    # === saving ===
+    push_to_hub: Annotated[bool, Option(help="Push results to the huggingface hub.")] = False,
+    push_to_tensorboard: Annotated[bool, Option(help="Push results to tensorboard.")] = False,
+    public_run: Annotated[bool, Option(help="Push results and details to a public repo.")] = False,
+    results_org: Annotated[Optional[str], Option(help="Organization to push results to.")] = None,
+    save_details: Annotated[bool, Option(help="Save detailed, sample per sample, results.")] = False,
+    # === debug ===
+    max_samples: Annotated[Optional[int], Option(help="Maximum number of samples to evaluate on.")] = None,
+    override_batch_size: Annotated[int, Option(help="Override batch size for evaluation.")] = -1,
+    job_id: Annotated[int, Option(help="Optional job id for future refenrence.")] = 0,
+):
+    """
+    Evaluate models using accelerate and transformers as backend.
+    """
+    from datetime import timedelta
+
     from accelerate import Accelerator, InitProcessGroupKwargs
+
+    from lighteval.logging.evaluation_tracker import EvaluationTracker
+    from lighteval.models.model_config import BaseModelConfig
+    from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
     accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
 
-    env_config = EnvConfig(token=TOKEN, cache_dir=args.cache_dir)
+    env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
     evaluation_tracker = EvaluationTracker(
-        output_dir=args.output_dir,
-        save_details=args.save_details,
-        push_to_hub=args.push_to_hub,
-        push_to_tensorboard=args.push_to_tensorboard,
-        public=args.public_run,
-        hub_results_org=args.results_org,
+        output_dir=output_dir,
+        save_details=save_details,
+        push_to_hub=push_to_hub,
+        push_to_tensorboard=push_to_tensorboard,
+        public=public_run,
+        hub_results_org=results_org,
     )
     pipeline_params = PipelineParameters(
         launcher_type=ParallelismManager.ACCELERATE,
         env_config=env_config,
-        job_id=args.job_id,
-        dataset_loading_processes=args.dataset_loading_processes,
-        custom_tasks_directory=args.custom_tasks,
-        override_batch_size=args.override_batch_size,
-        num_fewshot_seeds=args.num_fewshot_seeds,
-        max_samples=args.max_samples,
-        use_chat_template=args.use_chat_template,
-        system_prompt=args.system_prompt,
-    )
-
-    model_config = create_model_config(
-        use_chat_template=args.use_chat_template,
-        override_batch_size=args.override_batch_size,
-        model_args=args.model_args,
-        model_config_path=args.model_config_path,
-        accelerator=accelerator,
+        job_id=job_id,
+        dataset_loading_processes=dataset_loading_processes,
+        custom_tasks_directory=custom_tasks,
+        override_batch_size=override_batch_size,
+        num_fewshot_seeds=num_fewshot_seeds,
+        max_samples=max_samples,
+        use_chat_template=use_chat_template,
+        system_prompt=system_prompt,
     )
 
     # TODO (nathan): better handling of model_args
-    model_args: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.model_args.split(",")}
+    model_args: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
     model_args["accelerator"] = accelerator
-    model_args["use_chat_template"] = args.use_chat_template
+    model_args["use_chat_template"] = use_chat_template
     model_args["compile"] = bool(model_args["compile"]) if "compile" in model_args else False
     model_config = BaseModelConfig(**model_args)
 
     pipeline = Pipeline(
-        tasks=args.tasks,
+        tasks=tasks,
         pipeline_parameters=pipeline_params,
         evaluation_tracker=evaluation_tracker,
         model_config=model_config,
