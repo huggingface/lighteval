@@ -161,16 +161,17 @@ def get_swiss_legal_translation_judge(judge_model_name: str = "gpt-4o"):
         higher_is_better={name: True},
         category=MetricCategory.LLM_AS_JUDGE,
         use_case=MetricUseCase.TRANSLATION,
-        sample_level_fn=JudgeLLMMixEval(
-            judge_model_name=judge_model_name,
-            template=swiss_legal_translation_judge,
-            process_judge_response=process_judge_response_freeform_gpt,
-            judge_backend="openai",
-            short_judge_name=judge_model_name,
-        ).compute,
-        corpus_level_fn={
-            name: statistics.mean,
-        },
+        sample_level_fn=lambda *args, **kwargs: [
+            {k: v * 100 if k == f"judge_score_{judge_model_name}" else v for k, v in score_dict.items()}
+            for score_dict in JudgeLLMMixEval(
+                judge_model_name=judge_model_name,
+                template=swiss_legal_translation_judge,
+                process_judge_response=process_judge_response_freeform_gpt,
+                judge_backend="openai",
+                short_judge_name=judge_model_name,
+            ).compute(*args, **kwargs)
+        ],
+        corpus_level_fn={name: statistics.mean},
     )
 
 
@@ -188,20 +189,21 @@ def get_bert_score(model_type: str = "xlm-roberta-large", device: str = "cpu"):
         baseline_path=None,
         device=device,
     )
+
     return SampleLevelMetricGrouping(
         metric_name=["BERTScore-P", "BERTScore-R", "BERTScore-F"],
-        sample_level_fn=score.compute,
-        category=MetricCategory.GENERATIVE,
-        use_case=MetricUseCase.TRANSLATION,
-        corpus_level_fn={
-            "BERTScore-P": statistics.mean,
-            "BERTScore-R": statistics.mean,
-            "BERTScore-F": statistics.mean,
-        },
         higher_is_better={
             "BERTScore-P": True,
             "BERTScore-R": True,
             "BERTScore-F": True,
+        },
+        category=MetricCategory.GENERATIVE,
+        use_case=MetricUseCase.TRANSLATION,
+        sample_level_fn=lambda *args, **kwargs: {k: v * 100 for k, v in score.compute(*args, **kwargs).items()},
+        corpus_level_fn={
+            "BERTScore-P": statistics.mean,
+            "BERTScore-R": statistics.mean,
+            "BERTScore-F": statistics.mean,
         },
     )
 
@@ -211,6 +213,7 @@ class BLEURT:
         self,
         model_size: str = "tiny",
         seq_len: int = 512,
+        batch_size: int = 32,
         device: str = "cpu",
     ):
         """Creates a BLEURT scorer based on the model size (tiny, base, large) and sequence length (128, 512)."""
@@ -223,48 +226,52 @@ class BLEURT:
         if device == "mps":
             raise ValueError("MPS is not supported for BLEURT")
 
+        self.metric_name = f"bleurt_{model_size}"
         self.tokenizer = AutoTokenizer.from_pretrained(f"Elron/bleurt-{model_size}-{seq_len}")
         self.model = AutoModelForSequenceClassification.from_pretrained(f"Elron/bleurt-{model_size}-{seq_len}")
         self.model = self.model.to(device)
         self.model.eval()
         self.max_length = seq_len
+        self.batch_size = batch_size
 
-    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float:
-        """Uses the stored BLEURT scorer to compute the score on the current sample.
+    def compute(self, sample_ids: list[str], responses: list, formatted_docs: list[Doc], **kwargs) -> dict[str, float]:
+        golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
+        predictions = [response[0].result[0] for response in responses]
 
-        Args:
-            golds (list[str]): Reference targets
-            predictions (list[str]): Predicted strings
+        all_scores = []
+        for i in range(0, len(golds), self.batch_size):
+            batch_golds = golds[i : i + self.batch_size]
+            batch_predictions = predictions[i : i + self.batch_size]
 
-        Returns:
-            float: Score over the current sample's items.
-        """
-        if len(predictions) == 1:
-            predictions = predictions * len(golds)
-        inputs = self.tokenizer(
-            golds,
-            predictions,
-            return_tensors="pt",
-            padding=True,
-            truncation=True,
-            max_length=self.max_length,
-        )
-        inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
-        if any(len(encoding) == self.max_length for encoding in inputs["input_ids"]):
-            hlog_warn(f"Some inputs were truncated to max_length={self.max_length} in BLEURT scoring")
-        scores = self.model(**inputs)[0].squeeze()
-        return scores.item()
+            inputs = self.tokenizer(
+                batch_golds,
+                batch_predictions,
+                return_tensors="pt",
+                padding=True,
+                truncation=True,
+                max_length=self.max_length,
+            )
+            inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
+            if any(len(encoding) == self.max_length for encoding in inputs["input_ids"]):
+                hlog_warn(f"Some inputs were truncated to max_length={self.max_length} in BLEURT scoring")
+            with torch.no_grad():
+                all_scores.extend(self.model(**inputs)[0].squeeze().tolist())
+
+        return [{self.metric_name: score * 100} for score in all_scores]
 
 
-def get_bleurt(model_size: str = "tiny", seq_len: int = 512, device: str = "cpu"):
-    print(f"Loading BLEURT with model_size={model_size}, seq_len={seq_len}, and device={device}...")
-    return SampleLevelMetric(
-        metric_name=f"bleurt_{model_size}",
-        sample_level_fn=BLEURT(model_size=model_size, seq_len=seq_len, device=device).compute,
-        category=MetricCategory.GENERATIVE,
+def get_bleurt(model_size: str = "tiny", seq_len: int = 512, batch_size: int = 32, device: str = "cpu"):
+    print(
+        f"Loading BLEURT with model_size={model_size}, seq_len={seq_len}, batch_size={batch_size}, and device={device}..."
+    )
+    name = f"bleurt_{model_size}"
+    return SampleLevelMetricGrouping(
+        metric_name=[name],
+        higher_is_better={name: True},
+        category=MetricCategory.LLM_AS_JUDGE,
         use_case=MetricUseCase.TRANSLATION,
-        corpus_level_fn=statistics.mean,
-        higher_is_better=True,
+        sample_level_fn=BLEURT(model_size=model_size, seq_len=seq_len, batch_size=batch_size, device=device).compute,
+        corpus_level_fn={name: statistics.mean},
     )
 
 
@@ -272,56 +279,55 @@ class COMET:
     def __init__(
         self,
         model_name: str = "Unbabel/wmt22-comet-da",
-        batch_size: int = 1,
+        batch_size: int = 8,
         gpus: int = 1,
         accelerator: str = "cpu",
     ):
         if accelerator == "mps":
             raise ValueError("MPS is not supported for COMET")
-        model_path = download_model(model_name)
-        self.model = load_from_checkpoint(model_path)
+
+        self.metric_name = model_name.split("/")[-1]
+        self.model = load_from_checkpoint(download_model(model_name))
         self.batch_size = batch_size
         self.gpus = gpus
         self.accelerator = accelerator
 
-    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float:
-        data = [
-            {"src": src, "mt": pred, "ref": gold}
-            for src, pred, gold in zip(
-                [kwargs["formatted_doc"].specific["source"]] * len(predictions),
-                predictions,
-                golds,
-            )
-        ]
+    def compute(self, sample_ids: list[str], responses: list, formatted_docs: list[Doc], **kwargs) -> dict[str, float]:
+        golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
+        predictions = [response[0].result[0] for response in responses]
+        sources = [kwargs["formatted_doc"].specific["source"] for kwargs["formatted_doc"] in formatted_docs]
+
+        data = [{"src": src, "mt": pred, "ref": gold} for src, pred, gold in zip(sources, predictions, golds)]
         model_output = self.model.predict(
             data,
             batch_size=self.batch_size,
             gpus=self.gpus,
             accelerator=self.accelerator,
         )
-        # model_output["scores"] contains the sentence level scores
-        return model_output["system_score"]
+
+        return [{self.metric_name: score * 100} for score in model_output["scores"]]
 
 
 def get_comet(
     model_name: str = "Unbabel/wmt22-comet-da",
-    batch_size: int = 1,
+    batch_size: int = 8,
     gpus: int = 1,
     device: str = "cpu",
 ):
     print(f"Loading COMET with model_name={model_name}, batch_size={batch_size}, gpus={gpus}, and device={device}...")
-    return SampleLevelMetric(
-        metric_name=model_name.split("/")[-1],
+    name = model_name.split("/")[-1]
+    return SampleLevelMetricGrouping(
+        metric_name=[name],
+        higher_is_better={name: True},
+        category=MetricCategory.LLM_AS_JUDGE,
+        use_case=MetricUseCase.TRANSLATION,
         sample_level_fn=COMET(
             model_name=model_name,
             batch_size=batch_size,
             gpus=gpus,
             accelerator=device,
         ).compute,
-        category=MetricCategory.GENERATIVE,
-        use_case=MetricUseCase.TRANSLATION,
-        corpus_level_fn=statistics.mean,
-        higher_is_better=True,
+        corpus_level_fn={name: statistics.mean},
     )
 
 
@@ -360,17 +366,18 @@ class METEOR:
                 for ref, pred in zip(golds, predictions)
             ]
 
-        return statistics.mean(scores)
+        return statistics.mean(scores) * 100
 
 
 meteor = SampleLevelMetric(
     metric_name="meteor",
-    sample_level_fn=METEOR().compute,
+    higher_is_better=True,
     category=MetricCategory.GENERATIVE,
     use_case=MetricUseCase.TRANSLATION,
+    sample_level_fn=METEOR().compute,
     corpus_level_fn=statistics.mean,
-    higher_is_better=True,
 )
+
 
 # EVALS WITH SUBSET
 # This is how you create a subset task (like MMLU), which has several subset
@@ -517,14 +524,9 @@ bert_score = get_bert_score(model_type="xlm-roberta-large", device=device)
 bleurt_large = get_bleurt(model_size="large", seq_len=512, device=device)
 
 # There are also reference-free models (e.g., Unbabel/wmt22-cometkiwi-da), but since we have reference gold labels, we use the reference-based models.
-comet_wmt22_da = get_comet(
-    model_name="Unbabel/wmt22-comet-da",
-    batch_size=32,
-    gpus=1,
-    device=device,
-)
-xcomet_xl = get_comet(model_name="Unbabel/XCOMET-XL", batch_size=8, gpus=1, device=device)
-xcomet_xxl = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=8, gpus=1, device=device)
+comet_wmt22_da = get_comet(model_name="Unbabel/wmt22-comet-da", batch_size=32, gpus=1, device=device)
+# xcomet_xl = get_comet(model_name="Unbabel/XCOMET-XL", batch_size=8, gpus=1, device=device)
+# xcomet_xxl = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=8, gpus=1, device=device)
 
 swiss_legal_translation_judge_gpt_4o = get_swiss_legal_translation_judge(judge_model_name="gpt-4o")
 
@@ -546,9 +548,9 @@ class TranslationTask(LightevalTaskConfig):
             hf_subset=level_name,
             hf_filter=None,
             hf_avail_splits=["train", "validation", "test"],
-            evaluation_splits=["test"],  # ["validation", "test"],
+            evaluation_splits=["test"],
             few_shots_split="validation",
-            few_shots_select=None,
+            few_shots_select=None,  # TODO: add few-shot selection
             generation_size=level_config.generation_size,
             metric=[
                 Metrics.bleu,
@@ -559,14 +561,14 @@ class TranslationTask(LightevalTaskConfig):
                 bert_score,
                 bleurt_large,
                 comet_wmt22_da,
-                xcomet_xl,
-                xcomet_xxl,
+                # xcomet_xl,
+                # xcomet_xxl,
                 swiss_legal_translation_judge_gpt_4o,
                 # Additionally we could consider adding the following open source judge models:
                 # flowaicom/Flow-Judge-v0.1, prometheus-eval/prometheus-7b-v2.0
                 # However, these are only fine-tuned on English data and we need multilingual support.
             ],
-            stop_sequence=["\n"],
+            stop_sequence=["\n"],  # TODO: Debug why this is not working for litellm inference
             trust_dataset=True,
         )
 
