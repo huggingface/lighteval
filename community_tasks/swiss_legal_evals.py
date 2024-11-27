@@ -61,6 +61,15 @@ from lighteval.tasks.requests import Doc
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+# Try to optimize CUDA operations
+if device == "cuda":
+    torch.backends.cudnn.benchmark = True  # Enable cudnn auto-tuner
+    torch.backends.cuda.matmul.allow_tf32 = True  # Enable TF32 for faster matrix multiplications
+    # Enable tensor cores if available
+    if torch.cuda.get_device_capability()[0] >= 7:
+        # This will speed up GPU inference, e.g., for COMET and BLEURT
+        torch.set_float32_matmul_precision('medium') 
+
 # CUSTOM METRICS
 
 
