@@ -270,7 +270,7 @@ class BLEURT:
             if any(len(encoding) == self.max_length for encoding in inputs["input_ids"]):
                 hlog_warn(f"Some inputs were truncated to max_length={self.max_length} in BLEURT scoring")
             with torch.no_grad():
-                all_scores.extend(self.model(**inputs)[0].squeeze().tolist())
+                all_scores.extend(self.model(**inputs)[0].squeeze().cpu().tolist())
 
         return [{self.metric_name: score * 100} for score in all_scores]
 
@@ -539,8 +539,8 @@ bert_score = get_bert_score(model_type="xlm-roberta-large", device=device)
 bleurt_large = get_bleurt(model_size="large", seq_len=512, batch_size=64, device=device)
 
 # There are also reference-free models (e.g., Unbabel/wmt22-cometkiwi-da), but since we have reference gold labels, we use the reference-based models.
-comet_wmt22_da = get_comet(model_name="Unbabel/wmt22-comet-da", batch_size=64, gpus=1, device=device)
-xcomet_xl = get_comet(model_name="Unbabel/XCOMET-XL", batch_size=16, gpus=1, device=device)
+# comet_wmt22_da = get_comet(model_name="Unbabel/wmt22-comet-da", batch_size=64, gpus=1, device=device)
+# xcomet_xl = get_comet(model_name="Unbabel/XCOMET-XL", batch_size=16, gpus=1, device=device)
 xcomet_xxl = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=8, gpus=1, device=device)
 
 swiss_legal_translation_judge_gpt_4o = get_swiss_legal_translation_judge(judge_model_name="gpt-4o")
@@ -568,15 +568,14 @@ class TranslationTask(LightevalTaskConfig):
             few_shots_select="sequential",
             generation_size=level_config.generation_size,
             metric=[
-                Metrics.bleu,
-                # Metrics.bleu_4,
+                Metrics.bleu,  # Metrics.bleu_4,
                 Metrics.chrf,
                 Metrics.ter,
                 meteor,
                 bert_score,  # TODO: think about allowing parallelization as well if slow
                 bleurt_large,
-                comet_wmt22_da,
-                xcomet_xl,
+                # comet_wmt22_da,
+                # xcomet_xl,
                 xcomet_xxl,
                 swiss_legal_translation_judge_gpt_4o,
                 # Additionally we could consider adding the following open source judge models:
