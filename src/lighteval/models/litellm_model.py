@@ -77,7 +77,7 @@ class LiteLLMClient(LightevalModel):
         self.API_MAX_RETRY = 5
         self.API_RETRY_SLEEP = 3
         self.API_RETRY_MULTIPLIER = 2
-        self.CONCURENT_CALLS = 100
+        self.CONCURENT_CALLS = 20  # 100 leads to hitting Anthropic rate limits
         self.TEMPERATURE = 0.7
         self.TOP_P = 0.95
         self.model = config.model
@@ -86,7 +86,7 @@ class LiteLLMClient(LightevalModel):
         litellm.drop_params = True
 
     def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, stop_sequence, generation_size):
-        for _ in range(self.API_MAX_RETRY):
+        for attempt in range(self.API_MAX_RETRY):
             try:
                 response = litellm.completion(
                     model=self.model,
@@ -102,11 +102,21 @@ class LiteLLMClient(LightevalModel):
                     caching=True,
                 )
                 return response
+            except litellm.exceptions.RateLimitError:
+                if attempt == self.API_MAX_RETRY - 1:
+                    raise
+                wait_time = min(64, self.API_RETRY_SLEEP * (2**attempt))  # Exponential backoff with max 64s
+                hlog_warn(
+                    f"Rate limit hit. Waiting {wait_time} seconds before retry {attempt + 1}/{self.API_MAX_RETRY}"
+                )
+                time.sleep(wait_time)
             except Exception as e:
                 hlog_warn(f"{type(e), e}")
-                time.sleep(self.API_RETRY_SLEEP)
-                self.API_RETRY_SLEEP = self.API_RETRY_SLEEP**self.API_RETRY_MULTIPLIER
-        raise Exception("Failed to get response from the API")
+                if attempt == self.API_MAX_RETRY - 1:
+                    raise
+                wait_time = self.API_RETRY_SLEEP * (self.API_RETRY_MULTIPLIER**attempt)
+                hlog_warn(f"Retrying in {wait_time} seconds")
+                time.sleep(wait_time)
 
     def __call_api_parallel(
         self,
