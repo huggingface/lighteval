@@ -92,6 +92,7 @@ vllm = ["vllm", "ray", "more_itertools"]
 quality = ["ruff==v0.2.2","pre-commit"]
 tests = ["pytest==7.4.0"]
 dev = ["lighteval[accelerate,quality,tests,multilingual]"]
+docs = ["hf-doc-builder", "watchdog"]
 extended_tasks = [
   "langdetect", # ifeval
   "openai", # llm as a judge using openai models
