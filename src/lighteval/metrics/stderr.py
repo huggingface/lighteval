@@ -26,7 +26,7 @@
 
 import math
 import random
-from typing import Callable
+from typing import Callable, Optional
 
 import numpy as np
 from scipy.stats import bootstrap
@@ -45,9 +45,9 @@ def mean_stderr(arr):
 
 
 class _bootstrap_internal:
-    def __init__(self, metric: Callable, number_draws: int):
-        self.metric = metric
+    def __init__(self, number_draws: int, metric: Optional[Callable] = None):
         self.number_draws = number_draws
+        self.metric = metric
 
     def __call__(self, cur_experiment):
         # Creates number_draws samplings (with replacement) of the population by iterating on a given seed
@@ -56,49 +56,93 @@ class _bootstrap_internal:
         rnd.seed(seed)
         samplings = []
         for _ in range(self.number_draws):
-            samplings.append(self.metric(rnd.choices(population, k=len(population))))
+            if self.metric is None:
+                # For sample-level metrics, just compute mean of sampled precomputed values
+                sampled_values = rnd.choices(population, k=len(population))
+                samplings.append(np.mean(sampled_values))
+            else:
+                # For corpus-level metrics, recompute metric on sampled values
+                sampled_values = rnd.choices(population, k=len(population))
+                samplings.append(self.metric(sampled_values))
         return samplings
 
 
-def bootstrap_stderr(metric: Callable, population: list, number_experiments: int):
-    """Bootstraps the stderr of the given metric for the given population of samples,
-    by sampling said population for number_experiments and recomputing the metric on the
-    different samplings.
+def bootstrap_stderr(
+    population: list,
+    number_experiments: int,
+    metric: Optional[Callable] = None,
+) -> float:
+    """Bootstraps the stderr by resampling.
+
+    For sample-level metrics, resamples from precomputed values to avoid recomputing heavy metrics.
+    For corpus-level metrics, recomputes metric on resampled values.
+
+    Args:
+        population (list): List of values to bootstrap from
+        number_experiments (int): Total number of bootstrap iterations
+        metric (Optional[Callable]): Metric function for corpus-level metrics
+
+    Returns:
+        float: Standard error estimate from bootstrap
     """
+    if metric is None:
+        # For sample-level metrics, verify values are numeric
+        try:
+            population = [float(x) for x in population]
+        except (TypeError, ValueError) as e:
+            raise TypeError(f"All values must be numeric for sample-level bootstrap. Got error: {e}")
+
     import multiprocessing as mp
 
     pool = mp.Pool(mp.cpu_count())
 
     res = []
     number_draws = min(1000, number_experiments)
-    # We change the seed every 1000 re-samplings
-    # and do the experiment 1000 re-samplings at a time
     number_seeds = number_experiments // number_draws
 
-    hlog(f"Bootstrapping {metric.__name__}'s stderr.")
     for cur_bootstrap in tqdm(
         pool.imap(
-            _bootstrap_internal(metric=metric, number_draws=number_draws),
+            _bootstrap_internal(number_draws=number_draws, metric=metric),
             ((population, seed) for seed in range(number_seeds)),
         ),
         total=number_seeds,
     ):
-        # sample w replacement
         res.extend(cur_bootstrap)
 
     pool.close()
     return mean_stderr(res)
 
 
-def get_stderr_function(aggregation: Callable, number_experiments: int = 1000):
-    # Mean stderr can be computed trivially
-    if "mean" in aggregation.__name__:
-        return mean_stderr
+def get_stderr_function(
+    metric_values: list,
+    number_experiments: int = 1000,
+    aggregation: Optional[Callable] = None,
+) -> Optional[Callable]:
+    """Get the appropriate stderr function for the given metric values.
 
-    # For other metrics, we bootstrap the stderr by sampling
+    Args:
+        metric_values (list): List of values to compute stderr from
+        number_experiments (int): Number of bootstrap iterations
+        aggregation (Optional[Callable]): Aggregation function for corpus-level metrics
+
+    Returns:
+        Optional[Callable]: Function to compute standard error, or None if not possible
+    """
+    if len(metric_values) <= 1:
+        return None
+
+    # For sample-level metrics
+    if isinstance(metric_values[0], (int, float)) or aggregation is None:
+        try:
+            _ = [float(x) for x in metric_values]
+            return lambda _: bootstrap_stderr(population=metric_values, number_experiments=number_experiments)
+        except (TypeError, ValueError):
+            return None
+
+    # For corpus-level metrics
     try:
-        return lambda population: bootstrap_stderr(
-            metric=aggregation, population=population, number_experiments=number_experiments
+        return lambda _: bootstrap_stderr(
+            population=metric_values, number_experiments=number_experiments, metric=aggregation
         )
     except Exception:
         return None
