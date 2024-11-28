@@ -40,10 +40,12 @@ import torch
 from comet import download_model, load_from_checkpoint
 from nltk import word_tokenize
 from nltk.translate import meteor_score
+from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu
+from nltk.translate.chrf_score import sentence_chrf
 from packaging import version
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-from lighteval.logging.hierarchical_logger import hlog_warn, hlog
+from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.metrics.imports.bert_scorer import BERTScorer
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.metrics_sample import BertScore, JudgeLLM
@@ -64,11 +66,12 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 # Try to optimize CUDA operations
 if device == "cuda":
     torch.backends.cudnn.benchmark = True  # Enable cudnn auto-tuner
-    torch.backends.cuda.matmul.allow_tf32 = True  # Enable TF32 for faster matrix multiplications
+    # Enable TF32 for faster matrix multiplications
+    torch.backends.cuda.matmul.allow_tf32 = True
     # Enable tensor cores if available
     if torch.cuda.get_device_capability()[0] >= 7:
         # This will speed up GPU inference, e.g., for COMET and BLEURT
-        torch.set_float32_matmul_precision('medium') 
+        torch.set_float32_matmul_precision("medium")
 
 # CUSTOM METRICS
 
@@ -164,7 +167,13 @@ Your Judgment:""",
 
 
 class JudgeSwissLegalTranslation(JudgeLLM):
-    def compute(self, sample_ids: list[str], responses: list, formatted_docs: list[Doc], **kwargs) -> dict[str, float]:
+    def compute(
+        self,
+        sample_ids: list[str],
+        responses: list,
+        formatted_docs: list[Doc],
+        **kwargs,
+    ) -> dict[str, float]:
         hlog(f"Judging {len(formatted_docs)} samples with {self.short_judge_name}...")
         questions = [formatted_doc.specific["question"] for formatted_doc in formatted_docs]
         options = [formatted_doc.choices for formatted_doc in formatted_docs]
@@ -174,7 +183,10 @@ class JudgeSwissLegalTranslation(JudgeLLM):
         scores, _, judgements = self.judge.evaluate_answer_batch(questions, predictions, options, golds)
         # Exclude the messages (user prompt) because they are too long
         return [
-            {self.short_judge_name: score * 100, f"{self.short_judge_name}_judgment": judgment}
+            {
+                self.short_judge_name: score * 100,
+                f"{self.short_judge_name}_judgment": judgment,
+            }
             for score, judgment in zip(scores, judgements)
         ]
 
@@ -195,6 +207,9 @@ def get_swiss_legal_translation_judge(judge_model_name: str = "gpt-4o"):
         ).compute,
         corpus_level_fn={name: statistics.mean},
     )
+
+
+swiss_legal_translation_judge_gpt_4o = get_swiss_legal_translation_judge(judge_model_name="gpt-4o")
 
 
 def get_bert_score(model_type: str = "xlm-roberta-large", device: str = "cpu"):
@@ -230,6 +245,10 @@ def get_bert_score(model_type: str = "xlm-roberta-large", device: str = "cpu"):
     )
 
 
+# INFO: Batch sizes are optimized for an 80GB NVIDIA A100 GPU
+bert_score = get_bert_score(model_type="xlm-roberta-large", device=device)
+
+
 class BLEURT:
     def __init__(
         self,
@@ -256,7 +275,13 @@ class BLEURT:
         self.max_length = seq_len
         self.batch_size = batch_size
 
-    def compute(self, sample_ids: list[str], responses: list, formatted_docs: list[Doc], **kwargs) -> dict[str, float]:
+    def compute(
+        self,
+        sample_ids: list[str],
+        responses: list,
+        formatted_docs: list[Doc],
+        **kwargs,
+    ) -> dict[str, float]:
         hlog(f"Scoring {len(formatted_docs)} samples with {self.metric_name}...")
         golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
         predictions = [response[0].result[0] for response in responses]
@@ -283,7 +308,12 @@ class BLEURT:
         return [{self.metric_name: score * 100} for score in all_scores]
 
 
-def get_bleurt(model_size: str = "tiny", seq_len: int = 512, batch_size: int = 32, device: str = "cpu"):
+def get_bleurt(
+    model_size: str = "tiny",
+    seq_len: int = 512,
+    batch_size: int = 32,
+    device: str = "cpu",
+):
     hlog(
         f"Loading BLEURT with model_size={model_size}, seq_len={seq_len}, batch_size={batch_size}, and device={device}..."
     )
@@ -296,6 +326,10 @@ def get_bleurt(model_size: str = "tiny", seq_len: int = 512, batch_size: int = 3
         sample_level_fn=BLEURT(model_size=model_size, seq_len=seq_len, batch_size=batch_size, device=device).compute,
         corpus_level_fn={name: statistics.mean},
     )
+
+
+# Only take the largest version
+bleurt_large = get_bleurt(model_size="large", seq_len=512, batch_size=256, device=device)
 
 
 class COMET:
@@ -315,7 +349,13 @@ class COMET:
         self.gpus = gpus
         self.accelerator = accelerator
 
-    def compute(self, sample_ids: list[str], responses: list, formatted_docs: list[Doc], **kwargs) -> dict[str, float]:
+    def compute(
+        self,
+        sample_ids: list[str],
+        responses: list,
+        formatted_docs: list[Doc],
+        **kwargs,
+    ) -> dict[str, float]:
         hlog(f"Scoring {len(formatted_docs)} samples with {self.metric_name}...")
         golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
         predictions = [response[0].result[0] for response in responses]
@@ -337,7 +377,7 @@ def get_comet(
     batch_size: int = 8,
     gpus: int = 1,
     device: str = "cpu",
-):    
+):
     hlog(f"Loading COMET with model_name={model_name}, batch_size={batch_size}, gpus={gpus}, and device={device}...")
     name = model_name.split("/")[-1]
     return SampleLevelMetricGrouping(
@@ -353,6 +393,12 @@ def get_comet(
         ).compute,
         corpus_level_fn={name: statistics.mean},
     )
+
+
+# There are also reference-free models (e.g., Unbabel/wmt22-cometkiwi-da), but since we have reference gold labels, we use the reference-based models.
+# comet_wmt22_da = get_comet(model_name="Unbabel/wmt22-comet-da", batch_size=64, gpus=1, device=device)
+# xcomet_xl = get_comet(model_name="Unbabel/XCOMET-XL", batch_size=32, gpus=1, device=device)
+xcomet_xxl = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=16, gpus=1, device=device)
 
 
 class METEOR:
@@ -399,6 +445,110 @@ meteor = SampleLevelMetric(
     category=MetricCategory.GENERATIVE,
     use_case=MetricUseCase.TRANSLATION,
     sample_level_fn=METEOR().compute,
+    corpus_level_fn=statistics.mean,
+)
+
+
+class BLEU:
+    def __init__(
+        self,
+        weights=(0.25, 0.25, 0.25, 0.25),
+        smoothing_function=None,
+        auto_reweigh=False,
+    ):
+        """
+        Initialize BLEU scorer with specified n-gram weights.
+        Default weights are for BLEU-4 (equal weights for 1-4 grams).
+
+        Args:
+            weights: Tuple of weights for unigrams through 4-grams
+            smoothing_function: Optional smoothing function for BLEU computation
+            auto_reweigh: Whether to automatically reweigh the scores based on reference length
+        """
+        self.weights = weights
+        self.smoothing_function = smoothing_function or SmoothingFunction().method1
+        self.auto_reweigh = auto_reweigh
+
+        # Ensure NLTK data is downloaded
+        nltk.download("punkt")
+
+    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float:
+        """
+        Compute BLEU score for a list of predictions against their references.
+
+        Args:
+            golds: List of reference strings
+            predictions: List of prediction strings
+
+        Returns:
+            Mean BLEU score scaled to 0-100
+        """
+        scores = []
+        for ref, pred in zip(golds, predictions):
+            # Tokenize the reference and prediction
+            reference = [word_tokenize(ref)]
+            hypothesis = word_tokenize(pred)
+
+            # Calculate BLEU score for this pair
+            score = sentence_bleu(
+                references=reference,
+                hypothesis=hypothesis,
+                weights=self.weights,
+                smoothing_function=self.smoothing_function,
+                auto_reweigh=self.auto_reweigh,
+            )
+            scores.append(score)
+
+        return statistics.mean(scores) * 100
+
+
+bleu = SampleLevelMetric(
+    metric_name="bleu",
+    higher_is_better=True,
+    category=MetricCategory.GENERATIVE,
+    use_case=MetricUseCase.TRANSLATION,
+    sample_level_fn=BLEU().compute,
+    corpus_level_fn=statistics.mean,
+)
+
+
+class CHRF:
+    def __init__(self, beta: float = 3.0, max_len: int = 6, min_len: int = 1):
+        """
+        Initialize chrF scorer with specified parameters.
+        beta: Weight of recall vs precision (default: 3.0)
+        max_len: Maximum n-gram order (default: 6)
+        min_len: Minimum n-gram order (default: 1)
+        """
+        self.beta = beta
+        self.max_len = max_len
+        self.min_len = min_len
+
+    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float:
+        """
+        Compute chrF score for a list of predictions against their references.
+        """
+        scores = []
+        for ref, pred in zip(golds, predictions):
+            score = sentence_chrf(
+                ref,
+                pred,
+                min_len=self.min_len,
+                max_len=self.max_len,
+                beta=self.beta,
+                ignore_whitespace=True,
+            )
+            scores.append(score)
+
+        return statistics.mean(scores) * 100
+
+
+chrf = SampleLevelMetric(
+    metric_name="chrf",
+    higher_is_better=True,
+    category=MetricCategory.GENERATIVE,
+    use_case=MetricUseCase.TRANSLATION,
+    sample_level_fn=CHRF().compute,
     corpus_level_fn=statistics.mean,
 )
 
@@ -541,19 +691,6 @@ def create_prompt_fn(level_config: LevelConfig, src_lang: str, target_lang: str)
 
     return prompt_fn
 
-# INFO: Batch sizes are optimized for an 80GB NVIDIA A100 GPU
-bert_score = get_bert_score(model_type="xlm-roberta-large", device=device)
-
-# Only take the largest version
-bleurt_large = get_bleurt(model_size="large", seq_len=512, batch_size=256, device=device)
-
-# There are also reference-free models (e.g., Unbabel/wmt22-cometkiwi-da), but since we have reference gold labels, we use the reference-based models.
-# comet_wmt22_da = get_comet(model_name="Unbabel/wmt22-comet-da", batch_size=64, gpus=1, device=device)
-# xcomet_xl = get_comet(model_name="Unbabel/XCOMET-XL", batch_size=32, gpus=1, device=device)
-xcomet_xxl = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=16, gpus=1, device=device)
-
-swiss_legal_translation_judge_gpt_4o = get_swiss_legal_translation_judge(judge_model_name="gpt-4o")
-
 
 class TranslationTask(LightevalTaskConfig):
     def __init__(
@@ -577,13 +714,12 @@ class TranslationTask(LightevalTaskConfig):
             few_shots_select="sequential",
             generation_size=level_config.generation_size,
             metric=[
-                Metrics.bleu,  # Metrics.bleu_4,
-                Metrics.chrf,
-                Metrics.ter,
+                bleu,  # Use sample level BLEU for faster evaluation
+                chrf,  # Use sample level chrF for faster evaluation
                 meteor,
-                bert_score,  # TODO: think about allowing parallelization as well if slow
+                bert_score,
                 bleurt_large,
-                xcomet_xxl,  # xcomet_xl, comet_wmt22_da
+                xcomet_xxl,  # Just use one, disregarding xcomet_xl, comet_wmt22_da
                 swiss_legal_translation_judge_gpt_4o,
                 # Additionally we could consider adding the following open source judge models:
                 # flowaicom/Flow-Judge-v0.1, prometheus-eval/prometheus-7b-v2.0
