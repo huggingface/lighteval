@@ -54,6 +54,14 @@ from lighteval.utils.utils import EnvConfig, as_list
 
 BATCH_SIZE = 50
 
+SORTED_INSTANCE_SIZES = [  # sorted by incremental overall RAM (to load models)
+    # type, size
+    ("nvidia-a10g", "x1"),
+    ("nvidia-t4", "x4"),
+    ("nvidia-a100", "x1"),
+    ("nvidia-a10g", "x4"),
+]
+
 
 class InferenceEndpointModel(LightevalModel):
     """InferenceEndpointModels can be used both with the free inference client, or with inference
@@ -71,41 +79,60 @@ class InferenceEndpointModel(LightevalModel):
                     name=config.name, token=env_config.token, namespace=config.namespace
                 )
             else:
-                self.endpoint: InferenceEndpoint = create_inference_endpoint(
-                    name=config.name,
-                    namespace=config.namespace,
-                    repository=config.repository,
-                    revision=config.revision,
-                    framework=config.framework,
-                    task="text-generation",
-                    accelerator=config.accelerator,
-                    vendor=config.vendor,
-                    region=config.region,
-                    type=config.endpoint_type,
-                    instance_size=config.instance_size,
-                    instance_type=config.instance_type,
-                    token=env_config.token,
-                    custom_image={
-                        "health_route": "/health",
-                        "env": {
-                            # Documentaiton: https://huggingface.co/docs/text-generation-inference/en/basic_tutorials/launcher
-                            "MAX_BATCH_PREFILL_TOKENS": "2048",
-                            "MAX_INPUT_LENGTH": "2047",
-                            "MAX_TOTAL_TOKENS": "2048",
-                            "MODEL_ID": "/repository",
-                            "HF_MODEL_TRUST_REMOTE_CODE": "true",
-                            **config.get_dtype_args(),
-                            **config.get_custom_env_vars(),
+                instance_type = config.instance_type or SORTED_INSTANCE_SIZES[0][0]
+                instance_size = config.instance_size or SORTED_INSTANCE_SIZES[0][1]
+                for _ in range(5):  # We allow retrying for up to 5 times
+                    self.endpoint: InferenceEndpoint = create_inference_endpoint(
+                        name=config.name,
+                        namespace=config.namespace,
+                        repository=config.repository,
+                        revision=config.revision,
+                        framework=config.framework,
+                        task="text-generation",
+                        accelerator=config.accelerator,
+                        vendor=config.vendor,
+                        region=config.region,
+                        type=config.endpoint_type,
+                        instance_size=instance_size,
+                        instance_type=instance_type,
+                        token=env_config.token,
+                        custom_image={
+                            "health_route": "/health",
+                            "env": {
+                                # Documentaiton: https://huggingface.co/docs/text-generation-inference/en/basic_tutorials/launcher
+                                "MAX_BATCH_PREFILL_TOKENS": "2048",
+                                "MAX_INPUT_LENGTH": "2047",
+                                "MAX_TOTAL_TOKENS": "2048",
+                                "MODEL_ID": "/repository",
+                                "HF_MODEL_TRUST_REMOTE_CODE": "true",
+                                **config.get_dtype_args(),
+                                **config.get_custom_env_vars(),
+                            },
+                            "url": (config.image_url or "ghcr.io/huggingface/text-generation-inference:latest"),
                         },
-                        "url": (config.image_url or "ghcr.io/huggingface/text-generation-inference:latest"),
-                    },
-                )
-            hlog("Deploying your endpoint. Please wait.")
-            try:
-                self.endpoint.wait(timeout=600)  # Waits for the endpoint to be deployed
-            except InferenceEndpointTimeoutError as e:
-                hlog_err("Endpoint did not start within 10 minutes, there was a timeout.")
-                raise e
+                    )
+                    hlog("Trying to deploy your endpoint. Please wait.")
+                    try:
+                        # Waits for the endpoint to be deployed - we could also check for the status in updating', 'pending', 'initializing'
+                        self.endpoint.wait(timeout=600)
+
+                        if (
+                            self.endpoint.status == "failed"
+                        ):  # we'll try to rescale the hardware up if we could not deploy at this size
+                            instance_type, instance_size = self.get_larger_hardware_suggestion(
+                                instance_type, instance_size
+                            )
+                            hlog(
+                                f"Endpoint failed to start on current hardware. Trying to autoscale to ({instance_type}, {instance_size})."
+                            )
+                        if self.endpoint.status == "running":  # We're good! going to the next step!
+                            break
+                    except InferenceEndpointTimeoutError as e:
+                        hlog_err(
+                            "Endpoint did not start within 10 minutes, there was a timeout. Please inspect the logs."
+                        )
+                        raise e
+
             hlog("Endpoint successfully deployed!")
             self.name = config.repository
             self.revision = self.endpoint.revision
@@ -130,6 +157,23 @@ class InferenceEndpointModel(LightevalModel):
             model_dtype=config.model_dtype or "default",
             model_size=-1,
         )
+
+    @staticmethod
+    def get_larger_hardware_suggestion(cur_instance_type: str = None, cur_instance_size: str = None):
+        try:
+            cur_instance_ix = SORTED_INSTANCE_SIZES.index((cur_instance_type, cur_instance_size))
+            new_instance_type = SORTED_INSTANCE_SIZES[cur_instance_ix + 1][0]
+            new_instance_size = SORTED_INSTANCE_SIZES[cur_instance_ix + 1][1]
+            return new_instance_type, new_instance_size
+        except ValueError:
+            hlog_warn(
+                f"Problem when scaling endpoint: the current instance combination ({cur_instance_type}, {cur_instance_size}) is unknown. Can't scale it up."
+            )
+        except IndexError:
+            hlog_warn(
+                "To avoid accidental costs, we will not upgrade the current endpoint above 4 a10g automatically, please request it explicitely."
+            )
+        return cur_instance_type, cur_instance_size
 
     @property
     def tokenizer(self):

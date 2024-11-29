@@ -259,12 +259,12 @@ class InferenceModelConfig:
 class InferenceEndpointModelConfig:
     name: str
     repository: str
-    accelerator: str
-    vendor: str
-    region: str
-    instance_size: str
-    instance_type: str
-    model_dtype: str
+    accelerator: str = "gpu"
+    model_dtype: str = None  # if empty, we use the default
+    vendor: str = "aws"
+    region: str = "us-west-1"
+    instance_size: str = None  # if none, we autoscale
+    instance_type: str = None  # if none, we autoscale
     framework: str = "pytorch"
     endpoint_type: str = "protected"
     should_reuse_existing: bool = False
@@ -274,7 +274,16 @@ class InferenceEndpointModelConfig:
     image_url: str = None
     env_vars: dict = None
 
+    def __post_init__(self):
+        # xor operator, one is None but not the other
+        if (self.instance_size is None) ^ (self.instance_type is None):
+            raise ValueError(
+                "When creating an inference endpoint, you need to specify explicitely both instance_type and instance_size, or none of them for autoscaling."
+            )
+
     def get_dtype_args(self) -> Dict[str, str]:
+        if self.model_dtype is None:
+            return {}
         model_dtype = self.model_dtype.lower()
         if model_dtype in ["awq", "eetq", "gptq"]:
             return {"QUANTIZE": model_dtype}
@@ -296,7 +305,7 @@ class InferenceEndpointModelConfig:
         keys be specified in the configuration in order to launch the endpoint. This function returns the list of keys
         that are not required and can remain None.
         """
-        return ["namespace", "env_vars", "image_url"]
+        return ["namespace", "env_vars", "image_url", "model_dtupe", "instance_size", "instance_type"]
 
 
 def create_model_config(  # noqa: C901
