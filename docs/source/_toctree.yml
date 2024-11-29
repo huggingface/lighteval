@@ -28,3 +28,9 @@
   - local: available-tasks
     title: Available Tasks
   title: API
+- sections:
+  - sections:
+    - local: package_reference/pipeline
+      title: Pipeline
+    title: Main classes
+  title: Reference
