@@ -20,9 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from itertools import product
 import re
 from functools import lru_cache
+from itertools import product
 from typing import Callable, Literal
 
 import numpy as np
@@ -188,7 +188,7 @@ def multilingual_extractive_match_metric(
     def lazy_number_regex():
         number_re = r"(?P<target>\d+(?:\.\d+)?)"
         prefixed_res = [
-            f"{translation_literal.answer}.{{0,40}}?{number_re}",
+            f"(?i:{translation_literal.answer}).{{0,40}}?{number_re}",
             number_re,
         ]
         return list(map(re.compile, prefixed_res))
@@ -214,16 +214,20 @@ def multilingual_extractive_match_metric(
 
         # First we try to extract if by searching for answer followed by a colon, then just answer without any colon, then we just search for answer
         # and if none of this works, we just search for the indices in the text
-        answer_word = translation_literal.answer
+        answer_word = "(?i:translation_literal.answer)"
 
         prefixed_res = [
+            # Answer is: A.
             f"{answer_word}.{{0,40}}?{colon_re}{answer_re}",
+            # Answer is A.
             f"{answer_word}.{{0,40}}?{answer_re}",
+            # A.
             answer_re,
+            # A
             indice_str_re,
         ]
         return list(map(re.compile, prefixed_res))
-    
+
     def extract_target_from_pred(pred: str, target_re: list[re.Pattern]) -> str | None:
         for re_pattern in target_re:
             matches = re_pattern.findall(pred)
@@ -240,10 +244,15 @@ def multilingual_extractive_match_metric(
             target_re = lazy_number_regex()
         else:
             target_re = lazy_indices_regex(target_for_extraction, len(formatted_doc.choices))
-        
-        extracted_predictions = list(filter(lambda x: x is not None, [extract_target_from_pred(pred, target_re) for pred in predictions]))
 
-        results = [1 if gold.strip() == extracted_pred.strip() else 0 for gold, extracted_pred in product(golds, extracted_predictions)]
+        extracted_predictions = list(
+            filter(lambda x: x is not None, [extract_target_from_pred(pred, target_re) for pred in predictions])
+        )
+
+        results = [
+            1 if gold.strip() == extracted_pred.strip() else 0
+            for gold, extracted_pred in product(golds, extracted_predictions)
+        ]
         return aggregation_function(results or [0])
 
     return SampleLevelMetric(

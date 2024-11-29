@@ -203,7 +203,7 @@ class EvaluationTracker:
         self.fs.mkdirs(output_dir_results, exist_ok=True)
         output_results_file = output_dir_results / f"results_{date_id}.json"
         hlog(f"Saving results to {output_results_file}")
-        with self.fs.open(output_results_file, "w") as f:
+        with self.fs.open(output_results_file, "w", encoding="utf-8") as f:
             f.write(json.dumps(results_dict, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False))
 
     def save_details(self, date_id: str, details_datasets: dict[str, Dataset]):
