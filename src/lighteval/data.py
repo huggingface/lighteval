@@ -20,13 +20,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 from typing import Iterator
 
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data.distributed import DistributedSampler, T_co
 
-from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -34,6 +34,9 @@ from lighteval.tasks.requests import (
     LoglikelihoodSingleTokenRequest,
     Request,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class DynamicBatchDataset(Dataset):
@@ -75,7 +78,7 @@ class DynamicBatchDataset(Dataset):
 
     def init_split_limits(self, num_dataset_splits):
         if num_dataset_splits >= self.total_size:
-            hlog_warn(
+            (
                 f"num_dataset_splits ({num_dataset_splits}) >= total_size ({self.total_size}), setting num_dataset_splits to 1"
             )
             num_dataset_splits = 1
@@ -243,7 +246,7 @@ class GenerativeTaskDataset(DynamicBatchDataset):
             _type_: _description_
         """
         if num_dataset_splits is not None:
-            hlog_warn(
+            logger.warning(
                 "You cannot select the number of dataset splits for a generative evaluation at the moment. Automatically inferring."
             )
 

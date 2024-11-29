@@ -19,8 +19,11 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import logging
 import os
+from logging.config import dictConfig
 
+import colorlog
 import typer
 
 import lighteval.main_accelerate
@@ -33,6 +36,30 @@ import lighteval.main_vllm
 
 app = typer.Typer()
 CACHE_DIR = os.getenv("HF_HOME")
+
+logging_config = dict(  # noqa C408
+    version=1,
+    formatters={
+        "c": {
+            "()": colorlog.ColoredFormatter,
+            "format": "[%(asctime)s] [%(log_color)s%(levelname)8s%(reset)s] --- %(message)s (%(filename)s:%(lineno)s)",
+            "log_colors": {
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "red,bg_white",
+            },
+        },
+    },
+    handlers={"h": {"class": "logging.StreamHandler", "formatter": "c", "level": logging.INFO}},
+    root={
+        "handlers": ["h"],
+        "level": logging.INFO,
+    },
+)
+
+dictConfig(logging_config)
 
 
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_accelerate.accelerate)
