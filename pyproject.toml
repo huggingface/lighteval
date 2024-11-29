@@ -112,4 +112,4 @@ Issues = "https://github.com/huggingface/lighteval/issues"
 # Changelog = "https://github.com/huggingface/lighteval/blob/master/CHANGELOG.md"
 
 [project.scripts]
-lighteval = "lighteval.__main__:cli_evaluate"
+lighteval = "lighteval.__main__:app"
