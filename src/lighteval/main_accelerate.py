@@ -23,40 +23,71 @@
 import os
 from typing import Optional
 
-import typer
 from typer import Argument, Option
 from typing_extensions import Annotated
 
 
-app = typer.Typer()
-
 TOKEN = os.getenv("HF_TOKEN")
 CACHE_DIR: str = os.getenv("HF_HOME", "/scratch")
 
+HELP_PANNEL_NAME_1 = "Common Paramaters"
+HELP_PANNEL_NAME_2 = "Logging Parameters"
+HELP_PANNEL_NAME_3 = "Debug Paramaters"
+HELP_PANNEL_NAME_4 = "Modeling Paramaters"
 
-@app.command()
+
 def accelerate(
     # === general ===
     model_args: Annotated[str, Argument(help="Model arguments in the form key1=value1,key2=value2,...")],
     tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
     # === Common parameters ===
-    output_dir: Annotated[str, Option(help="Output directory for evaluation results.")] = "results",
-    use_chat_template: Annotated[bool, Option(help="Use chat template for evaluation.")] = False,
-    system_prompt: Annotated[Optional[str], Option(help="Use system prompt for evaluation.")] = None,
-    dataset_loading_processes: Annotated[int, Option(help="Number of processes to use for dataset loading.")] = 1,
-    custom_tasks: Annotated[Optional[str], Option(help="Path to custom tasks directory.")] = None,
-    cache_dir: Annotated[str, Option(help="Cache directory for datasets and models.")] = CACHE_DIR,
-    num_fewshot_seeds: Annotated[int, Option(help="Number of seeds to use for few-shot evaluation.")] = 1,
+    use_chat_template: Annotated[
+        bool, Option(help="Use chat template for evaluation.", rich_help_panel=HELP_PANNEL_NAME_4)
+    ] = False,
+    system_prompt: Annotated[
+        Optional[str], Option(help="Use system prompt for evaluation.", rich_help_panel=HELP_PANNEL_NAME_4)
+    ] = None,
+    dataset_loading_processes: Annotated[
+        int, Option(help="Number of processes to use for dataset loading.", rich_help_panel=HELP_PANNEL_NAME_1)
+    ] = 1,
+    custom_tasks: Annotated[
+        Optional[str], Option(help="Path to custom tasks directory.", rich_help_panel=HELP_PANNEL_NAME_1)
+    ] = None,
+    cache_dir: Annotated[
+        str, Option(help="Cache directory for datasets and models.", rich_help_panel=HELP_PANNEL_NAME_1)
+    ] = CACHE_DIR,
+    num_fewshot_seeds: Annotated[
+        int, Option(help="Number of seeds to use for few-shot evaluation.", rich_help_panel=HELP_PANNEL_NAME_1)
+    ] = 1,
     # === saving ===
-    push_to_hub: Annotated[bool, Option(help="Push results to the huggingface hub.")] = False,
-    push_to_tensorboard: Annotated[bool, Option(help="Push results to tensorboard.")] = False,
-    public_run: Annotated[bool, Option(help="Push results and details to a public repo.")] = False,
-    results_org: Annotated[Optional[str], Option(help="Organization to push results to.")] = None,
-    save_details: Annotated[bool, Option(help="Save detailed, sample per sample, results.")] = False,
+    output_dir: Annotated[
+        str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANNEL_NAME_2)
+    ] = "results",
+    push_to_hub: Annotated[
+        bool, Option(help="Push results to the huggingface hub.", rich_help_panel=HELP_PANNEL_NAME_2)
+    ] = False,
+    push_to_tensorboard: Annotated[
+        bool, Option(help="Push results to tensorboard.", rich_help_panel=HELP_PANNEL_NAME_2)
+    ] = False,
+    public_run: Annotated[
+        bool, Option(help="Push results and details to a public repo.", rich_help_panel=HELP_PANNEL_NAME_2)
+    ] = False,
+    results_org: Annotated[
+        Optional[str], Option(help="Organization to push results to.", rich_help_panel=HELP_PANNEL_NAME_2)
+    ] = None,
+    save_details: Annotated[
+        bool, Option(help="Save detailed, sample per sample, results.", rich_help_panel=HELP_PANNEL_NAME_2)
+    ] = False,
     # === debug ===
-    max_samples: Annotated[Optional[int], Option(help="Maximum number of samples to evaluate on.")] = None,
-    override_batch_size: Annotated[int, Option(help="Override batch size for evaluation.")] = -1,
-    job_id: Annotated[int, Option(help="Optional job id for future refenrence.")] = 0,
+    max_samples: Annotated[
+        Optional[int], Option(help="Maximum number of samples to evaluate on.", rich_help_panel=HELP_PANNEL_NAME_3)
+    ] = None,
+    override_batch_size: Annotated[
+        int, Option(help="Override batch size for evaluation.", rich_help_panel=HELP_PANNEL_NAME_3)
+    ] = -1,
+    job_id: Annotated[
+        int, Option(help="Optional job id for future refenrence.", rich_help_panel=HELP_PANNEL_NAME_3)
+    ] = 0,
 ):
     """
     Evaluate models using accelerate and transformers as backend.
@@ -94,11 +125,11 @@ def accelerate(
     )
 
     # TODO (nathan): better handling of model_args
-    model_args: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
-    model_args["accelerator"] = accelerator
-    model_args["use_chat_template"] = use_chat_template
-    model_args["compile"] = bool(model_args["compile"]) if "compile" in model_args else False
-    model_config = BaseModelConfig(**model_args)
+    model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
+    model_args_dict["accelerator"] = accelerator
+    model_args_dict["use_chat_template"] = use_chat_template
+    model_args_dict["compile"] = bool(model_args_dict["compile"]) if "compile" in model_args_dict else False
+    model_config = BaseModelConfig(**model_args_dict)
 
     pipeline = Pipeline(
         tasks=tasks,
