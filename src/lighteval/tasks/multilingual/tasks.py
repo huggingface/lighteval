@@ -140,7 +140,7 @@ xnli_tasks = [
         hf_subset=standardize_tag(language.value),
         evaluation_splits=["validation"],
         few_shots_split="train",
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, formulation),
     )
     for language in [
         Language.ARABIC,
@@ -206,7 +206,7 @@ xnli2_tasks = [
         hf_subset="default",
         evaluation_splits=["train"],
         hf_avail_splits=["train"],
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, formulation),
     )
     for language in [
         Language.ENGLISH,
@@ -278,7 +278,7 @@ xnli_indic_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, formulation),
     )
     for language in [
         Language.ASSAMESE,
@@ -335,7 +335,7 @@ afri_xnli_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, formulation),
     )
     for language in [
         Language.AMHARIC,
@@ -401,7 +401,7 @@ paws_x_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, formulation),
     )
     for language in [
         Language.GERMAN,
@@ -454,7 +454,7 @@ rcb_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.RUSSIAN),
+        stop_sequence=get_cot_stop_sequence(Language.RUSSIAN, formulation),
     )
     for formulation in [
         MCFFormulation(),
@@ -498,7 +498,7 @@ ocnli_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.CHINESE),
+        stop_sequence=get_cot_stop_sequence(Language.CHINESE, formulation),
     )
     for formulation in [
         MCFFormulation(),
@@ -541,7 +541,7 @@ cmnli_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.CHINESE),
+        stop_sequence=get_cot_stop_sequence(Language.CHINESE, formulation),
     )
     for formulation in [
         MCFFormulation(),
@@ -599,7 +599,7 @@ xcopa_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, formulation),
     )
     for language in [
         Language.ARABIC,
@@ -660,7 +660,7 @@ copa_indic_tasks = [
             eval_type,
         ),
         trust_dataset=True,
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, formulation),
     )
     for language in [
         Language.ASSAMESE,
@@ -721,7 +721,7 @@ parus_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.RUSSIAN),
+        stop_sequence=get_cot_stop_sequence(Language.RUSSIAN, formulation),
     )
     for formulation in [
         MCFFormulation(),
@@ -778,7 +778,7 @@ mlmm_hellaswag_tasks = [
             eval_type,
         ),
         trust_dataset=True,
-        stop_sequence=get_cot_stop_sequence(lang),
+        stop_sequence=get_cot_stop_sequence(lang, formulation),
     )
     for lang in [
         Language.ARABIC,
@@ -860,7 +860,7 @@ hellaswag_tur_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.TURKISH),
+        stop_sequence=get_cot_stop_sequence(Language.TURKISH, formulation),
     )
     for formulation in [
         MCFFormulation(),
@@ -904,7 +904,7 @@ hellaswag_tha_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.THAI),
+        stop_sequence=get_cot_stop_sequence(Language.THAI, formulation),
     )
     for formulation in [
         MCFFormulation(),
@@ -944,7 +944,7 @@ hellaswag_tel_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.TELUGU),
+        stop_sequence=get_cot_stop_sequence(Language.TELUGU, formulation),
     )
     for formulation in [
         MCFFormulation(),
@@ -994,7 +994,7 @@ xquad_tasks = [
             multilingual_quasi_exact_match_metric(language, "prefix"),
             multilingual_quasi_f1_score_metric(language),
         ),
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, CFFormulation(cot=False)),
     )
     for language in [
         Language.ARABIC,
@@ -1030,7 +1030,7 @@ thaiqa_tasks = [
         evaluation_splits=("train",),
         few_shots_split="validation",
         generation_size=400,
-        stop_sequence=get_cot_stop_sequence(Language.THAI),
+        stop_sequence=get_cot_stop_sequence(Language.THAI, CFFormulation(cot=False)),
         metric=(
             multilingual_quasi_exact_match_metric(Language.THAI, "prefix"),
             multilingual_quasi_f1_score_metric(Language.THAI),
@@ -1061,7 +1061,7 @@ sber_squad_tasks = [
             multilingual_quasi_f1_score_metric(Language.RUSSIAN),
         ),
         generation_size=400,
-        stop_sequence=get_cot_stop_sequence(Language.RUSSIAN),
+        stop_sequence=get_cot_stop_sequence(Language.RUSSIAN, CFFormulation(cot=False)),
     )
 ]
 
@@ -1088,7 +1088,7 @@ arcd_tasks = [
             multilingual_quasi_f1_score_metric(Language.ARABIC),
         ),
         generation_size=400,
-        stop_sequence=get_cot_stop_sequence(Language.ARABIC),
+        stop_sequence=get_cot_stop_sequence(Language.ARABIC, CFFormulation(cot=False)),
     )
 ]
 
@@ -1115,7 +1115,7 @@ kenswquad_tasks = [
             multilingual_quasi_f1_score_metric(Language.SWAHILI),
         ),
         generation_size=400,
-        stop_sequence=get_cot_stop_sequence(Language.SWAHILI),
+        stop_sequence=get_cot_stop_sequence(Language.SWAHILI, CFFormulation(cot=False)),
     )
 ]
 
@@ -1142,7 +1142,7 @@ chinese_squad_tasks = [
             multilingual_quasi_f1_score_metric(Language.CHINESE),
         ),
         generation_size=400,
-        stop_sequence=get_cot_stop_sequence(Language.CHINESE),
+        stop_sequence=get_cot_stop_sequence(Language.CHINESE, CFFormulation(cot=False)),
     )
 ]
 
@@ -1169,7 +1169,7 @@ cmrc2018_tasks = [
             multilingual_quasi_exact_match_metric(Language.CHINESE, "prefix"),
             multilingual_quasi_f1_score_metric(Language.CHINESE),
         ),
-        stop_sequence=get_cot_stop_sequence(Language.CHINESE),
+        stop_sequence=get_cot_stop_sequence(Language.CHINESE, CFFormulation(cot=False)),
     )
 ]
 
@@ -1201,7 +1201,7 @@ indicqa_tasks = [
             multilingual_quasi_exact_match_metric(language, "prefix"),
             multilingual_quasi_f1_score_metric(language),
         ),
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, CFFormulation(cot=False)),
     )
     for language in [
         Language.ASSAMESE,
@@ -1241,7 +1241,7 @@ fquad_v2_tasks = [
             multilingual_quasi_exact_match_metric(Language.FRENCH, "prefix"),
             multilingual_quasi_f1_score_metric(Language.FRENCH),
         ),
-        stop_sequence=get_cot_stop_sequence(Language.FRENCH),
+        stop_sequence=get_cot_stop_sequence(Language.FRENCH, CFFormulation(cot=False)),
     )
 ]
 
@@ -1267,7 +1267,7 @@ tquad_v2_tasks = [
             multilingual_quasi_exact_match_metric(Language.TURKISH, "prefix"),
             multilingual_quasi_f1_score_metric(Language.TURKISH),
         ),
-        stop_sequence=get_cot_stop_sequence(Language.TURKISH),
+        stop_sequence=get_cot_stop_sequence(Language.TURKISH, CFFormulation(cot=False)),
     )
 ]
 
@@ -1296,7 +1296,7 @@ tydiqa_tasks = [
             multilingual_quasi_exact_match_metric(language, "prefix"),
             multilingual_quasi_f1_score_metric(language),
         ),
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, CFFormulation(cot=False)),
     )
     for language in [
         Language.ENGLISH,
@@ -1343,7 +1343,7 @@ c3_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.CHINESE),
+        stop_sequence=get_cot_stop_sequence(Language.CHINESE, CFFormulation(cot=False)),
     )
     for formulation in [
         MCFFormulation(),
@@ -1383,7 +1383,7 @@ race_ar_task = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.ARABIC),
+        stop_sequence=get_cot_stop_sequence(Language.ARABIC, formulation),
     )
     for formulation in [
         MCFFormulation(),
@@ -1414,7 +1414,7 @@ soqal_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.ARABIC),
+        stop_sequence=get_cot_stop_sequence(Language.ARABIC, formulation),
     )
     for formulation in [
         MCFFormulation(),
@@ -1453,7 +1453,7 @@ mlqa_tasks = [
             multilingual_quasi_exact_match_metric(lang, "prefix"),
             multilingual_quasi_f1_score_metric(lang),
         ],
-        stop_sequence=get_cot_stop_sequence(lang),
+        stop_sequence=get_cot_stop_sequence(lang, CFFormulation(cot=False)),
     )
     for lang in [
         Language.ARABIC,
@@ -1500,7 +1500,8 @@ belebele_tasks = [
             eval_type,
         ),
         stop_sequence=get_cot_stop_sequence(
-            iso_639_3_ind_to_iso_639_3_macro[LangCodeLanguage.get(language).to_alpha3()]
+            iso_639_3_ind_to_iso_639_3_macro[LangCodeLanguage.get(language).to_alpha3()],
+            formulation,
         ),
     )
     for formulation in [
@@ -1762,7 +1763,7 @@ meta_mmlu_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, formulation),
     )
     for subset in MMLU_SUBSETS
     for language in [
@@ -1816,7 +1817,7 @@ mlmm_mmlu_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, formulation),
     )
     for subset in MMLU_SUBSETS
     for language in [
@@ -1886,7 +1887,7 @@ openai_mmlu_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(language[0]),
+        stop_sequence=get_cot_stop_sequence(language[0], formulation),
     )
     for subset in MMLU_SUBSETS
     for language in [
@@ -1956,7 +1957,7 @@ afri_mmlu_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, formulation),
     )
     for subset in AFRI_MMLU_SUBSETS
     for language in [
@@ -2018,7 +2019,7 @@ rummlu = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.RUSSIAN),
+        stop_sequence=get_cot_stop_sequence(Language.RUSSIAN, formulation),
     )
     for subset in MMLU_SUBSETS
     for formulation in [
@@ -2056,7 +2057,7 @@ mmlu_turkish = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.TURKISH),
+        stop_sequence=get_cot_stop_sequence(Language.TURKISH, formulation),
     )
     for subset in MMLU_SUBSETS
     for formulation in [
@@ -2169,7 +2170,7 @@ cmmlu_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.CHINESE),
+        stop_sequence=get_cot_stop_sequence(Language.CHINESE, formulation),
     )
     for subset in CMMLU_SUBSETS
     for formulation in [
@@ -2256,7 +2257,7 @@ arabic_mmlu_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.ARABIC),
+        stop_sequence=get_cot_stop_sequence(Language.ARABIC, formulation),
     )
     for subset in ARABIC_MMLU_SUBSETS
     for formulation in [
@@ -2308,7 +2309,7 @@ turkish_mmlu_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.TURKISH),
+        stop_sequence=get_cot_stop_sequence(Language.TURKISH, formulation),
     )
     for subset in TURKISH_MMLU_SUBSET
     for formulation in [
@@ -2378,7 +2379,7 @@ mlmm_arc_challenge_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, formulation),
     )
     for language in [
         Language.RUSSIAN,
@@ -2442,7 +2443,7 @@ arabic_ledarboard_arc_easy = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.ARABIC),
+        stop_sequence=get_cot_stop_sequence(Language.ARABIC, formulation),
     )
     for formulation in [
         MCFFormulation(),
@@ -2484,7 +2485,7 @@ lumi_arc = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, formulation),
     )
     for formulation in [
         MCFFormulation(),
@@ -2540,7 +2541,7 @@ turkish_arc_tasks = [
             + ([loglikelihood_acc_metric(normalization=LogProbPMINorm())] if subset == "challenge" else []),  # type: ignore
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.TURKISH),
+        stop_sequence=get_cot_stop_sequence(Language.TURKISH, formulation),
     )
     for subset in ["easy", "challenge"]
     for formulation in [
@@ -2582,7 +2583,7 @@ hindi_arc_tasks = [
             + ([loglikelihood_acc_metric(normalization=LogProbPMINorm())] if subset == "challenge" else []),  # type: ignore
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.HINDI),
+        stop_sequence=get_cot_stop_sequence(Language.HINDI, formulation),
     )
     for subset in ["easy", "challenge"]
     for formulation in [
@@ -2616,7 +2617,7 @@ arabic_arc_tasks = [
             eval_type,
         ),
         trust_dataset=True,
-        stop_sequence=get_cot_stop_sequence(Language.ARABIC),
+        stop_sequence=get_cot_stop_sequence(Language.ARABIC, formulation),
     )
     for formulation in [
         MCFFormulation(),
@@ -2660,7 +2661,7 @@ swahili_arc_tasks = [
             + ([loglikelihood_acc_metric(normalization=LogProbPMINorm())] if subset == "challenge" else []),  # type: ignore
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.SWAHILI),
+        stop_sequence=get_cot_stop_sequence(Language.SWAHILI, formulation),
     )
     for subset in ["easy", "challenge"]
     for formulation in [
@@ -2725,7 +2726,7 @@ mlmm_truthfulqa_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, formulation),
     )
     for subset in ["mc1", "mc2"]
     for language in [
@@ -2804,7 +2805,7 @@ turkish_truthfulqa = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.TURKISH),
+        stop_sequence=get_cot_stop_sequence(Language.TURKISH, formulation),
     )
     for subset in ["mc1", "mc2"]
     for formulation in [
@@ -2973,7 +2974,7 @@ exams_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, formulation),
     )
     for language in exams_subjects_by_lang.keys()
     for subject in exams_subjects_by_lang[language]
@@ -3012,7 +3013,7 @@ m3exams_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, formulation),
     )
     for language in [
         Language.AFRIKAANS,
@@ -3064,7 +3065,7 @@ thai_exams_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.THAI),
+        stop_sequence=get_cot_stop_sequence(Language.THAI, formulation),
     )
     for subset in THAI_EXAMS_SUBSETS
     for formulation in [
@@ -3121,7 +3122,7 @@ xcsqa_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, formulation),
     )
     for language in [
         Language.ARABIC,
@@ -3188,7 +3189,7 @@ piqa_ar_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.ARABIC),
+        stop_sequence=get_cot_stop_sequence(Language.ARABIC, formulation),
     )
     for formulation in [
         MCFFormulation(),
@@ -3237,7 +3238,7 @@ openbook_ara_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.ARABIC),
+        stop_sequence=get_cot_stop_sequence(Language.ARABIC, formulation),
     )
     for formulation in [
         MCFFormulation(),
@@ -3277,7 +3278,7 @@ openbook_rus_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.RUSSIAN),
+        stop_sequence=get_cot_stop_sequence(Language.RUSSIAN, formulation),
     )
     for formulation in [
         MCFFormulation(),
@@ -3329,7 +3330,7 @@ sciqa_ar_task = [
             eval_type,
         ),
         trust_dataset=True,
-        stop_sequence=get_cot_stop_sequence(Language.ARABIC),
+        stop_sequence=get_cot_stop_sequence(Language.ARABIC, formulation),
     )
     for formulation in [
         MCFFormulation(),
@@ -3379,7 +3380,7 @@ mathlogicqa_rus_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.RUSSIAN),
+        stop_sequence=get_cot_stop_sequence(Language.RUSSIAN, formulation),
     )
     for formulation in [
         CFFormulation(),
@@ -3411,7 +3412,7 @@ cmath_tasks = [
         metric=[
             multilingual_extractive_match_metric(Language.CHINESE),
         ],
-        stop_sequence=get_cot_stop_sequence(Language.CHINESE),
+        stop_sequence=get_cot_stop_sequence(Language.CHINESE, CFFormulation(cot=cot)),
     )
     for cot in (False, True)
 ]
@@ -3433,7 +3434,7 @@ mgsm_tasks = [
         metric=[
             multilingual_extractive_match_metric(language),
         ],
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, CFFormulation(cot=cot)),
     )
     for language in [
         Language.SPANISH,
@@ -3469,7 +3470,7 @@ afri_mgsm_tasks = [
         metric=[
             multilingual_extractive_match_metric(language),
         ],
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, CFFormulation(cot=cot)),
     )
     for language in [
         Language.AMHARIC,
@@ -3514,7 +3515,7 @@ msvamp_tasks = [
         metric=[
             multilingual_extractive_match_metric(language),
         ],
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, CFFormulation(cot=cot)),
     )
     for language in [
         Language.BENGALI,
@@ -3564,7 +3565,7 @@ cmm_math_mc_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.CHINESE),
+        stop_sequence=get_cot_stop_sequence(Language.CHINESE, formulation),
     )
     for formulation in [
         MCFFormulation(),
@@ -3602,7 +3603,7 @@ math23k_tasks = [
         few_shots_split="train",
         generation_size=get_cot_generaion_size(cot, 100),  # Similar to other math tasks like msvamp
         metric=[multilingual_extractive_match_metric(Language.CHINESE)],
-        stop_sequence=get_cot_stop_sequence(Language.CHINESE),
+        stop_sequence=get_cot_stop_sequence(Language.CHINESE, CFFormulation(cot=cot)),
     )
     for cot in (False, True)
 ]
@@ -3641,7 +3642,7 @@ tal_scq5k_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.CHINESE),
+        stop_sequence=get_cot_stop_sequence(Language.CHINESE, formulation),
     )
     for formulation in [
         MCFFormulation(),
@@ -3677,7 +3678,7 @@ mathqa_tr_tasks = [
         metric=[
             multilingual_extractive_match_metric(Language.TURKISH),
         ],
-        stop_sequence=get_cot_stop_sequence(Language.TURKISH),
+        stop_sequence=get_cot_stop_sequence(Language.TURKISH, CFFormulation(cot=cot)),
     )
     for cot in (False, True)
 ]
@@ -3702,7 +3703,7 @@ mwp_tr_tasks = [
         metric=[
             multilingual_extractive_match_metric(Language.TURKISH),
         ],
-        stop_sequence=get_cot_stop_sequence(Language.TURKISH),
+        stop_sequence=get_cot_stop_sequence(Language.TURKISH, CFFormulation(cot=cot)),
     )
     for cot in (False, True)
 ]
@@ -3731,7 +3732,7 @@ mera_arithmetic_tasks = [
         metric=[
             Metrics.quasi_exact_match_math,
         ],
-        stop_sequence=get_cot_stop_sequence(Language.RUSSIAN),
+        stop_sequence=get_cot_stop_sequence(Language.RUSSIAN, CFFormulation(cot=cot)),
     )
     for subset in ["rumodar", "rumultiar", "simplear"]
     for cot in (False, True)
@@ -3769,7 +3770,7 @@ qazuntv2_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(lang),
+        stop_sequence=get_cot_stop_sequence(lang, formulation),
     )
     for lang in [
         Language.ENGLISH,
@@ -3810,7 +3811,7 @@ armath_tasks = [
         metric=[
             multilingual_extractive_match_metric(Language.ARABIC),
         ],
-        stop_sequence=get_cot_stop_sequence(Language.ARABIC),
+        stop_sequence=get_cot_stop_sequence(Language.ARABIC, CFFormulation(cot=cot)),
     )
     for cot in (False, True)
 ]
@@ -3837,7 +3838,7 @@ hawp_tasks = [
         few_shots_split="dev",
         generation_size=get_cot_generaion_size(cot, 100),
         metric=[multilingual_extractive_match_metric(Language.HINDI)],
-        stop_sequence=get_cot_stop_sequence(Language.HINDI),
+        stop_sequence=get_cot_stop_sequence(Language.HINDI, CFFormulation(cot=cot)),
     )
     for cot in (False, True)
 ]
@@ -3907,7 +3908,7 @@ agieval_tasks_zh = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.CHINESE),
+        stop_sequence=get_cot_stop_sequence(Language.CHINESE, formulation),
     )
     for subset in CHINESE_AGIEVAL_SUBSET
     for formulation in [
@@ -4002,7 +4003,7 @@ ceval_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.CHINESE),
+        stop_sequence=get_cot_stop_sequence(Language.CHINESE, formulation),
     )
     for subset in CEVAL_SUBSET
     for formulation in [
@@ -4046,7 +4047,7 @@ worldtree_rus_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(Language.RUSSIAN),
+        stop_sequence=get_cot_stop_sequence(Language.RUSSIAN, formulation),
     )
     for formulation in [
         MCFFormulation(),
@@ -4086,7 +4087,7 @@ xcodah_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, formulation),
     )
     for language in [
         Language.ARABIC,
@@ -4152,7 +4153,7 @@ xstory_tasks = [
             ],
             eval_type,
         ),
-        stop_sequence=get_cot_stop_sequence(lang),
+        stop_sequence=get_cot_stop_sequence(lang, formulation),
     )
     for lang in [
         Language.RUSSIAN,
@@ -4198,12 +4199,17 @@ xwinograd_tasks = [
         hf_subset=standardize_tag(language.value),
         evaluation_splits=("test",),
         hf_avail_splits=["test"],
-        metric=[
-            loglikelihood_acc_metric(normalization=None),
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
-        stop_sequence=get_cot_stop_sequence(language),
+        metric=get_metrics_for_mcq_formulation(
+            formulation,
+            language,
+            [
+                loglikelihood_acc_metric(normalization=None),
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+            eval_type,
+        ),
+        stop_sequence=get_cot_stop_sequence(language, formulation),
     )
     for language in [
         Language.ENGLISH,
@@ -4236,12 +4242,17 @@ winograd_turkish_task = [
         hf_subset="default",
         evaluation_splits=("validation",),
         few_shots_split="train",
-        metric=[
-            loglikelihood_acc_metric(normalization=None),
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
-        stop_sequence=get_cot_stop_sequence(Language.TURKISH),
+        metric=get_metrics_for_mcq_formulation(
+            formulation,
+            Language.TURKISH,
+            [
+                loglikelihood_acc_metric(normalization=None),
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+            eval_type,
+        ),
+        stop_sequence=get_cot_stop_sequence(Language.TURKISH, formulation),
     )
     for formulation in [
         MCFFormulation(),
@@ -4300,7 +4311,7 @@ mkqa_tasks = [
         else [
             multilingual_quasi_exact_match_metric(language, "full"),
         ],
-        stop_sequence=get_cot_stop_sequence(language),
+        stop_sequence=get_cot_stop_sequence(language, CFFormulation(cot=False)),
     )
     for subset in MKQA_TASK_TO_ID.keys()
     for language in [
@@ -4353,7 +4364,7 @@ mintaka_tasks = [
             multilingual_quasi_exact_match_metric(lang, "prefix"),
             multilingual_quasi_f1_score_metric(lang),
         ],
-        stop_sequence=get_cot_stop_sequence(lang),
+        stop_sequence=get_cot_stop_sequence(lang, CFFormulation(cot=False)),
     )
     for lang in [
         Language.ARABIC,
@@ -4388,7 +4399,7 @@ french_triviqa_tasks = [
             multilingual_quasi_exact_match_metric(Language.FRENCH, "prefix"),
             multilingual_quasi_f1_score_metric(Language.FRENCH),
         ],
-        stop_sequence=get_cot_stop_sequence(Language.FRENCH),
+        stop_sequence=get_cot_stop_sequence(Language.FRENCH, CFFormulation(cot=False)),
     )
 ]
 
@@ -4413,7 +4424,7 @@ chegeka_tasks = [
             multilingual_quasi_exact_match_metric(Language.RUSSIAN, "prefix"),
             multilingual_quasi_f1_score_metric(Language.RUSSIAN),
         ],
-        stop_sequence=get_cot_stop_sequence(Language.RUSSIAN),
+        stop_sequence=get_cot_stop_sequence(Language.RUSSIAN, CFFormulation(cot=False)),
     )
 ]
 

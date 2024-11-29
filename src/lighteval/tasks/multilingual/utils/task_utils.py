@@ -51,7 +51,11 @@ def get_metrics_for_mcq_formulation(
         case _, "logprobs":
             return metrics
         case MCFFormulation(cot=False), "generative":
-            return [Metrics.exact_match, Metrics.prefix_exact_match]
+            return [
+                Metrics.exact_match,
+                Metrics.prefix_exact_match,
+                multilingual_extractive_match_metric(language, target_for_extraction=formulation.choice_prefix),
+            ]
         case MCFFormulation(cot=True), "generative":
             return [
                 multilingual_extractive_match_metric(language, target_for_extraction=formulation.choice_prefix),
@@ -65,9 +69,10 @@ def get_cot_generaion_size(cot: bool, generation_size: int) -> int | None:
     return 1024
 
 
-def get_cot_stop_sequence(language: Language) -> list[str] | None:
+def get_cot_stop_sequence(language: Language, formulation: Formulation) -> list[str] | None:
+    stop_sequence = ["\n"] if not formulation.cot else []
     try:
         trans = TRANSLATION_LITERALS[language]
-        return [f"{trans.question_word}{trans.colon}"]
+        return [f"{trans.question_word}{trans.colon}"] + stop_sequence
     except (AttributeError, KeyError):
-        return None
+        return stop_sequence
