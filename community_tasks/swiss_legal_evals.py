@@ -32,10 +32,12 @@ Author: Joel Niklaus
 """
 
 import importlib.metadata as importlib_metadata
+import os
 import statistics
 from dataclasses import dataclass
 
 import nltk
+import requests
 import torch
 from comet import download_model, load_from_checkpoint
 from nltk import word_tokenize
@@ -212,20 +214,41 @@ def get_swiss_legal_translation_judge(judge_model_name: str = "gpt-4o"):
 swiss_legal_translation_judge_gpt_4o = get_swiss_legal_translation_judge(judge_model_name="gpt-4o")
 
 
-def get_bert_score(model_type: str = "xlm-roberta-large", device: str = "cpu"):
+def get_bert_score(language: str, num_layers: int = 24, model_type: str = "xlm-roberta-large", device: str = "cpu"):
     if device == "mps":
         raise ValueError("MPS is not supported for BERTScore")
-    hlog(f"Loading BERTScore with model_type={model_type}, and device={device}...")
+    hlog(
+        f"Loading BERTScore with lang={language}, num_layers={num_layers}, model_type={model_type}, and device={device}..."
+    )
     score = BertScore(normalize_gold=remove_braces, normalize_pred=remove_braces_and_strip)
     score.bert_scorer = BERTScorer(
         # We could download the files from here and set the baseline_path ourselves:
         # https://github.com/Tiiiger/bert_score/tree/master/bert_score/rescale_baseline
         model_type=model_type,
-        lang=None,  # Needs to be set if rescale_with_baseline is True
-        rescale_with_baseline=False,
+        lang=language,  # Needs to be set if rescale_with_baseline is True
+        num_layers=num_layers,  # Needs to be set if rescale_with_baseline is True
+        rescale_with_baseline=True,
         baseline_path=None,
         device=device,
     )
+
+    if language == "rm":
+        language = "it"
+        hlog_warn("There is no BERTScore baseline file for Rumantsch, using Italian instead.")
+
+    # Create directory structure if it doesn't exist
+    os.makedirs(os.path.dirname(score.bert_scorer.baseline_path), exist_ok=True)
+
+    # Download the baseline file if it doesn't exist
+    if not os.path.exists(score.bert_scorer.baseline_path):
+        raw_url = f"https://raw.githubusercontent.com/Tiiiger/bert_score/master/bert_score/rescale_baseline/{language}/{model_type}.tsv"
+        hlog(f"Downloading BERTScore baseline file from {raw_url}")
+        response = requests.get(raw_url)
+        if response.status_code == 200:
+            with open(score.bert_scorer.baseline_path, "wb") as f:
+                f.write(response.content)
+        else:
+            raise RuntimeError(f"Failed to download baseline file from {raw_url}")
 
     return SampleLevelMetricGrouping(
         metric_name=["BERTScore-P", "BERTScore-R", "BERTScore-F"],
@@ -243,10 +266,6 @@ def get_bert_score(model_type: str = "xlm-roberta-large", device: str = "cpu"):
             "BERTScore-F": statistics.mean,
         },
     )
-
-
-# INFO: Batch sizes are optimized for an 80GB NVIDIA A100 GPU
-bert_score = get_bert_score(model_type="xlm-roberta-large", device=device)
 
 
 class BLEURT:
@@ -717,7 +736,7 @@ class TranslationTask(LightevalTaskConfig):
                 bleu,  # Use sample level BLEU for faster evaluation
                 chrf,  # Use sample level chrF for faster evaluation
                 meteor,
-                bert_score,
+                get_bert_score(language=target_lang, model_type="xlm-roberta-large", device=device),
                 bleurt_large,
                 xcomet_xxl,  # Just use one, disregarding xcomet_xl, comet_wmt22_da
                 swiss_legal_translation_judge_gpt_4o,
