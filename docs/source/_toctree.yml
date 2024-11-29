@@ -30,6 +30,8 @@
   title: API
 - sections:
   - sections:
+    - local: package_reference/models
+      title: Models
     - local: package_reference/pipeline
       title: Pipeline
     - local: package_reference/tasks
