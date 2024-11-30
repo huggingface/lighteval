@@ -1,35 +1,63 @@
 # Metrics
 
+## Metrics
+### Metrics
+[[autodoc]] metrics.metrics.Metrics
+### Metric
+[[autodoc]] metrics.utils.metric_utils.Metric
+### CorpusLevelMetric
+[[autodoc]] metrics.utils.metric_utils.CorpusLevelMetric
+### SampleLevelMetric
+[[autodoc]] metrics.utils.metric_utils.SampleLevelMetric
+
 ## Corpus Metrics
-
+### CorpusLevelF1Score
 [[autodoc]] metrics.metrics_corpus.CorpusLevelF1Score
-
+### CorpusLevelPerplexityMetric
 [[autodoc]] metrics.metrics_corpus.CorpusLevelPerplexityMetric
-
+### CorpusLevelTranslationMetric
 [[autodoc]] metrics.metrics_corpus.CorpusLevelTranslationMetric
+### matthews_corrcoef
+[[autodoc]] metrics.metrics_corpus.matthews_corrcoef
 
 ## Sample Metrics
-
+### ExactMatches
 [[autodoc]] metrics.metrics_sample.ExactMatches
+### F1_score
 [[autodoc]] metrics.metrics_sample.F1_score
+### LoglikelihoodAcc
 [[autodoc]] metrics.metrics_sample.LoglikelihoodAcc
+### NormalizedMultiChoiceProbability
 [[autodoc]] metrics.metrics_sample.NormalizedMultiChoiceProbability
+### Probability
 [[autodoc]] metrics.metrics_sample.Probability
+### Recall
 [[autodoc]] metrics.metrics_sample.Recall
+### MRR
 [[autodoc]] metrics.metrics_sample.MRR
+### ROUGE
 [[autodoc]] metrics.metrics_sample.ROUGE
+### BertScore
 [[autodoc]] metrics.metrics_sample.BertScore
+### Extractiveness
 [[autodoc]] metrics.metrics_sample.Extractiveness
+### Faithfulness
 [[autodoc]] metrics.metrics_sample.Faithfulness
+### BLEURT
 [[autodoc]] metrics.metrics_sample.BLEURT
-[[autodoc]] metrics.metrics_sample.BLEU
+### BLEU
+[[autodoc]] metrics.metrics_sample.
+### StringDistance
 [[autodoc]] metrics.metrics_sample.StringDistance
+### JudgeLLM
 [[autodoc]] metrics.metrics_sample.JudgeLLM
+### JudgeLLMMTBench
 [[autodoc]] metrics.metrics_sample.JudgeLLMMTBench
+### JudgeLLMMixEval
 [[autodoc]] metrics.metrics_sample.JudgeLLMMixEval
-[[autodoc]] metrics.metrics_sample.JudgeLLMMixEval
+### MajAtK
 [[autodoc]] metrics.metrics_sample.MajAtK
 
 ## LLM-as-a-Judge
-
+### JudgeLM
 [[autodoc]] metrics.llm_as_judge.JudgeLM
