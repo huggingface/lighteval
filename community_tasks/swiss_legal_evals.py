@@ -268,6 +268,19 @@ def get_bert_score(language: str, num_layers: int = 24, model_type: str = "xlm-r
     )
 
 
+# Create BERTScore metrics for each language
+
+
+bert_scores = {
+    lang: get_bert_score(
+        language=lang,
+        model_type="xlm-roberta-large",
+        device=device,
+    )
+    for lang in ["de", "fr", "it", "rm", "en"]
+}
+
+
 class BLEURT:
     def __init__(
         self,
@@ -347,7 +360,6 @@ def get_bleurt(
     )
 
 
-# Only take the largest version
 bleurt_large = get_bleurt(model_size="large", seq_len=512, batch_size=256, device=device)
 
 
@@ -521,8 +533,8 @@ class BLEU:
         return statistics.mean(scores) * 100
 
 
-bleu = SampleLevelMetric(
-    metric_name="bleu",
+bleu_sentence = SampleLevelMetric(
+    metric_name="bleu_sentence",
     higher_is_better=True,
     category=MetricCategory.GENERATIVE,
     use_case=MetricUseCase.TRANSLATION,
@@ -562,8 +574,8 @@ class CHRF:
         return statistics.mean(scores) * 100
 
 
-chrf = SampleLevelMetric(
-    metric_name="chrf",
+chrf_sentence = SampleLevelMetric(
+    metric_name="chrf_sentence",
     higher_is_better=True,
     category=MetricCategory.GENERATIVE,
     use_case=MetricUseCase.TRANSLATION,
@@ -733,12 +745,19 @@ class TranslationTask(LightevalTaskConfig):
             few_shots_select="sequential",
             generation_size=level_config.generation_size,
             metric=[
-                bleu,  # Use sample level BLEU for faster evaluation
-                chrf,  # Use sample level chrF for faster evaluation
+                # ===== Lexical metrics =====
+                # Metrics.ter,  # TER is a corpus level metric that is very slow in bootstrapping
+                bleu_sentence,  # Use sample level BLEU for faster evaluation
+                Metrics.bleu,  # Disable this if it is too slow
+                Metrics.bleu_1,
+                Metrics.bleu_4,
+                Metrics.chrf,  # Disable this if it is too slow
+                chrf_sentence,  # Use sample level chrF for faster evaluation
                 meteor,
-                get_bert_score(language=target_lang, model_type="xlm-roberta-large", device=device),
-                bleurt_large,
-                xcomet_xxl,  # Just use one, disregarding xcomet_xl, comet_wmt22_da
+                # ===== Model-based metrics =====
+                bert_scores[target_lang],
+                bleurt_large,  # Only take the largest version, disregarding base and tiny
+                xcomet_xxl,  # Only take the largest version, disregarding xcomet_xl, comet_wmt22_da
                 swiss_legal_translation_judge_gpt_4o,
                 # Additionally we could consider adding the following open source judge models:
                 # flowaicom/Flow-Judge-v0.1, prometheus-eval/prometheus-7b-v2.0
