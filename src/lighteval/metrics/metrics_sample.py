@@ -24,6 +24,7 @@
 using simple function (min, mean, max, ...) at the corpus level. Most metrics fall under this category.
 """
 
+import logging
 import os
 from typing import Callable, Literal
 
@@ -37,7 +38,6 @@ from nltk.translate.bleu_score import sentence_bleu
 from rouge_score import rouge_scorer, scoring
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.imports.bert_scorer import BERTScorer
 from lighteval.metrics.imports.data_stats_metric import DataStatsMetric
 from lighteval.metrics.imports.summac import SummaCZS
@@ -51,6 +51,9 @@ from lighteval.metrics.normalizations import (
 )
 from lighteval.tasks.requests import Doc
 from lighteval.utils.utils import as_list, safe_divide
+
+
+logger = logging.getLogger(__name__)
 
 
 class ExactMatches:
@@ -464,7 +467,7 @@ class ROUGE:
                 default tokenizer will be used.
         """
         if aggregation_function and bootstrap:
-            hlog_warn("Can't use both bootstrapping and an aggregation function in Rouge. Keeping bootstrap.")
+            logger.info("Can't use both bootstrapping and an aggregation function in Rouge. Keeping bootstrap.")
         self.aggregation_function = aggregation_function
         if self.aggregation_function is None:
             self.aggregation_function = np.mean
@@ -575,7 +578,7 @@ class BertScore:
             dict: Scores over the current sample's items.
         """
         if self.bert_scorer is None:
-            hlog_warn("The first metric computation step might be a bit longer as we need to download the model.")
+            logger.info("The first metric computation step might be a bit longer as we need to download the model.")
             # We only initialize on first compute
             self.bert_scorer = BERTScorer(
                 model_type="microsoft/deberta-large-mnli", lang="en", rescale_with_baseline=True, num_layers=9
@@ -787,7 +790,9 @@ class StringDistance:
            dict: The different scores computed
         """
         if len(golds) > 1:
-            hlog_warn("Provided more than one gold to compute a string distance metric. Just using the first one.")
+            logger.warning(
+                "Provided more than one gold to compute a string distance metric. Just using the first one."
+            )
         reference = golds[0]
 
         result = {m: [] for m in self.metric_types}

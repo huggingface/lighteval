@@ -22,6 +22,7 @@
 
 import collections
 import inspect
+import logging
 import random
 from dataclasses import asdict, dataclass, field
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple
@@ -31,7 +32,6 @@ from huggingface_hub import TextGenerationInputGrammarType
 from multiprocess import Pool
 from pytablewriter import MarkdownTableWriter
 
-from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.metrics import (
     apply_generative_metric,
     apply_llm_as_judge_metric,
@@ -59,6 +59,8 @@ from lighteval.utils.utils import ListLike, as_list, download_dataset_worker
 
 if TYPE_CHECKING:
     from lighteval.logging.evaluation_tracker import EvaluationTracker
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -188,7 +190,7 @@ class LightevalTask:
         self.dataset_filter = cfg.hf_filter
         self.trust_dataset = cfg.trust_dataset
         self.dataset: Optional[DatasetDict] = None  # Delayed download
-        hlog(f"{self.dataset_path} {self.dataset_config_name}")
+        logger.info(f"{self.dataset_path} {self.dataset_config_name}")
         self._fewshot_docs = None
         self._docs = None
 
@@ -207,7 +209,7 @@ class LightevalTask:
         ignored = [metric for metric in self.metrics if metric.category == MetricCategory.IGNORED]
 
         if len(ignored) > 0:
-            hlog_warn(f"[WARNING] Not implemented yet: ignoring the metric {' ,'.join(ignored)} for task {self.name}.")
+            logger.warning(f"Not implemented yet: ignoring the metric {' ,'.join(ignored)} for task {self.name}.")
 
         current_categories = [metric.category for metric in self.metrics]
         self.has_metric_category = {category: (category in current_categories) for category in MetricCategory}
@@ -262,7 +264,7 @@ class LightevalTask:
         if len(stored_splits) > 0:
             return stored_splits[:number_of_splits]
 
-        hlog_warn(f"Careful, the task {self.name} is using evaluation data to build the few shot examples.")
+        logger.warning(f"Careful, the task {self.name} is using evaluation data to build the few shot examples.")
         return None
 
     def _get_docs_from_split(self, splits: list[str], few_shots=False) -> list[Doc]:

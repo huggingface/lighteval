@@ -165,6 +165,7 @@ class Pipeline:
         return accelerator, parallel_context
 
     def _init_model(self, model_config, model):
+        logger.info("---- LOADING MODEL ----")
         if model_config is not None:
             if self.parallel_context:
                 return NanotronLightevalModel(
@@ -191,6 +192,7 @@ class Pipeline:
 
     def _init_tasks_and_requests(self, tasks: str):
         with local_ranks_zero_first() if self.launcher_type == ParallelismManager.NANOTRON else nullcontext():
+            logger.info("--- LOADING TASKS ---")
             registry = Registry(
                 cache_dir=self.pipeline_parameters.env_config.cache_dir,
                 custom_tasks=self.pipeline_parameters.custom_tasks_directory,
@@ -201,7 +203,6 @@ class Pipeline:
 
             self.evaluation_tracker.task_config_logger.log(task_dict)
 
-            logger.info("Loading documents, and requests")
             requests, docs = create_requests_from_tasks(
                 task_dict=task_dict,
                 fewshot_dict=fewshots_dict,
@@ -220,7 +221,7 @@ class Pipeline:
             self.docs = docs
 
     def _init_random_seeds(self):
-        logger.info(f"setting seed to {1234} for random and numpy")
+        logger.info("--- INIT SEEDS ---")
         random.seed(1234)
         np.random.seed(1234)
         if self.accelerator is not None:
@@ -244,7 +245,6 @@ class Pipeline:
             config=self.model_config,
         )
 
-        logger.info(f"Evaluate on {len(self.task_names_list)} tasks.")
         sample_id_to_responses = self._run_model()
         self._compute_metrics(sample_id_to_responses)
 
@@ -264,6 +264,7 @@ class Pipeline:
     def _run_model(self):
         # Running all requests depending on the model call type (log likelihood, generative, ...)
         # to be able to batch them
+        logger.info("--- RUNNING MODEL ---")
         sample_id_to_responses: dict[(SampleUid, MetricCategory), list[ModelResponse]] = collections.defaultdict(list)
 
         for request_type, requests in self.requests.items():
@@ -295,6 +296,7 @@ class Pipeline:
         #             "responses": [[response1_1, response1_2, ...], [response2_1, response2_2, ...], ...],
         #             "docs": [doc1, doc2, ...]
         #         }
+        logger.info("--- COMPUTING METRICS ---")
         task_metric_category_groups = collections.defaultdict(
             lambda: collections.defaultdict(lambda: collections.defaultdict(list))
         )
@@ -327,6 +329,7 @@ class Pipeline:
                     self.evaluation_tracker.details_logger.log(task_name, task, doc, response, output)
 
     def save_and_push_results(self):
+        logger.info("--- SAVING AND PUSHING RESULTS ---")
         if self.is_main_process():
             self.evaluation_tracker.save()
 

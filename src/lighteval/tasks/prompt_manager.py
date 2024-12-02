@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 import random
 from collections import defaultdict
 from dataclasses import dataclass
@@ -27,10 +28,12 @@ from enum import Enum
 from itertools import cycle
 from typing import TYPE_CHECKING, Optional, Tuple, Union
 
-from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.tasks.requests import Doc
 from lighteval.utils.utils import as_list
+
+
+logger = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:
@@ -416,5 +419,5 @@ class FewShotSampler:
         if few_shot_iterations <= 1:
             return [0]
         seeds = range(few_shot_iterations)
-        hlog_warn(f"Running {self.task.name} with {few_shot_iterations} few-shot iterations.")
+        logger.warning(f"Running {self.task.name} with {few_shot_iterations} few-shot iterations.")
         return seeds

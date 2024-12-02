@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import asyncio
+import logging
 from typing import Coroutine, List, Optional, Union
 
 import torch
@@ -39,7 +40,6 @@ from tqdm import tqdm
 from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
-from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
 from lighteval.models.model_config import InferenceEndpointModelConfig, InferenceModelConfig
 from lighteval.models.model_output import GenerativeResponse, LoglikelihoodResponse, LoglikelihoodSingleTokenResponse
@@ -51,6 +51,8 @@ from lighteval.tasks.requests import (
 )
 from lighteval.utils.utils import EnvConfig, as_list
 
+
+logger = logging.getLogger(__name__)
 
 BATCH_SIZE = 50
 
@@ -100,13 +102,13 @@ class InferenceEndpointModel(LightevalModel):
                         "url": (config.image_url or "ghcr.io/huggingface/text-generation-inference:latest"),
                     },
                 )
-            hlog("Deploying your endpoint. Please wait.")
+            logger.info("Deploying your endpoint. Please wait.")
             try:
                 self.endpoint.wait(timeout=600)  # Waits for the endpoint to be deployed
             except InferenceEndpointTimeoutError as e:
-                hlog_err("Endpoint did not start within 10 minutes, there was a timeout.")
+                logger.error("Endpoint did not start within 10 minutes, there was a timeout.")
                 raise e
-            hlog("Endpoint successfully deployed!")
+            logger.info("Endpoint successfully deployed!")
             self.name = config.repository
             self.revision = self.endpoint.revision
             self.async_client: AsyncInferenceClient = self.endpoint.async_client
@@ -146,7 +148,7 @@ class InferenceEndpointModel(LightevalModel):
     def cleanup(self):
         if self.endpoint is not None and not self.reuse_existing:
             self.endpoint.delete()
-            hlog_warn(
+            logger.warning(
                 "You deleted your endpoint after using it. You'll need to create it again if you need to reuse it."
             )
 
@@ -288,7 +290,7 @@ class InferenceEndpointModel(LightevalModel):
                 returns_logits = batch[0].use_logits
                 num_samples = batch[0].num_samples
                 if num_samples > 1:
-                    hlog_err(
+                    logger.error(
                         "Inference endpoints does not allow sampling evaluations - this is likely to fail or provide problematic results"
                     )
 

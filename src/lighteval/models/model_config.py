@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 from dataclasses import dataclass
 from typing import Dict, Optional, Union
 
@@ -27,7 +28,6 @@ import torch
 import yaml
 from transformers import AutoConfig, BitsAndBytesConfig, GPTQConfig, PretrainedConfig
 
-from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.utils import _get_model_sha
 from lighteval.utils.imports import (
     NO_AUTOGPTQ_ERROR_MSG,
@@ -40,6 +40,8 @@ from lighteval.utils.imports import (
 )
 from lighteval.utils.utils import EnvConfig, boolstring_to_bool
 
+
+logger = logging.getLogger(__name__)
 
 if is_accelerate_available():
     from accelerate import Accelerator
@@ -144,7 +146,7 @@ class BaseModelConfig:
         # Gathering the model's automatic quantization config, if available
         try:
             model_auto_quantization_config = auto_config.quantization_config
-            hlog("An automatic quantization config was found in the model's config. Using it to load the model")
+            logger.info("An automatic quantization config was found in the model's config. Using it to load the model")
         except (AttributeError, KeyError):
             model_auto_quantization_config = None
 
@@ -401,11 +403,11 @@ def create_model_config(  # noqa: C901
 
         if multichoice_continuations_start_space is not None:
             if multichoice_continuations_start_space:
-                hlog(
+                logger.info(
                     "You set `multichoice_continuations_start_space` to true. This will force multichoice continuations to use a starting space"
                 )
             else:
-                hlog(
+                logger.info(
                     "You set `multichoice_continuations_start_space` to false. This will remove a leading space from multichoice continuations, if present."
                 )
 
