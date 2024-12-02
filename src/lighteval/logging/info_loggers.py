@@ -30,7 +30,7 @@ import git
 import numpy as np
 import xxhash
 
-from lighteval.logging.hierarchical_logger import hlog, hlog_warn
+from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics import MetricCategory
 from lighteval.metrics.stderr import get_stderr_function
 from lighteval.models.abstract_model import ModelInfo
@@ -521,27 +521,8 @@ class MetricsLogger:
                 if isinstance(metric_result, dict):
                     stderr = None  # We skip stderr for some corpus metrics that return dicts
                 else:
-                    hlog(f"Bootstrapping standard error for {metric_name} from {len(metric_values)} samples")
-                    # For sample-level metrics, try to convert to numeric values
-                    if isinstance(metric_values[0], (int, float)):
-                        hlog("Using precomputed sample-level values to compute stderr")
-                        try:
-                            numeric_values = [float(v) for v in metric_values]
-                            stderr = get_stderr_function(
-                                metric_values=numeric_values, number_experiments=bootstrap_iters
-                            )
-                        except (TypeError, ValueError):
-                            hlog_warn(f"Skipping stderr for {metric_name} - values are not numeric")
-                            stderr = None
-                    # For corpus-level metrics, pass the aggregation function
-                    else:
-                        hlog("Recomputing the scores from scratch for stderr since we don't have sample-level values")
-                        stderr = get_stderr_function(
-                            metric_values=metric_values,
-                            number_experiments=bootstrap_iters,
-                            aggregation=task.aggregation()[metric_name],
-                        )
-
+                    aggregation = task.aggregation()[metric_name]
+                    stderr = get_stderr_function(aggregation=aggregation, number_experiments=1000)
                 if stderr is not None and len(metric_values) > 1:
                     try:
                         self.metric_aggregated[task_name][f"{metric_name}_stderr"] = stderr(metric_values)

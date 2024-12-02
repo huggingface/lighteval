@@ -86,36 +86,15 @@ def bootstrap_stderr(metric: Callable, population: list, number_experiments: int
     return mean_stderr(res)
 
 
-def get_stderr_function(
-    metric_values: list,
-    number_experiments: int = 1000,
-    aggregation: Optional[Callable] = None,
-) -> Optional[Callable]:
-    """Get the appropriate stderr function for the given metric values.
+def get_stderr_function(aggregation: Callable, number_experiments: int = 1000):
+    # Mean stderr can be computed trivially
+    if "mean" in aggregation.__name__:
+        return mean_stderr
 
-    Args:
-        metric_values (list): List of values to compute stderr from
-        number_experiments (int): Number of bootstrap iterations
-        aggregation (Optional[Callable]): Aggregation function for corpus-level metrics
-
-    Returns:
-        Optional[Callable]: Function to compute standard error, or None if not possible
-    """
-    if len(metric_values) <= 1:
-        return None
-
-    # For sample-level metrics
-    if isinstance(metric_values[0], (int, float)) or aggregation is None:
-        try:
-            _ = [float(x) for x in metric_values]
-            return lambda _: bootstrap_stderr(population=metric_values, number_experiments=number_experiments)
-        except (TypeError, ValueError):
-            return None
-
-    # For corpus-level metrics
+    # For other metrics, we bootstrap the stderr by sampling
     try:
-        return lambda _: bootstrap_stderr(
-            population=metric_values, number_experiments=number_experiments, metric=aggregation
+        return lambda population: bootstrap_stderr(
+            metric=aggregation, population=population, number_experiments=number_experiments
         )
     except Exception:
         return None
