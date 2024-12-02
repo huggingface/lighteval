@@ -35,7 +35,6 @@ from nltk.metrics.distance import edit_distance
 from nltk.tokenize import word_tokenize
 from nltk.tokenize.treebank import TreebankWordTokenizer
 from nltk.translate.bleu_score import sentence_bleu
-from rouge_score import rouge_scorer, scoring
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from lighteval.metrics.imports.bert_scorer import BERTScorer
@@ -477,11 +476,11 @@ class ROUGE:
             raise ValueError(
                 f"Rouge was initialised with method {methods}, which is not in {','.join(self.ALLOWED_ROUGE_METHODS)}"
             )
-        self.scorer = rouge_scorer.RougeScorer([methods], tokenizer=tokenizer)
         self.multiple_golds = multiple_golds
         self.bootstrap = bootstrap
         self.normalize_gold = normalize_gold
         self.normalize_pred = normalize_pred
+        self.tokenizer = tokenizer
 
     def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float | dict:
         """Computes the metric(s) over a list of golds and predictions for one single sample.
@@ -494,6 +493,11 @@ class ROUGE:
             float or dict: Aggregated score over the current sample's items.
                 If several rouge functions have been selected, returns a dict which maps name and scores.
         """
+        from rouge_score import rouge_scorer
+
+        if self.scorer is None:
+            self.scorer = rouge_scorer.RougeScorer(self.methods, tokenizer=self.tokenizer)
+
         # Normalize
         if self.normalize_gold:
             golds = [self.normalize_gold(g) for g in golds]
@@ -530,6 +534,8 @@ class ROUGE:
         return {method: self.aggregation_function(scores[method]) for method in self.methods}
 
     def _rouge_score_with_bootsrap(self, golds: list[str], preds: list[str]):
+        from rouge_score import scoring
+
         aggregator = scoring.BootstrapAggregator()
         for g, p in zip(golds, preds):
             aggregator.add_scores(self.scorer.score(g, p))

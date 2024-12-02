@@ -130,7 +130,7 @@ class Pipeline:
         self.launcher_type = self.pipeline_parameters.launcher_type
         if self.pipeline_parameters.max_samples:
             logger.warning(
-                "WARNING: --max_samples WAS SET. THESE NUMBERS ARE ONLY PARTIAL AND SHOULD NOT BE USED FOR COMPARISON UNLESS YOU KNOW WHAT YOU ARE DOING."
+                "--max_samples WAS SET. THESE NUMBERS ARE ONLY PARTIAL AND SHOULD NOT BE USED FOR COMPARISON UNLESS YOU KNOW WHAT YOU ARE DOING."
             )
 
         self.model_config = model_config
