@@ -55,61 +55,34 @@ class _bootstrap_internal:
         rnd = random.Random()
         rnd.seed(seed)
         samplings = []
-        for _ in range(self.number_draws):
-            if self.metric is None:
-                # For sample-level metrics, just compute mean of sampled precomputed values
-                sampled_values = rnd.choices(population, k=len(population))
-                samplings.append(np.mean(sampled_values))
-            else:
-                # For corpus-level metrics, recompute metric on sampled values
-                sampled_values = rnd.choices(population, k=len(population))
-                samplings.append(self.metric(sampled_values))
+        import multiprocessing as mp
+
+        with mp.Pool(mp.cpu_count()) as pool:
+            samplings = pool.starmap(
+                self.metric,
+                tqdm(
+                    [(rnd.choices(population, k=len(population)),) for _ in range(self.number_draws)],
+                    total=self.number_draws,
+                    desc="Sampling bootstrap iterations",
+                ),
+            )
         return samplings
 
 
-def bootstrap_stderr(
-    population: list,
-    number_experiments: int,
-    metric: Optional[Callable] = None,
-) -> float:
-    """Bootstraps the stderr by resampling.
-
-    For sample-level metrics, resamples from precomputed values to avoid recomputing heavy metrics.
-    For corpus-level metrics, recomputes metric on resampled values.
-
-    Args:
-        population (list): List of values to bootstrap from
-        number_experiments (int): Total number of bootstrap iterations
-        metric (Optional[Callable]): Metric function for corpus-level metrics
-
-    Returns:
-        float: Standard error estimate from bootstrap
+def bootstrap_stderr(metric: Callable, population: list, number_experiments: int):
+    """Bootstraps the stderr of the given metric for the given population of samples,
+    by sampling said population for number_experiments and recomputing the metric on the
+    different samplings.
     """
-    if metric is None:
-        # For sample-level metrics, verify values are numeric
-        try:
-            population = [float(x) for x in population]
-        except (TypeError, ValueError) as e:
-            raise TypeError(f"All values must be numeric for sample-level bootstrap. Got error: {e}")
-
-    import multiprocessing as mp
-
-    pool = mp.Pool(mp.cpu_count())
-
     res = []
     number_draws = min(1000, number_experiments)
     number_seeds = number_experiments // number_draws
 
-    for cur_bootstrap in tqdm(
-        pool.imap(
-            _bootstrap_internal(number_draws=number_draws, metric=metric),
-            ((population, seed) for seed in range(number_seeds)),
-        ),
-        total=number_seeds,
-    ):
-        res.extend(cur_bootstrap)
+    hlog(f"Bootstrapping {metric.__name__}'s stderr with {number_seeds} seeds.")
+    for seed in range(number_seeds):
+        # sample w replacement
+        res.extend(_bootstrap_internal(metric=metric, number_draws=number_draws)((population, seed)))
 
-    pool.close()
     return mean_stderr(res)
 
 
