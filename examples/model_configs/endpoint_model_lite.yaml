@@ -1,0 +1,4 @@
+model:
+  type: "endpoint" # can be base, tgi, or endpoint
+  base_params:
+    model_or_endpoint_name: "Qwen/Qwen2.5-72B-Instruct" #Qwen/Qwen2.5-7B"

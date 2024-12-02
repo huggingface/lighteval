@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import asyncio
+import re
 from typing import Coroutine, List, Optional, Union
 
 import torch
@@ -28,12 +29,14 @@ from huggingface_hub import (
     AsyncInferenceClient,
     InferenceClient,
     InferenceEndpoint,
+    InferenceEndpointError,
     InferenceEndpointTimeoutError,
     TextGenerationInputGrammarType,
     TextGenerationOutput,
     create_inference_endpoint,
     get_inference_endpoint,
 )
+from huggingface_hub.utils._errors import HfHubHTTPError
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoTokenizer
@@ -53,6 +56,7 @@ from lighteval.utils.utils import EnvConfig, as_list
 
 
 BATCH_SIZE = 50
+MAX_RETRIES = 5
 
 SORTED_INSTANCE_SIZES = [  # sorted by incremental overall RAM (to load models)
     # type, size
@@ -68,73 +72,89 @@ class InferenceEndpointModel(LightevalModel):
     endpoints, which will use text-generation-inference to deploy your model for the duration of the evaluation.
     """
 
-    def __init__(
+    def __init__(  # noqa: C901
         self, config: Union[InferenceEndpointModelConfig, InferenceModelConfig], env_config: EnvConfig
     ) -> None:
         self.reuse_existing = getattr(config, "should_reuse_existing", True)
         self._max_length = None
+        self.endpoint = None
         if isinstance(config, InferenceEndpointModelConfig):
-            if config.should_reuse_existing:
-                self.endpoint = get_inference_endpoint(
-                    name=config.name, token=env_config.token, namespace=config.namespace
-                )
-            else:
-                instance_type = config.instance_type or SORTED_INSTANCE_SIZES[0][0]
-                instance_size = config.instance_size or SORTED_INSTANCE_SIZES[0][1]
-                for _ in range(5):  # We allow retrying for up to 5 times
-                    self.endpoint: InferenceEndpoint = create_inference_endpoint(
-                        name=config.name,
-                        namespace=config.namespace,
-                        repository=config.repository,
-                        revision=config.revision,
-                        framework=config.framework,
-                        task="text-generation",
-                        accelerator=config.accelerator,
-                        vendor=config.vendor,
-                        region=config.region,
-                        type=config.endpoint_type,
-                        instance_size=instance_size,
-                        instance_type=instance_type,
-                        token=env_config.token,
-                        custom_image={
-                            "health_route": "/health",
-                            "env": {
-                                # Documentaiton: https://huggingface.co/docs/text-generation-inference/en/basic_tutorials/launcher
-                                "MAX_BATCH_PREFILL_TOKENS": "2048",
-                                "MAX_INPUT_LENGTH": "2047",
-                                "MAX_TOTAL_TOKENS": "2048",
-                                "MODEL_ID": "/repository",
-                                "HF_MODEL_TRUST_REMOTE_CODE": "true",
-                                **config.get_dtype_args(),
-                                **config.get_custom_env_vars(),
-                            },
-                            "url": (config.image_url or "ghcr.io/huggingface/text-generation-inference:latest"),
-                        },
-                    )
+            instance_type = config.instance_type or SORTED_INSTANCE_SIZES[0][0]
+            instance_size = config.instance_size or SORTED_INSTANCE_SIZES[0][1]
+            # Endpoint names do not allow special characters
+            endpoint_name = re.sub("[^a-zA-Z0-9-]", "-", config.model_or_endpoint_name.lower() + "-lighteval")
+            for _ in range(1, MAX_RETRIES):  # We allow retrying for up to 5 times
+                try:
+                    if self.endpoint is None:  # Endpoint does not exist yet locally
+                        if config.should_reuse_existing:
+                            self.endpoint = get_inference_endpoint(
+                                name=config.model_or_endpoint_name, token=env_config.token, namespace=config.namespace
+                            )
+                        else:
+                            self.endpoint: InferenceEndpoint = create_inference_endpoint(
+                                name=endpoint_name,
+                                namespace=config.namespace,
+                                repository=config.model_or_endpoint_name,
+                                revision=config.revision,
+                                framework=config.framework,
+                                task="text-generation",
+                                accelerator=config.accelerator,
+                                vendor=config.vendor,
+                                region=config.region,
+                                type=config.endpoint_type,
+                                instance_size=instance_size,
+                                instance_type=instance_type,
+                                token=env_config.token,
+                                custom_image={
+                                    "health_route": "/health",
+                                    "env": {
+                                        # Documentation: https://huggingface.co/docs/text-generation-inference/en/basic_tutorials/launcher
+                                        "MAX_BATCH_PREFILL_TOKENS": "2048",
+                                        "MAX_INPUT_LENGTH": "2047",
+                                        "MAX_TOTAL_TOKENS": "2048",
+                                        "MODEL_ID": "/repository",
+                                        "HF_MODEL_TRUST_REMOTE_CODE": "true",
+                                        **config.get_dtype_args(),
+                                        **config.get_custom_env_vars(),
+                                    },
+                                    "url": (
+                                        config.image_url or "ghcr.io/huggingface/text-generation-inference:latest"
+                                    ),
+                                },
+                            )
+                    else:  # Endpoint exists and must be scaled up
+                        self.endpoint.update(instance_size=instance_size, instance_type=instance_type)
+                        self.endpoint.fetch()
+
+                    # Waits for the endpoint to be deployed - we could also check for the status in updating', 'pending', 'initializing'
                     hlog("Trying to deploy your endpoint. Please wait.")
                     try:
-                        # Waits for the endpoint to be deployed - we could also check for the status in updating', 'pending', 'initializing'
-                        self.endpoint.wait(timeout=600)
-
-                        if (
-                            self.endpoint.status == "failed"
-                        ):  # we'll try to rescale the hardware up if we could not deploy at this size
-                            instance_type, instance_size = self.get_larger_hardware_suggestion(
-                                instance_type, instance_size
-                            )
-                            hlog(
-                                f"Endpoint failed to start on current hardware. Trying to autoscale to ({instance_type}, {instance_size})."
-                            )
-                        if self.endpoint.status == "running":  # We're good! going to the next step!
-                            break
-                    except InferenceEndpointTimeoutError as e:
-                        hlog_err(
-                            "Endpoint did not start within 10 minutes, there was a timeout. Please inspect the logs."
+                        self.endpoint.wait(timeout=1800, refresh_every=60)
+                    except InferenceEndpointError as e:
+                        instance_type, instance_size = self.get_larger_hardware_suggestion(
+                            instance_type, instance_size
                         )
-                        raise e
+
+                        hlog(
+                            f"Endpoint failed to start on current hardware with error {e}. Trying to autoscale to ({instance_type}, {instance_size})."
+                        )
+                    if self.endpoint.status == "running":  # We're good! going to the next step!
+                        break
+                except InferenceEndpointTimeoutError as e:
+                    hlog_err("Endpoint did not start within 30 minutes, there was a timeout. Please inspect the logs.")
+                    raise e
+                except HfHubHTTPError as e:
+                    if "409 Client Error: Conflict for url:" in str(e):
+                        config.model_or_endpoint_name = endpoint_name
+                        config.should_reuse_existing = True
+                    elif "Bad Request: Compute instance not available yet" in str(e):
+                        self.endpoint.wait(timeout=1800, refresh_every=60)
+
+            if not self.endpoint.status == "running":
+                raise Exception("Did not manage to start endpoint within the elapsed time and on suggested hardware.")
 
             hlog("Endpoint successfully deployed!")
-            self.name = config.repository
+            self.name = config.model_or_endpoint_name
             self.revision = self.endpoint.revision
             self.async_client: AsyncInferenceClient = self.endpoint.async_client
             self.client: InferenceClient = self.endpoint.client

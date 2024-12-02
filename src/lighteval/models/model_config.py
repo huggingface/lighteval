@@ -257,17 +257,16 @@ class InferenceModelConfig:
 
 @dataclass
 class InferenceEndpointModelConfig:
-    name: str
-    repository: str
+    model_or_endpoint_name: str
+    should_reuse_existing: bool = False
     accelerator: str = "gpu"
     model_dtype: str = None  # if empty, we use the default
     vendor: str = "aws"
-    region: str = "us-west-1"
+    region: str = "eu-west-1"
     instance_size: str = None  # if none, we autoscale
     instance_type: str = None  # if none, we autoscale
     framework: str = "pytorch"
     endpoint_type: str = "protected"
-    should_reuse_existing: bool = False
     add_special_tokens: bool = True
     revision: str = "main"
     namespace: str = None  # The namespace under which to launch the endopint. Defaults to the current user's namespace
@@ -297,15 +296,6 @@ class InferenceEndpointModelConfig:
 
     def get_custom_env_vars(self) -> Dict[str, str]:
         return {k: str(v) for k, v in self.env_vars.items()} if self.env_vars else {}
-
-    @staticmethod
-    def nullable_keys() -> list[str]:
-        """
-        Returns the list of optional keys in an endpoint model configuration. By default, the code requires that all the
-        keys be specified in the configuration in order to launch the endpoint. This function returns the list of keys
-        that are not required and can remain None.
-        """
-        return ["namespace", "env_vars", "image_url", "model_dtupe", "instance_size", "instance_type"]
 
 
 def create_model_config(  # noqa: C901
@@ -380,29 +370,26 @@ def create_model_config(  # noqa: C901
         )
 
     if config["type"] == "endpoint":
-        reuse_existing_endpoint = config["base_params"].get("reuse_existing", None)
-        complete_config_endpoint = all(
-            val not in [None, ""]
-            for key, val in config.get("instance", {}).items()
-            if key not in InferenceEndpointModelConfig.nullable_keys()
+        if config["base_params"].get("endpoint_name", None):
+            return InferenceModelConfig(model=config["base_params"]["endpoint_name"])
+        all_params = {
+            "model_dtype": config["base_params"].get("dtype", None),
+            "revision": config["base_params"].get("revision", None) or "main",
+            "should_reuse_existing": config["base_params"].get("should_reuse_existing"),
+            "accelerator": config.get("instance", {}).get("accelerator", None),
+            "region": config.get("instance", {}).get("region", None),
+            "vendor": config.get("instance", {}).get("vendor", None),
+            "instance_size": config.get("instance", {}).get("instance_size", None),
+            "instance_type": config.get("instance", {}).get("instance_type", None),
+            "namespace": config.get("instance", {}).get("namespace", None),
+            "image_url": config.get("instance", {}).get("image_url", None),
+            "env_vars": config.get("instance", {}).get("env_vars", None),
+        }
+        return InferenceEndpointModelConfig(
+            model_or_endpoint_name=config["base_params"]["model_or_endpoint_name"],
+            # We only initialize params which have a non default value
+            **{k: v for k, v in all_params.items() if v is not None},
         )
-        if reuse_existing_endpoint or complete_config_endpoint:
-            return InferenceEndpointModelConfig(
-                name=config["base_params"]["endpoint_name"].replace(".", "-").lower(),
-                repository=config["base_params"]["model"],
-                model_dtype=config["base_params"]["dtype"],
-                revision=config["base_params"]["revision"] or "main",
-                should_reuse_existing=reuse_existing_endpoint,
-                accelerator=config["instance"]["accelerator"],
-                region=config["instance"]["region"],
-                vendor=config["instance"]["vendor"],
-                instance_size=config["instance"]["instance_size"],
-                instance_type=config["instance"]["instance_type"],
-                namespace=config["instance"]["namespace"],
-                image_url=config["instance"].get("image_url", None),
-                env_vars=config["instance"].get("env_vars", None),
-            )
-        return InferenceModelConfig(model=config["base_params"]["endpoint_name"])
 
     if config["type"] == "base":
         # Creating the multichoice space parameters
