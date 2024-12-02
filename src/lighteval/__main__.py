@@ -42,7 +42,7 @@ logging_config = dict(  # noqa C408
     formatters={
         "c": {
             "()": colorlog.ColoredFormatter,
-            "format": "[%(asctime)s] [%(log_color)s%(levelname)8s%(reset)s] --- %(message)s (%(filename)s:%(lineno)s)",
+            "format": "[%(asctime)s] [%(log_color)s%(levelname)8s%(reset)s]: %(message)s (%(filename)s:%(lineno)s)",
             "log_colors": {
                 "DEBUG": "cyan",
                 "INFO": "green",

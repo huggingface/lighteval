@@ -105,7 +105,7 @@ class Registry:
         """
         task_class = self.task_registry.get(task_name)
         if task_class is None:
-            logger.critical(f"{task_name} not found in provided tasks")
+            logger.error(f"{task_name} not found in provided tasks")
             raise ValueError(f"Cannot find tasks {task_name} in task list or in custom task registry)")
 
         return task_class()
