@@ -78,7 +78,7 @@ class DynamicBatchDataset(Dataset):
 
     def init_split_limits(self, num_dataset_splits):
         if num_dataset_splits >= self.total_size:
-            (
+            logger.warning(
                 f"num_dataset_splits ({num_dataset_splits}) >= total_size ({self.total_size}), setting num_dataset_splits to 1"
             )
             num_dataset_splits = 1
