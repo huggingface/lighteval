@@ -26,24 +26,10 @@ from datetime import timedelta
 from logging import Logger
 from typing import Any, Callable
 
-from lighteval.utils.imports import is_accelerate_available, is_nanotron_available
-
-
-if is_nanotron_available():
-    from nanotron.logging import get_logger
-
-    logger = get_logger(__name__, log_level="INFO")
-elif is_accelerate_available():
-    from accelerate import Accelerator, InitProcessGroupKwargs
-    from accelerate.logging import get_logger
-
-    # We must init the accelerator before using the logger
-    accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
-    logger = get_logger(__name__, log_level="INFO")
-else:
-    logger = Logger(__name__, level="INFO")
-
 from colorama import Fore, Style
+
+
+logger = Logger(__name__, level="INFO")
 
 
 class HierarchicalLogger:
@@ -58,26 +44,23 @@ class HierarchicalLogger:
 
     def indent(self) -> str:
         """Manages the block level text indentation for nested blocks"""
-        return ""
         return "  " * len(self.start_times)
 
     def track_begin(self, x: Any) -> None:
         """Starts a block level tracker, stores the step begin time"""
-        return
         logger.warning(f"{self.indent()}{str(x)} \u007b")  # \u007b is {
         sys.stdout.flush()
         self.start_times.append(time.time())
 
     def track_end(self) -> None:
         """Ends a block level tracker, prints the elapsed time for the associated step"""
-        return
         duration = time.time() - self.start_times.pop()
         logger.warning(f"{self.indent()}\u007d [{str(timedelta(seconds=duration))}]")  # \u007d is }
         sys.stdout.flush()
 
     def log(self, x: Any) -> None:
-        logger.info(self.indent() + str(x))
-        # sys.stdout.flush()
+        logger.warning(self.indent() + str(x))
+        sys.stdout.flush()
 
 
 HIERARCHICAL_LOGGER = HierarchicalLogger()

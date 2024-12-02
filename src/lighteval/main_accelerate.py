@@ -20,12 +20,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 import os
 from typing import Optional
 
 from typer import Argument, Option
 from typing_extensions import Annotated
 
+
+logger = logging.getLogger(__name__)
 
 TOKEN = os.getenv("HF_TOKEN")
 CACHE_DIR: str = os.getenv("HF_HOME", "/scratch")
@@ -36,9 +39,14 @@ HELP_PANNEL_NAME_3 = "Debug Paramaters"
 HELP_PANNEL_NAME_4 = "Modeling Paramaters"
 
 
-def accelerate(
+def accelerate(  # noqa C901
     # === general ===
-    model_args: Annotated[str, Argument(help="Model arguments in the form key1=value1,key2=value2,...")],
+    model_args: Annotated[
+        str,
+        Argument(
+            help="Model arguments in the form key1=value1,key2=value2,... or path to yaml config file (see examples/model_configs/base_model.yaml)"
+        ),
+    ],
     tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
     # === Common parameters ===
     use_chat_template: Annotated[
@@ -94,11 +102,14 @@ def accelerate(
     """
     from datetime import timedelta
 
+    import torch
+    import yaml
     from accelerate import Accelerator, InitProcessGroupKwargs
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.models.model_config import BaseModelConfig
+    from lighteval.models.model_config import AdapterModelConfig, BaseModelConfig, BitsAndBytesConfig, DeltaModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
+    from lighteval.utils.utils import boolstring_to_bool
 
     accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
 
@@ -124,12 +135,69 @@ def accelerate(
         system_prompt=system_prompt,
     )
 
-    # TODO (nathan): better handling of model_args
-    model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
-    model_args_dict["accelerator"] = accelerator
-    model_args_dict["use_chat_template"] = use_chat_template
-    model_args_dict["compile"] = bool(model_args_dict["compile"]) if "compile" in model_args_dict else False
-    model_config = BaseModelConfig(**model_args_dict)
+    if model_args.endswith(".yaml"):
+        with open(model_args, "r") as f:
+            config = yaml.safe_load(f)["model"]
+
+        # Creating the multichoice space parameters
+        # We need to take into account possible conversion issues from our different input formats
+        multichoice_continuations_start_space = boolstring_to_bool(
+            config["generation"]["multichoice_continuations_start_space"]
+        )
+
+        if multichoice_continuations_start_space is not None:
+            if multichoice_continuations_start_space:
+                logger.info(
+                    "You set `multichoice_continuations_start_space` to true. This will force multichoice continuations to use a starting space"
+                )
+            else:
+                logger.info(
+                    "You set `multichoice_continuations_start_space` to false. This will remove a leading space from multichoice continuations, if present."
+                )
+
+        # Creating optional quantization configuration
+        if config["base_params"]["dtype"] == "4bit":
+            quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.float16)
+        elif config["base_params"]["dtype"] == "8bit":
+            quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+        else:
+            quantization_config = None
+
+        # We extract the model args
+        args_dict = {k.split("=")[0]: k.split("=")[1] for k in config["base_params"]["model_args"].split(",")}
+
+        # We store the relevant other args
+        args_dict["base_model"] = config["merged_weights"]["base_model"]
+        args_dict["compile"] = bool(config["base_params"]["compile"])
+        args_dict["dtype"] = config["base_params"]["dtype"]
+        args_dict["accelerator"] = accelerator
+        args_dict["quantization_config"] = quantization_config
+        args_dict["batch_size"] = override_batch_size
+        args_dict["multichoice_continuations_start_space"] = multichoice_continuations_start_space
+        args_dict["use_chat_template"] = use_chat_template
+
+        # Keeping only non null params
+        args_dict = {k: v for k, v in args_dict.items() if v is not None}
+
+        if config["merged_weights"]["delta_weights"]:
+            if config["merged_weights"]["base_model"] is None:
+                raise ValueError("You need to specify a base model when using delta weights")
+            model_config = DeltaModelConfig(**args_dict)
+        elif config["merged_weights"]["adapter_weights"]:
+            if config["merged_weights"]["base_model"] is None:
+                raise ValueError("You need to specify a base model when using adapter weights")
+            model_config = AdapterModelConfig(**args_dict)
+        elif config["merged_weights"]["base_model"] not in ["", None]:
+            raise ValueError("You can't specify a base model if you are not using delta/adapter weights")
+        else:
+            model_config = BaseModelConfig(**args_dict)
+    else:
+        # TODO (nathan): better handling of model_args
+        model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
+        model_args_dict["accelerator"] = accelerator
+        model_args_dict["use_chat_template"] = use_chat_template
+        model_args_dict["compile"] = bool(model_args_dict["compile"]) if "compile" in model_args_dict else False
+        model_config = BaseModelConfig(**model_args_dict)
 
     pipeline = Pipeline(
         tasks=tasks,
