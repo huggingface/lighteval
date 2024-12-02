@@ -19,7 +19,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import os
 
 import typer
 
@@ -32,7 +31,6 @@ import lighteval.main_vllm
 
 
 app = typer.Typer()
-CACHE_DIR = os.getenv("HF_HOME")
 
 
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_accelerate.accelerate)
