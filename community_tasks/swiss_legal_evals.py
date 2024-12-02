@@ -42,9 +42,8 @@ import torch
 from comet import download_model, load_from_checkpoint
 from nltk import word_tokenize
 from nltk.translate import meteor_score
-from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu
-from nltk.translate.chrf_score import sentence_chrf
 from packaging import version
+from sacrebleu import sentence_bleu, sentence_chrf, sentence_ter
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from lighteval.logging.hierarchical_logger import hlog, hlog_warn
@@ -481,28 +480,6 @@ meteor = SampleLevelMetric(
 
 
 class BLEU:
-    def __init__(
-        self,
-        weights=(0.25, 0.25, 0.25, 0.25),
-        smoothing_function=None,
-        auto_reweigh=False,
-    ):
-        """
-        Initialize BLEU scorer with specified n-gram weights.
-        Default weights are for BLEU-4 (equal weights for 1-4 grams).
-
-        Args:
-            weights: Tuple of weights for unigrams through 4-grams
-            smoothing_function: Optional smoothing function for BLEU computation
-            auto_reweigh: Whether to automatically reweigh the scores based on reference length
-        """
-        self.weights = weights
-        self.smoothing_function = smoothing_function or SmoothingFunction().method1
-        self.auto_reweigh = auto_reweigh
-
-        # Ensure NLTK data is downloaded
-        nltk.download("punkt")
-
     def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float:
         """
         Compute BLEU score for a list of predictions against their references.
@@ -516,19 +493,7 @@ class BLEU:
         """
         scores = []
         for ref, pred in zip(golds, predictions):
-            # Tokenize the reference and prediction
-            reference = [word_tokenize(ref)]
-            hypothesis = word_tokenize(pred)
-
-            # Calculate BLEU score for this pair
-            score = sentence_bleu(
-                references=reference,
-                hypothesis=hypothesis,
-                weights=self.weights,
-                smoothing_function=self.smoothing_function,
-                auto_reweigh=self.auto_reweigh,
-            )
-            scores.append(score)
+            scores.append(sentence_bleu(pred, [ref]).score)
 
         return statistics.mean(scores) * 100
 
@@ -544,32 +509,13 @@ bleu_sentence = SampleLevelMetric(
 
 
 class CHRF:
-    def __init__(self, beta: float = 3.0, max_len: int = 6, min_len: int = 1):
-        """
-        Initialize chrF scorer with specified parameters.
-        beta: Weight of recall vs precision (default: 3.0)
-        max_len: Maximum n-gram order (default: 6)
-        min_len: Minimum n-gram order (default: 1)
-        """
-        self.beta = beta
-        self.max_len = max_len
-        self.min_len = min_len
-
     def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float:
         """
         Compute chrF score for a list of predictions against their references.
         """
         scores = []
         for ref, pred in zip(golds, predictions):
-            score = sentence_chrf(
-                ref,
-                pred,
-                min_len=self.min_len,
-                max_len=self.max_len,
-                beta=self.beta,
-                ignore_whitespace=True,
-            )
-            scores.append(score)
+            scores.append(sentence_chrf(pred, [ref]).score)
 
         return statistics.mean(scores) * 100
 
@@ -584,9 +530,29 @@ chrf_sentence = SampleLevelMetric(
 )
 
 
+class TER:
+    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float:
+        """
+        Compute TER score for a list of predictions against their references.
+        """
+        scores = []
+        for ref, pred in zip(golds, predictions):
+            scores.append(sentence_ter(pred, [ref]).score)
+
+        return statistics.mean(scores) * 100
+
+
+ter_sentence = SampleLevelMetric(
+    metric_name="ter_sentence",
+    higher_is_better=False,
+    category=MetricCategory.GENERATIVE,
+    use_case=MetricUseCase.TRANSLATION,
+    sample_level_fn=TER().compute,
+    corpus_level_fn=statistics.mean,
+)
+
+
 # EVALS WITH SUBSET
-# This is how you create a subset task (like MMLU), which has several subset
-# each being its own evaluation task.
 
 
 def create_translation_pairs(langs_list: list) -> list[tuple]:
@@ -746,13 +712,14 @@ class TranslationTask(LightevalTaskConfig):
             generation_size=level_config.generation_size,
             metric=[
                 # ===== Lexical metrics =====
-                # Metrics.ter,  # TER is a corpus level metric that is very slow in bootstrapping
-                bleu_sentence,  # Use sample level BLEU for faster evaluation
-                Metrics.bleu,  # Disable this if it is too slow
-                Metrics.bleu_1,
-                Metrics.bleu_4,
-                Metrics.chrf,  # Disable this if it is too slow
-                chrf_sentence,  # Use sample level chrF for faster evaluation
+                # Corpus level metrics
+                Metrics.bleu,
+                Metrics.chrf,
+                # Metrics.ter,  # TER often hangs for a while and takes more than 10 minutes to compute
+                # Sample level metrics
+                bleu_sentence,
+                chrf_sentence,
+                ter_sentence,
                 meteor,
                 # ===== Model-based metrics =====
                 bert_scores[target_lang],
