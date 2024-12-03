@@ -4,9 +4,7 @@ generation: null
 logging:
   output_dir: "outputs"
   save_details: false
-  push_results_to_hub: false
-  push_details_to_hub: false
-  push_results_to_tensorboard: false
+  push_to_hub: false
   public_run: false
   results_org: null
   tensorboard_metric_prefix: "eval"

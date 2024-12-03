@@ -1,11 +1,24 @@
 # Quicktour
 
-We provide two main entry points to evaluate models:
+
+> [!TIP]
+> We recommend using the `--help` flag to get more information about the
+> available options for each command.
+> `lighteval --help` and `lighteval accelerate --help`
+
+Lighteval can be used with a few different commands.
 
 - `lighteval accelerate` : evaluate models on CPU or one or more GPUs using [🤗
   Accelerate](https://github.com/huggingface/accelerate)
 - `lighteval nanotron`: evaluate models in distributed settings using [⚡️
   Nanotron](https://github.com/huggingface/nanotron)
+- `lighteval vllm`: evaluate models on one or more GPUs using [🚀
+  VLLM](https://github.com/vllm-project/vllm)
+- `lighteval endpoint`
+    - `inference-endpoint`: evaluate models on one or more GPUs using [🔗
+  Inference Endpoint](https://huggingface.co/inference-endpoints/dedicated)
+    - `tgi`: evaluate models on one or more GPUs using [🔗 Text Generation Inference](https://huggingface.co/docs/text-generation-inference/en/index)
+    - `openai`: evaluate models on one or more GPUs using [🔗 OpenAI API](https://platform.openai.com/)
 
 ## Accelerate
 
@@ -15,10 +28,9 @@ To evaluate `GPT-2` on the Truthful QA benchmark, run:
 
 ```bash
 lighteval accelerate \
-     --model_args "pretrained=gpt2" \
-     --tasks "leaderboard|truthfulqa:mc|0|0" \
+     "pretrained=gpt2" \
+     "leaderboard|truthfulqa:mc|0|0" \
      --override_batch_size 1 \
-     --output_dir="./evals/"
 ```
 
 Here, `--tasks` refers to either a comma-separated list of supported tasks from
@@ -51,10 +63,9 @@ You can then evaluate a model using data parallelism on 8 GPUs like follows:
 ```bash
 accelerate launch --multi_gpu --num_processes=8 -m \
     lighteval accelerate \
-    --model_args "pretrained=gpt2" \
-    --tasks "leaderboard|truthfulqa:mc|0|0" \
-    --override_batch_size 1 \
-    --output_dir="./evals/"
+    "pretrained=gpt2" \
+    "leaderboard|truthfulqa:mc|0|0" \
+    --override-batch-size 1 \
 ```
 
 Here, `--override_batch_size` defines the batch size per device, so the effective
