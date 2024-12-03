@@ -51,7 +51,7 @@ Browse the list of all templates [here](https://github.com/huggingface/lighteval
 Then, when ready, to define your own task, you should:
 1. create a Python file as indicated in the above guide
 2. import the relevant templates for your task type (XNLI, Copa, Multiple choice, Question Answering, etc)
-3. define one or a list of tasks for each relevant language and evaluation formulation (for multichoice) using our parametrizable `LightevalTaskConfig` class
+3. define one or a list of tasks for each relevant language and evaluation formulation (for multichoice) using our parametrizable [`~tasks.lighteval_task.LightevalTaskConfig`] class
 
 ```python
 your_tasks = [
@@ -101,7 +101,7 @@ your_tasks = [
 4. then, you can go back to the guide to test if your task is correctly implemented!
 
 > [!TIP]
-> All `LightevalTaskConfig` parameters are strongly typed, including the inputs to the template function. Make sure to take advantage of your IDE's functionality to make it easier to correctly fill these parameters.
+> All [`~tasks.lighteval_task.LightevalTaskConfig`] parameters are strongly typed, including the inputs to the template function. Make sure to take advantage of your IDE's functionality to make it easier to correctly fill these parameters.
 
 
 Once everything is good, open a PR, and we'll be happy to review it!
