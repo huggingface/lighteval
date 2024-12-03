@@ -61,6 +61,7 @@ dependencies = [
     "datasets>=2.14.0",
     "numpy<2",  # pinned to avoid incompatibilities
     # Prettiness
+    "typer",
     "termcolor==2.3.0",
     "pytablewriter",
     "colorama",
