@@ -43,4 +43,6 @@
     title: Metrics
   - local: package_reference/tasks
     title: Tasks
+  - local: package_reference/logging
+    title: Logging
   title: Reference
