@@ -39,8 +39,6 @@
     - local: package_reference/pipeline
       title: Pipeline
     title: Main classes
-  - local: package_reference/datasets
-    title: Datasets
   - local: package_reference/metrics
     title: Metrics
   - local: package_reference/tasks
