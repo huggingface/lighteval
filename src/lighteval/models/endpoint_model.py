@@ -265,11 +265,17 @@ class InferenceEndpointModel(LightevalModel):
         False  # no accelerator = this is the main process
 
     def cleanup(self):
-        if self.endpoint is not None and not self.reuse_existing:
-            self.endpoint.delete()
-            hlog_warn(
-                "You deleted your endpoint after using it. You'll need to create it again if you need to reuse it."
-            )
+        if self.endpoint is not None:
+            if self.reuse_existing:
+                self.endpoint.pause()
+                hlog_warn(
+                    "Since your endpoint was existing before, we did not delete it, but paused it instead. You might want to delete it if you're done using it."
+                )
+            else:
+                self.endpoint.delete()
+                hlog_warn(
+                    "We deleted the spinned up endpoint after using it. You'll need to create it again if you need to reuse it."
+                )
 
     @property
     def max_length(self):
