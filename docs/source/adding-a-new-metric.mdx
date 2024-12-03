@@ -1,8 +1,8 @@
 # Adding a New Metric
 
 First, check if you can use one of the parametrized functions in
-[src.lighteval.metrics.metrics_corpus]() or
-[src.lighteval.metrics.metrics_sample]().
+[Corpus Metrics](package_reference/metrics#corpus-metrics) or
+[Sample Metrics](package_reference/metrics#sample-metrics).
 
 If not, you can use the `custom_task` system to register your new metric:
 
@@ -49,7 +49,8 @@ def agg_function(items):
     return score
 ```
 
-Finally, you can define your metric. If it's a sample level metric, you can use the following code:
+Finally, you can define your metric. If it's a sample level metric, you can use the following code
+with [`~metrics.utils.metric_utils.SampleLevelMetric`]:
 
 ```python
 my_custom_metric = SampleLevelMetric(
@@ -62,7 +63,8 @@ my_custom_metric = SampleLevelMetric(
 )
 ```
 
-If your metric defines multiple metrics per sample, you can use the following code:
+If your metric defines multiple metrics per sample, you can use the following code
+with [`~metrics.utils.metric_utils.SampleLevelMetricGrouping`]:
 
 ```python
 custom_metric = SampleLevelMetricGrouping(

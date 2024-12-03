@@ -69,7 +69,7 @@ These metrics need the model to generate an output. They are therefore slower.
     - `quasi_exact_match_gsm8k`: Fraction of instances where the normalized prediction matches the normalized gold (normalization done for gsm8k, where latex symbols, units, etc are removed)
     - `maj_at_8_gsm8k`: Majority choice evaluation, using the gsm8k normalisation for the predictions and gold
 
-## LLM-as-Judge:
+## LLM-as-Judge
 - `llm_judge_gpt3p5`: Can be used for any generative task, the model will be scored by a GPT3.5 model using the OpenAI API
 - `llm_judge_llama_3_405b`: Can be used for any generative task, the model will be scored by a Llama 3.405B model using the HuggingFace API
 - `llm_judge_multi_turn_gpt3p5`: Can be used for any generative task, the model will be scored by a GPT3.5 model using the OpenAI API. It is used for multiturn tasks like mt-bench.
