@@ -466,7 +466,7 @@ class ROUGE:
                 default tokenizer will be used.
         """
         if aggregation_function and bootstrap:
-            logger.info("Can't use both bootstrapping and an aggregation function in Rouge. Keeping bootstrap.")
+            logger.warning("Can't use both bootstrapping and an aggregation function in Rouge. Keeping bootstrap.")
         self.aggregation_function = aggregation_function
         if self.aggregation_function is None:
             self.aggregation_function = np.mean
