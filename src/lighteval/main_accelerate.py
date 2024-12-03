@@ -109,7 +109,6 @@ def accelerate(  # noqa C901
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.model_config import AdapterModelConfig, BaseModelConfig, BitsAndBytesConfig, DeltaModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
-    from lighteval.utils.utils import boolstring_to_bool
 
     accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
 
@@ -135,25 +134,10 @@ def accelerate(  # noqa C901
         system_prompt=system_prompt,
     )
 
+    # TODO (nathan): better handling of model_args
     if model_args.endswith(".yaml"):
         with open(model_args, "r") as f:
             config = yaml.safe_load(f)["model"]
-
-        # Creating the multichoice space parameters
-        # We need to take into account possible conversion issues from our different input formats
-        multichoice_continuations_start_space = boolstring_to_bool(
-            config["generation"]["multichoice_continuations_start_space"]
-        )
-
-        if multichoice_continuations_start_space is not None:
-            if multichoice_continuations_start_space:
-                logger.info(
-                    "You set `multichoice_continuations_start_space` to true. This will force multichoice continuations to use a starting space"
-                )
-            else:
-                logger.info(
-                    "You set `multichoice_continuations_start_space` to false. This will remove a leading space from multichoice continuations, if present."
-                )
 
         # Creating optional quantization configuration
         if config["base_params"]["dtype"] == "4bit":
@@ -173,7 +157,9 @@ def accelerate(  # noqa C901
         args_dict["accelerator"] = accelerator
         args_dict["quantization_config"] = quantization_config
         args_dict["batch_size"] = override_batch_size
-        args_dict["multichoice_continuations_start_space"] = multichoice_continuations_start_space
+        args_dict["multichoice_continuations_start_space"] = config["generation"][
+            "multichoice_continuations_start_space"
+        ]
         args_dict["use_chat_template"] = use_chat_template
 
         # Keeping only non null params
@@ -192,7 +178,6 @@ def accelerate(  # noqa C901
         else:
             model_config = BaseModelConfig(**args_dict)
     else:
-        # TODO (nathan): better handling of model_args
         model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
         model_args_dict["accelerator"] = accelerator
         model_args_dict["use_chat_template"] = use_chat_template
