@@ -584,7 +584,7 @@ class BertScore:
             dict: Scores over the current sample's items.
         """
         if self.bert_scorer is None:
-            logger.info("The first metric computation step might be a bit longer as we need to download the model.")
+            logger.warning("The first metric computation step might be a bit longer as we need to download the model.")
             # We only initialize on first compute
             self.bert_scorer = BERTScorer(
                 model_type="microsoft/deberta-large-mnli", lang="en", rescale_with_baseline=True, num_layers=9
