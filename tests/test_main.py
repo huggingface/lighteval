@@ -28,8 +28,7 @@ from typing import Callable, List, Literal, Tuple
 import pytest
 from pytest import approx
 
-from lighteval.main_accelerate import main  # noqa: E402
-from lighteval.parsers import parser_accelerate
+from lighteval.main_accelerate import accelerate  # noqa: E402
 from tests.reference_scores.reference_task_scores import RESULTS_FULL, RESULTS_LITE  # noqa: E402
 from tests.reference_scores.reference_tasks import ALL_SUBSETS
 
@@ -53,39 +52,29 @@ ModelInput = Tuple[str, str, str, str, Callable[[], dict], float]
 @lru_cache(maxsize=len(MODELS))
 def run_model_predictions_full(model: str, tasks: tuple):
     """Runs the full main as a black box, using the input model and tasks, on all samples without parallelism"""
-    lighteval_args = ["--model_args", f"pretrained={model}", "--tasks", ",".join(tasks)]
-    lighteval_args += [
-        "--override_batch_size",
-        "1",
-        "--output_dir",
-        "",
-        "--dataset_loading_processes",
-        "1",
-        "--save_details",
-    ]
-    parser = parser_accelerate()
-    args = parser.parse_args(lighteval_args)
-    results = main(args)
+    results = accelerate(
+        model_args=f"pretrained={model}",
+        tasks=",".join(tasks),
+        override_batch_size=1,
+        output_dir="",
+        dataset_loading_processes=1,
+        save_details=True,
+    )
     return results
 
 
 @lru_cache(maxsize=len(MODELS))
 def run_model_predictions_lite(model: str, tasks: tuple):
     """Runs the full main as a black box, using the input model and tasks, on 10 samples without parallelism"""
-    lighteval_args = ["--model_args", f"pretrained={model}", "--tasks", ",".join(tasks)]
-    lighteval_args += [
-        "--override_batch_size",
-        "1",
-        "--output_dir",
-        "",
-        "--dataset_loading_processes",
-        "1",
-        "--save_details",
-    ]
-    lighteval_args += ["--max_samples", "10"]
-    parser = parser_accelerate()
-    args = parser.parse_args(lighteval_args)
-    results = main(args)
+    results = accelerate(
+        model_args=f"pretrained={model}",
+        tasks=",".join(tasks),
+        override_batch_size=1,
+        output_dir="",
+        dataset_loading_processes=1,
+        save_details=True,
+        max_samples=10,
+    )
     return results
 
 
