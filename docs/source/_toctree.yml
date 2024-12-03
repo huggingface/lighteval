@@ -32,6 +32,8 @@
   - sections:
     - local: package_reference/evaluation_tracker
       title: EvaluationTracker
+    - local: package_reference/models
+      title: Models
     - local: package_reference/model_config
       title: ModelConfig
     - local: package_reference/pipeline
@@ -41,8 +43,6 @@
     title: Datasets
   - local: package_reference/metrics
     title: Metrics
-  - local: package_reference/models
-    title: Models
   - local: package_reference/tasks
     title: Tasks
   title: Reference
