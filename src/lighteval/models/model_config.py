@@ -262,7 +262,7 @@ class InferenceEndpointModelConfig:
     accelerator: str = "gpu"
     model_dtype: str = None  # if empty, we use the default
     vendor: str = "aws"
-    region: str = "eu-west-1"
+    region: str = "us-east-1"  # this region has the most hardware options available
     instance_size: str = None  # if none, we autoscale
     instance_type: str = None  # if none, we autoscale
     framework: str = "pytorch"

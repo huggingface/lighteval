@@ -22,6 +22,7 @@
 
 import asyncio
 import re
+import time
 from typing import Coroutine, List, Optional, Union
 
 import torch
@@ -37,6 +38,7 @@ from huggingface_hub import (
     get_inference_endpoint,
 )
 from huggingface_hub.utils._errors import HfHubHTTPError
+from requests import ConnectionError
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoTokenizer
@@ -56,7 +58,7 @@ from lighteval.utils.utils import EnvConfig, as_list
 
 
 BATCH_SIZE = 50
-MAX_RETRIES = 5
+MAX_TIME_FOR_SPINUP = 3600
 
 SORTED_INSTANCE_SIZES = [  # sorted by incremental overall RAM (to load models)
     # type, size
@@ -81,16 +83,17 @@ class InferenceEndpointModel(LightevalModel):
         if isinstance(config, InferenceEndpointModelConfig):
             instance_type = config.instance_type or SORTED_INSTANCE_SIZES[0][0]
             instance_size = config.instance_size or SORTED_INSTANCE_SIZES[0][1]
+            must_scaleup_endpoint = False
+            timer_start = time.time()
             # Endpoint names do not allow special characters
             endpoint_name = re.sub("[^a-zA-Z0-9-]", "-", config.model_or_endpoint_name.lower() + "-lighteval")
-            for _ in range(1, MAX_RETRIES):  # We allow retrying for up to 5 times
+            # If no endpoint or endpoint not running, and we're below an hour
+            while (self.endpoint is None or self.endpoint.status != ["running"]) and (
+                time.time() - timer_start < MAX_TIME_FOR_SPINUP
+            ):
                 try:
                     if self.endpoint is None:  # Endpoint does not exist yet locally
-                        if config.should_reuse_existing:
-                            self.endpoint = get_inference_endpoint(
-                                name=config.model_or_endpoint_name, token=env_config.token, namespace=config.namespace
-                            )
-                        else:
+                        if not config.should_reuse_existing:  # New endpoint
                             self.endpoint: InferenceEndpoint = create_inference_endpoint(
                                 name=endpoint_name,
                                 namespace=config.namespace,
@@ -122,33 +125,44 @@ class InferenceEndpointModel(LightevalModel):
                                     ),
                                 },
                             )
-                    else:  # Endpoint exists and must be scaled up
-                        self.endpoint.update(instance_size=instance_size, instance_type=instance_type)
-                        self.endpoint.fetch()
+                        else:  # Endpoint exists
+                            self.endpoint = get_inference_endpoint(
+                                name=config.model_or_endpoint_name, token=env_config.token, namespace=config.namespace
+                            )
+
+                    else:
+                        # Endpoint exists locally but either failed (and most likely it must be scaled up)
+                        if must_scaleup_endpoint:
+                            self.endpoint.update(instance_size=instance_size, instance_type=instance_type)
+                            must_scaleup_endpoint = False
+                        # or we got a connection error, in which case we do nothing and just wait at the next step
 
                     # Waits for the endpoint to be deployed - we could also check for the status in updating', 'pending', 'initializing'
-                    hlog("Trying to deploy your endpoint. Please wait.")
-                    try:
-                        self.endpoint.wait(timeout=1800, refresh_every=60)
-                    except InferenceEndpointError as e:
-                        instance_type, instance_size = self.get_larger_hardware_suggestion(
-                            instance_type, instance_size
-                        )
+                    hlog("Trying to deploy your endpoint. Please wait for 10 min.")
+                    self.endpoint.wait(timeout=600, refresh_every=60)  # We wait for 10 min
+                except InferenceEndpointError as e:
+                    instance_type, instance_size = self.get_larger_hardware_suggestion(instance_type, instance_size)
+                    must_scaleup_endpoint = True
 
-                        hlog(
-                            f"Endpoint failed to start on current hardware with error {e}. Trying to autoscale to ({instance_type}, {instance_size})."
-                        )
-                    if self.endpoint.status == "running":  # We're good! going to the next step!
-                        break
+                    hlog(
+                        f"Endpoint failed to start on current hardware with error {e}. Trying to autoscale to ({instance_type}, {instance_size})."
+                    )
                 except InferenceEndpointTimeoutError as e:
                     hlog_err("Endpoint did not start within 30 minutes, there was a timeout. Please inspect the logs.")
                     raise e
                 except HfHubHTTPError as e:
+                    # The endpoint actually already exists, we'll spin it up instead of trying to create a new one
                     if "409 Client Error: Conflict for url:" in str(e):
                         config.model_or_endpoint_name = endpoint_name
                         config.should_reuse_existing = True
+                    # Requested resources are not available
                     elif "Bad Request: Compute instance not available yet" in str(e):
-                        self.endpoint.wait(timeout=1800, refresh_every=60)
+                        hlog_err(
+                            "The hardware combination you are requesting does not seem to be available: ({instance_type}, {instance_size}, {config.region})."
+                        )
+                        raise e
+                except ConnectionError as e:
+                    hlog_err(f"Connection failed with error {e}. Retrying")
 
             if not self.endpoint.status == "running":
                 raise Exception("Did not manage to start endpoint within the elapsed time and on suggested hardware.")
@@ -186,14 +200,13 @@ class InferenceEndpointModel(LightevalModel):
             new_instance_size = SORTED_INSTANCE_SIZES[cur_instance_ix + 1][1]
             return new_instance_type, new_instance_size
         except ValueError:
-            hlog_warn(
+            raise Exception(
                 f"Problem when scaling endpoint: the current instance combination ({cur_instance_type}, {cur_instance_size}) is unknown. Can't scale it up."
             )
         except IndexError:
-            hlog_warn(
-                "To avoid accidental costs, we will not upgrade the current endpoint above 4 a10g automatically, please request it explicitely."
+            raise Exception(
+                "To avoid accidental costs, we do not upgrade the current endpoint above 4 a10g automatically, please request it explicitely."
             )
-        return cur_instance_type, cur_instance_size
 
     @property
     def tokenizer(self):
