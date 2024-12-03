@@ -25,6 +25,7 @@ import re
 import time
 from typing import Coroutine, List, Optional, Union
 
+import requests
 import torch
 from huggingface_hub import (
     AsyncInferenceClient,
@@ -37,7 +38,7 @@ from huggingface_hub import (
     create_inference_endpoint,
     get_inference_endpoint,
 )
-from huggingface_hub.utils._errors import HfHubHTTPError
+from huggingface_hub.utils import HfHubHTTPError
 from requests import ConnectionError
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -66,6 +67,8 @@ SORTED_INSTANCE_SIZES = [  # sorted by incremental overall RAM (to load models)
     ("nvidia-t4", "x4"),
     ("nvidia-a100", "x1"),
     ("nvidia-a10g", "x4"),
+    ("nvidia-a100", "x2"),
+    ("nvidia-a100", "x4"),
 ]
 
 
@@ -80,20 +83,35 @@ class InferenceEndpointModel(LightevalModel):
         self.reuse_existing = getattr(config, "should_reuse_existing", True)
         self._max_length = None
         self.endpoint = None
+        self.model_name = None
         if isinstance(config, InferenceEndpointModelConfig):
-            instance_type = config.instance_type or SORTED_INSTANCE_SIZES[0][0]
-            instance_size = config.instance_size or SORTED_INSTANCE_SIZES[0][1]
+            if config.instance_type and config.instance_size and config.vendor and config.region:
+                vendor, region, instance_type, instance_size = (
+                    config.vendor,
+                    config.region,
+                    config.instance_type,
+                    config.instance_size,
+                )
+            else:
+                try:
+                    vendor, region, instance_type, instance_size = self.get_suggested_model_config(
+                        config.model_or_endpoint_name
+                    )
+                except Exception:
+                    return "aws", "us-east-1", self.get_larger_hardware_suggestion()
+
             must_scaleup_endpoint = False
             timer_start = time.time()
             # Endpoint names do not allow special characters
             endpoint_name = re.sub("[^a-zA-Z0-9-]", "-", config.model_or_endpoint_name.lower() + "-lighteval")
             # If no endpoint or endpoint not running, and we're below an hour
-            while (self.endpoint is None or self.endpoint.status != ["running"]) and (
+            while (self.endpoint is None or self.endpoint.status != "running") and (
                 time.time() - timer_start < MAX_TIME_FOR_SPINUP
             ):
                 try:
                     if self.endpoint is None:  # Endpoint does not exist yet locally
                         if not config.should_reuse_existing:  # New endpoint
+                            hlog("Creating endpoint.")
                             self.endpoint: InferenceEndpoint = create_inference_endpoint(
                                 name=endpoint_name,
                                 namespace=config.namespace,
@@ -102,9 +120,9 @@ class InferenceEndpointModel(LightevalModel):
                                 framework=config.framework,
                                 task="text-generation",
                                 accelerator=config.accelerator,
-                                vendor=config.vendor,
-                                region=config.region,
                                 type=config.endpoint_type,
+                                vendor=vendor,
+                                region=region,
                                 instance_size=instance_size,
                                 instance_type=instance_type,
                                 token=env_config.token,
@@ -126,6 +144,7 @@ class InferenceEndpointModel(LightevalModel):
                                 },
                             )
                         else:  # Endpoint exists
+                            hlog("Reusing existing endpoint.")
                             self.endpoint = get_inference_endpoint(
                                 name=config.model_or_endpoint_name, token=env_config.token, namespace=config.namespace
                             )
@@ -133,6 +152,7 @@ class InferenceEndpointModel(LightevalModel):
                     else:
                         # Endpoint exists locally but either failed (and most likely it must be scaled up)
                         if must_scaleup_endpoint:
+                            hlog("Rescaling existing endpoint.")
                             self.endpoint.update(instance_size=instance_size, instance_type=instance_type)
                             must_scaleup_endpoint = False
                         # or we got a connection error, in which case we do nothing and just wait at the next step
@@ -161,6 +181,9 @@ class InferenceEndpointModel(LightevalModel):
                             "The hardware combination you are requesting does not seem to be available: ({instance_type}, {instance_size}, {config.region})."
                         )
                         raise e
+                    # User account does not have access to requested resources
+                    elif "Conflict: Quota exceeded" in str(e):
+                        raise e
                 except ConnectionError as e:
                     hlog_err(f"Connection failed with error {e}. Retrying")
 
@@ -168,13 +191,15 @@ class InferenceEndpointModel(LightevalModel):
                 raise Exception("Did not manage to start endpoint within the elapsed time and on suggested hardware.")
 
             hlog("Endpoint successfully deployed!")
-            self.name = config.model_or_endpoint_name
+            self.endpoint_name = config.model_or_endpoint_name
+            self.name = self.endpoint.repository
             self.revision = self.endpoint.revision
             self.async_client: AsyncInferenceClient = self.endpoint.async_client
             self.client: InferenceClient = self.endpoint.client
 
         else:  # Free inference client
             self.endpoint = None
+            self.endpoint_name = None
             self.name = config.model
             self.revision = "default"
             self.async_client = AsyncInferenceClient(model=config.model, token=env_config.token)
@@ -194,8 +219,10 @@ class InferenceEndpointModel(LightevalModel):
 
     @staticmethod
     def get_larger_hardware_suggestion(cur_instance_type: str = None, cur_instance_size: str = None):
+        cur_instance_ix = -1
         try:
-            cur_instance_ix = SORTED_INSTANCE_SIZES.index((cur_instance_type, cur_instance_size))
+            if cur_instance_type and cur_instance_size:
+                cur_instance_ix = SORTED_INSTANCE_SIZES.index((cur_instance_type, cur_instance_size))
             new_instance_type = SORTED_INSTANCE_SIZES[cur_instance_ix + 1][0]
             new_instance_size = SORTED_INSTANCE_SIZES[cur_instance_ix + 1][1]
             return new_instance_type, new_instance_size
@@ -205,8 +232,25 @@ class InferenceEndpointModel(LightevalModel):
             )
         except IndexError:
             raise Exception(
-                "To avoid accidental costs, we do not upgrade the current endpoint above 4 a10g automatically, please request it explicitely."
+                "To avoid accidental costs, we do not upgrade the current endpoint above 4 a100 automatically, please request it explicitely."
             )
+
+    @staticmethod
+    def get_suggested_model_config(model_repo):
+        # Code from https://huggingface.co/spaces/huggingface/dedicated-endpoint-snooper/blob/main/app.py
+        url = f"https://ui.endpoints.huggingface.co/api/configuration?model_id={model_repo}"
+        response = requests.get(url)
+        config = response.json()
+
+        suggested_compute = config["suggestedCompute"]
+        suggested_vendor = suggested_compute.split("-")[0]
+        if suggested_vendor == "azure":
+            suggested_region = suggested_compute.split("-")[1]
+        else:
+            suggested_region = "-".join(suggested_compute.split("-")[1:4])
+        suggested_instance = "-".join(suggested_compute.split("-")[-3:-1])
+        suggested_size = suggested_compute.split("-")[-1]
+        return suggested_vendor, suggested_region, suggested_instance, suggested_size
 
     @property
     def tokenizer(self):
