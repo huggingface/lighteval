@@ -114,7 +114,6 @@ def accelerate(  # noqa C901
     cache_dir = CACHE_DIR
 
     env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
-    print(f"ENV CONFIG: {env_config}")
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
         save_details=save_details,
