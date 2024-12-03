@@ -36,10 +36,6 @@ from tests.reference_scores.reference_tasks import ALL_SUBSETS
 # Set env var for deterministic run of models
 os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 
-# Set cache for github actions
-os.environ["HF_DATASETS_CACHE"] = "cache/datasets/"
-os.environ["HF_HOME"] = "cache/models/"
-
 # To add new models or tasks, change here
 # ! The correct results must be present in reference_task_scores
 MODELS = ["gpt2"]

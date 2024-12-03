@@ -32,8 +32,6 @@ logger = logging.getLogger(__name__)
 
 TOKEN = os.getenv("HF_TOKEN")
 CACHE_DIR: str = os.getenv("HF_HOME", "/scratch")
-print(f"CACHE_DIR: {CACHE_DIR}")
-print(f"ENV: {os.environ}")
 
 HELP_PANNEL_NAME_1 = "Common Paramaters"
 HELP_PANNEL_NAME_2 = "Logging Parameters"
@@ -64,8 +62,8 @@ def accelerate(  # noqa C901
         Optional[str], Option(help="Path to custom tasks directory.", rich_help_panel=HELP_PANNEL_NAME_1)
     ] = None,
     cache_dir: Annotated[
-        str, Option(help="Cache directory for datasets and models.", rich_help_panel=HELP_PANNEL_NAME_1)
-    ] = "cache/model",
+        Optional[str], Option(help="Cache directory for datasets and models.", rich_help_panel=HELP_PANNEL_NAME_1)
+    ] = None,
     num_fewshot_seeds: Annotated[
         int, Option(help="Number of seeds to use for few-shot evaluation.", rich_help_panel=HELP_PANNEL_NAME_1)
     ] = 1,
@@ -113,6 +111,7 @@ def accelerate(  # noqa C901
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
     accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
+    cache_dir = CACHE_DIR
 
     env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
     print(f"ENV CONFIG: {env_config}")
