@@ -59,7 +59,7 @@ def run_model_predictions_full(model: str, tasks: tuple):
         output_dir="",
         dataset_loading_processes=1,
         save_details=True,
-        cache_dir="cache/models",
+        # cache_dir="cache/models",
     )
     return results
 
@@ -75,7 +75,7 @@ def run_model_predictions_lite(model: str, tasks: tuple):
         dataset_loading_processes=1,
         save_details=True,
         max_samples=10,
-        cache_dir="cache/models",
+        # cache_dir="cache/models",
     )
     return results
 
