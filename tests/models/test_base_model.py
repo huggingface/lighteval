@@ -1,6 +1,6 @@
 # MIT License
 
-# Copyright (c) 2024 Taratra D. RAHARISON and The HuggingFace Team
+# Copyright (c) 2024 The HuggingFace Team
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,39 +19,19 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import os
 
-import typer
-
-import lighteval.main_accelerate
-import lighteval.main_baseline
-import lighteval.main_endpoint
-import lighteval.main_nanotron
-import lighteval.main_tasks
-import lighteval.main_vllm
+from lighteval.models.base_model import BaseModel
+from lighteval.models.model_config import BaseModelConfig
+from lighteval.models.model_loader import load_model
+from lighteval.utils.utils import EnvConfig
 
 
-app = typer.Typer()
-CACHE_DIR = os.getenv("HF_HOME")
+def test_empty_requests():
+    model_config = BaseModelConfig("hf-internal-testing/tiny-random-LlamaForCausalLM")
+    model: BaseModel = load_model(config=model_config, env_config=EnvConfig(cache_dir="."))
 
-
-app.command(rich_help_panel="Evaluation Backends")(lighteval.main_accelerate.accelerate)
-app.command(rich_help_panel="Evaluation Utils")(lighteval.main_baseline.baseline)
-app.command(rich_help_panel="Evaluation Backends")(lighteval.main_nanotron.nanotron)
-app.command(rich_help_panel="Evaluation Backends")(lighteval.main_vllm.vllm)
-app.add_typer(
-    lighteval.main_endpoint.app,
-    name="endpoint",
-    rich_help_panel="Evaluation Backends",
-    help="Evaluate models using some endpoint (tgi, inference endpoint, openai) as backend.",
-)
-app.add_typer(
-    lighteval.main_tasks.app,
-    name="tasks",
-    rich_help_panel="Utils",
-    help="List or inspect tasks.",
-)
-
-
-if __name__ == "__main__":
-    app()
+    assert model.loglikelihood([]) == []
+    assert model.loglikelihood_single_token([]) == []
+    assert model.loglikelihood_rolling([]) == []
+    assert model.greedy_until([]) == []
+    assert model.greedy_until_multi_turn([]) == []

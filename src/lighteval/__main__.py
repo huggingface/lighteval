@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import logging
-import os
 from logging.config import dictConfig
 
 import colorlog
@@ -35,7 +34,6 @@ import lighteval.main_vllm
 
 
 app = typer.Typer()
-CACHE_DIR = os.getenv("HF_HOME")
 
 logging_config = dict(  # noqa C408
     version=1,

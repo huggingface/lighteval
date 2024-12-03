@@ -291,11 +291,13 @@ class LightevalTask:
 
         docs = []
         for split in splits:
-            for item in self.dataset[split]:
+            for ix, item in enumerate(self.dataset[split]):
                 # Some tasks formatting is applied differently when the document is used for fewshot examples
                 # vs when it's used for the actual prompt. That's why we store whether we are currently using the
                 # doc for a fewshot sample (few_shots=True) or not, which then leads to the creation of a different Doc.
                 item["__few_shots"] = few_shots
+                # Some tasks require to know which is the current item index in order to apply a different prompt template
+                item["__index"] = ix
                 cur_docs = self.formatter(item, self.name)
                 if cur_docs is None:
                     continue

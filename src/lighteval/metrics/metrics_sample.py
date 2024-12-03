@@ -937,7 +937,7 @@ class JudgeLLMMixEval(JudgeLLM):
         """
         questions = [formatted_doc.specific["question"] for formatted_doc in formatted_docs]
         options = [formatted_doc.choices for formatted_doc in formatted_docs]
-        golds = [formatted_doc.choices[formatted_doc.gold_index[0]] for formatted_doc in formatted_docs]
+        golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
         predictions = [response[0].result[0] for response in responses]
 
         scores, messages, judgements = self.judge.evaluate_answer_batch(questions, predictions, options, golds)
