@@ -26,24 +26,10 @@ from datetime import timedelta
 from logging import Logger
 from typing import Any, Callable
 
-from lighteval.utils.imports import is_accelerate_available, is_nanotron_available
-
-
-if is_nanotron_available():
-    from nanotron.logging import get_logger
-
-    logger = get_logger(__name__, log_level="INFO")
-elif is_accelerate_available():
-    from accelerate import Accelerator, InitProcessGroupKwargs
-    from accelerate.logging import get_logger
-
-    # We must init the accelerator before using the logger
-    accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
-    logger = get_logger(__name__, log_level="INFO")
-else:
-    logger = Logger(__name__, level="INFO")
-
 from colorama import Fore, Style
+
+
+logger = Logger(__name__, level="INFO")
 
 
 class HierarchicalLogger:
