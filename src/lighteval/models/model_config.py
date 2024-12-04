@@ -374,9 +374,12 @@ def create_model_config(  # noqa: C901
         )
 
     if config["type"] == "endpoint":
-        if config["base_params"].get("endpoint_name", None):
-            return InferenceModelConfig(model=config["base_params"]["endpoint_name"])
+        # Find a way to add this back
+        # if config["base_params"].get("endpoint_name", None):
+        #    return InferenceModelConfig(model=config["base_params"]["endpoint_name"])
         all_params = {
+            "model_name": config["base_params"].get("model_name", None),
+            "endpoint_name": config["base_params"].get("endpoint_name", None),
             "model_dtype": config["base_params"].get("dtype", None),
             "revision": config["base_params"].get("revision", None) or "main",
             "should_reuse_existing": config["base_params"].get("should_reuse_existing"),
@@ -390,7 +393,6 @@ def create_model_config(  # noqa: C901
             "env_vars": config.get("instance", {}).get("env_vars", None),
         }
         return InferenceEndpointModelConfig(
-            model_or_endpoint_name=config["base_params"]["model_or_endpoint_name"],
             # We only initialize params which have a non default value
             **{k: v for k, v in all_params.items() if v is not None},
         )

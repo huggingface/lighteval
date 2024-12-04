@@ -94,11 +94,13 @@ class InferenceEndpointModel(LightevalModel):
                 )
             else:
                 try:
-                    vendor, region, instance_type, instance_size = self.get_suggested_model_config(
-                        config.model_or_endpoint_name
-                    )
+                    vendor, region, instance_type, instance_size = self.get_suggested_model_config(config.model_name)
                 except Exception:
-                    return "aws", "us-east-1", self.get_larger_hardware_suggestion()
+                    vendor, region, instance_type, instance_size = (
+                        "aws",
+                        "us-east-1",
+                        *self.get_larger_hardware_suggestion(),
+                    )
 
             must_scaleup_endpoint = False
             timer_start = time.time()

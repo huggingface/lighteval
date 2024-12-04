@@ -1,4 +1,4 @@
 model:
   type: "endpoint" # can be base, tgi, or endpoint
   base_params:
-    model_or_endpoint_name: "meta-llama/Llama-3.1-8B-Instruct" #Qwen/Qwen2.5-14B" #Qwen/Qwen2.5-7B"
+    model_name: "meta-llama/Llama-3.1-8B-Instruct" #Qwen/Qwen2.5-14B" #Qwen/Qwen2.5-7B"
