@@ -71,20 +71,24 @@ huggingface-cli login
 
 Lighteval offers two main entry points for model evaluation:
 
-
-* `lighteval accelerate`: evaluate models on CPU or one or more GPUs using [🤗
-  Accelerate](https://github.com/huggingface/accelerate).
-* `lighteval nanotron`: evaluate models in distributed settings using [⚡️
-  Nanotron](https://github.com/huggingface/nanotron).
+- `lighteval accelerate` : evaluate models on CPU or one or more GPUs using [🤗
+  Accelerate](https://github.com/huggingface/accelerate)
+- `lighteval nanotron`: evaluate models in distributed settings using [⚡️
+  Nanotron](https://github.com/huggingface/nanotron)
+- `lighteval vllm`: evaluate models on one or more GPUs using [🚀
+  VLLM](https://github.com/vllm-project/vllm)
+- `lighteval endpoint`
+    - `inference-endpoint`: evaluate models on one or more GPUs using [🔗
+  Inference Endpoint](https://huggingface.co/inference-endpoints/dedicated)
+    - `tgi`: evaluate models on one or more GPUs using [🔗 Text Generation Inference](https://huggingface.co/docs/text-generation-inference/en/index)
+    - `openai`: evaluate models on one or more GPUs using [🔗 OpenAI API](https://platform.openai.com/)
 
 Here’s a quick command to evaluate using the Accelerate backend:
 
 ```shell
 lighteval accelerate \
-    --model_args "pretrained=gpt2" \
-    --tasks "leaderboard|truthfulqa:mc|0|0" \
-    --override_batch_size 1 \
-    --output_dir="./evals/"
+    "pretrained=gpt2" \
+    "leaderboard|truthfulqa:mc|0|0"
 ```
 
 ## 🙏 Acknowledgements
