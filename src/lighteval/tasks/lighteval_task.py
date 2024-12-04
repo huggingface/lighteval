@@ -392,7 +392,7 @@ class LightevalTask:
                     sample_index=document_id_seed,
                     request_index=0,
                     context=context,
-                    stop_sequence=self.stop_sequence,
+                    stop_sequence=self.stop_sequence or [],
                     generation_size=self.generation_size,
                     generation_grammar=self.generation_grammar,
                     num_samples=max(self.num_samples),
@@ -480,7 +480,7 @@ class LightevalTask:
                     sample_index=document_id_seed,
                     request_index=0,
                     context=context,
-                    stop_sequence=self.stop_sequence,
+                    stop_sequence=self.stop_sequence or [],
                     generation_size=self.generation_size,
                     metric_categories=[MetricCategory.LLM_AS_JUDGE_MULTI_TURN],
                 )
