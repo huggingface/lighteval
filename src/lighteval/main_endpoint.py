@@ -218,7 +218,7 @@ def inference_endpoint(
 
     # TODO (nathan): better handling of model_args
 
-    parallelism_manager = ParallelismManager.TGI
+    parallelism_manager = ParallelismManager.NONE  # since we're using inference endpoints in remote
 
     with open(model_config_path, "r") as f:
         config = yaml.safe_load(f)["model"]
