@@ -190,7 +190,7 @@ def inference_endpoint(
     ] = None,
     override_batch_size: Annotated[
         int, Option(help="Override batch size for evaluation.", rich_help_panel=HELP_PANNEL_NAME_3)
-    ] = -1,
+    ] = None,
     job_id: Annotated[
         int, Option(help="Optional job id for future refenrence.", rich_help_panel=HELP_PANNEL_NAME_3)
     ] = 0,
