@@ -65,7 +65,7 @@ dependencies = [
     "termcolor==2.3.0",
     "pytablewriter",
     "rich",
-    "colorama",
+    "colorlog",
     # Extension of metrics
     "aenum==3.1.15",
     # Base metrics
