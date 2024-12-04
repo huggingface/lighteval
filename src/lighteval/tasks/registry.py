@@ -315,7 +315,7 @@ def taskinfo_selector(tasks: str, task_registry: Registry) -> tuple[list[str], d
         few_shot = int(few_shot)
 
         if suite_name not in DEFAULT_SUITES:
-            logger.info(
+            logger.warning(
                 f"Suite {suite_name} unknown. This is not normal, unless you are testing adding new evaluations."
             )
 
