@@ -55,7 +55,7 @@ Hub, S3, or locally.
 ## ⚡️ Installation
 
 ```bash
-pip install lighteval[accelerate]
+pip install lighteval
 ```
 
 Lighteval allows for many extras when installing, see [here](https://github.com/huggingface/lighteval/wiki/Installation) for a complete list.
