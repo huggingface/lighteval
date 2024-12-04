@@ -94,12 +94,14 @@ class InferenceEndpointModel(LightevalModel):
                 )
             else:
                 try:
-                    vendor, region, instance_type, instance_size = self.get_suggested_model_config(config.model_name)
+                    vendor, region, instance_type, instance_size = InferenceEndpointModel.get_suggested_model_config(
+                        config.model_name
+                    )
                 except Exception:
                     vendor, region, instance_type, instance_size = (
                         "aws",
                         "us-east-1",
-                        *self.get_larger_hardware_suggestion(),
+                        *InferenceEndpointModel.get_larger_hardware_suggestion(),
                     )
 
             must_scaleup_endpoint = False
@@ -165,7 +167,9 @@ class InferenceEndpointModel(LightevalModel):
                     hlog("Trying to deploy your endpoint. Please wait for 10 min.")
                     self.endpoint.wait(timeout=600, refresh_every=60)  # We wait for 10 min
                 except InferenceEndpointError as e:
-                    instance_type, instance_size = self.get_larger_hardware_suggestion(instance_type, instance_size)
+                    instance_type, instance_size = InferenceEndpointModel.get_larger_hardware_suggestion(
+                        instance_type, instance_size
+                    )
                     must_scaleup_endpoint = True
 
                     hlog(
@@ -242,6 +246,8 @@ class InferenceEndpointModel(LightevalModel):
     @staticmethod
     def get_suggested_model_config(model_repo):
         # Code from https://huggingface.co/spaces/huggingface/dedicated-endpoint-snooper/blob/main/app.py
+        # Example of the suggestedCompute value: 'aws-us-east-1-nvidia-l4-x1'
+        # -> aws us-east-1 nvidia-l4 x1
         url = f"https://ui.endpoints.huggingface.co/api/configuration?model_id={model_repo}"
         response = requests.get(url)
         config = response.json()
