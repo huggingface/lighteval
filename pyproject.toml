@@ -64,6 +64,7 @@ dependencies = [
     "typer",
     "termcolor==2.3.0",
     "pytablewriter",
+    "rich",
     "colorama",
     # Extension of metrics
     "aenum==3.1.15",

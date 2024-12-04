@@ -59,7 +59,6 @@ logging_config = dict(  # noqa C408
 
 dictConfig(logging_config)
 
-
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_accelerate.accelerate)
 app.command(rich_help_panel="Evaluation Utils")(lighteval.main_baseline.baseline)
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_nanotron.nanotron)
