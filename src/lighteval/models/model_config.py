@@ -257,7 +257,8 @@ class InferenceModelConfig:
 
 @dataclass
 class InferenceEndpointModelConfig:
-    model_or_endpoint_name: str
+    endpoint_name: str = None
+    model_name: str = None
     should_reuse_existing: bool = False
     accelerator: str = "gpu"
     model_dtype: str = None  # if empty, we use the default
@@ -279,6 +280,9 @@ class InferenceEndpointModelConfig:
             raise ValueError(
                 "When creating an inference endpoint, you need to specify explicitely both instance_type and instance_size, or none of them for autoscaling."
             )
+
+        if not (self.endpoint_name is None) ^ int(self.model_name is None):
+            raise ValueError("You need to set either endpoint_name or model_name (but not both).")
 
     def get_dtype_args(self) -> Dict[str, str]:
         if self.model_dtype is None:

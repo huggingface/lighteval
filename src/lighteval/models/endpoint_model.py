@@ -103,7 +103,9 @@ class InferenceEndpointModel(LightevalModel):
             must_scaleup_endpoint = False
             timer_start = time.time()
             # Endpoint names do not allow special characters
-            endpoint_name = re.sub("[^a-zA-Z0-9-]", "-", config.model_or_endpoint_name.lower() + "-lighteval")
+            endpoint_name = config.endpoint_name or re.sub(
+                "[^a-zA-Z0-9-]", "-", config.model_name.lower() + "-lighteval"
+            )
             # If no endpoint or endpoint not running, and we're below an hour
             while (self.endpoint is None or self.endpoint.status != "running") and (
                 time.time() - timer_start < MAX_TIME_FOR_SPINUP
@@ -115,7 +117,7 @@ class InferenceEndpointModel(LightevalModel):
                             self.endpoint: InferenceEndpoint = create_inference_endpoint(
                                 name=endpoint_name,
                                 namespace=config.namespace,
-                                repository=config.model_or_endpoint_name,
+                                repository=config.model_name,
                                 revision=config.revision,
                                 framework=config.framework,
                                 task="text-generation",
@@ -146,7 +148,7 @@ class InferenceEndpointModel(LightevalModel):
                         else:  # Endpoint exists
                             hlog("Reusing existing endpoint.")
                             self.endpoint = get_inference_endpoint(
-                                name=config.model_or_endpoint_name, token=env_config.token, namespace=config.namespace
+                                name=endpoint_name, token=env_config.token, namespace=config.namespace
                             )
 
                     else:
@@ -173,7 +175,7 @@ class InferenceEndpointModel(LightevalModel):
                 except HfHubHTTPError as e:
                     # The endpoint actually already exists, we'll spin it up instead of trying to create a new one
                     if "409 Client Error: Conflict for url:" in str(e):
-                        config.model_or_endpoint_name = endpoint_name
+                        config.endpoint_name = endpoint_name
                         config.should_reuse_existing = True
                     # Requested resources are not available
                     elif "Bad Request: Compute instance not available yet" in str(e):
@@ -191,7 +193,7 @@ class InferenceEndpointModel(LightevalModel):
                 raise Exception("Did not manage to start endpoint within the elapsed time and on suggested hardware.")
 
             hlog("Endpoint successfully deployed!")
-            self.endpoint_name = config.model_or_endpoint_name
+            self.endpoint_name = config.endpoint_name
             self.name = self.endpoint.repository
             self.revision = self.endpoint.revision
             self.async_client: AsyncInferenceClient = self.endpoint.async_client
