@@ -42,10 +42,14 @@ from lighteval.tasks.requests import SampleUid
 from lighteval.utils.imports import (
     NO_ACCELERATE_ERROR_MSG,
     NO_NANOTRON_ERROR_MSG,
+    NO_OPENAI_ERROR_MSG,
     NO_TGI_ERROR_MSG,
+    NO_VLLM_ERROR_MSG,
     is_accelerate_available,
     is_nanotron_available,
+    is_openai_available,
     is_tgi_available,
+    is_vllm_available,
 )
 from lighteval.utils.parallelism import test_all_gather
 from lighteval.utils.utils import EnvConfig, make_results_table
@@ -65,6 +69,8 @@ class ParallelismManager(Enum):
     ACCELERATE = auto()
     NANOTRON = auto()
     TGI = auto()
+    OPENAI = auto()
+    VLLM = auto()
     NONE = auto()
 
 
@@ -85,16 +91,22 @@ class PipelineParameters:
     use_chat_template: bool = False
     system_prompt: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self):  # noqa C901
         if self.launcher_type == ParallelismManager.ACCELERATE:
             if not is_accelerate_available():
                 raise ImportError(NO_ACCELERATE_ERROR_MSG)
+        elif self.launcher_type == ParallelismManager.VLLM:
+            if not is_vllm_available():
+                raise ImportError(NO_VLLM_ERROR_MSG)
         elif self.launcher_type == ParallelismManager.TGI:
             if not is_tgi_available():
                 raise ImportError(NO_TGI_ERROR_MSG)
         elif self.launcher_type == ParallelismManager.NANOTRON:
             if not is_nanotron_available():
                 raise ImportError(NO_NANOTRON_ERROR_MSG)
+        elif self.launcher_type == ParallelismManager.OPENAI:
+            if not is_openai_available():
+                raise ImportError(NO_OPENAI_ERROR_MSG)
 
 
 class Pipeline:
