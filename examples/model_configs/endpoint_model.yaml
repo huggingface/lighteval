@@ -1,5 +1,4 @@
 model:
-  type: "endpoint" # can be base, tgi, or endpoint
   base_params:
     model_name: "meta-llama/Llama-2-7b-hf" # the model name or the endpoint name if reuse_existing is true
     revision: "main"
