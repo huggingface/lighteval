@@ -42,13 +42,13 @@ from lighteval.data import (
     LoglikelihoodDataset,
     LoglikelihoodSingleTokenDataset,
 )
-from lighteval.models.base_model import LightevalModel, ModelInfo
 from lighteval.models.model_output import (
     Batch,
     GenerativeResponse,
     LoglikelihoodResponse,
     LoglikelihoodSingleTokenResponse,
 )
+from lighteval.models.transformers.base_model import LightevalModel, ModelInfo
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
