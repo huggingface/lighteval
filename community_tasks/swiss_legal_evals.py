@@ -579,6 +579,7 @@ class LevelConfig:
     text_col_name: str
     metadata_cols: list[str]
     generation_size: int
+    stop_sequence: list[str]  # just "\n" leads to problems for anthropic models, maybe we need a special case there
 
 
 @dataclass
@@ -603,18 +604,21 @@ SwissDecisionSummaryTranslations = DatasetConfig(
             text_col_name="bgeText",
             metadata_cols=["bge"],
             generation_size=2048,
+            stop_sequence=["</s>", "\n\n"],
         ),
         "regeste_level": LevelConfig(
             name="regeste_level",
             text_col_name="regesteText",
             metadata_cols=["bge"],
             generation_size=512,
+            stop_sequence=["</s>", "\n\n"],
         ),
         "text_level": LevelConfig(
             name="text_level",
             text_col_name="text",
             metadata_cols=["bge"],
             generation_size=256,
+            stop_sequence=["</s>", ".\n", "\n"],
         ),
     },
 )
@@ -630,18 +634,21 @@ SwissLawTranslations = DatasetConfig(
             text_col_name="lawText",
             metadata_cols=["rsNr"],
             generation_size=16384,
+            stop_sequence=["</s>", "\n\n"],
         ),
         "article_level": LevelConfig(
             name="article_level",
             text_col_name="artText",
             metadata_cols=["rsNr"],
             generation_size=1024,
+            stop_sequence=["</s>", "\n\n"],
         ),
         "paragraph_level": LevelConfig(
             name="paragraph_level",
             text_col_name="parText",
             metadata_cols=["rsNr"],
             generation_size=256,
+            stop_sequence=["</s>", ".\n", "\n"],
         ),
     },
 )
@@ -657,6 +664,7 @@ SwissSupremeCourtPressReleaseTranslations = DatasetConfig(
             text_col_name="text",
             metadata_cols=["filename"],
             generation_size=1024,
+            stop_sequence=["</s>", "\n\n"],
         )
     },
 )
@@ -730,7 +738,7 @@ class TranslationTask(LightevalTaskConfig):
                 # flowaicom/Flow-Judge-v0.1, prometheus-eval/prometheus-7b-v2.0
                 # However, these are only fine-tuned on English data and we need multilingual support.
             ],
-            stop_sequence=[".\n", "\n", "</s>"],  # just "\n" leads to problems for anthropic models
+            stop_sequence=level_config.stop_sequence,
             trust_dataset=True,
             # Remove the target language in the beginning if it exists: e.g., FR: {translation}
             # Is only applied to the generative metrics, but also there seems not to be invoked, maybe not passed through?
