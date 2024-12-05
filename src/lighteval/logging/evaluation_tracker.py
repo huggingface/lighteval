@@ -22,6 +22,7 @@
 
 import copy
 import json
+import logging
 import os
 import re
 import time
@@ -37,7 +38,6 @@ from datasets.utils.metadata import MetadataConfigs
 from fsspec import url_to_fs
 from huggingface_hub import DatasetCard, DatasetCardData, HfApi, HFSummaryWriter, hf_hub_url
 
-from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.logging.info_loggers import (
     DetailsLogger,
     GeneralConfigLogger,
@@ -48,6 +48,8 @@ from lighteval.logging.info_loggers import (
 from lighteval.utils.imports import NO_TENSORBOARDX_WARN_MSG, is_nanotron_available, is_tensorboardX_available
 from lighteval.utils.utils import obj_to_markdown
 
+
+logger = logging.getLogger(__name__)
 
 if is_nanotron_available():
     from nanotron.config import GeneralArgs  # type: ignore
@@ -147,7 +149,7 @@ class EvaluationTracker:
 
     def save(self) -> None:
         """Saves the experiment information and results to files, and to the hub if requested."""
-        hlog("Saving experiment tracker")
+        logger.info("Saving experiment tracker")
         date_id = datetime.now().isoformat().replace(":", "-")
 
         # We first prepare data to save
@@ -202,7 +204,7 @@ class EvaluationTracker:
         output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name
         self.fs.mkdirs(output_dir_results, exist_ok=True)
         output_results_file = output_dir_results / f"results_{date_id}.json"
-        hlog(f"Saving results to {output_results_file}")
+        logger.info(f"Saving results to {output_results_file}")
         with self.fs.open(output_results_file, "w") as f:
             f.write(json.dumps(results_dict, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False))
 
@@ -210,7 +212,7 @@ class EvaluationTracker:
         output_dir_details = Path(self.output_dir) / "details" / self.general_config_logger.model_name
         output_dir_details_sub_folder = output_dir_details / date_id
         self.fs.mkdirs(output_dir_details_sub_folder, exist_ok=True)
-        hlog(f"Saving details to {output_dir_details_sub_folder}")
+        logger.info(f"Saving details to {output_dir_details_sub_folder}")
         for task_name, dataset in details_datasets.items():
             output_file_details = output_dir_details_sub_folder / f"details_{task_name}_{date_id}.parquet"
             with self.fs.open(str(output_file_details), "wb") as f:
@@ -255,7 +257,7 @@ class EvaluationTracker:
 
         if not self.api.repo_exists(repo_id):
             self.api.create_repo(repo_id, private=not (self.public), repo_type="dataset", exist_ok=True)
-            hlog(f"Repository {repo_id} not found, creating it.")
+            logger.info(f"Repository {repo_id} not found, creating it.")
 
         # We upload it both as a json and a parquet file
         result_file_base_name = f"results_{date_id}"
@@ -490,11 +492,11 @@ class EvaluationTracker:
         self, results: dict[str, dict[str, float]], details: dict[str, DetailsLogger.CompiledDetail]
     ):
         if not is_tensorboardX_available:
-            hlog_warn(NO_TENSORBOARDX_WARN_MSG)
+            logger.warning(NO_TENSORBOARDX_WARN_MSG)
             return
 
         if not is_nanotron_available():
-            hlog_warn("You cannot push results to tensorboard without having nanotron installed. Skipping")
+            logger.warning("You cannot push results to tensorboard without having nanotron installed. Skipping")
             return
 
         prefix = self.tensorboard_metric_prefix
@@ -526,14 +528,14 @@ class EvaluationTracker:
             bench_suite = None
             if ":" in task_name:
                 bench_suite = task_name.split(":")[0]  # e.g. MMLU
-                hlog(f"bench_suite {bench_suite} in {task_name}")
+                logger.info(f"bench_suite {bench_suite} in {task_name}")
                 for metric, value in values.items():
                     if "stderr" in metric:
                         continue
                     if bench_suite not in bench_averages:
                         bench_averages[bench_suite] = {}
                     bench_averages[bench_suite][metric] = bench_averages[bench_suite].get(metric, []) + [float(value)]
-            hlog(f"Pushing {task_name} {values} to tensorboard")
+            logger.info(f"Pushing {task_name} {values} to tensorboard")
             for metric, value in values.items():
                 if "stderr" in metric:
                     tb_context.add_scalar(f"stderr_{prefix}/{task_name}/{metric}", value, global_step=global_step)
@@ -546,7 +548,7 @@ class EvaluationTracker:
         # Tasks with subtasks
         for name, values in bench_averages.items():
             for metric, values in values.items():
-                hlog(f"Pushing average {name} {metric} {sum(values) / len(values)} to tensorboard")
+                logger.info(f"Pushing average {name} {metric} {sum(values) / len(values)} to tensorboard")
                 tb_context.add_scalar(f"{prefix}/{name}/{metric}", sum(values) / len(values), global_step=global_step)
 
         tb_context.add_text("eval_config", obj_to_markdown(results), global_step=global_step)
@@ -571,7 +573,7 @@ class EvaluationTracker:
 
         # Now we can push to the hub
         tb_context.scheduler.trigger()
-        hlog(
+        logger.info(
             f"Pushed to tensorboard at https://huggingface.co/{self.tensorboard_repo}/{output_dir_tb}/tensorboard"
             f" at global_step {global_step}"
         )

@@ -22,6 +22,7 @@
 # SOFTWARE.
 
 """Simplified version of the BertScorer lib - we only import what we need."""
+import logging
 import os
 import time
 from collections import defaultdict
@@ -31,7 +32,8 @@ import torch
 from torch.nn.utils.rnn import pad_sequence
 from transformers import AutoModel, AutoTokenizer
 
-from lighteval.logging.hierarchical_logger import hlog, hlog_warn
+
+logger = logging.getLogger(__name__)
 
 
 def padding(arr, pad_token, dtype=torch.long):
@@ -218,14 +220,14 @@ def greedy_cos_idf(
         F = F.view(L, B)
 
     if torch.any(hyp_zero_mask):
-        hlog_warn(
+        logger.warning(
             "Warning: Empty candidate sentence detected; setting raw BERTscores to 0.",
         )
         P = P.masked_fill(hyp_zero_mask, 0.0)
         R = R.masked_fill(hyp_zero_mask, 0.0)
 
     if torch.any(ref_zero_mask):
-        hlog_warn("Warning: Empty reference sentence detected; setting raw BERTScores to 0.")
+        logger.warning("Empty reference sentence detected; setting raw BERTScores to 0.")
         P = P.masked_fill(ref_zero_mask, 0.0)
         R = R.masked_fill(ref_zero_mask, 0.0)
 
@@ -441,7 +443,7 @@ class BERTScorer:
         """
 
         if self._model is None:
-            hlog(f"Loading BERTScorer model `{self._model_type}`")
+            logger.info(f"Loading BERTScorer model `{self._model_type}`")
             self._tokenizer = AutoTokenizer.from_pretrained(self._model_type)
             self._model = AutoModel.from_pretrained(self._model_type)
             self._model.eval()
@@ -460,7 +462,7 @@ class BERTScorer:
                 count += len(ref_group)
 
         if verbose:
-            hlog("calculating scores...")
+            logger.info("calculating scores...")
             start = time.perf_counter()
 
         if self.idf:
@@ -496,6 +498,6 @@ class BERTScorer:
 
         if verbose:
             time_diff = time.perf_counter() - start
-            hlog(f"done in {time_diff:.2f} seconds, {len(refs) / time_diff:.2f} sentences/sec")
+            logger.info(f"done in {time_diff:.2f} seconds, {len(refs) / time_diff:.2f} sentences/sec")
 
         return out

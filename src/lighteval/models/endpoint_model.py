@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import asyncio
+import logging
 import re
 import time
 from typing import Coroutine, List, Optional, Union
@@ -45,7 +46,6 @@ from tqdm import tqdm
 from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
-from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
 from lighteval.models.model_config import InferenceEndpointModelConfig, InferenceModelConfig
 from lighteval.models.model_output import GenerativeResponse, LoglikelihoodResponse, LoglikelihoodSingleTokenResponse
@@ -57,6 +57,8 @@ from lighteval.tasks.requests import (
 )
 from lighteval.utils.utils import EnvConfig, as_list
 
+
+logger = logging.getLogger(__name__)
 
 BATCH_SIZE = 50
 MAX_TIME_FOR_SPINUP = 3600
@@ -117,7 +119,7 @@ class InferenceEndpointModel(LightevalModel):
                 try:
                     if self.endpoint is None:  # Endpoint does not exist yet locally
                         if not config.should_reuse_existing:  # New endpoint
-                            hlog("Creating endpoint.")
+                            logger.info("Creating endpoint.")
                             self.endpoint: InferenceEndpoint = create_inference_endpoint(
                                 name=endpoint_name,
                                 namespace=config.namespace,
@@ -150,7 +152,7 @@ class InferenceEndpointModel(LightevalModel):
                                 },
                             )
                         else:  # Endpoint exists
-                            hlog("Reusing existing endpoint.")
+                            logger.info("Reusing existing endpoint.")
                             self.endpoint = get_inference_endpoint(
                                 name=endpoint_name, token=env_config.token, namespace=config.namespace
                             )
@@ -158,13 +160,13 @@ class InferenceEndpointModel(LightevalModel):
                     else:
                         # Endpoint exists locally but either failed (and most likely it must be scaled up)
                         if must_scaleup_endpoint:
-                            hlog("Rescaling existing endpoint.")
+                            logger.info("Rescaling existing endpoint.")
                             self.endpoint.update(instance_size=instance_size, instance_type=instance_type)
                             must_scaleup_endpoint = False
                         # or we got a connection error, in which case we do nothing and just wait at the next step
 
                     # Waits for the endpoint to be deployed - we could also check for the status in updating', 'pending', 'initializing'
-                    hlog("Trying to deploy your endpoint. Please wait for 10 min.")
+                    logger.info("Trying to deploy your endpoint. Please wait for 10 min.")
                     self.endpoint.wait(timeout=600, refresh_every=60)  # We wait for 10 min
                 except InferenceEndpointError as e:
                     instance_type, instance_size = InferenceEndpointModel.get_larger_hardware_suggestion(
@@ -172,11 +174,13 @@ class InferenceEndpointModel(LightevalModel):
                     )
                     must_scaleup_endpoint = True
 
-                    hlog(
+                    logger.info(
                         f"Endpoint failed to start on current hardware with error {e}. Trying to autoscale to ({instance_type}, {instance_size})."
                     )
                 except InferenceEndpointTimeoutError as e:
-                    hlog_err("Endpoint did not start within 30 minutes, there was a timeout. Please inspect the logs.")
+                    logger.error(
+                        "Endpoint did not start within 30 minutes, there was a timeout. Please inspect the logs."
+                    )
                     raise e
                 except HfHubHTTPError as e:
                     # The endpoint actually already exists, we'll spin it up instead of trying to create a new one
@@ -185,20 +189,20 @@ class InferenceEndpointModel(LightevalModel):
                         config.should_reuse_existing = True
                     # Requested resources are not available
                     elif "Bad Request: Compute instance not available yet" in str(e):
-                        hlog_err(
-                            "The hardware combination you are requesting does not seem to be available: ({instance_type}, {instance_size}, {config.region})."
+                        logger.error(
+                            f"The hardware combination you are requesting does not seem to be available: ({instance_type}, {instance_size}, {config.region})."
                         )
                         raise e
                     # User account does not have access to requested resources
                     elif "Conflict: Quota exceeded" in str(e):
                         raise e
                 except ConnectionError as e:
-                    hlog_err(f"Connection failed with error {e}. Retrying")
+                    logger.error(f"Connection failed with error {e}. Retrying")
 
             if not self.endpoint.status == "running":
                 raise Exception("Did not manage to start endpoint within the elapsed time and on suggested hardware.")
 
-            hlog("Endpoint successfully deployed!")
+            logger.info("Endpoint successfully deployed!")
             self.endpoint_name = config.endpoint_name
             self.name = self.endpoint.repository
             self.revision = self.endpoint.revision
@@ -278,12 +282,12 @@ class InferenceEndpointModel(LightevalModel):
         if self.endpoint is not None:
             if self.reuse_existing:
                 self.endpoint.pause()
-                hlog_warn(
+                logger.warning(
                     "Since your endpoint was existing before, we did not delete it, but paused it instead. You might want to delete it if you're done using it."
                 )
             else:
                 self.endpoint.delete()
-                hlog_warn(
+                logger.warning(
                     "We deleted the spinned up endpoint after using it. You'll need to create it again if you need to reuse it."
                 )
 
@@ -425,7 +429,7 @@ class InferenceEndpointModel(LightevalModel):
                 returns_logits = batch[0].use_logits
                 num_samples = batch[0].num_samples
                 if num_samples > 1:
-                    hlog_err(
+                    logger.error(
                         "Inference endpoints does not allow sampling evaluations - this is likely to fail or provide problematic results"
                     )
 

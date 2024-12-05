@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 import os
 from typing import Optional, Tuple, Union
 
@@ -33,7 +34,6 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
-from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
 from lighteval.models.model_config import BaseModelConfig
 from lighteval.models.model_output import (
@@ -55,6 +55,9 @@ from lighteval.tasks.requests import (
 from lighteval.utils.imports import is_accelerate_available
 from lighteval.utils.parallelism import find_executable_batch_size
 from lighteval.utils.utils import EnvConfig, as_list
+
+
+logger = logging.getLogger(__name__)
 
 
 if is_accelerate_available():
@@ -91,10 +94,10 @@ class BaseModel(LightevalModel):
 
         # We are in DP (and launch the script with `accelerate launch`)
         if not config.model_parallel and not isinstance(config.quantization_config, BitsAndBytesConfig):
-            hlog(f"Using Data Parallelism, putting model on device {self._device}")
+            logger.info(f"Using Data Parallelism, putting model on device {self._device}")
             self.model = self.model.to(self._device)
         if config.compile:
-            hlog("Compiling the model")
+            logger.info("Compiling the model")
             self.model.model.compile()
 
         self.model_name = _simplify_name(config.pretrained)
@@ -202,7 +205,7 @@ class BaseModel(LightevalModel):
         self.num_local_processes = int(os.environ.get("LOCAL_WORLD_SIZE", 1))
         self.num_machines = int(os.environ.get("WORLD_SIZE", 0)) // self.num_local_processes
         if self.num_machines == 0:
-            hlog("We are not in a distributed setting. Setting model_parallel to False.")
+            logger.info("We are not in a distributed setting. Setting model_parallel to False.")
             model_parallel = False
 
         if model_parallel is None:
@@ -210,7 +213,7 @@ class BaseModel(LightevalModel):
             if "cpu" in max_memory_all_gpus:
                 del max_memory_all_gpus["cpu"]
             model_parallel = bool(self.num_local_processes < len(max_memory_all_gpus))
-            hlog(
+            logger.info(
                 f"Setting model parallel to {model_parallel} since "
                 f"the number of local processes is {self.num_local_processes} "
                 f"and the number of GPUs is {len(max_memory_all_gpus)}"
@@ -225,13 +228,13 @@ class BaseModel(LightevalModel):
                 if k % self.num_local_processes == (self.accelerator.process_index % self.num_local_processes)
             }
             device_map = "auto"
-            hlog(
+            logger.info(
                 f"Model parallel was set to True, setting max memory per GPU to {max_mem_this_process} and device map to {device_map}"
             )
         else:
             max_mem_this_process = None
             device_map = None
-            hlog(
+            logger.info(
                 f"Model parallel was set to False, max memory set to {max_mem_this_process} and device map to {device_map}"
             )
         return model_parallel, max_mem_this_process, device_map
@@ -332,7 +335,9 @@ class BaseModel(LightevalModel):
                 truncation_side="left",
             )
         except FileNotFoundError:
-            hlog_warn("Problem when loading the tokenizer in the cache - discarding the provided cache path value.")
+            logger.warning(
+                "Problem when loading the tokenizer in the cache - discarding the provided cache path value."
+            )
             tokenizer = AutoTokenizer.from_pretrained(
                 model_name if tokenizer_name is None else tokenizer_name,
                 revision=revision + (f"/{subfolder}" if subfolder is not None else ""),
@@ -343,7 +348,7 @@ class BaseModel(LightevalModel):
             )
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.model_max_length = self.max_length
-        hlog("Tokenizer truncation and padding size set to the left side.")
+        logger.info("Tokenizer truncation and padding size set to the left side.")
 
         return tokenizer
 
@@ -409,7 +414,7 @@ class BaseModel(LightevalModel):
     def _get_batch_size(self, max_input_length: int, override_bs: int = 0, starting_batch_size: int = 512) -> int:
         if override_bs > 0:
             return override_bs
-        hlog(f"Detecting largest batch size with max_input_length={max_input_length}")
+        logger.info(f"Detecting largest batch size with max_input_length={max_input_length}")
 
         @find_executable_batch_size(
             starting_batch_size=starting_batch_size
@@ -422,7 +427,7 @@ class BaseModel(LightevalModel):
             return batch_size
 
         batch_size = forward_batch()
-        hlog(f"Determined largest batch size: {batch_size}")
+        logger.info(f"Determined largest batch size: {batch_size}")
         return batch_size
 
     def greedy_until_multi_turn(  # noqa: C901
@@ -440,7 +445,7 @@ class BaseModel(LightevalModel):
         if self.accelerator:
             dataloader = self.accelerator.prepare(dataloader)
 
-        hlog_warn("Running greedy multi turn generation, the batch size is set to 1 for this task.")
+        logger.warning("Running greedy multi turn generation, the batch size is set to 1 for this task.")
 
         for request_batch in tqdm(
             dataloader, desc="Greedy Multi Turn generation", position=1, leave=False, disable=self.disable_tqdm
@@ -650,7 +655,7 @@ class BaseModel(LightevalModel):
                 # should have been managed by the prompt creator/few shot manager if requested by the user.
                 context_size = tokenized["input_ids"].shape[1]
                 if context_size > self.max_length:
-                    hlog_warn(
+                    logger.warning(
                         f"The context size of your batch ({context_size}) is bigger than the maximum context size allowed by the model ({self.max_length}) for a task in"
                         + str({i.task_name for i in batch})
                         + ". This is likely to lead to some errors."  # noqa C401
@@ -949,7 +954,7 @@ class BaseModel(LightevalModel):
         padded = []
 
         if max_context is None:
-            hlog_warn("max_context is None, using max_length")
+            logger.warning("max_context is None, using max_length")
             max_context = self.max_length
 
         # Each sample is concatenated and cut to length or padded to max_length
@@ -964,7 +969,7 @@ class BaseModel(LightevalModel):
             padding_length = padding_length if padding_length is not None else sequence_len
 
             if padding_length - sequence_len < 0:
-                hlog_err(f"Padding length {padding_length} is smaller than input length {sequence_len}")
+                logger.warning(f"Padding length {padding_length} is smaller than input length {sequence_len}")
                 raise ValueError("Negative padding")
 
             padded.append(padding_length - sequence_len)
