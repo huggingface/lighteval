@@ -165,6 +165,8 @@ def get_mcq_prompt_function(
         # NOTE: it's important to do it after query formatting, because otherwise the options will contain cot
         is_few_shot = line.get("__few_shots", False)
         few_shot_cot = mcq_input.get("few_shot_cot", None)
+        if is_few_shot:
+            pass
         if few_shot_cot and formulation.cot and is_few_shot:
             answers = [capitalize(fix_ending_punct(answer, translation_literals)) for answer in as_list(few_shot_cot)]
             gold_idx = list(range(len(answers)))

@@ -3510,6 +3510,9 @@ msvamp_tasks = [
         hf_repo="Mathoctopus/MSVAMP",
         hf_subset=standardize_tag(language.value),
         evaluation_splits=("test",),
+        # Don't use balanced here as the biggest clusters are 1,2,3,4,5 which results
+        # in some llms just output 6
+        few_shots_select="random",
         hf_avail_splits=["test"],
         generation_size=get_cot_generaion_size(cot, 100),
         metric=[

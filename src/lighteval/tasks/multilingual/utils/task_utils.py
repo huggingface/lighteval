@@ -73,6 +73,8 @@ def get_cot_stop_sequence(language: Language, formulation: Formulation) -> list[
     stop_sequence = ["\n"] if not formulation.cot else []
     try:
         trans = TRANSLATION_LITERALS[language]
-        return [f"{trans.question_word}{trans.colon}"] + stop_sequence
+        # Ensure it's on a new line as otherwise LLM's sometimes like to generate:
+        # "**Répondez à la" or "1. **Comprendre la" in their cot generations
+        return [f"\n{trans.question_word}{trans.colon}"] + stop_sequence
     except (AttributeError, KeyError):
         return stop_sequence
