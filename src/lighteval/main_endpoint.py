@@ -190,7 +190,7 @@ def inference_endpoint(
     ] = None,
     override_batch_size: Annotated[
         int, Option(help="Override batch size for evaluation.", rich_help_panel=HELP_PANNEL_NAME_3)
-    ] = -1,
+    ] = None,
     job_id: Annotated[
         int, Option(help="Optional job id for future refenrence.", rich_help_panel=HELP_PANNEL_NAME_3)
     ] = 0,
@@ -203,7 +203,6 @@ def inference_endpoint(
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.model_config import (
         InferenceEndpointModelConfig,
-        InferenceModelConfig,
     )
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
@@ -219,37 +218,33 @@ def inference_endpoint(
 
     # TODO (nathan): better handling of model_args
 
-    parallelism_manager = ParallelismManager.TGI
+    parallelism_manager = ParallelismManager.NONE  # since we're using inference endpoints in remote
 
     with open(model_config_path, "r") as f:
         config = yaml.safe_load(f)["model"]
 
-    reuse_existing_endpoint = config["base_params"].get("reuse_existing", None)
-
-    complete_config_endpoint = all(
-        val not in [None, ""]
-        for key, val in config.get("instance", {}).items()
-        if key not in InferenceEndpointModelConfig.nullable_keys()
+    # Find a way to add this back
+    # if config["base_params"].get("endpoint_name", None):
+    #    return InferenceModelConfig(model=config["base_params"]["endpoint_name"])
+    all_params = {
+        "model_name": config["base_params"].get("model_name", None),
+        "endpoint_name": config["base_params"].get("endpoint_name", None),
+        "model_dtype": config["base_params"].get("dtype", None),
+        "revision": config["base_params"].get("revision", None) or "main",
+        "should_reuse_existing": config["base_params"].get("should_reuse_existing"),
+        "accelerator": config.get("instance", {}).get("accelerator", None),
+        "region": config.get("instance", {}).get("region", None),
+        "vendor": config.get("instance", {}).get("vendor", None),
+        "instance_size": config.get("instance", {}).get("instance_size", None),
+        "instance_type": config.get("instance", {}).get("instance_type", None),
+        "namespace": config.get("instance", {}).get("namespace", None),
+        "image_url": config.get("instance", {}).get("image_url", None),
+        "env_vars": config.get("instance", {}).get("env_vars", None),
+    }
+    model_config = InferenceEndpointModelConfig(
+        # We only initialize params which have a non default value
+        **{k: v for k, v in all_params.items() if v is not None},
     )
-
-    if reuse_existing_endpoint or complete_config_endpoint:
-        model_config = InferenceEndpointModelConfig(
-            name=config["base_params"]["endpoint_name"].replace(".", "-").lower(),
-            repository=config["base_params"]["model"],
-            model_dtype=config["base_params"]["dtype"],
-            revision=config["base_params"]["revision"] or "main",
-            should_reuse_existing=reuse_existing_endpoint,
-            accelerator=config["instance"]["accelerator"],
-            region=config["instance"]["region"],
-            vendor=config["instance"]["vendor"],
-            instance_size=config["instance"]["instance_size"],
-            instance_type=config["instance"]["instance_type"],
-            namespace=config["instance"]["namespace"],
-            image_url=config["instance"].get("image_url", None),
-            env_vars=config["instance"].get("env_vars", None),
-        )
-    else:
-        model_config = InferenceModelConfig(model=config["base_params"]["endpoint_name"])
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,

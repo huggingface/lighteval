@@ -81,7 +81,7 @@ if is_nanotron_available():
     from nanotron.serialize import load_weights
     from nanotron.trainer import CONFIG_TO_MODEL_CLASS, mark_tied_parameters
 
-logger = logging.get_logger(__name__)
+    logger = logging.get_logger(__name__)
 
 
 class NanotronLightevalModel(LightevalModel):
@@ -93,7 +93,7 @@ class NanotronLightevalModel(LightevalModel):
         self,
         checkpoint_path: str,
         nanotron_config: FullNanotronConfig,
-        parallel_context: ParallelContext,
+        parallel_context: "ParallelContext",
         max_gen_toks: Optional[int] = 256,
         max_length: Optional[int] = None,
         add_special_tokens: Optional[bool] = True,
@@ -594,7 +594,7 @@ class NanotronLightevalModel(LightevalModel):
             input_ids=input_ids, input_mask=input_mask, input_lengths=input_lengths, truncated=truncated, padded=padded
         )
 
-    def gather(self, output_tensor: torch.Tensor, process_group: dist.ProcessGroup = None) -> torch.Tensor:
+    def gather(self, output_tensor: torch.Tensor, process_group: "dist.ProcessGroup" = None) -> torch.Tensor:
         """Gather together tensors of (possibly) various size spread on separate GPUs (first exchange the lengths and then pad and gather)"""
         if process_group is None:
             process_group = self.parallel_context.dp_pg
