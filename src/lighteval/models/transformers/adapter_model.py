@@ -22,14 +22,14 @@
 
 import logging
 from contextlib import nullcontext
+from dataclasses import dataclass
 
 import torch
 from transformers import AutoModelForCausalLM, PreTrainedTokenizer
 
-from lighteval.models.base_model import BaseModel
-from lighteval.models.model_config import AdapterModelConfig
+from lighteval.models.transformers.base_model import BaseModel, BaseModelConfig
 from lighteval.models.utils import _get_dtype
-from lighteval.utils.imports import is_peft_available
+from lighteval.utils.imports import NO_PEFT_ERROR_MSG, is_peft_available
 from lighteval.utils.utils import EnvConfig
 
 
@@ -37,6 +37,24 @@ logger = logging.getLogger(__name__)
 
 if is_peft_available():
     from peft import PeftModel
+
+
+@dataclass
+class AdapterModelConfig(BaseModelConfig):
+    # Adapter models have the specificity that they look at the base model (= the parent) for the tokenizer and config
+    base_model: str = None
+
+    def __post_init__(self):
+        if not is_peft_available():
+            raise ImportError(NO_PEFT_ERROR_MSG)
+
+        if not self.base_model:  # must have a default value bc of dataclass inheritance, but can't actually be None
+            raise ValueError("The base_model argument must not be null for an adapter model config")
+
+        return super().__post_init__()
+
+    def init_configs(self, env_config: EnvConfig):
+        return self._init_configs(self.base_model, env_config)
 
 
 class AdapterModel(BaseModel):

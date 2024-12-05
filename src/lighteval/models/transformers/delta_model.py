@@ -22,18 +22,35 @@
 
 import logging
 from contextlib import nullcontext
+from dataclasses import dataclass
 
 import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM
 
-from lighteval.models.base_model import BaseModel
-from lighteval.models.model_config import DeltaModelConfig
-from lighteval.models.utils import _get_dtype
+from lighteval.models.transformers.base_model import BaseModel, BaseModelConfig
+from lighteval.models.utils import _get_dtype, _get_model_sha
 from lighteval.utils.utils import EnvConfig
 
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class DeltaModelConfig(BaseModelConfig):
+    # Delta models look at the pretrained (= the delta weights) for the tokenizer and model config
+    base_model: str = None
+
+    def __post_init__(self):
+        self.revision = "main"
+
+        if not self.base_model:  # must have a default value bc of dataclass inheritance, but can't actually be None
+            raise ValueError("The base_model argument must not be null for a delta model config")
+
+        return super().__post_init__()
+
+    def get_model_sha(self):
+        return _get_model_sha(repo_id=self.pretrained, revision="main")
 
 
 class DeltaModel(BaseModel):

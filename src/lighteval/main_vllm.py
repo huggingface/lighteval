@@ -89,7 +89,7 @@ def vllm(
     Evaluate models using vllm as backend.
     """
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.models.model_config import VLLMModelConfig
+    from lighteval.models.vllm.vllm_model import VLLMModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
     TOKEN = os.getenv("HF_TOKEN")
