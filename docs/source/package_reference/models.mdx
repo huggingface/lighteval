@@ -4,19 +4,28 @@
 ### LightevalModel
 [[autodoc]] models.abstract_model.LightevalModel
 
+
 ## Accelerate and Transformers Models
 ### BaseModel
+[[autodoc]] models.transformers.base_model.BaseModelConfig
 [[autodoc]] models.transformers.base_model.BaseModel
+
 ### AdapterModel
+[[autodoc]] models.transformers.adapter_model.AdapterModelConfig
 [[autodoc]] models.transformers.adapter_model.AdapterModel
+
 ### DeltaModel
+[[autodoc]] models.transformers.delta_model.DeltaModelConfig
 [[autodoc]] models.transformers.delta_model.DeltaModel
 
 ## Endpoints-based Models
 ### InferenceEndpointModel
+[[autodoc]] models.endpoints.endpoint_model.InferenceEndpointModelConfig
+[[autodoc]] models.endpoints.endpoint_model.InferenceModelConfig
 [[autodoc]] models.endpoints.endpoint_model.InferenceEndpointModel
 
 ### TGI ModelClient
+[[autodoc]] models.endpoints.tgi_model.TGIModelConfig
 [[autodoc]] models.endpoints.tgi_model.ModelClient
 
 ### Open AI Models
@@ -28,4 +37,5 @@
 
 ## VLLM Model
 ### VLLMModel
+[[autodoc]] models.vllm.vllm_model.VLLMModelConfig
 [[autodoc]] models.vllm.vllm_model.VLLMModel
