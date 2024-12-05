@@ -20,9 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 from typing import Union
 
-from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.adapter_model import AdapterModel
 from lighteval.models.base_model import BaseModel
 from lighteval.models.delta_model import DeltaModel
@@ -54,6 +54,9 @@ from lighteval.utils.imports import (
     is_vllm_available,
 )
 from lighteval.utils.utils import EnvConfig
+
+
+logger = logging.getLogger(__name__)
 
 
 def load_model(  # noqa: C901
@@ -112,7 +115,7 @@ def load_model_with_tgi(config: TGIModelConfig):
     if not is_tgi_available():
         raise ImportError(NO_TGI_ERROR_MSG)
 
-    hlog(f"Load model from inference server: {config.inference_server_address}")
+    logger.info(f"Load model from inference server: {config.inference_server_address}")
     model = ModelClient(
         address=config.inference_server_address, auth_token=config.inference_server_auth, model_id=config.model_id
     )
@@ -137,7 +140,7 @@ def load_openai_model(config: OpenAIModelConfig, env_config: EnvConfig):
 
 
 def load_model_with_inference_endpoints(config: InferenceEndpointModelConfig, env_config: EnvConfig):
-    hlog("Spin up model using inference endpoint.")
+    logger.info("Spin up model using inference endpoint.")
     model = InferenceEndpointModel(config=config, env_config=env_config)
     return model
 

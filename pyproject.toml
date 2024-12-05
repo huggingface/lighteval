@@ -55,15 +55,18 @@ keywords = ["evaluation", "nlp", "llm"]
 dependencies = [
     # Base dependencies
     "transformers>=4.38.0",
+    "accelerate",
     "huggingface_hub>=0.23.0",
     "torch>=2.0,<2.5",
     "GitPython>=3.1.41", # for logging
     "datasets>=2.14.0",
     "numpy<2",  # pinned to avoid incompatibilities
     # Prettiness
+    "typer",
     "termcolor==2.3.0",
     "pytablewriter",
-    "colorama",
+    "rich",
+    "colorlog",
     # Extension of metrics
     "aenum==3.1.15",
     # Base metrics
@@ -79,7 +82,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-accelerate = ["accelerate"]
 litellm = ["litellm", "diskcache"]
 tgi = ["text-generation==0.6.0"]
 optimum = ["optimum==1.12.0"]
@@ -115,4 +117,4 @@ Issues = "https://github.com/huggingface/lighteval/issues"
 # Changelog = "https://github.com/huggingface/lighteval/blob/master/CHANGELOG.md"
 
 [project.scripts]
-lighteval = "lighteval.__main__:cli_evaluate"
+lighteval = "lighteval.__main__:app"

@@ -3,30 +3,32 @@
 ## Saving results locally
 
 Lighteval will automatically save results and evaluation details in the
-directory set with the `--output_dir` argument. The results will be saved in
+directory set with the `--output-dir` option. The results will be saved in
 `{output_dir}/results/{model_name}/results_{timestamp}.json`. [Here is an
 example of a result file](#example-of-a-result-file). The output path can be
 any [fsspec](https://filesystem-spec.readthedocs.io/en/latest/index.html)
 compliant path (local, s3, hf hub, gdrive, ftp, etc).
 
-To save the details of the evaluation, you can use the `--save_details`
-argument. The details will be saved in a parquet file
+To save the details of the evaluation, you can use the `--save-details`
+option. The details will be saved in a parquet file
 `{output_dir}/details/{model_name}/{timestamp}/details_{task}_{timestamp}.parquet`.
 
 ## Pushing results to the HuggingFace hub
 
 You can push the results and evaluation details to the HuggingFace hub. To do
-so, you need to set the `--push_to_hub` as well as the `--results_org`
-argument. The results will be saved in a dataset with the name at
+so, you need to set the `--push-to-hub` as well as the `--results-org`
+option. The results will be saved in a dataset with the name at
 `{results_org}/{model_org}/{model_name}`. To push the details, you need to set
-the `--save_details` argument.
+the `--save-details` option.
 The dataset created will be private by default, you can make it public by
-setting the `--public_run` argument.
+setting the `--public-run` option.
 
 
 ## Pushing results to Tensorboard
 
-You can push the results to Tensorboard by setting `--push_to_tensorboard`.
+You can push the results to Tensorboard by setting `--push-to-tensorboard`.
+This will create a Tensorboard dashboard in a HF org set with the `--results-org`
+option.
 
 
 ## How to load and investigate details
