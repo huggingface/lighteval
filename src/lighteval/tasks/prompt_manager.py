@@ -92,7 +92,7 @@ class PromptManager:
             formatted_doc (Doc): Formatted document.
 
         Returns:
-            str: Class of the
+            str: Class of the fewshot document
         """
         return formatted_doc.fewshot_sorting_class or PromptManager.doc_to_target(formatted_doc)
 
