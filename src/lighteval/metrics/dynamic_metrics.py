@@ -26,6 +26,7 @@ from itertools import product
 from typing import Callable, Literal
 
 import numpy as np
+import sympy
 
 from lighteval.metrics.metrics_sample import (
     ExactMatches,
@@ -39,6 +40,7 @@ from lighteval.metrics.normalizations import (
     LogProbPMINorm,
     LogProbTokenNorm,
     get_multilingual_normalizer,
+    math_normalizer,
 )
 from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase, SampleLevelMetric
 from lighteval.tasks.requests import Doc
@@ -178,31 +180,62 @@ def multilingual_quasi_exact_match_metric(
 
 def multilingual_extractive_match_metric(
     language: Language,
-    target_for_extraction: Literal["number"] | ChoicePrefix = "number",
+    target_for_extraction: list[Literal["number", "latex"] | ChoicePrefix] = ["number"],
     aggregation_function: Callable[[list[float]], float] = max,
 ) -> SampleLevelMetric:
-    # First try to extract the answer from the text
     translation_literal = TRANSLATION_LITERALS[language]
 
     @lru_cache(maxsize=1)
     def lazy_number_regex():
-        number_re = r"(?P<target>\d+(?:\.\d+)?)"
-        prefixed_res = [
-            f"(?i:{translation_literal.answer}).{{0,40}}?{number_re}",
-            number_re,
-        ]
-        return list(map(re.compile, prefixed_res))
+        # Basic number patterns (no LaTeX)
+        number_re = (
+            r"(?P<target>"
+            r"\d{1,3}(?:[ ,]\d{3})*(?:[.,]\d+)?|"  # Numbers with thousand/decimal separators
+            r"\d+(?:[.,]\d+)?"  # Simple numbers with decimals
+            r")"
+        )
+
+        # Match after equals with answer word
+        equals_re = f"(?i:{translation_literal.answer}).{{0,40}}?=\\s*{number_re}"
+
+        # Match with answer word
+        answer_re = f"(?i:{translation_literal.answer}).{{0,40}}?{number_re}"
+
+        # Match plain numbers
+        plain_number_re = number_re
+
+        return [re.compile(pattern) for pattern in [equals_re, answer_re, plain_number_re]]
+
+    @lru_cache(maxsize=1)
+    def lazy_latex_regex():
+        # Only LaTeX expressions between delimiters
+        latex_re = (
+            r"(?P<target>"
+            r"\$\$[\s\S]*?\$\$|"  # $$...$$ (display math, can be multiline)
+            r"\\\[[\s\S]*?\\\]|"  # \[...\] (display math, can be multiline)
+            r"\$[^\n$]*?\$|"  # $...$ (inline math, single line)
+            r"\\\([^\n)]*?\\\)"  # \(...\) (inline math, single line)
+            r")"
+        )
+
+        # Match after equals with answer word
+        equals_re = f"(?i:{translation_literal.answer}).{{0,40}}?=\\s*{latex_re}"
+
+        # Match with answer word
+        answer_re = f"(?i:{translation_literal.answer}).{{0,40}}?{latex_re}"
+
+        # Match plain LaTeX
+        plain_latex_re = latex_re
+
+        return [re.compile(pattern, re.DOTALL) for pattern in [equals_re, answer_re, plain_latex_re]]
 
     @lru_cache(maxsize=1000)
-    def lazy_indices_regex(target_for_extraction: ChoicePrefix, len_gold: int):
+    def lazy_indices_regex(target_for_extraction: ChoicePrefix, len_choices: int):
         # First get indices to predict
-        indices = get_prefix(target_for_extraction, translation_literal)[:len_gold]
+        indices = get_prefix(target_for_extraction, translation_literal)[:len_choices]
         indice_str_re = f"(?P<target>[{''.join([re.escape(i) for i in indices])}])"
 
         # The answer keys are either surrounded with <space>**answer**., or '<space>answer.' or the same without the dot
-        # Same version for comma
-
-        # We try with and without translation literals of punctuation
         full_stop_re = rf"[{re.escape(translation_literal.full_stop)}\.]"
         comma_re = rf"[{re.escape(translation_literal.comma)}\,]"
         colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
@@ -211,16 +244,17 @@ def multilingual_extractive_match_metric(
         answer_prefix_re = rf"{space_re}(?:\*\*)?"
         answer_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|$)"
         answer_re = f"{answer_prefix_re}{indice_str_re}{answer_suffix_re}"
+        answer_re_start = rf"^(?:\*\*)?{indice_str_re}{answer_suffix_re}"
 
-        # First we try to extract if by searching for answer followed by a colon, then just answer without any colon, then we just search for answer
-        # and if none of this works, we just search for the indices in the text
-        answer_word = "(?i:translation_literal.answer)"
+        answer_word = f"(?i:{translation_literal.answer})"
 
         prefixed_res = [
             # Answer is: A.
             f"{answer_word}.{{0,40}}?{colon_re}{answer_re}",
             # Answer is A.
             f"{answer_word}.{{0,40}}?{answer_re}",
+            # A. at start
+            answer_re_start,
             # A.
             answer_re,
             # A
@@ -232,28 +266,92 @@ def multilingual_extractive_match_metric(
         for re_pattern in target_re:
             matches = re_pattern.findall(pred)
             if matches:
-                return matches[-1]
+                match = matches[-1]
+                return match
         return None
+
+    def extract_math(match: str, target_type: str) -> str | None:
+        """Extract numerical value from a match.
+
+        Args:
+            match: The matched string (either LaTeX or number)
+            target_type: Either "latex" or "number"
+
+        Returns:
+            Numerical value as string or None if parsing fails
+        """
+        try:
+            if target_type == "latex":
+                # Use math_normalizer to handle LaTeX
+                normalized = math_normalizer(match)
+                if normalized:
+                    # math_normalizer already converts to a sympy-parseable format
+                    result = sympy.sympify(normalized).evalf()
+                    return str(float(result))
+            else:  # number
+                # Clean up the number (remove spaces, normalize comma/period)
+                clean_num = match.replace(". ", "")
+                # Also use math_normalizer here for consistency
+                normalized = math_normalizer(clean_num)
+                if normalized:
+                    result = sympy.sympify(normalized).evalf()
+                    return str(float(result))
+        except:
+            return None
 
     def extract_target(
         golds: list[str],
         predictions: list[str],
         formatted_doc: Doc,
     ) -> float:
-        if target_for_extraction == "number":
-            target_re = lazy_number_regex()
-        else:
-            target_re = lazy_indices_regex(target_for_extraction, len(formatted_doc.choices))
+        # Try each target type in order
+        for target_type in target_for_extraction:
+            if target_type == "number":
+                target_re = lazy_number_regex()
+            elif target_type == "latex":
+                target_re = lazy_latex_regex()
+            else:
+                target_re = lazy_indices_regex(target_type, len(formatted_doc.choices))
 
-        extracted_predictions = list(
-            filter(lambda x: x is not None, [extract_target_from_pred(pred, target_re) for pred in predictions])
-        )
+            extracted_predictions = []
+            for pred in predictions:
+                match = extract_target_from_pred(pred, target_re)
+                if match:
+                    if target_type in ["number", "latex"]:
+                        value = extract_math(match, target_type)
+                        if value is not None:
+                            extracted_predictions.append(value)
+                    else:
+                        extracted_predictions.append(match)
 
-        results = [
-            1 if gold.strip() == extracted_pred.strip() else 0
-            for gold, extracted_pred in product(golds, extracted_predictions)
-        ]
-        return aggregation_function(results or [0])
+            if extracted_predictions:  # If we found matches, process them
+                results = []
+                for gold, extracted_pred in product(golds, extracted_predictions):
+                    if target_type in ["number", "latex"]:
+                        try:
+                            # Normalize gold value too
+                            gold_normalized = math_normalizer(gold)
+                            if not gold_normalized:
+                                continue
+
+                            gold_val = float(sympy.sympify(gold_normalized).evalf())
+                            pred_val = float(sympy.sympify(extracted_pred).evalf())
+                            results.append(1 if abs(gold_val - pred_val) < 1e-6 else 0)
+                        except:
+                            # Fall back to string comparison
+                            if gold and extracted_pred:
+                                results.append(1 if gold.strip() == extracted_pred.strip() else 0)
+                            else:
+                                results.append(0)
+                    else:
+                        if gold and extracted_pred:
+                            results.append(1 if gold.strip() == extracted_pred.strip() else 0)
+                        else:
+                            results.append(0)
+
+                return aggregation_function(results or [0])
+
+        return 0.0  # Return 0 if no matches found with any target type
 
     return SampleLevelMetric(
         metric_name="extractive_match",
