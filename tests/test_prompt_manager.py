@@ -30,8 +30,8 @@ from lighteval.tasks.prompt_manager import FewShotSampler, PromptManager
 from lighteval.tasks.requests import Doc
 
 
-@pytest.fixture(params=["sequential", "random", "balanced"])
-def task(request):
+@pytest.mark.parametrize("fewshot_select", ["sequential", "random", "balanced"])
+def test_fewshot_sampler(fewshot_select: str):
     config = LightevalTaskConfig(
         name="test_fewshot_task",
         prompt_function=lambda _, __: None,
@@ -39,17 +39,13 @@ def task(request):
         hf_subset="default",
         metric=[],
         few_shots_split="test",
-        few_shots_select=request.param,
+        few_shots_select=fewshot_select,
     )
     task = LightevalTask("test_fewshot_task", config)
     rnd = random.Random(0)
     task._fewshot_docs = [
         Doc(str(i), ["A", "B"], rnd.randint(0, 2), fewshot_sorting_class=str(i % 20)) for i in range(100)
     ]
-    return task
-
-
-def test_fewshot_sampler(task: LightevalTask):
     sampler = FewShotSampler(task)
     seed = 1
     docs = sampler.sample_fewshot_examples(20, seed)
