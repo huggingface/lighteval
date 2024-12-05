@@ -147,7 +147,7 @@ class Registry:
         # Check the overlap between default_tasks_registry and custom_tasks_registry
         intersection = set(default_tasks_registry.keys()).intersection(set(custom_tasks_registry.keys()))
         if len(intersection) > 0:
-            logger.info(
+            logger.warning(
                 f"Following tasks ({intersection}) exists both in the default and custom tasks. Will use the default ones on conflict."
             )
 
