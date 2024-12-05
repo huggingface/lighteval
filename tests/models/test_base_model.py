@@ -20,9 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from lighteval.models.model_config import BaseModelConfig
 from lighteval.models.model_loader import load_model
-from lighteval.models.transformers.base_model import BaseModel
+from lighteval.models.transformers.base_model import BaseModel, BaseModelConfig
 from lighteval.utils.utils import EnvConfig
 
 
