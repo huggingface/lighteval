@@ -178,7 +178,9 @@ class InferenceEndpointModel(LightevalModel):
                         f"Endpoint failed to start on current hardware with error {e}. Trying to autoscale to ({instance_type}, {instance_size})."
                     )
                 except InferenceEndpointTimeoutError as e:
-                    logger.error("Endpoint did not start within 30 minutes, there was a timeout. Please inspect the logs.")
+                    logger.error(
+                        "Endpoint did not start within 30 minutes, there was a timeout. Please inspect the logs."
+                    )
                     raise e
                 except HfHubHTTPError as e:
                     # The endpoint actually already exists, we'll spin it up instead of trying to create a new one
@@ -188,7 +190,7 @@ class InferenceEndpointModel(LightevalModel):
                     # Requested resources are not available
                     elif "Bad Request: Compute instance not available yet" in str(e):
                         logger.error(
-                            "The hardware combination you are requesting does not seem to be available: ({instance_type}, {instance_size}, {config.region})."
+                            f"The hardware combination you are requesting does not seem to be available: ({instance_type}, {instance_size}, {config.region})."
                         )
                         raise e
                     # User account does not have access to requested resources
