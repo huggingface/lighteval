@@ -339,7 +339,7 @@ class Pipeline:
                 self.final_dict = self.evaluation_tracker.generate_final_dict()
 
     def show_results(self):
-        logger.info("--- SHOWING RESULTS ---")
+        logger.info("--- DISPLAYING RESULTS ---")
         self._init_final_dict()
         if self.is_main_process():
             print(make_results_table(self.final_dict))
