@@ -22,6 +22,7 @@
 
 import ast
 import json
+import logging
 import random
 import re
 import string
@@ -29,9 +30,11 @@ import string
 import numpy as np
 import pycountry
 
-from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.tasks.requests import Doc
 from lighteval.utils.utils import as_list
+
+
+logger = logging.getLogger(__name__)
 
 
 # fmt: off
@@ -277,7 +280,9 @@ def bbh_logical_deduction_three_objects(line, task_name: str = None):
 
 def bbh_movie_recommendation(line, task_name: str = None):
     if line["target"] == "Monsters, Inc":  # this line is not correctly formatted
-        hlog_warn("One sample removed from task bbh:movie_recommentation because its line is incorrectly formatted.")
+        logger.warning(
+            "One sample removed from task bbh:movie_recommentation because its line is incorrectly formatted."
+        )
         return []
     instruction = "Recommend movies similar to the given list of movies.\n\n"
     choices = [f"({c})" for c in LETTER_INDICES[:6]]
@@ -318,7 +323,7 @@ def bbh_reasoning_about_colored_objects(line, task_name: str = None):
 
 def bbh_ruin_names(line, task_name: str = None):
     if line["target"] in ["dearth, wind, & fire", "rita, sue and bob poo"]:  # line not correctly formatted
-        hlog_warn("One sample removed from task bbh:ruin_names because its line is incorrectly formatted.")
+        logger.warning("One sample removed from task bbh:ruin_names because its line is incorrectly formatted.")
         return []
     instruction = "Select the humorous edit that 'ruins' the input movie or musical artist name.\n\n"
     choices = [f"({c})" for c in LETTER_INDICES[:6]]

@@ -24,6 +24,7 @@
 # We kept it because it's very fast - however, we renamed the variables
 # and added documentation
 
+import logging
 import math
 import random
 from typing import Callable, Optional
@@ -32,7 +33,8 @@ import numpy as np
 from scipy.stats import bootstrap
 from tqdm import tqdm
 
-from lighteval.logging.hierarchical_logger import hlog
+
+logger = logging.getLogger(__name__)
 
 
 def _stddev(arr):
@@ -78,7 +80,7 @@ def bootstrap_stderr(metric: Callable, population: list, number_experiments: int
     number_draws = min(1000, number_experiments)
     number_seeds = number_experiments // number_draws
 
-    hlog(f"Bootstrapping {metric.__name__}'s stderr with {number_seeds} seeds.")
+    logger.info(f"Bootstrapping {metric.__name__}'s stderr with {number_seeds} seeds.")
     for seed in range(number_seeds):
         # sample w replacement
         res.extend(_bootstrap_internal(metric=metric, number_draws=number_draws)((population, seed)))
@@ -106,7 +108,7 @@ def bootstrap_stderr_scipy(metric: Callable, population: list, number_experiment
     Same as bootstrap_stderr, but uses scipy.
     It's kept for archive, as it overflows for big datasets
     """
-    hlog(f"Bootstrapping {metric.__name__}'s stderr.")
+    logger.info(f"Bootstrapping {metric.__name__}'s stderr.")
     res = bootstrap(
         data=[population],
         statistic=metric,

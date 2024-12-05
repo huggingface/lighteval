@@ -20,18 +20,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 from contextlib import nullcontext
 
 import torch
 from transformers import AutoModelForCausalLM, PreTrainedTokenizer
 
-from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.base_model import BaseModel
 from lighteval.models.model_config import AdapterModelConfig
 from lighteval.models.utils import _get_dtype
 from lighteval.utils.imports import is_peft_available
 from lighteval.utils.utils import EnvConfig
 
+
+logger = logging.getLogger(__name__)
 
 if is_peft_available():
     from peft import PeftModel
@@ -60,7 +62,7 @@ class AdapterModel(BaseModel):
         merged_path = f"{adapter_weights}-adapter-applied"
 
         if self.accelerator.is_local_main_process if self.accelerator is not None else nullcontext():
-            hlog(f"Loading model from {adapter_weights} and applying adapter to {config.base_model}")
+            logger.info(f"Loading model from {adapter_weights} and applying adapter to {config.base_model}")
             base = AutoModelForCausalLM.from_pretrained(
                 config.base_model, torch_dtype=torch.float16, low_cpu_mem_usage=True, token=env_config.token
             )
@@ -68,10 +70,10 @@ class AdapterModel(BaseModel):
             model = PeftModel.from_pretrained(base, adapter_weights)
             model = model.merge_and_unload()
 
-            hlog("Saving model with adapter applied")
+            logger.info("Saving model with adapter applied")
             base.save_pretrained(merged_path)
 
-        hlog(f"Loading model from {merged_path}")
+        logger.info(f"Loading model from {merged_path}")
 
         model = AutoModelForCausalLM.from_pretrained(
             merged_path,

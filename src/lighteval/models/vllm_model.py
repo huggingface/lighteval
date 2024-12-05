@@ -22,6 +22,7 @@
 
 import gc
 import itertools
+import logging
 import os
 from typing import Optional
 
@@ -29,7 +30,6 @@ import torch
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
-from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
 from lighteval.models.model_config import VLLMModelConfig
 from lighteval.models.model_output import (
@@ -43,6 +43,9 @@ from lighteval.tasks.requests import (
 )
 from lighteval.utils.imports import is_vllm_available
 from lighteval.utils.utils import EnvConfig, as_list
+
+
+logger = logging.getLogger(__name__)
 
 
 if is_vllm_available():
@@ -225,14 +228,14 @@ class VLLMModel(LightevalModel):
             # left truncate the inputs to the maximum length
             if max_new_tokens is not None:
                 if context_size + max_new_tokens > self.max_length:
-                    hlog_warn(
+                    logger.warning(
                         f"{context_size + max_new_tokens=} which is greather than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
                     )
                     context_size = self.max_length - max_new_tokens
                     inputs = [input[-context_size:] for input in inputs]
             else:
                 if context_size > self.max_length:
-                    hlog_warn(
+                    logger.warning(
                         f"{context_size=} which is greather than {self.max_length=}. Truncating context to {self.max_length} tokens."
                     )
                     context_size = self.max_length

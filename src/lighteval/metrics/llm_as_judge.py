@@ -28,12 +28,12 @@ from typing import Callable, Literal
 
 from tqdm import tqdm
 
-from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.utils.imports import is_openai_available, is_vllm_available
 
 
 logging.getLogger("openai").setLevel(logging.ERROR)
 logging.getLogger("httpx").setLevel(logging.ERROR)
+logger = logging.getLogger(__name__)
 
 
 class JudgeLM:
@@ -211,6 +211,6 @@ class JudgeLM:
                 text = response.choices[0].message.content
                 return text
             except Exception as e:
-                hlog_warn(f"{type(e), e}")
+                logger.warning(f"{type(e), e}")
                 time.sleep(self.API_RETRY_SLEEP)
         raise Exception("Failed to get response from the API")

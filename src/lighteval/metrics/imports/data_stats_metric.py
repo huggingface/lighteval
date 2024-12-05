@@ -24,13 +24,16 @@
 
 # pylint: disable=C0103,W0221,W0106
 # Replace summ_eval.data_stats_metric
+import logging
 from collections import Counter
 from multiprocessing import Pool
 
 import spacy
 
-from lighteval.logging.hierarchical_logger import hlog
 from lighteval.metrics.imports.data_stats_utils import Fragments
+
+
+logger = logging.getLogger(__name__)
 
 
 _en = None
@@ -78,7 +81,7 @@ class DataStatsMetric(Metric):
         try:
             _en = spacy.load("en_core_web_sm")
         except OSError:
-            hlog("Downloading the spacy en_core_web_sm model\n" "(don't worry, this will only happen once)")
+            logger.info("Downloading the spacy en_core_web_sm model\n(don't worry, this will only happen once)")
             from spacy.cli import download
 
             download("en_core_web_sm")
