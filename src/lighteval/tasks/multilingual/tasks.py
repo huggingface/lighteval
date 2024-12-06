@@ -45,8 +45,6 @@ from lighteval.tasks.multilingual.adapters import (
     xcodah_adapter,
 )
 from lighteval.tasks.multilingual.utils.task_utils import get_metrics_for_formulation, normalize_subset
-
-# Import for "arabic_mmlu_templated_tasks"
 from lighteval.tasks.templates.boolq import get_boolq_prompt_function
 from lighteval.tasks.templates.continuation import get_continuation_prompt_function
 from lighteval.tasks.templates.copa import get_copa_prompt_function
