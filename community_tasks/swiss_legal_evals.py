@@ -40,6 +40,7 @@ import nltk
 import requests
 import torch
 from comet import download_model, load_from_checkpoint
+from gemba import get_gemba_scores
 from nltk import word_tokenize
 from nltk.translate import meteor_score
 from packaging import version
@@ -211,6 +212,52 @@ def get_swiss_legal_translation_judge(judge_model_name: str = "gpt-4o"):
 
 
 swiss_legal_translation_judge_gpt_4o = get_swiss_legal_translation_judge(judge_model_name="gpt-4o")
+
+
+class GEMBA:
+    def __init__(self, method: str = "GEMBA-MQM_norm", model: str = "gpt-4o"):
+        self.method = method
+        self.model = model
+        self.name = f"{method.split('_')[0]}_{model}"
+
+    def compute(
+        self,
+        sample_ids: list[str],
+        responses: list,
+        formatted_docs: list[Doc],
+        **kwargs,
+    ) -> dict[str, float]:
+        hlog(f"Judging {len(formatted_docs)} samples with {self.name}...")
+        source_langs = [formatted_doc.specific["source_lang"] for formatted_doc in formatted_docs]
+        target_langs = [formatted_doc.specific["target_lang"] for formatted_doc in formatted_docs]
+        # There should be only one language each in the batch
+        assert len(set(source_langs)) == len(set(target_langs)) == 1
+        sources = [formatted_doc.specific["source"] for formatted_doc in formatted_docs]
+        predictions = [response[0].result[0] for response in responses]
+
+        answers, errors = get_gemba_scores(
+            sources, predictions, source_langs[0], target_langs[0], method=self.method, model=self.model
+        )
+
+        # Convert defaultdict to dict
+        errors = [[{key: value} for key, value in error.items()] for error in errors]
+
+        return [{self.name: answer, f"{self.name}_errors": error} for answer, error in zip(answers, errors)]
+
+
+def get_gemba_judge(method: str = "GEMBA-MQM_norm", model: str = "gpt-4o"):
+    name = f"{method.split('_')[0]}_{model}"
+    return SampleLevelMetricGrouping(
+        metric_name=[name],
+        higher_is_better={name: True},
+        category=MetricCategory.LLM_AS_JUDGE,
+        use_case=MetricUseCase.TRANSLATION,
+        sample_level_fn=GEMBA(method=method, model=model).compute,
+        corpus_level_fn={name: statistics.mean},
+    )
+
+
+gemba_mqm_gpt_4o = get_gemba_judge(method="GEMBA-MQM_norm", model="gpt-4o")
 
 
 def get_bert_score(language: str, num_layers: int = 24, model_type: str = "xlm-roberta-large", device: str = "cpu"):
@@ -670,17 +717,17 @@ SwissSupremeCourtPressReleaseTranslations = DatasetConfig(
 )
 
 
-def create_prompt_fn(level_config: LevelConfig, src_lang: str, target_lang: str):
+def create_prompt_fn(level_config: LevelConfig, source_lang: str, target_lang: str):
     """
     Create a prompt function for a given level configuration.
     """
     text_col = level_config.text_col_name
-    src_text_col = f"{src_lang}_{text_col}"
+    src_text_col = f"{source_lang}_{text_col}"
     target_text_col = f"{target_lang}_{text_col}"
 
     def prompt_fn(line: dict, task_name: str = None):
         # Following Template A from https://github.com/huggingface/lighteval/pull/389#issuecomment-2471580177
-        custom_query = f"{src_lang.upper()}: {line[src_text_col]}\n{target_lang.upper()}: "
+        custom_query = f"{source_lang.upper()}: {line[src_text_col]}\n{target_lang.upper()}: "
 
         return Doc(
             task_name=task_name,
@@ -691,6 +738,8 @@ def create_prompt_fn(level_config: LevelConfig, src_lang: str, target_lang: str)
                 **{col: line[col] for col in level_config.metadata_cols},
                 "question": custom_query,
                 "source": line[src_text_col],
+                "source_lang": source_lang,
+                "target_lang": target_lang,
             },
         )
 
@@ -733,6 +782,7 @@ class TranslationTask(LightevalTaskConfig):
                 bert_scores[target_lang],
                 bleurt_large,  # Only take the largest version, disregarding base and tiny
                 xcomet_xxl,  # Only take the largest version, disregarding xcomet_xl, comet_wmt22_da
+                gemba_mqm_gpt_4o,
                 swiss_legal_translation_judge_gpt_4o,
                 # Additionally we could consider adding the following open source judge models:
                 # flowaicom/Flow-Judge-v0.1, prometheus-eval/prometheus-7b-v2.0
