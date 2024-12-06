@@ -45,6 +45,8 @@ from lighteval.tasks.multilingual.adapters import (
     xcodah_adapter,
 )
 from lighteval.tasks.multilingual.utils.task_utils import get_metrics_for_formulation, normalize_subset
+
+# Import for "arabic_mmlu_templated_tasks"
 from lighteval.tasks.templates.boolq import get_boolq_prompt_function
 from lighteval.tasks.templates.continuation import get_continuation_prompt_function
 from lighteval.tasks.templates.copa import get_copa_prompt_function
@@ -1707,6 +1709,89 @@ openai_mmlu_tasks = [
     ]
 ]
 
+# Translated MMLU using both professional and non-professional translators. Contains tags for cultural sensitivity.
+# CA: Cultural Agnostic
+# CS: Cultural Specific
+# ALL: All of the above
+# https://huggingface.co/papers/2412.03304
+global_mmlu_tasks = [
+    LightevalTaskConfig(
+        name=f"global_mmlu_{sensitivity_label.lower()}_{language.value}_{formulation.name.lower()}:{subset}",
+        prompt_function=get_mcq_prompt_function(
+            language,
+            lambda line: {
+                "question": line["question"],
+                "choices": [line["option_a"], line["option_b"], line["option_c"], line["option_d"]],
+                "gold_idx": LETTER_INDICES.index(line["answer"]),
+            },
+            formulation=formulation,
+        ),
+        suite=("lighteval",),
+        hf_repo="CohereForAI/Global-MMLU",
+        hf_subset=standardize_tag(language.value),
+        evaluation_splits=("test",),
+        few_shots_split="dev",
+        hf_filter=partial(
+            lambda subset, sensitivity_label, x: x["subject"].lower() == subset
+            and (sensitivity_label == "ALL" or sensitivity_label in x["cultural_sensitivity_label"]),
+            subset,
+            sensitivity_label,
+        ),
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                loglikelihood_acc_metric(normalization=LogProbPMINorm()),
+            ],
+        ),
+    )
+    for subset in MMLU_SUBSETS
+    for language in [
+        Language.AMHARIC,
+        Language.ARABIC,
+        Language.BENGALI,
+        Language.CHINESE,
+        Language.CZECH,
+        Language.GERMAN,
+        Language.ENGLISH,
+        Language.SPANISH,
+        Language.FRENCH,
+        Language.HEBREW,
+        Language.HINDI,
+        Language.INDONESIAN,
+        Language.ITALIAN,
+        Language.JAPANESE,
+        Language.KOREAN,
+        Language.MALAY,
+        Language.DUTCH,
+        Language.NORWEGIAN,
+        Language.POLISH,
+        Language.PORTUGUESE,
+        Language.ROMANIAN,
+        Language.RUSSIAN,
+        Language.SERBIAN,
+        Language.SWEDISH,
+        Language.SWAHILI,
+        Language.TAMIL,
+        Language.TELUGU,
+        Language.THAI,
+        Language.TURKISH,
+        Language.UKRAINIAN,
+        Language.URDU,
+        Language.VIETNAMESE,
+        Language.YORUBA,
+        Language.ZULU,
+    ]
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+    for sensitivity_label in ["ALL", "CA", "CS"]
+]
+
+
 # There are only these subsets in the African MMLU
 AFRI_MMLU_SUBSETS = [
     "elementary_mathematics",
@@ -2088,6 +2173,7 @@ TASKS_TABLE.extend(
         *arabic_mmlu_tasks,
         *turkish_mmlu_tasks,
         *afri_mmlu_tasks,
+        *global_mmlu_tasks,
     ]
 )
 
