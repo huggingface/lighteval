@@ -65,7 +65,9 @@ def is_tensorboardX_available() -> bool:
     return importlib.util.find_spec("tensorboardX") is not None
 
 
-NO_TENSORBOARDX_WARN_MSG = "You are trying to log using tensorboardX, which is not installed. Please install it using pip. Skipping."
+NO_TENSORBOARDX_WARN_MSG = (
+    "You are trying to log using tensorboardX, which is not installed. Please install it using pip. Skipping."
+)
 
 
 def is_openai_available() -> bool:
@@ -83,10 +85,7 @@ NO_LITELLM_ERROR_MSG = "You are trying to use a LiteLLM model, for which you nee
 
 
 def is_vllm_available() -> bool:
-    return (
-        importlib.util.find_spec("vllm") is not None
-        and importlib.util.find_spec("ray") is not None
-    )
+    return importlib.util.find_spec("vllm") is not None and importlib.util.find_spec("ray") is not None
 
 
 NO_VLLM_ERROR_MSG = "You are trying to use an VLLM model, for which you need `vllm` and `ray`, which are not available in your environment. Please install them using pip, `pip install vllm ray`."

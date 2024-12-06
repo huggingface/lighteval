@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -29,7 +30,6 @@ from tqdm import tqdm
 from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset
-from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.endpoint_model import ModelInfo
 from lighteval.models.model_output import (
@@ -46,14 +46,14 @@ from lighteval.tasks.requests import (
 from lighteval.utils.imports import is_litellm_available
 
 
-if is_litellm_available():
-    import logging
+logger = logging.getLogger(__name__)
 
+if is_litellm_available():
     import litellm
     from litellm.caching.caching import Cache
 
-    logging.getLogger("litellm").setLevel(logging.ERROR)
-    logging.getLogger("httpx").setLevel(logging.ERROR)
+    logging.getLogger("LiteLLM").setLevel(logging.WARNING)
+    logging.getLogger("LiteLLM").handlers.clear()
 
     litellm.cache = Cache(type="disk")
 
@@ -84,6 +84,7 @@ class LiteLLMClient(LightevalModel):
         self._tokenizer = AutoTokenizer.from_pretrained("gpt2")  # Use a dummy tokenizer for compatibility
         self.pairwise_tokenization = False
         litellm.drop_params = True
+        litellm.verbose = True
 
     def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, stop_sequence, generation_size):
         for attempt in range(self.API_MAX_RETRY):
@@ -98,25 +99,18 @@ class LiteLLMClient(LightevalModel):
                     temperature=self.TEMPERATURE,
                     top_p=self.TOP_P,
                     stop=["\n"] if stop_sequence is None else stop_sequence,
-                    max_completion_tokens=generation_size if generation_size > 0 else None,
+                    # max_completion_tokens=generation_size if generation_size > 0 else None,
                     caching=True,
                 )
                 return response
-            except litellm.exceptions.RateLimitError:
-                if attempt == self.API_MAX_RETRY - 1:
-                    raise
+            except Exception as e:
                 wait_time = min(64, self.API_RETRY_SLEEP * (2**attempt))  # Exponential backoff with max 64s
-                hlog_warn(
-                    f"Rate limit hit. Waiting {wait_time} seconds before retry {attempt + 1}/{self.API_MAX_RETRY}"
+                logger.warning(
+                    f"Error in API call: {e}, waiting {wait_time} seconds before retry {attempt + 1}/{self.API_MAX_RETRY}"
                 )
                 time.sleep(wait_time)
-            except Exception as e:
-                hlog_warn(f"{type(e), e}")
-                if attempt == self.API_MAX_RETRY - 1:
-                    raise
-                wait_time = self.API_RETRY_SLEEP * (self.API_RETRY_MULTIPLIER**attempt)
-                hlog_warn(f"Retrying in {wait_time} seconds")
-                time.sleep(wait_time)
+
+        logger.error(f"API call failed after {self.API_MAX_RETRY} attempts, skipping entry.")
 
     def __call_api_parallel(
         self,
