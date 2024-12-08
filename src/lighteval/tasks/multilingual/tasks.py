@@ -60,8 +60,6 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
 from lighteval.utils.language import Language, iso_639_3_ind_to_iso_639_3_macro
 
-# Import for "arabic_mmlu_templated_tasks"
-from lighteval.tasks.requests import Doc
 
 TASKS_TABLE = []
 # ------------------------------- NLI Tasks ------------------------------- #
@@ -2030,41 +2028,6 @@ arabic_mmlu_tasks = [
         MCFFormulation(),
         CFFormulation(),
         HybridFormulation(),
-    ]
-]
-
-
-# definition of templated version of arabic_mmlu
-arabic_mmlu_templated_tasks = [
-    LightevalTaskConfig(
-        name=f"templated_mmlu_{Language.ARABIC.value}_{formulation.name.lower()}:{normalize_subset(subset)}",
-        prompt_function=get_mcq_prompt_function(
-            Language.ARABIC,
-            lambda line: {
-                "instruction": "السؤال التالي هو سؤال متعدد الإختيارات. اختر الإجابة الصحيحة:",
-                "context": line["Context"],
-                "question": line["Question"],
-                "choices": [str(o) for o in [line[f"Option {i}"] for i in range(1, 6)] if o],
-                "gold_idx": LETTER_INDICES.index(line["Answer Key"]),
-            },
-            formulation=formulation,
-        ),
-        suite=("lighteval",),
-        hf_repo="MBZUAI/ArabicMMLU",
-        hf_subset=subset,
-        evaluation_splits=("test",),
-        hf_avail_splits=["dev"],
-        metric=get_metrics_for_formulation(
-            formulation,
-            [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-            ],
-        ),
-    )
-    for subset in ARABIC_MMLU_SUBSETS
-    for formulation in [
-        MCFFormulation("NativeLetters"),
     ]
 ]
 
