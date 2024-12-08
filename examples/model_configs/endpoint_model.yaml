@@ -1,8 +1,6 @@
 model:
-  type: "endpoint" # can be base, tgi, or endpoint
   base_params:
-    endpoint_name: "llama-2-7B-lighteval" # needs to be lower case without special characters
-    model: "meta-llama/Llama-2-7b-hf"
+    model_name: "meta-llama/Llama-2-7b-hf" # the model name or the endpoint name if reuse_existing is true
     revision: "main"
     dtype: "float16" # can be any of "awq", "eetq", "gptq", "4bit' or "8bit" (will use bitsandbytes), "bfloat16" or "float16"
     reuse_existing: false # if true, ignore all params in instance, and don't delete the endpoint after evaluation

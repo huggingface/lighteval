@@ -28,3 +28,21 @@
   - local: available-tasks
     title: Available Tasks
   title: API
+- sections:
+  - sections:
+    - local: package_reference/evaluation_tracker
+      title: EvaluationTracker
+    - local: package_reference/models
+      title: Models
+    - local: package_reference/model_config
+      title: ModelConfig
+    - local: package_reference/pipeline
+      title: Pipeline
+    title: Main classes
+  - local: package_reference/metrics
+    title: Metrics
+  - local: package_reference/tasks
+    title: Tasks
+  - local: package_reference/logging
+    title: Logging
+  title: Reference

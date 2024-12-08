@@ -24,6 +24,7 @@
 using simple function (min, mean, max, ...) at the corpus level. Most metrics fall under this category.
 """
 
+import logging
 import os
 from typing import Callable, Literal
 
@@ -34,10 +35,8 @@ from nltk.metrics.distance import edit_distance
 from nltk.tokenize import word_tokenize
 from nltk.tokenize.treebank import TreebankWordTokenizer
 from nltk.translate.bleu_score import sentence_bleu
-from rouge_score import rouge_scorer, scoring
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.imports.bert_scorer import BERTScorer
 from lighteval.metrics.imports.data_stats_metric import DataStatsMetric
 from lighteval.metrics.imports.summac import SummaCZS
@@ -51,6 +50,9 @@ from lighteval.metrics.normalizations import (
 )
 from lighteval.tasks.requests import Doc
 from lighteval.utils.utils import as_list, safe_divide
+
+
+logger = logging.getLogger(__name__)
 
 
 class ExactMatches:
@@ -464,7 +466,7 @@ class ROUGE:
                 default tokenizer will be used.
         """
         if aggregation_function and bootstrap:
-            hlog_warn("Can't use both bootstrapping and an aggregation function in Rouge. Keeping bootstrap.")
+            logger.warning("Can't use both bootstrapping and an aggregation function in Rouge. Keeping bootstrap.")
         self.aggregation_function = aggregation_function
         if self.aggregation_function is None:
             self.aggregation_function = np.mean
@@ -474,11 +476,11 @@ class ROUGE:
             raise ValueError(
                 f"Rouge was initialised with method {methods}, which is not in {','.join(self.ALLOWED_ROUGE_METHODS)}"
             )
-        self.scorer = rouge_scorer.RougeScorer([methods], tokenizer=tokenizer)
         self.multiple_golds = multiple_golds
         self.bootstrap = bootstrap
         self.normalize_gold = normalize_gold
         self.normalize_pred = normalize_pred
+        self.tokenizer = tokenizer
 
     def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float | dict:
         """Computes the metric(s) over a list of golds and predictions for one single sample.
@@ -491,6 +493,11 @@ class ROUGE:
             float or dict: Aggregated score over the current sample's items.
                 If several rouge functions have been selected, returns a dict which maps name and scores.
         """
+        from rouge_score import rouge_scorer
+
+        if self.scorer is None:
+            self.scorer = rouge_scorer.RougeScorer(self.methods, tokenizer=self.tokenizer)
+
         # Normalize
         if self.normalize_gold:
             golds = [self.normalize_gold(g) for g in golds]
@@ -527,6 +534,8 @@ class ROUGE:
         return {method: self.aggregation_function(scores[method]) for method in self.methods}
 
     def _rouge_score_with_bootsrap(self, golds: list[str], preds: list[str]):
+        from rouge_score import scoring
+
         aggregator = scoring.BootstrapAggregator()
         for g, p in zip(golds, preds):
             aggregator.add_scores(self.scorer.score(g, p))
@@ -575,7 +584,7 @@ class BertScore:
             dict: Scores over the current sample's items.
         """
         if self.bert_scorer is None:
-            hlog_warn("The first metric computation step might be a bit longer as we need to download the model.")
+            logger.warning("The first metric computation step might be a bit longer as we need to download the model.")
             # We only initialize on first compute
             self.bert_scorer = BERTScorer(
                 model_type="microsoft/deberta-large-mnli", lang="en", rescale_with_baseline=True, num_layers=9
@@ -787,7 +796,9 @@ class StringDistance:
            dict: The different scores computed
         """
         if len(golds) > 1:
-            hlog_warn("Provided more than one gold to compute a string distance metric. Just using the first one.")
+            logger.warning(
+                "Provided more than one gold to compute a string distance metric. Just using the first one."
+            )
         reference = golds[0]
 
         result = {m: [] for m in self.metric_types}

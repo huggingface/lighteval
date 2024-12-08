@@ -23,16 +23,19 @@
 import functools
 import gc
 import inspect
+import logging
 
 import torch
 
-from lighteval.logging.hierarchical_logger import hlog, logger
 from lighteval.utils.imports import (
     NO_ACCELERATE_ERROR_MSG,
     NO_NANOTRON_ERROR_MSG,
     is_accelerate_available,
     is_nanotron_available,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 def should_reduce_batch_size(exception: Exception) -> bool:
@@ -127,10 +130,10 @@ def test_all_gather(accelerator=None, parallel_context=None):
     if accelerator:
         if not is_accelerate_available():
             raise ImportError(NO_ACCELERATE_ERROR_MSG)
-        hlog("Test gather tensor")
+        logger.info("Test gather tensor")
         test_tensor: torch.Tensor = torch.tensor([accelerator.process_index], device=accelerator.device)
         gathered_tensor: torch.Tensor = accelerator.gather(test_tensor)
-        hlog(f"gathered_tensor {gathered_tensor}, should be {list(range(accelerator.num_processes))}")
+        logger.info(f"gathered_tensor {gathered_tensor}, should be {list(range(accelerator.num_processes))}")
         accelerator.wait_for_everyone()
     elif parallel_context:
         if not is_nanotron_available():
@@ -138,7 +141,7 @@ def test_all_gather(accelerator=None, parallel_context=None):
         from nanotron import distributed as dist
         from nanotron import logging
 
-        hlog("Test gather tensor")
+        logger.info("Test gather tensor")
         # Do a first NCCL sync to warmup and try to avoid Timeout after model/data loading
         logging.log_rank(
             f"[TEST] Running NCCL sync for ranks {list(range(parallel_context.world_pg.size()))}",
@@ -162,4 +165,4 @@ def test_all_gather(accelerator=None, parallel_context=None):
         del test_tensor_list
         del test_tensor
     else:
-        hlog("Not running in a parallel setup, nothing to test")
+        logger.info("Not running in a parallel setup, nothing to test")

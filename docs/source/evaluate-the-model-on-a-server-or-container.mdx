@@ -6,10 +6,9 @@ to the server. The command is the same as before, except you specify a path to
 a yaml config file (detailed below):
 
 ```bash
-lighteval accelerate \
-    --model_config_path="/path/to/config/file"\
-    --tasks <task parameters> \
-    --output_dir output_dir
+lighteval endpoint {tgi,inference-endpoint} \
+    "/path/to/config/file"\
+    <task parameters>
 ```
 
 There are two types of configuration files that can be provided for running on
@@ -64,4 +63,20 @@ model:
     inference_server_address: ""
     inference_server_auth: null
     model_id: null # Optional, only required if the TGI container was launched with model_id pointing to a local directory
+```
+
+### OpenAI API
+
+Lighteval also supports evaluating models on the OpenAI API. To do so you need to set your OpenAI API key in the environment variable.
+
+```bash
+export  OPENAI_API_KEY={your_key}
+```
+
+And then run the following command:
+
+```bash
+lighteval endpoint openai \
+    {model-name} \
+    <task parameters>
 ```

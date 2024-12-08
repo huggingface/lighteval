@@ -20,17 +20,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 from contextlib import nullcontext
 
 import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM
 
-from lighteval.logging.hierarchical_logger import hlog
 from lighteval.models.base_model import BaseModel
 from lighteval.models.model_config import DeltaModelConfig
 from lighteval.models.utils import _get_dtype
 from lighteval.utils.utils import EnvConfig
+
+
+logger = logging.getLogger(__name__)
 
 
 class DeltaModel(BaseModel):
@@ -48,7 +51,7 @@ class DeltaModel(BaseModel):
         merged_path = f"{delta_model}-delta-applied"
 
         if self.accelerator.is_main_process if self.accelerator is not None else nullcontext():
-            hlog(f"Loading base and delta models from {config.base_model} and {delta_model}")
+            logger.info(f"Loading base and delta models from {config.base_model} and {delta_model}")
             base = AutoModelForCausalLM.from_pretrained(
                 config.base_model, torch_dtype=torch.float16, low_cpu_mem_usage=True, token=env_config.token
             )
@@ -64,10 +67,10 @@ class DeltaModel(BaseModel):
                 assert name in delta.state_dict()
                 param.data += delta.state_dict()[name]
 
-            hlog("Saving delta-applied model")
+            logger.info("Saving delta-applied model")
             base.save_pretrained(merged_path)
 
-        hlog(f"Loading delta-applied model from {delta_model}-delta-applied")
+        logger.info(f"Loading delta-applied model from {delta_model}-delta-applied")
 
         model = AutoModelForCausalLM.from_pretrained(
             merged_path,
