@@ -2031,6 +2031,7 @@ arabic_mmlu_tasks = [
     ]
 ]
 
+
 TURKISH_MMLU_SUBSET = [
     "Biology",
     "Chemistry",
