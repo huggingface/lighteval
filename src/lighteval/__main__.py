@@ -38,22 +38,9 @@ app = typer.Typer()
 logging_config = dict(  # noqa C408
     version=1,
     formatters={
-        "json": {
-            "()": "lighteval.logger.JSONFormatter",
-            "fmt_keys": {
-                "level": "levelname",
-                "message": "message",
-                "timestamp": "timestamp",
-                "logger": "name",
-                "module": "module",
-                "function": "funcName",
-                "line": "lineno",
-                "thread_name": "threadName",
-            },
-        },
-        "colored": {
+        "c": {
             "()": colorlog.ColoredFormatter,
-            "format": "[%(asctime)s] [%(log_color)s%(levelname)8s%(reset)s]: %(message)s",
+            "format": "[%(asctime)s] [%(log_color)s%(levelname)8s%(reset)s]: %(message)s (%(filename)s:%(lineno)s)",
             "log_colors": {
                 "DEBUG": "cyan",
                 "INFO": "green",
@@ -63,22 +50,10 @@ logging_config = dict(  # noqa C408
             },
         },
     },
-    handlers={
-        "stdout": {"class": "logging.StreamHandler", "formatter": "colored", "level": logging.INFO},
-        "file": {
-            "class": "logging.handlers.RotatingFileHandler",
-            "formatter": "json",
-            "level": logging.INFO,
-            "filename": "lighteval.log",
-            "maxBytes": 10485760,
-            "backupCount": 2,
-        },
-    },
-    loggers={
-        "root": {
-            "handlers": ["stdout", "file"],
-            "level": logging.INFO,
-        }
+    handlers={"h": {"class": "logging.StreamHandler", "formatter": "c", "level": logging.INFO}},
+    root={
+        "handlers": ["h"],
+        "level": logging.INFO,
     },
 )
 
