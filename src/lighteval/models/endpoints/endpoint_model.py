@@ -100,7 +100,7 @@ class InferenceEndpointModelConfig:
     namespace: str = None  # The namespace under which to launch the endopint. Defaults to the current user's namespace
     image_url: str = None
     env_vars: dict = None
-    generation_config: dict = {}
+    generation_config: dict = dict
 
     def __post_init__(self):
         # xor operator, one is None but not the other
