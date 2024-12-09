@@ -85,7 +85,7 @@ class VLLMModelConfig:
         True  # whether to add a space at the start of each continuation in multichoice generation
     )
     pairwise_tokenization: bool = False  # whether to tokenize the context and continuation separately or together.
-    sampling_params: dict = {}  # sampling parameters to use for generation
+    sampling_params: dict = dict  # sampling parameters to use for generation
 
     subfolder: Optional[str] = None
     temperature: float = 0.6  # will be used for multi sampling tasks, for tasks requiring no sampling, this will be ignored and set to 0.
