@@ -23,8 +23,6 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from lighteval.utils.imports import NO_VLLM_ERROR_MSG, is_vllm_available
-
 
 @dataclass
 class GenerationParameters:
@@ -45,11 +43,7 @@ class GenerationParameters:
     top_p: Optional[int] = None  # vllm, transformers, tgi
     truncate_prompt: Optional[bool] = None  # vllm, tgi
 
-    def to_vllm(self):
-        if not is_vllm_available():
-            raise ImportError(NO_VLLM_ERROR_MSG)
-        from vllm import SamplingParameters
-
+    def to_vllm_openai_dict(self):
         # Task specific sampling params to set in model: n, best_of, use_beam_search
         # Generation specific params to set in model: logprobs, prompt_logprobs
         args = {
@@ -68,11 +62,9 @@ class GenerationParameters:
             "min_tokens": self.min_new_tokens,
             "truncate_prompt_tokens": self.truncate_prompt,
         }
-        return SamplingParameters(**{k: v for k, v in args.items() if v is not None})
+        return {k: v for k, v in args.items() if v is not None}
 
-    def to_transformers(self):
-        from transformers import GenerationConfig
-
+    def to_transformers_dict(self):
         # Task specific sampling params to set in model: do_sample, num_return_sequences, num_beans
         args = {
             "max_new_tokens": self.max_new_tokens,
@@ -90,11 +82,9 @@ class GenerationParameters:
         }
         # Even though we only use the dict representation of the GenerationConfig
         # we still create the object as it uses validation steps
-        return GenerationConfig(**{k: v for k, v in args.items() if v is not None})
+        return {k: v for k, v in args.items() if v is not None}
 
-    def to_tgi(self):
-        from huggingface_hub import TextGenerationInputGenerateParameters
-
+    def to_tgi_inferenceendpoint_dict(self):
         # Task specific sampling params to set in model: best_of, do_sample
         args = {
             "decoder_input_details": True,
@@ -109,4 +99,4 @@ class GenerationParameters:
             "top_p": self.top_p,
             "truncate": self.truncate_prompt,
         }
-        return TextGenerationInputGenerateParameters(**{k: v for k, v in args.items() if v is not None})
+        return {k: v for k, v in args.items() if v is not None}

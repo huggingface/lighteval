@@ -153,7 +153,7 @@ class BaseModelConfig:
     trust_remote_code: bool = False
     use_chat_template: bool = False
     compile: bool = False
-    generation_config: GenerationConfig = None
+    generation_config: dict = {}
 
     def __post_init__(self):
         # Making sure this parameter is a boolean
@@ -259,7 +259,7 @@ class BaseModel(LightevalModel):
         self.model_sha = config.get_model_sha()
 
         self.precision = _get_dtype(config.dtype, config=self._config)
-        self.generation_config = config.generation_config.to_dict()
+        self.generation_config = config.generation_config
 
         if is_accelerate_available():
             model_size, _ = calculate_maximum_sizes(self.model)
@@ -636,7 +636,7 @@ class BaseModel(LightevalModel):
                 ]
             )
 
-            generation_config = GenerationConfig.from_dict(self.generation_config or {})
+            generation_config = GenerationConfig.from_dict(self.generation_config)
             generation_config.update(
                 {
                     "max_new_tokens": max_generated_tokens,
@@ -679,7 +679,7 @@ class BaseModel(LightevalModel):
                     ]
                 )
 
-                generation_config = GenerationConfig.from_dict(self.generation_config or {})
+                generation_config = GenerationConfig.from_dict(self.generation_config)
                 generation_config.update(
                     {
                         "max_new_tokens": max_generated_tokens,
@@ -876,7 +876,7 @@ class BaseModel(LightevalModel):
         stopping_criteria = stop_sequences_criteria(self.tokenizer, stop_sequences=stop_tokens, batch=batch)
         batch_size, _ = batch.input_ids.shape
 
-        generation_config = GenerationConfig.from_dict(self.generation_config or {})
+        generation_config = GenerationConfig.from_dict(self.generation_config)
         generation_config.update(
             {
                 "max_new_tokens": max_new_tokens,

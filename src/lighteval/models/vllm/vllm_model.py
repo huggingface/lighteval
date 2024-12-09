@@ -85,7 +85,7 @@ class VLLMModelConfig:
         True  # whether to add a space at the start of each continuation in multichoice generation
     )
     pairwise_tokenization: bool = False  # whether to tokenize the context and continuation separately or together.
-    sampling_params: SamplingParams = None  # sampling parameters to use for generation
+    sampling_params: dict = {}  # sampling parameters to use for generation
 
     subfolder: Optional[str] = None
     temperature: float = 0.6  # will be used for multi sampling tasks, for tasks requiring no sampling, this will be ignored and set to 0.
@@ -118,7 +118,7 @@ class VLLMModel(LightevalModel):
         self.precision = _get_dtype(config.dtype, config=self._config)
 
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
-        self.sampling_params = config.sampling_params
+        self.sampling_params = SamplingParams(**config.sampling_params)
         self.pairwise_tokenization = config.pairwise_tokenization
 
     @property
