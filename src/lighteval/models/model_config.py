@@ -250,6 +250,11 @@ class OpenAIModelConfig:
 
 
 @dataclass
+class LiteLLMModelConfig:
+    model: str
+
+
+@dataclass
 class TGIModelConfig:
     inference_server_address: str
     inference_server_auth: str
