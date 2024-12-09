@@ -1731,7 +1731,9 @@ global_mmlu_tasks = [
         few_shots_split="dev",
         hf_filter=partial(
             lambda subset, sensitivity_label, x: x["subject"].lower() == subset
-            and (sensitivity_label == "ALL" or sensitivity_label in x["cultural_sensitivity_label"]),
+            and (
+                sensitivity_label == "ALL" or sensitivity_label in x["cultural_sensitivity_label"].replace("-", "UNK")
+            ),
             subset,
             sensitivity_label,
         ),
@@ -1786,7 +1788,7 @@ global_mmlu_tasks = [
         CFFormulation(),
         HybridFormulation(),
     ]
-    for sensitivity_label in ["ALL", "CA", "CS"]
+    for sensitivity_label in ["ALL", "CA", "CS", "UNK"]
 ]
 
 
