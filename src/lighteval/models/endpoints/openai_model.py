@@ -62,7 +62,7 @@ if is_openai_available():
 @dataclass
 class OpenAIModelConfig:
     model: str
-    sampling_params: dict = {}
+    sampling_params: dict = dict
 
 
 class OpenAIClient(LightevalModel):

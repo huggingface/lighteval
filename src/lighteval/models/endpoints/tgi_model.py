@@ -50,7 +50,7 @@ class TGIModelConfig:
     inference_server_address: str
     inference_server_auth: str
     model_id: str
-    generation_config: dict = {}
+    generation_config: dict = dict
 
 
 # inherit from InferenceEndpointModel instead of LightevalModel since they both use the same interface, and only overwrite

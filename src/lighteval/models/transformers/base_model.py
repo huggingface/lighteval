@@ -153,7 +153,7 @@ class BaseModelConfig:
     trust_remote_code: bool = False
     use_chat_template: bool = False
     compile: bool = False
-    generation_config: dict = {}
+    generation_config: dict = dict
 
     def __post_init__(self):
         # Making sure this parameter is a boolean
