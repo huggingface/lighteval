@@ -122,6 +122,7 @@ class Language(Enum):
     WAR = "war"
     SHAN = "shn"
     UDMURT = "udm"
+    ZULU = "zul"
 
 
 # This mapping was created for beleble, it converts iso_639_3 individual codes to iso_639_3 macro codes
