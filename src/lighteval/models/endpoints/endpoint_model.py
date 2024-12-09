@@ -79,7 +79,7 @@ SORTED_INSTANCE_SIZES = [  # sorted by incremental overall RAM (to load models)
 class InferenceModelConfig:
     model: str
     add_special_tokens: bool = True
-    generation_config: TextGenerationInputGenerateParameters
+    generation_config: dict = dict
 
 
 @dataclass
