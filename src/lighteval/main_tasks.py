@@ -67,11 +67,11 @@ def inspect(
 
 
 @app.command()
-def list():
+def list(custom_tasks: Annotated[Optional[str], Option(help="Path to a file with custom tasks")] = None):
     """
     List all tasks
     """
     from lighteval.tasks.registry import Registry
 
-    registry = Registry(cache_dir=CACHE_DIR)
+    registry = Registry(cache_dir=CACHE_DIR, custom_tasks=custom_tasks)
     registry.print_all_tasks()
