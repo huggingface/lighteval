@@ -72,8 +72,8 @@ class LiteLLMClient(LightevalModel):
             model_dtype=None,
             model_size="",
         )
-        self.provider = config.provider
-        self.base_url = os.getenv(f"{config.provider.upper()}_BASE_URL", None)
+        self.provider = config.model.split("/")[0]
+        self.base_url = os.getenv(f"{self.provider.upper()}_BASE_URL", None)
         self.API_MAX_RETRY = 5
         self.API_RETRY_SLEEP = 3
         self.API_RETRY_MULTIPLIER = 2

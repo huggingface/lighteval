@@ -395,8 +395,9 @@ def tgi(
 @app.command(rich_help_panel="Evaluation Backends")
 def litellm(
     # === general ===
-    provider: Annotated[str, Argument(help="")],
-    model: Annotated[str, Argument(help="")],
+    model_name: Annotated[
+        str, Argument(help="The model name to evaluate (has to be available through the litellm API.")
+    ],
     tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
     # === Common parameters ===
     use_chat_template: Annotated[
@@ -448,7 +449,7 @@ def litellm(
     ] = 0,
 ):
     """
-    Evaluate models using TGI as backend.
+    Evaluate models using LiteLLM as backend.
     """
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
@@ -468,7 +469,7 @@ def litellm(
     # TODO (nathan): better handling of model_args
     parallelism_manager = ParallelismManager.NONE
 
-    model_config = LiteLLMModelConfig(provider=provider, model=model)
+    model_config = LiteLLMModelConfig(model=model_name)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,

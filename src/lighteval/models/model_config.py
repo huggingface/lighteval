@@ -251,7 +251,6 @@ class OpenAIModelConfig:
 
 @dataclass
 class LiteLLMModelConfig:
-    provider: str
     model: str
 
 
