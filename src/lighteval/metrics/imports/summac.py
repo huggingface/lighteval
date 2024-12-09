@@ -4,6 +4,7 @@
 ###############################################
 
 import json
+import logging
 import os
 import time
 
@@ -13,8 +14,8 @@ import torch
 import tqdm
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-from lighteval.logging.hierarchical_logger import hlog
 
+logger = logging.getLogger(__name__)
 
 # GPU-related business
 
@@ -40,7 +41,7 @@ def wait_free_gpu(gb_needed):
 
 def select_freer_gpu():
     freer_gpu = str(get_freer_gpu())
-    hlog("Will use GPU: %s" % (freer_gpu))
+    logger.info("Will use GPU: %s" % (freer_gpu))
     os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
     os.environ["CUDA_VISIBLE_DEVICES"] = "" + freer_gpu
     return freer_gpu

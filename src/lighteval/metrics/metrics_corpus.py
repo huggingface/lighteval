@@ -24,19 +24,22 @@
 Some metrics (such as corpus BLEU) are not computed at the individual item level, but over all the corpus.
 A number of these aggregations come from the EleutherAIHarness
 """
+import logging
 import math
 
 import numpy as np
 import sacrebleu
 import sklearn.metrics
 
-from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.sample_preparator import (
     GenerativeCorpusMetricInput,
     LogprobCorpusMetricInput,
     PerplexityCorpusMetricInput,
 )
 from lighteval.utils.utils import as_list
+
+
+logger = logging.getLogger(__name__)
 
 
 # General aggregations
@@ -108,7 +111,7 @@ class CorpusLevelTranslationMetric:
         for i in items:
             pred = as_list(i.preds)
             if len(pred) > 1:
-                hlog_warn(
+                logger.info(
                     f"Multiple predictions present, keeping only the first prediction (when computing sacrebleu.{self.metric.__name__})."
                 )
             preds.append(pred[0])
