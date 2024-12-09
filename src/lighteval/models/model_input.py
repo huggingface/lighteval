@@ -23,8 +23,6 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from huggingface_hub import TextGenerationInputGrammarType
-
 from lighteval.utils.imports import NO_VLLM_ERROR_MSG, is_vllm_available
 
 
@@ -46,8 +44,6 @@ class GenerationParameters:
     min_p: Optional[float] = None  # vllm, transformers
     top_p: Optional[int] = None  # vllm, transformers, tgi
     truncate_prompt: Optional[bool] = None  # vllm, tgi
-
-    grammar: Optional[TextGenerationInputGrammarType] = None  # tgi
 
     def to_vllm(self):
         if not is_vllm_available():
@@ -112,6 +108,5 @@ class GenerationParameters:
             "top_k": self.top_k,
             "top_p": self.top_p,
             "truncate": self.truncate_prompt,
-            "grammar": self.grammar,
         }
         return TextGenerationInputGenerateParameters(**{k: v for k, v in args.items() if v is not None})
