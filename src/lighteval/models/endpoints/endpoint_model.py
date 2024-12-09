@@ -24,7 +24,7 @@ import asyncio
 import logging
 import re
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Coroutine, Dict, List, Optional, Union
 
 import requests
@@ -35,6 +35,7 @@ from huggingface_hub import (
     InferenceEndpoint,
     InferenceEndpointError,
     InferenceEndpointTimeoutError,
+    TextGenerationInputGenerateParameters,
     TextGenerationInputGrammarType,
     TextGenerationOutput,
     create_inference_endpoint,
@@ -78,6 +79,7 @@ SORTED_INSTANCE_SIZES = [  # sorted by incremental overall RAM (to load models)
 class InferenceModelConfig:
     model: str
     add_special_tokens: bool = True
+    generation_config: TextGenerationInputGenerateParameters
 
 
 @dataclass
@@ -98,6 +100,7 @@ class InferenceEndpointModelConfig:
     namespace: str = None  # The namespace under which to launch the endopint. Defaults to the current user's namespace
     image_url: str = None
     env_vars: dict = None
+    generation_config: TextGenerationInputGenerateParameters
 
     def __post_init__(self):
         # xor operator, one is None but not the other
@@ -281,6 +284,7 @@ class InferenceEndpointModel(LightevalModel):
             model_dtype=config.model_dtype or "default",
             model_size=-1,
         )
+        self.generation_config = config.generation_config or TextGenerationInputGenerateParameters()
 
     @staticmethod
     def get_larger_hardware_suggestion(cur_instance_type: str = None, cur_instance_size: str = None):
@@ -364,14 +368,16 @@ class InferenceEndpointModel(LightevalModel):
     ) -> Coroutine[None, list[TextGenerationOutput], str]:
         # Todo: add an option to launch with conversational instead for chat prompts
         # https://huggingface.co/docs/huggingface_hub/v0.20.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.conversational
-        generated_text = self.async_client.text_generation(
-            prompt=context,
+        generation_config: TextGenerationInputGenerateParameters = replace(
+            self.generation_config,
+            stop=stop_tokens,
+            max_new_tokens=max_tokens,
             details=True,
             decoder_input_details=True,
-            grammar=grammar,
-            max_new_tokens=max_tokens,
-            stop_sequences=stop_tokens,
-            # truncate=,
+        )
+
+        generated_text = self.async_client.text_generation(
+            prompt=context, generation_config=generation_config, grammar=grammar
         )
 
         return generated_text
@@ -385,14 +391,16 @@ class InferenceEndpointModel(LightevalModel):
     ) -> TextGenerationOutput:
         # Todo: add an option to launch with conversational instead for chat prompts
         # https://huggingface.co/docs/huggingface_hub/v0.20.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.conversational
-        generated_text = self.client.text_generation(
-            prompt=context,
+        generation_config: TextGenerationInputGenerateParameters = replace(
+            self.generation_config,
+            stop=stop_tokens,
+            max_new_tokens=max_tokens,
             details=True,
             decoder_input_details=True,
-            grammar=grammar,
-            max_new_tokens=max_tokens,
-            stop_sequences=stop_tokens,
-            # truncate=,
+        )
+
+        generated_text = self.client.text_generation(
+            prompt=context, generation_config=generation_config, grammar=grammar
         )
 
         return generated_text
