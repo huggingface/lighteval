@@ -85,6 +85,7 @@ class VLLMModelConfig:
         True  # whether to add a space at the start of each continuation in multichoice generation
     )
     pairwise_tokenization: bool = False  # whether to tokenize the context and continuation separately or together.
+    sampling_params: SamplingParams = None  # sampling parameters to use for generation
 
     subfolder: Optional[str] = None
     temperature: float = 0.6  # will be used for multi sampling tasks, for tasks requiring no sampling, this will be ignored and set to 0.
@@ -117,6 +118,7 @@ class VLLMModel(LightevalModel):
         self.precision = _get_dtype(config.dtype, config=self._config)
 
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
+        self.sampling_params = config.sampling_params
         self.pairwise_tokenization = config.pairwise_tokenization
 
     @property
@@ -300,16 +302,19 @@ class VLLMModel(LightevalModel):
         generate: bool = True,
     ) -> list[GenerativeResponse]:
         """Contains the actual logic of the generation."""
+        sampling_params = self.sampling_params or SamplingParams()
         if generate:
-            sampling_params = SamplingParams(
-                temperature=float(self._config.temperature) if num_samples > 1 else 0.0,
-                n=num_samples,
-                max_tokens=max_new_tokens,
-                stop=stop_tokens,
-                logprobs=1 if returns_logits else 0,
-            )
+            sampling_params.temperature = float(self._config.temperature) if num_samples > 1 else 0.0
+            sampling_params.n = num_samples
+            sampling_params.max_tokens = max_new_tokens
+            sampling_params.stop = stop_tokens
+            sampling_params.logprobs = 1 if returns_logits else 0
+
         else:
-            sampling_params = SamplingParams(temperature=0, prompt_logprobs=1, max_tokens=1, detokenize=False)
+            sampling_params.temperature = 0
+            sampling_params.prompt_logprobs = 1
+            sampling_params.max_tokens = 1
+            sampling_params.detokenize = False
 
         if self.data_parallel_size > 1:
             # vLLM hangs if tensor_parallel > 1 and resources are set in ray.remote
