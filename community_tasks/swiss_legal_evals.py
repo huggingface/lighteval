@@ -655,14 +655,14 @@ SwissDecisionSummaryTranslations = DatasetConfig(
             text_col_name="bgeText",
             metadata_cols=["bge"],
             generation_size=2048,
-            stop_sequence=["</s>", "\n\n"],
+            stop_sequence=["</s>", ".\n\n", "\n\n"],
         ),
         "regeste_level": LevelConfig(
             name="regeste_level",
             text_col_name="regesteText",
             metadata_cols=["bge"],
             generation_size=512,
-            stop_sequence=["</s>", "\n\n"],
+            stop_sequence=["</s>", ".\n\n", "\n\n"],
         ),
         "text_level": LevelConfig(
             name="text_level",
@@ -685,14 +685,14 @@ SwissLawTranslations = DatasetConfig(
             text_col_name="lawText",
             metadata_cols=["rsNr"],
             generation_size=16384,
-            stop_sequence=["</s>", "\n\n"],
+            stop_sequence=["</s>", ".\n\n", "\n\n"],
         ),
         "article_level": LevelConfig(
             name="article_level",
             text_col_name="artText",
             metadata_cols=["rsNr"],
             generation_size=1024,
-            stop_sequence=["</s>", "\n\n"],
+            stop_sequence=["</s>", ".\n\n", "\n\n"],
         ),
         "paragraph_level": LevelConfig(
             name="paragraph_level",
@@ -715,7 +715,7 @@ SwissSupremeCourtPressReleaseTranslations = DatasetConfig(
             text_col_name="text",
             metadata_cols=["filename"],
             generation_size=1024,
-            stop_sequence=["</s>", "\n\n"],
+            stop_sequence=["</s>", ".\n\n", "\n\n"],
         )
     },
 )
