@@ -1710,6 +1710,7 @@ openai_mmlu_tasks = [
 # Translated MMLU using both professional and non-professional translators. Contains tags for cultural sensitivity.
 # CA: Cultural Agnostic
 # CS: Cultural Specific
+# UNK: Not annotated
 # ALL: All of the above
 # https://huggingface.co/papers/2412.03304
 global_mmlu_tasks = [
