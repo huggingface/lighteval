@@ -30,8 +30,8 @@ and press releases.
 
 Author: Joel Niklaus
 """
-
 import importlib.metadata as importlib_metadata
+import logging
 import os
 import statistics
 from dataclasses import dataclass
@@ -47,7 +47,6 @@ from packaging import version
 from sacrebleu import sentence_bleu, sentence_chrf, sentence_ter
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.metrics.imports.bert_scorer import BERTScorer
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.metrics_sample import BertScore, JudgeLLM
@@ -61,6 +60,9 @@ from lighteval.metrics.utils.metric_utils import (
 from lighteval.tasks.extended.mix_eval.main import process_judge_response_freeform_gpt
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
+
+
+logger = logging.getLogger(__name__)
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -176,7 +178,7 @@ class JudgeSwissLegalTranslation(JudgeLLM):
         formatted_docs: list[Doc],
         **kwargs,
     ) -> dict[str, float]:
-        hlog(f"Judging {len(formatted_docs)} samples with {self.short_judge_name}...")
+        logger.info(f"Judging {len(formatted_docs)} samples with {self.short_judge_name}...")
         questions = [formatted_doc.specific["question"] for formatted_doc in formatted_docs]
         options = [formatted_doc.choices for formatted_doc in formatted_docs]
         golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
@@ -227,7 +229,7 @@ class GEMBA:
         formatted_docs: list[Doc],
         **kwargs,
     ) -> dict[str, float]:
-        hlog(f"Judging {len(formatted_docs)} samples with {self.name}...")
+        logger.info(f"Judging {len(formatted_docs)} samples with {self.name}...")
         source_langs = [formatted_doc.specific["source_lang"] for formatted_doc in formatted_docs]
         target_langs = [formatted_doc.specific["target_lang"] for formatted_doc in formatted_docs]
         # There should be only one language each in the batch
@@ -263,7 +265,7 @@ gemba_mqm_gpt_4o = get_gemba_judge(method="GEMBA-MQM_norm", model="gpt-4o")
 def get_bert_score(language: str, num_layers: int = 24, model_type: str = "xlm-roberta-large", device: str = "cpu"):
     if device == "mps":
         raise ValueError("MPS is not supported for BERTScore")
-    hlog(
+    logger.info(
         f"Loading BERTScore with lang={language}, num_layers={num_layers}, model_type={model_type}, and device={device}..."
     )
     score = BertScore(normalize_gold=remove_braces, normalize_pred=remove_braces_and_strip)
@@ -280,7 +282,7 @@ def get_bert_score(language: str, num_layers: int = 24, model_type: str = "xlm-r
 
     if language == "rm":
         language = "it"
-        hlog_warn("There is no BERTScore baseline file for Rumantsch, using Italian instead.")
+        logger.warning("There is no BERTScore baseline file for Rumantsch, using Italian instead.")
 
     # Create directory structure if it doesn't exist
     os.makedirs(os.path.dirname(score.bert_scorer.baseline_path), exist_ok=True)
@@ -288,7 +290,7 @@ def get_bert_score(language: str, num_layers: int = 24, model_type: str = "xlm-r
     # Download the baseline file if it doesn't exist
     if not os.path.exists(score.bert_scorer.baseline_path):
         raw_url = f"https://raw.githubusercontent.com/Tiiiger/bert_score/master/bert_score/rescale_baseline/{language}/{model_type}.tsv"
-        hlog(f"Downloading BERTScore baseline file from {raw_url}")
+        logger.info(f"Downloading BERTScore baseline file from {raw_url}")
         response = requests.get(raw_url)
         if response.status_code == 200:
             with open(score.bert_scorer.baseline_path, "wb") as f:
@@ -360,7 +362,7 @@ class BLEURT:
         formatted_docs: list[Doc],
         **kwargs,
     ) -> dict[str, float]:
-        hlog(f"Scoring {len(formatted_docs)} samples with {self.metric_name}...")
+        logger.info(f"Scoring {len(formatted_docs)} samples with {self.metric_name}...")
         golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
         predictions = [response[0].result[0] for response in responses]
 
@@ -379,7 +381,7 @@ class BLEURT:
             )
             inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
             if any(len(encoding) == self.max_length for encoding in inputs["input_ids"]):
-                hlog_warn(f"Some inputs were truncated to max_length={self.max_length} in BLEURT scoring")
+                logger.warning(f"Some inputs were truncated to max_length={self.max_length} in BLEURT scoring")
             with torch.no_grad():
                 all_scores.extend(self.model(**inputs)[0].squeeze().cpu().tolist())
 
@@ -392,7 +394,7 @@ def get_bleurt(
     batch_size: int = 32,
     device: str = "cpu",
 ):
-    hlog(
+    logger.info(
         f"Loading BLEURT with model_size={model_size}, seq_len={seq_len}, batch_size={batch_size}, and device={device}..."
     )
     name = f"bleurt_{model_size}"
@@ -433,7 +435,7 @@ class COMET:
         formatted_docs: list[Doc],
         **kwargs,
     ) -> dict[str, float]:
-        hlog(f"Scoring {len(formatted_docs)} samples with {self.metric_name}...")
+        logger.info(f"Scoring {len(formatted_docs)} samples with {self.metric_name}...")
         golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
         predictions = [response[0].result[0] for response in responses]
         sources = [kwargs["formatted_doc"].specific["source"] for kwargs["formatted_doc"] in formatted_docs]
@@ -455,7 +457,9 @@ def get_comet(
     gpus: int = 1,
     device: str = "cpu",
 ):
-    hlog(f"Loading COMET with model_name={model_name}, batch_size={batch_size}, gpus={gpus}, and device={device}...")
+    logger.info(
+        f"Loading COMET with model_name={model_name}, batch_size={batch_size}, gpus={gpus}, and device={device}..."
+    )
     name = model_name.split("/")[-1]
     return SampleLevelMetricGrouping(
         metric_name=[name],
