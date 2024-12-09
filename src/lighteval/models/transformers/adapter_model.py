@@ -88,11 +88,11 @@ class AdapterModel(BaseModel):
             token_diff = len(self._tokenizer) - base.config.vocab_size
             if token_diff != 0:
                 if token_diff > 0:
-                    hlog(
+                    logger.info(
                         f"You're using the adapter model's tokenizer, which has more tokens than the base model. Adding {token_diff} token(s)."
                     )
                 else:
-                    hlog(
+                    logger.info(
                         f"You're using the adapter model's tokenizer, which has fewer tokens than the base model. Removing {abs(token_diff)} token(s)."
                     )
                 base.resize_token_embeddings(len(self._tokenizer))
