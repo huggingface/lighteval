@@ -22,6 +22,7 @@
 
 import logging
 import os
+from dataclasses import dataclass
 from typing import Optional, Tuple, Union
 
 import torch
@@ -30,12 +31,18 @@ import transformers
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from transformers import (
+    AutoConfig,
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    BitsAndBytesConfig,
+    GPTQConfig,
+    PretrainedConfig,
+)
 from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_config import BaseModelConfig
 from lighteval.models.model_output import (
     Batch,
     GenerativeMultiturnResponse,
@@ -43,7 +50,7 @@ from lighteval.models.model_output import (
     LoglikelihoodResponse,
     LoglikelihoodSingleTokenResponse,
 )
-from lighteval.models.utils import _get_dtype, _simplify_name, batched
+from lighteval.models.utils import _get_dtype, _get_model_sha, _simplify_name, batched
 from lighteval.tasks.requests import (
     GreedyUntilMultiTurnRequest,
     GreedyUntilRequest,
@@ -52,9 +59,15 @@ from lighteval.tasks.requests import (
     LoglikelihoodSingleTokenRequest,
     Request,
 )
-from lighteval.utils.imports import is_accelerate_available
+from lighteval.utils.imports import (
+    NO_AUTOGPTQ_ERROR_MSG,
+    NO_BNB_ERROR_MSG,
+    is_accelerate_available,
+    is_autogptq_available,
+    is_bnb_available,
+)
 from lighteval.utils.parallelism import find_executable_batch_size
-from lighteval.utils.utils import EnvConfig, as_list
+from lighteval.utils.utils import EnvConfig, as_list, boolstring_to_bool
 
 
 logger = logging.getLogger(__name__)
@@ -67,6 +80,145 @@ if is_accelerate_available():
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 STARTING_BATCH_SIZE = 512
+
+
+@dataclass
+class BaseModelConfig:
+    """
+    Base configuration class for models.
+
+    Attributes:
+        pretrained (str):
+            HuggingFace Hub model ID name or the path to a pre-trained
+            model to load. This is effectively the `pretrained_model_name_or_path`
+            argument of `from_pretrained` in the HuggingFace `transformers` API.
+        accelerator (Accelerator): accelerator to use for model training.
+        tokenizer (Optional[str]): HuggingFace Hub tokenizer ID that will be
+            used for tokenization.
+        multichoice_continuations_start_space (Optional[bool]): Whether to add a
+            space at the start of each continuation in multichoice generation.
+            For example, context: "What is the capital of France?" and choices: "Paris", "London".
+            Will be tokenized as: "What is the capital of France? Paris" and "What is the capital of France? London".
+            True adds a space, False strips a space, None does nothing
+        pairwise_tokenization (bool): Whether to tokenize the context and continuation as separately or together.
+        subfolder (Optional[str]): The subfolder within the model repository.
+        revision (str): The revision of the model.
+        batch_size (int): The batch size for model training.
+        max_gen_toks (Optional[int]): The maximum number of tokens to generate.
+        max_length (Optional[int]): The maximum length of the generated output.
+        add_special_tokens (bool, optional, defaults to True): Whether to add special tokens to the input sequences.
+           If `None`, the default value will be set to `True` for seq2seq models (e.g. T5) and
+            `False` for causal models.
+        model_parallel (bool, optional, defaults to False):
+            True/False: force to use or not the `accelerate` library to load a large
+            model across multiple devices.
+            Default: None which corresponds to comparing the number of processes with
+                the number of GPUs. If it's smaller => model-parallelism, else not.
+        dtype (Union[str, torch.dtype], optional, defaults to None):):
+            Converts the model weights to `dtype`, if specified. Strings get
+            converted to `torch.dtype` objects (e.g. `float16` -> `torch.float16`).
+            Use `dtype="auto"` to derive the type from the model's weights.
+        device (Union[int, str]): device to use for model training.
+        quantization_config (Optional[BitsAndBytesConfig]): quantization
+            configuration for the model, manually provided to load a normally floating point
+            model at a quantized precision. Needed for 4-bit and 8-bit precision.
+        trust_remote_code (bool): Whether to trust remote code during model
+            loading.
+
+    Methods:
+        __post_init__(): Performs post-initialization checks on the configuration.
+        _init_configs(model_name, env_config): Initializes the model configuration.
+        init_configs(env_config): Initializes the model configuration using the environment configuration.
+        get_model_sha(): Retrieves the SHA of the model.
+
+    """
+
+    pretrained: str
+    accelerator: "Accelerator" = None
+    tokenizer: Optional[str] = None
+    multichoice_continuations_start_space: Optional[bool] = None
+    pairwise_tokenization: bool = False
+    subfolder: Optional[str] = None
+    revision: str = "main"
+    batch_size: int = -1
+    max_gen_toks: Optional[int] = 256
+    max_length: Optional[int] = None
+    add_special_tokens: bool = True
+    model_parallel: Optional[bool] = None
+    dtype: Optional[Union[str, torch.dtype]] = None
+    device: Union[int, str] = "cuda"
+    quantization_config: Optional[BitsAndBytesConfig] = None
+    trust_remote_code: bool = False
+    use_chat_template: bool = False
+    compile: bool = False
+
+    def __post_init__(self):
+        # Making sure this parameter is a boolean
+        self.multichoice_continuations_start_space = boolstring_to_bool(self.multichoice_continuations_start_space)
+
+        if self.multichoice_continuations_start_space is not None:
+            if self.multichoice_continuations_start_space:
+                logger.info(
+                    "You set `multichoice_continuations_start_space` to true. This will force multichoice continuations to use a starting space"
+                )
+            else:
+                logger.info(
+                    "You set `multichoice_continuations_start_space` to false. This will remove a leading space from multichoice continuations, if present."
+                )
+
+        self.model_parallel = boolstring_to_bool(self.model_parallel)
+        self.compile = boolstring_to_bool(self.compile)
+
+        if self.quantization_config is not None and not is_bnb_available():
+            raise ImportError(NO_BNB_ERROR_MSG)
+
+        if not isinstance(self.pretrained, str):
+            raise ValueError("Pretrained model name must be passed as string.")
+        if not isinstance(self.device, str):
+            raise ValueError("Current device must be passed as string.")
+
+    def _init_configs(self, model_name: str, env_config: EnvConfig) -> PretrainedConfig:
+        revision = self.revision
+        if self.subfolder:
+            revision = f"{self.revision}/{self.subfolder}"
+        auto_config = AutoConfig.from_pretrained(
+            model_name,
+            revision=revision,
+            trust_remote_code=self.trust_remote_code,
+            cache_dir=env_config.cache_dir,
+            token=env_config.token,
+        )
+
+        # Gathering the model's automatic quantization config, if available
+        try:
+            model_auto_quantization_config = auto_config.quantization_config
+            logger.info("An automatic quantization config was found in the model's config. Using it to load the model")
+        except (AttributeError, KeyError):
+            model_auto_quantization_config = None
+
+        if model_auto_quantization_config is not None:
+            if self.quantization_config is not None:
+                # We don't load models quantized by default with a different user provided conf
+                raise ValueError("You manually requested quantization on a model already quantized!")
+
+            # We add the quantization to the model params we store
+            if model_auto_quantization_config["quant_method"] == "gptq":
+                if not is_autogptq_available():
+                    raise ImportError(NO_AUTOGPTQ_ERROR_MSG)
+                auto_config.quantization_config["use_exllama"] = None
+                self.quantization_config = GPTQConfig(**auto_config.quantization_config, disable_exllama=True)
+            elif model_auto_quantization_config["quant_method"] == "bitsandbytes":
+                if not is_bnb_available():
+                    raise ImportError(NO_BNB_ERROR_MSG)
+                self.quantization_config = BitsAndBytesConfig(**auto_config.quantization_config)
+
+        return auto_config
+
+    def init_configs(self, env_config: EnvConfig) -> PretrainedConfig:
+        return self._init_configs(self.pretrained, env_config=env_config)
+
+    def get_model_sha(self):
+        return _get_model_sha(repo_id=self.pretrained, revision=self.revision)
 
 
 class BaseModel(LightevalModel):
