@@ -83,23 +83,35 @@ class LiteLLMClient(LightevalModel):
         self.model = config.model
         self._tokenizer = AutoTokenizer.from_pretrained("gpt2")  # Use a dummy tokenizer for compatibility
         self.pairwise_tokenization = False
+        # TODO: Pass the system prompt from the pipeline through.
+        self.system_prompt = "You are a helpful assistant."
         litellm.drop_params = True
         litellm.verbose = True
 
-    def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, stop_sequence, generation_size):
+    def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, stop_sequence):
         for attempt in range(self.API_MAX_RETRY):
             try:
+                if self.provider == "anthropic":
+                    # Filter out whitespace-only stop sequences
+                    if stop_sequence:
+                        stop_sequence = [s for s in stop_sequence if s.strip()]
+                if not stop_sequence:  # If empty after filtering
+                    stop_sequence = ["\n"]
+
+                if "o1" in self.model:
+                    # We need to allow more tokens to include reasoning tokens
+                    max_new_tokens *= 10
+
                 response = litellm.completion(
                     model=self.model,
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=max_new_tokens if max_new_tokens > 0 else None,
+                    messages=[{"role": "system", "content": self.system_prompt}, {"role": "user", "content": prompt}],
+                    max_completion_tokens=max_new_tokens if max_new_tokens > 0 else None,
                     logprobs=return_logits if self.provider == "openai" else None,
+                    stop=stop_sequence,
                     base_url=self.base_url,
                     n=num_samples,
                     temperature=self.TEMPERATURE,
                     top_p=self.TOP_P,
-                    stop=["\n"] if stop_sequence is None else stop_sequence,
-                    # max_completion_tokens=generation_size if generation_size > 0 else None,
                     caching=True,
                 )
                 return response
@@ -119,7 +131,6 @@ class LiteLLMClient(LightevalModel):
         max_new_tokens: int | list[int],
         num_samples: int | list[int],
         stop_sequence: list[str] | None = None,
-        generation_size: int | None = None,
     ):
         results = []
 
@@ -127,16 +138,10 @@ class LiteLLMClient(LightevalModel):
         max_new_tokenss = [max_new_tokens for _ in prompts] if not isinstance(max_new_tokens, list) else max_new_tokens
         num_sampless = [num_samples for _ in prompts] if not isinstance(num_samples, list) else num_samples
         stop_sequencess = [stop_sequence for _ in prompts]
-        generation_sizess = [generation_size for _ in prompts]
 
         assert (
-            len(prompts)
-            == len(return_logitss)
-            == len(max_new_tokenss)
-            == len(num_sampless)
-            == len(stop_sequencess)
-            == len(generation_sizess)
-        ), f"Length of prompts, return_logitss, max_new_tokenss, num_sampless, stop_sequences, generation_sizes should be the same but are {len(prompts)}, {len(return_logitss)}, {len(max_new_tokenss)}, {len(num_sampless)}, {len(stop_sequencess)}, {len(generation_sizess)}"
+            len(prompts) == len(return_logitss) == len(max_new_tokenss) == len(num_sampless) == len(stop_sequencess)
+        ), f"Length of prompts, return_logitss, max_new_tokenss, num_sampless, stop_sequences should be the same but are {len(prompts)}, {len(return_logitss)}, {len(max_new_tokenss)}, {len(num_sampless)}, {len(stop_sequencess)}"
 
         with ThreadPoolExecutor(self.CONCURENT_CALLS) as executor:
             for entry in tqdm(
@@ -147,7 +152,6 @@ class LiteLLMClient(LightevalModel):
                     max_new_tokenss,
                     num_sampless,
                     stop_sequencess,
-                    generation_sizess,
                 ),
                 total=len(prompts),
             ):
@@ -192,11 +196,8 @@ class LiteLLMClient(LightevalModel):
             return_logits = dataset[0].use_logits
             num_samples = dataset[0].num_samples
             stop_sequence = requests[0].stop_sequence
-            generation_size = requests[0].generation_size
 
-            responses = self.__call_api_parallel(
-                contexts, return_logits, max_new_tokens, num_samples, stop_sequence, generation_size
-            )
+            responses = self.__call_api_parallel(contexts, return_logits, max_new_tokens, num_samples, stop_sequence)
 
             for response in responses:
                 result: list[str] = [choice.message.content for choice in response.choices]
