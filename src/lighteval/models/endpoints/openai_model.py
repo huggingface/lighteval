@@ -62,14 +62,16 @@ if is_openai_available():
 @dataclass
 class OpenAIModelConfig:
     model: str
+    sampling_params: dict = {}
 
 
 class OpenAIClient(LightevalModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
-    def __init__(self, config, env_config) -> None:
+    def __init__(self, config: OpenAIModelConfig, env_config) -> None:
         api_key = os.environ["OPENAI_API_KEY"]
         self.client = OpenAI(api_key=api_key)
+        self.sampling_params = config.sampling_params
 
         self.model_info = ModelInfo(
             model_name=config.model,
@@ -96,6 +98,7 @@ class OpenAIClient(LightevalModel):
                     logprobs=return_logits,
                     logit_bias=logit_bias,
                     n=num_samples,
+                    **self.sampling_params,
                 )
                 return response
             except Exception as e:

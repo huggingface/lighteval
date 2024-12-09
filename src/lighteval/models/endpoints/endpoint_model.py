@@ -100,7 +100,7 @@ class InferenceEndpointModelConfig:
     namespace: str = None  # The namespace under which to launch the endopint. Defaults to the current user's namespace
     image_url: str = None
     env_vars: dict = None
-    generation_config: TextGenerationInputGenerateParameters
+    generation_config: dict = {}
 
     def __post_init__(self):
         # xor operator, one is None but not the other
@@ -284,7 +284,7 @@ class InferenceEndpointModel(LightevalModel):
             model_dtype=config.model_dtype or "default",
             model_size=-1,
         )
-        self.generation_config = config.generation_config or TextGenerationInputGenerateParameters()
+        self.generation_config = TextGenerationInputGenerateParameters(**config.generation_config)
 
     @staticmethod
     def get_larger_hardware_suggestion(cur_instance_type: str = None, cur_instance_size: str = None):
@@ -374,11 +374,10 @@ class InferenceEndpointModel(LightevalModel):
             max_new_tokens=max_tokens,
             details=True,
             decoder_input_details=True,
+            grammar=grammar,
         )
 
-        generated_text = self.async_client.text_generation(
-            prompt=context, generation_config=generation_config, grammar=grammar
-        )
+        generated_text = self.async_client.text_generation(prompt=context, generation_config=generation_config)
 
         return generated_text
 
@@ -397,10 +396,12 @@ class InferenceEndpointModel(LightevalModel):
             max_new_tokens=max_tokens,
             details=True,
             decoder_input_details=True,
+            grammar=grammar,
         )
 
         generated_text = self.client.text_generation(
-            prompt=context, generation_config=generation_config, grammar=grammar
+            prompt=context,
+            generation_config=generation_config,
         )
 
         return generated_text

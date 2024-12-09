@@ -50,7 +50,7 @@ class TGIModelConfig:
     inference_server_address: str
     inference_server_auth: str
     model_id: str
-    generation_config: TextGenerationInputGenerateParameters = None
+    generation_config: dict = {}
 
 
 # inherit from InferenceEndpointModel instead of LightevalModel since they both use the same interface, and only overwrite
@@ -66,7 +66,7 @@ class ModelClient(InferenceEndpointModel):
         )
 
         self.client = AsyncClient(config.inference_server_address, headers=headers, timeout=240)
-        self.generation_config = config.generation_config or TextGenerationInputGenerateParameters()
+        self.generation_config = TextGenerationInputGenerateParameters(**config.generation_config)
         self._max_gen_toks = 256
         self.model_info = requests.get(f"{config.inference_server_address}/info", headers=headers).json()
         if "model_id" not in self.model_info:
