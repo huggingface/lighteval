@@ -302,7 +302,7 @@ class VLLMModel(LightevalModel):
         generate: bool = True,
     ) -> list[GenerativeResponse]:
         """Contains the actual logic of the generation."""
-        sampling_params = self.sampling_params or SamplingParams()
+        sampling_params = self.sampling_params.clone() or SamplingParams()
         if generate:
             sampling_params.temperature = float(self._config.temperature) if num_samples > 1 else 0.0
             sampling_params.n = num_samples

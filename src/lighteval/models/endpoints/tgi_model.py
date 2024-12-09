@@ -21,11 +21,11 @@
 # SOFTWARE.
 
 import asyncio
-from dataclasses import dataclass
-from typing import Coroutine, Optional
+from dataclasses import dataclass, replace
+from typing import Coroutine
 
 import requests
-from huggingface_hub import TextGenerationInputGrammarType, TextGenerationOutput
+from huggingface_hub import TextGenerationInputGenerateParameters, TextGenerationOutput
 from transformers import AutoTokenizer
 
 from lighteval.models.endpoints.endpoint_model import InferenceEndpointModel, ModelInfo
@@ -57,12 +57,15 @@ class TGIModelConfig:
 class ModelClient(InferenceEndpointModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
-    def __init__(self, address, auth_token=None, model_id=None) -> None:
+    def __init__(
+        self, address, auth_token=None, model_id=None, generation_config: TextGenerationInputGenerateParameters = None
+    ) -> None:
         if not is_tgi_available():
             raise ImportError(NO_TGI_ERROR_MSG)
         headers = {} if auth_token is None else {"Authorization": f"Bearer {auth_token}"}
 
         self.client = AsyncClient(address, headers=headers, timeout=240)
+        self.generation_config = generation_config
         self._max_gen_toks = 256
         self.model_info = requests.get(f"{address}/info", headers=headers).json()
         if "model_id" not in self.model_info:
@@ -88,16 +91,16 @@ class ModelClient(InferenceEndpointModel):
         context: str,
         stop_tokens: list[str],
         max_tokens: int,
-        grammar: Optional[TextGenerationInputGrammarType] = None,
     ) -> Coroutine[None, list[TextGenerationOutput], str]:
         # Todo: add an option to launch with conversational instead for chat prompts
-        generated_text = self.client.generate(
-            prompt=context,
-            decoder_input_details=True,
-            grammar=grammar,
+        generation_config: TextGenerationInputGenerateParameters = replace(
+            self.generation_config,
+            stop=stop_tokens,
             max_new_tokens=max_tokens,
-            stop_sequences=stop_tokens,
+            decoder_input_details=True,
         )
+
+        generated_text = self.client.generate(prompt=context, generation_config=generation_config)
 
         return generated_text
 
