@@ -109,7 +109,6 @@ agieval_gaokao_chinese_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=None,
-    output_regex=None,
     frozen=False,
     trust_dataset=True,
     version=0,
