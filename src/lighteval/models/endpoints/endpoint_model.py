@@ -135,7 +135,7 @@ class InferenceEndpointModel(LightevalModel):
     def __init__(  # noqa: C901
         self, config: Union[InferenceEndpointModelConfig, InferenceModelConfig], env_config: EnvConfig
     ) -> None:
-        self.reuse_existing = getattr(config, "reuse_existing", True)
+        self.reuse_existing = getattr(config, "reuse_existing", False)
         self._max_length = None
         self.endpoint = None
         self.model_name = None
