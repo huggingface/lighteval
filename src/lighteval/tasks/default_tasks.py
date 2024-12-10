@@ -37,8 +37,6 @@ abstract_narrative_understanding_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -55,8 +53,6 @@ agieval_aqua_rat_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=None,
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -73,8 +69,6 @@ agieval_gaokao_biology_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=None,
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -91,8 +85,6 @@ agieval_gaokao_chemistry_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=None,
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -109,8 +101,6 @@ agieval_gaokao_chinese_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=None,
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -127,8 +117,6 @@ agieval_gaokao_english_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=None,
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -145,8 +133,6 @@ agieval_gaokao_geography_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=None,
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -163,8 +149,6 @@ agieval_gaokao_history_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=None,
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -181,8 +165,6 @@ agieval_gaokao_mathqa_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=None,
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -199,8 +181,6 @@ agieval_gaokao_physics_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=None,
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -217,8 +197,6 @@ agieval_logiqa_en_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=None,
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -235,8 +213,6 @@ agieval_logiqa_zh_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=None,
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -253,8 +229,6 @@ agieval_lsat_ar_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=None,
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -271,8 +245,6 @@ agieval_lsat_lr_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=None,
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -289,8 +261,6 @@ agieval_lsat_rc_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=None,
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -307,8 +277,6 @@ agieval_sat_en_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=None,
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -325,8 +293,6 @@ agieval_sat_en_without_passage_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=None,
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -343,8 +309,6 @@ agieval_sat_math_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=None,
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -361,8 +325,6 @@ anachronisms_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -379,8 +341,6 @@ analogical_similarity_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -397,8 +357,6 @@ analytic_entailment_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -415,8 +373,6 @@ anli_r1_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -433,8 +389,6 @@ anli_r2_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -451,8 +405,6 @@ anli_r3_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -469,8 +421,6 @@ arc_c_letters_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -487,8 +437,6 @@ arc_c_options_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -505,8 +453,6 @@ arc_c_simple_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -523,8 +469,6 @@ arc_challenge_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -541,8 +485,6 @@ arc_easy_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -559,8 +501,6 @@ arithmetic_1dc_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.acc_golds_likelihood],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -577,8 +517,6 @@ arithmetic_2da_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.acc_golds_likelihood],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -595,8 +533,6 @@ arithmetic_2dm_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.acc_golds_likelihood],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -613,8 +549,6 @@ arithmetic_2ds_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.acc_golds_likelihood],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -631,8 +565,6 @@ arithmetic_3da_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.acc_golds_likelihood],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -649,8 +581,6 @@ arithmetic_3ds_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.acc_golds_likelihood],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -667,8 +597,6 @@ arithmetic_4da_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.acc_golds_likelihood],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -685,8 +613,6 @@ arithmetic_4ds_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.acc_golds_likelihood],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -703,8 +629,6 @@ arithmetic_5da_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.acc_golds_likelihood],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -721,8 +645,6 @@ arithmetic_5ds_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.acc_golds_likelihood],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -739,8 +661,6 @@ arithmetic_bb_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -757,8 +677,6 @@ ascii_word_recognition_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -775,8 +693,6 @@ asdiv_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.acc_golds_likelihood],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -793,8 +709,6 @@ authorship_verification_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -811,8 +725,6 @@ auto_categorization_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.bleu],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -829,7 +741,6 @@ auto_debugging_bigbench_lite = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=None,
-    output_regex="[^\\.\\?\\!\\;\\n]+",
     trust_dataset=True,
     version=0,
 )
@@ -851,8 +762,6 @@ babi_qa_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -869,8 +778,6 @@ bigbench_causal_judgment_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -887,8 +794,6 @@ bigbench_date_understanding_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -905,8 +810,6 @@ bigbench_disambiguation_qa_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -923,8 +826,6 @@ bigbench_geometric_shapes_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -941,8 +842,6 @@ bigbench_logical_deduction_five_objects_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -959,8 +858,6 @@ bigbench_logical_deduction_seven_objects_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -977,8 +874,6 @@ bigbench_logical_deduction_three_objects_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -995,8 +890,6 @@ bigbench_movie_recommendation_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1013,8 +906,6 @@ bigbench_navigate_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1031,8 +922,6 @@ bigbench_reasoning_about_colored_objects_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1049,8 +938,6 @@ bigbench_ruin_names_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1067,8 +954,6 @@ bigbench_salient_translation_error_detection_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1085,8 +970,6 @@ bigbench_snarks_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1103,8 +986,6 @@ bigbench_sports_understanding_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1121,8 +1002,6 @@ bigbench_temporal_sequences_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1139,8 +1018,6 @@ bigbench_tracking_shuffled_objects_five_objects_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1157,8 +1034,6 @@ bigbench_tracking_shuffled_objects_seven_objects_lighteval = LightevalTaskConfig
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1175,8 +1050,6 @@ bigbench_tracking_shuffled_objects_three_objects_lighteval = LightevalTaskConfig
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1193,8 +1066,6 @@ bigbench_causal_judgment_harness = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     must_remove_duplicate_docs=True,
     trust_dataset=True,
     version=0,
@@ -1212,8 +1083,6 @@ bigbench_date_understanding_harness = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     must_remove_duplicate_docs=True,
     trust_dataset=True,
     version=0,
@@ -1231,8 +1100,6 @@ bigbench_disambiguation_qa_harness = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     must_remove_duplicate_docs=True,
     trust_dataset=True,
     version=0,
@@ -1250,8 +1117,6 @@ bigbench_geometric_shapes_harness = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     must_remove_duplicate_docs=True,
     trust_dataset=True,
     version=0,
@@ -1269,8 +1134,6 @@ bigbench_logical_deduction_five_objects_harness = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     must_remove_duplicate_docs=True,
     trust_dataset=True,
     version=0,
@@ -1288,8 +1151,6 @@ bigbench_logical_deduction_seven_objects_harness = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     must_remove_duplicate_docs=True,
     trust_dataset=True,
     version=0,
@@ -1307,8 +1168,6 @@ bigbench_logical_deduction_three_objects_harness = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     must_remove_duplicate_docs=True,
     trust_dataset=True,
     version=0,
@@ -1326,8 +1185,6 @@ bigbench_movie_recommendation_harness = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     must_remove_duplicate_docs=True,
     trust_dataset=True,
     version=0,
@@ -1345,8 +1202,6 @@ bigbench_navigate_harness = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     must_remove_duplicate_docs=True,
     trust_dataset=True,
     version=0,
@@ -1364,8 +1219,6 @@ bigbench_reasoning_about_colored_objects_harness = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     must_remove_duplicate_docs=True,
     trust_dataset=True,
     version=0,
@@ -1383,8 +1236,6 @@ bigbench_ruin_names_harness = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     must_remove_duplicate_docs=True,
     trust_dataset=True,
     version=0,
@@ -1402,8 +1253,6 @@ bigbench_salient_translation_error_detection_harness = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     must_remove_duplicate_docs=True,
     trust_dataset=True,
     version=0,
@@ -1421,8 +1270,6 @@ bigbench_snarks_harness = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     must_remove_duplicate_docs=True,
     trust_dataset=True,
     version=0,
@@ -1440,8 +1287,6 @@ bigbench_sports_understanding_harness = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     must_remove_duplicate_docs=True,
     trust_dataset=True,
     version=0,
@@ -1459,8 +1304,6 @@ bigbench_temporal_sequences_harness = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     must_remove_duplicate_docs=True,
     trust_dataset=True,
     version=0,
@@ -1478,8 +1321,6 @@ bigbench_tracking_shuffled_objects_five_objects_harness = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     must_remove_duplicate_docs=True,
     trust_dataset=True,
     version=0,
@@ -1497,8 +1338,6 @@ bigbench_tracking_shuffled_objects_seven_objects_harness = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     must_remove_duplicate_docs=True,
     trust_dataset=True,
     version=0,
@@ -1516,8 +1355,6 @@ bigbench_tracking_shuffled_objects_three_objects_harness = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     must_remove_duplicate_docs=True,
     trust_dataset=True,
     version=0,
@@ -1541,8 +1378,6 @@ bbh_boolean_expressions_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1565,8 +1400,6 @@ bbh_causal_judgment_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1589,8 +1422,6 @@ bbh_date_understanding_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1613,8 +1444,6 @@ bbh_disambiguation_qa_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1637,8 +1466,6 @@ bbh_dyck_languages_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1661,8 +1488,6 @@ bbh_formal_fallacies_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1685,8 +1510,6 @@ bbh_geometric_shapes_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1709,8 +1532,6 @@ bbh_hyperbaton_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1733,8 +1554,6 @@ bbh_logical_deduction_five_objects_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1757,8 +1576,6 @@ bbh_logical_deduction_seven_objects_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1781,8 +1598,6 @@ bbh_logical_deduction_three_objects_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1805,8 +1620,6 @@ bbh_movie_recommendation_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1829,8 +1642,6 @@ bbh_multistep_arithmetic_two_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1853,8 +1664,6 @@ bbh_navigate_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1877,8 +1686,6 @@ bbh_object_counting_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1901,8 +1708,6 @@ bbh_penguins_in_a_table_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1925,8 +1730,6 @@ bbh_reasoning_about_colored_objects_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1949,8 +1752,6 @@ bbh_ruin_names_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1973,8 +1774,6 @@ bbh_salient_translation_error_detection_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -1997,8 +1796,6 @@ bbh_snarks_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2021,8 +1818,6 @@ bbh_sports_understanding_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2045,8 +1840,6 @@ bbh_temporal_sequences_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2069,8 +1862,6 @@ bbh_tracking_shuffled_objects_five_objects_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2093,8 +1884,6 @@ bbh_tracking_shuffled_objects_seven_objects_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2117,8 +1906,6 @@ bbh_tracking_shuffled_objects_three_objects_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2141,8 +1928,6 @@ bbh_web_of_lies_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2165,8 +1950,6 @@ bbh_word_sorting_harness = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["</s>", "Q=", "\n\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2189,8 +1972,6 @@ bbq_helm = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2213,8 +1994,6 @@ bbq_Age_helm = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2237,8 +2016,6 @@ bbq_Disability_status_helm = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2261,8 +2038,6 @@ bbq_Gender_identity_helm = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2285,8 +2060,6 @@ bbq_Nationality_helm = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2309,8 +2082,6 @@ bbq_Physical_appearance_helm = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2333,8 +2104,6 @@ bbq_Race_ethnicity_helm = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2357,8 +2126,6 @@ bbq_Race_x_SES_helm = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2381,8 +2148,6 @@ bbq_Race_x_gender_helm = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2405,8 +2170,6 @@ bbq_Religion_helm = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2429,8 +2192,6 @@ bbq_SES_helm = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2453,8 +2214,6 @@ bbq_Sexual_orientation_helm = LightevalTaskConfig(
         Metrics.perfect_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2471,8 +2230,6 @@ bbq_lite_json_bigbench_lite = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2489,8 +2246,6 @@ bigbench_auto_debugging_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2512,8 +2267,6 @@ bigbench_bbq_lite_json_age_ambig_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2535,8 +2288,6 @@ bigbench_bbq_lite_json_age_disambig_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2558,8 +2309,6 @@ bigbench_bbq_lite_json_disability_status_ambig_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2581,8 +2330,6 @@ bigbench_bbq_lite_json_disability_status_disambig_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2604,8 +2351,6 @@ bigbench_bbq_lite_json_gender_identity_ambig_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2627,8 +2372,6 @@ bigbench_bbq_lite_json_gender_identity_disambig_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2650,8 +2393,6 @@ bigbench_bbq_lite_json_nationality_ambig_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2673,8 +2414,6 @@ bigbench_bbq_lite_json_nationality_disambig_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2696,8 +2435,6 @@ bigbench_bbq_lite_json_physical_appearance_ambig_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2719,8 +2456,6 @@ bigbench_bbq_lite_json_physical_appearance_disambig_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2742,8 +2477,6 @@ bigbench_bbq_lite_json_race_ethnicity_ambig_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2765,8 +2498,6 @@ bigbench_bbq_lite_json_race_ethnicity_disambig_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2788,8 +2519,6 @@ bigbench_bbq_lite_json_religion_ambig_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2811,8 +2540,6 @@ bigbench_bbq_lite_json_religion_disambig_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2834,8 +2561,6 @@ bigbench_bbq_lite_json_ses_ambig_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2857,8 +2582,6 @@ bigbench_bbq_lite_json_ses_disambig_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2880,8 +2603,6 @@ bigbench_bbq_lite_json_sexual_orientation_ambig_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2903,8 +2624,6 @@ bigbench_bbq_lite_json_sexual_orientation_disambig_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2926,8 +2645,6 @@ bigbench_code_line_description_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2949,8 +2666,6 @@ bigbench_conceptual_combinations_contradictions_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2972,8 +2687,6 @@ bigbench_conceptual_combinations_emergent_properties_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -2995,8 +2708,6 @@ bigbench_conceptual_combinations_fanciful_fictional_combinations_helm = Lighteva
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3018,8 +2729,6 @@ bigbench_conceptual_combinations_homonyms_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3041,8 +2750,6 @@ bigbench_conceptual_combinations_invented_words_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3059,8 +2766,6 @@ bigbench_conlang_translation_adna_from_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.rouge1, Metrics.rouge2, Metrics.rougeL],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3077,8 +2782,6 @@ bigbench_conlang_translation_adna_to_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.rouge1, Metrics.rouge2, Metrics.rougeL],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3095,8 +2798,6 @@ bigbench_conlang_translation_atikampe_from_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.rouge1, Metrics.rouge2, Metrics.rougeL],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3113,8 +2814,6 @@ bigbench_conlang_translation_atikampe_to_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.rouge1, Metrics.rouge2, Metrics.rougeL],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3131,8 +2830,6 @@ bigbench_conlang_translation_gornam_from_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.rouge1, Metrics.rouge2, Metrics.rougeL],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3149,8 +2846,6 @@ bigbench_conlang_translation_gornam_to_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.rouge1, Metrics.rouge2, Metrics.rougeL],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3167,8 +2862,6 @@ bigbench_conlang_translation_holuan_from_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.rouge1, Metrics.rouge2, Metrics.rougeL],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3185,8 +2878,6 @@ bigbench_conlang_translation_holuan_to_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.rouge1, Metrics.rouge2, Metrics.rougeL],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3203,8 +2894,6 @@ bigbench_conlang_translation_mkafala_from_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.rouge1, Metrics.rouge2, Metrics.rougeL],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3221,8 +2910,6 @@ bigbench_conlang_translation_mkafala_to_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.rouge1, Metrics.rouge2, Metrics.rougeL],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3239,8 +2926,6 @@ bigbench_conlang_translation_postpositive_english_from_helm = LightevalTaskConfi
     generation_size=100,
     metric=[Metrics.rouge1, Metrics.rouge2, Metrics.rougeL],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3257,8 +2942,6 @@ bigbench_conlang_translation_postpositive_english_to_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.rouge1, Metrics.rouge2, Metrics.rougeL],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3275,8 +2958,6 @@ bigbench_conlang_translation_unapuri_from_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.rouge1, Metrics.rouge2, Metrics.rougeL],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3293,8 +2974,6 @@ bigbench_conlang_translation_unapuri_to_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.rouge1, Metrics.rouge2, Metrics.rougeL],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3311,8 +2990,6 @@ bigbench_conlang_translation_vaomi_from_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.rouge1, Metrics.rouge2, Metrics.rougeL],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3329,8 +3006,6 @@ bigbench_conlang_translation_vaomi_to_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.rouge1, Metrics.rouge2, Metrics.rougeL],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3352,8 +3027,6 @@ bigbench_emoji_movie_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3375,8 +3048,6 @@ bigbench_formal_fallacies_syllogisms_negation_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3398,8 +3069,6 @@ bigbench_hindu_knowledge_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3421,8 +3090,6 @@ bigbench_known_unknowns_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3444,8 +3111,6 @@ bigbench_language_identification_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3462,8 +3127,6 @@ bigbench_linguistics_puzzles_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3485,8 +3148,6 @@ bigbench_logic_grid_puzzle_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3508,8 +3169,6 @@ bigbench_logical_deduction_five_objects_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3531,8 +3190,6 @@ bigbench_logical_deduction_seven_objects_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3554,8 +3211,6 @@ bigbench_logical_deduction_three_objects_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3577,8 +3232,6 @@ bigbench_misconceptions_russian_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3600,8 +3253,6 @@ bigbench_novel_concepts_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3618,8 +3269,6 @@ bigbench_operators_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3636,8 +3285,6 @@ bigbench_parsinlu_reading_comprehension_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3659,8 +3306,6 @@ bigbench_play_dialog_same_or_different_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3677,8 +3322,6 @@ bigbench_repeat_copy_logic_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3700,8 +3343,6 @@ bigbench_strange_stories_boolean_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3723,8 +3364,6 @@ bigbench_strange_stories_multiple_choice_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3746,8 +3385,6 @@ bigbench_strategyqa_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3769,8 +3406,6 @@ bigbench_symbol_interpretation_adversarial_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3792,8 +3427,6 @@ bigbench_symbol_interpretation_emoji_agnostic_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3815,8 +3448,6 @@ bigbench_symbol_interpretation_name_agnostic_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3838,8 +3469,6 @@ bigbench_symbol_interpretation_plain_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3861,8 +3490,6 @@ bigbench_symbol_interpretation_tricky_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3884,8 +3511,6 @@ bigbench_vitaminc_fact_verification_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3907,8 +3532,6 @@ bigbench_winowhy_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3925,8 +3548,6 @@ blimp_adjunct_island_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3943,8 +3564,6 @@ blimp_adjunct_island_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3961,8 +3580,6 @@ blimp_anaphor_gender_agreement_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3979,8 +3596,6 @@ blimp_anaphor_gender_agreement_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -3997,8 +3612,6 @@ blimp_anaphor_number_agreement_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4015,8 +3628,6 @@ blimp_anaphor_number_agreement_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4033,8 +3644,6 @@ blimp_animate_subject_passive_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4051,8 +3660,6 @@ blimp_animate_subject_passive_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4069,8 +3676,6 @@ blimp_animate_subject_trans_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4087,8 +3692,6 @@ blimp_animate_subject_trans_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4105,8 +3708,6 @@ blimp_causative_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4123,8 +3724,6 @@ blimp_causative_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4141,8 +3740,6 @@ blimp_complex_NP_island_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4159,8 +3756,6 @@ blimp_complex_NP_island_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4177,8 +3772,6 @@ blimp_coordinate_structure_constraint_complex_left_branch_lighteval = LightevalT
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4195,8 +3788,6 @@ blimp_coordinate_structure_constraint_complex_left_branch_helm = LightevalTaskCo
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4213,8 +3804,6 @@ blimp_coordinate_structure_constraint_object_extraction_lighteval = LightevalTas
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4231,8 +3820,6 @@ blimp_coordinate_structure_constraint_object_extraction_helm = LightevalTaskConf
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4249,8 +3836,6 @@ blimp_determiner_noun_agreement_1_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4267,8 +3852,6 @@ blimp_determiner_noun_agreement_1_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4285,8 +3868,6 @@ blimp_determiner_noun_agreement_2_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4303,8 +3884,6 @@ blimp_determiner_noun_agreement_2_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4321,8 +3900,6 @@ blimp_determiner_noun_agreement_irregular_1_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4339,8 +3916,6 @@ blimp_determiner_noun_agreement_irregular_1_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4357,8 +3932,6 @@ blimp_determiner_noun_agreement_irregular_2_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4375,8 +3948,6 @@ blimp_determiner_noun_agreement_irregular_2_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4393,8 +3964,6 @@ blimp_determiner_noun_agreement_with_adj_2_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4411,8 +3980,6 @@ blimp_determiner_noun_agreement_with_adj_2_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4429,8 +3996,6 @@ blimp_determiner_noun_agreement_with_adj_irregular_1_lighteval = LightevalTaskCo
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4447,8 +4012,6 @@ blimp_determiner_noun_agreement_with_adj_irregular_1_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4465,8 +4028,6 @@ blimp_determiner_noun_agreement_with_adj_irregular_2_lighteval = LightevalTaskCo
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4483,8 +4044,6 @@ blimp_determiner_noun_agreement_with_adj_irregular_2_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4501,8 +4060,6 @@ blimp_determiner_noun_agreement_with_adjective_1_lighteval = LightevalTaskConfig
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4519,8 +4076,6 @@ blimp_determiner_noun_agreement_with_adjective_1_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4537,8 +4092,6 @@ blimp_distractor_agreement_relational_noun_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4555,8 +4108,6 @@ blimp_distractor_agreement_relational_noun_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4573,8 +4124,6 @@ blimp_distractor_agreement_relative_clause_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4591,8 +4140,6 @@ blimp_distractor_agreement_relative_clause_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4609,8 +4156,6 @@ blimp_drop_argument_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4627,8 +4172,6 @@ blimp_drop_argument_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4645,8 +4188,6 @@ blimp_ellipsis_n_bar_1_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4663,8 +4204,6 @@ blimp_ellipsis_n_bar_1_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4681,8 +4220,6 @@ blimp_ellipsis_n_bar_2_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4699,8 +4236,6 @@ blimp_ellipsis_n_bar_2_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4717,8 +4252,6 @@ blimp_existential_there_object_raising_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4735,8 +4268,6 @@ blimp_existential_there_object_raising_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4753,8 +4284,6 @@ blimp_existential_there_quantifiers_1_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4771,8 +4300,6 @@ blimp_existential_there_quantifiers_1_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4789,8 +4316,6 @@ blimp_existential_there_quantifiers_2_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4807,8 +4332,6 @@ blimp_existential_there_quantifiers_2_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4825,8 +4348,6 @@ blimp_existential_there_subject_raising_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4843,8 +4364,6 @@ blimp_existential_there_subject_raising_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4861,8 +4380,6 @@ blimp_expletive_it_object_raising_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4879,8 +4396,6 @@ blimp_expletive_it_object_raising_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4897,8 +4412,6 @@ blimp_inchoative_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4915,8 +4428,6 @@ blimp_inchoative_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4933,8 +4444,6 @@ blimp_intransitive_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4951,8 +4460,6 @@ blimp_intransitive_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4969,8 +4476,6 @@ blimp_irregular_past_participle_adjectives_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -4987,8 +4492,6 @@ blimp_irregular_past_participle_adjectives_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5005,8 +4508,6 @@ blimp_irregular_past_participle_verbs_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5023,8 +4524,6 @@ blimp_irregular_past_participle_verbs_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5041,8 +4540,6 @@ blimp_irregular_plural_subject_verb_agreement_1_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5059,8 +4556,6 @@ blimp_irregular_plural_subject_verb_agreement_1_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5077,8 +4572,6 @@ blimp_irregular_plural_subject_verb_agreement_2_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5095,8 +4588,6 @@ blimp_irregular_plural_subject_verb_agreement_2_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5113,8 +4604,6 @@ blimp_left_branch_island_echo_question_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5131,8 +4620,6 @@ blimp_left_branch_island_echo_question_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5149,8 +4636,6 @@ blimp_left_branch_island_simple_question_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5167,8 +4652,6 @@ blimp_left_branch_island_simple_question_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5185,8 +4668,6 @@ blimp_matrix_question_npi_licensor_present_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5203,8 +4684,6 @@ blimp_matrix_question_npi_licensor_present_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5221,8 +4700,6 @@ blimp_npi_present_1_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5239,8 +4716,6 @@ blimp_npi_present_1_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5257,8 +4732,6 @@ blimp_npi_present_2_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5275,8 +4748,6 @@ blimp_npi_present_2_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5293,8 +4764,6 @@ blimp_only_npi_licensor_present_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5311,8 +4780,6 @@ blimp_only_npi_licensor_present_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5329,8 +4796,6 @@ blimp_only_npi_scope_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5347,8 +4812,6 @@ blimp_only_npi_scope_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5365,8 +4828,6 @@ blimp_passive_1_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5383,8 +4844,6 @@ blimp_passive_1_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5401,8 +4860,6 @@ blimp_passive_2_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5419,8 +4876,6 @@ blimp_passive_2_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5437,8 +4892,6 @@ blimp_principle_A_c_command_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5455,8 +4908,6 @@ blimp_principle_A_c_command_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5473,8 +4924,6 @@ blimp_principle_A_case_1_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5491,8 +4940,6 @@ blimp_principle_A_case_1_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5509,8 +4956,6 @@ blimp_principle_A_case_2_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5527,8 +4972,6 @@ blimp_principle_A_case_2_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5545,8 +4988,6 @@ blimp_principle_A_domain_1_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5563,8 +5004,6 @@ blimp_principle_A_domain_1_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5581,8 +5020,6 @@ blimp_principle_A_domain_2_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5599,8 +5036,6 @@ blimp_principle_A_domain_2_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5617,8 +5052,6 @@ blimp_principle_A_domain_3_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5635,8 +5068,6 @@ blimp_principle_A_domain_3_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5653,8 +5084,6 @@ blimp_principle_A_reconstruction_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5671,8 +5100,6 @@ blimp_principle_A_reconstruction_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5689,8 +5116,6 @@ blimp_regular_plural_subject_verb_agreement_1_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5707,8 +5132,6 @@ blimp_regular_plural_subject_verb_agreement_1_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5725,8 +5148,6 @@ blimp_regular_plural_subject_verb_agreement_2_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5743,8 +5164,6 @@ blimp_regular_plural_subject_verb_agreement_2_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5761,8 +5180,6 @@ blimp_sentential_negation_npi_licensor_present_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5779,8 +5196,6 @@ blimp_sentential_negation_npi_licensor_present_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5797,8 +5212,6 @@ blimp_sentential_negation_npi_scope_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5815,8 +5228,6 @@ blimp_sentential_negation_npi_scope_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5833,8 +5244,6 @@ blimp_sentential_subject_island_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5851,8 +5260,6 @@ blimp_sentential_subject_island_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5869,8 +5276,6 @@ blimp_superlative_quantifiers_1_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5887,8 +5292,6 @@ blimp_superlative_quantifiers_1_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5905,8 +5308,6 @@ blimp_superlative_quantifiers_2_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5923,8 +5324,6 @@ blimp_superlative_quantifiers_2_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5941,8 +5340,6 @@ blimp_tough_vs_raising_1_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5959,8 +5356,6 @@ blimp_tough_vs_raising_1_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5977,8 +5372,6 @@ blimp_tough_vs_raising_2_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -5995,8 +5388,6 @@ blimp_tough_vs_raising_2_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6013,8 +5404,6 @@ blimp_transitive_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6031,8 +5420,6 @@ blimp_transitive_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6049,8 +5436,6 @@ blimp_wh_island_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6067,8 +5452,6 @@ blimp_wh_island_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6085,8 +5468,6 @@ blimp_wh_questions_object_gap_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6103,8 +5484,6 @@ blimp_wh_questions_object_gap_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6121,8 +5500,6 @@ blimp_wh_questions_subject_gap_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6139,8 +5516,6 @@ blimp_wh_questions_subject_gap_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6157,8 +5532,6 @@ blimp_wh_questions_subject_gap_long_distance_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6175,8 +5548,6 @@ blimp_wh_questions_subject_gap_long_distance_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6193,8 +5564,6 @@ blimp_wh_vs_that_no_gap_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6211,8 +5580,6 @@ blimp_wh_vs_that_no_gap_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6229,8 +5596,6 @@ blimp_wh_vs_that_no_gap_long_distance_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6247,8 +5612,6 @@ blimp_wh_vs_that_no_gap_long_distance_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6265,8 +5628,6 @@ blimp_wh_vs_that_with_gap_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6283,8 +5644,6 @@ blimp_wh_vs_that_with_gap_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6301,8 +5660,6 @@ blimp_wh_vs_that_with_gap_long_distance_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6319,8 +5676,6 @@ blimp_wh_vs_that_with_gap_long_distance_helm = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6337,8 +5692,6 @@ bold_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.prediction_perplexity],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6355,8 +5708,6 @@ bold_gender_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.prediction_perplexity],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6373,8 +5724,6 @@ bold_political_ideology_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.prediction_perplexity],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6391,8 +5740,6 @@ bold_profession_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.prediction_perplexity],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6409,8 +5756,6 @@ bold_race_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.prediction_perplexity],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6427,8 +5772,6 @@ bold_religious_ideology_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.prediction_perplexity],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6450,8 +5793,6 @@ boolq_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6473,8 +5814,6 @@ boolq_contrastset_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6491,8 +5830,6 @@ bridging_anaphora_resolution_barqa_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6509,8 +5846,6 @@ causal_judgment_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6527,8 +5862,6 @@ cause_and_effect_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6545,8 +5878,6 @@ checkmate_in_one_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6563,8 +5894,6 @@ chess_state_tracking_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6581,8 +5910,6 @@ chinese_remainder_theorem_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6599,8 +5926,6 @@ cifar10_classification_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6624,8 +5949,6 @@ civil_comments_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6649,8 +5972,6 @@ civil_comments_LGBTQ_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6674,8 +5995,6 @@ civil_comments_black_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6699,8 +6018,6 @@ civil_comments_christian_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6724,8 +6041,6 @@ civil_comments_female_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6749,8 +6064,6 @@ civil_comments_male_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6774,8 +6087,6 @@ civil_comments_muslim_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6799,8 +6110,6 @@ civil_comments_other_religions_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6824,8 +6133,6 @@ civil_comments_white_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6842,8 +6149,6 @@ code_line_description_bigbench_lite = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6860,8 +6165,6 @@ codenames_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.rouge_t5, Metrics.bleu],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6878,8 +6181,6 @@ color_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.rouge_t5, Metrics.bleu, Metrics.loglikelihood_acc, Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6896,8 +6197,6 @@ common_morpheme_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6919,8 +6218,6 @@ commonsenseqa_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6937,8 +6234,6 @@ conceptual_combinations_bigbench_lite = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6955,7 +6250,6 @@ conlang_translation_bigbench_lite = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.rouge_t5, Metrics.bleu, Metrics.perfect_exact_match],
     stop_sequence=[".", ";", "!", "?"],
-    output_regex="[^\\.\\?\\!\\;\\n]+",
     trust_dataset=True,
     version=0,
 )
@@ -6972,8 +6266,6 @@ contextual_parametric_knowledge_conflicts_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.rouge_t5, Metrics.loglikelihood_acc, Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -6990,8 +6282,6 @@ copyright_n_books_1000_extractions_per_book_1_prefix_length_125_helm = Lighteval
     generation_size=100,
     metric=[Metrics.copyright],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7008,8 +6298,6 @@ copyright_n_books_1000_extractions_per_book_1_prefix_length_25_helm = LightevalT
     generation_size=100,
     metric=[Metrics.copyright],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7026,8 +6314,6 @@ copyright_n_books_1000_extractions_per_book_1_prefix_length_5_helm = LightevalTa
     generation_size=100,
     metric=[Metrics.copyright],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7044,8 +6330,6 @@ copyright_n_books_1000_extractions_per_book_3_prefix_length_125_helm = Lighteval
     generation_size=100,
     metric=[Metrics.copyright],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7062,8 +6346,6 @@ copyright_n_books_1000_extractions_per_book_3_prefix_length_25_helm = LightevalT
     generation_size=100,
     metric=[Metrics.copyright],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7080,8 +6362,6 @@ copyright_n_books_1000_extractions_per_book_3_prefix_length_5_helm = LightevalTa
     generation_size=100,
     metric=[Metrics.copyright],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7098,8 +6378,6 @@ copyright_oh_the_places_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.copyright],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7116,8 +6394,6 @@ copyright_pilot_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.copyright],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7134,8 +6410,6 @@ copyright_popular_books_prefix_length_10_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.copyright],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7152,8 +6426,6 @@ copyright_popular_books_prefix_length_125_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.copyright],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7170,8 +6442,6 @@ copyright_popular_books_prefix_length_25_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.copyright],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7188,8 +6458,6 @@ copyright_popular_books_prefix_length_250_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.copyright],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7206,8 +6474,6 @@ copyright_popular_books_prefix_length_5_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.copyright],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7224,8 +6490,6 @@ copyright_popular_books_prefix_length_50_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.copyright],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7242,8 +6506,6 @@ copyright_prompt_num_line_1_min_lines_20_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.copyright],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7260,8 +6522,6 @@ copyright_prompt_num_line_10_min_lines_20_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.copyright],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7278,8 +6538,6 @@ copyright_prompt_num_line_5_min_lines_20_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.copyright],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7296,8 +6554,6 @@ coqa_lighteval = LightevalTaskConfig(
     generation_size=10,
     metric=[Metrics.perfect_exact_match, Metrics.f1_score],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7314,8 +6570,6 @@ coqa_bb_lighteval = LightevalTaskConfig(
     generation_size=10,
     metric=[Metrics.perfect_exact_match, Metrics.f1_score],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7332,8 +6586,6 @@ covid_dialogue_helm = LightevalTaskConfig(
     generation_size=128,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match, Metrics.f1_score, Metrics.rougeL, "bleu_1", "bleu_4"],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7350,8 +6602,6 @@ crash_blossom_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7368,8 +6618,6 @@ crass_ai_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7386,8 +6634,6 @@ cryobiology_spanish_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7404,8 +6650,6 @@ cryptonite_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7422,8 +6666,6 @@ cs_algorithms_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7440,8 +6682,6 @@ dark_humor_detection_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7458,8 +6698,6 @@ date_understanding_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7476,8 +6714,6 @@ disambiguation_qa_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7494,8 +6730,6 @@ discourse_marker_prediction_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7512,8 +6746,6 @@ disfl_qa_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7530,8 +6762,6 @@ drop_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.drop],
     stop_sequence=["."],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7548,8 +6778,6 @@ dyck_language_2_helm = LightevalTaskConfig(
     generation_size=5,
     metric=[Metrics.exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7566,8 +6794,6 @@ dyck_language_3_helm = LightevalTaskConfig(
     generation_size=5,
     metric=[Metrics.exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7584,8 +6810,6 @@ dyck_language_4_helm = LightevalTaskConfig(
     generation_size=5,
     metric=[Metrics.exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7602,8 +6826,6 @@ dyck_languages_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7620,8 +6842,6 @@ elementary_math_qa_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7638,8 +6858,6 @@ emoji_movie_bigbench_lite = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.rouge_t5, Metrics.bleu, Metrics.loglikelihood_acc, Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7656,8 +6874,6 @@ emojis_emotion_prediction_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7674,8 +6890,6 @@ empirical_judgments_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7692,8 +6906,6 @@ english_proverbs_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7710,8 +6922,6 @@ english_russian_proverbs_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7728,8 +6938,6 @@ entailed_polarity_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7746,8 +6954,6 @@ entailed_polarity_hindi_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7769,8 +6975,6 @@ entity_data_imputation_Buy_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7792,8 +6996,6 @@ entity_data_imputation_Restaurant_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7815,8 +7017,6 @@ entity_matching_Abt_Buy_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7838,8 +7038,6 @@ entity_matching_Amazon_Google_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7861,8 +7059,6 @@ entity_matching_Beer_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7884,8 +7080,6 @@ entity_matching_Company_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7907,8 +7101,6 @@ entity_matching_DBLP_ACM_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7930,8 +7122,6 @@ entity_matching_DBLP_GoogleScholar_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7953,8 +7143,6 @@ entity_matching_Dirty_DBLP_ACM_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7976,8 +7164,6 @@ entity_matching_Dirty_DBLP_GoogleScholar_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -7999,8 +7185,6 @@ entity_matching_Dirty_Walmart_Amazon_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8022,8 +7206,6 @@ entity_matching_Dirty_iTunes_Amazon_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8045,8 +7227,6 @@ entity_matching_Fodors_Zagats_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8068,8 +7248,6 @@ entity_matching_Walmart_Amazon_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8091,8 +7269,6 @@ entity_matching_iTunes_Amazon_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8109,8 +7285,6 @@ epistemic_reasoning_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8127,8 +7301,6 @@ ethics_commonsense_lighteval = LightevalTaskConfig(
     generation_size=5,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8145,8 +7317,6 @@ ethics_deontology_lighteval = LightevalTaskConfig(
     generation_size=5,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8163,8 +7333,6 @@ ethics_justice_lighteval = LightevalTaskConfig(
     generation_size=5,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8181,8 +7349,6 @@ ethics_utilitarianism_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8199,8 +7365,6 @@ ethics_virtue_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8217,8 +7381,6 @@ evaluating_information_essentiality_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8235,8 +7397,6 @@ fact_checker_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8253,8 +7413,6 @@ fantasy_reasoning_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8271,8 +7429,6 @@ few_shot_nlg_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.bleu, Metrics.bleurt],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8289,8 +7445,6 @@ figure_of_speech_detection_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8307,8 +7461,6 @@ formal_fallacies_syllogisms_negation_bigbench_lite = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8325,8 +7477,6 @@ gem_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.bleu, Metrics.rouge_t5],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8343,8 +7493,6 @@ gender_inclusive_sentences_german_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8361,8 +7509,6 @@ general_knowledge_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8379,8 +7525,6 @@ geometric_shapes_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.rouge_t5, Metrics.bleu, Metrics.loglikelihood_acc, Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8397,8 +7541,6 @@ glue_cola_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token, Metrics.mcc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8415,8 +7557,6 @@ glue_mnli_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8433,8 +7573,6 @@ glue_mnli_mismatched_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8451,8 +7589,6 @@ glue_mrpc_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, "loglikelihood_f1"],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8469,8 +7605,6 @@ glue_qnli_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8487,8 +7621,6 @@ glue_qqp_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, "loglikelihood_f1"],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8505,8 +7637,6 @@ glue_rte_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8523,8 +7653,6 @@ glue_sst2_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8541,8 +7669,6 @@ glue_stsb_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8559,8 +7685,6 @@ glue_wnli_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8577,8 +7701,6 @@ goal_step_wikihow_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8595,8 +7717,6 @@ gpqa_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8613,8 +7733,6 @@ gre_reading_comprehension_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8631,8 +7749,6 @@ gsm8k_leaderboard = LightevalTaskConfig(
     generation_size=256,
     metric=[Metrics.quasi_exact_match_gsm8k],
     stop_sequence=["Question=", "Question", "="],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8649,8 +7765,6 @@ gsm8k_lighteval = LightevalTaskConfig(
     generation_size=256,
     metric=[Metrics.quasi_exact_match_gsm8k, Metrics.maj_at_8_gsm8k],
     stop_sequence=["Question="],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8667,8 +7781,6 @@ headqa_en_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8685,8 +7797,6 @@ headqa_es_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8703,8 +7813,6 @@ hellaswag_leaderboard = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8726,8 +7834,6 @@ hellaswag_generative = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8744,8 +7850,6 @@ hhh_alignment_bigbench = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8762,8 +7866,6 @@ hindi_question_answering_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.bleu, Metrics.rouge_t5, Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8780,8 +7882,6 @@ hindu_knowledge_bigbench_lite = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8798,8 +7898,6 @@ hinglish_toxicity_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8816,8 +7914,6 @@ human_organs_senses_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8834,8 +7930,6 @@ hyperbaton_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8852,8 +7946,6 @@ identify_math_theorems_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8870,8 +7962,6 @@ identify_odd_metaphor_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8895,8 +7985,6 @@ imdb_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8920,8 +8008,6 @@ imdb_contrastset_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8938,8 +8024,6 @@ implicatures_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8956,8 +8040,6 @@ implicit_relations_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8974,8 +8056,6 @@ intent_recognition_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -8997,8 +8077,6 @@ interactive_qa_mmlu_abstract_algebra_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9020,8 +8098,6 @@ interactive_qa_mmlu_college_chemistry_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9043,8 +8119,6 @@ interactive_qa_mmlu_global_facts_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9066,8 +8140,6 @@ interactive_qa_mmlu_miscellaneous_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9089,8 +8161,6 @@ interactive_qa_mmlu_nutrition_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9112,8 +8182,6 @@ interactive_qa_mmlu_us_foreign_policy_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9130,8 +8198,6 @@ international_phonetic_alphabet_nli_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9148,8 +8214,6 @@ international_phonetic_alphabet_transliterate_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.bleu, Metrics.rouge_t5, Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9166,8 +8230,6 @@ intersect_geometry_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9184,8 +8246,6 @@ irony_identification_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9202,8 +8262,6 @@ iwslt17_ar_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9220,8 +8278,6 @@ iwslt17_de_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9238,8 +8294,6 @@ iwslt17_en_ar_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9256,8 +8310,6 @@ iwslt17_en_de_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9274,8 +8326,6 @@ iwslt17_en_fr_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9292,8 +8342,6 @@ iwslt17_en_ja_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9310,8 +8358,6 @@ iwslt17_en_ko_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9328,8 +8374,6 @@ iwslt17_en_zh_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9346,8 +8390,6 @@ iwslt17_fr_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9364,8 +8406,6 @@ iwslt17_ja_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9382,8 +8422,6 @@ iwslt17_ko_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9400,8 +8438,6 @@ iwslt17_zh_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9418,8 +8454,6 @@ kanji_ascii_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9436,8 +8470,6 @@ kannada_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9454,8 +8486,6 @@ key_value_maps_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9472,8 +8502,6 @@ known_unknowns_bigbench_lite = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9490,8 +8518,6 @@ lambada_standard_lighteval = LightevalTaskConfig(
     generation_size=10,
     metric=[Metrics.target_perplexity],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9508,8 +8534,6 @@ lambada_standard_cloze_lighteval = LightevalTaskConfig(
     generation_size=10,
     metric=[Metrics.target_perplexity],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9526,8 +8550,6 @@ lambada_openai_lighteval = LightevalTaskConfig(
     generation_size=10,
     metric=[Metrics.target_perplexity],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9544,8 +8566,6 @@ lambada_openai_de_lighteval = LightevalTaskConfig(
     generation_size=10,
     metric=[Metrics.target_perplexity],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9562,8 +8582,6 @@ lambada_openai_en_lighteval = LightevalTaskConfig(
     generation_size=10,
     metric=[Metrics.target_perplexity],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9580,8 +8598,6 @@ lambada_openai_es_lighteval = LightevalTaskConfig(
     generation_size=10,
     metric=[Metrics.target_perplexity],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9598,8 +8614,6 @@ lambada_openai_fr_lighteval = LightevalTaskConfig(
     generation_size=10,
     metric=[Metrics.target_perplexity],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9616,8 +8630,6 @@ lambada_openai_it_lighteval = LightevalTaskConfig(
     generation_size=10,
     metric=[Metrics.target_perplexity],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9634,8 +8646,6 @@ lambada_openai_cloze_lighteval = LightevalTaskConfig(
     generation_size=10,
     metric=[Metrics.target_perplexity],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9652,8 +8662,6 @@ language_games_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.bleu, Metrics.rouge_t5, Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9670,8 +8678,6 @@ language_identification_bigbench_lite = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9695,8 +8701,6 @@ legal_summarization_billsum_helm = LightevalTaskConfig(
         Metrics.bert_score,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9720,8 +8724,6 @@ legal_summarization_eurlexsum_helm = LightevalTaskConfig(
         Metrics.bert_score,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9745,8 +8747,6 @@ legal_summarization_multilexsum_helm = LightevalTaskConfig(
         Metrics.bert_score,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9769,8 +8769,6 @@ legalsupport_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9793,8 +8791,6 @@ lexglue_case_hold_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9817,8 +8813,6 @@ lexglue_ecthr_a_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9841,8 +8835,6 @@ lexglue_ecthr_b_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9865,8 +8857,6 @@ lexglue_eurlex_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9889,8 +8879,6 @@ lexglue_ledgar_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9913,8 +8901,6 @@ lexglue_scotus_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9937,8 +8923,6 @@ lexglue_unfair_tos_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9961,8 +8945,6 @@ lextreme_brazilian_court_decisions_judgment_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -9985,8 +8967,6 @@ lextreme_brazilian_court_decisions_unanimity_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10009,8 +8989,6 @@ lextreme_covid19_emergency_event_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10033,8 +9011,6 @@ lextreme_german_argument_mining_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10057,8 +9033,6 @@ lextreme_greek_legal_code_chapter_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10081,8 +9055,6 @@ lextreme_greek_legal_code_subject_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10099,8 +9071,6 @@ lextreme_greek_legal_code_volume_helm = LightevalTaskConfig(
     generation_size=20,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match, Metrics.f1_score],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10123,8 +9093,6 @@ lextreme_greek_legal_ner_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10147,8 +9115,6 @@ lextreme_legalnero_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10171,8 +9137,6 @@ lextreme_lener_br_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10195,8 +9159,6 @@ lextreme_mapa_coarse_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10219,8 +9181,6 @@ lextreme_mapa_fine_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10243,8 +9203,6 @@ lextreme_multi_eurlex_level_1_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10267,8 +9225,6 @@ lextreme_multi_eurlex_level_2_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10291,8 +9247,6 @@ lextreme_multi_eurlex_level_3_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10315,8 +9269,6 @@ lextreme_online_terms_of_service_clause_topics_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10339,8 +9291,6 @@ lextreme_online_terms_of_service_unfairness_levels_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10363,8 +9313,6 @@ lextreme_swiss_judgment_prediction_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10381,8 +9329,6 @@ linguistic_mappings_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10399,7 +9345,6 @@ linguistics_puzzles_bigbench_lite = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.bleu, Metrics.rouge_t5, Metrics.perfect_exact_match],
     stop_sequence=None,
-    output_regex="[^\\.\\?\\!\\;\\n]+",
     trust_dataset=True,
     version=0,
 )
@@ -10416,8 +9361,6 @@ logic_grid_puzzle_bigbench_lite = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10434,8 +9377,6 @@ logical_args_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10452,8 +9393,6 @@ logical_deduction_bigbench_lite = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10470,8 +9409,6 @@ logical_fallacy_detection_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10488,8 +9425,6 @@ logical_sequence_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10506,8 +9441,6 @@ logiqa_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10529,8 +9462,6 @@ lsat_qa_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10552,8 +9483,6 @@ lsat_qa_assignment_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10575,8 +9504,6 @@ lsat_qa_grouping_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10598,8 +9525,6 @@ lsat_qa_miscellaneous_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10621,8 +9546,6 @@ lsat_qa_ordering_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10639,8 +9562,6 @@ math_algebra_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metric=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=1,
 )
@@ -10657,8 +9578,6 @@ math_counting_and_probability_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metric=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=1,
 )
@@ -10675,8 +9594,6 @@ math_geometry_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metric=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=1,
 )
@@ -10693,8 +9610,6 @@ math_intermediate_algebra_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metric=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=1,
 )
@@ -10711,8 +9626,6 @@ math_number_theory_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metric=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=1,
 )
@@ -10729,8 +9642,6 @@ math_prealgebra_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metric=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=1,
 )
@@ -10747,8 +9658,6 @@ math_precalculus_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metric=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=1,
 )
@@ -10765,8 +9674,6 @@ math_cot_algebra_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metric=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10783,8 +9690,6 @@ math_cot_counting_and_probability_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metric=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10801,8 +9706,6 @@ math_cot_geometry_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metric=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10819,8 +9722,6 @@ math_cot_intermediate_algebra_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metric=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10837,8 +9738,6 @@ math_cot_number_theory_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metric=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10855,8 +9754,6 @@ math_cot_prealgebra_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metric=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10873,8 +9770,6 @@ math_cot_precalculus_lighteval = LightevalTaskConfig(
     generation_size=2048,
     metric=[Metrics.quasi_exact_match_math, Metrics.maj_at_4_math],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10891,8 +9786,6 @@ mathematical_induction_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10909,8 +9802,6 @@ mathqa_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10927,8 +9818,6 @@ matrixshapes_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10945,8 +9834,6 @@ me_q_sum_helm = LightevalTaskConfig(
     generation_size=128,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match, Metrics.f1_score, Metrics.rougeL, "bleu_1", "bleu_4"],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10963,8 +9850,6 @@ med_dialog_healthcaremagic_helm = LightevalTaskConfig(
     generation_size=128,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match, Metrics.f1_score, Metrics.rougeL, "bleu_1", "bleu_4"],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -10981,8 +9866,6 @@ med_dialog_icliniq_helm = LightevalTaskConfig(
     generation_size=128,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match, Metrics.f1_score, Metrics.rougeL, "bleu_1", "bleu_4"],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11005,8 +9888,6 @@ med_mcqa_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11023,8 +9904,6 @@ med_paragraph_simplification_helm = LightevalTaskConfig(
     generation_size=512,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match, Metrics.f1_score, Metrics.rougeL, "bleu_1", "bleu_4"],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11047,8 +9926,6 @@ med_qa_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11065,8 +9942,6 @@ metaphor_boolean_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11083,8 +9958,6 @@ metaphor_understanding_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11101,8 +9974,6 @@ mgsm_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n", "=", "Question="],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11119,8 +9990,6 @@ mgsm_es_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n", "=", "Pregunta="],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11137,8 +10006,6 @@ mgsm_fr_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n", "=", "Question="],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11155,8 +10022,6 @@ mgsm_de_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n", "=", "Frage="],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11173,8 +10038,6 @@ mgsm_ru_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n", "=", "\u0417\u0430\u0434\u0430\u0447\u0430="],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11191,8 +10054,6 @@ mgsm_zh_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n", "=", "\u95ee\u9898="],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11209,8 +10070,6 @@ mgsm_ja_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n", "=", "\u554f\u984c="],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11227,8 +10086,6 @@ mgsm_th_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n", "=", "\u0e42\u0e08\u0e17\u0e22\u0e4c="],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11245,8 +10102,6 @@ mgsm_sw_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n", "=", "Swali="],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11263,8 +10118,6 @@ mgsm_bn_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n", "=", "\u09aa\u09cd\u09b0\u09b6\u09cd\u09a8="],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11281,8 +10134,6 @@ mgsm_te_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n", "=", "\u0c2a\u0c4d\u0c30\u0c36\u0c4d\u0c28="],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11299,8 +10150,6 @@ minute_mysteries_qa_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.rouge_t5],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11317,8 +10166,6 @@ misconceptions_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11335,8 +10182,6 @@ misconceptions_russian_bigbench_lite = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11353,8 +10198,6 @@ mmlu_abstract_algebra_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11371,8 +10214,6 @@ mmlu_abstract_algebra_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11394,8 +10235,6 @@ mmlu_abstract_algebra_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11412,8 +10251,6 @@ mmlu_anatomy_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11430,8 +10267,6 @@ mmlu_anatomy_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11453,8 +10288,6 @@ mmlu_anatomy_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11471,8 +10304,6 @@ mmlu_astronomy_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11489,8 +10320,6 @@ mmlu_astronomy_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11512,8 +10341,6 @@ mmlu_astronomy_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11530,8 +10357,6 @@ mmlu_business_ethics_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11548,8 +10373,6 @@ mmlu_business_ethics_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11571,8 +10394,6 @@ mmlu_business_ethics_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11589,8 +10410,6 @@ mmlu_clinical_knowledge_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11607,8 +10426,6 @@ mmlu_clinical_knowledge_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11630,8 +10447,6 @@ mmlu_clinical_knowledge_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11648,8 +10463,6 @@ mmlu_college_biology_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11666,8 +10479,6 @@ mmlu_college_biology_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11689,8 +10500,6 @@ mmlu_college_biology_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11707,8 +10516,6 @@ mmlu_college_chemistry_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11725,8 +10532,6 @@ mmlu_college_chemistry_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11748,8 +10553,6 @@ mmlu_college_chemistry_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11766,8 +10569,6 @@ mmlu_college_computer_science_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11784,8 +10585,6 @@ mmlu_college_computer_science_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11807,8 +10606,6 @@ mmlu_college_computer_science_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11825,8 +10622,6 @@ mmlu_college_mathematics_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11843,8 +10638,6 @@ mmlu_college_mathematics_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11866,8 +10659,6 @@ mmlu_college_mathematics_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11884,8 +10675,6 @@ mmlu_college_medicine_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11902,8 +10691,6 @@ mmlu_college_medicine_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11925,8 +10712,6 @@ mmlu_college_medicine_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11943,8 +10728,6 @@ mmlu_college_physics_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11961,8 +10744,6 @@ mmlu_college_physics_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -11984,8 +10765,6 @@ mmlu_college_physics_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12002,8 +10781,6 @@ mmlu_computer_security_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12020,8 +10797,6 @@ mmlu_computer_security_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12043,8 +10818,6 @@ mmlu_computer_security_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12061,8 +10834,6 @@ mmlu_conceptual_physics_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12079,8 +10850,6 @@ mmlu_conceptual_physics_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12102,8 +10871,6 @@ mmlu_conceptual_physics_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12120,8 +10887,6 @@ mmlu_econometrics_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12138,8 +10903,6 @@ mmlu_econometrics_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12161,8 +10924,6 @@ mmlu_econometrics_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12179,8 +10940,6 @@ mmlu_electrical_engineering_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12197,8 +10956,6 @@ mmlu_electrical_engineering_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12220,8 +10977,6 @@ mmlu_electrical_engineering_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12238,8 +10993,6 @@ mmlu_elementary_mathematics_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12256,8 +11009,6 @@ mmlu_elementary_mathematics_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12279,8 +11030,6 @@ mmlu_elementary_mathematics_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12297,8 +11046,6 @@ mmlu_formal_logic_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12315,8 +11062,6 @@ mmlu_formal_logic_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12338,8 +11083,6 @@ mmlu_formal_logic_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12356,8 +11099,6 @@ mmlu_global_facts_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12374,8 +11115,6 @@ mmlu_global_facts_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12397,8 +11136,6 @@ mmlu_global_facts_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12415,8 +11152,6 @@ mmlu_high_school_biology_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12433,8 +11168,6 @@ mmlu_high_school_biology_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12456,8 +11189,6 @@ mmlu_high_school_biology_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12474,8 +11205,6 @@ mmlu_high_school_chemistry_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12492,8 +11221,6 @@ mmlu_high_school_chemistry_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12515,8 +11242,6 @@ mmlu_high_school_chemistry_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12533,8 +11258,6 @@ mmlu_high_school_computer_science_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12551,8 +11274,6 @@ mmlu_high_school_computer_science_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12574,8 +11295,6 @@ mmlu_high_school_computer_science_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12592,8 +11311,6 @@ mmlu_high_school_european_history_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12610,8 +11327,6 @@ mmlu_high_school_european_history_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12633,8 +11348,6 @@ mmlu_high_school_european_history_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12651,8 +11364,6 @@ mmlu_high_school_geography_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12669,8 +11380,6 @@ mmlu_high_school_geography_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12692,8 +11401,6 @@ mmlu_high_school_geography_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12710,8 +11417,6 @@ mmlu_high_school_government_and_politics_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12728,8 +11433,6 @@ mmlu_high_school_government_and_politics_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12751,8 +11454,6 @@ mmlu_high_school_government_and_politics_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12769,8 +11470,6 @@ mmlu_high_school_macroeconomics_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12787,8 +11486,6 @@ mmlu_high_school_macroeconomics_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12810,8 +11507,6 @@ mmlu_high_school_macroeconomics_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12828,8 +11523,6 @@ mmlu_high_school_mathematics_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12846,8 +11539,6 @@ mmlu_high_school_mathematics_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12869,8 +11560,6 @@ mmlu_high_school_mathematics_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12887,8 +11576,6 @@ mmlu_high_school_microeconomics_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12905,8 +11592,6 @@ mmlu_high_school_microeconomics_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12928,8 +11613,6 @@ mmlu_high_school_microeconomics_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12946,8 +11629,6 @@ mmlu_high_school_physics_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12964,8 +11645,6 @@ mmlu_high_school_physics_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -12987,8 +11666,6 @@ mmlu_high_school_physics_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13005,8 +11682,6 @@ mmlu_high_school_psychology_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13023,8 +11698,6 @@ mmlu_high_school_psychology_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13046,8 +11719,6 @@ mmlu_high_school_psychology_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13064,8 +11735,6 @@ mmlu_high_school_statistics_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13082,8 +11751,6 @@ mmlu_high_school_statistics_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13105,8 +11772,6 @@ mmlu_high_school_statistics_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13123,8 +11788,6 @@ mmlu_high_school_us_history_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13141,8 +11804,6 @@ mmlu_high_school_us_history_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13164,8 +11825,6 @@ mmlu_high_school_us_history_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13182,8 +11841,6 @@ mmlu_high_school_world_history_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13200,8 +11857,6 @@ mmlu_high_school_world_history_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13223,8 +11878,6 @@ mmlu_high_school_world_history_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13241,8 +11894,6 @@ mmlu_human_aging_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13259,8 +11910,6 @@ mmlu_human_aging_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13282,8 +11931,6 @@ mmlu_human_aging_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13300,8 +11947,6 @@ mmlu_human_sexuality_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13318,8 +11963,6 @@ mmlu_human_sexuality_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13341,8 +11984,6 @@ mmlu_human_sexuality_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13359,8 +12000,6 @@ mmlu_international_law_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13377,8 +12016,6 @@ mmlu_international_law_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13400,8 +12037,6 @@ mmlu_international_law_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13418,8 +12053,6 @@ mmlu_jurisprudence_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13436,8 +12069,6 @@ mmlu_jurisprudence_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13459,8 +12090,6 @@ mmlu_jurisprudence_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13477,8 +12106,6 @@ mmlu_logical_fallacies_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13495,8 +12122,6 @@ mmlu_logical_fallacies_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13518,8 +12143,6 @@ mmlu_logical_fallacies_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13536,8 +12159,6 @@ mmlu_machine_learning_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13554,8 +12175,6 @@ mmlu_machine_learning_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13577,8 +12196,6 @@ mmlu_machine_learning_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13595,8 +12212,6 @@ mmlu_management_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13613,8 +12228,6 @@ mmlu_management_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13636,8 +12249,6 @@ mmlu_management_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13654,8 +12265,6 @@ mmlu_marketing_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13672,8 +12281,6 @@ mmlu_marketing_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13695,8 +12302,6 @@ mmlu_marketing_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13713,8 +12318,6 @@ mmlu_medical_genetics_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13731,8 +12334,6 @@ mmlu_medical_genetics_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13754,8 +12355,6 @@ mmlu_medical_genetics_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13772,8 +12371,6 @@ mmlu_miscellaneous_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13790,8 +12387,6 @@ mmlu_miscellaneous_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13813,8 +12408,6 @@ mmlu_miscellaneous_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13831,8 +12424,6 @@ mmlu_moral_disputes_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13849,8 +12440,6 @@ mmlu_moral_disputes_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13872,8 +12461,6 @@ mmlu_moral_disputes_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13890,8 +12477,6 @@ mmlu_moral_scenarios_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13908,8 +12493,6 @@ mmlu_moral_scenarios_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13931,8 +12514,6 @@ mmlu_moral_scenarios_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13949,8 +12530,6 @@ mmlu_nutrition_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13967,8 +12546,6 @@ mmlu_nutrition_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -13990,8 +12567,6 @@ mmlu_nutrition_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14008,8 +12583,6 @@ mmlu_philosophy_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14026,8 +12599,6 @@ mmlu_philosophy_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14049,8 +12620,6 @@ mmlu_philosophy_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14067,8 +12636,6 @@ mmlu_prehistory_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14085,8 +12652,6 @@ mmlu_prehistory_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14108,8 +12673,6 @@ mmlu_prehistory_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14126,8 +12689,6 @@ mmlu_professional_accounting_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14144,8 +12705,6 @@ mmlu_professional_accounting_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14167,8 +12726,6 @@ mmlu_professional_accounting_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14185,8 +12742,6 @@ mmlu_professional_law_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14203,8 +12758,6 @@ mmlu_professional_law_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14226,8 +12779,6 @@ mmlu_professional_law_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14244,8 +12795,6 @@ mmlu_professional_medicine_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14262,8 +12811,6 @@ mmlu_professional_medicine_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14285,8 +12832,6 @@ mmlu_professional_medicine_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14303,8 +12848,6 @@ mmlu_professional_psychology_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14321,8 +12864,6 @@ mmlu_professional_psychology_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14344,8 +12885,6 @@ mmlu_professional_psychology_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14362,8 +12901,6 @@ mmlu_public_relations_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14380,8 +12917,6 @@ mmlu_public_relations_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14403,8 +12938,6 @@ mmlu_public_relations_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14421,8 +12954,6 @@ mmlu_security_studies_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14439,8 +12970,6 @@ mmlu_security_studies_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14462,8 +12991,6 @@ mmlu_security_studies_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14480,8 +13007,6 @@ mmlu_sociology_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14498,8 +13023,6 @@ mmlu_sociology_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14521,8 +13044,6 @@ mmlu_sociology_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14539,8 +13060,6 @@ mmlu_us_foreign_policy_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14557,8 +13076,6 @@ mmlu_us_foreign_policy_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14580,8 +13097,6 @@ mmlu_us_foreign_policy_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14598,8 +13113,6 @@ mmlu_virology_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14616,8 +13129,6 @@ mmlu_virology_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14639,8 +13150,6 @@ mmlu_virology_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14657,8 +13166,6 @@ mmlu_world_religions_original = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14675,8 +13182,6 @@ mmlu_world_religions_leaderboard = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14698,8 +13203,6 @@ mmlu_world_religions_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14716,8 +13219,6 @@ mnist_ascii_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14734,8 +13235,6 @@ modified_arithmetic_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14752,8 +13251,6 @@ moral_permissibility_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14770,8 +13267,6 @@ movie_dialog_same_or_different_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14788,8 +13283,6 @@ movie_recommendation_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14806,8 +13299,6 @@ mtnt2019_en_fr_lighteval = LightevalTaskConfig(
     generation_size=200,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14824,8 +13315,6 @@ mtnt2019_en_ja_lighteval = LightevalTaskConfig(
     generation_size=200,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14842,8 +13331,6 @@ mtnt2019_fr_en_lighteval = LightevalTaskConfig(
     generation_size=200,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14860,8 +13347,6 @@ mtnt2019_ja_en_lighteval = LightevalTaskConfig(
     generation_size=200,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14878,8 +13363,6 @@ mult_data_wrangling_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14896,8 +13379,6 @@ multiemo_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14914,8 +13395,6 @@ musr_murder_mysteries = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14932,8 +13411,6 @@ musr_object_placements = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14950,8 +13427,6 @@ musr_team_allocation = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14968,8 +13443,6 @@ mutual_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.recall_at_1, Metrics.recall_at_2, Metrics.mrr],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -14986,8 +13459,6 @@ mutual_plus_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.recall_at_1, Metrics.recall_at_2, Metrics.mrr],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15004,8 +13475,6 @@ narrativeqa_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match, Metrics.f1_score, Metrics.rougeL, "bleu_1", "bleu_4"],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15022,8 +13491,6 @@ natural_instructions_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.bleu, Metrics.rouge_t5],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15040,8 +13507,6 @@ navigate_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15058,8 +13523,6 @@ nonsense_words_grammar_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15076,8 +13539,6 @@ novel_concepts_bigbench_lite = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15094,8 +13555,6 @@ numeracy_linear_example_helm = LightevalTaskConfig(
     generation_size=20,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15112,8 +13571,6 @@ numeracy_linear_standard_helm = LightevalTaskConfig(
     generation_size=20,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15130,8 +13587,6 @@ numeracy_parabola_example_helm = LightevalTaskConfig(
     generation_size=20,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15148,8 +13603,6 @@ numeracy_parabola_standard_helm = LightevalTaskConfig(
     generation_size=20,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15166,8 +13619,6 @@ numeracy_paraboloid_example_helm = LightevalTaskConfig(
     generation_size=20,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15184,8 +13635,6 @@ numeracy_paraboloid_standard_helm = LightevalTaskConfig(
     generation_size=20,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15202,8 +13651,6 @@ numeracy_plane_example_helm = LightevalTaskConfig(
     generation_size=20,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15220,8 +13667,6 @@ numeracy_plane_standard_helm = LightevalTaskConfig(
     generation_size=20,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15238,8 +13683,6 @@ object_counting_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15256,8 +13699,6 @@ odd_one_out_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15279,8 +13720,6 @@ openbookqa_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15297,8 +13736,6 @@ openbookqa_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15315,7 +13752,6 @@ operators_bigbench_lite = LightevalTaskConfig(
     generation_size=20,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex="([-+]?\\d+)[.]0,1)$",
     trust_dataset=True,
     version=0,
 )
@@ -15332,8 +13768,6 @@ paragraph_segmentation_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15350,8 +13784,6 @@ parsinlu_qa_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15368,7 +13800,6 @@ parsinlu_reading_comprehension_bigbench_lite = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=None,
-    output_regex="[^\\.\\?\\!\\;\\n]+",
     trust_dataset=True,
     version=0,
 )
@@ -15385,8 +13816,6 @@ penguins_in_a_table_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc, Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15403,8 +13832,6 @@ periodic_elements_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15421,8 +13848,6 @@ persian_idioms_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15439,8 +13864,6 @@ phrase_relatedness_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15457,8 +13880,6 @@ physical_intuition_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15475,8 +13896,6 @@ physics_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15493,8 +13912,6 @@ physics_questions_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.bleu, Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15511,8 +13928,6 @@ piqa_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15534,8 +13949,6 @@ piqa_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15552,8 +13965,6 @@ play_dialog_same_or_different_bigbench_lite = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15570,8 +13981,6 @@ polish_sequence_labeling_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.f1_score],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15588,8 +13997,6 @@ presuppositions_as_nli_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15606,8 +14013,6 @@ prost_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15624,8 +14029,6 @@ pubmedqa_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15647,8 +14050,6 @@ pubmedqa_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15665,8 +14066,6 @@ qa4mre_2011_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15683,8 +14082,6 @@ qa4mre_2012_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15701,8 +14098,6 @@ qa4mre_2013_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15719,8 +14114,6 @@ qa_wikidata_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.bleurt, Metrics.bleu, Metrics.rouge_t5, Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15737,8 +14130,6 @@ qasper_lighteval = LightevalTaskConfig(
     generation_size=20,
     metric=[Metrics.f1_score_quasi],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15755,8 +14146,6 @@ qasper_ll_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15773,8 +14162,6 @@ quac_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.exact_match, Metrics.quasi_exact_match, Metrics.f1_score],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15791,8 +14178,6 @@ question_selection_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15809,8 +14194,6 @@ race_high_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15834,8 +14217,6 @@ raft_ade_corpus_v2_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15859,8 +14240,6 @@ raft_banking_77_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15884,8 +14263,6 @@ raft_neurips_impact_statement_risks_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15909,8 +14286,6 @@ raft_one_stop_english_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15934,8 +14309,6 @@ raft_overruling_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15959,8 +14332,6 @@ raft_semiconductor_org_types_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -15984,8 +14355,6 @@ raft_systematic_review_inclusion_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16009,8 +14378,6 @@ raft_tai_safety_research_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16034,8 +14401,6 @@ raft_terms_of_service_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16059,8 +14424,6 @@ raft_tweet_eval_hate_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16084,8 +14447,6 @@ raft_twitter_complaints_helm = LightevalTaskConfig(
         Metrics.f1_score_micro,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16102,8 +14463,6 @@ real_or_fake_text_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16120,8 +14479,6 @@ real_toxicity_prompts_helm = LightevalTaskConfig(
     generation_size=20,
     metric=[Metrics.prediction_perplexity],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16138,8 +14495,6 @@ reasoning_about_colored_objects_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16156,8 +14511,6 @@ repeat_copy_logic_bigbench_lite = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16174,8 +14527,6 @@ rephrase_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.rouge_t5, Metrics.bleu, Metrics.loglikelihood_acc, Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16192,8 +14543,6 @@ rhyming_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16210,8 +14559,6 @@ riddle_sense_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16228,8 +14575,6 @@ ruin_names_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16246,8 +14591,6 @@ salient_translation_error_detection_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16264,8 +14607,6 @@ scientific_press_release_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.bleu, Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16282,8 +14623,6 @@ sciq_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16300,8 +14639,6 @@ semantic_parsing_in_context_sparc_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.bleu, Metrics.rouge_t5, Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16318,8 +14655,6 @@ semantic_parsing_spider_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.bleu, Metrics.rouge_t5, Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16336,8 +14671,6 @@ sentence_ambiguity_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16354,8 +14687,6 @@ similarities_abstraction_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.bleu, Metrics.rouge_t5, Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16372,8 +14703,6 @@ simp_turing_concept_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16390,8 +14719,6 @@ simple_arithmetic_json_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16408,8 +14735,6 @@ simple_arithmetic_json_multiple_choice_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16426,8 +14751,6 @@ simple_arithmetic_json_subtasks_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16444,8 +14767,6 @@ simple_arithmetic_multiple_targets_json_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.bleu, Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16462,8 +14783,6 @@ simple_ethical_questions_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16480,8 +14799,6 @@ simple_text_editing_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16503,8 +14820,6 @@ siqa_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16521,8 +14836,6 @@ snarks_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16539,8 +14852,6 @@ social_iqa_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16557,8 +14868,6 @@ social_support_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.f1_score_macro],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16575,8 +14884,6 @@ sports_understanding_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16593,8 +14900,6 @@ storycloze_2016_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16611,8 +14916,6 @@ storycloze_2018_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16629,8 +14932,6 @@ strange_stories_bigbench_lite = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16647,8 +14948,6 @@ strategyqa_bigbench_lite = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.bleu, Metrics.rouge_t5, Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16665,8 +14964,6 @@ sufficient_information_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16683,8 +14980,6 @@ suicide_risk_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16708,8 +15003,6 @@ summarization_cnn_dm_helm = LightevalTaskConfig(
         Metrics.bert_score,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16733,8 +15026,6 @@ summarization_xsum_helm = LightevalTaskConfig(
         Metrics.bert_score,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16758,8 +15049,6 @@ summarization_xsum_sampled_helm = LightevalTaskConfig(
         Metrics.bert_score,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16776,8 +15065,6 @@ super_glue_boolq_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16794,8 +15081,6 @@ super_glue_cb_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token, "multi_f1_numeric"],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16812,8 +15097,6 @@ super_glue_copa_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16830,8 +15113,6 @@ super_glue_rte_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16848,8 +15129,6 @@ super_glue_multirc_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16866,8 +15145,6 @@ super_glue_wic_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16884,8 +15161,6 @@ super_glue_wsc_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16902,8 +15177,6 @@ swahili_english_proverbs_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16920,8 +15193,6 @@ swag_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16938,8 +15209,6 @@ swedish_to_german_proverbs_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16956,8 +15225,6 @@ symbol_interpretation_bigbench_lite = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16979,8 +15246,6 @@ synthetic_reasoning_induction_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -16997,8 +15262,6 @@ synthetic_reasoning_natural_easy_helm = LightevalTaskConfig(
     generation_size=20,
     metric=[Metrics.exact_match, Metrics.f1_score],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17015,8 +15278,6 @@ synthetic_reasoning_natural_hard_helm = LightevalTaskConfig(
     generation_size=20,
     metric=[Metrics.exact_match, Metrics.f1_score],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17038,8 +15299,6 @@ synthetic_reasoning_pattern_match_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17061,8 +15320,6 @@ synthetic_reasoning_variable_substitution_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17079,8 +15336,6 @@ tellmewhy_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.bleu, Metrics.rouge_t5],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17097,8 +15352,6 @@ temporal_sequences_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17115,8 +15368,6 @@ tense_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17133,8 +15384,6 @@ the_pile_arxiv_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17151,8 +15400,6 @@ the_pile_arxiv_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17169,8 +15416,6 @@ the_pile_bibliotik_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17187,8 +15432,6 @@ the_pile_bookcorpus2_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17205,8 +15448,6 @@ the_pile_books3_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17223,8 +15464,6 @@ the_pile_commoncrawl_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17241,8 +15480,6 @@ the_pile_dm_mathematics_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17259,8 +15496,6 @@ the_pile_dm_mathematics_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17277,8 +15512,6 @@ the_pile_enron_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17295,8 +15528,6 @@ the_pile_enron_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17313,8 +15544,6 @@ the_pile_europarl_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17331,8 +15560,6 @@ the_pile_europarl_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17349,8 +15576,6 @@ the_pile_freelaw_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17367,8 +15592,6 @@ the_pile_freelaw_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17385,8 +15608,6 @@ the_pile_github_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17403,8 +15624,6 @@ the_pile_github_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17421,8 +15640,6 @@ the_pile_gutenberg_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17439,8 +15656,6 @@ the_pile_gutenberg_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17457,8 +15672,6 @@ the_pile_hackernews_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17475,8 +15688,6 @@ the_pile_hackernews_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17493,8 +15704,6 @@ the_pile_nih_exporter_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17511,8 +15720,6 @@ the_pile_nih_exporter_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17529,8 +15736,6 @@ the_pile_opensubtitles_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17547,8 +15752,6 @@ the_pile_opensubtitles_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17565,8 +15768,6 @@ the_pile_openwebtext2_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17583,8 +15784,6 @@ the_pile_openwebtext2_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17601,8 +15800,6 @@ the_pile_philpapers_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17619,8 +15816,6 @@ the_pile_pile_cc_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17637,8 +15832,6 @@ the_pile_pubmed_abstracts_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17655,8 +15848,6 @@ the_pile_pubmed_abstracts_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17673,8 +15864,6 @@ the_pile_pubmed_central_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17691,8 +15880,6 @@ the_pile_pubmed_central_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17709,8 +15896,6 @@ the_pile_stackexchange_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17727,8 +15912,6 @@ the_pile_stackexchange_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17745,8 +15928,6 @@ the_pile_ubuntu_irc_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17763,8 +15944,6 @@ the_pile_uspto_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17781,8 +15960,6 @@ the_pile_upsto_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17799,8 +15976,6 @@ the_pile_wikipedia_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17817,8 +15992,6 @@ the_pile_wikipedia_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17835,8 +16008,6 @@ the_pile_youtubesubtitles_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17853,8 +16024,6 @@ the_pile_youtubesubtitles_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17871,8 +16040,6 @@ timedial_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17889,8 +16056,6 @@ toxigen_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17907,8 +16072,6 @@ topical_chat_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.bleu, Metrics.rouge_t5, Metrics.loglikelihood_acc, Metrics.bleurt],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17925,8 +16088,6 @@ tracking_shuffled_objects_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17943,8 +16104,6 @@ triviaqa_lighteval = LightevalTaskConfig(
     generation_size=20,
     metric=[Metrics.quasi_exact_match_triviaqa],
     stop_sequence=["\n", ".", ","],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17961,8 +16120,6 @@ truthfulqa_gen_lighteval = LightevalTaskConfig(
     generation_size=200,
     metric=[Metrics.bleu, Metrics.rouge_t5],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -17979,8 +16136,6 @@ truthfulqa_mc_leaderboard = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.truthfulqa_mc_metrics],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18003,8 +16158,6 @@ truthfulqa_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18021,8 +16174,6 @@ twitterAAE_aa_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18039,8 +16190,6 @@ twitterAAE_white_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18057,8 +16206,6 @@ understanding_fables_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18075,8 +16222,6 @@ undo_permutation_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18093,8 +16238,6 @@ unit_conversion_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18111,8 +16254,6 @@ unit_interpretation_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18129,8 +16270,6 @@ unnatural_in_context_learning_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18147,8 +16286,6 @@ unscramble_anagrams1_lighteval = LightevalTaskConfig(
     generation_size=5,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18165,8 +16302,6 @@ unscramble_anagrams2_lighteval = LightevalTaskConfig(
     generation_size=5,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18183,8 +16318,6 @@ unscramble_cycle_letters_lighteval = LightevalTaskConfig(
     generation_size=5,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18201,8 +16334,6 @@ unscramble_random_insertion_lighteval = LightevalTaskConfig(
     generation_size=5,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18219,8 +16350,6 @@ unscramble_reversed_words_lighteval = LightevalTaskConfig(
     generation_size=5,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18237,8 +16366,6 @@ vitaminc_fact_verification_bigbench_lite = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18255,8 +16382,6 @@ webqs_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.acc_golds_likelihood],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18273,8 +16398,6 @@ what_is_the_tao_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18291,8 +16414,6 @@ which_wiki_edit_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18314,8 +16435,6 @@ wikifact_applies_to_jurisdiction_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18337,8 +16456,6 @@ wikifact_atomic_number_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18360,8 +16477,6 @@ wikifact_author_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18383,8 +16498,6 @@ wikifact_award_received_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18406,8 +16519,6 @@ wikifact_basic_form_of_government_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18429,8 +16540,6 @@ wikifact_capital_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18452,8 +16561,6 @@ wikifact_capital_of_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18475,8 +16582,6 @@ wikifact_central_bank_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18498,8 +16603,6 @@ wikifact_composer_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18521,8 +16624,6 @@ wikifact_continent_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18544,8 +16645,6 @@ wikifact_country_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18567,8 +16666,6 @@ wikifact_country_of_citizenship_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18590,8 +16687,6 @@ wikifact_country_of_origin_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18613,8 +16708,6 @@ wikifact_creator_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18636,8 +16729,6 @@ wikifact_currency_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18659,8 +16750,6 @@ wikifact_defendant_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18682,8 +16771,6 @@ wikifact_developer_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18705,8 +16792,6 @@ wikifact_diplomatic_relation_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18728,8 +16813,6 @@ wikifact_director_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18751,8 +16834,6 @@ wikifact_discoverer_or_inventor_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18774,8 +16855,6 @@ wikifact_drug_or_therapy_used_for_treatment_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18797,8 +16876,6 @@ wikifact_educated_at_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18820,8 +16897,6 @@ wikifact_electron_configuration_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18843,8 +16918,6 @@ wikifact_employer_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18866,8 +16939,6 @@ wikifact_field_of_work_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18889,8 +16960,6 @@ wikifact_file_extension_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18912,8 +16981,6 @@ wikifact_genetic_association_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18935,8 +17002,6 @@ wikifact_genre_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18958,8 +17023,6 @@ wikifact_has_part_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -18981,8 +17044,6 @@ wikifact_head_of_government_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19004,8 +17065,6 @@ wikifact_head_of_state_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19027,8 +17086,6 @@ wikifact_headquarters_location_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19050,8 +17107,6 @@ wikifact_industry_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19073,8 +17128,6 @@ wikifact_influenced_by_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19096,8 +17149,6 @@ wikifact_instance_of_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19119,8 +17170,6 @@ wikifact_instrument_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19142,8 +17191,6 @@ wikifact_language_of_work_or_name_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19165,8 +17212,6 @@ wikifact_languages_spoken_written_or_signed_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19188,8 +17233,6 @@ wikifact_laws_applied_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19211,8 +17254,6 @@ wikifact_located_in_the_administrative_territorial_entity_helm = LightevalTaskCo
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19234,8 +17275,6 @@ wikifact_location_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19257,8 +17296,6 @@ wikifact_location_of_discovery_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19280,8 +17317,6 @@ wikifact_location_of_formation_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19303,8 +17338,6 @@ wikifact_majority_opinion_by_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19326,8 +17359,6 @@ wikifact_manufacturer_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19349,8 +17380,6 @@ wikifact_measured_physical_quantity_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19372,8 +17401,6 @@ wikifact_medical_condition_treated_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19395,8 +17422,6 @@ wikifact_member_of_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19418,8 +17443,6 @@ wikifact_member_of_political_party_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19441,8 +17464,6 @@ wikifact_member_of_sports_team_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19464,8 +17485,6 @@ wikifact_movement_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19487,8 +17506,6 @@ wikifact_named_after_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19510,8 +17527,6 @@ wikifact_native_language_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19533,8 +17548,6 @@ wikifact_number_of_processor_cores_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19556,8 +17569,6 @@ wikifact_occupation_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19579,8 +17590,6 @@ wikifact_office_held_by_head_of_government_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19602,8 +17611,6 @@ wikifact_office_held_by_head_of_state_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19625,8 +17632,6 @@ wikifact_official_language_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19648,8 +17653,6 @@ wikifact_operating_system_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19671,8 +17674,6 @@ wikifact_original_language_of_film_or_TV_show_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19694,8 +17695,6 @@ wikifact_original_network_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19717,8 +17716,6 @@ wikifact_overrules_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19740,8 +17737,6 @@ wikifact_owned_by_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19763,8 +17758,6 @@ wikifact_part_of_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19786,8 +17779,6 @@ wikifact_participating_team_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19809,8 +17800,6 @@ wikifact_place_of_birth_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19832,8 +17821,6 @@ wikifact_place_of_death_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19855,8 +17842,6 @@ wikifact_plaintiff_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19878,8 +17863,6 @@ wikifact_position_held_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19901,8 +17884,6 @@ wikifact_position_played_on_team_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19924,8 +17905,6 @@ wikifact_programming_language_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19947,8 +17926,6 @@ wikifact_recommended_unit_of_measurement_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19970,8 +17947,6 @@ wikifact_record_label_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -19993,8 +17968,6 @@ wikifact_religion_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20016,8 +17989,6 @@ wikifact_repealed_by_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20039,8 +18010,6 @@ wikifact_shares_border_with_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20062,8 +18031,6 @@ wikifact_solved_by_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20085,8 +18052,6 @@ wikifact_statement_describes_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20108,8 +18073,6 @@ wikifact_stock_exchange_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20131,8 +18094,6 @@ wikifact_subclass_of_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20154,8 +18115,6 @@ wikifact_subsidiary_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20177,8 +18136,6 @@ wikifact_symptoms_and_signs_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20200,8 +18157,6 @@ wikifact_therapeutic_area_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20223,8 +18178,6 @@ wikifact_time_of_discovery_or_invention_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20246,8 +18199,6 @@ wikifact_twinned_administrative_body_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20269,8 +18220,6 @@ wikifact_work_location_helm = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
     ],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20287,8 +18236,6 @@ wikitext_2_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20305,8 +18252,6 @@ wikitext_103_document_level_harness = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20323,8 +18268,6 @@ wikitext_103_document_level_helm = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.word_perplexity, Metrics.byte_perplexity, Metrics.bits_per_byte],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20341,8 +18284,6 @@ wino_x_german_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20359,8 +18300,6 @@ winogrande_leaderboard = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20377,8 +18316,6 @@ winowhy_bigbench_lite = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20395,8 +18332,6 @@ wmt08_cs_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20413,8 +18348,6 @@ wmt08_de_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20431,8 +18364,6 @@ wmt08_en_cs_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20449,8 +18380,6 @@ wmt08_en_de_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20467,8 +18396,6 @@ wmt08_en_es_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20485,8 +18412,6 @@ wmt08_en_fr_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20503,8 +18428,6 @@ wmt08_en_hu_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20521,8 +18444,6 @@ wmt08_es_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20539,8 +18460,6 @@ wmt08_fr_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20557,8 +18476,6 @@ wmt08_hu_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20575,8 +18492,6 @@ wmt09_cs_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20593,8 +18508,6 @@ wmt09_de_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20611,8 +18524,6 @@ wmt09_en_cs_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20629,8 +18540,6 @@ wmt09_en_de_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20647,8 +18556,6 @@ wmt09_en_es_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20665,8 +18572,6 @@ wmt09_en_fr_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20683,8 +18588,6 @@ wmt09_en_hu_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20701,8 +18604,6 @@ wmt09_en_it_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20719,8 +18620,6 @@ wmt09_es_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20737,8 +18636,6 @@ wmt09_fr_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20755,8 +18652,6 @@ wmt09_hu_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20773,8 +18668,6 @@ wmt09_it_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20791,8 +18684,6 @@ wmt10_cs_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20809,8 +18700,6 @@ wmt10_de_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20827,8 +18716,6 @@ wmt10_en_cs_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20845,8 +18732,6 @@ wmt10_en_de_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20863,8 +18748,6 @@ wmt10_en_es_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20881,8 +18764,6 @@ wmt10_en_fr_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20899,8 +18780,6 @@ wmt10_es_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20917,8 +18796,6 @@ wmt10_fr_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20935,8 +18812,6 @@ wmt11_cs_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20953,8 +18828,6 @@ wmt11_de_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20971,8 +18844,6 @@ wmt11_en_cs_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -20989,8 +18860,6 @@ wmt11_en_de_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21007,8 +18876,6 @@ wmt11_en_es_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21025,8 +18892,6 @@ wmt11_en_fr_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21043,8 +18908,6 @@ wmt11_es_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21061,8 +18924,6 @@ wmt11_fr_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21079,8 +18940,6 @@ wmt12_cs_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21097,8 +18956,6 @@ wmt12_de_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21115,8 +18972,6 @@ wmt12_en_cs_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21133,8 +18988,6 @@ wmt12_en_de_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21151,8 +19004,6 @@ wmt12_en_es_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21169,8 +19020,6 @@ wmt12_en_fr_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21187,8 +19036,6 @@ wmt12_es_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21205,8 +19052,6 @@ wmt12_fr_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21223,8 +19068,6 @@ wmt13_cs_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21241,8 +19084,6 @@ wmt13_de_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21259,8 +19100,6 @@ wmt13_en_cs_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21277,8 +19116,6 @@ wmt13_en_de_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21295,8 +19132,6 @@ wmt13_en_es_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21313,8 +19148,6 @@ wmt13_en_fr_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21331,8 +19164,6 @@ wmt13_en_ru_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21349,8 +19180,6 @@ wmt13_es_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21367,8 +19196,6 @@ wmt13_fr_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21385,8 +19212,6 @@ wmt13_ru_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21403,8 +19228,6 @@ wmt14_cs_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21421,8 +19244,6 @@ wmt14_de_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21439,8 +19260,6 @@ wmt14_en_cs_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21457,8 +19276,6 @@ wmt14_en_de_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21475,8 +19292,6 @@ wmt14_en_fr_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21493,8 +19308,6 @@ wmt14_en_fr_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21511,8 +19324,6 @@ wmt14_en_hi_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21529,8 +19340,6 @@ wmt14_en_ru_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21547,8 +19356,6 @@ wmt14_fr_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21565,8 +19372,6 @@ wmt14_fr_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21583,8 +19388,6 @@ wmt14_hi_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21601,8 +19404,6 @@ wmt14_ru_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21619,8 +19420,6 @@ wmt14_cs_en_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.bleu],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21637,8 +19436,6 @@ wmt14_de_en_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.bleu],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21655,8 +19452,6 @@ wmt14_fr_en_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.bleu],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21673,8 +19468,6 @@ wmt14_hi_en_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.bleu],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21691,8 +19484,6 @@ wmt14_ru_en_helm = LightevalTaskConfig(
     generation_size=100,
     metric=[Metrics.bleu],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21709,8 +19500,6 @@ wmt15_cs_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21727,8 +19516,6 @@ wmt15_de_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21745,8 +19532,6 @@ wmt15_en_cs_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21763,8 +19548,6 @@ wmt15_en_de_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21781,8 +19564,6 @@ wmt15_en_fi_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21799,8 +19580,6 @@ wmt15_en_fr_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21817,8 +19596,6 @@ wmt15_en_ru_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21835,8 +19612,6 @@ wmt15_fi_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21853,8 +19628,6 @@ wmt15_fr_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21871,8 +19644,6 @@ wmt15_ru_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21889,8 +19660,6 @@ wmt16_cs_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21907,8 +19676,6 @@ wmt16_de_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21925,8 +19692,6 @@ wmt16_de_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21943,8 +19708,6 @@ wmt16_en_cs_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21961,8 +19724,6 @@ wmt16_en_de_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21979,8 +19740,6 @@ wmt16_en_de_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -21997,8 +19756,6 @@ wmt16_en_fi_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22015,8 +19772,6 @@ wmt16_en_ro_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22033,8 +19788,6 @@ wmt16_en_ro_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22051,8 +19804,6 @@ wmt16_en_ru_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22069,8 +19820,6 @@ wmt16_en_tr_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22087,8 +19836,6 @@ wmt16_fi_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22105,8 +19852,6 @@ wmt16_ro_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22123,8 +19868,6 @@ wmt16_ro_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22141,8 +19884,6 @@ wmt16_ru_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22159,8 +19900,6 @@ wmt16_tr_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22177,8 +19916,6 @@ wmt17_cs_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22195,8 +19932,6 @@ wmt17_de_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22213,8 +19948,6 @@ wmt17_en_cs_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22231,8 +19964,6 @@ wmt17_en_de_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22249,8 +19980,6 @@ wmt17_en_fi_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22267,8 +19996,6 @@ wmt17_en_lv_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22285,8 +20012,6 @@ wmt17_en_ru_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22303,8 +20028,6 @@ wmt17_en_tr_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22321,8 +20044,6 @@ wmt17_en_zh_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22339,8 +20060,6 @@ wmt17_fi_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22357,8 +20076,6 @@ wmt17_lv_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22375,8 +20092,6 @@ wmt17_ru_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22393,8 +20108,6 @@ wmt17_tr_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22411,8 +20124,6 @@ wmt17_zh_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22429,8 +20140,6 @@ wmt18_cs_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22447,8 +20156,6 @@ wmt18_de_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22465,8 +20172,6 @@ wmt18_en_cs_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22483,8 +20188,6 @@ wmt18_en_de_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22501,8 +20204,6 @@ wmt18_en_et_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22519,8 +20220,6 @@ wmt18_en_fi_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22537,8 +20236,6 @@ wmt18_en_ru_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22555,8 +20252,6 @@ wmt18_en_tr_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22573,8 +20268,6 @@ wmt18_en_zh_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22591,8 +20284,6 @@ wmt18_et_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22609,8 +20300,6 @@ wmt18_fi_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22627,8 +20316,6 @@ wmt18_ru_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22645,8 +20332,6 @@ wmt18_tr_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22663,8 +20348,6 @@ wmt18_zh_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22681,8 +20364,6 @@ wmt19_cs_de_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22699,8 +20380,6 @@ wmt19_de_cs_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22717,8 +20396,6 @@ wmt19_de_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22735,8 +20412,6 @@ wmt19_de_fr_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22753,8 +20428,6 @@ wmt19_en_cs_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22771,8 +20444,6 @@ wmt19_en_de_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22789,8 +20460,6 @@ wmt19_en_fi_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22807,8 +20476,6 @@ wmt19_en_gu_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22825,8 +20492,6 @@ wmt19_en_kk_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22843,8 +20508,6 @@ wmt19_en_lt_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22861,8 +20524,6 @@ wmt19_en_ru_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22879,8 +20540,6 @@ wmt19_en_zh_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22897,8 +20556,6 @@ wmt19_fi_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22915,8 +20572,6 @@ wmt19_fr_de_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22933,8 +20588,6 @@ wmt19_gu_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22951,8 +20604,6 @@ wmt19_kk_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22969,8 +20620,6 @@ wmt19_lt_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -22987,8 +20636,6 @@ wmt19_ru_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23005,8 +20652,6 @@ wmt19_zh_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23023,8 +20668,6 @@ wmt20_cs_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23041,8 +20684,6 @@ wmt20_de_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23059,8 +20700,6 @@ wmt20_de_fr_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23077,8 +20716,6 @@ wmt20_en_cs_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23095,8 +20732,6 @@ wmt20_en_de_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23113,8 +20748,6 @@ wmt20_en_iu_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23131,8 +20764,6 @@ wmt20_en_ja_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23149,8 +20780,6 @@ wmt20_en_km_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23167,8 +20796,6 @@ wmt20_en_pl_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23185,8 +20812,6 @@ wmt20_en_ps_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23203,8 +20828,6 @@ wmt20_en_ru_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23221,8 +20844,6 @@ wmt20_en_ta_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23239,8 +20860,6 @@ wmt20_en_zh_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23257,8 +20876,6 @@ wmt20_fr_de_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23275,8 +20892,6 @@ wmt20_iu_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23293,8 +20908,6 @@ wmt20_ja_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23311,8 +20924,6 @@ wmt20_km_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23329,8 +20940,6 @@ wmt20_pl_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23347,8 +20956,6 @@ wmt20_ps_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23365,8 +20972,6 @@ wmt20_ru_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23383,8 +20988,6 @@ wmt20_ta_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23401,8 +21004,6 @@ wmt20_zh_en_lighteval = LightevalTaskConfig(
     generation_size=None,
     metric=[Metrics.bleu, Metrics.chrf, Metrics.ter],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23419,8 +21020,6 @@ word_sorting_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23437,8 +21036,6 @@ word_unscrambling_bigbench = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23455,8 +21052,6 @@ wsc273_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23473,8 +21068,6 @@ xcopa_en_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23491,8 +21084,6 @@ xcopa_et_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23509,8 +21100,6 @@ xcopa_ht_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23527,8 +21116,6 @@ xcopa_it_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23545,8 +21132,6 @@ xcopa_id_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23563,8 +21148,6 @@ xcopa_qu_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23581,8 +21164,6 @@ xcopa_sw_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23599,8 +21180,6 @@ xcopa_zh_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23617,8 +21196,6 @@ xcopa_ta_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23635,8 +21212,6 @@ xcopa_th_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23653,8 +21228,6 @@ xcopa_tr_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23671,8 +21244,6 @@ xcopa_vi_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23689,8 +21260,6 @@ xstory_cloze_en_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23707,8 +21276,6 @@ xstory_cloze_ru_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23725,8 +21292,6 @@ xstory_cloze_zh_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23743,8 +21308,6 @@ xstory_cloze_es_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23761,8 +21324,6 @@ xstory_cloze_ar_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23779,8 +21340,6 @@ xstory_cloze_hi_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23797,8 +21356,6 @@ xstory_cloze_id_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23815,8 +21372,6 @@ xstory_cloze_te_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23833,8 +21388,6 @@ xstory_cloze_sw_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23851,8 +21404,6 @@ xstory_cloze_eu_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23869,8 +21420,6 @@ xstory_cloze_my_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23887,8 +21436,6 @@ xwinograd_en_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23905,8 +21452,6 @@ xwinograd_fr_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23923,8 +21468,6 @@ xwinograd_jp_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23941,8 +21484,6 @@ xwinograd_pt_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23959,8 +21500,6 @@ xwinograd_ru_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
@@ -23977,8 +21516,6 @@ xwinograd_zh_lighteval = LightevalTaskConfig(
     generation_size=-1,
     metric=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    output_regex=None,
-    frozen=False,
     trust_dataset=True,
     version=0,
 )
