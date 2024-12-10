@@ -49,7 +49,7 @@ class GenerationParameters:
 
         Args:
             config_dict (dict): Config dictionary. Must obey the following shape:
-            {"generation_parameters":
+            {"generation":
                 {
                     "early_stopping": value,
                     ...
@@ -57,22 +57,22 @@ class GenerationParameters:
                 }
             }
         """
-        if "generation_parameters" not in config_dict:
+        if "generation" not in config_dict:
             return cls
-        cls.early_stopping = config_dict["generation_parameters"].get("early_stopping", None)
-        cls.repetition_penalty = config_dict["generation_parameters"].get("repetition_penalty", None)
-        cls.frequency_penalty = config_dict["generation_parameters"].get("frequency_penalty", None)
-        cls.length_penalty = config_dict["generation_parameters"].get("length_penalty", None)
-        cls.presence_penalty = config_dict["generation_parameters"].get("presence_penalty", None)
-        cls.max_new_tokens = config_dict["generation_parameters"].get("max_new_tokens", None)
-        cls.min_new_tokens = config_dict["generation_parameters"].get("min_new_tokens", None)
-        cls.seed = config_dict["generation_parameters"].get("seed", None)
-        cls.stop_tokens = config_dict["generation_parameters"].get("stop_tokens", None)
-        cls.temperature = config_dict["generation_parameters"].get("temperature", None)
-        cls.top_k = config_dict["generation_parameters"].get("top_k", None)
-        cls.min_p = config_dict["generation_parameters"].get("min_p", None)
-        cls.top_p = config_dict["generation_parameters"].get("top_p", None)
-        cls.truncate_prompt = config_dict["generation_parameters"].get("truncate_prompt", None)
+        cls.early_stopping = config_dict["generation"].get("early_stopping", None)
+        cls.repetition_penalty = config_dict["generation"].get("repetition_penalty", None)
+        cls.frequency_penalty = config_dict["generation"].get("frequency_penalty", None)
+        cls.length_penalty = config_dict["generation"].get("length_penalty", None)
+        cls.presence_penalty = config_dict["generation"].get("presence_penalty", None)
+        cls.max_new_tokens = config_dict["generation"].get("max_new_tokens", None)
+        cls.min_new_tokens = config_dict["generation"].get("min_new_tokens", None)
+        cls.seed = config_dict["generation"].get("seed", None)
+        cls.stop_tokens = config_dict["generation"].get("stop_tokens", None)
+        cls.temperature = config_dict["generation"].get("temperature", None)
+        cls.top_k = config_dict["generation"].get("top_k", None)
+        cls.min_p = config_dict["generation"].get("min_p", None)
+        cls.top_p = config_dict["generation"].get("top_p", None)
+        cls.truncate_prompt = config_dict["generation"].get("truncate_prompt", None)
         return cls
 
     def to_vllm_openai_dict(self) -> dict:

@@ -43,19 +43,13 @@ HELP_PANNEL_NAME_4 = "Modeling Paramaters"
 @app.command(rich_help_panel="Evaluation Backends")
 def openai(
     # === general ===
+    model_args: Annotated[
+        str,
+        Argument(
+            help="Model name as a string (has to be available through the openai API) or path to yaml config file (see examples/model_configs/base_model.yaml)"
+        ),
+    ],
     tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
-    model_name: Annotated[
-        str,
-        Argument(
-            help="The model name to evaluate (has to be available through the openai API. Mutually exclusive with the config path"
-        ),
-    ] = None,
-    model_config_path: Annotated[
-        str,
-        Argument(
-            help="Path to model config yaml file. (examples/model_configs/endpoint_model.yaml). Mutually exclusive with the model name"
-        ),
-    ] = None,
     # === Common parameters ===
     system_prompt: Annotated[
         Optional[str], Option(help="Use system prompt for evaluation.", rich_help_panel=HELP_PANNEL_NAME_4)
@@ -109,8 +103,13 @@ def openai(
     from lighteval.models.model_input import GenerationParameters
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
-    if not (model_name is None ^ model_config_path is None):
-        raise typer.Abort("You must define either the model_name or the model_config_path, not both")
+    if model_args.endswith(".yaml"):
+        with open(model_args, "r") as f:
+            config = yaml.safe_load(f)["model"]
+        generation_parameters = GenerationParameters.from_dict(config)
+        model_config = OpenAIModelConfig(model=config["model_name"], generation_parameters=generation_parameters)
+    else:
+        model_config = OpenAIModelConfig(model=model_args)
 
     env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
     evaluation_tracker = EvaluationTracker(
@@ -123,14 +122,6 @@ def openai(
     )
 
     parallelism_manager = ParallelismManager.OPENAI
-
-    if model_name:
-        model_config = OpenAIModelConfig(model=model_name)
-    else:
-        with open(model_config_path, "r") as f:
-            config = yaml.safe_load(f)["model"]
-        generation_parameters = GenerationParameters.from_dict(config)
-        model_config = OpenAIModelConfig(model=config["model_name"], generation_parameters=generation_parameters)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
