@@ -22,7 +22,7 @@
 import os
 from typing import Optional
 
-from typer import Argument, Option
+from typer import Abort, Argument, Option
 from typing_extensions import Annotated
 
 
@@ -37,8 +37,19 @@ HELP_PANNEL_NAME_4 = "Modeling Paramaters"
 
 def vllm(
     # === general ===
-    model_args: Annotated[str, Argument(help="Model arguments in the form key1=value1,key2=value2,...")],
     tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
+    model_args: Annotated[
+        str,
+        Argument(
+            help="Model arguments in the form key1=value1,key2=value2,... Mutually exclusive with the config path"
+        ),
+    ] = None,
+    model_config_path: Annotated[
+        str,
+        Argument(
+            help="Path to model config yaml file. (examples/model_configs/vllm_model.yaml). Mutually exclusive with the model args"
+        ),
+    ] = None,
     # === Common parameters ===
     use_chat_template: Annotated[
         bool, Option(help="Use chat template for evaluation.", rich_help_panel=HELP_PANNEL_NAME_4)
@@ -88,9 +99,15 @@ def vllm(
     """
     Evaluate models using vllm as backend.
     """
+    import yaml
+
     from lighteval.logging.evaluation_tracker import EvaluationTracker
+    from lighteval.models.model_input import GenerationParameters
     from lighteval.models.vllm.vllm_model import VLLMModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
+
+    if not (model_args is None ^ model_config_path is None):
+        raise Abort("You must define either the model_args or the model_config_path, not both")
 
     TOKEN = os.getenv("HF_TOKEN")
 
@@ -118,8 +135,14 @@ def vllm(
         system_prompt=system_prompt,
     )
 
-    model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
-    model_config = VLLMModelConfig(**model_args_dict)
+    if model_args:
+        model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
+        model_config = VLLMModelConfig(**model_args_dict)
+    else:
+        with open(model_config_path, "r") as f:
+            config = yaml.safe_load(f)["model"]
+        generation_parameters = GenerationParameters.from_dict(config)
+        model_config = VLLMModelConfig(**model_args_dict, generation_parameters=generation_parameters)
 
     pipeline = Pipeline(
         tasks=tasks,

@@ -32,6 +32,7 @@ from tqdm import tqdm
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.endpoints.endpoint_model import ModelInfo
+from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
@@ -62,7 +63,11 @@ if is_openai_available():
 @dataclass
 class OpenAIModelConfig:
     model: str
-    sampling_params: dict = dict
+    generation_parameters: GenerationParameters = None
+
+    def __post_init__(self):
+        if not self.generation_parameters:
+            self.generation_parameters = GenerationParameters()
 
 
 class OpenAIClient(LightevalModel):
@@ -71,7 +76,8 @@ class OpenAIClient(LightevalModel):
     def __init__(self, config: OpenAIModelConfig, env_config) -> None:
         api_key = os.environ["OPENAI_API_KEY"]
         self.client = OpenAI(api_key=api_key)
-        self.sampling_params = config.sampling_params
+        self.generation_parameters = config.generation_parameters
+        self.sampling_params = self.generation_parameters.to_vllm_openai_dict()
 
         self.model_info = ModelInfo(
             model_name=config.model,

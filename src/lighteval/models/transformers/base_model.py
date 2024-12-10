@@ -45,6 +45,7 @@ from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_N
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     Batch,
     GenerativeMultiturnResponse,
@@ -153,7 +154,7 @@ class BaseModelConfig:
     trust_remote_code: bool = False
     use_chat_template: bool = False
     compile: bool = False
-    generation_config: dict = dict
+    generation_parameters: GenerationParameters = None
 
     def __post_init__(self):
         # Making sure this parameter is a boolean
@@ -179,6 +180,9 @@ class BaseModelConfig:
             raise ValueError("Pretrained model name must be passed as string.")
         if not isinstance(self.device, str):
             raise ValueError("Current device must be passed as string.")
+
+        if not self.generation_parameters:
+            self.generation_parameters = GenerationParameters()
 
     def _init_configs(self, model_name: str, env_config: EnvConfig) -> PretrainedConfig:
         revision = self.revision
@@ -259,7 +263,8 @@ class BaseModel(LightevalModel):
         self.model_sha = config.get_model_sha()
 
         self.precision = _get_dtype(config.dtype, config=self._config)
-        self.generation_config = config.generation_config
+        self.generation_parameters = config.generation_parameters
+        self.generation_config_dict = self.generation_parameters.to_transformers_dict()
 
         if is_accelerate_available():
             model_size, _ = calculate_maximum_sizes(self.model)
@@ -636,7 +641,7 @@ class BaseModel(LightevalModel):
                 ]
             )
 
-            generation_config = GenerationConfig.from_dict(self.generation_config)
+            generation_config = GenerationConfig.from_dict(self.generation_config_dict)
             generation_config.update(
                 {
                     "max_new_tokens": max_generated_tokens,
@@ -679,7 +684,7 @@ class BaseModel(LightevalModel):
                     ]
                 )
 
-                generation_config = GenerationConfig.from_dict(self.generation_config)
+                generation_config = GenerationConfig.from_dict(self.generation_config_dict)
                 generation_config.update(
                     {
                         "max_new_tokens": max_generated_tokens,
@@ -876,7 +881,7 @@ class BaseModel(LightevalModel):
         stopping_criteria = stop_sequences_criteria(self.tokenizer, stop_sequences=stop_tokens, batch=batch)
         batch_size, _ = batch.input_ids.shape
 
-        generation_config = GenerationConfig.from_dict(self.generation_config)
+        generation_config = GenerationConfig.from_dict(self.generation_config_dict)
         generation_config.update(
             {
                 "max_new_tokens": max_new_tokens,

@@ -155,7 +155,7 @@ def accelerate(  # noqa C901
         # We extract the model args
         args_dict = {k.split("=")[0]: k.split("=")[1] for k in config["base_params"]["model_args"].split(",")}
 
-        args_dict["generation_config"] = GenerationParameters.from_dict(config).to_transformers_dict()
+        args_dict["generation_parameters"] = GenerationParameters.from_dict(config)
 
         # We store the relevant other args
         args_dict["base_model"] = config["merged_weights"]["base_model"]

@@ -49,6 +49,7 @@ from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import GenerativeResponse, LoglikelihoodResponse, LoglikelihoodSingleTokenResponse
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
@@ -79,7 +80,11 @@ SORTED_INSTANCE_SIZES = [  # sorted by incremental overall RAM (to load models)
 class InferenceModelConfig:
     model: str
     add_special_tokens: bool = True
-    generation_config: dict = dict
+    generation_parameters: GenerationParameters = None
+
+    def __post_init__(self):
+        if not self.generation_parameters:
+            self.generation_parameters = GenerationParameters()
 
 
 @dataclass
@@ -100,7 +105,7 @@ class InferenceEndpointModelConfig:
     namespace: str = None  # The namespace under which to launch the endopint. Defaults to the current user's namespace
     image_url: str = None
     env_vars: dict = None
-    generation_config: dict = dict
+    generation_parameters: GenerationParameters = None
 
     def __post_init__(self):
         # xor operator, one is None but not the other
@@ -111,6 +116,9 @@ class InferenceEndpointModelConfig:
 
         if not (self.endpoint_name is None) ^ int(self.model_name is None):
             raise ValueError("You need to set either endpoint_name or model_name (but not both).")
+
+        if not self.generation_parameters:
+            self.generation_parameters = GenerationParameters()
 
     def get_dtype_args(self) -> Dict[str, str]:
         if self.model_dtype is None:
@@ -284,7 +292,10 @@ class InferenceEndpointModel(LightevalModel):
             model_dtype=config.model_dtype or "default",
             model_size=-1,
         )
-        self.generation_config = TextGenerationInputGenerateParameters(**config.generation_config)
+        self.generation_parameters = config.generation_parameters
+        self.generation_config = TextGenerationInputGenerateParameters(
+            **self.generation_parameters.to_tgi_inferenceendpoint_dict()
+        )
 
     @staticmethod
     def get_larger_hardware_suggestion(cur_instance_type: str = None, cur_instance_size: str = None):

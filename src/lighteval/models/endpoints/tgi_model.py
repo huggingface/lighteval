@@ -29,6 +29,7 @@ from huggingface_hub import TextGenerationInputGenerateParameters, TextGeneratio
 from transformers import AutoTokenizer
 
 from lighteval.models.endpoints.endpoint_model import InferenceEndpointModel, ModelInfo
+from lighteval.models.model_input import GenerationParameters
 from lighteval.utils.imports import NO_TGI_ERROR_MSG, is_tgi_available
 
 
@@ -50,7 +51,11 @@ class TGIModelConfig:
     inference_server_address: str
     inference_server_auth: str
     model_id: str
-    generation_config: dict = dict
+    generation_parameters: GenerationParameters = None
+
+    def __post_init__(self):
+        if not self.generation_parameters:
+            self.generation_parameters = GenerationParameters()
 
 
 # inherit from InferenceEndpointModel instead of LightevalModel since they both use the same interface, and only overwrite
@@ -66,7 +71,10 @@ class ModelClient(InferenceEndpointModel):
         )
 
         self.client = AsyncClient(config.inference_server_address, headers=headers, timeout=240)
-        self.generation_config = TextGenerationInputGenerateParameters(**config.generation_config)
+        self.generation_parameters = config.generation_parameters
+        self.generation_config = TextGenerationInputGenerateParameters(
+            **self.generation_parameters.to_tgi_inferenceendpoint_dict()
+        )
         self._max_gen_toks = 256
         self.model_info = requests.get(f"{config.inference_server_address}/info", headers=headers).json()
         if "model_id" not in self.model_info:
