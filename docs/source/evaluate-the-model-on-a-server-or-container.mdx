@@ -26,10 +26,9 @@ __configuration file example:__
 
 ```yaml
 model:
-  type: "endpoint"
   base_params:
-    endpoint_name: "llama-2-7B-lighteval" # needs to be lower case without special characters
-    model: "meta-llama/Llama-2-7b-hf"
+    # endpoint_name: "llama-2-7B-lighteval" # needs to be lower case without special characters
+    model_name: "meta-llama/Llama-2-7b-hf"
     revision: "main"
     dtype: "float16" # can be any of "awq", "eetq", "gptq", "4bit' or "8bit" (will use bitsandbytes), "bfloat16" or "float16"
     reuse_existing: false # if true, ignore all params in instance, and don't delete the endpoint after evaluation
@@ -58,7 +57,6 @@ __configuration file example:__
 
 ```yaml
 model:
-  type: "tgi"
   instance:
     inference_server_address: ""
     inference_server_auth: null
