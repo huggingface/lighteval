@@ -736,7 +736,6 @@ METRICS_TO_USE = [
     "bert_score",
     "bleurt_large",
     "xcomet_xxl",
-    "gemba_mqm_gpt_4o",
     "slt_judge_gpt_4o",
 ]
 METRICS = {}
@@ -778,7 +777,7 @@ if "xcomet_xl" in METRICS_TO_USE:
     METRICS["xcomet_xl"] = get_comet(model_name="Unbabel/XCOMET-XL", batch_size=32, gpus=1, device=device)
 if "xcomet_xxl" in METRICS_TO_USE:
     METRICS["xcomet_xxl"] = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=16, gpus=1, device=device)
-if "gemba_mqm_gpt_4o" in METRICS_TO_USE:
+if "gemba_mqm_gpt_4o" in METRICS_TO_USE:  # TODO: Somehow in long evaluations something is wrong here
     METRICS["gemba_mqm_gpt_4o"] = get_gemba_judge(method="GEMBA-MQM_norm", model="gpt-4o")
 if "slt_judge_gpt_4o" in METRICS_TO_USE:
     METRICS["slt_judge_gpt_4o"] = get_swiss_legal_translation_judge(judge_model_name="gpt-4o")
@@ -791,9 +790,11 @@ def get_metrics(METRICS_TO_USE, target_lang: str):
     metrics = []
     for metric in METRICS_TO_USE:
         if metric in METRICS:
-            metrics.append(METRICS[metric])
-        elif metric == "bert_score":
-            metrics.append(METRICS["bert_score"][target_lang])
+            if metric == "bert_score":
+                # Add only the BERTScore for the target language
+                metrics.append(METRICS["bert_score"][target_lang])
+            else:
+                metrics.append(METRICS[metric])
     return metrics
 
 
