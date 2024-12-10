@@ -201,7 +201,7 @@ def inference_endpoint(
     import yaml
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.models.model_config import (
+    from lighteval.models.endpoints.endpoint_model import (
         InferenceEndpointModelConfig,
     )
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
