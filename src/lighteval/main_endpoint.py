@@ -231,7 +231,7 @@ def inference_endpoint(
         "endpoint_name": config["base_params"].get("endpoint_name", None),
         "model_dtype": config["base_params"].get("dtype", None),
         "revision": config["base_params"].get("revision", None) or "main",
-        "should_reuse_existing": config["base_params"].get("should_reuse_existing"),
+        "reuse_existing": config["base_params"].get("reuse_existing"),
         "accelerator": config.get("instance", {}).get("accelerator", None),
         "region": config.get("instance", {}).get("region", None),
         "vendor": config.get("instance", {}).get("vendor", None),
