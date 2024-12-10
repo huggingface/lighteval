@@ -213,9 +213,6 @@ def get_swiss_legal_translation_judge(judge_model_name: str = "gpt-4o"):
     )
 
 
-swiss_legal_translation_judge_gpt_4o = get_swiss_legal_translation_judge(judge_model_name="gpt-4o")
-
-
 class GEMBA:
     def __init__(self, method: str = "GEMBA-MQM_norm", model: str = "gpt-4o"):
         self.method = method
@@ -257,9 +254,6 @@ def get_gemba_judge(method: str = "GEMBA-MQM_norm", model: str = "gpt-4o"):
         sample_level_fn=GEMBA(method=method, model=model).compute,
         corpus_level_fn={name: statistics.mean},
     )
-
-
-gemba_mqm_gpt_4o = get_gemba_judge(method="GEMBA-MQM_norm", model="gpt-4o")
 
 
 def get_bert_score(language: str, num_layers: int = 24, model_type: str = "xlm-roberta-large", device: str = "cpu"):
@@ -314,19 +308,6 @@ def get_bert_score(language: str, num_layers: int = 24, model_type: str = "xlm-r
             "BERTScore-F": statistics.mean,
         },
     )
-
-
-# Create BERTScore metrics for each language
-
-
-bert_scores = {
-    lang: get_bert_score(
-        language=lang,
-        model_type="xlm-roberta-large",
-        device=device,
-    )
-    for lang in ["de", "fr", "it", "rm", "en"]
-}
 
 
 class BLEURT:
@@ -408,9 +389,6 @@ def get_bleurt(
     )
 
 
-bleurt_large = get_bleurt(model_size="large", seq_len=512, batch_size=256, device=device)
-
-
 class COMET:
     def __init__(
         self,
@@ -476,12 +454,6 @@ def get_comet(
     )
 
 
-# There are also reference-free models (e.g., Unbabel/wmt22-cometkiwi-da), but since we have reference gold labels, we use the reference-based models.
-# comet_wmt22_da = get_comet(model_name="Unbabel/wmt22-comet-da", batch_size=64, gpus=1, device=device)
-# xcomet_xl = get_comet(model_name="Unbabel/XCOMET-XL", batch_size=32, gpus=1, device=device)
-xcomet_xxl = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=16, gpus=1, device=device)
-
-
 class METEOR:
     def __init__(self, alpha=0.9, beta=3, gamma=0.5):
         self.alpha = alpha
@@ -520,14 +492,15 @@ class METEOR:
         return statistics.mean(scores) * 100
 
 
-meteor = SampleLevelMetric(
-    metric_name="meteor",
-    higher_is_better=True,
-    category=MetricCategory.GENERATIVE,
-    use_case=MetricUseCase.TRANSLATION,
-    sample_level_fn=METEOR().compute,
-    corpus_level_fn=statistics.mean,
-)
+def get_meteor():
+    return SampleLevelMetric(
+        metric_name="meteor",
+        higher_is_better=True,
+        category=MetricCategory.GENERATIVE,
+        use_case=MetricUseCase.TRANSLATION,
+        sample_level_fn=METEOR().compute,
+        corpus_level_fn=statistics.mean,
+    )
 
 
 class BLEU:
@@ -549,14 +522,15 @@ class BLEU:
         return statistics.mean(scores) * 100
 
 
-bleu_sentence = SampleLevelMetric(
-    metric_name="bleu_sentence",
-    higher_is_better=True,
-    category=MetricCategory.GENERATIVE,
-    use_case=MetricUseCase.TRANSLATION,
-    sample_level_fn=BLEU().compute,
-    corpus_level_fn=statistics.mean,
-)
+def get_bleu_sentence():
+    return SampleLevelMetric(
+        metric_name="bleu_sentence",
+        higher_is_better=True,
+        category=MetricCategory.GENERATIVE,
+        use_case=MetricUseCase.TRANSLATION,
+        sample_level_fn=BLEU().compute,
+        corpus_level_fn=statistics.mean,
+    )
 
 
 class CHRF:
@@ -571,14 +545,15 @@ class CHRF:
         return statistics.mean(scores) * 100
 
 
-chrf_sentence = SampleLevelMetric(
-    metric_name="chrf_sentence",
-    higher_is_better=True,
-    category=MetricCategory.GENERATIVE,
-    use_case=MetricUseCase.TRANSLATION,
-    sample_level_fn=CHRF().compute,
-    corpus_level_fn=statistics.mean,
-)
+def get_chrf_sentence():
+    return SampleLevelMetric(
+        metric_name="chrf_sentence",
+        higher_is_better=True,
+        category=MetricCategory.GENERATIVE,
+        use_case=MetricUseCase.TRANSLATION,
+        sample_level_fn=CHRF().compute,
+        corpus_level_fn=statistics.mean,
+    )
 
 
 class TER:
@@ -593,14 +568,15 @@ class TER:
         return statistics.mean(scores) * 100
 
 
-ter_sentence = SampleLevelMetric(
-    metric_name="ter_sentence",
-    higher_is_better=False,
-    category=MetricCategory.GENERATIVE,
-    use_case=MetricUseCase.TRANSLATION,
-    sample_level_fn=TER().compute,
-    corpus_level_fn=statistics.mean,
-)
+def get_ter_sentence():
+    return SampleLevelMetric(
+        metric_name="ter_sentence",
+        higher_is_better=False,
+        category=MetricCategory.GENERATIVE,
+        use_case=MetricUseCase.TRANSLATION,
+        sample_level_fn=TER().compute,
+        corpus_level_fn=statistics.mean,
+    )
 
 
 # EVALS WITH SUBSET
@@ -750,6 +726,77 @@ def create_prompt_fn(level_config: LevelConfig, source_lang: str, target_lang: s
     return prompt_fn
 
 
+METRICS_TO_USE = [
+    "bleu",
+    "chrf",
+    "bleu_sentence",
+    "chrf_sentence",
+    "ter_sentence",
+    "meteor",
+    "bert_score",
+    "bleurt_large",
+    "xcomet_xxl",
+    "gemba_mqm_gpt_4o",
+    "slt_judge_gpt_4o",
+]
+METRICS = {}
+
+# ===== Lexical metrics =====
+# Corpus level metrics
+if "bleu" in METRICS_TO_USE:
+    METRICS["bleu"] = Metrics.bleu
+if "chrf" in METRICS_TO_USE:
+    METRICS["chrf"] = Metrics.chrf
+if "ter" in METRICS_TO_USE:
+    # TER often hangs for a while and takes more than 10 minutes to compute
+    METRICS["ter"] = Metrics.ter
+# Sample level metrics
+if "bleu_sentence" in METRICS_TO_USE:
+    METRICS["bleu_sentence"] = get_bleu_sentence()
+if "chrf_sentence" in METRICS_TO_USE:
+    METRICS["chrf_sentence"] = get_chrf_sentence()
+if "ter_sentence" in METRICS_TO_USE:
+    METRICS["ter_sentence"] = get_ter_sentence()
+if "meteor" in METRICS_TO_USE:
+    METRICS["meteor"] = get_meteor()
+# ===== Model-based metrics =====
+if "bert_score" in METRICS_TO_USE:
+    METRICS["bert_score"] = {  # Create BERTScore metrics for each language
+        lang: get_bert_score(language=lang, model_type="xlm-roberta-large", device=device)
+        for lang in ["de", "fr", "it", "rm", "en"]
+    }
+if "bleurt_tiny" in METRICS_TO_USE:
+    METRICS["bleurt_tiny"] = get_bleurt(model_size="tiny", seq_len=512, batch_size=256, device=device)
+if "bleurt_base" in METRICS_TO_USE:
+    METRICS["bleurt_base"] = get_bleurt(model_size="base", seq_len=512, batch_size=256, device=device)
+if "bleurt_large" in METRICS_TO_USE:
+    METRICS["bleurt_large"] = get_bleurt(model_size="large", seq_len=512, batch_size=256, device=device)
+# There are also reference-free models (e.g., Unbabel/wmt22-cometkiwi-da), but since we have reference gold labels, we use the reference-based models.
+if "wmt22-comet-da" in METRICS_TO_USE:
+    METRICS["wmt22-comet-da"] = get_comet(model_name="Unbabel/wmt22-comet-da", batch_size=64, gpus=1, device=device)
+if "xcomet_xl" in METRICS_TO_USE:
+    METRICS["xcomet_xl"] = get_comet(model_name="Unbabel/XCOMET-XL", batch_size=32, gpus=1, device=device)
+if "xcomet_xxl" in METRICS_TO_USE:
+    METRICS["xcomet_xxl"] = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=16, gpus=1, device=device)
+if "gemba_mqm_gpt_4o" in METRICS_TO_USE:
+    METRICS["gemba_mqm_gpt_4o"] = get_gemba_judge(method="GEMBA-MQM_norm", model="gpt-4o")
+if "slt_judge_gpt_4o" in METRICS_TO_USE:
+    METRICS["slt_judge_gpt_4o"] = get_swiss_legal_translation_judge(judge_model_name="gpt-4o")
+# Additionally we could consider adding the following open source judge models:
+# flowaicom/Flow-Judge-v0.1, prometheus-eval/prometheus-7b-v2.0
+# However, these are only fine-tuned on English data and we need multilingual support.
+
+
+def get_metrics(METRICS_TO_USE, target_lang: str):
+    metrics = []
+    for metric in METRICS_TO_USE:
+        if metric in METRICS:
+            metrics.append(METRICS[metric])
+        elif metric == "bert_score":
+            metrics.append(METRICS["bert_score"][target_lang])
+    return metrics
+
+
 class TranslationTask(LightevalTaskConfig):
     def __init__(
         self,
@@ -771,27 +818,7 @@ class TranslationTask(LightevalTaskConfig):
             few_shots_split="validation",
             few_shots_select="sequential",
             generation_size=level_config.generation_size,
-            metric=[
-                # ===== Lexical metrics =====
-                # Corpus level metrics
-                Metrics.bleu,
-                Metrics.chrf,
-                # Metrics.ter,  # TER often hangs for a while and takes more than 10 minutes to compute
-                # Sample level metrics
-                bleu_sentence,
-                chrf_sentence,
-                ter_sentence,
-                meteor,
-                # ===== Model-based metrics =====
-                bert_scores[target_lang],
-                bleurt_large,  # Only take the largest version, disregarding base and tiny
-                xcomet_xxl,  # Only take the largest version, disregarding xcomet_xl, comet_wmt22_da
-                gemba_mqm_gpt_4o,
-                swiss_legal_translation_judge_gpt_4o,
-                # Additionally we could consider adding the following open source judge models:
-                # flowaicom/Flow-Judge-v0.1, prometheus-eval/prometheus-7b-v2.0
-                # However, these are only fine-tuned on English data and we need multilingual support.
-            ],
+            metric=get_metrics(METRICS_TO_USE, target_lang),
             stop_sequence=level_config.stop_sequence,
             trust_dataset=True,
             # Remove the target language in the beginning if it exists: e.g., FR: {translation}
