@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import re
 
 from lighteval.metrics.metrics import Metric, MetricCategory
 from lighteval.models.model_output import ModelResponse
