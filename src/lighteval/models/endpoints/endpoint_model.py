@@ -95,7 +95,7 @@ class InferenceEndpointModelConfig:
     endpoint_type: str = "protected"
     add_special_tokens: bool = True
     revision: str = "main"
-    namespace: str = None  # The namespace under which to launch the endopint. Defaults to the current user's namespace
+    namespace: str = None  # The namespace under which to launch the endpoint. Defaults to the current user's namespace
     image_url: str = None
     env_vars: dict = None
 
