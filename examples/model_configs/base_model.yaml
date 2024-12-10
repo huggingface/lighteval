@@ -9,3 +9,4 @@ model:
     base_model: null # path to the base_model
   generation:
     multichoice_continuations_start_space: null # If true/false, will force multiple choice continuations to start/not start with a space. If none, will do nothing
+    temperature: 0.5

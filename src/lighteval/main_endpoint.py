@@ -23,6 +23,7 @@ import os
 from typing import Optional
 
 import typer
+import yaml
 from typer import Argument, Option
 from typing_extensions import Annotated
 
@@ -42,8 +43,11 @@ HELP_PANNEL_NAME_4 = "Modeling Paramaters"
 @app.command(rich_help_panel="Evaluation Backends")
 def openai(
     # === general ===
-    model_name: Annotated[
-        str, Argument(help="The model name to evaluate (has to be available through the openai API.")
+    model_args: Annotated[
+        str,
+        Argument(
+            help="Model name as a string (has to be available through the openai API) or path to yaml config file (see examples/model_configs/base_model.yaml)"
+        ),
     ],
     tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
     # === Common parameters ===
@@ -93,8 +97,19 @@ def openai(
     Evaluate OPENAI models.
     """
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.models.model_config import OpenAIModelConfig
+
+    # from lighteval.models.model_input import GenerationParameters
+    from lighteval.models.endpoints.openai_model import OpenAIModelConfig
+    from lighteval.models.model_input import GenerationParameters
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
+
+    if model_args.endswith(".yaml"):
+        with open(model_args, "r") as f:
+            config = yaml.safe_load(f)["model"]
+        generation_parameters = GenerationParameters.from_dict(config)
+        model_config = OpenAIModelConfig(model=config["model_name"], generation_parameters=generation_parameters)
+    else:
+        model_config = OpenAIModelConfig(model=model_args)
 
     env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
     evaluation_tracker = EvaluationTracker(
@@ -107,7 +122,6 @@ def openai(
     )
 
     parallelism_manager = ParallelismManager.OPENAI
-    model_config = OpenAIModelConfig(model=model_name)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
@@ -198,12 +212,11 @@ def inference_endpoint(
     """
     Evaluate models using inference-endpoints as backend.
     """
-    import yaml
-
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.endpoints.endpoint_model import (
         InferenceEndpointModelConfig,
     )
+    from lighteval.models.model_input import GenerationParameters
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
     env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
@@ -226,6 +239,7 @@ def inference_endpoint(
     # Find a way to add this back
     # if config["base_params"].get("endpoint_name", None):
     #    return InferenceModelConfig(model=config["base_params"]["endpoint_name"])
+    generation_parameters = GenerationParameters.from_dict(config)
     all_params = {
         "model_name": config["base_params"].get("model_name", None),
         "endpoint_name": config["base_params"].get("endpoint_name", None),
@@ -240,7 +254,9 @@ def inference_endpoint(
         "namespace": config.get("instance", {}).get("namespace", None),
         "image_url": config.get("instance", {}).get("image_url", None),
         "env_vars": config.get("instance", {}).get("env_vars", None),
+        "generation_parameters": generation_parameters,
     }
+
     model_config = InferenceEndpointModelConfig(
         # We only initialize params which have a non default value
         **{k: v for k, v in all_params.items() if v is not None},
@@ -335,10 +351,9 @@ def tgi(
     """
     Evaluate models using TGI as backend.
     """
-    import yaml
-
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.models.model_config import TGIModelConfig
+    from lighteval.models.endpoints.tgi_model import TGIModelConfig
+    from lighteval.models.model_input import GenerationParameters
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
     env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
@@ -356,10 +371,13 @@ def tgi(
     with open(model_config_path, "r") as f:
         config = yaml.safe_load(f)["model"]
 
+    generation_parameters = GenerationParameters.from_dict(config)
+
     model_config = TGIModelConfig(
         inference_server_address=config["instance"]["inference_server_address"],
         inference_server_auth=config["instance"]["inference_server_auth"],
         model_id=config["instance"]["model_id"],
+        generation_parameters=generation_parameters,
     )
 
     pipeline_params = PipelineParameters(

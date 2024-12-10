@@ -36,13 +36,16 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,
+    GenerationConfig,
     GPTQConfig,
     PretrainedConfig,
 )
+from transformers.generation.utils import GenerateOutput
 from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     Batch,
     GenerativeMultiturnResponse,
@@ -151,6 +154,7 @@ class BaseModelConfig:
     trust_remote_code: bool = False
     use_chat_template: bool = False
     compile: bool = False
+    generation_parameters: GenerationParameters = None
 
     def __post_init__(self):
         # Making sure this parameter is a boolean
@@ -176,6 +180,9 @@ class BaseModelConfig:
             raise ValueError("Pretrained model name must be passed as string.")
         if not isinstance(self.device, str):
             raise ValueError("Current device must be passed as string.")
+
+        if not self.generation_parameters:
+            self.generation_parameters = GenerationParameters()
 
     def _init_configs(self, model_name: str, env_config: EnvConfig) -> PretrainedConfig:
         revision = self.revision
@@ -256,6 +263,8 @@ class BaseModel(LightevalModel):
         self.model_sha = config.get_model_sha()
 
         self.precision = _get_dtype(config.dtype, config=self._config)
+        self.generation_parameters = config.generation_parameters
+        self.generation_config_dict = self.generation_parameters.to_transformers_dict()
 
         if is_accelerate_available():
             model_size, _ = calculate_maximum_sizes(self.model)
@@ -631,25 +640,29 @@ class BaseModel(LightevalModel):
                     ],
                 ]
             )
-            model_outputs = self.model.generate(
-                **model_inputs,
-                max_new_tokens=max_generated_tokens,
-                stopping_criteria=stopping_criteria,
-                do_sample=False,
-                pad_token_id=self.tokenizer.pad_token_id
-                if self.tokenizer.pad_token_id
-                else self.tokenizer.eos_token_id,
+
+            generation_config = GenerationConfig.from_dict(self.generation_config_dict)
+            generation_config.update(
+                {
+                    "max_new_tokens": max_generated_tokens,
+                    "pad_token_id": self.tokenizer.pad_token_id
+                    if self.tokenizer.pad_token_id
+                    else self.tokenizer.eos_token_id,
+                    "eos_token_id": self.tokenizer.eos_token_id,
+                    "do_sample": False,
+                }
             )
-            model_outputs = model_outputs[0, model_inputs["input_ids"].size(1) :]
+
+            model_outputs: GenerateOutput = self.model.generate(
+                **model_inputs, stopping_criteria=stopping_criteria, generation_config=generation_config
+            )
+            model_outputs = model_outputs.sequences[0, model_inputs["input_ids"].size(1) :]
             model_generations = [model_outputs]
-            decoded_generation = self.tokenizer.decode(model_outputs)
-            for term in stop_tokens:
-                decoded_generation = decoded_generation.split(term)[0]
 
             input_tokens = [model_inputs["input_ids"]]
 
             for i, multi_turn_context in enumerate(request.context[1:]):
-                multi_turn_context = multi_turn_context.format(model_response=decoded_generation)
+                multi_turn_context = multi_turn_context.format(model_response=model_generations[-1])
 
                 model_inputs = self.tokenizer(
                     multi_turn_context,
@@ -671,17 +684,25 @@ class BaseModel(LightevalModel):
                     ]
                 )
 
-                model_outputs = self.model.generate(
+                generation_config = GenerationConfig.from_dict(self.generation_config_dict)
+                generation_config.update(
+                    {
+                        "max_new_tokens": max_generated_tokens,
+                        "pad_token_id": self.tokenizer.pad_token_id
+                        if self.tokenizer.pad_token_id
+                        else self.tokenizer.eos_token_id,
+                        "eos_token_id": self.tokenizer.eos_token_id,
+                        "do_sample": False,
+                    }
+                )
+
+                model_outputs: GenerateOutput = self.model.generate(
                     input_ids=model_inputs["input_ids"],
                     attention_mask=model_inputs["attention_mask"],
-                    max_new_tokens=max_generated_tokens,
                     stopping_criteria=stopping_criteria,
-                    do_sample=False,
-                    pad_token_id=self.tokenizer.pad_token_id
-                    if self.tokenizer.pad_token_id
-                    else self.tokenizer.eos_token_id,
+                    generation_config=generation_config,
                 )
-                model_outputs = model_outputs[0, model_inputs["input_ids"].size(1) :]
+                model_outputs = model_outputs.sequences[0, model_inputs["input_ids"].size(1) :]
                 model_generations.append(model_outputs)
                 decoded_generation = self.tokenizer.decode(model_outputs, skip_special_tokens=True)
                 input_tokens.append(model_inputs["input_ids"])
@@ -708,7 +729,7 @@ class BaseModel(LightevalModel):
                 results.append(
                     GenerativeMultiturnResponse(
                         result=answers,
-                        input_tokens=[],
+                        input_tokens=input_tokens,
                         generated_tokens=[],
                         truncated_tokens_count=0,
                         padded_tokens_count=0,
@@ -860,21 +881,28 @@ class BaseModel(LightevalModel):
         stopping_criteria = stop_sequences_criteria(self.tokenizer, stop_sequences=stop_tokens, batch=batch)
         batch_size, _ = batch.input_ids.shape
 
+        generation_config = GenerationConfig.from_dict(self.generation_config_dict)
+        generation_config.update(
+            {
+                "max_new_tokens": max_new_tokens,
+                "pad_token_id": self.tokenizer.pad_token_id
+                if self.tokenizer.pad_token_id
+                else self.tokenizer.eos_token_id,
+                "eos_token_id": self.tokenizer.eos_token_id,
+                "do_sample": do_sample,
+                "num_return_sequences": num_samples,
+                "output_logits": returns_logits,
+                "renormalize_logits": True,
+            }
+        )
+
         # Compute model generation
-        outputs = self.model.generate(
+        outputs: GenerateOutput = self.model.generate(
             input_ids=batch.input_ids,
             attention_mask=batch.input_mask,
-            max_new_tokens=max_new_tokens,
             stopping_criteria=stopping_criteria,
-            pad_token_id=self.tokenizer.pad_token_id if self.tokenizer.pad_token_id else self.tokenizer.eos_token_id,
-            return_dict_in_generate=True,
-            output_scores=True,
-            eos_token_id=self.tokenizer.eos_token_id,
-            do_sample=do_sample,
-            num_return_sequences=num_samples,
+            generation_config=generation_config,
         )
-        if returns_logits:
-            logits = self.model.compute_transition_scores(outputs.sequences, outputs.scores, normalize_logits=True)
         generations = outputs.sequences[:, batch.input_ids.size(1) :]
         generations = torch.reshape(generations, (batch_size, num_samples, -1))
         generations, len_gens = self.pad_and_gather(generations, num_samples=num_samples)
@@ -882,7 +910,7 @@ class BaseModel(LightevalModel):
 
         logits, len_logits = None, None
         if returns_logits:
-            logits, len_logits = self.pad_and_gather(logits)
+            logits, len_logits = self.pad_and_gather(outputs.logits)
             logits = logits.cpu().numpy()
 
         # We gather remaining info
