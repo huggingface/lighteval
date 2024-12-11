@@ -74,8 +74,6 @@ dependencies = [
     "scikit-learn",
     "spacy==3.7.2",
     "sacrebleu",
-    "unbabel-comet",
-    "gemba",
     "rouge_score==0.1.2",
     "sentencepiece>=0.1.99",
     "protobuf==3.20.*", # pinned for sentencepiece compat
@@ -101,7 +99,9 @@ docs = ["hf-doc-builder", "watchdog"]
 extended_tasks = [
   "langdetect", # ifeval
   "openai", # llm as a judge using openai models
-  "tiktoken"
+  "tiktoken",
+  "unbabel-comet",
+  "gemba",
 ]
 s3 = ["s3fs"]
 multilingual = [
