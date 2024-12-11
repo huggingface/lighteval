@@ -23,25 +23,18 @@
 import logging
 from typing import Union
 
-from lighteval.models.adapter_model import AdapterModel
-from lighteval.models.base_model import BaseModel
-from lighteval.models.delta_model import DeltaModel
-from lighteval.models.dummy_model import DummyModel
-from lighteval.models.endpoint_model import InferenceEndpointModel
-from lighteval.models.model_config import (
-    AdapterModelConfig,
-    BaseModelConfig,
-    DeltaModelConfig,
-    DummyModelConfig,
+from lighteval.models.dummy.dummy_model import DummyModel, DummyModelConfig
+from lighteval.models.endpoints.endpoint_model import (
+    InferenceEndpointModel,
     InferenceEndpointModelConfig,
     InferenceModelConfig,
-    OpenAIModelConfig,
-    TGIModelConfig,
-    VLLMModelConfig,
 )
-from lighteval.models.openai_model import OpenAIClient
-from lighteval.models.tgi_model import ModelClient
-from lighteval.models.vllm_model import VLLMModel
+from lighteval.models.endpoints.openai_model import OpenAIClient, OpenAIModelConfig
+from lighteval.models.endpoints.tgi_model import ModelClient, TGIModelConfig
+from lighteval.models.transformers.adapter_model import AdapterModel, AdapterModelConfig
+from lighteval.models.transformers.base_model import BaseModel, BaseModelConfig
+from lighteval.models.transformers.delta_model import DeltaModel, DeltaModelConfig
+from lighteval.models.vllm.vllm_model import VLLMModel, VLLMModelConfig
 from lighteval.utils.imports import (
     NO_TGI_ERROR_MSG,
     NO_VLLM_ERROR_MSG,
