@@ -256,8 +256,11 @@ class BaseModel(LightevalModel):
             logger.info(f"Using Data Parallelism, putting model on device {self._device}")
             self.model = self.model.to(self._device)
         if config.compile:
-            logger.info("Compiling the model")
-            self.model.model.compile()
+            try:
+                logger.info("Compiling the model")
+                self.model.model.compile()
+            except AttributeError as e:
+                logger.warn("Could not compile the model because: ", e)
 
         self.model_name = _simplify_name(config.pretrained)
         self.model_sha = config.get_model_sha()
@@ -883,17 +886,13 @@ class BaseModel(LightevalModel):
 
         generation_config = GenerationConfig.from_dict(self.generation_config_dict)
         generation_config.update(
-            {
-                "max_new_tokens": max_new_tokens,
-                "pad_token_id": self.tokenizer.pad_token_id
-                if self.tokenizer.pad_token_id
-                else self.tokenizer.eos_token_id,
-                "eos_token_id": self.tokenizer.eos_token_id,
-                "do_sample": do_sample,
-                "num_return_sequences": num_samples,
-                "output_logits": returns_logits,
-                "renormalize_logits": True,
-            }
+            max_new_tokens=max_new_tokens,
+            pad_token_id=self.tokenizer.pad_token_id if self.tokenizer.pad_token_id else self.tokenizer.eos_token_id,
+            eos_token_id=self.tokenizer.eos_token_id,
+            do_sample=do_sample,
+            num_return_sequences=num_samples,
+            output_logits=returns_logits,
+            renormalize_logits=True,
         )
 
         # Compute model generation

@@ -58,22 +58,23 @@ class GenerationParameters:
             }
         """
         if "generation" not in config_dict:
-            return cls
-        cls.early_stopping = config_dict["generation"].get("early_stopping", None)
-        cls.repetition_penalty = config_dict["generation"].get("repetition_penalty", None)
-        cls.frequency_penalty = config_dict["generation"].get("frequency_penalty", None)
-        cls.length_penalty = config_dict["generation"].get("length_penalty", None)
-        cls.presence_penalty = config_dict["generation"].get("presence_penalty", None)
-        cls.max_new_tokens = config_dict["generation"].get("max_new_tokens", None)
-        cls.min_new_tokens = config_dict["generation"].get("min_new_tokens", None)
-        cls.seed = config_dict["generation"].get("seed", None)
-        cls.stop_tokens = config_dict["generation"].get("stop_tokens", None)
-        cls.temperature = config_dict["generation"].get("temperature", None)
-        cls.top_k = config_dict["generation"].get("top_k", None)
-        cls.min_p = config_dict["generation"].get("min_p", None)
-        cls.top_p = config_dict["generation"].get("top_p", None)
-        cls.truncate_prompt = config_dict["generation"].get("truncate_prompt", None)
-        return cls
+            return GenerationParameters()
+        return GenerationParameters(
+            early_stopping=config_dict["generation"].get("early_stopping", None),
+            repetition_penalty=config_dict["generation"].get("repetition_penalty", None),
+            frequency_penalty=config_dict["generation"].get("frequency_penalty", None),
+            length_penalty=config_dict["generation"].get("length_penalty", None),
+            presence_penalty=config_dict["generation"].get("presence_penalty", None),
+            max_new_tokens=config_dict["generation"].get("max_new_tokens", None),
+            min_new_tokens=config_dict["generation"].get("min_new_tokens", None),
+            seed=config_dict["generation"].get("seed", None),
+            stop_tokens=config_dict["generation"].get("stop_tokens", None),
+            temperature=config_dict["generation"].get("temperature", None),
+            top_k=config_dict["generation"].get("top_k", None),
+            min_p=config_dict["generation"].get("min_p", None),
+            top_p=config_dict["generation"].get("top_p", None),
+            truncate_prompt=config_dict["generation"].get("truncate_prompt", None),
+        )
 
     def to_vllm_openai_dict(self) -> dict:
         """Selects relevant generation and sampling parameters for vllm and openai models.
