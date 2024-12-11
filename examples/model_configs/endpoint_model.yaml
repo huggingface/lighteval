@@ -4,7 +4,7 @@ model:
     # endpoint_name: "llama-2-7B-lighteval" # needs to be lower case without special characters
     # reuse_existing: true # defaults to false; if true, ignore all params in instance, and don't delete the endpoint after evaluation
     model_name: "meta-llama/Llama-2-7b-hf"
-    revision: "main"
+    # revision: "main"  # defaults to "main"
     dtype: "float16" # can be any of "awq", "eetq", "gptq", "4bit' or "8bit" (will use bitsandbytes), "bfloat16" or "float16"
   instance:
     accelerator: "gpu"
