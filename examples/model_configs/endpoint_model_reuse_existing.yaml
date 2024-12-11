@@ -1,0 +1,5 @@
+model:
+  base_params:
+    # Pass either model_name, or endpoint_name and true reuse_existing
+     endpoint_name: "llama-2-7B-lighteval" # needs to be lower case without special characters
+     reuse_existing: true # defaults to false; if true, ignore all params in instance, and don't delete the endpoint after evaluation
