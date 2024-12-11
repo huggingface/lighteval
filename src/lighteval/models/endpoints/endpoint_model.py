@@ -115,22 +115,8 @@ class InferenceEndpointModelConfig:
 
         with open(path, "r") as f:
             config = yaml.safe_load(f)["model"]
-        all_params = {
-            "model_name": config["base_params"].get("model_name", None),
-            "endpoint_name": config["base_params"].get("endpoint_name", None),
-            "model_dtype": config["base_params"].get("dtype", None),
-            "revision": config["base_params"].get("revision", None) or "main",
-            "reuse_existing": config["base_params"].get("reuse_existing"),
-            "accelerator": config.get("instance", {}).get("accelerator", None),
-            "region": config.get("instance", {}).get("region", None),
-            "vendor": config.get("instance", {}).get("vendor", None),
-            "instance_size": config.get("instance", {}).get("instance_size", None),
-            "instance_type": config.get("instance", {}).get("instance_type", None),
-            "namespace": config.get("instance", {}).get("namespace", None),
-            "image_url": config.get("instance", {}).get("image_url", None),
-            "env_vars": config.get("instance", {}).get("env_vars", None),
-        }
-        return cls(**{k: v for k, v in all_params.items() if v is not None})
+        config["base_params"]["model_dtype"] = config["base_params"].pop("dtype", None)
+        return cls(**config["base_params"], **config.get("instance", {}))
 
     def get_dtype_args(self) -> Dict[str, str]:
         if self.model_dtype is None:
