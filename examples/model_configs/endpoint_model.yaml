@@ -18,5 +18,3 @@ model:
     image_url: null # Optionally specify the docker image to use when launching the endpoint model. E.g., launching models with later releases of the TGI container with support for newer models.
     env_vars:
       null # Optional environment variables to include when launching the endpoint. e.g., `MAX_INPUT_LENGTH: 2048`
-  generation:
-    add_special_tokens: true
