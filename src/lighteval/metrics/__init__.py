@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import re
 
 from lighteval.metrics.metrics import Metric, MetricCategory
 from lighteval.models.model_output import ModelResponse
@@ -89,7 +88,6 @@ def apply_generative_metric(  # noqa: C901
     responses: list[list[ModelResponse]],
     formatted_docs: list[Doc],
     metrics: list[Metric],
-    output_regex: str = None,
 ):
     outputs = []
 
@@ -113,10 +111,7 @@ def apply_generative_metric(  # noqa: C901
         preds = []
 
         for pred_raw in preds_raw:
-            if output_regex is not None:
-                pred = next(iter(re.findall(output_regex, pred_raw)), "")
-            else:
-                pred = pred_raw
+            pred = pred_raw
             preds.append(pred)
 
         for metric in metrics:
