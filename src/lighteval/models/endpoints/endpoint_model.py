@@ -103,7 +103,7 @@ class InferenceEndpointModelConfig:
         # xor operator, one is None but not the other
         if (self.instance_size is None) ^ (self.instance_type is None):
             raise ValueError(
-                "When creating an inference endpoint, you need to specify explicitely both instance_type and instance_size, or none of them for autoscaling."
+                "When creating an inference endpoint, you need to specify explicitly both instance_type and instance_size, or none of them for autoscaling."
             )
 
         if not (self.endpoint_name is None) ^ int(self.model_name is None):
