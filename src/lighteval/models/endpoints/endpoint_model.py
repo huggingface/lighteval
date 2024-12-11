@@ -91,7 +91,7 @@ class InferenceModelConfig:
 class InferenceEndpointModelConfig:
     endpoint_name: str = None
     model_name: str = None
-    should_reuse_existing: bool = False
+    reuse_existing: bool = False
     accelerator: str = "gpu"
     model_dtype: str = None  # if empty, we use the default
     vendor: str = "aws"
@@ -102,7 +102,7 @@ class InferenceEndpointModelConfig:
     endpoint_type: str = "protected"
     add_special_tokens: bool = True
     revision: str = "main"
-    namespace: str = None  # The namespace under which to launch the endopint. Defaults to the current user's namespace
+    namespace: str = None  # The namespace under which to launch the endpoint. Defaults to the current user's namespace
     image_url: str = None
     env_vars: dict = None
     generation_parameters: GenerationParameters = None
@@ -146,7 +146,7 @@ class InferenceEndpointModel(LightevalModel):
     def __init__(  # noqa: C901
         self, config: Union[InferenceEndpointModelConfig, InferenceModelConfig], env_config: EnvConfig
     ) -> None:
-        self.reuse_existing = getattr(config, "should_reuse_existing", True)
+        self.reuse_existing = getattr(config, "reuse_existing", False)
         self._max_length = None
         self.endpoint = None
         self.model_name = None
@@ -182,7 +182,7 @@ class InferenceEndpointModel(LightevalModel):
             ):
                 try:
                     if self.endpoint is None:  # Endpoint does not exist yet locally
-                        if not config.should_reuse_existing:  # New endpoint
+                        if not config.reuse_existing:  # New endpoint
                             logger.info("Creating endpoint.")
                             self.endpoint: InferenceEndpoint = create_inference_endpoint(
                                 name=endpoint_name,
@@ -250,7 +250,7 @@ class InferenceEndpointModel(LightevalModel):
                     # The endpoint actually already exists, we'll spin it up instead of trying to create a new one
                     if "409 Client Error: Conflict for url:" in str(e):
                         config.endpoint_name = endpoint_name
-                        config.should_reuse_existing = True
+                        config.reuse_existing = True
                     # Requested resources are not available
                     elif "Bad Request: Compute instance not available yet" in str(e):
                         logger.error(
