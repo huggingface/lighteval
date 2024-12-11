@@ -1007,4 +1007,5 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
     Language.WESTERN_FRISIAN: TranslationLiterals(language=Language.WESTERN_FRISIAN),
     Language.YIDDISH: TranslationLiterals(language=Language.YIDDISH),
     Language.YORUBA: TranslationLiterals(language=Language.YORUBA),
+    Language.ZULU: TranslationLiterals(language=Language.ZULU),
 }

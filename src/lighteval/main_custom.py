@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import os
+from dataclasses import dataclass
 from typing import Optional
 
 import typer
@@ -37,6 +38,12 @@ HELP_PANNEL_NAME_1 = "Common Paramaters"
 HELP_PANNEL_NAME_2 = "Logging Parameters"
 HELP_PANNEL_NAME_3 = "Debug Paramaters"
 HELP_PANNEL_NAME_4 = "Modeling Paramaters"
+
+
+@dataclass
+class CustomModelConfig:
+    model: str
+    model_definition_file_path: str
 
 
 @app.command(rich_help_panel="Evaluation Backends")
@@ -98,7 +105,6 @@ def custom(
     Evaluate custom models (can be anything).
     """
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.models.model_config import CustomModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
     env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
