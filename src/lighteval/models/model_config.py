@@ -245,6 +245,12 @@ class VLLMModelConfig:
 
 
 @dataclass
+class CustomModelConfig:
+    model: str
+    model_definition_file_path: str
+
+
+@dataclass
 class OpenAIModelConfig:
     model: str
 

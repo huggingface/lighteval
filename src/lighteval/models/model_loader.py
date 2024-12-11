@@ -23,6 +23,7 @@
 import logging
 from typing import Union
 
+from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.adapter_model import AdapterModel
 from lighteval.models.base_model import BaseModel
 from lighteval.models.delta_model import DeltaModel
@@ -31,6 +32,7 @@ from lighteval.models.endpoint_model import InferenceEndpointModel
 from lighteval.models.model_config import (
     AdapterModelConfig,
     BaseModelConfig,
+    CustomModelConfig,
     DeltaModelConfig,
     DummyModelConfig,
     InferenceEndpointModelConfig,
@@ -64,6 +66,7 @@ def load_model(  # noqa: C901
         InferenceEndpointModelConfig,
         DummyModelConfig,
         VLLMModelConfig,
+        CustomModelConfig,
         OpenAIModelConfig,
     ],
     env_config: EnvConfig,
@@ -99,6 +102,9 @@ def load_model(  # noqa: C901
     if isinstance(config, VLLMModelConfig):
         return load_model_with_accelerate_or_default(config=config, env_config=env_config)
 
+    if isinstance(config, CustomModelConfig):
+        return load_custom_model(config=config, env_config=env_config)
+
     if isinstance(config, OpenAIModelConfig):
         return load_openai_model(config=config, env_config=env_config)
 
@@ -111,6 +117,33 @@ def load_model_with_tgi(config: TGIModelConfig):
     model = ModelClient(
         address=config.inference_server_address, auth_token=config.inference_server_auth, model_id=config.model_id
     )
+    return model
+
+
+def load_custom_model(config: CustomModelConfig, env_config: EnvConfig):
+    import importlib.util
+
+    # Load the Python file
+    spec = importlib.util.spec_from_file_location("custom_model_module", config.model_definition_file_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Could not load file: {config.model_definition_file_path}")
+
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    # Find the first class that inherits from LightevalModel
+    model_class = None
+    for attr_name in dir(module):
+        attr = getattr(module, attr_name)
+        if isinstance(attr, type) and issubclass(attr, LightevalModel) and attr != LightevalModel:
+            model_class = attr
+            break
+
+    if model_class is None:
+        raise ValueError(f"No class inheriting from LightevalModel found in {config.model_definition_file_path}")
+
+    model = model_class(config, env_config)
+
     return model
 
 
