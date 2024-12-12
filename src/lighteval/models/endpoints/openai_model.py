@@ -24,13 +24,14 @@ import logging
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 from typing import Optional
 
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel
-from lighteval.models.endpoint_model import ModelInfo
+from lighteval.models.endpoints.endpoint_model import ModelInfo
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
@@ -56,6 +57,11 @@ if is_openai_available():
 
     logging.getLogger("openai").setLevel(logging.ERROR)
     logging.getLogger("httpx").setLevel(logging.ERROR)
+
+
+@dataclass
+class OpenAIModelConfig:
+    model: str
 
 
 class OpenAIClient(LightevalModel):

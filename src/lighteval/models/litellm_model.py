@@ -24,6 +24,7 @@ import logging
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 from typing import Optional
 
 from tqdm import tqdm
@@ -56,6 +57,11 @@ if is_litellm_available():
     logging.getLogger("LiteLLM").handlers.clear()
 
     litellm.cache = Cache(type="disk")
+
+
+@dataclass
+class LiteLLMModelConfig:
+    model: str
 
 
 class LiteLLMClient(LightevalModel):

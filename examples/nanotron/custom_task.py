@@ -82,8 +82,6 @@ TASKS_TABLE = [
         generation_size=5,
         metric=[Metrics.loglikelihood_acc_single_token],
         stop_sequence=["\n"],
-        output_regex=None,
-        frozen=False,
     ),
     LightevalTaskConfig(
         name="mmlu:anatomy_signs",
@@ -98,7 +96,5 @@ TASKS_TABLE = [
         generation_size=5,
         metric=[Metrics.loglikelihood_acc_single_token],
         stop_sequence=["\n"],
-        output_regex=None,
-        frozen=False,
     ),
 ]

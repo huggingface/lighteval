@@ -107,7 +107,9 @@ def accelerate(  # noqa C901
     from accelerate import Accelerator, InitProcessGroupKwargs
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.models.model_config import AdapterModelConfig, BaseModelConfig, BitsAndBytesConfig, DeltaModelConfig
+    from lighteval.models.transformers.adapter_model import AdapterModelConfig
+    from lighteval.models.transformers.base_model import BaseModelConfig, BitsAndBytesConfig
+    from lighteval.models.transformers.delta_model import DeltaModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
     accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
@@ -167,11 +169,11 @@ def accelerate(  # noqa C901
         # Keeping only non null params
         args_dict = {k: v for k, v in args_dict.items() if v is not None}
 
-        if config["merged_weights"]["delta_weights"]:
+        if config["merged_weights"].get("delta_weights", False):
             if config["merged_weights"]["base_model"] is None:
                 raise ValueError("You need to specify a base model when using delta weights")
             model_config = DeltaModelConfig(**args_dict)
-        elif config["merged_weights"]["adapter_weights"]:
+        elif config["merged_weights"].get("adapter_weights", False):
             if config["merged_weights"]["base_model"] is None:
                 raise ValueError("You need to specify a base model when using adapter weights")
             model_config = AdapterModelConfig(**args_dict)
