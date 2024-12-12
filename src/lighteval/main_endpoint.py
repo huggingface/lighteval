@@ -93,7 +93,7 @@ def openai(
     Evaluate OPENAI models.
     """
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.models.model_config import OpenAIModelConfig
+    from lighteval.models.endpoints.openai_model import OpenAIModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
     env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
@@ -198,10 +198,9 @@ def inference_endpoint(
     """
     Evaluate models using inference-endpoints as backend.
     """
-    import yaml
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.models.model_config import (
+    from lighteval.models.endpoints.endpoint_model import (
         InferenceEndpointModelConfig,
     )
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
@@ -220,31 +219,11 @@ def inference_endpoint(
 
     parallelism_manager = ParallelismManager.NONE  # since we're using inference endpoints in remote
 
-    with open(model_config_path, "r") as f:
-        config = yaml.safe_load(f)["model"]
-
     # Find a way to add this back
     # if config["base_params"].get("endpoint_name", None):
     #    return InferenceModelConfig(model=config["base_params"]["endpoint_name"])
-    all_params = {
-        "model_name": config["base_params"].get("model_name", None),
-        "endpoint_name": config["base_params"].get("endpoint_name", None),
-        "model_dtype": config["base_params"].get("dtype", None),
-        "revision": config["base_params"].get("revision", None) or "main",
-        "should_reuse_existing": config["base_params"].get("should_reuse_existing"),
-        "accelerator": config.get("instance", {}).get("accelerator", None),
-        "region": config.get("instance", {}).get("region", None),
-        "vendor": config.get("instance", {}).get("vendor", None),
-        "instance_size": config.get("instance", {}).get("instance_size", None),
-        "instance_type": config.get("instance", {}).get("instance_type", None),
-        "namespace": config.get("instance", {}).get("namespace", None),
-        "image_url": config.get("instance", {}).get("image_url", None),
-        "env_vars": config.get("instance", {}).get("env_vars", None),
-    }
-    model_config = InferenceEndpointModelConfig(
-        # We only initialize params which have a non default value
-        **{k: v for k, v in all_params.items() if v is not None},
-    )
+
+    model_config = InferenceEndpointModelConfig.from_path(model_config_path)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
@@ -338,7 +317,7 @@ def tgi(
     import yaml
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.models.model_config import TGIModelConfig
+    from lighteval.models.endpoints.tgi_model import TGIModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
     env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
