@@ -114,6 +114,8 @@ def load_model_with_tgi(config: TGIModelConfig):
 
 
 def load_custom_model(config: CustomModelConfig, env_config: EnvConfig):
+    logger.warning(f"Executing custom model code loaded from {config.model_definition_file_path}.")
+
     import importlib.util
 
     # Load the Python file
