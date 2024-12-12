@@ -92,7 +92,7 @@ class PromptManager:
             formatted_doc (Doc): Formatted document.
 
         Returns:
-            str: Class of the
+            str: Class of the fewshot document
         """
         return formatted_doc.fewshot_sorting_class or PromptManager.doc_to_target(formatted_doc)
 
@@ -356,12 +356,13 @@ class FewShotSampler:
         self._fewshot_cache[variance_seed] = fewshotpool  # Store few shot examples
 
     def _init_fewshot_sampling_random(self, variance_seed: int):
-        fewshotpool = self.task.fewshot_docs()
+        fewshotpool = list(self.task.fewshot_docs())
         if variance_seed == 0:
             self._fewshot_cache[variance_seed] = fewshotpool
         else:  # we shuffle
             rnd = random.Random(variance_seed)
-            self._fewshot_cache[variance_seed] = rnd.shuffle(fewshotpool)
+            rnd.shuffle(fewshotpool)
+            self._fewshot_cache[variance_seed] = fewshotpool
 
     def _init_fewshot_sampling_balanced(
         self,
