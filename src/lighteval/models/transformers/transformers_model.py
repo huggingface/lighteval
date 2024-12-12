@@ -36,7 +36,6 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,
-    GenerationConfig,
     GPTQConfig,
     PretrainedConfig,
 )
@@ -656,7 +655,7 @@ class TransformersModel(LightevalModel):
                 ]
             )
 
-            generation_config = GenerationConfig.from_dict(self.generation_config_dict)
+            generation_config = self.generation_config_dict.copy()
             generation_config.update(
                 {
                     "max_new_tokens": max_generated_tokens,
@@ -669,7 +668,7 @@ class TransformersModel(LightevalModel):
             )
 
             model_outputs: GenerateOutput = self.model.generate(
-                **model_inputs, stopping_criteria=stopping_criteria, generation_config=generation_config
+                **model_inputs, stopping_criteria=stopping_criteria, **generation_config
             )
             model_outputs = model_outputs.sequences[0, model_inputs["input_ids"].size(1) :]
             model_generations = [model_outputs]
@@ -699,7 +698,7 @@ class TransformersModel(LightevalModel):
                     ]
                 )
 
-                generation_config = GenerationConfig.from_dict(self.generation_config_dict)
+                generation_config = self.generation_config_dict.copy()
                 generation_config.update(
                     {
                         "max_new_tokens": max_generated_tokens,
@@ -715,7 +714,7 @@ class TransformersModel(LightevalModel):
                     input_ids=model_inputs["input_ids"],
                     attention_mask=model_inputs["attention_mask"],
                     stopping_criteria=stopping_criteria,
-                    generation_config=generation_config,
+                    **generation_config,
                 )
                 model_outputs = model_outputs.sequences[0, model_inputs["input_ids"].size(1) :]
                 model_generations.append(model_outputs)
@@ -896,7 +895,7 @@ class TransformersModel(LightevalModel):
         stopping_criteria = stop_sequences_criteria(self.tokenizer, stop_sequences=stop_tokens, batch=batch)
         batch_size, _ = batch.input_ids.shape
 
-        generation_config = GenerationConfig.from_dict(self.generation_config_dict)
+        generation_config = self.generation_config_dict.copy()
         generation_config.update(
             max_new_tokens=max_new_tokens,
             pad_token_id=self.tokenizer.pad_token_id if self.tokenizer.pad_token_id else self.tokenizer.eos_token_id,
@@ -912,7 +911,7 @@ class TransformersModel(LightevalModel):
             input_ids=batch.input_ids,
             attention_mask=batch.input_mask,
             stopping_criteria=stopping_criteria,
-            generation_config=generation_config,
+            **generation_config,
         )
         generations = outputs.sequences[:, batch.input_ids.size(1) :]
         generations = torch.reshape(generations, (batch_size, num_samples, -1))

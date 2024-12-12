@@ -107,6 +107,9 @@ class GenerationParameters:
         """Selects relevant generation and sampling parameters for transformers models.
         Doc: https://huggingface.co/docs/transformers/v4.46.3/en/main_classes/text_generation#transformers.GenerationConfig
 
+        Note: We actually don't use the GenerationConfig object itself because it has a huge number of parameters automatically
+        initialized, to a config which slows down evals insanely.
+
         Returns:
             dict: The parameters to create a transformers.GenerationConfig in the model config.
         """
@@ -114,7 +117,7 @@ class GenerationParameters:
         args = {
             "max_new_tokens": self.max_new_tokens,
             "min_new_tokens": self.min_new_tokens,
-            "early_stopping": self.early_stopping,
+            "early_stopping": self.early_stopping or False,
             "stop_strings": self.stop_tokens,
             "temperature": self.temperature,
             "top_k": self.top_k,
@@ -125,8 +128,6 @@ class GenerationParameters:
             "output_scores": True,
             "return_dict_in_generate": True,
         }
-        # Even though we only use the dict representation of the GenerationConfig
-        # we still create the object as it uses validation steps
         return {k: v for k, v in args.items() if v is not None}
 
     def to_tgi_inferenceendpoint_dict(self) -> dict:
