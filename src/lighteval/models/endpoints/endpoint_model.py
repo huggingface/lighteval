@@ -103,11 +103,20 @@ class InferenceEndpointModelConfig:
         # xor operator, one is None but not the other
         if (self.instance_size is None) ^ (self.instance_type is None):
             raise ValueError(
-                "When creating an inference endpoint, you need to specify explicitely both instance_type and instance_size, or none of them for autoscaling."
+                "When creating an inference endpoint, you need to specify explicitly both instance_type and instance_size, or none of them for autoscaling."
             )
 
         if not (self.endpoint_name is None) ^ int(self.model_name is None):
             raise ValueError("You need to set either endpoint_name or model_name (but not both).")
+
+    @classmethod
+    def from_path(cls, path: str) -> "InferenceEndpointModelConfig":
+        import yaml
+
+        with open(path, "r") as f:
+            config = yaml.safe_load(f)["model"]
+        config["base_params"]["model_dtype"] = config["base_params"].pop("dtype", None)
+        return cls(**config["base_params"], **config.get("instance", {}))
 
     def get_dtype_args(self) -> Dict[str, str]:
         if self.model_dtype is None:
