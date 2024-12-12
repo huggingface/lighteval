@@ -107,7 +107,9 @@ def accelerate(  # noqa C901
     from accelerate import Accelerator, InitProcessGroupKwargs
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.models.model_config import AdapterModelConfig, BaseModelConfig, BitsAndBytesConfig, DeltaModelConfig
+    from lighteval.models.transformers.adapter_model import AdapterModelConfig
+    from lighteval.models.transformers.base_model import BaseModelConfig, BitsAndBytesConfig
+    from lighteval.models.transformers.delta_model import DeltaModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
     accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])

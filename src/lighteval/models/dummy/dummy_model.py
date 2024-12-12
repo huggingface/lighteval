@@ -23,12 +23,12 @@
 # inspired by https://github.com/EleutherAI/lm-evaluation-harness/blob/main/lm_eval/models/dummy.py
 
 import random
+from dataclasses import dataclass
 from typing import Optional
 
 from transformers import AutoTokenizer
 
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_config import DummyModelConfig
 from lighteval.models.model_output import GenerativeResponse, LoglikelihoodResponse, LoglikelihoodSingleTokenResponse
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
@@ -37,6 +37,11 @@ from lighteval.tasks.requests import (
     LoglikelihoodSingleTokenRequest,
 )
 from lighteval.utils.utils import EnvConfig
+
+
+@dataclass
+class DummyModelConfig:
+    seed: int = 42
 
 
 class DummyModel(LightevalModel):

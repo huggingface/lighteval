@@ -41,7 +41,7 @@ from lighteval.metrics import (
     apply_target_perplexity_metric,
 )
 from lighteval.metrics.metrics import Metric, MetricCategory, Metrics
-from lighteval.models.base_model import BaseModel
+from lighteval.models.transformers.base_model import BaseModel
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import (
     Doc,
@@ -86,8 +86,6 @@ class LightevalTaskConfig:
         truncated_num_docs (bool): Whether less than the total number of documents were used
         trust_dataset (bool): Whether to trust the dataset at execution or not
         version (int): The version of the task. Defaults to 0. Can be increased if the underlying dataset or the prompt changes.
-        output_regex (str)
-        frozen (bool)
     """
 
     name: str
@@ -112,7 +110,6 @@ class LightevalTaskConfig:
     generation_size: Optional[int] = None
     generation_grammar: Optional[TextGenerationInputGrammarType] = None
     stop_sequence: Optional[ListLike[str]] = None
-    output_regex: Optional[str] = None
     num_samples: Optional[list[int]] = None
 
     suite: ListLike[str] = field(default_factory=lambda: ["custom"])
@@ -123,9 +120,6 @@ class LightevalTaskConfig:
     must_remove_duplicate_docs: bool = False
 
     version: int = 0
-
-    # Currently unused
-    frozen: bool = False
 
     def __post_init__(self):
         # If we got a Metrics enums instead of a Metric, we convert
