@@ -75,9 +75,17 @@ SORTED_INSTANCE_SIZES = [  # sorted by incremental overall RAM (to load models)
 
 
 @dataclass
-class InferenceModelConfig:
+class ServerlessEndpointModelConfig:
     model: str
     add_special_tokens: bool = True
+
+    @classmethod
+    def from_path(cls, path: str) -> "InferenceEndpointModelConfig":
+        import yaml
+
+        with open(path, "r") as f:
+            config = yaml.safe_load(f)["model"]
+        return cls(**config["base_params"])
 
 
 @dataclass
@@ -142,7 +150,7 @@ class InferenceEndpointModel(LightevalModel):
     """
 
     def __init__(  # noqa: C901
-        self, config: Union[InferenceEndpointModelConfig, InferenceModelConfig], env_config: EnvConfig
+        self, config: Union[InferenceEndpointModelConfig, ServerlessEndpointModelConfig], env_config: EnvConfig
     ) -> None:
         self.reuse_existing = getattr(config, "reuse_existing", False)
         self._max_length = None
