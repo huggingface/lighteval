@@ -20,12 +20,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import os
-from dataclasses import dataclass
 from typing import Optional
 
 import typer
 from typer import Argument, Option
 from typing_extensions import Annotated
+
+from lighteval.models.custom.custom_model import CustomModelConfig
 
 
 app = typer.Typer()
@@ -38,12 +39,6 @@ HELP_PANNEL_NAME_1 = "Common Paramaters"
 HELP_PANNEL_NAME_2 = "Logging Parameters"
 HELP_PANNEL_NAME_3 = "Debug Paramaters"
 HELP_PANNEL_NAME_4 = "Modeling Paramaters"
-
-
-@dataclass
-class CustomModelConfig:
-    model: str
-    model_definition_file_path: str
 
 
 @app.command(rich_help_panel="Evaluation Backends")

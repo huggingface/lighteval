@@ -23,8 +23,8 @@
 import logging
 from typing import Union
 
-from lighteval.main_custom import CustomModelConfig
 from lighteval.models.abstract_model import LightevalModel
+from lighteval.models.custom.custom_model import CustomModelConfig
 from lighteval.models.dummy.dummy_model import DummyModel, DummyModelConfig
 from lighteval.models.endpoints.endpoint_model import (
     InferenceEndpointModel,
