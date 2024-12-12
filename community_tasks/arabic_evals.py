@@ -413,9 +413,7 @@ ALGHAFA_SUBSETS = [
 def alghafa_pfn(line, task_name: str = None):
     question = line["query"]
     answer_index = int(line["label"])
-    # Dynamically determining the choices by excluding '__few_shots', 'query' and 'label'
-    choices_keys = [key for key in line.keys() if key not in ["query", "label", "__few_shots"]]
-    choices = [line[key] for key in choices_keys]
+    choices = [line[key] for key in ["sol1", "sol2", "sol3", "sol4"]]
 
     instruction = "الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح\n\n"
     query = f"{instruction}السؤال: {question}\n"
