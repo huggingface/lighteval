@@ -109,8 +109,8 @@ def accelerate(  # noqa C901
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.model_input import GenerationParameters
     from lighteval.models.transformers.adapter_model import AdapterModelConfig
-    from lighteval.models.transformers.base_model import BaseModelConfig, BitsAndBytesConfig
     from lighteval.models.transformers.delta_model import DeltaModelConfig
+    from lighteval.models.transformers.transformers_model import BitsAndBytesConfig, TransformersModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
     accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
@@ -183,13 +183,13 @@ def accelerate(  # noqa C901
         elif config["merged_weights"]["base_model"] not in ["", None]:
             raise ValueError("You can't specify a base model if you are not using delta/adapter weights")
         else:
-            model_config = BaseModelConfig(**args_dict)
+            model_config = TransformersModelConfig(**args_dict)
     else:
         model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
         model_args_dict["accelerator"] = accelerator
         model_args_dict["use_chat_template"] = use_chat_template
         model_args_dict["compile"] = bool(model_args_dict["compile"]) if "compile" in model_args_dict else False
-        model_config = BaseModelConfig(**model_args_dict)
+        model_config = TransformersModelConfig(**model_args_dict)
 
     pipeline = Pipeline(
         tasks=tasks,

@@ -86,7 +86,7 @@ STARTING_BATCH_SIZE = 512
 
 
 @dataclass
-class BaseModelConfig:
+class TransformersModelConfig:
     """
     Base configuration class for models.
 
@@ -228,11 +228,21 @@ class BaseModelConfig:
         return _get_model_sha(repo_id=self.pretrained, revision=self.revision)
 
 
-class BaseModel(LightevalModel):
+@dataclass
+class BaseModelConfig(TransformersModelConfig):
+    def __post_init__(self):
+        super()
+
+        logger.warning(
+            "Careful, BaseModelConfig is deprecated and will be removed, you should use TransformersModelConfig instead!"
+        )
+
+
+class TransformersModel(LightevalModel):
     def __init__(
         self,
         env_config: EnvConfig,
-        config: BaseModelConfig,
+        config: TransformersModelConfig,
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self._config = config.init_configs(env_config)
@@ -403,7 +413,9 @@ class BaseModel(LightevalModel):
             )
         return model_parallel, max_mem_this_process, device_map
 
-    def _create_auto_model(self, config: BaseModelConfig, env_config: EnvConfig) -> transformers.PreTrainedModel:
+    def _create_auto_model(
+        self, config: TransformersModelConfig, env_config: EnvConfig
+    ) -> transformers.PreTrainedModel:
         """
         Creates an instance of the pretrained HF model.
 
@@ -440,7 +452,7 @@ class BaseModel(LightevalModel):
         return model
 
     def _create_auto_tokenizer(
-        self, config: BaseModelConfig, env_config: EnvConfig
+        self, config: TransformersModelConfig, env_config: EnvConfig
     ) -> transformers.PreTrainedTokenizer:
         return self._create_auto_tokenizer_with_name(
             model_name=config.pretrained,
@@ -1322,6 +1334,15 @@ class BaseModel(LightevalModel):
                 del batch_padded
 
         return dataset.get_original_order(res)
+
+
+class BaseModel(TransformersModel):
+    def __post_init__(self):
+        super()
+
+        logger.warning(
+            "Careful, the BaseModel name is deprecated and will be removed, you should use TransformersModel instead!"
+        )
 
 
 class MultiTokenEOSCriteria(transformers.StoppingCriteria):
