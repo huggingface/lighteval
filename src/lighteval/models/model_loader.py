@@ -113,6 +113,15 @@ def load_model_with_tgi(config: TGIModelConfig):
     return model
 
 
+def load_openai_model(config: OpenAIModelConfig, env_config: EnvConfig):
+    if not is_openai_available():
+        raise ImportError()
+
+    model = OpenAIClient(config, env_config)
+
+    return model
+
+
 def load_custom_model(config: CustomModelConfig, env_config: EnvConfig):
     logger.warning(f"Executing custom model code loaded from {config.model_definition_file_path}.")
 
@@ -138,15 +147,6 @@ def load_custom_model(config: CustomModelConfig, env_config: EnvConfig):
         raise ValueError(f"No class inheriting from LightevalModel found in {config.model_definition_file_path}")
 
     model = model_class(config, env_config)
-
-    return model
-
-
-def load_openai_model(config: OpenAIModelConfig, env_config: EnvConfig):
-    if not is_openai_available():
-        raise ImportError()
-
-    model = OpenAIClient(config, env_config)
 
     return model
 
