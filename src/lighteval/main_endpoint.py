@@ -314,7 +314,6 @@ def tgi(
     """
     Evaluate models using TGI as backend.
     """
-    import yaml
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.endpoints.tgi_model import TGIModelConfig
@@ -332,14 +331,8 @@ def tgi(
 
     # TODO (nathan): better handling of model_args
     parallelism_manager = ParallelismManager.TGI
-    with open(model_config_path, "r") as f:
-        config = yaml.safe_load(f)["model"]
 
-    model_config = TGIModelConfig(
-        inference_server_address=config["instance"]["inference_server_address"],
-        inference_server_auth=config["instance"]["inference_server_auth"],
-        model_id=config["instance"]["model_id"],
-    )
+    model_config = TGIModelConfig.from_path(model_config_path)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
