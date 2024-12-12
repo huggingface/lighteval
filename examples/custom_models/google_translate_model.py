@@ -20,9 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import hashlib
 import logging
+import os
 from typing import Optional
 
+import diskcache
 from tqdm import tqdm
 from transformers import AutoTokenizer
 
@@ -67,6 +70,29 @@ class GoogleTranslateClient(LightevalModel):
 
         self.translator = Translator()
 
+        # Initialize disk cache
+        cache_dir = os.path.join(os.getcwd(), ".translation_cache")
+        self.cache = diskcache.Cache(cache_dir)
+
+    def _get_cache_key(self, context: str, src_lang: str, tgt_lang: str) -> str:
+        """Generate a unique cache key for the translation request."""
+        key_string = f"{context}|{src_lang}|{tgt_lang}"
+        return hashlib.md5(key_string.encode()).hexdigest()
+
+    def _translate_with_cache(self, context: str, src_lang: str, tgt_lang: str) -> str:
+        """Translate text using cache if available, otherwise call Google Translate."""
+        cache_key = self._get_cache_key(context, src_lang, tgt_lang)
+
+        # Try to get from cache
+        if cache_key in self.cache:
+            return self.cache[cache_key]
+
+        # If not in cache, translate and store
+        translation = self.translator.translate(context, src=src_lang, dest=tgt_lang)
+        result = translation.text
+        self.cache[cache_key] = result
+        return result
+
     def greedy_until(
         self,
         requests: list[GreedyUntilRequest],
@@ -74,10 +100,10 @@ class GoogleTranslateClient(LightevalModel):
     ) -> list[GenerativeResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
+        Results are cached to disk to avoid repeated translations.
 
         Args:
             requests (list[Request]): list of requests containing the context and ending conditions.
-            disable_tqdm (bool, optional): Whether to disable the progress bar. Defaults to False.
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
 
         Returns:
@@ -97,11 +123,13 @@ class GoogleTranslateClient(LightevalModel):
             disable=False,  # self.disable_tqdm,
         ):
             for r in tqdm(dataset, desc="Batch", position=1, disable=False):
-                context = r.context.replace("French phrase: ", "")
-                # TODO: Get src and dest from request
-                translation = self.translator.translate(context, src="fr", dest="de")
+                # Extract source and target languages from task name
+                # Format is like "community|sdst-text_level:de-fr|0"
+                src_lang, tgt_lang = r.task_name.split("|")[1].split(":")[-1].split("-")
 
-                result = translation.text
+                context = r.context.replace("French phrase: ", "")
+                result = self._translate_with_cache(context, src_lang, tgt_lang)
+
                 cur_response = GenerativeResponse(
                     result=result,
                     logits=None,
