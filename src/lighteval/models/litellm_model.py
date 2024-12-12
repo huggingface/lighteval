@@ -32,7 +32,7 @@ from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset
 from lighteval.models.abstract_model import LightevalModel
-from lighteval.models.endpoint_model import ModelInfo
+from lighteval.models.endpoints.endpoint_model import ModelInfo
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
