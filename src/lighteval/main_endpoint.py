@@ -46,7 +46,7 @@ def openai(
     model_args: Annotated[
         str,
         Argument(
-            help="Model name as a string (has to be available through the openai API) or path to yaml config file (see examples/model_configs/base_model.yaml)"
+            help="Model name as a string (has to be available through the openai API) or path to yaml config file (see examples/model_configs/transformers_model.yaml)"
         ),
     ],
     tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],

@@ -40,7 +40,7 @@ def vllm(
     model_args: Annotated[
         str,
         Argument(
-            help="Model arguments in the form key1=value1,key2=value2,... or path to yaml config file (see examples/model_configs/base_model.yaml)"
+            help="Model arguments in the form key1=value1,key2=value2,... or path to yaml config file (see examples/model_configs/transformers_model.yaml)"
         ),
     ],
     tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
