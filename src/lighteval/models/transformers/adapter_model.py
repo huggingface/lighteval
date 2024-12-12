@@ -84,6 +84,18 @@ class AdapterModel(BaseModel):
             base = AutoModelForCausalLM.from_pretrained(
                 config.base_model, torch_dtype=torch.float16, low_cpu_mem_usage=True, token=env_config.token
             )
+            # resize model for adapters with added tokens
+            token_diff = len(self._tokenizer) - base.config.vocab_size
+            if token_diff != 0:
+                if token_diff > 0:
+                    logger.info(
+                        f"You're using the adapter model's tokenizer, which has more tokens than the base model. Adding {token_diff} token(s)."
+                    )
+                else:
+                    logger.info(
+                        f"You're using the adapter model's tokenizer, which has fewer tokens than the base model. Removing {abs(token_diff)} token(s)."
+                    )
+                base.resize_token_embeddings(len(self._tokenizer))
             # Should pass revision
             model = PeftModel.from_pretrained(base, adapter_weights)
             model = model.merge_and_unload()
