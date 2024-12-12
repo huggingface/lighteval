@@ -127,7 +127,7 @@ class GoogleTranslateClient(LightevalModel):
                 # Format is like "community|sdst-text_level:de-fr|0"
                 src_lang, tgt_lang = r.task_name.split("|")[1].split(":")[-1].split("-")
 
-                context = r.context.replace("French phrase: ", "")
+                context = r.context.replace(f"{src_lang.upper()}: ", "").replace(f"\n{tgt_lang.upper()}: ", "")
                 result = self._translate_with_cache(context, src_lang, tgt_lang)
 
                 cur_response = GenerativeResponse(
