@@ -109,8 +109,6 @@ class CustomArabicMMLUTask(LightevalTaskConfig):
             suite=["community"],
             generation_size=-1,
             stop_sequence=None,
-            output_regex=None,
-            frozen=False,
             trust_dataset=True,
             version=0,
         )
@@ -174,8 +172,6 @@ class CustomArabicMMLUHTTask(LightevalTaskConfig):
             suite=["community"],
             generation_size=-1,
             stop_sequence=None,
-            output_regex=None,
-            frozen=False,
             trust_dataset=True,
             version=0,
         )
@@ -241,8 +237,6 @@ class CustomArabicMMLUMTTask(LightevalTaskConfig):
             suite=["community"],
             generation_size=-1,
             stop_sequence=None,
-            output_regex=None,
-            frozen=False,
             trust_dataset=True,
             version=0,
         )
@@ -299,8 +293,6 @@ class CustomACVATask(LightevalTaskConfig):
             suite=["community"],
             generation_size=-1,
             stop_sequence=None,
-            output_regex=None,
-            frozen=False,
             trust_dataset=True,
             version=0,
         )
@@ -361,8 +353,6 @@ class CustomAraTrustTask(LightevalTaskConfig):
             suite=["community"],
             generation_size=-1,
             stop_sequence=[],
-            output_regex=None,
-            frozen=False,
             trust_dataset=True,
             version=0,
         )
@@ -461,8 +451,6 @@ class CustomAlGhafaNativeTask(LightevalTaskConfig):
             suite=["community"],
             generation_size=-1,
             stop_sequence=None,
-            output_regex=None,
-            frozen=False,
             trust_dataset=True,
             version=0,
         )
@@ -839,8 +827,6 @@ class CustomMadinahQATask(LightevalTaskConfig):
             suite=["community"],
             generation_size=-1,
             stop_sequence=None,
-            output_regex=None,
-            frozen=False,
             trust_dataset=True,
             version=0,
         )
