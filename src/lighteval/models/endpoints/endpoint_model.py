@@ -76,11 +76,11 @@ SORTED_INSTANCE_SIZES = [  # sorted by incremental overall RAM (to load models)
 
 @dataclass
 class ServerlessEndpointModelConfig:
-    model: str
+    model_name: str
     add_special_tokens: bool = True
 
     @classmethod
-    def from_path(cls, path: str) -> "InferenceEndpointModelConfig":
+    def from_path(cls, path: str) -> "ServerlessEndpointModelConfig":
         import yaml
 
         with open(path, "r") as f:
@@ -282,10 +282,10 @@ class InferenceEndpointModel(LightevalModel):
         else:  # Free inference client
             self.endpoint = None
             self.endpoint_name = None
-            self.name = config.model
+            self.name = config.model_name
             self.revision = "default"
-            self.async_client = AsyncInferenceClient(model=config.model, token=env_config.token)
-            self.client = InferenceClient(model=config.model, token=env_config.token)
+            self.async_client = AsyncInferenceClient(model=config.model_name, token=env_config.token)
+            self.client = InferenceClient(model=config.model_name, token=env_config.token)
 
         self.use_async = True  # set to False for debug - async use is faster
 
@@ -295,7 +295,7 @@ class InferenceEndpointModel(LightevalModel):
         self.model_info = ModelInfo(
             model_name=self.name,
             model_sha=self.revision,
-            model_dtype=config.model_dtype or "default",
+            model_dtype=getattr(config, "model_dtype", "default"),
             model_size=-1,
         )
 
@@ -547,7 +547,12 @@ class InferenceEndpointModel(LightevalModel):
                     cont_toks = torch.tensor(cur_request.tokenized_continuation)
                     len_choice = len(cont_toks)
 
-                    logits = [t.logprob for t in response.details.prefill[-len_choice:] if t.logprob is not None]
+                    if self.endpoint:  # inference endpoint
+                        logits = [
+                            t.logprob for t in response.details.prefill[-len_choice:] if t.logprob is not None
+                        ]  # to check
+                    else:  # serverless endpoint
+                        logits = [t.logprob for t in response.details.tokens[-len_choice:] if t.logprob is not None]
 
                     greedy_tokens = torch.tensor(logits).argmax(dim=-1)
                     max_equal = (greedy_tokens == cont_toks).all().squeeze(0)

@@ -33,10 +33,10 @@ app = typer.Typer()
 TOKEN = os.getenv("HF_TOKEN")
 CACHE_DIR: str = os.getenv("HF_HOME", "/scratch")
 
-HELP_PANNEL_NAME_1 = "Common Paramaters"
+HELP_PANNEL_NAME_1 = "Common Parameters"
 HELP_PANNEL_NAME_2 = "Logging Parameters"
-HELP_PANNEL_NAME_3 = "Debug Paramaters"
-HELP_PANNEL_NAME_4 = "Modeling Paramaters"
+HELP_PANNEL_NAME_3 = "Debug Parameters"
+HELP_PANNEL_NAME_4 = "Modeling Parameters"
 
 
 @app.command(rich_help_panel="Evaluation Backends")
@@ -93,7 +93,7 @@ def openai(
     Evaluate OPENAI models.
     """
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.models.model_config import OpenAIModelConfig
+    from lighteval.models.endpoints.openai_model import OpenAIModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
     env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
@@ -147,9 +147,10 @@ def inference_endpoint(
     ],
     tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
     free_endpoint: Annotated[
-        str,
-        Argument(
-            help="True if you want to use the serverless free endpoints, False (default) if you want to spin up your own inference endpoint."
+        bool,
+        Option(
+            help="Use serverless free endpoints instead of spinning up your own inference endpoint.",
+            rich_help_panel=HELP_PANNEL_NAME_4,
         ),
     ] = False,
     # === Common parameters ===
