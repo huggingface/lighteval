@@ -11,7 +11,7 @@ After that, simply run the pipeline and save the results.
 ```python
 import lighteval
 from lighteval.logging.evaluation_tracker import EvaluationTracker
-from lighteval.models.model_config import VLLMModelConfig
+from lighteval.models.vllm.vllm_model import VLLMModelConfig
 from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 from lighteval.utils.utils import EnvConfig
 from lighteval.utils.imports import is_accelerate_available
