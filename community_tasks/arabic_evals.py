@@ -413,7 +413,20 @@ ALGHAFA_SUBSETS = [
 def alghafa_pfn(line, task_name: str = None):
     question = line["query"]
     answer_index = int(line["label"])
-    choices = [line[key] for key in ["sol1", "sol2", "sol3", "sol4"]]
+    # Define subset-specific columns
+    SUBSET_COLUMNS = {
+        "mcq_exams_test_ar": ["sol1", "sol2", "sol3", "sol4"],
+        "meta_ar_dialects": ["sol1", "sol2", "sol3", "sol4"],
+        "meta_ar_msa": ["sol1", "sol2", "sol3", "sol4"],
+        "multiple_choice_facts_truefalse_balanced_task": ["sol1", "sol2"],
+        "multiple_choice_grounded_statement_soqal_task": ["sol1", "sol2", "sol3", "sol4", "sol5"],
+        "multiple_choice_grounded_statement_xglue_mlqa_task": ["sol1", "sol2", "sol3", "sol4", "sol5"],
+        "multiple_choice_rating_sentiment_no_neutral_task": ["sol1", "sol2"],
+        "multiple_choice_rating_sentiment_task": ["sol1", "sol2"],
+        "multiple_choice_sentiment_task": ["sol1", "sol2", "sol3"],
+    }
+    choices_keys = SUBSET_COLUMNS[task_name]
+    choices = [line[key] for key in choices_keys if key in line]
 
     instruction = "الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح\n\n"
     query = f"{instruction}السؤال: {question}\n"
