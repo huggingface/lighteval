@@ -85,8 +85,7 @@ def arabic_mmlu_pfn(line, task_name: str = None):
         query=query,
         choices=valid_keys_arabic,  # Return only valid choices (Arabic keys)
         gold_index=answer_index,  # Correct index in the valid Arabic keys
-        instruction=instruction,
-        target_for_fewshot_sorting=valid_keys_arabic[answer_index],  # Correct answer in Arabic form
+        instruction=instruction
     )
 
 
@@ -148,8 +147,7 @@ def arabic_mmlu_ht_pfn(line, task_name: str = None):
         query=query,
         choices=[str(i) for i in range(1, len(choices) + 1)],  # List of strings instead of ints
         gold_index=answer_index,
-        instruction=instruction,
-        target_for_fewshot_sorting=str(answer_index),  # Assuming it's sorted based on the number
+        instruction=instruction
     )
 
 
@@ -327,8 +325,7 @@ def aratrust_pfn(line, task_name: str = None):
         query=query,
         choices=LETTER_INDICES_AR[:3],
         gold_index=answer_index,
-        instruction=instruction,
-        target_for_fewshot_sorting=LETTER_INDICES_AR[answer_index],
+        instruction=instruction
     )
 
 
@@ -414,7 +411,7 @@ def alghafa_pfn(line, task_name: str = None):
     question = line["query"]
     answer_index = int(line["label"])
     allowed_keys = [f"sol{i}" for i in range(1, 6)]
-    choices = line[key] for key in allowed_keys if key in line]
+    choices = [line[key] for key in allowed_keys if key in line]
 
     instruction = "الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح\n\n"
     query = f"{instruction}السؤال: {question}\n"
@@ -802,8 +799,7 @@ def madinah_qa_pfn(line, task_name: str = None):
         query=query,
         choices=choices,
         gold_index=answer_index,  # Correct index in the valid keys
-        instruction=instruction,
-        target_for_fewshot_sorting=valid_keys_latin[answer_index],  # Correct answer in Latin form
+        instruction=instruction
     )
 
 
