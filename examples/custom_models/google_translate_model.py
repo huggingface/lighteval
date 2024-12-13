@@ -23,9 +23,13 @@
 import hashlib
 import logging
 import os
+import time
 from typing import Optional
 
 import diskcache
+import httpcore
+import tenacity
+from googletrans import Translator
 from tqdm import tqdm
 from transformers import AutoTokenizer
 
@@ -61,12 +65,9 @@ class GoogleTranslateClient(LightevalModel):
 
         self._tokenizer = AutoTokenizer.from_pretrained("gpt2")  # Use a dummy tokenizer for compatibility
 
-        import httpcore
-
         # Needed to fix some googletrans bug
         # https://stackoverflow.com/questions/72796594/attributeerror-module-httpcore-has-no-attribute-synchttptransport#comment136664963_77334618
         setattr(httpcore, "SyncHTTPTransport", "AsyncHTTPProxy")
-        from googletrans import Translator
 
         self.translator = Translator()
 
@@ -74,24 +75,39 @@ class GoogleTranslateClient(LightevalModel):
         cache_dir = os.path.join(os.getcwd(), ".translation_cache")
         self.cache = diskcache.Cache(cache_dir)
 
+        self.max_retries = 3
+        self.retry_delay = 1
+
     def _get_cache_key(self, context: str, src_lang: str, tgt_lang: str) -> str:
         """Generate a unique cache key for the translation request."""
         key_string = f"{context}|{src_lang}|{tgt_lang}"
         return hashlib.md5(key_string.encode()).hexdigest()
 
+    @tenacity.retry(
+        stop=tenacity.stop_after_attempt(3),
+        wait=tenacity.wait_exponential(multiplier=1, min=4, max=10),
+        retry=tenacity.retry_if_exception_type((Exception)),
+        before_sleep=lambda retry_state: time.sleep(1),
+    )
     def _translate_with_cache(self, context: str, src_lang: str, tgt_lang: str) -> str:
-        """Translate text using cache if available, otherwise call Google Translate."""
+        """Translate text using cache if available, otherwise call Google Translate with retry logic."""
         cache_key = self._get_cache_key(context, src_lang, tgt_lang)
 
         # Try to get from cache
         if cache_key in self.cache:
             return self.cache[cache_key]
 
-        # If not in cache, translate and store
-        translation = self.translator.translate(context, src=src_lang, dest=tgt_lang)
-        result = translation.text
-        self.cache[cache_key] = result
-        return result
+        try:
+            # If not in cache, translate and store
+            translation = self.translator.translate(context, src=src_lang, dest=tgt_lang)
+            result = translation.text
+            self.cache[cache_key] = result
+            return result
+        except Exception as e:
+            logger.warning(f"Translation error: {str(e)}. Retrying...")
+            # Re-initialize translator on error
+            self.translator = Translator()
+            raise  # Let tenacity handle the retry
 
     def greedy_until(
         self,
