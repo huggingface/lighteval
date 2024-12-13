@@ -86,7 +86,7 @@ def openai(
         Optional[int], Option(help="Maximum number of samples to evaluate on.", rich_help_panel=HELP_PANEL_NAME_3)
     ] = None,
     job_id: Annotated[
-        int, Option(help="Optional job id for future refenrence.", rich_help_panel=HELP_PANEL_NAME_3)
+        int, Option(help="Optional job id for future reference.", rich_help_panel=HELP_PANEL_NAME_3)
     ] = 0,
 ):
     """
@@ -192,7 +192,7 @@ def inference_endpoint(
         int, Option(help="Override batch size for evaluation.", rich_help_panel=HELP_PANEL_NAME_3)
     ] = None,
     job_id: Annotated[
-        int, Option(help="Optional job id for future refenrence.", rich_help_panel=HELP_PANEL_NAME_3)
+        int, Option(help="Optional job id for future reference.", rich_help_panel=HELP_PANEL_NAME_3)
     ] = 0,
 ):
     """
@@ -308,7 +308,7 @@ def tgi(
         int, Option(help="Override batch size for evaluation.", rich_help_panel=HELP_PANEL_NAME_3)
     ] = -1,
     job_id: Annotated[
-        int, Option(help="Optional job id for future refenrence.", rich_help_panel=HELP_PANEL_NAME_3)
+        int, Option(help="Optional job id for future reference.", rich_help_panel=HELP_PANEL_NAME_3)
     ] = 0,
 ):
     """
