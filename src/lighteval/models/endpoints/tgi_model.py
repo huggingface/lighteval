@@ -53,6 +53,14 @@ class TGIModelConfig:
 
     @classmethod
     def from_path(cls, path: str) -> "TGIModelConfig":
+        """Load configuration for TGI endpoint model from YAML file path.
+
+        Args:
+            path (`str`): Path of the model configuration YAML file.
+
+        Returns:
+            [`TGIModelConfig`]: Configuration for TGI endpoint model.
+        """
         import yaml
 
         with open(path, "r") as f:
