@@ -671,7 +671,3 @@ TASKS_GROUPS = {
     "all": ",".join(t[1] for t in _TASKS_STRINGS),
     "early-signal": EARLY_SIGNAL_TASKS,
 }
-
-if __name__ == "__main__":
-    print(t["name"] for t in TASKS_TABLE)
-    print(len(TASKS_TABLE))

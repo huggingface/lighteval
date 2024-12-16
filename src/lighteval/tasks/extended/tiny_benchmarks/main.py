@@ -283,11 +283,3 @@ for task_param in task_params:
             corpus_level_fn=TinyCorpusAggregator(name).aggregate,
         ),
     )
-
-
-# MODULE LOGIC
-# You should not need to touch this
-# Convert to dict for lighteval
-if __name__ == "__main__":
-    print(t["name"] for t in TASKS_TABLE)
-    print(len(TASKS_TABLE))
