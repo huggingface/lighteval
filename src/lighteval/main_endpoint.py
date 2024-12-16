@@ -26,8 +26,6 @@ import typer
 from typer import Argument, Option
 from typing_extensions import Annotated
 
-from lighteval.models.litellm_model import LiteLLMModelConfig
-
 
 app = typer.Typer()
 
@@ -434,6 +432,7 @@ def litellm(
     """
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
+    from lighteval.models.litellm_model import LiteLLMModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
     env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
