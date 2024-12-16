@@ -277,7 +277,7 @@ class TransformersModel(LightevalModel):
                 logger.info("Compiling the model")
                 self.model.model.compile()
             except AttributeError as e:
-                logger.warn("Could not compile the model because: ", e)
+                logger.warning("Could not compile the model because: ", e)
 
         self.model_name = _simplify_name(config.pretrained)
         self.model_sha = config.get_model_sha()
