@@ -339,7 +339,7 @@ class LightevalTask:
         return self._docs
 
     def construct_requests(
-        self, formatted_doc: Doc, context: str, document_id_seed: str, current_task_name: str
+        self, formatted_doc: Doc, context: str, document_id_seed: str, current_task_name: str, system_prompt: str
     ) -> Dict[RequestType, List[Request]]:
         """
         Constructs a list of requests from the task based on the given parameters.
@@ -349,7 +349,7 @@ class LightevalTask:
             ctx (str): Context, which is the few shot examples + the query.
             document_id_seed (str): Index of the document in the task appended with the seed used for the few shot sampling.
             current_task_name (str): Name of the current task.
-
+            system_prompt (str): System prompt to use for the request.
         Returns:
             dict[RequestType, List[Request]]: List of requests.
         """
@@ -365,6 +365,7 @@ class LightevalTask:
                     context=context,
                     choice=gold,
                     metric_categories=[MetricCategory.TARGET_PERPLEXITY],
+                    system_prompt=system_prompt,
                 )
                 for i, gold in enumerate(golds)
             ]
@@ -376,6 +377,7 @@ class LightevalTask:
                     request_index=0,
                     context=context,
                     metric_categories=[MetricCategory.PERPLEXITY],
+                    system_prompt=system_prompt,
                 )
             ]
         if self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]:
@@ -395,6 +397,7 @@ class LightevalTask:
                     do_sample=True,
                     use_logits=False,
                     metric_categories=[MetricCategory.GENERATIVE_SAMPLING],
+                    system_prompt=system_prompt,
                 )
             ]
         if (
@@ -421,6 +424,7 @@ class LightevalTask:
                         ]
                         if self.has_metric_category[c]
                     ],
+                    system_prompt=system_prompt,
                 )
             ]
         if (
@@ -439,6 +443,7 @@ class LightevalTask:
                         for c in [MetricCategory.MULTICHOICE, MetricCategory.MULTICHOICE_PMI]
                         if self.has_metric_category[c]
                     ],
+                    system_prompt=system_prompt,
                 )
                 for i, choice in enumerate(formatted_doc.choices)
             ]
@@ -455,6 +460,7 @@ class LightevalTask:
                     context=formatted_doc.unconditioned_query,
                     choice=choice,
                     metric_categories=[MetricCategory.MULTICHOICE_PMI],
+                    system_prompt=system_prompt,
                 )
                 for i, choice in enumerate(formatted_doc.choices)
             ]
@@ -467,6 +473,7 @@ class LightevalTask:
                     context=context,
                     choices=formatted_doc.choices,
                     metric_categories=[MetricCategory.MULTICHOICE_ONE_TOKEN],
+                    system_prompt=system_prompt,
                 )
             ]
         if self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]:
@@ -479,6 +486,7 @@ class LightevalTask:
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
                     metric_categories=[MetricCategory.LLM_AS_JUDGE_MULTI_TURN],
+                    system_prompt=system_prompt,
                 )
             ]
         if self.has_metric_category[MetricCategory.LLM_AS_JUDGE]:
@@ -493,6 +501,7 @@ class LightevalTask:
                     generation_grammar=self.generation_grammar,
                     num_samples=1,
                     metric_categories=[MetricCategory.LLM_AS_JUDGE],
+                    system_prompt=system_prompt,
                 )
             ]
 
@@ -652,7 +661,9 @@ def create_requests_from_tasks(  # noqa: C901
                     # Constructing the requests
                     cur_task_name = f"{task_name}|{num_fewshot}"
                     docs[SampleUid(cur_task_name, doc_id_seed)] = doc
-                    req_type_reqs_dict = task.construct_requests(doc, doc.ctx, doc_id_seed, cur_task_name)
+                    req_type_reqs_dict = task.construct_requests(
+                        doc, doc.ctx, doc_id_seed, cur_task_name, system_prompt
+                    )
                     for req_type, reqs in req_type_reqs_dict.items():
                         requests[req_type].extend(reqs)
 

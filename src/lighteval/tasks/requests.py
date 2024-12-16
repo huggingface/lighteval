@@ -52,6 +52,7 @@ class Request:
         request_index (int): The index of the request.
         context (str): The context for the request.
         metric_categories (list[MetricCategory]): All the metric categories which concern this request
+        system_prompt (str): System prompt to use for the request.
     """
 
     task_name: str
@@ -59,6 +60,7 @@ class Request:
     request_index: int
     context: str
     metric_categories: list["MetricCategory"]  # noqa F821
+    system_prompt: Optional[str]
 
 
 @dataclass

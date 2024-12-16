@@ -89,12 +89,10 @@ class LiteLLMClient(LightevalModel):
         self.model = config.model
         self._tokenizer = AutoTokenizer.from_pretrained("gpt2")  # Use a dummy tokenizer for compatibility
         self.pairwise_tokenization = False
-        # TODO: Pass the system prompt from the pipeline through.
-        self.system_prompt = "You are a helpful assistant."
         litellm.drop_params = True
         litellm.verbose = True
 
-    def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, stop_sequence):
+    def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, stop_sequence, system_prompt):
         for attempt in range(self.API_MAX_RETRY):
             try:
                 if self.provider == "anthropic":
@@ -110,7 +108,7 @@ class LiteLLMClient(LightevalModel):
 
                 response = litellm.completion(
                     model=self.model,
-                    messages=[{"role": "system", "content": self.system_prompt}, {"role": "user", "content": prompt}],
+                    messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
                     max_completion_tokens=max_new_tokens if max_new_tokens > 0 else None,
                     logprobs=return_logits if self.provider == "openai" else None,
                     stop=stop_sequence,
@@ -137,6 +135,7 @@ class LiteLLMClient(LightevalModel):
         max_new_tokens: int | list[int],
         num_samples: int | list[int],
         stop_sequence: list[str] | None = None,
+        system_prompt: str | list[str] = None,
     ):
         results = []
 
@@ -144,10 +143,15 @@ class LiteLLMClient(LightevalModel):
         max_new_tokenss = [max_new_tokens for _ in prompts] if not isinstance(max_new_tokens, list) else max_new_tokens
         num_sampless = [num_samples for _ in prompts] if not isinstance(num_samples, list) else num_samples
         stop_sequencess = [stop_sequence for _ in prompts]
-
+        system_prompts = [system_prompt for _ in prompts] if not isinstance(system_prompt, list) else system_prompt
         assert (
-            len(prompts) == len(return_logitss) == len(max_new_tokenss) == len(num_sampless) == len(stop_sequencess)
-        ), f"Length of prompts, return_logitss, max_new_tokenss, num_sampless, stop_sequences should be the same but are {len(prompts)}, {len(return_logitss)}, {len(max_new_tokenss)}, {len(num_sampless)}, {len(stop_sequencess)}"
+            len(prompts)
+            == len(return_logitss)
+            == len(max_new_tokenss)
+            == len(num_sampless)
+            == len(stop_sequencess)
+            == len(system_prompts)
+        ), f"Length of prompts, return_logitss, max_new_tokenss, num_sampless, stop_sequences, system_prompts should be the same but are {len(prompts)}, {len(return_logitss)}, {len(max_new_tokenss)}, {len(num_sampless)}, {len(stop_sequencess)}, {len(system_prompts)}"
 
         with ThreadPoolExecutor(self.CONCURENT_CALLS) as executor:
             for entry in tqdm(
@@ -158,6 +162,7 @@ class LiteLLMClient(LightevalModel):
                     max_new_tokenss,
                     num_sampless,
                     stop_sequencess,
+                    system_prompts,
                 ),
                 total=len(prompts),
             ):
@@ -178,7 +183,6 @@ class LiteLLMClient(LightevalModel):
 
         Args:
             requests (list[Request]): list of requests containing the context and ending conditions.
-            disable_tqdm (bool, optional): Whether to disable the progress bar. Defaults to False.
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
 
         Returns:
@@ -202,8 +206,11 @@ class LiteLLMClient(LightevalModel):
             return_logits = dataset[0].use_logits
             num_samples = dataset[0].num_samples
             stop_sequence = requests[0].stop_sequence
+            system_prompt = requests[0].system_prompt
 
-            responses = self.__call_api_parallel(contexts, return_logits, max_new_tokens, num_samples, stop_sequence)
+            responses = self.__call_api_parallel(
+                contexts, return_logits, max_new_tokens, num_samples, stop_sequence, system_prompt
+            )
 
             for response in responses:
                 result: list[str] = [choice.message.content for choice in response.choices]
