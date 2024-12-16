@@ -853,7 +853,3 @@ TASKS_TABLE = (
     + [toxigen_ar_task]
     + [sciq_ar_task]
 )
-
-if __name__ == "__main__":
-    print(t.name for t in TASKS_TABLE)
-    print(len(TASKS_TABLE))
