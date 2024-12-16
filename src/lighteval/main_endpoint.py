@@ -98,7 +98,6 @@ def openai(
     """
     from lighteval.logging.evaluation_tracker import EvaluationTracker
 
-    # from lighteval.models.model_input import GenerationParameters
     from lighteval.models.endpoints.openai_model import OpenAIModelConfig
     from lighteval.models.model_input import GenerationParameters
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters

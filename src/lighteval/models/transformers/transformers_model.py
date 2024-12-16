@@ -238,7 +238,7 @@ class TransformersModelConfig:
 @dataclass
 class BaseModelConfig(TransformersModelConfig):
     def __post_init__(self):
-        super()
+        super().__post_init__()
 
         logger.warning(
             "Careful, BaseModelConfig is deprecated and will be removed, you should use TransformersModelConfig instead!"
