@@ -116,10 +116,3 @@ custom_metric = SampleLevelMetric(
     sample_level_fn=lambda x: x,  # how to compute score for one sample
     corpus_level_fn=np.mean,  # aggregation
 )
-
-# MODULE LOGIC
-# You should not need to touch this
-# Convert to dict for lighteval
-if __name__ == "__main__":
-    print(t.name for t in TASKS_TABLE)
-    print(len(TASKS_TABLE))
