@@ -167,17 +167,6 @@ TASKS_TABLE = SUBSET_TASKS
 # TASKS_TABLE = [task]
 ```
 
-Finally, you need to add a module logic to convert your task to a dict for lighteval.
-
-```python
-# MODULE LOGIC
-# You should not need to touch this
-# Convert to dict for lighteval
-if __name__ == "__main__":
-    print(t.name for t in TASKS_TABLE)
-    print(len(TASKS_TABLE))
-```
-
 Once your file is created you can then run the evaluation with the following command:
 
 ```bash
