@@ -228,8 +228,3 @@ mixeval_multichoice_hard = LightevalTaskConfig(
 
 
 TASKS_TABLE = [mixeval_multichoice_easy, mixeval_freeform_easy, mixeval_multichoice_hard, mixeval_freeform_hard]
-
-if __name__ == "__main__":
-    # Adds the metric to the metric list!
-    print(t["name"] for t in TASKS_TABLE)
-    print(len(TASKS_TABLE))
