@@ -221,11 +221,3 @@ task4 = LightevalTaskConfig(
 
 # STORE YOUR EVALS
 TASKS_TABLE = [task1, task2, task3, task4]
-
-
-# MODULE LOGIC
-# You should not need to touch this
-
-if __name__ == "__main__":
-    print(t.name for t in TASKS_TABLE)
-    print(len(TASKS_TABLE))
