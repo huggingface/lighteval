@@ -216,9 +216,7 @@ class InferenceEndpointModel(LightevalModel):
                                         **config.get_dtype_args(),
                                         **config.get_custom_env_vars(),
                                     },
-                                    "url": (
-                                        config.image_url or "ghcr.io/huggingface/text-generation-inference:latest"
-                                    ),
+                                    "url": (config.image_url or "ghcr.io/huggingface/text-generation-inference:3.0.1"),
                                 },
                             )
                         else:  # Endpoint exists
