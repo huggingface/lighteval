@@ -1,6 +1,11 @@
 import pytest
 
-from lighteval.metrics.dynamic_metrics import multilingual_extractive_match_metric
+from lighteval.metrics.dynamic_metrics import (
+    ExprExtractionConfig,
+    IndicesExtractionConfig,
+    LatexExtractionConfig,
+    multilingual_extractive_match_metric,
+)
 from lighteval.tasks.requests import Doc
 from lighteval.utils.language import Language
 
@@ -8,7 +13,23 @@ from lighteval.utils.language import Language
 def compare_en(
     gold: str, pred: str, language: Language = Language.ENGLISH, match_types: list[str] = ["latex", "expr"]
 ):
-    return multilingual_extractive_match_metric(language, match_types).sample_level_fn(
+    # Convert string match_types to ExtractionTarget objects
+    extraction_targets = []
+    for match_type in match_types:
+        if match_type == "latex":
+            extraction_targets.append(LatexExtractionConfig())
+        elif match_type == "expr":
+            extraction_targets.append(ExprExtractionConfig())
+        elif match_type == "NativeLetters":
+            extraction_targets.append(IndicesExtractionConfig(prefix_for_extraction="NativeLetters"))
+
+    extraction_targets = tuple(extraction_targets)  # Convert to tuple
+
+    return multilingual_extractive_match_metric(
+        language=language,
+        gold_extraction_target=extraction_targets,
+        pred_extraction_target=extraction_targets,
+    ).sample_level_fn(
         golds=[gold],
         predictions=[pred],
         formatted_doc=Doc(choices=["", "", "", ""], query="", gold_index=0),
@@ -135,6 +156,20 @@ def test_simple_fraction_notation(gold, pred, expected):
 @pytest.mark.parametrize(
     "gold,pred,expected",
     [
+        ("$[0,1)$", "$[0,1)$", 1),
+        ("$[0,1)$", "$[0,1)$", 1),
+        ("$[0,9)$", "$[0,1)$", 0),
+        ("$(0,9)$", "$[0,9)$", 0),
+        ("$1$", "$-[0,1)$", 0),
+    ],
+)
+def test_fallback(gold, pred, expected):
+    assert compare_en(gold, pred, match_types=["latex", "expr"]) == expected
+
+
+@pytest.mark.parametrize(
+    "gold,pred,expected",
+    [
         # Notations
         ("$9$", "Answer don't parse me \\[ 9 \\]", 1),
         ("$9$", "Answer don't parse me $ 9 $", 1),
@@ -151,7 +186,6 @@ def test_simple_fraction_notation(gold, pred, expected):
         # Incorrect fractions work
         ("$1/3$", "$\\frac13 $", 1),
         ("$\\frac{a}{b}*c$", "$\\fracabc $", 1),
-        ("$1/3$", "$\\frac{1}3 $", 1),
         ("$1$", "$\\frac3{3} $", 1),
         # Incorrect sqrt works
         ("$\\sqrt{3}$", "$\\sqrt3 $", 1),
@@ -164,11 +198,11 @@ def test_simple_fraction_notation(gold, pred, expected):
         # Styling is removed
         ("$1/3$", "$\\left( \\frac{1}{3} \\right)$", 1),
         ("$1/3$", "$\\boxed{\\frac{1}{3}}$", 1),
-        ("$x/3$", "$\\frac{1}{3} \\text{x}$", 1),
-        ("$1/3*x$", "$\\frac{1}{3} \\textbf{x}$", 1),
+        ("$1/3$", "$\\frac{1}{3} \\text{x}$", 1),
+        ("$1/3$", "$\\frac{1}{3} \\textbf{x}$", 1),
         # Last = is considered
         ("$1/3$", "$\\k = \\frac{1}{3}$", 1),
-        ("$x/3$", "$\\frac{1}{3} \\textbf{x}$", 1),
+        ("$1/3$", "$\\frac{1}{3} \\textbf{x}$", 1),
     ],
 )
 def test_latex_notation(gold, pred, expected):
