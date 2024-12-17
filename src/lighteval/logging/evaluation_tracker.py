@@ -204,15 +204,14 @@ class EvaluationTracker:
         self, date_id: str | None = None, results_dict: dict | None = None, output_path: str | None = None
     ):
         if output_path:
-            fs, output_path = url_to_fs(output_path)
+            output_path = Path(self.output_dir) / output_path
         else:
             output_path = (
                 Path(self.output_dir) / "results" / self.general_config_logger.model_name / f"results_{date_id}.json"
             )
-            fs = self.fs
-        fs.mkdirs(output_path.parent, exist_ok=True)
+        self.fs.mkdirs(output_path.parent, exist_ok=True)
         logger.info(f"Saving results to {output_path}")
-        with fs.open(output_path, "w") as f:
+        with self.fs.open(output_path, "w") as f:
             f.write(json.dumps(results_dict, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False))
 
     def save_details(self, date_id: str, details_datasets: dict[str, Dataset]):
