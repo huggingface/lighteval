@@ -99,7 +99,9 @@ docs = ["hf-doc-builder", "watchdog"]
 extended_tasks = [
   "langdetect", # ifeval
   "openai", # llm as a judge using openai models
-  "tiktoken"
+  "tiktoken",
+  "unbabel-comet",
+  "gemba",
 ]
 s3 = ["s3fs"]
 multilingual = [
