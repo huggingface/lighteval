@@ -209,7 +209,7 @@ class InferenceEndpointModel(LightevalModel):
                                         **config.get_custom_env_vars(),
                                     },
                                     "url": (
-                                        config.image_url or "ghcr.io/huggingface/text-generation-inference:latest"
+                                        config.image_url or "ghcr.io/huggingface/text-generation-inference:3.0.1"
                                     ),
                                 },
                             )
