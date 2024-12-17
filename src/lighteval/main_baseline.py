@@ -30,28 +30,28 @@ from typing_extensions import Annotated
 
 CACHE_DIR: str = os.getenv("HF_HOME", "/scratch")
 
-HELP_PANNEL_NAME_1 = "Common Paramaters"
-HELP_PANNEL_NAME_2 = "Logging Parameters"
-HELP_PANNEL_NAME_3 = "Debug Paramaters"
-HELP_PANNEL_NAME_4 = "Modeling Paramaters"
+HELP_PANEL_NAME_1 = "Common Parameters"
+HELP_PANEL_NAME_2 = "Logging Parameters"
+HELP_PANEL_NAME_3 = "Debug Parameters"
+HELP_PANEL_NAME_4 = "Modeling Parameters"
 
 
 def baseline(
     tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
     cache_dir: Annotated[
-        str, Option(help="Cache directory for datasets and models.", rich_help_panel=HELP_PANNEL_NAME_1)
+        str, Option(help="Cache directory for datasets and models.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = CACHE_DIR,
     custom_tasks: Annotated[
-        Optional[str], Option(help="Path to custom tasks directory.", rich_help_panel=HELP_PANNEL_NAME_1)
+        Optional[str], Option(help="Path to custom tasks directory.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
     dataset_loading_processes: Annotated[
-        int, Option(help="Number of processes to use for dataset loading.", rich_help_panel=HELP_PANNEL_NAME_1)
+        int, Option(help="Number of processes to use for dataset loading.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = 1,
     output_dir: Annotated[
-        str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANNEL_NAME_2)
+        str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = "results",
     max_samples: Annotated[
-        Optional[int], Option(help="Maximum number of samples to evaluate on.", rich_help_panel=HELP_PANNEL_NAME_3)
+        Optional[int], Option(help="Maximum number of samples to evaluate on.", rich_help_panel=HELP_PANEL_NAME_3)
     ] = None,
 ):
     """

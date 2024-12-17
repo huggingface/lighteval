@@ -87,8 +87,3 @@ oz_eval_task = LightevalTaskConfig(
 
 # STORE YOUR EVALS
 TASKS_TABLE = [oz_eval_task]
-
-
-if __name__ == "__main__":
-    print(t["name"] for t in TASKS_TABLE)
-    print(len(TASKS_TABLE))

@@ -784,7 +784,3 @@ TASKS_TABLE = [
     mmlu_world_religions,
     mmlu_all,
 ]
-
-if __name__ == "__main__":
-    print(t.name for t in TASKS_TABLE)
-    print(len(TASKS_TABLE))
