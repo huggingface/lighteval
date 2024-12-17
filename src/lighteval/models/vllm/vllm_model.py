@@ -89,7 +89,6 @@ class VLLMModelConfig:
     generation_parameters: GenerationParameters = None  # sampling parameters to use for generation
 
     subfolder: Optional[str] = None
-    temperature: float = 0.6  # will be used for multi sampling tasks, for tasks requiring no sampling, this will be ignored and set to 0.
 
     def __post_init__(self):
         if not self.generation_parameters:
@@ -309,7 +308,6 @@ class VLLMModel(LightevalModel):
         """Contains the actual logic of the generation."""
         sampling_params = self.sampling_params.clone() or SamplingParams()
         if generate:
-            sampling_params.temperature = float(self._config.temperature) if num_samples > 1 else 0.0
             sampling_params.n = num_samples
             sampling_params.max_tokens = max_new_tokens
             sampling_params.stop = stop_tokens
