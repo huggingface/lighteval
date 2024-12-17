@@ -33,10 +33,10 @@ logger = logging.getLogger(__name__)
 TOKEN = os.getenv("HF_TOKEN")
 CACHE_DIR: str = os.getenv("HF_HOME", "/scratch")
 
-HELP_PANNEL_NAME_1 = "Common Paramaters"
-HELP_PANNEL_NAME_2 = "Logging Parameters"
-HELP_PANNEL_NAME_3 = "Debug Paramaters"
-HELP_PANNEL_NAME_4 = "Modeling Paramaters"
+HELP_PANEL_NAME_1 = "Common Parameters"
+HELP_PANEL_NAME_2 = "Logging Parameters"
+HELP_PANEL_NAME_3 = "Debug Parameters"
+HELP_PANEL_NAME_4 = "Modeling Parameters"
 
 
 def accelerate(  # noqa C901
@@ -50,51 +50,51 @@ def accelerate(  # noqa C901
     tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
     # === Common parameters ===
     use_chat_template: Annotated[
-        bool, Option(help="Use chat template for evaluation.", rich_help_panel=HELP_PANNEL_NAME_4)
+        bool, Option(help="Use chat template for evaluation.", rich_help_panel=HELP_PANEL_NAME_4)
     ] = False,
     system_prompt: Annotated[
-        Optional[str], Option(help="Use system prompt for evaluation.", rich_help_panel=HELP_PANNEL_NAME_4)
+        Optional[str], Option(help="Use system prompt for evaluation.", rich_help_panel=HELP_PANEL_NAME_4)
     ] = None,
     dataset_loading_processes: Annotated[
-        int, Option(help="Number of processes to use for dataset loading.", rich_help_panel=HELP_PANNEL_NAME_1)
+        int, Option(help="Number of processes to use for dataset loading.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = 1,
     custom_tasks: Annotated[
-        Optional[str], Option(help="Path to custom tasks directory.", rich_help_panel=HELP_PANNEL_NAME_1)
+        Optional[str], Option(help="Path to custom tasks directory.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
     cache_dir: Annotated[
-        Optional[str], Option(help="Cache directory for datasets and models.", rich_help_panel=HELP_PANNEL_NAME_1)
+        Optional[str], Option(help="Cache directory for datasets and models.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
     num_fewshot_seeds: Annotated[
-        int, Option(help="Number of seeds to use for few-shot evaluation.", rich_help_panel=HELP_PANNEL_NAME_1)
+        int, Option(help="Number of seeds to use for few-shot evaluation.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = 1,
     # === saving ===
     output_dir: Annotated[
-        str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANNEL_NAME_2)
+        str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = "results",
     push_to_hub: Annotated[
-        bool, Option(help="Push results to the huggingface hub.", rich_help_panel=HELP_PANNEL_NAME_2)
+        bool, Option(help="Push results to the huggingface hub.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = False,
     push_to_tensorboard: Annotated[
-        bool, Option(help="Push results to tensorboard.", rich_help_panel=HELP_PANNEL_NAME_2)
+        bool, Option(help="Push results to tensorboard.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = False,
     public_run: Annotated[
-        bool, Option(help="Push results and details to a public repo.", rich_help_panel=HELP_PANNEL_NAME_2)
+        bool, Option(help="Push results and details to a public repo.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = False,
     results_org: Annotated[
-        Optional[str], Option(help="Organization to push results to.", rich_help_panel=HELP_PANNEL_NAME_2)
+        Optional[str], Option(help="Organization to push results to.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = None,
     save_details: Annotated[
-        bool, Option(help="Save detailed, sample per sample, results.", rich_help_panel=HELP_PANNEL_NAME_2)
+        bool, Option(help="Save detailed, sample per sample, results.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = False,
     # === debug ===
     max_samples: Annotated[
-        Optional[int], Option(help="Maximum number of samples to evaluate on.", rich_help_panel=HELP_PANNEL_NAME_3)
+        Optional[int], Option(help="Maximum number of samples to evaluate on.", rich_help_panel=HELP_PANEL_NAME_3)
     ] = None,
     override_batch_size: Annotated[
-        int, Option(help="Override batch size for evaluation.", rich_help_panel=HELP_PANNEL_NAME_3)
+        int, Option(help="Override batch size for evaluation.", rich_help_panel=HELP_PANEL_NAME_3)
     ] = -1,
     job_id: Annotated[
-        int, Option(help="Optional job id for future refenrence.", rich_help_panel=HELP_PANNEL_NAME_3)
+        int, Option(help="Optional job id for future reference.", rich_help_panel=HELP_PANEL_NAME_3)
     ] = 0,
 ):
     """
