@@ -102,14 +102,18 @@ class LiteLLMClient(LightevalModel):
                 if not stop_sequence:  # If empty after filtering
                     stop_sequence = ["\n"]
 
-                if "o1" in self.model:
-                    # We need to allow more tokens to include reasoning tokens
-                    max_new_tokens *= 10
+                # Handle max_new_tokens
+                completion_tokens = None
+                if max_new_tokens and max_new_tokens > 0:
+                    completion_tokens = max_new_tokens
+                    if "o1" in self.model:
+                        # We need to allow more tokens to include reasoning tokens
+                        completion_tokens = min(max_new_tokens * 10, 32000)
 
                 response = litellm.completion(
                     model=self.model,
                     messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
-                    max_completion_tokens=max_new_tokens if max_new_tokens > 0 else None,
+                    max_completion_tokens=completion_tokens,
                     logprobs=return_logits if self.provider == "openai" else None,
                     stop=stop_sequence,
                     base_url=self.base_url,
