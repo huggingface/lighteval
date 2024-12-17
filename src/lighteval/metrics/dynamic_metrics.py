@@ -254,6 +254,7 @@ def multilingual_extractive_match_metric(
 
     @lru_cache(maxsize=1)
     def lazy_expr_regex(expr_config: ExprExtractionConfig) -> list[re.Pattern[str]]:
+        # TODO: Possibly we should also nesure that the expression doesn't appear in latex env
         # Basic number patterns (no LaTeX)
         number_re = (
             # Format 1: Numbers with thousand separators (e.g., "1,234.56" or "1 234.56")
@@ -273,25 +274,39 @@ def multilingual_extractive_match_metric(
         all_expr_chars = r"[\d\.\s" + operators_re + r"]"
         # Expression should have at minimum at least one operator, must start with a digit
         expr_re = rf"-?\(?-?\d{all_expr_chars}*[{operators_re}]{all_expr_chars}+\)?"
-        colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
 
+        # Punctuation regexes
+        full_stop_re = rf"[{re.escape(translation_literal.full_stop)}\.]"
+        comma_re = rf"[{re.escape(translation_literal.comma)}\,]"
+        colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
+        space_re = rf"(?:\s|{re.escape(translation_literal.sentence_space)})"
+
+        # For expressions we also allow = prefix without any space, for suffix we allow ) because sometimes the answer is wrapped in parenthesis
+        expr_prefix_re = rf"(?:^|{space_re}|\=)(?:\*\*)?"
+        expr_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|\)|\$|$)"
+
+
+        expr = f"(?P<expr>{expr_re}|{number_re})"
+        full_expr = rf"(?:{expr_prefix_re}{expr}{expr_suffix_re})"
         regexes: list[str] = []
         if language == Language.ENGLISH:
-            equals_re = rf"(?i:the final answer is\s*)(?P<expr>{expr_re}|{number_re})"
+            equals_re = rf"(?i:the final answer is\s*){full_expr}"
 
         answer_prefix_re = rf"(?i:{translation_literal.answer}|{translation_literal.result_word})"
         # Match after the last equals with answer word - require the number pattern
         # Not sure about the equals matchings
 
         equals_re_colon = (
-            rf"{answer_prefix_re}{colon_re}(?:.{{0,100}}=\s*|.{{0,50}}?)(?P<expr>{expr_re}|{number_re})(?!\s*=)"
+            rf"{answer_prefix_re}{colon_re}(?:.{{0,100}}=\s*|.{{0,50}}?){full_expr}(?!\s*=)"
         )
-        equals_re = rf"{answer_prefix_re}(?:.{{0,100}}=\s*|.{{0,50}}?)(?P<expr>{expr_re}|{number_re})(?!\s*=)"
+        equals_re = rf"{answer_prefix_re}(?:.{{0,100}}=\s*|.{{0,50}}?){full_expr}(?!\s*=)"
 
         regexes.extend([equals_re_colon, equals_re])
         if expr_config.try_last_expr_match:
-            regexes.append(f"(?P<expr>{expr_re})")
-            regexes.append(f"(?P<expr>{number_re})")
+            regexes.append(f"({expr_prefix_re})(?P<expr>{expr_re})({expr_suffix_re})")
+            regexes.append(f"({expr_prefix_re})(?P<expr>{number_re})({expr_suffix_re})")
+
+            # We never try to match without prefixes as otherwise it will easily match partials
 
         # We first try to match the answer then the plain number
         return [re.compile(pattern) for pattern in regexes]
@@ -344,7 +359,7 @@ def multilingual_extractive_match_metric(
         colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
         space_re = rf"(?:\s|{re.escape(translation_literal.sentence_space)})"
 
-        answer_prefix_re = rf"{space_re}(?:\*\*)?"
+        answer_prefix_re = rf"(^|{space_re})(?:\*\*)?"
         answer_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|$)"
         answer_re = f"{answer_prefix_re}{indice_str_re}{answer_suffix_re}"
         answer_re_start = rf"^(?:\*\*)?{indice_str_re}{answer_suffix_re}"
