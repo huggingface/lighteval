@@ -160,8 +160,3 @@ ifeval = LightevalTaskConfig(
 TASKS_TABLE = [ifeval]
 
 extend_enum(Metrics, "ifeval_metric", ifeval_metrics)
-
-if __name__ == "__main__":
-    # Adds the metric to the metric list!
-    print(t["name"] for t in TASKS_TABLE)
-    print(len(TASKS_TABLE))

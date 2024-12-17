@@ -29,10 +29,10 @@ from typing_extensions import Annotated
 
 CACHE_DIR: str = os.getenv("HF_HOME", "/scratch")
 
-HELP_PANNEL_NAME_1 = "Common Paramaters"
-HELP_PANNEL_NAME_2 = "Logging Parameters"
-HELP_PANNEL_NAME_3 = "Debug Paramaters"
-HELP_PANNEL_NAME_4 = "Modeling Paramaters"
+HELP_PANEL_NAME_1 = "Common Parameters"
+HELP_PANEL_NAME_2 = "Logging Parameters"
+HELP_PANEL_NAME_3 = "Debug Parameters"
+HELP_PANEL_NAME_4 = "Modeling Parameters"
 
 
 SEED = 1234
