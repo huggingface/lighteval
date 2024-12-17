@@ -23,7 +23,11 @@
 
 from typing import Literal
 
-from lighteval.metrics.dynamic_metrics import loglikelihood_acc_metric, multilingual_extractive_match_metric
+from lighteval.metrics.dynamic_metrics import (
+    IndicesExtractionConfig,
+    loglikelihood_acc_metric,
+    multilingual_extractive_match_metric,
+)
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.utils.metric_utils import Metric
 from lighteval.tasks.templates.utils.formulation import Formulation, MCFFormulation
@@ -54,11 +58,17 @@ def get_metrics_for_mcq_formulation(
             return [
                 Metrics.exact_match,
                 Metrics.prefix_exact_match,
-                multilingual_extractive_match_metric(language, target_for_extraction=formulation.choice_prefix),
+                multilingual_extractive_match_metric(
+                    language,
+                    gold_extraction_target=(IndicesExtractionConfig(prefix_for_extraction=formulation.choice_prefix),),
+                ),
             ]
         case MCFFormulation(cot=True), "generative":
             return [
-                multilingual_extractive_match_metric(language, target_for_extraction=formulation.choice_prefix),
+                multilingual_extractive_match_metric(
+                    language,
+                    gold_extraction_target=(IndicesExtractionConfig(prefix_for_extraction=formulation.choice_prefix),),
+                ),
                 Metrics.prefix_exact_match,
             ]
         case _:

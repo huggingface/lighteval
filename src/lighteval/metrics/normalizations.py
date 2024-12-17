@@ -73,7 +73,7 @@ UNICODE_TO_LATEX = {
     "∅": "\\emptyset",
     "∇": "\\nabla",
     "∈": "\\in",
-    "∉": "\\notin",
+    "�����": "\\notin",
     "∋": "\\ni",
     "∏": "\\prod",
     "∑": "\\sum",
@@ -435,7 +435,7 @@ UNICODE_TO_LATEX = {
     "⊁": "\\nsucc",
     "⋉": "\\ltimes",
     "⋊": "\\rtimes",
-    "⋋": "\\leftthreetimes",
+    "��": "\\leftthreetimes",
     "⋌": "\\rightthreetimes",
     "⋍": "\\backsimeq",
     "⋎": "\\curlyvee",
@@ -674,99 +674,276 @@ def remove_braces_and_strip(text: str) -> str:
     return text
 
 
+units = [
+    "integer" "point",
+    "feet",
+    "sue",
+    "digit",
+    "pound",
+    "meal",
+    "edge",
+    "student",
+    "children ticket",
+    "multiple",
+    "east",
+    "degree",
+    "mph",
+    "kmph",
+    "ft",
+    "m square",
+    " m east",
+    "sq m",
+    "deg",
+    "mile",
+    "q .",
+    "monkey",
+    "prime",
+    "ratio",
+    "profit of rs",
+    "rd",
+    "o",
+    "gm",
+    "p . m",
+    "lb",
+    "tile",
+    "per",
+    "dm",
+    "lt",
+    "gain",
+    "ab",
+    "way",
+    "west",
+    "a .",
+    "b .",
+    "c .",
+    "d .",
+    "e .",
+    "f .",
+    "g .",
+    "h .",
+    "t",
+    "a",
+    "h",
+    "no change",
+    "men",
+    "soldier",
+    "pie",
+    "bc",
+    "excess",
+    "st",
+    "inches",
+    "noon",
+    "percent",
+    "cent",
+    "by",
+    "gal",
+    "kmh",
+    "c",
+    "acre",
+    "rise",
+    "a . m",
+    "th",
+    "π r 2",
+    "sq",
+    "mark",
+    "l",
+    "toy",
+    "coin",
+    "sq . m",
+    "gallon",
+    "° f",
+    "profit",
+    "minw",
+    "yr",
+    "women",
+    "am",
+    "pm",
+    "hr",
+    "cu cm",
+    "square",
+    "v â € ™",
+    "are",
+    "rupee",
+    "rounds",
+    "cubic",
+    "cc",
+    "mtr",
+    "s",
+    "ohm",
+    "number",
+    "kmph",
+    "day",
+    "hour",
+    "minute",
+    "min",
+    "second",
+    "man",
+    "woman",
+    "sec",
+    "cube",
+    "mt",
+    "sq inch",
+    "mp",
+    "∏ cm ³",
+    "hectare",
+    "more",
+    "sec",
+    "unit",
+    "cu . m",
+    "cm 2",
+    "rs .",
+    "rs",
+    "kg",
+    "g",
+    "month",
+    "km",
+    "m",
+    "cm",
+    "mm",
+    "apple",
+    "liter",
+    "loss",
+    "yard",
+    "pure",
+    "year",
+    "increase",
+    "decrease",
+    "d",
+    "less",
+    "Surface",
+    "litre",
+    "pi sq m",
+    "s .",
+    "metre",
+    "meter",
+    "inch",
+]
+
+# We sort here to that when matching from right the longest units are matched first
+# E.g "percent" is matched before "cent"
+
+units_regex = re.compile("|".join([f"(^|\\W)(?:{unit}(?:s|es)?)($|\\W)" for unit in units]))
+
 to_remove_regex = re.compile(
-    r"[^a-z]square|[^a-z]ways|[^a-z]integers|[^a-z]dollars|[^a-z]mph|[^a-z]inches|[^a-z]ft|[^a-z]hours|[^a-z]km|[^a-z]units|\\ldots|"
-    r"[^a-z]sue|[^a-z]points|[^a-z]feet|[^a-z]minutes|[^a-z]digits|[^a-z]cents|[^a-z]degrees|[^a-z]cm|[^a-z]gm|[^a-z]pounds|[^a-z]meters|"
-    r"[^a-z]meals|[^a-z]edges|[^a-z]students|[^a-z]childrentickets|[^a-z]multiples|\\text\{s\}|"
-    r"\\text\{\.\}|\\text\{\ns\}|\\text\{\}(?:\^[23])?|\\text\{\n\}|"
-    r"\\mathrm\{th\}|\^\\circ|\^{\\circ}|\\;|,\\!|\{,\}|\"|\\dots|\\!|\\left|\\right|\\^{\\circ}|"
+    r"\\mathrm\{th\}|"
+    r"\\;|"
+    r"\{,\}|"
     r"\\!|"  # inverse spaces (already present in original)
     r"\\left|\\right|"  # \left and \right (already present in original)
     r"\^{\\circ}|\^\\circ|"  # degrees symbols (already present in original)
-    r"\\\$|"  # dollar signs
+    r"\\\$|\$|"  # dollar signs
     r",\\!|"  # comma with inverse space (already present in original)
     r"\{,\}|"  # braced comma (already present in original)
-    r"an\s|"  # "an" with whitespace
-    r"a\s|"  # "a" with whitespace
+    r"(?<=\s)(and|an|a)(?=\s)|"  # "an" with whitespace
     r"\\\s|"  # backslash with whitespace
-    r"\\%"  # percentage symbol
+    # Percentage symbol
+    r"\\\\%|\\%|%|"  # percentage symbol
+    r"[xyzk](?:=|\\in|\\to)|"
+    # Quote
+    r'"|\''
+    # weird texts
+    r"\\text{s}|"
+    r"\\text{.}|"
+    r"\\text{\ns}|"
+    r"\\text{}^2|"
+    r"\\text{}^3|"
+    r"\\text{\n}|"
+    r"\\text{}",
 )
 
-to_replace_dict = {
-    r"\\\\": r"\\",  # replace \\ with \
-    r"tfrac": "frac",  # replace tfrac and dfrac with frac
-    r"cfrac": "frac",
-    r"dfrac": "frac",
-    r"textbf": "text",
-    r"mbox": "text",
-    r",\\text\{and\}": ",",
-    r"\\text\{and\}": ",",
-    r"\\text\{m\}": r"\\text{}",
-    r"\s\.": " 0.",
-    r"\{\.": "{0.",
-}
+to_replace_patterns = [
+    # (name, pattern, replacement)
+    ("frac", r"\\tfrac", r"\frac"),
+    ("cfrac", r"\\cfrac", r"\frac"),
+    ("dfrac", r"\\dfrac", r"\frac"),
+    ("array", r"\\begin\{array\}\{.*?\}", r"\\begin{pmatrix}"),
+    ("array_end", r"\\end\{array\}", r"\\end{pmatrix}"),
+    ("bmatrix", r"bmatrix", r"pmatrix"),
+    ("textbf", r"\\textbf", r"\text"),
+    ("mbox", r"\\mbox", r"\xt"),
+    ("decimal_space", r"\s\.", r" 0."),
+    ("decimal_brace", r"\{\.", r"{0."),
+    ("neq", r"\\neq", r"\ne"),
+    ("leq", r"\\leq", r"\\le"),
+    ("geq", r"\\geq", r"\ge"),
+    ("brace_open", r"\\\{", r"{"),
+    ("brace_close", r"\\\}", r"}"),
+    ("paren_open", r"\\\(", r"("),
+    ("paren_close", r"\\\)", r")"),
+    ("emptyset", r"\\emptyset", r"{}"),
+    ("real_line", r"\(-\\infty,\\infty\)", r"\mathbb{R}"),
+    ("infinity", r"infinity", r"\infty"),
+    ("inf", r"((?<!\\)inf(?!inity))", r"\infty"),
+    ("double_backslash", r"\\\\", "\\"),
+]
 
-to_replace_regex = re.compile("|".join(map(re.escape, to_replace_dict.keys())))
+# Create regex with named groups
+pattern = "|".join(f"(?P<{name}>{pattern})" for name, pattern, _ in to_replace_patterns)
+to_replace_regex = re.compile(pattern)
+
+# Create lookup dictionary for replacements
+replacements = {name: replacement for name, _, replacement in to_replace_patterns}
+
+
+def replace(match):
+    # Find which group matched
+    # Get corresponding replacement from dict
+    return replacements[match.lastgroup]
 
 
 def replace_in_latex(text: str) -> str:
-    return to_replace_regex.sub(lambda m: to_replace_dict[m.group(0)], text)
+    return to_replace_regex.sub(replace, text)
 
 
-def math_normalizer(text: str) -> str:  # noqa C901
+def extract_last_boxed_content(text: str) -> str:
+    """
+    Find and extract the content of the last \\boxed{...} or \\fbox{...} element from a string.
+
+    Example:
+    >>> extract_last_boxed_content("Some text \\boxed{\\frac{2}{3}}")
+    "\\frac{2}{3}"
+    >>> extract_last_boxed_content("\\boxed 123")
+    "123"
+    >>> extract_last_boxed_content("No box here")
+    ""
+    """
+
+    # Then look for \\boxed{...} or \\fbox{...}
+    env = "\\boxed"
+    left_idx = text.rfind(env)
+    if left_idx < 0:
+        env = "\\fbox"
+        left_idx = text.rfind(env)
+        if left_idx < 0:
+            return text
+    left_idx += len(env)
+
+    # If the next character is a brace remove it, otherwise it's a \\boxed {content}
+    if len(text) > left_idx + 1 and text[left_idx + 1] == "{":
+        left_idx += 1
+    else:
+        # If there is no opening brace, it's a \\boxed {content}
+        return text[left_idx:].lstrip()
+
+    # Find matching closing brace
+    i = left_idx
+    num_left_braces_open = 0
+    while i < len(text):
+        if text[i] == "{":
+            num_left_braces_open += 1
+        if text[i] == "}":
+            num_left_braces_open -= 1
+            if num_left_braces_open == 0:
+                # Extract content between braces
+                return text[left_idx:i]
+        i += 1
+
+    # Otherwise, it's no a valid latex
+    return text
+
+
+def math_normalizer(text: str, skip_unit: bool = False) -> str:  # noqa C901
     """Source: https://github.com/hendrycks/math"""
-
-    def _remove_boxed(text: str | None) -> str:
-        """
-        Extract the text within a \\boxed{...} environment.
-        Example:
-        >>> _remove_boxed(\\boxed{\\frac{2}{3}})
-        \\frac{2}{3}
-        """
-        if text is None:
-            return ""
-        try:
-            if "\\boxed " in text:
-                left = "\\boxed "
-                assert text[: len(left)] == left
-                return text[len(left) :]
-
-            left = "\\boxed{"
-
-            assert text[: len(left)] == left
-            assert text[-1] == "}"
-
-            return text[len(left) : -1]
-        except Exception:
-            return ""
-
-    def _last_boxed_only_string(text: str) -> str | None:
-        """Extract the last \\boxed{...} or \\fbox{...} element from a string."""
-        idx = text.rfind("\\boxed")
-        if idx < 0:
-            idx = text.rfind("\\fbox")
-            if idx < 0:
-                return None
-
-        i = idx
-        right_brace_idx = None
-        num_left_braces_open = 0
-        while i < len(text):
-            if text[i] == "{":
-                num_left_braces_open += 1
-            if text[i] == "}":
-                num_left_braces_open -= 1
-                if num_left_braces_open == 0:
-                    right_brace_idx = i
-                    break
-            i += 1
-
-        if right_brace_idx is None:
-            retval = None
-        else:
-            retval = text[idx : right_brace_idx + 1]
-
-        return retval
 
     def _fix_fracs(text: str) -> str:
         """
@@ -787,6 +964,7 @@ def math_normalizer(text: str) -> str:  # noqa C901
             >>> _fix_fracs("\\frac1{2}")
             "\\frac{1}{2}"
         """
+
         substrs = text.split("\\frac")
         new_str = substrs[0]
         if len(substrs) > 1:
@@ -837,45 +1015,6 @@ def math_normalizer(text: str) -> str:  # noqa C901
         except Exception:
             return text
 
-    def _remove_right_units(text: str) -> str:
-        """
-        Removes unit descriptions from LaTeX-formatted text, where units are indicated by "\\text{ }".
-        This function splits the text at each "\\text{ " and returns the part before the first occurrence,
-        effectively discarding any units and additional text following this pattern. This function also
-        trims any trailing whitespace left after removing units.
-
-        Args:
-            text (str): The input string potentially containing LaTeX-style unit descriptions.
-
-        Returns:
-            str: The text with unit descriptions removed.
-
-        Examples:
-            - Input: '50.5 \\text{ kg}'
-            Output: '50.5'
-
-            - Input: 'The mass is 20 grams'
-            Output: 'The mass is 20 grams'
-
-            - Input: 'The object weighs 30.2 \\text{ lbs} and is 15 \\text{ inches} long'
-            Output: 'The object weighs 30.2'
-
-            - Input: '\\text{ unit without preceding text}'
-            Output: ''
-
-        Note:
-            This function assumes that "\\text{ " is only used to denote units. It will remove all text
-            following the first occurrence of "\\text{ ", including any further text and units that might
-            appear in complex sentences.
-        """
-        # Check for "\\text{ " and split the text at each occurrence
-        if "\\text{ " in text:
-            splits = text.split("\\text{ ")
-            # Return only the first part which is assumed to contain the main content without units
-            return splits[0].rstrip()
-        else:
-            return text
-
     def _fix_sqrt(text: str) -> str:
         """Source: https://github.com/hendrycks/math
         Reformat square roots.
@@ -916,26 +1055,33 @@ def math_normalizer(text: str) -> str:  # noqa C901
             Output: '$x + y$'
         """
         text = re.sub(r"(\\text\{)(.*?)(\})", "\\2", text)  # remove \text{...}
-        text = re.sub(r"(\\textbf\{)(.*?)(\})", "\\2", text)  # remove \textbf{...}
         text = re.sub(r"(\\overline\{)(.*?)(\})", "\\2", text)  # remove \overline{...}
         return text
+
+    # First remove
+    text = extract_last_boxed_content(text)
 
     # Replace the unigrams
     text = unicode_to_latex(text)
 
-    text = _remove_boxed(_last_boxed_only_string(text))
-
+    # Remoove useless latex commands
     text = to_remove_regex.sub("", text)
+
     text = replace_in_latex(text)
 
-    # remove units (on the right)
-    text = _remove_right_units(text)
+    # Remove the units
+    _text = re.sub(r"\\text{.*?}$", "", text).strip()
+    if _text != "" and _text != text:
+        # print("Warning: unit not removed: '{}' -> '{}'".format(string, _string))
+        text = _text
 
+    if not skip_unit:
+        # Remove unit: texts, we do thiss twice too remove stuff like meter square
+        for _ in range(2):
+            _text = units_regex.sub(r"\1\2", text)
+    # Remove all text formatting
     text = _remove_text_formatting(text)
 
-    # if empty, return empty text
-    if len(text) == 0:
-        return text
     if text[0] == ".":
         text = "0" + text
 
@@ -955,7 +1101,7 @@ def math_normalizer(text: str) -> str:  # noqa C901
     # NOTE: X/Y changed to \frac{X}{Y} in dataset, but in simple cases fix in case the model output is X/Y
     text = _fix_a_slash_b(text)
 
-    return text
+    return text.strip()
 
 
 def gsm8k_normalizer(text: str) -> str:
