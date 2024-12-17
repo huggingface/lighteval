@@ -131,7 +131,7 @@ def test_multilingual_extraction_math_latex_numbers():
         # Test decimal separator as ,
         ("1000.99", "1000,99", 1),
         ("1,22", "1.22", 1),
-        ("$2.74$", "Soucis : 2,74 $ a..", 1),
+        ("2.74", "Soucis : 2,74 $ a..", 1),
         # Test .4
         ("0.4", ".4", 1),
         # Test decimals
