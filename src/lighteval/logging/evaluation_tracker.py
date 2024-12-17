@@ -186,7 +186,7 @@ class EvaluationTracker:
         self.save_results(date_id=date_id, results_dict=results_dict)
 
         if self.should_save_details:
-            self.save_details(date_id, details_datasets)
+            self.save_details(date_id=date_id, details_datasets=details_datasets)
 
         if self.should_push_to_hub:
             self.push_to_hub(
@@ -214,14 +214,21 @@ class EvaluationTracker:
         with self.fs.open(output_path, "w") as f:
             f.write(json.dumps(results_dict, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False))
 
-    def save_details(self, date_id: str, details_datasets: dict[str, Dataset]):
-        output_dir_details = Path(self.output_dir) / "details" / self.general_config_logger.model_name
-        output_dir_details_sub_folder = output_dir_details / date_id
-        self.fs.mkdirs(output_dir_details_sub_folder, exist_ok=True)
-        logger.info(f"Saving details to {output_dir_details_sub_folder}")
+    def save_details(self, date_id: str, details_datasets: dict[str, Dataset], output_path: str | None = None):
+        if output_path:
+            output_path = Path(self.output_dir) / output_path
+        else:
+            output_path = (
+                Path(self.output_dir)
+                / "details"
+                / self.general_config_logger.model_name
+                / date_id
+                / f"details_{{task_name}}_{date_id}.parquet"
+            )
+        self.fs.mkdirs(output_path.parent, exist_ok=True)
+        logger.info(f"Saving details to {output_path}")
         for task_name, dataset in details_datasets.items():
-            output_file_details = output_dir_details_sub_folder / f"details_{task_name}_{date_id}.parquet"
-            with self.fs.open(str(output_file_details), "wb") as f:
+            with self.fs.open(output_path.as_posix().format(task_name=task_name), "wb") as f:
                 dataset.to_parquet(f)
 
     def generate_final_dict(self) -> dict:
