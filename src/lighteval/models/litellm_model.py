@@ -126,7 +126,7 @@ class LiteLLMClient(LightevalModel):
 
                 response = litellm.completion(
                     model=self.model,
-                    messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
+                    messages=prompt,
                     max_completion_tokens=max_new_tokens,
                     logprobs=return_logits if self.provider == "openai" else None,
                     stop=stop_sequence,
@@ -258,7 +258,7 @@ class LiteLLMClient(LightevalModel):
         return self._tokenizer
 
     def tok_encode(self, text: str):
-        return self.tokenizer.encode(text)
+        return text
 
     @property
     def add_special_tokens(self) -> bool:
