@@ -57,6 +57,22 @@ class TGIModelConfig:
         if not self.generation_parameters:
             self.generation_parameters = GenerationParameters()
 
+    @classmethod
+    def from_path(cls, path: str) -> "TGIModelConfig":
+        """Load configuration for TGI endpoint model from YAML file path.
+
+        Args:
+            path (`str`): Path of the model configuration YAML file.
+
+        Returns:
+            [`TGIModelConfig`]: Configuration for TGI endpoint model.
+        """
+        import yaml
+
+        with open(path, "r") as f:
+            config = yaml.safe_load(f)["model"]
+        return cls(**config["instance"], generation_parameters=GenerationParameters.from_dict(config))
+
 
 # inherit from InferenceEndpointModel instead of LightevalModel since they both use the same interface, and only overwrite
 # the client functions, since they use a different client.
