@@ -38,6 +38,7 @@ from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.metrics_sample import (
     ExactMatches,
     F1_score,
+    JudgeLLM,
     JudgeLLMMixEval,
     LoglikelihoodAcc,
     NormalizedMultiChoiceProbability,
@@ -51,7 +52,8 @@ from lighteval.metrics.normalizations import (
     math_normalizer,
     remove_outer_braces,
 )
-from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase, SampleLevelMetric
+from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase, SampleLevelMetric, SampleLevelMetricGrouping
+from lighteval.tasks.extended.mt_bench.main import process_judge_response
 from lighteval.tasks.requests import Doc
 from lighteval.tasks.templates.utils.formulation import ChoicePrefix, get_prefix
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
@@ -687,19 +689,29 @@ def multilingual_extractive_match_metric(
         higher_is_better=True,
     )
 
-# llm_judge_mixeval_multichoice_flow_judge = SampleLevelMetricGrouping(
-#     metric_name=["llm_judge_mixeval_flow"],
-#     higher_is_better={"judge_score_flow": True},
-#     category=MetricCategory.LLM_AS_JUDGE,
-#     use_case=MetricUseCase.SUMMARIZATION,
-#     sample_level_fn=JudgeLLMMixEval(
-#         judge_model_name="flowaicom/Flow-Judge-v0.1",
-#         template=flow_judge_for_multichoice_template,
-#         process_judge_response=process_judge_response,
-#         judge_backend="vllm",
-#         short_judge_name="flow",
-#     ).compute,
-#     corpus_level_fn={
-#         "judge_score_flow": np.mean,
-#     },
-# )
+# class LLMFreeFlowExtractiveMatch(JudgeLLM):
+#     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
+#         """
+#         Compute the score of a generative task using a llm as a judge.
+#         The generative task can be multiturn with 2 turns max, in that case, we
+#         return scores for turn 1 and 2. Also returns user_prompt and judgement
+#         which are ignored later by the aggregator.
+#         """
+#         questions = [formatted_doc.specific["question"] for formatted_doc in formatted_docs]
+#         options = [formatted_doc.choices for formatted_doc in formatted_docs]
+#         golds = [formatted_doc.choices[formatted_doc.gold_index[0]] for formatted_doc in formatted_docs]
+#         predictions = [response[0].result[0] for response in responses]
+
+#         scores, messages, judgements = self.judge.evaluate_answer_batch(questions, predictions, options, golds)
+
+#         metrics = []
+#         for i in range(len(sample_ids)):
+#             metrics.append(
+#                 {
+#                     f"judge_score_{self.short_judge_name}": scores[i],
+#                     f"user_prompt_{self.short_judge_name}": messages[i],
+#                     f"judgement_{self.short_judge_name}": judgements[i],
+#                 }
+#             )
+
+#         return metrics
