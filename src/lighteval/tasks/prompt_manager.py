@@ -209,7 +209,8 @@ class PromptManager:
         if not use_chat_template:
             toks = self.model.tok_encode(output)
         else:
-            toks = "".join([msg["content"] for msg in output])
+            toks = [self.model.tok_encode(msg["content"]) for msg in output]
+            toks = [t for ts in toks for t in ts]
 
         # If we need to truncate few-shots to fit in the context
         if truncate_few_shots and self.model.max_length is not None and self.model.tokenizer is not None:
@@ -230,7 +231,8 @@ class PromptManager:
                 if not use_chat_template:
                     toks = self.model.tok_encode(output)
                 else:
-                    toks = "".join([msg["content"] for msg in output])
+                    toks = [self.model.tok_encode(msg["content"]) for msg in output]
+                    toks = [t for ts in toks for t in ts]
 
         if isinstance(self.model, LiteLLMClient):
             return output, num_effective_fewshots
