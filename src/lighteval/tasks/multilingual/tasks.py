@@ -111,7 +111,9 @@ def get_task_name(base_name: str, language: Language | str, formulation: Formula
 
     return f"{base_name}_{language_name}{formulation_name}{eval_type_name}"
 
-math_hard_lighteval =[LightevalTaskConfig(
+
+math_hard_lighteval = [
+    LightevalTaskConfig(
         name=f"math_hard_hynek{'_cot' if cot else ''}:{subset}",
         suite=["lighteval", "math"],
         prompt_function=get_qa_prompt_function(
@@ -120,7 +122,7 @@ math_hard_lighteval =[LightevalTaskConfig(
                 "question": line["problem"],
                 "choices": [line["solution"]],
             },
-            cot=cot
+            cot=cot,
         ),
         hf_repo="HuggingFaceTB/MATH",
         hf_subset=subset,
@@ -129,7 +131,15 @@ math_hard_lighteval =[LightevalTaskConfig(
         few_shots_split="test",
         generation_size=2048,
         metric=[
-            multilingual_extractive_match_metric(Language.ENGLISH, gold_extraction_target=(LatexExtractionConfig(),), pred_extraction_target=(LatexExtractionConfig(), ExprExtractionConfig()))
+<<<<<<< HEAD
+            multilingual_extractive_match_metric(
+                Language.ENGLISH,
+                gold_extraction_target=(LatexExtractionConfig(),),
+                pred_extraction_target=(LatexExtractionConfig(), ExprExtractionConfig()),
+            )
+=======
+            multilingual_extractive_match_metric(Language.ENGLISH, gold_extraction_target=[LatexExtractionConfig()], pred_extraction_target=[LatexExtractionConfig(), ExprExtractionConfig()])
+>>>>>>> 3ad0971 (tmp)
         ],
         stop_sequence=get_cot_stop_sequence(Language.ENGLISH, CFFormulation(cot=cot)),
         output_regex=None,
@@ -137,7 +147,15 @@ math_hard_lighteval =[LightevalTaskConfig(
         trust_dataset=True,
         version=0,
     )
-    for subset in ["algebra", "counting_and_probability", "geometry", "intermediate_algebra", "number_theory", "prealgebra", "precalculus"]
+    for subset in [
+        "algebra",
+        "counting_and_probability",
+        "geometry",
+        "intermediate_algebra",
+        "number_theory",
+        "prealgebra",
+        "precalculus",
+    ]
     for cot in (False, True)
 ]
 
@@ -3843,7 +3861,7 @@ armath_tasks = [
         few_shots_split="validation",
         generation_size=get_cot_generaion_size(cot, 100),  # Similar to other math tasks
         metric=[
-            multilingual_extractive_match_metric(Language.ARABIC),
+            multilingual_extractive_match_metric(Language.ARABIC, precision=6),
         ],
         stop_sequence=get_cot_stop_sequence(Language.ARABIC, CFFormulation(cot=cot)),
     )
@@ -3871,7 +3889,7 @@ hawp_tasks = [
         evaluation_splits=("test",),
         few_shots_split="dev",
         generation_size=get_cot_generaion_size(cot, 100),
-        metric=[multilingual_extractive_match_metric(Language.HINDI)],
+        metric=[multilingual_extractive_match_metric(Language.HINDI, precision=6)],
         stop_sequence=get_cot_stop_sequence(Language.HINDI, CFFormulation(cot=cot)),
     )
     for cot in (False, True)
@@ -3893,6 +3911,7 @@ TASKS_TABLE.extend(
         *mera_arithmetic_tasks,
         *qazuntv2_tasks,
         *hawp_tasks,
+        *math_hard_lighteval,
     ]
 )
 

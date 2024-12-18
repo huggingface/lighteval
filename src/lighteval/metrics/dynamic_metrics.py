@@ -547,7 +547,7 @@ def extract_target_from_pred(
     
     return extracted_predictions
 
-def sympy_expr_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase) -> bool:
+def sympy_expr_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precision: int) -> bool:
     # This should be enough for most cases
     a_b_diff = sympy.simplify(a - b)
     if isinstance(a_b_diff, MatrixBase) and a_b_diff.is_zero_matrix:
@@ -555,14 +555,15 @@ def sympy_expr_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase) -> boo
     elif isinstance(a_b_diff, sympy.Expr) and a_b_diff.is_zero:
         return True
 
-    return try_evalf(a) == try_evalf(b)
+    return try_evalf(a, precision) == try_evalf(b, precision)
 
-def try_evalf(a: sympy.Expr | MatrixBase) -> str:
+def try_evalf(a: sympy.Expr | MatrixBase, precision: int) -> str:
     try:
-        return str(a.evalf())
+        return str(a.evalf(n=precision))
     except:
         return str(a)
 
+<<<<<<< HEAD
 
 def compare_gold_target(gold: list[sympy.Expr | Relational], target: list[sympy.Expr | Relational]) -> float:
     def compare_sympy_expr(gold: sympy.Expr | Relational , target: sympy.Expr | Relational) -> float:
@@ -571,15 +572,22 @@ def compare_gold_target(gold: list[sympy.Expr | Relational], target: list[sympy.
                 return 1.0 if sympy_expr_eq(gold, target) else 0.0
             except:
                 return 0.0
+=======
+def compare_gold_target(gold: list[str | sympy.Expr | float], target: list[str | sympy.Expr | float], precision: int) -> float:
+    def compare_single_extraction(gold: str | sympy.Expr | float, target: str | sympy.Expr | float) -> float:
+        # Expression case
+        if (isinstance(gold, (sympy.Expr, MatrixBase))) and (isinstance(target, (sympy.Expr, MatrixBase))):
+            return 1.0 if sympy_expr_eq(gold, target, precision) else 0.0
+>>>>>>> 3ad0971 (tmp)
 
         # Support for equations
         elif isinstance(gold, Relational) and isinstance(target, Relational):
             # Helper to check if expressions are equivalent when flipped
             def are_flipped_inequalities_equal(a: Relational, b: Relational) -> bool:
-                return sympy_expr_eq(a.lhs - a.rhs, b.rhs - b.lhs)
+                return sympy_expr_eq(a.lhs - a.rhs, b.rhs - b.lhs, precision)
 
             # Same type of relation (e.g. both <= or both >=)
-            if type(gold) == type(target) and sympy_expr_eq(gold.lhs - gold.rhs, target.lhs - target.rhs):
+            if type(gold) == type(target) and sympy_expr_eq(gold.lhs - gold.rhs, target.lhs - target.rhs, precision):
                 return 1.0
 
             # Check flipped inequalities (a <= b equals b >= a)
@@ -613,8 +621,14 @@ def compare_gold_target(gold: list[sympy.Expr | Relational], target: list[sympy.
                 pass
 
         # We just do string comparison for everything else
+<<<<<<< HEAD
         gold = try_evalf(gold) if isinstance(gold, sympy.Expr) else str(gold)
         target = try_evalf(target) if isinstance(target, sympy.Expr) else str(target)
+=======
+        else:
+            gold = try_evalf(gold, precision) if isinstance(gold, sympy.Expr) else str(gold)
+            target = try_evalf(target, precision) if isinstance(target, sympy.Expr) else str(target)
+>>>>>>> 3ad0971 (tmp)
 
         gold = gold.strip()
         target = target.strip()
@@ -635,7 +649,8 @@ def extract_target(
     pred_extraction_target: tuple[ExtractionTarget],
     aggregation_function: Callable[[list[float]], float] = max,
     extraction_mode: Literal["first_match", "extract_each_target", "first_fallback"] = "first_match",
-    fallback_mode: Literal["no_fallback", "first_match", "any_match"] = "no_fallback"
+    fallback_mode: Literal["no_fallback", "first_match", "any_match"] = "no_fallback",
+    precision: int = 6,
 ) -> float:
     # Try each target type in order
     gold_extraction_regexes = get_extraction_regexes(formatted_doc, gold_extraction_target, language)
@@ -647,10 +662,9 @@ def extract_target(
     extracted_golds = [extract_target_from_pred(gold, gold_extraction_regexes, extraction_mode, fallback_mode) for gold in golds]
 
     # Assert on empty gold and warn on empty pred
-    if any(len(g) == 0 for g in extracted_golds):
-        raise ValueError("No gold targets found")
+    assert any(len(g) == 0 for g in extracted_golds), f"No gold targets found. Gold: {golds}, Pred: {predictions}"
     if all(len(p) == 0 for p in extracted_predictions):
-        hlog_warn("No predictions found")
+        hlog_warn(f"No predictions found. Gold: {golds}, Pred: {predictions}")
 
     if formatted_doc.specific is None:
         formatted_doc.specific = {}
@@ -659,7 +673,7 @@ def extract_target(
     formatted_doc.specific["extracted_golds"] = extracted_golds
 
     return aggregation_function(
-        (1.0 if any(compare_gold_target(gold, pred) for gold in extracted_golds) else 0.0)
+        (1.0 if any(compare_gold_target(gold, pred, precision) for gold in extracted_golds) else 0.0)
         for pred in extracted_predictions
     )
 
@@ -670,7 +684,8 @@ def multilingual_extractive_match_metric(
     pred_extraction_target: tuple[ExtractionTarget] = (ExprExtractionConfig(),),
     aggregation_function: Callable[[list[float]], float] = max,
     extraction_mode: Literal["first_match", "extract_each_target", "first_fallback"] = "first_match",
-    fallback_mode: Literal["no_fallback", "first_match", "any_match"] = "no_fallback"
+    fallback_mode: Literal["no_fallback", "first_match", "any_match"] = "no_fallback",
+    precision: int = 6,
 ) -> SampleLevelMetric:
     return SampleLevelMetric(
         metric_name="extractive_match",
@@ -682,6 +697,7 @@ def multilingual_extractive_match_metric(
             aggregation_function=aggregation_function,
             extraction_mode=extraction_mode,
             fallback_mode=fallback_mode,
+            precision=precision,
         ),
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.ACCURACY,
