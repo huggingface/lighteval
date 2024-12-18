@@ -27,7 +27,7 @@ from lighteval.models.dummy.dummy_model import DummyModel, DummyModelConfig
 from lighteval.models.endpoints.endpoint_model import (
     InferenceEndpointModel,
     InferenceEndpointModelConfig,
-    InferenceModelConfig,
+    ServerlessEndpointModelConfig,
 )
 from lighteval.models.endpoints.openai_model import OpenAIClient, OpenAIModelConfig
 from lighteval.models.endpoints.tgi_model import ModelClient, TGIModelConfig
@@ -80,7 +80,7 @@ def load_model(  # noqa: C901
     if isinstance(config, TGIModelConfig):
         return load_model_with_tgi(config)
 
-    if isinstance(config, InferenceEndpointModelConfig) or isinstance(config, InferenceModelConfig):
+    if isinstance(config, InferenceEndpointModelConfig) or isinstance(config, ServerlessEndpointModelConfig):
         return load_model_with_inference_endpoints(config, env_config=env_config)
 
     if isinstance(config, TransformersModelConfig):
