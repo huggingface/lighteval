@@ -837,18 +837,10 @@ to_remove_regex = re.compile(
     r"(?<=\s)(and|an|a)(?=\s)|"  # "an" with whitespace
     r"\\\s|"  # backslash with whitespace
     # Percentage symbol
-    r"\\\\%|\\%|%|"  # percentage symbol
+    r"\\\%|\%|%|"  # percentage symbol
     r"[xyzk](?:=|\\in|\\to)|"
     # Quote
     r'"|\''
-    # weird texts
-    r"\\text{s}|"
-    r"\\text{.}|"
-    r"\\text{\ns}|"
-    r"\\text{}^2|"
-    r"\\text{}^3|"
-    r"\\text{\n}|"
-    r"\\text{}",
 )
 
 to_replace_patterns = [
@@ -860,11 +852,11 @@ to_replace_patterns = [
     ("array_end", r"\\end\{array\}", r"\\end{pmatrix}"),
     ("bmatrix", r"bmatrix", r"pmatrix"),
     ("textbf", r"\\textbf", r"\text"),
-    ("mbox", r"\\mbox", r"\xt"),
+    ("mbox", r"\\mbox", r"\text"),
     ("decimal_space", r"\s\.", r" 0."),
     ("decimal_brace", r"\{\.", r"{0."),
     ("neq", r"\\neq", r"\ne"),
-    ("leq", r"\\leq", r"\\le"),
+    ("leq", r"\\leq", r"\le"),
     ("geq", r"\\geq", r"\ge"),
     ("brace_open", r"\\\{", r"{"),
     ("brace_close", r"\\\}", r"}"),
@@ -874,7 +866,6 @@ to_replace_patterns = [
     ("real_line", r"\(-\\infty,\\infty\)", r"\mathbb{R}"),
     ("infinity", r"infinity", r"\infty"),
     ("inf", r"((?<!\\)inf(?!inity))", r"\infty"),
-    ("double_backslash", r"\\\\", "\\"),
 ]
 
 # Create regex with named groups
@@ -919,9 +910,7 @@ def extract_last_boxed_content(text: str) -> str:
     left_idx += len(env)
 
     # If the next character is a brace remove it, otherwise it's a \\boxed {content}
-    if len(text) > left_idx + 1 and text[left_idx + 1] == "{":
-        left_idx += 1
-    else:
+    if len(text) > left_idx and text[left_idx] != "{":
         # If there is no opening brace, it's a \\boxed {content}
         return text[left_idx:].lstrip()
 
@@ -934,8 +923,8 @@ def extract_last_boxed_content(text: str) -> str:
         if text[i] == "}":
             num_left_braces_open -= 1
             if num_left_braces_open == 0:
-                # Extract content between braces
-                return text[left_idx:i]
+                # Extract content between braces (+1 to remove the opening brace)
+                return text[left_idx+1:i]
         i += 1
 
     # Otherwise, it's no a valid latex
@@ -1058,8 +1047,11 @@ def math_normalizer(text: str, skip_unit: bool = False) -> str:  # noqa C901
         text = re.sub(r"(\\overline\{)(.*?)(\})", "\\2", text)  # remove \overline{...}
         return text
 
-    # First remove
+    # First extract the last boxed content
     text = extract_last_boxed_content(text)
+
+    # Sometimes the \\ are doubled so we substitute them
+    text = text.replace("\\\\", "\\")
 
     # Replace the unigrams
     text = unicode_to_latex(text)
@@ -1069,8 +1061,8 @@ def math_normalizer(text: str, skip_unit: bool = False) -> str:  # noqa C901
 
     text = replace_in_latex(text)
 
-    # Remove the units
-    _text = re.sub(r"\\text{.*?}$", "", text).strip()
+    # Remove the units and possibly the superscript (for things like m^2)
+    _text = re.sub(r"\\text{.*?}(^{\d})?$", "", text).strip()
     if _text != "" and _text != text:
         # print("Warning: unit not removed: '{}' -> '{}'".format(string, _string))
         text = _text

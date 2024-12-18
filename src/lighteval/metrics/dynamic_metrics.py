@@ -22,7 +22,7 @@
 
 import re
 from dataclasses import dataclass
-from functools import lru_cache
+from functools import lru_cache, partial
 from itertools import product
 from typing import Callable, Literal, Sequence
 
@@ -207,130 +207,196 @@ class IndicesExtractionConfig:
     try_last_indices_match: bool = True
 
 
+
 ExtractionTarget = LatexExtractionConfig | ExprExtractionConfig | IndicesExtractionConfig
 
 
 def try_parse_latex_interval(latex: str) -> Interval | None:
     # TODO: Move to antlr in future
     # Simply check if the latex is an interval -> [/(\number, \number)/]
-    interval_element_re = r"(-?\d+(?:\.\d+)?|-?\\infty)"
-    match = re.match(
-        rf"(?P<l_bound>[\(\[])(?P<l_bound_val>{interval_element_re}),\s*(?P<u_bound_val>{interval_element_re})(?P<u_bound>[\)\]])",
-        latex.strip(),
-    )
+    match = re.match(r"(?P<l_bound>[\(\[])\s*(?P<l_val>.*?),\s*(?P<u_val>.*?)(?P<u_bound>[\)\]])", latex.strip())
     if match:
         l_closed = match.group("l_bound") == "["
         u_closed = match.group("u_bound") == "]"
 
-        l_bound_val = match.group("l_bound_val")
-        u_bound_val = match.group("u_bound_val")
-
-        # Parse infinity values
-        if l_bound_val == "-\\infty":
-            l_bound_val = -sympy.oo
-        elif l_bound_val == "\\infty":
-            l_bound_val = sympy.oo
-        else:
-            l_bound_val = float(l_bound_val)
-
-        if u_bound_val == "-\\infty":
-            u_bound_val = -sympy.oo
-        elif u_bound_val == "\\infty":
-            u_bound_val = sympy.oo
-        else:
-            u_bound_val = float(u_bound_val)
-        return Interval(l_bound_val, u_bound_val, l_closed, u_closed)
+        try:
+            l_bound_val = parse_latex(match.group("l_val"))
+            u_bound_val = parse_latex(match.group("u_val"))
+            interval = Interval(l_bound_val, u_bound_val, l_closed, u_closed)
+            # If the interval is empty, there is probably issue with sides so just switch them
+            if interval.is_empty:
+                return Interval(u_bound_val, l_bound_val, u_closed, l_closed)
+            return interval
+        except:
+            return None
+            
     return None
 
 
-def multilingual_extractive_match_metric(
-    language: Language,
-    gold_extraction_target: tuple[ExtractionTarget] = (ExprExtractionConfig(),),
-    pred_extraction_target: tuple[ExtractionTarget] = (ExprExtractionConfig(),),
-    extract_all_targets: bool = False,
-    aggregation_function: Callable[[list[float]], float] = max,
-) -> SampleLevelMetric:
+def extract_expr(match: re.Match) -> tuple[str | sympy.Expr | None, str]:
+    # First combine the number
+    groups = match.groupdict()
+    # This musst always exist
+    expr = groups["expr"]
+    integer = next((val for name, val in groups.items() if name.startswith("integer") and val), None)
+    decimal = next((val for name, val in groups.items() if name.startswith("decimal") and val), None)
+
+    percentage_multiplier = 0.01 if groups.get("percent", None) else 1
+
+    if integer:
+        # Remove thousand separators and convert to float
+        num_str = integer.translate(str.maketrans("", "", ", "))
+
+        if decimal:
+            # Add decimal part if present
+            num_str += f"{decimal.replace(',', '.')}"
+        return sympy.Number(float(num_str)) * percentage_multiplier, expr
+    elif decimal:
+        # Just decimal part, convert to float
+        return sympy.Number(float(f"0{decimal}")) * percentage_multiplier, expr
+
+    # Otherwise just return the expression
+    # Remove new lines and spaces
+    try:
+        return parse_expr(expr.replace("\n", "").replace(" ", "")), expr
+    except:
+        return None, expr
+
+
+def extract_latex(match: re.Match, target_type: LatexExtractionConfig) -> tuple[sympy.Expr | str | None, str]:
+    latex_group, latex = next(
+        ((name, val) for name, val in match.groupdict().items() if name.startswith("latex") and val), ("", "")
+    )
+
+    # Take last expr after the =
+    latex = re.split(r"(?<!<|>)=", latex)[-1]  # Split on = not preceded by < or >
+    # Remove new lines and simplify tabs
+    latex = latex.replace("\n", "").replace("\t", " ")
+
+    normalized_latex = math_normalizer(latex)
+
+    interval = try_parse_latex_interval(normalized_latex)
+    if interval is not None:
+        return interval, normalized_latex
+
+    try:
+        return parse_latex(normalized_latex), normalized_latex
+    except:
+        pass
+
+    # If we got this catch by hard to see in wild latex expression, it's possibly that it's a false positive, otherwise we probably failed because the latex is not valid
+    # return (
+    #     normalized_latex
+    #     if len(normalized_latex.strip()) > 0 and latex_group in target_type.groups_with_fallback
+    #     else None
+    # )
+    return None, normalized_latex
+
+
+def extract_match(match: re.Match, target_type: ExtractionTarget) -> tuple[str | sympy.Expr | float | None, str]:
+    """
+    Extracts the match from the regex match.
+    Returns a tuple of the extracted value and string representation of the match
+    """
+    if isinstance(target_type, LatexExtractionConfig):
+        return extract_latex(match, target_type)
+    elif isinstance(target_type, ExprExtractionConfig):
+        return extract_expr(match)
+    elif isinstance(target_type, IndicesExtractionConfig):
+        return match.group("indices"), match.group("indices")
+
+
+
+@lru_cache(maxsize=1)
+def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> list[re.Pattern[str]]:
     translation_literal = TRANSLATION_LITERALS[language]
 
-    @lru_cache(maxsize=1)
-    def lazy_expr_regex(expr_config: ExprExtractionConfig) -> list[re.Pattern[str]]:
-        # TODO: Possibly we should also nesure that the expression doesn't appear in latex env
-        # Basic number patterns (no LaTeX)
-        number_re = (
-            # Format 1: Numbers with thousand separators (e.g., "1,234.56" or "1 234.56")
-            r"(?:"
-            r"(?P<integer1>-?\d{1,3}(?:[ ,]\d{3})+)(?P<decimal1>\.\d+)?|"
-            # Format 2: Simple numbers with decimal point or comma (e.g., "123.45" or "123,45")
-            r"(?P<integer2>-?\d+)(?P<decimal2>[.,]\d+)|"
-            # Format 3: Decimal part only (e.g., ".123")
-            r"(?P<decimal3>\.\d+)|"
-            # Format 4: Integer only (e.g., "123")
-            r"(?P<integer3>-?\d+)"
-            r")(?P<percent>%?|%)"
-        )
+    # TODO: Possibly we should also nesure that the expression doesn't appear in latex env
+    # Basic number patterns (no LaTeX)
+    number_re = (
+        # Format 1: Numbers with thousand separators (e.g., "1,234.56" or "1 234.56")
+        r"(?:"
+        r"(?P<integer1>-?\d{1,3}(?:[ ,]\d{3})+)(?P<decimal1>\.\d+)?|"
+        # Format 2: Simple numbers with decimal point or comma (e.g., "123.45" or "123,45")
+        r"(?P<integer2>-?\d+)(?P<decimal2>[.,]\d+)|"
+        # Format 3: Decimal part only (e.g., ".123")
+        r"(?P<decimal3>\.\d+)|"
+        # Format 4: Integer only (e.g., "123")
+        r"(?P<integer3>-?\d+)"
+        r")(?P<percent>%?|%)"
+    )
 
-        operators = [r"\+", r"\-", r"\*", r"\×", r"\/", r"\^", r"\(", r"\)", r"\÷"]
-        operators_re = "".join(operators)
-        all_expr_chars = r"[\d\.\s" + operators_re + r"]"
-        # Expression should have at minimum at least one operator, must start with a digit
-        expr_re = rf"-?\(?-?\d{all_expr_chars}*[{operators_re}]{all_expr_chars}+\)?"
+    operators = [r"\+", r"\-", r"\*", r"\×", r"\/", r"\^", r"\(", r"\)", r"\÷"]
+    operators_re = "".join(operators)
+    all_expr_chars = r"[\d\.\s" + operators_re + r"]"
+    # Expression should have at minimum at least one operator, must start with a digit
+    expr_re = rf"-?\(?-?\d{all_expr_chars}*[{operators_re}]{all_expr_chars}+\)?"
 
-        # Punctuation regexes
-        full_stop_re = rf"[{re.escape(translation_literal.full_stop)}\.]"
-        comma_re = rf"[{re.escape(translation_literal.comma)}\,]"
-        colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
-        space_re = rf"(?:\s|{re.escape(translation_literal.sentence_space)})"
+    # Punctuation regexes
+    full_stop_re = rf"[{re.escape(translation_literal.full_stop)}\.]"
+    comma_re = rf"[{re.escape(translation_literal.comma)}\,]"
+    colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
+    space_re = rf"(?:\s|{re.escape(translation_literal.sentence_space)})"
 
-        # For expressions we also allow = prefix without any space, for suffix we allow ) because sometimes the answer is wrapped in parenthesis
-        expr_prefix_re = rf"(?:^|{space_re}|\=)(?:\*\*)?"
-        expr_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|\)|\$|$)"
+    # For expressions we also allow = prefix without any space, for suffix we allow ) because sometimes the answer is wrapped in parenthesis
+    expr_prefix_re = rf"(?:^|{space_re}|\=)(?:\*\*)?"
+    expr_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|\)|\$|$)"
 
 
-        expr = f"(?P<expr>{expr_re}|{number_re})"
-        full_expr = rf"(?:{expr_prefix_re}{expr}{expr_suffix_re})"
-        regexes: list[str] = []
-        if language == Language.ENGLISH:
-            equals_re = rf"(?i:the final answer is\s*){full_expr}"
+    expr = f"(?P<expr>{expr_re}|{number_re})"
+    full_expr = rf"(?:{expr_prefix_re}{expr}{expr_suffix_re})"
+    regexes: list[str] = []
+    if language == Language.ENGLISH:
+        equals_re = rf"(?i:the final answer is\s*){full_expr}"
 
-        answer_prefix_re = rf"(?i:{translation_literal.answer}|{translation_literal.result_word})"
-        # Match after the last equals with answer word - require the number pattern
-        # Not sure about the equals matchings
+    answer_prefix_re = rf"(?i:{translation_literal.answer}|{translation_literal.result_word})"
+    # Match after the last equals with answer word - require the number pattern
+    # Not sure about the equals matchings
 
-        equals_re_colon = (
-            rf"{answer_prefix_re}{colon_re}(?:.{{0,100}}=\s*|.{{0,50}}?){full_expr}(?!\s*=)"
-        )
-        equals_re = rf"{answer_prefix_re}(?:.{{0,100}}=\s*|.{{0,50}}?){full_expr}(?!\s*=)"
+    equals_re_colon = (
+        rf"{answer_prefix_re}{colon_re}(?:.{{0,100}}=\s*|.{{0,50}}?){full_expr}(?!\s*=)"
+    )
+    equals_re = rf"{answer_prefix_re}(?:.{{0,100}}=\s*|.{{0,50}}?){full_expr}(?!\s*=)"
 
-        regexes.extend([equals_re_colon, equals_re])
-        if expr_config.try_last_expr_match:
-            regexes.append(f"({expr_prefix_re})(?P<expr>{expr_re})({expr_suffix_re})")
-            regexes.append(f"({expr_prefix_re})(?P<expr>{number_re})({expr_suffix_re})")
+    regexes.extend([equals_re_colon, equals_re])
+    if expr_config.try_last_expr_match:
+        regexes.append(f"({expr_prefix_re})(?P<expr>{expr_re})({expr_suffix_re})")
+        regexes.append(f"({expr_prefix_re})(?P<expr>{number_re})({expr_suffix_re})")
 
-            # We never try to match without prefixes as otherwise it will easily match partials
+        # We never try to match without prefixes as otherwise it will easily match partials
 
-        # We first try to match the answer then the plain number
-        return [re.compile(pattern) for pattern in regexes]
+    # We first try to match the answer then the plain number
+    return [re.compile(pattern) for pattern in regexes]
 
-    @lru_cache(maxsize=1)
-    def lazy_latex_regex(latex_config: LatexExtractionConfig):
-        # Only LaTeX expressions between delimiters
-        simple_number = r"-?\d+(?:[.,]\d+)?"
-        latex_re = (
-            r"("
-            r"(?<!\\)\$\$(?P<latexDisplayDollar>[\s\S]+?)(?<!\\)\$\$|"  # $$...$$ (display math, can be multiline)
-            r"(?<!\\)\\\[(?P<latexDisplayBracket>[\s\S]+?)(?<!\\)\\\]|"  # \[...\] (display math, can be multiline)
-            r"(?<!\\|\d)\$(?P<latexInlineDollar>(?:\\[$]|[^\n$])+?)(?<!\\)\$|"  # $...$ (inline math, single line, allows escaped $), we make sure it's not preceed by a digit to minimize false positives with actualy dollar unit
-            r"(?<!\\)\\\((?P<latexInlineParenthesis>[^\n)]+?)(?<!\\)\\\)|"  # \(...\) (inline math, single line)
-            r"(?<!\\)\[(?P<latexInlineBracket>[^\n$]+?)(?<!\\)\]|"  # [....] While this is no a valid display math llms like to generate it, allow it
-            r"(?P<latexBoxed>\\boxed{{.*}})(?<!\\)\)|"  # Boxed number, it's fine to be as greedy as possible as we will find the correct end afterwards
-            rf"(?P<latexFraction>-?\\frac{{{simple_number}}}{{{simple_number}}})"  # Simple fraction without any signaling
-            r")"
-        )
-        colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
+@lru_cache(maxsize=1)
+def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language):
+    # Only LaTeX expressions between delimiters
+    simple_number = r"-?\d+(?:[.,]\d+)?"
+    latex_envs_re = (
+        r"("
+        r"(?<!\\)\$\$(?P<latexDisplayDollar>[\s\S]+?)(?<!\\)\$\$|"  # $$...$$ (display math, can be multiline)
+        r"(?<!\\)\\\[(?P<latexDisplayBracket>[\s\S]+?)(?<!\\)\\\]|"  # \[...\] (display math, can be multiline)
+        r"(?<!\\|\d)\$(?P<latexInlineDollar>(?:\\[$]|[^\n$])+?)(?<!\\)\$|"  # $...$ (inline math, single line, allows escaped $), we make sure it's not preceed by a digit to minimize false positives with actualy dollar unit
+        r"(?<!\\)\\\((?P<latexInlineParenthesis>[^\n)]+?)(?<!\\)\\\)|"  # \(...\) (inline math, single line)
+        r"(?<!\\)\[(?P<latexInlineBracket>[^\n$]+?)(?<!\\)\]"  # [....] While this is no a valid display math llms like to generate it, allow it
+        r")"
+    )
 
-        answer_prefix_re = rf"(?i:{translation_literal.answer}|{translation_literal.result_word})"
+    # Match latex without environments
+    latex_boxed = (
+        r"(?P<latexBoxed>\\boxed{[^\n]+})"  # Boxed number, it's fine to be as greedy as possible as we will find the correct end afterwards
+    )
+    latex_fraction = rf"(?P<latexFraction>-?\\frac{{{simple_number}}}{{{simple_number}}})"
 
-        regexes: list[str] = []
+    translation_literal = TRANSLATION_LITERALS[language]
+    colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
+
+    answer_prefix_re = rf"(?i:{translation_literal.answer}|{translation_literal.result_word})"
+
+    # We first match boxed env, for some reason that's the most common case of output
+    # Then we match the latex with environments, then we try to match the fraction
+    regexes: list[str] = []
+    for latex_re in [latex_boxed, latex_envs_re, latex_fraction]:
         if language == Language.ENGLISH:
             custom_answer_re = rf"final answer is\s*{latex_re}"
             regexes.append(custom_answer_re)
@@ -345,236 +411,197 @@ def multilingual_extractive_match_metric(
         if latex_config.try_last_latex_match:
             regexes.append(latex_re)
 
-        return [re.compile(pattern, re.DOTALL) for pattern in regexes]
+    return [re.compile(pattern, re.DOTALL) for pattern in regexes]
 
-    @lru_cache(maxsize=100)
-    def lazy_indices_regex(indices_config: IndicesExtractionConfig, len_choices: int):
-        # First get indices to predict
-        indices = get_prefix(indices_config.prefix_for_extraction, translation_literal)[:len_choices]
-        indice_str_re = f"(?P<indices>{'|'.join([re.escape(i) for i in indices])})"
+@lru_cache(maxsize=100)
+def lazy_indices_regex(indices_config: IndicesExtractionConfig, len_choices: int, language: Language):
+    translation_literal = TRANSLATION_LITERALS[language]
+    # First get indices to predict
+    indices = get_prefix(indices_config.prefix_for_extraction, translation_literal)[:len_choices]
+    indice_str_re = f"(?P<indices>{'|'.join([re.escape(i) for i in indices])})"
 
-        # The answer keys are either surrounded with <space>**answer**., or '<space>answer.' or the same without the dot
-        full_stop_re = rf"[{re.escape(translation_literal.full_stop)}\.]"
-        comma_re = rf"[{re.escape(translation_literal.comma)}\,]"
-        colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
-        space_re = rf"(?:\s|{re.escape(translation_literal.sentence_space)})"
+    # The answer keys are either surrounded with <space>**answer**., or '<space>answer.' or the same without the dot
+    full_stop_re = rf"[{re.escape(translation_literal.full_stop)}\.]"
+    comma_re = rf"[{re.escape(translation_literal.comma)}\,]"
+    colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
+    space_re = rf"(?:\s|{re.escape(translation_literal.sentence_space)})"
 
-        answer_prefix_re = rf"(^|{space_re})(?:\*\*)?"
-        answer_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|$)"
-        answer_re = f"{answer_prefix_re}{indice_str_re}{answer_suffix_re}"
-        answer_re_start = rf"^(?:\*\*)?{indice_str_re}{answer_suffix_re}"
+    answer_prefix_re = rf"(^|{space_re})(?:\*\*)?"
+    answer_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|$)"
+    answer_re = f"{answer_prefix_re}{indice_str_re}{answer_suffix_re}"
+    answer_re_start = rf"^(?:\*\*)?{indice_str_re}{answer_suffix_re}"
 
-        answer_word = f"(?i:{translation_literal.answer})"
+    answer_word = f"(?i:{translation_literal.answer})"
 
-        prefixed_res = [
-            f"{answer_word}{colon_re}.{{0,50}}?{answer_re}",
-            # Answer is A.
-            f"{answer_word}.{{0,50}}?{answer_re}",
-            # A. at start
-            answer_re_start,
-        ]
-        if indices_config.try_last_indices_match:
-            prefixed_res.extend(
-                [
-                    # A.
-                    answer_re,
-                    # A
-                    indice_str_re,
-                ]
-            )
-
-        return list(map(re.compile, prefixed_res))
-
-    def extract_expr(match: re.Match) -> str | sympy.Expr | None:
-        # First combine the number
-        groups = match.groupdict()
-        # This musst always exist
-        expr = groups["expr"]
-        integer = next((val for name, val in groups.items() if name.startswith("integer") and val), None)
-        decimal = next((val for name, val in groups.items() if name.startswith("decimal") and val), None)
-
-        percentage_multiplier = 0.01 if groups.get("percent", None) else 1
-
-        if integer:
-            # Remove thousand separators and convert to float
-            num_str = integer.translate(str.maketrans("", "", ", "))
-
-            if decimal:
-                # Add decimal part if present
-                num_str += f"{decimal.replace(',', '.')}"
-            return sympy.Number(float(num_str)) * percentage_multiplier
-        elif decimal:
-            # Just decimal part, convert to float
-            return sympy.Number(float(f"0{decimal}")) * percentage_multiplier
-
-        # Otherwise just return the expression
-        # Remove new lines and spaces
-        try:
-            return parse_expr(expr.replace("\n", "").replace(" ", ""))
-        except:
-            return None
-
-    def extract_latex(match: re.Match, target_type: LatexExtractionConfig) -> sympy.Expr | str | None:
-        latex_group, latex = next(
-            ((name, val) for name, val in match.groupdict().items() if name.startswith("latex") and val), ("", "")
+    prefixed_res = [
+        f"{answer_word}{colon_re}.{{0,50}}?{answer_re}",
+        # Answer is A.
+        f"{answer_word}.{{0,50}}?{answer_re}",
+        # A. at start
+        answer_re_start,
+    ]
+    if indices_config.try_last_indices_match:
+        prefixed_res.extend(
+            [
+                # A.
+                answer_re,
+                # A
+                indice_str_re,
+            ]
         )
 
-        # Take last expr after the =
-        latex = re.split(r"(?<!<|>)=", latex)[-1]  # Split on = not preceded by < or >
-        # Remove new lines and simplify tabs
-        latex = latex.replace("\n", "").replace("\t", " ")
+    return list(map(re.compile, prefixed_res))
 
-        normalized_latex = math_normalizer(latex)
+def get_extraction_regexes(
+    formatted_doc: Doc, target_types: tuple[ExtractionTarget], language: Language
+) -> list[tuple[list[re.Pattern], ExtractionTarget]]:
+    extraction_regexes = [
+        (lazy_latex_regex(target_type, language), target_type)
+        if isinstance(target_type, LatexExtractionConfig)
+        else (lazy_expr_regex(target_type, language), target_type)
+        if isinstance(target_type, ExprExtractionConfig)
+        else (lazy_indices_regex(target_type, len(formatted_doc.choices), language), target_type)
+        for target_type in target_types
+    ]
 
-        interval = try_parse_latex_interval(normalized_latex)
-        if interval is not None:
-            return interval
+    # Sort the extraction res so that order is indices, latex, expr
+    def get_target_type_order(target_type: ExtractionTarget) -> int:
+        match target_type:
+            case IndicesExtractionConfig():
+                return 0
+            case LatexExtractionConfig():
+                return 1
+            case ExprExtractionConfig():
+                return 2
 
-        try:
-            return parse_latex(normalized_latex)
-        except:
-            pass
+    extraction_regexes = sorted(extraction_regexes, key=lambda x: get_target_type_order(x[1]))
 
-        # If we got this catch by hard to see in wild latex expression, it's possibly that it's a false positive, otherwise we probably failed because the latex is not valid
-        return (
-            normalized_latex
-            if len(normalized_latex.strip()) > 0 and latex_group in target_type.groups_with_fallback
-            else None
-        )
+    return extraction_regexes
 
-    def extract_match(match: re.Match, target_type: ExtractionTarget) -> str | sympy.Expr | float | None:
-        if isinstance(target_type, LatexExtractionConfig):
-            return extract_latex(match, target_type)
-        elif isinstance(target_type, ExprExtractionConfig):
-            return extract_expr(match)
+def extract_target_from_pred(
+    pred: str, target_res: list[tuple[list[re.Pattern], ExtractionTarget]], extract_all_targets: bool = False
+) -> list[str | sympy.Expr | None | float]:
+    extracted_predictions = []
+    fallbacks = []
 
-        elif isinstance(target_type, IndicesExtractionConfig):
-            return match.group("indices")
+    for patterns, target_type in target_res:
+        for p in patterns:
+            matches = list(p.finditer(pred))
+            extracted_match, str_fallback = extract_match(matches[-1], target_type) if matches else (None, None)
 
-    def extract_target_from_pred(
-        pred: str, target_res: list[tuple[list[re.Pattern], ExtractionTarget]]
-    ) -> list[str | sympy.Expr | None | float]:
-        extracted_predictions = []
-
-        for patterns, target_type in target_res:
-            for p in patterns:
-                matches = list(p.finditer(pred))
-                extracted_match = extract_match(matches[-1], target_type) if matches else None
-
-                # If we managed to extract something, break
-                if extracted_match is not None:
-                    extracted_predictions.append(extracted_match)
-                    break
-
-            # Break early if we don't want to extract all targets
-            if not extract_all_targets and any(e is not None for e in extracted_predictions):
+            # If we managed to extract something, break
+            if extracted_match is not None:
+                extracted_predictions.append(extracted_match)
                 break
 
-        return extracted_predictions
+            if str_fallback:
+                fallbacks.append(str_fallback)
+        # Break early if we don't want to extract all targets
+        if not extract_all_targets and any(e is not None for e in extracted_predictions):
+            break
 
-    def compare_gold_target(gold: list[str | sympy.Expr | float], target: list[str | sympy.Expr | float]) -> float:
-        def compare_single_extraction(gold: str | sympy.Expr | float, target: str | sympy.Expr | float) -> float:
-            # Expression case
-            if isinstance(gold, sympy.Expr) and isinstance(target, sympy.Expr):
-                # First try using -
+    return extracted_predictions + fallbacks
 
-                if gold.equals(target) or sympy.simplify(gold - target).is_zero:
-                    return 1.0
+def compare_gold_target(gold: list[str | sympy.Expr | float], target: list[str | sympy.Expr | float]) -> float:
+    def compare_single_extraction(gold: str | sympy.Expr | float, target: str | sympy.Expr | float) -> float:
+        # Expression case
+        if isinstance(gold, sympy.Expr) and isinstance(target, sympy.Expr):
+            # First try using -
 
-                # Otherwise try using ==
-                if gold == target or str(gold.evalf()) == str(target.evalf()):
-                    return 1.0
-
-            # Support for equations
-            elif (
-                isinstance(gold, Relational)
-                and isinstance(target, Relational)
-                and type(gold) == type(target)
-                and abs(gold.lhs - gold.rhs).equals(target.lhs - target.rhs)
-            ):
-                # TODO: Possibly also support a <= b to equal to a >= b
+            if gold.equals(target) or sympy.simplify(gold - target).is_zero:
                 return 1.0
 
-            elif (
-                isinstance(gold, Interval)
-                and isinstance(target, Interval)
-                and gold.symmetric_difference(target).is_empty
-            ):
+            # Otherwise try using ==
+            if gold == target or str(gold.evalf()) == str(target.evalf()):
                 return 1.0
-                # TODO: add support for  matrices
 
-            elif isinstance(gold, str) or isinstance(target, str):
-                gold = str(gold.evalf()) if isinstance(gold, sympy.Expr) else str(gold)
-                target = str(target.evalf()) if isinstance(target, sympy.Expr) else str(target)
+        # Support for equations
+        elif isinstance(gold, Relational) and isinstance(target, Relational):
+            # Helper to check if expressions are equivalent when flipped
+            def are_flipped_inequalities_equal(a: Relational, b: Relational) -> bool:
+                return abs(a.lhs - a.rhs).equals(b.rhs - b.lhs)
 
-                gold = gold.strip()
-                target = target.strip()
+            # Same type of relation (e.g. both <= or both >=)
+            if type(gold) == type(target):
+                if abs(gold.lhs - gold.rhs).equals(target.lhs - target.rhs):
+                    return 1.0
 
-                # Ensure it's both not empty and equal
-                return len(gold) > 0 and len(target) > 0 and gold == target
+            # Check flipped inequalities (a <= b equals b >= a)
+            if (isinstance(gold, sympy.GreaterThan) and isinstance(target, sympy.LessThan)
+                or isinstance(gold, sympy.LessThan) and isinstance(target, sympy.GreaterThan)) and are_flipped_inequalities_equal(gold, target):
+                return 1.0
 
             return 0.0
 
-        return any(compare_single_extraction(g, t) for g, t in product(gold, target))
 
-    def get_extraction_regexes(
-        formatted_doc: Doc, target_types: tuple[ExtractionTarget]
-    ) -> list[tuple[list[re.Pattern], ExtractionTarget]]:
-        extraction_regexes = [
-            (lazy_latex_regex(target_type), target_type)
-            if isinstance(target_type, LatexExtractionConfig)
-            else (lazy_expr_regex(target_type), target_type)
-            if isinstance(target_type, ExprExtractionConfig)
-            else (lazy_indices_regex(target_type, len(formatted_doc.choices)), target_type)
-            for target_type in target_types
-        ]
+        elif (
+            isinstance(gold, Interval)
+            and isinstance(target, Interval)
+            and gold.symmetric_difference(target).is_empty
+        ):
+            return 1.0
+            # TODO: add support for  matrices
 
-        # Sort the extraction res so that order is indices, latex, expr
-        def get_target_type_order(target_type: ExtractionTarget) -> int:
-            match target_type:
-                case IndicesExtractionConfig():
-                    return 0
-                case LatexExtractionConfig():
-                    return 1
-                case ExprExtractionConfig():
-                    return 2
+        # We just do string comparison for everything else
+        else:
+            gold = str(gold.evalf()) if isinstance(gold, sympy.Expr) else str(gold)
+            target = str(target.evalf()) if isinstance(target, sympy.Expr) else str(target)
 
-        extraction_regexes = sorted(extraction_regexes, key=lambda x: get_target_type_order(x[1]))
+            gold = gold.strip()
+            target = target.strip()
 
-        return extraction_regexes
+            # Ensure it's both not empty and equal
+            return len(gold) > 0 and len(target) > 0 and gold == target
 
-    def extract_target(
-        golds: list[str],
-        predictions: list[str],
-        formatted_doc: Doc,
-    ) -> float:
-        # Try each target type in order
-        gold_extraction_regexes = get_extraction_regexes(formatted_doc, gold_extraction_target)
-        pred_extraction_regexes = get_extraction_regexes(formatted_doc, pred_extraction_target)
+        return 0.0
 
-        extracted_predictions = [extract_target_from_pred(pred, pred_extraction_regexes) for pred in predictions]
-        extracted_golds = [extract_target_from_pred(gold, gold_extraction_regexes) for gold in golds]
+    return any(compare_single_extraction(g, t) for g, t in product(gold, target))
 
-        # Assert on empty gold and warn on empty pred
-        if len(extracted_golds) == 0:
-            raise ValueError("No gold targets found")
-        if len(extracted_predictions) == 0:
-            hlog_warn("No predictions found")
+def extract_target(
+    golds: list[str],
+    predictions: list[str],
+    formatted_doc: Doc,
+    language: Language,
+    gold_extraction_target: tuple[ExtractionTarget],
+    pred_extraction_target: tuple[ExtractionTarget],
+    aggregation_function: Callable[[list[float]], float] = max,
+    extract_all_targets: bool = False,
+) -> float:
+    # Try each target type in order
+    gold_extraction_regexes = get_extraction_regexes(formatted_doc, gold_extraction_target, language)
+    pred_extraction_regexes = get_extraction_regexes(formatted_doc, pred_extraction_target, language)
 
-        if formatted_doc.specific is None:
-            formatted_doc.specific = {}
+    extracted_predictions = [extract_target_from_pred(pred, pred_extraction_regexes, extract_all_targets) for pred in predictions]
+    extracted_golds = [extract_target_from_pred(gold, gold_extraction_regexes, extract_all_targets) for gold in golds]
 
-        formatted_doc.specific["extracted_predictions"] = extracted_predictions
-        formatted_doc.specific["extracted_golds"] = extracted_golds
+    # Assert on empty gold and warn on empty pred
+    if len(extracted_golds) == 0:
+        raise ValueError("No gold targets found")
+    if len(extracted_predictions) == 0:
+        hlog_warn("No predictions found")
 
-        return aggregation_function(
-            (1.0 if any(compare_gold_target(gold, pred) for gold in extracted_golds) else 0.0)
-            for pred in extracted_predictions
-        )
+    if formatted_doc.specific is None:
+        formatted_doc.specific = {}
 
+    formatted_doc.specific["extracted_predictions"] = extracted_predictions
+    formatted_doc.specific["extracted_golds"] = extracted_golds
+
+    return aggregation_function(
+        (1.0 if any(compare_gold_target(gold, pred) for gold in extracted_golds) else 0.0)
+        for pred in extracted_predictions
+    )
+
+
+def multilingual_extractive_match_metric(
+    language: Language,
+    gold_extraction_target: tuple[ExtractionTarget] = (ExprExtractionConfig(),),
+    pred_extraction_target: tuple[ExtractionTarget] = (ExprExtractionConfig(),),
+    extract_all_targets: bool = False,
+    aggregation_function: Callable[[list[float]], float] = max,
+) -> SampleLevelMetric:
     return SampleLevelMetric(
         metric_name="extractive_match",
-        sample_level_fn=extract_target,
+        sample_level_fn=partial(extract_target, language=language, gold_extraction_target=gold_extraction_target, pred_extraction_target=pred_extraction_target, aggregation_function=aggregation_function, extract_all_targets=extract_all_targets),
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=np.mean,
