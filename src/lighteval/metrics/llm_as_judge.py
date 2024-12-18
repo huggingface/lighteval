@@ -71,8 +71,8 @@ class JudgeLM:
     def __init__(
         self,
         model: str,
-        templates: Callable,
-        process_judge_response: Callable,
+        templates: Callable[[str, str, list[str] | None, str | None], str],
+        process_judge_response: Callable[[str, str, str, list[str] | None, str | None], float],
         judge_backend: Literal["openai", "transformers", "tgi", "vllm"],
         url: str | None = None,
         api_key: str | None = None,
@@ -147,7 +147,10 @@ class JudgeLM:
             for q, a, o, g in zip(questions, answers, options, golds)
         ]
         responses = judge_function(prompts)
-        scores = [self.process_judge_response(response) for response in responses]
+        scores = [
+            self.process_judge_response(response, q, a, o, g)
+            for response, q, a, o, g in zip(responses, questions, answers, options, golds)
+        ]
 
         # clean up the vllm pipeline and free up memory
         if self.pipe is not None and self.backend == "vllm":
@@ -170,9 +173,9 @@ class JudgeLM:
         """
         # lazy loading of the pipeline
         judge_function = self.__lazy_load_client()
-        prompt = self.template(question=question, options=options, answer=answer, gold=gold)
+        prompt = self.template(question=question, answer=answer, options=options, gold=gold)
         response = judge_function(prompt)
-        score = self.process_judge_response(response)
+        score = self.process_judge_response(response, question, answer, options, gold)
 
         return score, prompt, response
 

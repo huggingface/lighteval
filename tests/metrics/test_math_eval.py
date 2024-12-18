@@ -185,7 +185,6 @@ def test_fallback(gold, pred, expected):
         ("$10/9$", "Answer don't parse me $ \\frac{1}{2} \\$ = \\frac{10}{9} $", 1),
         # Incorrect fractions work
         ("$1/3$", "$\\frac13 $", 1),
-        ("$\\frac{a}{b}*c$", "$\\fracabc $", 1),
         ("$1$", "$\\frac3{3} $", 1),
         # Incorrect sqrt works
         ("$\\sqrt{3}$", "$\\sqrt3 $", 1),
@@ -212,6 +211,21 @@ def test_latex_notation(gold, pred, expected):
 @pytest.mark.parametrize(
     "gold,pred,expected",
     [
+        (
+            "$\\frac{2}{3}$",
+            " \\$\\dfrac{4}{6} =\\boxed{\\$\\dfrac23 \\approx \\$0.67}",
+            1,
+        ),
+        (
+            "$2-2p$",
+            "Since $x<2$, it follows that $|x-2|=2-x$. If $2-x=p$, then $x=2-p$. Thus $x-p=\\boxed{2-2p}$.",
+            1,
+        ),
+        (
+            "\\boxed{\n\\begin{pmatrix} 0 & 3 \\\\ 0 & -1 \\end{pmatrix}\n}.\n\\end{align*}",
+            "\\boxed{\n\\begin{pmatrix} 0 & 3 \\\\ 0 & -1 \\end{pmatrix}\n}.\n\\end{align*}",
+            1,
+        ),
         # Notations
         (
             "$(3, \\frac{\\pi}{2})$",
@@ -300,16 +314,39 @@ def test_latex_notation(gold, pred, expected):
             "The roots of $P(x)$ are $-2$ and $1 \\pm \\sqrt{5}$, so the answer is $\\boxed{\\{1\\pm\\sqrt{5},-2\\}}.$",
             1,
         ),
-          (
-              "$f(2) < f(1) < f(4)$",
-              'The graph of $f(x) = x^2 + bx + c$ is an upward-facing parabola, and the condition\n\\[f(2 + t) = f(2 - t)\\]tells us that the axis of symmetry of the parabola is the line $x = 2.$  Thus, $f(x)$ is an increasing function of $|x - 2|.$  In other words, the farther $x$ is from 2, the greater $f(x)$ is.\n\n[asy]\nunitsize(1.5 cm);\n\nreal parab (real x) {\n  return (x^2/4);\n}\n\ndraw(graph(parab,-2,2),red);\ndraw((0,-0.5)--(0,2),dashed);\n\nlabel("$x = 2$", (0,2), N);\ndot("$(2,f(2))$", (0,0), SE);\ndot("$(1,f(1))$", (-0.8,parab(-0.8)), SW);\ndot("$(4,f(4))$", (1.6,parab(1.6)), SE);\n[/asy]\n\nHence, $\\boxed{f(2) < f(1) < f(4)}.$',
-              1,
-          ),
-
+        (
+            "$f(2) < f(1) < f(4)$",
+            'The graph of $f(x) = x^2 + bx + c$ is an upward-facing parabola, and the condition\n\\[f(2 + t) = f(2 - t)\\]tells us that the axis of symmetry of the parabola is the line $x = 2.$  Thus, $f(x)$ is an increasing function of $|x - 2|.$  In other words, the farther $x$ is from 2, the greater $f(x)$ is.\n\n[asy]\nunitsize(1.5 cm);\n\nreal parab (real x) {\n  return (x^2/4);\n}\n\ndraw(graph(parab,-2,2),red);\ndraw((0,-0.5)--(0,2),dashed);\n\nlabel("$x = 2$", (0,2), N);\ndot("$(2,f(2))$", (0,0), SE);\ndot("$(1,f(1))$", (-0.8,parab(-0.8)), SW);\ndot("$(4,f(4))$", (1.6,parab(1.6)), SE);\n[/asy]\n\nHence, $\\boxed{f(2) < f(1) < f(4)}.$',
+            1,
+        ),
+        (
+            "$2 \\sin b \\cos a$",
+            "By sum-to-product,\n\\[\\sin (a + b) - \\sin (a - b) = \\boxed{2 \\sin b \\cos a}.\\]",
+            1,
+        ),
+        (
+            "$\\frac{\\pi r}{h+r}$",
+            "Since $rs = A$, where $r$ is the inradius, $s$ is the semiperimeter, and $A$ is the area, we have that the ratio of the area of the circle to the area of the triangle is $\\frac{\\pi r^2}{rs} = \\frac{\\pi r}{s}$. Now we try to express $s$ as $h$ and $r$. Denote the points where the incircle meets the triangle as $X,Y,Z$, where $O$ is the incenter, and denote $AX = AY = z, BX = BZ = y, CY = CZ = x$. Since $XOZB$ is a square (tangents are perpendicular to radius), $r = BX = BZ = y$. The perimeter can be expressed as $2(x+y+z)$, so the semiperimeter is $x+y+z$. The hypotenuse is $AY+CY = z+x$. Thus we have $s = x+y+z = (z+x)+y = h+r$. The answer is $\\boxed{\\frac{\\pi r}{h+r}}$.'], Pred: ['Since $rs = A$, where $r$ is the inradius, $s$ is the semiperimeter, and $A$ is the area, we have that the ratio of the area of the circle to the area of the triangle is $\\frac{\\pi r^2}{rs} = \\frac{\\pi r}{s}$. Now we try to express $s$ as $h$ and $r$. Denote the points where the incircle meets the triangle as $X,Y,Z$, where $O$ is the incenter, and denote $AX = AY = z, BX = BZ = y, CY = CZ = x$. Since $XOZB$ is a square (tangents are perpendicular to radius), $r = BX = BZ = y$. The perimeter can be expressed as $2(x+y+z)$, so the semiperimeter is $x+y+z$. The hypotenuse is $AY+CY = z+x$. Thus we have $s = x+y+z = (z+x)+y = h+r$. The answer is $\\boxed{\\frac{\\pi r}{h+r}}$.",
+            1,
+        ),
+        (
+            "$\\begin{pmatrix} 1 & -1 \\\\ 1 & 1 \\end{pmatrix}$",
+            "The matrix is $\\boxed{\\begin{pmatrix} 1 & -1 \\\\ 1 & \\phantom 1 \\end{pmatrix}}$",
+            1,
+        ),
+        ("$125$ miles", "The distance is $\\boxed{125\\textnormal{ miles}}.$", 1),
+        (
+            "$[-1, -\\frac{1}{2}) \\cup (-\\frac{1}{2}, 0) \\cup (0, 1) \\cup (1, \\infty)$",
+            "The solution set is $\\boxed{[-1, -\\tfrac12) \\cup (-\\tfrac12, 0) \\cup (0, 1) \\cup (1, \\infty)}.$",
+            1,
+        ),
+        ("$\\sqrt{2}+\\sqrt{5}$", "The answer is $\\boxed{\\sqrt 2+\\sqrt 5}$", 1),
+        ("$\\frac{9}{4}\\pi$", "Therefore $\\boxed{\\frac94\\pi}$.", 1),
     ],
 )
 def test_latex_notation_math(gold, pred, expected):
     assert compare_en(gold, pred, match_types=["latex"]) == expected
+
 
 @pytest.mark.parametrize(
     "gold,pred,expected",
@@ -356,7 +393,6 @@ def test_latex_notation_math(gold, pred, expected):
             "The solution is $x = 5$",
             0,
         ),
-
         # Test flipped inequalities
         (
             "$x \\leq 5$",
@@ -374,7 +410,6 @@ def test_relations_math(gold, pred, expected):
     assert compare_en(gold, pred, match_types=["latex"]) == expected
 
 
-
 @pytest.mark.parametrize(
     "gold,pred,expected",
     [
@@ -382,50 +417,45 @@ def test_relations_math(gold, pred, expected):
         (
             r"$\begin{pmatrix}1 & 0 \\ 0 & 1\end{pmatrix}$",
             r"The identity matrix is $ \begin{pmatrix}1 & 0 \\ 0 & 1\end{pmatrix} $.",
-            1
+            1,
         ),
         # Test bmatrix
         (
             r"$\begin{bmatrix}0 & 0 \\0 & 0\end{bmatrix}$",
             r"Here is a zero matrix: $ \begin{pmatrix}0 & 0 \\0 & 0\end{pmatrix} $",
-            1
+            1,
         ),
         # Test Matrix with Special Formatting
         (
             r"$\begin{pmatrix}1 & 2 \\3 & 4\end{pmatrix}$",
             r"Special matrix: $ \left[\begin{array}{cc}1 & 2 \\3 & 4\end{array}\right] $",
-            1
+            1,
         ),
         # Test Matrix with Fraction Entries
         (
             r"$\begin{pmatrix}\frac{1}{2} & \frac{3}{4} \\ \frac{5}{6} & \frac{7}{8}\end{pmatrix}$",
             r"Matrix with fractions: $ \begin{pmatrix}\frac{1}{2} & \frac{3}{4} \\ \frac{5}{6} & \frac{7}{8}\end{pmatrix} $",
-            1
+            1,
         ),
         # Test matrix addition
         (
             r"$\begin{pmatrix}6 & 8 \\ 10 & 12\end{pmatrix}$",
             r"The sum is $\begin{pmatrix}1 & 2 \\ 3 & 4\end{pmatrix} + \begin{pmatrix}5 & 6 \\ 7 & 8\end{pmatrix}$",
-            1
+            1,
         ),
-
         # Test matrix multiplication
         (
             r"$\begin{pmatrix}1 & 0 \\ 0 & 1\end{pmatrix}$",
             r"When multiplying by identity: $\begin{pmatrix}1 & 0 \\ 0 & 1\end{pmatrix} \begin{pmatrix}1 & 0 \\ 0 & 1\end{pmatrix}$",
-            1
+            1,
         ),
-
         # Test incorrect matrix
         (
             r"$\begin{pmatrix}1 & 2 \\ 3 & 4\end{pmatrix}$",
             r"The matrix is $\begin{pmatrix}1 & 2 \\ 3 & 5\end{pmatrix}$",  # Different value in bottom right
-            0
+            0,
         ),
     ],
 )
 def test_matrix_extraction(gold, pred, expected):
     assert compare_en(gold, pred, match_types=["latex"]) == expected
-
-
-

@@ -29,17 +29,17 @@ from typing import Callable, Literal, Sequence
 import numpy as np
 import sympy
 from latex2sympy2 import latex2sympy as parse_latex
+
+# from sympy.parsing.latex import parse_latex
 from sympy import FiniteSet, Interval
 from sympy.core.relational import Relational
-from sympy.parsing.sympy_parser import parse_expr
 from sympy.matrices import MatrixBase
+from sympy.parsing.sympy_parser import parse_expr
 
 from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.metrics_sample import (
     ExactMatches,
     F1_score,
-    JudgeLLM,
-    JudgeLLMMixEval,
     LoglikelihoodAcc,
     NormalizedMultiChoiceProbability,
     Probability,
@@ -52,8 +52,11 @@ from lighteval.metrics.normalizations import (
     math_normalizer,
     remove_outer_braces,
 )
-from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase, SampleLevelMetric, SampleLevelMetricGrouping
-from lighteval.tasks.extended.mt_bench.main import process_judge_response
+from lighteval.metrics.utils.metric_utils import (
+    MetricCategory,
+    MetricUseCase,
+    SampleLevelMetric,
+)
 from lighteval.tasks.requests import Doc
 from lighteval.tasks.templates.utils.formulation import ChoicePrefix, get_prefix
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
@@ -218,31 +221,57 @@ ExtractionTarget = LatexExtractionConfig | ExprExtractionConfig | IndicesExtract
 def try_parse_latex_interval(latex: str) -> Interval | FiniteSet | None:
     # TODO: Move to antlr in future
     # Simply check if the latex is an interval -> [/(\number, \number)/]
-    match = re.match(r"(?P<l_bound>[\(\[])\s*(?P<l_val>.*?),\s*(?P<u_val>.*?)(?P<u_bound>[\)\]])", latex.strip())
-    if match:
+    # First split on union and intersection operators
+    parts = re.split(r"\\cup|\\cap", latex.strip())
+
+    intervals = []
+    operators = []
+
+    # Extract the operators (cup/cap) in order
+    for op in re.finditer(r"\\cup|\\cap", latex.strip()):
+        operators.append(op.group())
+
+    # Parse each interval part
+    for part in parts:
+        match = re.match(r"(?P<l_bound>[\(\[])\s*(?P<l_val>.*?),\s*(?P<u_val>.*?)(?P<u_bound>[\)\]])", part.strip())
+        if not match:
+            return None
+
         l_closed = match.group("l_bound") == "["
         u_closed = match.group("u_bound") == "]"
 
         try:
             l_bound_val = parse_latex(match.group("l_val"))
-            # Ensures we are not parsing a set
-            if isinstance(l_bound_val, list):
-                return None
             u_bound_val = parse_latex(match.group("u_val"))
-            if isinstance(u_bound_val, list):
+
+            # Ensure we're not parsing lists
+            if isinstance(l_bound_val, list) or isinstance(u_bound_val, list):
                 return None
-            # Ensure that the result is not list
+
             interval = Interval(l_bound_val, u_bound_val, l_closed, u_closed)
-            # If the interval is empty, there is probably issue with sides so just switch them
             if interval.is_empty:
                 interval = Interval(u_bound_val, l_bound_val, u_closed, l_closed)
-            return interval
+            intervals.append(interval)
         except:
             return None
 
-    return None
+    if not intervals:
+        return None
+
+    # Combine intervals using operators
+    result = intervals[0]
+    for i, op in enumerate(operators):
+        if op == "\\cup":
+            result = result.union(intervals[i + 1])
+        else:  # \\cap
+            result = result.intersection(intervals[i + 1])
+
+    return result
+
 
 pm_regex = re.compile(r"(?P<expr>.+)(?P<plus_minus>\\pm)(?P<value>.+)")
+
+
 def try_parse_latex_set(latex: str) -> FiniteSet | None:
     elements = []
     latex = remove_outer_braces(latex)
@@ -267,11 +296,13 @@ def try_parse_latex_set(latex: str) -> FiniteSet | None:
 
     return FiniteSet(*elements)
 
+
 def parse_latex_extended(latex: str) -> FiniteSet | Interval | sympy.Expr | None:
     interval = try_parse_latex_interval(latex)
     if interval is not None:
         return interval
     return try_parse_latex_set(latex)
+
 
 def extract_expr(match: re.Match) -> tuple[str | sympy.Expr | None, str]:
     # First combine the number
@@ -411,7 +442,7 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language):
     )
 
     # Match latex without environments
-    latex_boxed = r"(?P<latexBoxed>\\boxed{[^\n]+})"  # Boxed number, it's fine to be as greedy as possible as we will find the correct end afterwards
+    latex_boxed = r"(?P<latexBoxed>\\boxed{.+})"  # Boxed number, it's fine to be as greedy as possible as we will find the correct end afterwards
     latex_fraction = rf"(?P<latexFraction>-?\\frac{{{simple_number}}}{{{simple_number}}})"
 
     translation_literal = TRANSLATION_LITERALS[language]
@@ -508,11 +539,10 @@ def get_extraction_regexes(
 
 
 def extract_target_from_pred(
-    pred: str, 
-    target_res: list[tuple[list[re.Pattern], ExtractionTarget]], 
+    pred: str,
+    target_res: list[tuple[list[re.Pattern], ExtractionTarget]],
     extraction_mode: Literal["first_match", "extract_each_target", "first_fallback"] = "first_match",
-    fallback_mode: Literal["no_fallback", "first_match", "any_match"] = "no_fallback"
-    
+    fallback_mode: Literal["no_fallback", "first_match", "any_match"] = "no_fallback",
 ) -> list[str | sympy.Expr | None | float]:
     extracted_predictions = []
     fallbacks = []
@@ -544,8 +574,9 @@ def extract_target_from_pred(
             return fallbacks  # Return all fallbacks
         elif fallback_mode == "no_fallback":
             return []  # Return empty list if no successful extractions
-    
+
     return extracted_predictions
+
 
 def sympy_expr_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precision: int) -> bool:
     # This should be enough for most cases
@@ -557,6 +588,7 @@ def sympy_expr_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precis
 
     return try_evalf(a, precision) == try_evalf(b, precision)
 
+
 def try_evalf(a: sympy.Expr | MatrixBase, precision: int) -> str:
     try:
         return str(a.evalf(n=precision))
@@ -564,8 +596,10 @@ def try_evalf(a: sympy.Expr | MatrixBase, precision: int) -> str:
         return str(a)
 
 
-def compare_gold_target(gold: list[sympy.Expr | Relational], target: list[sympy.Expr | Relational], precision: int) -> float:
-    def compare_sympy_expr(gold: sympy.Expr | Relational , target: sympy.Expr | Relational) -> float:
+def compare_gold_target(
+    gold: list[sympy.Expr | Relational], target: list[sympy.Expr | Relational], precision: int
+) -> float:
+    def compare_sympy_expr(gold: sympy.Expr | Relational, target: sympy.Expr | Relational) -> float:
         if (isinstance(gold, (sympy.Expr, MatrixBase))) and (isinstance(target, (sympy.Expr, MatrixBase))):
             try:
                 return 1.0 if sympy_expr_eq(gold, target, precision) else 0.0
@@ -594,19 +628,16 @@ def compare_gold_target(gold: list[sympy.Expr | Relational], target: list[sympy.
             return 0.0
 
         elif (
-            (isinstance(gold, (Interval, FiniteSet)) and isinstance(target, (Interval, FiniteSet)))
-            and gold.symmetric_difference(target).is_empty
-        ):
+            isinstance(gold, (Interval, FiniteSet)) and isinstance(target, (Interval, FiniteSet))
+        ) and gold.symmetric_difference(target).is_empty:
             return 1.0
-        
+
         return 0.0
-
-
 
     def compare_single_extraction(gold: str | sympy.Expr | float, target: str | sympy.Expr | float) -> float:
         # Expression case
 
-        if isinstance(gold, sympy.Basic) and isinstance(target, sympy.Basic):
+        if isinstance(gold, (sympy.Basic, MatrixBase)) and isinstance(target, (sympy.Basic, MatrixBase)):
             try:
                 return 1.0 if compare_sympy_expr(gold, target) else 0.0
             except:
@@ -621,7 +652,6 @@ def compare_gold_target(gold: list[sympy.Expr | Relational], target: list[sympy.
 
         # Ensure it's both not empty and equal
         return len(gold) > 0 and len(target) > 0 and gold == target
-
 
     return any(compare_single_extraction(g, t) for g, t in product(gold, target))
 
@@ -645,7 +675,9 @@ def extract_target(
     extracted_predictions = [
         extract_target_from_pred(pred, pred_extraction_regexes, extraction_mode, fallback_mode) for pred in predictions
     ]
-    extracted_golds = [extract_target_from_pred(gold, gold_extraction_regexes, extraction_mode, fallback_mode) for gold in golds]
+    extracted_golds = [
+        extract_target_from_pred(gold, gold_extraction_regexes, extraction_mode, fallback_mode) for gold in golds
+    ]
 
     # Assert on empty gold and warn on empty pred
     if any(len(g) == 0 for g in extracted_golds):
@@ -693,6 +725,7 @@ def multilingual_extractive_match_metric(
         higher_is_better=True,
     )
 
+
 # class LLMFreeFlowExtractiveMatch(JudgeLLM):
 #     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
 #         """
@@ -701,7 +734,6 @@ def multilingual_extractive_match_metric(
 #         return scores for turn 1 and 2. Also returns user_prompt and judgement
 #         which are ignored later by the aggregator.
 #         """
-#         questions = [formatted_doc.specific["question"] for formatted_doc in formatted_docs]
 #         options = [formatted_doc.choices for formatted_doc in formatted_docs]
 #         golds = [formatted_doc.choices[formatted_doc.gold_index[0]] for formatted_doc in formatted_docs]
 #         predictions = [response[0].result[0] for response in responses]
@@ -719,3 +751,28 @@ def multilingual_extractive_match_metric(
 #             )
 
 #         return metrics
+
+
+# def flow_judge_mt_bench_prompt(question, answer, options, gold):
+#     return f"""\
+# ## Task
+# You will be provided an answer given by a student to a mathematical question
+# Extract an answer from an mathematical answer given by a student. The extracted answer should be in latex format.
+
+
+# llm_judge_mt_bench = SampleLevelMetricGrouping(
+#     metric_name=["judge_score_turn_1", "judge_score_turn_2"],
+#     higher_is_better={"judge_score_turn_1": True, "judge_score_turn_2": True},
+#     category=MetricCategory.LLM_AS_JUDGE_MULTI_TURN,
+#     use_case=MetricUseCase.SUMMARIZATION,
+#     sample_level_fn=LLMFreeFlowExtractiveMatch(
+#         judge_model_name="flowaicom/Flow-Judge-v0.1",
+#         template=flow_judge_mt_bench_prompt,
+#         process_judge_response=process_judge_response,
+#         judge_backend="vllm",
+#     ).compute,
+#     corpus_level_fn={
+#         "judge_score_turn_1": np.mean,
+#         "judge_score_turn_2": np.mean,
+#     },
+# )
