@@ -563,22 +563,14 @@ def try_evalf(a: sympy.Expr | MatrixBase, precision: int) -> str:
     except:
         return str(a)
 
-<<<<<<< HEAD
 
-def compare_gold_target(gold: list[sympy.Expr | Relational], target: list[sympy.Expr | Relational]) -> float:
+def compare_gold_target(gold: list[sympy.Expr | Relational], target: list[sympy.Expr | Relational], precision: int) -> float:
     def compare_sympy_expr(gold: sympy.Expr | Relational , target: sympy.Expr | Relational) -> float:
         if (isinstance(gold, (sympy.Expr, MatrixBase))) and (isinstance(target, (sympy.Expr, MatrixBase))):
             try:
-                return 1.0 if sympy_expr_eq(gold, target) else 0.0
+                return 1.0 if sympy_expr_eq(gold, target, precision) else 0.0
             except:
                 return 0.0
-=======
-def compare_gold_target(gold: list[str | sympy.Expr | float], target: list[str | sympy.Expr | float], precision: int) -> float:
-    def compare_single_extraction(gold: str | sympy.Expr | float, target: str | sympy.Expr | float) -> float:
-        # Expression case
-        if (isinstance(gold, (sympy.Expr, MatrixBase))) and (isinstance(target, (sympy.Expr, MatrixBase))):
-            return 1.0 if sympy_expr_eq(gold, target, precision) else 0.0
->>>>>>> 3ad0971 (tmp)
 
         # Support for equations
         elif isinstance(gold, Relational) and isinstance(target, Relational):
@@ -621,14 +613,8 @@ def compare_gold_target(gold: list[str | sympy.Expr | float], target: list[str |
                 pass
 
         # We just do string comparison for everything else
-<<<<<<< HEAD
-        gold = try_evalf(gold) if isinstance(gold, sympy.Expr) else str(gold)
-        target = try_evalf(target) if isinstance(target, sympy.Expr) else str(target)
-=======
-        else:
-            gold = try_evalf(gold, precision) if isinstance(gold, sympy.Expr) else str(gold)
-            target = try_evalf(target, precision) if isinstance(target, sympy.Expr) else str(target)
->>>>>>> 3ad0971 (tmp)
+        gold = try_evalf(gold, precision) if isinstance(gold, sympy.Expr) else str(gold)
+        target = try_evalf(target, precision) if isinstance(target, sympy.Expr) else str(target)
 
         gold = gold.strip()
         target = target.strip()
@@ -662,9 +648,11 @@ def extract_target(
     extracted_golds = [extract_target_from_pred(gold, gold_extraction_regexes, extraction_mode, fallback_mode) for gold in golds]
 
     # Assert on empty gold and warn on empty pred
-    assert any(len(g) == 0 for g in extracted_golds), f"No gold targets found. Gold: {golds}, Pred: {predictions}"
+    if any(len(g) == 0 for g in extracted_golds):
+        hlog_warn(f"No gold targets found for at least one gold. Gold: {golds}, Pred: {predictions}")
+
     if all(len(p) == 0 for p in extracted_predictions):
-        hlog_warn(f"No predictions found. Gold: {golds}, Pred: {predictions}")
+        hlog_warn(f"No predictions found for all predictions. Gold: {golds}, Pred: {predictions}")
 
     if formatted_doc.specific is None:
         formatted_doc.specific = {}
