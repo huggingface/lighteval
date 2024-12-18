@@ -214,7 +214,9 @@ class EvaluationTracker:
         with self.fs.open(output_path, "w") as f:
             f.write(json.dumps(results_dict, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False))
 
-    def save_details(self, date_id: str, details_datasets: dict[str, Dataset], output_path: str | None = None):
+    def save_details(
+        self, date_id: str | None, details_datasets: dict[str, Dataset] | None = None, output_path: str | None = None
+    ):
         if output_path:
             output_path = Path(self.output_dir) / output_path
         else:
