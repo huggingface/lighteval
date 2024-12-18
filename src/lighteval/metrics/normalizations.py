@@ -730,7 +730,6 @@ units = [
     "g .",
     "h .",
     "t",
-    "a",
     "h",
     "no change",
     "men",
@@ -830,24 +829,26 @@ units = [
 # We sort here to that when matching from right the longest units are matched first
 # E.g "percent" is matched before "cent"
 
-units_regex = re.compile("|".join([f"(^|\\W)(?:{unit}(?:s|es)?)($|\\W)" for unit in units]))
+units_regex = re.compile("|".join([f"(?=\\s)(?:{unit}(?:s|es)?)($|\\W)" for unit in units]))
 
 to_remove_regex = re.compile(
     r"\\mathrm\{th\}|"
     r"\\;|"
     r"\{,\}|"
     r"\\!|"  # inverse spaces (already present in original)
-    r"(?<!\\)\\\s|" # backslash with whitespace (but not in matrix line breaks)
+    r"(?<!\\)\\\s|"  # backslash with whitespace (but not in matrix line breaks)
     r"\\left|\\right|"  # \left and \right (already present in original)
     r"\^{\\circ}|\^\\circ|"  # degrees symbols (already present in original)
     r"\\\$|\$|"  # dollar signs
     r",\\!|"  # comma with inverse space (already present in original)
-    r"(?<=\s)(and|an|a)(?=\s)|"  # "an" with whitespace
+    r"(?<=\s)(and)(?=\s)|"  # "and" with whitespace
     # Percentage symbol
     r"\\\%|\%|%|"  # percentage symbol
     r"[xyzk](?:=|\\in|\\to)|"
     # Quote
-    r"(?<!\\)[\"\']"
+    r"(?<!\\)[\"\']|"
+    # Phantom
+    r"\\phantom"
 )
 
 to_replace_patterns = [
@@ -860,6 +861,7 @@ to_replace_patterns = [
     ("bmatrix", r"bmatrix", r"pmatrix"),
     ("textbf", r"\\textbf", r"\text"),
     ("mbox", r"\\mbox", r"\text"),
+    ("textnormal", r"\\textnormal", r"\text"),
     ("decimal_space", r"\s\.", r" 0."),
     ("decimal_brace", r"\{\.", r"{0."),
     ("neq", r"\\neq", r"\ne"),
@@ -867,6 +869,7 @@ to_replace_patterns = [
     ("geq", r"\\geq", r"\ge"),
     ("gt", r"\\gt", r">"),
     ("lt", r"\\lt", r"<"),
+    ("approx", r"\~\=", r"\approx"),
     # Again we could in theory improve the antlr4 parser directly
     ("neq_natural", r"!=", r"\ne"),
     ("leq_natural", r"<=", r"\le"),
@@ -890,7 +893,6 @@ to_replace_regex = re.compile(pattern)
 replacements = {name: replacement for name, _, replacement in to_replace_patterns}
 
 
-
 def replace(match):
     # Find which group matched
     # Get corresponding replacement from dict
@@ -900,8 +902,11 @@ def replace(match):
 def replace_in_latex(text: str) -> str:
     return to_replace_regex.sub(replace, text)
 
+
 # Make sure we don't break line breaks
-command_slash_fix_regex=re.compile(r"\\\\(?=[a-zA-Z])")
+
+
+command_slash_fix_regex = re.compile(r"\\\\(?=[a-zA-Z])")
 
 
 def extract_last_boxed_content(text: str) -> str:
@@ -971,20 +976,19 @@ def math_normalizer(text: str, skip_unit: bool = False) -> str:  # noqa C901
             >>> _fix_fracs("\\frac1{2}")
             "\\frac{1}{2}"
         """
-
         substrs = text.split("\\frac")
         new_str = substrs[0]
         if len(substrs) > 1:
-            substrs = substrs[1:]
-            for substr in substrs:
+            for substr in substrs[1:]:
+                # This allows use to have \\frac{1}{2} and \\ frac1{2}
+                substr = substr.lstrip()
                 new_str += "\\frac"
-                if substr[0] == "{":
+                if len(substr) > 0 and substr[0] == "{":
                     new_str += substr
+
+                elif len(substr) < 2:
+                    return text
                 else:
-                    try:
-                        assert len(substr) >= 2
-                    except AssertionError:
-                        return text
                     a = substr[0]
                     b = substr[1]
                     if b != "{":
@@ -1034,6 +1038,7 @@ def math_normalizer(text: str, skip_unit: bool = False) -> str:  # noqa C901
         splits = text.split("\\sqrt")
         new_string = splits[0]
         for split in splits[1:]:
+            split = split.lstrip()
             if split[0] != "{":
                 a = split[0]
                 new_substr = "\\sqrt{" + a + "}" + split[1:]
@@ -1086,8 +1091,14 @@ def math_normalizer(text: str, skip_unit: bool = False) -> str:  # noqa C901
     # Split on =, by now all <=/>=/!= are replaced with \le/\ge/\ne
     text = re.split(r"=", text)[-1]
 
+    # Split on approximate, we want to take everything but last part because we don't care about approximate
+    approx_split = re.split(r"\\approx", text)
+    # We take the second last part because we don't care about approximate
+    if len(approx_split) > 1:
+        text = approx_split[-2]
+
     # Remove the units and possibly the superscript (for things like m^2)
-    _text = re.sub(r"\\text{.*?}(^{\d})?$", "", text).strip()
+    _text = re.sub(r"\\text{.*?}(\^\d|\{\^\d\})?$", "", text).strip()
     if _text != "" and _text != text:
         # print("Warning: unit not removed: '{}' -> '{}'".format(string, _string))
         text = _text
@@ -1106,9 +1117,6 @@ def math_normalizer(text: str, skip_unit: bool = False) -> str:  # noqa C901
 
     # fix sqrt3 --> sqrt{3}
     text = _fix_sqrt(text)
-
-    # remove spaces
-    text = text.replace(" ", "")
 
     # \frac1b or \frac12 --> \frac{1}{b} and \frac{1}{2}, etc. Even works with \frac1{72} (but not \frac{72}1). Also does a/b --> \\frac{a}{b}
     text = _fix_fracs(text)
