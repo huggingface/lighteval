@@ -33,7 +33,7 @@ import numpy as np
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.metrics.utils.metric_utils import MetricCategory
-from lighteval.models.model_loader import BaseModel, load_model
+from lighteval.models.model_loader import TransformersModel, load_model
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_tasks
 from lighteval.tasks.registry import Registry, taskinfo_selector
@@ -180,10 +180,10 @@ class Pipeline:
                 )
             else:
                 return load_model(config=model_config, env_config=self.pipeline_parameters.env_config)
-        if isinstance(model, BaseModel):
+        if isinstance(model, TransformersModel):
             return model
         else:
-            return BaseModel.from_model(
+            return TransformersModel.from_model(
                 model=model,
                 use_chat_template=self.pipeline_parameters.use_chat_template,
                 env_config=self.pipeline_parameters.env_config,

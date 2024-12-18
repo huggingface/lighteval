@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import logging
-from logging.config import dictConfig
+import logging.config
 
 import colorlog
 import typer
@@ -57,7 +57,8 @@ logging_config = dict(  # noqa C408
     },
 )
 
-dictConfig(logging_config)
+logging.config.dictConfig(logging_config)
+logging.captureWarnings(capture=True)
 
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_accelerate.accelerate)
 app.command(rich_help_panel="Evaluation Utils")(lighteval.main_baseline.baseline)

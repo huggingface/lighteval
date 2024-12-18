@@ -27,7 +27,7 @@ from dataclasses import dataclass
 import torch
 from transformers import AutoModelForCausalLM, PreTrainedTokenizer
 
-from lighteval.models.transformers.base_model import BaseModel, BaseModelConfig
+from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
 from lighteval.models.utils import _get_dtype
 from lighteval.utils.imports import NO_PEFT_ERROR_MSG, is_peft_available
 from lighteval.utils.utils import EnvConfig
@@ -40,7 +40,7 @@ if is_peft_available():
 
 
 @dataclass
-class AdapterModelConfig(BaseModelConfig):
+class AdapterModelConfig(TransformersModelConfig):
     # Adapter models have the specificity that they look at the base model (= the parent) for the tokenizer and config
     base_model: str = None
 
@@ -57,7 +57,7 @@ class AdapterModelConfig(BaseModelConfig):
         return self._init_configs(self.base_model, env_config)
 
 
-class AdapterModel(BaseModel):
+class AdapterModel(TransformersModel):
     def _create_auto_tokenizer(self, config: AdapterModelConfig, env_config: EnvConfig) -> PreTrainedTokenizer:
         # By default, we look at the model config for the model stored in `base_model`
         # (= the parent model, not the model of interest)

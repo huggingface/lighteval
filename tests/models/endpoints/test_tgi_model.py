@@ -33,7 +33,27 @@ class TestTGIModelConfig:
         [
             (
                 "examples/model_configs/tgi_model.yaml",
-                {"inference_server_address": "", "inference_server_auth": None, "model_id": None},
+                {
+                    "inference_server_address": "",
+                    "inference_server_auth": None,
+                    "model_id": None,
+                    "generation_parameters": {
+                        "early_stopping": None,
+                        "frequency_penalty": None,
+                        "length_penalty": None,
+                        "max_new_tokens": None,
+                        "min_new_tokens": None,
+                        "min_p": None,
+                        "presence_penalty": None,
+                        "repetition_penalty": None,
+                        "seed": None,
+                        "stop_tokens": None,
+                        "temperature": None,
+                        "top_k": None,
+                        "top_p": None,
+                        "truncate_prompt": None,
+                    },
+                },
             ),
         ],
     )
