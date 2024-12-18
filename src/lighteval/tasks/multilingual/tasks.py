@@ -4618,5 +4618,6 @@ TASKS_TABLE.extend(
         *acva_tasks,
         *french_boolq_tasks,
         *hindi_boolq_tasks,
+        *math_hard_lighteval,
     ]
 )
