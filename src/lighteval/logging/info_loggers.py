@@ -589,7 +589,7 @@ class TaskConfigLogger:
     """Logs the different parameters of the current [`LightevalTask`] of interest.
 
     Attributes:
-        tasks_config (dict[str, dict]): Maps each task to its associated [`LightevalTaskConfig`] dict.
+        tasks_configs (dict[str, dict]): Maps each task to its associated [`LightevalTaskConfig`] dict.
 
     """
 
