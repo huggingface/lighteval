@@ -35,7 +35,7 @@ from lighteval.metrics import MetricCategory
 from lighteval.metrics.stderr import get_stderr_function
 from lighteval.models.abstract_model import ModelInfo
 from lighteval.models.model_output import ModelResponse
-from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
+from lighteval.tasks.lighteval_task import LightevalTask
 from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import is_nanotron_available
 from lighteval.utils.utils import as_list, sanitize_numpy
@@ -589,15 +589,15 @@ class TaskConfigLogger:
     """Logs the different parameters of the current [`LightevalTask`] of interest.
 
     Attributes:
-        tasks_config (dict[str, LightevalTaskConfig]): Maps each task to its associated [`LightevalTaskConfig`]
+        tasks_config (dict[str, dict]): Maps each task to its associated [`LightevalTaskConfig`] dict.
 
     """
 
-    tasks_configs: dict[str, LightevalTaskConfig] = field(default_factory=dict)
+    tasks_configs: dict[str, dict] = field(default_factory=dict)
 
     def log(self, task_dict: dict[str, LightevalTask]) -> None:
-        self.tasks_configs = {name: task.cfg for name, task in task_dict.items()}
+        self.tasks_configs = {name: asdict(task.cfg) for name, task in task_dict.items()}
 
     def log_num_docs(self, task_name: str, original_num_docs: int, effective_num_docs: int) -> None:
-        self.tasks_configs[task_name].original_num_docs = original_num_docs
-        self.tasks_configs[task_name].effective_num_docs = effective_num_docs
+        self.tasks_configs[task_name]["original_num_docs"] = original_num_docs
+        self.tasks_configs[task_name]["effective_num_docs"] = effective_num_docs
