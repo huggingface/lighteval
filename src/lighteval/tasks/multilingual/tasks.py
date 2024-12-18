@@ -131,15 +131,11 @@ math_hard_lighteval = [
         few_shots_split="test",
         generation_size=2048,
         metric=[
-<<<<<<< HEAD
             multilingual_extractive_match_metric(
                 Language.ENGLISH,
                 gold_extraction_target=(LatexExtractionConfig(),),
                 pred_extraction_target=(LatexExtractionConfig(), ExprExtractionConfig()),
             )
-=======
-            multilingual_extractive_match_metric(Language.ENGLISH, gold_extraction_target=[LatexExtractionConfig()], pred_extraction_target=[LatexExtractionConfig(), ExprExtractionConfig()])
->>>>>>> 3ad0971 (tmp)
         ],
         stop_sequence=get_cot_stop_sequence(Language.ENGLISH, CFFormulation(cot=cot)),
         output_regex=None,
