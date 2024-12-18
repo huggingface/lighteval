@@ -51,6 +51,22 @@ class TGIModelConfig:
     inference_server_auth: str
     model_id: str
 
+    @classmethod
+    def from_path(cls, path: str) -> "TGIModelConfig":
+        """Load configuration for TGI endpoint model from YAML file path.
+
+        Args:
+            path (`str`): Path of the model configuration YAML file.
+
+        Returns:
+            [`TGIModelConfig`]: Configuration for TGI endpoint model.
+        """
+        import yaml
+
+        with open(path, "r") as f:
+            config = yaml.safe_load(f)["model"]
+        return cls(**config["instance"])
+
 
 # inherit from InferenceEndpointModel instead of LightevalModel since they both use the same interface, and only overwrite
 # the client functions, since they use a different client.
