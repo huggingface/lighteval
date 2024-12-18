@@ -1099,7 +1099,14 @@ def math_normalizer(text: str, skip_unit: bool = False) -> str:  # noqa C901
     # Remove all text formatting
     text = _remove_text_formatting(text)
 
+<<<<<<< HEAD
     if len(text) > 0 and text[0] == ".":
+=======
+    if len(text) == 0:
+        return text
+
+    if text[0] == ".":
+>>>>>>> 3ad0971 (tmp)
         text = "0" + text
 
     # fix sqrt3 --> sqrt{3}
