@@ -203,12 +203,8 @@ class EvaluationTracker:
     def save_results(
         self, date_id: str | None = None, results_dict: dict | None = None, output_path: str | None = None
     ):
-        if output_path:
-            output_path = Path(self.output_dir) / output_path
-        else:
-            output_path = (
-                Path(self.output_dir) / "results" / self.general_config_logger.model_name / f"results_{date_id}.json"
-            )
+        output_path = output_path or f"results/{self.general_config_logger.model_name}/results_{date_id}.json"
+        output_path = Path(self.output_dir) / output_path
         self.fs.mkdirs(output_path.parent, exist_ok=True)
         logger.info(f"Saving results to {output_path}")
         with self.fs.open(output_path, "w") as f:
@@ -217,16 +213,11 @@ class EvaluationTracker:
     def save_details(
         self, date_id: str | None, details_datasets: dict[str, Dataset] | None = None, output_path: str | None = None
     ):
-        if output_path:
-            output_path = Path(self.output_dir) / output_path
-        else:
-            output_path = (
-                Path(self.output_dir)
-                / "details"
-                / self.general_config_logger.model_name
-                / date_id
-                / f"details_{{task_name}}_{date_id}.parquet"
-            )
+        output_path = (
+            output_path
+            or f"details/{self.general_config_logger.model_name}/{date_id}/details_{{task_name}}_{date_id}.parquet"
+        )
+        output_path = Path(self.output_dir) / output_path
         self.fs.mkdirs(output_path.parent, exist_ok=True)
         logger.info(f"Saving details to {output_path}")
         for task_name, dataset in details_datasets.items():
