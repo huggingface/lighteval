@@ -300,6 +300,12 @@ def test_latex_notation(gold, pred, expected):
             "The roots of $P(x)$ are $-2$ and $1 \\pm \\sqrt{5}$, so the answer is $\\boxed{\\{1\\pm\\sqrt{5},-2\\}}.$",
             1,
         ),
+          (
+              "$f(2) < f(1) < f(4)$",
+              'The graph of $f(x) = x^2 + bx + c$ is an upward-facing parabola, and the condition\n\\[f(2 + t) = f(2 - t)\\]tells us that the axis of symmetry of the parabola is the line $x = 2.$  Thus, $f(x)$ is an increasing function of $|x - 2|.$  In other words, the farther $x$ is from 2, the greater $f(x)$ is.\n\n[asy]\nunitsize(1.5 cm);\n\nreal parab (real x) {\n  return (x^2/4);\n}\n\ndraw(graph(parab,-2,2),red);\ndraw((0,-0.5)--(0,2),dashed);\n\nlabel("$x = 2$", (0,2), N);\ndot("$(2,f(2))$", (0,0), SE);\ndot("$(1,f(1))$", (-0.8,parab(-0.8)), SW);\ndot("$(4,f(4))$", (1.6,parab(1.6)), SE);\n[/asy]\n\nHence, $\\boxed{f(2) < f(1) < f(4)}.$',
+              1,
+          ),
+
     ],
 )
 def test_latex_notation_math(gold, pred, expected):

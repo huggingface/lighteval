@@ -38,6 +38,7 @@ from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.metrics_sample import (
     ExactMatches,
     F1_score,
+    JudgeLLMMixEval,
     LoglikelihoodAcc,
     NormalizedMultiChoiceProbability,
     Probability,
@@ -560,11 +561,14 @@ def try_evalf(a: sympy.Expr | MatrixBase) -> str:
     except:
         return str(a)
 
-def compare_gold_target(gold: list[str | sympy.Expr | float], target: list[str | sympy.Expr | float]) -> float:
-    def compare_single_extraction(gold: str | sympy.Expr | float, target: str | sympy.Expr | float) -> float:
-        # Expression case
+
+def compare_gold_target(gold: list[sympy.Expr | Relational], target: list[sympy.Expr | Relational]) -> float:
+    def compare_sympy_expr(gold: sympy.Expr | Relational , target: sympy.Expr | Relational) -> float:
         if (isinstance(gold, (sympy.Expr, MatrixBase))) and (isinstance(target, (sympy.Expr, MatrixBase))):
-            return 1.0 if sympy_expr_eq(gold, target) else 0.0
+            try:
+                return 1.0 if sympy_expr_eq(gold, target) else 0.0
+            except:
+                return 0.0
 
         # Support for equations
         elif isinstance(gold, Relational) and isinstance(target, Relational):
@@ -593,18 +597,28 @@ def compare_gold_target(gold: list[str | sympy.Expr | float], target: list[str |
         ):
             return 1.0
         
+        return 0.0
 
+
+
+    def compare_single_extraction(gold: str | sympy.Expr | float, target: str | sympy.Expr | float) -> float:
+        # Expression case
+
+        if isinstance(gold, sympy.Basic) and isinstance(target, sympy.Basic):
+            try:
+                return 1.0 if compare_sympy_expr(gold, target) else 0.0
+            except:
+                pass
 
         # We just do string comparison for everything else
-        else:
-            gold = try_evalf(gold) if isinstance(gold, sympy.Expr) else str(gold)
-            target = try_evalf(target) if isinstance(target, sympy.Expr) else str(target)
+        gold = try_evalf(gold) if isinstance(gold, sympy.Expr) else str(gold)
+        target = try_evalf(target) if isinstance(target, sympy.Expr) else str(target)
 
-            gold = gold.strip()
-            target = target.strip()
+        gold = gold.strip()
+        target = target.strip()
 
-            # Ensure it's both not empty and equal
-            return len(gold) > 0 and len(target) > 0 and gold == target
+        # Ensure it's both not empty and equal
+        return len(gold) > 0 and len(target) > 0 and gold == target
 
 
     return any(compare_single_extraction(g, t) for g, t in product(gold, target))
@@ -672,3 +686,20 @@ def multilingual_extractive_match_metric(
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
+
+# llm_judge_mixeval_multichoice_flow_judge = SampleLevelMetricGrouping(
+#     metric_name=["llm_judge_mixeval_flow"],
+#     higher_is_better={"judge_score_flow": True},
+#     category=MetricCategory.LLM_AS_JUDGE,
+#     use_case=MetricUseCase.SUMMARIZATION,
+#     sample_level_fn=JudgeLLMMixEval(
+#         judge_model_name="flowaicom/Flow-Judge-v0.1",
+#         template=flow_judge_for_multichoice_template,
+#         process_judge_response=process_judge_response,
+#         judge_backend="vllm",
+#         short_judge_name="flow",
+#     ).compute,
+#     corpus_level_fn={
+#         "judge_score_flow": np.mean,
+#     },
+# )
