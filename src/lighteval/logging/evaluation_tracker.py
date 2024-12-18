@@ -318,13 +318,14 @@ class EvaluationTracker:
         repo_id = repo_id if "/" in repo_id else f"{self.hub_results_org}/{repo_id}"
         private = private if private is not None else not self.public
         self.api.create_repo(repo_id, private=private, repo_type="dataset", exist_ok=True)
-        details_json = "\n".join([json.dumps(detail) for detail in self.details])
-        self.api.upload_file(
-            repo_id=repo_id,
-            path_or_fileobj=details_json.encode(),
-            path_in_repo=path_in_repo,
-            repo_type="dataset",
-        )
+        for task_name, details in self.details:
+            details_json = "\n".join([json.dumps(detail) for detail in details])
+            self.api.upload_file(
+                repo_id=repo_id,
+                path_or_fileobj=details_json.encode(),
+                path_in_repo=path_in_repo.format(task_name=task_name),
+                repo_type="dataset",
+            )
 
     def recreate_metadata_card(self, repo_id: str) -> None:  # noqa: C901
         """Fully updates the details repository metadata card for the currently evaluated model
