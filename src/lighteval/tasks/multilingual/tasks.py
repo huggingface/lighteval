@@ -131,11 +131,15 @@ math_hard_lighteval = [
         few_shots_split="test",
         generation_size=2048,
         metric=[
+<<<<<<< HEAD
             multilingual_extractive_match_metric(
                 Language.ENGLISH,
                 gold_extraction_target=(LatexExtractionConfig(),),
                 pred_extraction_target=(LatexExtractionConfig(), ExprExtractionConfig()),
             )
+=======
+            multilingual_extractive_match_metric(Language.ENGLISH, gold_extraction_target=[LatexExtractionConfig()], pred_extraction_target=[LatexExtractionConfig(), ExprExtractionConfig()])
+>>>>>>> 3ad0971 (tmp)
         ],
         stop_sequence=get_cot_stop_sequence(Language.ENGLISH, CFFormulation(cot=cot)),
         output_regex=None,
@@ -3857,7 +3861,7 @@ armath_tasks = [
         few_shots_split="validation",
         generation_size=get_cot_generaion_size(cot, 100),  # Similar to other math tasks
         metric=[
-            multilingual_extractive_match_metric(Language.ARABIC),
+            multilingual_extractive_match_metric(Language.ARABIC, precision=6),
         ],
         stop_sequence=get_cot_stop_sequence(Language.ARABIC, CFFormulation(cot=cot)),
     )
@@ -3885,7 +3889,7 @@ hawp_tasks = [
         evaluation_splits=("test",),
         few_shots_split="dev",
         generation_size=get_cot_generaion_size(cot, 100),
-        metric=[multilingual_extractive_match_metric(Language.HINDI)],
+        metric=[multilingual_extractive_match_metric(Language.HINDI, precision=6)],
         stop_sequence=get_cot_stop_sequence(Language.HINDI, CFFormulation(cot=cot)),
     )
     for cot in (False, True)
@@ -3907,6 +3911,7 @@ TASKS_TABLE.extend(
         *mera_arithmetic_tasks,
         *qazuntv2_tasks,
         *hawp_tasks,
+        *math_hard_lighteval,
     ]
 )
 
@@ -4632,6 +4637,5 @@ TASKS_TABLE.extend(
         *acva_tasks,
         *french_boolq_tasks,
         *hindi_boolq_tasks,
-        *math_hard_lighteval,
     ]
 )
