@@ -162,7 +162,7 @@ class EvaluationTracker:
             "config_general": config_general,
             "results": self.metrics_logger.metric_aggregated,
             "versions": self.versions_logger.versions,
-            "config_tasks": self.task_config_logger.tasks_configs,
+            "config_tasks": self.task_config_logger.task_configs,
             "summary_tasks": self.details_logger.compiled_details,
             "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
         }
@@ -227,7 +227,7 @@ class EvaluationTracker:
             "config_general": asdict(self.general_config_logger),
             "results": self.metrics_logger.metric_aggregated,
             "versions": self.versions_logger.versions,
-            "config_tasks": self.task_config_logger.tasks_configs,
+            "config_tasks": self.task_config_logger.task_configs,
             "summary_tasks": self.details_logger.compiled_details,
             "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
         }

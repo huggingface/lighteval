@@ -589,15 +589,15 @@ class TaskConfigLogger:
     """Logs the different parameters of the current [`LightevalTask`] of interest.
 
     Attributes:
-        tasks_configs (dict[str, dict]): Maps each task to its associated [`LightevalTaskConfig`] dict.
+        task_configs (dict[str, dict]): Maps each task to its associated [`LightevalTaskConfig`] dict.
 
     """
 
-    tasks_configs: dict[str, dict] = field(default_factory=dict)
+    task_configs: dict[str, dict] = field(default_factory=dict)
 
     def log(self, task_dict: dict[str, LightevalTask]) -> None:
-        self.tasks_configs = {name: asdict(task.cfg) for name, task in task_dict.items()}
+        self.task_configs = {name: asdict(task.cfg) for name, task in task_dict.items()}
 
     def log_num_docs(self, task_name: str, original_num_docs: int, effective_num_docs: int) -> None:
-        self.tasks_configs[task_name]["original_num_docs"] = original_num_docs
-        self.tasks_configs[task_name]["effective_num_docs"] = effective_num_docs
+        self.task_configs[task_name]["original_num_docs"] = original_num_docs
+        self.task_configs[task_name]["effective_num_docs"] = effective_num_docs
