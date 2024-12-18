@@ -613,6 +613,14 @@ def unicode_to_latex(text: str) -> str:
     return UNICODE_TO_LATEX_REG.sub(lambda m: UNICODE_TO_LATEX[m.group(0)], text)
 
 
+def remove_outer_braces(text: str) -> str:
+    pairs = ["{}", "[]", "()"]
+    for l, r in pairs:
+        if text.startswith(l) and text.endswith(r):
+            return text[len(l) : -len(r)]
+    return text
+
+
 # From HELM
 def helm_normalizer(text: str) -> str:
     """Lower text and remove punctuation, articles and extra whitespace.
@@ -829,18 +837,17 @@ to_remove_regex = re.compile(
     r"\\;|"
     r"\{,\}|"
     r"\\!|"  # inverse spaces (already present in original)
+    r"(?<!\\)\\\s|" # backslash with whitespace (but not in matrix line breaks)
     r"\\left|\\right|"  # \left and \right (already present in original)
     r"\^{\\circ}|\^\\circ|"  # degrees symbols (already present in original)
     r"\\\$|\$|"  # dollar signs
     r",\\!|"  # comma with inverse space (already present in original)
-    r"\{,\}|"  # braced comma (already present in original)
     r"(?<=\s)(and|an|a)(?=\s)|"  # "an" with whitespace
-    r"\\\s|"  # backslash with whitespace
     # Percentage symbol
     r"\\\%|\%|%|"  # percentage symbol
     r"[xyzk](?:=|\\in|\\to)|"
     # Quote
-    r'"|\''
+    r"(?<!\\)[\"\']"
 )
 
 to_replace_patterns = [
@@ -848,8 +855,8 @@ to_replace_patterns = [
     ("frac", r"\\tfrac", r"\frac"),
     ("cfrac", r"\\cfrac", r"\frac"),
     ("dfrac", r"\\dfrac", r"\frac"),
-    ("array", r"\\begin\{array\}\{.*?\}", r"\\begin{pmatrix}"),
-    ("array_end", r"\\end\{array\}", r"\\end{pmatrix}"),
+    ("array", r"\\begin\{array\}\{.*?\}", r"\begin{pmatrix}"),
+    ("array_end", r"\\end\{array\}", r"\end{pmatrix}"),
     ("bmatrix", r"bmatrix", r"pmatrix"),
     ("textbf", r"\\textbf", r"\text"),
     ("mbox", r"\\mbox", r"\text"),
@@ -858,6 +865,12 @@ to_replace_patterns = [
     ("neq", r"\\neq", r"\ne"),
     ("leq", r"\\leq", r"\le"),
     ("geq", r"\\geq", r"\ge"),
+    ("gt", r"\\gt", r">"),
+    ("lt", r"\\lt", r"<"),
+    # Again we could in theory improve the antlr4 parser directly
+    ("neq_natural", r"!=", r"\ne"),
+    ("leq_natural", r"<=", r"\le"),
+    ("geq_natural", r">=", r"\ge"),
     ("brace_open", r"\\\{", r"{"),
     ("brace_close", r"\\\}", r"}"),
     ("paren_open", r"\\\(", r"("),
@@ -868,12 +881,14 @@ to_replace_patterns = [
     ("inf", r"((?<!\\)inf(?!inity))", r"\infty"),
 ]
 
+
 # Create regex with named groups
 pattern = "|".join(f"(?P<{name}>{pattern})" for name, pattern, _ in to_replace_patterns)
 to_replace_regex = re.compile(pattern)
 
 # Create lookup dictionary for replacements
 replacements = {name: replacement for name, _, replacement in to_replace_patterns}
+
 
 
 def replace(match):
@@ -884,6 +899,9 @@ def replace(match):
 
 def replace_in_latex(text: str) -> str:
     return to_replace_regex.sub(replace, text)
+
+# Make sure we don't break line breaks
+command_slash_fix_regex=re.compile(r"\\\\(?=[a-zA-Z])")
 
 
 def extract_last_boxed_content(text: str) -> str:
@@ -1051,12 +1069,11 @@ def math_normalizer(text: str, skip_unit: bool = False) -> str:  # noqa C901
     text = extract_last_boxed_content(text)
 
     # Take last expr after the =, it's important to do this after finding the boxed env as otherwise we might get the wrong expr
-    text = re.split(r"(?<!<|>)=", text)[-1]  # Split on = not preceded by < or >
     # Remove new lines and simplify tabs
-    text = text.replace("\n", "").replace("\t", " ")
+    text = text.replace("\n", " ").replace("\t", " ")
 
     # Sometimes the \\ are doubled so we substitute them
-    text = text.replace("\\\\", "\\")
+    text = command_slash_fix_regex.sub(r"\\", text)
 
     # Replace the unigrams
     text = unicode_to_latex(text)
@@ -1065,6 +1082,9 @@ def math_normalizer(text: str, skip_unit: bool = False) -> str:  # noqa C901
     text = to_remove_regex.sub("", text)
 
     text = replace_in_latex(text)
+
+    # Split on =, by now all <=/>=/!= are replaced with \le/\ge/\ne
+    text = re.split(r"=", text)[-1]
 
     # Remove the units and possibly the superscript (for things like m^2)
     _text = re.sub(r"\\text{.*?}(^{\d})?$", "", text).strip()
