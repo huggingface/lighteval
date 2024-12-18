@@ -121,6 +121,9 @@ class LiteLLMClient(LightevalModel):
                 stop_sequence = self._prepare_stop_sequence(stop_sequence)
                 max_new_tokens = self._prepare_max_new_tokens(max_new_tokens)
 
+                if return_logits and not self.provider == "openai":
+                    logger.warning("Returning logits is not supported for this provider, ignoring.")
+
                 response = litellm.completion(
                     model=self.model,
                     messages=prompt,
