@@ -147,6 +147,28 @@ class EvaluationTracker:
 
         self.public = public
 
+    @property
+    def results(self):
+        config_general = asdict(self.general_config_logger)
+        # We remove the config from logging, which contains context/accelerator objects
+        config_general.pop("config")
+        results = {
+            "config_general": config_general,
+            "results": self.metrics_logger.metric_aggregated,
+            "versions": self.versions_logger.versions,
+            "config_tasks": self.task_config_logger.tasks_configs,
+            "summary_tasks": self.details_logger.compiled_details,
+            "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
+        }
+        return results
+
+    @property
+    def details(self):
+        return {
+            task_name: [asdict(detail) for detail in task_details]
+            for task_name, task_details in self.details_logger.details.items()
+        }
+
     def save(self) -> None:
         """Saves the experiment information and results to files, and to the hub if requested."""
         logger.info("Saving experiment tracker")
@@ -279,6 +301,30 @@ class EvaluationTracker:
             dataset.to_parquet(f"{fsspec_repo_uri}/{output_file_details}")
 
         self.recreate_metadata_card(repo_id)
+
+    def push_results_to_hub(self, repo_id: str, path_in_repo: str, private: bool | None = None):
+        repo_id = repo_id if "/" in repo_id else f"{self.hub_results_org}/{repo_id}"
+        private = private if private is not None else not self.public
+        self.api.create_repo(repo_id, private=private, repo_type="dataset", exist_ok=True)
+        results_json = json.dumps(self.results, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False)
+        self.api.upload_file(
+            repo_id=repo_id,
+            path_or_fileobj=results_json.encode(),
+            path_in_repo=path_in_repo,
+            repo_type="dataset",
+        )
+
+    def push_details_to_hub(self, repo_id: str, path_in_repo: str, private: bool | None = None):
+        repo_id = repo_id if "/" in repo_id else f"{self.hub_results_org}/{repo_id}"
+        private = private if private is not None else not self.public
+        self.api.create_repo(repo_id, private=private, repo_type="dataset", exist_ok=True)
+        details_json = "\n".join([json.dumps(detail) for detail in self.details])
+        self.api.upload_file(
+            repo_id=repo_id,
+            path_or_fileobj=details_json.encode(),
+            path_in_repo=path_in_repo,
+            repo_type="dataset",
+        )
 
     def recreate_metadata_card(self, repo_id: str) -> None:  # noqa: C901
         """Fully updates the details repository metadata card for the currently evaluated model
