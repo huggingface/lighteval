@@ -28,7 +28,7 @@ jobs:
        run: |
          pip install -e .[dev,extended_tasks,multilingual]
      - name: Get cached files
-       uses: actions/cache@v2
+       uses: actions/cache@v4
        id: get-cache
        with:
          path: "cache"
@@ -41,7 +41,7 @@ jobs:
        run: | # PYTHONPATH="${PYTHONPATH}:src" HF_DATASETS_CACHE="cache/datasets" HF_HOME="cache/models"
         python -m pytest --disable-pytest-warnings
      - name: Write cache
-       uses: actions/cache@v2
+       uses: actions/cache@v4
        with:
          path: "cache"
          key: test-cache-HF
