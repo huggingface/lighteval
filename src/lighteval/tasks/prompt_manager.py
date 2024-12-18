@@ -237,9 +237,12 @@ class PromptManager:
         if isinstance(self.model, LiteLLMClient):
             return output, num_effective_fewshots
 
-        return self.model.tokenizer.apply_chat_template(
-            output, tokenize=False, add_generation_prompt=True
-        ), num_effective_fewshots
+        elif use_chat_template:
+            return self.model.tokenizer.apply_chat_template(
+                output, tokenize=False, add_generation_prompt=True
+            ), num_effective_fewshots
+
+        return output, num_effective_fewshots
 
     def get_examples(
         self,

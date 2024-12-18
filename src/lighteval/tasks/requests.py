@@ -60,7 +60,6 @@ class Request:
     request_index: int
     context: str
     metric_categories: list["MetricCategory"]  # noqa F821
-    system_prompt: Optional[str]
 
 
 @dataclass
