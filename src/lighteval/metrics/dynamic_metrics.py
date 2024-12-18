@@ -29,9 +29,10 @@ from typing import Callable, Literal, Sequence
 import numpy as np
 import sympy
 from latex2sympy2 import latex2sympy as parse_latex
-from sympy import Interval
+from sympy import FiniteSet, Interval
 from sympy.core.relational import Relational
 from sympy.parsing.sympy_parser import parse_expr
+from sympy.matrices import MatrixBase
 
 from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.metrics_sample import (
@@ -47,6 +48,7 @@ from lighteval.metrics.normalizations import (
     LogProbTokenNorm,
     get_multilingual_normalizer,
     math_normalizer,
+    remove_outer_braces,
 )
 from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase, SampleLevelMetric
 from lighteval.tasks.requests import Doc
@@ -210,7 +212,7 @@ class IndicesExtractionConfig:
 ExtractionTarget = LatexExtractionConfig | ExprExtractionConfig | IndicesExtractionConfig
 
 
-def try_parse_latex_interval(latex: str) -> Interval | None:
+def try_parse_latex_interval(latex: str) -> Interval | FiniteSet | None:
     # TODO: Move to antlr in future
     # Simply check if the latex is an interval -> [/(\number, \number)/]
     match = re.match(r"(?P<l_bound>[\(\[])\s*(?P<l_val>.*?),\s*(?P<u_val>.*?)(?P<u_bound>[\)\]])", latex.strip())
@@ -220,17 +222,53 @@ def try_parse_latex_interval(latex: str) -> Interval | None:
 
         try:
             l_bound_val = parse_latex(match.group("l_val"))
+            # Ensures we are not parsing a set
+            if isinstance(l_bound_val, list):
+                return None
             u_bound_val = parse_latex(match.group("u_val"))
+            if isinstance(u_bound_val, list):
+                return None
+            # Ensure that the result is not list
             interval = Interval(l_bound_val, u_bound_val, l_closed, u_closed)
             # If the interval is empty, there is probably issue with sides so just switch them
             if interval.is_empty:
-                return Interval(u_bound_val, l_bound_val, u_closed, l_closed)
+                interval = Interval(u_bound_val, l_bound_val, u_closed, l_closed)
             return interval
         except:
             return None
 
     return None
 
+pm_regex = re.compile(r"(?P<expr>.+)(?P<plus_minus>\\pm)(?P<value>.+)")
+def try_parse_latex_set(latex: str) -> FiniteSet | None:
+    elements = []
+    latex = remove_outer_braces(latex)
+    for latex_element in re.split(r"(?<!\\),", latex.strip()):
+        match = pm_regex.match(latex_element.strip())
+        if match:
+            try:
+                expr = parse_latex(match.group("expr"))
+                value = parse_latex(match.group("value"))
+                # Return a tuple of (expr - value, expr + value)
+                elements.append(expr - value)
+                elements.append(expr + value)
+            except:
+                return None
+        else:
+            try:
+                elements.append(parse_latex(latex_element.strip()))
+            except:
+                return None
+    if len(elements) == 1:
+        return elements[0]
+
+    return FiniteSet(*elements)
+
+def parse_latex_extended(latex: str) -> FiniteSet | Interval | sympy.Expr | None:
+    interval = try_parse_latex_interval(latex)
+    if interval is not None:
+        return interval
+    return try_parse_latex_set(latex)
 
 def extract_expr(match: re.Match) -> tuple[str | sympy.Expr | None, str]:
     # First combine the number
@@ -269,14 +307,10 @@ def extract_latex(match: re.Match, target_type: LatexExtractionConfig) -> tuple[
 
     normalized_latex = math_normalizer(latex)
 
-    interval = try_parse_latex_interval(normalized_latex)
-    if interval is not None:
-        return interval, normalized_latex
-
-    try:
-        return parse_latex(normalized_latex), normalized_latex
-    except:
-        pass
+    parsed_latex = parse_latex_extended(normalized_latex)
+    if isinstance(parsed_latex, list):
+        return FiniteSet(*parsed_latex), normalized_latex
+    return parsed_latex, normalized_latex
 
     # If we got this catch by hard to see in wild latex expression, it's possibly that it's a false positive, otherwise we probably failed because the latex is not valid
     # return (
@@ -471,7 +505,11 @@ def get_extraction_regexes(
 
 
 def extract_target_from_pred(
-    pred: str, target_res: list[tuple[list[re.Pattern], ExtractionTarget]], extract_all_targets: bool = False
+    pred: str, 
+    target_res: list[tuple[list[re.Pattern], ExtractionTarget]], 
+    extraction_mode: Literal["first_match", "extract_each_target", "first_fallback"] = "first_match",
+    fallback_mode: Literal["no_fallback", "first_match", "any_match"] = "no_fallback"
+    
 ) -> list[str | sympy.Expr | None | float]:
     extracted_predictions = []
     fallbacks = []
@@ -489,35 +527,54 @@ def extract_target_from_pred(
             if str_fallback:
                 fallbacks.append(str_fallback)
         # Break early if we don't want to extract all targets
-        if not extract_all_targets and any(e is not None for e in extracted_predictions):
+        if extraction_mode == "first_match" and extracted_predictions:
             break
 
-    return extracted_predictions + fallbacks
+        if extraction_mode == "first_fallback" and fallbacks:
+            break
 
+    # Handle fallback modes
+    if not extracted_predictions:  # Only use fallbacks if no successful extractions
+        if fallback_mode == "first_match" and fallbacks:
+            return [fallbacks[0]]  # Return first fallback
+        elif fallback_mode == "any_match" and fallbacks:
+            return fallbacks  # Return all fallbacks
+        elif fallback_mode == "no_fallback":
+            return []  # Return empty list if no successful extractions
+    
+    return extracted_predictions
+
+def sympy_expr_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase) -> bool:
+    # This should be enough for most cases
+    a_b_diff = sympy.simplify(a - b)
+    if isinstance(a_b_diff, MatrixBase) and a_b_diff.is_zero_matrix:
+        return True
+    elif isinstance(a_b_diff, sympy.Expr) and a_b_diff.is_zero:
+        return True
+
+    return try_evalf(a) == try_evalf(b)
+
+def try_evalf(a: sympy.Expr | MatrixBase) -> str:
+    try:
+        return str(a.evalf())
+    except:
+        return str(a)
 
 def compare_gold_target(gold: list[str | sympy.Expr | float], target: list[str | sympy.Expr | float]) -> float:
     def compare_single_extraction(gold: str | sympy.Expr | float, target: str | sympy.Expr | float) -> float:
         # Expression case
-        if isinstance(gold, sympy.Expr) and isinstance(target, sympy.Expr):
-            # First try using -
-
-            if gold.equals(target) or sympy.simplify(gold - target).is_zero:
-                return 1.0
-
-            # Otherwise try using ==
-            if gold == target or str(gold.evalf()) == str(target.evalf()):
-                return 1.0
+        if (isinstance(gold, (sympy.Expr, MatrixBase))) and (isinstance(target, (sympy.Expr, MatrixBase))):
+            return 1.0 if sympy_expr_eq(gold, target) else 0.0
 
         # Support for equations
         elif isinstance(gold, Relational) and isinstance(target, Relational):
             # Helper to check if expressions are equivalent when flipped
             def are_flipped_inequalities_equal(a: Relational, b: Relational) -> bool:
-                return abs(a.lhs - a.rhs).equals(b.rhs - b.lhs)
+                return sympy_expr_eq(a.lhs - a.rhs, b.rhs - b.lhs)
 
             # Same type of relation (e.g. both <= or both >=)
-            if type(gold) == type(target):
-                if abs(gold.lhs - gold.rhs).equals(target.lhs - target.rhs):
-                    return 1.0
+            if type(gold) == type(target) and sympy_expr_eq(gold.lhs - gold.rhs, target.lhs - target.rhs):
+                return 1.0
 
             # Check flipped inequalities (a <= b equals b >= a)
             if (
@@ -531,15 +588,17 @@ def compare_gold_target(gold: list[str | sympy.Expr | float], target: list[str |
             return 0.0
 
         elif (
-            isinstance(gold, Interval) and isinstance(target, Interval) and gold.symmetric_difference(target).is_empty
+            (isinstance(gold, (Interval, FiniteSet)) and isinstance(target, (Interval, FiniteSet)))
+            and gold.symmetric_difference(target).is_empty
         ):
             return 1.0
-            # TODO: add support for  matrices
+        
+
 
         # We just do string comparison for everything else
         else:
-            gold = str(gold.evalf()) if isinstance(gold, sympy.Expr) else str(gold)
-            target = str(target.evalf()) if isinstance(target, sympy.Expr) else str(target)
+            gold = try_evalf(gold) if isinstance(gold, sympy.Expr) else str(gold)
+            target = try_evalf(target) if isinstance(target, sympy.Expr) else str(target)
 
             gold = gold.strip()
             target = target.strip()
@@ -547,7 +606,6 @@ def compare_gold_target(gold: list[str | sympy.Expr | float], target: list[str |
             # Ensure it's both not empty and equal
             return len(gold) > 0 and len(target) > 0 and gold == target
 
-        return 0.0
 
     return any(compare_single_extraction(g, t) for g, t in product(gold, target))
 
@@ -560,21 +618,22 @@ def extract_target(
     gold_extraction_target: tuple[ExtractionTarget],
     pred_extraction_target: tuple[ExtractionTarget],
     aggregation_function: Callable[[list[float]], float] = max,
-    extract_all_targets: bool = False,
+    extraction_mode: Literal["first_match", "extract_each_target", "first_fallback"] = "first_match",
+    fallback_mode: Literal["no_fallback", "first_match", "any_match"] = "no_fallback"
 ) -> float:
     # Try each target type in order
     gold_extraction_regexes = get_extraction_regexes(formatted_doc, gold_extraction_target, language)
     pred_extraction_regexes = get_extraction_regexes(formatted_doc, pred_extraction_target, language)
 
     extracted_predictions = [
-        extract_target_from_pred(pred, pred_extraction_regexes, extract_all_targets) for pred in predictions
+        extract_target_from_pred(pred, pred_extraction_regexes, extraction_mode, fallback_mode) for pred in predictions
     ]
-    extracted_golds = [extract_target_from_pred(gold, gold_extraction_regexes, extract_all_targets) for gold in golds]
+    extracted_golds = [extract_target_from_pred(gold, gold_extraction_regexes, extraction_mode, fallback_mode) for gold in golds]
 
     # Assert on empty gold and warn on empty pred
-    if len(extracted_golds) == 0:
+    if any(len(g) == 0 for g in extracted_golds):
         raise ValueError("No gold targets found")
-    if len(extracted_predictions) == 0:
+    if all(len(p) == 0 for p in extracted_predictions):
         hlog_warn("No predictions found")
 
     if formatted_doc.specific is None:
@@ -593,8 +652,9 @@ def multilingual_extractive_match_metric(
     language: Language,
     gold_extraction_target: tuple[ExtractionTarget] = (ExprExtractionConfig(),),
     pred_extraction_target: tuple[ExtractionTarget] = (ExprExtractionConfig(),),
-    extract_all_targets: bool = False,
     aggregation_function: Callable[[list[float]], float] = max,
+    extraction_mode: Literal["first_match", "extract_each_target", "first_fallback"] = "first_match",
+    fallback_mode: Literal["no_fallback", "first_match", "any_match"] = "no_fallback"
 ) -> SampleLevelMetric:
     return SampleLevelMetric(
         metric_name="extractive_match",
@@ -604,7 +664,8 @@ def multilingual_extractive_match_metric(
             gold_extraction_target=gold_extraction_target,
             pred_extraction_target=pred_extraction_target,
             aggregation_function=aggregation_function,
-            extract_all_targets=extract_all_targets,
+            extraction_mode=extraction_mode,
+            fallback_mode=fallback_mode,
         ),
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.ACCURACY,

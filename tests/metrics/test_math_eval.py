@@ -89,7 +89,7 @@ def test_multilingual_extraction_abc(gold, pred, language, expected):
         ("\\frac{9.5}{3.14159}", "\\frac{9.5}{3.14159} \\approx 3.01", Language.CHINESE, ["latex", "expr"], True),
         (
             "1314",
-            "الباقي: 4 ÷ 3 = 1 بباقي 1 نكتب 1 فوق الخط ونضع الباقي 1 تحت الرقم الرابع. 6. نجمع الأرقام فوق الخط: 438 7. نتحقق من النتيجة: 438 × 3 = 1314 لذا، فإن ناتج 1314 ÷ 3 هو 438. الباقي من القسمة هو 0، مما يعني أن 1314 قابل للقسمة على 3 تمامًا.",
+            "ا��باقي: 4 ÷ 3 = 1 بباقي 1 نكتب 1 فوق الخط ونضع الباقي 1 تحت الرقم الرابع. 6. نجمع الأرقام فوق الخط: 438 7. نتحقق من النتيجة: 438 × 3 = 1314 لذا، فإن ناتج 1314 ÷ 3 هو 438. الباقي من القسمة هو 0، مما يعني أن 1314 قابل للقسمة على 3 تمامًا.",
             Language.ARABIC,
             ["latex", "expr"],
             True,
@@ -280,7 +280,146 @@ def test_latex_notation(gold, pred, expected):
             r"We may carry out long division in base 5 just as in base 10. We have  \[ \begin{array}{c|ccc} \multicolumn{2}{r}{2} & 0 & 4 \\ \cline{2-4} 2 & 4 & 1 & 3 \\ \multicolumn{2}{r}{4} & \downarrow & \\ \cline{2-2} \multicolumn{2}{r}{0} & 1 & \\ \multicolumn{2}{r}{} & 0 & \downarrow \\ \cline{3-3} \multicolumn{2}{r}{} & 1 & 3 \\ \multicolumn{2}{r}{} & 1 & 3 \\ \cline{3-4} \multicolumn{2}{r}{} & & 0 \end{array} \]for a quotient of $\boxed{204_5}$. Note that in the above calculation we have used that $13_5$ divided by $2_5$ is $4_5$, which follows from $4_5\times2_5=8_{10}=13_5$.",
             1,
         ),
+        (
+            "$(6,31,-1)$",
+            "Let $\\alpha$ be a root of $x^3 - 3x^2 + 4x - 1 = 0,$ so $\\alpha^3 = 3 \\alpha^2 - 4 \\alpha + 1.$ Then solving the system of equations, we find $(p,q,r) = \\boxed{(6,31,-1)}.$",
+            1,
+        ),
+        (
+            "$1 \\pm \\sqrt{19}$",
+            "This simplifies to $64y + 1920 = 0,$ so $y = -30.$ Then $x^2 - 2x - 48 = -30,$ or $x^2 - 2x - 18 = 0.$ By the quadratic formula, $x = \\boxed{1 \\pm \\sqrt{19}}.$",
+            1,
+        ),
+        (
+            "$3 \\pm 2 \\sqrt{2}$",
+            "This gives us $x^2 + 1 = 6x,$ or $x^2 - 6x + 1 = 0.$ By the quadratic formula, the roots are $x = \\boxed{3 \\pm 2 \\sqrt{2}}.$",
+            1,
+        ),
+        (
+            "$\\{1\\pm\\sqrt{5},-2\\}$",
+            "The roots of $P(x)$ are $-2$ and $1 \\pm \\sqrt{5}$, so the answer is $\\boxed{\\{1\\pm\\sqrt{5},-2\\}}.$",
+            1,
+        ),
     ],
 )
 def test_latex_notation_math(gold, pred, expected):
     assert compare_en(gold, pred, match_types=["latex"]) == expected
+
+@pytest.mark.parametrize(
+    "gold,pred,expected",
+    [
+        # Basic support for all relations
+        (
+            "$x >= 5$",
+            "Therefore $x \\geq 5$ is the solution.",
+            1,
+        ),
+        (
+            "$x < 3$",
+            "We find that $x \\lt 3$.",
+            1,
+        ),
+        (
+            "$x \\leq 2$",
+            "Thus $x <= 2$ is our answer.",
+            1,
+        ),
+        (
+            "$x > 5$",
+            "Therefore $x \\gt 5$ is the solution.",
+            1,
+        ),
+        (
+            "$x != 3$",
+            "We find that $x \\neq 3$.",
+            1,
+        ),
+        # Incorrect cases
+        (
+            "$x > 5$",
+            "Therefore $x < 5$ is the solution.",
+            0,
+        ),
+        (
+            "$x \\geq 5$",
+            "The solution is $x \\leq 5$",
+            0,
+        ),
+        (
+            "$x \\neq 5$",
+            "The solution is $x = 5$",
+            0,
+        ),
+
+        # Test flipped inequalities
+        (
+            "$x \\leq 5$",
+            "$5 \\geq x$",
+            1,
+        ),
+        (
+            "$x \\geq 5$",
+            "$5 \\leq x$",
+            1,
+        ),
+    ],
+)
+def test_relations_math(gold, pred, expected):
+    assert compare_en(gold, pred, match_types=["latex"]) == expected
+
+
+
+@pytest.mark.parametrize(
+    "gold,pred,expected",
+    [
+        # Test Identity Matrix
+        (
+            r"$\begin{pmatrix}1 & 0 \\ 0 & 1\end{pmatrix}$",
+            r"The identity matrix is $ \begin{pmatrix}1 & 0 \\ 0 & 1\end{pmatrix} $.",
+            1
+        ),
+        # Test bmatrix
+        (
+            r"$\begin{bmatrix}0 & 0 \\0 & 0\end{bmatrix}$",
+            r"Here is a zero matrix: $ \begin{pmatrix}0 & 0 \\0 & 0\end{pmatrix} $",
+            1
+        ),
+        # Test Matrix with Special Formatting
+        (
+            r"$\begin{pmatrix}1 & 2 \\3 & 4\end{pmatrix}$",
+            r"Special matrix: $ \left[\begin{array}{cc}1 & 2 \\3 & 4\end{array}\right] $",
+            1
+        ),
+        # Test Matrix with Fraction Entries
+        (
+            r"$\begin{pmatrix}\frac{1}{2} & \frac{3}{4} \\ \frac{5}{6} & \frac{7}{8}\end{pmatrix}$",
+            r"Matrix with fractions: $ \begin{pmatrix}\frac{1}{2} & \frac{3}{4} \\ \frac{5}{6} & \frac{7}{8}\end{pmatrix} $",
+            1
+        ),
+        # Test matrix addition
+        (
+            r"$\begin{pmatrix}6 & 8 \\ 10 & 12\end{pmatrix}$",
+            r"The sum is $\begin{pmatrix}1 & 2 \\ 3 & 4\end{pmatrix} + \begin{pmatrix}5 & 6 \\ 7 & 8\end{pmatrix}$",
+            1
+        ),
+
+        # Test matrix multiplication
+        (
+            r"$\begin{pmatrix}1 & 0 \\ 0 & 1\end{pmatrix}$",
+            r"When multiplying by identity: $\begin{pmatrix}1 & 0 \\ 0 & 1\end{pmatrix} \begin{pmatrix}1 & 0 \\ 0 & 1\end{pmatrix}$",
+            1
+        ),
+
+        # Test incorrect matrix
+        (
+            r"$\begin{pmatrix}1 & 2 \\ 3 & 4\end{pmatrix}$",
+            r"The matrix is $\begin{pmatrix}1 & 2 \\ 3 & 5\end{pmatrix}$",  # Different value in bottom right
+            0
+        ),
+    ],
+)
+def test_matrix_extraction(gold, pred, expected):
+    assert compare_en(gold, pred, match_types=["latex"]) == expected
+
+
+
