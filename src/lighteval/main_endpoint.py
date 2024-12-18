@@ -146,6 +146,13 @@ def inference_endpoint(
         str, Argument(help="Path to model config yaml file. (examples/model_configs/endpoint_model.yaml)")
     ],
     tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
+    free_endpoint: Annotated[
+        bool,
+        Option(
+            help="Use serverless free endpoints instead of spinning up your own inference endpoint.",
+            rich_help_panel=HELP_PANEL_NAME_4,
+        ),
+    ] = False,
     # === Common parameters ===
     use_chat_template: Annotated[
         bool, Option(help="Use chat template for evaluation.", rich_help_panel=HELP_PANEL_NAME_4)
@@ -200,9 +207,7 @@ def inference_endpoint(
     """
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.models.endpoints.endpoint_model import (
-        InferenceEndpointModelConfig,
-    )
+    from lighteval.models.endpoints.endpoint_model import InferenceEndpointModelConfig, ServerlessEndpointModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
     env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
@@ -220,10 +225,10 @@ def inference_endpoint(
     parallelism_manager = ParallelismManager.NONE  # since we're using inference endpoints in remote
 
     # Find a way to add this back
-    # if config["base_params"].get("endpoint_name", None):
-    #    return InferenceModelConfig(model=config["base_params"]["endpoint_name"])
-
-    model_config = InferenceEndpointModelConfig.from_path(model_config_path)
+    if free_endpoint:
+        model_config = ServerlessEndpointModelConfig.from_path(model_config_path)
+    else:
+        model_config = InferenceEndpointModelConfig.from_path(model_config_path)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
