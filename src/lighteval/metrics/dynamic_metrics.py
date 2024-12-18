@@ -40,6 +40,8 @@ from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.metrics_sample import (
     ExactMatches,
     F1_score,
+    JudgeLLM,
+    JudgeLLMMixEval,
     LoglikelihoodAcc,
     NormalizedMultiChoiceProbability,
     Probability,
