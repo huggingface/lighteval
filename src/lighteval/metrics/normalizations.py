@@ -924,7 +924,7 @@ def extract_last_boxed_content(text: str) -> str:
             num_left_braces_open -= 1
             if num_left_braces_open == 0:
                 # Extract content between braces (+1 to remove the opening brace)
-                return text[left_idx+1:i]
+                return text[left_idx + 1 : i]
         i += 1
 
     # Otherwise, it's no a valid latex
@@ -1049,6 +1049,11 @@ def math_normalizer(text: str, skip_unit: bool = False) -> str:  # noqa C901
 
     # First extract the last boxed content
     text = extract_last_boxed_content(text)
+
+    # Take last expr after the =, it's important to do this after finding the boxed env as otherwise we might get the wrong expr
+    text = re.split(r"(?<!<|>)=", text)[-1]  # Split on = not preceded by < or >
+    # Remove new lines and simplify tabs
+    text = text.replace("\n", "").replace("\t", " ")
 
     # Sometimes the \\ are doubled so we substitute them
     text = text.replace("\\\\", "\\")

@@ -208,23 +208,78 @@ def test_fallback(gold, pred, expected):
 def test_latex_notation(gold, pred, expected):
     assert compare_en(gold, pred, match_types=["latex"]) == expected
 
+
 @pytest.mark.parametrize(
     "gold,pred,expected",
     [
         # Notations
-        ("$(3, \\frac{\\pi}{2})$", r"We have that $r = \\sqrt{0^2 + 3^2} = 3.$  Also, if we draw the line connecting the origin and $(0,3),$ this line makes an angle of $\\frac{\\pi}{2}$ with the positive $x$-axis.\n\n[asy]\nunitsize(0.8 cm);\n\ndraw((-0.5,0)--(3.5,0));\ndraw((0,-0.5)--(0,3.5));\ndraw(arc((0,0),3,0,90),red,Arrow(6));\n\ndot((0,3), red);\nlabel(\"$(0,3)$\", (0,3), W);\ndot((3,0), red);\n[/asy]\n\nTherefore, the polar coordinates are $\\boxed{\\left( 3, \\frac{\\pi}{2} \\right)}.$", 1),
-        ("$\\frac{14}{3}$",r"$f(-2)+f(-1)+f(0)=\frac{3(-2)-2}{-2-2}+\frac{3(-1)-2}{-1-2}+\frac{3(0)-2}{0-2}=\frac{-8}{-4}+\frac{-5}{-3}+\frac{-2}{-2}=2+\frac{5}{3}+1=\boxed{\frac{14}{3}}$", 1),
-        ("$\\text{Evelyn}$",r"Evelyn covered more distance in less time than Briana, Debra and Angela, so her average speed is greater than any of their average speeds. Evelyn went almost as far as Carla in less than half the time that it took Carla, so Evelyn's average speed is also greater than Carla's. Therefore, $\boxed{\text{Evelyn}}$ is our answer.", 1),
+        (
+            "$(3, \\frac{\\pi}{2})$",
+            r"We have that $r = \\sqrt{0^2 + 3^2} = 3.$  Also, if we draw the line connecting the origin and $(0,3),$ this line makes an angle of $\\frac{\\pi}{2}$ with the positive $x$-axis.\n\n[asy]\nunitsize(0.8 cm);\n\ndraw((-0.5,0)--(3.5,0));\ndraw((0,-0.5)--(0,3.5));\ndraw(arc((0,0),3,0,90),red,Arrow(6));\n\ndot((0,3), red);\nlabel(\"$(0,3)$\", (0,3), W);\ndot((3,0), red);\n[/asy]\n\nTherefore, the polar coordinates are $\\boxed{\\left( 3, \\frac{\\pi}{2} \\right)}.$",
+            1,
+        ),
+        (
+            "$\\frac{14}{3}$",
+            r"$f(-2)+f(-1)+f(0)=\frac{3(-2)-2}{-2-2}+\frac{3(-1)-2}{-1-2}+\frac{3(0)-2}{0-2}=\frac{-8}{-4}+\frac{-5}{-3}+\frac{-2}{-2}=2+\frac{5}{3}+1=\boxed{\frac{14}{3}}$",
+            1,
+        ),
+        (
+            "$\\text{Evelyn}$",
+            r"Evelyn covered more distance in less time than Briana, Debra and Angela, so her average speed is greater than any of their average speeds. Evelyn went almost as far as Carla in less than half the time that it took Carla, so Evelyn's average speed is also greater than Carla's. Therefore, $\boxed{\text{Evelyn}}$ is our answer.",
+            1,
+        ),
         # Test cases from math problems
-        ("$90^\\circ$", r"For the first line, let $t = 2x = 3y = -z.$  Then \[\begin{pmatrix} x \\ y \\ z \end{pmatrix} = \begin{pmatrix} t/2 \\ t/3 \\ -t \end{pmatrix} = \frac{t}{6} \begin{pmatrix} 3 \\ 2 \\ -6 \end{pmatrix}.\]Thus, the direction vector of the first line is $\begin{pmatrix} 3 \\ 2 \\ -6 \end{pmatrix}.$ For the second line, let $t = 6x = -y = -4z.$  Then \[\begin{pmatrix} x \\ y \\ z \end{pmatrix} = \begin{pmatrix} t/6 \\ -t \\ -t/4 \end{pmatrix} = \frac{t}{12} \begin{pmatrix} 2 \\ -12 \\ -3 \end{pmatrix}.\]Thus, the direction vector of the first line is $\begin{pmatrix} 2 \\ -12 \\ -3 \end{pmatrix}.$ Note that \[\begin{pmatrix} 3 \\ 2 \\ -6 \end{pmatrix} \cdot \begin{pmatrix} 2 \\ -12 \\ -3 \end{pmatrix} = 0.\]Hence, the angle between the lines is $\boxed{90^\circ}.$", 1),
-        ("$3\\sqrt{13}$", r"We use the distance formula:  \begin{align*} \sqrt{(2 - (-4))^2 + ((-6) - 3)^2} &= \sqrt{6^2 + (-9)^2}\\ & = \sqrt{36 + 81}\\ & = \sqrt{117} = \boxed{3\sqrt{13}}. \end{align*}", 1),
-        ("$\\frac{3}{56}$", r"We also know that $q(-1) = ((-1)^2 - 1)p(-1) + 1 = 1.$  Setting $x = -1$ in the equation above, we get \[q(-1) = 20160(-a + b),\]so $-a + b = \frac{1}{20160}.$  Solving for $a$ and $b,$ we find $a = -\frac{29}{40320}$ and $b = -\frac{3}{4480}.$  Hence, \begin{align*} q(x) &= \left( -\frac{29}{40320} x - \frac{3}{4480} \right) (x - 2)(x - 3) \dotsm (x - 7) \\ &= -\frac{(29x + 27)(x - 2)(x - 3) \dotsm (x - 7)}{40320}. \end{align*}In particular, \[q(8) = -\frac{(29 \cdot 8 + 27)(6)(5) \dotsm (1)}{40320} = -\frac{37}{8},\]so \[p(8) = \frac{q(8) + 8}{8^2 - 1} = \boxed{\frac{3}{56}}.\]", 1),
-        ("$2$", r"Of the two-digit perfect squares, only $4^2=16$ and $6^2=36$ end in $6$. Thus, there are $\boxed{2}$ distinct possible values for $B$.", 1),
-        ("$15\\mbox{ cm}^2$", r"The shaded triangle has a base of length $10\text{ cm}.$ Since the triangle is enclosed in a rectangle of height $3\text{ cm},$ then the height of the triangle is $3\text{ cm}.$ (We know that the enclosing shape is a rectangle, because any figure with four sides, including two pairs of equal opposite sides, and two right angles must be a rectangle.) Therefore, the area of the triangle is $$\frac{1}{2}\times 3 \times 10 = \boxed{15\mbox{ cm}^2}.$$", 1),
-        ("$-2,1$", r"By the Integer Root Theorem, the possible integer roots are all the divisors of 14 (including negative divisors), which are $-14,$ $-7,$ $-2,$ $-1,$ $1,$ $2,$ $7,$ and $14.$  Checking, we find that the only integer roots are $\boxed{-2,1}.$", 1),
-        ("$9$", r"We use the property that $a \equiv b \pmod{m}$ implies $a^c \equiv b^c \pmod{m}$. Since $129 \equiv -3 \pmod{11}$ and $96 \equiv -3 \pmod{11}$, we have  $$129^{34}+96^{38} \equiv (-3)^{34}+(-3)^{38} \equiv 3^{34}+3^{38} \pmod{11}.$$ Since $3^5 \equiv 1 \pmod{11},$ we can see that $3^{34} = (3^5)^{6} \cdot 3^4$ and $3^{38} = (3^5)^{7} \cdot 3^3.$ Then, $129^{34}+96^{38} \equiv \boxed{9} \pmod{11}.$", 1),
-        ("$90^\\circ$", "Therefore, \\begin{align*} \\angle BAC &= \\angle BAD + \\angle DAC \\\\ &= 50^\\circ+40^\\circ \\\\ &= \\boxed{90^\\circ}. \\end{align*}", 1),
-        ("$0$", "Note that $p(x)$ has degree at most 2.  Also, $p(a) = p(b) = p(c) = 1.$  Thus, the polynomials $p(x)$ and 1 agree at three different values, so by the Identity Theorem, they are the same polynomial.  Hence, the degree of $p(x)$ (which is the constant polynomial 1) is $\\boxed{0}.$", 1),
+        (
+            "$90^\\circ$",
+            r"For the first line, let $t = 2x = 3y = -z.$  Then \[\begin{pmatrix} x \\ y \\ z \end{pmatrix} = \begin{pmatrix} t/2 \\ t/3 \\ -t \end{pmatrix} = \frac{t}{6} \begin{pmatrix} 3 \\ 2 \\ -6 \end{pmatrix}.\]Thus, the direction vector of the first line is $\begin{pmatrix} 3 \\ 2 \\ -6 \end{pmatrix}.$ For the second line, let $t = 6x = -y = -4z.$  Then \[\begin{pmatrix} x \\ y \\ z \end{pmatrix} = \begin{pmatrix} t/6 \\ -t \\ -t/4 \end{pmatrix} = \frac{t}{12} \begin{pmatrix} 2 \\ -12 \\ -3 \end{pmatrix}.\]Thus, the direction vector of the first line is $\begin{pmatrix} 2 \\ -12 \\ -3 \end{pmatrix}.$ Note that \[\begin{pmatrix} 3 \\ 2 \\ -6 \end{pmatrix} \cdot \begin{pmatrix} 2 \\ -12 \\ -3 \end{pmatrix} = 0.\]Hence, the angle between the lines is $\boxed{90^\circ}.$",
+            1,
+        ),
+        (
+            "$3\\sqrt{13}$",
+            r"We use the distance formula:  \begin{align*} \sqrt{(2 - (-4))^2 + ((-6) - 3)^2} &= \sqrt{6^2 + (-9)^2}\\ & = \sqrt{36 + 81}\\ & = \sqrt{117} = \boxed{3\sqrt{13}}. \end{align*}",
+            1,
+        ),
+        (
+            "$\\frac{3}{56}$",
+            r"We also know that $q(-1) = ((-1)^2 - 1)p(-1) + 1 = 1.$  Setting $x = -1$ in the equation above, we get \[q(-1) = 20160(-a + b),\]so $-a + b = \frac{1}{20160}.$  Solving for $a$ and $b,$ we find $a = -\frac{29}{40320}$ and $b = -\frac{3}{4480}.$  Hence, \begin{align*} q(x) &= \left( -\frac{29}{40320} x - \frac{3}{4480} \right) (x - 2)(x - 3) \dotsm (x - 7) \\ &= -\frac{(29x + 27)(x - 2)(x - 3) \dotsm (x - 7)}{40320}. \end{align*}In particular, \[q(8) = -\frac{(29 \cdot 8 + 27)(6)(5) \dotsm (1)}{40320} = -\frac{37}{8},\]so \[p(8) = \frac{q(8) + 8}{8^2 - 1} = \boxed{\frac{3}{56}}.\]",
+            1,
+        ),
+        (
+            "$2$",
+            r"Of the two-digit perfect squares, only $4^2=16$ and $6^2=36$ end in $6$. Thus, there are $\boxed{2}$ distinct possible values for $B$.",
+            1,
+        ),
+        (
+            "$15\\mbox{ cm}^2$",
+            r"The shaded triangle has a base of length $10\text{ cm}.$ Since the triangle is enclosed in a rectangle of height $3\text{ cm},$ then the height of the triangle is $3\text{ cm}.$ (We know that the enclosing shape is a rectangle, because any figure with four sides, including two pairs of equal opposite sides, and two right angles must be a rectangle.) Therefore, the area of the triangle is $$\frac{1}{2}\times 3 \times 10 = \boxed{15\mbox{ cm}^2}.$$",
+            1,
+        ),
+        (
+            "$-2,1$",
+            r"By the Integer Root Theorem, the possible integer roots are all the divisors of 14 (including negative divisors), which are $-14,$ $-7,$ $-2,$ $-1,$ $1,$ $2,$ $7,$ and $14.$  Checking, we find that the only integer roots are $\boxed{-2,1}.$",
+            1,
+        ),
+        (
+            "$9$",
+            r"We use the property that $a \equiv b \pmod{m}$ implies $a^c \equiv b^c \pmod{m}$. Since $129 \equiv -3 \pmod{11}$ and $96 \equiv -3 \pmod{11}$, we have  $$129^{34}+96^{38} \equiv (-3)^{34}+(-3)^{38} \equiv 3^{34}+3^{38} \pmod{11}.$$ Since $3^5 \equiv 1 \pmod{11},$ we can see that $3^{34} = (3^5)^{6} \cdot 3^4$ and $3^{38} = (3^5)^{7} \cdot 3^3.$ Then, $129^{34}+96^{38} \equiv \boxed{9} \pmod{11}.$",
+            1,
+        ),
+        (
+            "$90^\\circ$",
+            "Therefore, \\begin{align*} \\angle BAC &= \\angle BAD + \\angle DAC \\\\ &= 50^\\circ+40^\\circ \\\\ &= \\boxed{90^\\circ}. \\end{align*}",
+            1,
+        ),
+        (
+            "$0$",
+            "Note that $p(x)$ has degree at most 2.  Also, $p(a) = p(b) = p(c) = 1.$  Thus, the polynomials $p(x)$ and 1 agree at three different values, so by the Identity Theorem, they are the same polynomial.  Hence, the degree of $p(x)$ (which is the constant polynomial 1) is $\\boxed{0}.$",
+            1,
+        ),
+        # Test long division in base 5
+        (
+            "$204_5$",
+            r"We may carry out long division in base 5 just as in base 10. We have  \[ \begin{array}{c|ccc} \multicolumn{2}{r}{2} & 0 & 4 \\ \cline{2-4} 2 & 4 & 1 & 3 \\ \multicolumn{2}{r}{4} & \downarrow & \\ \cline{2-2} \multicolumn{2}{r}{0} & 1 & \\ \multicolumn{2}{r}{} & 0 & \downarrow \\ \cline{3-3} \multicolumn{2}{r}{} & 1 & 3 \\ \multicolumn{2}{r}{} & 1 & 3 \\ \cline{3-4} \multicolumn{2}{r}{} & & 0 \end{array} \]for a quotient of $\boxed{204_5}$. Note that in the above calculation we have used that $13_5$ divided by $2_5$ is $4_5$, which follows from $4_5\times2_5=8_{10}=13_5$.",
+            1,
+        ),
     ],
 )
 def test_latex_notation_math(gold, pred, expected):

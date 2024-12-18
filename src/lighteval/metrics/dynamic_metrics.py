@@ -207,7 +207,6 @@ class IndicesExtractionConfig:
     try_last_indices_match: bool = True
 
 
-
 ExtractionTarget = LatexExtractionConfig | ExprExtractionConfig | IndicesExtractionConfig
 
 
@@ -229,7 +228,7 @@ def try_parse_latex_interval(latex: str) -> Interval | None:
             return interval
         except:
             return None
-            
+
     return None
 
 
@@ -268,11 +267,6 @@ def extract_latex(match: re.Match, target_type: LatexExtractionConfig) -> tuple[
         ((name, val) for name, val in match.groupdict().items() if name.startswith("latex") and val), ("", "")
     )
 
-    # Take last expr after the =
-    latex = re.split(r"(?<!<|>)=", latex)[-1]  # Split on = not preceded by < or >
-    # Remove new lines and simplify tabs
-    latex = latex.replace("\n", "").replace("\t", " ")
-
     normalized_latex = math_normalizer(latex)
 
     interval = try_parse_latex_interval(normalized_latex)
@@ -304,7 +298,6 @@ def extract_match(match: re.Match, target_type: ExtractionTarget) -> tuple[str |
         return extract_expr(match)
     elif isinstance(target_type, IndicesExtractionConfig):
         return match.group("indices"), match.group("indices")
-
 
 
 @lru_cache(maxsize=1)
@@ -342,7 +335,6 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
     expr_prefix_re = rf"(?:^|{space_re}|\=)(?:\*\*)?"
     expr_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|\)|\$|$)"
 
-
     expr = f"(?P<expr>{expr_re}|{number_re})"
     full_expr = rf"(?:{expr_prefix_re}{expr}{expr_suffix_re})"
     regexes: list[str] = []
@@ -353,9 +345,7 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
     # Match after the last equals with answer word - require the number pattern
     # Not sure about the equals matchings
 
-    equals_re_colon = (
-        rf"{answer_prefix_re}{colon_re}(?:.{{0,100}}=\s*|.{{0,50}}?){full_expr}(?!\s*=)"
-    )
+    equals_re_colon = rf"{answer_prefix_re}{colon_re}(?:.{{0,100}}=\s*|.{{0,50}}?){full_expr}(?!\s*=)"
     equals_re = rf"{answer_prefix_re}(?:.{{0,100}}=\s*|.{{0,50}}?){full_expr}(?!\s*=)"
 
     regexes.extend([equals_re_colon, equals_re])
@@ -367,6 +357,7 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
 
     # We first try to match the answer then the plain number
     return [re.compile(pattern) for pattern in regexes]
+
 
 @lru_cache(maxsize=1)
 def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language):
@@ -383,9 +374,7 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language):
     )
 
     # Match latex without environments
-    latex_boxed = (
-        r"(?P<latexBoxed>\\boxed{[^\n]+})"  # Boxed number, it's fine to be as greedy as possible as we will find the correct end afterwards
-    )
+    latex_boxed = r"(?P<latexBoxed>\\boxed{[^\n]+})"  # Boxed number, it's fine to be as greedy as possible as we will find the correct end afterwards
     latex_fraction = rf"(?P<latexFraction>-?\\frac{{{simple_number}}}{{{simple_number}}})"
 
     translation_literal = TRANSLATION_LITERALS[language]
@@ -412,6 +401,7 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language):
             regexes.append(latex_re)
 
     return [re.compile(pattern, re.DOTALL) for pattern in regexes]
+
 
 @lru_cache(maxsize=100)
 def lazy_indices_regex(indices_config: IndicesExtractionConfig, len_choices: int, language: Language):
@@ -452,6 +442,7 @@ def lazy_indices_regex(indices_config: IndicesExtractionConfig, len_choices: int
 
     return list(map(re.compile, prefixed_res))
 
+
 def get_extraction_regexes(
     formatted_doc: Doc, target_types: tuple[ExtractionTarget], language: Language
 ) -> list[tuple[list[re.Pattern], ExtractionTarget]]:
@@ -478,6 +469,7 @@ def get_extraction_regexes(
 
     return extraction_regexes
 
+
 def extract_target_from_pred(
     pred: str, target_res: list[tuple[list[re.Pattern], ExtractionTarget]], extract_all_targets: bool = False
 ) -> list[str | sympy.Expr | None | float]:
@@ -501,6 +493,7 @@ def extract_target_from_pred(
             break
 
     return extracted_predictions + fallbacks
+
 
 def compare_gold_target(gold: list[str | sympy.Expr | float], target: list[str | sympy.Expr | float]) -> float:
     def compare_single_extraction(gold: str | sympy.Expr | float, target: str | sympy.Expr | float) -> float:
@@ -527,17 +520,18 @@ def compare_gold_target(gold: list[str | sympy.Expr | float], target: list[str |
                     return 1.0
 
             # Check flipped inequalities (a <= b equals b >= a)
-            if (isinstance(gold, sympy.GreaterThan) and isinstance(target, sympy.LessThan)
-                or isinstance(gold, sympy.LessThan) and isinstance(target, sympy.GreaterThan)) and are_flipped_inequalities_equal(gold, target):
+            if (
+                isinstance(gold, sympy.GreaterThan)
+                and isinstance(target, sympy.LessThan)
+                or isinstance(gold, sympy.LessThan)
+                and isinstance(target, sympy.GreaterThan)
+            ) and are_flipped_inequalities_equal(gold, target):
                 return 1.0
 
             return 0.0
 
-
         elif (
-            isinstance(gold, Interval)
-            and isinstance(target, Interval)
-            and gold.symmetric_difference(target).is_empty
+            isinstance(gold, Interval) and isinstance(target, Interval) and gold.symmetric_difference(target).is_empty
         ):
             return 1.0
             # TODO: add support for  matrices
@@ -557,6 +551,7 @@ def compare_gold_target(gold: list[str | sympy.Expr | float], target: list[str |
 
     return any(compare_single_extraction(g, t) for g, t in product(gold, target))
 
+
 def extract_target(
     golds: list[str],
     predictions: list[str],
@@ -571,7 +566,9 @@ def extract_target(
     gold_extraction_regexes = get_extraction_regexes(formatted_doc, gold_extraction_target, language)
     pred_extraction_regexes = get_extraction_regexes(formatted_doc, pred_extraction_target, language)
 
-    extracted_predictions = [extract_target_from_pred(pred, pred_extraction_regexes, extract_all_targets) for pred in predictions]
+    extracted_predictions = [
+        extract_target_from_pred(pred, pred_extraction_regexes, extract_all_targets) for pred in predictions
+    ]
     extracted_golds = [extract_target_from_pred(gold, gold_extraction_regexes, extract_all_targets) for gold in golds]
 
     # Assert on empty gold and warn on empty pred
@@ -601,7 +598,14 @@ def multilingual_extractive_match_metric(
 ) -> SampleLevelMetric:
     return SampleLevelMetric(
         metric_name="extractive_match",
-        sample_level_fn=partial(extract_target, language=language, gold_extraction_target=gold_extraction_target, pred_extraction_target=pred_extraction_target, aggregation_function=aggregation_function, extract_all_targets=extract_all_targets),
+        sample_level_fn=partial(
+            extract_target,
+            language=language,
+            gold_extraction_target=gold_extraction_target,
+            pred_extraction_target=pred_extraction_target,
+            aggregation_function=aggregation_function,
+            extract_all_targets=extract_all_targets,
+        ),
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=np.mean,
