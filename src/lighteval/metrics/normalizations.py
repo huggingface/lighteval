@@ -1039,7 +1039,7 @@ def math_normalizer(text: str, skip_unit: bool = False) -> str:  # noqa C901
         new_string = splits[0]
         for split in splits[1:]:
             split = split.lstrip()
-            if split[0] != "{":
+            if len(split) > 0 and split[0] != "{":
                 a = split[0]
                 new_substr = "\\sqrt{" + a + "}" + split[1:]
             else:
