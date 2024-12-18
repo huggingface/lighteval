@@ -240,8 +240,9 @@ class BaseModelConfig(TransformersModelConfig):
     def __post_init__(self):
         super().__post_init__()
 
-        logger.warning(
-            "Careful, BaseModelConfig is deprecated and will be removed, you should use TransformersModelConfig instead!"
+        warnings.warn(
+            "BaseModelConfig is deprecated and will be removed. Use TransformersModelConfig instead",
+            FutureWarning,
         )
 
 
