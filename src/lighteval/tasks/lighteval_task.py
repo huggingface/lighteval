@@ -349,7 +349,7 @@ class LightevalTask:
             ctx (str): Context, which is the few shot examples + the query.
             document_id_seed (str): Index of the document in the task appended with the seed used for the few shot sampling.
             current_task_name (str): Name of the current task.
-            system_prompt (str): System prompt to use for the request.
+
         Returns:
             dict[RequestType, List[Request]]: List of requests.
         """
