@@ -105,7 +105,7 @@ class EvaluationTracker:
         public (`bool`, defaults to False): If True, results and details are pushed to public orgs.
         nanotron_run_info ([`GeneralArgs`], *optional*): Reference to information about Nanotron models runs.
 
-    Attributes:
+    **Attributes**:
         details_logger ([`DetailsLogger`]): Logger for experiment details.
         metrics_logger ([`MetricsLogger`]): Logger for experiment metrics.
         versions_logger ([`VersionsLogger`]): Logger for task versions.
