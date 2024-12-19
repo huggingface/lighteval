@@ -106,7 +106,7 @@ class EvaluationTracker:
         nanotron_run_info ([`GeneralArgs`], *optional*): Reference to information about Nanotron models runs.
 
     **Attributes**:
-        - **details_logger** ([`DetailsLogger`]): Logger for experiment details.
+        - **details_logger** ([`DetailsLogger`]) -- Logger for experiment details.
         - **metrics_logger** ([`MetricsLogger`]): Logger for experiment metrics.
         - **versions_logger** ([`VersionsLogger`]): Logger for task versions.
         - **general_config_logger** ([`GeneralConfigLogger`]): Logger for general configuration.
