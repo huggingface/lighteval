@@ -84,11 +84,11 @@ class EnhancedJSONEncoder(json.JSONEncoder):
 class EvaluationTracker:
     """Keeps track of the overall evaluation process and relevant information.
 
-    The [`EvaluationTracker`] contains specific loggers for experiments details
-    ([`DetailsLogger`]), metrics ([`MetricsLogger`]), task versions
-    ([`VersionsLogger`]) as well as for the general configurations of both the
-    specific task ([`TaskConfigLogger`]) and overall evaluation run
-    ([`GeneralConfigLogger`]).  It compiles the data from these loggers and
+    The [`~logging.evaluation_tracker.EvaluationTracker`] contains specific loggers for experiments details
+    ([`~logging.evaluation_tracker.DetailsLogger`]), metrics ([`~logging.evaluation_tracker.MetricsLogger`]), task versions
+    ([`~logging.evaluation_tracker.VersionsLogger`]) as well as for the general configurations of both the
+    specific task ([`~logging.evaluation_tracker.TaskConfigLogger`]) and overall evaluation run
+    ([`~logging.evaluation_tracker.GeneralConfigLogger`]).  It compiles the data from these loggers and
     writes it to files, which can be published to the Hugging Face hub if
     requested.
 
@@ -103,14 +103,14 @@ class EvaluationTracker:
             See more details about the datasets organisation in [`EvaluationTracker.save`].
         tensorboard_metric_prefix (`str`, defaults to "eval"): Prefix for the metrics in the tensorboard logs.
         public (`bool`, defaults to False): If True, results and details are pushed to public orgs.
-        nanotron_run_info ([`GeneralArgs`], *optional*): Reference to information about Nanotron models runs.
+        nanotron_run_info ([`~nanotron.config.GeneralArgs`], *optional*): Reference to information about Nanotron models runs.
 
     **Attributes**:
-        - **details_logger** ([`DetailsLogger`]) -- Logger for experiment details.
-        - **metrics_logger** ([`MetricsLogger`]) -- Logger for experiment metrics.
-        - **versions_logger** ([`VersionsLogger`]) -- Logger for task versions.
-        - **general_config_logger** ([`GeneralConfigLogger`]) -- Logger for general configuration.
-        - **task_config_logger** ([`TaskConfigLogger`]) -- Logger for task configuration.
+        - **details_logger** ([`~logging.info_loggers.DetailsLogger`]) -- Logger for experiment details.
+        - **metrics_logger** ([`~logging.info_loggers.MetricsLogger`]) -- Logger for experiment metrics.
+        - **versions_logger** ([`~logging.info_loggers.VersionsLogger`]) -- Logger for task versions.
+        - **general_config_logger** ([`~logging.info_loggers.GeneralConfigLogger`]) -- Logger for general configuration.
+        - **task_config_logger** ([`~logging.info_loggers.TaskConfigLogger`]) -- Logger for task configuration.
     """
 
     def __init__(
