@@ -220,6 +220,32 @@ class LocalMTClient(LightevalModel):
 
         return dataset.get_original_order(results)
 
+    def cleanup(self):
+        import gc
+
+        logger.info("Cleaning up GPU memory for local MT client.")
+
+        # Show GPU memory before cleanup
+        if torch.cuda.is_available():
+            logger.info(f"GPU memory before cleanup: {torch.cuda.memory_allocated() / 1024**2:.2f} MB")
+
+        # Delete model and move to CPU
+        if hasattr(self, "_model"):
+            self._model.cpu()
+            del self._model
+            self._model = None
+
+        if hasattr(self, "_tokenizer"):
+            del self._tokenizer
+            self._tokenizer = None
+
+        torch.cuda.empty_cache()
+        gc.collect()
+
+        # Show GPU memory after cleanup
+        if torch.cuda.is_available():
+            logger.info(f"GPU memory after cleanup: {torch.cuda.memory_allocated() / 1024**2:.2f} MB")
+
     @property
     def tokenizer(self):
         return self._tokenizer
