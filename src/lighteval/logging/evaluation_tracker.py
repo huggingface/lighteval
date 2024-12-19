@@ -119,7 +119,7 @@ class EvaluationTracker:
                 more details about the datasets organisation in
                 [`EvaluationTracker.save`]
             tensorboard_metric_prefix (str): Prefix for the metrics in the tensorboard logs
-            public (bool): If True, results and details are pushed in private orgs
+            public (`bool`, defaults to False): If True, results and details are pushed to public orgs.
             nanotron_run_info (GeneralArgs): Reference to informations about Nanotron models runs
         """
         self.details_logger = DetailsLogger()
