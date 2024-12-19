@@ -26,8 +26,6 @@ from langcodes import Language as LangCodeLanguage
 from langcodes import standardize_tag
 
 from lighteval.metrics.dynamic_metrics import (
-    ExprExtractionConfig,
-    LatexExtractionConfig,
     loglikelihood_acc_metric,
     multilingual_extractive_match_metric,
     multilingual_quasi_exact_match_metric,
@@ -124,18 +122,67 @@ math_hard_lighteval = [
             },
             cot=cot,
         ),
+        hf_repo="lighteval/MATH-Hard",
+        hf_subset=subset,
+        hf_filter=lambda x: len(x["problem"].strip()) > 0 and len(x["solution"].strip()) > 0,
+        evaluation_splits=["test"],
+        few_shots_split="test",
+        generation_size=1024,
+        metric=[
+            # multilingual_extractive_match_metric(
+            #     Language.ENGLISH,
+            #     gold_extraction_target=(LatexExtractionConfig(),),
+            #     pred_extraction_target=(LatexExtractionConfig(), ExprExtractionConfig()),
+            #     fallback_mode="first_match",
+            #     extraction_mode="first_match",
+            # )
+            multilingual_quasi_exact_match_metric(Language.ENGLISH, "prefix"),
+        ],
+        stop_sequence=get_cot_stop_sequence(Language.ENGLISH, CFFormulation(cot=cot)),
+        output_regex=None,
+        frozen=False,
+        trust_dataset=True,
+        version=0,
+    )
+    for subset in [
+        "algebra",
+        "counting_and_probability",
+        "geometry",
+        "intermediate_algebra",
+        "number_theory",
+        "prealgebra",
+        "precalculus",
+    ]
+    for cot in (False, True)
+]
+
+math_hard_lighteval = [
+    LightevalTaskConfig(
+        name=f"math_hynek{'_cot' if cot else ''}:{subset}",
+        suite=["lighteval", "math"],
+        prompt_function=get_qa_prompt_function(
+            language=Language.ENGLISH,
+            adapter=lambda line: {
+                "question": line["problem"],
+                "choices": [line["solution"]],
+            },
+            cot=cot,
+        ),
         hf_repo="HuggingFaceTB/MATH",
         hf_subset=subset,
         hf_filter=lambda x: len(x["problem"].strip()) > 0 and len(x["solution"].strip()) > 0,
         evaluation_splits=["test"],
         few_shots_split="test",
-        generation_size=2048,
+        generation_size=1024,
         metric=[
-            multilingual_extractive_match_metric(
-                Language.ENGLISH,
-                gold_extraction_target=(LatexExtractionConfig(),),
-                pred_extraction_target=(LatexExtractionConfig(), ExprExtractionConfig()),
-            )
+            # multilingual_extractive_match_metric(
+            #     Language.ENGLISH,
+            #     gold_extraction_target=(LatexExtractionConfig(),),
+            #     pred_extraction_target=(LatexExtractionConfig(), ExprExtractionConfig()),
+            #     fallback_mode="first_match",
+            #     extraction_mode="first_match",
+            # )
+            multilingual_quasi_exact_match_metric(Language.ENGLISH, "prefix"),
         ],
         stop_sequence=get_cot_stop_sequence(Language.ENGLISH, CFFormulation(cot=cot)),
         output_regex=None,
