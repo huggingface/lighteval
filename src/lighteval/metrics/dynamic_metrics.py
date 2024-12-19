@@ -36,12 +36,9 @@ from sympy.core.relational import Relational
 from sympy.matrices import MatrixBase
 from sympy.parsing.sympy_parser import parse_expr
 
-from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.metrics_sample import (
     ExactMatches,
     F1_score,
-    JudgeLLM,
-    JudgeLLMMixEval,
     LoglikelihoodAcc,
     NormalizedMultiChoiceProbability,
     Probability,
@@ -63,6 +60,29 @@ from lighteval.tasks.requests import Doc
 from lighteval.tasks.templates.utils.formulation import ChoicePrefix, get_prefix
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
 from lighteval.utils.language import Language
+
+
+def parse_latex_with_timeout(latex: str):
+    import signal
+    from contextlib import contextmanager
+
+    @contextmanager
+    def timeout(seconds):
+        def signal_handler(signum, frame):
+            raise TimeoutError("Parsing timed out")
+
+        # Set signal handler
+        signal.signal(signal.SIGALRM, signal_handler)
+        signal.alarm(seconds)  # Start timer
+
+        try:
+            yield
+        finally:
+            signal.alarm(0)  # Disable timer
+
+    with timeout(10):
+        return parse_latex(latex)
+    raise TimeoutError("Parsing timed out")
 
 
 def loglikelihood_acc_metric(normalization: LogProbNormalization | None = None) -> SampleLevelMetric:
@@ -243,8 +263,8 @@ def try_parse_latex_interval(latex: str) -> Interval | FiniteSet | None:
         u_closed = match.group("u_bound") == "]"
 
         try:
-            l_bound_val = parse_latex(match.group("l_val"))
-            u_bound_val = parse_latex(match.group("u_val"))
+            l_bound_val = parse_latex_with_timeout(match.group("l_val"))
+            u_bound_val = parse_latex_with_timeout(match.group("u_val"))
 
             # Ensure we're not parsing lists
             if isinstance(l_bound_val, list) or isinstance(u_bound_val, list):
@@ -271,7 +291,6 @@ def try_parse_latex_interval(latex: str) -> Interval | FiniteSet | None:
     return result
 
 
-
 pm_regex = re.compile(r"(?P<expr>.+)(?P<plus_minus>\\pm)(?P<value>.+)")
 
 
@@ -282,8 +301,8 @@ def try_parse_latex_set(latex: str) -> FiniteSet | None:
         match = pm_regex.match(latex_element.strip())
         if match:
             try:
-                expr = parse_latex(match.group("expr"))
-                value = parse_latex(match.group("value"))
+                expr = parse_latex_with_timeout(match.group("expr"))
+                value = parse_latex_with_timeout(match.group("value"))
                 # Return a tuple of (expr - value, expr + value)
                 elements.append(expr - value)
                 elements.append(expr + value)
@@ -291,7 +310,7 @@ def try_parse_latex_set(latex: str) -> FiniteSet | None:
                 return None
         else:
             try:
-                elements.append(parse_latex(latex_element.strip()))
+                elements.append(parse_latex_with_timeout(latex_element.strip()))
             except:
                 return None
     if len(elements) == 1:
@@ -558,15 +577,25 @@ def extract_target_from_pred(
             # If we managed to extract something, break
             if extracted_match is not None:
                 extracted_predictions.append(extracted_match)
-                break
 
             if str_fallback:
                 fallbacks.append(str_fallback)
-        # Break early if we don't want to extract all targets
-        if extraction_mode == "first_match" and extracted_predictions:
-            break
 
-        if extraction_mode == "first_fallback" and fallbacks:
+            if (
+                extraction_mode == "first_match"
+                and extracted_predictions
+                or extraction_mode == "first_fallback"
+                and fallbacks
+            ):
+                break
+
+        # Break early if we don't want to extract all targets
+        if (
+            extraction_mode == "first_match"
+            and extracted_predictions
+            or extraction_mode == "first_fallback"
+            and fallbacks
+        ):
             break
 
     # Handle fallback modes
@@ -679,21 +708,21 @@ def extract_target(
         extract_target_from_pred(pred, pred_extraction_regexes, extraction_mode, fallback_mode) for pred in predictions
     ]
     extracted_golds = [
-        extract_target_from_pred(gold, gold_extraction_regexes, extraction_mode, fallback_mode) for gold in golds
+        extract_target_from_pred(gold, gold_extraction_regexes, "first_match", "first_match") for gold in golds
     ]
 
     # Assert on empty gold and warn on empty pred
-    if any(len(g) == 0 for g in extracted_golds):
-        hlog_warn(f"No gold targets found for at least one gold. Gold: {golds}, Pred: {predictions}")
+    # if any(len(g) == 0 for g in extracted_golds):
+    #     hlog_warn(f"No gold targets found for at least one gold. Gold: {golds}, Pred: {predictions}")
 
-    if all(len(p) == 0 for p in extracted_predictions):
-        hlog_warn(f"No predictions found for all predictions. Gold: {golds}, Pred: {predictions}")
+    # if all(len(p) == 0 for p in extracted_predictions):
+    #     hlog_warn(f"No predictions found for all predictions. Gold: {golds}, Pred: {predictions}")
 
     if formatted_doc.specific is None:
         formatted_doc.specific = {}
 
-    formatted_doc.specific["extracted_predictions"] = extracted_predictions
-    formatted_doc.specific["extracted_golds"] = extracted_golds
+    formatted_doc.specific["extracted_predictions"] = [str(p) for p in extracted_predictions]
+    formatted_doc.specific["extracted_golds"] = [str(g) for g in extracted_golds]
 
     return aggregation_function(
         (1.0 if any(compare_gold_target(gold, pred, precision) for gold in extracted_golds) else 0.0)
