@@ -31,13 +31,16 @@ from lighteval.models.endpoints.endpoint_model import (
 )
 from lighteval.models.endpoints.openai_model import OpenAIClient, OpenAIModelConfig
 from lighteval.models.endpoints.tgi_model import ModelClient, TGIModelConfig
+from lighteval.models.litellm_model import LiteLLMClient, LiteLLMModelConfig
 from lighteval.models.transformers.adapter_model import AdapterModel, AdapterModelConfig
 from lighteval.models.transformers.base_model import BaseModel, BaseModelConfig
 from lighteval.models.transformers.delta_model import DeltaModel, DeltaModelConfig
 from lighteval.models.vllm.vllm_model import VLLMModel, VLLMModelConfig
 from lighteval.utils.imports import (
+    NO_LITELLM_ERROR_MSG,
     NO_TGI_ERROR_MSG,
     NO_VLLM_ERROR_MSG,
+    is_litellm_available,
     is_openai_available,
     is_tgi_available,
     is_vllm_available,
@@ -58,6 +61,7 @@ def load_model(  # noqa: C901
         DummyModelConfig,
         VLLMModelConfig,
         OpenAIModelConfig,
+        LiteLLMModelConfig,
     ],
     env_config: EnvConfig,
 ) -> Union[BaseModel, AdapterModel, DeltaModel, ModelClient, DummyModel]:
@@ -95,6 +99,9 @@ def load_model(  # noqa: C901
     if isinstance(config, OpenAIModelConfig):
         return load_openai_model(config=config, env_config=env_config)
 
+    if isinstance(config, LiteLLMModelConfig):
+        return load_litellm_model(config=config, env_config=env_config)
+
 
 def load_model_with_tgi(config: TGIModelConfig):
     if not is_tgi_available():
@@ -104,6 +111,14 @@ def load_model_with_tgi(config: TGIModelConfig):
     model = ModelClient(
         address=config.inference_server_address, auth_token=config.inference_server_auth, model_id=config.model_id
     )
+    return model
+
+
+def load_litellm_model(config: LiteLLMModelConfig, env_config: EnvConfig):
+    if not is_litellm_available():
+        raise ImportError(NO_LITELLM_ERROR_MSG)
+
+    model = LiteLLMClient(config, env_config)
     return model
 
 

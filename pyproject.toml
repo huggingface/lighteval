@@ -82,6 +82,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+litellm = ["litellm", "diskcache"]
 tgi = ["text-generation==0.6.0"]
 optimum = ["optimum==1.12.0"]
 quantization = ["bitsandbytes>=0.41.0", "auto-gptq>=0.4.2"]
