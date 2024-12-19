@@ -82,8 +82,7 @@ class EnhancedJSONEncoder(json.JSONEncoder):
 
 
 class EvaluationTracker:
-    """
-    Keeps track of the overall evaluation process and relevant information.
+    """Keeps track of the overall evaluation process and relevant information.
 
     The [`EvaluationTracker`] contains specific loggers for experiments details
     ([`DetailsLogger`]), metrics ([`MetricsLogger`]), task versions
@@ -92,6 +91,19 @@ class EvaluationTracker:
     ([`GeneralConfigLogger`]).  It compiles the data from these loggers and
     writes it to files, which can be published to the Hugging Face hub if
     requested.
+
+    Args:
+        output_dir (`str`): Local folder path where you want results to be saved.
+        save_details (`bool`, defaults to True): If True, details are saved to the `output_dir`.
+        push_to_hub (`bool`, defaults to False): If True, details are pushed to the hub.
+            Results are pushed to `{hub_results_org}/details__{sanitized model_name}` for the model `model_name`, a public dataset,
+            if `public` is True else `{hub_results_org}/details__{sanitized model_name}_private`, a private dataset.
+        push_to_tensorboard (`bool`, defaults to False): If True, will create and push the results for a tensorboard folder on the hub.
+        hub_results_org (`str`, *optional*): The organisation to push the results to.
+            See more details about the datasets organisation in [`EvaluationTracker.save`].
+        tensorboard_metric_prefix (`str`, defaults to "eval"): Prefix for the metrics in the tensorboard logs.
+        public (`bool`, defaults to False): If True, results and details are pushed to public orgs.
+        nanotron_run_info ([`GeneralArgs`], *optional*): Reference to information about Nanotron models runs.
     """
 
     def __init__(
@@ -105,22 +117,7 @@ class EvaluationTracker:
         public: bool = False,
         nanotron_run_info: "GeneralArgs" = None,
     ) -> None:
-        """
-        Creates all the necessary loggers for evaluation tracking.
-
-        Args:
-            output_dir (`str`): Local folder path where you want results to be saved.
-            save_details (`bool`, defaults to True): If True, details are saved to the `output_dir`.
-            push_to_hub (`bool`, defaults to False): If True, details are pushed to the hub.
-                Results are pushed to `{hub_results_org}/details__{sanitized model_name}` for the model `model_name`, a public dataset,
-                if `public` is True else `{hub_results_org}/details__{sanitized model_name}_private`, a private dataset.
-            push_to_tensorboard (`bool`, defaults to False): If True, will create and push the results for a tensorboard folder on the hub.
-            hub_results_org (`str`, *optional*): The organisation to push the results to.
-                See more details about the datasets organisation in [`EvaluationTracker.save`].
-            tensorboard_metric_prefix (`str`, defaults to "eval"): Prefix for the metrics in the tensorboard logs.
-            public (`bool`, defaults to False): If True, results and details are pushed to public orgs.
-            nanotron_run_info ([`GeneralArgs`], *optional*): Reference to information about Nanotron models runs.
-        """
+        """Creates all the necessary loggers for evaluation tracking."""
         self.details_logger = DetailsLogger()
         self.metrics_logger = MetricsLogger()
         self.versions_logger = VersionsLogger()
