@@ -114,7 +114,7 @@ class EvaluationTracker:
             push_to_hub (bool): If True, details are pushed to the hub.
                 Results are pushed to `{hub_results_org}/details__{sanitized model_name}` for the model `model_name`, a public dataset,
                 if `public` is True else `{hub_results_org}/details__{sanitized model_name}_private`, a private dataset.
-            push_to_tensorboard (bool): If True, will create and push the results for a tensorboard folder on the hub
+            push_to_tensorboard (`bool`, defaults to False): If True, will create and push the results for a tensorboard folder on the hub.
             hub_results_org (str): The organisation to push the results to. See
                 more details about the datasets organisation in
                 [`EvaluationTracker.save`]
