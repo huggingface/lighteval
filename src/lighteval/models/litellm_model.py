@@ -52,6 +52,7 @@ if is_litellm_available():
     import litellm
     from litellm import encode
     from litellm.caching.caching import Cache
+    from litellm.utils import ModelResponse
 
     logging.getLogger("LiteLLM").setLevel(logging.WARNING)
     logging.getLogger("LiteLLM").handlers.clear()
