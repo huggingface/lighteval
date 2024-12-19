@@ -1,6 +1,6 @@
 model:
   base_params:
-    model_args: "pretrained=predibase/customer_support,revision=main" # pretrained=model_name,trust_remote_code=boolean,revision=revision_to_use,model_parallel=True ... For a PEFT model, the pretrained model should be the one trained with PEFT and the base model below will contain the original model on which the adapters will be applied.
+    model_args: "pretrained=predibase/customer_support,revision=main" # pretrained=model_name,trust_remote_code=boolean,revision=revision_to_use,model_parallel=True ... For a PEFT model, the pretrained model should be the one trained with PEFT and the base model below will contain the original model on which the adapters will be applied.To see the full list of parameters, please see here: https://huggingface.co/docs/lighteval/main/en/package_reference/models#lighteval.models.transformers.adapter_model.AdapterModelConfig
     dtype: "4bit"  # Specifying the model to be loaded in 4 bit uses BitsAndBytesConfig. The other option is to use "8bit" quantization.
     compile: true
   merged_weights: # Ignore this section if you are not using PEFT models
