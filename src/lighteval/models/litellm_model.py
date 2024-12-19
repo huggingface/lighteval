@@ -27,7 +27,6 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Optional
 
-from litellm.utils import ModelResponse
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset
