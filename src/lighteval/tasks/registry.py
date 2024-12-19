@@ -152,7 +152,7 @@ class Registry:
             )
 
         # Defaults tasks should overwrite custom tasks
-        return {**custom_tasks_registry, **default_tasks_registry}
+        return {**default_tasks_registry, **custom_tasks_registry}
 
     @property
     @lru_cache
