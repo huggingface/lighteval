@@ -104,6 +104,13 @@ class EvaluationTracker:
         tensorboard_metric_prefix (`str`, defaults to "eval"): Prefix for the metrics in the tensorboard logs.
         public (`bool`, defaults to False): If True, results and details are pushed to public orgs.
         nanotron_run_info ([`GeneralArgs`], *optional*): Reference to information about Nanotron models runs.
+
+    Attributes:
+        details_logger ([`DetailsLogger`]): Logger for experiment details.
+        metrics_logger ([`MetricsLogger`]): Logger for experiment metrics.
+        versions_logger ([`VersionsLogger`]): Logger for task versions.
+        general_config_logger ([`GeneralConfigLogger`]): Logger for general configuration.
+        task_config_logger ([`TaskConfigLogger`]): Logger for task configuration.
     """
 
     def __init__(
