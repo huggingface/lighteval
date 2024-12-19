@@ -85,7 +85,7 @@ def arabic_mmlu_pfn(line, task_name: str = None):
         query=query,
         choices=valid_keys_arabic,  # Return only valid choices (Arabic keys)
         gold_index=answer_index,  # Correct index in the valid Arabic keys
-        instruction=instruction
+        instruction=instruction,
     )
 
 
@@ -147,7 +147,7 @@ def arabic_mmlu_ht_pfn(line, task_name: str = None):
         query=query,
         choices=[str(i) for i in range(1, len(choices) + 1)],  # List of strings instead of ints
         gold_index=answer_index,
-        instruction=instruction
+        instruction=instruction,
     )
 
 
@@ -325,7 +325,7 @@ def aratrust_pfn(line, task_name: str = None):
         query=query,
         choices=LETTER_INDICES_AR[:3],
         gold_index=answer_index,
-        instruction=instruction
+        instruction=instruction,
     )
 
 
@@ -799,7 +799,7 @@ def madinah_qa_pfn(line, task_name: str = None):
         query=query,
         choices=choices,
         gold_index=answer_index,  # Correct index in the valid keys
-        instruction=instruction
+        instruction=instruction,
     )
 
 
