@@ -130,7 +130,7 @@ class LightevalTaskConfig:
         self.hf_avail_splits = tuple(self.hf_avail_splits) if self.hf_avail_splits is not None else None
         self.evaluation_splits = tuple(self.evaluation_splits)
         self.suite = tuple(self.suite)
-        self.stop_sequence = tuple(self.stop_sequence) if self.stop_sequence is not None else None
+        self.stop_sequence = tuple(self.stop_sequence) if self.stop_sequence is not None else ()
 
     def print(self):
         md_writer = MarkdownTableWriter()
