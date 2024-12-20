@@ -76,6 +76,7 @@ class ParallelismManager(Enum):
     TGI = auto()
     OPENAI = auto()
     VLLM = auto()
+    CUSTOM = auto()
     NONE = auto()
 
 
