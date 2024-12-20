@@ -48,7 +48,7 @@ from lighteval.models.model_output import (
     LoglikelihoodResponse,
     LoglikelihoodSingleTokenResponse,
 )
-from lighteval.models.transformers.base_model import LightevalModel, ModelInfo
+from lighteval.models.transformers.transformers_model import LightevalModel, ModelInfo
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,

@@ -41,7 +41,7 @@ from lighteval.metrics import (
     apply_target_perplexity_metric,
 )
 from lighteval.metrics.metrics import Metric, MetricCategory, Metrics
-from lighteval.models.transformers.base_model import BaseModel
+from lighteval.models.transformers.transformers_model import TransformersModel
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import (
     Doc,
@@ -578,7 +578,7 @@ def create_requests_from_tasks(  # noqa: C901
     task_dict: dict[str, LightevalTask],
     fewshot_dict: dict[str, list[Tuple[int, bool]]],
     num_fewshot_seeds: int,
-    lm: BaseModel,
+    lm: TransformersModel,
     max_samples: int | None,
     evaluation_tracker: "EvaluationTracker",
     use_chat_template: bool,
@@ -594,7 +594,7 @@ def create_requests_from_tasks(  # noqa: C901
         fewshot_dict (dict[str, list[Tuple[int, bool]]]): A dictionary of few
             shot examples.
         num_fewshot_seeds (int): number of few shot seeds.
-        lm (BaseModel): language model class that will be used to eventually
+        lm (TransformersModel): language model class that will be used to eventually
             truncate the few shot examples (we need the maximum input size of the
             model)
         max_samples (int): maximum number of samples.
