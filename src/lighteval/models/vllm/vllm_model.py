@@ -68,6 +68,28 @@ STARTING_BATCH_SIZE = 512
 
 @dataclass
 class VLLMModelConfig:
+    """
+    This class defines the configuration parameters for deploying and running models using the vLLM framework. 
+
+    Attributes:
+    pretrained (str, required): The identifier for the pretrained model (e.g., model name or path).
+    gpu_memory_utilisation (float, default: 0.9): Fraction of GPU memory to allocate for the model. Reduce this value if you encounter memory issues.
+    revision (str, default: "main"): Specifies the branch or version of the model repository.
+    dtype (str | None, optional): Data type for computations (e.g., float32, float16, or bfloat16). Defaults to the model's preset if None.
+    tensor_parallel_size (int, default: 1): Number of GPUs used for splitting tensors across devices.
+    pipeline_parallel_size (int, default: 1): Number of GPUs used for pipeline parallelism.
+    data_parallel_size (int, default: 1): Number of GPUs used for data parallelism.
+    max_model_length (int | None, optional): Maximum sequence length for the model. If None, it is inferred automatically. Can be reduced to handle Out-of-Memory (OOM) issues.
+    swap_space (int, default: 4): Amount of CPU swap space (in GiB) per GPU for offloading.
+    seed (int, default: 1234): Seed for reproducibility in experiments.
+    trust_remote_code (bool, default: False): Whether to trust custom code provided by remote repositories.
+    use_chat_template (bool, default: False): Specifies if chat-specific templates should be used for input formatting.
+    add_special_tokens (bool, default: True): Indicates whether to add special tokens during tokenization.
+    multichoice_continuations_start_space (bool, default: True): Adds a space at the beginning of each continuation during multi-choice generation.
+    pairwise_tokenization (bool, default: False): Specifies if context and continuation should be tokenized separately or together.
+    subfolder (Optional[str], optional): Path to a specific subfolder in the model repository, if applicable.
+    temperature (float, default: 0.6): Sampling temperature for stochastic tasks. Ignored for deterministic tasks (set internally to 0).
+    """
     pretrained: str
     gpu_memory_utilisation: float = 0.9  # lower this if you are running out of memory
     revision: str = "main"  # revision of the model
