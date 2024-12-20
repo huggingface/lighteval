@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import copy
 import json
 import logging
 import os
@@ -156,8 +155,7 @@ class EvaluationTracker:
         date_id = datetime.now().isoformat().replace(":", "-")
 
         # We first prepare data to save
-        config_general = copy.deepcopy(self.general_config_logger)
-        config_general = asdict(config_general)
+        config_general = asdict(self.general_config_logger)
         # We remove the config from logging, which contains context/accelerator objects
         config_general.pop("config")
 
