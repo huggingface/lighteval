@@ -124,18 +124,27 @@ class LiteLLMClient(LightevalModel):
                 if return_logits and not self.provider == "openai":
                     logger.warning("Returning logits is not supported for this provider, ignoring.")
 
-                response = litellm.completion(
-                    model=self.model,
-                    messages=prompt,
-                    max_completion_tokens=max_new_tokens,
-                    logprobs=return_logits if self.provider == "openai" else None,
-                    stop=stop_sequence,
-                    base_url=self.base_url,
-                    n=num_samples,
-                    temperature=self.TEMPERATURE,
-                    top_p=self.TOP_P,
-                    caching=True,
-                )
+                # Prepare kwargs for completion call
+                kwargs = {
+                    "model": self.model,
+                    "messages": prompt,
+                    "max_completion_tokens": max_new_tokens,
+                    "logprobs": return_logits if self.provider == "openai" else None,
+                    "stop": stop_sequence,
+                    "base_url": self.base_url,
+                    "n": num_samples,
+                    "temperature": self.TEMPERATURE,
+                    "top_p": self.TOP_P,
+                    "caching": True,
+                }
+
+                response = litellm.completion(**kwargs)
+
+                # If response is empty, retry without caching (maybe the error is recoverable and solved with a retry)
+                if response.choices[0].message.content is None:
+                    kwargs["caching"] = False
+                    logger.info("Response is empty, retrying without caching")
+                    response = litellm.completion(**kwargs)
                 return response
             except litellm.BadRequestError as e:
                 if "message" in e.__dict__:
