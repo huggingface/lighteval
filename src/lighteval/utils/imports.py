@@ -77,6 +77,13 @@ def is_openai_available() -> bool:
 NO_OPENAI_ERROR_MSG = "You are trying to use an Open AI LLM as a judge, for which you need `openai`, which is not available in your environment. Please install it using pip."
 
 
+def is_litellm_available() -> bool:
+    return importlib.util.find_spec("litellm") is not None
+
+
+NO_LITELLM_ERROR_MSG = "You are trying to use a LiteLLM model, for which you need `litellm`, which is not available in your environment. Please install it using pip."
+
+
 def is_vllm_available() -> bool:
     return importlib.util.find_spec("vllm") is not None and importlib.util.find_spec("ray") is not None
 
