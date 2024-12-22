@@ -27,9 +27,8 @@ import time
 from typing import Optional
 
 import diskcache
-import httpcore
 import tenacity
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 from tqdm import tqdm
 from transformers import AutoTokenizer
 
@@ -65,11 +64,8 @@ class GoogleTranslateClient(LightevalModel):
 
         self._tokenizer = AutoTokenizer.from_pretrained("gpt2")  # Use a dummy tokenizer for compatibility
 
-        # Needed to fix some googletrans bug
-        # https://stackoverflow.com/questions/72796594/attributeerror-module-httpcore-has-no-attribute-synchttptransport#comment136664963_77334618
-        setattr(httpcore, "SyncHTTPTransport", "AsyncHTTPProxy")
-
-        self.translator = Translator()
+        # Deep-translator also supports other translators
+        self.translator = GoogleTranslator()
 
         # Initialize disk cache
         cache_dir = os.path.join(os.getcwd(), ".translation_cache")
@@ -98,15 +94,14 @@ class GoogleTranslateClient(LightevalModel):
             return self.cache[cache_key]
 
         try:
-            # If not in cache, translate and store
-            translation = self.translator.translate(context, src=src_lang, dest=tgt_lang)
-            result = translation.text
+            # Updated translation call for deep-translator
+            self.translator.source = src_lang
+            self.translator.target = tgt_lang
+            result = self.translator.translate(context)
             self.cache[cache_key] = result
             return result
         except Exception as e:
             logger.warning(f"Translation error: {str(e)}. Retrying...")
-            # Re-initialize translator on error
-            self.translator = Translator()
             raise  # Let tenacity handle the retry
 
     def greedy_until(
@@ -161,7 +156,7 @@ class GoogleTranslateClient(LightevalModel):
         return self._tokenizer
 
     def tok_encode(self, text: str):
-        return self.tokenizer.encode(text)
+        return text
 
     @property
     def add_special_tokens(self) -> bool:
