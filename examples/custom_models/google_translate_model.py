@@ -76,6 +76,7 @@ class GoogleTranslateClient(LightevalModel):
 
     def _get_cache_key(self, context: str, src_lang: str, tgt_lang: str) -> str:
         """Generate a unique cache key for the translation request."""
+        # IMPORTANT: In case we want to support other translators, we can add the translator name to the key
         key_string = f"{context}|{src_lang}|{tgt_lang}"
         return hashlib.md5(key_string.encode()).hexdigest()
 
@@ -91,13 +92,20 @@ class GoogleTranslateClient(LightevalModel):
 
         # Try to get from cache
         if cache_key in self.cache:
-            return self.cache[cache_key]
+            result = self.cache[cache_key]
+            if result is not None and result != "":
+                return result
+            logger.warning("Translation in cache is empty. Removing from cache and retrying...")
+            del self.cache[cache_key]
 
         try:
             # Updated translation call for deep-translator
             self.translator.source = src_lang
             self.translator.target = tgt_lang
             result = self.translator.translate(context)
+            if result is None or result == "":
+                result = ""
+
             self.cache[cache_key] = result
             return result
         except Exception as e:
@@ -140,6 +148,8 @@ class GoogleTranslateClient(LightevalModel):
 
                 context = r.context.replace(f"{src_lang.upper()}: ", "").replace(f"\n{tgt_lang.upper()}: ", "")
                 result = self._translate_with_cache(context, src_lang, tgt_lang)
+                if result is None:
+                    result = ""  # Set to empty string to prevent errors in metric computation
 
                 cur_response = GenerativeResponse(
                     result=result,
