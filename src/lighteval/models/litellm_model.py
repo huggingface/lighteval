@@ -98,7 +98,7 @@ class LiteLLMClient(LightevalModel):
         if self.provider == "anthropic":
             # Filter out whitespace-only stop sequences
             if stop_sequence:
-                stop_sequence = [s for s in stop_sequence if s.strip()]
+                stop_sequence = [s for s in stop_sequence if s and s.strip()]
         if not stop_sequence:  # If empty after filtering
             stop_sequence = ["\n"]
         return stop_sequence
