@@ -182,7 +182,7 @@ class JudgeSwissLegalTranslation(JudgeLLM):
         questions = [formatted_doc.specific["question"] for formatted_doc in formatted_docs]
         options = [formatted_doc.choices for formatted_doc in formatted_docs]
         golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
-        predictions = [response[0].result[0] for response in responses]
+        predictions = [response[0].result for response in responses]
 
         scores, _, judgements = self.judge.evaluate_answer_batch(questions, predictions, options, golds)
         # Exclude the messages (user prompt) because they are too long
@@ -195,21 +195,24 @@ class JudgeSwissLegalTranslation(JudgeLLM):
         ]
 
 
-def get_swiss_legal_translation_judge(judge_model_name: str = "gpt-4o"):
-    name = f"slt_judge_{judge_model_name}"
+def get_swiss_legal_translation_judge(
+    judge_model_name: str = "openai/gpt-4o-2024-11-20",
+    short_judge_name: str = "slt_judge_gpt-4o",
+    backend: str = "litellm",
+):
     return SampleLevelMetricGrouping(
-        metric_name=[name],
-        higher_is_better={name: True},
+        metric_name=[short_judge_name],
+        higher_is_better={short_judge_name: True},
         category=MetricCategory.LLM_AS_JUDGE,
         use_case=MetricUseCase.TRANSLATION,
         sample_level_fn=JudgeSwissLegalTranslation(
             judge_model_name=judge_model_name,
             template=swiss_legal_translation_judge,
             process_judge_response=process_judge_response_freeform_gpt,
-            judge_backend="openai",
-            short_judge_name=name,
+            judge_backend=backend,
+            short_judge_name=short_judge_name,
         ).compute,
-        corpus_level_fn={name: statistics.mean},
+        corpus_level_fn={short_judge_name: statistics.mean},
     )
 
 
@@ -779,8 +782,23 @@ if "xcomet_xxl" in METRICS_TO_USE:
     METRICS["xcomet_xxl"] = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=16, gpus=1, device=device)
 if "gemba_mqm_gpt_4o" in METRICS_TO_USE:  # TODO: Somehow in long evaluations something is wrong here
     METRICS["gemba_mqm_gpt_4o"] = get_gemba_judge(method="GEMBA-MQM_norm", model="gpt-4o")
+if "slt_judge_gpt_4o_mini" in METRICS_TO_USE:
+    METRICS["slt_judge_gpt_4o_mini"] = get_swiss_legal_translation_judge(
+        judge_model_name="openai/gpt-4o-mini-2024-07-18", short_judge_name="slt_judge_gpt-4o-mini"
+    )
 if "slt_judge_gpt_4o" in METRICS_TO_USE:
-    METRICS["slt_judge_gpt_4o"] = get_swiss_legal_translation_judge(judge_model_name="gpt-4o")
+    METRICS["slt_judge_gpt_4o"] = get_swiss_legal_translation_judge(
+        judge_model_name="openai/gpt-4o-2024-11-20", short_judge_name="slt_judge_gpt-4o"
+    )
+if "slt_judge_haiku_35" in METRICS_TO_USE:
+    METRICS["slt_judge_haiku_35"] = get_swiss_legal_translation_judge(
+        judge_model_name="anthropic/claude-3-5-haiku-20241022", short_judge_name="slt_judge_haiku-3.5"
+    )
+if "slt_judge_sonnet_35" in METRICS_TO_USE:
+    METRICS["slt_judge_sonnet_35"] = get_swiss_legal_translation_judge(
+        judge_model_name="anthropic/claude-3-5-sonnet-20241022", short_judge_name="slt_judge_sonnet-3.5"
+    )
+
 # Additionally we could consider adding the following open source judge models:
 # flowaicom/Flow-Judge-v0.1, prometheus-eval/prometheus-7b-v2.0
 # However, these are only fine-tuned on English data and we need multilingual support.
