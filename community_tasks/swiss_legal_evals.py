@@ -268,7 +268,7 @@ class JudgeSwissLegalTranslation(JudgeLLM):
         **kwargs,
     ) -> dict[str, float]:
         logger.info(f"Judging {len(formatted_docs)} samples with {self.short_judge_name}...")
-        questions = [formatted_doc.specific["question"] for formatted_doc in formatted_docs]
+        questions = [formatted_doc.specific["source"] for formatted_doc in formatted_docs]
         options = [formatted_doc.choices for formatted_doc in formatted_docs]
         golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
         predictions = [response[0].result for response in responses]
