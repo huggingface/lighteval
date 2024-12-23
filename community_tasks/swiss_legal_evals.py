@@ -348,7 +348,7 @@ class GEMBA:
         # There should be only one language each in the batch
         assert len(set(source_langs)) == len(set(target_langs)) == 1
         sources = [formatted_doc.specific["source"] for formatted_doc in formatted_docs]
-        predictions = [response[0].result[0] for response in responses]
+        predictions = [response[0].result for response in responses]
 
         answers, errors = get_gemba_scores(
             sources, predictions, source_langs[0], target_langs[0], method=self.method, model=self.model
@@ -461,7 +461,7 @@ class BLEURT:
     ) -> dict[str, float]:
         logger.info(f"Scoring {len(formatted_docs)} samples with {self.metric_name}...")
         golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
-        predictions = [response[0].result[0] for response in responses]
+        predictions = [response[0].result for response in responses]
 
         all_scores = []
         for i in range(0, len(golds), self.batch_size):
@@ -531,7 +531,7 @@ class COMET:
     ) -> dict[str, float]:
         logger.info(f"Scoring {len(formatted_docs)} samples with {self.metric_name}...")
         golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
-        predictions = [response[0].result[0] for response in responses]
+        predictions = [response[0].result for response in responses]
         sources = [kwargs["formatted_doc"].specific["source"] for kwargs["formatted_doc"] in formatted_docs]
 
         data = [{"src": src, "mt": pred, "ref": gold} for src, pred, gold in zip(sources, predictions, golds)]
