@@ -31,7 +31,7 @@ from typing_extensions import Annotated
 logger = logging.getLogger(__name__)
 
 TOKEN = os.getenv("HF_TOKEN")
-CACHE_DIR: str = os.getenv("HF_HOME", "/scratch")
+CACHE_DIR: str = os.getenv("HF_HOME")
 
 HELP_PANEL_NAME_1 = "Common Parameters"
 HELP_PANEL_NAME_2 = "Logging Parameters"
