@@ -309,12 +309,7 @@ Model's Translation:
 
 Your Judgment:
 """
-
         user_prompt = user + few_shot_examples + instruction
-
-        print(user_prompt)
-        print(system_prompt)
-        exit()
 
         return [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
 
