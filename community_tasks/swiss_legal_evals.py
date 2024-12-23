@@ -852,6 +852,7 @@ METRICS_TO_USE = [
     "bert_score",
     "bleurt_large",
     "xcomet_xxl",
+    "gemba_mqm_gpt_4o",
     "slt_judge_gpt_4o",
 ]
 METRICS = {}
