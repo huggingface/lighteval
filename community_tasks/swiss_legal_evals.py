@@ -908,7 +908,7 @@ if "slt_judge_gpt_4o_mini" in METRICS_TO_USE:
         short_judge_name="slt_judge_gpt-4o-mini",
     )
 if "slt_judge_gpt_4o" in METRICS_TO_USE:
-    METRICS["slt_judge_gpt_4o_basic_diverse"] = get_swiss_legal_translation_judge(
+    METRICS["slt_judge_gpt_4o"] = get_swiss_legal_translation_judge(
         judge_model_name="openai/gpt-4o-2024-11-20",
         short_judge_name="slt_judge_gpt-4o",
     )
