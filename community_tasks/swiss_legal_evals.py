@@ -900,15 +900,45 @@ if "xcomet_xl" in METRICS_TO_USE:
     METRICS["xcomet_xl"] = get_comet(model_name="Unbabel/XCOMET-XL", batch_size=32, gpus=1, device=device)
 if "xcomet_xxl" in METRICS_TO_USE:
     METRICS["xcomet_xxl"] = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=16, gpus=1, device=device)
-if "gemba_mqm_gpt_4o" in METRICS_TO_USE:  # TODO: Somehow in long evaluations something is wrong here
+if "gemba_mqm_gpt_4o" in METRICS_TO_USE:
     METRICS["gemba_mqm_gpt_4o"] = get_gemba_judge(method="GEMBA-MQM_norm", model="gpt-4o")
 if "slt_judge_gpt_4o_mini" in METRICS_TO_USE:
     METRICS["slt_judge_gpt_4o_mini"] = get_swiss_legal_translation_judge(
-        judge_model_name="openai/gpt-4o-mini-2024-07-18", short_judge_name="slt_judge_gpt-4o-mini"
+        judge_model_name="openai/gpt-4o-mini-2024-07-18",
+        short_judge_name="slt_judge_gpt-4o-mini",
     )
 if "slt_judge_gpt_4o" in METRICS_TO_USE:
-    METRICS["slt_judge_gpt_4o"] = get_swiss_legal_translation_judge(
-        judge_model_name="openai/gpt-4o-2024-11-20", short_judge_name="slt_judge_gpt-4o"
+    METRICS["slt_judge_gpt_4o_basic_diverse"] = get_swiss_legal_translation_judge(
+        judge_model_name="openai/gpt-4o-2024-11-20",
+        short_judge_name="slt_judge_gpt-4o",
+    )
+if "slt_judge_gpt_4o_basic_diverse" in METRICS_TO_USE:
+    METRICS["slt_judge_gpt_4o_basic_diverse"] = get_swiss_legal_translation_judge(
+        judge_model_name="openai/gpt-4o-2024-11-20",
+        short_judge_name="slt_judge_gpt-4o-basic-diverse",
+        system_style="basic",
+        few_shot_style="diverse",
+    )
+if "slt_judge_gpt_4o_basic_fr-de" in METRICS_TO_USE:
+    METRICS["slt_judge_gpt_4o_basic_fr-de"] = get_swiss_legal_translation_judge(
+        judge_model_name="openai/gpt-4o-2024-11-20",
+        short_judge_name="slt_judge_gpt-4o-basic-fr-de",
+        system_style="basic",
+        few_shot_style="fr-de",
+    )
+if "slt_judge_gpt_4o_detailed_diverse" in METRICS_TO_USE:
+    METRICS["slt_judge_gpt_4o_detailed_diverse"] = get_swiss_legal_translation_judge(
+        judge_model_name="openai/gpt-4o-2024-11-20",
+        short_judge_name="slt_judge_gpt-4o-detailed-diverse",
+        system_style="detailed",
+        few_shot_style="diverse",
+    )
+if "slt_judge_gpt_4o_detailed_fr-de" in METRICS_TO_USE:
+    METRICS["slt_judge_gpt_4o_detailed_fr-de"] = get_swiss_legal_translation_judge(
+        judge_model_name="openai/gpt-4o-2024-11-20",
+        short_judge_name="slt_judge_gpt-4o-detailed-fr-de",
+        system_style="detailed",
+        few_shot_style="fr-de",
     )
 if "slt_judge_haiku_35" in METRICS_TO_USE:
     METRICS["slt_judge_haiku_35"] = get_swiss_legal_translation_judge(
