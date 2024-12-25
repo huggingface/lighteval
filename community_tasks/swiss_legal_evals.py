@@ -354,10 +354,16 @@ class GEMBA:
             sources, predictions, source_langs[0], target_langs[0], method=self.method, model=self.model
         )
 
-        # Convert defaultdict to dict
-        errors = [[{key: value} for key, value in error.items()] for error in errors]
+        # Handle cases where errors might be nan
+        formatted_errors = []
+        for error in errors:
+            if isinstance(error, dict):
+                # Convert defaultdict to dic
+                formatted_errors.append([{key: value} for key, value in error.items()])
+            else:
+                formatted_errors.append([{"error": ["No error details available"]}])
 
-        return [{self.name: answer, f"{self.name}_errors": error} for answer, error in zip(answers, errors)]
+        return [{self.name: answer, f"{self.name}_errors": error} for answer, error in zip(answers, formatted_errors)]
 
 
 def get_gemba_judge(method: str = "GEMBA-MQM_norm", model: str = "gpt-4o"):
