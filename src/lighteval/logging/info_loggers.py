@@ -462,7 +462,7 @@ class MetricsLogger:
     """Logs the actual scores for each metric of each task.
 
     Attributes:
-        metrics_value (dict[str, dict[str, list[float]]]): Maps each task to its dictionary of metrics to scores for all the example of the task.
+        metrics_values (dict[str, dict[str, list[float]]]): Maps each task to its dictionary of metrics to scores for all the example of the task.
             Example: {"winogrande|winogrande_xl": {"accuracy": [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]}}
         metric_aggregated (dict[str, dict[str, float]]): Maps each task to its dictionary of metrics to aggregated scores over all the example of the task.
             Example: {"winogrande|winogrande_xl": {"accuracy": 0.5}}
@@ -563,8 +563,7 @@ class VersionsLogger:
     Tasks can have a version number/date, which indicates what is the precise metric definition and dataset version used for an evaluation.
 
     Attributes:
-        version (dict[str, int]): Maps the task names with the task versions.
-
+        versions (dict[str, int]): Maps the task names with the task versions.
     """
 
     # the versions dict will be a dict of task_name: task_version
@@ -580,8 +579,7 @@ class TaskConfigLogger:
     """Logs the different parameters of the current [`LightevalTask`] of interest.
 
     Attributes:
-        tasks_config (dict[str, LightevalTaskConfig]): Maps each task to its associated [`LightevalTaskConfig`]
-
+        tasks_configs (dict[str, LightevalTaskConfig]): Maps each task to its associated [`LightevalTaskConfig`]
     """
 
     tasks_configs: dict[str, LightevalTaskConfig] = field(default_factory=dict)
