@@ -481,6 +481,7 @@ class ROUGE:
         self.normalize_gold = normalize_gold
         self.normalize_pred = normalize_pred
         self.tokenizer = tokenizer
+        self.scorer = None
 
     def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float | dict:
         """Computes the metric(s) over a list of golds and predictions for one single sample.
