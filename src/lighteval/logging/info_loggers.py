@@ -251,11 +251,7 @@ class DetailsLogger:
             non_truncated (int): Total number of samples which did not need prompt truncation to fit the model context size across all tasks
             padded (int): Number of samples which needed padding during the batching step across all tasks.
             non_padded (int): Number of samples which did not need padding during the batching step across all tasks.
-            effective_few_shots (float): Average effective few shots across all samples across all tasks.
-                effective few shot is the number of few shots actually used to fit the prompt in the model context
-                length while allowing model generation of the expected size.
             num_truncated_few_shots (int): Number of samples which required truncated prompts to fit the model size across all tasks.
-
         """
 
         hashes: dict = field(default_factory=dict)
