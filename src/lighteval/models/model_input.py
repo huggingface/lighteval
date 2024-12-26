@@ -97,7 +97,7 @@ class GenerationParameters:
         }
         return {k: v for k, v in args.items() if v is not None}
 
-    def to_tgi_inferenceendpoint_dict(self) -> dict:
+    def to_tgi_ie_dict(self) -> dict:
         """Selects relevant generation and sampling parameters for tgi or inference endpoints models.
         Doc: https://huggingface.co/docs/huggingface_hub/v0.26.3/en/package_reference/inference_types#huggingface_hub.TextGenerationInputGenerateParameters
 

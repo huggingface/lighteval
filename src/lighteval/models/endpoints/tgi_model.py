@@ -88,9 +88,7 @@ class ModelClient(InferenceEndpointModel):
 
         self.client = AsyncClient(config.inference_server_address, headers=headers, timeout=240)
         self.generation_parameters = config.generation_parameters
-        self.generation_config = TextGenerationInputGenerateParameters(
-            **self.generation_parameters.to_tgi_inferenceendpoint_dict()
-        )
+        self.generation_config = TextGenerationInputGenerateParameters(**self.generation_parameters.to_tgi_ie_dict())
         self._max_gen_toks = 256
         self.model_info = requests.get(f"{config.inference_server_address}/info", headers=headers).json()
         if "model_id" not in self.model_info:

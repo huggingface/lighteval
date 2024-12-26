@@ -316,9 +316,7 @@ class InferenceEndpointModel(LightevalModel):
             model_size=-1,
         )
         self.generation_parameters = config.generation_parameters
-        self.generation_config = TextGenerationInputGenerateParameters(
-            **self.generation_parameters.to_tgi_inferenceendpoint_dict()
-        )
+        self.generation_config = TextGenerationInputGenerateParameters(**self.generation_parameters.to_tgi_ie_dict())
 
     @staticmethod
     def get_larger_hardware_suggestion(cur_instance_type: str = None, cur_instance_size: str = None):
