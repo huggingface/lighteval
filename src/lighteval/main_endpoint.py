@@ -23,7 +23,6 @@ import os
 from typing import Optional
 
 import typer
-import yaml
 from typer import Argument, Option
 from typing_extensions import Annotated
 
@@ -98,14 +97,10 @@ def openai(
     """
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.endpoints.openai_model import OpenAIModelConfig
-    from lighteval.models.model_input import GenerationParameters
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
     if model_args.endswith(".yaml"):
-        with open(model_args, "r") as f:
-            config = yaml.safe_load(f)["model"]
-        generation_parameters = GenerationParameters.from_dict(config)
-        model_config = OpenAIModelConfig(model=config["model_name"], generation_parameters=generation_parameters)
+        model_config = OpenAIModelConfig.from_path(model_args)
     else:
         model_config = OpenAIModelConfig(model=model_args)
 

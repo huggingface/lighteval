@@ -69,6 +69,15 @@ class OpenAIModelConfig:
         if not self.generation_parameters:
             self.generation_parameters = GenerationParameters()
 
+    @classmethod
+    def from_path(cls, path: str) -> "OpenAIModelConfig":
+        import yaml
+
+        with open(path, "r") as f:
+            config = yaml.safe_load(f)["model"]
+        generation_parameters = GenerationParameters.from_dict(config)
+        return cls(model=config["model_name"], generation_parameters=generation_parameters)
+
 
 class OpenAIClient(LightevalModel):
     _DEFAULT_MAX_LENGTH: int = 4096
