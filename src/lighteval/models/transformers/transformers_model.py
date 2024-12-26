@@ -1354,7 +1354,7 @@ class BaseModel(TransformersModel):
 
         warnings.warn(
             "Careful, the BaseModel name is deprecated and will be removed, you should use TransformersModel instead!",
-             FutureWarning,
+            FutureWarning,
         )
 
 
