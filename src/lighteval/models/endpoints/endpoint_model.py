@@ -257,6 +257,7 @@ class InferenceEndpointModel(LightevalModel):
                     logger.error(
                         "Endpoint did not start within 30 minutes, there was a timeout. Please inspect the logs."
                     )
+                    self.cleanup()
                     raise e
                 except HfHubHTTPError as e:
                     # The endpoint actually already exists, we'll spin it up instead of trying to create a new one
