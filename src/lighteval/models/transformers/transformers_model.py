@@ -1350,9 +1350,9 @@ class TransformersModel(LightevalModel):
 
 class BaseModel(TransformersModel):
     def __post_init__(self):
-        super()
+        super().__post_init__()
 
-        logger.warning(
+        warnings.warn(
             "Careful, the BaseModel name is deprecated and will be removed, you should use TransformersModel instead!"
         )
 
