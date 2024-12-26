@@ -25,7 +25,7 @@ import logging
 import os
 import time
 from dataclasses import asdict, dataclass, field
-from typing import Optional, Union
+from typing import Union
 
 import git
 import numpy as np
@@ -319,7 +319,6 @@ class DetailsLogger:
         doc: Doc,
         outputs: list[ModelResponse],
         metrics: dict,
-        llm_as_prompt_judgement: Optional[tuple[str, str]] = None,
     ) -> None:
         """Stores the relevant information for one sample of one task to the total list of samples stored in the DetailsLogger.
 
@@ -329,8 +328,6 @@ class DetailsLogger:
             doc (Doc): Current sample that we want to store.
             outputs (list[ModelResponse]): Model outputs for the current sample
             metrics (_type_): Model scores for said sample on the current task's metrics.
-            llm_as_prompt_judgement (tuple[str, str]): Tuple containing the
-                prompt passed to the judge and the judgement for the current sample when using llm-as-judge metric.
         """
         detail = self.Detail()
         detail.example = doc.query
