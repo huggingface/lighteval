@@ -20,28 +20,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 from typing import Union
 
-from lighteval.logging.hierarchical_logger import hlog
-from lighteval.models.adapter_model import AdapterModel
-from lighteval.models.base_model import BaseModel
-from lighteval.models.delta_model import DeltaModel
-from lighteval.models.dummy_model import DummyModel
-from lighteval.models.endpoint_model import InferenceEndpointModel
-from lighteval.models.model_config import (
-    AdapterModelConfig,
-    BaseModelConfig,
-    DeltaModelConfig,
-    DummyModelConfig,
+from lighteval.models.dummy.dummy_model import DummyModel, DummyModelConfig
+from lighteval.models.endpoints.endpoint_model import (
+    InferenceEndpointModel,
     InferenceEndpointModelConfig,
-    InferenceModelConfig,
-    OpenAIModelConfig,
-    TGIModelConfig,
-    VLLMModelConfig,
+    ServerlessEndpointModelConfig,
 )
-from lighteval.models.openai_model import OpenAIClient
-from lighteval.models.tgi_model import ModelClient
-from lighteval.models.vllm_model import VLLMModel
+from lighteval.models.endpoints.openai_model import OpenAIClient, OpenAIModelConfig
+from lighteval.models.endpoints.tgi_model import ModelClient, TGIModelConfig
+from lighteval.models.transformers.adapter_model import AdapterModel, AdapterModelConfig
+from lighteval.models.transformers.base_model import BaseModel, BaseModelConfig
+from lighteval.models.transformers.delta_model import DeltaModel, DeltaModelConfig
+from lighteval.models.vllm.vllm_model import VLLMModel, VLLMModelConfig
 from lighteval.utils.imports import (
     NO_TGI_ERROR_MSG,
     NO_VLLM_ERROR_MSG,
@@ -50,6 +43,9 @@ from lighteval.utils.imports import (
     is_vllm_available,
 )
 from lighteval.utils.utils import EnvConfig
+
+
+logger = logging.getLogger(__name__)
 
 
 def load_model(  # noqa: C901
@@ -84,7 +80,7 @@ def load_model(  # noqa: C901
     if isinstance(config, TGIModelConfig):
         return load_model_with_tgi(config)
 
-    if isinstance(config, InferenceEndpointModelConfig) or isinstance(config, InferenceModelConfig):
+    if isinstance(config, InferenceEndpointModelConfig) or isinstance(config, ServerlessEndpointModelConfig):
         return load_model_with_inference_endpoints(config, env_config=env_config)
 
     if isinstance(config, BaseModelConfig):
@@ -104,7 +100,7 @@ def load_model_with_tgi(config: TGIModelConfig):
     if not is_tgi_available():
         raise ImportError(NO_TGI_ERROR_MSG)
 
-    hlog(f"Load model from inference server: {config.inference_server_address}")
+    logger.info(f"Load model from inference server: {config.inference_server_address}")
     model = ModelClient(
         address=config.inference_server_address, auth_token=config.inference_server_auth, model_id=config.model_id
     )
@@ -121,9 +117,9 @@ def load_openai_model(config: OpenAIModelConfig, env_config: EnvConfig):
 
 
 def load_model_with_inference_endpoints(
-    config: Union[InferenceEndpointModelConfig, InferenceModelConfig], env_config: EnvConfig
+    config: Union[InferenceEndpointModelConfig, ServerlessEndpointModelConfig], env_config: EnvConfig
 ):
-    hlog("Spin up model using inference endpoint.")
+    logger.info("Spin up model using inference endpoint.")
     model = InferenceEndpointModel(config=config, env_config=env_config)
     return model
 

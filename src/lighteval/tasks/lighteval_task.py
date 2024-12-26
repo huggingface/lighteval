@@ -22,6 +22,7 @@
 
 import collections
 import inspect
+import logging
 import random
 from dataclasses import asdict, dataclass, field
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple
@@ -31,7 +32,6 @@ from huggingface_hub import TextGenerationInputGrammarType
 from multiprocess import Pool
 from pytablewriter import MarkdownTableWriter
 
-from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.metrics import (
     apply_generative_metric,
     apply_llm_as_judge_metric,
@@ -41,7 +41,7 @@ from lighteval.metrics import (
     apply_target_perplexity_metric,
 )
 from lighteval.metrics.metrics import Metric, MetricCategory, Metrics
-from lighteval.models.base_model import BaseModel
+from lighteval.models.transformers.base_model import BaseModel
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import (
     Doc,
@@ -59,6 +59,8 @@ from lighteval.utils.utils import ListLike, as_list, download_dataset_worker
 
 if TYPE_CHECKING:
     from lighteval.logging.evaluation_tracker import EvaluationTracker
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -84,8 +86,6 @@ class LightevalTaskConfig:
         truncated_num_docs (bool): Whether less than the total number of documents were used
         trust_dataset (bool): Whether to trust the dataset at execution or not
         version (int): The version of the task. Defaults to 0. Can be increased if the underlying dataset or the prompt changes.
-        output_regex (str)
-        frozen (bool)
     """
 
     name: str
@@ -110,7 +110,6 @@ class LightevalTaskConfig:
     generation_size: Optional[int] = None
     generation_grammar: Optional[TextGenerationInputGrammarType] = None
     stop_sequence: Optional[ListLike[str]] = None
-    output_regex: Optional[str] = None
     num_samples: Optional[list[int]] = None
 
     suite: ListLike[str] = field(default_factory=lambda: ["custom"])
@@ -122,9 +121,6 @@ class LightevalTaskConfig:
 
     version: int = 0
 
-    # Currently unused
-    frozen: bool = False
-
     def __post_init__(self):
         # If we got a Metrics enums instead of a Metric, we convert
         self.metric = [metric.value if isinstance(metric, Metrics) else metric for metric in self.metric]
@@ -134,7 +130,7 @@ class LightevalTaskConfig:
         self.hf_avail_splits = tuple(self.hf_avail_splits) if self.hf_avail_splits is not None else None
         self.evaluation_splits = tuple(self.evaluation_splits)
         self.suite = tuple(self.suite)
-        self.stop_sequence = tuple(self.stop_sequence) if self.stop_sequence is not None else None
+        self.stop_sequence = tuple(self.stop_sequence) if self.stop_sequence is not None else ()
 
     def print(self):
         md_writer = MarkdownTableWriter()
@@ -188,7 +184,7 @@ class LightevalTask:
         self.dataset_filter = cfg.hf_filter
         self.trust_dataset = cfg.trust_dataset
         self.dataset: Optional[DatasetDict] = None  # Delayed download
-        hlog(f"{self.dataset_path} {self.dataset_config_name}")
+        logger.info(f"{self.dataset_path} {self.dataset_config_name}")
         self._fewshot_docs = None
         self._docs = None
 
@@ -207,7 +203,7 @@ class LightevalTask:
         ignored = [metric for metric in self.metrics if metric.category == MetricCategory.IGNORED]
 
         if len(ignored) > 0:
-            hlog_warn(f"[WARNING] Not implemented yet: ignoring the metric {' ,'.join(ignored)} for task {self.name}.")
+            logger.warning(f"Not implemented yet: ignoring the metric {' ,'.join(ignored)} for task {self.name}.")
 
         current_categories = [metric.category for metric in self.metrics]
         self.has_metric_category = {category: (category in current_categories) for category in MetricCategory}
@@ -262,7 +258,7 @@ class LightevalTask:
         if len(stored_splits) > 0:
             return stored_splits[:number_of_splits]
 
-        hlog_warn(f"Careful, the task {self.name} is using evaluation data to build the few shot examples.")
+        logger.warning(f"Careful, the task {self.name} is using evaluation data to build the few shot examples.")
         return None
 
     def _get_docs_from_split(self, splits: list[str], few_shots=False) -> list[Doc]:

@@ -22,32 +22,45 @@
 
 # flake8: noqa: C901
 import os
-from typing import Optional
 
-from lighteval.config.lighteval_config import FullNanotronConfig, LightEvalConfig
-from lighteval.logging.evaluation_tracker import EvaluationTracker
-from lighteval.logging.hierarchical_logger import htrack, htrack_block
-from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
-from lighteval.utils.imports import NO_NANOTRON_ERROR_MSG, is_nanotron_available
-from lighteval.utils.utils import EnvConfig
+from typer import Option
+from typing_extensions import Annotated
 
 
-if not is_nanotron_available():
-    raise ImportError(NO_NANOTRON_ERROR_MSG)
+CACHE_DIR: str = os.getenv("HF_HOME", "/scratch")
 
-from nanotron.config import Config, get_config_from_file
+HELP_PANEL_NAME_1 = "Common Parameters"
+HELP_PANEL_NAME_2 = "Logging Parameters"
+HELP_PANEL_NAME_3 = "Debug Parameters"
+HELP_PANEL_NAME_4 = "Modeling Parameters"
 
 
 SEED = 1234
 
 
-@htrack()
-def main(
-    checkpoint_config_path: str,
-    lighteval_config_path: Optional[str] = None,
-    cache_dir: Optional[str] = os.getenv("HF_HOME", "/scratch"),
+def nanotron(
+    checkpoint_config_path: Annotated[
+        str, Option(help="Path to the nanotron checkpoint YAML or python config file, potentially on s3.")
+    ],
+    lighteval_config_path: Annotated[str, Option(help="Path to a YAML config to be used for the evaluation.")],
+    cache_dir: Annotated[str, Option(help="Cache directory for datasets and models.")] = CACHE_DIR,
 ):
+    """
+    Evaluate models using nanotron as backend.
+    """
+    from nanotron.config import Config, get_config_from_file
+
+    from lighteval.config.lighteval_config import FullNanotronConfig, LightEvalConfig
+    from lighteval.logging.evaluation_tracker import EvaluationTracker
+    from lighteval.logging.hierarchical_logger import htrack_block
+    from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
+    from lighteval.utils.imports import NO_NANOTRON_ERROR_MSG, is_nanotron_available
+    from lighteval.utils.utils import EnvConfig
+
     env_config = EnvConfig(token=os.getenv("HF_TOKEN"), cache_dir=cache_dir)
+
+    if not is_nanotron_available():
+        raise ImportError(NO_NANOTRON_ERROR_MSG)
 
     with htrack_block("Load nanotron config"):
         # Create nanotron config

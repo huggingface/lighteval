@@ -11,7 +11,7 @@ After that, simply run the pipeline and save the results.
 ```python
 import lighteval
 from lighteval.logging.evaluation_tracker import EvaluationTracker
-from lighteval.models.model_config import VLLMModelConfig
+from lighteval.models.vllm.vllm_model import VLLMModelConfig
 from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 from lighteval.utils.utils import EnvConfig
 from lighteval.utils.imports import is_accelerate_available
@@ -35,7 +35,7 @@ def main():
         env_config=EnvConfig(cache_dir="tmp/"),
         # Remove the 2 parameters below once your configuration is tested
         override_batch_size=1,
-        max_samples=10 
+        max_samples=10
     )
 
     model_config = VLLMModelConfig(

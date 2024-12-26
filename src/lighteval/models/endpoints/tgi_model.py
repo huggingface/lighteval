@@ -21,13 +21,14 @@
 # SOFTWARE.
 
 import asyncio
+from dataclasses import dataclass
 from typing import Coroutine, Optional
 
 import requests
 from huggingface_hub import TextGenerationInputGrammarType, TextGenerationOutput
 from transformers import AutoTokenizer
 
-from lighteval.models.endpoint_model import InferenceEndpointModel, ModelInfo
+from lighteval.models.endpoints.endpoint_model import InferenceEndpointModel, ModelInfo
 from lighteval.utils.imports import NO_TGI_ERROR_MSG, is_tgi_available
 
 
@@ -42,6 +43,29 @@ def divide_chunks(array, n):
     # looping till length array
     for i in range(0, len(array), n):
         yield array[i : i + n]
+
+
+@dataclass
+class TGIModelConfig:
+    inference_server_address: str
+    inference_server_auth: str
+    model_id: str
+
+    @classmethod
+    def from_path(cls, path: str) -> "TGIModelConfig":
+        """Load configuration for TGI endpoint model from YAML file path.
+
+        Args:
+            path (`str`): Path of the model configuration YAML file.
+
+        Returns:
+            [`TGIModelConfig`]: Configuration for TGI endpoint model.
+        """
+        import yaml
+
+        with open(path, "r") as f:
+            config = yaml.safe_load(f)["model"]
+        return cls(**config["instance"])
 
 
 # inherit from InferenceEndpointModel instead of LightevalModel since they both use the same interface, and only overwrite

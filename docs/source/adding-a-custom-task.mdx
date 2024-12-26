@@ -107,8 +107,6 @@ class CustomSubsetTask(LightevalTaskConfig):
             suite=["community"],
             generation_size=-1,
             stop_sequence=None,
-            output_regex=None,
-            frozen=False,
         )
 SUBSET_TASKS = [CustomSubsetTask(name=f"mytask:{subset}", hf_subset=subset) for subset in SAMPLE_SUBSETS]
 ```
@@ -154,13 +152,6 @@ Here is a list of the parameters and their meaning:
   for your generation
 - `metric` (list), the metrics you want to use for your evaluation (see next
   section for a detailed explanation)
-- `output_regex` (str), A regex string that will be used to filter your
-  generation. (Generative metrics will only select tokens that are between the
-  first and the second sequence matched by the regex. For example, for a regex
-  matching `\n` and a generation `\nModel generation output\nSome other text`
-  the metric will only be fed with `Model generation output`)
-- `frozen` (bool), for now, is set to False, but we will steadily pass all
-  stable tasks to True.
 - `trust_dataset` (bool), set to True if you trust the dataset.
 
 
@@ -176,23 +167,11 @@ TASKS_TABLE = SUBSET_TASKS
 # TASKS_TABLE = [task]
 ```
 
-Finally, you need to add a module logic to convert your task to a dict for lighteval.
-
-```python
-# MODULE LOGIC
-# You should not need to touch this
-# Convert to dict for lighteval
-if __name__ == "__main__":
-    print(t.name for t in TASKS_TABLE)
-    print(len(TASKS_TABLE))
-```
-
 Once your file is created you can then run the evaluation with the following command:
 
 ```bash
 lighteval accelerate \
-    --model_args "pretrained=HuggingFaceH4/zephyr-7b-beta" \
-    --tasks "community|{custom_task}|{fewshots}|{truncate_few_shot}" \
-    --custom_tasks {path_to_your_custom_task_file} \
-    --output_dir "./evals"
+    "pretrained=HuggingFaceH4/zephyr-7b-beta" \
+    "community|{custom_task}|{fewshots}|{truncate_few_shot}" \
+    --custom-tasks {path_to_your_custom_task_file}
 ```

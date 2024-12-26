@@ -20,17 +20,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 from typing import Optional
 
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
-from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.models.abstract_model import LightevalModel
-from lighteval.models.endpoint_model import ModelInfo
+from lighteval.models.endpoints.endpoint_model import ModelInfo
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
@@ -45,6 +46,9 @@ from lighteval.tasks.requests import (
 from lighteval.utils.imports import is_openai_available
 
 
+logger = logging.getLogger(__name__)
+
+
 if is_openai_available():
     import logging
 
@@ -53,6 +57,11 @@ if is_openai_available():
 
     logging.getLogger("openai").setLevel(logging.ERROR)
     logging.getLogger("httpx").setLevel(logging.ERROR)
+
+
+@dataclass
+class OpenAIModelConfig:
+    model: str
 
 
 class OpenAIClient(LightevalModel):
@@ -90,7 +99,7 @@ class OpenAIClient(LightevalModel):
                 )
                 return response
             except Exception as e:
-                hlog_warn(f"{type(e), e}")
+                logger.warning(f"{type(e), e}")
                 time.sleep(self.API_RETRY_SLEEP)
                 self.API_RETRY_SLEEP = self.API_RETRY_SLEEP**self.API_RETRY_MULTIPLIER
         raise Exception("Failed to get response from the API")

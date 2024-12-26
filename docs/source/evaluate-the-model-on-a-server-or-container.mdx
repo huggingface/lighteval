@@ -6,10 +6,9 @@ to the server. The command is the same as before, except you specify a path to
 a yaml config file (detailed below):
 
 ```bash
-lighteval accelerate \
-    --model_config_path="/path/to/config/file"\
-    --tasks <task parameters> \
-    --output_dir output_dir
+lighteval endpoint {tgi,inference-endpoint} \
+    "/path/to/config/file"\
+    <task parameters>
 ```
 
 There are two types of configuration files that can be provided for running on
@@ -27,27 +26,25 @@ __configuration file example:__
 
 ```yaml
 model:
-  type: "endpoint"
   base_params:
-    endpoint_name: "llama-2-7B-lighteval" # needs to be lower case without special characters
-    model: "meta-llama/Llama-2-7b-hf"
-    revision: "main"
+    # Pass either model_name, or endpoint_name and true reuse_existing
+    # endpoint_name: "llama-2-7B-lighteval" # needs to be lower case without special characters
+    # reuse_existing: true # defaults to false; if true, ignore all params in instance, and don't delete the endpoint after evaluation
+    model_name: "meta-llama/Llama-2-7b-hf"
+    # revision: "main" # defaults to "main"
     dtype: "float16" # can be any of "awq", "eetq", "gptq", "4bit' or "8bit" (will use bitsandbytes), "bfloat16" or "float16"
-    reuse_existing: false # if true, ignore all params in instance, and don't delete the endpoint after evaluation
   instance:
     accelerator: "gpu"
     region: "eu-west-1"
     vendor: "aws"
-    instance_size: "medium"
-    instance_type: "g5.2xlarge"
+    instance_type: "nvidia-a10g"
+    instance_size: "x1"
     framework: "pytorch"
     endpoint_type: "protected"
-    namespace: null # The namespace under which to launch the endopint. Defaults to the current user's namespace
+    namespace: null # The namespace under which to launch the endpoint. Defaults to the current user's namespace
     image_url: null # Optionally specify the docker image to use when launching the endpoint model. E.g., launching models with later releases of the TGI container with support for newer models.
     env_vars:
       null # Optional environment variables to include when launching the endpoint. e.g., `MAX_INPUT_LENGTH: 2048`
-  generation:
-    add_special_tokens: true
 ```
 
 ### Text Generation Inference (TGI)
@@ -59,9 +56,24 @@ __configuration file example:__
 
 ```yaml
 model:
-  type: "tgi"
   instance:
     inference_server_address: ""
     inference_server_auth: null
     model_id: null # Optional, only required if the TGI container was launched with model_id pointing to a local directory
+```
+
+### OpenAI API
+
+Lighteval also supports evaluating models on the OpenAI API. To do so you need to set your OpenAI API key in the environment variable.
+
+```bash
+export  OPENAI_API_KEY={your_key}
+```
+
+And then run the following command:
+
+```bash
+lighteval endpoint openai \
+    {model-name} \
+    <task parameters>
 ```

@@ -22,16 +22,16 @@
 
 import gc
 import itertools
+import logging
 import os
+from dataclasses import dataclass
 from typing import Optional
 
 import torch
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
-from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_config import VLLMModelConfig
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
@@ -43,6 +43,9 @@ from lighteval.tasks.requests import (
 )
 from lighteval.utils.imports import is_vllm_available
 from lighteval.utils.utils import EnvConfig, as_list
+
+
+logger = logging.getLogger(__name__)
 
 
 if is_vllm_available():
@@ -61,6 +64,30 @@ else:
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 STARTING_BATCH_SIZE = 512
+
+
+@dataclass
+class VLLMModelConfig:
+    pretrained: str
+    gpu_memory_utilisation: float = 0.9  # lower this if you are running out of memory
+    revision: str = "main"  # revision of the model
+    dtype: str | None = None
+    tensor_parallel_size: int = 1  # how many GPUs to use for tensor parallelism
+    pipeline_parallel_size: int = 1  # how many GPUs to use for pipeline parallelism
+    data_parallel_size: int = 1  # how many GPUs to use for data parallelism
+    max_model_length: int | None = None  # maximum length of the model, ussually infered automatically. reduce this if you encouter OOM issues, 4096 is usually enough
+    swap_space: int = 4  # CPU swap space size (GiB) per GPU.
+    seed: int = 1234
+    trust_remote_code: bool = False
+    use_chat_template: bool = False
+    add_special_tokens: bool = True
+    multichoice_continuations_start_space: bool = (
+        True  # whether to add a space at the start of each continuation in multichoice generation
+    )
+    pairwise_tokenization: bool = False  # whether to tokenize the context and continuation separately or together.
+
+    subfolder: Optional[str] = None
+    temperature: float = 0.6  # will be used for multi sampling tasks, for tasks requiring no sampling, this will be ignored and set to 0.
 
 
 class VLLMModel(LightevalModel):
@@ -225,14 +252,14 @@ class VLLMModel(LightevalModel):
             # left truncate the inputs to the maximum length
             if max_new_tokens is not None:
                 if context_size + max_new_tokens > self.max_length:
-                    hlog_warn(
+                    logger.warning(
                         f"{context_size + max_new_tokens=} which is greather than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
                     )
                     context_size = self.max_length - max_new_tokens
                     inputs = [input[-context_size:] for input in inputs]
             else:
                 if context_size > self.max_length:
-                    hlog_warn(
+                    logger.warning(
                         f"{context_size=} which is greather than {self.max_length=}. Truncating context to {self.max_length} tokens."
                     )
                     context_size = self.max_length
