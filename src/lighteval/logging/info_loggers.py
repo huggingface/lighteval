@@ -289,16 +289,16 @@ class DetailsLogger:
         Hashes the aggregated hash values for all the sample ([`Doc`]) of one task ([`LightevalTask`])
 
         Attributes:
-            example (str): Aggregated hash of all the [`Doc.query`] hashes for all samples of the current task.
-            full_prompt (str): Aggregated hash of all the [`Doc.ctx`] hashes for all samples of the current task.
+            examples (str): Aggregated hash of all the [`Doc.query`] hashes for all samples of the current task.
+            full_prompts (str): Aggregated hash of all the [`Doc.ctx`] hashes for all samples of the current task.
             input_tokens (str): Aggregated hash of the aggregated [`Doc.input_tokens`] hashes over all samples of the current task.
             cont_tokens (str): Aggregated hash of the aggregated [`Doc.generated_tokens`] hashes over all samples of the current task.
         """
 
-        hash_examples: str = ""
-        hash_full_prompts: str = ""
-        hash_input_tokens: str = ""
-        hash_cont_tokens: str = ""
+        examples: str = ""
+        full_prompts: str = ""
+        input_tokens: str = ""
+        cont_tokens: str = ""
 
     hashes: dict[str, list[Hash]] = field(default_factory=lambda: collections.defaultdict(list))
     compiled_hashes: dict[str, CompiledHash] = field(
@@ -412,16 +412,16 @@ class DetailsLogger:
 
         for task_name in self.hashes:
             compiled_hash = self.CompiledHash()
-            compiled_hash.hash_examples = xxhash.xxh64(
+            compiled_hash.examples = xxhash.xxh64(
                 "".join(sorted(q.example for q in self.hashes[task_name]))
             ).hexdigest()  # hash of all the hash - sorted for reproducibility
-            compiled_hash.hash_full_prompts = xxhash.xxh64(
+            compiled_hash.full_prompts = xxhash.xxh64(
                 "".join(sorted(q.full_prompt for q in self.hashes[task_name]))
             ).hexdigest()  # hash of all the hash - sorted for reproducibility
-            compiled_hash.hash_input_tokens = xxhash.xxh64(
+            compiled_hash.input_tokens = xxhash.xxh64(
                 "".join(sorted(q.input_tokens for q in self.hashes[task_name]))
             ).hexdigest()  # hash of all the hash - sorted for reproducibility
-            compiled_hash.hash_cont_tokens = xxhash.xxh64(
+            compiled_hash.cont_tokens = xxhash.xxh64(
                 "".join(sorted(q.cont_tokens for q in self.hashes[task_name]))
             ).hexdigest()  # hash of all the hash - sorted for reproducibility
             self.compiled_hashes[task_name] = compiled_hash
