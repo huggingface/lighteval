@@ -1353,7 +1353,8 @@ class BaseModel(TransformersModel):
         super().__post_init__()
 
         warnings.warn(
-            "Careful, the BaseModel name is deprecated and will be removed, you should use TransformersModel instead!"
+            "Careful, the BaseModel name is deprecated and will be removed, you should use TransformersModel instead!",
+             FutureWarning,
         )
 
 
