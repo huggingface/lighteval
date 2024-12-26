@@ -483,14 +483,12 @@ class MetricsLogger:
         for metric_name, metric_value in metrics.items():
             self.metrics_values[task_name][metric_name].append(metric_value)
 
-    def aggregate(self, task_dict: dict[str, LightevalTask], bootstrap_iters: int = 1000):  # noqa: C901
+    def aggregate(self, task_dict: dict[str, LightevalTask]):  # noqa: C901
         """
         Aggregate the metrics for each task and then for all tasks.
 
         Args:
             task_dict (dict[str, LightevalTask]): used to determine what aggregation function to use for each metric
-            bootstrap_iters (int, optional): Number of runs used to run the statistical bootstrap. Defaults to 1000.
-
         """
 
         for task_name, metrics in self.metrics_values.items():
