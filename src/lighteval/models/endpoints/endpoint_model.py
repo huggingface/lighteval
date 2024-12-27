@@ -243,7 +243,7 @@ class InferenceEndpointModel(LightevalModel):
 
                     # Waits for the endpoint to be deployed - we could also check for the status in updating', 'pending', 'initializing'
                     logger.info("Trying to deploy your endpoint. Please wait for 10 min.")
-                    self.endpoint.wait(timeout=600, refresh_every=60)  # We wait for 10 min
+                    self.endpoint.wait(timeout=1800, refresh_every=60)  # We wait for 30 min
                 except InferenceEndpointError as e:
                     instance_type, instance_size = InferenceEndpointModel.get_larger_hardware_suggestion(
                         instance_type, instance_size
