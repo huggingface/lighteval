@@ -62,11 +62,10 @@ if is_openai_available():
 @dataclass
 class OpenAIModelConfig:
     """
-    A configuration class for OpenAI models. This class is used to specify settings related to OpenAI models,
-    including the model name or identifier.
-
+    Configuration class to create an [[OpenAIModel]], to call via its API at inference for evaluation. 
+    
     Attributes:
-    model: It specifies the name or identifier of the OpenAI model to be used.
+    model: name or identifier of the OpenAI model to be used for inference.
     """
     model: str
 

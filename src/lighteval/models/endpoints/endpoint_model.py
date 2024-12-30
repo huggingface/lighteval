@@ -91,10 +91,10 @@ class ServerlessEndpointModelConfig:
 @dataclass
 class InferenceEndpointModelConfig:
     """
-    This class is designed to manage and define settings for deploying inference endpoints in machine learning models. 
+This class defines the settings used to deploy inference endpoints automatically. (Inference endpoint docs: https://huggingface.co/docs/inference-endpoints/index) 
 
     Attributes:
-    endpoint_name (str, optional):The name of the inference endpoint. 
+    endpoint_name (str, Optional): Inference endpoint name (to use at creation or reuse)
     model_name (str, optional): The name of the model for inference. 
     reuse_existing (bool, default: False): Indicates whether to reuse an existing endpoint.
     accelerator (str, default: "gpu"): Specifies the type of hardware accelerator.
