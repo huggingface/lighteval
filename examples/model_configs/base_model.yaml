@@ -1,6 +1,6 @@
 model:
   base_params:
-    model_args: "pretrained=HuggingFaceH4/zephyr-7b-beta,revision=main" # pretrained=model_name,trust_remote_code=boolean,revision=revision_to_use,model_parallel=True.To see the full list of parameters, please click here: https://huggingface.co/docs/lighteval/main/en/quicktour#model-arguments
+    model_args: "pretrained=HuggingFaceH4/zephyr-7b-beta,revision=main" # pretrained=model_name,trust_remote_code=boolean,revision=revision_to_use,model_parallel=True. To see the full list of parameters, please click here: https://huggingface.co/docs/lighteval/main/en/quicktour#model-arguments
     dtype: "bfloat16"
     compile: true
   merged_weights: # Ignore this section if you are not using PEFT models
