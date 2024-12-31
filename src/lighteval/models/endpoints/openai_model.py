@@ -62,8 +62,8 @@ if is_openai_available():
 @dataclass
 class OpenAIModelConfig:
     """
-    Configuration class to create an [[OpenAIModel]], to call via its API at inference for evaluation. 
-    
+    Configuration class to create an [[OpenAIModel]], to call via its API at inference for evaluation.
+
     Attributes:
     model: name or identifier of the OpenAI model to be used for inference.
     """
@@ -240,7 +240,7 @@ class OpenAIClient(LightevalModel):
             ), "Only single token continuations are supported when using openai API."
 
             for i in range(len(dataset)):
-                logit_bias = {tok: 100 for tok in dataset[i].tokenized_continuation}
+                logit_bias = dict.fromkeys(dataset[i].tokenized_continuation, 100)
                 logit_biass.append(logit_bias)
 
             outputs = self.__call_api_parallel(

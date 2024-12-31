@@ -42,7 +42,7 @@ if is_peft_available():
 @dataclass
 class AdapterModelConfig(BaseModelConfig):
     """
-    This class is used to manage the configuration of adapter models. Adapter models are designed to extend or adapt a 
+    Manages the configuration of adapter models. Adapter models are designed to extend or adapt a
     base model's functionality for specific tasks while keeping most of the base model's parameters frozen.
     """
     # Adapter models have the specificity that they look at the base model (= the parent) for the tokenizer and config
@@ -58,20 +58,32 @@ class AdapterModelConfig(BaseModelConfig):
         return super().__post_init__()
 
     def init_configs(self, env_config: EnvConfig):
+        """
+        Initializes the configurations of adapter models.
+
+        Args:
+            env_configs(EnvConfig): An instance of EnvConfig.
+
+        Returns:
+            Any:
+        """
         return self._init_configs(self.base_model, env_config)
 
 
 class AdapterModel(BaseModel):
     """
-    This class is designed to integrate adapter models with a pre-trained base model.
+    Integrates the adapter models with a pre-trained base model.
+
+    Args:
+
     """
     def _create_auto_tokenizer(self, config: AdapterModelConfig, env_config: EnvConfig) -> PreTrainedTokenizer:
         """
         Creates and configures the adapter model by applying adapter weights to the base model.
 
         Args:
-        config(AdapterModelConfig): An instance of AdapterModelConfig.
-        env_config(EnvConfig): An instance of EnvConfig.
+            config(AdapterModelConfig): An instance of AdapterModelConfig.
+            env_config(EnvConfig): An instance of EnvConfig.
 
         Returns: PreTrainedTokenizer
         """
@@ -89,12 +101,12 @@ class AdapterModel(BaseModel):
     def _create_auto_model(self, config: AdapterModelConfig, env_config: EnvConfig) -> AutoModelForCausalLM:
         """
         It returns a PeftModel from a base model and a version fined tuned using PEFT.
-        
-        Args:
-        config(AdapterModelConfig): An instance of AdapterModelConfig.
-        env_config(EnvConfig): An instance of EnvConfig.
 
-        Returns: AutoModelForCasualLM        
+        Args:
+            config(AdapterModelConfig): An instance of AdapterModelConfig.
+            env_config(EnvConfig): An instance of EnvConfig.
+
+        Returns: AutoModelForCasualLM
         """
         torch_dtype = _get_dtype(config.dtype, self._config)
         config.model_parallel, max_memory, device_map = self.init_model_parallel(config.model_parallel)

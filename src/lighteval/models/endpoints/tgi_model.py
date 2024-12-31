@@ -48,10 +48,10 @@ def divide_chunks(array, n):
 @dataclass
 class TGIModelConfig:
     """
-    This class provides a streamlined configuration for integrating with Text Generation Inference (TGI) endpoints.
+    Provides a streamlined configuration for integrating with Text Generation Inference (TGI) endpoints. To know more, please click here: https://huggingface.co/docs/text-generation-inference/index
 
     Attributes:
-    inference_server_address (str, required): The endpoint address of the inference server hosting the model.
+           inference_server_address (str, required):Endpoint address of the inference server hosting the model.
     inference_server_auth (str, required): Authentication credentials or tokens required to access the server.
     model_id (str, required): Identifier for the model hosted on the inference server.
     """

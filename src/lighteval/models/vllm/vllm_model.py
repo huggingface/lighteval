@@ -69,7 +69,7 @@ STARTING_BATCH_SIZE = 512
 @dataclass
 class VLLMModelConfig:
     """
-    This class defines the configuration parameters for deploying and running models using the vLLM framework. 
+    This class defines the configuration parameters for deploying and running models using the vLLM framework.
 
     Attributes:
     pretrained (str, required): The identifier for the pretrained model (e.g., model name or path).
