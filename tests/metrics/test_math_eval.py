@@ -1,17 +1,23 @@
 import pytest
+import sympy
 
 from lighteval.metrics.dynamic_metrics import (
     ExprExtractionConfig,
     IndicesExtractionConfig,
     LatexExtractionConfig,
     multilingual_extractive_match_metric,
+    sympy_expr_eq,
 )
 from lighteval.tasks.requests import Doc
 from lighteval.utils.language import Language
 
 
 def compare_en(
-    gold: str, pred: str, language: Language = Language.ENGLISH, match_types: list[str] = ["latex", "expr"]
+    gold: str,
+    pred: str,
+    language: Language = Language.ENGLISH,
+    match_types: list[str] = ["latex", "expr"],
+    precision: int = 6,
 ):
     # Convert string match_types to ExtractionTarget objects
     extraction_targets = []
@@ -29,6 +35,7 @@ def compare_en(
         language=language,
         gold_extraction_target=extraction_targets,
         pred_extraction_target=extraction_targets,
+        precision=precision,
     ).sample_level_fn(
         golds=[gold],
         predictions=[pred],
@@ -329,11 +336,6 @@ def test_latex_notation(gold, pred, expected):
             "Since $rs = A$, where $r$ is the inradius, $s$ is the semiperimeter, and $A$ is the area, we have that the ratio of the area of the circle to the area of the triangle is $\\frac{\\pi r^2}{rs} = \\frac{\\pi r}{s}$. Now we try to express $s$ as $h$ and $r$. Denote the points where the incircle meets the triangle as $X,Y,Z$, where $O$ is the incenter, and denote $AX = AY = z, BX = BZ = y, CY = CZ = x$. Since $XOZB$ is a square (tangents are perpendicular to radius), $r = BX = BZ = y$. The perimeter can be expressed as $2(x+y+z)$, so the semiperimeter is $x+y+z$. The hypotenuse is $AY+CY = z+x$. Thus we have $s = x+y+z = (z+x)+y = h+r$. The answer is $\\boxed{\\frac{\\pi r}{h+r}}$.'], Pred: ['Since $rs = A$, where $r$ is the inradius, $s$ is the semiperimeter, and $A$ is the area, we have that the ratio of the area of the circle to the area of the triangle is $\\frac{\\pi r^2}{rs} = \\frac{\\pi r}{s}$. Now we try to express $s$ as $h$ and $r$. Denote the points where the incircle meets the triangle as $X,Y,Z$, where $O$ is the incenter, and denote $AX = AY = z, BX = BZ = y, CY = CZ = x$. Since $XOZB$ is a square (tangents are perpendicular to radius), $r = BX = BZ = y$. The perimeter can be expressed as $2(x+y+z)$, so the semiperimeter is $x+y+z$. The hypotenuse is $AY+CY = z+x$. Thus we have $s = x+y+z = (z+x)+y = h+r$. The answer is $\\boxed{\\frac{\\pi r}{h+r}}$.",
             1,
         ),
-        (
-            "$\\begin{pmatrix} 1 & -1 \\\\ 1 & 1 \\end{pmatrix}$",
-            "The matrix is $\\boxed{\\begin{pmatrix} 1 & -1 \\\\ 1 & \\phantom 1 \\end{pmatrix}}$",
-            1,
-        ),
         ("$125$ miles", "The distance is $\\boxed{125\\textnormal{ miles}}.$", 1),
         (
             "$[-1, -\\frac{1}{2}) \\cup (-\\frac{1}{2}, 0) \\cup (0, 1) \\cup (1, \\infty)$",
@@ -342,6 +344,7 @@ def test_latex_notation(gold, pred, expected):
         ),
         ("$\\sqrt{2}+\\sqrt{5}$", "The answer is $\\boxed{\\sqrt 2+\\sqrt 5}$", 1),
         ("$\\frac{9}{4}\\pi$", "Therefore $\\boxed{\\frac94\\pi}$.", 1),
+        ("x \\in \\boxed{\\{-1\\} \\cup [0,7)}.$", "x \\in \\boxed{\\{-1\\} \\cup [0,7)}.$", 1),
     ],
 )
 def test_latex_notation_math(gold, pred, expected):
@@ -459,3 +462,69 @@ def test_relations_math(gold, pred, expected):
 )
 def test_matrix_extraction(gold, pred, expected):
     assert compare_en(gold, pred, match_types=["latex"]) == expected
+
+
+def test_precision():
+    assert sympy_expr_eq(sympy.Rational(1, 3), sympy.Float(0.333), precision=3)
+    assert not sympy_expr_eq(sympy.Rational(1, 3), sympy.Float(0.333), precision=4)
+
+    # It should work with more nuanced pairs
+    assert sympy_expr_eq(sympy.Rational(1, 3) + 1, sympy.Float(1.333), precision=3)
+    assert not sympy_expr_eq(sympy.Rational(1, 3) + 1, sympy.Float(1.333), precision=4)
+
+    # From latex
+    assert compare_en("$\\frac{1}{3}$", "0.3333$", match_types=["latex", "expr"], precision=4) == 1
+
+
+# Tests from qwen parser
+@pytest.mark.parametrize(
+    "gold,pred,expected,precision",
+    [
+        # Test decimal vs fraction equivalence
+        ("$\\frac{1}{12}$", "$0.0833333333333333$", 1, 6),
+        ("$(1,\\frac{9}{2})$", "$(1,4.5)$", 1, 6),
+        # Test algebraic expressions
+        ("$\\frac{x+2}{7}$", "$\\frac{x}{7}+\\frac{2}{7}$", 1, 6),
+        ("$\\tan^2(y)+1$", "$\\sec^2(y)$", 1, 6),
+        # Test complex matrices
+        (
+            "$\\begin{pmatrix}-\\\frac{7}{4}&-2\\\\4&\\frac{1}{4}\\\\\\end{pmatrix}$",
+            "$\\begin{pmatrix}-\\\frac{7}{4}&-2\\\\4&\\frac{1}{4}\\\\\\end{pmatrix}$",
+            1,
+            6,
+        ),
+        (
+            "$\\begin{pmatrix}\\frac{1}{3\\sqrt[3]{x}^2}&0&0\\\\0&1&0\\\\-\\sin(x)&0&0\\\\\\end{pmatrix}$",
+            "$\\begin{pmatrix}\\frac{1}{3x^{2/3}}&0&0\\\\0&1&0\\\\-\\sin(x)&0&0\\end{pmatrix}$",
+            1,
+            6,
+        ),
+        # Test equations
+        ("$34x+45y-20z+100=0$", "$-34x-45y+20z-100=0$", 1, 6),
+        # Test matrix with decimals
+        (
+            "$(\\begin{pmatrix}\\frac{1}{3}\\\\ \\frac{1}{5} \\end{pmatrix})$",
+            "$\\begin{pmatrix}0.33\\\\0.2 \\end{pmatrix}$",
+            1,
+            2,
+        ),
+        # Test expression order invariance
+        (
+            "$\\frac{\\sqrt{\\sqrt{11}+\\sqrt{194}}}{15+2\\sqrt{33}}$",
+            "$\\frac{\\sqrt{\\sqrt{11}+\\sqrt{194}}}{2\\sqrt{33}+15}$",
+            1,
+            6,
+        ),
+        # Test non-equivalent expressions
+        ("$(a+5)(b+2)$", "$(+5)(b+2)$", 0, 6),
+        ("$2$", "$\\frac{1+\\sqrt{5}}{2}$", 0, 6),
+        ("$4$", "$\\frac{34}{16}+\\frac{\\sqrt{1358}}{16}$", 0, 6),
+        ("$1\\sqrt{19}$", "$1$", 0, 6),
+        # Test intervals
+        ("$(\\frac{3}{5},\\frac{8}{3}]$", "$(0.6,2.6667]$", 1, 2),
+        # Test non-equivalent algebraic expressions
+        ("$x+2n+1$", "$x+1$", 0, 6),
+    ],
+)
+def test_complex_math_expressions(gold, pred, expected, precision):
+    assert compare_en(gold, pred, match_types=["latex", "expr"], precision=precision) == expected

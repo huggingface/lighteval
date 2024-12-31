@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
 import re
 from dataclasses import dataclass
 from functools import lru_cache, partial
@@ -28,12 +29,10 @@ from typing import Callable, Literal, Sequence
 
 import numpy as np
 import sympy
-from latex2sympy2 import latex2sympy as parse_latex
-
-# from sympy.parsing.latex import parse_latex
-from sympy import FiniteSet, Interval
+from latex2sympy2_extended import NormalizationConfig, normalize_latex
+from latex2sympy2_extended import latex2sympy as parse_latex
+from sympy import Basic, FiniteSet, Interval, MatrixBase, MatrixExpr, Set
 from sympy.core.relational import Relational
-from sympy.matrices import MatrixBase
 from sympy.parsing.sympy_parser import parse_expr
 
 from lighteval.metrics.metrics_sample import (
@@ -48,8 +47,6 @@ from lighteval.metrics.normalizations import (
     LogProbPMINorm,
     LogProbTokenNorm,
     get_multilingual_normalizer,
-    math_normalizer,
-    remove_outer_braces,
 )
 from lighteval.metrics.utils.metric_utils import (
     MetricCategory,
@@ -62,27 +59,92 @@ from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LIT
 from lighteval.utils.language import Language
 
 
+class TimeoutException(Exception):
+    pass
+
+
+def timeout(timeout_seconds: int = 10):
+    """
+    A decorator that applies a timeout to the decorated function.
+    On Unix: uses signal-based alarm.
+    On Windows: uses a multiprocessing-based approach.
+
+    Preferably the unix approach is better, because we don't have to spawn a new process,
+    but it's not available on windows.
+    """
+    if os.name == "posix":
+        # Unix-like approach: signal.alarm
+
+        import signal
+
+        def decorator(func):
+            def handler(signum, frame):
+                raise TimeoutException("Operation timed out!")
+
+            def wrapper(*args, **kwargs):
+                old_handler = signal.getsignal(signal.SIGALRM)
+                signal.signal(signal.SIGALRM, handler)
+                signal.alarm(timeout_seconds)
+                try:
+                    return func(*args, **kwargs)
+                finally:
+                    # Cancel the alarm and restore previous handler
+                    signal.alarm(0)
+                    signal.signal(signal.SIGALRM, old_handler)
+
+            return wrapper
+
+        return decorator
+
+    else:
+        # Windows approach: use multiprocessing
+        from multiprocessing import Process, Queue
+
+        def decorator(func):
+            def wrapper(*args, **kwargs):
+                q = Queue()
+
+                def run_func(q, args, kwargs):
+                    try:
+                        result = func(*args, **kwargs)
+                        q.put((True, result))
+                    except Exception as e:
+                        q.put((False, e))
+
+                p = Process(target=run_func, args=(q, args, kwargs))
+                p.start()
+                p.join(timeout_seconds)
+
+                if p.is_alive():
+                    # Timeout: Terminate the process
+                    p.terminate()
+                    p.join()
+                    raise TimeoutException("Operation timed out!")
+
+                # If we got here, the process completed in time.
+                success, value = q.get()
+                if success:
+                    return value
+                else:
+                    # The child raised an exception; re-raise it here
+                    raise value
+
+            return wrapper
+
+        return decorator
+
+
+# Small cache, to catche repeated calls invalid parsing
+@lru_cache(maxsize=20)
+@timeout(timeout_seconds=5)
 def parse_latex_with_timeout(latex: str):
-    import signal
-    from contextlib import contextmanager
+    return parse_latex(latex, is_real=not should_treat_as_complex(latex))
 
-    @contextmanager
-    def timeout(seconds):
-        def signal_handler(signum, frame):
-            raise TimeoutError("Parsing timed out")
 
-        # Set signal handler
-        signal.signal(signal.SIGALRM, signal_handler)
-        signal.alarm(seconds)  # Start timer
-
-        try:
-            yield
-        finally:
-            signal.alarm(0)  # Disable timer
-
-    with timeout(10):
-        return parse_latex(latex)
-    raise TimeoutError("Parsing timed out")
+@lru_cache(maxsize=20)
+@timeout(timeout_seconds=5)
+def parse_expr_with_timeout(expr: str):
+    return parse_expr(expr)
 
 
 def loglikelihood_acc_metric(normalization: LogProbNormalization | None = None) -> SampleLevelMetric:
@@ -240,92 +302,6 @@ class IndicesExtractionConfig:
 ExtractionTarget = LatexExtractionConfig | ExprExtractionConfig | IndicesExtractionConfig
 
 
-def try_parse_latex_interval(latex: str) -> Interval | FiniteSet | None:
-    # TODO: Move to antlr in future
-    # Simply check if the latex is an interval -> [/(\number, \number)/]
-    # First split on union and intersection operators
-    parts = re.split(r"\\cup|\\cap", latex.strip())
-
-    intervals = []
-    operators = []
-
-    # Extract the operators (cup/cap) in order
-    for op in re.finditer(r"\\cup|\\cap", latex.strip()):
-        operators.append(op.group())
-
-    # Parse each interval part
-    for part in parts:
-        match = re.match(r"(?P<l_bound>[\(\[])\s*(?P<l_val>.*?),\s*(?P<u_val>.*?)(?P<u_bound>[\)\]])", part.strip())
-        if not match:
-            return None
-
-        l_closed = match.group("l_bound") == "["
-        u_closed = match.group("u_bound") == "]"
-
-        try:
-            l_bound_val = parse_latex_with_timeout(match.group("l_val"))
-            u_bound_val = parse_latex_with_timeout(match.group("u_val"))
-
-            # Ensure we're not parsing lists
-            if isinstance(l_bound_val, list) or isinstance(u_bound_val, list):
-                return None
-
-            interval = Interval(l_bound_val, u_bound_val, l_closed, u_closed)
-            if interval.is_empty:
-                interval = Interval(u_bound_val, l_bound_val, u_closed, l_closed)
-            intervals.append(interval)
-        except:
-            return None
-
-    if not intervals:
-        return None
-
-    # Combine intervals using operators
-    result = intervals[0]
-    for i, op in enumerate(operators):
-        if op == "\\cup":
-            result = result.union(intervals[i + 1])
-        else:  # \\cap
-            result = result.intersection(intervals[i + 1])
-
-    return result
-
-
-pm_regex = re.compile(r"(?P<expr>.+)(?P<plus_minus>\\pm)(?P<value>.+)")
-
-
-def try_parse_latex_set(latex: str) -> FiniteSet | None:
-    elements = []
-    latex = remove_outer_braces(latex)
-    for latex_element in re.split(r"(?<!\\),", latex.strip()):
-        match = pm_regex.match(latex_element.strip())
-        if match:
-            try:
-                expr = parse_latex_with_timeout(match.group("expr"))
-                value = parse_latex_with_timeout(match.group("value"))
-                # Return a tuple of (expr - value, expr + value)
-                elements.append(expr - value)
-                elements.append(expr + value)
-            except:
-                return None
-        else:
-            try:
-                elements.append(parse_latex_with_timeout(latex_element.strip()))
-            except:
-                return None
-    if len(elements) == 1:
-        return elements[0]
-
-    return FiniteSet(*elements)
-
-
-def parse_latex_extended(latex: str) -> FiniteSet | Interval | sympy.Expr | None:
-    interval = try_parse_latex_interval(latex)
-    if interval is not None:
-        return interval
-    return try_parse_latex_set(latex)
-
-
 def extract_expr(match: re.Match) -> tuple[str | sympy.Expr | None, str]:
     # First combine the number
     groups = match.groupdict()
@@ -334,7 +310,7 @@ def extract_expr(match: re.Match) -> tuple[str | sympy.Expr | None, str]:
     integer = next((val for name, val in groups.items() if name.startswith("integer") and val), None)
     decimal = next((val for name, val in groups.items() if name.startswith("decimal") and val), None)
 
-    percentage_multiplier = 0.01 if groups.get("percent", None) else 1
+    is_percentage = True if groups.get("percent", None) else False
 
     if integer:
         # Remove thousand separators and convert to float
@@ -343,38 +319,48 @@ def extract_expr(match: re.Match) -> tuple[str | sympy.Expr | None, str]:
         if decimal:
             # Add decimal part if present
             num_str += f"{decimal.replace(',', '.')}"
-        return sympy.Number(float(num_str)) * percentage_multiplier, expr
+        number = sympy.Number(num_str)
+        if is_percentage:
+            number = number / sympy.Number(100)
+        return number, expr
     elif decimal:
-        # Just decimal part, convert to float
-        return sympy.Number(float(f"0{decimal}")) * percentage_multiplier, expr
+        # Just decimal part, convert to float, make sure to use sympy directly to avoid floating point errors
+        number = sympy.Float(f"0{decimal}")
+        if is_percentage:
+            number = number / sympy.Number(100)
+        return number, expr
 
     # Otherwise just return the expression
     # Remove new lines and spaces
     try:
-        return parse_expr(expr.replace("\n", "").replace(" ", "")), expr
+        return parse_expr_with_timeout(expr.replace("\n", " ").replace(" ", " ").replace("^", "**")), expr
     except:
         return None, expr
 
 
+@lru_cache(maxsize=1000)
 def extract_latex(match: re.Match, target_type: LatexExtractionConfig) -> tuple[sympy.Expr | str | None, str]:
     latex_group, latex = next(
         ((name, val) for name, val in match.groupdict().items() if name.startswith("latex") and val), ("", "")
     )
 
-    normalized_latex = math_normalizer(latex)
+    normalized_latex = normalize_latex(
+        latex,
+        NormalizationConfig(
+            basic_latex=True,
+            units=True,
+            malformed_operators=True,
+            nits=True,
+            boxed=True,
+            equations=True,
+        ),
+    )
 
-    parsed_latex = parse_latex_extended(normalized_latex)
-    if isinstance(parsed_latex, list):
-        return FiniteSet(*parsed_latex), normalized_latex
+    try:
+        parsed_latex = parse_latex_with_timeout(normalized_latex)
+    except:
+        return None, normalized_latex
     return parsed_latex, normalized_latex
-
-    # If we got this catch by hard to see in wild latex expression, it's possibly that it's a false positive, otherwise we probably failed because the latex is not valid
-    # return (
-    #     normalized_latex
-    #     if len(normalized_latex.strip()) > 0 and latex_group in target_type.groups_with_fallback
-    #     else None
-    # )
-    return None, normalized_latex
 
 
 def extract_match(match: re.Match, target_type: ExtractionTarget) -> tuple[str | sympy.Expr | float | None, str]:
@@ -440,10 +426,9 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
 
     regexes.extend([equals_re_colon, equals_re])
     if expr_config.try_last_expr_match:
+        # We never try to match without prefixes as otherwise it will easily match partials
         regexes.append(f"({expr_prefix_re})(?P<expr>{expr_re})({expr_suffix_re})")
         regexes.append(f"({expr_prefix_re})(?P<expr>{number_re})({expr_suffix_re})")
-
-        # We never try to match without prefixes as otherwise it will easily match partials
 
     # We first try to match the answer then the plain number
     return [re.compile(pattern) for pattern in regexes]
@@ -610,82 +595,165 @@ def extract_target_from_pred(
     return extracted_predictions
 
 
-def sympy_expr_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precision: int) -> bool:
-    # This should be enough for most cases
-    a_b_diff = sympy.simplify(a - b)
-    if isinstance(a_b_diff, MatrixBase) and a_b_diff.is_zero_matrix:
-        return True
-    elif isinstance(a_b_diff, sympy.Expr) and a_b_diff.is_zero:
-        return True
+def sympy_numeric_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precision: int):
+    # Only do this when one of the two is a float, in other cases use symbolic equality as this could lead to false positives
+    # E.g we want 1/3 == 0.333333 to work
+    if isinstance(a, (MatrixBase, MatrixExpr)) and isinstance(b, (MatrixBase, MatrixExpr)):
+        a = a.doit()
+        b = b.doit()
+        # If we have matrices and one of them is only made of floats, we can use the same logic as above
+        if isinstance(a, (MatrixBase)) and isinstance(b, (MatrixBase)) and a.shape == b.shape:
+            return all(sympy_numeric_eq(a_elem, b_elem, precision) for a_elem, b_elem in zip(a.flat(), b.flat()))
 
-    return try_evalf(a, precision) == try_evalf(b, precision)
+    else:
+        # If one of them is a float, we can try to use precision
+        if isinstance(a, (sympy.Float)) or isinstance(b, (sympy.Float)):
+            return a.doit().round(precision) == b.doit().round(precision)
+        else:
+            return a.doit() == b.doit()
+
+    return False
 
 
-def try_evalf(a: sympy.Expr | MatrixBase, precision: int) -> str:
+def sympy_symbolic_eq(a: Basic | MatrixBase, b: Basic | MatrixBase) -> bool:
     try:
-        return str(a.evalf(n=precision))
+        a_b_diff = sympy.simplify((a - b))
+        if isinstance(a_b_diff, MatrixBase) and a_b_diff.is_zero_matrix:
+            return True
+        elif isinstance(a_b_diff, Basic) and a_b_diff.is_zero:
+            return True
     except:
-        return str(a)
+        pass
+
+    return False
+
+
+def sympy_compare_finite_set(a: FiniteSet, b: FiniteSet, precision: int) -> bool:
+    try:
+        if a == b or a.symmetric_difference(b).is_empty:
+            return True
+    except:
+        pass
+
+    # This ensures it works for {1/3} and {0.333333}
+    try:
+        if len(a) == len(b) and all(sympy_expr_eq(a, b, precision) for a, b in zip(a, b)):
+            return True
+    except:
+        pass
+
+    return False
+
+
+def sympy_compare_interval(a: Interval, b: Interval, precision: int) -> bool:
+    return (
+        a.left_open == b.left_open
+        and a.right_open == b.right_open
+        and sympy_expr_eq(a.start, b.start, precision)
+        and sympy_expr_eq(a.end, b.end, precision)
+    )
+
+
+def sympy_expr_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precision: int) -> bool:
+    # Start with simple str and expr comparisson as it's the fastest
+    try:
+        a = a.doit()
+        if str(a.doit()).strip() == str(b.doit()).strip():
+            return True
+    except:
+        if str(a).strip() == str(b).strip():
+            return True
+
+    # Support for equations
+    if isinstance(a, Relational) and isinstance(b, Relational):
+        # Helper to check if expressions are equivalent when flipped
+        def are_flipped_inequalities_equal(a: Relational, b: Relational) -> bool:
+            return sympy_expr_eq(a.lhs - a.rhs, b.rhs - b.lhs, precision)
+
+        # Same type of relation (e.g. both <= or both >=)
+        if type(a) == type(b) and sympy_expr_eq(a.lhs - a.rhs, b.lhs - b.rhs, precision):
+            return True
+
+        # Check flipped inequalities (a <= b equals b >= a)
+        if (
+            isinstance(a, sympy.GreaterThan)
+            and isinstance(b, sympy.LessThan)
+            or isinstance(a, sympy.LessThan)
+            and isinstance(b, sympy.GreaterThan)
+        ) and are_flipped_inequalities_equal(a, b):
+            return True
+
+        return False
+
+    elif isinstance(a, (Set)) or isinstance(b, (Set)):
+        # This way we can also evalute {1} and 1 to be equal
+        a_set = a if isinstance(a, Set) else FiniteSet(a)
+        b_set = b if isinstance(b, Set) else FiniteSet(b)
+
+        # If both are finite sets, we can compare per element
+        if isinstance(a_set, FiniteSet) and isinstance(b_set, FiniteSet):
+            return sympy_compare_finite_set(a_set, b_set, precision)
+
+        elif isinstance(a_set, Interval) and isinstance(b_set, Interval):
+            return sympy_compare_interval(a_set, b_set, precision)
+
+        else:
+            if a_set == b_set:
+                return True
+            if a_set.symmetric_difference(b_set).is_empty:
+                return True
+            return False
+
+    elif isinstance(a, (Basic, MatrixBase)) and isinstance(b, (Basic, MatrixBase)):
+        # For expressions,
+        try:
+            if sympy_numeric_eq(a, b, precision):
+                return True
+        except:
+            pass
+        # Then try symbolic equality
+        try:
+            if sympy_symbolic_eq(a, b):
+                return True
+        except:
+            pass
+
+    return False
 
 
 def compare_gold_target(
-    gold: list[sympy.Expr | Relational], target: list[sympy.Expr | Relational], precision: int
+    gold: list[sympy.Expr | Relational | str], target: list[sympy.Expr | Relational | str], precision: int
 ) -> float:
-    def compare_sympy_expr(gold: sympy.Expr | Relational, target: sympy.Expr | Relational) -> float:
-        if (isinstance(gold, (sympy.Expr, MatrixBase))) and (isinstance(target, (sympy.Expr, MatrixBase))):
-            try:
-                return 1.0 if sympy_expr_eq(gold, target, precision) else 0.0
-            except:
-                return 0.0
-
-        # Support for equations
-        elif isinstance(gold, Relational) and isinstance(target, Relational):
-            # Helper to check if expressions are equivalent when flipped
-            def are_flipped_inequalities_equal(a: Relational, b: Relational) -> bool:
-                return sympy_expr_eq(a.lhs - a.rhs, b.rhs - b.lhs, precision)
-
-            # Same type of relation (e.g. both <= or both >=)
-            if type(gold) == type(target) and sympy_expr_eq(gold.lhs - gold.rhs, target.lhs - target.rhs, precision):
-                return 1.0
-
-            # Check flipped inequalities (a <= b equals b >= a)
-            if (
-                isinstance(gold, sympy.GreaterThan)
-                and isinstance(target, sympy.LessThan)
-                or isinstance(gold, sympy.LessThan)
-                and isinstance(target, sympy.GreaterThan)
-            ) and are_flipped_inequalities_equal(gold, target):
-                return 1.0
-
-            return 0.0
-
-        elif (
-            isinstance(gold, (Interval, FiniteSet)) and isinstance(target, (Interval, FiniteSet))
-        ) and gold.symmetric_difference(target).is_empty:
-            return 1.0
-
-        return 0.0
-
+    @timeout(timeout_seconds=200000)
     def compare_single_extraction(gold: str | sympy.Expr | float, target: str | sympy.Expr | float) -> float:
         # Expression case
 
-        if isinstance(gold, (sympy.Basic, MatrixBase)) and isinstance(target, (sympy.Basic, MatrixBase)):
-            try:
-                return 1.0 if compare_sympy_expr(gold, target) else 0.0
-            except:
-                pass
+        # If both are sympy expressions, we can use sympy to compare them
+        if isinstance(gold, (Basic, MatrixBase)) and isinstance(target, (Basic, MatrixBase)):
+            return 1.0 if sympy_expr_eq(gold, target, precision) else 0.0
 
-        # We just do string comparison for everything else
-        gold = try_evalf(gold, precision) if isinstance(gold, sympy.Expr) else str(gold)
-        target = try_evalf(target, precision) if isinstance(target, sympy.Expr) else str(target)
+        # We don't support str / sympy.Expr comparison. Imo there is no point in doing this, as chances
+        # of this happening are very low.  The only why one of them is not converted to sympy expression
+        # is usually because the parsing logic failed in this case we should improve the parsing logic
+        # instead of somehow fixing adhoc.
+        elif isinstance(gold, str) and isinstance(target, str):
+            # We just do string comparison for everything else
+            gold = gold.strip()
+            target = target.strip()
 
-        gold = gold.strip()
-        target = target.strip()
+            # Ensure it's both not empty and equal
+            return len(gold) > 0 and len(target) > 0 and gold == target
 
-        # Ensure it's both not empty and equal
-        return len(gold) > 0 and len(target) > 0 and gold == target
+        else:
+            raise ValueError(f"Unsupported comparison between {type(gold)} and {type(target)}")
 
-    return any(compare_single_extraction(g, t) for g, t in product(gold, target))
+    def compare_single_extraction_wrapper(g, t):
+        try:
+            return compare_single_extraction(g, t)
+        except TimeoutError:
+            return 0.0
+
+    return any(compare_single_extraction_wrapper(g, t) for g, t in product(gold, target))
 
 
 def extract_target(
@@ -758,53 +826,34 @@ def multilingual_extractive_match_metric(
     )
 
 
-# class LLMFreeFlowExtractiveMatch(JudgeLLM):
-#     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
-#         """
-#         Compute the score of a generative task using a llm as a judge.
-#         The generative task can be multiturn with 2 turns max, in that case, we
-#         return scores for turn 1 and 2. Also returns user_prompt and judgement
-#         which are ignored later by the aggregator.
-#         """
-#         options = [formatted_doc.choices for formatted_doc in formatted_docs]
-#         golds = [formatted_doc.choices[formatted_doc.gold_index[0]] for formatted_doc in formatted_docs]
-#         predictions = [response[0].result[0] for response in responses]
+def should_treat_as_complex(latex_str: str) -> bool:
+    """
+    Returns True if the latex string likely contains complex numbers, matrices, or vectors.
+    """
+    complex_pattern = re.compile(
+        r"""
+        # Complex number indicators
+        \\mathbb\{C\}|        # Complex number set ℂ
+        \\i\b|                # Complex i
+        \bi\b|                # Standalone i
+        \\text\{i\}|          # Text i
+        \\mathrm\{i\}|        # Roman i
+        \\imath\b|            # Alternative i notation
 
-#         scores, messages, judgements = self.judge.evaluate_answer_batch(questions, predictions, options, golds)
+        # Matrix operations
+        \\det|                # Determinant
+        \\operatorname\{tr\}| # Trace
+        \\operatorname\{rank\}| # Rank
+        \\text\{rank\}|
+        \\arg\{|              # Complex argument
+        \\Re\{|               # Real part
+        \\Im\{|               # Imaginary part
+        \\operatorname\{Re\}| # Real part alternate
+        \\operatorname\{Im\}| # Imaginary part alternate
+        \\text\{Re\}|         # Real part text
+        \\text\{Im\}          # Imaginary part text
+    """,
+        re.VERBOSE,
+    )
 
-#         metrics = []
-#         for i in range(len(sample_ids)):
-#             metrics.append(
-#                 {
-#                     f"judge_score_{self.short_judge_name}": scores[i],
-#                     f"user_prompt_{self.short_judge_name}": messages[i],
-#                     f"judgement_{self.short_judge_name}": judgements[i],
-#                 }
-#             )
-
-#         return metrics
-
-
-# def flow_judge_mt_bench_prompt(question, answer, options, gold):
-#     return f"""\
-# ## Task
-# You will be provided an answer given by a student to a mathematical question
-# Extract an answer from an mathematical answer given by a student. The extracted answer should be in latex format.
-
-
-# llm_judge_mt_bench = SampleLevelMetricGrouping(
-#     metric_name=["judge_score_turn_1", "judge_score_turn_2"],
-#     higher_is_better={"judge_score_turn_1": True, "judge_score_turn_2": True},
-#     category=MetricCategory.LLM_AS_JUDGE_MULTI_TURN,
-#     use_case=MetricUseCase.SUMMARIZATION,
-#     sample_level_fn=LLMFreeFlowExtractiveMatch(
-#         judge_model_name="flowaicom/Flow-Judge-v0.1",
-#         template=flow_judge_mt_bench_prompt,
-#         process_judge_response=process_judge_response,
-#         judge_backend="vllm",
-#     ).compute,
-#     corpus_level_fn={
-#         "judge_score_turn_1": np.mean,
-#         "judge_score_turn_2": np.mean,
-#     },
-# )
+    return bool(complex_pattern.search(latex_str))
