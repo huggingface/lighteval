@@ -273,7 +273,10 @@ class BaseModel(LightevalModel):
 
         self.pairwise_tokenization = config.pairwise_tokenization
 
-        self._generation_cache = Cache(directory=os.path.join(env_config.cache_dir, "generation_cache"))
+        self._generation_cache = Cache(
+            directory=os.path.join(env_config.cache_dir, ".generation_cache"),
+            size_limit=10 * 1024**3,  # 10GB
+        )
 
     @classmethod
     def from_model(
@@ -860,6 +863,7 @@ class BaseModel(LightevalModel):
         do_sample: Optional[bool] = False,
     ) -> list[GenerativeResponse]:
         # Create a cache key from the inputs
+        # TODO: add model name to the cache key
         cache_key = (
             hashlib.sha256(str(batch.input_ids.tolist()).encode()).hexdigest(),
             max_new_tokens,
