@@ -26,6 +26,8 @@ from langcodes import Language as LangCodeLanguage
 from langcodes import standardize_tag
 
 from lighteval.metrics.dynamic_metrics import (
+    ExprExtractionConfig,
+    LatexExtractionConfig,
     loglikelihood_acc_metric,
 LatexExtractionConfig,
 ExprExtractionConfig,
@@ -39,7 +41,6 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.normalizations import LogProbCharNorm, LogProbPMINorm, LogProbTokenNorm
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.metrics.dynamic_metrics import LatexExtractionConfig, ExprExtractionConfig
 from lighteval.tasks.multilingual.adapters import (
     agieval_adapter,
     alghafa_adapter,
