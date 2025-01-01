@@ -594,13 +594,22 @@ def extract_target_from_pred(
 
     return extracted_predictions
 
+def safe_sympy_doit(a: sympy.Expr | MatrixBase):
+    try:
+        return a.doit()
+    except TimeoutException:
+        raise
+    except:
+        pass
+    return a
 
 def sympy_numeric_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precision: int):
     # Only do this when one of the two is a float, in other cases use symbolic equality as this could lead to false positives
     # E.g we want 1/3 == 0.333333 to work
     if isinstance(a, (MatrixBase, MatrixExpr)) and isinstance(b, (MatrixBase, MatrixExpr)):
-        a = a.doit()
-        b = b.doit()
+        a = safe_sympy_doit(a)
+        b = safe_sympy_doit(b)
+
         # If we have matrices and one of them is only made of floats, we can use the same logic as above
         if isinstance(a, (MatrixBase)) and isinstance(b, (MatrixBase)) and a.shape == b.shape:
             return all(sympy_numeric_eq(a_elem, b_elem, precision) for a_elem, b_elem in zip(a.flat(), b.flat()))
@@ -608,9 +617,13 @@ def sympy_numeric_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, pre
     else:
         # If one of them is a float, we can try to use precision
         if isinstance(a, (sympy.Float)) or isinstance(b, (sympy.Float)):
-            return a.doit().round(precision) == b.doit().round(precision)
+            a = safe_sympy_doit(a)
+            b = safe_sympy_doit(b)
+            # Now if both are numbers, we can use precision
+            if isinstance(a, (sympy.Number)) and isinstance(b, (sympy.Number)):
+                return a.round(precision) == b.round(precision)
         else:
-            return a.doit() == b.doit()
+            return safe_sympy_doit(a) == safe_sympy_doit(b)
 
     return False
 
@@ -622,25 +635,18 @@ def sympy_symbolic_eq(a: Basic | MatrixBase, b: Basic | MatrixBase) -> bool:
             return True
         elif isinstance(a_b_diff, Basic) and a_b_diff.is_zero:
             return True
+    except TimeoutException:
+        raise
     except:
         pass
 
     return False
 
 
-def sympy_compare_finite_set(a: FiniteSet, b: FiniteSet, precision: int) -> bool:
-    try:
-        if a == b or a.symmetric_difference(b).is_empty:
-            return True
-    except:
-        pass
-
+def sympy_deep_compare_finite_set(a: FiniteSet, b: FiniteSet, precision: int) -> bool:
     # This ensures it works for {1/3} and {0.333333}
-    try:
-        if len(a) == len(b) and all(sympy_expr_eq(a, b, precision) for a, b in zip(a, b)):
-            return True
-    except:
-        pass
+    if len(a) == len(b) and all(sympy_expr_eq(a, b, precision) for a, b in zip(a, b)):
+        return True
 
     return False
 
@@ -653,24 +659,31 @@ def sympy_compare_interval(a: Interval, b: Interval, precision: int) -> bool:
         and sympy_expr_eq(a.end, b.end, precision)
     )
 
+def sympy_str_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase) -> bool:
+
+    # First just do a simple str comparison
+    # Because of float comparison, we only use doit() during the string conversion, but keep the original expr
+    a_doit = safe_sympy_doit(a)
+    b_doit = safe_sympy_doit(b)
+
+    try:
+        # Structural equality, the cheapest but the dumbest one, it will fail for a + b vs b + a
+        if a_doit == b_doit:
+            return True
+        # Then do a simple str comparison
+        if str(a_doit).strip() == str(b_doit).strip():
+            return True
+    except TimeoutException:
+        raise
+    except:
+        pass
+    return False
 
 def sympy_expr_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precision: int) -> bool:
     # Start with simple str and expr comparisson as it's the fastest
     # str comparison is better, than simple eq, because it will also handle missarangments
-
-    # Because of float comparison, we only use doit() during the string conversion, but keep the original expr
-    try:
-        a_doit = a.doit()
-        b_doit = b.doit()
-    except:
-        a_doit = a
-        b_doit = b
-
-    try:
-        if str(a_doit).strip() == str(b_doit).strip():
-            return True
-    except:
-        pass
+    if sympy_str_eq(a, b):
+        return True
 
     # Support for equations
     if isinstance(a, Relational) and isinstance(b, Relational):
@@ -699,32 +712,24 @@ def sympy_expr_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precis
         b_set = b if isinstance(b, Set) else FiniteSet(b)
 
         # If both are finite sets, we can compare per element
-        if isinstance(a_set, FiniteSet) and isinstance(b_set, FiniteSet):
-            return sympy_compare_finite_set(a_set, b_set, precision)
-
-        elif isinstance(a_set, Interval) and isinstance(b_set, Interval):
+        if isinstance(a_set, Interval) and isinstance(b_set, Interval):
             return sympy_compare_interval(a_set, b_set, precision)
 
-        else:
-            if a_set == b_set:
-                return True
-            if a_set.symmetric_difference(b_set).is_empty:
-                return True
-            return False
+        if a_set == b_set:
+            return True
+        if a_set.symmetric_difference(b_set).is_empty:
+            return True
+        if isinstance(a_set, FiniteSet) and isinstance(b_set, FiniteSet):
+            return sympy_deep_compare_finite_set(a_set, b_set, precision)
+        return False
 
     elif isinstance(a, (Basic, MatrixBase)) and isinstance(b, (Basic, MatrixBase)):
         # For expressions,
-        try:
-            if sympy_numeric_eq(a, b, precision):
-                return True
-        except:
-            pass
+        if sympy_numeric_eq(a, b, precision):
+            return True
         # Then try symbolic equality
-        try:
-            if sympy_symbolic_eq(a, b):
-                return True
-        except:
-            pass
+        if sympy_symbolic_eq(a, b):
+            return True
 
     return False
 
@@ -759,7 +764,7 @@ def compare_gold_target(
     def compare_single_extraction_wrapper(g, t):
         try:
             return compare_single_extraction(g, t)
-        except TimeoutError:
+        except TimeoutException:
             return 0.0
 
     return any(compare_single_extraction_wrapper(g, t) for g, t in product(gold, target))
