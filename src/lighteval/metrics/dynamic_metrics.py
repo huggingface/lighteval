@@ -656,13 +656,21 @@ def sympy_compare_interval(a: Interval, b: Interval, precision: int) -> bool:
 
 def sympy_expr_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precision: int) -> bool:
     # Start with simple str and expr comparisson as it's the fastest
+    # str comparison is better, than simple eq, because it will also handle missarangments
+
+    # Because of float comparison, we only use doit() during the string conversion, but keep the original expr
     try:
-        a = a.doit()
-        if str(a.doit()).strip() == str(b.doit()).strip():
+        a_doit = a.doit()
+        b_doit = b.doit()
+    except:
+        a_doit = a
+        b_doit = b
+
+    try:
+        if str(a_doit).strip() == str(b_doit).strip():
             return True
     except:
-        if str(a).strip() == str(b).strip():
-            return True
+        pass
 
     # Support for equations
     if isinstance(a, Relational) and isinstance(b, Relational):
@@ -724,7 +732,7 @@ def sympy_expr_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precis
 def compare_gold_target(
     gold: list[sympy.Expr | Relational | str], target: list[sympy.Expr | Relational | str], precision: int
 ) -> float:
-    @timeout(timeout_seconds=200000)
+    @timeout(timeout_seconds=10)
     def compare_single_extraction(gold: str | sympy.Expr | float, target: str | sympy.Expr | float) -> float:
         # Expression case
 
@@ -745,7 +753,8 @@ def compare_gold_target(
             return len(gold) > 0 and len(target) > 0 and gold == target
 
         else:
-            raise ValueError(f"Unsupported comparison between {type(gold)} and {type(target)}")
+            return 0.0
+            # raise ValueError(f"Unsupported comparison between {type(gold)} and {type(target)}")
 
     def compare_single_extraction_wrapper(g, t):
         try:
