@@ -55,6 +55,12 @@ if is_vllm_available():
     from vllm import LLM, SamplingParams
     from vllm.distributed.parallel_state import destroy_distributed_environment, destroy_model_parallel
     from vllm.transformers_utils.tokenizer import get_tokenizer
+
+    logging.getLogger("vllm").propagate = True
+    logging.getLogger("vllm").handlers.clear()
+
+    logging.getLogger("ray").propagate = True
+    logging.getLogger("ray").handlers.clear()
 else:
     LLM = None
     SamplingParams = None
