@@ -960,6 +960,7 @@ def get_metrics(METRICS_TO_USE, target_lang: str, generation_size: int):
         if metric not in METRICS:
             logger.debug(f"Skipping {metric} because it is not available. Available metrics: {METRICS}")
             continue
+        # These metrics are sentence level metrics and we only want to use them for generation sizes up to 512.
         short_metrics = [
             "bleu_sentence",
             "chrf_sentence",
@@ -968,6 +969,9 @@ def get_metrics(METRICS_TO_USE, target_lang: str, generation_size: int):
             "bleurt_tiny",
             "bleurt_base",
             "bleurt_large",
+            "wmt22-comet-da",
+            "xcomet_xl",
+            "xcomet_xxl",
         ]
         if generation_size > 512 and metric in short_metrics:
             logger.debug(
