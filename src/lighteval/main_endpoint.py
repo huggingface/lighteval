@@ -42,8 +42,11 @@ HELP_PANEL_NAME_4 = "Modeling Parameters"
 @app.command(rich_help_panel="Evaluation Backends")
 def openai(
     # === general ===
-    model_name: Annotated[
-        str, Argument(help="The model name to evaluate (has to be available through the openai API.")
+    model_args: Annotated[
+        str,
+        Argument(
+            help="Model name as a string (has to be available through the openai API) or path to yaml config file (see examples/model_configs/transformers_model.yaml)"
+        ),
     ],
     tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
     # === Common parameters ===
@@ -96,6 +99,11 @@ def openai(
     from lighteval.models.endpoints.openai_model import OpenAIModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
+    if model_args.endswith(".yaml"):
+        model_config = OpenAIModelConfig.from_path(model_args)
+    else:
+        model_config = OpenAIModelConfig(model=model_args)
+
     env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
@@ -107,7 +115,6 @@ def openai(
     )
 
     parallelism_manager = ParallelismManager.OPENAI
-    model_config = OpenAIModelConfig(model=model_name)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
@@ -205,7 +212,6 @@ def inference_endpoint(
     """
     Evaluate models using inference-endpoints as backend.
     """
-
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.endpoints.endpoint_model import InferenceEndpointModelConfig, ServerlessEndpointModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
@@ -319,7 +325,6 @@ def tgi(
     """
     Evaluate models using TGI as backend.
     """
-
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.endpoints.tgi_model import TGIModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
