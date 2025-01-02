@@ -92,7 +92,7 @@ class EvaluationTracker:
     requested.
 
     Args:
-        output_dir (`str`): Local folder path where you want results to be saved.
+        output_dir (`str`, *optional*): Directory where to save results and/or details.
         save_details (`bool`, defaults to True): If True, details are saved to the `output_dir`.
         push_to_hub (`bool`, defaults to False): If True, details are pushed to the hub.
             Results are pushed to `{hub_results_org}/details__{sanitized model_name}` for the model `model_name`, a public dataset,
@@ -114,7 +114,7 @@ class EvaluationTracker:
 
     def __init__(
         self,
-        output_dir: str,
+        output_dir: str | None = None,
         save_details: bool = True,
         push_to_hub: bool = False,
         push_to_tensorboard: bool = False,
@@ -131,7 +131,7 @@ class EvaluationTracker:
         self.task_config_logger = TaskConfigLogger()
 
         self.api = HfApi()
-        self.fs, self.output_dir = url_to_fs(output_dir)
+        self.output_dir = output_dir
 
         self.hub_results_org = hub_results_org  # will also contain tensorboard results
         if hub_results_org in ["", None] and any([push_to_hub, push_to_tensorboard]):
@@ -184,10 +184,10 @@ class EvaluationTracker:
             details_datasets[task_name] = dataset
 
         # We save results at every case
-        self.save_results(date_id, results_dict)
+        self.save_results(date_id=date_id, results_dict=results_dict)
 
         if self.should_save_details:
-            self.save_details(date_id, details_datasets)
+            self.save_details(date_id=date_id, details_datasets=details_datasets)
 
         if self.should_push_to_hub:
             self.push_to_hub(
@@ -201,22 +201,30 @@ class EvaluationTracker:
                 results=self.metrics_logger.metric_aggregated, details=self.details_logger.compiled_details
             )
 
-    def save_results(self, date_id: str, results_dict: dict):
-        output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name
-        self.fs.mkdirs(output_dir_results, exist_ok=True)
-        output_results_file = output_dir_results / f"results_{date_id}.json"
-        logger.info(f"Saving results to {output_results_file}")
-        with self.fs.open(output_results_file, "w") as f:
+    def save_results(
+        self, date_id: str | None = None, results_dict: dict | None = None, output_path: str | None = None
+    ):
+        output_path = output_path or f"results/{self.general_config_logger.model_name}/results_{date_id}.json"
+        output_path = Path(self.output_dir) / output_path if self.output_dir else output_path
+        fs, output_path = url_to_fs(output_path)
+        fs.mkdirs(output_path.parent, exist_ok=True)
+        logger.info(f"Saving results to {output_path}")
+        with fs.open(output_path, "w") as f:
             f.write(json.dumps(results_dict, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False))
 
-    def save_details(self, date_id: str, details_datasets: dict[str, Dataset]):
-        output_dir_details = Path(self.output_dir) / "details" / self.general_config_logger.model_name
-        output_dir_details_sub_folder = output_dir_details / date_id
-        self.fs.mkdirs(output_dir_details_sub_folder, exist_ok=True)
-        logger.info(f"Saving details to {output_dir_details_sub_folder}")
+    def save_details(
+        self, date_id: str | None, details_datasets: dict[str, Dataset] | None = None, output_path: str | None = None
+    ):
+        output_path = (
+            output_path
+            or f"details/{self.general_config_logger.model_name}/{date_id}/details_{{task_name}}_{date_id}.parquet"
+        )
+        output_path = Path(self.output_dir) / output_path if self.output_dir else output_path
+        fs, output_path = url_to_fs(output_path)
+        fs.mkdirs(output_path.parent, exist_ok=True)
+        logger.info(f"Saving details to {output_path}")
         for task_name, dataset in details_datasets.items():
-            output_file_details = output_dir_details_sub_folder / f"details_{task_name}_{date_id}.parquet"
-            with self.fs.open(str(output_file_details), "wb") as f:
+            with fs.open(output_path.as_posix().format(task_name=task_name), "wb") as f:
                 dataset.to_parquet(f)
 
     def generate_final_dict(self) -> dict:
@@ -509,7 +517,8 @@ class EvaluationTracker:
             global_step = 0
             run = prefix
 
-        output_dir_tb = Path(self.output_dir) / "tb" / run
+        output_dir_tb = f"tb/{run}"
+        output_dir_tb = Path(self.output_dir) / output_dir_tb if self.output_dir else output_dir_tb
         output_dir_tb.mkdir(parents=True, exist_ok=True)
 
         tb_context = HFSummaryWriter(
