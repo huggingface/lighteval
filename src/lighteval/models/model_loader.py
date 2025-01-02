@@ -33,8 +33,8 @@ from lighteval.models.endpoints.openai_model import OpenAIClient, OpenAIModelCon
 from lighteval.models.endpoints.tgi_model import ModelClient, TGIModelConfig
 from lighteval.models.litellm_model import LiteLLMClient, LiteLLMModelConfig
 from lighteval.models.transformers.adapter_model import AdapterModel, AdapterModelConfig
-from lighteval.models.transformers.base_model import BaseModel, BaseModelConfig
 from lighteval.models.transformers.delta_model import DeltaModel, DeltaModelConfig
+from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
 from lighteval.models.vllm.vllm_model import VLLMModel, VLLMModelConfig
 from lighteval.utils.imports import (
     NO_LITELLM_ERROR_MSG,
@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 
 def load_model(  # noqa: C901
     config: Union[
-        BaseModelConfig,
+        TransformersModelConfig,
         AdapterModelConfig,
         DeltaModelConfig,
         TGIModelConfig,
@@ -64,7 +64,7 @@ def load_model(  # noqa: C901
         LiteLLMModelConfig,
     ],
     env_config: EnvConfig,
-) -> Union[BaseModel, AdapterModel, DeltaModel, ModelClient, DummyModel]:
+) -> Union[TransformersModel, AdapterModel, DeltaModel, ModelClient, DummyModel]:
     """Will load either a model from an inference server or a model from a checkpoint, depending
     on the config type.
 
@@ -78,7 +78,7 @@ def load_model(  # noqa: C901
         ValueError: If you did not specify a base model when using delta weights or adapter weights
 
     Returns:
-        Union[BaseModel, AdapterModel, DeltaModel, ModelClient]: The model that will be evaluated
+        Union[TransformersModel, AdapterModel, DeltaModel, ModelClient]: The model that will be evaluated
     """
     # Inference server loading
     if isinstance(config, TGIModelConfig):
@@ -87,7 +87,7 @@ def load_model(  # noqa: C901
     if isinstance(config, InferenceEndpointModelConfig) or isinstance(config, ServerlessEndpointModelConfig):
         return load_model_with_inference_endpoints(config, env_config=env_config)
 
-    if isinstance(config, BaseModelConfig):
+    if isinstance(config, TransformersModelConfig):
         return load_model_with_accelerate_or_default(config=config, env_config=env_config)
 
     if isinstance(config, DummyModelConfig):
@@ -138,7 +138,7 @@ def load_model_with_inference_endpoints(config: InferenceEndpointModelConfig, en
 
 
 def load_model_with_accelerate_or_default(
-    config: Union[AdapterModelConfig, BaseModelConfig, DeltaModelConfig], env_config: EnvConfig
+    config: Union[AdapterModelConfig, TransformersModelConfig, DeltaModelConfig], env_config: EnvConfig
 ):
     if isinstance(config, AdapterModelConfig):
         model = AdapterModel(config=config, env_config=env_config)
@@ -150,7 +150,7 @@ def load_model_with_accelerate_or_default(
         model = VLLMModel(config=config, env_config=env_config)
         return model
     else:
-        model = BaseModel(config=config, env_config=env_config)
+        model = TransformersModel(config=config, env_config=env_config)
 
     return model
 
