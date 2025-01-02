@@ -954,15 +954,31 @@ if "slt_judge_sonnet_35" in METRICS_TO_USE:
 # However, these are only fine-tuned on English data and we need multilingual support.
 
 
-def get_metrics(METRICS_TO_USE, target_lang: str):
+def get_metrics(METRICS_TO_USE, target_lang: str, generation_size: int):
     metrics = []
     for metric in METRICS_TO_USE:
-        if metric in METRICS:
-            if metric == "bert_score":
-                # Add only the BERTScore for the target language
-                metrics.append(METRICS["bert_score"][target_lang])
-            else:
-                metrics.append(METRICS[metric])
+        if metric not in METRICS:
+            logger.debug(f"Skipping {metric} because it is not available. Available metrics: {METRICS}")
+            continue
+        short_metrics = [
+            "bleu_sentence",
+            "chrf_sentence",
+            "ter_sentence",
+            "bert_score",
+            "bleurt_tiny",
+            "bleurt_base",
+            "bleurt_large",
+        ]
+        if generation_size > 512 and metric in short_metrics:
+            logger.debug(
+                f"Skipping {metric} for generation size {generation_size} because the maximum supported sequence length is 512."
+            )
+            continue
+        if metric == "bert_score":
+            # Add only the BERTScore for the target language
+            metrics.append(METRICS["bert_score"][target_lang])
+        else:
+            metrics.append(METRICS[metric])
     return metrics
 
 
@@ -987,7 +1003,7 @@ class TranslationTask(LightevalTaskConfig):
             few_shots_split="validation",
             few_shots_select="sequential",
             generation_size=level_config.generation_size,
-            metric=get_metrics(METRICS_TO_USE, target_lang),
+            metric=get_metrics(METRICS_TO_USE, target_lang, level_config.generation_size),
             stop_sequence=level_config.stop_sequence,
             trust_dataset=True,
             # Remove the target language in the beginning if it exists: e.g., FR: {translation}
