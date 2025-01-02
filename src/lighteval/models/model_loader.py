@@ -23,6 +23,8 @@
 import logging
 from typing import Union
 
+from lighteval.models.abstract_model import LightevalModel
+from lighteval.models.custom.custom_model import CustomModelConfig
 from lighteval.models.dummy.dummy_model import DummyModel, DummyModelConfig
 from lighteval.models.endpoints.endpoint_model import (
     InferenceEndpointModel,
@@ -60,6 +62,7 @@ def load_model(  # noqa: C901
         InferenceEndpointModelConfig,
         DummyModelConfig,
         VLLMModelConfig,
+        CustomModelConfig,
         OpenAIModelConfig,
         LiteLLMModelConfig,
     ],
@@ -96,6 +99,9 @@ def load_model(  # noqa: C901
     if isinstance(config, VLLMModelConfig):
         return load_model_with_accelerate_or_default(config=config, env_config=env_config)
 
+    if isinstance(config, CustomModelConfig):
+        return load_custom_model(config=config, env_config=env_config)
+
     if isinstance(config, OpenAIModelConfig):
         return load_openai_model(config=config, env_config=env_config)
 
@@ -127,6 +133,35 @@ def load_openai_model(config: OpenAIModelConfig, env_config: EnvConfig):
         raise ImportError()
 
     model = OpenAIClient(config, env_config)
+
+    return model
+
+
+def load_custom_model(config: CustomModelConfig, env_config: EnvConfig):
+    logger.warning(f"Executing custom model code loaded from {config.model_definition_file_path}.")
+
+    import importlib.util
+
+    # Load the Python file
+    spec = importlib.util.spec_from_file_location("custom_model_module", config.model_definition_file_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Could not load file: {config.model_definition_file_path}")
+
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    # Find the first class that inherits from LightevalModel
+    model_class = None
+    for attr_name in dir(module):
+        attr = getattr(module, attr_name)
+        if isinstance(attr, type) and issubclass(attr, LightevalModel) and attr != LightevalModel:
+            model_class = attr
+            break
+
+    if model_class is None:
+        raise ValueError(f"No class inheriting from LightevalModel found in {config.model_definition_file_path}")
+
+    model = model_class(config, env_config)
 
     return model
 
