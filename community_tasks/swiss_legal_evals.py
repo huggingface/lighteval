@@ -451,12 +451,57 @@ class BLEURT:
             raise ValueError("MPS is not supported for BLEURT")
 
         self.metric_name = f"bleurt_{model_size}"
-        self.tokenizer = AutoTokenizer.from_pretrained(f"Elron/bleurt-{model_size}-{seq_len}")
-        self.model = AutoModelForSequenceClassification.from_pretrained(f"Elron/bleurt-{model_size}-{seq_len}")
-        self.model = self.model.to(device)
-        self.model.eval()
-        self.max_length = seq_len
+        self.model_size = model_size
+        self.seq_len = seq_len
         self.batch_size = batch_size
+        self.device = device
+
+        # Lazy loading
+        self.tokenizer = None
+        self.model = None
+
+    def _ensure_initialized(self):
+        """Lazy initialization of model and tokenizer"""
+        if self.tokenizer is None:
+            logger.info(f"Loading BLEURT tokenizer {self.metric_name} lazily...")
+            self.tokenizer = AutoTokenizer.from_pretrained(f"Elron/bleurt-{self.model_size}-{self.seq_len}")
+
+        if self.model is None:
+            logger.info(f"Loading BLEURT model {self.metric_name} lazily...")
+            self.model = AutoModelForSequenceClassification.from_pretrained(
+                f"Elron/bleurt-{self.model_size}-{self.seq_len}"
+            )
+            self.model = self.model.to(self.device)
+            self.model.eval()
+
+    def _process_batch(self, references: list[str], candidates: list[str]) -> list[float]:
+        """Process a batch of references and candidates"""
+        # Clean and prepare inputs
+        references = [str(ref).strip() for ref in references]
+        candidates = [str(cand).strip() for cand in candidates]
+
+        # Tokenize
+        inputs = self.tokenizer(
+            references,
+            candidates,
+            return_tensors="pt",
+            padding=True,
+            truncation=True,
+            max_length=self.seq_len,
+        )
+
+        # Log warning if any sequences were truncated
+        if any(len(encoding) == self.seq_len for encoding in inputs["input_ids"]):
+            logger.warning(f"Some inputs were truncated to max_length={self.seq_len} in BLEURT scoring")
+
+        # Move to device
+        inputs = {k: v.to(self.device) for k, v in inputs.items()}
+
+        # Get predictions
+        with torch.no_grad():
+            outputs = self.model(**inputs)[0]
+
+        return outputs.squeeze().cpu().tolist()
 
     def compute(
         self,
@@ -465,28 +510,27 @@ class BLEURT:
         formatted_docs: list[Doc],
         **kwargs,
     ) -> dict[str, float]:
+        """Compute BLEURT scores for a batch of translations"""
+        self._ensure_initialized()
+
         logger.info(f"Scoring {len(formatted_docs)} samples with {self.metric_name}...")
-        golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
+
+        # Get references and predictions
+        references = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
         predictions = [response[0].result for response in responses]
 
+        # Process in batches
         all_scores = []
-        for i in range(0, len(golds), self.batch_size):
-            batch_golds = golds[i : i + self.batch_size]
-            batch_predictions = predictions[i : i + self.batch_size]
-
-            inputs = self.tokenizer(
-                batch_golds,
-                batch_predictions,
-                return_tensors="pt",
-                padding=True,
-                truncation=True,
-                max_length=self.max_length,
-            )
-            inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
-            if any(len(encoding) == self.max_length for encoding in inputs["input_ids"]):
-                logger.warning(f"Some inputs were truncated to max_length={self.max_length} in BLEURT scoring")
-            with torch.no_grad():
-                all_scores.extend(self.model(**inputs)[0].squeeze().cpu().tolist())
+        for i in range(0, len(references), self.batch_size):
+            batch_refs = references[i : i + self.batch_size]
+            batch_preds = predictions[i : i + self.batch_size]
+            try:
+                scores = self._process_batch(batch_refs, batch_preds)
+                all_scores.extend(scores if isinstance(scores, list) else [scores])
+            except Exception as e:
+                logger.error(f"Error processing batch {i}: {str(e)}")
+                # Use minimum score for failed batches
+                all_scores.extend([-1.0] * len(batch_refs))
 
         return [{self.metric_name: score * 100} for score in all_scores]
 
@@ -523,7 +567,8 @@ class COMET:
             raise ValueError("MPS is not supported for COMET")
 
         self.metric_name = model_name.split("/")[-1]
-        self.model = load_from_checkpoint(download_model(model_name))
+        self.model = None  # Lazy loading of the model
+        self.model_name = model_name
         self.batch_size = batch_size
         self.gpus = gpus
         self.accelerator = accelerator
@@ -535,6 +580,11 @@ class COMET:
         formatted_docs: list[Doc],
         **kwargs,
     ) -> dict[str, float]:
+        # Only load the model here to save memory and time
+        if self.model is None:
+            logger.info(f"Loading COMET model {self.model_name} lazily...")
+            self.model = load_from_checkpoint(download_model(self.model_name))
+
         logger.info(f"Scoring {len(formatted_docs)} samples with {self.metric_name}...")
         golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
         predictions = [response[0].result for response in responses]
@@ -863,91 +913,114 @@ METRICS_TO_USE = [
 ]
 METRICS = {}
 
-# ===== Lexical metrics =====
-# Corpus level metrics
-if "bleu" in METRICS_TO_USE:
-    METRICS["bleu"] = Metrics.bleu
-if "chrf" in METRICS_TO_USE:
-    METRICS["chrf"] = Metrics.chrf
-if "ter" in METRICS_TO_USE:
-    # TER often hangs for a while and takes more than 10 minutes to compute
-    METRICS["ter"] = Metrics.ter
-# Sample level metrics
-if "bleu_sentence" in METRICS_TO_USE:
-    METRICS["bleu_sentence"] = get_bleu_sentence()
-if "chrf_sentence" in METRICS_TO_USE:
-    METRICS["chrf_sentence"] = get_chrf_sentence()
-if "ter_sentence" in METRICS_TO_USE:
-    METRICS["ter_sentence"] = get_ter_sentence()
-if "meteor" in METRICS_TO_USE:
-    METRICS["meteor"] = get_meteor()
-# ===== Model-based metrics =====
-if "bert_score" in METRICS_TO_USE:
-    METRICS["bert_score"] = {  # Create BERTScore metrics for each language
-        lang: get_bert_score(language=lang, model_type="xlm-roberta-large", device=device)
-        for lang in ["de", "fr", "it", "rm", "en"]
-    }
-if "bleurt_tiny" in METRICS_TO_USE:
-    METRICS["bleurt_tiny"] = get_bleurt(model_size="tiny", seq_len=512, batch_size=256, device=device)
-if "bleurt_base" in METRICS_TO_USE:
-    METRICS["bleurt_base"] = get_bleurt(model_size="base", seq_len=512, batch_size=256, device=device)
-if "bleurt_large" in METRICS_TO_USE:
-    METRICS["bleurt_large"] = get_bleurt(model_size="large", seq_len=512, batch_size=256, device=device)
-# There are also reference-free models (e.g., Unbabel/wmt22-cometkiwi-da), but since we have reference gold labels, we use the reference-based models.
-if "wmt22-comet-da" in METRICS_TO_USE:
-    METRICS["wmt22-comet-da"] = get_comet(model_name="Unbabel/wmt22-comet-da", batch_size=64, gpus=1, device=device)
-if "xcomet_xl" in METRICS_TO_USE:
-    METRICS["xcomet_xl"] = get_comet(model_name="Unbabel/XCOMET-XL", batch_size=32, gpus=1, device=device)
-if "xcomet_xxl" in METRICS_TO_USE:
-    METRICS["xcomet_xxl"] = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=16, gpus=1, device=device)
-if "gemba_mqm_gpt_4o" in METRICS_TO_USE:
-    METRICS["gemba_mqm_gpt_4o"] = get_gemba_judge(method="GEMBA-MQM_norm", model="gpt-4o")
-if "slt_judge_gpt_4o_mini" in METRICS_TO_USE:
-    METRICS["slt_judge_gpt_4o_mini"] = get_swiss_legal_translation_judge(
-        judge_model_name="openai/gpt-4o-mini-2024-07-18",
-        short_judge_name="slt_judge_gpt-4o-mini",
-    )
-if "slt_judge_gpt_4o" in METRICS_TO_USE:
-    METRICS["slt_judge_gpt_4o"] = get_swiss_legal_translation_judge(
-        judge_model_name="openai/gpt-4o-2024-11-20",
-        short_judge_name="slt_judge_gpt-4o",
-    )
-if "slt_judge_gpt_4o_basic_diverse" in METRICS_TO_USE:
-    METRICS["slt_judge_gpt_4o_basic_diverse"] = get_swiss_legal_translation_judge(
-        judge_model_name="openai/gpt-4o-2024-11-20",
-        short_judge_name="slt_judge_gpt-4o-basic-diverse",
-        system_style="basic",
-        few_shot_style="diverse",
-    )
-if "slt_judge_gpt_4o_basic_fr-de" in METRICS_TO_USE:
-    METRICS["slt_judge_gpt_4o_basic_fr-de"] = get_swiss_legal_translation_judge(
-        judge_model_name="openai/gpt-4o-2024-11-20",
-        short_judge_name="slt_judge_gpt-4o-basic-fr-de",
-        system_style="basic",
-        few_shot_style="fr-de",
-    )
-if "slt_judge_gpt_4o_detailed_diverse" in METRICS_TO_USE:
-    METRICS["slt_judge_gpt_4o_detailed_diverse"] = get_swiss_legal_translation_judge(
-        judge_model_name="openai/gpt-4o-2024-11-20",
-        short_judge_name="slt_judge_gpt-4o-detailed-diverse",
-        system_style="detailed",
-        few_shot_style="diverse",
-    )
-if "slt_judge_gpt_4o_detailed_fr-de" in METRICS_TO_USE:
-    METRICS["slt_judge_gpt_4o_detailed_fr-de"] = get_swiss_legal_translation_judge(
-        judge_model_name="openai/gpt-4o-2024-11-20",
-        short_judge_name="slt_judge_gpt-4o-detailed-fr-de",
-        system_style="detailed",
-        few_shot_style="fr-de",
-    )
-if "slt_judge_haiku_35" in METRICS_TO_USE:
-    METRICS["slt_judge_haiku_35"] = get_swiss_legal_translation_judge(
-        judge_model_name="anthropic/claude-3-5-haiku-20241022", short_judge_name="slt_judge_haiku-3.5"
-    )
-if "slt_judge_sonnet_35" in METRICS_TO_USE:
-    METRICS["slt_judge_sonnet_35"] = get_swiss_legal_translation_judge(
-        judge_model_name="anthropic/claude-3-5-sonnet-20241022", short_judge_name="slt_judge_sonnet-3.5"
-    )
+
+def init_lexical_metrics(metric_name: str):
+    # Corpus level metrics
+    if metric_name == "bleu":
+        METRICS["bleu"] = Metrics.bleu
+    if metric_name == "chrf":
+        METRICS["chrf"] = Metrics.chrf
+    if metric_name == "ter":
+        # TER often hangs for a while and takes more than 10 minutes to compute
+        METRICS["ter"] = Metrics.ter
+    # Sample level metrics
+    if metric_name == "bleu_sentence":
+        METRICS["bleu_sentence"] = get_bleu_sentence()
+    if metric_name == "chrf_sentence":
+        METRICS["chrf_sentence"] = get_chrf_sentence()
+    if metric_name == "ter_sentence":
+        METRICS["ter_sentence"] = get_ter_sentence()
+    if metric_name == "meteor":
+        METRICS["meteor"] = get_meteor()
+
+
+def init_model_based_metrics(metric_name: str):
+    if metric_name == "bert_score":
+        METRICS["bert_score"] = {  # Create BERTScore metrics for each language
+            lang: get_bert_score(language=lang, model_type="xlm-roberta-large", device=device)
+            for lang in ["de", "fr", "it", "rm", "en"]
+        }
+    if metric_name == "bleurt_tiny":
+        METRICS["bleurt_tiny"] = get_bleurt(model_size="tiny", seq_len=512, batch_size=256, device=device)
+    if metric_name == "bleurt_base":
+        METRICS["bleurt_base"] = get_bleurt(model_size="base", seq_len=512, batch_size=256, device=device)
+    if metric_name == "bleurt_large":
+        METRICS["bleurt_large"] = get_bleurt(model_size="large", seq_len=512, batch_size=256, device=device)
+    # There are also reference-free models (e.g., Unbabel/wmt22-cometkiwi-da), but since we have reference gold labels, we use the reference-based models.
+    if metric_name == "wmt22-comet-da":
+        METRICS["wmt22-comet-da"] = get_comet(
+            model_name="Unbabel/wmt22-comet-da", batch_size=64, gpus=1, device=device
+        )
+    if metric_name == "xcomet_xl":
+        METRICS["xcomet_xl"] = get_comet(model_name="Unbabel/XCOMET-XL", batch_size=32, gpus=1, device=device)
+    if metric_name == "xcomet_xxl":
+        METRICS["xcomet_xxl"] = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=16, gpus=1, device=device)
+
+
+def init_llm_judge_metrics(metric_name: str):
+    if metric_name == "gemba_mqm_gpt_4o":
+        METRICS["gemba_mqm_gpt_4o"] = get_gemba_judge(method="GEMBA-MQM_norm", model="gpt-4o")
+    if metric_name == "slt_judge_gpt_4o_mini":
+        METRICS["slt_judge_gpt_4o_mini"] = get_swiss_legal_translation_judge(
+            judge_model_name="openai/gpt-4o-mini-2024-07-18",
+            short_judge_name="slt_judge_gpt-4o-mini",
+        )
+    if metric_name == "slt_judge_gpt_4o":
+        METRICS["slt_judge_gpt_4o"] = get_swiss_legal_translation_judge(
+            judge_model_name="openai/gpt-4o-2024-11-20",
+            short_judge_name="slt_judge_gpt-4o",
+        )
+    if metric_name == "slt_judge_gpt_4o_basic_diverse":
+        METRICS["slt_judge_gpt_4o_basic_diverse"] = get_swiss_legal_translation_judge(
+            judge_model_name="openai/gpt-4o-2024-11-20",
+            short_judge_name="slt_judge_gpt-4o-basic-diverse",
+            system_style="basic",
+            few_shot_style="diverse",
+        )
+    if metric_name == "slt_judge_gpt_4o_basic_fr-de":
+        METRICS["slt_judge_gpt_4o_basic_fr-de"] = get_swiss_legal_translation_judge(
+            judge_model_name="openai/gpt-4o-2024-11-20",
+            short_judge_name="slt_judge_gpt-4o-basic-fr-de",
+            system_style="basic",
+            few_shot_style="fr-de",
+        )
+    if metric_name == "slt_judge_gpt_4o_detailed_diverse":
+        METRICS["slt_judge_gpt_4o_detailed_diverse"] = get_swiss_legal_translation_judge(
+            judge_model_name="openai/gpt-4o-2024-11-20",
+            short_judge_name="slt_judge_gpt-4o-detailed-diverse",
+            system_style="detailed",
+            few_shot_style="diverse",
+        )
+    if metric_name == "slt_judge_gpt_4o_detailed_fr-de":
+        METRICS["slt_judge_gpt_4o_detailed_fr-de"] = get_swiss_legal_translation_judge(
+            judge_model_name="openai/gpt-4o-2024-11-20",
+            short_judge_name="slt_judge_gpt-4o-detailed-fr-de",
+            system_style="detailed",
+            few_shot_style="fr-de",
+        )
+    if metric_name == "slt_judge_haiku_35":
+        METRICS["slt_judge_haiku_35"] = get_swiss_legal_translation_judge(
+            judge_model_name="anthropic/claude-3-5-haiku-20241022", short_judge_name="slt_judge_haiku-3.5"
+        )
+    if metric_name == "slt_judge_sonnet_35":
+        METRICS["slt_judge_sonnet_35"] = get_swiss_legal_translation_judge(
+            judge_model_name="anthropic/claude-3-5-sonnet-20241022", short_judge_name="slt_judge_sonnet-3.5"
+        )
+
+
+def init_metric(metric_name: str):
+    # Only load the metric once
+    if metric_name in METRICS:
+        logger.debug(f"Metric {metric_name} already initialized")
+        return
+
+    # ===== Lexical metrics =====
+    init_lexical_metrics(metric_name)
+    # ===== Model-based metrics =====
+    init_model_based_metrics(metric_name)
+    # ===== LLM Judge metrics =====
+    init_llm_judge_metrics(metric_name)
+
 
 # Additionally we could consider adding the following open source judge models:
 # flowaicom/Flow-Judge-v0.1, prometheus-eval/prometheus-7b-v2.0
@@ -957,9 +1030,6 @@ if "slt_judge_sonnet_35" in METRICS_TO_USE:
 def get_metrics(METRICS_TO_USE, target_lang: str, generation_size: int):
     metrics = []
     for metric in METRICS_TO_USE:
-        if metric not in METRICS:
-            logger.debug(f"Skipping {metric} because it is not available. Available metrics: {METRICS}")
-            continue
         # These metrics are sentence level metrics and we only want to use them for generation sizes up to 512.
         short_metrics = [
             "bleu_sentence",
@@ -978,6 +1048,8 @@ def get_metrics(METRICS_TO_USE, target_lang: str, generation_size: int):
                 f"Skipping {metric} for generation size {generation_size} because the maximum supported sequence length is 512."
             )
             continue
+
+        init_metric(metric)
         if metric == "bert_score":
             # Add only the BERTScore for the target language
             metrics.append(METRICS["bert_score"][target_lang])
