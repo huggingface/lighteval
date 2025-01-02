@@ -29,6 +29,7 @@ from itertools import cycle
 from typing import TYPE_CHECKING, Optional, Tuple, Union
 
 from lighteval.models.abstract_model import LightevalModel
+from lighteval.models.litellm_model import LiteLLMClient
 from lighteval.tasks.requests import Doc
 from lighteval.utils.utils import as_list
 
@@ -205,7 +206,11 @@ class PromptManager:
             system_prompt=system_prompt,
             use_chat_template=use_chat_template,
         )
-        toks = self.model.tok_encode(output)
+        if not use_chat_template:
+            toks = self.model.tok_encode(output)
+        else:
+            toks = [self.model.tok_encode(msg["content"]) for msg in output]
+            toks = [t for ts in toks for t in ts]
 
         # If we need to truncate few-shots to fit in the context
         if truncate_few_shots and self.model.max_length is not None and self.model.tokenizer is not None:
@@ -223,7 +228,19 @@ class PromptManager:
                     system_prompt=system_prompt,
                     use_chat_template=use_chat_template,
                 )
-                toks = self.model.tokenizer(output)["input_ids"]
+                if not use_chat_template:
+                    toks = self.model.tok_encode(output)
+                else:
+                    toks = [self.model.tok_encode(msg["content"]) for msg in output]
+                    toks = [t for ts in toks for t in ts]
+
+        if isinstance(self.model, LiteLLMClient):
+            return output, num_effective_fewshots
+
+        elif use_chat_template:
+            return self.model.tokenizer.apply_chat_template(
+                output, tokenize=False, add_generation_prompt=True
+            ), num_effective_fewshots
 
         return output, num_effective_fewshots
 
@@ -256,7 +273,7 @@ class PromptManager:
                 examples.insert(0, {"role": "system", "content": system_prompt + instruction})
             else:  # Else we add the instruction to the first example
                 examples[0]["content"] = instruction + examples[0]["content"]
-            return self.model.tokenizer.apply_chat_template(examples, tokenize=False, add_generation_prompt=True)
+            return examples
         else:
             if system_prompt is not None:
                 output = system_prompt + instruction + "\n\n".join(examples)
