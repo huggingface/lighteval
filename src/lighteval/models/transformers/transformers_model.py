@@ -684,12 +684,18 @@ class TransformersModel(LightevalModel):
                 **model_inputs, stopping_criteria=stopping_criteria, **generation_config
             )
             model_outputs = model_outputs.sequences[0, model_inputs["input_ids"].size(1) :]
+
+            # We manage stop tokens in an extra step in case they were incorrectly detected earlier
+            # (which can happen for multitoken stop sequences)
+            decoded_generation = self.tokenizer.decode(model_outputs)  # should we skip_special_tokens=True here?
+            for term in stop_tokens:
+                decoded_generation = decoded_generation.split(term)[0]
             model_generations = [model_outputs]
 
             input_tokens = [model_inputs["input_ids"]]
 
             for i, multi_turn_context in enumerate(request.context[1:]):
-                multi_turn_context = multi_turn_context.format(model_response=model_generations[-1])
+                multi_turn_context = multi_turn_context.format(model_response=decoded_generation)
 
                 model_inputs = self.tokenizer(
                     multi_turn_context,
@@ -731,9 +737,9 @@ class TransformersModel(LightevalModel):
                 )
                 model_outputs = model_outputs.sequences[0, model_inputs["input_ids"].size(1) :]
                 model_generations.append(model_outputs)
-                decoded_generation = self.tokenizer.decode(model_outputs, skip_special_tokens=True)
                 input_tokens.append(model_inputs["input_ids"])
 
+                decoded_generation = self.tokenizer.decode(model_outputs, skip_special_tokens=True)
                 for term in stop_tokens:
                     decoded_generation = decoded_generation.split(term)[0]
 
