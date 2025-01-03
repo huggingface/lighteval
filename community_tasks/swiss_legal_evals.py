@@ -109,12 +109,6 @@ SCORING RUBRIC:
 0.0: Completely incorrect
 
 
-REQUIRED OUTPUT FORMAT:
-Reasoning: Analyze how the model's translation aligns with or differs from the golden translation, focusing on significant legal and linguistic aspects.
-Examples: Identify specific terms, phrases, or sections in the model's answer that were correct or incorrect, with explanations.
-Score: End with "The correctness score: [[score]]"
-
-
 EVALUATION GUIDELINES:
 Stylistic differences should not impact accuracy significantly unless they alter the legal meaning.
 Untranslated Latin terms (e.g., prima facie) are not considered errors, but they should still be assessed for appropriate use within the context of the answer.
@@ -123,8 +117,13 @@ Consider both explicit and implicit legal meanings.
 Consider jurisdiction-specific legal terminology.
 Flag any ambiguities, omissions or additions that affect legal meaning.
 
-Below are some examples.
-""",
+
+REQUIRED OUTPUT FORMAT:
+Your response should be in plain text with the following sections:
+Reasoning: Analyze how the model's translation aligns with or differs from the golden translation, focusing on significant legal and linguistic aspects.
+Examples: Identify specific terms, phrases, or sections in the model's answer that were correct or incorrect, with explanations.
+Score: End with exactly this format: \"The correctness score: [[score]]\"
+The correctness score must strictly follow this format: \"[[score]]\", e.g., \"The correctness score: [[0.5]]\". Below are some examples.""",
 }
 
 FEW_SHOT = {
@@ -901,8 +900,11 @@ def create_prompt_fn(level_config: LevelConfig, source_lang: str, target_lang: s
 JUDGE_MODELS = {
     "gpt-4o-mini": "openai/gpt-4o-mini-2024-07-18",
     "gpt-4o": "openai/gpt-4o-2024-11-20",
-    "claude-3-5-haiku": "anthropic/claude-3-5-haiku-20241022",
-    "claude-3-5-sonnet": "anthropic/claude-3-5-sonnet-20241022",
+    "gemini-1-5-pro": "gemini/gemini-1.5-pro-002",
+    "gemini-1-5-flash": "gemini/gemini-1.5-flash-002",
+    # The Claude models do not follow the required output format.
+    # "claude-3-5-haiku": "anthropic/claude-3-5-haiku-20241022",
+    # "claude-3-5-sonnet": "anthropic/claude-3-5-sonnet-20241022",
 }
 
 METRICS_TO_USE = [
