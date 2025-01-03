@@ -192,7 +192,7 @@ Der Bundesgerichtshof hat den Antrag des Käufer gegen dieses Urteil abgelehnt. 
 
 Your Judgment: The model’s translation diverges significantly from the golden translation in accuracy, clarity, and fidelity. Critical legal terminology is mistranslated, omitted, and distorted. For instance, the courts are misidentified (“Zivilgerichtsverfassung”, “Zivilgericht”, “Bundesgerichtshof”). The model’s translation has several grammatical errors, such as “Geneßische Auktion”, “Erbvergabe”, “Wagenkellner” and “zu valieren”. The model also omits the explanation that, under German law, stolen property cannot be acquired in good faith. The correctness score: [[0.2]]
 """,
-    "fr-de": """Example 1:
+    "single": """Example 1:
 Source Text:
 ```Le contrat est nul s’il a pour objet une chose impossible, illicite ou contraire aux moeurs. Si le contrat n’est vicié que dans certaines de ses clauses, ces clauses sont seules frappées de nullité, à moins qu’il n’y ait lieu d’admettre que le contrat n’aurait pas été conclu sans elles.```
 
@@ -289,7 +289,7 @@ def get_swiss_legal_translation_judge(
     short_judge_name: str = "slt_judge_gpt-4o",
     backend: str = "litellm",
     system_style: str = "basic",  # "basic" or "detailed"
-    few_shot_style: str = "diverse",  # "diverse" or "fr-de"
+    few_shot_style: str = "diverse",  # "diverse" or "single"
 ):
     def swiss_legal_translation_judge(question, options, answer, gold):
         system_prompt = SYSTEM[system_style]
@@ -898,6 +898,13 @@ def create_prompt_fn(level_config: LevelConfig, source_lang: str, target_lang: s
     return prompt_fn
 
 
+JUDGE_MODELS = {
+    "gpt-4o-mini": "openai/gpt-4o-mini-2024-07-18",
+    "gpt-4o": "openai/gpt-4o-2024-11-20",
+    "claude-3-5-haiku": "anthropic/claude-3-5-haiku-20241022",
+    "claude-3-5-sonnet": "anthropic/claude-3-5-sonnet-20241022",
+}
+
 METRICS_TO_USE = [
     "bleu",
     "chrf",
@@ -911,10 +918,20 @@ METRICS_TO_USE = [
     "gemba_mqm_gpt_4o",
     "slt_judge_gpt_4o",
 ]
+METRICS_TO_USE.extend(
+    [
+        f"slt_judge_{judge_model}-{system_style}-{few_shot_style}".replace("-", "_")
+        for judge_model in JUDGE_MODELS
+        for system_style in ["basic", "detailed"]
+        for few_shot_style in ["diverse", "single"]
+    ]
+)
+logger.info(f"Available metrics: {METRICS_TO_USE}")
+
 METRICS = {}
 
 
-def init_lexical_metrics(metric_name: str):
+def init_lexical_metric(metric_name: str):
     # Corpus level metrics
     if metric_name == "bleu":
         METRICS["bleu"] = Metrics.bleu
@@ -934,7 +951,7 @@ def init_lexical_metrics(metric_name: str):
         METRICS["meteor"] = get_meteor()
 
 
-def init_model_based_metrics(metric_name: str):
+def init_model_based_metric(metric_name: str):
     if metric_name == "bert_score":
         METRICS["bert_score"] = {  # Create BERTScore metrics for each language
             lang: get_bert_score(language=lang, model_type="xlm-roberta-large", device=device)
@@ -957,55 +974,30 @@ def init_model_based_metrics(metric_name: str):
         METRICS["xcomet_xxl"] = get_comet(model_name="Unbabel/XCOMET-XXL", batch_size=16, gpus=1, device=device)
 
 
-def init_llm_judge_metrics(metric_name: str):
+def init_llm_judge_metric(metric_name: str):
     if metric_name == "gemba_mqm_gpt_4o":
         METRICS["gemba_mqm_gpt_4o"] = get_gemba_judge(method="GEMBA-MQM_norm", model="gpt-4o")
-    if metric_name == "slt_judge_gpt_4o_mini":
-        METRICS["slt_judge_gpt_4o_mini"] = get_swiss_legal_translation_judge(
-            judge_model_name="openai/gpt-4o-mini-2024-07-18",
-            short_judge_name="slt_judge_gpt-4o-mini",
-        )
+
     if metric_name == "slt_judge_gpt_4o":
         METRICS["slt_judge_gpt_4o"] = get_swiss_legal_translation_judge(
             judge_model_name="openai/gpt-4o-2024-11-20",
             short_judge_name="slt_judge_gpt-4o",
         )
-    if metric_name == "slt_judge_gpt_4o_basic_diverse":
-        METRICS["slt_judge_gpt_4o_basic_diverse"] = get_swiss_legal_translation_judge(
-            judge_model_name="openai/gpt-4o-2024-11-20",
-            short_judge_name="slt_judge_gpt-4o-basic-diverse",
-            system_style="basic",
-            few_shot_style="diverse",
-        )
-    if metric_name == "slt_judge_gpt_4o_basic_fr-de":
-        METRICS["slt_judge_gpt_4o_basic_fr-de"] = get_swiss_legal_translation_judge(
-            judge_model_name="openai/gpt-4o-2024-11-20",
-            short_judge_name="slt_judge_gpt-4o-basic-fr-de",
-            system_style="basic",
-            few_shot_style="fr-de",
-        )
-    if metric_name == "slt_judge_gpt_4o_detailed_diverse":
-        METRICS["slt_judge_gpt_4o_detailed_diverse"] = get_swiss_legal_translation_judge(
-            judge_model_name="openai/gpt-4o-2024-11-20",
-            short_judge_name="slt_judge_gpt-4o-detailed-diverse",
-            system_style="detailed",
-            few_shot_style="diverse",
-        )
-    if metric_name == "slt_judge_gpt_4o_detailed_fr-de":
-        METRICS["slt_judge_gpt_4o_detailed_fr-de"] = get_swiss_legal_translation_judge(
-            judge_model_name="openai/gpt-4o-2024-11-20",
-            short_judge_name="slt_judge_gpt-4o-detailed-fr-de",
-            system_style="detailed",
-            few_shot_style="fr-de",
-        )
-    if metric_name == "slt_judge_haiku_35":
-        METRICS["slt_judge_haiku_35"] = get_swiss_legal_translation_judge(
-            judge_model_name="anthropic/claude-3-5-haiku-20241022", short_judge_name="slt_judge_haiku-3.5"
-        )
-    if metric_name == "slt_judge_sonnet_35":
-        METRICS["slt_judge_sonnet_35"] = get_swiss_legal_translation_judge(
-            judge_model_name="anthropic/claude-3-5-sonnet-20241022", short_judge_name="slt_judge_sonnet-3.5"
-        )
+
+    # Check all the judge metric combinations
+    for judge_model in JUDGE_MODELS:
+        for system_style in ["basic", "detailed"]:
+            for few_shot_style in ["diverse", "single"]:
+                short_judge_name = f"slt_judge_{judge_model}-{system_style}-{few_shot_style}"
+                judge_metric_name = short_judge_name.replace("-", "_")
+                if metric_name == judge_metric_name:
+                    METRICS[metric_name] = get_swiss_legal_translation_judge(
+                        judge_model_name=JUDGE_MODELS[judge_model],
+                        short_judge_name=short_judge_name,
+                        system_style=system_style,
+                        few_shot_style=few_shot_style,
+                    )
+                    break
 
 
 def init_metric(metric_name: str):
@@ -1015,11 +1007,11 @@ def init_metric(metric_name: str):
         return
 
     # ===== Lexical metrics =====
-    init_lexical_metrics(metric_name)
+    init_lexical_metric(metric_name)
     # ===== Model-based metrics =====
-    init_model_based_metrics(metric_name)
+    init_model_based_metric(metric_name)
     # ===== LLM Judge metrics =====
-    init_llm_judge_metrics(metric_name)
+    init_llm_judge_metric(metric_name)
 
 
 # Additionally we could consider adding the following open source judge models:
