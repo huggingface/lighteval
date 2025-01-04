@@ -900,8 +900,8 @@ def create_prompt_fn(level_config: LevelConfig, source_lang: str, target_lang: s
 JUDGE_MODELS = {
     "gpt-4o-mini": "openai/gpt-4o-mini-2024-07-18",
     "gpt-4o": "openai/gpt-4o-2024-11-20",
-    "gemini-1-5-pro": "gemini/gemini-1.5-pro-002",
     "gemini-1-5-flash": "gemini/gemini-1.5-flash-002",
+    "gemini-1-5-pro": "gemini/gemini-1.5-pro-002",
     # The Claude models do not follow the required output format.
     # "claude-3-5-haiku": "anthropic/claude-3-5-haiku-20241022",
     # "claude-3-5-sonnet": "anthropic/claude-3-5-sonnet-20241022",
