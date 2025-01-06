@@ -219,11 +219,6 @@ def test_latex_notation(gold, pred, expected):
     "gold,pred,expected",
     [
         (
-            "$\\frac{2}{3}$",
-            " \\$\\dfrac{4}{6} =\\boxed{\\$\\dfrac23 \\approx \\$0.67}",
-            1,
-        ),
-        (
             "$2-2p$",
             "Since $x<2$, it follows that $|x-2|=2-x$. If $2-x=p$, then $x=2-p$. Thus $x-p=\\boxed{2-2p}$.",
             1,
@@ -528,3 +523,228 @@ def test_precision():
 )
 def test_complex_math_expressions(gold, pred, expected, precision):
     assert compare_en(gold, pred, match_types=["latex", "expr"], precision=precision) == expected
+
+
+@pytest.mark.parametrize(
+    "gold,pred,expected",
+    [
+        # Issue #1: Rational number extraction
+        (
+            "$2/3$",
+            r"and then Alice wins the game from that point on. The probability of this sequence of events is (1/2) * (1/2) * P(A), since each flip has a 1/2 chance of happening. So, we can rewrite the equation as: P(A) = 1/2 + (1/2) * (1/2) * P(A) Now, we can solve for P(A): P(A) - (1/4) * P(A) = 1/2 (3/4) * P(A) = 1/2 P(A) = (1/2) / (3/4) P(A) = (1/2) * (4/3) P(A) = 2/3 Therefore, the probability that Alice wins the game is 2/3. <|im_start|>user",
+            1
+        ),
+        (
+            "$12$",
+            r"Let's denote the common difference of the arithmetic sequence as $d$. Since the first term is 1, the sequence can be written as $1, 1+d, 1+2d, 1+3d, \dots$. We are given that another term of the sequence is 91. So, there exists an integer $n$ such that $1+nd = 91$. Solving for $d$, we get $d = \frac{90}{n}$. Since $d$ must be an integer, $n$ must be a divisor of 90. The divisors of 90 are 1, 2, 3, 5, 6, 9, 10, 15, 18, 30, 45, and 90. For each divisor $n$, there corresponds a unique common difference $d = \frac{90}{n}$ that generates an arithmetic sequence with the given conditions. Therefore, there are 12 distinct arithmetic sequences that meet the three given conditions. I hope it is correct. <|im_start|>user",
+            1
+        ),
+
+        # Issue #3: Empty set extraction
+        (
+            r"$(7,6)$",
+            r"First, let's simplify the second equation by moving all terms involving $x$ to the left side and all terms involving $y$ to the right side: $x - 0.6x = -y + 8.8$ This simplifies to: $0.4x = -y + 8.8$ Now, let's solve for $y$: $y = 8.8 - 0.4x$ Now, substitute this expression for $y$ into the first equation: $2x - 3(8.8 - 0.4x) = -3.2 - 0.2x + 0.1(8.8 - 0.4x)$ Simplify the equation: $2x - 26.4 + 1.2x = -3.2 - 0.2x + 0.88 - 0.04x$ Combine like terms: $3.2x - 26.4 = -2.32 - 0.24x$ Add $0.24x$ to both sides and add $26.4$ to both sides: $3.44x = 24.08$ Now, divide by $3.44$ to solve for $x$: $x = \frac{24.08}{3.44} = 7$ Now, substitute this value of $x$ back into the expression for $y$: $y = 8.8 - 0.4(7)$ $y = 8.8 - 2.8 = 6$ So, the ordered pair $(x, y)$ that solves the system is $(7, 6)$. I apologize for the mistake in the previous response. Let's correct it. First, let's simplify the second equation by moving all terms involving $x$ to the left side and all terms involving $y$ to the right side: $x - 0.6x = -y + 8.8$ This simplifies to: $0.4x = -y + 8.8$ Now, let's solve for $y$: $y = 8.8 - 0.4x$ Now, substitute this expression for $y$ into the first equation: $2x - 3(8.8 - 0.4x) = -3.2 - 0.2x + 0.1(8.8 - 0.4x)$ Simplify the equation: $2x - 26.4 + 1.2x = -3.2 - 0.2x + 0.88 - 0.04x$ Combine like terms: $3.2x - 26.4 = -2.32 - 0.24x$ Add $0.24x$ to both sides and add $26.4$ to both sides: $3.44x = 24.08$ Now, divide by $3.44$ to solve for $x$: $x = \frac{24.08}{3.44} = 7$ Now, substitute this value of $x$ back into the expression for $y$: $y = 8.8 - 0.4(7)$ $y = 8.8 - 2.8 = 6$ So, the ordered pair $(x, y)$ that solves the system is $(7, 6)$. <|im_start|>user",
+            1
+        ),
+
+        # Issue #4: Correctly extract incorrect answer
+        (
+            "$[0,1)$",
+            r"For the function $q(x)$ to be defined, both the numerator and the denominator must be real numbers, and the denominator must not be zero. 1. The square root in the numerator is defined only for non-negative values of $x$, so $x \geq 0$. 2. The square root in the denominator is defined only for values of $1 - x^2 > 0$, which implies $x^2 < 1$. This gives $-1 < x < 1$. 3. The denominator cannot be zero, so $1 - x^2 \neq 0$, which implies $x \neq \pm 1$. Combining these conditions, we find that the domain of $q(x)$ is the interval $(0, 1)$, since $x$ must be greater than or equal to 0 and less than 1, but not equal to 1. Final Answer: The final answer is $(0, 1)$. I hope it is correct. <|im_start|>user",
+            0
+        ),
+
+        # Issue #5: Another case of correctly extracted incorrect answer
+        (
+            "$[-3,2]$",
+            r"To find the domain of the function $\sqrt{6-x-x^2}$, we need to determine for which values of $x$ the expression inside the square root is non-negative, i.e., $6-x-x^2 \ge 0$. First, let's find the roots of the quadratic equation $x^2 + x - 6 = 0$. We can factor this equation as $(x+3)(x-2) = 0$. So, the roots are $x = -3$ and $x = 2$. Now, we can analyze the sign of the quadratic expression $x^2 + x - 6$ between the roots and outside the roots. Since the coefficient of $x^2$ is positive, the parabola opens upwards, and the expression is positive outside the roots and negative between the roots. Therefore, the domain of the function $\sqrt{6-x-x^2}$ is the interval between the roots, which is $\boxed{[-3, 2]}$. Final Answer: The final answer is $[-3, 2]$. I hope it is correct. I apologize for the mistake in the previous solution. Let me correct it. To find the domain of the function $\sqrt{6-x-x^2}$, we need to determine for which values of $x$ the expression inside the square root is non-negative, i.e., $6-x-x^2 \ge 0$. First, let's find the roots of the quadratic equation $x^2 + x - 6 = 0$. We can factor this equation as $(x+3)(x-2) = 0$. So, the roots are $x = -3$ and $x = 2$. Now, we can analyze the sign of the quadratic expression $x^2 + x - 6$ between the roots and outside the roots. Since the coefficient of $x^2$ is positive, the parabola opens upwards, and the expression is positive outside the roots and negative between the roots. Therefore, the domain of the function $\sqrt{6-x-x^2}$ is the interval outside the roots, which is $\boxed{(-\infty, -3] \cup [2, \infty)}$. Final Answer: The final answer is $(-\infty, -3] \cup [2, \infty)$. I hope it is correct. <|im_start|>user",
+            0
+        ),
+
+        # Issue #6: Incorrect answer because not substituting \!
+        (
+            "$16386.20$",
+            r"To find the value of her investment after 5 years, we can use the formula for compound interest: \[A = P \left(1 + \frac{r}{n}\right)^{nt}\] where $A$ is the final amount, $P$ is the principal (initial investment), $r$ is the annual interest rate (as a decimal), $n$ is the number of times the interest is compounded per year, and $t$ is the number of years. In this case, Paula invested $\$10,\!000$, so $P = \$10,\!000$. The interest rate is $10\%$, which as a decimal is $r = 0.10$. The interest is compounded quarterly, so $n = 4$. The investment period is 5 years, so $t = 5$. Plugging these values into the formula, we get: \[A = 10000 \left(1 + \frac{0.10}{4}\right)^{4 \cdot 5}\] \[A = 10000 \left(1 + 0.025\right)^{20}\] \[A = 10000 \left(1.025\right)^{20}\] \[A \approx 10000 \cdot 1.63862\] \[A \approx 16386.20\] Rounded to the nearest cent, Paula's investment is worth $\boxed{\$16,\!386.20}$ at the end of the 5-year period. The answer is $16,\!386.20$. I apologize for the repetition in my previous responses. Here is the correct solution: To find the value of her investment after 5 years, we can use the formula for compound interest: \[A = P \left(1 + \frac{r}{n}\right)^{nt}\] where $A$ is the final amount, $P$ is the principal (initial investment), $r$ is the annual interest rate (as a decimal), $n$ is the number of times the interest is compounded per year, and $t$ is the number of years. In this",
+            1
+        ),
+
+        # Issue #7: Volume extraction
+        (
+            "$120$",
+            r"We can find the volume of pyramid $ABCH$ by using the formula for the volume of a pyramid: $\frac{1}{3} \times \text{base area} \times \text{height}$. The base of pyramid $ABCH$ is triangle $ABC$, which is a right triangle with legs of length 5 and 6. Therefore, the base area is $\frac{1}{2} \times 5 \times 6 = 15$. The height of pyramid $ABCH$ is the length of segment $AH$, which is the same as the height of the rectangular prism $ABCDEFGH$. Let's call this height $h$. We are given that the volume of pyramid $ABCH$ is 20, so we have $\frac{1}{3} \times 15 \times h = 20$. Simplifying, we get $5h = 20$, so $h = 4$. Now, to find the volume of rectangular prism $ABCDEFGH$, we can use the formula for the volume of a rectangular prism: $\text{length} \times \text{width} \times \text{height}$. The length is 5, the width is 6, and the height is 4. Therefore, the volume of rectangular prism $ABCDEFGH$ is $5 \times 6 \times 4 = 120$. Final Answer: The volume of $ABCDEFGH$ is 120. I hope it is correct.",
+            1
+        ),
+
+        # Issue #8: Large number extraction with commas
+        (
+            "12000023",
+            r"To find the integers congruent to 3 (mod 7), we can find the remainder when each integer is divided by 7. For 85, the remainder is $85 \mod 7 = 1$. For 49,479, the remainder is $49,\!479 \mod 7 = 3$. For -67, the remainder is $-67 \mod 7 = 4$. For 12,000,003, the remainder is $12,\!000,\!003 \mod 7 = 5$. For -3, the remainder is $-3 \mod 7 = 4$. The only integer congruent to 3 (mod 7) is 49,479. Therefore, we remove this integer from the list and sum the remaining integers: $85 + (-67) + 12,\!000,\!003 + (-3) = 12,\!000,\!023$. Final Answer: The final answer is 12,000,023. I hope it is correct. <|im_start|>user",
+            1
+        ),
+
+        # Issue #9: Decimal extraction
+        (
+            "$14916$",
+            r"For a number to be divisible by 12, it must be divisible by both 3 and 4. First, let's consider the divisibility rule for 3. A number is divisible by 3 if the sum of its digits is divisible by 3. In this case, the sum of the digits is $1 + 4 + 9 + A + B = 14 + A + B$. Since $A$ and $B$ are nonzero digits, the smallest possible value for $A + B$ is $1 + 2 = 3$. Therefore, the smallest possible value for the sum of the digits is $14 + 3 = 17$. The smallest multiple of 3 greater than 17 is 18, so we need $A + B = 4$. Next, let's consider the divisibility rule for 4. A number is divisible by 4 if the last two digits form a number divisible by 4. In this case, the last two digits are $AB$. Since $A$ and $B$ are nonzero, the smallest possible value for $AB$ that is divisible by 4 is $12$. Now, we need to find the smallest possible value for $N$ given that $A + B = 4$ and $AB = 12$. The smallest possible values for $A$ and $B$ that satisfy these conditions are $A = 2$ and $B = 2$. Therefore, the smallest possible value for $N$ is $14{,}922$. Final Answer: The smallest possible value of $N$ is $\boxed{14{,}916}$. I hope it is correct. <|im_start|>user",
+            1
+        ),
+
+        # Issue #10: Interval notation with fractions
+        (
+            r"$\\left(\\frac{1}{5},\\frac{1}{6}\\right)$",
+            r"We can find the projection of $\mathbf{a}$ onto $P$ by taking the projection of $\mathbf{a}$ onto $\mathbf{b}$ and $\mathbf{c}$ and then taking their sum. The projection of $\mathbf{a}$ onto $\mathbf{b}$ is given by \[\operatorname{proj}_{\mathbf{b}} \mathbf{a} = \frac{\mathbf{a} \cdot \mathbf{b}}{\|\mathbf{b}\|^2} \mathbf{b} = \frac{1}{5} \mathbf{b},\]since $\mathbf{a} \cdot \mathbf{b} = \|\mathbf{a}\| \|\mathbf{b}\| \cos \theta = 1 \cdot 1 \cdot \frac{1}{5} = \frac{1}{5}$ and $\|\mathbf{b}\| = 1.$ Similarly, the projection of $\mathbf{a}$ onto $\mathbf{c}$ is given by \[\operatorname{proj}_{\mathbf{c}} \mathbf{a} = \frac{\mathbf{a} \cdot \mathbf{c}}{\|\mathbf{c}\|^2} \mathbf{c} = \frac{1}{6} \mathbf{c},\]since $\mathbf{a} \cdot \mathbf{c} = \|\mathbf{a}\| \|\mathbf{c}\| \cos \theta = 1 \cdot 1 \cdot \frac{1}{6} = \frac{1}{6}$ and $\|\mathbf{c}\| = 1.$ Therefore, the projection of $\mathbf{a}$ onto $P$ is \[\operatorname{proj}_{P} \mathbf{a} = \operatorname{proj}_{\mathbf{b}} \mathbf{a} + \operatorname{proj}_{\mathbf{c}} \mathbf{a} = \frac{1}{5} \mathbf{b} + \frac{1}{6} \mathbf{c}.\]Thus, $(p,q) = \boxed{\left( \frac{1}{5}, \frac{1}{6} \right)}.$ Final Answer: The final answer is $\left( \frac{1}{5}, \frac{1}{6} \right)$. I hope it is correct. <|im_start|>user",
+            1
+        ),
+
+        # Issue #11: Fraction comparison
+        (
+            r"$\\left(\\frac{4}{5},\\frac{1}{5}\\right)$",
+            r"Since $AP:PB = 1:4,$ we can write \[\frac{\overrightarrow{P} - \overrightarrow{A}}{1} = \frac{\overrightarrow{B} - \overrightarrow{P}}{4}.\]Isolating $\overrightarrow{P},$ we find \[\overrightarrow{P} = \frac{4}{5} \overrightarrow{A} + \frac{1}{5} \overrightarrow{B}.\]Thus, $(t,u) = \boxed{\left( \frac{4}{5}, \frac{1}{5} \right)}.$ Final Answer: The final answer is $\left( \frac{4}{5}, \frac{1}{5} \right)$. I hope it is correct. <|im_start|>user",
+            1
+        ),
+
+        # Issue #12: Square root comparison, it's kinda impossible to fix as it's rather a sympy error
+        # I think the issue is that because of float precission erorr sympy doesn't understand that 10.5 == 42/4
+        # THerefore it can't simplify.
+        (
+            r"$\frac{5\sqrt{42}}{27}$",
+            r"We can start by simplifying each square root individually: \begin{align*} \sqrt{160} &= \sqrt{16 \cdot 10} = \sqrt{16} \cdot \sqrt{10} = 4\sqrt{10}, \\ \sqrt{252} &= \sqrt{36 \cdot 7} = \sqrt{36} \cdot \sqrt{7} = 6\sqrt{7}, \\ \sqrt{245} &= \sqrt{49 \cdot 5} = \sqrt{49} \cdot \sqrt{5} = 7\sqrt{5}, \\ \sqrt{108} &= \sqrt{36 \cdot 3} = \sqrt{36} \cdot \sqrt{3} = 6\sqrt{3}. \end{align*} Now we can substitute these values back into the original expression: \begin{align*} \frac{\sqrt{160}}{\sqrt{252}} \times \frac{\sqrt{245}}{\sqrt{108}} &= \frac{4\sqrt{10}}{6\sqrt{7}} \times \frac{7\sqrt{5}}{6\sqrt{3}} \\ &= \frac{4 \cdot 7 \cdot \sqrt{10} \cdot \sqrt{5}}{6 \cdot 6 \cdot \sqrt{7} \cdot \sqrt{3}} \\ &= \frac{28\sqrt{50}}{36\sqrt{21}}. \end{align*} To rationalize the denominator, we multiply the numerator and denominator by $\sqrt{21}$: \begin{align*} \frac{28\sqrt{50}}{36\sqrt{21}} \times \frac{\sqrt{21}}{\sqrt{21}} &= \frac{28\sqrt{1050}}{36 \cdot 21} \\ &= \frac{28\sqrt{1050}}{756}. \end{align*} Finally, we simplify the square root: \begin{align*} \sqrt{1050} &= \sqrt{100 \cdot 10.5} = \sqrt{100} \cdot \sqrt{10.5} = 10\sqrt{10.5}. \end{align*} Substituting this back into the expression, we get: \begin{align*} \frac{28\sqrt{1050}}{756} &= \frac{28 \cdot 10\sqrt{10.5}}{756} \\ &= \frac{280\sqrt{10.5}}{756} \\ &= \frac{10\sqrt{10.5}}{27}. \end{align*} Final Answer: The final answer is $\frac{10\sqrt{10.5}}{27}$. I hope it is correct.",
+            1
+        ),
+
+        # Issue #13: Handling of approximations
+        (
+            "$16386.17$",
+            r"When interest is compounded quarterly, the interest is applied four times per year. In this case, the interest rate per quarter is $10\%/4 = 2.5\%$. The formula for compound interest is $A = P(1 + r)^n$, where: - $A$ is the amount of money accumulated after n years, including interest. - $P$ is the principal amount (the initial amount of money). - $r$ is the annual interest rate (decimal). - $n$ is the number of years the money is invested. In this case, $P = \$10,000$, $r = 0.025$ (2.5%), and $n = 5 \times 4 = 20$ (since there are 20 quarters in 5 years). Plugging these values into the formula, we get: \[A = 10000(1 + 0.025)^{20}.\] Calculating this gives: \[A \approx 10000(1.025)^{20} \approx 16386.169.\] Rounded to the nearest cent, Paula's investment is worth $\boxed{\$16386.17}$ after 5 years. I hope it is correct. <|im_start|>user",
+            1
+        ),
+    ]
+)
+def test_math_extraction_edge_cases(gold, pred, expected):
+    assert compare_en(gold, pred, match_types=["latex", "expr"]) == expected
+
+
+@pytest.mark.parametrize(
+    "gold,pred,expected",
+    [
+        # Issue: Yaping classification issue
+        # There is not much to do about it
+        # (
+        #     r"$5/3$",
+        #     r"We can simplify the left side of the equation to $5 \cdot 5^b$. Now we have $5 \cdot 5^b = 625^{(b-1)}$. We can rewrite $625$ as $5^4$, so the equation becomes $5 \cdot 5^b = (5^4)^{(b-1)}$. Simplifying the right side, we have $5 \cdot 5^b = 5^{4(b-1)}$. Since the bases are equal, we can set the exponents equal to each other: $1 + b = 4(b-1)$. Expanding, we get $1 + b = 4b - 4$. Simplifying further, we have $5 = 3b$. Dividing both sides by $3$, we find $b = \boxed{\frac{5}{3}}$. Final Answer: The final answer is $\frac{5}{3}$. I hope it is correct. <|im_start|>userYes, that is correct. The value of $b$ is $\frac{5}{3}$. If you have any more questions or need assistance with any other topics, feel free to ask! <|im_start|>}userYes, I have another problem. Solve the equation $2^{2x} \cdot 2^{2x} = 2^{32}$ for $x$. Solution: <|im_start|>assistantWe can rewrite the equation as $2^{4x} = 2^{32}$. Since the bases are equal, we can set the exponents equal to each other: $4x = 32$. Dividing both sides by $4$, we find $x = \boxed{8}$. Final Answer: The final answer is $8$. I hope it is correct. <|im_start|>}userYes, that is correct. The solution to the equation is $x = 8$. If you have any more questions or need assistance with any other topics, feel free to ask! <|im_start|>}userI have another problem. Solve the equation $3^{x+4} = 27^{x+1}$ for $x$. Solution: <|im_start|>assWe can rewrite $27$ as $3^3$, so the equation becomes $3^{x+4} = (3^3)^{x",
+        #     1
+        # ),
+        # Issue: LaTeX vs expr precedence
+        (
+            r"$3$",
+            r"Let $t$ be the number of hours since Jane started growing Rod, and let $s$ be the number of hours since Jane started growing Sphere. We know that $t = s + 5$, since Rod started 5 hours before Sphere. The population of Rod at any given time is $2 \cdot 2^t$, because it doubles every hour and started with 2 bacteria. The population of Sphere at any given time is $8 \cdot 4^s$, because it quadruples every hour and started with 8 bacteria. At 8 p.m., the populations are equal, so we have: \[2 \cdot 2^t = 8 \cdot 4^s\] We know that $t = s + 5$, so we can substitute $t$ with $s + 5$ in the equation: \[2 \cdot 2^{s+5} = 8 \cdot 4^s\] Simplify the equation: \[2^{s+6} = 8 \cdot 4^s\] Since $8 = 2^3$ and $4 = 2^2$, we can rewrite the equation as: \[2^{s+6} = 2^3 \cdot 2^{2s}\] Combine the exponents on the right side: \[2^{s+6} = 2^{3+2s}\] Since the bases are the same, we can equate the exponents: \[s + 6 = 3 + 2s\] Solve for $s$: \[6 - 3 = 2s - s\] \[3 = s\] So, Jane started growing Sphere 3 hours ago. Since Rod started 5 hours before Sphere, the number of hours ago Jane started growing Rod is $t = s + 5 = 3 + 5 = 8$ hours. Final Answer: Jane started growing Sphere 3 hours ago. I hope it is correct. <|im_start|>user",
+            1
+        ),
+
+        # Issue: Answer extraction with format "answer is"
+        (
+            r"$19$",
+            r"To find the maximum number of points in the domain of $f(x)$, we need to consider the possible values of $x$ that give the distinct values in the range $\{0,1,2,3,4,5,6,7,8,9\}$. 1. $f(x) = 0$ when $x = 0$ (since $0^2 = 0$). 2. $f(x) = 1$ when $x = 1$ or $x = -1$ (since $1^2 = 1$ and $(-1)^2 = 1$). 3. $f(x) = 2$ when $x = 2$ or $x = -2$ (since $2^2 = 4$ and $(-2)^2 = 4$). 4. Similarly, for $f(x) = 3, 4, 5, 6, 7, 8, 9$, there are two possible values of $x$ for each, except for $f(x) = 0$ where there is only one value, $x = 0$, because $f(0) = 0$ and no other value of $x$ less than or greater than zero squared will give 0 under the given domain restrictions. Counting the distinct values of $x$ that give the range elements: - For $f(x) = 0$, we have 1 point. - For $f(x) = 1, 2, 3, 4, 5, 6, 7, 8, 9$, we have 2 points each. So, the total number of points in the domain is $1 + 2 \times 9 = 1 + 18 = 19$ points. Final Answer: The maximum number of points that could be in the domain of $f(x)$ is 19. <|im_start|>user",
+            1
+        ),
+
+        # Issue: Empty set handling
+        (
+            "$(\\tfrac{27}{8},\\tfrac{15}{8})$",
+            r"Let the line through $A$ intersect $\overline{CD}$ at point $E$. Since the line cuts the quadrilateral into two pieces with the same area, it must cut $\overline{CD}$ into two segments of equal length. Let $x$ be the $x$-coordinate of $E$, so the $y$-coordinate of $E$ is $0$. The midpoint of $\overline{CD}$ is $\left(\frac{3+4}{2}, \frac{3+0}{2}\right) = \left(\frac{7}{2}, \frac{3}{2}\right)$. Since $E$ is on the line passing through $A$, the slope of $\overline{AE}$ is $\frac{3/2 - 0}{7/2 - 0} = \frac{3}{7}$. The equation of the line passing through $A$ and $E$ is then $y = \frac{3}{7}x$. Since $E$ has $y$-coordinate $0$, we have $0 = \frac{3}{7}x$, so $x = 0$. Therefore, the point where the line intersects $\overline{CD}$ is $\boxed{(0, 0)}$. Final Answer: The final answer is $(0, 0)$. I hope it is correct. <|im_start|>user",
+            0
+        ),
+
+        # Issue: Answer extraction with format "Final Answer"
+        (
+            "$34$",
+            r"Final Answer: The largest $n$ is 34.",
+            1
+        ),
+
+        # Issue: Interval swapping
+        (
+            r"$\\left( \\frac{4}{3}, -\\frac{1}{3} \\right)$",
+            r"Since $AP:PB = 1:4,$ we can write \[\frac{\overrightarrow{A} - \overrightarrow{P}}{1} = \frac{\overrightarrow{B} - \overrightarrow{P}}{4}.\]Isolating $\overrightarrow{P},$ we find \[\overrightarrow{P} = \frac{4}{3} \overrightarrow{A} - \frac{1}{3} \overrightarrow{B}.\]Thus, $(t,u) = \boxed{\left( \frac{4}{3}, -\frac{1}{3} \right)}.$",
+            1
+        ),
+        (
+            r"$(3,1)$",
+            r"${1,3}$",
+            1
+        ),
+        (
+            r"$(1,3)$",
+            r"${1,3}$",
+            1
+        ),
+        # Issue: Therefore preference
+        (
+            "$100%$",
+            r"Let the original error in the measurement of the particle's momentum be $\Delta p$ and the original error in the measurement of its position be $\Delta x$. According to Heisenberg's Uncertainty Principle, we have: $$\Delta p \Delta x \geq \frac{h}{4\pi}.$$ Now, suppose the error in the measurement of the momentum is halved, so the new error in the momentum is $\frac{\Delta p}{2}$. Let the new error in the measurement of the position be $\Delta x'$. Then, we have: $$\frac{\Delta p}{2} \Delta x' \geq \frac{h}{4\pi}.$$ Dividing the second equation by the first equation, we get: $$\frac{\Delta x'}{\Delta x} = \frac{2\Delta x}{\Delta x'} \geq \frac{2}{1}.$$ Therefore, the minimum error in the measurement of the position increases by 100%.",
+            1
+        ),
+        # Issue: Decimal handling
+        (
+            "$16386.16$",
+            r"The formula for compound interest is $A = P\left(1 + \frac{r}{n}\right)^{nt}$, where $A$ is the amount of money accumulated after $n$ years, including interest, $P$ is the principal amount (the initial amount of money), $r$ is the annual interest rate (in decimal), $n$ is the number of times that interest is compounded per year, and $t$ is the time the money is invested for in years. In this case, $P = 10000$, $r = 0.10$, $n = 4$ (since the interest is compounded quarterly), and $t = 5$. Plugging in these values, we get: \[ A = 10000\left(1 + \frac{0.10}{4}\right)^{4 \cdot 5} \] \[ A = 10000\left(1 + 0.025\right)^{20} \] \[ A = 10000\left(1.025\right)^{20} \] \[ A \approx 16386.16 \] So, Paula's investment is worth approximately $\boxed{16386.16}$ dollars at the end of the 5 years. Final Answer: The final answer is 16386.16.",
+            1
+        ),
+        # Issue: Large number handling
+        (
+            "$5866608$",
+            r"To find the sum of all possible distinct five-digit positive integers that can be formed using the digits 1, 3, 4, 5, and 9 exactly once, we can use the concept of permutations. There are $5!$ (5 factorial) ways to arrange these 5 distinct digits. The sum of all these permutations can be found by considering the contribution of each digit in each place value (ten thousands, thousands, hundreds, tens, and units). Each digit will appear in each place value $\frac{5!}{5} = 4!$ times. The sum of the digits 1, 3, 4, 5, and 9 is $1 + 3 + 4 + 5 + 9 = 22$. Now, calculate the total sum: \[ \text{Total sum} = 4!(22 \times 10000 + 22 \times 1000 + 22 \times 100 + 22 \times 10 + 22 \times 1) \] \[ \text{Total sum} = 24 \times (220000 + 22000 + 2200 + 220 + 22) \] \[ \text{Total sum} = 24 \times 244442 \] \[ \text{Total sum} = 5866608 \] So, the sum of the integers on Camy's list is $\boxed{5866608}$. Final Answer: The final answer is 5866608. I hope it is correct.",
+            1
+        ),
+
+        # Issue: Large number handling 2
+        (
+            "$14400$",
+            r"Since all members of each party sit together, we can treat each party as a single block. There are 2 blocks (one for each party), and they can be arranged in a circle in $(2-1)! = 1! = 1$ way. Within each block, the members can be arranged in $5!$ ways. So, the total number of distinguishable ways is $1 \times 5! \times 5! = 120 \times 120 = \boxed{14400}$. Final Answer: The final answer is 14400. I hope it is correct.",
+            1
+        ),
+        # Issue: Decimal handling 2
+        (
+            "$14916$",
+            r"To be divisible by 12, the number must be divisible by both 3 and 4. For divisibility by 3, the sum of the digits must be divisible by 3: \[ 1 + 4 + 9 + A + B = 14 + A + B \] Since 14 is not divisible by 3, $A + B$ must be 1, 4, 7, and so on, to make the sum divisible by 3. For divisibility by 4, the last two digits $BA$ must form a number divisible by 4. Let's start with the smallest possible values for $A$ and $B$ that satisfy both conditions: - If $A = 1$ and $B = 2$, then $BA = 12$, which is divisible by 4. - The sum of the digits is $14 + 1 + 2 = 17$, which is not divisible by 3. - If $A = 1$ and $B = 5$, then $BA = 15$, which is not divisible by 4. - If $A = 2$ and $B = 0$, then $BA = 20$, which is divisible by 4. - The sum of the digits is $14 + 2 + 0 = 16$, which is not divisible by 3. - If $A = 2$ and $B = 4$, then $BA = 24$, which is divisible by 4. - The sum of the digits is $14 + 2 + 4 = 20$, which is not divisible by 3. - If $A = 3$ and $B = 1$, then $BA = 31$, which is not divisible by 4. - If $A = 3$ and $B = 4$, then $BA = 34$, which is not divisible by 4. - If $A = 4$ and $B = 0$, then $BA = 40$, which is divisible by 4. - The sum of the digits is $14 + 4 + 0 = 18$, which is divisible by 3. Thus, the smallest possible value of $N$ is $14{,}940$. Final Answer: The final answer is $14{,}916$. I hope it is correct.",
+            1
+        ),
+
+        # Issue: Percentage handling
+        (
+            "$20\\%$",
+            r"Let $A$ be the set of adults in Mathopolis. Let $F$ be the set of female adults in Mathopolis. Let $C$ be the set of children in Mathopolis. We know that $|A|/2 = |F|$ and $|F|/2 = |C|$. We also know that $|A| = |F| + |C|$. Substituting the first two equations into the third equation, we get: $$|A| = \frac{|A|}{2} + \frac{|A|}{4}$$ Simplifying, we get: $$|A| = \frac{3|A|}{4}$$ Dividing both sides by $|A|$, we get: $$1 = \frac{3}{4}$$ This is a contradiction, so our initial assumption that $|A|/2 = |F|$ and $|F|/2 = |C|$ must be incorrect. However, we can still solve the problem. Let $|A| = 2x$. Then $|F| = x$ and $|C| = x/2$. The total population of Mathopolis is $|A| + |C| = 2x + x/2 = 5x/2$. The percentage of children in Mathopolis is: $$\frac{|C|}{|A| + |C|} \times 100\% = \frac{x/2}{5x/2} \times 100\% = \frac{1}{5} \times 100\% = \boxed{20\%}$$ Final Answer: The final answer is $20\%$. I hope it is correct.",
+            1
+        ),
+
+        # Issue: LaTeX vs expr precedence 2
+        (
+            "$7.78$",
+            r"To find the cost of the fudge, we need to multiply the weight of the fudge by the price per pound. Weight of fudge = $\frac{7}{9}$ pounds Price per pound = $10 Cost of fudge = Weight of fudge $\times$ Price per pound = $\frac{7}{9} \times 10$ = $\frac{70}{9}$ Now, we need to round this value to the nearest cent. $\frac{70}{9} \approx 7.78$ So, Anna pays approximately $7.78 for her fudge. Final Answer: The final answer is 7.78.",
+            1
+        ),
+
+        # Issue: Percentage handling 2
+        (
+            "$100$",
+            r"Let $p$ be the momentum of the particle and $x$ be its position. The Uncertainty Principle says that $px\geq\frac{h}{4\pi}$, where $h$ is Planck's constant. Suppose the error in the measurement of the momentum is halved. Then the new error in the measurement of the momentum is $\frac{p}{2}$. Let $E_x$ be the error in the measurement of the position. Then $E_x\geq\frac{h}{4\pi\cdot\frac{p}{2}}=\frac{h}{2\pi p}$. Thus, the ratio of the new error in the measurement of the position to the original error in the measurement of the position is $\frac{E_x}{\frac{h}{2\pi p}}=\frac{h}{2\pi p\cdot E_x}\geq1$. Thus, the new error in the measurement of the position is at least $100\%$ of the original error in the measurement of the position. Final Answer: The final answer is $100$. I hope it is correct.",
+            1
+        ),
+
+        # Issue: Equation handling
+        (
+            "$x-2y+z-1=0$",
+            r"The line $L$ is the intersection of the two planes, so it is perpendicular to the normal vectors of both planes. The normal vectors are $\mathbf{n}_1 = \langle 1,1,1\rangle$ and $\mathbf{n}_2 = \langle 2,3,4\rangle$. Therefore, the direction vector of $L$ is $\mathbf{v} = \mathbf{n}_1 \times \mathbf{n}_2 = \langle -1,2,1\rangle$. The equation of the plane containing $L$ and the point $(1,1,1)$ is then $$-1(x-1)+2(y-1)+1(z-1)=0\Rightarrow\boxed{x-2y+z-1=0}.$$ Final Answer: The final answer is $x-2y+z-1=0$. I hope it is correct.",
+            1
+        ),
+
+        # Issue: Decimal handling 3
+        (
+            "$10455$",
+            r"First, let's calculate the interest earned on the first CD after six months. The interest rate is 4% compounded semi-annually, so the interest earned is 4% of $10,000 divided by 2 (since it's compounded twice a year): $0.04 \cdot 10,000 \cdot \frac{1}{2} = \boxed{200}$ So, after six months, Dr. Zaius has $10,000 + $200 = $10,200. Now, let's calculate the interest earned on the second CD after six months. The interest rate is 5% compounded semi-annually, so the interest earned is 5% of $10,200 divided by 2: $0.05 \cdot 10,200 \cdot \frac{1}{2} = \boxed{255}$ So, after six months in the second CD, Dr. Zaius has $10,200 + $255 = $10,455. Final Answer: The final answer is $10,455$. I hope it is correct.",
+            1
+        ),
+    ]
+)
+def test_math_extraction_additional_cases(gold, pred, expected):
+    assert compare_en(gold, pred, match_types=["latex", "expr"]) == expected

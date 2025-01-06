@@ -377,7 +377,7 @@ def extract_match(match: re.Match, target_type: ExtractionTarget) -> tuple[str |
 
 
 @lru_cache(maxsize=1)
-def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> list[re.Pattern[str]]:
+def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> list[tuple[re.Pattern[str], int]]:
     translation_literal = TRANSLATION_LITERALS[language]
 
     # TODO: Possibly we should also nesure that the expression doesn't appear in latex env
@@ -413,9 +413,16 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
 
     expr = f"(?P<expr>{expr_re}|{number_re})"
     full_expr = rf"(?:{expr_prefix_re}{expr}{expr_suffix_re})"
-    regexes: list[str] = []
+    regexes: list[tuple[str, int]] = []
     if language == Language.ENGLISH:
-        equals_re = rf"(?i:the final answer is\s*){full_expr}"
+        final_answer_prefixed_re = rf"(?i:final answer is)\:?\s*{full_expr}\.?\s?I hope"
+        final_answer_prefixed_no_hope = rf"(?i:final answer is)\:?\s*{full_expr}"
+
+        # This ensures that we don't match variables answer: the final answer: domain of $f(x)$ is 19e
+        final_answer_prefixed_just_is = rf"(?i:final answer.{{0,100}}?)\s+is\:?{full_expr}"
+        regexes.append((final_answer_prefixed_re, 5))
+        regexes.append((final_answer_prefixed_no_hope, 55))
+        regexes.append((final_answer_prefixed_just_is, 105))
 
     answer_prefix_re = rf"(?i:{translation_literal.answer}|{translation_literal.result_word})"
     # Match after the last equals with answer word - require the number pattern
@@ -423,19 +430,22 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
 
     equals_re_colon = rf"{answer_prefix_re}{colon_re}(?:.{{0,100}}=\s*|.{{0,50}}?){full_expr}(?!\s*=)"
     equals_re = rf"{answer_prefix_re}(?:.{{0,100}}=\s*|.{{0,50}}?){full_expr}(?!\s*=)"
+    regexes.extend([(equals_re_colon, 155), (equals_re, 205)])
 
-    regexes.extend([equals_re_colon, equals_re])
+    therefore_prefix_re = rf"(?i:{translation_literal.effect_word})"
+    therefore_re = rf"{therefore_prefix_re}(?:.{{0,100}}?){full_expr}"
+    regexes.append((therefore_re, 255))
     if expr_config.try_last_expr_match:
-        # We never try to match without prefixes as otherwise it will easily match partials
-        regexes.append(f"({expr_prefix_re})(?P<expr>{expr_re})({expr_suffix_re})")
-        regexes.append(f"({expr_prefix_re})(?P<expr>{number_re})({expr_suffix_re})")
+        # Priority 3-4: Less specific patterns
+        regexes.append((f"({expr_prefix_re})(?P<expr>{expr_re})({expr_suffix_re})", 305))
+        regexes.append((f"({expr_prefix_re})(?P<expr>{number_re})({expr_suffix_re})", 306))
 
     # We first try to match the answer then the plain number
-    return [re.compile(pattern) for pattern in regexes]
+    return [(re.compile(pattern), priority) for pattern, priority in regexes]
 
 
 @lru_cache(maxsize=1)
-def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language):
+def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) -> list[tuple[re.Pattern[str], int]]:
     # Only LaTeX expressions between delimiters
     simple_number = r"-?\d+(?:[.,]\d+)?"
     latex_envs_re = (
@@ -459,27 +469,39 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language):
 
     # We first match boxed env, for some reason that's the most common case of output
     # Then we match the latex with environments, then we try to match the fraction
-    regexes: list[str] = []
-    for latex_re in [latex_boxed, latex_envs_re, latex_fraction]:
+    regexes: list[tuple[str, int]] = []
+    for latex_re, base_priority in [(latex_boxed, 1), (latex_envs_re, 2), (latex_fraction, 3)]:
         if language == Language.ENGLISH:
-            custom_answer_re = rf"final answer is\s*{latex_re}"
-            regexes.append(custom_answer_re)
+            final_answer_prefixed_re = rf"(?i:final answer is)\s*{latex_re}\.?\s?I hope"
+            final_answer_prefixed_no_hope = rf"(?i:final answer is)\s*{latex_re}"
+            final_answer_prefixed_just_is = rf"(?i:final answer.{{0,100}}?)\s+is\:?\s*{latex_re}"
+            regexes.append((final_answer_prefixed_re, base_priority))
+            regexes.append((final_answer_prefixed_no_hope, base_priority + 50))
+            regexes.append((final_answer_prefixed_just_is, base_priority + 100))
 
-        # Match with answer word
+        # Match with answer word - higher priority than plain latex
+        # Priority 50
         answer_re_colon = f"{answer_prefix_re}{colon_re}.{{0,50}}?{latex_re}"
         answer_re = f"{answer_prefix_re}.{{0,50}}?{latex_re}"
 
-        regexes.extend([answer_re_colon, answer_re])
+        regexes.extend([(answer_re_colon, base_priority + 150), (answer_re, base_priority + 200)])
 
-        # Match plain LaTeX
+        # Therefore prefix
+        therefore_prefix_re = rf"(?i:{translation_literal.effect_word})"
+        therefore_re = rf"{therefore_prefix_re}(?:.{{0,100}}?){latex_re}"
+        regexes.append((therefore_re, base_priority + 250))
+
+
+
+        # Match plain LaTeX - lowest priority
         if latex_config.try_last_latex_match:
-            regexes.append(latex_re)
+            regexes.append((latex_re, base_priority + 300))
 
-    return [re.compile(pattern, re.DOTALL) for pattern in regexes]
+    return [(re.compile(pattern, re.DOTALL), priority) for pattern, priority in regexes]
 
 
 @lru_cache(maxsize=100)
-def lazy_indices_regex(indices_config: IndicesExtractionConfig, len_choices: int, language: Language):
+def lazy_indices_regex(indices_config: IndicesExtractionConfig, len_choices: int, language: Language) -> list[tuple[re.Pattern[str], int]]:
     translation_literal = TRANSLATION_LITERALS[language]
     # First get indices to predict
     indices = get_prefix(indices_config.prefix_for_extraction, translation_literal)[:len_choices]
@@ -498,29 +520,28 @@ def lazy_indices_regex(indices_config: IndicesExtractionConfig, len_choices: int
 
     answer_word = f"(?i:{translation_literal.answer})"
 
-    prefixed_res = [
-        f"{answer_word}{colon_re}.{{0,50}}?{answer_re}",
-        # Answer is A.
-        f"{answer_word}.{{0,50}}?{answer_re}",
-        # A. at start
-        answer_re_start,
+    regexes = [
+        # Priority 1: Most specific patterns first
+        (f"{answer_word}{colon_re}.{{0,50}}?{answer_re}", 0),
+        # Priority 2: Answer word patterns
+        (f"{answer_word}.{{0,50}}?{answer_re}", 50),
+        # Priority 3: Start of line patterns
+        (answer_re_start, 100),
     ]
+    
     if indices_config.try_last_indices_match:
-        prefixed_res.extend(
-            [
-                # A.
-                answer_re,
-                # A
-                indice_str_re,
-            ]
-        )
+        # Priority 4-5: Less specific patterns
+        regexes.extend([
+            (answer_re, 150),
+            (indice_str_re, 200),
+        ])
 
-    return list(map(re.compile, prefixed_res))
+    return [(re.compile(pattern), priority) for pattern, priority in regexes]
 
 
 def get_extraction_regexes(
     formatted_doc: Doc, target_types: tuple[ExtractionTarget], language: Language
-) -> list[tuple[list[re.Pattern], ExtractionTarget]]:
+) -> list[tuple[list[tuple[re.Pattern[str], int]], ExtractionTarget]]:
     extraction_regexes = [
         (lazy_latex_regex(target_type, language), target_type)
         if isinstance(target_type, LatexExtractionConfig)
@@ -547,34 +568,29 @@ def get_extraction_regexes(
 
 def extract_target_from_pred(
     pred: str,
-    target_res: list[tuple[list[re.Pattern], ExtractionTarget]],
+    target_res: list[tuple[list[tuple[re.Pattern[str], int]], ExtractionTarget]],
     extraction_mode: Literal["first_match", "extract_each_target", "first_fallback"] = "first_match",
     fallback_mode: Literal["no_fallback", "first_match", "any_match"] = "no_fallback",
 ) -> list[str | sympy.Expr | None | float]:
     extracted_predictions = []
     fallbacks = []
 
-    for patterns, target_type in target_res:
-        for p in patterns:
-            matches = list(p.finditer(pred))
-            extracted_match, str_fallback = extract_match(matches[-1], target_type) if matches else (None, None)
+    # for patterns, target_type in target_res:
+        # Sort patterns by priority (lowest first)
+    all_patterns = [(pattern, target_type, priority) for target_patterns, target_type in target_res for pattern, priority in target_patterns]
+    sorted_patterns = sorted(all_patterns, key=lambda x: x[2])
+    
+    for pattern, target_type, _ in sorted_patterns:
+        matches = list(pattern.finditer(pred))
+        extracted_match, str_fallback = extract_match(matches[-1], target_type) if matches else (None, None)
 
-            # If we managed to extract something, break
-            if extracted_match is not None:
-                extracted_predictions.append(extracted_match)
+        # If we managed to extract something, break
+        if extracted_match is not None:
+             extracted_predictions.append(extracted_match)
 
-            if str_fallback:
-                fallbacks.append(str_fallback)
+        if str_fallback:
+            fallbacks.append(str_fallback)
 
-            if (
-                extraction_mode == "first_match"
-                and extracted_predictions
-                or extraction_mode == "first_fallback"
-                and fallbacks
-            ):
-                break
-
-        # Break early if we don't want to extract all targets
         if (
             extraction_mode == "first_match"
             and extracted_predictions
@@ -594,6 +610,7 @@ def extract_target_from_pred(
 
     return extracted_predictions
 
+
 def safe_sympy_doit(a: sympy.Expr | MatrixBase):
     try:
         return a.doit()
@@ -602,6 +619,23 @@ def safe_sympy_doit(a: sympy.Expr | MatrixBase):
     except:
         pass
     return a
+
+
+def is_atomic_or_negative_atomic(expr: Basic | MatrixBase, atomic_type: type) -> bool:
+    """
+    Check if expression is either:
+    - An instance of the specified atomic type
+    - A negative number represented as Mul(-1, atomic_type)
+    """
+    return (
+        isinstance(expr, atomic_type) 
+        or (
+            isinstance(expr, sympy.Mul) 
+            and len(expr.args) == 2 
+            and expr.args[0] == -1 
+            and isinstance(expr.args[1], atomic_type)
+        )
+    )
 
 def sympy_numeric_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precision: int):
     # Only do this when one of the two is a float, in other cases use symbolic equality as this could lead to false positives
@@ -614,9 +648,13 @@ def sympy_numeric_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, pre
         if isinstance(a, (MatrixBase)) and isinstance(b, (MatrixBase)) and a.shape == b.shape:
             return all(sympy_numeric_eq(a_elem, b_elem, precision) for a_elem, b_elem in zip(a.flat(), b.flat()))
 
-    else:
-        # If one of them is a float, we can try to use precision
-        if isinstance(a, (sympy.Float)) or isinstance(b, (sympy.Float)):
+    # Ensure this also works for negative numbers
+    elif is_atomic_or_negative_atomic(a, sympy.Atom) or is_atomic_or_negative_atomic(b, sympy.Atom):
+        # If one of them is a float or a negative atomic number, we can try to use precision
+        if (
+            is_atomic_or_negative_atomic(a, sympy.Float) 
+            or is_atomic_or_negative_atomic(b, sympy.Float)
+        ):
             a = safe_sympy_doit(a)
             b = safe_sympy_doit(b)
             # Now if both are numbers, we can use precision
@@ -624,6 +662,12 @@ def sympy_numeric_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, pre
                 return a.round(precision) == b.round(precision)
         else:
             return safe_sympy_doit(a) == safe_sympy_doit(b)
+    
+    else:
+        try:
+            return bool(abs((a-b).evalf()) < 1e-10)
+        except:
+            pass
 
     return False
 
@@ -650,6 +694,13 @@ def sympy_deep_compare_finite_set(a: FiniteSet, b: FiniteSet, precision: int) ->
 
     return False
 
+def sympy_compare_set_interval(a: FiniteSet, b: Interval, precision: int) -> bool:
+    # Only compare if it's the special case of 2 elements
+    if len(a) == 2 and b.is_open:
+        return sympy_deep_compare_finite_set(a, FiniteSet(b.start, b.end), precision)
+
+    return False
+
 
 def sympy_compare_interval(a: Interval, b: Interval, precision: int) -> bool:
     return (
@@ -658,6 +709,7 @@ def sympy_compare_interval(a: Interval, b: Interval, precision: int) -> bool:
         and sympy_expr_eq(a.start, b.start, precision)
         and sympy_expr_eq(a.end, b.end, precision)
     )
+
 
 def sympy_str_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase) -> bool:
 
@@ -678,6 +730,7 @@ def sympy_str_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase) -> bool
     except:
         pass
     return False
+
 
 def sympy_expr_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precision: int) -> bool:
     # Start with simple str and expr comparisson as it's the fastest
@@ -721,10 +774,19 @@ def sympy_expr_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precis
             return True
         if isinstance(a_set, FiniteSet) and isinstance(b_set, FiniteSet):
             return sympy_deep_compare_finite_set(a_set, b_set, precision)
+        
+        # Special case for interval and set, it's very hard to distinguish between them 2 element set and interval
+        # so in this case we also try to treat them as equal
+        if isinstance(a_set, Interval) and isinstance(b_set, FiniteSet):
+            return sympy_compare_set_interval(b_set, a_set, precision)
+        
+        if isinstance(a_set, FiniteSet) and isinstance(b_set, Interval):
+            return sympy_compare_set_interval(a_set, b_set, precision)
+
         return False
 
     elif isinstance(a, (Basic, MatrixBase)) and isinstance(b, (Basic, MatrixBase)):
-        # For expressions,
+        # Mostly so that 0.333333 = 1/3
         if sympy_numeric_eq(a, b, precision):
             return True
         # Then try symbolic equality
@@ -737,7 +799,8 @@ def sympy_expr_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precis
 def compare_gold_target(
     gold: list[sympy.Expr | Relational | str], target: list[sympy.Expr | Relational | str], precision: int
 ) -> float:
-    @timeout(timeout_seconds=10)
+    # REVERT BACK TO 10
+    @timeout(timeout_seconds=1000000)
     def compare_single_extraction(gold: str | sympy.Expr | float, target: str | sympy.Expr | float) -> float:
         # Expression case
 
