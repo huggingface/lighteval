@@ -206,18 +206,20 @@ class JudgeLM:
                     }
                     response = litellm.completion(**kwargs)
                     text = response.choices[0].message.content
-                    if text is None:
+                    if not text or response.failed:
                         kwargs["caching"] = False
                         response = litellm.completion(**kwargs)
                         text = response.choices[0].message.content
-                        if text is None:
+                        if not text or response.failed:
                             # Just return an error response if the second attempt fails too
-                            return ModelResponse(text="Failed to get response from the API.", model=self.model)
+                            return ModelResponse(
+                                text="Failed to get response from the API.", model=self.model, failed=True
+                            )
                     return text
                 except Exception as e:
                     logger.warning(f"{type(e), e}")
                     time.sleep(self.API_RETRY_SLEEP)
-            return ModelResponse(text="Failed to get response from the API.", model=self.model)
+            return ModelResponse(text="Failed to get response from the API.", model=self.model, failed=True)
 
         results = []
         with ThreadPoolExecutor(100) as executor:
