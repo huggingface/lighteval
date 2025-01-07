@@ -290,7 +290,6 @@ class LatexExtractionConfig:
     enforce_boxed_match: bool = True
 
 
-
 @dataclass(frozen=True)
 class ExprExtractionConfig:
     try_last_expr_match: bool = True
@@ -346,6 +345,7 @@ def extract_latex(match: re.Match, target_type: LatexExtractionConfig) -> tuple[
     latex_group, latex = next(
         ((name, val) for name, val in match.groupdict().items() if name.startswith("latex") and val), ("", "")
     )
+    is_percentage = True if match.group("percent") else False
 
     normalized_latex = normalize_latex(
         latex,
@@ -361,6 +361,8 @@ def extract_latex(match: re.Match, target_type: LatexExtractionConfig) -> tuple[
 
     try:
         parsed_latex = parse_latex_with_timeout(normalized_latex)
+        if is_percentage:
+            parsed_latex = parsed_latex / sympy.Number(100)
     except:
         return None, normalized_latex
     return parsed_latex, normalized_latex
@@ -395,7 +397,7 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
         r"(?P<decimal3>\.\d+)|"
         # Format 4: Integer only (e.g., "123")
         r"(?P<integer3>-?\d+)"
-        r")(?P<percent>%?|%)"
+        r")(?P<percent>\s*(?:%|[Pp]ercent|\s*[Pp]ercentage|\s*[Pp]ct))?"
     )
 
     operators = [r"\+", r"\-", r"\*", r"\×", r"\/", r"\^", r"\(", r"\)", r"\÷"]
@@ -448,6 +450,7 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
 def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) -> list[tuple[re.Pattern[str], int]]:
     # Only LaTeX expressions between delimiters
     simple_number = r"-?\d+(?:[.,]\d+)?"
+    percent_re_group = r"(?P<percent>\s*(?:\\?%|[Pp]ercent|[Pp]ercentage|[Pp]ct))"
     latex_envs_re = (
         r"("
         r"(?<!\\)\$\$(?P<latexDisplayDollar>[\s\S]+?)(?<!\\)\$\$|"  # $$...$$ (display math, can be multiline)
@@ -455,12 +458,12 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) ->
         r"(?<!\\|\d)\$(?P<latexInlineDollar>(?:\\[$]|[^\n$])+?)(?<!\\)\$|"  # $...$ (inline math, single line, allows escaped $), we make sure it's not preceed by a digit to minimize false positives with actualy dollar unit
         r"(?<!\\)\\\((?P<latexInlineParenthesis>[^\n)]+?)(?<!\\)\\\)|"  # \(...\) (inline math, single line)
         r"(?<!\\)\[(?P<latexInlineBracket>[^\n$]+?)(?<!\\)\]"  # [....] While this is no a valid display math llms like to generate it, allow it
-        r")"
+        rf"){percent_re_group}?"
     )
 
     # Match latex without environments
-    latex_boxed = r"(?P<latexBoxed>\\boxed{.+})"  # Boxed number, it's fine to be as greedy as possible as we will find the correct end afterwards
-    latex_fraction = rf"(?P<latexFraction>-?\\frac{{{simple_number}}}{{{simple_number}}})"
+    latex_boxed = rf"(?P<latexBoxed>\\boxed{{.+}})\$?{percent_re_group}?"  # Boxed number, it's fine to be as greedy as possible as we will find the correct end afterwards
+    latex_fraction = rf"(?P<latexFraction>-?\\frac{{{simple_number}}}{{{simple_number}}})\$?{percent_re_group}?"
 
     translation_literal = TRANSLATION_LITERALS[language]
     colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
