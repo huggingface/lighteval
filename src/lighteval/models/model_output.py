@@ -33,7 +33,6 @@ class ModelResponse:
     generated_tokens: list[int] = field(default_factory=list)  # model generations
     truncated_tokens_count: Optional[int] = 0  # How many tokens truncated
     padded_tokens_count: Optional[int] = 0  # How many tokens of padding
-    failed: bool = False
 
     def get_result_for_eval(self):
         raise NotImplementedError()
