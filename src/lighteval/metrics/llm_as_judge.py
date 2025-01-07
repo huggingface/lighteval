@@ -212,14 +212,12 @@ class JudgeLM:
                         text = response.choices[0].message.content
                         if not text or response.failed:
                             # Just return an error response if the second attempt fails too
-                            return ModelResponse(
-                                text="Failed to get response from the API.", model=self.model, failed=True
-                            )
+                            return ModelResponse(result="Failed to get response from the API.", failed=True)
                     return text
                 except Exception as e:
                     logger.warning(f"{type(e), e}")
                     time.sleep(self.API_RETRY_SLEEP)
-            return ModelResponse(text="Failed to get response from the API.", model=self.model, failed=True)
+            return ModelResponse(result="Failed to get response from the API.", failed=True)
 
         results = []
         with ThreadPoolExecutor(100) as executor:
