@@ -677,7 +677,9 @@ def sympy_numeric_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, pre
 
     else:
         try:
-            return bool(abs((a - b).evalf()) < 1e-10)
+            return bool(abs((a-b).evalf()) < 1e-10)
+        except TimeoutException:
+            raise
         except:
             pass
 
@@ -812,7 +814,7 @@ def compare_gold_target(
     gold: list[sympy.Expr | Relational | str], target: list[sympy.Expr | Relational | str], precision: int
 ) -> float:
     # REVERT BACK TO 10
-    @timeout(timeout_seconds=1000000)
+    @timeout(timeout_seconds=10)
     def compare_single_extraction(gold: str | sympy.Expr | float, target: str | sympy.Expr | float) -> float:
         # Expression case
 
