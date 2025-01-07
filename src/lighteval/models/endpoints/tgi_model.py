@@ -21,14 +21,15 @@
 # SOFTWARE.
 
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Coroutine, Optional
 
 import requests
-from huggingface_hub import TextGenerationInputGrammarType, TextGenerationOutput
+from huggingface_hub import TextGenerationInputGenerateParameters, TextGenerationInputGrammarType, TextGenerationOutput
 from transformers import AutoTokenizer
 
 from lighteval.models.endpoints.endpoint_model import InferenceEndpointModel, ModelInfo
+from lighteval.models.model_input import GenerationParameters
 from lighteval.utils.imports import NO_TGI_ERROR_MSG, is_tgi_available
 
 
@@ -50,6 +51,11 @@ class TGIModelConfig:
     inference_server_address: str
     inference_server_auth: str
     model_id: str
+    generation_parameters: GenerationParameters = None
+
+    def __post_init__(self):
+        if not self.generation_parameters:
+            self.generation_parameters = GenerationParameters()
 
     @classmethod
     def from_path(cls, path: str) -> "TGIModelConfig":
@@ -65,7 +71,7 @@ class TGIModelConfig:
 
         with open(path, "r") as f:
             config = yaml.safe_load(f)["model"]
-        return cls(**config["instance"])
+        return cls(**config["instance"], generation_parameters=GenerationParameters.from_dict(config))
 
 
 # inherit from InferenceEndpointModel instead of LightevalModel since they both use the same interface, and only overwrite
@@ -73,18 +79,22 @@ class TGIModelConfig:
 class ModelClient(InferenceEndpointModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
-    def __init__(self, address, auth_token=None, model_id=None) -> None:
+    def __init__(self, config: TGIModelConfig) -> None:
         if not is_tgi_available():
             raise ImportError(NO_TGI_ERROR_MSG)
-        headers = {} if auth_token is None else {"Authorization": f"Bearer {auth_token}"}
+        headers = (
+            {} if config.inference_server_auth is None else {"Authorization": f"Bearer {config.inference_server_auth}"}
+        )
 
-        self.client = AsyncClient(address, headers=headers, timeout=240)
+        self.client = AsyncClient(config.inference_server_address, headers=headers, timeout=240)
+        self.generation_parameters = config.generation_parameters
+        self.generation_config = TextGenerationInputGenerateParameters(**self.generation_parameters.to_tgi_ie_dict())
         self._max_gen_toks = 256
-        self.model_info = requests.get(f"{address}/info", headers=headers).json()
+        self.model_info = requests.get(f"{config.inference_server_address}/info", headers=headers).json()
         if "model_id" not in self.model_info:
             raise ValueError("Error occured when fetching info: " + str(self.model_info))
-        if model_id:
-            self.model_info["model_id"] = model_id
+        if config.model_id:
+            self.model_info["model_id"] = config.model_id
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_info["model_id"])
         self._add_special_tokens = True
         self.use_async = True
@@ -107,13 +117,17 @@ class ModelClient(InferenceEndpointModel):
         grammar: Optional[TextGenerationInputGrammarType] = None,
     ) -> Coroutine[None, list[TextGenerationOutput], str]:
         # Todo: add an option to launch with conversational instead for chat prompts
-        generated_text = self.client.generate(
-            prompt=context,
+        # We create a copy of the current text generation params
+        generation_config: TextGenerationInputGenerateParameters = replace(
+            self.generation_config,
+            stop=stop_tokens,
+            max_new_tokens=max_tokens,
+            details=True,
             decoder_input_details=True,
             grammar=grammar,
-            max_new_tokens=max_tokens,
-            stop_sequences=stop_tokens,
         )
+
+        generated_text = self.client.generate(prompt=context, generation_config=generation_config)
 
         return generated_text
 

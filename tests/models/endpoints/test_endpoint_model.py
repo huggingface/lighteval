@@ -53,7 +53,7 @@ class TestInferenceEndpointModelConfig:
                 },
             ),
             (
-                "examples/model_configs/endpoint_model_lite.yaml",
+                "examples/model_configs/serverless_model.yaml",
                 {
                     "model_name": "meta-llama/Llama-3.1-8B-Instruct",
                     # Defaults:

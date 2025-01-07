@@ -148,10 +148,10 @@ class Registry:
         intersection = set(default_tasks_registry.keys()).intersection(set(custom_tasks_registry.keys()))
         if len(intersection) > 0:
             logger.warning(
-                f"Following tasks ({intersection}) exists both in the default and custom tasks. Will use the default ones on conflict."
+                f"Following tasks ({intersection}) exists both in the default and custom tasks. Will use the custom ones on conflict."
             )
 
-        # Defaults tasks should overwrite custom tasks
+        # Custom tasks overwrite defaults tasks
         return {**default_tasks_registry, **custom_tasks_registry}
 
     @property

@@ -29,10 +29,9 @@ from typing import Optional
 
 from tqdm import tqdm
 
-from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
+from lighteval.data import GenerativeTaskDataset
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.endpoints.endpoint_model import ModelInfo
-from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
@@ -44,83 +43,126 @@ from lighteval.tasks.requests import (
     LoglikelihoodRollingRequest,
     LoglikelihoodSingleTokenRequest,
 )
-from lighteval.utils.imports import is_openai_available
+from lighteval.utils.imports import is_litellm_available
 
 
 logger = logging.getLogger(__name__)
 
+if is_litellm_available():
+    import litellm
+    from litellm import encode
+    from litellm.caching.caching import Cache
+    from litellm.utils import ModelResponse
 
-if is_openai_available():
-    import logging
+    logging.getLogger("LiteLLM").setLevel(logging.WARNING)
+    logging.getLogger("LiteLLM").handlers.clear()
 
-    import tiktoken
-    from openai import OpenAI
-
-    logging.getLogger("openai").setLevel(logging.ERROR)
-    logging.getLogger("httpx").setLevel(logging.ERROR)
+    litellm.cache = Cache(type="disk")
 
 
 @dataclass
-class OpenAIModelConfig:
+class LiteLLMModelConfig:
     model: str
-    generation_parameters: GenerationParameters = None
-
-    def __post_init__(self):
-        if not self.generation_parameters:
-            self.generation_parameters = GenerationParameters()
-
-    @classmethod
-    def from_path(cls, path: str) -> "OpenAIModelConfig":
-        import yaml
-
-        with open(path, "r") as f:
-            config = yaml.safe_load(f)["model"]
-        generation_parameters = GenerationParameters.from_dict(config)
-        return cls(model=config["model_name"], generation_parameters=generation_parameters)
 
 
-class OpenAIClient(LightevalModel):
+class LiteLLMClient(LightevalModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
-    def __init__(self, config: OpenAIModelConfig, env_config) -> None:
-        api_key = os.environ["OPENAI_API_KEY"]
-        self.client = OpenAI(api_key=api_key)
-        self.generation_parameters = config.generation_parameters
-        self.sampling_params = self.generation_parameters.to_vllm_openai_dict()
-
+    def __init__(self, config, env_config) -> None:
+        """
+        IMPORTANT: Your API keys should be set in the environment variables.
+        If a base_url is not set, it will default to the public API.
+        """
         self.model_info = ModelInfo(
             model_name=config.model,
             model_sha="",
             model_dtype=None,
             model_size="",
         )
+        self.provider = config.model.split("/")[0]
+        self.base_url = os.getenv(f"{self.provider.upper()}_BASE_URL", None)
         self.API_MAX_RETRY = 5
         self.API_RETRY_SLEEP = 3
         self.API_RETRY_MULTIPLIER = 2
-        self.CONCURENT_CALLS = 100
+        self.CONCURENT_CALLS = 20  # 100 leads to hitting Anthropic rate limits
+        self.TEMPERATURE = 0.7
+        self.TOP_P = 0.95
         self.model = config.model
-        self._tokenizer = tiktoken.encoding_for_model(self.model)
+        self._tokenizer = encode
         self.pairwise_tokenization = False
+        litellm.drop_params = True
+        litellm.verbose = True
 
-    def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, logit_bias):
-        for _ in range(self.API_MAX_RETRY):
+    def _prepare_stop_sequence(self, stop_sequence):
+        """Prepare and validate stop sequence."""
+        if self.provider == "anthropic":
+            # Filter out whitespace-only stop sequences
+            if stop_sequence:
+                stop_sequence = [s for s in stop_sequence if s and s.strip()]
+        if not stop_sequence:  # If empty after filtering
+            stop_sequence = ["\n"]
+        return stop_sequence
+
+    def _prepare_max_new_tokens(self, max_new_tokens):
+        """Calculate completion tokens based on max_new_tokens."""
+        if not max_new_tokens or max_new_tokens <= 0:
+            return None
+
+        if "o1" in self.model:
+            # We need to allow more tokens to include reasoning tokens
+            max_new_tokens = min(max_new_tokens * 10, 32000)
+        return max_new_tokens
+
+    def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, stop_sequence):
+        """Make API call with retries."""
+        response = ModelResponse()
+        for attempt in range(self.API_MAX_RETRY):
             try:
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[{"role": "user", "content": prompt}],
-                    response_format={"type": "text"},
-                    max_tokens=max_new_tokens if max_new_tokens > 0 else None,
-                    logprobs=return_logits,
-                    logit_bias=logit_bias,
-                    n=num_samples,
-                    **self.sampling_params,
-                )
+                stop_sequence = self._prepare_stop_sequence(stop_sequence)
+                max_new_tokens = self._prepare_max_new_tokens(max_new_tokens)
+
+                if return_logits and not self.provider == "openai":
+                    logger.warning("Returning logits is not supported for this provider, ignoring.")
+
+                # Prepare kwargs for completion call
+                kwargs = {
+                    "model": self.model,
+                    "messages": prompt,
+                    "max_completion_tokens": max_new_tokens,
+                    "logprobs": return_logits if self.provider == "openai" else None,
+                    "stop": stop_sequence,
+                    "base_url": self.base_url,
+                    "n": num_samples,
+                    "temperature": self.TEMPERATURE,
+                    "top_p": self.TOP_P,
+                    "caching": True,
+                }
+
+                response = litellm.completion(**kwargs)
+
+                # If response is empty, retry without caching (maybe the error is recoverable and solved with a retry)
+                if response.choices[0].message.content is None:
+                    kwargs["caching"] = False
+                    logger.info("Response is empty, retrying without caching")
+                    response = litellm.completion(**kwargs)
                 return response
+            except litellm.BadRequestError as e:
+                if "message" in e.__dict__:
+                    error_string = (
+                        "The response was filtered due to the prompt triggering Microsoft's content management policy"
+                    )
+                    if error_string in e.__dict__["message"]:
+                        logger.warning(f"{error_string}. Returning empty response.")
+                        return ModelResponse()
             except Exception as e:
-                logger.warning(f"{type(e), e}")
-                time.sleep(self.API_RETRY_SLEEP)
-                self.API_RETRY_SLEEP = self.API_RETRY_SLEEP**self.API_RETRY_MULTIPLIER
-        raise Exception("Failed to get response from the API")
+                wait_time = min(64, self.API_RETRY_SLEEP * (2**attempt))  # Exponential backoff with max 64s
+                logger.warning(
+                    f"Error in API call: {e}, waiting {wait_time} seconds before retry {attempt + 1}/{self.API_MAX_RETRY}"
+                )
+                time.sleep(wait_time)
+
+        logger.error(f"API call failed after {self.API_MAX_RETRY} attempts, returning empty response.")
+        return ModelResponse()
 
     def __call_api_parallel(
         self,
@@ -128,22 +170,28 @@ class OpenAIClient(LightevalModel):
         return_logits: bool | list[bool],
         max_new_tokens: int | list[int],
         num_samples: int | list[int],
-        logit_bias: list[dict[int, float]] | None = None,
+        stop_sequence: list[str] | None = None,
     ):
         results = []
 
         return_logitss = [return_logits for _ in prompts] if not isinstance(return_logits, list) else return_logits
         max_new_tokenss = [max_new_tokens for _ in prompts] if not isinstance(max_new_tokens, list) else max_new_tokens
         num_sampless = [num_samples for _ in prompts] if not isinstance(num_samples, list) else num_samples
-        logit_biass = [logit_bias for _ in prompts] if logit_bias is None else logit_bias
-
+        stop_sequencess = [stop_sequence for _ in prompts]
         assert (
-            len(prompts) == len(return_logitss) == len(max_new_tokenss) == len(num_sampless) == len(logit_biass)
-        ), "Length of prompts, return_logitss, max_new_tokenss, num_sampless, logit_biass should be same"
+            len(prompts) == len(return_logitss) == len(max_new_tokenss) == len(num_sampless) == len(stop_sequencess)
+        ), f"Length of prompts, return_logitss, max_new_tokenss, num_sampless, stop_sequences, system_prompts should be the same but are {len(prompts)}, {len(return_logitss)}, {len(max_new_tokenss)}, {len(num_sampless)}, {len(stop_sequencess)}"
 
         with ThreadPoolExecutor(self.CONCURENT_CALLS) as executor:
             for entry in tqdm(
-                executor.map(self.__call_api, prompts, return_logitss, max_new_tokenss, num_sampless, logit_biass),
+                executor.map(
+                    self.__call_api,
+                    prompts,
+                    return_logitss,
+                    max_new_tokenss,
+                    num_sampless,
+                    stop_sequencess,
+                ),
                 total=len(prompts),
             ):
                 results.append(entry)
@@ -181,18 +229,20 @@ class OpenAIClient(LightevalModel):
             position=0,
             disable=False,  # self.disable_tqdm,
         ):
+            contexts = [c.context for c in dataset]
             max_new_tokens = dataset[0].generation_size  # could be none
             return_logits = dataset[0].use_logits
             num_samples = dataset[0].num_samples
-            contexts = [c.context for c in dataset]
+            stop_sequence = requests[0].stop_sequence
 
-            responses = self.__call_api_parallel(contexts, return_logits, max_new_tokens, num_samples)
+            responses = self.__call_api_parallel(contexts, return_logits, max_new_tokens, num_samples, stop_sequence)
 
             for response in responses:
-                result: list[str] = [output.message.content for output in response.choices]
+                result: list[str] = [choice.message.content for choice in response.choices]
 
                 cur_response = GenerativeResponse(
-                    result=result,
+                    # In empty responses, the model should return an empty string instead of None
+                    result=result if result[0] else [""],
                     logits=None,
                     generated_tokens=[],
                     input_tokens=[],
@@ -205,8 +255,12 @@ class OpenAIClient(LightevalModel):
     def tokenizer(self):
         return self._tokenizer
 
-    def tok_encode(self, text: str):
-        return self.tokenizer.encode(text)
+    def tok_encode(self, text: str | list[str]):
+        if isinstance(text, list):
+            toks = [encode(model=self.model, text=t["content"]) for t in text]
+            toks = [tok for tok in toks if tok]
+            return toks
+        return encode(model=self.model, text=text)
 
     @property
     def add_special_tokens(self) -> bool:
@@ -223,51 +277,7 @@ class OpenAIClient(LightevalModel):
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
-        for request in requests:
-            if request.context == "":
-                request.tokenized_context = [" "]
-                request.tokenized_continuation = self.tok_encode(request.choice)
-            else:
-                # The following line is mandatory for compatibility with the harness
-                request.tokenized_context, request.tokenized_continuation = self.tok_encode_pair(
-                    request.context, request.choice, pairwise=self.pairwise_tokenization
-                )
-        return self._loglikelihood_tokens(requests)
-
-    def _loglikelihood_tokens(
-        self,
-        requests: list[LoglikelihoodRequest],
-    ) -> list[LoglikelihoodResponse]:
-        dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=1)
-        results = []
-
-        for _ in tqdm(dataset.splits_start_end_iterator()):
-            inputs = [dataset[i].context for i in range(len(dataset))]
-            logit_biass = []
-            max_new_tokens = [len(dataset[i].tokenized_continuation) for i in range(len(dataset))]
-
-            assert all(
-                new_tokens == 1 for new_tokens in max_new_tokens
-            ), "Only single token continuations are supported when using openai API."
-
-            for i in range(len(dataset)):
-                logit_bias = {tok: 100 for tok in dataset[i].tokenized_continuation}
-                logit_biass.append(logit_bias)
-
-            outputs = self.__call_api_parallel(
-                inputs, return_logits=True, max_new_tokens=max_new_tokens, num_samples=1, logit_bias=logit_biass
-            )
-
-            for output, input in zip(outputs, dataset):
-                continuation_logprobs = [content.logprob for content in output.choices[0].logprobs.content]
-                answer = LoglikelihoodResponse(
-                    input_tokens=input.tokenized_context + input.tokenized_continuation,
-                    generated_tokens=input.tokenized_continuation,
-                    result=(sum(continuation_logprobs), None),
-                )
-                results.append(answer)
-
-        return dataset.get_original_order(results)
+        raise NotImplementedError
 
     def loglikelihood_rolling(
         self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
