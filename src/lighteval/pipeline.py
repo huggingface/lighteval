@@ -35,7 +35,13 @@ import numpy as np
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.metrics.utils.metric_utils import MetricCategory
 from lighteval.models.model_loader import TransformersModel, load_model
-from lighteval.models.model_output import GenerativeMultiturnResponse, GenerativeResponse, LoglikelihoodResponse, LoglikelihoodSingleTokenResponse, ModelResponse
+from lighteval.models.model_output import (
+    GenerativeMultiturnResponse,
+    GenerativeResponse,
+    LoglikelihoodResponse,
+    LoglikelihoodSingleTokenResponse,
+    ModelResponse,
+)
 from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_tasks
 from lighteval.tasks.registry import Registry, taskinfo_selector
 from lighteval.tasks.requests import RequestType, SampleUid
@@ -248,7 +254,13 @@ class Pipeline:
         )
 
         if self.pipeline_parameters.load_responses_from_details_date_id:
-            sample_id_to_responses = self._load_responses_from_details()
+            try:
+                sample_id_to_responses = self._load_responses_from_details()
+            except FileNotFoundError as e:
+                logger.warning(
+                    f"No responses found for {self.pipeline_parameters.load_responses_from_details_date_id} in details directory: {e}. Running model instead."
+                )
+                sample_id_to_responses = self._run_model()
         else:
             sample_id_to_responses = self._run_model()
 
@@ -267,15 +279,47 @@ class Pipeline:
                 except OSError:
                     pass
 
-
     def _load_responses_from_details(self):
         logger.info("--- LOADING RESPONSES FROM DETAILS ---")
         sample_id_to_responses: dict[(SampleUid, MetricCategory), list[ModelResponse]] = collections.defaultdict(list)
 
         request_types = list(self.requests.keys())
         if len(request_types) > 1:
-            raise ValueError("Loading responses from details when there are multiple request types is currently not supported")
-        request_type = request_types[0]
+            raise ValueError(
+                "Loading responses from details when there are multiple request types is currently not supported"
+            )
+        model_response_type = self._get_model_response_type(request_types[0])
+
+        details_datasets = self.evaluation_tracker.load_details_datasets(
+            self.pipeline_parameters.load_responses_from_details_date_id
+        )
+        for task_name, dataset in details_datasets.items():
+            task: LightevalTask = self._get_task(task_name)
+            num_samples = len(dataset["predictions"])
+            max_samples = self.pipeline_parameters.max_samples if self.pipeline_parameters.max_samples else num_samples
+            if num_samples > max_samples:
+                logger.warning(
+                    f"Skipping {num_samples - max_samples} samples for {task_name} when loading responses from details because max_samples is set to {max_samples}"
+                )
+                num_samples = self.pipeline_parameters.max_samples
+            for metric_category, has_metric_category in task.has_metric_category.items():
+                if not has_metric_category:
+                    continue
+                for idx in range(num_samples):
+                    kwargs = {
+                        "result": ast.literal_eval(dataset["predictions"][idx]),
+                        "input_tokens": ast.literal_eval(dataset["input_tokens"][idx]),
+                        "generated_tokens": ast.literal_eval(dataset["cont_tokens"][idx]),
+                        "truncated_tokens_count": ast.literal_eval(dataset["truncated"][idx])[0],
+                        "padded_tokens_count": ast.literal_eval(dataset["padded"][idx])[0],
+                    }
+                    if model_response_type == GenerativeResponse:
+                        kwargs["logits"] = ast.literal_eval(dataset["pred_logits"][idx])
+                    response = model_response_type(**kwargs)
+                    sample_id_to_responses[(SampleUid(task_name, f"{idx}_{0}"), metric_category)] = [response]
+        return sample_id_to_responses
+
+    def _get_model_response_type(self, request_type):
         if request_type == RequestType.LOGLIKELIHOOD:
             model_response_type = LoglikelihoodResponse
         elif request_type == RequestType.LOGLIKELIHOOD_SINGLE_TOKEN:
@@ -287,32 +331,11 @@ class Pipeline:
         elif request_type == RequestType.GREEDY_UNTIL:
             model_response_type = GenerativeResponse
         else:
-            raise ValueError(f"Loading responses from details for request type {request_type} is currently not supported")
+            raise ValueError(
+                f"Loading responses from details for request type {request_type} is currently not supported"
+            )
 
-        details_datasets = self.evaluation_tracker.load_details_datasets(self.pipeline_parameters.load_responses_from_details_date_id)
-        for task_name, dataset in details_datasets.items():
-            task: LightevalTask = self._get_task(task_name)
-            num_samples = len(dataset["predictions"])
-            max_samples = self.pipeline_parameters.max_samples if self.pipeline_parameters.max_samples else num_samples
-            if num_samples > max_samples:
-                logger.warning(f"Skipping {num_samples - max_samples} samples for {task_name} when loading responses from details because max_samples is set to {max_samples}")
-                num_samples = self.pipeline_parameters.max_samples
-            for metric_category, has_metric_category in task.has_metric_category.items():
-                if not has_metric_category:
-                    continue
-                for idx in range(num_samples):
-                    kwargs = {
-                        "result": ast.literal_eval(dataset["predictions"][idx]),
-                        "input_tokens": ast.literal_eval(dataset["input_tokens"][idx]),
-                        "generated_tokens": ast.literal_eval(dataset["cont_tokens"][idx]),
-                        "truncated_tokens_count": ast.literal_eval(dataset["truncated"][idx])[0],
-                        "padded_tokens_count": ast.literal_eval(dataset["padded"][idx])[0]
-                    }
-                    if model_response_type == GenerativeResponse:
-                        kwargs["logits"] = ast.literal_eval(dataset["pred_logits"][idx])
-                    response = model_response_type(**kwargs)
-                    sample_id_to_responses[(SampleUid(task_name, f"{idx}_{0}"), metric_category)] = [response]
-        return sample_id_to_responses
+        return model_response_type
 
     def _run_model(self):
         # Running all requests depending on the model call type (log likelihood, generative, ...)
