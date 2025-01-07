@@ -27,6 +27,7 @@ from dataclasses import dataclass
 from functools import lru_cache, partial
 from itertools import product
 from typing import Callable, Literal, Sequence
+from lighteval.logging.hierarchical_logger import hlog_warn
 
 import numpy as np
 import sympy
@@ -679,7 +680,9 @@ def sympy_numeric_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, pre
 
     else:
         try:
-            return bool(abs((a - b).evalf()) < 1e-10)
+            return bool(abs((a-b).evalf()) < 1e-10)
+        except TimeoutException:
+            raise
         except:
             pass
 
@@ -814,7 +817,7 @@ def compare_gold_target(
     gold: list[sympy.Expr | Relational | str], target: list[sympy.Expr | Relational | str], precision: int
 ) -> float:
     # REVERT BACK TO 10
-    @timeout(timeout_seconds=1000000)
+    @timeout(timeout_seconds=10)
     def compare_single_extraction(gold: str | sympy.Expr | float, target: str | sympy.Expr | float) -> float:
         # Expression case
 
@@ -871,17 +874,17 @@ def extract_target(
     ]
 
     # Assert on empty gold and warn on empty pred
-    # if any(len(g) == 0 for g in extracted_golds):
-    #     hlog_warn(f"No gold targets found for at least one gold. Gold: {golds}, Pred: {predictions}")
+    if any(len(g) == 0 for g in extracted_golds):
+        hlog_warn(f"No gold targets found for at least one gold. Gold: {golds}, Pred: {predictions}")
 
-    # if all(len(p) == 0 for p in extracted_predictions):
-    #     hlog_warn(f"No predictions found for all predictions. Gold: {golds}, Pred: {predictions}")
+    if all(len(p) == 0 for p in extracted_predictions):
+        hlog_warn(f"No predictions found for all predictions. Gold: {golds}, Pred: {predictions}")
 
     if formatted_doc.specific is None:
         formatted_doc.specific = {}
 
-    formatted_doc.specific["extracted_predictions"] = [str(p) for p in extracted_predictions]
-    formatted_doc.specific["extracted_golds"] = [str(g) for g in extracted_golds]
+    formatted_doc.specific["extracted_predictions"] = [str(pred) for preds in extracted_predictions for pred in preds]
+    formatted_doc.specific["extracted_golds"] = [str(gold) for golds in extracted_golds for gold in golds]
 
     return aggregation_function(
         (1.0 if any(compare_gold_target(gold, pred, precision) for gold in extracted_golds) else 0.0)

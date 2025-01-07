@@ -124,7 +124,7 @@ class Metrics(Enum):
 
     bleurt = SampleLevelMetric(
         metric_name="bleurt",
-        sample_level_fn=BLEURT().compute,
+        sample_level_fn=lambda x, y: x,
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.TRANSLATION,
         corpus_level_fn=np.mean,
