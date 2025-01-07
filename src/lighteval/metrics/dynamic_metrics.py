@@ -287,6 +287,8 @@ class LatexExtractionConfig:
 
     groups_with_fallback: Sequence[str] = ("latexDisplayDollar", "latexDisplayBracket", "latexInlineParenthesis")
     try_last_latex_match: bool = True
+    enforce_boxed_match: bool = True
+
 
 
 @dataclass(frozen=True)
@@ -468,7 +470,7 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) ->
     # We first match boxed env, for some reason that's the most common case of output
     # Then we match the latex with environments, then we try to match the fraction
     regexes: list[tuple[str, int]] = []
-    for latex_re, base_priority in [(latex_boxed, 1), (latex_envs_re, 2), (latex_fraction, 3)]:
+    for latex_re, base_priority in [(latex_envs_re, 2), (latex_fraction, 3)]:
         if language == Language.ENGLISH:
             final_answer_prefixed_re = rf"(?i:final answer is)\s*{latex_re}\.?\s?I hope"
             final_answer_prefixed_no_hope = rf"(?i:final answer is)\s*{latex_re}"
@@ -486,10 +488,11 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) ->
 
         # Match plain LaTeX - lowest priority
         if latex_config.try_last_latex_match:
-            if base_priority == 1:
-                regexes.append((latex_re, 299))
-            else:
-                regexes.append((latex_re, 300))
+            regexes.append((latex_re, 300))
+
+    # This ensures that boxed is matched right after the final answer xxxx
+    if latex_config.enforce_boxed_match:
+        regexes.append((latex_boxed, 110))
 
     return [(re.compile(pattern, re.DOTALL), priority) for pattern, priority in regexes]
 
