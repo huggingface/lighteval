@@ -134,24 +134,20 @@ pearson_metric = CorpusLevelMetric(
 
 # JSQUAD
 
-# JSQUAD_INSTRUCTION = "[題名]と[問題]から[質問]に対する[答え]を抜き出しなさい"  # The original prompt words in the paper
-JSQUAD_INSTRUCTION = (
-    "[質問]に対する回答を文章から一言で抽出してください。回答は名詞で答えてください。 それ以外には何も含めないことを厳守してください。"
-)
+JSQUAD_INSTRUCTION = "[題名]と[問題]から[質問]に対する[答え]を抜き出しなさい\n\n"
 
 JSQUAD_PROMPT_TEMPLAT = """\
-[題名]: {title}
-[問題]: {context}
-[質問]: {question}
+[題名]:
+{title}
+[問題]:
+{context}
+[質問]:
+{question}
 [答え]: """
 
 
 def jsquad_prompt_fn(line, task_name: str = None):
-    prompt = JSQUAD_PROMPT_TEMPLAT.format(
-        title=line["title"],
-        context=line["context"],
-        question=line["question"]
-    )
+    prompt = JSQUAD_PROMPT_TEMPLAT.format(title=line["title"], context=line["context"], question=line["question"])
     query = JSQUAD_INSTRUCTION + "\n\n" + prompt
     answer = line["answers"][0]["text"]
 
@@ -187,14 +183,9 @@ jsquad_task = LightevalTaskConfig(
     ],
 )
 
-
 # JCommonsenceQA
 
-# JCOMMONSENSE_QA_INSTRUCTION = "[問題]に対する[答え]を[選択肢]の中から選んでください。 "  # The original prompt words in the paper
-JCOMMONSENSE_QA_INSTRUCTION = (
-    "質問と回答の選択肢を入力として受け取り、選択肢から回答を選択してください。なお、回答は選択肢の番号（例：0）でするものとします。"
-    "回答となる数値をint型で返し、他には何も含めないことを厳守してください。"
-)
+JCOMMONSENSE_QA_INSTRUCTION = "[問題]に対する[答え]を[選択肢]の中から選んでください。\n\n"
 
 JCOMMONSENSE_QA_PROMPT_TEMPLAT = """\
 [問題]: {question}
@@ -204,10 +195,7 @@ JCOMMONSENSE_QA_PROMPT_TEMPLAT = """\
 
 def jcommonsenseqa_prompt_fn(line, task_name: str = None):
     choices = [line[f"choice{i}"] for i in range(5)]
-    prompt = JCOMMONSENSE_QA_PROMPT_TEMPLAT.format(
-        question=line["question"],
-        choices=str(choices)
-    )
+    prompt = JCOMMONSENSE_QA_PROMPT_TEMPLAT.format(question=line["question"], choices=str(choices))
     query = JCOMMONSENSE_QA_INSTRUCTION + "\n\n" + prompt
     label = line["label"]
 
@@ -253,10 +241,7 @@ JSTS_PROMPT_TEMPLAT = """\
 
 
 def jsts_prompt_fn(line, task_name: str = None):
-    prompt = JSTS_PROMPT_TEMPLAT.format(
-        sentence1=line["sentence1"],
-        sentence2=line["sentence2"]
-    )
+    prompt = JSTS_PROMPT_TEMPLAT.format(sentence1=line["sentence1"], sentence2=line["sentence2"])
     query = JSTS_INSTRUCTION + "\n\n" + prompt
     answer = line["label"]
 
@@ -302,10 +287,7 @@ JNLI_LABELS = ["含意", "中立", "矛盾"]
 
 
 def jnli_prompt_fn(line, task_name: str = None):
-    prompt = JNLI_PROMPT_TEMPLAT.format(
-        premise=line["premise"],
-        hypothesis=line["hypothesis"]
-    )
+    prompt = JNLI_PROMPT_TEMPLAT.format(premise=line["premise"], hypothesis=line["hypothesis"])
     query = JNLI_INSTRUCTION + "\n\n" + prompt
     label = line["label"]
 
@@ -336,6 +318,5 @@ jnli_task = LightevalTaskConfig(
         Metrics.loglikelihood_acc_norm_nospace,
     ],
 )
-
 
 TASKS_TABLE = [jsquad_task, jcommonsenseqa_task, jsts_task, jnli_task]
