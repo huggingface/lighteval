@@ -31,7 +31,7 @@ from typing_extensions import Annotated
 logger = logging.getLogger(__name__)
 
 TOKEN = os.getenv("HF_TOKEN")
-CACHE_DIR: str = os.getenv("HF_HOME", "/scratch")
+CACHE_DIR: str = os.getenv("HF_HOME")
 
 HELP_PANEL_NAME_1 = "Common Parameters"
 HELP_PANEL_NAME_2 = "Logging Parameters"
@@ -44,7 +44,7 @@ def accelerate(  # noqa C901
     model_args: Annotated[
         str,
         Argument(
-            help="Model arguments in the form key1=value1,key2=value2,... or path to yaml config file (see examples/model_configs/base_model.yaml)"
+            help="Model arguments in the form key1=value1,key2=value2,... or path to yaml config file (see examples/model_configs/transformers_model.yaml)"
         ),
     ],
     tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
@@ -107,9 +107,10 @@ def accelerate(  # noqa C901
     from accelerate import Accelerator, InitProcessGroupKwargs
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
+    from lighteval.models.model_input import GenerationParameters
     from lighteval.models.transformers.adapter_model import AdapterModelConfig
-    from lighteval.models.transformers.base_model import BaseModelConfig, BitsAndBytesConfig
     from lighteval.models.transformers.delta_model import DeltaModelConfig
+    from lighteval.models.transformers.transformers_model import BitsAndBytesConfig, TransformersModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
     accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
@@ -154,6 +155,8 @@ def accelerate(  # noqa C901
         # We extract the model args
         args_dict = {k.split("=")[0]: k.split("=")[1] for k in config["base_params"]["model_args"].split(",")}
 
+        args_dict["generation_parameters"] = GenerationParameters.from_dict(config)
+
         # We store the relevant other args
         args_dict["base_model"] = config["merged_weights"]["base_model"]
         args_dict["compile"] = bool(config["base_params"]["compile"])
@@ -180,13 +183,13 @@ def accelerate(  # noqa C901
         elif config["merged_weights"]["base_model"] not in ["", None]:
             raise ValueError("You can't specify a base model if you are not using delta/adapter weights")
         else:
-            model_config = BaseModelConfig(**args_dict)
+            model_config = TransformersModelConfig(**args_dict)
     else:
         model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
         model_args_dict["accelerator"] = accelerator
         model_args_dict["use_chat_template"] = use_chat_template
         model_args_dict["compile"] = bool(model_args_dict["compile"]) if "compile" in model_args_dict else False
-        model_config = BaseModelConfig(**model_args_dict)
+        model_config = TransformersModelConfig(**model_args_dict)
 
     pipeline = Pipeline(
         tasks=tasks,

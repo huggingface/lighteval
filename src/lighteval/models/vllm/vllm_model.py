@@ -32,6 +32,7 @@ from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
@@ -54,6 +55,12 @@ if is_vllm_available():
     from vllm import LLM, SamplingParams
     from vllm.distributed.parallel_state import destroy_distributed_environment, destroy_model_parallel
     from vllm.transformers_utils.tokenizer import get_tokenizer
+
+    logging.getLogger("vllm").propagate = True
+    logging.getLogger("vllm").handlers.clear()
+
+    logging.getLogger("ray").propagate = True
+    logging.getLogger("ray").handlers.clear()
 else:
     LLM = None
     SamplingParams = None
@@ -85,9 +92,13 @@ class VLLMModelConfig:
         True  # whether to add a space at the start of each continuation in multichoice generation
     )
     pairwise_tokenization: bool = False  # whether to tokenize the context and continuation separately or together.
+    generation_parameters: GenerationParameters = None  # sampling parameters to use for generation
 
     subfolder: Optional[str] = None
-    temperature: float = 0.6  # will be used for multi sampling tasks, for tasks requiring no sampling, this will be ignored and set to 0.
+
+    def __post_init__(self):
+        if not self.generation_parameters:
+            self.generation_parameters = GenerationParameters()
 
 
 class VLLMModel(LightevalModel):
@@ -117,6 +128,7 @@ class VLLMModel(LightevalModel):
         self.precision = _get_dtype(config.dtype, config=self._config)
 
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
+        self.sampling_params = SamplingParams(**config.generation_parameters.to_vllm_openai_dict())
         self.pairwise_tokenization = config.pairwise_tokenization
 
     @property
@@ -300,16 +312,18 @@ class VLLMModel(LightevalModel):
         generate: bool = True,
     ) -> list[GenerativeResponse]:
         """Contains the actual logic of the generation."""
+        sampling_params = self.sampling_params.clone() or SamplingParams()
         if generate:
-            sampling_params = SamplingParams(
-                temperature=float(self._config.temperature) if num_samples > 1 else 0.0,
-                n=num_samples,
-                max_tokens=max_new_tokens,
-                stop=stop_tokens,
-                logprobs=1 if returns_logits else 0,
-            )
+            sampling_params.n = num_samples
+            sampling_params.max_tokens = max_new_tokens
+            sampling_params.stop = stop_tokens
+            sampling_params.logprobs = 1 if returns_logits else 0
+
         else:
-            sampling_params = SamplingParams(temperature=0, prompt_logprobs=1, max_tokens=1, detokenize=False)
+            sampling_params.temperature = 0
+            sampling_params.prompt_logprobs = 1
+            sampling_params.max_tokens = 1
+            sampling_params.detokenize = False
 
         if self.data_parallel_size > 1:
             # vLLM hangs if tensor_parallel > 1 and resources are set in ray.remote
