@@ -140,7 +140,7 @@ def timeout(timeout_seconds: int = 10):
 @lru_cache(maxsize=20)
 @timeout(timeout_seconds=5)
 def parse_latex_with_timeout(latex: str):
-    return parse_latex(latex, is_real=not should_treat_as_complex(latex))
+    return parse_latex(latex, is_real=not should_treat_as_complex(latex), convert_degrees=False)
 
 
 @lru_cache(maxsize=20)
