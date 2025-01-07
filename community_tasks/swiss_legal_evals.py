@@ -862,7 +862,7 @@ SwissSupremeCourtPressReleaseTranslations = DatasetConfig(
             text_col_name="text",
             metadata_cols=["filename"],
             generation_size=1024,
-            stop_sequence=["</s>", ".\n\n", "\n\n"],
+            stop_sequence=["</s>"],
         )
     },
 )
