@@ -44,12 +44,12 @@ Hub, S3, or locally.
 
 ## 🔑 Key Features
 
-- **Speed**: [Use vllm as backend for fast evals](https://github.com/huggingface/lighteval/wiki/Use-VLLM-as-backend).
-- **Completeness**: [Use the accelerate backend to launch any models hosted on Hugging Face](https://github.com/huggingface/lighteval/wiki/Quicktour#accelerate).
-- **Seamless Storage**: [Save results in S3 or Hugging Face Datasets](https://github.com/huggingface/lighteval/wiki/Saving-and-reading-results).
-- **Python API**: [Simple integration with the Python API](https://github.com/huggingface/lighteval/wiki/Using-the-Python-API).
-- **Custom Tasks**: [Easily add custom tasks](https://github.com/huggingface/lighteval/wiki/Adding-a-Custom-Task).
-- **Versatility**: Tons of [metrics](https://github.com/huggingface/lighteval/wiki/Metric-List) and [tasks](https://github.com/huggingface/lighteval/wiki/Available-Tasks) ready to go.
+- **Speed**: [Use vllm as backend for fast evals](https://huggingface.co/docs/lighteval/use-vllm-as-backend).
+- **Completeness**: [Use the accelerate backend to launch any models hosted on Hugging Face](https://huggingface.co/docs/lighteval/quicktour#accelerate).
+- **Seamless Storage**: [Save results in S3 or Hugging Face Datasets](https://huggingface.co/docs/lighteval/saving-and-reading-results).
+- **Python API**: [Simple integration with the Python API](https://huggingface.co/docs/lighteval/using-the-python-api).
+- **Custom Tasks**: [Easily add custom tasks](https://huggingface.co/docs/lighteval/adding-a-custom-task).
+- **Versatility**: Tons of [metrics](https://huggingface.co/docs/lighteval/metric-list) and [tasks](https://huggingface.co/docs/lighteval/available-tasks) ready to go.
 
 
 ## ⚡️ Installation
@@ -58,7 +58,7 @@ Hub, S3, or locally.
 pip install lighteval
 ```
 
-Lighteval allows for many extras when installing, see [here](https://github.com/huggingface/lighteval/wiki/Installation) for a complete list.
+Lighteval allows for many extras when installing, see [here](https://huggingface.co/docs/lighteval/installation) for a complete list.
 
 If you want to push results to the Hugging Face Hub, add your access token as
 an environment variable:
@@ -106,8 +106,8 @@ Harness and HELM teams for their pioneering work on LLM evaluations.
 ## 🌟 Contributions Welcome 💙💚💛💜🧡
 
 Got ideas? Found a bug? Want to add a
-[task](https://github.com/huggingface/lighteval/wiki/Adding-a-Custom-Task) or
-[metric](https://github.com/huggingface/lighteval/wiki/Adding-a-New-Metric)?
+[task](https://huggingface.co/docs/lighteval/adding-a-custom-task) or
+[metric](https://huggingface.co/docs/lighteval/adding-a-new-metric)?
 Contributions are warmly welcomed!
 
 If you're adding a new feature, please open an issue first.

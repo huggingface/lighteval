@@ -28,7 +28,7 @@ import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM
 
-from lighteval.models.transformers.base_model import BaseModel, BaseModelConfig
+from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
 from lighteval.models.utils import _get_dtype, _get_model_sha
 from lighteval.utils.utils import EnvConfig
 
@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class DeltaModelConfig(BaseModelConfig):
+class DeltaModelConfig(TransformersModelConfig):
     # Delta models look at the pretrained (= the delta weights) for the tokenizer and model config
     base_model: str = None
 
@@ -53,7 +53,7 @@ class DeltaModelConfig(BaseModelConfig):
         return _get_model_sha(repo_id=self.pretrained, revision="main")
 
 
-class DeltaModel(BaseModel):
+class DeltaModel(TransformersModel):
     def _create_auto_model(
         self,
         config: DeltaModelConfig,
