@@ -25,12 +25,11 @@ import math
 from typing import Iterator, Tuple
 
 import torch
-from torch.utils.data import Dataset
 from packaging import version
+from torch.utils.data import Dataset
 
-torch_version = torch.__version__
 
-if version.parse(torch_version) >= version.parse("2.5.0"):
+if version.parse(torch.__version__) >= version.parse("2.5.0"):
     from torch.utils.data.distributed import DistributedSampler, _T_co
 else:
     from torch.utils.data.distributed import DistributedSampler
