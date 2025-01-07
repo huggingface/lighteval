@@ -255,12 +255,18 @@ class LiteLLMClient(LightevalModel):
     def tokenizer(self):
         return self._tokenizer
 
+    def _encode(self, text: str):
+        enc = encode(model=self.model, text=text)
+        if hasattr(enc, "ids"):
+            return enc.ids
+        return enc
+
     def tok_encode(self, text: str | list[str]):
         if isinstance(text, list):
-            toks = [encode(model=self.model, text=t["content"]) for t in text]
+            toks = [self._encode(t["content"]) for t in text]
             toks = [tok for tok in toks if tok]
             return toks
-        return encode(model=self.model, text=text)
+        return self._encode(text)
 
     @property
     def add_special_tokens(self) -> bool:
