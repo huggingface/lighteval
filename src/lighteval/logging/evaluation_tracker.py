@@ -209,9 +209,36 @@ class EvaluationTracker:
         with self.fs.open(output_results_file, "w") as f:
             f.write(json.dumps(results_dict, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False))
 
-    def save_details(self, date_id: str, details_datasets: dict[str, Dataset]):
+    def _get_details_sub_folder(self, date_id: str):
         output_dir_details = Path(self.output_dir) / "details" / self.general_config_logger.model_name
-        output_dir_details_sub_folder = output_dir_details / date_id
+        if date_id == "latest":
+            # Get all folders in output_dir_details
+            if not self.fs.exists(output_dir_details):
+                raise FileNotFoundError(f"Details directory {output_dir_details} does not exist")
+            
+            # List all folders and filter out files
+            folders = [f['name'] for f in self.fs.listdir(output_dir_details) if f['type'] == 'directory']
+            
+            if not folders:
+                raise FileNotFoundError(f"No timestamp folders found in {output_dir_details}")
+                
+            # Parse timestamps and get latest
+            date_id = max(folders)
+        return output_dir_details / date_id
+
+    def load_details_datasets(self, date_id: str) -> dict[str, Dataset]:
+        output_dir_details_sub_folder = self._get_details_sub_folder(date_id)
+        date_id = output_dir_details_sub_folder.name # Overwrite date_id in case of latest
+        details_datasets = {}
+        for file in self.fs.glob(str(output_dir_details_sub_folder / f"details_*_{date_id}.parquet")):
+            task_name = Path(file).stem.replace(f"details_", "").replace(f"_{date_id}", "")
+            dataset = load_dataset("parquet", data_files=file, split="train")
+            details_datasets[task_name] = dataset
+        return details_datasets
+
+    
+    def save_details(self, date_id: str, details_datasets: dict[str, Dataset]):
+        output_dir_details_sub_folder = self._get_details_sub_folder(date_id)
         self.fs.mkdirs(output_dir_details_sub_folder, exist_ok=True)
         logger.info(f"Saving details to {output_dir_details_sub_folder}")
         for task_name, dataset in details_datasets.items():
