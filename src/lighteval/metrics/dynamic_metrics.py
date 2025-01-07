@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import itertools
 import os
 import re
 from dataclasses import dataclass
@@ -432,13 +433,10 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
     equals_re = rf"{answer_prefix_re}(?:.{{0,100}}=\s*|.{{0,50}}?){full_expr}(?!\s*=)"
     regexes.extend([(equals_re_colon, 155), (equals_re, 205)])
 
-    therefore_prefix_re = rf"(?i:{translation_literal.effect_word})"
-    therefore_re = rf"{therefore_prefix_re}(?:.{{0,100}}?){full_expr}"
-    regexes.append((therefore_re, 255))
     if expr_config.try_last_expr_match:
         # Priority 3-4: Less specific patterns
-        regexes.append((f"({expr_prefix_re})(?P<expr>{expr_re})({expr_suffix_re})", 305))
-        regexes.append((f"({expr_prefix_re})(?P<expr>{number_re})({expr_suffix_re})", 306))
+        regexes.append((f"({expr_prefix_re})(?P<expr>{expr_re})({expr_suffix_re})", 300))
+        regexes.append((f"({expr_prefix_re})(?P<expr>{number_re})({expr_suffix_re})", 300))
 
     # We first try to match the answer then the plain number
     return [(re.compile(pattern), priority) for pattern, priority in regexes]
@@ -486,22 +484,20 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) ->
 
         regexes.extend([(answer_re_colon, base_priority + 150), (answer_re, base_priority + 200)])
 
-        # Therefore prefix
-        therefore_prefix_re = rf"(?i:{translation_literal.effect_word})"
-        therefore_re = rf"{therefore_prefix_re}(?:.{{0,100}}?){latex_re}"
-        regexes.append((therefore_re, base_priority + 250))
-
-
-
         # Match plain LaTeX - lowest priority
         if latex_config.try_last_latex_match:
-            regexes.append((latex_re, base_priority + 300))
+            if base_priority == 1:
+                regexes.append((latex_re, 299))
+            else:
+                regexes.append((latex_re, 300))
 
     return [(re.compile(pattern, re.DOTALL), priority) for pattern, priority in regexes]
 
 
 @lru_cache(maxsize=100)
-def lazy_indices_regex(indices_config: IndicesExtractionConfig, len_choices: int, language: Language) -> list[tuple[re.Pattern[str], int]]:
+def lazy_indices_regex(
+    indices_config: IndicesExtractionConfig, len_choices: int, language: Language
+) -> list[tuple[re.Pattern[str], int]]:
     translation_literal = TRANSLATION_LITERALS[language]
     # First get indices to predict
     indices = get_prefix(indices_config.prefix_for_extraction, translation_literal)[:len_choices]
@@ -528,13 +524,15 @@ def lazy_indices_regex(indices_config: IndicesExtractionConfig, len_choices: int
         # Priority 3: Start of line patterns
         (answer_re_start, 100),
     ]
-    
+
     if indices_config.try_last_indices_match:
         # Priority 4-5: Less specific patterns
-        regexes.extend([
-            (answer_re, 150),
-            (indice_str_re, 200),
-        ])
+        regexes.extend(
+            [
+                (answer_re, 150),
+                (indice_str_re, 200),
+            ]
+        )
 
     return [(re.compile(pattern), priority) for pattern, priority in regexes]
 
@@ -575,27 +573,42 @@ def extract_target_from_pred(
     extracted_predictions = []
     fallbacks = []
 
-    # for patterns, target_type in target_res:
-        # Sort patterns by priority (lowest first)
-    all_patterns = [(pattern, target_type, priority) for target_patterns, target_type in target_res for pattern, priority in target_patterns]
-    sorted_patterns = sorted(all_patterns, key=lambda x: x[2])
-    
-    for pattern, target_type, _ in sorted_patterns:
-        matches = list(pattern.finditer(pred))
-        extracted_match, str_fallback = extract_match(matches[-1], target_type) if matches else (None, None)
+    # Get all patterns and sort by priority
+    all_patterns = [
+        (pattern, target_type, priority)
+        for target_patterns, target_type in target_res
+        for pattern, priority in target_patterns
+    ]
 
-        # If we managed to extract something, break
-        if extracted_match is not None:
-             extracted_predictions.append(extracted_match)
+    # Group patterns by priority using itertools.groupby
+    for priority, patterns_group in itertools.groupby(sorted(all_patterns, key=lambda x: x[2]), key=lambda x: x[2]):
+        # Find all matches for each pattern in this priority group
+        matches_with_pos = (
+            (match, match.start(), match.end(), target_type)
+            for pattern, target_type, _ in patterns_group
+            for match in pattern.finditer(pred)
+        )
 
-        if str_fallback:
-            fallbacks.append(str_fallback)
+        # Sort matches by end position (rightmost first) and then by start position (leftmost first)
+        matches_with_pos = sorted(matches_with_pos, key=lambda x: (x[2], -x[1]), reverse=True)
 
-        if (
-            extraction_mode == "first_match"
-            and extracted_predictions
-            or extraction_mode == "first_fallback"
-            and fallbacks
+        # Try to extract from each match, starting from rightmost
+        for match, _, _, target_type in matches_with_pos:
+            extracted_match, str_fallback = extract_match(match, target_type)
+
+            if extracted_match is not None:
+                extracted_predictions.append(extracted_match)
+                if extraction_mode == "first_match":
+                    break
+
+            if str_fallback:
+                fallbacks.append(str_fallback)
+                if extraction_mode == "first_fallback":
+                    break
+
+        # If we found something and we're in first_match mode, stop processing other priorities
+        if (extraction_mode == "first_match" and extracted_predictions) or (
+            extraction_mode == "first_fallback" and fallbacks
         ):
             break
 
@@ -627,15 +640,13 @@ def is_atomic_or_negative_atomic(expr: Basic | MatrixBase, atomic_type: type) ->
     - An instance of the specified atomic type
     - A negative number represented as Mul(-1, atomic_type)
     """
-    return (
-        isinstance(expr, atomic_type) 
-        or (
-            isinstance(expr, sympy.Mul) 
-            and len(expr.args) == 2 
-            and expr.args[0] == -1 
-            and isinstance(expr.args[1], atomic_type)
-        )
+    return isinstance(expr, atomic_type) or (
+        isinstance(expr, sympy.Mul)
+        and len(expr.args) == 2
+        and expr.args[0] == -1
+        and isinstance(expr.args[1], atomic_type)
     )
+
 
 def sympy_numeric_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precision: int):
     # Only do this when one of the two is a float, in other cases use symbolic equality as this could lead to false positives
@@ -651,10 +662,7 @@ def sympy_numeric_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, pre
     # Ensure this also works for negative numbers
     elif is_atomic_or_negative_atomic(a, sympy.Atom) or is_atomic_or_negative_atomic(b, sympy.Atom):
         # If one of them is a float or a negative atomic number, we can try to use precision
-        if (
-            is_atomic_or_negative_atomic(a, sympy.Float) 
-            or is_atomic_or_negative_atomic(b, sympy.Float)
-        ):
+        if is_atomic_or_negative_atomic(a, sympy.Float) or is_atomic_or_negative_atomic(b, sympy.Float):
             a = safe_sympy_doit(a)
             b = safe_sympy_doit(b)
             # Now if both are numbers, we can use precision
@@ -662,10 +670,10 @@ def sympy_numeric_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, pre
                 return a.round(precision) == b.round(precision)
         else:
             return safe_sympy_doit(a) == safe_sympy_doit(b)
-    
+
     else:
         try:
-            return bool(abs((a-b).evalf()) < 1e-10)
+            return bool(abs((a - b).evalf()) < 1e-10)
         except:
             pass
 
@@ -694,6 +702,7 @@ def sympy_deep_compare_finite_set(a: FiniteSet, b: FiniteSet, precision: int) ->
 
     return False
 
+
 def sympy_compare_set_interval(a: FiniteSet, b: Interval, precision: int) -> bool:
     # Only compare if it's the special case of 2 elements
     if len(a) == 2 and b.is_open:
@@ -712,7 +721,6 @@ def sympy_compare_interval(a: Interval, b: Interval, precision: int) -> bool:
 
 
 def sympy_str_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase) -> bool:
-
     # First just do a simple str comparison
     # Because of float comparison, we only use doit() during the string conversion, but keep the original expr
     a_doit = safe_sympy_doit(a)
@@ -774,12 +782,12 @@ def sympy_expr_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precis
             return True
         if isinstance(a_set, FiniteSet) and isinstance(b_set, FiniteSet):
             return sympy_deep_compare_finite_set(a_set, b_set, precision)
-        
+
         # Special case for interval and set, it's very hard to distinguish between them 2 element set and interval
         # so in this case we also try to treat them as equal
         if isinstance(a_set, Interval) and isinstance(b_set, FiniteSet):
             return sympy_compare_set_interval(b_set, a_set, precision)
-        
+
         if isinstance(a_set, FiniteSet) and isinstance(b_set, Interval):
             return sympy_compare_set_interval(a_set, b_set, precision)
 
