@@ -400,6 +400,7 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
         r")(?P<percent>\s*(?:%|[Pp]ercent|\s*[Pp]ercentage|\s*[Pp]ct))?"
     )
 
+
     operators = [r"\+", r"\-", r"\*", r"\×", r"\/", r"\^", r"\(", r"\)", r"\÷"]
     operators_re = "".join(operators)
     all_expr_chars = r"[\d\.\s" + operators_re + r"]"
@@ -420,8 +421,10 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
     full_expr = rf"(?:{expr_prefix_re}{expr}{expr_suffix_re})"
     regexes: list[tuple[str, int]] = []
     if language == Language.ENGLISH:
+        final_answer_prefixed_re = rf"(?i:final answer is)\:?\s*{full_expr}\.?\s?I hope"
         final_answer_prefixed_just_is = rf"(?i:final answer.{{0,100}}?)\s+is\:?{full_expr}"
-        regexes.append((final_answer_prefixed_just_is, 0))
+        regexes.append((final_answer_prefixed_re, 0))
+        regexes.append((final_answer_prefixed_just_is, 50))
 
     answer_prefix_re = rf"(?i:{translation_literal.answer}|{translation_literal.result_word})"
     # Match after the last equals with answer word - require the number pattern
@@ -469,8 +472,10 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) ->
     regexes: list[tuple[str, int]] = []
     for latex_re, base_priority in [(latex_envs_re, 2), (latex_fraction, 3)]:
         if language == Language.ENGLISH:
+            final_answer_prefixed_re = rf"(?i:final answer is)\:?\s*{latex_re}\.?\s?I hope"
             final_answer_prefixed_just_is = rf"(?i:final answer.{{0,100}}?)\s+is\:?\s*{latex_re}"
-            regexes.append((final_answer_prefixed_just_is, 0))
+            regexes.append((final_answer_prefixed_re, 0))
+            regexes.append((final_answer_prefixed_just_is, 50))
 
         # Match with answer word - higher priority than plain latex
         # Priority 50
@@ -485,7 +490,7 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) ->
 
     # This ensures that boxed is matched right after the final answer xxxx
     if latex_config.enforce_boxed_match:
-        regexes.append((latex_boxed, 5))
+        regexes.append((latex_boxed, 55))
 
     return [(re.compile(pattern, re.DOTALL), priority) for pattern, priority in regexes]
 
