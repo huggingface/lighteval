@@ -286,7 +286,6 @@ class LatexExtractionConfig:
         groups_with_fallback: Groups, which will return a fallback value (postprocessed latex) if latex matching failed.
     """
 
-    groups_with_fallback: Sequence[str] = ("latexDisplayDollar", "latexDisplayBracket", "latexInlineParenthesis")
     try_last_latex_match: bool = True
     enforce_boxed_match: bool = True
 
@@ -421,14 +420,8 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
     full_expr = rf"(?:{expr_prefix_re}{expr}{expr_suffix_re})"
     regexes: list[tuple[str, int]] = []
     if language == Language.ENGLISH:
-        final_answer_prefixed_re = rf"(?i:final answer is)\:?\s*{full_expr}\.?\s?I hope"
-        final_answer_prefixed_no_hope = rf"(?i:final answer is)\:?\s*{full_expr}"
-
-        # This ensures that we don't match variables answer: the final answer: domain of $f(x)$ is 19e
         final_answer_prefixed_just_is = rf"(?i:final answer.{{0,100}}?)\s+is\:?{full_expr}"
-        regexes.append((final_answer_prefixed_re, 5))
-        regexes.append((final_answer_prefixed_no_hope, 55))
-        regexes.append((final_answer_prefixed_just_is, 105))
+        regexes.append((final_answer_prefixed_just_is, 0))
 
     answer_prefix_re = rf"(?i:{translation_literal.answer}|{translation_literal.result_word})"
     # Match after the last equals with answer word - require the number pattern
@@ -436,7 +429,7 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
 
     equals_re_colon = rf"{answer_prefix_re}{colon_re}(?:.{{0,100}}=\s*|.{{0,50}}?){full_expr}(?!\s*=)"
     equals_re = rf"{answer_prefix_re}(?:.{{0,100}}=\s*|.{{0,50}}?){full_expr}(?!\s*=)"
-    regexes.extend([(equals_re_colon, 155), (equals_re, 205)])
+    regexes.extend([(equals_re_colon, 100), (equals_re, 200)])
 
     if expr_config.try_last_expr_match:
         # Priority 3-4: Less specific patterns
@@ -476,19 +469,15 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) ->
     regexes: list[tuple[str, int]] = []
     for latex_re, base_priority in [(latex_envs_re, 2), (latex_fraction, 3)]:
         if language == Language.ENGLISH:
-            final_answer_prefixed_re = rf"(?i:final answer is)\s*{latex_re}\.?\s?I hope"
-            final_answer_prefixed_no_hope = rf"(?i:final answer is)\s*{latex_re}"
             final_answer_prefixed_just_is = rf"(?i:final answer.{{0,100}}?)\s+is\:?\s*{latex_re}"
-            regexes.append((final_answer_prefixed_re, base_priority))
-            regexes.append((final_answer_prefixed_no_hope, base_priority + 50))
-            regexes.append((final_answer_prefixed_just_is, base_priority + 100))
+            regexes.append((final_answer_prefixed_just_is, 0))
 
         # Match with answer word - higher priority than plain latex
         # Priority 50
         answer_re_colon = f"{answer_prefix_re}{colon_re}.{{0,50}}?{latex_re}"
         answer_re = f"{answer_prefix_re}.{{0,50}}?{latex_re}"
 
-        regexes.extend([(answer_re_colon, base_priority + 150), (answer_re, base_priority + 200)])
+        regexes.extend([(answer_re_colon, 100), (answer_re, 200)])
 
         # Match plain LaTeX - lowest priority
         if latex_config.try_last_latex_match:
@@ -496,7 +485,7 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) ->
 
     # This ensures that boxed is matched right after the final answer xxxx
     if latex_config.enforce_boxed_match:
-        regexes.append((latex_boxed, 110))
+        regexes.append((latex_boxed, 5))
 
     return [(re.compile(pattern, re.DOTALL), priority) for pattern, priority in regexes]
 
