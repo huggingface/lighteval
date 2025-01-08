@@ -27,16 +27,16 @@ from dataclasses import dataclass
 from functools import lru_cache, partial
 from itertools import product
 from typing import Callable, Literal, Sequence
-from lighteval.logging.hierarchical_logger import hlog_warn
 
 import numpy as np
 import sympy
 from latex2sympy2_extended import NormalizationConfig, normalize_latex
 from latex2sympy2_extended import latex2sympy as parse_latex
 from sympy import Basic, FiniteSet, Interval, MatrixBase, MatrixExpr, Set, Symbol
-from sympy.core.relational import Relational, Eq
+from sympy.core.relational import Eq, Relational
 from sympy.parsing.sympy_parser import parse_expr
 
+from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.metrics_sample import (
     ExactMatches,
     F1_score,
@@ -680,7 +680,7 @@ def sympy_numeric_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, pre
 
     else:
         try:
-            return bool(abs((a-b).evalf()) < 1e-10)
+            return bool(abs((a - b).evalf()) < 1e-10)
         except TimeoutException:
             raise
         except:
@@ -750,7 +750,6 @@ def sympy_str_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase) -> bool
 
 
 def sympy_expr_eq(gold: sympy.Expr | MatrixBase, pred: sympy.Expr | MatrixBase, precision: int) -> bool:
-    
     # If refernce is relational, but target it's not it's possible it's case of k=x+1+z, so we just take x+1+z
     # We assume that the gold never contains symplifications, so we don't handle that case
     # e.g 1+1+1=3 will never be simplified to 3, it would be possibly by doing lhs-rhs == 0, but ehhh just make the gold simpler
@@ -762,7 +761,6 @@ def sympy_expr_eq(gold: sympy.Expr | MatrixBase, pred: sympy.Expr | MatrixBase, 
     # k=x+1+z or 1+1+1=3 will be simplified to rhs
     if isinstance(pred, Eq) and not isinstance(gold, Eq):
         pred = pred.rhs
-
 
     # Start with simple str and expr comparisson as it's the fastest
     # str comparison is better, than simple eq, because it will also handle missarangments
