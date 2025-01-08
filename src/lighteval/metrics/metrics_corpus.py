@@ -26,6 +26,7 @@ A number of these aggregations come from the EleutherAIHarness
 """
 import logging
 import math
+from typing import Literal
 
 import numpy as np
 import sacrebleu
