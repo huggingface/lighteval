@@ -33,8 +33,8 @@ import numpy as np
 import sympy
 from latex2sympy2_extended import NormalizationConfig, normalize_latex
 from latex2sympy2_extended import latex2sympy as parse_latex
-from sympy import Basic, FiniteSet, Interval, MatrixBase, MatrixExpr, Set
-from sympy.core.relational import Relational
+from sympy import Basic, FiniteSet, Interval, MatrixBase, MatrixExpr, Set, Symbol
+from sympy.core.relational import Relational, Eq
 from sympy.parsing.sympy_parser import parse_expr
 
 from lighteval.metrics.metrics_sample import (
@@ -749,37 +749,57 @@ def sympy_str_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase) -> bool
     return False
 
 
-def sympy_expr_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precision: int) -> bool:
+def sympy_expr_eq(gold: sympy.Expr | MatrixBase, pred: sympy.Expr | MatrixBase, precision: int) -> bool:
+    
+    # If refernce is relational, but target it's not it's possible it's case of k=x+1+z, so we just take x+1+z
+    # We assume that the gold never contains symplifications, so we don't handle that case
+    # e.g 1+1+1=3 will never be simplified to 3, it would be possibly by doing lhs-rhs == 0, but ehhh just make the gold simpler
+    # The new latex2sympy2 will actually convert such cases automatically, but so this is in theory not needed
+    if isinstance(gold, Eq) and not isinstance(pred, Relational) and isinstance(gold.lhs, Symbol):
+        gold = gold.rhs
+
+    # Here we respect the gold and simplify accordingly, thus any of
+    # k=x+1+z or 1+1+1=3 will be simplified to rhs
+    if isinstance(pred, Eq) and not isinstance(gold, Eq):
+        pred = pred.rhs
+
+
     # Start with simple str and expr comparisson as it's the fastest
     # str comparison is better, than simple eq, because it will also handle missarangments
-    if sympy_str_eq(a, b):
+    if sympy_str_eq(gold, pred):
         return True
 
     # Support for equations
-    if isinstance(a, Relational) and isinstance(b, Relational):
+    if isinstance(gold, Relational) and isinstance(pred, Relational):
         # Helper to check if expressions are equivalent when flipped
         def are_flipped_inequalities_equal(a: Relational, b: Relational) -> bool:
             return sympy_expr_eq(a.lhs - a.rhs, b.rhs - b.lhs, precision)
 
         # Same type of relation (e.g. both <= or both >=)
-        if type(a) == type(b) and sympy_expr_eq(a.lhs - a.rhs, b.lhs - b.rhs, precision):
+        if type(gold) == type(pred) and sympy_expr_eq(gold.lhs - gold.rhs, pred.lhs - pred.rhs, precision):
             return True
 
         # Check flipped inequalities (a <= b equals b >= a)
         if (
-            isinstance(a, sympy.GreaterThan)
-            and isinstance(b, sympy.LessThan)
-            or isinstance(a, sympy.LessThan)
-            and isinstance(b, sympy.GreaterThan)
-        ) and are_flipped_inequalities_equal(a, b):
+            isinstance(gold, sympy.GreaterThan)
+            and isinstance(pred, sympy.LessThan)
+            or isinstance(gold, sympy.LessThan)
+            and isinstance(pred, sympy.GreaterThan)
+            or isinstance(gold, sympy.StrictGreaterThan)
+            and isinstance(pred, sympy.StrictLessThan)
+            or isinstance(gold, sympy.StrictLessThan)
+            and isinstance(pred, sympy.StrictGreaterThan)
+            or isinstance(gold, sympy.Eq)
+            and isinstance(pred, sympy.Eq)
+        ) and are_flipped_inequalities_equal(gold, pred):
             return True
 
         return False
 
-    elif isinstance(a, (Set)) or isinstance(b, (Set)):
+    elif isinstance(gold, (Set)) or isinstance(pred, (Set)):
         # This way we can also evalute {1} and 1 to be equal
-        a_set = a if isinstance(a, Set) else FiniteSet(a)
-        b_set = b if isinstance(b, Set) else FiniteSet(b)
+        a_set = gold if isinstance(gold, Set) else FiniteSet(gold)
+        b_set = pred if isinstance(pred, Set) else FiniteSet(pred)
 
         # If both are finite sets, we can compare per element
         if isinstance(a_set, Interval) and isinstance(b_set, Interval):
@@ -802,12 +822,12 @@ def sympy_expr_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precis
 
         return False
 
-    elif isinstance(a, (Basic, MatrixBase)) and isinstance(b, (Basic, MatrixBase)):
+    elif isinstance(gold, (Basic, MatrixBase)) and isinstance(pred, (Basic, MatrixBase)):
         # Mostly so that 0.333333 = 1/3
-        if sympy_numeric_eq(a, b, precision):
+        if sympy_numeric_eq(gold, pred, precision):
             return True
         # Then try symbolic equality
-        if sympy_symbolic_eq(a, b):
+        if sympy_symbolic_eq(gold, pred):
             return True
 
     return False
@@ -815,15 +835,15 @@ def sympy_expr_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precis
 
 def compare_gold_target(
     gold: list[sympy.Expr | Relational | str], target: list[sympy.Expr | Relational | str], precision: int
-) -> float:
+) -> bool:
     # REVERT BACK TO 10
-    @timeout(timeout_seconds=10)
+    @timeout(timeout_seconds=1000)
     def compare_single_extraction(gold: str | sympy.Expr | float, target: str | sympy.Expr | float) -> float:
         # Expression case
 
         # If both are sympy expressions, we can use sympy to compare them
         if isinstance(gold, (Basic, MatrixBase)) and isinstance(target, (Basic, MatrixBase)):
-            return 1.0 if sympy_expr_eq(gold, target, precision) else 0.0
+            return sympy_expr_eq(gold, target, precision)
 
         # We don't support str / sympy.Expr comparison. Imo there is no point in doing this, as chances
         # of this happening are very low.  The only why one of them is not converted to sympy expression
@@ -838,14 +858,14 @@ def compare_gold_target(
             return len(gold) > 0 and len(target) > 0 and gold == target
 
         else:
-            return 0.0
+            return False
             # raise ValueError(f"Unsupported comparison between {type(gold)} and {type(target)}")
 
     def compare_single_extraction_wrapper(g, t):
         try:
             return compare_single_extraction(g, t)
         except TimeoutException:
-            return 0.0
+            return False
 
     return any(compare_single_extraction_wrapper(g, t) for g, t in product(gold, target))
 
