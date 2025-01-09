@@ -45,6 +45,7 @@ class AdapterModelConfig(BaseModelConfig):
     Manages the configuration of adapter models. Adapter models are designed to extend or adapt a
     base model's functionality for specific tasks while keeping most of the base model's parameters frozen.
     """
+
     # Adapter models have the specificity that they look at the base model (= the parent) for the tokenizer and config
     base_model: str = None
 
@@ -77,6 +78,7 @@ class AdapterModel(BaseModel):
     Args:
 
     """
+
     def _create_auto_tokenizer(self, config: AdapterModelConfig, env_config: EnvConfig) -> PreTrainedTokenizer:
         """
         Creates and configures the adapter model by applying adapter weights to the base model.

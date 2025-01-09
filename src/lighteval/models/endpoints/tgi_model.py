@@ -55,6 +55,7 @@ class TGIModelConfig:
     inference_server_auth (str, required): Authentication credentials or tokens required to access the server.
     model_id (str, required): Identifier for the model hosted on the inference server.
     """
+
     inference_server_address: str
     inference_server_auth: str
     model_id: str

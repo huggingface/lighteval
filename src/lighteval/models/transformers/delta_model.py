@@ -41,6 +41,7 @@ class DeltaModelConfig(BaseModelConfig):
     """
     This class is used to manage the configuration class for delta models.
     """
+
     # Delta models look at the pretrained (= the delta weights) for the tokenizer and model config
     base_model: str = None
 

@@ -67,6 +67,7 @@ class OpenAIModelConfig:
     Attributes:
     model: name or identifier of the OpenAI model to be used for inference.
     """
+
     model: str
 
 
