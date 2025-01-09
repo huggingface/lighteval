@@ -29,11 +29,13 @@ This file generally creates just a TASKS_TABLE and TASKS_GROUPS which are then i
 import random
 import re
 
-from lighteval.metrics.metrics import Metrics
+from lighteval.metrics.metrics import Metrics, MetricCategory
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
-
+from typing import List, Dict, Optional, Union, Any
+from lighteval.metrics.llm_as_judge import JudgeLM
+from lighteval.metrics.utils.metric_utils import MetricUseCase
 
 # fmt: off
 LETTER_INDICES_AR = ["أ", "ب", "ج", "د", "هـ", "و", "ز", "ح", "ط", "ي", "ك", "ل", "م", "ن", "س", "ع", "ف", "ص", "ق", "ر", "ش", "ت", "ث", "خ", "ذ", "ض", "ظ", "غ"]
@@ -831,6 +833,253 @@ MADINAH_QA_TASKS = [
     CustomMadinahQATask(name=f"madinah_qa:{subset}", hf_subset=subset) for subset in MADINAH_QA_SUBSETS
 ]
 
+class JudgeMetricWrapper(Metric):
+    """Wrapper class for LLM-based judge metric implementation."""
+    
+    def __init__(self, judge: JudgeLM):
+        """
+        Initializes the judge metric wrapper.
+        
+        Args:
+            judge (JudgeLM): The LLM judge instance to use for evaluation.
+        """
+        self.judge = judge
+        self.metric_name = "llm_as_judge"
+        self.category = MetricCategory.LLM_AS_JUDGE
+        self.corpus_level_fn = self.aggregate_scores
+        self.sample_level_fn = self._sample_level_fn
+        self.higher_is_better = True  # Fixed tuple syntax
+        self.use_case = MetricUseCase.NONE
+
+    def compute(self, responses: list[str], formatted_docs: list[Doc], **kwargs) -> dict[str, float]:
+        """
+        Computes evaluation scores using the judge's evaluate_answer method.
+        
+        Args:
+            responses (list[str]): The predicted answers
+            formatted_docs (list[Doc]): Documents containing questions and gold answers
+            
+        Returns:
+            dict[str, float]: Dictionary containing evaluation scores
+        """
+        results = []
+        for i, doc in enumerate(formatted_docs):
+            question = doc.query
+            gold = doc.choices[doc.gold_index] if doc.gold_index is not None else None
+            answer = responses[i][0].result[0]
+
+            score, _, _ = self.judge.evaluate_answer(
+                question=question,
+                answer=answer, 
+                options=None,
+                gold=gold
+            )
+            results.append({self.metric_name: score})
+
+        return results
+
+    def aggregate_scores(self, scores: list[dict]) -> float:
+        """
+        Aggregates individual scores into a final score.
+        
+        Args:
+            scores (list[dict]): List of individual scores
+            
+        Returns:
+            float: Aggregated score
+        """
+        return sum(scores) / len(scores) if scores else 0.0
+
+    def _sample_level_fn(self):
+        """Sample level scoring function placeholder."""
+        return None
+
+def parse_candidates(candidates: Union[List[str], str]) -> List[str]:
+    """
+    Parses and validates candidate answers from either list or string format.
+    
+    Args:
+        candidates: Either a list of candidate answers or a newline-separated string
+        
+    Returns:
+        List[str]: List of validated candidate answers
+        
+    Raises:
+        ValueError: If candidates cannot be parsed or are empty
+    """
+    try:
+        if isinstance(candidates, list):
+            parsed_candidates = [str(c).strip() for c in candidates if c]
+        else:
+            parsed_candidates = [c.strip() for c in str(candidates).split('\n') if c.strip()]
+        
+        if not parsed_candidates:
+            raise ValueError("No valid candidates found after parsing")
+            
+        return parsed_candidates
+    except Exception as e:
+        raise ValueError(f"Failed to parse candidates: {str(e)}")
+
+def qa_prompt_arabic(line: Dict[str, Any], task_name: str = None) -> Doc:
+    """
+    Formats the prompt for Arabic question answering with candidates.
+    
+    Args:
+        line: Dictionary containing question and candidate information
+        task_name: Optional name for the task
+        
+    Returns:
+        Doc: Formatted document for evaluation
+        
+    Raises:
+        ValueError: If required fields are missing or invalid
+    """
+    try:
+        # Validates and extracts the question
+        if not isinstance(line.get("question"), str):
+            raise ValueError("Question must be a string")
+        question = line["question"]
+
+        # Processes candidate answers
+        candidates = parse_candidates(line["candidates"])
+
+        # Validates gold answer
+        if "gold_answer" not in line:
+            raise ValueError("Gold answer is required")
+        gold_answer = str(line["gold_answer"])
+
+        # Constructs the prompt
+        instruction = "بناءً على السياقات المقترحة التالية، اجب عن السؤال التالي"
+        query = f"{instruction}\n\nالسؤال:\n{question}\n\nالسياقات المقترحة:\n{', '.join(candidates)}\n"
+
+        return Doc(
+            task_name=task_name or "alrage",
+            query=query,
+            instruction=instruction,
+            choices=[gold_answer],  # Gold answer is used as the only valid choice
+            gold_index=0  # Index of the correct answer in choices
+        )
+    except Exception as e:
+        raise ValueError(f"Failed to create QA prompt: {str(e)}")
+
+def judge_template(question: str, answer: str, gold: str, options: Optional[List[str]] = None) -> List[Dict[str, str]]:
+    """
+    Template for the Arabic judge prompt.
+    
+    System prompt translation:
+    You are a neutral expert evaluator. Your tasks are:
+    1. Evaluate the answer's accuracy compared to the correct answer
+    2. Verify that the answer is supported by the provided context
+    3. Evaluate the quality and comprehensiveness of the answer
+    Rate the answer on a scale from 0 to 10.
+    
+    Args:
+        question: The question being evaluated
+        answer: The provided answer
+        gold: The correct answer
+        options: Optional list of answer choices
+        
+    Returns:
+        List[Dict[str, str]]: Formatted messages for the judge
+    """
+    messages = [
+        {
+            "role": "system",
+            "content": """أنت مقيّم محايد خبير. مهمتك هي:
+1. تقييم دقة الإجابة مقارنة بالإجابة الصحيحة
+2. التحقق من أن الإجابة مدعومة بالسياق المقدم
+3. تقييم جودة وشمولية الإجابة
+
+قم بتقييم الإجابة على مقياس من 0 إلى 10."""
+        },
+        {
+            "role": "user",
+            "content": f"""{question}
+
+الإجابة المقدمة: {answer}
+
+الإجابة الصحيحة: {gold}
+
+قيّم الإجابة على مقياس من 0 إلى 10، حيث:
+- 0-2: إجابة خاطئة تماماً أو غير متعلقة
+- 3-4: إجابة جزئية مع أخطاء كبيرة
+- 5-6: إجابة متوسطة الدقة
+- 7-8: إجابة جيدة مع بعض النقص
+- 9-10: إجابة ممتازة ودقيقة
+
+قدم تقييمك كرقم فقط."""
+        }
+    ]
+    return messages
+
+def process_judge_response(response: Union[str, List[Dict[str, str]]]) -> float:
+    """
+    Processes the judge's response to extract a normalized score.
+    
+    The function expects either:
+    1. A string containing a numerical score
+    2. A list of message dictionaries where one contains the score
+    
+    Args:
+        response: Raw response from the judge
+        
+    Returns:
+        float: Normalized score between 0 and 1
+        
+    Raises:
+        ValueError: If no valid score can be extracted
+    """
+    try:
+        # Handles list-type responses (message format)
+        if isinstance(response, list):
+            response_content = ' '.join(
+                item['content'] for item in response 
+                if item.get('role') == 'user' and 'content' in item
+            )
+        else:
+            response_content = str(response)
+
+        # Extracts the first number found in the response
+        numbers = [
+            word for word in response_content.split() 
+            if word.replace('.', '', 1).isdigit()
+        ]
+        
+        if not numbers:
+            raise ValueError("No numerical score found in response")
+            
+        score = float(numbers[0])
+        
+        # Normalizes score to 0-1 range
+        return min(max(score / 10.0, 0.0), 1.0)
+        
+    except Exception as e:
+        raise ValueError(f"Failed to process judge response: {str(e)}")
+
+# Initialize the judge and metric
+judge = JudgeLM(
+    model="Qwen/Qwen2.5-72B-Instruct",
+    templates=judge_template,
+    process_judge_response=process_judge_response,
+    judge_backend="transformers"
+)
+
+wrapped_judge = JudgeMetricWrapper(judge)
+# Task configuration
+alrage_qa_task = LightevalTaskConfig(
+    name="alrage_qa",
+    prompt_function=qa_prompt_arabic,
+    suite=["community"],
+    hf_repo="OALL/ALRAGE",
+    hf_subset=None,
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    metric=[wrapped_judge],
+    trust_dataset=True,
+    generation_size=200,
+    stop_sequence=[],
+    version=0
+)
 
 TASKS_TABLE = (
     ARABIC_MMLU_TASKS
@@ -852,4 +1101,5 @@ TASKS_TABLE = (
     + [hellaswag_okapi_ar_task]
     + [toxigen_ar_task]
     + [sciq_ar_task]
+    + [alrage_qa_task]
 )
