@@ -29,11 +29,13 @@ This file generally creates just a TASKS_TABLE and TASKS_GROUPS which are then i
 import random
 import re
 
-from lighteval.metrics.metrics import Metrics, MetricCategory
+from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 from typing import List, Dict, Optional, Union, Any
+from lighteval.metrics.metrics import Metric, MetricCategory
+
 from lighteval.metrics.llm_as_judge import JudgeLM
 from lighteval.metrics.utils.metric_utils import MetricUseCase
 
