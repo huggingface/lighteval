@@ -90,6 +90,7 @@ class VLLMModelConfig:
     subfolder (Optional[str], optional): Path to a specific subfolder in the model repository, if applicable.
     temperature (float, default: 0.6): Sampling temperature for stochastic tasks. Ignored for deterministic tasks (set internally to 0).
     """
+
     pretrained: str
     gpu_memory_utilisation: float = 0.9  # lower this if you are running out of memory
     revision: str = "main"  # revision of the model
