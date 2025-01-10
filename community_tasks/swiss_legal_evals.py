@@ -914,27 +914,45 @@ JUDGE_MODELS = {
     # "claude-3-5-sonnet": "anthropic/claude-3-5-sonnet-20241022",
 }
 
-METRICS_TO_USE = [
+LEXICAL_METRICS = [
     "bleu",
     "chrf",
     "bleu_sentence",
     "chrf_sentence",
     "ter_sentence",
     "meteor",
+]
+GPU_METRICS = [
     "bert_score",
     "bleurt_large",
     "xcomet_xxl",
+]
+API_METRICS = [
     "gemba_mqm_gpt_4o",
     "slt_judge_gpt_4o",
 ]
-METRICS_TO_USE.extend(
-    [
-        f"slt_judge_{judge_model}-{system_style}-{few_shot_style}".replace("-", "_")
-        for judge_model in JUDGE_MODELS
-        for system_style in ["basic", "detailed"]
-        for few_shot_style in ["diverse", "single"]
-    ]
-)
+JUDGE_METRICS = [
+    f"slt_judge_{judge_model}-{system_style}-{few_shot_style}".replace("-", "_")
+    for judge_model in JUDGE_MODELS
+    for system_style in ["basic", "detailed"]
+    for few_shot_style in ["diverse", "single"]
+]
+
+metrics_to_evaluate = ["judge"]
+
+METRICS_TO_USE = []
+if metrics_to_evaluate == ["debug"]:
+    METRICS_TO_USE = ["bleu"]
+elif "lexical" in metrics_to_evaluate:
+    METRICS_TO_USE += LEXICAL_METRICS
+elif "gpu" in metrics_to_evaluate:
+    METRICS_TO_USE += GPU_METRICS
+elif "api" in metrics_to_evaluate:
+    METRICS_TO_USE += API_METRICS
+elif "judge" in metrics_to_evaluate:
+    METRICS_TO_USE += JUDGE_METRICS
+else:
+    METRICS_TO_USE = LEXICAL_METRICS + GPU_METRICS + API_METRICS
 logger.info(f"Available metrics: {METRICS_TO_USE}")
 
 METRICS = {}
