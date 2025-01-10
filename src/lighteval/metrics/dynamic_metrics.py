@@ -830,7 +830,7 @@ def compare_gold_target(
     gold: list[sympy.Expr | Relational | str], target: list[sympy.Expr | Relational | str], precision: int
 ) -> bool:
     # REVERT BACK TO 10
-    @timeout(timeout_seconds=1000)
+    @timeout(timeout_seconds=10)
     def compare_single_extraction(gold: str | sympy.Expr | float, target: str | sympy.Expr | float) -> float:
         # Expression case
 
@@ -905,7 +905,7 @@ def extract_target(
 def multilingual_extractive_match_metric(
     language: Language,
     gold_extraction_target: tuple[ExtractionTarget] = (ExprExtractionConfig(),),
-    pred_extraction_target: tuple[ExtractionTarget] = (ExprExtractionConfig(),),
+    pred_extraction_target: tuple[ExtractionTarget] = (ExprExtractionConfig(), LatexExtractionConfig()),
     aggregation_function: Callable[[list[float]], float] = max,
     fallback_mode: Literal["no_fallback", "first_match"] = "first_match",
     precision: int = 6,

@@ -32,6 +32,8 @@ ExprExtractionConfig,
     multilingual_extractive_match_metric,
     multilingual_quasi_exact_match_metric,
     multilingual_quasi_f1_score_metric,
+    LatexExtractionConfig,
+    ExprExtractionConfig,
 )
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.normalizations import LogProbCharNorm, LogProbPMINorm, LogProbTokenNorm
