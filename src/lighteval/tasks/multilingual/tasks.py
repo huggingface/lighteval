@@ -27,6 +27,8 @@ from langcodes import standardize_tag
 
 from lighteval.metrics.dynamic_metrics import (
     loglikelihood_acc_metric,
+LatexExtractionConfig,
+ExprExtractionConfig,
     multilingual_extractive_match_metric,
     multilingual_quasi_exact_match_metric,
     multilingual_quasi_f1_score_metric,
@@ -129,14 +131,14 @@ math_hard_lighteval = [
         few_shots_split="test",
         generation_size=1024,
         metric=[
-            multilingual_extractive_match_metric(
-                Language.ENGLISH,
-                gold_extraction_target=(LatexExtractionConfig(),),
-                pred_extraction_target=(LatexExtractionConfig(), ExprExtractionConfig()),
-                fallback_mode="first_match",
-                extraction_mode="first_match",
-            )
-            # multilingual_quasi_exact_match_metric(Language.ENGLISH, "prefix"),
+        multilingual_extractive_match_metric(
+            Language.ENGLISH,
+            gold_extraction_target=(LatexExtractionConfig(),),
+            pred_extraction_target=(LatexExtractionConfig(), ExprExtractionConfig()),
+            fallback_mode="first_match",
+            extraction_mode="first_match",
+        )
+        # multilingual_quasi_exact_match_metric(Language.ENGLISH, "prefix"),
         ],
         stop_sequence=get_cot_stop_sequence(Language.ENGLISH, CFFormulation(cot=cot)),
         output_regex=None,

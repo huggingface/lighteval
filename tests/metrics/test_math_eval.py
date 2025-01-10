@@ -73,9 +73,22 @@ def test_multilingual_extraction_abc(gold, pred, language, expected):
 @pytest.mark.parametrize(
     "gold,pred,language,match_type,expected",
     [
+
+        # Think I have to remove the result: ...
+        ("13", "首先，我们知道最初有3只鸟和4只鹳鸟坐在篱笆上，所以总共有3 + 4 = 7只鸟和鹳鸟。 然后，又有6只鹳鸟来加入它们，所以鹳鸟的总数变成4 + 6 = 10只。 因此，现在篱笆上总共有3只鸟（假设鸟的数量没有变化）和10只鹳鸟，所以一共有3 + 10 = 13只鸟和鹳鸟。", Language.CHINESE, ["latex", "expr"], True),
+        ("3",	"瑞秋的数学作业有5页，阅读作业有2页。 要找出数学作业比阅读作业多多少页，我们可以简单地进行减法运算： 5页（数学作业） - 2页（阅读作业） = 3页 因此，瑞秋的数学作业比阅读作业多 **3页**。", Language.CHINESE, ["latex", "expr"], True),
+        ("858", "要解决这个问题，我们可以按照以下步骤进行： 1. **确定每个袋子里的糖果数量**：弗兰克将糖果放入26个袋子里，每个袋子里有33颗糖果。 2. **计算总糖果数量**：如果每个袋子里有33颗糖果，那么26个袋子里的糖果总数为：33颗/袋 * 26袋 = 858颗。 因此，弗兰克一共有**858颗**糖果。 ", Language.CHINESE, ["latex", "expr"], True),
+        ("192", "让我们一步步来解决这个问题。 我们知道杰西减掉了126公斤，她目前的体重是66公斤。要找到她开始慢跑前的体重，我们只需将她减掉的体重添加到她当前的体重上： 66公斤（当前体重） + 126公斤（减掉的体重） = 192公斤 因此，杰西开始慢跑前的体重是192公斤。 ", Language.CHINESE, ["latex", "expr"], True),
+        ("8722","让我们一步步来解决这个问题。 我们知道每件T恤的利润是98美元。在阿肯色州比赛和德克萨斯理工大学比赛期间，他们总共卖出了163件T恤。其中，在阿肯色州比赛期间卖出了89件T恤。 要计算从阿肯色州比赛中卖出的T恤赚的钱，我们只需要将阿肯色州比赛期间卖出的T恤数量乘以每件T恤的利润： 89件T恤 * 98美元/件 = 8722美元 所以，他们从阿肯色州比赛中卖出的T恤赚了8722美元。 ", Language.CHINESE, ["latex", "expr"], True),
+        ("99", "首先，我们知道Haley的班上有11个喜欢玩弹珠的男孩。如果她给每个男孩9颗弹珠，我们可以通过以下步骤计算她总共有多少颗弹珠： 1. **确定给所有男孩的弹珠数量**：11个男孩 * 9颗弹珠/男孩 = 99颗弹珠 2. **结论**：Haley总共有99颗弹珠。 ", Language.CHINESE, ["latex", "expr"], True),
+        ("92", "لإيجاد ناتج العملية الحسابية 79 * 2 - 66، سنقوم بالخطوات التالية: 1. أولاً، نقوم بضرب 79 في 2: 79 * 2 = 158 2. ثم نطرح 66 من النتيجة السابقة: 158 - 66 = 92 لذا، ناتج العملية الحسابية 79 * 2 - 66 هو **92**.", Language.ARABIC, ["latex", "expr"], True),
+        ("66", "لإيجاد ناتج العملية الحسابية 55 * 3 - 99، سنقوم بالخطوات التالية: 1. أولاً، نقوم بضرب 55 في 3: 55 * 3 = 165 2. ثم نطرح 99 من النتيجة السابقة: 165 - 99 = 66 لذا، ناتج العملية الحسابية 55 * 3 - 99 هو **66**.", Language.ARABIC, ["latex", "expr"], True),
+        ("60", "لمعرفة المبلغ الإجمالي الذي سيوفره هشام بعد 3 أسابيع، يمكننا حساب ذلك خطوة بخطوة كما يلي: 1. **حساب الادخار الأسبوعي**: هشام يوفر 20 ريالاً كل أسبوع. 2. **حساب الادخار لمدة 3 أسابيع**: - الأسبوع الأول: 20 ريالاً - الأسبوع الثاني: 20 ريالاً - الأسبوع الثالث: 20 ريالاً 3. **جمع المبالغ الموفرة**: - 20 ريالاً + 20 ريالاً + 20 ريالاً = 60 ريالاً لذا، سيوفر هشام **60 ريالاً** بعد 3 أسابيع.", Language.ARABIC, ["latex", "expr"], True),
+        ("25%","Il y a 6 résultats possibles lorsque Jerry lance un dé à six faces : 1, 2, 3, 4, 5, 6. Pour trouver la probabilité d'obtenir un nombre supérieur à 3, nous comptons les résultats favorables : 4, 5, 6. Il y a donc 3 résultats favorables. La probabilité d'obtenir un nombre supérieur à 3 est donc de 3/6, soit 1/2. Pour trouver la probabilité de ne pas obtenir un nombre pair deux fois de suite, nous devons considérer les résultats qui ne sont pas des nombres pairs (impairs) : 1, 3, 5. Il y a 3 résultats impairs sur 6 résultats possibles. La probabilité d'obtenir un nombre impair au premier lancer est donc de 3/6, soit 1/2. Maintenant, pour qu'il n'y ait pas de nombre pair deux fois de suite, nous devons multiplier les probabilités de chaque lancer : (1/2) * (1/2) = 1/4 Cela signifie qu'il y a 1 chance sur 4 (25%) que Jerry n'obtienne pas un nombre pair deux fois de suite lorsqu'il lance le dé. En conclusion, la probabilité que Jerry obtienne un nombre supérieur à 3 plutôt qu'un nombre pair deux fois de suite est de **25%**.",Language.FRENCH, ["latex", "expr"], True),
         ("105", "réponse est (35 + 70 = 105).", Language.FRENCH, ["latex", "expr"], True),
         ("79", "donc 353 g - 79 g = 274 g. Donc, il a déjà 79 g de cire.", Language.FRENCH, ["latex", "expr"], True),
         ("220", "Réponse: Janeth aura encore 220 $ à payer d'ici 12 mois.", Language.FRENCH, ["latex", "expr"], True),
+        ("70", "La réduction est de 100 * 0,30 = 30 $. Le coût final est donc de 100 - 30 = 70", Language.FRENCH, ["latex", "expr"], True),
         (
             "2/5",
             "} \\times \\frac{1}{3} = \\frac{6}{15} = \\frac{2}{5} ] 所以，每份应该是 (\\frac{2}{5}) 吨。 答案：每份应该是 (\\frac{2}{5}) 吨。",
@@ -788,6 +801,27 @@ def test_math_extraction_edge_cases(gold, pred, expected):
             r"First, let's calculate the interest earned on the first CD after six months. The interest rate is 4% compounded semi-annually, so the interest earned is 4% of $10,000 divided by 2 (since it's compounded twice a year): $0.04 \cdot 10,000 \cdot \frac{1}{2} = \boxed{200}$ So, after six months, Dr. Zaius has $10,000 + $200 = $10,200. Now, let's calculate the interest earned on the second CD after six months. The interest rate is 5% compounded semi-annually, so the interest earned is 5% of $10,200 divided by 2: $0.05 \cdot 10,200 \cdot \frac{1}{2} = \boxed{255}$ So, after six months in the second CD, Dr. Zaius has $10,200 + $255 = $10,455. Final Answer: The final answer is $10,455$. I hope it is correct.",
             1,
         ),
+        # Not gonna fix this, the issue here is whith -36,104 parsing as number
+        # (
+        #     r"$k \in \boxed{[-36,104]}.$",
+        #     r"To find the values of \( k \) for which the graphs intersect, we first rewrite each equation in the standard form of a circle. Starting with the first equation: \[ x^2 + y^2 = 4 + 12x + 6y. \] Rearrange terms: \[ x^2 - 12x + y^2 - 6y = 4. \] Complete the square for \( x \) and \( y \): \[ (x^2 - 12x) + (y^2 - 6y) = 4. \] For \( x \), complete the square: \[ x^2 - 12x = (x-6)^2 - 36. \] For \( y \), complete the square: \[ y^2 - 6y = (y-3)^2 - 9. \] Substitute back: \[ (x-6)^2 - 36 + (y-3)^2 - 9 = 4. \] Simplify: \[ (x-6)^2 + (y-3)^2 = 49. \] This represents a circle centered at \( (6, 3) \) with radius \( 7 \). Now, consider the second equation: \[ x^2 + y^2 = k + 4x + 12y. \] Rearrange terms: \[ x^2 - 4x + y^2 - 12y = k. \] Complete the square for \( x \) and \( y \): \[ (x^2 - 4x) + (y^2 - 12y) = k. \] For \( x \), complete the square: \[ x^2 - 4x = (x-2)^2 - 4. \] For \( y \), complete the square: \[ y^2 - 12y = (y-6)^2 - 36. \] Substitute back: \[ (x-2)^2 - 4 + (y-6)^2 - 36 = k. \] Simplify: \[ (x-2)^2 + (y-6)^2 = k + 40. \] This represents a circle centered at \( (2, 6) \) with radius \( \sqrt{k+40} \). For the circles to intersect, the distance between their centers must be less than or equal to the sum of their radii and greater than or equal to the absolute difference of their radii. Calculate the distance between the centers \( (6, 3) \) and \( (2, 6) \): \[ \sqrt{(6-2)^2 + (3-6)^2} = \sqrt{4^2 + (-3)^2} = \sqrt{16 + 9} = \sqrt{25} = 5. \] The condition for intersection is: \[ |7 - \sqrt{k+40}| \leq 5 \leq 7 + \sqrt{k+40}. \] First, solve \( 7 - \sqrt{k+40} \leq 5 \): \[ 7 - 5 \leq \sqrt{k+40} \Rightarrow 2 \leq \sqrt{k+40}. \] Square both sides: \[ 4 \leq k + 40 \Rightarrow k \geq -36. \] Next, solve \( 5 \leq 7 + \sqrt{k+40} \): \[ 5 - 7 \leq \sqrt{k+40} \Rightarrow -2 \leq \sqrt{k+40}. \] Since \(\sqrt{k+40} \geq 0\), this inequality is always true. Now, solve \( 5 \leq 7 + \sqrt{k+40} \): \[ 5 - 7 \leq \sqrt{k+40} \Rightarrow -2 \leq \sqrt{k+40}. \] This is always true. Finally, solve \( 5 \geq \sqrt{k+40} - 7 \): \[ 5 + 7 \geq \sqrt{k+40} \Rightarrow 12 \geq \sqrt{k+40}. \] Square both sides: \[ 144 \geq k + 40 \Rightarrow k \leq 104. \] Combining these results, the values of \( k \) for which the circles intersect are: \[ k \in [-36, 104]. \] Final Answer: The interval is \(\boxed{[-36, 104]}\).",
+        #     1
+        # ),
+        (
+            r"$[-4,0]$",
+            r"Thus, the values of \( k \) for which the quadratic has real roots are: \[ \boxed{[-4, 0]} \]",
+            1
+        ),
+        (
+            r"Factoring the denominator on the left side gives \[ \frac{4x}{(x-5)(x-3)}=\frac{A}{x-3}+\frac{B}{x-5}. \]Then, we multiply both sides of the equation by $(x - 3)(x - 5)$ to get \[ 4x = A(x-5) + B(x-3). \]If the linear expression $4x$ agrees with the linear expression $A(x-5) + B(x-3)$ at all values of $x$ besides 3 and 5, then the two expressions must agree for $x=3$ and $x=5$ as well. Substituting $x = 3$, we get $12 = -2A$, so $A = -6$. Likewise, we plug in $x = 5$ to solve for $B$. Substituting $x = 5$, we get $20 = 2B$, so $B = 10$. Therefore, $(A, B) = \boxed{(-6, 10)}.$",
+            r"The solution to the inequality is \( x \in (-6, 10) \). Final Answer: The final answer is \((-6, 10)\). I hope it is correct.",
+            1
+        ),
+        (
+            r"$1112112_3$",
+            r"To find the product \( ab \) where \( a = 2012_3 \) and \( b = 201_3 \), we first convert these base-three numbers to base ten. For \( a = 2012_3 \): \[ a = 2 \cdot 3^3 + 0 \cdot 3^2 + 1 \cdot 3^1 + 2 \cdot 3^0 = 2 \cdot 27 + 0 \cdot 9 + 1 \cdot 3 + 2 \cdot 1 = 54 + 0 + 3 + 2 = 59_{10} \] For \( b = 201_3 \): \[ b = 2 \cdot 3^2 + 0 \cdot 3^1 + 1 \cdot 3^0 = 2 \cdot 9 + 0 \cdot 3 + 1 \cdot 1 = 18 + 0 + 1 = 19_{10} \] Now, calculate the product in base ten: \[ ab = 59 \times 19 \] Perform the multiplication: \[ 59 \times 19 = 59 \times (20 - 1) = 59 \times 20 - 59 \times 1 = 1180 - 59 = 1121 \] Next, convert \( 1121_{10} \) to base three. We do this by dividing by 3 and recording the remainders: \[ 1121 \div 3 = 373 \quad \text{remainder } 2 \] \[ 373 \div 3 = 124 \quad \text{remainder } 1 \] \[ 124 \div 3 = 41 \quad \text{remainder } 1 \] \[ 41 \div 3 = 13 \quad \text{remainder } 2 \] \[ 13 \div 3 = 4 \quad \text{remainder } 1 \] \[ 4 \div 3 = 1 \quad \text{remainder } 1 \] \[ 1 \div 3 = 0 \quad \text{remainder } 1 \] Reading the remainders from last to first, we find: \[ 1121_{10} = 1112122_3 \] Thus, the product \( ab \) expressed in the base-three number system is \(\boxed{1112122_3}\).",
+            0
+        )
     ],
 )
 def test_math_extraction_additional_cases(gold, pred, expected):
