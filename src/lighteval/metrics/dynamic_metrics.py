@@ -426,7 +426,7 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
         regexes.append((final_answer_prefixed_re, 0))
         regexes.append((final_answer_prefixed_just_is, 50))
 
-    answer_prefix_re = rf"(?i:{translation_literal.answer}|{translation_literal.result_word})"
+    answer_prefix_re = rf"(?i:{translation_literal.answer})"
     # Match after the last equals with answer word - require the number pattern
     # Not sure about the equals matchings
 
@@ -453,7 +453,7 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) ->
         r"(?<!\\)\$\$(?P<latexDisplayDollar>[\s\S]+?)(?<!\\)\$\$|"  # $$...$$ (display math, can be multiline)
         r"(?<!\\)\\\[(?P<latexDisplayBracket>[\s\S]+?)(?<!\\)\\\]|"  # \[...\] (display math, can be multiline)
         r"(?<!\\|\d)\$(?P<latexInlineDollar>(?:\\[$]|[^\n$])+?)(?<!\\)\$|"  # $...$ (inline math, single line, allows escaped $), we make sure it's not preceed by a digit to minimize false positives with actualy dollar unit
-        r"(?<!\\)\\\((?P<latexInlineParenthesis>[^\n)]+?)(?<!\\)\\\)|"  # \(...\) (inline math, single line)
+        r"(?<!\\)\\\((?P<latexInlineParenthesis>[^\n]+?)(?<!\\)\\\)|"  # \(...\) (inline math, single line)
         r"(?<!\\)\[(?P<latexInlineBracket>[^\n$]+?)(?<!\\)\]"  # [....] While this is no a valid display math llms like to generate it, allow it
         rf"){percent_re_group}?"
     )
@@ -465,7 +465,7 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) ->
     translation_literal = TRANSLATION_LITERALS[language]
     colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
 
-    answer_prefix_re = rf"(?i:{translation_literal.answer}|{translation_literal.result_word})"
+    answer_prefix_re = rf"(?i:{translation_literal.answer})"
 
     # We first match boxed env, for some reason that's the most common case of output
     # Then we match the latex with environments, then we try to match the fraction
@@ -568,8 +568,7 @@ def get_extraction_regexes(
 def extract_target_from_pred(
     pred: str,
     target_res: list[tuple[list[tuple[re.Pattern[str], int]], ExtractionTarget]],
-    extraction_mode: Literal["first_match", "extract_each_target", "first_fallback"] = "first_match",
-    fallback_mode: Literal["no_fallback", "first_match", "any_match"] = "no_fallback",
+    fallback_mode: Literal["no_fallback", "first_match"] = "no_fallback",
 ) -> list[str | sympy.Expr | None | float]:
     extracted_predictions = []
     fallbacks = []
@@ -597,30 +596,30 @@ def extract_target_from_pred(
         for match, _, _, target_type in matches_with_pos:
             extracted_match, str_fallback = extract_match(match, target_type)
 
-            if extracted_match is not None:
-                extracted_predictions.append(extracted_match)
-                if extraction_mode == "first_match":
-                    break
-
             if str_fallback:
                 fallbacks.append(str_fallback)
-                if extraction_mode == "first_fallback":
-                    break
+
+            if extracted_match is not None:
+                extracted_predictions.append(extracted_match)
+                break
+            
+
 
         # If we found something and we're in first_match mode, stop processing other priorities
-        if (extraction_mode == "first_match" and extracted_predictions) or (
-            extraction_mode == "first_fallback" and fallbacks
-        ):
+        if extracted_predictions:
             break
 
     # Handle fallback modes
-    if not extracted_predictions:  # Only use fallbacks if no successful extractions
-        if fallback_mode == "first_match" and fallbacks:
-            return [fallbacks[0]]  # Return first fallback
-        elif fallback_mode == "any_match" and fallbacks:
-            return fallbacks  # Return all fallbacks
-        elif fallback_mode == "no_fallback":
-            return []  # Return empty list if no successful extractions
+    # if not extracted_predictions:  # Only use fallbacks if no successful extractions
+    #     if fallback_mode == "first_match" and fallbacks:
+    #         return [fallbacks[0]]  # Return first fallback
+    #     elif fallback_mode == "any_match" and fallbacks:
+    #         return fallbacks  # Return all fallbacks
+    #     elif fallback_mode == "no_fallback":
+    #         return []  # Return empty list if no successful extractions
+
+    if fallback_mode == "first_match" and fallbacks:
+        extracted_predictions += [fallbacks[0]]
 
     return extracted_predictions
 
@@ -674,7 +673,7 @@ def sympy_numeric_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, pre
 
     else:
         try:
-            return bool(abs((a - b).evalf()) < 1e-10)
+            return (a - b).evalf(chop=True) == 0
         except TimeoutException:
             raise
         except:
@@ -870,8 +869,7 @@ def extract_target(
     gold_extraction_target: tuple[ExtractionTarget],
     pred_extraction_target: tuple[ExtractionTarget],
     aggregation_function: Callable[[list[float]], float] = max,
-    extraction_mode: Literal["first_match", "extract_each_target", "first_fallback"] = "first_match",
-    fallback_mode: Literal["no_fallback", "first_match", "any_match"] = "no_fallback",
+    fallback_mode: Literal["no_fallback", "first_match"] = "first_match",
     precision: int = 6,
 ) -> float:
     # Try each target type in order
@@ -879,10 +877,10 @@ def extract_target(
     pred_extraction_regexes = get_extraction_regexes(formatted_doc, pred_extraction_target, language)
 
     extracted_predictions = [
-        extract_target_from_pred(pred, pred_extraction_regexes, extraction_mode, fallback_mode) for pred in predictions
+        extract_target_from_pred(pred, pred_extraction_regexes, fallback_mode) for pred in predictions
     ]
     extracted_golds = [
-        extract_target_from_pred(gold, gold_extraction_regexes, "first_match", "first_match") for gold in golds
+        extract_target_from_pred(gold, gold_extraction_regexes, fallback_mode) for gold in golds
     ]
 
     # Assert on empty gold and warn on empty pred
@@ -909,8 +907,7 @@ def multilingual_extractive_match_metric(
     gold_extraction_target: tuple[ExtractionTarget] = (ExprExtractionConfig(),),
     pred_extraction_target: tuple[ExtractionTarget] = (ExprExtractionConfig(),),
     aggregation_function: Callable[[list[float]], float] = max,
-    extraction_mode: Literal["first_match", "extract_each_target", "first_fallback"] = "first_match",
-    fallback_mode: Literal["no_fallback", "first_match", "any_match"] = "no_fallback",
+    fallback_mode: Literal["no_fallback", "first_match"] = "first_match",
     precision: int = 6,
 ) -> SampleLevelMetric:
     return SampleLevelMetric(
@@ -921,7 +918,6 @@ def multilingual_extractive_match_metric(
             gold_extraction_target=gold_extraction_target,
             pred_extraction_target=pred_extraction_target,
             aggregation_function=aggregation_function,
-            extraction_mode=extraction_mode,
             fallback_mode=fallback_mode,
             precision=precision,
         ),
