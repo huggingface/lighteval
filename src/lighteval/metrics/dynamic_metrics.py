@@ -26,7 +26,7 @@ import re
 from dataclasses import dataclass
 from functools import lru_cache, partial
 from itertools import product
-from typing import Callable, Literal, Sequence
+from typing import Callable, Literal
 
 import numpy as np
 import sympy
@@ -400,7 +400,6 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
         r")(?P<percent>\s*(?:%|[Pp]ercent|\s*[Pp]ercentage|\s*[Pp]ct))?"
     )
 
-
     operators = [r"\+", r"\-", r"\*", r"\×", r"\/", r"\^", r"\(", r"\)", r"\÷"]
     operators_re = "".join(operators)
     all_expr_chars = r"[\d\.\s" + operators_re + r"]"
@@ -411,7 +410,7 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
     full_stop_re = rf"[{re.escape(translation_literal.full_stop)}\.]"
     comma_re = rf"[{re.escape(translation_literal.comma)}\,]"
     colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
-    space_re = rf"(?:\s|{re.escape(translation_literal.sentence_space)})"
+    space_re = re.escape(translation_literal.sentence_space)
 
     # For expressions we also allow = prefix without any space, for suffix we allow ) because sometimes the answer is wrapped in parenthesis
     expr_prefix_re = rf"(?:^|{space_re}|\=)(?:\*\*)?"
@@ -438,6 +437,9 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
         # Priority 3-4: Less specific patterns
         regexes.append((f"({expr_prefix_re})(?P<expr>{expr_re})({expr_suffix_re})", 300))
         regexes.append((f"({expr_prefix_re})(?P<expr>{number_re})({expr_suffix_re})", 300))
+
+        # This ensure that we parse stuff like $1
+        regexes.append((f"(?P<expr>{number_re})", 350))
 
     # We first try to match the answer then the plain number
     return [(re.compile(pattern), priority) for pattern, priority in regexes]
@@ -508,7 +510,9 @@ def lazy_indices_regex(
     full_stop_re = rf"[{re.escape(translation_literal.full_stop)}\.]"
     comma_re = rf"[{re.escape(translation_literal.comma)}\,]"
     colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
-    space_re = rf"(?:\s|{re.escape(translation_literal.sentence_space)})"
+
+    # Do note that this can be just '' for some languages, but it's better because otherwise it will often don't extract any target
+    space_re = re.escape(translation_literal.sentence_space)
 
     answer_prefix_re = rf"(^|{space_re})(?:\*\*)?"
     answer_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|$)"
@@ -602,8 +606,6 @@ def extract_target_from_pred(
             if extracted_match is not None:
                 extracted_predictions.append(extracted_match)
                 break
-            
-
 
         # If we found something and we're in first_match mode, stop processing other priorities
         if extracted_predictions:
@@ -879,9 +881,7 @@ def extract_target(
     extracted_predictions = [
         extract_target_from_pred(pred, pred_extraction_regexes, fallback_mode) for pred in predictions
     ]
-    extracted_golds = [
-        extract_target_from_pred(gold, gold_extraction_regexes, fallback_mode) for gold in golds
-    ]
+    extracted_golds = [extract_target_from_pred(gold, gold_extraction_regexes, fallback_mode) for gold in golds]
 
     # Assert on empty gold and warn on empty pred
     if any(len(g) == 0 for g in extracted_golds):
