@@ -1014,50 +1014,22 @@ def judge_template(question: str, answer: str, gold: str, options: Optional[List
     ]
     return messages
 
-def process_judge_response(response: Union[str, List[Dict[str, str]]]) -> float:
-    """
-    Processes the judge's response to extract a normalized score.
-    
-    The function expects either:
-    1. A string containing a numerical score
-    2. A list of message dictionaries where one contains the score
-    
-    Args:
-        response: Raw response from the judge
-        
-    Returns:
-        float: Normalized score between 0 and 1
-        
-    Raises:
-        ValueError: If no valid score can be extracted
-    """
+
+def process_judge_response(response) -> float:
+    """Process the judge's response to extract the score"""
+    # If response is a list, extract the content from the user role
+    if isinstance(response, list):
+        # Join the content from the user role into a single string
+        response_content = ' '.join(item['content'] for item in response if item['role'] == 'user')
+    else:
+        response_content = response  # If it's not a list, use it directly
+
     try:
-        # Handles list-type responses (message format)
-        if isinstance(response, list):
-            response_content = ' '.join(
-                item['content'] for item in response 
-                if item.get('role') == 'user' and 'content' in item
-            )
-        else:
-            response_content = str(response)
-
-        # Extracts the first number found in the response
-        numbers = [
-            word for word in response_content.split() 
-            if word.replace('.', '', 1).isdigit()
-        ]
-        
-        if not numbers:
-            raise ValueError("No numerical score found in response")
-            
-        score = float(numbers[0])
-        
-        # Normalizes score to 0-1 range
+        # Extract the score from the response content
+        score = float(next(num for num in response_content.split() if num.replace('.', '', 1).isdigit()))
         return min(max(score / 10.0, 0.0), 1.0)
-        
-    except Exception as e:
-        raise ValueError(f"Failed to process judge response: {str(e)}")
-
+    except (StopIteration, ValueError):
+        return 0.0
 # Initialize the judge and metric
 judge = JudgeLM(
     model="Qwen/Qwen2.5-72B-Instruct",
