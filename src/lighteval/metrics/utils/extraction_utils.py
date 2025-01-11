@@ -24,7 +24,7 @@ import re
 from dataclasses import dataclass
 from functools import lru_cache
 from itertools import groupby
-from typing import Literal
+from typing import Literal, Sequence
 
 import sympy
 from latex2sympy2_extended.latex2sympy2 import NormalizationConfig, convert_to_pct, latex2sympy, normalize_latex
@@ -253,7 +253,7 @@ def lazy_indices_regex(
 
 
 def get_extraction_regexes(
-    formatted_doc: Doc, target_types: tuple[ExtractionTarget], language: Language
+    formatted_doc: Doc, target_types: Sequence[ExtractionTarget], language: Language
 ) -> list[tuple[list[tuple[re.Pattern[str], int]], ExtractionTarget]]:
     extraction_regexes: list[tuple[list[tuple[re.Pattern[str], int]], ExtractionTarget]] = [
         (lazy_latex_regex(target_type, language), target_type)

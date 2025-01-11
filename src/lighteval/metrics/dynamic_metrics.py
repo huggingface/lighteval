@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 import logging
-from typing import Callable, Literal
+from typing import Callable, Literal, Sequence
 
 import numpy as np
 
@@ -187,21 +187,39 @@ def multilingual_quasi_exact_match_metric(
 
 def multilingual_extractive_match_metric(
     language: Language,
-    gold_extraction_target: tuple[ExtractionTarget] = (ExprExtractionConfig(),),
-    pred_extraction_target: tuple[ExtractionTarget] = (ExprExtractionConfig(),),
+    gold_extraction_target: Sequence[ExtractionTarget] = (ExprExtractionConfig(),),
+    pred_extraction_target: Sequence[ExtractionTarget] = (ExprExtractionConfig(),),
     aggregation_function: Callable[[list[float]], float] = max,
     fallback_mode: Literal["no_fallback", "first_match"] = "first_match",
     precision: int = 6,
 ) -> SampleLevelMetric:
-    """
+    """Creates a language-aware extractive match metric that extracts answers from the model's output.
 
     Known issues:
     - If the task is to simplify an expression, the metric might overestimate the accuracy. This is because if the model doesn't output any anchor for the extraction (e.g final answer is..),
         it's possible that the the extracted prediction will be the expression to simplify. Because we do simplifications ourselves, it can thus happen that sympy will correctly simplify the expression,
-        thus it will match gold, despite model not doing anything. You can try to limit this issue by setting extraction_mode to "first_match" instead of "first_extraction", but this will likely incurr
-        too low recall on correct predictions.
+        thus it will match gold, despite model not doing anything. PRs to fix this are welcome.
+
     - There is currently no StringExtractionConfig, so if the gold is \boxed{\text{Friday}} and model outputs Friday it will not match, because nothing will be extracted.
 
+    Args:
+        language: Language
+            The language of the samples.
+        gold_extraction_target: Sequence[ExtractionTarget]
+            Extraction targets to use for gold answers. Defaults to extracting simple math expressions.
+        pred_extraction_target: Sequence[ExtractionTarget]
+            Extraction targets to use for predictions. Defaults to extracting simple math expressions.
+        aggregation_function: Callable[[list[float]], float]
+            Function to aggregate scores when multiple golds/predictions are present. Defaults to max.
+        fallback_mode: Literal["no_fallback", "first_match"]
+            How to perform extraction. Defaults to "first_match".
+            - "no_fallback": Only use first successfully parsed matches
+            - "first_match": Use the first successfully parsed match + first match irregardless the parsing success
+        precision: int
+            Number of decimal places to use when comparing numerical values. Defaults to 6.
+
+    Returns:
+        A sample level metric that extracts and compares mathematical expressions.
 
     """
 
