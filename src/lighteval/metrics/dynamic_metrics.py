@@ -38,7 +38,7 @@ from lighteval.metrics.normalizations import (
     LogProbTokenNorm,
     get_multilingual_normalizer,
 )
-from lighteval.metrics.utils.extraction_utils import (  # noqa: F401
+from lighteval.metrics.utils.extractive_match_utils import (  # noqa: F401
     ExprExtractionConfig,
     ExtractionTarget,
     IndicesExtractionConfig,

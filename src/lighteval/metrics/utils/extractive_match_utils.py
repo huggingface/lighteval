@@ -27,7 +27,6 @@ from itertools import groupby
 from typing import Literal, Sequence
 
 import sympy
-from latex2sympy2_extended.latex2sympy2 import NormalizationConfig, convert_to_pct, latex2sympy, normalize_latex
 from sympy import Basic, MatrixBase, Number
 from sympy.parsing import parse_expr
 
@@ -35,6 +34,7 @@ from lighteval.metrics.utils.math_comparisson import should_treat_as_complex
 from lighteval.tasks.requests import Doc
 from lighteval.tasks.templates.utils.formulation import ChoicePrefix, get_prefix
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
+from lighteval.utils.imports import requires_latex2sympy2_extended
 from lighteval.utils.language import Language
 from lighteval.utils.timeout import timeout
 
@@ -282,7 +282,10 @@ def get_extraction_regexes(
 # Small cache, to catche repeated calls invalid parsing
 @lru_cache(maxsize=20)
 @timeout(timeout_seconds=5)
+@requires_latex2sympy2_extended
 def parse_latex_with_timeout(latex: str):
+    from latex2sympy2_extended.latex2sympy2 import latex2sympy
+
     return latex2sympy(latex, is_real=not should_treat_as_complex(latex), convert_degrees=False)
 
 
@@ -324,9 +327,17 @@ def extract_expr(match: re.Match) -> tuple[str | sympy.Expr | None, str]:
         return None, expr
 
 
+def convert_to_pct(number: Number):
+    return sympy.Mul(number, sympy.Rational(1, 100), evaluate=False)
+
+
 @lru_cache(maxsize=1000)
+@timeout(timeout_seconds=5)
+@requires_latex2sympy2_extended
 def extract_latex(match: re.Match) -> tuple[sympy.Expr | str | None, str]:
-    _, latex = next((val for name, val in match.groupdict().items() if name.startswith("latex") and val), "")
+    from latex2sympy2_extended.latex2sympy2 import NormalizationConfig, normalize_latex
+
+    latex = next((val for name, val in match.groupdict().items() if name.startswith("latex") and val), "")
     is_percentage = True if match.group("percent") else False
 
     normalized_latex = normalize_latex(
