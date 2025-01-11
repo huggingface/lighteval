@@ -102,7 +102,7 @@ class AdapterModel(BaseModel):
 
     def _create_auto_model(self, config: AdapterModelConfig, env_config: EnvConfig) -> AutoModelForCausalLM:
         """
-        It returns a PeftModel from a base model and a version fined tuned using PEFT.
+        Returns a PeftModel from a base model and a version fined tuned using PEFT.
 
         Args:
             config(AdapterModelConfig): An instance of AdapterModelConfig.
