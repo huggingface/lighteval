@@ -37,7 +37,12 @@ HELP_PANEL_NAME_4 = "Modeling Parameters"
 
 def vllm(
     # === general ===
-    model_args: Annotated[str, Argument(help="Model arguments in the form key1=value1,key2=value2,...")],
+    model_args: Annotated[
+        str,
+        Argument(
+            help="Model arguments in the form key1=value1,key2=value2,... or path to yaml config file (see examples/model_configs/transformers_model.yaml)"
+        ),
+    ],
     tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
     # === Common parameters ===
     use_chat_template: Annotated[
@@ -88,7 +93,10 @@ def vllm(
     """
     Evaluate models using vllm as backend.
     """
+    import yaml
+
     from lighteval.logging.evaluation_tracker import EvaluationTracker
+    from lighteval.models.model_input import GenerationParameters
     from lighteval.models.vllm.vllm_model import VLLMModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
@@ -118,8 +126,15 @@ def vllm(
         system_prompt=system_prompt,
     )
 
-    model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
-    model_config = VLLMModelConfig(**model_args_dict)
+    if model_args.endswith(".yaml"):
+        with open(model_args, "r") as f:
+            config = yaml.safe_load(f)["model"]
+        generation_parameters = GenerationParameters.from_dict(config)
+        model_config = VLLMModelConfig(config, generation_parameters=generation_parameters)
+
+    else:
+        model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
+        model_config = VLLMModelConfig(**model_args_dict)
 
     pipeline = Pipeline(
         tasks=tasks,

@@ -32,6 +32,7 @@ from tqdm import tqdm
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.endpoints.endpoint_model import ModelInfo
+from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
@@ -69,14 +70,30 @@ class OpenAIModelConfig:
     """
 
     model: str
+    generation_parameters: GenerationParameters = None
+
+    def __post_init__(self):
+        if not self.generation_parameters:
+            self.generation_parameters = GenerationParameters()
+
+    @classmethod
+    def from_path(cls, path: str) -> "OpenAIModelConfig":
+        import yaml
+
+        with open(path, "r") as f:
+            config = yaml.safe_load(f)["model"]
+        generation_parameters = GenerationParameters.from_dict(config)
+        return cls(model=config["model_name"], generation_parameters=generation_parameters)
 
 
 class OpenAIClient(LightevalModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
-    def __init__(self, config, env_config) -> None:
+    def __init__(self, config: OpenAIModelConfig, env_config) -> None:
         api_key = os.environ["OPENAI_API_KEY"]
         self.client = OpenAI(api_key=api_key)
+        self.generation_parameters = config.generation_parameters
+        self.sampling_params = self.generation_parameters.to_vllm_openai_dict()
 
         self.model_info = ModelInfo(
             model_name=config.model,
@@ -103,6 +120,7 @@ class OpenAIClient(LightevalModel):
                     logprobs=return_logits,
                     logit_bias=logit_bias,
                     n=num_samples,
+                    **self.sampling_params,
                 )
                 return response
             except Exception as e:
@@ -152,7 +170,6 @@ class OpenAIClient(LightevalModel):
 
         Args:
             requests (list[Request]): list of requests containing the context and ending conditions.
-            disable_tqdm (bool, optional): Whether to disable the progress bar. Defaults to False.
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
 
         Returns:
