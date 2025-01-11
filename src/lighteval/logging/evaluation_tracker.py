@@ -242,7 +242,7 @@ class EvaluationTracker:
         for task_name in task_names:
             if not any(task_name.startswith(task_name) for task_name in details_datasets.keys()):
                 raise ValueError(
-                    f"Task {task_name} not found in details datasets. Check the tasks to be evaluated or the date_id used to load the details ({self.pipeline_parameters.load_responses_from_details_date_id})."
+                    f"Task {task_name} not found in details datasets. Check the tasks to be evaluated or the date_id used to load the details ({date_id})."
                 )
         return details_datasets
 
