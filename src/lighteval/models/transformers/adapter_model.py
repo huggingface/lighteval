@@ -44,6 +44,10 @@ class AdapterModelConfig(BaseModelConfig):
     """
     Manages the configuration of adapter models. Adapter models are designed to extend or adapt a
     base model's functionality for specific tasks while keeping most of the base model's parameters frozen.
+
+    Attributes:
+        base_model (str): The name of the parent base model. This model provides the tokenizer and configuration for the adapter model.
+                          Defaults to None if not specified.
     """
 
     # Adapter models have the specificity that they look at the base model (= the parent) for the tokenizer and config
@@ -66,7 +70,7 @@ class AdapterModelConfig(BaseModelConfig):
             env_configs(EnvConfig): An instance of EnvConfig.
 
         Returns:
-            Any:
+            Any: Result of the configuration initialization.
         """
         return self._init_configs(self.base_model, env_config)
 
@@ -74,9 +78,6 @@ class AdapterModelConfig(BaseModelConfig):
 class AdapterModel(BaseModel):
     """
     Integrates the adapter models with a pre-trained base model.
-
-    Args:
-
     """
 
     def _create_auto_tokenizer(self, config: AdapterModelConfig, env_config: EnvConfig) -> PreTrainedTokenizer:
