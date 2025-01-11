@@ -215,28 +215,37 @@ class EvaluationTracker:
             # Get all folders in output_dir_details
             if not self.fs.exists(output_dir_details):
                 raise FileNotFoundError(f"Details directory {output_dir_details} does not exist")
-            
+
             # List all folders and filter out files
-            folders = [f['name'] for f in self.fs.listdir(output_dir_details) if f['type'] == 'directory']
-            
+            folders = [f["name"] for f in self.fs.listdir(output_dir_details) if f["type"] == "directory"]
+
             if not folders:
                 raise FileNotFoundError(f"No timestamp folders found in {output_dir_details}")
-                
+
             # Parse timestamps and get latest
             date_id = max(folders)
         return output_dir_details / date_id
 
-    def load_details_datasets(self, date_id: str) -> dict[str, Dataset]:
+    def load_details_datasets(self, date_id: str, task_names: list[str]) -> dict[str, Dataset]:
         output_dir_details_sub_folder = self._get_details_sub_folder(date_id)
-        date_id = output_dir_details_sub_folder.name # Overwrite date_id in case of latest
+        logger.info(f"Loading details from {output_dir_details_sub_folder}")
+        date_id = output_dir_details_sub_folder.name  # Overwrite date_id in case of latest
         details_datasets = {}
         for file in self.fs.glob(str(output_dir_details_sub_folder / f"details_*_{date_id}.parquet")):
-            task_name = Path(file).stem.replace(f"details_", "").replace(f"_{date_id}", "")
+            task_name = Path(file).stem.replace("details_", "").replace(f"_{date_id}", "")
+            if "|".join(task_name.split("|")[:-1]) not in task_names:
+                logger.info(f"Skipping {task_name} because it is not in the task_names list")
+                continue
             dataset = load_dataset("parquet", data_files=file, split="train")
             details_datasets[task_name] = dataset
+
+        for task_name in task_names:
+            if not any(task_name.startswith(task_name) for task_name in details_datasets.keys()):
+                raise ValueError(
+                    f"Task {task_name} not found in details datasets. Check the tasks to be evaluated or the date_id used to load the details ({self.pipeline_parameters.load_responses_from_details_date_id})."
+                )
         return details_datasets
 
-    
     def save_details(self, date_id: str, details_datasets: dict[str, Dataset]):
         output_dir_details_sub_folder = self._get_details_sub_folder(date_id)
         self.fs.mkdirs(output_dir_details_sub_folder, exist_ok=True)

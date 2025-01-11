@@ -31,6 +31,7 @@ from datetime import timedelta
 from enum import Enum, auto
 
 import numpy as np
+from tqdm import tqdm
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.metrics.utils.metric_utils import MetricCategory
@@ -291,9 +292,10 @@ class Pipeline:
         model_response_type = self._get_model_response_type(request_types[0])
 
         details_datasets = self.evaluation_tracker.load_details_datasets(
-            self.pipeline_parameters.load_responses_from_details_date_id
+            self.pipeline_parameters.load_responses_from_details_date_id, self.task_names_list
         )
-        for task_name, dataset in details_datasets.items():
+
+        for task_name, dataset in tqdm(details_datasets.items(), desc="Loading responses from details for tasks"):
             task: LightevalTask = self._get_task(task_name)
             num_samples = len(dataset["predictions"])
             max_samples = self.pipeline_parameters.max_samples if self.pipeline_parameters.max_samples else num_samples
@@ -305,16 +307,28 @@ class Pipeline:
             for metric_category, has_metric_category in task.has_metric_category.items():
                 if not has_metric_category:
                     continue
+
+                # Pre-evaluate all the literal strings once
+                predictions = [ast.literal_eval(p) for p in dataset["predictions"][:num_samples]]
+                input_tokens = [ast.literal_eval(t) for t in dataset["input_tokens"][:num_samples]]
+                cont_tokens = [ast.literal_eval(t) for t in dataset["cont_tokens"][:num_samples]]
+                truncated = [ast.literal_eval(t)[0] for t in dataset["truncated"][:num_samples]]
+                padded = [ast.literal_eval(p)[0] for p in dataset["padded"][:num_samples]]
+
+                if model_response_type == GenerativeResponse:
+                    logits = [ast.literal_eval(p) for p in dataset["pred_logits"][:num_samples]]
+
                 for idx in range(num_samples):
                     kwargs = {
-                        "result": ast.literal_eval(dataset["predictions"][idx]),
-                        "input_tokens": ast.literal_eval(dataset["input_tokens"][idx]),
-                        "generated_tokens": ast.literal_eval(dataset["cont_tokens"][idx]),
-                        "truncated_tokens_count": ast.literal_eval(dataset["truncated"][idx])[0],
-                        "padded_tokens_count": ast.literal_eval(dataset["padded"][idx])[0],
+                        "result": predictions[idx],
+                        "input_tokens": input_tokens[idx],
+                        "generated_tokens": cont_tokens[idx],
+                        "truncated_tokens_count": truncated[idx],
+                        "padded_tokens_count": padded[idx],
                     }
                     if model_response_type == GenerativeResponse:
-                        kwargs["logits"] = ast.literal_eval(dataset["pred_logits"][idx])
+                        kwargs["logits"] = logits[idx]
+
                     response = model_response_type(**kwargs)
                     sample_id_to_responses[(SampleUid(task_name, f"{idx}_{0}"), metric_category)] = [response]
         return sample_id_to_responses
