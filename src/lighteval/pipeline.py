@@ -280,6 +280,14 @@ class Pipeline:
                 except OSError:
                     pass
 
+    def _unpack(self, x):
+        if isinstance(x, str):
+            return x
+        elif isinstance(x, (list, tuple)):
+            return self._unpack(x[0])
+        else:
+            raise ValueError(f"Unknown type {type(x)} of prediction {x}")
+
     def _load_responses_from_details(self):
         logger.info("--- LOADING RESPONSES FROM DETAILS ---")
         sample_id_to_responses: dict[(SampleUid, MetricCategory), list[ModelResponse]] = collections.defaultdict(list)
@@ -305,7 +313,7 @@ class Pipeline:
                 )
                 num_samples = self.pipeline_parameters.max_samples
 
-            predictions = [ast.literal_eval(p) for p in dataset["predictions"][:num_samples]]
+            predictions = [self._unpack(ast.literal_eval(p)) for p in dataset["predictions"][:num_samples]]
             input_tokens = [ast.literal_eval(t) for t in dataset["input_tokens"][:num_samples]]
             cont_tokens = [ast.literal_eval(t) for t in dataset["cont_tokens"][:num_samples]]
             truncated = [ast.literal_eval(t)[0] for t in dataset["truncated"][:num_samples]]
