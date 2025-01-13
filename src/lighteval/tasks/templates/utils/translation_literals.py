@@ -201,7 +201,7 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         word_space="",
         sentence_space="",
         colon="：",
-        indices=["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩"],
+        indices=["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
     ),
     Language.CROATIAN: TranslationLiterals(
         language=Language.CROATIAN,

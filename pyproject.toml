@@ -95,7 +95,7 @@ tensorboardX = ["tensorboardX"]
 vllm = ["vllm", "ray", "more_itertools"]
 quality = ["ruff==v0.2.2","pre-commit"]
 tests = ["pytest==7.4.0"]
-dev = ["lighteval[accelerate,quality,tests,multilingual]"]
+dev = ["lighteval[accelerate,quality,tests,multilingual,math]"]
 docs = ["hf-doc-builder", "watchdog"]
 extended_tasks = [
   "langdetect", # ifeval
@@ -109,6 +109,7 @@ multilingual = [
     "jieba", # for chinese tokenizer
     "pyvi", # for vietnamese tokenizer
 ]
+math = ["latex2sympy2_extended>=0.9.0"]
 
 [project.urls]
 Homepage = "https://github.com/huggingface/lighteval"
