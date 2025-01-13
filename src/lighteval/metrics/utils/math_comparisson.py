@@ -336,9 +336,9 @@ def sympy_expr_eq(gold: Basic | MatrixBase, pred: Basic | MatrixBase, precision:
     Returns:
         True if expressions are equal by any comparison method, False otherwise
     """
-    # If refernce is relational, but target it's not it's possible it's case of k=x+1+z, so we just take x+1+z
-    # We assume that the gold never contains symplifications, so we don't handle that case
-    # e.g 1+1+1=3 will never be simplified to 3, it would be possibly by doing lhs-rhs == 0, but ehhh just make the gold simpler
+    # If the reference is relational, but the target is not, it's possible it's a case of answer=x+1+z, so we just take x+1+z
+    # We assume that the gold never needs to be simplified, so we don't handle that case
+    # e.g 1+1+1=3 will never be simplified to 3; it would be possible to do so with lhs-rhs == 0, but we assume the gold is at its most simplified form.
     # The new latex2sympy2 will actually convert such cases automatically, but so this is in theory not needed
     if isinstance(gold, Eq) and not isinstance(pred, Relational) and isinstance(gold.lhs, Symbol):
         gold = gold.rhs
