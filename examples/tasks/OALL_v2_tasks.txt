@@ -115,3 +115,4 @@ community|arabic_mmlu_ht:sociology|0|0
 community|arabic_mmlu_ht:us_foreign_policy|0|0
 community|arabic_mmlu_ht:virology|0|0
 community|arabic_mmlu_ht:world_religions|0|0
+community|alrage_qa|0|0
