@@ -589,14 +589,15 @@ class COMET:
         predictions = [response[0].result for response in responses]
         sources = [kwargs["formatted_doc"].specific["source"] for kwargs["formatted_doc"] in formatted_docs]
 
-        data = [
-            {
-                "src": src,
-                "mt": pred if isinstance(pred, str) else pred[0],
-                "ref": gold,
-            }
-            for src, pred, gold in zip(sources, predictions, golds)
-        ]
+        def unpack(x):
+            if isinstance(x, str):
+                return x
+            elif isinstance(x, (list, tuple)):
+                return unpack(x[0])
+            else:
+                raise ValueError(f"Unknown type {type(x)} of prediction {x}")
+
+        data = [{"src": src, "mt": unpack(pred), "ref": gold} for src, pred, gold in zip(sources, predictions, golds)]
         model_output = self.model.predict(
             data,
             batch_size=self.batch_size,
