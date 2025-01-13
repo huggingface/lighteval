@@ -24,7 +24,7 @@ import asyncio
 import logging
 import re
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Coroutine, Dict, List, Optional, Union
 
 import requests
@@ -35,6 +35,7 @@ from huggingface_hub import (
     InferenceEndpoint,
     InferenceEndpointError,
     InferenceEndpointTimeoutError,
+    TextGenerationInputGenerateParameters,
     TextGenerationInputGrammarType,
     TextGenerationOutput,
     create_inference_endpoint,
@@ -48,6 +49,7 @@ from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import GenerativeResponse, LoglikelihoodResponse, LoglikelihoodSingleTokenResponse
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
@@ -78,6 +80,11 @@ SORTED_INSTANCE_SIZES = [  # sorted by incremental overall RAM (to load models)
 class ServerlessEndpointModelConfig:
     model_name: str
     add_special_tokens: bool = True
+    generation_parameters: GenerationParameters = None
+
+    def __post_init__(self):
+        if not self.generation_parameters:
+            self.generation_parameters = GenerationParameters()
 
     @classmethod
     def from_path(cls, path: str) -> "ServerlessEndpointModelConfig":
@@ -106,6 +113,7 @@ class InferenceEndpointModelConfig:
     namespace: str = None  # The namespace under which to launch the endpoint. Defaults to the current user's namespace
     image_url: str = None
     env_vars: dict = None
+    generation_parameters: GenerationParameters = None
 
     def __post_init__(self):
         # xor operator, one is None but not the other
@@ -116,6 +124,9 @@ class InferenceEndpointModelConfig:
 
         if not (self.endpoint_name is None) ^ int(self.model_name is None):
             raise ValueError("You need to set either endpoint_name or model_name (but not both).")
+
+        if not self.generation_parameters:
+            self.generation_parameters = GenerationParameters()
 
     @classmethod
     def from_path(cls, path: str) -> "InferenceEndpointModelConfig":
@@ -257,6 +268,7 @@ class InferenceEndpointModel(LightevalModel):
                     logger.error(
                         "Endpoint did not start within 30 minutes, there was a timeout. Please inspect the logs."
                     )
+                    self.cleanup()
                     raise e
                 except HfHubHTTPError as e:
                     # The endpoint actually already exists, we'll spin it up instead of trying to create a new one
@@ -304,6 +316,8 @@ class InferenceEndpointModel(LightevalModel):
             model_dtype=getattr(config, "model_dtype", "default"),
             model_size=-1,
         )
+        self.generation_parameters = config.generation_parameters
+        self.generation_config = TextGenerationInputGenerateParameters(**self.generation_parameters.to_tgi_ie_dict())
 
     @staticmethod
     def get_larger_hardware_suggestion(cur_instance_type: str = None, cur_instance_size: str = None):
@@ -387,15 +401,16 @@ class InferenceEndpointModel(LightevalModel):
     ) -> Coroutine[None, list[TextGenerationOutput], str]:
         # Todo: add an option to launch with conversational instead for chat prompts
         # https://huggingface.co/docs/huggingface_hub/v0.20.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.conversational
-        generated_text = self.async_client.text_generation(
-            prompt=context,
+        generation_config: TextGenerationInputGenerateParameters = replace(
+            self.generation_config,
+            stop=stop_tokens,
+            max_new_tokens=max_tokens,
             details=True,
             decoder_input_details=True,
             grammar=grammar,
-            max_new_tokens=max_tokens,
-            stop_sequences=stop_tokens,
-            # truncate=,
         )
+
+        generated_text = self.async_client.text_generation(prompt=context, generation_config=generation_config)
 
         return generated_text
 
@@ -408,14 +423,18 @@ class InferenceEndpointModel(LightevalModel):
     ) -> TextGenerationOutput:
         # Todo: add an option to launch with conversational instead for chat prompts
         # https://huggingface.co/docs/huggingface_hub/v0.20.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.conversational
-        generated_text = self.client.text_generation(
-            prompt=context,
+        generation_config: TextGenerationInputGenerateParameters = replace(
+            self.generation_config,
+            stop=stop_tokens,
+            max_new_tokens=max_tokens,
             details=True,
             decoder_input_details=True,
             grammar=grammar,
-            max_new_tokens=max_tokens,
-            stop_sequences=stop_tokens,
-            # truncate=,
+        )
+
+        generated_text = self.client.text_generation(
+            prompt=context,
+            generation_config=generation_config,
         )
 
         return generated_text
@@ -491,7 +510,7 @@ class InferenceEndpointModel(LightevalModel):
 
         for _, _ in tqdm(
             dataset.splits_start_end_iterator(),
-            total=self.DATASET_SPLITS,
+            total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
             disable=self.disable_tqdm,
@@ -513,12 +532,15 @@ class InferenceEndpointModel(LightevalModel):
                     responses = asyncio.run(self._async_process_batch_generate(batch))
                 else:
                     responses = self._process_batch_generate(batch)
-                for response in responses:
+                for i, response in enumerate(responses):
                     results.append(
                         GenerativeResponse(
                             result=response.generated_text,
                             logits=[item.logprob for item in response.details.prefill] if returns_logits else None,
-                            truncated_tokens_count=-1,
+                            generated_tokens=[token.id for token in response.details.tokens],
+                            truncated_tokens_count=max(
+                                len(self.tokenizer.encode(batch[i].context)) - self.max_length, 0
+                            ),
                             padded_tokens_count=-1,
                         )
                     )
@@ -537,7 +559,7 @@ class InferenceEndpointModel(LightevalModel):
 
         for _, _ in tqdm(
             dataset.splits_start_end_iterator(),
-            total=self.DATASET_SPLITS,
+            total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
             disable=self.disable_tqdm,
@@ -588,7 +610,7 @@ class InferenceEndpointModel(LightevalModel):
 
         for _, _ in tqdm(
             dataset.splits_start_end_iterator(),
-            total=self.DATASET_SPLITS,
+            total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
             disable=self.disable_tqdm,
