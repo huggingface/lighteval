@@ -211,7 +211,7 @@ class EvaluationTracker:
 
     def _get_details_sub_folder(self, date_id: str):
         output_dir_details = Path(self.output_dir) / "details" / self.general_config_logger.model_name
-        if date_id == "latest":
+        if date_id in ["first", "last"]:
             # Get all folders in output_dir_details
             if not self.fs.exists(output_dir_details):
                 raise FileNotFoundError(f"Details directory {output_dir_details} does not exist")
@@ -222,8 +222,8 @@ class EvaluationTracker:
             if not folders:
                 raise FileNotFoundError(f"No timestamp folders found in {output_dir_details}")
 
-            # Parse timestamps and get latest
-            date_id = max(folders)
+            # Parse timestamps and get first or last
+            date_id = max(folders) if date_id == "last" else min(folders)
         return output_dir_details / date_id
 
     def load_details_datasets(self, date_id: str, task_names: list[str]) -> dict[str, Dataset]:
