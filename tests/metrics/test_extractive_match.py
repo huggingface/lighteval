@@ -29,7 +29,7 @@ from lighteval.metrics.dynamic_metrics import (
     LatexExtractionConfig,
     multilingual_extractive_match_metric,
 )
-from lighteval.metrics.utils.math_comparisson import sympy_expr_eq
+from lighteval.metrics.utils.math_comparison import sympy_expr_eq
 from lighteval.tasks.requests import Doc
 from lighteval.utils.language import Language
 

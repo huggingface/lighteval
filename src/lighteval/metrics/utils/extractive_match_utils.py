@@ -30,7 +30,7 @@ import sympy
 from sympy import Basic, MatrixBase, Number
 from sympy.parsing import parse_expr
 
-from lighteval.metrics.utils.math_comparisson import should_treat_as_complex
+from lighteval.metrics.utils.math_comparison import should_treat_as_complex
 from lighteval.tasks.requests import Doc
 from lighteval.tasks.templates.utils.formulation import ChoicePrefix, get_prefix
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
@@ -151,9 +151,9 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) ->
         r"("
         r"(?<!\\)\$\$(?P<latexDisplayDollar>[\s\S]+?)(?<!\\)\$\$|"  # $$...$$ (display math, can be multiline)
         r"(?<!\\)\\\[(?P<latexDisplayBracket>[\s\S]+?)(?<!\\)\\\]|"  # \[...\] (display math, can be multiline)
-        r"(?<!\\|\d)\$(?P<latexInlineDollar>(?:\\[$]|[^\n$])+?)(?<!\\)\$|" # $...$ (inline math, single line, allows escaped $), we make sure it's not preceded by a digit to minimize false positives containing dollar as a unit
+        r"(?<!\\|\d)\$(?P<latexInlineDollar>(?:\\[$]|[^\n$])+?)(?<!\\)\$|"  # $...$ (inline math, single line, allows escaped $), we make sure it's not preceded by a digit to minimize false positives containing dollar as a unit
         r"(?<!\\)\\\((?P<latexInlineParenthesis>[^\n]+?)(?<!\\)\\\)|"  # \(...\) (inline math, single line)
-                r"(?<!\\)\[(?P<latexInlineBracket>[^\n$]+?)(?<!\\)\]"  # [....] While this is not a valid display, math LLMs like to generate it. We allow it
+        r"(?<!\\)\[(?P<latexInlineBracket>[^\n$]+?)(?<!\\)\]"  # [....] While this is not a valid display, math LLMs like to generate it. We allow it
         rf"){percent_re_group}?"
     )
 

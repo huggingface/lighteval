@@ -46,7 +46,7 @@ from lighteval.metrics.utils.extractive_match_utils import (  # noqa: F401
     extract_target_from_pred,
     get_extraction_regexes,
 )
-from lighteval.metrics.utils.math_comparisson import compare_gold_target
+from lighteval.metrics.utils.math_comparison import compare_gold_target
 from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase, SampleLevelMetric
 from lighteval.tasks.requests import Doc
 from lighteval.utils.language import Language
@@ -249,7 +249,9 @@ def multilingual_extractive_match_metric(
             raise ValueError(f"No gold targets found for at least one gold. Gold: {golds}, Pred: {predictions}")
 
         if all(len(p) == 0 for p in extracted_predictions):
-            logger.warning(f"We did not manage to extract a prediction in the correct format. Gold: {golds}, Pred: {predictions}")
+            logger.warning(
+                f"We did not manage to extract a prediction in the correct format. Gold: {golds}, Pred: {predictions}"
+            )
 
         # We have to use timeout because the sypmy to str conversion can be very slow
         try:
