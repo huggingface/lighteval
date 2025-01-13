@@ -881,19 +881,10 @@ class JudgeMetricWrapper(Metric):
         return results
 
     def aggregate_scores(self, scores: list[dict]) -> float:
-        """
-        Aggregates individual scores into a final score.
-        
-        Args:
-            scores (list[dict]): List of individual scores
-            
-        Returns:
-            float: Aggregated score
-        """
+     
         return sum(scores) / len(scores) if scores else 0.0
 
     def _sample_level_fn(self):
-        """Sample level scoring function placeholder."""
         return None
 
 def parse_candidates(candidates: Union[List[str], str]) -> List[str]:
@@ -1019,7 +1010,6 @@ def process_judge_response(response) -> float:
     """Process the judge's response to extract the score"""
     # If response is a list, extract the content from the user role
     if isinstance(response, list):
-        # Join the content from the user role into a single string
         response_content = ' '.join(item['content'] for item in response if item['role'] == 'user')
     else:
         response_content = response  # If it's not a list, use it directly
@@ -1030,15 +1020,16 @@ def process_judge_response(response) -> float:
         return min(max(score / 10.0, 0.0), 1.0)
     except (StopIteration, ValueError):
         return 0.0
-# Initialize the judge and metric
+
 judge = JudgeLM(
     model="Qwen/Qwen2.5-72B-Instruct",
     templates=judge_template,
     process_judge_response=process_judge_response,
-    judge_backend="transformers"
+    judge_backend="vllm"
 )
 
 wrapped_judge = JudgeMetricWrapper(judge)
+
 # Task configuration
 alrage_qa_task = LightevalTaskConfig(
     name="alrage_qa",
