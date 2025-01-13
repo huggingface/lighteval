@@ -186,7 +186,7 @@ def multilingual_quasi_exact_match_metric(
 
 
 def multilingual_extractive_match_metric(
-    language: Language,
+    language: Language = Language.ENGLISH,
     gold_extraction_target: Sequence[ExtractionTarget] = (ExprExtractionConfig(),),
     pred_extraction_target: Sequence[ExtractionTarget] = (ExprExtractionConfig(),),
     aggregation_function: Callable[[list[float]], float] = max,

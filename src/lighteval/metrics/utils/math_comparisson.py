@@ -50,6 +50,11 @@ from lighteval.utils.timeout import timeout
 
 def safe_sympy_doit(a: Basic | MatrixBase):
     """Safely execute doit() on a sympy expression, catching exceptions.
+      Doit in sympy will evaluate expressions it will pass the expression tree and evluate nodes.
+      For example for 1+1+1 it will evaluate the additions and return 3. One issue with it is that it maybe
+      evaluates too much as integrals will also be evaluated.
+
+      As we are using latex2sympy2_extended, evaluates are
 
     Args:
         a: A sympy Basic or MatrixBase expression to evaluate
@@ -66,18 +71,19 @@ def safe_sympy_doit(a: Basic | MatrixBase):
     return a
 
 
-def is_atomic_pct_atomic(expr: Basic | MatrixBase, atomic_type: type) -> bool:
-    """Check if expression is either an atomic type or negative atomic type.
+def is_atomic_or_pct_atomic(expr: Basic | MatrixBase, atomic_type: type) -> bool:
+    """Check if expression is either an atomic type or percentage atomic type.
 
     Args:
         expr: The sympy expression to check
         atomic_type: The atomic type to check for
 
     Returns:
-        True if expr is atomic_type or -1 * atomic_type, False otherwise
+        True if expr is atomic_type or percentage atomic type, False otherwise
     """
     return isinstance(expr, atomic_type) or (
-        # Check if it's
+        # Check for percentage representation: latex2sympy_extended converts "X%" into X*Rational(1,100)
+        # So we detect percentages by looking for this multiplication structure
         isinstance(expr, Mul)
         and len(expr.args) == 2
         and expr.args[1] == Rational(1, 100)
@@ -106,10 +112,10 @@ def sympy_numeric_eq(a: Basic | MatrixBase, b: Basic | MatrixBase, precision: in
         if isinstance(a, (MatrixBase)) and isinstance(b, (MatrixBase)) and a.shape == b.shape:
             return all(sympy_numeric_eq(a_elem, b_elem, precision) for a_elem, b_elem in zip(a.flat(), b.flat()))
 
-    # Ensure this also works for negative numbers
-    elif is_atomic_pct_atomic(a, Number) or is_atomic_pct_atomic(b, Number):
+    # Ensure this also works for percentage numbers so that 0.333333% = 0.33333333333 with precision 4
+    elif is_atomic_or_pct_atomic(a, Number) or is_atomic_or_pct_atomic(b, Number):
         # If one of them is a float or a negative atomic number, we can try to use precision
-        if is_atomic_pct_atomic(a, Float) or is_atomic_pct_atomic(b, Float):
+        if is_atomic_or_pct_atomic(a, Float) or is_atomic_or_pct_atomic(b, Float):
             a = safe_sympy_doit(a)
             b = safe_sympy_doit(b)
             # Now if both are numbers, we can use precision
@@ -268,8 +274,6 @@ def sympy_str_eq(a: Basic | MatrixBase, b: Basic | MatrixBase) -> bool:
     Returns:
         True if string representations are equal, False otherwise
     """
-    # First just do a simple str comparison
-    # Because of float comparison, we only use doit() during the string conversion, but keep the original expr
     a_doit = safe_sympy_doit(a)
     b_doit = safe_sympy_doit(b)
 

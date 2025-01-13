@@ -298,7 +298,7 @@ def parse_expr_with_timeout(expr: str):
 def extract_expr(match: re.Match) -> tuple[str | sympy.Expr | None, str]:
     # First combine the number
     groups = match.groupdict()
-    # This musst always exist
+    # Expr group will always exist because every regex has it
     expr = groups["expr"]
     integer = next((val for name, val in groups.items() if name.startswith("integer") and val), "")
     decimal = next((val for name, val in groups.items() if name.startswith("decimal") and val), "")
