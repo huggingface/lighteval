@@ -249,7 +249,7 @@ def multilingual_extractive_match_metric(
             raise ValueError(f"No gold targets found for at least one gold. Gold: {golds}, Pred: {predictions}")
 
         if all(len(p) == 0 for p in extracted_predictions):
-            logger.warning(f"No predictions found for all predictions. Gold: {golds}, Pred: {predictions}")
+            logger.warning(f"We did not manage to extract a prediction in the correct format. Gold: {golds}, Pred: {predictions}")
 
         # We have to use timeout because the sypmy to str conversion can be very slow
         try:
