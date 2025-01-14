@@ -32,18 +32,33 @@ lighteval accelerate \
      "leaderboard|truthfulqa:mc|0|0"
 ```
 
-Here, `--tasks` refers to either a comma-separated list of supported tasks from
-the [tasks_list](available-tasks) in the format:
+Here, the first argument specifies which model(s) to run, and the second argument specifies how to evaluate them.
+
+Multiple models can be evaluated at the same time by using a comma-separated list. For example:
+
+```bash
+lighteval accelerate \
+     "pretrained=gpt2,pretrained=﻿HuggingFaceTB/SmolLM2-135M-Instruct" \
+     "leaderboard|truthfulqa:mc|0|0"
+```
+
+Similarly, multiple evalutions can be run as well, either with a comma-separated list of supported tasks, or by specifing 
+a file path, like from [examples/tasks/recommended_set.txt](https://github.com/huggingface/lighteval/blob/main/examples/tasks/recommended_set.txt).
+For example:
+
+```bash
+lighteval accelerate \
+     "pretrained=gpt2 \
+     ./path/to/lighteval/examples/tasks/recommended_set.txt
+```
+
+The task specification might be a bit hard to grasp as first. The format is as follows:
 
 ```bash
 {suite}|{task}|{num_few_shot}|{0 or 1 to automatically reduce `num_few_shot` if prompt is too long}
 ```
 
-or a file path like
-[examples/tasks/recommended_set.txt](https://github.com/huggingface/lighteval/blob/main/examples/tasks/recommended_set.txt)
-which specifies multiple task configurations.
-
-Tasks details can be found in the
+All supported tasks can be found at the [tasks_list](available-tasks). For more details, you can have a look at the
 [file](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/default_tasks.py)
 implementing them.
 
