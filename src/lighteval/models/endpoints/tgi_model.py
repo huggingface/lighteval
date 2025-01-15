@@ -101,7 +101,7 @@ class ModelClient(InferenceEndpointModel):
 
         model_name = str(self.model_info["model_id"])
         model_sha = self.model_info["model_sha"]
-        model_precision = self.model_info["model_dtype"]
+        model_precision = self.model_info.get("model_dtype")
         self.model_info = ModelInfo(
             model_name=model_name,
             model_sha=model_sha,
@@ -127,7 +127,23 @@ class ModelClient(InferenceEndpointModel):
             grammar=grammar,
         )
 
-        generated_text = self.client.generate(prompt=context, generation_config=generation_config)
+        generated_text = self.client.generate(
+            prompt=context,
+            do_sample=generation_config.do_sample or False,
+            max_new_tokens=generation_config.max_new_tokens,
+            best_of=generation_config.best_of,
+            repetition_penalty=generation_config.repetition_penalty,
+            return_full_text=generation_config.return_full_text or False,
+            seed=generation_config.seed,
+            stop_sequences=generation_config.stop,
+            temperature=generation_config.temperature,
+            top_k=generation_config.top_k,
+            top_p=generation_config.top_p,
+            truncate=generation_config.truncate,
+            typical_p=generation_config.typical_p,
+            watermark=generation_config.watermark or False,
+            decoder_input_details=generation_config.decoder_input_details,
+        )
 
         return generated_text
 
