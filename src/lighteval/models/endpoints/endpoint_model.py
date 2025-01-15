@@ -478,6 +478,7 @@ class InferenceEndpointModel(LightevalModel):
                     context=request.context if rolling else request.context + request.choice,
                     stop_tokens=[],
                     max_tokens=1,
+                    grammar=request.generation_grammar,
                 )
                 for request in requests
             ]
@@ -491,6 +492,7 @@ class InferenceEndpointModel(LightevalModel):
                 context=request.context if rolling else request.context + request.choice,
                 stop_tokens=[],
                 max_tokens=1,
+                grammar=request.generation_grammar,
             )
             for request in requests
         ]

@@ -143,6 +143,7 @@ class ModelClient(InferenceEndpointModel):
             typical_p=generation_config.typical_p,
             watermark=generation_config.watermark or False,
             decoder_input_details=generation_config.decoder_input_details,
+            grammar=generation_config.grammar,
         )
 
         return generated_text
