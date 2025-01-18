@@ -103,7 +103,7 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
     operators_re = "".join(operators)
     all_expr_chars = r"[\d\.\s" + operators_re + r"]"
     # Expression should have at minimum at least one operator and must start with a digit
-    expr_re = rf"-?\(?-?\d{all_expr_chars}*[{operators_re}]{all_expr_chars}+\)?"
+    expr_re = rf"(?P<expr>-?\(?-?\d{all_expr_chars}*[{operators_re}]{all_expr_chars}+\)?)"
 
     # Punctuation regexes
     full_stop_re = rf"[{re.escape(translation_literal.full_stop)}\.]"
@@ -111,34 +111,34 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
     colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
     space_re = rf"(?:\s|{re.escape(translation_literal.sentence_space)})"
 
+    currency_units = re.escape("$€£¥₹₽₪₩₫฿₡₢₣₤₥₦₧₨₩₪₫₭₮₯₰₱₲₳₴₵₶₷₸₹₺₻₼₽₾₿")
     expr_prefix_re = rf"(?:^|{space_re}|\=)(?:\*\*)?"
     expr_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|\)|\$|$)"
-
-    expr = f"(?P<expr>{expr_re}|{number_re})"
-    full_expr = rf"(?:{expr_prefix_re}{expr}{expr_suffix_re})"
+    # Expressions must be prefixed and suffixed while, digits don't need suffix and can have currency units preceeded, this is to ensure
+    # That we can extract stuff like $100 or 100m2, while we don't extract XDY2K as 2
+    expr_with_anchors = rf"(?:{expr_prefix_re}{expr_re}{expr_suffix_re})"
+    number_with_anchors = rf"(?:{expr_prefix_re}[{currency_units}]?{number_re})"
+    expr_or_number = rf"(?:{expr_with_anchors}|{number_with_anchors})"
     regexes: list[tuple[str, int]] = []
 
     # Ideally we would have translation of such concept in each language
     if language == Language.ENGLISH:
-        final_answer_prefixed_re = rf"(?i:final answer is)\:?\s*{full_expr}\.?\s?I hope"
-        final_answer_prefixed_just_is = rf"(?i:final answer.{{0,100}}?)\s+is\:?{full_expr}"
+        final_answer_prefixed_re = rf"(?i:final answer is)\:?\s*{expr_or_number}\.?\s?I hope"
+        final_answer_prefixed_just_is = rf"(?i:final answer.{{0,100}}?)\s+is\:?{expr_or_number}"
         regexes.append((final_answer_prefixed_re, 0))
         regexes.append((final_answer_prefixed_just_is, 50))
 
     answer_prefix_re = rf"(?i:{translation_literal.answer})"
 
     # Match after the last equals with answer word - require the number pattern,
-    equals_re_colon = rf"{answer_prefix_re}{colon_re}(?:.{{0,100}}=\s*|.{{0,50}}?){full_expr}(?!\s*=)"
-    equals_re = rf"{answer_prefix_re}(?:.{{0,100}}=\s*|.{{0,50}}?){full_expr}(?!\s*=)"
+    equals_re_colon = rf"{answer_prefix_re}{colon_re}(?:.{{0,100}}=\s*|.{{0,50}}?){expr_or_number}(?!\s*=)"
+    equals_re = rf"{answer_prefix_re}(?:.{{0,100}}=\s*|.{{0,50}}?){expr_or_number}(?!\s*=)"
     regexes.extend([(equals_re_colon, 100), (equals_re, 200)])
 
     if expr_config.try_extract_without_anchor:
         # If everything fails, try to match plain expr/number
-        regexes.append((f"({expr_prefix_re})(?P<expr>{expr_re})({expr_suffix_re})", 300))
-        regexes.append((f"({expr_prefix_re})(?P<expr>{number_re})({expr_suffix_re})", 300))
-
-        # Worst case just ignore any prefix/suffix, e.g 1$ wouldn't be extracted otherwise
-        regexes.append((f"((?P<expr>{number_re}))", 350))
+        regexes.append((expr_with_anchors, 300))
+        regexes.append((number_with_anchors, 300))
 
     return [(re.compile(pattern), priority) for pattern, priority in regexes]
 
@@ -299,7 +299,7 @@ def extract_expr(match: re.Match) -> tuple[str | sympy.Expr | None, str]:
     # First combine the number
     groups = match.groupdict()
     # Expr group will always exist because every regex has it
-    expr = groups["expr"]
+    expr = groups.get("expr", "")
     integer = next((val for name, val in groups.items() if name.startswith("integer") and val), "")
     decimal = next((val for name, val in groups.items() if name.startswith("decimal") and val), "")
 
@@ -321,10 +321,12 @@ def extract_expr(match: re.Match) -> tuple[str | sympy.Expr | None, str]:
 
     # Otherwise just return the expression
     # Remove new lines and spaces
-    try:
-        return parse_expr_with_timeout(expr.replace("\n", " ").replace("^", "**")), expr
-    except:  # noqa: E722
-        return None, expr
+    if expr:
+        try:
+            return parse_expr_with_timeout(expr.replace("\n", " ").replace("^", "**")), expr
+        except:  # noqa: E722
+            pass
+    return None, expr
 
 
 def convert_to_pct(number: Number):
