@@ -20,11 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from pathlib import Path
 from types import ModuleType
 from typing import Optional, Union
 from unittest.mock import patch
 
-from anyio import Path
 from transformers import AutoTokenizer
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
