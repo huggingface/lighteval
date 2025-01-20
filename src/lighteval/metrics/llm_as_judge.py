@@ -193,22 +193,32 @@ class JudgeLM:
         import litellm
 
         def __call_api(prompt):
+            error_message = "ERROR: Failed to get response from the API."
             for _ in range(self.API_MAX_RETRY):
                 try:
-                    response = litellm.completion(
-                        model=self.model,
-                        messages=prompt,
-                        response_format={"type": "text"},
-                        max_tokens=512,
-                        n=1,
-                        caching=True,
-                    )
+                    kwargs = {
+                        "model": self.model,
+                        "messages": prompt,
+                        "response_format": {"type": "text"},
+                        "max_tokens": 512,
+                        "n": 1,
+                        "caching": True,
+                    }
+                    response = litellm.completion(**kwargs)
                     text = response.choices[0].message.content
+                    if not text or text == error_message:
+                        kwargs["caching"] = False
+                        response = litellm.completion(**kwargs)
+                        text = response.choices[0].message.content
+                        if not text or text == error_message:
+                            # Just return an error response if the second attempt fails too
+                            logger.error(f"Failed to get response from the API for prompt: {prompt}")
+                            return error_message
                     return text
                 except Exception as e:
                     logger.warning(f"{type(e), e}")
                     time.sleep(self.API_RETRY_SLEEP)
-            raise Exception("Failed to get response from the API")
+            return error_message
 
         results = []
         with ThreadPoolExecutor(100) as executor:

@@ -91,7 +91,7 @@ class LiteLLMClient(LightevalModel):
         self._tokenizer = encode
         self.pairwise_tokenization = False
         litellm.drop_params = True
-        litellm.verbose = True
+        litellm.set_verbose = False
 
     def _prepare_stop_sequence(self, stop_sequence):
         """Prepare and validate stop sequence."""
@@ -130,13 +130,16 @@ class LiteLLMClient(LightevalModel):
                     "messages": prompt,
                     "max_completion_tokens": max_new_tokens,
                     "logprobs": return_logits if self.provider == "openai" else None,
-                    "stop": stop_sequence,
                     "base_url": self.base_url,
                     "n": num_samples,
-                    "temperature": self.TEMPERATURE,
-                    "top_p": self.TOP_P,
                     "caching": True,
                 }
+                if "o1" in self.model:
+                    logger.warning("O1 models do not support temperature, top_p, stop sequence. Disabling.")
+                else:
+                    kwargs["temperature"] = self.TEMPERATURE
+                    kwargs["top_p"] = self.TOP_P
+                    kwargs["stop"] = stop_sequence
 
                 response = litellm.completion(**kwargs)
 
@@ -255,12 +258,18 @@ class LiteLLMClient(LightevalModel):
     def tokenizer(self):
         return self._tokenizer
 
+    def _encode(self, text: str):
+        enc = encode(model=self.model, text=text)
+        if hasattr(enc, "ids"):
+            return enc.ids
+        return enc
+
     def tok_encode(self, text: str | list[str]):
         if isinstance(text, list):
-            toks = [encode(model=self.model, text=t["content"]) for t in text]
+            toks = [self._encode(t["content"]) for t in text]
             toks = [tok for tok in toks if tok]
             return toks
-        return encode(model=self.model, text=text)
+        return self._encode(text)
 
     @property
     def add_special_tokens(self) -> bool:
