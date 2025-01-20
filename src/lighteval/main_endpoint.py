@@ -179,6 +179,9 @@ def inference_endpoint(
     num_fewshot_seeds: Annotated[
         int, Option(help="Number of seeds to use for few-shot evaluation.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = 1,
+    load_responses_from_details_date_id: Annotated[
+        Optional[str], Option(help="Load responses from details directory.", rich_help_panel=HELP_PANEL_NAME_1)
+    ] = None,
     # === saving ===
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
@@ -247,6 +250,7 @@ def inference_endpoint(
         max_samples=max_samples,
         use_chat_template=use_chat_template,
         system_prompt=system_prompt,
+        load_responses_from_details_date_id=load_responses_from_details_date_id,
     )
     pipeline = Pipeline(
         tasks=tasks,
@@ -292,6 +296,9 @@ def tgi(
     num_fewshot_seeds: Annotated[
         int, Option(help="Number of seeds to use for few-shot evaluation.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = 1,
+    load_responses_from_details_date_id: Annotated[
+        Optional[str], Option(help="Load responses from details directory.", rich_help_panel=HELP_PANEL_NAME_1)
+    ] = None,
     # === saving ===
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
@@ -355,6 +362,7 @@ def tgi(
         max_samples=max_samples,
         use_chat_template=use_chat_template,
         system_prompt=system_prompt,
+        load_responses_from_details_date_id=load_responses_from_details_date_id,
     )
     pipeline = Pipeline(
         tasks=tasks,
@@ -400,6 +408,9 @@ def litellm(
     num_fewshot_seeds: Annotated[
         int, Option(help="Number of seeds to use for few-shot evaluation.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = 1,
+    load_responses_from_details_date_id: Annotated[
+        Optional[str], Option(help="Load responses from details directory.", rich_help_panel=HELP_PANEL_NAME_1)
+    ] = None,
     # === saving ===
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
@@ -464,6 +475,7 @@ def litellm(
         max_samples=max_samples,
         use_chat_template=use_chat_template,
         system_prompt=system_prompt,
+        load_responses_from_details_date_id=load_responses_from_details_date_id,
     )
     pipeline = Pipeline(
         tasks=tasks,
