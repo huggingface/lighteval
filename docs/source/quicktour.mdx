@@ -93,7 +93,7 @@ To evaluate a model using pipeline parallelism on 2 or more GPUs, run:
 
 ```bash
 lighteval accelerate \
-    "pretrained=gpt2,model_parallel=True,dtype=float16" \
+    "pretrained=gpt2,model_parallel=True" \
     "leaderboard|truthfulqa:mc|0|0"
 ```
 
