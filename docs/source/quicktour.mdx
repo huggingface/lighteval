@@ -24,7 +24,7 @@ Lighteval can be used with a few different commands.
 
 ### Evaluate a model on a GPU
 
-To evaluate `GPT-2` on the Truthful QA benchmark, run:
+To evaluate `GPT-2` on the Truthful QA benchmark run:
 
 ```bash
 lighteval accelerate \
@@ -32,35 +32,38 @@ lighteval accelerate \
      "leaderboard|truthfulqa:mc|0|0"
 ```
 
-Here, the first argument specifies which model(s) to run, and the second argument specifies how to evaluate them.
+Here, the first argument specifies the model to run, and the second argument specifies which tasks to run.
 
-Multiple models can be evaluated at the same time by using a comma-separated list. For example:
+The syntax for the model arguments is `key1=value1,key2=value2,etc`.
+The keys correspond with the backend configuration (accelerate, vllm), and are detailed [below](#Model Arguments).
 
-```bash
-lighteval accelerate \
-     "pretrained=gpt2,pretrained=﻿HuggingFaceTB/SmolLM2-135M-Instruct" \
-     "leaderboard|truthfulqa:mc|0|0"
+The syntax for the task specification might be a bit hard to grasp as first. The format is as follows:
+
+```txt
+{suite}|{task}|{num_few_shot}|{0 for strict `num_few_shots`, or 1 to allow a reduction}
 ```
 
-Similarly, multiple evalutions can be run as well, either with a comma-separated list of supported tasks, or by specifing 
-a file path, like from [examples/tasks/recommended_set.txt](https://github.com/huggingface/lighteval/blob/main/examples/tasks/recommended_set.txt).
-For example:
+If the fourth value is set to 1, lighteval will check if the prompt (including the few-shot examples) is too long for the context size of the task or the model.
+If so, the number of few shot examples is automatically reduced.
 
-```bash
-lighteval accelerate \
-     "pretrained=gpt2 \
-     ./path/to/lighteval/examples/tasks/recommended_set.txt
-```
-
-The task specification might be a bit hard to grasp as first. The format is as follows:
-
-```bash
-{suite}|{task}|{num_few_shot}|{0 or 1 to automatically reduce `num_few_shot` if prompt is too long}
-```
-
-All supported tasks can be found at the [tasks_list](available-tasks). For more details, you can have a look at the
+All officially supported tasks can be found at the [tasks_list](available-tasks).
+Moreover, community-provided tasks can be found in the
+[extended folder](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks/extended) and the
+[community](https://github.com/huggingface/lighteval/tree/main/community_tasks) folder.
+For more details on the implementation of the tasks, such as how prompts are constructed, or which metrics are used, you can have a look at the
 [file](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/default_tasks.py)
 implementing them.
+
+Running multiple tasks is supported, either with a comma-separated list, or by specifying a file path.
+The file should be structured like [examples/tasks/recommended_set.txt](https://github.com/huggingface/lighteval/blob/main/examples/tasks/recommended_set.txt).
+When specifying a path to file, it should start with `./`.
+
+```bash
+lighteval accelerate \
+     "pretrained=gpt2" \
+     ./path/to/lighteval/examples/tasks/recommended_set.txt
+# or, e.g., "leaderboard|truthfulqa:mc|0|0|,leaderboard|gsm8k|3|1"
+```
 
 ### Evaluate a model on one or more GPUs
 
@@ -90,7 +93,7 @@ To evaluate a model using pipeline parallelism on 2 or more GPUs, run:
 
 ```bash
 lighteval accelerate \
-    "pretrained=gpt2,model_parallel=True" \
+    "pretrained=gpt2,model_parallel=True,dtype=float16" \
     "leaderboard|truthfulqa:mc|0|0"
 ```
 
