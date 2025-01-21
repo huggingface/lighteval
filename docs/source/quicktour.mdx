@@ -20,11 +20,10 @@ Lighteval can be used with a few different commands.
     - `tgi`: evaluate models on one or more GPUs using [🔗 Text Generation Inference](https://huggingface.co/docs/text-generation-inference/en/index)
     - `openai`: evaluate models on one or more GPUs using [🔗 OpenAI API](https://platform.openai.com/)
 
-## Accelerate
+## Basic usage
 
-### Evaluate a model on a GPU
-
-To evaluate `GPT-2` on the Truthful QA benchmark, run:
+To evaluate `GPT-2` on the Truthful QA benchmark with [🤗
+  Accelerate](https://github.com/huggingface/accelerate) , run:
 
 ```bash
 lighteval accelerate \
@@ -32,12 +31,12 @@ lighteval accelerate \
      "leaderboard|truthfulqa:mc|0|0"
 ```
 
-Here, the first argument specifies the model to run, and the second argument specifies which tasks to run.
+Here, we first choose a backend (either `accelerate`, `nanotron`, or `vllm`), and then specify the model and task(s) to run.
 
 The syntax for the model arguments is `key1=value1,key2=value2,etc`.
-The keys correspond with the backend configuration (accelerate, vllm), and are detailed [below](#Model Arguments).
+Valid key-value pairs correspond with the backend configuration, and are detailed [below](#Model Arguments).
 
-The syntax for the task specification might be a bit hard to grasp as first. The format is as follows:
+The syntax for the task specification might be a bit hard to grasp at first. The format is as follows:
 
 ```txt
 {suite}|{task}|{num_few_shot}|{0 for strict `num_few_shots`, or 1 to allow a reduction}
@@ -65,7 +64,7 @@ lighteval accelerate \
 # or, e.g., "leaderboard|truthfulqa:mc|0|0|,leaderboard|gsm8k|3|1"
 ```
 
-### Evaluate a model on one or more GPUs
+## Evaluate a model on one or more GPUs
 
 #### Data parallelism
 
@@ -104,13 +103,13 @@ This will automatically use accelerate to distribute the model across the GPUs.
 > `model_parallel=True` and using accelerate to distribute the data across the
 GPUs.
 
-### Model Arguments
+## Backend configuration
 
 The `model-args` argument takes a string representing a list of model
 argument. The arguments allowed vary depending on the backend you use (vllm or
 accelerate).
 
-#### Accelerate
+### Accelerate
 
 - **pretrained** (str):
     HuggingFace Hub model ID name or the path to a pre-trained
@@ -146,7 +145,7 @@ accelerate).
 - **trust_remote_code** (bool): Whether to trust remote code during model
     loading.
 
-#### VLLM
+### VLLM
 
 - **pretrained** (str): HuggingFace Hub model ID name or the path to a pre-trained model to load.
 - **gpu_memory_utilisation** (float): The fraction of GPU memory to use.
