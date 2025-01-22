@@ -621,7 +621,7 @@ def create_requests_from_tasks(  # noqa: C901
         n_samples = min(max_samples, len(task_docs)) if max_samples else len(task_docs)
         evaluation_tracker.task_config_logger.log_num_docs(task_name, len(task_docs), n_samples)
 
-        # logs out the diferent versions of the tasks for every few shot
+        # logs out the different versions of the tasks for every few shot
         for num_fewshot, _ in fewshot_dict[task_name]:
             cur_task_name = f"{task_name}|{num_fewshot}"
             evaluation_tracker.versions_logger.log(cur_task_name, task.version)
@@ -633,7 +633,7 @@ def create_requests_from_tasks(  # noqa: C901
         prompt_manager = PromptManager(lm=lm, task=task)
         seeds = prompt_manager.few_shot_sampler.get_fewshot_seeds(num_fewshot_seeds)
 
-        # We can do several round of fewshots sampling to get some variance informations
+        # We can do several round of fewshots sampling to get some variance information
         for seed in seeds:
             for doc_id in range(n_samples):
                 doc_id_seed = f"{doc_id}_{seed}"  # if we do several rounds of few shot sampling we have several seeds
