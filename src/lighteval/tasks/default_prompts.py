@@ -120,7 +120,7 @@ def asdiv(line, task_name: str = None):
 
 def babi_qa(line, task_name: str = None):  # HELM
     def process_path(path: str) -> str:
-        """Turn a path string (task 19) from the original format 's,w' to a verbal model-friendly format 'south west'"""
+        """Turn a path string (task 19) from the original format 's,w' into a verbal model-friendly format 'south west'"""
         steps = path.split(",")
         directions = {"s": "south", "n": "north", "e": "east", "w": "west"}
         path = " ".join([directions[step] for step in steps])
@@ -281,7 +281,7 @@ def bbh_logical_deduction_three_objects(line, task_name: str = None):
 def bbh_movie_recommendation(line, task_name: str = None):
     if line["target"] == "Monsters, Inc":  # this line is not correctly formatted
         logger.warning(
-            "One sample removed from task bbh:movie_recommentation because its line is incorrectly formatted."
+            "One sample removed from task bbh:movie_recommendation because its line is incorrectly formatted."
         )
         return []
     instruction = "Recommend movies similar to the given list of movies.\n\n"
@@ -500,7 +500,7 @@ def civil_comments(line, task_name: str = None):
 def cnn_dm(line, task_name: str = None):
     return Doc(
         task_name=task_name,
-        query=f"###\nArticle:{line['article']}\n\nSummarize the above article in 3 sentence.\n",
+        query=f"###\nArticle:{line['article']}\n\nSummarize the above article in 3 sentences.\n",
         choices=[str(line["summary"])],
         gold_index=0,
         specific={"text": line["article"]},
@@ -730,7 +730,7 @@ def gpqa(line, task_name: str = None):
 
 
 def gsm8k(line, task_name: str = None):
-    # Has special analysis in metric for number decomposiition
+    # Has special analysis in metric for number decomposition
     return Doc(
         task_name=task_name,
         query=f"Question: {line['question']}\nAnswer:",
@@ -2076,7 +2076,7 @@ def rte(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=f"{line['sentence1']}\nQuestion: {line['sentence2']} True or False?\nAnswer:",
-        choices=[" True", " False"],  # 0 = entailement, 1 = not entailment
+        choices=[" True", " False"],  # 0 = entailment, 1 = not entailment
         gold_index=int(line["label"]),
         # "metric": "choices_loglikelihood",
     )

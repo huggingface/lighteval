@@ -228,7 +228,7 @@ def get_nli_prompt_function(
         if input_data is None:
             return None
 
-        # Template based on dicussion here: https://github.com/EleutherAI/lm-evaluation-harness/issues/450
+        # Template based on discussion here: https://github.com/EleutherAI/lm-evaluation-harness/issues/450
         labels = [capitalize(get_relation_label(label, translation_literals)) for label in relations]
 
         premise, hypothesis, gold_idx = input_data["premise"], input_data["hypothesis"], input_data["gold_idx"]
@@ -236,15 +236,15 @@ def get_nli_prompt_function(
         hypothesis = input_data["hypothesis"]
         if isinstance(formulation, HybridFormulation):
             # If we have the neither option move it to the end to be consistent with standard NLI evaluation
-            rearanged_labales = labels
+            rearranged_labels = labels
             if "neutral" in relations:
                 neutral_idx = relations.index("neutral")
-                rearanged_labales = labels[:neutral_idx] + labels[neutral_idx + 1 :] + [labels[neutral_idx]]
+                rearranged_labels = labels[:neutral_idx] + labels[neutral_idx + 1 :] + [labels[neutral_idx]]
 
-            choices_str = f"{translation_literals.comma}{translation_literals.word_space}".join(rearanged_labales[:-1])
-            hypothesis = f"{hypothesis.rstrip(PUNCT)}{translation_literals.sentence_space}{choices_str}{translation_literals.word_space}{translation_literals.or_word}{translation_literals.word_space}{rearanged_labales[-1]}{translation_literals.question_mark}"
+            choices_str = f"{translation_literals.comma}{translation_literals.word_space}".join(rearranged_labels[:-1])
+            hypothesis = f"{hypothesis.rstrip(PUNCT)}{translation_literals.sentence_space}{choices_str}{translation_literals.word_space}{translation_literals.or_word}{translation_literals.word_space}{rearranged_labels[-1]}{translation_literals.question_mark}"
 
-        # (hynky1999): Ideally we would not compute logprobs of the Yes/No/Also in CF fomulation. However as of right now lighteval doesn't allow to
+        # (hynky1999): Ideally we would not compute logprobs of the Yes/No/Also in CF formulation. However as of right now lighteval doesn't allow to
         # use multi-context.
         row = {
             "instruction": input_data.get("instruction", ""),
