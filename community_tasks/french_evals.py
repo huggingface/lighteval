@@ -22,7 +22,7 @@
 
 # ruff: noqa: F405, F403, F401
 """
-Custom evaluation tasks for lighteval. Copy this file and complete it with the info for your task.
+Custom evaluation tasks for lighteval.
 
 This file generally creates just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
 
@@ -42,18 +42,14 @@ from lighteval.metrics.utils.metric_utils import (
     MetricUseCase,
     SampleLevelMetricGrouping,
 )
+from lighteval.tasks.default_prompts import LETTER_INDICES
+from lighteval.tasks.extended.ifeval.main import ifeval_metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
 
-# DEFINE YOUR PROMPT FUNCTIONS
-# Define as many as you need for your different tasks
 # Ifeval-fr prompt function
 def prompt_ifeval_fr(line, task_name: str = None):
-    """Defines how to go from a dataset line to a doc object.
-    Follow examples in src/lighteval/tasks/tasks_prompt_formatting.py, or get more info
-    about what this function should do in the README.
-    """
     return Doc(
         task_name=task_name,
         query=line["prompt"],
@@ -65,43 +61,7 @@ def prompt_ifeval_fr(line, task_name: str = None):
 
 
 # qpqa-fr prompt function
-
-
-LETTER_INDICES = [
-    "A",
-    "B",
-    "C",
-    "D",
-    "E",
-    "F",
-    "G",
-    "H",
-    "I",
-    "J",
-    "K",
-    "L",
-    "M",
-    "N",
-    "O",
-    "P",
-    "Q",
-    "R",
-    "S",
-    "T",
-    "U",
-    "V",
-    "W",
-    "X",
-    "Y",
-    "Z",
-]
-
-
 def prompt_gpqa_fr(line, task_name: str = None):
-    """Defines how to go from a dataset line to a doc object.
-    Follow examples in src/lighteval/tasks/tasks_prompt_formatting.py, or get more info
-    about what this function should do in the README.
-    """
     gold_index = random.randint(0, 3)
     choices = [line["Réponse incorrecte 1"], line["Réponse incorrecte 2"], line["Réponse incorrecte 3"]]
     choices.insert(gold_index, line["Réponse correcte"])
@@ -120,103 +80,9 @@ def prompt_gpqa_fr(line, task_name: str = None):
     )
 
 
-submetric_names = [
-    "prompt_level_strict_acc",
-    "inst_level_strict_acc",
-    "prompt_level_loose_acc",
-    "inst_level_loose_acc",
-]
-
-
-def ifeval_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dict:
-    response = predictions[0]
-
-    # Strict instructions
-    instruction_list = formatted_doc.specific["instructions_id_list"]
-    all_kwargs = formatted_doc.specific["kwargs"]
-    prompt = formatted_doc.query
-
-    # Loose instructions
-    r = response.split("\n")
-    response_remove_first = "\n".join(r[1:]).strip()
-    response_remove_last = "\n".join(r[:-1]).strip()
-    response_remove_both = "\n".join(r[1:-1]).strip()
-    revised_response = response.replace("*", "")
-    revised_response_remove_first = response_remove_first.replace("*", "")
-    revised_response_remove_last = response_remove_last.replace("*", "")
-    revised_response_remove_both = response_remove_both.replace("*", "")
-    all_responses = [
-        response,
-        revised_response,
-        response_remove_first,
-        response_remove_last,
-        response_remove_both,
-        revised_response_remove_first,
-        revised_response_remove_last,
-        revised_response_remove_both,
-    ]
-
-    is_following_list_strict = []
-    is_following_list_loose = []
-
-    for index, instruction_id in enumerate(instruction_list):
-        instruction_cls = instructions_registry.INSTRUCTION_DICT[instruction_id]
-        instruction = instruction_cls(instruction_id)
-
-        # Remove None values from kwargs to avoid unexpected keyword argument errors in build_description method.
-        task_kwargs = {k: v for k, v in all_kwargs[index].items() if v}
-        instruction.build_description(**task_kwargs)
-        args = instruction.get_instruction_args()
-        if args and "prompt" in args:
-            instruction.build_description(prompt=prompt)
-
-        # Strict
-        if response.strip() and instruction.check_following(response):
-            is_following_list_strict.append(True)
-        else:
-            is_following_list_strict.append(False)
-
-        # Loose
-        is_following = False
-        for r in all_responses:
-            if r.strip() and instruction.check_following(r):
-                is_following = True
-                break
-
-        is_following_list_loose.append(is_following)
-
-    return {
-        "prompt_level_strict_acc": int(all(is_following_list_strict)),
-        "inst_level_strict_acc": is_following_list_strict,
-        "prompt_level_loose_acc": int(all(is_following_list_loose)),
-        "inst_level_loose_acc": is_following_list_loose,
-    }
-
-
-def agg_inst_level_acc(items):
-    flat_items = [item for sublist in items for item in sublist]
-    inst_level_acc = sum(flat_items) / len(flat_items)
-    return inst_level_acc
-
-
-ifeval_metrics = SampleLevelMetricGrouping(
-    metric_name=submetric_names,
-    higher_is_better={n: True for n in submetric_names},
-    category=MetricCategory.GENERATIVE,
-    use_case=MetricUseCase.ACCURACY,
-    sample_level_fn=ifeval_metric,
-    corpus_level_fn={
-        "prompt_level_strict_acc": np.mean,
-        "inst_level_strict_acc": agg_inst_level_acc,
-        "prompt_level_loose_acc": np.mean,
-        "inst_level_loose_acc": agg_inst_level_acc,
-    },
-)
-
-# EVAL WITH NO SUBSET ##
-# This is how you create a simple task (like hellaswag) which has one single subset
-# attached to it, and one evaluation possible.
 # IFEVal-fr task
+
+
 ifeval_fr_task = LightevalTaskConfig(
     name="ifeval-fr",
     prompt_function=prompt_ifeval_fr,  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
@@ -235,11 +101,11 @@ ifeval_fr_task = LightevalTaskConfig(
 
 # GPQA-fr task
 gpqa_fr_task = LightevalTaskConfig(
-    name="gpqa",
-    suite=["lighteval"],
+    name="gpqa-fr",
+    suite=["community"],
     prompt_function=prompt_gpqa_fr,
     hf_repo="fr-gouv-coordination-ia/gpqa-fr",
-    hf_subset="gpqa_main",
+    hf_subset="gpqa_extended",
     hf_avail_splits=["train"],
     evaluation_splits=["train"],
     few_shots_split=None,
