@@ -39,15 +39,15 @@ Valid key-value pairs correspond with the backend configuration, and are detaile
 The syntax for the task specification might be a bit hard to grasp at first. The format is as follows:
 
 ```txt
-{suite}|{task}|{num_few_shot}|{0 for strict `num_few_shots`, or 1 to allow a reduction}
+{suite}|{task}|{num_few_shot}|{0 for strict `num_few_shots`, or 1 to allow a truncation if context size is too small
 ```
 
 If the fourth value is set to 1, lighteval will check if the prompt (including the few-shot examples) is too long for the context size of the task or the model.
 If so, the number of few shot examples is automatically reduced.
 
-All officially supported tasks can be found at the [tasks_list](available-tasks).
+All officially supported tasks can be found at the [tasks_list](available-tasks) and in the
+[extended folder](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks/extended).
 Moreover, community-provided tasks can be found in the
-[extended folder](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks/extended) and the
 [community](https://github.com/huggingface/lighteval/tree/main/community_tasks) folder.
 For more details on the implementation of the tasks, such as how prompts are constructed, or which metrics are used, you can have a look at the
 [file](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/default_tasks.py)
