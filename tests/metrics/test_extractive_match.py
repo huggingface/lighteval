@@ -949,7 +949,34 @@ def test_math_extraction_edge_cases(gold, pred, expected):
             r"To find the product \( ab \) where \( a = 2012_3 \) and \( b = 201_3 \), we first convert these base-three numbers to base ten. For \( a = 2012_3 \): \[ a = 2 \cdot 3^3 + 0 \cdot 3^2 + 1 \cdot 3^1 + 2 \cdot 3^0 = 2 \cdot 27 + 0 \cdot 9 + 1 \cdot 3 + 2 \cdot 1 = 54 + 0 + 3 + 2 = 59_{10} \] For \( b = 201_3 \): \[ b = 2 \cdot 3^2 + 0 \cdot 3^1 + 1 \cdot 3^0 = 2 \cdot 9 + 0 \cdot 3 + 1 \cdot 1 = 18 + 0 + 1 = 19_{10} \] Now, calculate the product in base ten: \[ ab = 59 \times 19 \] Perform the multiplication: \[ 59 \times 19 = 59 \times (20 - 1) = 59 \times 20 - 59 \times 1 = 1180 - 59 = 1121 \] Next, convert \( 1121_{10} \) to base three. We do this by dividing by 3 and recording the remainders: \[ 1121 \div 3 = 373 \quad \text{remainder } 2 \] \[ 373 \div 3 = 124 \quad \text{remainder } 1 \] \[ 124 \div 3 = 41 \quad \text{remainder } 1 \] \[ 41 \div 3 = 13 \quad \text{remainder } 2 \] \[ 13 \div 3 = 4 \quad \text{remainder } 1 \] \[ 4 \div 3 = 1 \quad \text{remainder } 1 \] \[ 1 \div 3 = 0 \quad \text{remainder } 1 \] Reading the remainders from last to first, we find: \[ 1121_{10} = 1112122_3 \] Thus, the product \( ab \) expressed in the base-three number system is \(\boxed{1112122_3}\).",
             0,
         ),
+        (
+            r"\(\boxed{\text{C}}\).",
+            r"$\boxed{\text{(C)}}.$",
+            1,
+        ),
+        (
+            r" So the answer is: \[ \boxed{11111111100} \]",
+            r"is $\boxed{11,\! 111,\! 111,\! 100}$",
+            1,
+        ),
+        (
+            r" So the answer is: \[ \boxed{32349} \]",
+            r"is $\boxed{32,\! 349}$",
+            1,
+        ),
+        (
+            r"Thus, the domain of the function \( f(x) \) is: \[ \boxed{(2, 12) \cup (12, 102)} \]",
+            r"Thus, the answer is $x \in \boxed{(2,12) \cup (12,102)}$",
+            1,
+        ),
     ],
 )
 def test_math_extraction_additional_cases(gold, pred, expected):
     assert compare_strings(gold, pred, match_types=["latex", "expr"]) == expected
+
+
+# text{C} Qwen correct
+# 11111111100 Qwen correct
+# Interval(2, oo) qwen incorrect
+# text{west} qwen incorrect
+# 32349, 32,\!348 qwen incorrect
