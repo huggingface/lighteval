@@ -86,17 +86,17 @@ def get_copa_prompt_function(
 
     Format:
     *CF*
-    Context Premise thefore/cause | (Continuation 1, Continuation 2, Continuation 3)
+    Context Premise therefore/cause | (Continuation 1, Continuation 2, Continuation 3)
 
     *Hybrid*
-    Context Premise thefore/cause
+    Context Premise therefore/cause
     A. Continuation 1
     B. Continuation 2
     C. Continuation 3
     Answer: | Continuation 1/Continuation 2/Continuation 3
 
     *MCF*
-    Context Premise thefore/cause
+    Context Premise therefore/cause
     A. Continuation 1
     B. Continuation 2
     C. Continuation 3
