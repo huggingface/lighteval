@@ -39,7 +39,7 @@ Valid key-value pairs correspond with the backend configuration, and are detaile
 The syntax for the task specification might be a bit hard to grasp at first. The format is as follows:
 
 ```txt
-{suite}|{task}|{num_few_shot}|{0 for strict `num_few_shots`, or 1 to allow a truncation if context size is too small
+{suite}|{task}|{num_few_shot}|{0 for strict `num_few_shots`, or 1 to allow a truncation if context size is too small}
 ```
 
 If the fourth value is set to 1, lighteval will check if the prompt (including the few-shot examples) is too long for the context size of the task or the model.
