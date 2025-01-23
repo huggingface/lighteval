@@ -148,10 +148,10 @@ class Registry:
         intersection = set(default_tasks_registry.keys()).intersection(set(custom_tasks_registry.keys()))
         if len(intersection) > 0:
             logger.warning(
-                f"Following tasks ({intersection}) exists both in the default and custom tasks. Will use the default ones on conflict."
+                f"Following tasks ({intersection}) exists both in the default and custom tasks. Will use the custom ones on conflict."
             )
 
-        # Defaults tasks should overwrite custom tasks
+        # Custom tasks overwrite defaults tasks
         return {**default_tasks_registry, **custom_tasks_registry}
 
     @property
@@ -166,7 +166,7 @@ class Registry:
                 "lighteval|mmlu" -> ["lighteval|mmlu:abstract_algebra", "lighteval|mmlu:college_biology", ...]
             }
         """
-        # Note: sorted before groupby is imporant as the python implementation of groupby does not
+        # Note: sorted before groupby is important as the python implementation of groupby does not
         # behave like sql groupby. For more info see the docs of itertools.groupby
         superset_dict = {k: list(v) for k, v in groupby(sorted(self.task_registry.keys()), lambda x: x.split(":")[0])}
         # Only consider supersets with more than one task

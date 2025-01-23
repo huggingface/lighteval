@@ -41,7 +41,7 @@ from lighteval.metrics import (
     apply_target_perplexity_metric,
 )
 from lighteval.metrics.metrics import Metric, MetricCategory, Metrics
-from lighteval.models.transformers.base_model import BaseModel
+from lighteval.models.transformers.transformers_model import TransformersModel
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import (
     Doc,
@@ -130,7 +130,7 @@ class LightevalTaskConfig:
         self.hf_avail_splits = tuple(self.hf_avail_splits) if self.hf_avail_splits is not None else None
         self.evaluation_splits = tuple(self.evaluation_splits)
         self.suite = tuple(self.suite)
-        self.stop_sequence = tuple(self.stop_sequence) if self.stop_sequence is not None else None
+        self.stop_sequence = tuple(self.stop_sequence) if self.stop_sequence is not None else ()
 
     def print(self):
         md_writer = MarkdownTableWriter()
@@ -578,7 +578,7 @@ def create_requests_from_tasks(  # noqa: C901
     task_dict: dict[str, LightevalTask],
     fewshot_dict: dict[str, list[Tuple[int, bool]]],
     num_fewshot_seeds: int,
-    lm: BaseModel,
+    lm: TransformersModel,
     max_samples: int | None,
     evaluation_tracker: "EvaluationTracker",
     use_chat_template: bool,
@@ -594,7 +594,7 @@ def create_requests_from_tasks(  # noqa: C901
         fewshot_dict (dict[str, list[Tuple[int, bool]]]): A dictionary of few
             shot examples.
         num_fewshot_seeds (int): number of few shot seeds.
-        lm (BaseModel): language model class that will be used to eventually
+        lm (TransformersModel): language model class that will be used to eventually
             truncate the few shot examples (we need the maximum input size of the
             model)
         max_samples (int): maximum number of samples.
@@ -621,7 +621,7 @@ def create_requests_from_tasks(  # noqa: C901
         n_samples = min(max_samples, len(task_docs)) if max_samples else len(task_docs)
         evaluation_tracker.task_config_logger.log_num_docs(task_name, len(task_docs), n_samples)
 
-        # logs out the diferent versions of the tasks for every few shot
+        # logs out the different versions of the tasks for every few shot
         for num_fewshot, _ in fewshot_dict[task_name]:
             cur_task_name = f"{task_name}|{num_fewshot}"
             evaluation_tracker.versions_logger.log(cur_task_name, task.version)
@@ -633,7 +633,7 @@ def create_requests_from_tasks(  # noqa: C901
         prompt_manager = PromptManager(lm=lm, task=task)
         seeds = prompt_manager.few_shot_sampler.get_fewshot_seeds(num_fewshot_seeds)
 
-        # We can do several round of fewshots sampling to get some variance informations
+        # We can do several round of fewshots sampling to get some variance information
         for seed in seeds:
             for doc_id in range(n_samples):
                 doc_id_seed = f"{doc_id}_{seed}"  # if we do several rounds of few shot sampling we have several seeds

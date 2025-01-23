@@ -8,7 +8,7 @@ We welcome translations in your language!
 
 To contribute, you'll need to
 1. Open the [translation_literals](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/templates/utils/translation_literals.py) file
-2. Edit the file to add or expand the literal for your language of interest. 
+2. Edit the file to add or expand the literal for your language of interest.
 
 ```python
     Language.ENGLISH: TranslationLiterals(
@@ -42,7 +42,7 @@ To contribute, you'll need to
 
 ## Contributing a new multilingual task
 
-You should first read our guide on [adding a custom task](adding-a-custom-task), to better understand the different parameters we use. 
+You should first read our guide on [adding a custom task](adding-a-custom-task), to better understand the different parameters we use.
 
 Then, you should take a look at the current [multilingual tasks](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/multilingual/tasks.py) file, to understand how they are defined. For multilingual evaluations the `prompt_function` should be implemented by language-adapted template. The template will take care of correct formatting, correct and consistent usage of language adjusted prompt anchors (e.g Question/Answer) and punctuation.
 
@@ -58,7 +58,7 @@ your_tasks = [
     LightevalTaskConfig(
         # Name of your evaluation
         name=f"evalname_{language.value}_{formulation.name.lower()}",
-        # The evaluation is community contributed 
+        # The evaluation is community contributed
         suite=["community"],
         # This will automatically get the correct metrics for your chosen formulation
         metric=get_metrics_for_formulation(
@@ -72,7 +72,7 @@ your_tasks = [
         # In this function, you choose which template to follow and for which language and formulation
         prompt_function=get_template_prompt_function(
             language=language,
-            # then use the adapter to define the mapping between the 
+            # then use the adapter to define the mapping between the
             # keys of the template (left), and the keys of your dataset
             # (right)
             # To know which template keys are required and available,
@@ -83,9 +83,9 @@ your_tasks = [
             },
             formulation=formulation,
         ),
-        # You can also add specific filters to remove irrelevant samples 
+        # You can also add specific filters to remove irrelevant samples
         hf_filter=lambda line: line["label"] in <condition>,
-        # You then select your huggingface dataset as well as 
+        # You then select your huggingface dataset as well as
         # the splits available for evaluation
         hf_repo=<dataset>,
         hf_subset=<subset>,

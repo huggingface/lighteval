@@ -481,6 +481,7 @@ class ROUGE:
         self.normalize_gold = normalize_gold
         self.normalize_pred = normalize_pred
         self.tokenizer = tokenizer
+        self.scorer = None
 
     def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float | dict:
         """Computes the metric(s) over a list of golds and predictions for one single sample.
@@ -858,7 +859,7 @@ class JudgeLLM:
         judge_model_name: str,
         template: Callable,
         process_judge_response: Callable,
-        judge_backend: Literal["openai", "transformers", "vllm", "tgi"],
+        judge_backend: Literal["litellm", "openai", "transformers", "vllm", "tgi"],
         short_judge_name: str | None = None,
     ) -> None:
         match judge_backend:
@@ -871,6 +872,9 @@ class JudgeLLM:
             case "tgi":
                 api_key = os.getenv("HF_TOKEN")
                 url = "https://api-inference.huggingface.co/v1/"
+            case "litellm":
+                api_key = None
+                url = None
             case "transformers" | "vllm":
                 api = HfApi()
                 models = api.list_models(model_name=judge_model_name)
