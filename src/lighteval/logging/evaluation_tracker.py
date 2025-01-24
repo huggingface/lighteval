@@ -34,7 +34,6 @@ from pathlib import Path
 import torch
 from datasets import Dataset, load_dataset
 from datasets.utils.metadata import MetadataConfigs
-from fsspec import url_to_fs
 from huggingface_hub import DatasetCard, DatasetCardData, HfApi, HFSummaryWriter, hf_hub_url
 
 from lighteval.logging.info_loggers import (
@@ -52,6 +51,11 @@ logger = logging.getLogger(__name__)
 
 if is_nanotron_available():
     from nanotron.config import GeneralArgs  # type: ignore
+
+try:
+    from fsspec import url_to_fs
+except ImportError:
+    from fsspec.core import url_to_fs
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
