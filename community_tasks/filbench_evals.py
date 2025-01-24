@@ -26,3 +26,9 @@ Custom evaluation tasks for lighteval.
 
 This file generally creates just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
 """
+
+from filbench.global_mmlu import FILIPINO_GLOBAL_MMLU_TASKS
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
+
+
+TASKS_TABLE: list[LightevalTaskConfig] = FILIPINO_GLOBAL_MMLU_TASKS
