@@ -20,7 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 import os
+import warnings
+from dataclasses import dataclass
 from typing import Optional, Tuple, Union
 
 import torch
@@ -29,13 +32,20 @@ import transformers
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from transformers import (
+    AutoConfig,
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    BitsAndBytesConfig,
+    GPTQConfig,
+    PretrainedConfig,
+)
+from transformers.generation.utils import GenerateOutput, GenerationConfig
 from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
-from lighteval.logging.hierarchical_logger import hlog, hlog_err, hlog_warn
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_config import BaseModelConfig
+from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     Batch,
     GenerativeMultiturnResponse,
@@ -43,7 +53,7 @@ from lighteval.models.model_output import (
     LoglikelihoodResponse,
     LoglikelihoodSingleTokenResponse,
 )
-from lighteval.models.utils import _get_dtype, _simplify_name, batched
+from lighteval.models.utils import _get_dtype, _get_model_sha, _simplify_name, batched
 from lighteval.tasks.requests import (
     GreedyUntilMultiTurnRequest,
     GreedyUntilRequest,
@@ -52,9 +62,18 @@ from lighteval.tasks.requests import (
     LoglikelihoodSingleTokenRequest,
     Request,
 )
-from lighteval.utils.imports import is_accelerate_available
+from lighteval.utils.imports import (
+    NO_AUTOGPTQ_ERROR_MSG,
+    NO_BNB_ERROR_MSG,
+    is_accelerate_available,
+    is_autogptq_available,
+    is_bnb_available,
+)
 from lighteval.utils.parallelism import find_executable_batch_size
-from lighteval.utils.utils import EnvConfig, as_list
+from lighteval.utils.utils import EnvConfig, as_list, boolstring_to_bool
+
+
+logger = logging.getLogger(__name__)
 
 
 if is_accelerate_available():
@@ -66,11 +85,173 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 STARTING_BATCH_SIZE = 512
 
 
-class BaseModel(LightevalModel):
+@dataclass
+class TransformersModelConfig:
+    """
+    Base configuration class for models.
+
+    Attributes:
+        pretrained (str):
+            HuggingFace Hub model ID name or the path to a pre-trained
+            model to load. This is effectively the `pretrained_model_name_or_path`
+            argument of `from_pretrained` in the HuggingFace `transformers` API.
+        accelerator (Accelerator): accelerator to use for model training.
+        tokenizer (Optional[str]): HuggingFace Hub tokenizer ID that will be
+            used for tokenization.
+        multichoice_continuations_start_space (Optional[bool]): Whether to add a
+            space at the start of each continuation in multichoice generation.
+            For example, context: "What is the capital of France?" and choices: "Paris", "London".
+            Will be tokenized as: "What is the capital of France? Paris" and "What is the capital of France? London".
+            True adds a space, False strips a space, None does nothing
+        pairwise_tokenization (bool): Whether to tokenize the context and continuation as separately or together.
+        subfolder (Optional[str]): The subfolder within the model repository.
+        revision (str): The revision of the model.
+        batch_size (int): The batch size for model training.
+        max_gen_toks (Optional[int]): The maximum number of tokens to generate.
+        max_length (Optional[int]): The maximum length of the generated output.
+        add_special_tokens (bool, optional, defaults to True): Whether to add special tokens to the input sequences.
+           If `None`, the default value will be set to `True` for seq2seq models (e.g. T5) and
+            `False` for causal models.
+        model_parallel (bool, optional, defaults to False):
+            True/False: force to use or not the `accelerate` library to load a large
+            model across multiple devices.
+            Default: None which corresponds to comparing the number of processes with
+                the number of GPUs. If it's smaller => model-parallelism, else not.
+        dtype (Union[str, torch.dtype], optional, defaults to None):):
+            Converts the model weights to `dtype`, if specified. Strings get
+            converted to `torch.dtype` objects (e.g. `float16` -> `torch.float16`).
+            Use `dtype="auto"` to derive the type from the model's weights.
+        device (Union[int, str]): device to use for model training.
+        quantization_config (Optional[BitsAndBytesConfig]): quantization
+            configuration for the model, manually provided to load a normally floating point
+            model at a quantized precision. Needed for 4-bit and 8-bit precision.
+        trust_remote_code (bool): Whether to trust remote code during model
+            loading.
+        generation_parameters (GenerationParameters): Range of parameters which will affect the generation.
+        generation_config (GenerationConfig): GenerationConfig object (only passed during manual creation)
+
+    Methods:
+        __post_init__(): Performs post-initialization checks on the configuration.
+        _init_configs(model_name, env_config): Initializes the model configuration.
+        init_configs(env_config): Initializes the model configuration using the environment configuration.
+        get_model_sha(): Retrieves the SHA of the model.
+
+    """
+
+    pretrained: str
+    accelerator: "Accelerator" = None
+    tokenizer: Optional[str] = None
+    multichoice_continuations_start_space: Optional[bool] = None
+    pairwise_tokenization: bool = False
+    subfolder: Optional[str] = None
+    revision: str = "main"
+    batch_size: int = -1
+    max_gen_toks: Optional[int] = 256
+    max_length: Optional[int] = None
+    add_special_tokens: bool = True
+    model_parallel: Optional[bool] = None
+    dtype: Optional[Union[str, torch.dtype]] = None
+    device: Union[int, str] = "cuda"
+    quantization_config: Optional[BitsAndBytesConfig] = None
+    trust_remote_code: bool = False
+    use_chat_template: bool = False
+    compile: bool = False
+    generation_parameters: GenerationParameters = None
+    generation_config: GenerationConfig = None
+
+    def __post_init__(self):
+        # Making sure this parameter is a boolean
+        self.multichoice_continuations_start_space = boolstring_to_bool(self.multichoice_continuations_start_space)
+
+        if self.multichoice_continuations_start_space is not None:
+            if self.multichoice_continuations_start_space:
+                logger.info(
+                    "You set `multichoice_continuations_start_space` to true. This will force multichoice continuations to use a starting space"
+                )
+            else:
+                logger.info(
+                    "You set `multichoice_continuations_start_space` to false. This will remove a leading space from multichoice continuations, if present."
+                )
+
+        self.model_parallel = boolstring_to_bool(self.model_parallel)
+        self.compile = boolstring_to_bool(self.compile)
+
+        if self.quantization_config is not None and not is_bnb_available():
+            raise ImportError(NO_BNB_ERROR_MSG)
+
+        if not isinstance(self.pretrained, str):
+            raise ValueError("Pretrained model name must be passed as string.")
+        if not isinstance(self.device, str):
+            raise ValueError("Current device must be passed as string.")
+
+        if self.generation_config and self.generation_parameters:
+            raise ValueError(
+                "Can't use both generation_config and generation_parameters argument. Pass the generation parameters to your generation config object"
+            )
+
+        if not self.generation_parameters and not self.generation_config:
+            self.generation_parameters = GenerationParameters()
+
+    def _init_configs(self, model_name: str, env_config: EnvConfig) -> PretrainedConfig:
+        revision = self.revision
+        if self.subfolder:
+            revision = f"{self.revision}/{self.subfolder}"
+        auto_config = AutoConfig.from_pretrained(
+            model_name,
+            revision=revision,
+            trust_remote_code=self.trust_remote_code,
+            cache_dir=env_config.cache_dir,
+            token=env_config.token,
+        )
+
+        # Gathering the model's automatic quantization config, if available
+        try:
+            model_auto_quantization_config = auto_config.quantization_config
+            logger.info("An automatic quantization config was found in the model's config. Using it to load the model")
+        except (AttributeError, KeyError):
+            model_auto_quantization_config = None
+
+        if model_auto_quantization_config is not None:
+            if self.quantization_config is not None:
+                # We don't load models quantized by default with a different user provided conf
+                raise ValueError("You manually requested quantization on a model already quantized!")
+
+            # We add the quantization to the model params we store
+            if model_auto_quantization_config["quant_method"] == "gptq":
+                if not is_autogptq_available():
+                    raise ImportError(NO_AUTOGPTQ_ERROR_MSG)
+                auto_config.quantization_config["use_exllama"] = None
+                self.quantization_config = GPTQConfig(**auto_config.quantization_config, disable_exllama=True)
+            elif model_auto_quantization_config["quant_method"] == "bitsandbytes":
+                if not is_bnb_available():
+                    raise ImportError(NO_BNB_ERROR_MSG)
+                self.quantization_config = BitsAndBytesConfig(**auto_config.quantization_config)
+
+        return auto_config
+
+    def init_configs(self, env_config: EnvConfig) -> PretrainedConfig:
+        return self._init_configs(self.pretrained, env_config=env_config)
+
+    def get_model_sha(self):
+        return _get_model_sha(repo_id=self.pretrained, revision=self.revision)
+
+
+@dataclass
+class BaseModelConfig(TransformersModelConfig):
+    def __post_init__(self):
+        super().__post_init__()
+
+        warnings.warn(
+            "BaseModelConfig is deprecated and will be removed. Use TransformersModelConfig instead",
+            FutureWarning,
+        )
+
+
+class TransformersModel(LightevalModel):
     def __init__(
         self,
         env_config: EnvConfig,
-        config: BaseModelConfig,
+        config: TransformersModelConfig,
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self._config = config.init_configs(env_config)
@@ -91,16 +272,24 @@ class BaseModel(LightevalModel):
 
         # We are in DP (and launch the script with `accelerate launch`)
         if not config.model_parallel and not isinstance(config.quantization_config, BitsAndBytesConfig):
-            hlog(f"Using Data Parallelism, putting model on device {self._device}")
+            logger.info(f"Using Data Parallelism, putting model on device {self._device}")
             self.model = self.model.to(self._device)
         if config.compile:
-            hlog("Compiling the model")
-            self.model.model.compile()
+            try:
+                logger.info("Compiling the model")
+                self.model.model.compile()
+            except AttributeError as e:
+                logger.warning("Could not compile the model because: ", e)
 
         self.model_name = _simplify_name(config.pretrained)
         self.model_sha = config.get_model_sha()
 
         self.precision = _get_dtype(config.dtype, config=self._config)
+        if config.generation_config is None:
+            self.generation_parameters = config.generation_parameters
+            self.generation_config_dict = self.generation_parameters.to_transformers_dict()
+        else:
+            self.generation_config_dict = config.generation_config.to_dict()
 
         if is_accelerate_available():
             model_size, _ = calculate_maximum_sizes(self.model)
@@ -200,9 +389,9 @@ class BaseModel(LightevalModel):
             return False, None, None
 
         self.num_local_processes = int(os.environ.get("LOCAL_WORLD_SIZE", 1))
-        self.num_machines = int(os.environ.get("WORLD_SIZE", 0)) // self.num_local_processes
+        self.num_machines = torch.cuda.device_count() // self.num_local_processes
         if self.num_machines == 0:
-            hlog("We are not in a distributed setting. Setting model_parallel to False.")
+            logger.info("We are not in a distributed setting. Setting model_parallel to False.")
             model_parallel = False
 
         if model_parallel is None:
@@ -210,7 +399,7 @@ class BaseModel(LightevalModel):
             if "cpu" in max_memory_all_gpus:
                 del max_memory_all_gpus["cpu"]
             model_parallel = bool(self.num_local_processes < len(max_memory_all_gpus))
-            hlog(
+            logger.info(
                 f"Setting model parallel to {model_parallel} since "
                 f"the number of local processes is {self.num_local_processes} "
                 f"and the number of GPUs is {len(max_memory_all_gpus)}"
@@ -225,18 +414,20 @@ class BaseModel(LightevalModel):
                 if k % self.num_local_processes == (self.accelerator.process_index % self.num_local_processes)
             }
             device_map = "auto"
-            hlog(
+            logger.info(
                 f"Model parallel was set to True, setting max memory per GPU to {max_mem_this_process} and device map to {device_map}"
             )
         else:
             max_mem_this_process = None
             device_map = None
-            hlog(
+            logger.info(
                 f"Model parallel was set to False, max memory set to {max_mem_this_process} and device map to {device_map}"
             )
         return model_parallel, max_mem_this_process, device_map
 
-    def _create_auto_model(self, config: BaseModelConfig, env_config: EnvConfig) -> transformers.PreTrainedModel:
+    def _create_auto_model(
+        self, config: TransformersModelConfig, env_config: EnvConfig
+    ) -> transformers.PreTrainedModel:
         """
         Creates an instance of the pretrained HF model.
 
@@ -273,7 +464,7 @@ class BaseModel(LightevalModel):
         return model
 
     def _create_auto_tokenizer(
-        self, config: BaseModelConfig, env_config: EnvConfig
+        self, config: TransformersModelConfig, env_config: EnvConfig
     ) -> transformers.PreTrainedTokenizer:
         return self._create_auto_tokenizer_with_name(
             model_name=config.pretrained,
@@ -332,7 +523,9 @@ class BaseModel(LightevalModel):
                 truncation_side="left",
             )
         except FileNotFoundError:
-            hlog_warn("Problem when loading the tokenizer in the cache - discarding the provided cache path value.")
+            logger.warning(
+                "Problem when loading the tokenizer in the cache - discarding the provided cache path value."
+            )
             tokenizer = AutoTokenizer.from_pretrained(
                 model_name if tokenizer_name is None else tokenizer_name,
                 revision=revision + (f"/{subfolder}" if subfolder is not None else ""),
@@ -343,7 +536,7 @@ class BaseModel(LightevalModel):
             )
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.model_max_length = self.max_length
-        hlog("Tokenizer truncation and padding size set to the left side.")
+        logger.info("Tokenizer truncation and padding size set to the left side.")
 
         return tokenizer
 
@@ -409,7 +602,7 @@ class BaseModel(LightevalModel):
     def _get_batch_size(self, max_input_length: int, override_bs: int = 0, starting_batch_size: int = 512) -> int:
         if override_bs > 0:
             return override_bs
-        hlog(f"Detecting largest batch size with max_input_length={max_input_length}")
+        logger.info(f"Detecting largest batch size with max_input_length={max_input_length}")
 
         @find_executable_batch_size(
             starting_batch_size=starting_batch_size
@@ -422,7 +615,7 @@ class BaseModel(LightevalModel):
             return batch_size
 
         batch_size = forward_batch()
-        hlog(f"Determined largest batch size: {batch_size}")
+        logger.info(f"Determined largest batch size: {batch_size}")
         return batch_size
 
     def greedy_until_multi_turn(  # noqa: C901
@@ -440,7 +633,7 @@ class BaseModel(LightevalModel):
         if self.accelerator:
             dataloader = self.accelerator.prepare(dataloader)
 
-        hlog_warn("Running greedy multi turn generation, the batch size is set to 1 for this task.")
+        logger.warning("Running greedy multi turn generation, the batch size is set to 1 for this task.")
 
         for request_batch in tqdm(
             dataloader, desc="Greedy Multi Turn generation", position=1, leave=False, disable=self.disable_tqdm
@@ -474,20 +667,30 @@ class BaseModel(LightevalModel):
                     ],
                 ]
             )
-            model_outputs = self.model.generate(
-                **model_inputs,
-                max_new_tokens=max_generated_tokens,
-                stopping_criteria=stopping_criteria,
-                do_sample=False,
-                pad_token_id=self.tokenizer.pad_token_id
-                if self.tokenizer.pad_token_id
-                else self.tokenizer.eos_token_id,
+
+            generation_config = self.generation_config_dict.copy()
+            generation_config.update(
+                {
+                    "max_new_tokens": max_generated_tokens,
+                    "pad_token_id": self.tokenizer.pad_token_id
+                    if self.tokenizer.pad_token_id
+                    else self.tokenizer.eos_token_id,
+                    "eos_token_id": self.tokenizer.eos_token_id,
+                    "do_sample": False,
+                }
             )
-            model_outputs = model_outputs[0, model_inputs["input_ids"].size(1) :]
-            model_generations = [model_outputs]
-            decoded_generation = self.tokenizer.decode(model_outputs)
+
+            model_outputs: GenerateOutput = self.model.generate(
+                **model_inputs, stopping_criteria=stopping_criteria, **generation_config
+            )
+            model_outputs = model_outputs.sequences[0, model_inputs["input_ids"].size(1) :]
+
+            # We manage stop tokens in an extra step in case they were incorrectly detected earlier
+            # (which can happen for multitoken stop sequences)
+            decoded_generation = self.tokenizer.decode(model_outputs)  # should we skip_special_tokens=True here?
             for term in stop_tokens:
                 decoded_generation = decoded_generation.split(term)[0]
+            model_generations = [model_outputs]
 
             input_tokens = [model_inputs["input_ids"]]
 
@@ -514,21 +717,29 @@ class BaseModel(LightevalModel):
                     ]
                 )
 
-                model_outputs = self.model.generate(
+                generation_config = self.generation_config_dict.copy()
+                generation_config.update(
+                    {
+                        "max_new_tokens": max_generated_tokens,
+                        "pad_token_id": self.tokenizer.pad_token_id
+                        if self.tokenizer.pad_token_id
+                        else self.tokenizer.eos_token_id,
+                        "eos_token_id": self.tokenizer.eos_token_id,
+                        "do_sample": False,
+                    }
+                )
+
+                model_outputs: GenerateOutput = self.model.generate(
                     input_ids=model_inputs["input_ids"],
                     attention_mask=model_inputs["attention_mask"],
-                    max_new_tokens=max_generated_tokens,
                     stopping_criteria=stopping_criteria,
-                    do_sample=False,
-                    pad_token_id=self.tokenizer.pad_token_id
-                    if self.tokenizer.pad_token_id
-                    else self.tokenizer.eos_token_id,
+                    **generation_config,
                 )
-                model_outputs = model_outputs[0, model_inputs["input_ids"].size(1) :]
+                model_outputs = model_outputs.sequences[0, model_inputs["input_ids"].size(1) :]
                 model_generations.append(model_outputs)
-                decoded_generation = self.tokenizer.decode(model_outputs, skip_special_tokens=True)
                 input_tokens.append(model_inputs["input_ids"])
 
+                decoded_generation = self.tokenizer.decode(model_outputs, skip_special_tokens=True)
                 for term in stop_tokens:
                     decoded_generation = decoded_generation.split(term)[0]
 
@@ -551,7 +762,7 @@ class BaseModel(LightevalModel):
                 results.append(
                     GenerativeMultiturnResponse(
                         result=answers,
-                        input_tokens=[],
+                        input_tokens=input_tokens,
                         generated_tokens=[],
                         truncated_tokens_count=0,
                         padded_tokens_count=0,
@@ -650,7 +861,7 @@ class BaseModel(LightevalModel):
                 # should have been managed by the prompt creator/few shot manager if requested by the user.
                 context_size = tokenized["input_ids"].shape[1]
                 if context_size > self.max_length:
-                    hlog_warn(
+                    logger.warning(
                         f"The context size of your batch ({context_size}) is bigger than the maximum context size allowed by the model ({self.max_length}) for a task in"
                         + str({i.task_name for i in batch})
                         + ". This is likely to lead to some errors."  # noqa C401
@@ -669,10 +880,7 @@ class BaseModel(LightevalModel):
                     input_ids=tokenized["input_ids"],
                     input_lengths=[len(item == 1) for item in tokenized["attention_mask"]],
                     input_mask=tokenized["attention_mask"],
-                    truncated=[
-                        len(c) - tokenized["input_ids"].shape[1] if len(c) > tokenized["input_ids"].shape[1] else 0
-                        for c in context
-                    ],
+                    truncated=[max(len(c) - tokenized["input_ids"].shape[1], 0) for c in context],
                     padded=[sum(mask == 0) for mask in tokenized["attention_mask"]],
                 )
 
@@ -703,21 +911,24 @@ class BaseModel(LightevalModel):
         stopping_criteria = stop_sequences_criteria(self.tokenizer, stop_sequences=stop_tokens, batch=batch)
         batch_size, _ = batch.input_ids.shape
 
-        # Compute model generation
-        outputs = self.model.generate(
-            input_ids=batch.input_ids,
-            attention_mask=batch.input_mask,
+        generation_config = self.generation_config_dict.copy()
+        generation_config.update(
             max_new_tokens=max_new_tokens,
-            stopping_criteria=stopping_criteria,
             pad_token_id=self.tokenizer.pad_token_id if self.tokenizer.pad_token_id else self.tokenizer.eos_token_id,
-            return_dict_in_generate=True,
-            output_scores=True,
             eos_token_id=self.tokenizer.eos_token_id,
             do_sample=do_sample,
             num_return_sequences=num_samples,
+            output_logits=returns_logits,
+            renormalize_logits=True,
         )
-        if returns_logits:
-            logits = self.model.compute_transition_scores(outputs.sequences, outputs.scores, normalize_logits=True)
+
+        # Compute model generation
+        outputs: GenerateOutput = self.model.generate(
+            input_ids=batch.input_ids,
+            attention_mask=batch.input_mask,
+            stopping_criteria=stopping_criteria,
+            **generation_config,
+        )
         generations = outputs.sequences[:, batch.input_ids.size(1) :]
         generations = torch.reshape(generations, (batch_size, num_samples, -1))
         generations, len_gens = self.pad_and_gather(generations, num_samples=num_samples)
@@ -725,7 +936,7 @@ class BaseModel(LightevalModel):
 
         logits, len_logits = None, None
         if returns_logits:
-            logits, len_logits = self.pad_and_gather(logits)
+            logits, len_logits = self.pad_and_gather(outputs.logits)
             logits = logits.cpu().numpy()
 
         # We gather remaining info
@@ -949,7 +1160,7 @@ class BaseModel(LightevalModel):
         padded = []
 
         if max_context is None:
-            hlog_warn("max_context is None, using max_length")
+            logger.warning("max_context is None, using max_length")
             max_context = self.max_length
 
         # Each sample is concatenated and cut to length or padded to max_length
@@ -964,7 +1175,7 @@ class BaseModel(LightevalModel):
             padding_length = padding_length if padding_length is not None else sequence_len
 
             if padding_length - sequence_len < 0:
-                hlog_err(f"Padding length {padding_length} is smaller than input length {sequence_len}")
+                logger.warning(f"Padding length {padding_length} is smaller than input length {sequence_len}")
                 raise ValueError("Negative padding")
 
             padded.append(padding_length - sequence_len)
@@ -1138,6 +1349,16 @@ class BaseModel(LightevalModel):
                 del batch_padded
 
         return dataset.get_original_order(res)
+
+
+class BaseModel(TransformersModel):
+    def __post_init__(self):
+        super().__post_init__()
+
+        warnings.warn(
+            "Careful, the BaseModel name is deprecated and will be removed, you should use TransformersModel instead!",
+            FutureWarning,
+        )
 
 
 class MultiTokenEOSCriteria(transformers.StoppingCriteria):

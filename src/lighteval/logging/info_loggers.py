@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import collections
+import logging
 import os
 import time
 from dataclasses import asdict, dataclass, field
@@ -30,7 +31,6 @@ import git
 import numpy as np
 import xxhash
 
-from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics import MetricCategory
 from lighteval.metrics.stderr import get_stderr_function
 from lighteval.models.abstract_model import ModelInfo
@@ -39,6 +39,9 @@ from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import is_nanotron_available
 from lighteval.utils.utils import as_list, sanitize_numpy
+
+
+logger = logging.getLogger(__name__)
 
 
 if is_nanotron_available():
@@ -507,7 +510,7 @@ class MetricsLogger:
                 try:
                     metric_result = task.aggregation()[metric_name](metric_values)
                 except OverflowError:
-                    hlog_warn(f"{task_name}, {metric_name} got an OVERFLOW ERROR when aggregating.")
+                    logger.warning(f"{task_name}, {metric_name} got an OVERFLOW ERROR when aggregating.")
                     metric_result = float("nan")
                 except KeyError:
                     continue
@@ -529,7 +532,7 @@ class MetricsLogger:
                     except OverflowError:
                         # Is this need or should we just pass?
                         self.metric_aggregated[task_name][f"{metric_name}_stderr"] = float("nan")
-                        hlog_warn(f"{task_name}, {metric_name} got an OVERFLOW ERROR when computing stderr.")
+                        logger.warning(f"{task_name}, {metric_name} got an OVERFLOW ERROR when computing stderr.")
 
         # We group subtasks which belong to the same parent task, like MMLU, to compute an average on them
         # and compute an average of all metrics

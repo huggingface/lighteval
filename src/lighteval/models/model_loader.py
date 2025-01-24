@@ -20,31 +20,27 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 from typing import Union
 
-from lighteval.logging.hierarchical_logger import hlog
-from lighteval.models.adapter_model import AdapterModel
-from lighteval.models.base_model import BaseModel
-from lighteval.models.delta_model import DeltaModel
-from lighteval.models.dummy_model import DummyModel
-from lighteval.models.endpoint_model import InferenceEndpointModel
-from lighteval.models.model_config import (
-    AdapterModelConfig,
-    BaseModelConfig,
-    DeltaModelConfig,
-    DummyModelConfig,
+from lighteval.models.dummy.dummy_model import DummyModel, DummyModelConfig
+from lighteval.models.endpoints.endpoint_model import (
+    InferenceEndpointModel,
     InferenceEndpointModelConfig,
-    InferenceModelConfig,
-    OpenAIModelConfig,
-    TGIModelConfig,
-    VLLMModelConfig,
+    ServerlessEndpointModelConfig,
 )
-from lighteval.models.openai_model import OpenAIClient
-from lighteval.models.tgi_model import ModelClient
-from lighteval.models.vllm_model import VLLMModel
+from lighteval.models.endpoints.openai_model import OpenAIClient, OpenAIModelConfig
+from lighteval.models.endpoints.tgi_model import ModelClient, TGIModelConfig
+from lighteval.models.litellm_model import LiteLLMClient, LiteLLMModelConfig
+from lighteval.models.transformers.adapter_model import AdapterModel, AdapterModelConfig
+from lighteval.models.transformers.delta_model import DeltaModel, DeltaModelConfig
+from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
+from lighteval.models.vllm.vllm_model import VLLMModel, VLLMModelConfig
 from lighteval.utils.imports import (
+    NO_LITELLM_ERROR_MSG,
     NO_TGI_ERROR_MSG,
     NO_VLLM_ERROR_MSG,
+    is_litellm_available,
     is_openai_available,
     is_tgi_available,
     is_vllm_available,
@@ -52,9 +48,12 @@ from lighteval.utils.imports import (
 from lighteval.utils.utils import EnvConfig
 
 
+logger = logging.getLogger(__name__)
+
+
 def load_model(  # noqa: C901
     config: Union[
-        BaseModelConfig,
+        TransformersModelConfig,
         AdapterModelConfig,
         DeltaModelConfig,
         TGIModelConfig,
@@ -62,9 +61,10 @@ def load_model(  # noqa: C901
         DummyModelConfig,
         VLLMModelConfig,
         OpenAIModelConfig,
+        LiteLLMModelConfig,
     ],
     env_config: EnvConfig,
-) -> Union[BaseModel, AdapterModel, DeltaModel, ModelClient, DummyModel]:
+) -> Union[TransformersModel, AdapterModel, DeltaModel, ModelClient, DummyModel]:
     """Will load either a model from an inference server or a model from a checkpoint, depending
     on the config type.
 
@@ -78,16 +78,16 @@ def load_model(  # noqa: C901
         ValueError: If you did not specify a base model when using delta weights or adapter weights
 
     Returns:
-        Union[BaseModel, AdapterModel, DeltaModel, ModelClient]: The model that will be evaluated
+        Union[TransformersModel, AdapterModel, DeltaModel, ModelClient]: The model that will be evaluated
     """
     # Inference server loading
     if isinstance(config, TGIModelConfig):
         return load_model_with_tgi(config)
 
-    if isinstance(config, InferenceEndpointModelConfig) or isinstance(config, InferenceModelConfig):
+    if isinstance(config, InferenceEndpointModelConfig) or isinstance(config, ServerlessEndpointModelConfig):
         return load_model_with_inference_endpoints(config, env_config=env_config)
 
-    if isinstance(config, BaseModelConfig):
+    if isinstance(config, TransformersModelConfig):
         return load_model_with_accelerate_or_default(config=config, env_config=env_config)
 
     if isinstance(config, DummyModelConfig):
@@ -99,15 +99,26 @@ def load_model(  # noqa: C901
     if isinstance(config, OpenAIModelConfig):
         return load_openai_model(config=config, env_config=env_config)
 
+    if isinstance(config, LiteLLMModelConfig):
+        return load_litellm_model(config=config, env_config=env_config)
+
 
 def load_model_with_tgi(config: TGIModelConfig):
     if not is_tgi_available():
         raise ImportError(NO_TGI_ERROR_MSG)
 
-    hlog(f"Load model from inference server: {config.inference_server_address}")
+    logger.info(f"Load model from inference server: {config.inference_server_address}")
     model = ModelClient(
         address=config.inference_server_address, auth_token=config.inference_server_auth, model_id=config.model_id
     )
+    return model
+
+
+def load_litellm_model(config: LiteLLMModelConfig, env_config: EnvConfig):
+    if not is_litellm_available():
+        raise ImportError(NO_LITELLM_ERROR_MSG)
+
+    model = LiteLLMClient(config, env_config)
     return model
 
 
@@ -120,14 +131,16 @@ def load_openai_model(config: OpenAIModelConfig, env_config: EnvConfig):
     return model
 
 
-def load_model_with_inference_endpoints(config: InferenceEndpointModelConfig, env_config: EnvConfig):
-    hlog("Spin up model using inference endpoint.")
+def load_model_with_inference_endpoints(
+    config: Union[InferenceEndpointModelConfig, ServerlessEndpointModelConfig], env_config: EnvConfig
+):
+    logger.info("Spin up model using inference endpoint.")
     model = InferenceEndpointModel(config=config, env_config=env_config)
     return model
 
 
 def load_model_with_accelerate_or_default(
-    config: Union[AdapterModelConfig, BaseModelConfig, DeltaModelConfig], env_config: EnvConfig
+    config: Union[AdapterModelConfig, TransformersModelConfig, DeltaModelConfig], env_config: EnvConfig
 ):
     if isinstance(config, AdapterModelConfig):
         model = AdapterModel(config=config, env_config=env_config)
@@ -139,7 +152,7 @@ def load_model_with_accelerate_or_default(
         model = VLLMModel(config=config, env_config=env_config)
         return model
     else:
-        model = BaseModel(config=config, env_config=env_config)
+        model = TransformersModel(config=config, env_config=env_config)
 
     return model
 

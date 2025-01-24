@@ -20,24 +20,44 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 from contextlib import nullcontext
+from dataclasses import dataclass
 
 import torch
 from transformers import AutoModelForCausalLM, PreTrainedTokenizer
 
-from lighteval.logging.hierarchical_logger import hlog
-from lighteval.models.base_model import BaseModel
-from lighteval.models.model_config import AdapterModelConfig
+from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
 from lighteval.models.utils import _get_dtype
-from lighteval.utils.imports import is_peft_available
+from lighteval.utils.imports import NO_PEFT_ERROR_MSG, is_peft_available
 from lighteval.utils.utils import EnvConfig
 
+
+logger = logging.getLogger(__name__)
 
 if is_peft_available():
     from peft import PeftModel
 
 
-class AdapterModel(BaseModel):
+@dataclass
+class AdapterModelConfig(TransformersModelConfig):
+    # Adapter models have the specificity that they look at the base model (= the parent) for the tokenizer and config
+    base_model: str = None
+
+    def __post_init__(self):
+        if not is_peft_available():
+            raise ImportError(NO_PEFT_ERROR_MSG)
+
+        if not self.base_model:  # must have a default value bc of dataclass inheritance, but can't actually be None
+            raise ValueError("The base_model argument must not be null for an adapter model config")
+
+        return super().__post_init__()
+
+    def init_configs(self, env_config: EnvConfig):
+        return self._init_configs(self.base_model, env_config)
+
+
+class AdapterModel(TransformersModel):
     def _create_auto_tokenizer(self, config: AdapterModelConfig, env_config: EnvConfig) -> PreTrainedTokenizer:
         # By default, we look at the model config for the model stored in `base_model`
         # (= the parent model, not the model of interest)
@@ -60,18 +80,30 @@ class AdapterModel(BaseModel):
         merged_path = f"{adapter_weights}-adapter-applied"
 
         if self.accelerator.is_local_main_process if self.accelerator is not None else nullcontext():
-            hlog(f"Loading model from {adapter_weights} and applying adapter to {config.base_model}")
+            logger.info(f"Loading model from {adapter_weights} and applying adapter to {config.base_model}")
             base = AutoModelForCausalLM.from_pretrained(
                 config.base_model, torch_dtype=torch.float16, low_cpu_mem_usage=True, token=env_config.token
             )
+            # resize model for adapters with added tokens
+            token_diff = len(self._tokenizer) - base.config.vocab_size
+            if token_diff != 0:
+                if token_diff > 0:
+                    logger.info(
+                        f"You're using the adapter model's tokenizer, which has more tokens than the base model. Adding {token_diff} token(s)."
+                    )
+                else:
+                    logger.info(
+                        f"You're using the adapter model's tokenizer, which has fewer tokens than the base model. Removing {abs(token_diff)} token(s)."
+                    )
+                base.resize_token_embeddings(len(self._tokenizer))
             # Should pass revision
             model = PeftModel.from_pretrained(base, adapter_weights)
             model = model.merge_and_unload()
 
-            hlog("Saving model with adapter applied")
+            logger.info("Saving model with adapter applied")
             base.save_pretrained(merged_path)
 
-        hlog(f"Loading model from {merged_path}")
+        logger.info(f"Loading model from {merged_path}")
 
         model = AutoModelForCausalLM.from_pretrained(
             merged_path,

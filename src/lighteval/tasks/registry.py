@@ -22,22 +22,23 @@
 
 import collections
 import importlib
+import logging
 import os
 from functools import lru_cache, partial
 from itertools import groupby
 from pathlib import Path
-from pprint import pformat
 from types import ModuleType
 from typing import Callable, Dict, List, Optional, Union
 
 from datasets.load import dataset_module_factory
 
 import lighteval.tasks.default_tasks as default_tasks
-from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.tasks.extended import AVAILABLE_EXTENDED_TASKS_MODULES
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.utils.imports import CANNOT_USE_EXTENDED_TASKS_MSG, can_load_extended_tasks
 
+
+logger = logging.getLogger(__name__)
 
 # Helm, Bigbench, Harness are implementations following an evaluation suite setup
 # Original follows the original implementation as closely as possible
@@ -104,8 +105,7 @@ class Registry:
         """
         task_class = self.task_registry.get(task_name)
         if task_class is None:
-            hlog_warn(f"{task_name} not found in provided tasks")
-            hlog_warn(pformat(list(self.task_registry.keys())))
+            logger.error(f"{task_name} not found in provided tasks")
             raise ValueError(f"Cannot find tasks {task_name} in task list or in custom task registry)")
 
         return task_class()
@@ -133,12 +133,12 @@ class Registry:
             for extended_task_module in AVAILABLE_EXTENDED_TASKS_MODULES:
                 custom_tasks_module.append(extended_task_module)
         else:
-            hlog_warn(CANNOT_USE_EXTENDED_TASKS_MSG)
+            logger.warning(CANNOT_USE_EXTENDED_TASKS_MSG)
 
         for module in custom_tasks_module:
             TASKS_TABLE.extend(module.TASKS_TABLE)
             # We don't log the tasks themselves as it makes the logs unreadable
-            hlog(f"Found {len(module.TASKS_TABLE)} custom tasks in {module.__file__}")
+            logger.info(f"Found {len(module.TASKS_TABLE)} custom tasks in {module.__file__}")
 
         if len(TASKS_TABLE) > 0:
             custom_tasks_registry = create_lazy_tasks(meta_table=TASKS_TABLE, cache_dir=self._cache_dir)
@@ -147,11 +147,11 @@ class Registry:
         # Check the overlap between default_tasks_registry and custom_tasks_registry
         intersection = set(default_tasks_registry.keys()).intersection(set(custom_tasks_registry.keys()))
         if len(intersection) > 0:
-            hlog_warn(
-                f"Following tasks ({intersection}) exists both in the default and custom tasks. Will use the default ones on conflict."
+            logger.warning(
+                f"Following tasks ({intersection}) exists both in the default and custom tasks. Will use the custom ones on conflict."
             )
 
-        # Defaults tasks should overwrite custom tasks
+        # Custom tasks overwrite defaults tasks
         return {**default_tasks_registry, **custom_tasks_registry}
 
     @property
@@ -166,7 +166,7 @@ class Registry:
                 "lighteval|mmlu" -> ["lighteval|mmlu:abstract_algebra", "lighteval|mmlu:college_biology", ...]
             }
         """
-        # Note: sorted before groupby is imporant as the python implementation of groupby does not
+        # Note: sorted before groupby is important as the python implementation of groupby does not
         # behave like sql groupby. For more info see the docs of itertools.groupby
         superset_dict = {k: list(v) for k, v in groupby(sorted(self.task_registry.keys()), lambda x: x.split(":")[0])}
         # Only consider supersets with more than one task
@@ -315,7 +315,9 @@ def taskinfo_selector(tasks: str, task_registry: Registry) -> tuple[list[str], d
         few_shot = int(few_shot)
 
         if suite_name not in DEFAULT_SUITES:
-            hlog(f"Suite {suite_name} unknown. This is not normal, unless you are testing adding new evaluations.")
+            logger.warning(
+                f"Suite {suite_name} unknown. This is not normal, unless you are testing adding new evaluations."
+            )
 
         # This adds support for task supersets (eg: mmlu -> all the mmlu tasks)
         for expanded_task in task_registry.expand_task_definition(f"{suite_name}|{task_name}"):
@@ -348,7 +350,7 @@ def create_lazy_tasks(
     # Every task is renamed suite|task, if the suite is in DEFAULT_SUITE
     for config in meta_table:
         if not any(suite in config.suite for suite in DEFAULT_SUITES):
-            hlog_warn(
+            logger.warning(
                 f"This evaluation is not in any known suite: {config.name} is in {config.suite}, not in {DEFAULT_SUITES}. Skipping."
             )
             continue

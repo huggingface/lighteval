@@ -23,21 +23,25 @@
 from dataclasses import dataclass
 from typing import Dict, Optional, Union
 
-from nanotron.config.parallelism_config import ParallelismArgs
-from nanotron.generation.sampler import SamplerType
-from nanotron.logging import get_logger
+from lighteval.utils.imports import is_nanotron_available
 
 from brrr.config import Config
 
 
-logger = get_logger(__name__)
+if is_nanotron_available():
+    from nanotron.config import Config
+    from nanotron.config.parallelism_config import ParallelismArgs
+    from nanotron.generation.sampler import SamplerType
+    from nanotron.logging import get_logger
+
+    logger = get_logger(__name__)
 
 DEFAULT_GENERATION_SEED = 42
 
 
 @dataclass
 class GenerationArgs:
-    sampler: Optional[Union[str, SamplerType]] = None
+    sampler: Optional[Union[str, "SamplerType"]] = None
     temperature: Optional[float] = None
     top_k: Optional[int] = None
     top_p: Optional[float] = None
@@ -90,7 +94,7 @@ class LightEvalConfig:
 
     logging: LightEvalLoggingArgs
     tasks: LightEvalTasksArgs
-    parallelism: ParallelismArgs
+    parallelism: "ParallelismArgs"
     batch_size: int = 0
     generation: Optional[Union[GenerationArgs, Dict[str, GenerationArgs]]] = None
 
@@ -98,4 +102,4 @@ class LightEvalConfig:
 @dataclass
 class FullNanotronConfig:
     lighteval_config: LightEvalConfig
-    nanotron_config: Config
+    nanotron_config: "Config"

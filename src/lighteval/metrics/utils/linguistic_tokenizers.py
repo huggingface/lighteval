@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 from abc import ABC, abstractmethod
 from functools import lru_cache
 from typing import Callable, Iterator
 
-from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.utils.imports import (
     NO_SPACY_TOKENIZER_ERROR_MSG,
     NO_STANZA_TOKENIZER_ERROR_MSG,
@@ -24,6 +24,9 @@ from lighteval.utils.imports import (
     can_load_stanza_tokenizer,
 )
 from lighteval.utils.language import Language
+
+
+logger = logging.getLogger(__name__)
 
 
 # Copy of https://github.com/huggingface/datatrove/blob/main/src/datatrove/utils/tokenization.py
@@ -270,6 +273,6 @@ TOKENIZER_FACTORY: dict[Language, Callable[[], WordTokenizer]] = {
 def get_word_tokenizer(language: Language) -> WordTokenizer:
     tokenizer = TOKENIZER_FACTORY.get(language)
     if tokenizer is None:
-        hlog_warn(f"No word tokenizer found for language {language}, will split on spaces.")
+        logger.warning(f"No word tokenizer found for language {language}, will split on spaces.")
         return WhitespaceTokenizer()
     return tokenizer()
