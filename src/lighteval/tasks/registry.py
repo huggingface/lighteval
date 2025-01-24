@@ -35,7 +35,10 @@ from datasets.load import dataset_module_factory
 import lighteval.tasks.default_tasks as default_tasks
 from lighteval.tasks.extended import AVAILABLE_EXTENDED_TASKS_MODULES
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
-from lighteval.utils.imports import CANNOT_USE_EXTENDED_TASKS_MSG, can_load_extended_tasks
+from lighteval.utils.imports import (
+    CANNOT_USE_EXTENDED_TASKS_MSG,
+    can_load_extended_tasks,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -56,6 +59,7 @@ DEFAULT_SUITES = [
     "extended",
     "custom",
     "community",
+    "filbench",
 ]
 
 TRUNCATE_FEW_SHOTS_DEFAULTS = True
@@ -69,7 +73,11 @@ class Registry:
     The Registry class is used to manage the task registry and get task classes.
     """
 
-    def __init__(self, cache_dir: Optional[str] = None, custom_tasks: Optional[Union[str, Path, ModuleType]] = None):
+    def __init__(
+        self,
+        cache_dir: Optional[str] = None,
+        custom_tasks: Optional[Union[str, Path, ModuleType]] = None,
+    ):
         """
         Initialize the Registry class.
 
@@ -328,7 +336,8 @@ def taskinfo_selector(tasks: str, task_registry: Registry) -> tuple[list[str], d
 
 
 def create_lazy_tasks(
-    meta_table: Optional[List[LightevalTaskConfig]] = None, cache_dir: Optional[str] = None
+    meta_table: Optional[List[LightevalTaskConfig]] = None,
+    cache_dir: Optional[str] = None,
 ) -> Dict[str, LazyLightevalTask]:
     """
     Create configuration tasks based on the provided meta_table.
