@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 # ruff: noqa: C901
+import logging
 import os
 import time
 from typing import List, Optional, Tuple, Type, Union
@@ -41,14 +42,13 @@ from lighteval.data import (
     LoglikelihoodDataset,
     LoglikelihoodSingleTokenDataset,
 )
-from lighteval.logging.hierarchical_logger import hlog_err, hlog_warn
-from lighteval.models.base_model import LightevalModel, ModelInfo
 from lighteval.models.model_output import (
     Batch,
     GenerativeResponse,
     LoglikelihoodResponse,
     LoglikelihoodSingleTokenResponse,
 )
+from lighteval.models.transformers.transformers_model import LightevalModel, ModelInfo
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -57,6 +57,9 @@ from lighteval.tasks.requests import (
 from lighteval.utils.imports import is_nanotron_available
 from lighteval.utils.parallelism import find_executable_batch_size
 from lighteval.utils.utils import EnvConfig, as_list
+
+
+logger = logging.getLogger(__name__)
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -78,7 +81,7 @@ if is_nanotron_available():
     from nanotron.serialize import load_weights
     from nanotron.trainer import CONFIG_TO_MODEL_CLASS, mark_tied_parameters
 
-logger = logging.get_logger(__name__)
+    logger = logging.get_logger(__name__)
 
 
 class NanotronLightevalModel(LightevalModel):
@@ -90,7 +93,7 @@ class NanotronLightevalModel(LightevalModel):
         self,
         checkpoint_path: str,
         nanotron_config: FullNanotronConfig,
-        parallel_context: ParallelContext,
+        parallel_context: "ParallelContext",
         max_gen_toks: Optional[int] = 256,
         max_length: Optional[int] = None,
         add_special_tokens: Optional[bool] = True,
@@ -591,7 +594,7 @@ class NanotronLightevalModel(LightevalModel):
             input_ids=input_ids, input_mask=input_mask, input_lengths=input_lengths, truncated=truncated, padded=padded
         )
 
-    def gather(self, output_tensor: torch.Tensor, process_group: dist.ProcessGroup = None) -> torch.Tensor:
+    def gather(self, output_tensor: torch.Tensor, process_group: "dist.ProcessGroup" = None) -> torch.Tensor:
         """Gather together tensors of (possibly) various size spread on separate GPUs (first exchange the lengths and then pad and gather)"""
         if process_group is None:
             process_group = self.parallel_context.dp_pg
@@ -1186,7 +1189,7 @@ class NanotronLightevalModel(LightevalModel):
                 returns_logits = batch[0].use_logits
                 num_samples = batch[0].num_samples
                 if num_samples > 1:
-                    hlog_err(
+                    logger.error(
                         "Nonotron models does not allow sampling evaluations - this is likely to fail or provide problematic results"
                     )
 
@@ -1210,7 +1213,7 @@ class NanotronLightevalModel(LightevalModel):
                 # should have been managed by the prompt creator/few shot manager if requested by the user.
                 context_size = tokenized["input_ids"].shape[1]
                 if context_size > self.max_length:
-                    hlog_warn(
+                    logger.warning(
                         f"The context size of your batch ({context_size}) is bigger than the maximum context size allowed by the model ({self.max_length}) for a task in"
                         + str({i.task_name for i in batch})
                         + ". This is likely to lead to some errors."  # noqa C401

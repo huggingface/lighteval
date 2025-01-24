@@ -1,0 +1,46 @@
+- sections:
+  - local: index
+    title: 🤗 Lighteval
+  - local: installation
+    title: Installation
+  - local: quicktour
+    title: Quicktour
+  title: Getting started
+- sections:
+  - local: saving-and-reading-results
+    title: Save and read results
+  - local: using-the-python-api
+    title: Use the Python API
+  - local: adding-a-custom-task
+    title: Add a custom task
+  - local: adding-a-new-metric
+    title: Add a custom metric
+  - local: use-vllm-as-backend
+    title: Use VLLM as backend
+  - local: evaluate-the-model-on-a-server-or-container
+    title: Evaluate on Server
+  - local: contributing-to-multilingual-evaluations
+    title: Contributing to multilingual evaluations
+  title: Guides
+- sections:
+  - local: metric-list
+    title: Available Metrics
+  - local: available-tasks
+    title: Available Tasks
+  title: API
+- sections:
+  - sections:
+    - local: package_reference/evaluation_tracker
+      title: EvaluationTracker
+    - local: package_reference/models
+      title: Models and ModelConfigs
+    - local: package_reference/pipeline
+      title: Pipeline
+    title: Main classes
+  - local: package_reference/metrics
+    title: Metrics
+  - local: package_reference/tasks
+    title: Tasks
+  - local: package_reference/logging
+    title: Logging
+  title: Reference

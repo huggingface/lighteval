@@ -22,16 +22,17 @@
 
 import gc
 import itertools
+import logging
 import os
+from dataclasses import dataclass
 from typing import Optional
 
 import torch
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
-from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_config import VLLMModelConfig
+from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
@@ -45,12 +46,21 @@ from lighteval.utils.imports import is_vllm_available
 from lighteval.utils.utils import EnvConfig, as_list
 
 
+logger = logging.getLogger(__name__)
+
+
 if is_vllm_available():
     import ray
     from more_itertools import distribute
     from vllm import LLM, SamplingParams
     from vllm.distributed.parallel_state import destroy_distributed_environment, destroy_model_parallel
     from vllm.transformers_utils.tokenizer import get_tokenizer
+
+    logging.getLogger("vllm").propagate = True
+    logging.getLogger("vllm").handlers.clear()
+
+    logging.getLogger("ray").propagate = True
+    logging.getLogger("ray").handlers.clear()
 else:
     LLM = None
     SamplingParams = None
@@ -61,6 +71,34 @@ else:
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 STARTING_BATCH_SIZE = 512
+
+
+@dataclass
+class VLLMModelConfig:
+    pretrained: str
+    gpu_memory_utilisation: float = 0.9  # lower this if you are running out of memory
+    revision: str = "main"  # revision of the model
+    dtype: str | None = None
+    tensor_parallel_size: int = 1  # how many GPUs to use for tensor parallelism
+    pipeline_parallel_size: int = 1  # how many GPUs to use for pipeline parallelism
+    data_parallel_size: int = 1  # how many GPUs to use for data parallelism
+    max_model_length: int | None = None  # maximum length of the model, ussually infered automatically. reduce this if you encouter OOM issues, 4096 is usually enough
+    swap_space: int = 4  # CPU swap space size (GiB) per GPU.
+    seed: int = 1234
+    trust_remote_code: bool = False
+    use_chat_template: bool = False
+    add_special_tokens: bool = True
+    multichoice_continuations_start_space: bool = (
+        True  # whether to add a space at the start of each continuation in multichoice generation
+    )
+    pairwise_tokenization: bool = False  # whether to tokenize the context and continuation separately or together.
+    generation_parameters: GenerationParameters = None  # sampling parameters to use for generation
+
+    subfolder: Optional[str] = None
+
+    def __post_init__(self):
+        if not self.generation_parameters:
+            self.generation_parameters = GenerationParameters()
 
 
 class VLLMModel(LightevalModel):
@@ -90,6 +128,7 @@ class VLLMModel(LightevalModel):
         self.precision = _get_dtype(config.dtype, config=self._config)
 
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
+        self.sampling_params = SamplingParams(**config.generation_parameters.to_vllm_openai_dict())
         self.pairwise_tokenization = config.pairwise_tokenization
 
     @property
@@ -228,14 +267,14 @@ class VLLMModel(LightevalModel):
             # left truncate the inputs to the maximum length
             if max_new_tokens is not None:
                 if context_size + max_new_tokens > self.max_length:
-                    hlog_warn(
+                    logger.warning(
                         f"{context_size + max_new_tokens=} which is greather than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
                     )
                     context_size = self.max_length - max_new_tokens
                     inputs = [input[-context_size:] for input in inputs]
             else:
                 if context_size > self.max_length:
-                    hlog_warn(
+                    logger.warning(
                         f"{context_size=} which is greather than {self.max_length=}. Truncating context to {self.max_length} tokens."
                     )
                     context_size = self.max_length
@@ -276,16 +315,18 @@ class VLLMModel(LightevalModel):
         generate: bool = True,
     ) -> list[GenerativeResponse]:
         """Contains the actual logic of the generation."""
+        sampling_params = self.sampling_params.clone() or SamplingParams()
         if generate:
-            sampling_params = SamplingParams(
-                temperature=float(self._config.temperature) if num_samples > 1 else 0.0,
-                n=num_samples,
-                max_tokens=max_new_tokens,
-                stop=stop_tokens,
-                logprobs=1 if returns_logits else 0,
-            )
+            sampling_params.n = num_samples
+            sampling_params.max_tokens = max_new_tokens
+            sampling_params.stop = stop_tokens
+            sampling_params.logprobs = 1 if returns_logits else 0
+
         else:
-            sampling_params = SamplingParams(temperature=0, prompt_logprobs=1, max_tokens=1, detokenize=False)
+            sampling_params.temperature = 0
+            sampling_params.prompt_logprobs = 1
+            sampling_params.max_tokens = 1
+            sampling_params.detokenize = False
 
         if self.data_parallel_size > 1:
             # vLLM hangs if tensor_parallel > 1 and resources are set in ray.remote

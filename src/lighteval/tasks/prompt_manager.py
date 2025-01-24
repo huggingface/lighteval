@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 import random
 from collections import defaultdict
 from dataclasses import dataclass
@@ -27,10 +28,13 @@ from enum import Enum
 from itertools import cycle
 from typing import TYPE_CHECKING, Optional, Tuple, Union
 
-from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.models.abstract_model import LightevalModel
+from lighteval.models.litellm_model import LiteLLMClient
 from lighteval.tasks.requests import Doc
 from lighteval.utils.utils import as_list
+
+
+logger = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:
@@ -89,7 +93,7 @@ class PromptManager:
             formatted_doc (Doc): Formatted document.
 
         Returns:
-            str: Class of the
+            str: Class of the fewshot document
         """
         return formatted_doc.fewshot_sorting_class or PromptManager.doc_to_target(formatted_doc)
 
@@ -128,7 +132,7 @@ class PromptManager:
         Multi turn tasks need use chat templating.
 
         Args:
-            doc (Doc): Formated document.
+            doc (Doc): Formatted document.
             use_chat_template (bool): wether or not to use chat template. Will fail if false.
             system_prompt (Optional[str]): The system prompt to use
             tokenizer (PreTrainedTokenizer): The tokenizer used for the chat template
@@ -202,7 +206,11 @@ class PromptManager:
             system_prompt=system_prompt,
             use_chat_template=use_chat_template,
         )
-        toks = self.model.tok_encode(output)
+        if not use_chat_template:
+            toks = self.model.tok_encode(output)
+        else:
+            toks = [self.model.tok_encode(msg["content"]) for msg in output]
+            toks = [t for ts in toks for t in ts]
 
         # If we need to truncate few-shots to fit in the context
         if truncate_few_shots and self.model.max_length is not None and self.model.tokenizer is not None:
@@ -220,7 +228,19 @@ class PromptManager:
                     system_prompt=system_prompt,
                     use_chat_template=use_chat_template,
                 )
-                toks = self.model.tokenizer(output)["input_ids"]
+                if not use_chat_template:
+                    toks = self.model.tok_encode(output)
+                else:
+                    toks = [self.model.tok_encode(msg["content"]) for msg in output]
+                    toks = [t for ts in toks for t in ts]
+
+        if isinstance(self.model, LiteLLMClient):
+            return output, num_effective_fewshots
+
+        elif use_chat_template:
+            return self.model.tokenizer.apply_chat_template(
+                output, tokenize=False, add_generation_prompt=True
+            ), num_effective_fewshots
 
         return output, num_effective_fewshots
 
@@ -253,7 +273,7 @@ class PromptManager:
                 examples.insert(0, {"role": "system", "content": system_prompt + instruction})
             else:  # Else we add the instruction to the first example
                 examples[0]["content"] = instruction + examples[0]["content"]
-            return self.model.tokenizer.apply_chat_template(examples, tokenize=False, add_generation_prompt=True)
+            return examples
         else:
             if system_prompt is not None:
                 output = system_prompt + instruction + "\n\n".join(examples)
@@ -353,12 +373,13 @@ class FewShotSampler:
         self._fewshot_cache[variance_seed] = fewshotpool  # Store few shot examples
 
     def _init_fewshot_sampling_random(self, variance_seed: int):
-        fewshotpool = self.task.fewshot_docs()
+        fewshotpool = list(self.task.fewshot_docs())
         if variance_seed == 0:
             self._fewshot_cache[variance_seed] = fewshotpool
         else:  # we shuffle
             rnd = random.Random(variance_seed)
-            self._fewshot_cache[variance_seed] = rnd.shuffle(fewshotpool)
+            rnd.shuffle(fewshotpool)
+            self._fewshot_cache[variance_seed] = fewshotpool
 
     def _init_fewshot_sampling_balanced(
         self,
@@ -416,5 +437,5 @@ class FewShotSampler:
         if few_shot_iterations <= 1:
             return [0]
         seeds = range(few_shot_iterations)
-        hlog_warn(f"Running {self.task.name} with {few_shot_iterations} few-shot iterations.")
+        logger.warning(f"Running {self.task.name} with {few_shot_iterations} few-shot iterations.")
         return seeds

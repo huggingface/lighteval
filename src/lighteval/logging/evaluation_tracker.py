@@ -20,8 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import copy
 import json
+import logging
 import os
 import re
 import time
@@ -34,10 +34,8 @@ from pathlib import Path
 import torch
 from datasets import Dataset, load_dataset
 from datasets.utils.metadata import MetadataConfigs
-from fsspec import url_to_fs
 from huggingface_hub import DatasetCard, DatasetCardData, HfApi, HFSummaryWriter, hf_hub_url
 
-from lighteval.logging.hierarchical_logger import hlog, hlog_warn
 from lighteval.logging.info_loggers import (
     DetailsLogger,
     GeneralConfigLogger,
@@ -49,8 +47,15 @@ from lighteval.utils.imports import NO_TENSORBOARDX_WARN_MSG, is_nanotron_availa
 from lighteval.utils.utils import obj_to_markdown
 
 
+logger = logging.getLogger(__name__)
+
 if is_nanotron_available():
     from nanotron.config import GeneralArgs  # type: ignore
+
+try:
+    from fsspec import url_to_fs
+except ImportError:
+    from fsspec.core import url_to_fs
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
@@ -80,16 +85,35 @@ class EnhancedJSONEncoder(json.JSONEncoder):
 
 
 class EvaluationTracker:
-    """
-    Keeps track of the overall evaluation process and relevant informations.
+    """Keeps track of the overall evaluation process and relevant information.
 
-    The [`EvaluationTracker`] contains specific loggers for experiments details
-    ([`DetailsLogger`]), metrics ([`MetricsLogger`]), task versions
-    ([`VersionsLogger`]) as well as for the general configurations of both the
-    specific task ([`TaskConfigLogger`]) and overall evaluation run
-    ([`GeneralConfigLogger`]).  It compiles the data from these loggers and
+    The [`~logging.evaluation_tracker.EvaluationTracker`] contains specific loggers for experiments details
+    ([`~logging.evaluation_tracker.DetailsLogger`]), metrics ([`~logging.evaluation_tracker.MetricsLogger`]), task versions
+    ([`~logging.evaluation_tracker.VersionsLogger`]) as well as for the general configurations of both the
+    specific task ([`~logging.evaluation_tracker.TaskConfigLogger`]) and overall evaluation run
+    ([`~logging.evaluation_tracker.GeneralConfigLogger`]).  It compiles the data from these loggers and
     writes it to files, which can be published to the Hugging Face hub if
     requested.
+
+    Args:
+        output_dir (`str`): Local folder path where you want results to be saved.
+        save_details (`bool`, defaults to True): If True, details are saved to the `output_dir`.
+        push_to_hub (`bool`, defaults to False): If True, details are pushed to the hub.
+            Results are pushed to `{hub_results_org}/details__{sanitized model_name}` for the model `model_name`, a public dataset,
+            if `public` is True else `{hub_results_org}/details__{sanitized model_name}_private`, a private dataset.
+        push_to_tensorboard (`bool`, defaults to False): If True, will create and push the results for a tensorboard folder on the hub.
+        hub_results_org (`str`, *optional*): The organisation to push the results to.
+            See more details about the datasets organisation in [`EvaluationTracker.save`].
+        tensorboard_metric_prefix (`str`, defaults to "eval"): Prefix for the metrics in the tensorboard logs.
+        public (`bool`, defaults to False): If True, results and details are pushed to public orgs.
+        nanotron_run_info ([`~nanotron.config.GeneralArgs`], *optional*): Reference to information about Nanotron models runs.
+
+    **Attributes**:
+        - **details_logger** ([`~logging.info_loggers.DetailsLogger`]) -- Logger for experiment details.
+        - **metrics_logger** ([`~logging.info_loggers.MetricsLogger`]) -- Logger for experiment metrics.
+        - **versions_logger** ([`~logging.info_loggers.VersionsLogger`]) -- Logger for task versions.
+        - **general_config_logger** ([`~logging.info_loggers.GeneralConfigLogger`]) -- Logger for general configuration.
+        - **task_config_logger** ([`~logging.info_loggers.TaskConfigLogger`]) -- Logger for task configuration.
     """
 
     def __init__(
@@ -103,23 +127,7 @@ class EvaluationTracker:
         public: bool = False,
         nanotron_run_info: "GeneralArgs" = None,
     ) -> None:
-        """
-        Creates all the necessary loggers for evaluation tracking.
-
-        Args:
-            output_dir (str): Local folder path where you want results to be saved
-            save_details (bool): If True, details are saved to the output_dir
-            push_to_hub (bool): If True, details are pushed to the hub.
-                Results are pushed to `{hub_results_org}/details__{sanitized model_name}` for the model `model_name`, a public dataset,
-                if `public` is True else `{hub_results_org}/details__{sanitized model_name}_private`, a private dataset.
-            push_results_to_tensorboard (bool): If True, will create and push the results for a tensorboard folder on the hub
-            hub_results_org (str): The organisation to push the results to. See
-                more details about the datasets organisation in
-                [`EvaluationTracker.save`]
-            tensorboard_metric_prefix (str): Prefix for the metrics in the tensorboard logs
-            public (bool): If True, results and details are pushed in private orgs
-            nanotron_run_info (GeneralArgs): Reference to informations about Nanotron models runs
-        """
+        """Creates all the necessary loggers for evaluation tracking."""
         self.details_logger = DetailsLogger()
         self.metrics_logger = MetricsLogger()
         self.versions_logger = VersionsLogger()
@@ -145,14 +153,35 @@ class EvaluationTracker:
 
         self.public = public
 
+    @property
+    def results(self):
+        config_general = asdict(self.general_config_logger)
+        # We remove the config from logging, which contains context/accelerator objects
+        config_general.pop("config")
+        results = {
+            "config_general": config_general,
+            "results": self.metrics_logger.metric_aggregated,
+            "versions": self.versions_logger.versions,
+            "config_tasks": self.task_config_logger.tasks_configs,
+            "summary_tasks": self.details_logger.compiled_details,
+            "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
+        }
+        return results
+
+    @property
+    def details(self):
+        return {
+            task_name: [asdict(detail) for detail in task_details]
+            for task_name, task_details in self.details_logger.details.items()
+        }
+
     def save(self) -> None:
         """Saves the experiment information and results to files, and to the hub if requested."""
-        hlog("Saving experiment tracker")
+        logger.info("Saving experiment tracker")
         date_id = datetime.now().isoformat().replace(":", "-")
 
         # We first prepare data to save
-        config_general = copy.deepcopy(self.general_config_logger)
-        config_general = asdict(config_general)
+        config_general = asdict(self.general_config_logger)
         # We remove the config from logging, which contains context/accelerator objects
         config_general.pop("config")
 
@@ -202,15 +231,15 @@ class EvaluationTracker:
         output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name
         self.fs.mkdirs(output_dir_results, exist_ok=True)
         output_results_file = output_dir_results / f"results_{date_id}.json"
-        hlog(f"Saving results to {output_results_file}")
-        with self.fs.open(output_results_file, "w", encoding="utf-8") as f:
+        logger.info(f"Saving results to {output_results_file}")
+        with self.fs.open(output_results_file, "w") as f:
             f.write(json.dumps(results_dict, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False))
 
     def save_details(self, date_id: str, details_datasets: dict[str, Dataset]):
         output_dir_details = Path(self.output_dir) / "details" / self.general_config_logger.model_name
         output_dir_details_sub_folder = output_dir_details / date_id
         self.fs.mkdirs(output_dir_details_sub_folder, exist_ok=True)
-        hlog(f"Saving details to {output_dir_details_sub_folder}")
+        logger.info(f"Saving details to {output_dir_details_sub_folder}")
         for task_name, dataset in details_datasets.items():
             output_file_details = output_dir_details_sub_folder / f"details_{task_name}_{date_id}.json"
             with self.fs.open(str(output_file_details), "wb") as f:
@@ -255,7 +284,7 @@ class EvaluationTracker:
 
         if not self.api.repo_exists(repo_id):
             self.api.create_repo(repo_id, private=not (self.public), repo_type="dataset", exist_ok=True)
-            hlog(f"Repository {repo_id} not found, creating it.")
+            logger.info(f"Repository {repo_id} not found, creating it.")
 
         # We upload it both as a json and a parquet file
         result_file_base_name = f"results_{date_id}"
@@ -277,6 +306,31 @@ class EvaluationTracker:
             dataset.to_parquet(f"{fsspec_repo_uri}/{output_file_details}")
 
         self.recreate_metadata_card(repo_id)
+
+    def push_results_to_hub(self, repo_id: str, path_in_repo: str, private: bool | None = None):
+        repo_id = repo_id if "/" in repo_id else f"{self.hub_results_org}/{repo_id}"
+        private = private if private is not None else not self.public
+        self.api.create_repo(repo_id, private=private, repo_type="dataset", exist_ok=True)
+        results_json = json.dumps(self.results, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False)
+        self.api.upload_file(
+            repo_id=repo_id,
+            path_or_fileobj=results_json.encode(),
+            path_in_repo=path_in_repo,
+            repo_type="dataset",
+        )
+
+    def push_details_to_hub(self, repo_id: str, path_in_repo: str, private: bool | None = None):
+        repo_id = repo_id if "/" in repo_id else f"{self.hub_results_org}/{repo_id}"
+        private = private if private is not None else not self.public
+        self.api.create_repo(repo_id, private=private, repo_type="dataset", exist_ok=True)
+        for task_name, details in self.details:
+            details_json = "\n".join([json.dumps(detail) for detail in details])
+            self.api.upload_file(
+                repo_id=repo_id,
+                path_or_fileobj=details_json.encode(),
+                path_in_repo=path_in_repo.format(task_name=task_name),
+                repo_type="dataset",
+            )
 
     def recreate_metadata_card(self, repo_id: str) -> None:  # noqa: C901
         """Fully updates the details repository metadata card for the currently evaluated model
@@ -490,11 +544,11 @@ class EvaluationTracker:
         self, results: dict[str, dict[str, float]], details: dict[str, DetailsLogger.CompiledDetail]
     ):
         if not is_tensorboardX_available:
-            hlog_warn(NO_TENSORBOARDX_WARN_MSG)
+            logger.warning(NO_TENSORBOARDX_WARN_MSG)
             return
 
         if not is_nanotron_available():
-            hlog_warn("You cannot push results to tensorboard without having nanotron installed. Skipping")
+            logger.warning("You cannot push results to tensorboard without having nanotron installed. Skipping")
             return
 
         prefix = self.tensorboard_metric_prefix
@@ -526,14 +580,14 @@ class EvaluationTracker:
             bench_suite = None
             if ":" in task_name:
                 bench_suite = task_name.split(":")[0]  # e.g. MMLU
-                hlog(f"bench_suite {bench_suite} in {task_name}")
+                logger.info(f"bench_suite {bench_suite} in {task_name}")
                 for metric, value in values.items():
                     if "stderr" in metric:
                         continue
                     if bench_suite not in bench_averages:
                         bench_averages[bench_suite] = {}
                     bench_averages[bench_suite][metric] = bench_averages[bench_suite].get(metric, []) + [float(value)]
-            hlog(f"Pushing {task_name} {values} to tensorboard")
+            logger.info(f"Pushing {task_name} {values} to tensorboard")
             for metric, value in values.items():
                 if "stderr" in metric:
                     tb_context.add_scalar(f"stderr_{prefix}/{task_name}/{metric}", value, global_step=global_step)
@@ -546,7 +600,7 @@ class EvaluationTracker:
         # Tasks with subtasks
         for name, values in bench_averages.items():
             for metric, values in values.items():
-                hlog(f"Pushing average {name} {metric} {sum(values) / len(values)} to tensorboard")
+                logger.info(f"Pushing average {name} {metric} {sum(values) / len(values)} to tensorboard")
                 tb_context.add_scalar(f"{prefix}/{name}/{metric}", sum(values) / len(values), global_step=global_step)
 
         tb_context.add_text("eval_config", obj_to_markdown(results), global_step=global_step)
@@ -571,7 +625,7 @@ class EvaluationTracker:
 
         # Now we can push to the hub
         tb_context.scheduler.trigger()
-        hlog(
+        logger.info(
             f"Pushed to tensorboard at https://huggingface.co/{self.tensorboard_repo}/{output_dir_tb}/tensorboard"
             f" at global_step {global_step}"
         )

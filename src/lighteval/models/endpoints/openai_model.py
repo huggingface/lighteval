@@ -20,17 +20,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 from typing import Optional
 
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
-from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.models.abstract_model import LightevalModel
-from lighteval.models.endpoint_model import ModelInfo
+from lighteval.models.endpoints.endpoint_model import ModelInfo
+from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
@@ -45,6 +47,9 @@ from lighteval.tasks.requests import (
 from lighteval.utils.imports import is_openai_available
 
 
+logger = logging.getLogger(__name__)
+
+
 if is_openai_available():
     import logging
 
@@ -55,12 +60,33 @@ if is_openai_available():
     logging.getLogger("httpx").setLevel(logging.ERROR)
 
 
+@dataclass
+class OpenAIModelConfig:
+    model: str
+    generation_parameters: GenerationParameters = None
+
+    def __post_init__(self):
+        if not self.generation_parameters:
+            self.generation_parameters = GenerationParameters()
+
+    @classmethod
+    def from_path(cls, path: str) -> "OpenAIModelConfig":
+        import yaml
+
+        with open(path, "r") as f:
+            config = yaml.safe_load(f)["model"]
+        generation_parameters = GenerationParameters.from_dict(config)
+        return cls(model=config["model_name"], generation_parameters=generation_parameters)
+
+
 class OpenAIClient(LightevalModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
-    def __init__(self, config, env_config) -> None:
+    def __init__(self, config: OpenAIModelConfig, env_config) -> None:
         api_key = os.environ["OPENAI_API_KEY"]
         self.client = OpenAI(api_key=api_key)
+        self.generation_parameters = config.generation_parameters
+        self.sampling_params = self.generation_parameters.to_vllm_openai_dict()
 
         self.model_info = ModelInfo(
             model_name=config.model,
@@ -87,10 +113,11 @@ class OpenAIClient(LightevalModel):
                     logprobs=return_logits,
                     logit_bias=logit_bias,
                     n=num_samples,
+                    **self.sampling_params,
                 )
                 return response
             except Exception as e:
-                hlog_warn(f"{type(e), e}")
+                logger.warning(f"{type(e), e}")
                 time.sleep(self.API_RETRY_SLEEP)
                 self.API_RETRY_SLEEP = self.API_RETRY_SLEEP**self.API_RETRY_MULTIPLIER
         raise Exception("Failed to get response from the API")
@@ -136,7 +163,6 @@ class OpenAIClient(LightevalModel):
 
         Args:
             requests (list[Request]): list of requests containing the context and ending conditions.
-            disable_tqdm (bool, optional): Whether to disable the progress bar. Defaults to False.
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
 
         Returns:

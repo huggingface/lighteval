@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 import re
 
 import numpy as np
@@ -35,6 +36,9 @@ from lighteval.tasks.extended.mix_eval.judge_prompts import (
 from lighteval.tasks.extended.mix_eval.prompts import construct_prompt_freeform, construct_prompt_multichoice
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
+
+
+logger = logging.getLogger(__name__)
 
 
 def mixeval_freeform_prompt(line, task_name: str = ""):
@@ -71,19 +75,30 @@ def mixeval_multichoice_prompt(line, task_name: str = ""):
 
 
 def process_judge_response(x):
-    search = re.search(r"<score>\s(\d)\s</score>", x)
-    return int(search.group(1)) if search else 0
+    try:
+        search = re.search(r"<score>\s(\d)\s</score>", x)
+        return int(search.group(1)) if search else 0
+    except Exception as e:
+        logger.warning(f"Error processing judge response for flow: {e}")
+        return 0
 
 
 def process_judge_response_multichoice_gpt(x):
-    search = re.search(r"\[\[([01])\]\]", x)
-    return int(search.group(1)) if search else 0
+    try:
+        search = re.search(r"\[\[([01])\]\]", x)
+        return int(search.group(1)) if search else 0
+    except Exception as e:
+        logger.warning(f"Error processing judge response for multichoice GPT: {e}")
+        return 0
 
 
 def process_judge_response_freeform_gpt(x):
-    search = re.search(r"\[\[(\d.\d)\]\]", x)
-    answer = float(search.group(1) if search else 0)
-    return answer
+    try:
+        search = re.search(r"\[\[(\d.\d)\]\]", x)
+        return float(search.group(1)) if search else 0
+    except Exception as e:
+        logger.warning(f"Error processing judge response for freeform GPT: {e}")
+        return 0
 
 
 llm_judge_mixeval_multichoice_flow_judge = SampleLevelMetricGrouping(
@@ -228,8 +243,3 @@ mixeval_multichoice_hard = LightevalTaskConfig(
 
 
 TASKS_TABLE = [mixeval_multichoice_easy, mixeval_freeform_easy, mixeval_multichoice_hard, mixeval_freeform_hard]
-
-if __name__ == "__main__":
-    # Adds the metric to the metric list!
-    print(t["name"] for t in TASKS_TABLE)
-    print(len(TASKS_TABLE))

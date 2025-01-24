@@ -22,8 +22,7 @@
 
 from transformers import AutoTokenizer
 
-from lighteval.models.dummy_model import DummyModel
-from lighteval.models.model_config import DummyModelConfig
+from lighteval.models.dummy.dummy_model import DummyModel, DummyModelConfig
 from lighteval.utils.utils import EnvConfig
 
 

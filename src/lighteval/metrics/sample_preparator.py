@@ -20,12 +20,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 import re
 from dataclasses import asdict, dataclass
 
 import numpy as np
 
-from lighteval.logging.hierarchical_logger import hlog_warn
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -92,7 +94,7 @@ class LoglikelihoodPreparator:
         """
         if self.is_single_token:
             if len(gold_ixs) > 1:
-                hlog_warn(
+                logger.warning(
                     "The current sample has more than one gold available, which is unexpected. We selected only the first one for the corpus aggregation of the loglikelihood metric."
                 )
             return LogprobCorpusMetricInput(golds=gold_ixs[0], preds=np.argmax(choices_logprob))

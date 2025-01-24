@@ -1,0 +1,107 @@
+# Contributing to multilingual evaluations
+
+## Contributing a small translation
+
+We define 19 `literals`, basic keywords or punctuation signs used when creating evaluation prompts in an automatic manner, such as `yes`, `no`, `because`, etc.
+
+We welcome translations in your language!
+
+To contribute, you'll need to
+1. Open the [translation_literals](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/templates/utils/translation_literals.py) file
+2. Edit the file to add or expand the literal for your language of interest.
+
+```python
+    Language.ENGLISH: TranslationLiterals(
+        language=Language.ENGLISH,
+        question_word="question", # Usage: "Question: How are you?"
+        answer="answer", # Usage: "Answer: I am fine"
+        confirmation_word="right", # Usage: "He is smart, right?"
+        yes="yes", # Usage: "Yes, he is"
+        no="no", # Usage: "No, he is not"
+        also="also", # Usage: "Also, she is smart."
+        cause_word="because", # Usage: "She is smart, because she is tall"
+        effect_word="therefore", # Usage: "He is tall therefore he is smart"
+        or_word="or", # Usage: "He is tall or small"
+        true="true", # Usage: "He is smart, true, false or neither?"
+        false="false", # Usage: "He is smart, true, false or neither?"
+        neither="neither", # Usage: "He is smart, true, false or neither?"
+        # Punctuation and spacing: only adjust if your language uses something different than in English
+        full_stop=".",
+        comma=",",
+        question_mark="?",
+        exclamation_mark="!",
+        word_space=" ",
+        sentence_space=" ",
+        colon=":",
+        # The first characters of your alphabet used in enumerations, if different from English
+        indices=["A", "B", "C", ...]
+    )
+```
+
+3. Open a PR with your modifications! And voilà!
+
+## Contributing a new multilingual task
+
+You should first read our guide on [adding a custom task](adding-a-custom-task), to better understand the different parameters we use.
+
+Then, you should take a look at the current [multilingual tasks](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/multilingual/tasks.py) file, to understand how they are defined. For multilingual evaluations the `prompt_function` should be implemented by language-adapted template. The template will take care of correct formatting, correct and consistent usage of language adjusted prompt anchors (e.g Question/Answer) and punctuation.
+
+Browse the list of all templates [here](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks/templates) to see which are the most adapted to your own task.
+
+Then, when ready, to define your own task, you should:
+1. create a Python file as indicated in the above guide
+2. import the relevant templates for your task type (XNLI, Copa, Multiple choice, Question Answering, etc)
+3. define one or a list of tasks for each relevant language and evaluation formulation (for multichoice) using our parametrizable [`~tasks.lighteval_task.LightevalTaskConfig`] class
+
+```python
+your_tasks = [
+    LightevalTaskConfig(
+        # Name of your evaluation
+        name=f"evalname_{language.value}_{formulation.name.lower()}",
+        # The evaluation is community contributed
+        suite=["community"],
+        # This will automatically get the correct metrics for your chosen formulation
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=None),
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
+        # In this function, you choose which template to follow and for which language and formulation
+        prompt_function=get_template_prompt_function(
+            language=language,
+            # then use the adapter to define the mapping between the
+            # keys of the template (left), and the keys of your dataset
+            # (right)
+            # To know which template keys are required and available,
+            # consult the appropriate adapter type and doc-string.
+            adapter=lambda line: {
+                "key": line["relevant_key"],
+                ...
+            },
+            formulation=formulation,
+        ),
+        # You can also add specific filters to remove irrelevant samples
+        hf_filter=lambda line: line["label"] in <condition>,
+        # You then select your huggingface dataset as well as
+        # the splits available for evaluation
+        hf_repo=<dataset>,
+        hf_subset=<subset>,
+        evaluation_splits=["train"],
+        hf_avail_splits=["train"],
+    )
+    for language in [
+        Language.YOUR_LANGUAGE, ...
+    ]
+    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+]
+```
+4. then, you can go back to the guide to test if your task is correctly implemented!
+
+> [!TIP]
+> All [`~tasks.lighteval_task.LightevalTaskConfig`] parameters are strongly typed, including the inputs to the template function. Make sure to take advantage of your IDE's functionality to make it easier to correctly fill these parameters.
+
+
+Once everything is good, open a PR, and we'll be happy to review it!

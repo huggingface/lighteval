@@ -1,0 +1,79 @@
+# Evaluate the model on a server or container
+
+An alternative to launching the evaluation locally is to serve the model on a
+TGI-compatible server/container and then run the evaluation by sending requests
+to the server. The command is the same as before, except you specify a path to
+a yaml config file (detailed below):
+
+```bash
+lighteval endpoint {tgi,inference-endpoint} \
+    "/path/to/config/file"\
+    <task parameters>
+```
+
+There are two types of configuration files that can be provided for running on
+the server:
+
+### Hugging Face Inference Endpoints
+
+To launch a model using HuggingFace's Inference Endpoints, you need to provide
+the following file: `endpoint_model.yaml`. Lighteval will automatically deploy
+the endpoint, run the evaluation, and finally delete the endpoint (unless you
+specify an endpoint that was already launched, in which case the endpoint won't
+be deleted afterwards).
+
+__configuration file example:__
+
+```yaml
+model:
+  base_params:
+    # Pass either model_name, or endpoint_name and true reuse_existing
+    # endpoint_name: "llama-2-7B-lighteval" # needs to be lower case without special characters
+    # reuse_existing: true # defaults to false; if true, ignore all params in instance, and don't delete the endpoint after evaluation
+    model_name: "meta-llama/Llama-2-7b-hf"
+    # revision: "main" # defaults to "main"
+    dtype: "float16" # can be any of "awq", "eetq", "gptq", "4bit' or "8bit" (will use bitsandbytes), "bfloat16" or "float16"
+  instance:
+    accelerator: "gpu"
+    region: "eu-west-1"
+    vendor: "aws"
+    instance_type: "nvidia-a10g"
+    instance_size: "x1"
+    framework: "pytorch"
+    endpoint_type: "protected"
+    namespace: null # The namespace under which to launch the endpoint. Defaults to the current user's namespace
+    image_url: null # Optionally specify the docker image to use when launching the endpoint model. E.g., launching models with later releases of the TGI container with support for newer models.
+    env_vars:
+      null # Optional environment variables to include when launching the endpoint. e.g., `MAX_INPUT_LENGTH: 2048`
+```
+
+### Text Generation Inference (TGI)
+
+To use a model already deployed on a TGI server, for example on HuggingFace's
+serverless inference.
+
+__configuration file example:__
+
+```yaml
+model:
+  instance:
+    inference_server_address: ""
+    inference_server_auth: null
+    model_id: null # Optional, only required if the TGI container was launched with model_id pointing to a local directory
+```
+
+### OpenAI API
+
+Lighteval also supports evaluating models on the OpenAI API. To do so you need to set your OpenAI API key in the environment variable.
+
+```bash
+export  OPENAI_API_KEY={your_key}
+```
+
+And then run the following command:
+
+```bash
+lighteval endpoint openai \
+    {model-name} \
+    <task parameters>
+```

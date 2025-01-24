@@ -1,0 +1,177 @@
+# Adding a Custom Task
+
+To add a new task, first either open an issue, to determine whether it will be
+integrated in the core evaluations of lighteval, in the extended tasks, or the
+community tasks, and add its dataset on the hub.
+
+- Core evaluations are evaluations that only require standard logic in their
+  metrics and processing, and that we will add to our test suite to ensure non
+  regression through time. They already see high usage in the community.
+- Extended evaluations are evaluations that require custom logic in their
+  metrics (complex normalisation, an LLM as a judge, ...), that we added to
+  facilitate the life of users. They already see high usage in the community.
+- Community evaluations are submissions by the community of new tasks.
+
+A popular community evaluation can move to become an extended or core evaluation over time.
+
+> [!TIP]
+> You can find examples of custom tasks in the <a href="https://github.com/huggingface/lighteval/tree/main/community_tasks">community_task</a> directory.
+
+## Step by step creation of a custom task
+
+> [!WARNING]
+> To contribute your custom metric to the lighteval repo, you would first need
+> to install the required dev dependencies by running `pip install -e .[dev]`
+> and then run `pre-commit install` to install the pre-commit hooks.
+
+First, create a python file under the `community_tasks` directory.
+
+You need to define a prompt function that will convert a line from your
+dataset to a document to be used for evaluation.
+
+```python
+# Define as many as you need for your different tasks
+def prompt_fn(line, task_name: str = None):
+    """Defines how to go from a dataset line to a doc object.
+    Follow examples in src/lighteval/tasks/default_prompts.py, or get more info
+    about what this function should do in the README.
+    """
+    return Doc(
+        task_name=task_name,
+        query=line["question"],
+        choices=[f" {c}" for c in line["choices"]],
+        gold_index=line["gold"],
+        instruction="",
+    )
+```
+
+Then, you need to choose a metric: you can either use an existing one (defined
+in [`lighteval.metrics.metrics.Metrics`]) or [create a custom one](adding-a-new-metric)).
+[//]: # (TODO: Replace lighteval.metrics.metrics.Metrics with ~metrics.metrics.Metrics once its autodoc is added)
+
+```python
+custom_metric = SampleLevelMetric(
+    metric_name="my_custom_metric_name",
+    higher_is_better=True,
+    category=MetricCategory.IGNORED,
+    use_case=MetricUseCase.NONE,
+    sample_level_fn=lambda x: x,  # how to compute score for one sample
+    corpus_level_fn=np.mean,  # How to aggreagte the samples metrics
+)
+```
+
+Then, you need to define your task using [`~tasks.lighteval_task.LightevalTaskConfig`].
+You can define a task with or without subsets.
+To define a task with no subsets:
+
+```python
+# This is how you create a simple task (like hellaswag) which has one single subset
+# attached to it, and one evaluation possible.
+task = LightevalTaskConfig(
+    name="myothertask",
+    prompt_function=prompt_fn,  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
+    suite=["community"],
+    hf_repo="",
+    hf_subset="default",
+    hf_avail_splits=[],
+    evaluation_splits=[],
+    few_shots_split=None,
+    few_shots_select=None,
+    metric=[],  # select your metric in Metrics
+)
+```
+
+If you want to create a task with multiple subset, add them to the
+`SAMPLE_SUBSETS` list and create a task for each subset.
+
+```python
+SAMPLE_SUBSETS = []  # list of all the subsets to use for this eval
+
+
+class CustomSubsetTask(LightevalTaskConfig):
+    def __init__(
+        self,
+        name,
+        hf_subset,
+    ):
+        super().__init__(
+            name=name,
+            hf_subset=hf_subset,
+            prompt_function=prompt_fn,  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
+            hf_repo="",
+            metric=[custom_metric],  # select your metric in Metrics or use your custom_metric
+            hf_avail_splits=[],
+            evaluation_splits=[],
+            few_shots_split=None,
+            few_shots_select=None,
+            suite=["community"],
+            generation_size=-1,
+            stop_sequence=None,
+        )
+SUBSET_TASKS = [CustomSubsetTask(name=f"mytask:{subset}", hf_subset=subset) for subset in SAMPLE_SUBSETS]
+```
+
+Here is a list of the parameters and their meaning:
+
+- `name` (str), your evaluation name
+- `suite` (list), the suite(s) to which your evaluation should belong. This
+  field allows us to compare different task implementations and is used as a
+  task selection to differentiate the versions to launch. At the moment, you'll
+  find the keywords ["helm", "bigbench", "original", "lighteval", "community",
+  "custom"]; for core evals, please choose `lighteval`.
+- `prompt_function` (Callable), the prompt function you defined in the step
+  above
+- `hf_repo` (str), the path to your evaluation dataset on the hub
+- `hf_subset` (str), the specific subset you want to use for your evaluation
+  (note: when the dataset has no subset, fill this field with `"default"`, not
+  with `None` or `""`)
+- `hf_avail_splits` (list), all the splits available for your dataset (train,
+  valid or validation, test, other...)
+- `evaluation_splits` (list), the splits you want to use for evaluation
+- `few_shots_split` (str, can be `null`), the specific split from which you
+  want to select samples for your few-shot examples. It should be different
+  from the sets included in `evaluation_splits`
+- `few_shots_select` (str, can be `null`), the method that you will use to
+  select items for your few-shot examples. Can be `null`, or one of:
+    - `balanced` select examples from the `few_shots_split` with balanced
+      labels, to avoid skewing the few shot examples (hence the model
+      generations) toward one specific label
+    - `random` selects examples at random from the `few_shots_split`
+    - `random_sampling` selects new examples at random from the
+      `few_shots_split` for every new item, but if a sampled item is equal to
+      the current one, it is removed from the available samples
+    - `random_sampling_from_train` selects new examples at random from the
+      `few_shots_split` for every new item, but if a sampled item is equal to
+      the current one, it is kept! Only use this if you know what you are
+      doing.
+    - `sequential` selects the first `n` examples of the `few_shots_split`
+- `generation_size` (int), the maximum number of tokens allowed for a
+  generative evaluation. If your evaluation is a log likelihood evaluation
+  (multi-choice), this value should be -1
+- `stop_sequence` (list), a list of strings acting as end of sentence tokens
+  for your generation
+- `metric` (list), the metrics you want to use for your evaluation (see next
+  section for a detailed explanation)
+- `trust_dataset` (bool), set to True if you trust the dataset.
+
+
+Then you need to add your task to the `TASKS_TABLE` list.
+
+```python
+# STORE YOUR EVALS
+
+# tasks with subset:
+TASKS_TABLE = SUBSET_TASKS
+
+# tasks without subset:
+# TASKS_TABLE = [task]
+```
+
+Once your file is created you can then run the evaluation with the following command:
+
+```bash
+lighteval accelerate \
+    "pretrained=HuggingFaceH4/zephyr-7b-beta" \
+    "community|{custom_task}|{fewshots}|{truncate_few_shot}" \
+    --custom-tasks {path_to_your_custom_task_file}
+```
