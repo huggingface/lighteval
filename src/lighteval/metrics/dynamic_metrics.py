@@ -20,7 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from functools import lru_cache
 import logging
+import os
 from typing import Callable, Literal, Sequence
 
 import numpy as np
@@ -31,7 +33,6 @@ from sympy import Basic, FiniteSet, Interval, MatrixBase, MatrixExpr, Set, Symbo
 from sympy.core.relational import Eq, Relational
 from sympy.parsing.sympy_parser import parse_expr
 
-from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.metrics_sample import (
     ExactMatches,
     F1_score,
@@ -53,7 +54,7 @@ from lighteval.metrics.utils.extractive_match_utils import (  # noqa: F401
     extract_target_from_pred,
     get_extraction_regexes,
 )
-from lighteval.metrics.utils.math_comparison import compare_gold_target
+from lighteval.metrics.utils.math_comparison import compare_gold_target, should_treat_as_complex
 from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase, SampleLevelMetric
 from lighteval.tasks.requests import Doc
 from lighteval.utils.language import Language
