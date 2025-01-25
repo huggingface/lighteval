@@ -32,7 +32,6 @@ import numpy as np
 import sacrebleu
 import sklearn.metrics
 
-from lighteval.logging.hierarchical_logger import hlog_warn
 from lighteval.metrics.sample_preparator import (
     GenerativeCorpusMetricInput,
     LogprobCorpusMetricInput,

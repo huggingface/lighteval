@@ -138,13 +138,10 @@ math_hard_lighteval = [
             gold_extraction_target=(LatexExtractionConfig(),),
             pred_extraction_target=(LatexExtractionConfig(), ExprExtractionConfig()),
             fallback_mode="first_match",
-            extraction_mode="first_match",
         )
         # multilingual_quasi_exact_match_metric(Language.ENGLISH, "prefix"),
         ],
         stop_sequence=get_cot_stop_sequence(Language.ENGLISH, CFFormulation(cot=cot)),
-        output_regex=None,
-        frozen=False,
         trust_dataset=True,
         version=0,
     )
@@ -184,13 +181,10 @@ math_hard_lighteval = [
             #     gold_extraction_target=(LatexExtractionConfig(),),
             #     pred_extraction_target=(LatexExtractionConfig(), ExprExtractionConfig()),
             #     fallback_mode="first_match",
-            #     extraction_mode="first_match",
             # )
             multilingual_quasi_exact_match_metric(Language.ENGLISH, "prefix"),
         ],
         stop_sequence=get_cot_stop_sequence(Language.ENGLISH, CFFormulation(cot=cot)),
-        output_regex=None,
-        frozen=False,
         trust_dataset=True,
         version=0,
     )
@@ -2043,13 +2037,15 @@ global_mmlu_tasks = [
             subset,
             sensitivity_label,
         ),
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            language,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
                 loglikelihood_acc_metric(normalization=LogProbPMINorm()),
             ],
+            eval_type="generative",
         ),
     )
     for subset in MMLU_SUBSETS

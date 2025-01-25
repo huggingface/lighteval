@@ -65,6 +65,18 @@ class TranslationLiterals:
     # Indices
     indices: list[str] = field(default_factory=lambda: LETTER_INDICES)
 
+    # Instructions
+    continuation_instruction: str = "Choose the letter of the most likely continuation."
+    qa_instruction: str = "Answer the following question."
+    multichoice_instruction: str = "Choose the the letter of the correct answer."
+
+    # Formatting instruction
+    default_formatting_instruction: str = "Output the answer in format: The final answer is: <answer>."
+    math_formatting_instruction: str = "Output the answer in \\boxed{}."
+
+    # Extraction
+    final_answer_regex: str = r"(?i:final answer.{{0,100}}?)\s+is\:?\s*<answer>"
+
     def __getattribute__(self, name: str) -> str:
         value = super().__getattribute__(name)
         if value is None:
@@ -107,6 +119,14 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
         indices=["أ", "ب", "ج", "د", "هـ", "و", "ز", "ح"],
+        
+        # Translated using gpt4-o
+        continuation_instruction="اختر الحرف الذي يمثل الاستمرار الأكثر احتمالاً",
+        qa_instruction="أجب عن السؤال التالي",
+        multichoice_instruction="اختر الحرف الذي يمثل الإجابة الصحيحة",
+        default_formatting_instruction="اكتب الإجابة بالتنسيق: الإجابة النهائية هي: <الإجابة>",
+        math_formatting_instruction="اكتب الإجابة في \\boxed{}",
+        final_answer_regex=r"(?i:الإجابة النهائية.{{0,100}}?)\s+هي\:?\s*<answer>",
     ),
     Language.ARMENIAN: TranslationLiterals(language=Language.ARMENIAN),
     Language.ASSAMESE: TranslationLiterals(language=Language.ASSAMESE),
@@ -236,6 +256,16 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space="",
         colon="：",
         indices=["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+
+        # Translated using gpt4-o
+        continuation_instruction = "选择最可能的继续的字母。",
+        qa_instruction = "回答以下问题。",
+        multichoice_instruction = "选择正确答案的字母。",
+
+        default_formatting_instruction = "以格式输出答案：最终答案是：<答案>。",
+        math_formatting_instruction="在 \\boxed{} 环境中输出答案。",
+
+        final_answer_regex = r"(?i:最终答案.{{0,100}}?)\s+是：?\s*<answer>",
     ),
     Language.CROATIAN: TranslationLiterals(
         language=Language.CROATIAN,
@@ -331,6 +361,16 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
         or_word="or",
+
+        continuation_instruction = "Choose the letter of the most likely continuation.",
+        qa_instruction = "Answer the following question.",
+        multichoice_instruction = "Choose the the letter of the correct answer.",
+
+        # Formatting instruction
+        default_formatting_instruction = "Output the answer in format: The final answer is: <answer>.",
+        math_formatting_instruction = "Output the answer in \\boxed{}.",
+        final_answer_regex = r"(?i:final answer.{{0,100}}?)\s+is\:?\s*<answer>",
+
     ),
     Language.ESPERANTO: TranslationLiterals(language=Language.ESPERANTO),
     Language.ESTONIAN: TranslationLiterals(
@@ -386,6 +426,16 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         word_space=" ",
         sentence_space=" ",
         colon=":",
+
+        continuation_instruction = "Choisissez la lettre de la continuation la plus probable.",
+        qa_instruction = "Répondez à la question suivante.",
+        multichoice_instruction = "Choisissez la lettre de la réponse correcte.",
+
+        # Formatting instruction
+        default_formatting_instruction = "Donnez la réponse au format : La réponse finale est: <réponse>.",
+        math_formatting_instruction = "Donnez la réponse dans \\boxed{}.",
+        final_answer_regex = r"(?i:réponse finale.{{0,100}}?)\s+est\:?\s*<answer>",
+
     ),
     Language.GALICIAN: TranslationLiterals(
         language=Language.GALICIAN,
@@ -491,6 +541,15 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
         indices=["क", "ख", "ग", "घ", "ङ", "च"],
+
+        continuation_instruction = "अत्यधिक संभावित निरंतरता का अक्षर चुनें।",
+        qa_instruction = "निम्नलिखित प्रश्न का उत्तर दें।",
+        multichoice_instruction = "सही उत्तर का अक्षर चुनें।",
+
+        # Formatting instruction
+        default_formatting_instruction = "उत्तर को इस प्रारूप में आउटपुट करें: अंतिम उत्तर है: <उत्तर>।",
+        math_formatting_instruction = "उत्तर को \\boxed{} में आउटपुट करें।",
+        final_answer_regex = r"(?i:अंतिम उत्तर.{{0,100}}?)\s+है\:?\s*<answer>",
     ),
     Language.HUNGARIAN: TranslationLiterals(
         language=Language.HUNGARIAN,
@@ -717,6 +776,15 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
         indices=["А", "Б", "В", "Г", "Д", "Е"],
+
+        continuation_instruction = "Выберите букву наиболее вероятного продолжения.",
+        qa_instruction = "Ответьте на следующий вопрос.",
+        multichoice_instruction = "Выберите букву правильного ответа.",
+
+        # Formatting instruction
+        default_formatting_instruction = "Выведите ответ в формате: Окончательный ответ это: <ответ>.",
+        math_formatting_instruction = "Выведите ответ в \\boxed{}.",
+        final_answer_regex = r"(?i:окончательный ответ.{{0,100}}?)\s+это\:?\s*<answer>",
     ),
     Language.SANSKRIT: TranslationLiterals(language=Language.SANSKRIT),
     # Latin serbian script for future when separating scipts
@@ -855,6 +923,17 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         word_space=" ",
         sentence_space=" ",
         colon=":",
+
+        # Translated using gpt-4o
+        continuation_instruction = "Chagua herufi ya mwendelezo unaowezekana zaidi.",
+        qa_instruction = "Jibu swali lifuatalo.",
+        multichoice_instruction = "Chagua herufi ya jibu sahihi.",
+
+        # Formatting instruction
+        default_formatting_instruction = "Toa jibu katika muundo: Jibu la mwisho ni: <jibu>.",
+        math_formatting_instruction = "Toa jibu katika \\boxed{}.",
+        final_answer_regex = r"(?i:jibu la mwisho.{{0,100}}?)\s+ni\:?\s*<answer>",
+
     ),
     Language.SWEDISH: TranslationLiterals(
         language=Language.SWEDISH,
@@ -934,7 +1013,18 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
         indices=["అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ"],
+
+
+        continuation_instruction = "అత్యంత సాధ్యమైన కొనసాగింపును సూచించే అక్షరాన్ని ఎంచుకోండి.",
+        qa_instruction = "క్రింది ప్రశ్నకు సమాధానం ఇవ్వండి.",
+        multichoice_instruction = "సరైన సమాధానాన్ని సూచించే అక్షరాన్ని ఎంచుకోండి.",
+
+        # Formatting instruction
+        default_formatting_instruction = "సమాధానాన్ని ఈ ఫార్మాట్‌లో ఇవ్వండి: తుది సమాధానం అని ఉంది: <సమాధానం>.",
+        math_formatting_instruction = "సమాధానాన్ని \\boxed{} లో ఇవ్వండి.",
+        final_answer_regex = r"(?i:తుది సమాధానం.{{0,100}}?)\s+అని\s*ఉంది\:?\s*<answer>",
     ),
+
     Language.THAI: TranslationLiterals(
         language=Language.THAI,
         question_word="คำถาม",
@@ -960,6 +1050,15 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
         indices=["ก", "ข", "ค", "ง", "จ", "ฉ", "ช", "ซ"],
+
+        continuation_instruction = "เลือกตัวอักษรของการดำเนินการต่อที่มีความเป็นไปได้มากที่สุด",
+        qa_instruction = "ตอบคำถามต่อไปนี้",
+        multichoice_instruction = "เลือกตัวอักษรของคำตอบที่ถูกต้อง",
+
+        # Formatting instruction
+        default_formatting_instruction = "แสดงคำตอบในรูปแบบ: คำตอบสุดท้ายคือ: <คำตอบ>",
+        math_formatting_instruction = "แสดงคำตอบใน \\boxed{}",
+        final_answer_regex = r"(?i:คำตอบสุดท้าย.{{0,100}}?)\s+\:?\s*<answer>",
     ),
     Language.TURKISH: TranslationLiterals(
         language=Language.TURKISH,
@@ -984,6 +1083,15 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         word_space=" ",
         sentence_space=" ",
         colon=":",
+
+        continuation_instruction = "En olası devamı temsil eden harfi seçin.",
+        qa_instruction = "Aşağıdaki soruyu yanıtlayın.",
+        multichoice_instruction = "Doğru cevabı temsil eden harfi seçin.",
+
+        # Formatting instruction
+        default_formatting_instruction = "Cevabı şu formatta verin: Nihai cevap şudur: <cevap>.",
+        math_formatting_instruction = "Cevabı \\boxed{} içinde verin.",
+        final_answer_regex = r"(?i:nihai cevap.{{0,100}}?)\s+şudur\:?\s*<answer>",
     ),
     Language.TURKMEN: TranslationLiterals(language=Language.TURKMEN),
     Language.UDMURT: TranslationLiterals(
