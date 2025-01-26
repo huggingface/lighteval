@@ -980,7 +980,7 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         language=Language.UKRAINIAN,
         question_word="питання",
         answer="відповідь",
-        confirmation_word="вірно",
+        confirmation_word="правильно",
         yes="так",
         no="ні",
         also="також",
@@ -998,6 +998,7 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
         semicolon=";",
+        indices=["А", "Б", "В", "Г", "Д", "Е"],
     ),
     Language.URDU: TranslationLiterals(
         language=Language.URDU,
