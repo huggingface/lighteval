@@ -1079,7 +1079,7 @@ class PassAtK:
         self.strip_strings = strip_strings
 
         # Managed the logic of the per prediction of sample scoring
-        if isinstance(sample_scoring_function, callable):
+        if callable(sample_scoring_function):
             self.score_sample = sample_scoring_function
             self.type_exact_match = None
         else:
