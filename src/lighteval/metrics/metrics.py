@@ -365,9 +365,25 @@ class Metrics(Enum):
         corpus_level_fn=CorpusLevelF1Score(average=None, num_classes=3).compute,
         higher_is_better=True,
     )
-    pass_at_k_32 = SampleLevelMetric(
-        metric_name="pass@k:32",
-        sample_level_fn=PassAtK(k=32, strip_strings=True).compute,
+    pass_at_1 = SampleLevelMetric(
+        metric_name="pass@1:32_samples",
+        sample_level_fn=PassAtK(k=1, n=32, strip_strings=True).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    pass_at_10 = SampleLevelMetric(
+        metric_name="pass@10:32_samples",
+        sample_level_fn=PassAtK(k=10, n=32, strip_strings=True).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    pass_at_100 = SampleLevelMetric(
+        metric_name="pass@100:32_samples",
+        sample_level_fn=PassAtK(k=100, n=32, strip_strings=True).compute,
         category=MetricCategory.GENERATIVE_SAMPLING,
         use_case=MetricUseCase.REASONING,
         corpus_level_fn=np.mean,

@@ -1067,10 +1067,10 @@ class PassAtK:
             strip_strings (bool, optional): Whether to strip both reference and predictions. Defaults to False.
             sample_scoring_function (callable or str, optional): Function to use to score each sample.
                 Either pass the full function (should take a string prediction and a string gold, and return a score between 0 and 1)
-                or a string (any of `prefix`, `suffix` or `full`) to define the type of exact match that you want. Defaults to "full".
-                `prefix` checks if the prediction starts with the gold,
-                `suffix` if the prediction ends with the gold,
-                `full` if the prediction and gold are equal
+                a string (any of `prefix`, `suffix` or `full`) to define the type of exact match that you want, or nothing to defaults to "full".
+                    `prefix` checks if the prediction starts with the gold,
+                    `suffix` if the prediction ends with the gold,
+                    `full` if the prediction and gold are equal
         """
         self.k = k
         self.n = n
