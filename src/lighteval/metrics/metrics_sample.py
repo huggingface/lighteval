@@ -26,7 +26,7 @@ using simple function (min, mean, max, ...) at the corpus level. Most metrics fa
 
 import logging
 import os
-from typing import Callable, Literal
+from typing import Callable, Literal, Union
 
 import nltk
 import numpy as np
@@ -1050,10 +1050,10 @@ class PassAtK:
         self,
         k: int,
         n: int = None,
-        normalize_gold: callable = None,
-        normalize_pred: callable = None,
+        normalize_gold: Callable = None,
+        normalize_pred: Callable = None,
         strip_strings: bool = False,
-        sample_scoring_function: callable | str = None,
+        sample_scoring_function: Union[Callable[[str, str], float], str] = None,
     ):
         """Computing pass at k
 
