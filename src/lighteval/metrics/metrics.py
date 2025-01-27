@@ -44,6 +44,7 @@ from lighteval.metrics.metrics_sample import (
     Faithfulness,
     LoglikelihoodAcc,
     MajAtK,
+    PassAtK,
     Recall,
     StringDistance,
     acc_golds_likelihood,
@@ -362,6 +363,14 @@ class Metrics(Enum):
         category=MetricCategory.MULTICHOICE_ONE_TOKEN,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=CorpusLevelF1Score(average=None, num_classes=3).compute,
+        higher_is_better=True,
+    )
+    pass_at_k_32 = SampleLevelMetric(
+        metric_name="pass@k:32",
+        sample_level_fn=PassAtK(k=32, strip_strings=True).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     perfect_exact_match = SampleLevelMetric(
