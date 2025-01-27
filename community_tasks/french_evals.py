@@ -80,6 +80,18 @@ def prompt_gpqa_fr(line, task_name: str = None):
     )
 
 
+# BAC-fr prompt function
+def prompt_bac_fr(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=line["prompt"],
+        choices=[""],
+        gold_index=0,
+        instruction="",
+        specific={"instruction": line["instruction"], "enonce": line["enonce"]},
+    )
+
+
 # IFEVal-fr task
 
 
@@ -117,5 +129,23 @@ gpqa_fr_task = LightevalTaskConfig(
     version=0,
 )
 
+# BAC-fr task
+bac_fr_task = LightevalTaskConfig(
+    name="bac-fr",
+    suite=["community"],
+    prompt_function=prompt_bac_fr,
+    hf_repo="fr-gouv-coordination-ia/bac-fr",
+    hf_subset="default",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select="random_sampling",
+    generation_size=1,
+    metric=[],  # To be defined
+    stop_sequence=["\n"],
+    trust_dataset=True,
+    version=0,
+)
+
 # STORE YOUR EVALS
-TASKS_TABLE = [ifeval_fr_task, gpqa_fr_task]
+TASKS_TABLE = [ifeval_fr_task, gpqa_fr_task, bac_fr_task]
