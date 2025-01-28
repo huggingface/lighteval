@@ -141,9 +141,6 @@ class LiteLLMClient(LightevalModel):
 
                 response = litellm.completion(**kwargs)
 
-                print(response)
-                print(kwargs)
-
                 # If response is empty, retry without caching (maybe the error is recoverable and solved with a retry)
                 if response.choices[0].message.content is None:
                     kwargs["caching"] = False
