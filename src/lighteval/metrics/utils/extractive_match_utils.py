@@ -203,7 +203,6 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) ->
         if latex_config.try_extract_without_anchor:
             regexes.append((latex_re, 300))
 
-    # This ensures that boxed is matched right after the final answer xxxx
     if latex_config.boxed_match_priority >= 0:
         regexes.append((latex_boxed, latex_config.boxed_match_priority))
 
