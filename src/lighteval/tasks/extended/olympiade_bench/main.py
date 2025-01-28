@@ -96,28 +96,46 @@ def get_answer_type_text(answer_type, is_chinese, multiple_answer):
 def olympiad_bench_prompt(line, task_name: str = None):
     is_math = "Math" in line["subject"]
     subject = "Math" if is_math else "Physics"
-
+    is_chinese = line["language"] == "Chinese"
     is_theorem_proving = "TP" in task_name
     unit = line["unit"]
     is_multiple_answer = line["is_multiple_answer"]
 
-    if is_theorem_proving:
-        instruction = f"The following is a theorem proving problem from an International {subject} competition. Please use logical reasoning and common theorems to prove the proposition in the problem according to the given requirements. Please use LaTeX format to represent the variables and formulas used in the proof."
-    else:
-        if is_multiple_answer:
-            multiple_answer_text = "\\boxed{multiple answers connected with commas}"
+    if is_chinese:
+        subject_content = "数学" if is_math else "物理"
+        if is_theorem_proving:
+            instruction = f"以下是中国{subject_content}竞赛中的证明题。请根据题目的要求，运用逻辑推理及常用定理证明题目中的命题。证明过程中使用的变量和公式请使用LaTeX格式表示。"
         else:
-            multiple_answer_text = "\\boxed{answer}"
-        unit_text = ""
-        if unit:
-            multiple_answer_text += "(unit)"
-            unit_text = ", note that the unit of the answer should not be included in \\boxed{}"
+            answer_type_text = get_answer_type_text(
+                line["answer_type"], is_chinese=True, multiple_answer=is_multiple_answer
+            )
+            if is_multiple_answer:
+                multiple_answer_text = "\\boxed{用英文逗号连接的多个答案}"
+            else:
+                multiple_answer_text = "\\boxed{答案}"
+            unit_text = ""
+            if unit:
+                multiple_answer_text += "(单位)"
+                unit_text = "，注意答案的单位不要放在\\boxed{}中"
+            instruction = f"以下是中国{subject_content}竞赛中的解答题{answer_type_text}。请根据题目的要求和所提供的信息计算得出答案。解答过程和结果中使用的变量和公式请使用LaTeXæ ¼式表示。请在最后以“所以最终答案是{multiple_answer_text}。”显式给出结果{unit_text}。"
+    else:
+        if is_theorem_proving:
+            instruction = f"The following is a theorem proving problem from an International {subject} competition. Please use logical reasoning and common theorems to prove the proposition in the problem according to the given requirements. Please use LaTeX format to represent the variables and formulas used in the proof."
+        else:
+            if is_multiple_answer:
+                multiple_answer_text = "\\boxed{multiple answers connected with commas}"
+            else:
+                multiple_answer_text = "\\boxed{answer}"
+            unit_text = ""
+            if unit:
+                multiple_answer_text += "(unit)"
+                unit_text = ", note that the unit of the answer should not be included in \\boxed{}"
 
-        answer_type_text = get_answer_type_text(
-            line["answer_type"], is_chinese=False, multiple_answer=is_multiple_answer
-        )
+            answer_type_text = get_answer_type_text(
+                line["answer_type"], is_chinese=False, multiple_answer=is_multiple_answer
+            )
 
-        instruction = f'The following is an open-ended problem from an International {subject} competition. {answer_type_text}Please calculate the answer according to the given requirements and the information provided. Please use LaTeX format to represent the variables and formulas used in the solution process and results. Please end your solution with "So the final answer is {multiple_answer_text}." and give the result explicitly{unit_text}.'
+            instruction = f'The following is an open-ended problem from an International {subject} competition. {answer_type_text}Please calculate the answer according to the given requirements and the information provided. Please use LaTeX format to represent the variables and formulas used in the solution process and results. Please end your solution with "So the final answer is {multiple_answer_text}." and give the result explicitly{unit_text}.'
 
     # instruction += f"\nYou are an AI assistant. Please answer the following {subject} competition questions as required."
 
@@ -147,7 +165,7 @@ def olympiad_bench_prompt(line, task_name: str = None):
 question_type = ["OE"]  # "TP"]
 multimodality = ["TO"]  # MM
 subject = ["physics", "maths"]
-language = ["en"]  # "zh"]
+language = ["en", "zh"]
 source = ["COMP", "CEE"]
 
 olympiad_bench_subsets = []
