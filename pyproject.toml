@@ -109,7 +109,7 @@ multilingual = [
     "jieba", # for chinese tokenizer
     "pyvi", # for vietnamese tokenizer
 ]
-math = ["latex2sympy2_extended>=0.9.1"]
+math = ["latex2sympy2_extended>=0.9.3"]
 
 [project.urls]
 Homepage = "https://github.com/huggingface/lighteval"

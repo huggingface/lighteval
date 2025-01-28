@@ -969,6 +969,7 @@ def test_math_extraction_edge_cases(gold, pred, expected):
             r"Thus, the answer is $x \in \boxed{(2,12) \cup (12,102)}$",
             1,
         ),
+        (r"$204$", r"$24+108=204$", 1),
     ],
 )
 def test_math_extraction_additional_cases(gold, pred, expected):
