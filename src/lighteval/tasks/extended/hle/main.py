@@ -170,7 +170,7 @@ def calib_err(confidence, correct, p="2", beta=100):
 
 
 def hle_text_only(line, task_name: str = None):
-    if line["image"] is not None:
+    if line["image"] not in [None, ""]:
         return
 
     return Doc(
@@ -195,13 +195,13 @@ hle = LightevalTaskConfig(
     suite=["lighteval"],
     prompt_function=hle_text_only,
     hf_repo="cais/hle",
-    hf_subset="main",
+    hf_subset="default",
     hf_avail_splits=["test"],
     evaluation_splits=["test"],
     few_shots_split=None,
     few_shots_select=None,
-    generation_size=1,  # TODO
-    metric=[Metrics.exact_match],
+    generation_size=8192,  # TODO
+    metric=[Metrics.exact_match, hle_metrics],
     stop_sequence=["\n"],
     trust_dataset=True,
     version=0,
