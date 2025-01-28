@@ -22,6 +22,8 @@
 import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.templates.qa import get_qa_prompt_function
+from lighteval.utils.language import Language
 
 
 abstract_narrative_understanding_bigbench = LightevalTaskConfig(
@@ -5503,6 +5505,30 @@ blimp_wh_questions_subject_gap_lighteval = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
+
+natural_questions = LightevalTaskConfig(
+    name="natural_questions",
+    prompt_function=get_qa_prompt_function(
+        Language.ENGLISH,
+        lambda line: {
+            "question": line["question"],
+            "context": line["context"],
+            "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+        },
+    ),
+    suite=("lighteval",),
+    hf_repo="lighteval/SimpleQA",
+    hf_subset="default",
+    evaluation_splits=("validation",),
+    few_shots_split="train",
+    generation_size=200,
+    stop_sequence=("\n",),
+    metric=(
+        Metrics.prefix_quasi_exact_match,
+        Metrics.f1_score_quasi,
+    ),
+)
+
 blimp_wh_questions_subject_gap_helm = LightevalTaskConfig(
     name="blimp:wh_questions_subject_gap",
     suite=["helm", "blimp"],
@@ -6557,6 +6583,30 @@ coqa_lighteval = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
+
+coqa_first_question = LightevalTaskConfig(
+    name="coqa_first_question",
+    prompt_function=get_qa_prompt_function(
+        Language.ENGLISH,
+        lambda line: {
+            "question": line["question"][0],
+            "context": line["story"],
+            "choices": [line["answers"]["input_text"][0]],
+        },
+    ),
+    suite=("lighteval",),
+    hf_repo="stadford/coqa",
+    hf_subset="default",
+    hf_avail_splits=["train", "validation"],
+    evaluation_splits=["validation"],
+    generation_size=150,
+    stop_sequence=("\n",),
+    metric=(
+        Metrics.prefix_quasi_exact_match,
+        Metrics.f1_score_quasi,
+    ),
+)
+
 coqa_bb_lighteval = LightevalTaskConfig(
     name="coqa_bb",
     suite=["lighteval", "bigbench_programmatic", "bigbench"],
@@ -15180,6 +15230,74 @@ swahili_english_proverbs_bigbench = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
+squad_v2 = LightevalTaskConfig(
+    name="squad_v2",
+    prompt_function=get_qa_prompt_function(
+        Language.ENGLISH,
+        lambda line: {
+            "question": line["question"],
+            "context": line["context"],
+            "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+        },
+    ),
+    suite=("lighteval",),
+    hf_repo="rajpurkar/squad_v2",
+    hf_subset="default",
+    evaluation_splits=("validation",),
+    few_shots_split="train",
+    generation_size=200,
+    stop_sequence=("\n",),
+    metric=(
+        Metrics.prefix_quasi_exact_match,
+        Metrics.f1_score_quasi,
+    ),
+)
+
+jeopardy = LightevalTaskConfig(
+    name="jeopardy",
+    prompt_function=get_qa_prompt_function(
+        Language.ENGLISH,
+        lambda line: {
+            "question": line["question"],
+            "choices": [line["answer"]],
+        },
+    ),
+    suite=("lighteval",),
+    hf_repo="openaccess-ai-collective/jeopardy",
+    hf_subset="default",
+    evaluation_splits=("train",),
+    few_shots_split="train",
+    generation_size=50,
+    stop_sequence=("\n",),
+    metric=(
+        Metrics.prefix_quasi_exact_match,
+        Metrics.f1_score_quasi,
+    ),
+)
+
+simple_qa = LightevalTaskConfig(
+    name="squad_v2",
+    prompt_function=get_qa_prompt_function(
+        Language.ENGLISH,
+        lambda line: {
+            "question": line["question"],
+            "context": line["context"],
+            "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+        },
+    ),
+    suite=("lighteval",),
+    hf_repo="lighteval/SimpleQA",
+    hf_subset="default",
+    evaluation_splits=("test",),
+    few_shots_split="few_shot",
+    generation_size=250,
+    stop_sequence=("\n",),
+    metric=(
+        Metrics.prefix_quasi_exact_match,
+        Metrics.f1_score_quasi,
+    ),
+)
+
 swag_lighteval = LightevalTaskConfig(
     name="swag",
     suite=["lighteval"],

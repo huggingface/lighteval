@@ -24,6 +24,7 @@
 import numpy as np
 from aenum import Enum
 
+from lighteval.metrics.dynamic_metrics import multilingual_extractive_match_metric
 from lighteval.metrics.harness_compatibility.drop import drop_metrics
 from lighteval.metrics.harness_compatibility.truthful_qa import truthfulqa_mc_metrics
 from lighteval.metrics.metrics_corpus import (
@@ -58,7 +59,15 @@ from lighteval.metrics.normalizations import (
     remove_braces,
     remove_braces_and_strip,
 )
-from lighteval.metrics.sample_preparator import GenerativePreparator, LoglikelihoodPreparator, PerplexityPreparator
+from lighteval.metrics.sample_preparator import (
+    GenerativePreparator,
+    LoglikelihoodPreparator,
+    PerplexityPreparator,
+)
+from lighteval.metrics.utils.extractive_match_utils import (
+    ExprExtractionConfig,
+    LatexExtractionConfig,
+)
 from lighteval.metrics.utils.metric_utils import (
     CorpusLevelMetric,
     CorpusLevelMetricGrouping,
@@ -69,6 +78,7 @@ from lighteval.metrics.utils.metric_utils import (
     SampleLevelMetric,
     SampleLevelMetricGrouping,
 )
+from lighteval.utils.language import Language
 from lighteval.utils.utils import as_list
 
 
@@ -86,8 +96,16 @@ class Metrics(Enum):
         sample_level_fn=BertScore(normalize_gold=remove_braces, normalize_pred=remove_braces_and_strip).compute,
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.SUMMARIZATION,
-        corpus_level_fn={"BERTScore-P": np.mean, "BERTScore-R": np.mean, "BERTScore-F": np.mean},
-        higher_is_better={"BERTScore-P": True, "BERTScore-R": True, "BERTScore-F": True},
+        corpus_level_fn={
+            "BERTScore-P": np.mean,
+            "BERTScore-R": np.mean,
+            "BERTScore-F": np.mean,
+        },
+        higher_is_better={
+            "BERTScore-P": True,
+            "BERTScore-R": True,
+            "BERTScore-F": True,
+        },
     )
     bits_per_byte = CorpusLevelMetric(
         metric_name="bits_per_byte",
@@ -147,14 +165,31 @@ class Metrics(Enum):
         higher_is_better=True,
     )
     copyright = SampleLevelMetricGrouping(
-        metric_name=["longest_common_prefix_length", "edit_distance", "edit_similarity"],
+        metric_name=[
+            "longest_common_prefix_length",
+            "edit_distance",
+            "edit_similarity",
+        ],
         sample_level_fn=StringDistance(
-            metric_types=["longest_common_prefix_length", "edit_distance", "edit_similarity"], strip_prediction=True
+            metric_types=[
+                "longest_common_prefix_length",
+                "edit_distance",
+                "edit_similarity",
+            ],
+            strip_prediction=True,
         ).compute,
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.SOCIAL_IMPACTS,
-        corpus_level_fn={"longest_common_prefix_length": max, "edit_distance": min, "edit_similarity": max},
-        higher_is_better={"longest_common_prefix_length": True, "edit_distance": False, "edit_similarity": True},
+        corpus_level_fn={
+            "longest_common_prefix_length": max,
+            "edit_distance": min,
+            "edit_similarity": max,
+        },
+        higher_is_better={
+            "longest_common_prefix_length": True,
+            "edit_distance": False,
+            "edit_similarity": True,
+        },
     )
     drop = SampleLevelMetricGrouping(
         metric_name=["qem", "f1"],
@@ -173,9 +208,15 @@ class Metrics(Enum):
         higher_is_better=True,
     )
     extractiveness = SampleLevelMetricGrouping(
-        metric_name=["summarization_coverage", "summarization_density", "summarization_compression"],
+        metric_name=[
+            "summarization_coverage",
+            "summarization_density",
+            "summarization_compression",
+        ],
         sample_level_fn=Extractiveness(
-            normalize_input=remove_braces, normalize_pred=remove_braces_and_strip, input_column="text"
+            normalize_input=remove_braces,
+            normalize_pred=remove_braces_and_strip,
+            input_column="text",
         ).compute,
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.SUMMARIZATION,
@@ -225,7 +266,9 @@ class Metrics(Enum):
     faithfulness = SampleLevelMetric(
         metric_name="summac",
         sample_level_fn=Faithfulness(
-            normalize_input=remove_braces, normalize_pred=remove_braces_and_strip, input_column="text"
+            normalize_input=remove_braces,
+            normalize_pred=remove_braces_and_strip,
+            input_column="text",
         ).compute,
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.SUMMARIZATION,
@@ -307,7 +350,10 @@ class Metrics(Enum):
     maj_at_4_math = SampleLevelMetric(
         metric_name="maj@4",
         sample_level_fn=MajAtK(
-            k=4, strip_strings=True, normalize_pred=math_normalizer, normalize_gold=math_normalizer
+            k=4,
+            strip_strings=True,
+            normalize_pred=math_normalizer,
+            normalize_gold=math_normalizer,
         ).compute,
         category=MetricCategory.GENERATIVE_SAMPLING,
         use_case=MetricUseCase.MATH,
@@ -333,7 +379,10 @@ class Metrics(Enum):
     maj_at_8_gsm8k = SampleLevelMetric(
         metric_name="maj@8",
         sample_level_fn=MajAtK(
-            k=8, strip_strings=True, normalize_pred=gsm8k_normalizer, normalize_gold=gsm8k_normalizer
+            k=8,
+            strip_strings=True,
+            normalize_pred=gsm8k_normalizer,
+            normalize_gold=gsm8k_normalizer,
         ).compute,
         category=MetricCategory.GENERATIVE_SAMPLING,
         use_case=MetricUseCase.MATH,
@@ -415,7 +464,9 @@ class Metrics(Enum):
     quasi_exact_match_math = SampleLevelMetric(
         metric_name="qem",
         sample_level_fn=ExactMatches(
-            strip_strings=True, normalize_pred=math_normalizer, normalize_gold=math_normalizer
+            strip_strings=True,
+            normalize_pred=math_normalizer,
+            normalize_gold=math_normalizer,
         ).compute,
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.MATH,
@@ -433,7 +484,9 @@ class Metrics(Enum):
     quasi_exact_match_gsm8k = SampleLevelMetric(
         metric_name="qem",
         sample_level_fn=ExactMatches(
-            strip_strings=True, normalize_pred=gsm8k_normalizer, normalize_gold=gsm8k_normalizer
+            strip_strings=True,
+            normalize_pred=gsm8k_normalizer,
+            normalize_gold=gsm8k_normalizer,
         ).compute,
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.MATH,
@@ -482,8 +535,18 @@ class Metrics(Enum):
         ).compute,
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.ACCURACY,
-        corpus_level_fn={"rouge1": np.mean, "rouge2": np.mean, "rougeL": np.mean, "rougeLsum": np.mean},
-        higher_is_better={"rouge1": True, "rouge2": True, "rougeL": True, "rougeLsum": True},
+        corpus_level_fn={
+            "rouge1": np.mean,
+            "rouge2": np.mean,
+            "rougeL": np.mean,
+            "rougeLsum": np.mean,
+        },
+        higher_is_better={
+            "rouge1": True,
+            "rouge2": True,
+            "rougeL": True,
+            "rougeLsum": True,
+        },
     )
     rouge1 = SampleLevelMetric(
         metric_name="rouge1",
@@ -540,6 +603,16 @@ class Metrics(Enum):
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn={"truthfulqa_mc1": np.mean, "truthfulqa_mc2": np.mean},
         higher_is_better={"truthfulqa_mc1": True, "truthfulqa_mc2": True},
+    )
+    math_gold_as_latex_verifier = multilingual_extractive_match_metric(
+        Language.ENGLISH,
+        gold_extraction_target=[LatexExtractionConfig()],
+        fallback_mode="first_match",
+    )
+    math_gold_as_expr_verifier = multilingual_extractive_match_metric(
+        Language.ENGLISH,
+        gold_extraction_target=[ExprExtractionConfig()],
+        fallback_mode="first_match",
     )
     word_perplexity = CorpusLevelMetric(
         metric_name="word_perplexity",
