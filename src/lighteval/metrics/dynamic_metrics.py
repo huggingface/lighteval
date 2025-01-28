@@ -217,6 +217,9 @@ def multilingual_extractive_match_metric(
             - "no_fallback": Only use first successfully parsed matches
             - "first_match": Use the first successfully parsed match + first match irregardless the parsing success
         extraction_mode: Literal["first_match", "any_match"]
+            - "first_match": Only tries to extract the first regex match if it fails no other matches are tried
+            - "any_match": Tries to extract any regex match
+
         precision: int
             Number of decimal places to use when comparing numerical values. Defaults to 6.
 
