@@ -413,7 +413,7 @@ def should_treat_as_complex(latex_str: str) -> bool:
 def compare_gold_target(
     gold: list[Basic | MatrixBase | str], target: list[Basic | MatrixBase | str], precision: int
 ) -> bool:
-    @timeout(timeout_seconds=100)
+    @timeout(timeout_seconds=10)
     def compare_single_extraction(gold: Basic | MatrixBase | str, target: Basic | MatrixBase | str) -> bool:
         # If both are sympy expressions, we can use sympy to compare them
         if isinstance(gold, (Basic, MatrixBase)) and isinstance(target, (Basic, MatrixBase)):
