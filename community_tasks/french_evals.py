@@ -46,6 +46,7 @@ from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.extended.ifeval.main import ifeval_metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
+from lighteval.utils.utils import as_list
 
 
 # Ifeval-fr prompt function
@@ -88,7 +89,7 @@ def prompt_bac_fr(line, task_name: str = None):
         return Doc(
             task_name=task_name,
             query=prompt,
-            choices=list(line["Choix"]),
+            choices=as_list(line["Choix"]),
             gold_index=line["Choix"].index(line["Choix correct"]),
             instruction="",
         )
