@@ -84,13 +84,13 @@ def prompt_gpqa_fr(line, task_name: str = None):
 # BAC-fr prompt function
 def prompt_bac_fr(line, task_name: str = None):
     prompt = f"Enoncé: {line['enonce']}\n{line['instruction']}\n"
-    if line["Choix"] is not None:  # Multichoice evaluation
-        prompt += "\n".join([f"{LETTER_INDICES[ix]}.{choix}" for ix, choix in enumerate(line["choix"])])
+    if line["choix"] is not None:  # Multichoice evaluation
+        # prompt += "\n".join([f"{LETTER_INDICES[ix]}.{choix}" for ix, choix in enumerate(line["choix"])])
         return Doc(
             task_name=task_name,
             query=prompt,
-            choices=as_list(line["Choix"]),
-            gold_index=line["Choix"].index(line["Choix correct"]),
+            choices=as_list(line["choix"]),
+            gold_index=line["choix"].index(line["choix correct"]),
             instruction="",
         )
     else:
