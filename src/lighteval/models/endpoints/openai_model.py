@@ -253,7 +253,7 @@ class OpenAIClient(LightevalModel):
             position=0,
             disable=False,  # self.disable_tqdm,
         ):
-            max_new_tokens = 500  # dataset[0].generation_size  # could be none
+            max_new_tokens = dataset[0].generation_size  # could be none
             return_logits = dataset[0].use_logits
             num_samples = dataset[0].num_samples
             contexts = [c.context for c in dataset]
