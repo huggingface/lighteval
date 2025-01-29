@@ -30,11 +30,15 @@ from pydantic import BaseModel
 from tqdm import tqdm
 
 from lighteval.utils.imports import is_litellm_available, is_openai_available, is_vllm_available
+from lighteval.utils.utils import as_list
 
 
 logging.getLogger("openai").setLevel(logging.ERROR)
 logging.getLogger("httpx").setLevel(logging.ERROR)
 logger = logging.getLogger(__name__)
+
+
+DEFAULT_FORMAT = {"type": "text"}
 
 
 class JudgeLM:
@@ -93,7 +97,7 @@ class JudgeLM:
         self.api_key = api_key
         self.backend = judge_backend
 
-        self.response_format = response_format
+        self.response_format = response_format if not None else DEFAULT_FORMAT
 
     def __lazy_load_client(self):
         match self.backend:
@@ -248,28 +252,34 @@ class JudgeLM:
     def __call_api(self, prompt):
         for _ in range(self.API_MAX_RETRY):
             try:
-                if self.response_format:
+                # Base model
+                response = self.client.beta.chat.completions.parse(
+                    model=self.model,
+                    messages=as_list(prompt),
+                    response_format=self.response_format,
+                    max_tokens=4096,
+                    temperature=0.0,
+                    n=1,
+                )
+                answer = response.choices[0].message.parsed
+                return answer
+            except TypeError:
+                try:
+                    # Finetune
                     response = self.client.chat.completions.create(
                         model=self.model,
-                        messages=prompt,
+                        messages=as_list(prompt),
                         response_format=self.response_format,
-                        max_tokens=4096,
-                        temperature=0.0,
-                        n=1,
-                    )
-                    answer = response.choices[0].message.parsed
-                    return answer
-                else:
-                    response = self.client.chat.completions.create(
-                        model=self.model,
-                        messages=prompt,
-                        response_format={"type": "text"},
                         max_tokens=512,
                         n=1,
                     )
                     text = response.choices[0].message.content
                     return text
+                except Exception as e:
+                    logger.warning(f"{type(e), e}")
+                    time.sleep(self.API_RETRY_SLEEP)
             except Exception as e:
                 logger.warning(f"{type(e), e}")
                 time.sleep(self.API_RETRY_SLEEP)
+
         raise Exception("Failed to get response from the API")

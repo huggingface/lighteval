@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 
+import logging
 import math
 from typing import List, Literal
 
@@ -31,12 +32,15 @@ from pydantic import BaseModel
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.metrics_sample import JudgeLLM
 from lighteval.metrics.utils.metric_utils import (
+    CorpusLevelMetricGrouping,
     MetricCategory,
     MetricUseCase,
-    SampleLevelMetricGrouping,
 )
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
+
+
+logger = logging.getLogger(__name__)
 
 
 class ExtractedAnswer(BaseModel):
@@ -77,7 +81,10 @@ confidence: The extracted confidence score between 0|\%| and 100|\%| from [respo
     ]
 
 
-def process_judge_response_hle(response: ExtractedAnswer):
+def process_judge_response_hle(response: ExtractedAnswer | List[ExtractedAnswer]):
+    # todo: add support for batched responses
+    if isinstance(response, list):
+        response = response[0]
     return {
         # "correct_answer": correct_answer,
         "model_answer": response.extracted_final_answer,
@@ -105,7 +112,11 @@ class JudgeLLMHLE(JudgeLLM):
         score, _, _ = self.judge.evaluate_answer(question=formatted_doc.query, answer=predictions[0], gold=gold)
 
         score["correct_answer"] = gold
-        return score
+        return {
+            "accuracy": score,
+            "confidence_half_width": score,
+            "calibration_error": score,
+        }
 
     def compute_corpus(self, scores: List[dict]):
         n = len(scores)
@@ -142,6 +153,10 @@ def calib_err(confidence, correct, p="2", beta=100):
     confidence = confidence[idxs]
     correct = correct[idxs]
     bins = [[i * beta, (i + 1) * beta] for i in range(len(confidence) // beta)]
+    if len(bins) == 0:
+        logger.warning("Error when computing the bins for calibration error")
+        return -1
+
     bins[-1] = [bins[-1][0], len(confidence)]
 
     cerr = 0
@@ -181,7 +196,7 @@ def hle_text_only(line, task_name: str = None):
     )
 
 
-hle_metrics = SampleLevelMetricGrouping(
+hle_metrics = CorpusLevelMetricGrouping(
     metric_name=["accuracy", "confidence_half_width", "calibration_error"],
     higher_is_better={n: True for n in ["accuracy", "confidence_half_width", "calibration_error"]},
     category=MetricCategory.GENERATIVE,
@@ -189,6 +204,7 @@ hle_metrics = SampleLevelMetricGrouping(
     sample_level_fn=JudgeLLMHLE().compute,
     corpus_level_fn=JudgeLLMHLE().compute_corpus,
 )
+extend_enum(Metrics, "hle_metrics", hle_metrics)
 
 hle = LightevalTaskConfig(
     name="hle",
@@ -201,7 +217,7 @@ hle = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=8192,  # TODO
-    metric=[Metrics.exact_match, hle_metrics],
+    metric=[Metrics.exact_match, Metrics.hle_metrics],
     stop_sequence=["\n"],
     trust_dataset=True,
     version=0,
@@ -209,5 +225,3 @@ hle = LightevalTaskConfig(
 
 
 TASKS_TABLE = [hle]
-
-extend_enum(Metrics, "hle_metrics", hle_metrics)
