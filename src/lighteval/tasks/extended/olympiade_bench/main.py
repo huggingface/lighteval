@@ -137,8 +137,6 @@ def olympiad_bench_prompt(line, task_name: str = None):
 
             instruction = f'The following is an open-ended problem from an International {subject} competition. {answer_type_text}Please calculate the answer according to the given requirements and the information provided. Please use LaTeX format to represent the variables and formulas used in the solution process and results. Please end your solution with "So the final answer is {multiple_answer_text}." and give the result explicitly{unit_text}.'
 
-    # instruction += f"\nYou are an AI assistant. Please answer the following {subject} competition questions as required."
-
     choice = line["final_answer"]
 
     return Doc(
@@ -162,8 +160,8 @@ def olympiad_bench_prompt(line, task_name: str = None):
 # * COMP: Competition problems
 # * CEE: Chinese College Entrance Exam problems
 
-question_type = ["OE"]  # "TP"]
-multimodality = ["TO"]  # MM
+question_type = ["OE"]  # TP  # TP cannot be replicated
+multimodality = ["TO"]  # MM  # We do not allow multimodal tasks
 subject = ["physics", "maths"]
 language = ["en", "zh"]
 source = ["COMP", "CEE"]
