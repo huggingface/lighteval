@@ -129,7 +129,7 @@ class OpenAIClient(LightevalModel):
             except Exception as e:
                 logger.warning(f"{type(e), e}")
                 time.sleep(self.API_RETRY_SLEEP)
-                self.API_RETRY_SLEEP = self.API_RETRY_SLEEP * self.API_RETRY_MULTIPLIER
+                self.API_RETRY_SLEEP = self.API_RETRY_SLEEP**self.API_RETRY_MULTIPLIER
         raise Exception("Failed to get response from the API")
 
     def __call_api_parallel(

@@ -216,9 +216,9 @@ hle = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split=None,
     few_shots_select=None,
-    generation_size=8192,  # TODO
+    generation_size=8192,
     metric=[Metrics.exact_match, Metrics.hle_metrics],
-    stop_sequence=["\n"],
+    stop_sequence=[],
     trust_dataset=True,
     version=0,
 )
