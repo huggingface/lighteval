@@ -191,6 +191,7 @@ def multilingual_extractive_match_metric(
     pred_extraction_target: Sequence[ExtractionTarget] = (ExprExtractionConfig(),),
     aggregation_function: Callable[[list[float]], float] = max,
     fallback_mode: Literal["no_fallback", "first_match"] = "first_match",
+    extraction_mode: Literal["first_match", "any_match"] = "any_match",
     precision: int = 6,
 ) -> SampleLevelMetric:
     """Creates a language-aware extractive match metric that extracts answers from the model's output.
@@ -215,6 +216,10 @@ def multilingual_extractive_match_metric(
             How to perform extraction. Defaults to "first_match".
             - "no_fallback": Only use first successfully parsed matches
             - "first_match": Use the first successfully parsed match + first match irregardless the parsing success
+        extraction_mode: Literal["first_match", "any_match"]
+            - "first_match": Only tries to extract the first regex match if it fails no other matches are tried
+            - "any_match": Tries to extract any regex match
+
         precision: int
             Number of decimal places to use when comparing numerical values. Defaults to 6.
 
@@ -240,9 +245,12 @@ def multilingual_extractive_match_metric(
         pred_extraction_regexes = get_extraction_regexes(formatted_doc, pred_extraction_target, language)
 
         extracted_predictions = [
-            extract_target_from_pred(pred, pred_extraction_regexes, fallback_mode) for pred in predictions
+            extract_target_from_pred(pred, pred_extraction_regexes, fallback_mode, extraction_mode)
+            for pred in predictions
         ]
-        extracted_golds = [extract_target_from_pred(gold, gold_extraction_regexes, fallback_mode) for gold in golds]
+        extracted_golds = [
+            extract_target_from_pred(gold, gold_extraction_regexes, fallback_mode, extraction_mode) for gold in golds
+        ]
 
         # Assert on empty gold and warn on empty pred
         if any(len(g) == 0 for g in extracted_golds):
