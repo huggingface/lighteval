@@ -6210,7 +6210,7 @@ commonsenseqa_helm = LightevalTaskConfig(
     evaluation_splits=["validation"],
     few_shots_split=None,
     few_shots_select=None,
-    generation_size=-1,
+    generation_size=1,
     metric=[
         Metrics.exact_match,
         Metrics.quasi_exact_match,
