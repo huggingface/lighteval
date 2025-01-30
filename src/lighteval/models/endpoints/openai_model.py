@@ -28,6 +28,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from tqdm import tqdm
+from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel
@@ -64,6 +65,8 @@ if is_openai_available():
 class OpenAIModelConfig:
     model: str
     generation_parameters: GenerationParameters = None
+    base_url: str = "https://api.openai.com/v1"
+    api_key: str = os.environ.get("OPENAI_API_KEY", None)
 
     def __post_init__(self):
         if not self.generation_parameters:
@@ -74,17 +77,19 @@ class OpenAIModelConfig:
         import yaml
 
         with open(path, "r") as f:
-            config = yaml.safe_load(f)["model"]
+            loaded_file = yaml.safe_load(f)
+            config = loaded_file["model"]
+            api = loaded_file.get("api", {})
         generation_parameters = GenerationParameters.from_dict(config)
-        return cls(model=config["model_name"], generation_parameters=generation_parameters)
+        return cls(model=config["model_name"], generation_parameters=generation_parameters, **api)
 
 
 class OpenAIClient(LightevalModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
     def __init__(self, config: OpenAIModelConfig, env_config) -> None:
-        api_key = os.environ["OPENAI_API_KEY"]
-        self.client = OpenAI(api_key=api_key)
+        self.client = OpenAI(api_key=config.api_key, base_url=config.base_url)
+        self.config = config
         self.generation_parameters = config.generation_parameters
         self.sampling_params = self.generation_parameters.to_vllm_openai_dict()
 
@@ -99,22 +104,27 @@ class OpenAIClient(LightevalModel):
         self.API_RETRY_MULTIPLIER = 2
         self.CONCURENT_CALLS = 100
         self.model = config.model
-        self._tokenizer = tiktoken.encoding_for_model(self.model)
+        try:
+            self._tokenizer = tiktoken.encoding_for_model(self.model)
+        except KeyError:
+            self._tokenizer = AutoTokenizer.from_pretrained(self.model)
         self.pairwise_tokenization = False
 
     def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, logit_bias):
         for _ in range(self.API_MAX_RETRY):
             try:
+                response_format = {"response_format": {"type": "text"}} if "openai" in self.config.base_url else {}
                 response = self.client.chat.completions.create(
                     model=self.model,
                     messages=[{"role": "user", "content": prompt}],
-                    response_format={"type": "text"},
                     max_tokens=max_new_tokens if max_new_tokens > 0 else None,
                     logprobs=return_logits,
                     logit_bias=logit_bias,
                     n=num_samples,
                     **self.sampling_params,
+                    **response_format,
                 )
+                self.API_RETRY_SLEEP = 3
                 return response
             except Exception as e:
                 logger.warning(f"{type(e), e}")
