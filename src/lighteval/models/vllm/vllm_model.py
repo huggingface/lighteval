@@ -37,7 +37,7 @@ from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
 )
-from lighteval.models.utils import _get_dtype, _simplify_name
+from lighteval.models.utils import _get_dtype, _get_model_sha, _simplify_name
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -100,6 +100,9 @@ class VLLMModelConfig:
         if not self.generation_parameters:
             self.generation_parameters = GenerationParameters()
 
+    def get_model_sha(self):
+        return _get_model_sha(repo_id=self.pretrained, revision=self.revision)
+
 
 class VLLMModel(LightevalModel):
     def __init__(
@@ -124,10 +127,10 @@ class VLLMModel(LightevalModel):
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
 
         self.model_name = _simplify_name(config.pretrained)
-        self.model_sha = ""  # config.get_model_sha()
+        self.model_sha = config.get_model_sha()
         self.precision = _get_dtype(config.dtype, config=self._config)
 
-        self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
+        self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha, model_dtype=config.dtype)
         self.sampling_params = SamplingParams(**config.generation_parameters.to_vllm_openai_dict())
         self.pairwise_tokenization = config.pairwise_tokenization
 
@@ -203,7 +206,7 @@ class VLLMModel(LightevalModel):
             config.pretrained,
             tokenizer_mode="auto",
             trust_remote_code=config.trust_remote_code,
-            tokenizer_revision=config.revision,
+            revision=config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
         )
         tokenizer.pad_token = tokenizer.eos_token
         return tokenizer
