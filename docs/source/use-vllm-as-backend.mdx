@@ -47,3 +47,52 @@ Available arguments for `vllm` can be found in the `VLLMModelConfig`:
 > [!WARNING]
 > In the case of OOM issues, you might need to reduce the context size of the
 > model as well as reduce the `gpu_memory_utilisation` parameter.
+
+
+## Multi-node vLLM
+
+It is entirely possible to use vLLM in a multi-node setting. For this, we will use Ray.
+In these examples, we will assume that we are on a Slurm cluster where nodes do not have internet access.
+Those scripts are heavily inspired by [https://github.com/NERSC/slurm-ray-cluster/](https://github.com/NERSC/slurm-ray-cluster/).
+
+First you need to start the Ray cluster. It has one master, and you need to find an available
+port on this node
+
+```bash
+function find_available_port {
+    printf $(python -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()')
+}
+
+PORT=$(find_available_port)
+NODELIST=($(scontrol show hostnames $SLURM_JOB_NODELIST))
+MASTER=${NODELIST[0]}  # Name of master node
+MASTER_IP=$(hostname --ip-address)  # IP address of master node
+
+function set_VLLM_HOST_IP {
+    export VLLM_HOST_IP=$(hostname --ip-address);
+}
+export -f set_VLLM_HOST_IP;
+
+# Start the master
+srun -N1 -n1 -c $(( SLURM_CPUS_PER_TASK/2 )) -w $MASTER bash -c "set_VLLM_HOST_IP; ray start --head --port=$PORT --block" &
+sleep 5
+
+# Start all other nodes :)
+if [[ $SLURM_NNODES -gt 1 ]]; then
+    srun -N $(( SLURM_NNODES-1 )) --ntasks-per-node=1 -c $(( SLURM_CPUS_PER_TASK/2 )) -x $MASTER bash -c "set_VLLM_HOST_IP; ray start --address=$MASTER_IP:$PORT --block" &
+    sleep 5
+fi
+```
+
+Then, once the Ray cluster is running, you can launch vLLM through lighteval.
+
+```bash
+set_VLLM_HOST_IP
+
+MODEL_ARGS="pretrained=$MODEL_DIRECTORY,gpu_memory_utilisation=0.5,trust_remote_code=False,dtype=bfloat16,max_model_length=16384,tensor_parallel_size=<gpus_per_node * nnodes>"
+TASK_ARGS="community|gpqa-fr|0|0,community|ifeval-fr|0|0"
+
+srun -N1 -n1 -c $(( SLURM_CPUS_PER_TASK/2 )) --overlap -w $MASTER lighteval vllm "$MODEL_ARGS" "$TASK_ARGS" --custom-tasks $TASK_FILE
+```
+
+The full script is available here: [https://github.com/huggingface/lighteval/blob/main/examples/slurm/multi_node_vllm.slurm](https://github.com/huggingface/lighteval/blob/main/examples/slurm/multi_node_vllm.slurm)
