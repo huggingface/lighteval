@@ -85,7 +85,7 @@ class LiteLLMClient(LightevalModel):
         self.API_RETRY_SLEEP = 3
         self.API_RETRY_MULTIPLIER = 2
         self.CONCURENT_CALLS = 20  # 100 leads to hitting Anthropic rate limits
-        self.TEMPERATURE = 0.7
+        self.TEMPERATURE = 0.3
         self.TOP_P = 0.95
         self.model = config.model
         self._tokenizer = encode
@@ -99,8 +99,6 @@ class LiteLLMClient(LightevalModel):
             # Filter out whitespace-only stop sequences
             if stop_sequence:
                 stop_sequence = [s for s in stop_sequence if s and s.strip()]
-        if not stop_sequence:  # If empty after filtering
-            stop_sequence = ["\n"]
         return stop_sequence
 
     def _prepare_max_new_tokens(self, max_new_tokens):

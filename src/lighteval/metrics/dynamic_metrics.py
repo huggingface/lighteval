@@ -254,7 +254,8 @@ def multilingual_extractive_match_metric(
 
         # Assert on empty gold and warn on empty pred
         if any(len(g) == 0 for g in extracted_golds):
-            raise ValueError(f"No gold targets found for at least one gold. Gold: {golds}, Pred: {predictions}")
+            logger.warning(f"We did not manage to extract a gold in the correct format. Gold: {golds}")
+            extracted_golds = [[gold] for gold in golds]
 
         if all(len(p) == 0 for p in extracted_predictions):
             logger.warning(
