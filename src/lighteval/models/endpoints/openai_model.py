@@ -84,7 +84,7 @@ class OpenAIClient(LightevalModel):
 
     def __init__(self, config: OpenAIModelConfig, env_config) -> None:
         api_key = os.environ["OPENAI_API_KEY"]
-        self.client = OpenAI(api_key=api_key)
+        self.client = OpenAI(api_key=api_key, base_url=os.getenv("OPENAI_BASE_URL"))
         self.generation_parameters = config.generation_parameters
         self.sampling_params = self.generation_parameters.to_vllm_openai_dict()
 
@@ -99,7 +99,19 @@ class OpenAIClient(LightevalModel):
         self.API_RETRY_MULTIPLIER = 2
         self.CONCURENT_CALLS = 100
         self.model = config.model
-        self._tokenizer = tiktoken.encoding_for_model(self.model)
+        try:
+            self._tokenizer = tiktoken.encoding_for_model(self.model)
+        except KeyError:
+            if "TOKENIZER_PATH" in os.environ:
+                from transformers import AutoTokenizer
+
+                self._tokenizer = AutoTokenizer.from_pretrained(os.getenv("TOKENIZER_PATH"))
+            elif os.path.exists(self.model) and os.path.isdir(self.model):
+                from transformers import AutoTokenizer
+
+                self._tokenizer = AutoTokenizer.from_pretrained(self.model)
+            else:
+                raise
         self.pairwise_tokenization = False
 
     def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, logit_bias):
