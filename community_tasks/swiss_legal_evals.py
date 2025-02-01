@@ -80,16 +80,23 @@ if device == "cuda":
 
 # CUSTOM METRICS
 
+basic_system = "Act as a Judge specializing in the evaluation of translations of Swiss legal documents. Your task is to assess the accuracy, clarity, and fidelity of the model's translation to the golden translation, while considering the nuances of legal language."
+detailed_system = "You are a senior legal translator and quality assurance specialist with over 20 years of experience in Swiss law, certified by the Swiss Sworn Translators Association (Association suisse des traducteurs-jurés, ASTJ). You possess native-level proficiency in all Swiss national languages (German, French, Italian, and Romansh) as well as English, enabling precise evaluation of legal nuances across all linguistic combinations. Your task is to evaluate machine-translated legal texts for accuracy, clarity and fidelity to Swiss legal standards analyzing the subtle complexities of legal language. You excel at identifying even minor discrepancies and calibrating evaluation scores appropriately to reflect the severity of each error."
+
+
 SYSTEM = {
-    "basic": "Act as a Judge specializing in the evaluation of translations of Swiss legal documents. Your task is to assess the accuracy, clarity, and fidelity of the model's translation to the golden translation, while considering the nuances of legal language.",
-    "detailed": "You are a senior legal translator and quality assurance specialist with over 20 years of experience in Swiss law, certified by the Swiss Sworn Translators Association (Association suisse des traducteurs-jurés, ASTJ). You possess native-level proficiency in all Swiss national languages (German, French, Italian, and Romansh) as well as English, enabling precise evaluation of legal nuances across all linguistic combinations. Your task is to evaluate machine-translated legal texts for accuracy, clarity and fidelity to Swiss legal standards analyzing the subtle complexities of legal language. You excel at identifying even minor discrepancies and calibrating evaluation scores appropriately to reflect the severity of each error.",
+    "basic": basic_system,
+    "detailed": detailed_system,
+    "codebook": detailed_system,
 }
 
+final_formatting = 'The correctness score must strictly follow this format: "[[score]]", e.g., "The correctness score: [[0.5]]". Below are some examples.'
+
 USER = {
-    "basic": """
-You will be provided with a source text, its golden translation, and the model's translation. Your task is to judge how correct the model's translation is based on the golden translation, and then give a correctness score. The correctness score should be one of the below numbers: 0.0 (totally wrong), 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, or 1.0 (totally right). You should first briefly give your reasoning process regarding how the model's translation conforms to or contradicts the golden translation, and then give the correctness score. The correctness score must strictly follow this format: \"[[score]]\", e.g., \"The correctness score: [[0.5]]\". Below are some examples.
-""",
-    "detailed": """
+    "basic": f"""
+You will be provided with a source text, its golden translation, and the model's translation. Your task is to judge how correct the model's translation is based on the golden translation, and then give a correctness score. The correctness score should be one of the below numbers: 0.0 (totally wrong), 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, or 1.0 (totally right). You should first briefly give your reasoning process regarding how the model's translation conforms to or contradicts the golden translation, and then give the correctness score.
+{final_formatting}""",
+    "detailed": f"""
 INPUT FORMAT:
 Source Text: [Original text in source language]
 Golden Translation: [Reference professional translation]
@@ -124,25 +131,53 @@ Your response should be in plain text with the following sections:
 Reasoning: Analyze how the model's translation aligns with or differs from the golden translation, focusing on significant legal and linguistic aspects.
 Examples: Identify specific terms, phrases, or sections in the model's answer that were correct or incorrect, with explanations.
 Score: End with exactly this format: \"The correctness score: [[score]]\"
-The correctness score must strictly follow this format: \"[[score]]\", e.g., \"The correctness score: [[0.5]]\". Below are some examples.""",
+{final_formatting}""",
+    "codebook": f"""
+GENERAL INSTRUCTIONS:
+You must give each translation a score between 0 and 1 that must be divisible by 0.1 (e.g., 0.6 or 0.9). To this end, you are given a source text, its “gold translation” (official translation of the Swiss authorities) and the predicted translation, to which you must assign the score. You can also write down notes if deemed necessary.
+
+
+SCORE:
+The scores shall reflect the completeness and accuracy of the predicted translation. In other words, you should not give a score based on readability or stylistic attributes.
+
+
+POINT DEDUCTION SYSTEM:
+A perfect, i.e., a perfectly complete and accurate translation receives a score of 1.
+0.1 points deduction for a relevant legal term in an unusual but still correct manner. 0.1 points shall also be deducted if the law has not been translated (e.g., BV to BV). Finally, 0.1 points shall be deducted if a non-relevant term is missing.
+0.2 points deduction if a legally relevant legal term is translated erroneously. 0.2 points shall also be deducted if a relevant term is missing.
+0.4 points deduction for critical errors, such as when a law is translated with reference to the wrong law.
+
+Do not deduct points for discrepancies between the predicted translation and the gold translation if the predicted translation matches the source text better. The gold translation should primarily serve as a reference to help you assess cases where it is also a correct translation of the source. In some cases, the source text may differ slightly from the gold translation. This can happen if the source text itself was previously translated. Repeated errors for the same term should not lead to multiple point deductions.
+
+
+REQUIRED OUTPUT FORMAT:
+Your response should be in plain text with the following sections:
+Deductions: Focusing on significant legal and linguistic aspects, analyze and present concretely all points to be deducted together with brief explanations.
+Score: End with exactly this format: \"The correctness score: [[score]]\"
+{final_formatting}""",
 }
 
-FEW_SHOT = {
-    "diverse": """Example 1:
-Source Text:
+EXAMPLES = {
+    "law": {
+        "en-it": """Source Text:
 ```A contract is void if its terms are impossible, unlawful or immoral. However, where the defect pertains only to certain terms of a contract, those terms alone are void unless there is cause to assume that the contract would not have been concluded without them.```
 
 Golden Translation:
 ```Il contratto che ha per oggetto una cosa impossibile o contraria alle leggi od ai buoni costumi è nullo. Se il contratto è viziato solo in alcune parti, queste soltanto sono nulle, ove non si debba ammettere che senza la parte nulla esso non sarebbe stato conchiuso.```
 
 Model’s Translation:
-```Il contratto è nullo se le sue clausole sono impossibili, illecite o immorali. Tuttavia, quando il vizio riguarda solo determinate clausole del contratto, solo queste sono nulle, salvo che vi sia motivo di ritenere che il contratto non sarebbe stato concluso senza di esse.```
+```Il contratto è nullo se le sue clausole sono impossibili, illecite o immorali. Tuttavia, quando il vizio riguarda solo determinate clausole del contratto, solo queste sono nulle, salvo che vi sia motivo di ritenere che il contratto non sarebbe stato concluso senza di esse.```""",
+        "fr-de": """Source Text:
+```Le contrat est nul s’il a pour objet une chose impossible, illicite ou contraire aux moeurs. Si le contrat n’est vicié que dans certaines de ses clauses, ces clauses sont seules frappées de nullité, à moins qu’il n’y ait lieu d’admettre que le contrat n’aurait pas été conclu sans elles.```
 
-Your Judgment: The model’s translation aligns well with the golden translation in terms of accuracy, clarity, and fidelity to the source text. However, there are minor stylistic differences. For example, the golden translation uses “conchiuso” an older and more formal term, while the model opts for “concluso” which is modern. Similarly, the golden translation uses the idiomatic phrase “contraria alle leggi od ai buoni costumi” whereas the model employs the more literal “illecite o immorali”. The correctness score: [[0.9]]
+Golden Translation:
+```Ein Vertrag, der einen unmöglichen oder widerrechtlichen Inhalt hat oder gegen die guten Sitten verstösst, ist nichtig. Betrifft aber der Mangel bloss einzelne Teile des Vertrages, so sind nur diese nichtig, sobald nicht anzunehmen ist, dass er ohne den nichtigen Teil überhaupt nicht geschlossen worden wäre.```
 
-
-Example 2:
-Source Text:
+Model’s Translation:
+```Der Vertrag ist nichtig, wenn er einen unmöglichen, widerrechtlichen oder sittenwidrigen Inhalt hat. Betrifft der Mangel bloß einzelne Teile des Vertrages, so sind nur diese nichtig, sobald nicht anzunehmen ist, dass er ohne den nichtigen Teil überhaupt nicht geschlossen worden wäre.```""",
+    },
+    "headnote": {
+        "de-fr": """Source Text:
 ```Art. 13 Abs. 2, Art. 36 Abs. 1 BV; Art. 141 Abs. 2 StPO; Verwertbarkeit von polizeilichen Aufzeichnungen der automatischen Fahrzeugfahndung und Verkehrsüberwachung (AFV).
 Die Erhebung und die Aufbewahrung von Aufzeichnungen der AFV stellen einen Eingriff in die Grundrechte der Betroffenen dar, insbesondere in das Recht auf Privatsphäre, das den Anspruch auf informationelle Selbstbestimmung miteinschliesst (E. 3.1). Für die AFV besteht im Kanton Thurgau keine hinreichend bestimmte gesetzliche Grundlage. Der mit der Überwachung verbundene Eingriff in die Privatsphäre verstösst daher gegen Art. 13 Abs. 2 i.V.m. Art. 36 Abs. 1 BV (E. 3.2 und 3.3).
 Stellt die Polizei im Rahmen ihrer präventiven Kontrolltätigkeit strafbare Handlungen fest, ermittelt sie nach Art. 306 ff. StPO. Die Frage, ob die mangels gesetzlicher Grundlage rechtswidrig erhobenen Beweismittel im Strafprozess verwertbar sind, ist nach Art. 141 Abs. 2 StPO zu prüfen (Präzisierung der Rechtsprechung; E. 4.1 und 4.2). Verwertbarkeit im vorliegenden Fall verneint (E. 4.3).```
@@ -155,58 +190,8 @@ La constatation d'infractions par la police dans le cadre de son activité de co
 Model’s Translation:
 ```Art. 13 al. 2, Art. 36 al. 1 Cst.; Art. 141 al. 2 CPP; Admissibilité des enregistrements de la poursuite automatisée des véhicules et de la surveillance de la circulation (AFV).
 La collecte et la conservation des enregistrements de l'AFV constituent une ingérence dans les droits fondamentaux des personnes concernées, en particulier dans le droit à la vie privée, qui inclut le droit à l'autodétermination informationnelle (consid. 3.1). Dans le canton de Thurgovie, il n'existe pas de base légale suffisamment déterminée pour l'AFV. Par conséquent, l'ingérence dans la vie privée associée à la surveillance viole donc les art. 13 al. 2 combiné avec l'art. 36 al. 1 Cst (consid. 3.2 et 3.3).
-Si la police relève des infractions pénales dans le cadre de ses activités de contrôle préventif, elle enquête conformément aux art. 306 et suivants CPP. La question de savoir si les preuves illégalement recueillies peuvent être utilisées dans la procédure pénale est examinée conformément à l'art. 141 al. 2 CPP (précision de la jurisprudence; consid. 4.1 et 4.2). Admissibilité dans le cas présent niée (consid. 4.3).```
-
-Your Judgment: The model’s translation mostly aligns with the golden translation but diverges when it comes to accuracy and fidelity to Swiss legal terminology. For instance, the term “exploitabilité” which is closer to the Swiss provision is replaced in the model’s translation with “admissibilité”. Similarly, “ingérence” is used instead of “atteinte”, although “atteinte” is commonly used in Swiss law to discuss a violation of fundamental rights. Also, the term "recherche automatisée de véhicules et surveillance du trafic (RVS)" used by the golden translation is more established than "poursuite automatisée des véhicules et de la surveillance de la circulation (AFV)" in the model’s translation. The model’s translation is almost complete, but omits a critical point in one sentence: that the evidence was unlawfully obtained due to lack of a sufficiently clear legal basis. This omission impacts the completeness. The correctness score: [[0.7]]
-
-
-Example 3:
-Source Text:
-```Yoko Ono est propriétaire de la montre de John Lennon – rejet du recours d'un collectionneur contre un arrêt rendu par la Cour de justice genevoise
-
-Le Tribunal fédéral rejette le recours déposé par un collectionneur contre l'arrêt de la Cour de justice genevoise par lequel celle-ci confirmait que Yoko Ono est propriétaire de la montre qu'elle avait offerte à John Lennon en 1980, deux mois avant qu'il ne soit assassiné. Le collectionneur, qui a remis la montre à une maison de vente aux enchères genevoise en 2014 afin d'en faire estimer la valeur, a quant à lui revendiqué la propriété de ladite montre.
-
-En 1980, Yoko Ono a acquis à New York une montre de marque Patek Philippe. Elle y a fait graver au dos l'inscription « (JUST LIKE) STARTING OVER LOVE YOKO 10·9·1980 N.Y.C » et l'a offerte à son époux, John Lennon, le 9 octobre 1980 pour son 40e anniversaire. Le 8 décembre 1980, John Lennon a été assassiné à New York. La montre a été répertoriée dans l'inventaire successoral et conservée dans une pièce de l'appartement de Yoko Ono à New York. Par la suite, la montre s'est retrouvée aux mains d'un homme qui avait été le chauffeur privé de Yoko Ono de 1995 à 2006. Un autre possesseur intermédiaire l'a remise à une maison de vente aux enchères allemande, où elle a été acquise par un collectionneur en 2014. Ce dernier l'a remise la même année à une maison de vente aux enchères genevoise afin d'en faire estimer la valeur, ce dont a été informée Yoko Ono. Cette dernière n'avait jusqu'alors pas eu conscience du fait que la montre n'était plus en sa possession. En 2018, le collectionneur a formé à Genève une action visant à constater sa qualité de propriétaire, action à laquelle Yoko Ono s'est opposée. En 2022, le tribunal de première instance genevois a constaté que Yoko Ono était la seule et unique propriétaire de la montre, ce que la Cour de justice du canton de Genève, statuant sur appel du collectionneur, a confirmé en 2023.
-
-Le Tribunal fédéral rejette le recours déposé par le collectionneur contre cet arrêt. Il n'est tout d'abord pas contesté que la propriété de la montre a été acquise par succession par Yoko Ono après le décès de John Lennon. C'est en outre sans arbitraire que la Cour de justice genevoise a retenu que la montre avait été volée par l'ancien chauffeur et que, à l'inverse, aucun élément ne permettait de démontrer que Yoko Ono aurait eu l'intention de faire donation au chauffeur d'une chose si particulière que la montre, gravée d'une inscription, qu'elle avait offerte à John Lennon deux mois avant son décès. Dès lors qu'il s'agit d'une chose volée, le collectionneur, aujourd'hui recourant, ne pouvait pas acquérir la propriété de la montre par un mode originaire d'acquisition lorsqu'il l'a achetée en Allemagne en 2014 ; selon le droit allemand applicable en la matière, cela vaut indépendamment du fait que l'acquéreur était ou non de bonne foi quant à l'origine de la chose.```
-
-Golden Translation:
-```Yoko Ono ist Eigentümerin der Uhr von John Lennon – Beschwerde von Sammler gegen Genfer Urteil abgewiesen
-
-Das Bundesgericht weist die Beschwerde eines Sammlers gegen das Urteil des Genfer Kantonsgerichts ab, mit dem Yoko Ono als Eigentümerin der Uhr bestätigt wurde, die sie John Lennon 1980 zwei Monate vor seiner Ermordung geschenkt hat. Der Sammler hatte die Uhr 2014 zur Schätzung bei einem Auktionshaus in Genf eingereicht und seinerseits Eigentümerschaft an der Uhr geltend gemacht.
-
-Yoko Ono hatte 1980 in New York eine Uhr der Marke Patek Philippe gekauft. Sie liess auf der Rückseite die Gravur "(JUST LIKE) STARTING OVER LOVE YOKO 10·9·1980 N.Y.C" anbringen und schenkte sie ihrem Ehemann John Lennon am 9. Oktober 1980 zum 40. Geburtstag. Am 8. Dezember 1980 wurde John Lennon in New York ermordet. Die Uhr wurde ins Erbschaftsinventar aufgenommen und in einem Zimmer der Wohnung von Yoko Ono in New York aufbewahrt. Sie gelangte von dort in die Hände eines Mannes, der von 1995 bis 2006 Privatchauffeur von Yoko Ono gewesen war. Ein weiterer Zwischenbesitzer brachte die Uhr in ein deutsches Auktionshaus, wo sie 2014 von einem Sammler erworben wurde. Dieser reichte die Uhr im gleichen Jahr bei einem Auktionshaus in Genf zur Schätzung ihres Wertes ein. Davon erfuhr Yoko Ono, die bis dahin keine Kenntnis davon gehabt hatte, dass sich die Uhr nicht mehr in ihrem Besitz befand. Der Sammler erhob 2018 in Genf eine Klage auf Feststellung seiner Eigentümerschaft, der sich Yoko Ono widersetzte. Das erstinstanzliche Genfer Gericht stellte 2022 fest, dass Yoko Ono die alleinige Eigentümerin der Uhr sei, was auf Berufung des Sammlers 2023 vom Kantonsgericht des Kantons Genf bestätigt wurde.
-
-Das Bundesgericht weist die dagegen erhobene Beschwerde des Sammlers ab. Unbestritten ist zunächst, dass das Eigentum an der Uhr nach dem Tod von John Lennon durch Erbschaft an Yoko Ono übergegangen ist. Sodann durfte das Genfer Kantonsgericht willkürfrei davon ausgehen, dass die Uhr vom ehemaligen Chauffeur gestohlen wurde und umgekehrt nichts dafür spricht, dass Yoko Ono dem Chauffeur dieses einzigartige Stück, welches sie John Lennon zwei Monate vor seinem Tod mit einer Inschrift versehen überreicht hatte, hätte schenken wollen. Da es sich bei der Uhr um eine gestohlene Sache handelt, konnte der Sammler und heutige Beschwerdeführer bei ihrem Erwerb 2014 in Deutschland nicht unmittelbar zum Eigentümer werden; dies gilt gemäss dem diesbezüglich anwendbaren deutschen Recht unabhängig davon, ob der Erwerber in Bezug auf die Herkunft der Sache in gutem Glauben war.```
-
-Model’s Translation:
-```Hier, der Bundesgerichtshof hat den Antrag des Käufer gegen den Urteil des Zivilgerichts in Zürich abgelehnt, das das Zivilgericht in Zürich 2023 bestätigt hatte, dass Yoko Ono die Uhr als Geschenk 1980 an John Lennon gegeben hat, bevor dieser am 8. Dezember 1980 ermordet wurde. Der Käufer, der die Uhr 2014 in eine Geneßische Auktion verkauft hat, behauptet, die Uhr sei ihm verliehen worden, und nicht von Yoko Ono.
-
-Im Jahr 1980 hat Yoko Ono in New York eine Uhr von der Marke Patek Philippe gekauft. Sie hat auf der Rückseite der Uhr die Inschrift "JUST LIKE STARTING OVER LOVE YOKO 10·9·1980 N.Y.C." gemalt und sie an ihren Ehemann, John Lennon, am 9. Oktober 1980 als Geburtstag gegeben. Am 8. Dezember 1980 wurde Lennon ermordet in New York. Die Uhr wurde in den Erbeverzeichnis des Lennon-Mädchens aufbewahrt und in einem Zimmer in Yoko Onos New Yorker Wohnung.
-
-Danach wurde die Uhr von einem Mann, der als Wagenkellner von Yoko Ono zwischen 1995 und 2006 gearbeitet hat, in die Hände gebracht. Ein weiterer mittlerer Eigentümer hat sie 2014 in eine deutsche Auktion verkauft, wo sie einem Käufer in Zürich übergeben wurde. Dieser Käufer hat die Uhr 2014 in eine Geneßische Auktion verkauft, um sie zu valieren, und Yoko Ono war von diesem Moment an nicht mehr bewusst, dass die Uhr nicht mehr in ihrer Hand war.
-
-Im Jahr 2018 hat der Käufer in Zürich eine Anzeige gegen Yoko Ono eröffnet, um die Qualität des Eigentums der Uhr zu bestätigen, was Yoko Ono ansprach. Im Jahr 2022 hat der Zivilgericht in Zürich bestätigt, dass Yoko Ono die einzige und letzte Eigentümerin der Uhr ist, was der Zivilgerichtshof im Jahr 2023 bestätigt hat.
-
-Der Bundesgerichtshof hat den Antrag des Käufer gegen dieses Urteil abgelehnt. Er ist zunächst nicht bezweifelt, dass Yoko Ono die Uhr nach dem Tod von John Lennon durch Erbvergabe gekauft hat. Es ist auch nicht bezweifelt, dass die Zivilgerichtsverfassung in Zürich die Uhr als gestohlen angenommen hat, da niemand einen Beweis dafür gab, dass Yoko Ono die Uhr als Geschenk an den Wagenkellner hatte. Deshalb kann der Käufer nicht durch eine rechtliche Handlung die Uhr von Yoko Ono erwerben, wenn er die Uhr in Deutschland gekauft hat.```
-
-Your Judgment: The model’s translation diverges significantly from the golden translation in accuracy, clarity, and fidelity. Critical legal terminology is mistranslated, omitted, and distorted. For instance, the courts are misidentified (“Zivilgerichtsverfassung”, “Zivilgericht”, “Bundesgerichtshof”). The model’s translation has several grammatical errors, such as “Geneßische Auktion”, “Erbvergabe”, “Wagenkellner” and “zu valieren”. The model also omits the explanation that, under German law, stolen property cannot be acquired in good faith. The correctness score: [[0.2]]
-""",
-    "single": """Example 1:
-Source Text:
-```Le contrat est nul s’il a pour objet une chose impossible, illicite ou contraire aux moeurs. Si le contrat n’est vicié que dans certaines de ses clauses, ces clauses sont seules frappées de nullité, à moins qu’il n’y ait lieu d’admettre que le contrat n’aurait pas été conclu sans elles.```
-
-Golden Translation:
-```Ein Vertrag, der einen unmöglichen oder widerrechtlichen Inhalt hat oder gegen die guten Sitten verstösst, ist nichtig. Betrifft aber der Mangel bloss einzelne Teile des Vertrages, so sind nur diese nichtig, sobald nicht anzunehmen ist, dass er ohne den nichtigen Teil überhaupt nicht geschlossen worden wäre.```
-
-Model’s Translation:
-```Der Vertrag ist nichtig, wenn er einen unmöglichen, widerrechtlichen oder sittenwidrigen Inhalt hat. Betrifft der Mangel bloß einzelne Teile des Vertrages, so sind nur diese nichtig, sobald nicht anzunehmen ist, dass er ohne den nichtigen Teil überhaupt nicht geschlossen worden wäre.```
-
-Your Judgment: The model’s translation aligns well with the golden translation in terms of accuracy and clarity. However, minor stylistic differences exist. For example, the golden translation uses “gegen die guten Sitten verstösst” which is more idiomatic, while the model opts for the more literal “sittenwidrigen Inhalt hat” Similarly, “Ein Vertrag” in the golden translation better reflects generalized legal phrasing than the model’s literal “Der Vertrag”. The correctness score: [[0.9]]
-
-
-Example 2:
-Source Text:
+Si la police relève des infractions pénales dans le cadre de ses activités de contrôle préventif, elle enquête conformément aux art. 306 et suivants CPP. La question de savoir si les preuves illégalement recueillies peuvent être utilisées dans la procédure pénale est examinée conformément à l'art. 141 al. 2 CPP (précision de la jurisprudence; consid. 4.1 et 4.2). Admissibilité dans le cas présent niée (consid. 4.3).```""",
+        "fr-de": """Source Text:
 ```Art. 13 al. 2, art. 36 al. 1 Cst.; art. 141 al. 2 CPP; exploitabilité d'enregistrements réalisés par la police au moyen du Système de recherche automatisée de véhicules et surveillance du trafic (RVS).
 La réalisation et le stockage d'enregistrements par la RVS constituent une atteinte aux droits fondamentaux des personnes concernées, singulièrement à la protection de leur sphère privée, qui englobe le droit à l'autodétermination en matière de données (consid. 3.1). Le recours à la RVS ne repose sur aucune base légale suffisamment précise dans le canton de Thurgovie. L'atteinte à la sphère privée inhérente à cette surveillance viole partant l'art. 13 al. 2 en corrélation avec l'art. 36 al. 1 Cst. (consid. 3.2 et 3.3).
 La constatation d'infractions par la police dans le cadre de son activité de contrôle préventive, relève de l'investigation au sens des art. 306 ss CPP. L'exploitabilité dans le procès pénal de preuves recueillies de manière illicite faute de base légale doit être examinée à l'aune de l'art. 141 al. 2 CPP (précision de la jurisprudence; consid. 4.1 et 4.2). Exploitabilité niée en l'espèce (consid. 4.3).```
@@ -219,13 +204,10 @@ Stellt die Polizei im Rahmen ihrer präventiven Kontrolltätigkeit strafbare Han
 Model’s Translation:
 ```Art. 13 Abs. 2, Art. 36 Abs. 1 BV; Art. 141 Abs. 2 StPO; Verwertbarkeit von Aufzeichnungen, die durch die Polizei mit dem System zur automatisierten Fahrzeugerfassung und Verkehrsüberwachung (RVS) durchgeführt wurden.
 Die Durchführung und Speicherung von Aufzeichnungen durch das RVS stellt einen Eingriff in die Grundrechte der betroffenen Personen dar, insbesondere in den Schutz ihrer Privatsphäre, die das Recht auf Selbstbestimmung in Bezug auf Daten umfasst (E. 3.1). Der Einsatz von RVS stützt sich im Kanton Thurgau auf keine ausreichend präzise gesetzliche Grundlage. Die in dieser Überwachung liegende Beeinträchtigung der Privatsphäre verstößt daher gegen Art. 13 Abs. 2 in Verbindung mit Art. 36 Abs. 1 BV (E. 3.2 und 3.3).
-Die Aufdeckung von Straftaten durch die Polizei im Rahmen ihrer präventiven Kontrolltätigkeit fällt unter die Ermittlung im Sinne der Art. 306 ff. StPO. Die Verwertbarkeit im Strafverfahren von Beweisen, die auf illegale Weise erhoben wurden, muss anhand von Art. 141 Abs. 2 StPO geprüft werden (Klarstellung der Rechtsprechung; E. 4.1 und 4.2). Verwertbarkeit in diesem Fall verneint (E. 4.3).```
-
-Your Judgment: The model’s translation is accurate overall but omits a critical point in the second-to-last sentence: the evidence was unlawfully obtained due to a lack of legal basis. Additionally, its fidelity to Swiss legal terminology is limited. For example, the model uses "Klarstellung der Rechtsprechung" instead of the more appropriate "Präzisierung der Rechtsprechung" and "nicht ausreichend präzise" rather than the common "hinreichend bestimmt" It also consistently uses the French abbreviation "RVS" instead of the German "automatische Fahrzeugfahndung und Verkehrsüberwachung (AFV)" Lastly, "Recht auf Selbstbestimmung in Bezug auf Daten" is overly literal compared to the idiomatic "Anspruch auf informationelle Selbstbestimmung". The correctness score: [[0.6]]
-
-
-Example 3:
-Source Text:
+Die Aufdeckung von Straftaten durch die Polizei im Rahmen ihrer präventiven Kontrolltätigkeit fällt unter die Ermittlung im Sinne der Art. 306 ff. StPO. Die Verwertbarkeit im Strafverfahren von Beweisen, die auf illegale Weise erhoben wurden, muss anhand von Art. 141 Abs. 2 StPO geprüft werden (Klarstellung der Rechtsprechung; E. 4.1 und 4.2). Verwertbarkeit in diesem Fall verneint (E. 4.3).```""",
+    },
+    "press": {
+        "fr-de": """Source Text:
 ```Yoko Ono est propriétaire de la montre de John Lennon – rejet du recours d'un collectionneur contre un arrêt rendu par la Cour de justice genevoise
 
 Le Tribunal fédéral rejette le recours déposé par un collectionneur contre l'arrêt de la Cour de justice genevoise par lequel celle-ci confirmait que Yoko Ono est propriétaire de la montre qu'elle avait offerte à John Lennon en 1980, deux mois avant qu'il ne soit assassiné. Le collectionneur, qui a remis la montre à une maison de vente aux enchères genevoise en 2014 afin d'en faire estimer la valeur, a quant à lui revendiqué la propriété de ladite montre.
@@ -252,9 +234,78 @@ Danach wurde die Uhr von einem Mann, der als Wagenkellner von Yoko Ono zwischen 
 
 Im Jahr 2018 hat der Käufer in Zürich eine Anzeige gegen Yoko Ono eröffnet, um die Qualität des Eigentums der Uhr zu bestätigen, was Yoko Ono ansprach. Im Jahr 2022 hat der Zivilgericht in Zürich bestätigt, dass Yoko Ono die einzige und letzte Eigentümerin der Uhr ist, was der Zivilgerichtshof im Jahr 2023 bestätigt hat.
 
-Der Bundesgerichtshof hat den Antrag des Käufer gegen dieses Urteil abgelehnt. Er ist zunächst nicht bezweifelt, dass Yoko Ono die Uhr nach dem Tod von John Lennon durch Erbvergabe gekauft hat. Es ist auch nicht bezweifelt, dass die Zivilgerichtsverfassung in Zürich die Uhr als gestohlen angenommen hat, da niemand einen Beweis dafür gab, dass Yoko Ono die Uhr als Geschenk an den Wagenkellner hatte. Deshalb kann der Käufer nicht durch eine rechtliche Handlung die Uhr von Yoko Ono erwerben, wenn er die Uhr in Deutschland gekauft hat.```
+Der Bundesgerichtshof hat den Antrag des Käufer gegen dieses Urteil abgelehnt. Er ist zunächst nicht bezweifelt, dass Yoko Ono die Uhr nach dem Tod von John Lennon durch Erbvergabe gekauft hat. Es ist auch nicht bezweifelt, dass die Zivilgerichtsverfassung in Zürich die Uhr als gestohlen angenommen hat, da niemand einen Beweis dafür gab, dass Yoko Ono die Uhr als Geschenk an den Wagenkellner hatte. Deshalb kann der Käufer nicht durch eine rechtliche Handlung die Uhr von Yoko Ono erwerben, wenn er die Uhr in Deutschland gekauft hat.```""",
+    },
+}
+
+FEW_SHOT = {
+    "diverse_absolute": f"""Example 1:
+{EXAMPLES["law"]["en-it"]}
+
+Your Judgment: The model’s translation aligns well with the golden translation in terms of accuracy, clarity, and fidelity to the source text. However, there are minor stylistic differences. For example, the golden translation uses “conchiuso” an older and more formal term, while the model opts for “concluso” which is modern. Similarly, the golden translation uses the idiomatic phrase “contraria alle leggi od ai buoni costumi” whereas the model employs the more literal “illecite o immorali”. The correctness score: [[0.9]]
+
+
+Example 2:
+{EXAMPLES["headnote"]["de-fr"]}
+
+Your Judgment: The model’s translation mostly aligns with the golden translation but diverges when it comes to accuracy and fidelity to Swiss legal terminology. For instance, the term “exploitabilité” which is closer to the Swiss provision is replaced in the model’s translation with “admissibilité”. Similarly, “ingérence” is used instead of “atteinte”, although “atteinte” is commonly used in Swiss law to discuss a violation of fundamental rights. Also, the term "recherche automatisée de véhicules et surveillance du trafic (RVS)" used by the golden translation is more established than "poursuite automatisée des véhicules et de la surveillance de la circulation (AFV)" in the model’s translation. The model’s translation is almost complete, but omits a critical point in one sentence: that the evidence was unlawfully obtained due to lack of a sufficiently clear legal basis. This omission impacts the completeness. The correctness score: [[0.7]]
+
+
+Example 3:
+{EXAMPLES["press"]["fr-de"]}
 
 Your Judgment: The model’s translation diverges significantly from the golden translation in accuracy, clarity, and fidelity. Critical legal terminology is mistranslated, omitted, and distorted. For instance, the courts are misidentified (“Zivilgerichtsverfassung”, “Zivilgericht”, “Bundesgerichtshof”). The model’s translation has several grammatical errors, such as “Geneßische Auktion”, “Erbvergabe”, “Wagenkellner” and “zu valieren”. The model also omits the explanation that, under German law, stolen property cannot be acquired in good faith. The correctness score: [[0.2]]
+""",
+    "single_absolute": f"""Example 1:
+{EXAMPLES["law"]["fr-de"]}
+
+Your Judgment: The model’s translation aligns well with the golden translation in terms of accuracy and clarity. However, minor stylistic differences exist. For example, the golden translation uses “gegen die guten Sitten verstösst” which is more idiomatic, while the model opts for the more literal “sittenwidrigen Inhalt hat” Similarly, “Ein Vertrag” in the golden translation better reflects generalized legal phrasing than the model’s literal “Der Vertrag”. The correctness score: [[0.9]]
+
+
+Example 2:
+{EXAMPLES["headnote"]["fr-de"]}
+
+Your Judgment: The model’s translation is accurate overall but omits a critical point in the second-to-last sentence: the evidence was unlawfully obtained due to a lack of legal basis. Additionally, its fidelity to Swiss legal terminology is limited. For example, the model uses "Klarstellung der Rechtsprechung" instead of the more appropriate "Präzisierung der Rechtsprechung" and "nicht ausreichend präzise" rather than the common "hinreichend bestimmt" It also consistently uses the French abbreviation "RVS" instead of the German "automatische Fahrzeugfahndung und Verkehrsüberwachung (AFV)" Lastly, "Recht auf Selbstbestimmung in Bezug auf Daten" is overly literal compared to the idiomatic "Anspruch auf informationelle Selbstbestimmung". The correctness score: [[0.6]]
+
+
+Example 3:
+{EXAMPLES["press"]["fr-de"]}
+
+Your Judgment: The model’s translation diverges significantly from the golden translation in accuracy, clarity, and fidelity. Critical legal terminology is mistranslated, omitted, and distorted. For instance, the courts are misidentified (“Zivilgerichtsverfassung”, “Zivilgericht”, “Bundesgerichtshof”). The model’s translation has several grammatical errors, such as “Geneßische Auktion”, “Erbvergabe”, “Wagenkellner” and “zu valieren”. The model also omits the explanation that, under German law, stolen property cannot be acquired in good faith. The correctness score: [[0.2]]
+""",
+    "diverse_deduction": f"""Example 1:
+{EXAMPLES["law"]["en-it"]}
+
+Your Judgment: The model’s translation is legally sound and has no critical errors, but minor legal terminology choices warrant deductions. There are no deductions for minor stylistic differences, such as the use of “concluso” instead of “conchiuso”. However, there is a 0.1 points deduction for the more literal “illecite o immorali” instead of “contraria alle leggi od ai buoni costumi”. Another 0.1 points deduction is for the use of “clausole” instead of “parti” as “clausole” is narrower as the source text. The correctness score: [[0.8]]
+
+
+Example 2:
+{EXAMPLES["headnote"]["de-fr"]}
+
+Your Judgment: The model’s translation is legally sound but contains terminological inconsistencies and an omission that affects its completeness. A 0.1 points deduction applies for “admissibilité” instead of “exploitabilité”, as the latter is the precise Swiss legal term for evidentiary usability. Another 0.1 points deduction is given for “ingérence” instead of “atteinte”, as "atteinte" is the standard term for fundamental rights violations in Swiss law. Additionally, “poursuite automatisée des véhicules et de la surveillance de la circulation (AFV)” replaces “recherche automatisée de véhicules et surveillance du trafic (RVS)”, deviating from the established Swiss legal terminology, leading to another 0.1 points deduction. A 0.2 points deduction is applied for the omitting of a legally significant detail—the lack of a sufficiently clear legal basis for evidence collection, which directly affects the completeness of the translation. The correctness score: [[0.5]]
+
+
+Example 3:
+{EXAMPLES["press"]["fr-de"]}
+
+Your Judgment: The model’s translation fails to meet standards of completeness and accuracy due to severe errors and omissions. A 0.4 points deduction is applied for the omission of a critical legal argument—that stolen property cannot be acquired in good faith under German law. Furthermore, 0.1 points deductions are applied for grammatical errors that reduce clarity, such as  “Geneßische Auktion”, “Wagenkellner” and “zu valieren”. Two 0.2 points deductions apply for the misidentification of the courts "Zivilgericht" and “Zivilgerichtsverfassung” instead of "Kantonsgericht" and "Bundesgerichtshof" instead of "Bundesgericht". Another 0.2 points deduction comes from the translation “Erbvergabe” instead of “Erbschaft”. The correctness score: [[0]]
+""",
+    "single_deduction": f"""Example 1:
+{EXAMPLES["law"]["fr-de"]}
+
+Your Judgment: The model’s translation is complete and legally sound, but a minor terminology issue warrants a deduction. A 0.1 points deduction applies for "sittenwidrigen Inhalt hat" instead of "gegen die guten Sitten verstößt", as the latter is the standard Swiss legal phrasing in contract law. No deduction is applied for "Der Vertrag" instead of "Ein Vertrag", as the point deduction system does not penalize stylistic variations that do not impact legal accuracy or completeness. The correctness score: [[0.9]]
+
+
+Example 2:
+{EXAMPLES["headnote"]["fr-de"]}
+
+Your Judgment: The model’s translation is legally structured and accurate in meaning, but omissions and terminological inconsistencies affect completeness and precision. A 0.2 points deduction applies for omitting a key legal argument—that evidence was unlawfully obtained due to a lack of legal basis, impacting completeness. A 0.1 points deduction is given for terminological imprecision, such as "nicht ausreichend präzise" instead of "hinreichend bestimmt". Another 0.1 points deduction applies for using the French abbreviation "RVS" instead of the correct German "AFV", and a final 0.1 points deduction is applied for overly literal phrasing in "Recht auf Selbstbestimmung in Bezug auf Daten" instead of "Anspruch auf informationelle Selbstbestimmung". Despite these issues, the translation conveys the core meaning correctly. The correctness score: [[0.5]]
+
+
+Example 3:
+{EXAMPLES["press"]["fr-de"]}
+
+Your Judgment: The model’s translation fails to meet standards of completeness and accuracy due to severe errors and omissions. A 0.4 points deduction is applied for the omission of a critical legal argument—that stolen property cannot be acquired in good faith under German law. Furthermore, 0.1 points deductions are applied for grammatical errors that reduce clarity, such as  “Geneßische Auktion”, “Wagenkellner” and “zu valieren”. Two 0.2 points deductions apply for the misidentification of the courts "Zivilgericht" and “Zivilgerichtsverfassung” instead of "Kantonsgericht" and "Bundesgerichtshof" instead of "Bundesgericht". Another 0.2 points deduction comes from the translation “Erbvergabe” instead of “Erbschaft”. The correctness score: [[0]]
 """,
 }
 
@@ -288,13 +339,19 @@ def get_swiss_legal_translation_judge(
     judge_model_name: str = "openai/gpt-4o-2024-11-20",
     short_judge_name: str = "slt_judge_gpt-4o",
     backend: str = "litellm",
-    system_style: str = "basic",  # "basic" or "detailed"
+    system_style: str = "basic",  # "basic" or "detailed" or "codebook"
     few_shot_style: str = "diverse",  # "diverse" or "single"
+    judgment_style: str = "absolute",  # "absolute" or "deduction"
 ):
+    if system_style == "codebook" and judgment_style == "absolute":
+        raise ValueError("The codebook system style can only be used with the deduction judgment style.")
+    if system_style in ("basic", "detailed") and judgment_style == "deduction":
+        raise ValueError(f"The {system_style} can only be used with the absolute judgment style.")
+
     def swiss_legal_translation_judge(question, options, answer, gold):
         system_prompt = SYSTEM[system_style]
         user = USER[system_style]
-        few_shot_examples = FEW_SHOT[few_shot_style]
+        few_shot_examples = FEW_SHOT[f"{few_shot_style}_{judgment_style}"]
         instruction = f"""Judge the below case, give the brief reasoning process and the correctness score.
 
 
@@ -907,6 +964,7 @@ def create_prompt_fn(level_config: LevelConfig, source_lang: str, target_lang: s
 JUDGE_MODELS = {
     "gpt-4o-mini": "openai/gpt-4o-mini-2024-07-18",
     "gpt-4o": "openai/gpt-4o-2024-11-20",
+    # The Gemini models are not very good judges.
     "gemini-1-5-flash": "gemini/gemini-1.5-flash-002",
     "gemini-1-5-pro": "gemini/gemini-1.5-pro-002",
     # The Claude models do not follow the required output format.
@@ -932,10 +990,18 @@ API_METRICS = [
     "slt_judge_gpt_4o",
 ]
 JUDGE_METRICS = [
-    f"slt_judge_{judge_model}-{system_style}-{few_shot_style}".replace("-", "_")
-    for judge_model in JUDGE_MODELS
-    for system_style in ["basic", "detailed"]
-    for few_shot_style in ["diverse", "single"]
+    [
+        f"slt_judge_{judge_model}-{system_style}-{few_shot_style}-{judgment_style}".replace("-", "_")
+        for judge_model in JUDGE_MODELS
+        for few_shot_style in ["diverse", "single"]
+        for system_style, judgment_style in [
+            ("basic", "absolute"),
+            ("detailed", "absolute"),
+            ("codebook", "deduction"),
+            # Make sure that the codebook system style is used with the deduction judgment style
+            # and the basic and detailed system styles are used with the absolute judgment style
+        ]
+    ]
 ]
 
 metrics_to_evaluate = ["judge"]
