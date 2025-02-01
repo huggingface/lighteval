@@ -990,17 +990,15 @@ API_METRICS = [
     "slt_judge_gpt_4o",
 ]
 JUDGE_METRICS = [
-    [
-        f"slt_judge_{judge_model}-{system_style}-{few_shot_style}-{judgment_style}".replace("-", "_")
-        for judge_model in JUDGE_MODELS
-        for few_shot_style in ["diverse", "single"]
-        for system_style, judgment_style in [
-            ("basic", "absolute"),
-            ("detailed", "absolute"),
-            ("codebook", "deduction"),
-            # Make sure that the codebook system style is used with the deduction judgment style
-            # and the basic and detailed system styles are used with the absolute judgment style
-        ]
+    f"slt_judge_{judge_model}-{system_style}-{few_shot_style}-{judgment_style}".replace("-", "_")
+    for judge_model in JUDGE_MODELS
+    for few_shot_style in ["diverse", "single"]
+    for system_style, judgment_style in [
+        ("basic", "absolute"),
+        ("detailed", "absolute"),
+        ("codebook", "deduction"),
+        # Make sure that the codebook system style is used with the deduction judgment style
+        # and the basic and detailed system styles are used with the absolute judgment style
     ]
 ]
 
@@ -1079,9 +1077,13 @@ def init_llm_judge_metric(metric_name: str):
 
     # Check all the judge metric combinations
     for judge_model in JUDGE_MODELS:
-        for system_style in ["basic", "detailed"]:
-            for few_shot_style in ["diverse", "single"]:
-                short_judge_name = f"slt_judge_{judge_model}-{system_style}-{few_shot_style}"
+        for few_shot_style in ["diverse", "single"]:
+            for system_style, judgment_style in [
+                ("basic", "absolute"),
+                ("detailed", "absolute"),
+                ("codebook", "deduction"),
+            ]:
+                short_judge_name = f"slt_judge_{judge_model}-{system_style}-{few_shot_style}-{judgment_style}"
                 judge_metric_name = short_judge_name.replace("-", "_")
                 if metric_name == judge_metric_name:
                     METRICS[metric_name] = get_swiss_legal_translation_judge(
@@ -1089,6 +1091,7 @@ def init_llm_judge_metric(metric_name: str):
                         short_judge_name=short_judge_name,
                         system_style=system_style,
                         few_shot_style=few_shot_style,
+                        judgment_style=judgment_style,
                     )
                     break
 
