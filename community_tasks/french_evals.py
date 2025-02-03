@@ -70,7 +70,7 @@ def prompt_gpqa_fr(line, task_name: str = None):
 
     query = f"Question: {line['Question']}\n"
     query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, choices)])
-    query += "Answer: "
+    query += "Réponse: "
     return Doc(
         task_name=task_name,
         query=f"{instruction}{query}",
