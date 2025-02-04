@@ -37,6 +37,7 @@ from lighteval.utils.language import Language
 
 
 def gpqa_prompt_fn(line, task_name: str = None):
+    """Adapted from simple-eval: https://github.com/openai/simple-evals/blob/83ed7640a7d9cd26849bcb3340125002ef14abbe/common.py#L14"""
     gold_index = random.randint(0, 3)
     choices = [line["Incorrect Answer 1"], line["Incorrect Answer 2"], line["Incorrect Answer 3"]]
     choices.insert(gold_index, line["Correct Answer"])
