@@ -1,0 +1,5 @@
+model:
+  base_params:
+    model_args: "pretrained=HuggingFaceTB/SmolLM-1.7B,revision=main,dtype=bfloat16" # pretrained=model_name,trust_remote_code=boolean,revision=revision_to_use,model_parallel=True ...
+  generation:
+    temperature: 0.3

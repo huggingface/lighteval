@@ -63,9 +63,6 @@ def vllm(
     num_fewshot_seeds: Annotated[
         int, Option(help="Number of seeds to use for few-shot evaluation.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = 1,
-    load_responses_from_details_date_id: Annotated[
-        Optional[str], Option(help="Load responses from details directory.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = None,
     # === saving ===
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
@@ -127,18 +124,18 @@ def vllm(
         max_samples=max_samples,
         use_chat_template=use_chat_template,
         system_prompt=system_prompt,
-        load_responses_from_details_date_id=load_responses_from_details_date_id,
     )
 
     if model_args.endswith(".yaml"):
         with open(model_args, "r") as f:
             config = yaml.safe_load(f)["model"]
+        model_args = config["base_params"]["model_args"]
         generation_parameters = GenerationParameters.from_dict(config)
-        model_config = VLLMModelConfig(config, generation_parameters=generation_parameters)
-
     else:
-        model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
-        model_config = VLLMModelConfig(**model_args_dict)
+        generation_parameters = GenerationParameters()
+
+    model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
+    model_config = VLLMModelConfig(**model_args_dict, generation_parameters=generation_parameters)
 
     pipeline = Pipeline(
         tasks=tasks,
