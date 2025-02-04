@@ -729,6 +729,25 @@ def gpqa(line, task_name: str = None):
     )
 
 
+def gpqa_instruct(line, task_name: str = None):
+    """Adapted from simple-eval: https://github.com/openai/simple-evals/blob/83ed7640a7d9cd26849bcb3340125002ef14abbe/common.py#L14"""
+    gold_index = random.randint(0, 3)
+    choices = [line["Incorrect Answer 1"], line["Incorrect Answer 2"], line["Incorrect Answer 3"]]
+    choices.insert(gold_index, line["Correct Answer"])
+
+    instruction = "Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering."
+    query = f"{instruction}\n\n{line['Question']}\n\n" ""
+    query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, choices)])
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=LETTER_INDICES[: len(choices)],
+        gold_index=gold_index,
+        instruction=instruction,
+    )
+
+
 def gsm8k(line, task_name: str = None):
     # Has special analysis in metric for number decomposition
     return Doc(
