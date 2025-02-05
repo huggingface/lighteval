@@ -1085,8 +1085,6 @@ def test_math_extraction_additional_cases(gold, pred, expected):
         r"$\boxed{-5, \frac{14}{3}}$",
         1,
     ),
-    #TODO: make sure that \, is translate to ,
-    # the or joining should be extend if one of the is a 
     (
         r"\boxed{a=4,\,-8,\,-10}",
         r"$\boxed{-10,-8,4}$",
