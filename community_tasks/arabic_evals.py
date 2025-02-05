@@ -772,7 +772,7 @@ MADINAH_QA_SUBSETS = ["Arabic Language (General)", "Arabic Language (Grammar)"]
 
 
 def madinah_qa_pfn(line, task_name: str = None):
-    instruction = "السؤال التالي هو سؤال متعدد الإختيارات. اختر الإجابة الصحيحة:\n\n"
+    instruction = "بناءً على السياق أدناه، اختر الإجابة الصحيحة للسؤال التالي من قائمة الأجوبة:\n\n"
 
     # Define the mapping from Latin to Arabic letters
     latin_to_arabic = {"A": "أ", "B": "ب", "C": "ج", "D": "د", "E": "هـ"}
