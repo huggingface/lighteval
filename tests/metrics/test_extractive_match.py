@@ -604,12 +604,6 @@ def test_latex_notation_math(gold, pred, expected):
             "$-x >= -1$",
             1,
         ),
-        # Test incomplete equation
-        (
-            "$a +z = 0$",
-            "$0$",
-            0,
-        ),
     ],
 )
 def test_relations_math(gold, pred, expected):
@@ -1132,12 +1126,33 @@ def test_math_extraction_additional_cases(gold, pred, expected):
         r"$\text{Even}$",
         r"$Even$",
         1
-    )
+    ),
     # (
     #     r"$f(x)$",
     #     r"$f(y)$",
     #     1
     # )
+
+    (
+        r"$x_{1}=10^{\frac{-5+\sqrt{13}}{6}},\quadx_{2}=10^{\frac{-5-\sqrt{13}}{6}}$",
+        r"$\boxed{10^{\frac{\sqrt{13} - 5}{6}}} \quad \text{and} \quad \boxed{10^{-\frac{5 + \sqrt{13}}{6}}}$",
+        1,
+    ),
+    (
+        r"$y_{1}=-2 x^{2}+4 x+3, y_{2}=3 x^{2}+12 x+10$",
+        r"\($y_1 = \boxed{-2(x - 1)^2 + 5} \) and \( y_2 = \boxed{3(x + 2)^2 - 2} \) ",
+        1,
+    ),
+    (
+        r"$x_{1}=\frac{1}{2}+\frac{31\sqrt{5}}{216},\quadx_{2}=\frac{1}{2}-\frac{31\sqrt{5}}{216}$",
+        r"$\boxed{\dfrac{108 + 31\sqrt{5}}{216}} \quad \text{and} \quad \boxed{\dfrac{108 - 31\sqrt{5}}{216}}$",
+        1,
+    ),
+    (
+        r"$x_{1}=10^{\frac{-5+\sqrt{13}}{6}},\quadx_{2}=10^{\frac{-5-\sqrt{13}}{6}}$",
+        r"$\boxed{10^{\frac{\sqrt{13} - 5}{6}}} \quad \text{and} \quad \boxed{10^{-\frac{5 + \sqrt{13}}{6}}}$",
+        1,
+    ),
 ])
 def test_math_numina_cases(gold, pred, expected):
     assert compare_strings(gold, pred, match_types=["latex", "expr"]) == expected

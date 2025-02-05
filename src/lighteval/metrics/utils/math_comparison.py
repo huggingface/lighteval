@@ -54,6 +54,7 @@ from sympy.core.function import UndefinedFunction
 from sympy.core.relational import Relational
 
 from lighteval.utils.timeout import timeout
+from latex2sympy2_extended.sets import FiniteSet as L2SFiniteSet
 
 
 def safe_sympy_doit(a: Basic | MatrixBase):
@@ -181,19 +182,34 @@ def sympy_deep_compare_set_and_tuple(gold: FiniteSet | Tuple, pred: FiniteSet | 
     Note: in order to fully support finite sets, we should ideally do kartesian product comparison
     but this is not implemented yet. We kinda hope sympy will order the elements.
     """
+    from latex2sympy2_extended.sets import FiniteSet as L2SFiniteSet
     def unwrap_eq(s):
         if is_assignment_relation(s):
             return take_last_relation(s).rhs
         return s
 
+    def sort_key(x):
+        try:
+            return default_sort_key(unwrap_eq(x).evalf())
+        except TimeoutError:
+            raise
+        except:
+            return default_sort_key(unwrap_eq(x))
+
 
     # This ensures it works for {1/3} and {0.333333}
     if len(gold) == len(pred):
         if isinstance(gold, FiniteSet):
-            gold_args = list(ordered(gold.args, keys=lambda x: default_sort_key(unwrap_eq(x)), default=False))
-            pred_args = list(ordered(pred.args, keys=lambda x: default_sort_key(unwrap_eq(x)), default=False))
+            gold_args = list(ordered(gold.args, keys=sort_key, default=False))
+            pred_args = list(ordered(pred.args, keys=sort_key, default=False))
+        
+        elif isinstance(gold, Tuple) and isinstance(pred, L2SFiniteSet):
+            # We treat the pred as tuple too
+            pred_args = pred._unsorted_args
+            gold_args = gold.args
+
         elif isinstance(pred, FiniteSet):
-            pred_args = list(ordered(pred.args, keys=lambda x: default_sort_key(unwrap_eq(x)), default=False))
+            pred_args = list(ordered(pred.args, keys=sort_key, default=False))
             gold_args = gold.args
         else:
             gold_args = gold.args
@@ -286,7 +302,7 @@ def is_equation(expr: Basic | MatrixBase) -> bool:
 
 @requires_latex2sympy2_extended
 def is_assignment_relation(expr: Basic | MatrixBase) -> bool:
-    from latex2sympy2_extended.latex2sympy2 import is_assignment_symbol
+    from latex2sympy2_extended.latex2sympy2 import is_expr_of_only_symbols
     """Check if an expression is an assignment relation. E.g a=1
     
     Args:
@@ -294,11 +310,11 @@ def is_assignment_relation(expr: Basic | MatrixBase) -> bool:
     Returns:
         bool: True if expr is a relational expression or And of relations, False otherwise
     """
-    if isinstance(expr, Eq) and is_assignment_symbol(expr.lhs):
+    if isinstance(expr, Eq) and is_expr_of_only_symbols(expr.lhs):
         return True
     
     if isinstance(expr, And) and len(expr.args) > 0:
-        return all(isinstance(arg, Eq) for arg in expr.args) and is_assignment_symbol(expr.args[0].lhs)
+        return all(isinstance(arg, Eq) for arg in expr.args) and is_expr_of_only_symbols(expr.args[0].lhs)
         
     return False
 

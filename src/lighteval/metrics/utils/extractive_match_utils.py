@@ -414,7 +414,7 @@ def convert_to_pct(number: Number):
 @requires_latex2sympy2_extended
 @lru_cache(maxsize=20)
 def extract_latex(match: re.Match, latex_config: LatexExtractionConfig, timeout_seconds: int) -> tuple[sympy.Expr | str | None, str]:
-    from latex2sympy2_extended.latex2sympy2 import normalize_latex
+    from latex2sympy2_extended.latex2sympy2 import normalize_latex, FiniteSet as L2SFiniteSet
     latex_exprs = []
     latex_strs = []
     
@@ -472,7 +472,7 @@ def extract_latex(match: re.Match, latex_config: LatexExtractionConfig, timeout_
                 all_elements.extend(expr.args)
             else:
                 all_elements.append(expr)
-        return FiniteSet(*all_elements), " and ".join(latex_strs)
+        return L2SFiniteSet(*all_elements), " and ".join(latex_strs)
     
     # Otherwise return the single expression
     return latex_exprs[0], latex_strs[0]
