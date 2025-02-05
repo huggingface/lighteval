@@ -730,7 +730,7 @@ def gpqa(line, task_name: str = None):
 
 
 def gpqa_instruct(line, task_name: str = None):
-    """Adapted from Llama 3 evals: https://huggingface.co/datasets/meta-llama/Llama-3.1-8B-Instruct-evals/viewer/Llama-3.1-8B-Instruct-evals__gpqa__details"""
+    """Prompt adapted from Llama 3 evals: https://huggingface.co/datasets/meta-llama/Llama-3.1-8B-Instruct-evals/viewer/Llama-3.1-8B-Instruct-evals__gpqa__details"""
     gold_index = random.randint(0, 3)
     choices = [line["Incorrect Answer 1"], line["Incorrect Answer 2"], line["Incorrect Answer 3"]]
     choices.insert(gold_index, line["Correct Answer"])
