@@ -793,7 +793,7 @@ def madinah_qa_pfn(line, task_name: str = None):
     # Find the correct index for the answer key in the Arabic version
     answer_index = valid_keys_latin.index(line["Answer Key"])
 
-    query = f"{instruction}{line['Question']}\n"
+    query = f"{instruction}\nالسياق:\n{line['Context']}\nالسؤال:\n{line['Question']}\n"
     query += "".join([f"{key}. {choice}\n" for key, choice in zip(valid_keys_arabic, choices)])
     query += "الإجابة:"
 
