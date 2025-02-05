@@ -730,11 +730,11 @@ def gpqa(line, task_name: str = None):
 
 
 def gpqa_instruct(line, task_name: str = None):
-    """Prompt adapted from Llama 3 evals: https://huggingface.co/datasets/meta-llama/Llama-3.1-8B-Instruct-evals/viewer/Llama-3.1-8B-Instruct-evals__gpqa__details"""
+    """Prompt template adapted from simple-evals: https://github.com/openai/simple-evals/blob/83ed7640a7d9cd26849bcb3340125002ef14abbe/common.py#L14"""
     gold_index = random.randint(0, 3)
     choices = [line["Incorrect Answer 1"], line["Incorrect Answer 2"], line["Incorrect Answer 3"]]
     choices.insert(gold_index, line["Correct Answer"])
-    query_template = """Given the following question and four candidate answers (A, B, C and D), choose the best answer.\n\nQuestion: {Question}\nA. {A}\nB. {B}\nC. {C}\nD. {D}\nYour response should end with \"The best answer is [the_answer_letter]\" where the [the_answer_letter] is one of A, B, C or D. Think step by step before answering."""
+    query_template = "Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering.\n\n{Question}\n\nA) {A}\nB) {B}\nC) {C}\nD) {D}"
     query = query_template.format(A=choices[0], B=choices[1], C=choices[2], D=choices[3], Question=line["Question"])
 
     return Doc(
