@@ -709,8 +709,14 @@ class BLEURT:
         For more complex use cases, could also be Elron/bleurt-base-128
         """
         self.tokenizer = AutoTokenizer.from_pretrained("Elron/bleurt-tiny-512")
-        self.model = AutoModelForSequenceClassification.from_pretrained("Elron/bleurt-tiny-512")
-        self.model.eval()
+        self._model = None
+
+    @property
+    def model(self):
+        if self._model is None:
+            self._model = AutoModelForSequenceClassification.from_pretrained("Elron/bleurt-tiny-512")
+            self._model.eval()
+        return self._model
 
     def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float:
         """Uses the stored BLEURT scorer to compute the score on the current sample.
