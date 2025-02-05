@@ -962,6 +962,8 @@ def create_prompt_fn(level_config: LevelConfig, source_lang: str, target_lang: s
 
 
 JUDGE_MODELS = {
+    "o1": "openai/o1-2024-12-17",
+    "o1-mini": "openai/o1-mini-2024-09-12",
     "gpt-4o-mini": "openai/gpt-4o-mini-2024-07-18",
     "gpt-4o": "openai/gpt-4o-2024-11-20",
     # The Gemini models are not very good judges.
@@ -970,6 +972,8 @@ JUDGE_MODELS = {
     # The Claude models do not follow the required output format.
     # "claude-3-5-haiku": "anthropic/claude-3-5-haiku-20241022",
     # "claude-3-5-sonnet": "anthropic/claude-3-5-sonnet-20241022",
+    "llama-3-3-70b": "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "llama-3-1-405b": "together_ai/meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
 }
 
 LEXICAL_METRICS = [
