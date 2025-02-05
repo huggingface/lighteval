@@ -223,6 +223,8 @@ def multilingual_extractive_match_metric(
 
         precision: int
             Number of decimal places to use when comparing numerical values. Defaults to 6.
+        timeout_seconds: int
+            Timeout for the extraction (each attempt) and comparison. Defaults to 5.
 
     Returns:
         A sample level metric that extracts and compares mathematical expressions.
