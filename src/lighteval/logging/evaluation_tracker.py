@@ -325,12 +325,13 @@ class EvaluationTracker:
         # We upload it both as a json and a parquet file
         result_file_base_name = f"results_{date_id}"
         results_json = json.dumps(results_dict, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False)
-        self.api.upload_file(
+        url = self.api.upload_file(
             repo_id=repo_id,
             path_or_fileobj=BytesIO(results_json.encode("utf-8")),
             path_in_repo=f"{result_file_base_name}.json",
             repo_type="dataset",
         )
+        logger.info(f"Uploaded evaluation details to {url}")
 
         results_dataset = Dataset.from_dict(
             {key: [json.dumps(v, cls=EnhancedJSONEncoder, indent=2)] for key, v in results_dict.items()}
