@@ -250,7 +250,8 @@ def multilingual_extractive_match_metric(
             for pred in predictions
         ]
         extracted_golds = [
-            extract_target_from_pred(gold, gold_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds) for gold in golds
+            extract_target_from_pred(gold, gold_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds)
+            for gold in golds
         ]
 
         # Assert on empty gold and warn on empty pred
@@ -266,12 +267,19 @@ def multilingual_extractive_match_metric(
         # We have to use timeout because the sypmy to str conversion can be very slow
         try:
             add_to_specifics_with_timeout(formatted_doc, extracted_predictions, extracted_golds)
-        except:  # noqa: E722
+        except Exception:  # noqa: E722
             logger.warning("Timeout when adding extracted predictions and golds to specific")
 
         return aggregation_function(
             [
-                (1.0 if any(compare_gold_target(gold, pred, precision, timeout_seconds=timeout_seconds) for gold in extracted_golds) else 0.0)
+                (
+                    1.0
+                    if any(
+                        compare_gold_target(gold, pred, precision, timeout_seconds=timeout_seconds)
+                        for gold in extracted_golds
+                    )
+                    else 0.0
+                )
                 for pred in extracted_predictions
             ]
         )

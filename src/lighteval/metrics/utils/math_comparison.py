@@ -24,9 +24,10 @@
 import re
 from itertools import product
 
-from lighteval.utils.imports import requires_latex2sympy2_extended
 from sympy import (
+    And,
     Basic,
+    E,
     Eq,
     FiniteSet,
     Float,
@@ -42,19 +43,16 @@ from sympy import (
     StrictGreaterThan,
     StrictLessThan,
     Symbol,
+    Tuple,
     default_sort_key,
     ordered,
     simplify,
-    E,
-    And,
-    EmptySet,
-    Tuple,
 )
 from sympy.core.function import UndefinedFunction
 from sympy.core.relational import Relational
 
+from lighteval.utils.imports import requires_latex2sympy2_extended
 from lighteval.utils.timeout import timeout
-from latex2sympy2_extended.sets import FiniteSet as L2SFiniteSet
 
 
 def safe_sympy_doit(a: Basic | MatrixBase):
@@ -75,7 +73,7 @@ def safe_sympy_doit(a: Basic | MatrixBase):
         return a.doit()
     except TimeoutError:
         raise
-    except:  # noqa: E722
+    except Exception:  # noqa: E722
         pass
     return a
 
@@ -138,7 +136,7 @@ def sympy_numeric_eq(a: Basic | MatrixBase, b: Basic | MatrixBase, precision: in
             return (a - b).evalf(chop=True) == 0  # type: ignore
         except TimeoutError:
             raise
-        except:  # noqa: E722
+        except Exception:  # noqa: E722
             pass
 
     return False
@@ -162,7 +160,7 @@ def sympy_symbolic_eq(a: Basic | MatrixBase, b: Basic | MatrixBase) -> bool:
             return True
     except TimeoutError:
         raise
-    except:  # noqa: E722
+    except Exception:  # noqa: E722
         pass
 
     return False
@@ -183,6 +181,7 @@ def sympy_deep_compare_set_and_tuple(gold: FiniteSet | Tuple, pred: FiniteSet | 
     but this is not implemented yet. We kinda hope sympy will order the elements.
     """
     from latex2sympy2_extended.sets import FiniteSet as L2SFiniteSet
+
     def unwrap_eq(s):
         if is_assignment_relation(s):
             return take_last_relation(s).rhs
@@ -193,16 +192,15 @@ def sympy_deep_compare_set_and_tuple(gold: FiniteSet | Tuple, pred: FiniteSet | 
             return default_sort_key(unwrap_eq(x).evalf())
         except TimeoutError:
             raise
-        except:
+        except Exception:  # noqa: E722
             return default_sort_key(unwrap_eq(x))
-
 
     # This ensures it works for {1/3} and {0.333333}
     if len(gold) == len(pred):
         if isinstance(gold, FiniteSet):
             gold_args = list(ordered(gold.args, keys=sort_key, default=False))
             pred_args = list(ordered(pred.args, keys=sort_key, default=False))
-        
+
         elif isinstance(gold, Tuple) and isinstance(pred, L2SFiniteSet):
             # We treat the pred as tuple too
             pred_args = pred._unsorted_args
@@ -214,7 +212,7 @@ def sympy_deep_compare_set_and_tuple(gold: FiniteSet | Tuple, pred: FiniteSet | 
         else:
             gold_args = gold.args
             pred_args = pred.args
-        
+
         return all(sympy_expr_eq(a, b, precision) for a, b in zip(gold_args, pred_args))
 
     return False
@@ -222,22 +220,32 @@ def sympy_deep_compare_set_and_tuple(gold: FiniteSet | Tuple, pred: FiniteSet | 
 
 def sympy_compare_symbols(gold: Basic | MatrixBase, pred: Basic | MatrixBase) -> bool:
     """Compare two sympy expressions where at least one is a Symbol.
-    
+
     Handles special cases:
     - One is Symbol and other is E (limitation of parsed expressions)
     - One is multiplication of symbols and other is single symbol (concatenated comparison)
     """
     # Handle E vs symbol case
-    if (isinstance(gold, Symbol) and gold.name.lower() == 'e' and pred == E) or (isinstance(pred, Symbol) and pred.name.lower() == 'e' and gold == E):
+    if (isinstance(gold, Symbol) and gold.name.lower() == "e" and pred == E) or (
+        isinstance(pred, Symbol) and pred.name.lower() == "e" and gold == E
+    ):
         return True
 
     # Handle multiplication of symbols vs single symbol
-    if isinstance(gold, Symbol) and isinstance(pred, Mul) and all(arg == E or isinstance(arg, (Symbol)) for arg in pred.args):
-        concat_pred = ''.join(arg.name if isinstance(arg, Symbol) else 'e' for arg in pred.args)
+    if (
+        isinstance(gold, Symbol)
+        and isinstance(pred, Mul)
+        and all(arg == E or isinstance(arg, (Symbol)) for arg in pred.args)
+    ):
+        concat_pred = "".join(arg.name if isinstance(arg, Symbol) else "e" for arg in pred.args)
         return gold.name.lower() == concat_pred.lower()
-    
-    if isinstance(pred, Symbol) and isinstance(gold, Mul) and all(arg == E or isinstance(arg, (Symbol)) for arg in gold.args):
-        concat_gold = ''.join(arg.name if isinstance(arg, Symbol) else 'e' for arg in gold.args)
+
+    if (
+        isinstance(pred, Symbol)
+        and isinstance(gold, Mul)
+        and all(arg == E or isinstance(arg, (Symbol)) for arg in gold.args)
+    ):
+        concat_gold = "".join(arg.name if isinstance(arg, Symbol) else "e" for arg in gold.args)
         return pred.name.lower() == concat_gold.lower()
 
     return gold == pred
@@ -247,10 +255,10 @@ def is_relation(expr: Basic | MatrixBase) -> bool:
     """Check if an expression is a relational expression."""
     if isinstance(expr, Relational):
         return True
-    
+
     if isinstance(expr, And):
         return all(isinstance(arg, Relational) for arg in expr.args)
-        
+
     return False
 
 
@@ -266,7 +274,7 @@ def unwrap_fcs(expr: Basic | MatrixBase) -> Basic | MatrixBase:
     if not isinstance(expr, Basic):
         return expr
 
-    if hasattr(expr, 'func') and isinstance(expr.func, UndefinedFunction):
+    if hasattr(expr, "func") and isinstance(expr.func, UndefinedFunction):
         func_name = expr.func.__name__
         unwrapped_args = [str(unwrap_fcs(arg)) for arg in expr.args]
         return Symbol(f"{func_name}_{'_'.join(unwrapped_args)}")
@@ -277,7 +285,7 @@ def unwrap_fcs(expr: Basic | MatrixBase) -> Basic | MatrixBase:
             return expr.func(*new_args)
     except TimeoutError:
         raise
-    except:  # noqa: E722
+    except Exception:  # noqa: E722
         pass
 
     return expr
@@ -285,7 +293,7 @@ def unwrap_fcs(expr: Basic | MatrixBase) -> Basic | MatrixBase:
 
 def is_equation(expr: Basic | MatrixBase) -> bool:
     """Check if an expression is an equation.
-    
+
     Args:
         expr: The expression to check
     Returns:
@@ -293,18 +301,19 @@ def is_equation(expr: Basic | MatrixBase) -> bool:
     """
     if isinstance(expr, Eq):
         return True
-    
+
     if isinstance(expr, And) and len(expr.args) > 0:
         return all(isinstance(arg, Eq) for arg in expr.args)
-        
+
     return False
 
 
 @requires_latex2sympy2_extended
 def is_assignment_relation(expr: Basic | MatrixBase) -> bool:
     from latex2sympy2_extended.latex2sympy2 import is_expr_of_only_symbols
+
     """Check if an expression is an assignment relation. E.g a=1
-    
+
     Args:
         expr: The expression to check
     Returns:
@@ -312,10 +321,10 @@ def is_assignment_relation(expr: Basic | MatrixBase) -> bool:
     """
     if isinstance(expr, Eq) and is_expr_of_only_symbols(expr.lhs):
         return True
-    
+
     if isinstance(expr, And) and len(expr.args) > 0:
         return all(isinstance(arg, Eq) for arg in expr.args) and is_expr_of_only_symbols(expr.args[0].lhs)
-        
+
     return False
 
 
@@ -359,7 +368,7 @@ def sympy_compare_relational(gold: Relational | And, pred: Relational | And, pre
             return sympy_expr_eq(a.lhs - a.rhs, b.rhs - b.lhs, precision)  # type: ignore
         except TimeoutError:
             raise
-        except:  # noqa: E722
+        except Exception:  # noqa: E722
             pass
         return False
 
@@ -369,7 +378,7 @@ def sympy_compare_relational(gold: Relational | And, pred: Relational | And, pre
             return True
     except TimeoutError:
         raise
-    except:  # noqa: E722
+    except Exception:  # noqa: E722
         pass
 
     # Check flipped inequalities (a <= b equals b >= a)
@@ -412,12 +421,14 @@ def sympy_str_eq(a: Basic | MatrixBase, b: Basic | MatrixBase) -> bool:
             return True
     except TimeoutError:
         raise
-    except:  # noqa: E722
+    except Exception:  # noqa: E722
         pass
     return False
 
 
-def sympy_compare_sets(gold: Set | Basic | MatrixBase | Tuple, pred: Set | Basic | MatrixBase | Tuple, precision: int) -> bool:
+def sympy_compare_sets(
+    gold: Set | Basic | MatrixBase | Tuple, pred: Set | Basic | MatrixBase | Tuple, precision: int
+) -> bool:
     """Compare two sympy sets for equality using multiple methods.
 
     Args:
@@ -448,12 +459,12 @@ def sympy_compare_sets(gold: Set | Basic | MatrixBase | Tuple, pred: Set | Basic
     if isinstance(a_set, (FiniteSet, Tuple)) and isinstance(b_set, (FiniteSet, Tuple)):
         return sympy_deep_compare_set_and_tuple(a_set, b_set, precision)
 
-    # Because (1,2) is parsed as Interval(1,2,left_open=True,right_open=True), it could have that the 
+    # Because (1,2) is parsed as Interval(1,2,left_open=True,right_open=True), it could have that the
     # correct is (1,2) and predicted is 1,2, which is parsed as Set(1,2)
     if isinstance(a_set, Interval) and isinstance(b_set, (FiniteSet, Tuple)):
         if a_set.is_open and len(b_set) == 2:
             return sympy_deep_compare_set_and_tuple(Tuple(a_set.start, a_set.end), b_set, precision)
-    
+
     if isinstance(b_set, Interval) and isinstance(a_set, (FiniteSet, Tuple)):
         if b_set.is_open and len(a_set) == 2:
             return sympy_deep_compare_set_and_tuple(a_set, Tuple(b_set.start, b_set.end), precision)
@@ -461,7 +472,7 @@ def sympy_compare_sets(gold: Set | Basic | MatrixBase | Tuple, pred: Set | Basic
     return False
 
 
-def sympy_expr_eq(gold: Basic | MatrixBase, pred: Basic | MatrixBase, precision: int, strict: bool=True) -> bool:
+def sympy_expr_eq(gold: Basic | MatrixBase, pred: Basic | MatrixBase, precision: int, strict: bool = True) -> bool:  # noqa: C901
     """Compare two sympy expressions for equality using multiple methods.
 
     Args:
@@ -482,7 +493,7 @@ def sympy_expr_eq(gold: Basic | MatrixBase, pred: Basic | MatrixBase, precision:
                 pred = pred.subs(list(zip(pred_variables, gold_variables)))
         except TimeoutError:
             raise
-        except:  # noqa: E722
+        except Exception:  # noqa: E722
             pass
 
     # If the target is relational, but the refernce is not, it's possible it's a case of a=x+1+z, so we just take x+1+z
@@ -502,7 +513,7 @@ def sympy_expr_eq(gold: Basic | MatrixBase, pred: Basic | MatrixBase, precision:
             gold = unwrap_fcs(gold).as_set()
         except TimeoutError:
             raise
-        except:
+        except Exception:  # noqa: E722
             pass
 
     # Start with simple str and expr comparison as it's the fastest
@@ -565,12 +576,14 @@ def should_treat_as_complex(latex_str: str) -> bool:
     """
 
     return bool(complex_number_pattern.search(latex_str))
+
+
 def compare_gold_target(
-    gold: list[Basic | MatrixBase | str] | Basic | MatrixBase | str, 
-    target: list[Basic | MatrixBase | str] | Basic | MatrixBase | str, 
-    precision: int=6,
-    strict: bool=True,
-    timeout_seconds: int=3
+    gold: list[Basic | MatrixBase | str] | Basic | MatrixBase | str,
+    target: list[Basic | MatrixBase | str] | Basic | MatrixBase | str,
+    precision: int = 6,
+    strict: bool = True,
+    timeout_seconds: int = 3,
 ) -> bool:
     @timeout(timeout_seconds=timeout_seconds)
     def compare_single_extraction(gold: Basic | MatrixBase | str, target: Basic | MatrixBase | str) -> bool:
@@ -595,7 +608,7 @@ def compare_gold_target(
     def compare_single_extraction_wrapper(g, t):
         try:
             return compare_single_extraction(g, t)
-        except:
+        except Exception:  # noqa: E722
             return False
-    return any(compare_single_extraction_wrapper(g, t) for g, t in product(gold, target))
 
+    return any(compare_single_extraction_wrapper(g, t) for g, t in product(gold, target))
