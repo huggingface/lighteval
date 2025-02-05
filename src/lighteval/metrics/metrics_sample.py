@@ -708,8 +708,14 @@ class BLEURT:
         """Creates a BLEURT scorer using a light bleurt-tiny-512 model.
         For more complex use cases, could also be Elron/bleurt-base-128
         """
-        self.tokenizer = AutoTokenizer.from_pretrained("Elron/bleurt-tiny-512")
+        self._tokenizer = None
         self._model = None
+
+    @property
+    def tokenizer(self):
+        if self._tokenizer is None:
+            self._tokenizer = AutoTokenizer.from_pretrained("Elron/bleurt-tiny-512")
+        return self._tokenizer
 
     @property
     def model(self):
