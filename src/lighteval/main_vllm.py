@@ -136,6 +136,7 @@ def vllm(
         model_args = config["base_params"]["model_args"]
         generation_parameters = GenerationParameters.from_dict(config)
     else:
+        generation_parameters = GenerationParameters()
 
     model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
     model_config = VLLMModelConfig(**model_args_dict, generation_parameters=generation_parameters)
