@@ -27,7 +27,7 @@ from itertools import groupby
 from typing import Any, Literal, Sequence
 
 import sympy
-from sympy import FiniteSet, Number
+from sympy import Basic, FiniteSet, MatrixBase, Number
 from sympy.parsing import parse_expr
 
 from lighteval.metrics.utils.math_comparison import should_treat_as_complex
@@ -487,7 +487,9 @@ def extract_latex(
     return latex_exprs[0], latex_strs[0]
 
 
-def extract_match(match: re.Match, target_type: ExtractionTarget, timeout_seconds: int):
+def extract_match(
+    match: re.Match, target_type: ExtractionTarget, timeout_seconds: int
+) -> tuple[Basic | MatrixBase | str | None, str]:
     """Extracts the match from the regex match.
 
     Args:
