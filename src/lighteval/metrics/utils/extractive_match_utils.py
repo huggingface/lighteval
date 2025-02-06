@@ -215,10 +215,7 @@ def make_latex_env_pattern(prefix: str = "", context: Literal["boxed", "plain"] 
         rf"(?<!\\)\\\((?P<{prefix}latexInlineParenthesis>{inline_content_parenthesis})(?<!\\)\\\)",
         rf"\s\[(?P<{prefix}latexInlineBracket>{inline_content_bracket})\]\s",
     ]
-    if context == "boxed":
-        # allow also matching plain boxed
-        patterns.append(rf"(?P<{prefix}latexBoxed>\\boxed{{.+}})")
-    elif context == "plain":
+    if context == "plain":
         simple_number = r"-?\d+(?:[.,]\d+)?"
         patterns.append(rf"(?P<{prefix}latexFraction>-?\\frac{{{simple_number}}}{{{simple_number}}})")
 
@@ -492,7 +489,7 @@ def extract_latex(
 
 def extract_match(
     match: re.Match, target_type: ExtractionTarget, timeout_seconds: int
-) -> tuple[Basic | MatrixBase | str | None, str]:
+):
     """Extracts the match from the regex match.
 
     Args:
