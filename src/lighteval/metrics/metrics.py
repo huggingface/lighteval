@@ -48,6 +48,7 @@ from lighteval.metrics.metrics_sample import (
     Faithfulness,
     LoglikelihoodAcc,
     MajAtK,
+    PassAtK,
     Recall,
     StringDistance,
     acc_golds_likelihood,
@@ -367,6 +368,30 @@ class Metrics(Enum):
         category=MetricCategory.MULTICHOICE_ONE_TOKEN,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=CorpusLevelF1Score(average=None, num_classes=3).compute,
+        higher_is_better=True,
+    )
+    pass_at_1 = SampleLevelMetric(
+        metric_name="pass@1:32_samples",
+        sample_level_fn=PassAtK(k=1, n=32, strip_strings=True).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    pass_at_10 = SampleLevelMetric(
+        metric_name="pass@10:32_samples",
+        sample_level_fn=PassAtK(k=10, n=32, strip_strings=True).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    pass_at_100 = SampleLevelMetric(
+        metric_name="pass@100:32_samples",
+        sample_level_fn=PassAtK(k=100, n=32, strip_strings=True).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     perfect_exact_match = SampleLevelMetric(
