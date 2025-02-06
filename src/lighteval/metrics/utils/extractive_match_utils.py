@@ -27,7 +27,7 @@ from itertools import groupby
 from typing import Any, Literal, Sequence
 
 import sympy
-from sympy import Basic, FiniteSet, MatrixBase, Number
+from sympy import FiniteSet, Number
 from sympy.parsing import parse_expr
 
 from lighteval.metrics.utils.math_comparison import should_treat_as_complex
@@ -234,7 +234,7 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) ->
     and_word = translation_literal.and_word
     or_word = translation_literal.or_word
     next_groups = "".join(
-        [rf"(?:\s*(?:{and_word}|{or_word})\s*{make_latex_env_pattern(f'next{i}_')})?" for i in range(1, 6)]
+        [rf"(?:\s*(?:{and_word}|{or_word}|,)\s*{make_latex_env_pattern(f'next{i}_')})?" for i in range(1, 6)]
     )
 
     latex_envs_re = rf"(?:{first_latex_group}{next_groups})"
@@ -266,7 +266,7 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) ->
         latex_re_boxed = make_latex_env_pattern(prefix="first_", context="boxed")
         next_groups = "".join(
             [
-                rf"(?:\s*(?:{and_word}|{or_word})\s*{make_latex_env_pattern(f'next{i}_', context='boxed')})?"
+                rf"(?:\s*(?:{and_word}|{or_word}|,)\s*{make_latex_env_pattern(f'next{i}_', context='boxed')})?"
                 for i in range(1, 6)
             ]
         )
@@ -487,9 +487,7 @@ def extract_latex(
     return latex_exprs[0], latex_strs[0]
 
 
-def extract_match(
-    match: re.Match, target_type: ExtractionTarget, timeout_seconds: int
-):
+def extract_match(match: re.Match, target_type: ExtractionTarget, timeout_seconds: int):
     """Extracts the match from the regex match.
 
     Args:
