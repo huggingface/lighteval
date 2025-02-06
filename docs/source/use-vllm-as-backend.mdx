@@ -44,19 +44,13 @@ model: # Model specific parameters
     model_args: "pretrained=HuggingFaceTB/SmolLM-1.7B,revision=main,dtype=bfloat16" # Model args that you would pass in the command line
   generation: # Generation specific parameters
     temperature: 0.3
-    early_stopping: 1
     repetition_penalty: 1.0
     frequency_penalty: 0.0
-    length_penalty: 0.0
     presence_penalty: 0.0
-    max_new_tokens: 100
-    min_new_tokens: 1
     seed: 42
-    stop_tokens: null
     top_k: 0
     min_p: 0.0
     top_p: 0.9
-    truncate_prompt: false
 ```
 
 > [!WARNING]
