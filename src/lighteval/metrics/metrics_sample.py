@@ -708,9 +708,21 @@ class BLEURT:
         """Creates a BLEURT scorer using a light bleurt-tiny-512 model.
         For more complex use cases, could also be Elron/bleurt-base-128
         """
-        self.tokenizer = AutoTokenizer.from_pretrained("Elron/bleurt-tiny-512")
-        self.model = AutoModelForSequenceClassification.from_pretrained("Elron/bleurt-tiny-512")
-        self.model.eval()
+        self._tokenizer = None
+        self._model = None
+
+    @property
+    def tokenizer(self):
+        if self._tokenizer is None:
+            self._tokenizer = AutoTokenizer.from_pretrained("Elron/bleurt-tiny-512")
+        return self._tokenizer
+
+    @property
+    def model(self):
+        if self._model is None:
+            self._model = AutoModelForSequenceClassification.from_pretrained("Elron/bleurt-tiny-512")
+            self._model.eval()
+        return self._model
 
     def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float:
         """Uses the stored BLEURT scorer to compute the score on the current sample.
