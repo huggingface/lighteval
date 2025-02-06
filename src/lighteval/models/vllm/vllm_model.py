@@ -184,7 +184,8 @@ class VLLMModel(LightevalModel):
             "seed": 1234,
         }
         if int(config.data_parallel_size) > 1:
-            self.model_args["worker_use_ray"] = True
+            # self.model_args["worker_use_ray"] = True
+            self.model_args["distributed_executor_backend"] = "ray"
             self._batch_size = "auto"
             return None
 
@@ -331,8 +332,9 @@ class VLLMModel(LightevalModel):
             # see https://github.com/vllm-project/vllm/issues/973
             # note: this has changed on 0.3.3, and it only works now if num_gpus are set.
             # but then tensor_parallel breaks
-            @ray.remote
+            @ray.remote(num_gpus=1)
             def run_inference_one_model(model_args: dict, sampling_params: SamplingParams, requests):
+                print(model_args)
                 llm = LLM(**model_args)
                 return llm.generate(prompt_token_ids=requests, sampling_params=sampling_params)
 
