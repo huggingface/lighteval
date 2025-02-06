@@ -414,12 +414,15 @@ def alghafa_pfn(line, task_name: str = None):
     question = line["query"]
     answer_index = int(line["label"])
     allowed_keys = [f"sol{i}" for i in range(1, 6)]
-    choices = [line[key] for key in allowed_keys if key in line]
+    extracted_choices = [line[key] for key in allowed_keys if key in line]
+    choices = [str(i) for i in range(len(extracted_choices))]
 
     instruction = "الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح\n\n"
     query = f"{instruction}السؤال: {question}\n"
-    for index, choice in enumerate(choices):
+    
+    for index, choice in enumerate(extracted_choices):
         query += f"{index}) {choice}\n"
+    
     query += "الإجابة:"
 
     return Doc(
