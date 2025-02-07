@@ -1,3 +1,4 @@
+# TODO: change to what?
 # MIT License
 
 # Copyright (c) 2024 The HuggingFace Team
@@ -34,8 +35,8 @@ HELP_PANEL_NAME_2 = "Logging Parameters"
 HELP_PANEL_NAME_3 = "Debug Parameters"
 HELP_PANEL_NAME_4 = "Modeling Parameters"
 
-
-def vllm(
+# TODO: change
+def sglang(
     # === general ===
     model_args: Annotated[
         str,
@@ -100,7 +101,7 @@ def vllm(
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.model_input import GenerationParameters
-    from lighteval.models.vllm.vllm_model import VLLMModelConfig
+    from lighteval.models.sglang.sglang_model import SGLANGModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
     TOKEN = os.getenv("HF_TOKEN")
@@ -118,12 +119,12 @@ def vllm(
 
     ## Jayon02: vllm pipeline parameter
     pipeline_params = PipelineParameters(
-        launcher_type=ParallelismManager.VLLM,
+        launcher_type=ParallelismManager.SGLANG,
         env_config=env_config,
         job_id=job_id,
         dataset_loading_processes=dataset_loading_processes,
         custom_tasks_directory=custom_tasks,
-        override_batch_size=-1,  # Cannot override batch size when using VLLM
+        override_batch_size=-1,
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         use_chat_template=use_chat_template,
@@ -136,12 +137,13 @@ def vllm(
         with open(model_args, "r") as f:
             config = yaml.safe_load(f)["model"]
         generation_parameters = GenerationParameters.from_dict(config)
-        model_config = VLLMModelConfig(config, generation_parameters=generation_parameters)
+        model_config = SGLANGModelConfig(config, generation_parameters=generation_parameters)
 
     else:
         ## cmd arg
         model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
-        model_config = VLLMModelConfig(**model_args_dict)
+
+        model_config = SGLANGModelConfig(**model_args_dict)
 
     pipeline = Pipeline(
         tasks=tasks,

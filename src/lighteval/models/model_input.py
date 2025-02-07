@@ -119,3 +119,8 @@ class GenerationParameters:
             "truncate": self.truncate_prompt,
         }
         return {k: v for k, v in args.items() if v is not None}
+
+    # TODO first: sampling parameter
+    def to_sglang_dict(self) -> dict:
+        return {k: v for k, v in asdict(self).items() if v is not None}
+

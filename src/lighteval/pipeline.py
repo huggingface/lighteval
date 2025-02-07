@@ -57,7 +57,7 @@ from lighteval.utils.imports import (
     is_nanotron_available,
     is_openai_available,
     is_tgi_available,
-    is_vllm_available,
+    is_vllm_available, is_sglang_available, NO_SGLANG_ERROR_MSG,
 )
 from lighteval.utils.parallelism import test_all_gather
 from lighteval.utils.utils import EnvConfig, make_results_table
@@ -86,6 +86,7 @@ class ParallelismManager(Enum):
     OPENAI = auto()
     VLLM = auto()
     NONE = auto()
+    SGLANG = auto()
 
 
 @dataclass
@@ -113,6 +114,9 @@ class PipelineParameters:
         elif self.launcher_type == ParallelismManager.VLLM:
             if not is_vllm_available():
                 raise ImportError(NO_VLLM_ERROR_MSG)
+        elif self.launcher_type == ParallelismManager.SGLANG:
+            if not is_sglang_available():
+                raise ImportError(NO_SGLANG_ERROR_MSG)
         elif self.launcher_type == ParallelismManager.TGI:
             if not is_tgi_available():
                 raise ImportError(NO_TGI_ERROR_MSG)
@@ -189,7 +193,9 @@ class Pipeline:
                     env_config=self.pipeline_parameters.env_config,
                 )
             else:
+                ## Jayon02: load model into vllm
                 return load_model(config=model_config, env_config=self.pipeline_parameters.env_config)
+
         if isinstance(model, TransformersModel):
             return model
         else:

@@ -42,31 +42,37 @@ from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
 )
-from lighteval.utils.imports import is_vllm_available
+from lighteval.utils.imports import is_sglang_available
 from lighteval.utils.utils import EnvConfig, as_list
 
 
 logger = logging.getLogger(__name__)
 
+from more_itertools import distribute
+from sglang import Engine
+from sglang.srt.hf_transformers_utils import get_tokenizer
+from sglang.lang.ir import SglSamplingParams
+from sglang.srt.distributed.parallel_state import destroy_model_parallel, destroy_distributed_environment
+
+# from vllm.distributed.parallel_state import destroy_distributed_environment, destroy_model_parallel
+
+logging.getLogger("sglang").propagate = True
+logging.getLogger("sglang").handlers.clear()
+
 ## Jayon02: sglang with what dependency, ray? flashinfer?
-if is_vllm_available():
-    import ray
-    from more_itertools import distribute
-    from vllm import LLM, SamplingParams
-    from vllm.distributed.parallel_state import destroy_distributed_environment, destroy_model_parallel
-    from vllm.transformers_utils.tokenizer import get_tokenizer
-
-    logging.getLogger("vllm").propagate = True
-    logging.getLogger("vllm").handlers.clear()
-
-    logging.getLogger("ray").propagate = True
-    logging.getLogger("ray").handlers.clear()
-else:
-    LLM = None
-    SamplingParams = None
-    get_tokenizer = None
-    ray = None
-    distribute = None
+# if is_sglang_available():
+#     from more_itertools import distribute
+#     from vllm import LLM, SamplingParams
+#     from vllm.distributed.parallel_state import destroy_distributed_environment, destroy_model_parallel
+#     from vllm.transformers_utils.tokenizer import get_tokenizer
+#
+#     logging.getLogger("sglang").propagate = True
+#     logging.getLogger("sglang").handlers.clear()
+# else:
+#     LLM = None
+#     SamplingParams = None
+#     get_tokenizer = None
+#     distribute = None
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -74,18 +80,24 @@ STARTING_BATCH_SIZE = 512
 
 ## change to all sglang config
 @dataclass
-class VLLMModelConfig:
-    pretrained: str
+class SGLANGModelConfig:
+    pretrained: str #
+    trust_remote_code: bool = True #
+    dtype: str = "auto" #
+    tensor_parallel_size: int = 1  # how many GPUs to use for tensor parallelism
+    device: str = "cuda"
+    disable_radix_cache: bool = True
+    seed: int = 42 #
+    disable_cuda_graph: bool = True
+    disable_cuda_graph_padding: bool = True
+    max_model_length: int | None = None  # maximum length of the model, ussually infered automatically. reduce this if you encouter OOM issues, 4096 is usually enough
+    return_token_ids: bool = True
+
     gpu_memory_utilisation: float = 0.9  # lower this if you are running out of memory
     revision: str = "main"  # revision of the model
-    dtype: str | None = None
-    tensor_parallel_size: int = 1  # how many GPUs to use for tensor parallelism
     pipeline_parallel_size: int = 1  # how many GPUs to use for pipeline parallelism
     data_parallel_size: int = 1  # how many GPUs to use for data parallelism
-    max_model_length: int | None = None  # maximum length of the model, ussually infered automatically. reduce this if you encouter OOM issues, 4096 is usually enough
     swap_space: int = 4  # CPU swap space size (GiB) per GPU.
-    seed: int = 1234
-    trust_remote_code: bool = False
     use_chat_template: bool = False
     add_special_tokens: bool = True
     multichoice_continuations_start_space: bool = (
@@ -101,10 +113,10 @@ class VLLMModelConfig:
             self.generation_parameters = GenerationParameters()
 
 
-class VLLMModel(LightevalModel):
+class SGLANGModel(LightevalModel):
     def __init__(
         self,
-        config: VLLMModelConfig,
+        config: SGLANGModelConfig,
         env_config: EnvConfig,
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
@@ -129,7 +141,7 @@ class VLLMModel(LightevalModel):
         self.precision = _get_dtype(config.dtype, config=self._config)
 
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
-        self.sampling_params = SamplingParams(**config.generation_parameters.to_vllm_openai_dict())
+        self.sampling_params = SglSamplingParams(**config.generation_parameters.to_sglang_dict())
         self.pairwise_tokenization = config.pairwise_tokenization
 
     @property
@@ -142,7 +154,8 @@ class VLLMModel(LightevalModel):
             del self.model.llm_engine.model_executor.driver_worker
         self.model = None
         gc.collect()
-        ray.shutdown()
+        # TODO: check sglang dependency: ray flashinfer ray?
+        # ray.shutdown()
         destroy_distributed_environment()
         torch.cuda.empty_cache()
 
@@ -154,7 +167,7 @@ class VLLMModel(LightevalModel):
     def max_length(self) -> int:
         return self._max_length
 
-    def _create_auto_model(self, config: VLLMModelConfig, env_config: EnvConfig) -> Optional[LLM]:
+    def _create_auto_model(self, config: SGLANGModelConfig, env_config: EnvConfig) -> Optional[Engine]:
         """
         Creates an instance of the pretrained HF model.
 
@@ -172,34 +185,55 @@ class VLLMModel(LightevalModel):
         Returns:
             transformers.PreTrainedModel: The created auto model instance.
         """
-        self.model_args = {
-            "model": config.pretrained,
-            "gpu_memory_utilization": float(config.gpu_memory_utilisation),
-            "revision": config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
-            "dtype": config.dtype,
+        # self.model_args = {
+        #     "model": config.pretrained,
+        #     "gpu_memory_utilization": float(config.gpu_memory_utilisation),
+        #     "revision": config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
+        #     "dtype": config.dtype,
+        #     "trust_remote_code": config.trust_remote_code,
+        #     "tensor_parallel_size": int(config.tensor_parallel_size),
+        #     "pipeline_parallel_size": int(config.pipeline_parallel_size),
+        #     "max_model_len": self._max_length,
+        #     "swap_space": 4,
+        #     "seed": 1234,
+        # }
+
+        # TODO: double check
+        self.model_args  = {
+            "model_path": config.pretrained,
             "trust_remote_code": config.trust_remote_code,
-            "tensor_parallel_size": int(config.tensor_parallel_size),
-            "pipeline_parallel_size": int(config.pipeline_parallel_size),
-            "max_model_len": self._max_length,
-            "swap_space": 4,
-            "seed": 1234,
+            "dtype": config.dtype,
+            "tp_size": int(config.tensor_parallel_size),
+            "device": "cuda",
+            "disable_radix_cache": config.disable_radix_cache,
+            "random_seed": config.seed,
+            "disable_cuda_graph": config.disable_cuda_graph,
+            "disable_cuda_graph_padding": config.disable_cuda_graph_padding,
+            "context_length": self._max_length,
+            "log_level": "info",
+            "return_token_ids": True,
+
+            "revision": config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
         }
-        if int(config.data_parallel_size) > 1:
-            self.model_args["distributed_executor_backend"] = "ray"
-            self._batch_size = "auto"
-            return None
 
-        model = LLM(**self.model_args)
+        # TODO: double check
+        # if int(config.data_parallel_size) > 1:
+        #     self.model_args["distributed_executor_backend"] = "ray"
+        #     self._batch_size = "auto"
+        #     return None
 
+        model = Engine(**self.model_args)
+
+        # TODO: double check
         # If the max_length can't get extracted from the config, it will be inferred from the model
         # Inferring from the tokenizer will cause vllm to bug for models with mismatches between model
         # config and tk config, like mistralai/Mistral-7B-v0.1
-        if self._max_length is None:
-            self._max_length = model.llm_engine.model_config.max_seq_len_to_capture
+        # if self._max_length is None:
+        #    self._max_length = model.llm_engine.model_config.max_seq_len_to_capture
 
         return model
 
-    def _create_auto_tokenizer(self, config: VLLMModelConfig, env_config: EnvConfig):
+    def _create_auto_tokenizer(self, config: SGLANGModelConfig, env_config: EnvConfig):
         tokenizer = get_tokenizer(
             config.pretrained,
             tokenizer_mode="auto",
@@ -278,7 +312,7 @@ class VLLMModel(LightevalModel):
                     context_size = self.max_length
                     inputs = [input[-context_size:] for input in inputs]
 
-            vllm_outputs = self._generate(
+            sglang_outputs = self._generate(
                 inputs=inputs,
                 max_new_tokens=max_new_tokens,
                 stop_tokens=stop_tokens,
@@ -286,12 +320,12 @@ class VLLMModel(LightevalModel):
                 num_samples=num_samples,
             )
 
-            for vllm_output in vllm_outputs:
-                output_token_ids = [outputs.token_ids for outputs in vllm_output.outputs]
-                logprobs = [output.logprobs for output in vllm_output.outputs] or []
+            for sglang_output in sglang_outputs:
+                output_token_ids = [outputs.token_ids for outputs in sglang_output.outputs]
+                logprobs = [output.logprobs for output in sglang_output.outputs] or []
                 logprobs = [logprob[token_id].logprob for token_id, logprob in zip(output_token_ids[0], logprobs[0])]
-                result = [output.text for output in vllm_output.outputs]
-                input_token_ids = vllm_output.prompt_token_ids
+                result = [output.text for output in sglang_output.outputs]
+                input_token_ids = sglang_output.prompt_token_ids
 
                 cur_response = GenerativeResponse(
                     result=result,
@@ -313,7 +347,7 @@ class VLLMModel(LightevalModel):
         generate: bool = True,
     ) -> list[GenerativeResponse]:
         """Contains the actual logic of the generation."""
-        sampling_params = self.sampling_params.clone() or SamplingParams()
+        sampling_params = self.sampling_params.clone() or SglSamplingParams()
         if generate:
             sampling_params.n = num_samples
             sampling_params.max_tokens = max_new_tokens
@@ -327,35 +361,41 @@ class VLLMModel(LightevalModel):
             sampling_params.detokenize = False
 
         ## Jayon02: how do sglang handle this
-        if self.data_parallel_size > 1:
-            # vLLM hangs if tensor_parallel > 1 and resources are set in ray.remote
-            # also seems to only work with decorator and not with ray.remote() fn
-            # see https://github.com/vllm-project/vllm/issues/973
-            # note: this has changed on 0.3.3, and it only works now if num_gpus are set.
-            # but then tensor_parallel breaks
-            # Hynek: With the newest vllm, it actually breaks when tensor_parallel_size == 1 and num_gpus not set,
-            # as VLLM complains about no GPUs available.
-            @ray.remote(num_gpus=1 if self.tensor_parallel_size == 1 else None)
-            def run_inference_one_model(model_args: dict, sampling_params: SamplingParams, requests):
-                llm = LLM(**model_args)
-                return llm.generate(prompt_token_ids=requests, sampling_params=sampling_params)
+        # if self.data_parallel_size > 1:
+        #     # vLLM hangs if tensor_parallel > 1 and resources are set in ray.remote
+        #     # also seems to only work with decorator and not with ray.remote() fn
+        #     # see https://github.com/vllm-project/vllm/issues/973
+        #     # note: this has changed on 0.3.3, and it only works now if num_gpus are set.
+        #     # but then tensor_parallel breaks
+        #     # Hynek: With the newest vllm, it actually breaks when tensor_parallel_size == 1 and num_gpus not set,
+        #     # as VLLM complains about no GPUs available.
+        #     @ray.remote(num_gpus=1 if self.tensor_parallel_size == 1 else None)
+        #     def run_inference_one_model(model_args: dict, sampling_params: SamplingParams, requests):
+        #         llm = LLM(**model_args)
+        #         return llm.generate(prompt_token_ids=requests, sampling_params=sampling_params)
+        #
+        #     # dispatch requests to all self.data_parallel_size workers, in interleaved fashion
+        #     # interleaved important to balance context lengths across workers
+        #     requests = [list(x) for x in distribute(self.data_parallel_size, inputs)]
+        #     inputs = ((self.model_args, sampling_params, req) for req in requests)
+        #     object_refs = [run_inference_one_model.remote(*x) for x in inputs]
+        #     results = ray.get(object_refs)
+        #     # Invoke ray.shutdown() to prevent hang-ups if subsequent calls required.
+        #     ray.shutdown()
+        #     # flatten results
+        #     outputs = [
+        #         x
+        #         for x in itertools.chain.from_iterable(itertools.zip_longest(*[list(x) for x in results]))
+        #         if x is not None
+        #     ]
+        # else:
+        #     outputs = self.model.generate(
+        #         prompt_token_ids=inputs,
+        #         sampling_params=sampling_params,
+        #         use_tqdm=True,
+        #     )
 
-            # dispatch requests to all self.data_parallel_size workers, in interleaved fashion
-            # interleaved important to balance context lengths across workers
-            requests = [list(x) for x in distribute(self.data_parallel_size, inputs)]
-            inputs = ((self.model_args, sampling_params, req) for req in requests)
-            object_refs = [run_inference_one_model.remote(*x) for x in inputs]
-            results = ray.get(object_refs)
-            # Invoke ray.shutdown() to prevent hang-ups if subsequent calls required.
-            ray.shutdown()
-            # flatten results
-            outputs = [
-                x
-                for x in itertools.chain.from_iterable(itertools.zip_longest(*[list(x) for x in results]))
-                if x is not None
-            ]
-        else:
-            outputs = self.model.generate(
+        outputs = self.model.generate(
                 prompt_token_ids=inputs,
                 sampling_params=sampling_params,
                 use_tqdm=True,
