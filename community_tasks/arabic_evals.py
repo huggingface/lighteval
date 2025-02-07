@@ -803,7 +803,7 @@ def madinah_qa_pfn(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=query,
-        choices=choices,
+        choices=valid_keys_arabic,
         gold_index=answer_index,  # Correct index in the valid keys
         instruction=instruction,
     )
