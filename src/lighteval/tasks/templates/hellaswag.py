@@ -70,7 +70,7 @@ def get_hellaswag_prompt_function(
     Create a templated prompt function for a Hellaswag task.
 
     Format:
-    Context Premise thefore/cause | (Continuation 1, Continuation 2, Continuation 3)
+    Context Premise therefore/cause | (Continuation 1, Continuation 2, Continuation 3)
 
     Args:
         language (Language): The language of the Hellaswag task.
@@ -126,7 +126,7 @@ def get_hellaswag_prompt_function(
         if ctx_b:
             ctx_a = join_ctxs(ctx_a, ctx_b)
 
-        # Removoal of the [header] can happen and we need the first letter to be capital afterwards
+        # Removal of the [header] can happen and we need the first letter to be capital afterwards
         full_context = HELLASWAG_QUERY.format(activity_label=activity_label, ctx=ctx_a)
         choices = [
             hellaswag_preprocess(

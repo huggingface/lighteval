@@ -28,7 +28,6 @@ from typing import Callable, Literal
 
 from tqdm import tqdm
 
-from lighteval.models.model_output import ModelResponse
 from lighteval.utils.imports import is_litellm_available, is_openai_available, is_vllm_available
 
 
@@ -194,6 +193,7 @@ class JudgeLM:
         import litellm
 
         def __call_api(prompt):
+            error_message = "ERROR: Failed to get response from the API."
             for _ in range(self.API_MAX_RETRY):
                 try:
                     kwargs = {
@@ -206,20 +206,19 @@ class JudgeLM:
                     }
                     response = litellm.completion(**kwargs)
                     text = response.choices[0].message.content
-                    if not text or response.failed:
+                    if not text or text == error_message:
                         kwargs["caching"] = False
                         response = litellm.completion(**kwargs)
                         text = response.choices[0].message.content
-                        if not text or response.failed:
+                        if not text or text == error_message:
                             # Just return an error response if the second attempt fails too
-                            return ModelResponse(
-                                text="Failed to get response from the API.", model=self.model, failed=True
-                            )
+                            logger.error(f"Failed to get response from the API for prompt: {prompt}")
+                            return error_message
                     return text
                 except Exception as e:
                     logger.warning(f"{type(e), e}")
                     time.sleep(self.API_RETRY_SLEEP)
-            return ModelResponse(text="Failed to get response from the API.", model=self.model, failed=True)
+            return error_message
 
         results = []
         with ThreadPoolExecutor(100) as executor:

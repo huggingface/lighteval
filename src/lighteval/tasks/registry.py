@@ -166,7 +166,7 @@ class Registry:
                 "lighteval|mmlu" -> ["lighteval|mmlu:abstract_algebra", "lighteval|mmlu:college_biology", ...]
             }
         """
-        # Note: sorted before groupby is imporant as the python implementation of groupby does not
+        # Note: sorted before groupby is important as the python implementation of groupby does not
         # behave like sql groupby. For more info see the docs of itertools.groupby
         superset_dict = {k: list(v) for k, v in groupby(sorted(self.task_registry.keys()), lambda x: x.split(":")[0])}
         # Only consider supersets with more than one task
