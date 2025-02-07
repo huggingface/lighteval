@@ -92,7 +92,7 @@ nanotron = [
   "tensorboardX"
 ]
 tensorboardX = ["tensorboardX"]
-vllm = ["vllm", "ray", "more_itertools"]
+vllm = ["vllm>=0.7.0", "ray", "more_itertools"]
 quality = ["ruff==v0.2.2","pre-commit"]
 tests = ["pytest==7.4.0"]
 dev = ["lighteval[accelerate,quality,tests,multilingual,math]"]
@@ -109,7 +109,7 @@ multilingual = [
     "jieba", # for chinese tokenizer
     "pyvi", # for vietnamese tokenizer
 ]
-math = ["latex2sympy2_extended>=0.9.3"]
+math = ["latex2sympy2_extended==1.0.6"]
 
 [project.urls]
 Homepage = "https://github.com/huggingface/lighteval"

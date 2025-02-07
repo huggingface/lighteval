@@ -123,10 +123,10 @@ pre-commit run --all-files
 
 ```bibtex
 @misc{lighteval,
-  author = {Fourrier, Clémentine and Habib, Nathan and Wolf, Thomas and Tunstall, Lewis},
+  author = {Fourrier, Clémentine and Habib, Nathan and Kydlíček, Hynek and Wolf, Thomas and Tunstall, Lewis},
   title = {LightEval: A lightweight framework for LLM evaluation},
   year = {2023},
-  version = {0.5.0},
+  version = {0.7.0},
   url = {https://github.com/huggingface/lighteval}
 }
 ```
