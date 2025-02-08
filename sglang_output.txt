@@ -1,0 +1,11 @@
+│ │                  │   {                                                                       │ │
+│ │                  │   │   'text': ' Answer according to: For the given dictionary d with keys │ │
+│ │                  being integers, trave'+208,                                                 │ │
+│ │                  │   │   'meta_info': {                                                      │ │
+│ │                  │   │   │   'id': '04224678f3a24f7abfafef26cd6d101f',                       │ │
+│ │                  │   │   │   'finish_reason': {'type': 'stop', 'matched': '\n'},             │ │
+│ │                  │   │   │   'prompt_tokens': 77,                                            │ │
+│ │                  │   │   │   'completion_tokens': 58,                                        │ │
+│ │                  │   │   │   'cached_tokens': 0                                              │ │
+│ │                  │   │   }                                                                   │ │
+│ │                  │   }, 

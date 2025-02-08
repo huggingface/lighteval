@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 from more_itertools import distribute
 from sglang import Engine
 from sglang.srt.hf_transformers_utils import get_tokenizer
-from sglang.lang.ir import SglSamplingParams
+from sglang.srt.sampling.sampling_params import SamplingParams
 from sglang.srt.distributed.parallel_state import destroy_model_parallel, destroy_distributed_environment
 
 # from vllm.distributed.parallel_state import destroy_distributed_environment, destroy_model_parallel
@@ -141,7 +141,8 @@ class SGLANGModel(LightevalModel):
         self.precision = _get_dtype(config.dtype, config=self._config)
 
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
-        self.sampling_params = SglSamplingParams(**config.generation_parameters.to_sglang_dict())
+        # self.sampling_params = SamplingParams(**config.generation_parameters.to_sglang_dict())
+        self.sampling_params = dict()
         self.pairwise_tokenization = config.pairwise_tokenization
 
     @property
@@ -211,7 +212,7 @@ class SGLANGModel(LightevalModel):
             "disable_cuda_graph_padding": config.disable_cuda_graph_padding,
             "context_length": self._max_length,
             "log_level": "info",
-            "return_token_ids": True,
+            # "return_token_ids": True,
 
             "revision": config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
         }
@@ -297,20 +298,20 @@ class SGLANGModel(LightevalModel):
             context_size = len(inputs[0])
 
             # left truncate the inputs to the maximum length
-            if max_new_tokens is not None:
-                if context_size + max_new_tokens > self.max_length:
-                    logger.warning(
-                        f"{context_size + max_new_tokens=} which is greather than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
-                    )
-                    context_size = self.max_length - max_new_tokens
-                    inputs = [input[-context_size:] for input in inputs]
-            else:
-                if context_size > self.max_length:
-                    logger.warning(
-                        f"{context_size=} which is greather than {self.max_length=}. Truncating context to {self.max_length} tokens."
-                    )
-                    context_size = self.max_length
-                    inputs = [input[-context_size:] for input in inputs]
+            # if max_new_tokens is not None:
+            #     if context_size + max_new_tokens > self.max_length:
+            #         logger.warning(
+            #             f"{context_size + max_new_tokens=} which is greather than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
+            #         )
+            #         context_size = self.max_length - max_new_tokens
+            #         inputs = [input[-context_size:] for input in inputs]
+            # else:
+            #     if context_size > self.max_length:
+            #         logger.warning(
+            #             f"{context_size=} which is greather than {self.max_length=}. Truncating context to {self.max_length} tokens."
+            #         )
+            #         context_size = self.max_length
+            #         inputs = [input[-context_size:] for input in inputs]
 
             sglang_outputs = self._generate(
                 inputs=inputs,
@@ -347,18 +348,31 @@ class SGLANGModel(LightevalModel):
         generate: bool = True,
     ) -> list[GenerativeResponse]:
         """Contains the actual logic of the generation."""
-        sampling_params = self.sampling_params.clone() or SglSamplingParams()
-        if generate:
-            sampling_params.n = num_samples
-            sampling_params.max_tokens = max_new_tokens
-            sampling_params.stop = stop_tokens
-            sampling_params.logprobs = 1 if returns_logits else 0
+        # TODO: double check without clone
+        # bug: params are wrong
+        # sampling_params = self.sampling_params
+        # if generate:
+        #     sampling_params.n = num_samples
+        #     sampling_params.max_tokens = max_new_tokens
+        #     sampling_params.stop = stop_tokens
+        #     sampling_params.logprobs = 1 if returns_logits else 0
 
-        else:
-            sampling_params.temperature = 0
-            sampling_params.prompt_logprobs = 1
-            sampling_params.max_tokens = 1
-            sampling_params.detokenize = False
+        # else:
+        #     sampling_params.temperature = 0
+        #     sampling_params.prompt_logprobs = 1
+        #     sampling_params.max_tokens = 1
+        #     sampling_params.detokenize = False
+        
+        params = dict(
+            top_p=1.0,
+            top_k=-1,
+            max_new_tokens=max_new_tokens,
+            stop=stop_tokens,
+            temperature=1.0,
+            repetition_penalty=1.0,
+            skip_special_tokens=True,
+            spaces_between_special_tokens=True
+        )
 
         ## Jayon02: how do sglang handle this
         # if self.data_parallel_size > 1:
@@ -395,11 +409,18 @@ class SGLANGModel(LightevalModel):
         #         use_tqdm=True,
         #     )
 
+        # print(params)
+        # exit(0)
+
         outputs = self.model.generate(
-                prompt_token_ids=inputs,
-                sampling_params=sampling_params,
-                use_tqdm=True,
+                input_ids=inputs,
+                sampling_params=params,
             )
+
+        # outputs = self.model.generate(
+        #         inputs,
+        #         params,
+        #     )
 
         return outputs
 
