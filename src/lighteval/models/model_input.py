@@ -120,7 +120,6 @@ class GenerationParameters:
         }
         return {k: v for k, v in args.items() if v is not None}
 
-    # # TODO first: sampling parameter
     # def to_sglang_dict(self) -> dict:
     #     args = {
     #         "max_new_tokens": self.max_new_tokens,

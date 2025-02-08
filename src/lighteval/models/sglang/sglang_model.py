@@ -82,36 +82,19 @@ STARTING_BATCH_SIZE = 512
 @dataclass
 class SGLANGModelConfig:
     pretrained: str #
-    trust_remote_code: bool = True #
+    load_format: str = "auto"
     dtype: str = "auto" #
-    tensor_parallel_size: int = 1  # how many GPUs to use for tensor parallelism
+    tp_size: int = 1  # how many GPUs to use for tensor parallelism
+    dp_size: int = 1  # how many GPUs to use for data parallelism
+    context_length: int | None = None
+    random_seed: Optional[int] = None
+    trust_remote_code: bool = True #
+    chat_template: Optional[str] = None
     device: str = "cuda"
-    disable_radix_cache: bool = True
-    seed: int = 42 #
-    disable_cuda_graph: bool = True
-    disable_cuda_graph_padding: bool = True
-    max_model_length: int | None = None  # maximum length of the model, ussually infered automatically. reduce this if you encouter OOM issues, 4096 is usually enough
-    return_token_ids: bool = True
-
-    gpu_memory_utilisation: float = 0.9  # lower this if you are running out of memory
-    revision: str = "main"  # revision of the model
+    skip_tokenizer_init: bool = False
+    kv_cache_dtype: str = "auto",
+    add_special_tokens: bool = True,
     pipeline_parallel_size: int = 1  # how many GPUs to use for pipeline parallelism
-    data_parallel_size: int = 1  # how many GPUs to use for data parallelism
-    swap_space: int = 4  # CPU swap space size (GiB) per GPU.
-    use_chat_template: bool = False
-    add_special_tokens: bool = True
-    multichoice_continuations_start_space: bool = (
-        True  # whether to add a space at the start of each continuation in multichoice generation
-    )
-    pairwise_tokenization: bool = False  # whether to tokenize the context and continuation separately or together.
-    generation_parameters: GenerationParameters = None  # sampling parameters to use for generation
-
-    subfolder: Optional[str] = None
-
-    def __post_init__(self):
-        if not self.generation_parameters:
-            self.generation_parameters = GenerationParameters()
-
 
 class SGLANGModel(LightevalModel):
     def __init__(
@@ -121,30 +104,18 @@ class SGLANGModel(LightevalModel):
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self._config = config
-        self.use_chat_template = config.use_chat_template
-        self.data_parallel_size = int(config.data_parallel_size)
-        self.tensor_parallel_size = int(config.tensor_parallel_size)
-
-        self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
+        self.use_chat_template = config.chat_template is not None
+        self.data_parallel_size = int(config.dp_size)
+        self.tensor_parallel_size = int(config.tp_size)
+        self._add_special_tokens = bool(config.add_special_tokens)
         self._tokenizer = self._create_auto_tokenizer(config, env_config)
-
-        self._max_length = int(config.max_model_length) if config.max_model_length is not None else None
-
-        # If model_parallel is not set we compare the number of processes with the number of GPUs
+        self._max_length = int(config.context_length) if config.context_length is not None else 256
         self.model = self._create_auto_model(config, env_config)
-
-        # self._device = config.accelerator.device if config.accelerator is not None else "cpu"
-        self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
-
         self.model_name = _simplify_name(config.pretrained)
         self.model_sha = ""  # config.get_model_sha()
         self.precision = _get_dtype(config.dtype, config=self._config)
-
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
-        # self.sampling_params = SamplingParams(**config.generation_parameters.to_sglang_dict())
-        self.sampling_params = dict()
-        self.pairwise_tokenization = config.pairwise_tokenization
-
+ 
     @property
     def tokenizer(self):
         return self._tokenizer
@@ -155,8 +126,6 @@ class SGLANGModel(LightevalModel):
             del self.model.llm_engine.model_executor.driver_worker
         self.model = None
         gc.collect()
-        # TODO: check sglang dependency: ray flashinfer ray?
-        # ray.shutdown()
         destroy_distributed_environment()
         torch.cuda.empty_cache()
 
@@ -186,42 +155,19 @@ class SGLANGModel(LightevalModel):
         Returns:
             transformers.PreTrainedModel: The created auto model instance.
         """
-        # self.model_args = {
-        #     "model": config.pretrained,
-        #     "gpu_memory_utilization": float(config.gpu_memory_utilisation),
-        #     "revision": config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
-        #     "dtype": config.dtype,
-        #     "trust_remote_code": config.trust_remote_code,
-        #     "tensor_parallel_size": int(config.tensor_parallel_size),
-        #     "pipeline_parallel_size": int(config.pipeline_parallel_size),
-        #     "max_model_len": self._max_length,
-        #     "swap_space": 4,
-        #     "seed": 1234,
-        # }
-
         # TODO: double check
         self.model_args  = {
             "model_path": config.pretrained,
             "trust_remote_code": config.trust_remote_code,
             "dtype": config.dtype,
-            "tp_size": int(config.tensor_parallel_size),
             "device": "cuda",
-            "disable_radix_cache": config.disable_radix_cache,
-            "random_seed": config.seed,
-            "disable_cuda_graph": config.disable_cuda_graph,
-            "disable_cuda_graph_padding": config.disable_cuda_graph_padding,
-            "context_length": self._max_length,
+            "random_seed": config.random_seed,
+            "load_format": config.load_format,
+            "context_length": int(self._max_length) if self._max_length else None,
+            "dp_size": int(config.dp_size),
+            "tp_size": int(config.tp_size),
             "log_level": "info",
-            # "return_token_ids": True,
-
-            "revision": config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
         }
-
-        # TODO: double check
-        # if int(config.data_parallel_size) > 1:
-        #     self.model_args["distributed_executor_backend"] = "ray"
-        #     self._batch_size = "auto"
-        #     return None
 
         model = Engine(**self.model_args)
 
@@ -239,7 +185,7 @@ class SGLANGModel(LightevalModel):
             config.pretrained,
             tokenizer_mode="auto",
             trust_remote_code=config.trust_remote_code,
-            tokenizer_revision=config.revision,
+            tokenizer_revision="main",
         )
         tokenizer.pad_token = tokenizer.eos_token
         return tokenizer
@@ -294,34 +240,36 @@ class SGLANGModel(LightevalModel):
             # of losing some meaning, or have some generations that are exceedingly short?
             # The choice we go for here is to avoid truncating the prompt if we can, since it
             # should have been managed by the prompt creator/few shot manager if requested by the user.
+            
             inputs = tokenized["input_ids"]
             context_size = len(inputs[0])
 
             # left truncate the inputs to the maximum length
-            # if max_new_tokens is not None:
-            #     if context_size + max_new_tokens > self.max_length:
-            #         logger.warning(
-            #             f"{context_size + max_new_tokens=} which is greather than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
-            #         )
-            #         context_size = self.max_length - max_new_tokens
-            #         inputs = [input[-context_size:] for input in inputs]
-            # else:
-            #     if context_size > self.max_length:
-            #         logger.warning(
-            #             f"{context_size=} which is greather than {self.max_length=}. Truncating context to {self.max_length} tokens."
-            #         )
-            #         context_size = self.max_length
-            #         inputs = [input[-context_size:] for input in inputs]
+            if max_new_tokens is not None:
+                if context_size + max_new_tokens > self.max_length:
+                    logger.warning(
+                        f"{context_size + max_new_tokens=} which is greather than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
+                    )
+                    context_size = self.max_length - max_new_tokens
+                    inputs = [input[-context_size:] for input in inputs]
+            else:
+                if context_size > self.max_length:
+                    logger.warning(
+                        f"{context_size=} which is greather than {self.max_length=}. Truncating context to {self.max_length} tokens."
+                    )
+                    context_size = self.max_length
+                    inputs = [input[-context_size:] for input in inputs]
 
             sglang_outputs = self._generate(
                 inputs=inputs,
                 max_new_tokens=max_new_tokens,
                 stop_tokens=stop_tokens,
-                returns_logits=returns_logits,
                 num_samples=num_samples,
             )
 
             for sglang_output in sglang_outputs:
+                print(sglang_output)
+                exit(0)
                 output_token_ids = [outputs.token_ids for outputs in sglang_output.outputs]
                 logprobs = [output.logprobs for output in sglang_output.outputs] or []
                 logprobs = [logprob[token_id].logprob for token_id, logprob in zip(output_token_ids[0], logprobs[0])]
@@ -343,132 +291,37 @@ class SGLANGModel(LightevalModel):
         inputs: list[list[int]],
         max_new_tokens: Optional[int] = None,
         stop_tokens: Optional[list[str]] = None,
-        returns_logits: Optional[bool] = False,
         num_samples: int = 1,
         generate: bool = True,
     ) -> list[GenerativeResponse]:
         """Contains the actual logic of the generation."""
         # TODO: double check without clone
-        # bug: params are wrong
         # sampling_params = self.sampling_params
-        # if generate:
-        #     sampling_params.n = num_samples
-        #     sampling_params.max_tokens = max_new_tokens
-        #     sampling_params.stop = stop_tokens
-        #     sampling_params.logprobs = 1 if returns_logits else 0
 
-        # else:
-        #     sampling_params.temperature = 0
-        #     sampling_params.prompt_logprobs = 1
-        #     sampling_params.max_tokens = 1
-        #     sampling_params.detokenize = False
-        
         params = dict(
             top_p=1.0,
             top_k=-1,
+            min_p=0,
             max_new_tokens=max_new_tokens,
-            stop=stop_tokens,
+            # stop=stop_tokens,
             temperature=1.0,
             repetition_penalty=1.0,
             skip_special_tokens=True,
             spaces_between_special_tokens=True
         )
 
-        ## Jayon02: how do sglang handle this
-        # if self.data_parallel_size > 1:
-        #     # vLLM hangs if tensor_parallel > 1 and resources are set in ray.remote
-        #     # also seems to only work with decorator and not with ray.remote() fn
-        #     # see https://github.com/vllm-project/vllm/issues/973
-        #     # note: this has changed on 0.3.3, and it only works now if num_gpus are set.
-        #     # but then tensor_parallel breaks
-        #     # Hynek: With the newest vllm, it actually breaks when tensor_parallel_size == 1 and num_gpus not set,
-        #     # as VLLM complains about no GPUs available.
-        #     @ray.remote(num_gpus=1 if self.tensor_parallel_size == 1 else None)
-        #     def run_inference_one_model(model_args: dict, sampling_params: SamplingParams, requests):
-        #         llm = LLM(**model_args)
-        #         return llm.generate(prompt_token_ids=requests, sampling_params=sampling_params)
-        #
-        #     # dispatch requests to all self.data_parallel_size workers, in interleaved fashion
-        #     # interleaved important to balance context lengths across workers
-        #     requests = [list(x) for x in distribute(self.data_parallel_size, inputs)]
-        #     inputs = ((self.model_args, sampling_params, req) for req in requests)
-        #     object_refs = [run_inference_one_model.remote(*x) for x in inputs]
-        #     results = ray.get(object_refs)
-        #     # Invoke ray.shutdown() to prevent hang-ups if subsequent calls required.
-        #     ray.shutdown()
-        #     # flatten results
-        #     outputs = [
-        #         x
-        #         for x in itertools.chain.from_iterable(itertools.zip_longest(*[list(x) for x in results]))
-        #         if x is not None
-        #     ]
-        # else:
-        #     outputs = self.model.generate(
-        #         prompt_token_ids=inputs,
-        #         sampling_params=sampling_params,
-        #         use_tqdm=True,
-        #     )
-
-        # print(params)
-        # exit(0)
-
         outputs = self.model.generate(
                 input_ids=inputs,
                 sampling_params=params,
+                return_logprob=True,
             )
-
-        # outputs = self.model.generate(
-        #         inputs,
-        #         params,
-        #     )
 
         return outputs
 
     def loglikelihood(
         self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
     ) -> list[LoglikelihoodResponse]:
-        for request in requests:
-            if request.context == "":
-                request.tokenized_context = [self.tokenizer.eos_token_id]
-                request.tokenized_continuation = self.tok_encode(request.choice)
-            else:
-                # The following line is mandatory for compatibility with the harness
-                request.tokenized_context, request.tokenized_continuation = self.tok_encode_pair(
-                    request.context, request.choice, pairwise=self.pairwise_tokenization
-                )
-        return self._loglikelihood_tokens(requests, override_bs=override_bs)
-
-    def _loglikelihood_tokens(
-        self,
-        requests: list[LoglikelihoodRequest],
-        override_bs: int = -1,
-        return_bool_score: bool = True,
-        rolling: bool = False,
-    ) -> list[LoglikelihoodResponse]:
-        dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=1)
-        res = []
-
-        for _ in tqdm(dataset.splits_start_end_iterator()):
-            # the last token is an eos token, so we don't need to add it
-            inputs = [dataset[i].tokenized_context + dataset[i].tokenized_continuation for i in range(len(dataset))]
-            # Left truncate the inputs to the maximum length
-            inputs = [input[-self.max_length :] for input in inputs]
-            outputs = self._generate(inputs, generate=False)
-
-            for output, input in zip(outputs, dataset):
-                continuation_logprobs = []
-                for token, logprobs in zip(input.tokenized_continuation[::-1], output.prompt_logprobs[::-1]):
-                    continuation_logprobs.append(logprobs[token])
-                bool_score = all(logprob.rank == 1 for logprob in continuation_logprobs)
-                continuation_logprobs = [logprob.logprob for logprob in continuation_logprobs]
-                answer = LoglikelihoodResponse(
-                    input_tokens=input.tokenized_context + input.tokenized_continuation,
-                    generated_tokens=input.tokenized_continuation,
-                    result=(sum(continuation_logprobs), bool_score if return_bool_score else None),
-                )
-                res.append(answer)
-
-        return dataset.get_original_order(res)
+        pass
 
     def loglikelihood_rolling():
         pass
