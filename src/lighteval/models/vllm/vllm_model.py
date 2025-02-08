@@ -286,7 +286,6 @@ class VLLMModel(LightevalModel):
             )
 
             for vllm_output in vllm_outputs:
-                
                 output_token_ids = [outputs.token_ids for outputs in vllm_output.outputs]
                 logprobs = [output.logprobs for output in vllm_output.outputs] or []
                 logprobs = [logprob[token_id].logprob for token_id, logprob in zip(output_token_ids[0], logprobs[0])]

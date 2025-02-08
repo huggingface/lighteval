@@ -54,8 +54,6 @@ from sglang.srt.hf_transformers_utils import get_tokenizer
 from sglang.srt.sampling.sampling_params import SamplingParams
 from sglang.srt.distributed.parallel_state import destroy_model_parallel, destroy_distributed_environment
 
-# from vllm.distributed.parallel_state import destroy_distributed_environment, destroy_model_parallel
-
 logging.getLogger("sglang").propagate = True
 logging.getLogger("sglang").handlers.clear()
 
@@ -123,7 +121,7 @@ class SGLANGModel(LightevalModel):
     def cleanup(self):
         destroy_model_parallel()
         if self.model is not None:
-            del self.model.llm_engine.model_executor.driver_worker
+            self.model.shutdown()
         self.model = None
         gc.collect()
         destroy_distributed_environment()
@@ -168,6 +166,9 @@ class SGLANGModel(LightevalModel):
             "tp_size": int(config.tp_size),
             "log_level": "info",
         }
+
+        if config.dp_size > 1:
+            pass
 
         model = Engine(**self.model_args)
 
@@ -267,15 +268,17 @@ class SGLANGModel(LightevalModel):
                 num_samples=num_samples,
             )
 
-            for sglang_output in sglang_outputs:
-                print(sglang_output)
-                exit(0)
-                output_token_ids = [outputs.token_ids for outputs in sglang_output.outputs]
-                logprobs = [output.logprobs for output in sglang_output.outputs] or []
-                logprobs = [logprob[token_id].logprob for token_id, logprob in zip(output_token_ids[0], logprobs[0])]
-                result = [output.text for output in sglang_output.outputs]
-                input_token_ids = sglang_output.prompt_token_ids
-
+            for i in range(len(sglang_outputs)):
+                sglang_output = sglang_outputs[i]
+                # print(sglang_output)
+                # exit(0)
+                meta_info = sglang_output["meta_info"]
+                output_token_logprobs = meta_info["output_token_logprobs"]
+                output_token_ids = [output[1] for output in output_token_logprobs]
+                logprobs = [output[0] for output in output_token_logprobs]
+                result = [sglang_output["text"]]
+                input_token_ids = inputs[i]
+        
                 cur_response = GenerativeResponse(
                     result=result,
                     logits=logprobs,
@@ -296,19 +299,23 @@ class SGLANGModel(LightevalModel):
     ) -> list[GenerativeResponse]:
         """Contains the actual logic of the generation."""
         # TODO: double check without clone
-        # sampling_params = self.sampling_params
 
         params = dict(
             top_p=1.0,
             top_k=-1,
             min_p=0,
             max_new_tokens=max_new_tokens,
-            # stop=stop_tokens,
+            stop=stop_tokens,
             temperature=1.0,
             repetition_penalty=1.0,
             skip_special_tokens=True,
-            spaces_between_special_tokens=True
+            spaces_between_special_tokens=True,
+            n=num_samples
         )
+
+        if not generate:
+            params.temperature = 0
+            params.max_tokens = 1
 
         outputs = self.model.generate(
                 input_ids=inputs,
