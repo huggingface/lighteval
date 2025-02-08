@@ -1,1 +1,12 @@
-RequestOutput(request_id=0, prompt=None, prompt_token_ids=[1, 8789, 13, 1889, 1984, 15503, 2472, 5888, 13, 12, 1270, 1848, 1783, 28732, 944, 28725, 2195, 1148, 1329, 13, 12, 12, 944, 28723, 8554, 1148, 327, 2195, 1148, 13, 1889, 1984, 3540, 2472, 28732, 5183, 15503, 2472, 1329, 13, 12, 1270, 1848, 1783, 6743, 944, 28725, 1083, 1148, 1329, 13, 12, 12, 944, 28723, 1666, 1148, 327, 1083, 1148, 13, 28744, 327, 1984, 15503, 2472, 28732, 28782, 28731, 13, 28724, 327, 1984, 3540, 2472, 28732, 28744, 28723, 8554, 1148, 28731, 13, 13940, 28832, 13, 3195, 349, 272, 1192, 302, 337, 28723, 1666, 1148, 438, 272, 948, 302, 456, 2007, 28804], encoder_prompt=None, encoder_prompt_token_ids=None, prompt_logprobs=None, outputs=[CompletionOutput(index=0, text='', token_ids=(13,), cumulative_logprob=-0.047923602163791656, logprobs=[{13: Logprob(logprob=-0.047923602163791656, rank=1, decoded_token='\n')}], finish_reason=stop, stop_reason=)], finished=True, metrics=RequestMetrics(arrival_time=1738946941.3884528, last_token_time=1738946941.3884528, first_scheduled_time=1738946941.3913035, first_token_time=1738946941.6071706, time_in_queue=0.002850770950317383, finished_time=1738946941.608071, scheduler_time=0.001762479543685913, model_forward_time=None, model_execute_time=None), lora_request=None, num_cached_tokens=0)
+RequestOutput(request_id=0, 
+prompt=None, 
+prompt_token_ids=[1, 8789, 13, 1889, 1984, 15503, 2472, 5888, 13, 12, 1270, 1848, 1783, 28732, 944, 28725, 2195, 1148, 1329, 13, 12, 12, 944, 28723, 8554, 1148, 327, 2195, 1148, 13, 1889, 1984, 3540, 2472, 28732, 5183, 15503, 2472, 1329, 13, 12, 1270, 1848, 1783, 6743, 944, 28725, 1083, 1148, 1329, 13, 12, 12, 944, 28723, 1666, 1148, 327, 1083, 1148, 13, 28744, 327, 1984, 15503, 2472, 28732, 28782, 28731, 13, 28724, 327, 1984, 3540, 2472, 28732, 28744, 28723, 8554, 1148, 28731, 13, 13940, 28832, 13, 3195, 349, 272, 1192, 302, 337, 28723, 1666, 1148, 438, 272, 948, 302, 456, 2007, 28804], 
+encoder_prompt=None, 
+encoder_prompt_token_ids=None, prompt_logprobs=None, 
+outputs=[CompletionOutput(index=0, text='', token_ids=(13,), 
+  cumulative_logprob=-0.047923602163791656, 
+  logprobs=[{13: Logprob(logprob=-0.047923602163791656, rank=1, decoded_token='\n')}], 
+  finish_reason=stop, stop_reason=)], 
+finished=True, 
+metrics=RequestMetrics(arrival_time=1738946941.3884528, last_token_time=1738946941.3884528, first_scheduled_time=1738946941.3913035, first_token_time=1738946941.6071706, time_in_queue=0.002850770950317383, finished_time=1738946941.608071, scheduler_time=0.001762479543685913, model_forward_time=None, model_execute_time=None), 
+lora_request=None, num_cached_tokens=0)
