@@ -111,6 +111,7 @@ class VLLMModel(LightevalModel):
         self._config = config
         self.use_chat_template = config.use_chat_template
         self.data_parallel_size = int(config.data_parallel_size)
+        self.tensor_parallel_size = int(config.tensor_parallel_size)
 
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
         self._tokenizer = self._create_auto_tokenizer(config, env_config)
@@ -184,7 +185,7 @@ class VLLMModel(LightevalModel):
             "seed": 1234,
         }
         if int(config.data_parallel_size) > 1:
-            self.model_args["worker_use_ray"] = True
+            self.model_args["distributed_executor_backend"] = "ray"
             self._batch_size = "auto"
             return None
 
@@ -333,7 +334,9 @@ class VLLMModel(LightevalModel):
             # see https://github.com/vllm-project/vllm/issues/973
             # note: this has changed on 0.3.3, and it only works now if num_gpus are set.
             # but then tensor_parallel breaks
-            @ray.remote
+            # Hynek: With the newest vllm, it actually breaks when tensor_parallel_size == 1 and num_gpus not set,
+            # as VLLM complains about no GPUs available.
+            @ray.remote(num_gpus=1 if self.tensor_parallel_size == 1 else None)
             def run_inference_one_model(model_args: dict, sampling_params: SamplingParams, requests):
                 llm = LLM(**model_args)
                 return llm.generate(prompt_token_ids=requests, sampling_params=sampling_params)
