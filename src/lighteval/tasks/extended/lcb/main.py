@@ -27,7 +27,7 @@ lighteval vllm \
 """
 
 import json
-from typing import Any, Literal, TypedDict
+from typing import Any
 
 import lighteval.tasks.extended.lcb.testing_util as testing_util
 from lighteval.metrics.metrics import MetricCategory, MetricUseCase, PassAtK, SampleLevelMetric
@@ -36,12 +36,6 @@ from lighteval.tasks.lighteval_task import Doc, LightevalTaskConfig
 
 
 SYSTEM_MESSAGE_DEEPSEEK_R1 = "<｜begin▁of▁sentence｜>A conversation between User and Assistant. The user asks a question, and the Assistant solves it. The assistant first thinks about the reasoning process in the mind and then provides the user with the answer. The reasoning process and answer are enclosed within <think> </think> and <answer> </answer> tags, respectively, i.e., <think> reasoning process here </think> <answer> answer here </answer>.<｜User｜>"
-
-
-class TestCase(TypedDict):
-    input: str
-    output: str
-    testtype: Literal["stdin", "stdout"]
 
 
 def prepare_prompt(line: dict[str, Any]) -> str:
