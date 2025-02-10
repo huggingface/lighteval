@@ -315,7 +315,9 @@ class VLLMModel(LightevalModel):
         sampling_params = self.sampling_params.clone() or SamplingParams()
         if generate:
             sampling_params.n = num_samples
-            sampling_params.max_tokens = max_new_tokens
+            sampling_params.max_tokens = (
+                max_new_tokens if sampling_params.max_tokens is None else sampling_params.max_tokens
+            )
             sampling_params.stop = stop_tokens
             sampling_params.logprobs = 1 if returns_logits else 0
 
