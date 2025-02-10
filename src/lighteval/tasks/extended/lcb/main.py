@@ -31,7 +31,7 @@ from typing import Any, Literal, TypedDict
 
 import lighteval.tasks.extended.lcb.testing_util as testing_util
 from lighteval.metrics.metrics import MetricCategory, MetricUseCase, PassAtK, SampleLevelMetric
-from lighteval.tasks.extended.lcb.lcb_utils import translate_private_test_cases
+from lighteval.tasks.extended.lcb.testing_util import translate_private_test_cases
 from lighteval.tasks.lighteval_task import Doc, LightevalTaskConfig
 
 
