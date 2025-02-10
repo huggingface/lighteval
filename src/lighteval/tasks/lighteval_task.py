@@ -74,6 +74,8 @@ class LightevalTaskConfig:
         hf_repo (str): Path of the hub dataset repository containing the evaluation information.
         hf_subset (str): Subset used for the current task, will be default if none is selected.
         hf_avail_splits (list[str]): All the available splits in the evaluation dataset
+        hf_revision (str): Revision of the dataset used for the evaluation
+        hf_version_tag (str): Version tag of the dataset used for the evaluation
         evaluation_splits (list[str]): List of the splits actually used for this evaluation
         few_shots_split (str): Name of the split from which to sample few-shot examples
         few_shots_select (str): Method with which to sample few-shot examples
@@ -98,6 +100,7 @@ class LightevalTaskConfig:
     hf_revision: Optional[str] = None
     hf_filter: Optional[Callable[[dict], bool]] = None
     hf_avail_splits: Optional[ListLike[str]] = field(default_factory=lambda: ["train", "validation", "test"])
+    hf_version_tag: Optional[str] = None
     # We default to false, to reduce security issues
     trust_dataset: bool = False
 
@@ -181,6 +184,7 @@ class LightevalTask:
         self.dataset_path = cfg.hf_repo
         self.dataset_config_name = cfg.hf_subset
         self.dataset_revision = cfg.hf_revision
+        self.dataset_version_tag = cfg.hf_version_tag
         self.dataset_filter = cfg.hf_filter
         self.trust_dataset = cfg.trust_dataset
         self.dataset: Optional[DatasetDict] = None  # Delayed download
@@ -280,6 +284,7 @@ class LightevalTask:
                 self.trust_dataset,
                 self.dataset_filter,
                 self.dataset_revision,
+                version_tag=self.dataset_version_tag,
             )
         splits = as_list(splits)
 
