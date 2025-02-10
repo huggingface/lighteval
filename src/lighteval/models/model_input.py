@@ -59,6 +59,23 @@ class GenerationParameters:
         """
         return GenerationParameters(**config_dict.get("generation", {}))
 
+    def to_vllm_dict(self) -> dict:
+        """Selects relevant generation and sampling parameters for vllm models.
+        Doc: https://docs.vllm.ai/en/v0.5.5/dev/sampling_params.html
+
+        Returns:
+            dict: The parameters to create a vllm.SamplingParams in the model config.
+        """
+        sampling_params_to_vllm_naming = {
+            "max_new_tokens": "max_tokens",
+            "min_new_tokens": "min_tokens",
+            "stop_tokens": "stop",
+        }
+
+        # Task specific sampling params to set in model: n, best_of, use_beam_search
+        # Generation specific params to set in model: logprobs, prompt_logprobs
+        return {sampling_params_to_vllm_naming.get(k, k): v for k, v in asdict(self).items() if v is not None}
+
     def to_vllm_openai_dict(self) -> dict:
         """Selects relevant generation and sampling parameters for vllm and openai models.
         Doc: https://docs.vllm.ai/en/v0.5.5/dev/sampling_params.html
