@@ -72,3 +72,11 @@ model:
     repetition_penalty: 1.0
     frequency_penalty: 0.0
 ```
+
+And then, we are able to eval our model on any eval available in Lighteval.
+
+```bash
+lighteval endpoint litellm \
+    "examples/model_configs/litellm_model.yaml" \
+    "lighteval|gsm8k|0|0"
+```
