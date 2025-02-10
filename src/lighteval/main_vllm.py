@@ -133,12 +133,13 @@ def vllm(
     if model_args.endswith(".yaml"):
         with open(model_args, "r") as f:
             config = yaml.safe_load(f)["model"]
+        model_args = config["base_params"]["model_args"]
         generation_parameters = GenerationParameters.from_dict(config)
-        model_config = VLLMModelConfig(config, generation_parameters=generation_parameters)
-
     else:
-        model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
-        model_config = VLLMModelConfig(**model_args_dict)
+        generation_parameters = GenerationParameters()
+
+    model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
+    model_config = VLLMModelConfig(**model_args_dict, generation_parameters=generation_parameters)
 
     pipeline = Pipeline(
         tasks=tasks,
