@@ -120,16 +120,11 @@ class GenerationParameters:
         }
         return {k: v for k, v in args.items() if v is not None}
 
-    # def to_sglang_dict(self) -> dict:
-    #     args = {
-    #         "max_new_tokens": self.max_new_tokens,
-    #         "min_new_tokens": self.min_new_tokens,
-    #         "stop_token_ids": self.stop_tokens,
-    #         "temperature": self.temperature,
-    #         "top_k": self.top_k,
-    #         "top_p": self.top_p,
-    #         "min_p": self.min_p,
-    #         "repetition_penalty": self.repetition_penalty,
-    #     }
-    #     return {k: v for k, v in args.items() if v is not None}
+    def to_sglang_dict(self) -> dict:
+        args = {
+            "max_new_tokens": self.max_new_tokens,
+            "stop_token_ids": self.stop_tokens,
+            "temperature": self.temperature,
+        }
+        return {k: v for k, v in args.items() if v is not None}
 

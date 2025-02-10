@@ -64,7 +64,6 @@ logging.captureWarnings(capture=True)
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_accelerate.accelerate)
 app.command(rich_help_panel="Evaluation Utils")(lighteval.main_baseline.baseline)
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_nanotron.nanotron)
-# Jayon02: add vllm cmd
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_vllm.vllm)
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_sglang.sglang)
 app.add_typer(

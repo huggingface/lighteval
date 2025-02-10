@@ -151,7 +151,6 @@ class Pipeline:
         self.evaluation_tracker = evaluation_tracker
         self.accelerator, self.parallel_context = self._init_parallelism_manager()
         self.model = self._init_model(model_config, model)
-
         self.evaluation_tracker.general_config_logger.log_model_info(self.model.model_info)
         self._init_tasks_and_requests(tasks=tasks)
         self._init_random_seeds()
@@ -193,7 +192,6 @@ class Pipeline:
                     env_config=self.pipeline_parameters.env_config,
                 )
             else:
-                ## Jayon02: load model into vllm
                 return load_model(config=model_config, env_config=self.pipeline_parameters.env_config)
 
         if isinstance(model, TransformersModel):
@@ -213,10 +211,10 @@ class Pipeline:
                 cache_dir=self.pipeline_parameters.env_config.cache_dir,
                 custom_tasks=self.pipeline_parameters.custom_tasks_directory,
             )
+
             task_names_list, fewshots_dict = taskinfo_selector(tasks, registry)
             task_dict = registry.get_task_dict(task_names_list)
             LightevalTask.load_datasets(list(task_dict.values()), self.pipeline_parameters.dataset_loading_processes)
-
             self.evaluation_tracker.task_config_logger.log(task_dict)
 
             requests, docs = create_requests_from_tasks(
@@ -451,6 +449,7 @@ class Pipeline:
             responses = run_model(requests, override_bs=self.pipeline_parameters.override_batch_size)
 
             # Storing the responses associated to the same samples together
+
             for response, request in zip(responses, requests):
                 for metric_category in request.metric_categories:
                     sample_id = SampleUid(request.task_name, request.sample_index)

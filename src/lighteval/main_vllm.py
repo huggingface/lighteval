@@ -116,7 +116,6 @@ def vllm(
         hub_results_org=results_org,
     )
 
-    ## Jayon02: vllm pipeline parameter
     pipeline_params = PipelineParameters(
         launcher_type=ParallelismManager.VLLM,
         env_config=env_config,
@@ -131,7 +130,6 @@ def vllm(
         load_responses_from_details_date_id=load_responses_from_details_date_id,
     )
 
-    ## Jayon02: support two ways to load model
     if model_args.endswith(".yaml"):
         with open(model_args, "r") as f:
             config = yaml.safe_load(f)["model"]

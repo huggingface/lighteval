@@ -21,9 +21,10 @@
 # SOFTWARE.
 
 import gc
-import itertools
 import logging
 import os
+import subprocess
+import signal
 from dataclasses import dataclass
 from typing import Optional
 
@@ -45,54 +46,46 @@ from lighteval.tasks.requests import (
 from lighteval.utils.imports import is_sglang_available
 from lighteval.utils.utils import EnvConfig, as_list
 
-
 logger = logging.getLogger(__name__)
 
-from more_itertools import distribute
-from sglang import Engine
-from sglang.srt.hf_transformers_utils import get_tokenizer
-from sglang.srt.sampling.sampling_params import SamplingParams
-from sglang.srt.distributed.parallel_state import destroy_model_parallel, destroy_distributed_environment
-
-logging.getLogger("sglang").propagate = True
-logging.getLogger("sglang").handlers.clear()
-
-## Jayon02: sglang with what dependency, ray? flashinfer?
-# if is_sglang_available():
-#     from more_itertools import distribute
-#     from vllm import LLM, SamplingParams
-#     from vllm.distributed.parallel_state import destroy_distributed_environment, destroy_model_parallel
-#     from vllm.transformers_utils.tokenizer import get_tokenizer
-#
-#     logging.getLogger("sglang").propagate = True
-#     logging.getLogger("sglang").handlers.clear()
-# else:
-#     LLM = None
-#     SamplingParams = None
-#     get_tokenizer = None
-#     distribute = None
+if is_sglang_available():
+    from sglang import Engine
+    from sglang.srt.hf_transformers_utils import get_tokenizer
+    from sglang.srt.distributed.parallel_state import destroy_model_parallel, destroy_distributed_environment
+    
+    logging.getLogger("sglang").propagate = True
+    logging.getLogger("sglang").handlers.clear()
+else:
+    Engine = None
+    get_tokenizer = None
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 STARTING_BATCH_SIZE = 512
 
-## change to all sglang config
 @dataclass
 class SGLANGModelConfig:
-    pretrained: str #
+    pretrained: str
     load_format: str = "auto"
-    dtype: str = "auto" #
+    dtype: str = "auto"
     tp_size: int = 1  # how many GPUs to use for tensor parallelism
     dp_size: int = 1  # how many GPUs to use for data parallelism
     context_length: int | None = None
-    random_seed: Optional[int] = None
-    trust_remote_code: bool = True #
-    chat_template: Optional[str] = None
+    random_seed: Optional[int] = 1234
+    trust_remote_code: bool = False
+    chat_template: Optional[str] = None # no use
+    use_chat_template: bool = False
     device: str = "cuda"
     skip_tokenizer_init: bool = False
-    kv_cache_dtype: str = "auto",
-    add_special_tokens: bool = True,
+    kv_cache_dtype: str = "auto"
+    add_special_tokens: bool = True
     pipeline_parallel_size: int = 1  # how many GPUs to use for pipeline parallelism
+
+    generation_parameters: GenerationParameters = None
+    
+    def __post_init__(self):
+        if not self.generation_parameters:
+            self.generation_parameters = GenerationParameters()
 
 class SGLANGModel(LightevalModel):
     def __init__(
@@ -102,26 +95,57 @@ class SGLANGModel(LightevalModel):
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self._config = config
-        self.use_chat_template = config.chat_template is not None
+        self.use_chat_template = config.use_chat_template
         self.data_parallel_size = int(config.dp_size)
         self.tensor_parallel_size = int(config.tp_size)
         self._add_special_tokens = bool(config.add_special_tokens)
         self._tokenizer = self._create_auto_tokenizer(config, env_config)
-        self._max_length = int(config.context_length) if config.context_length is not None else 256
+        self._max_length = int(config.context_length) if config.context_length is not None else None
         self.model = self._create_auto_model(config, env_config)
         self.model_name = _simplify_name(config.pretrained)
         self.model_sha = ""  # config.get_model_sha()
         self.precision = _get_dtype(config.dtype, config=self._config)
+        self.sampling_params = config.generation_parameters.to_sglang_dict()
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
- 
+        
     @property
     def tokenizer(self):
         return self._tokenizer
 
     def cleanup(self):
+        
+        def reap_children(signum, frame):
+            try:
+                while True:
+                    pid, status = os.waitpid(-1, os.WNOHANG)
+                    if pid == 0:
+                        break
+                    print(f"Reaped child process {pid} with status {status}")
+            except ChildProcessError:
+                pass
+
+        signal.signal(signal.SIGCHLD, reap_children)
+        
+        
         destroy_model_parallel()
         if self.model is not None:
             self.model.shutdown()
+            result = subprocess.run(["nvidia-smi", "--query-compute-apps=pid,process_name,gpu_uuid",
+                "--format=csv,noheader,nounits"], capture_output=True, text=True)
+            lines = result.stdout.strip().split("\n")
+            target_pids = []
+
+            for line in lines:
+                parts = [p.strip() for p in line.split(",")]
+                if len(parts) < 2:
+                    continue
+                pid, process_name = parts[:2]
+                if process_name == "sglang::scheduler":
+                    target_pids.append(pid)
+                    
+            for pid in target_pids:
+                os.kill(int(pid), 9)
+
         self.model = None
         gc.collect()
         destroy_distributed_environment()
@@ -136,23 +160,7 @@ class SGLANGModel(LightevalModel):
         return self._max_length
 
     def _create_auto_model(self, config: SGLANGModelConfig, env_config: EnvConfig) -> Optional[Engine]:
-        """
-        Creates an instance of the pretrained HF model.
 
-        Args:
-            pretrained (str): The name or path of the pretrained model.
-            revision (str): The revision of the model.
-            subfolder (Optional[str], optional): The subfolder within the model. Defaults to None.
-            max_memory (Optional[dict], optional): The maximum memory to allocate for the model per GPU. Defaults to None.
-            device_map (Optional[dict], optional): The device mapping for the model. Defaults to None.
-            torch_dtype (Optional[Union[str, torch.dtype]], optional): The torch data type for the model. Defaults to None.
-            quantization_config (Optional[Union[BitsAndBytesConfig, GPTQConfig]], optional): The quantization configuration for the model. Defaults to None.
-            trust_remote_code (bool, optional): Whether to trust remote code. Defaults to False.
-            cache_dir (str, optional): The cache directory for the model. Defaults to "/scratch".
-
-        Returns:
-            transformers.PreTrainedModel: The created auto model instance.
-        """
         # TODO: double check
         self.model_args  = {
             "model_path": config.pretrained,
@@ -172,12 +180,8 @@ class SGLANGModel(LightevalModel):
 
         model = Engine(**self.model_args)
 
-        # TODO: double check
-        # If the max_length can't get extracted from the config, it will be inferred from the model
-        # Inferring from the tokenizer will cause vllm to bug for models with mismatches between model
-        # config and tk config, like mistralai/Mistral-7B-v0.1
-        # if self._max_length is None:
-        #    self._max_length = model.llm_engine.model_config.max_seq_len_to_capture
+        if self._max_length is None:
+           self._max_length = 8192
 
         return model
 
@@ -218,15 +222,12 @@ class SGLANGModel(LightevalModel):
             total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
-            disable=False,  # self.disable_tqdm,
+            disable=False,
         ):
-            # For chat models, generation stops with EOS token, so we don't need to specify stop tokens
+            
             if self.use_chat_template:
                 stop_tokens = []
             else:
-                # NOTE: we are assuming all items in a batch behave similarly (same
-                # stop_tokens and max_tokens genrated) which is not necessarily
-                # the case! Because of that we only use batch size of 1
                 stop_tokens = dataset[0].stop_sequence
 
             max_new_tokens = dataset[0].generation_size  # could be none
@@ -267,17 +268,13 @@ class SGLANGModel(LightevalModel):
                 stop_tokens=stop_tokens,
                 num_samples=num_samples,
             )
-
-            for i in range(len(sglang_outputs)):
-                sglang_output = sglang_outputs[i]
-                # print(sglang_output)
-                # exit(0)
+            
+            for input_token_ids, sglang_output in zip(inputs, sglang_outputs):
                 meta_info = sglang_output["meta_info"]
                 output_token_logprobs = meta_info["output_token_logprobs"]
                 output_token_ids = [output[1] for output in output_token_logprobs]
                 logprobs = [output[0] for output in output_token_logprobs]
                 result = [sglang_output["text"]]
-                input_token_ids = inputs[i]
         
                 cur_response = GenerativeResponse(
                     result=result,
@@ -298,31 +295,27 @@ class SGLANGModel(LightevalModel):
         generate: bool = True,
     ) -> list[GenerativeResponse]:
         """Contains the actual logic of the generation."""
-        # TODO: double check without clone
+        # TODO: double check
+        
+        self.sampling_params["stop"] = stop_tokens
+        self.sampling_params["n"] = num_samples
+        self.sampling_params["top_p"] = 1.0
+        self.sampling_params["top_k"] = -1
+        self.sampling_params["skip_special_tokens"] = True
 
-        params = dict(
-            top_p=1.0,
-            top_k=-1,
-            min_p=0,
-            max_new_tokens=max_new_tokens,
-            stop=stop_tokens,
-            temperature=1.0,
-            repetition_penalty=1.0,
-            skip_special_tokens=True,
-            spaces_between_special_tokens=True,
-            n=num_samples
-        )
-
-        if not generate:
-            params.temperature = 0
-            params.max_tokens = 1
+        if generate:
+            self.sampling_params["temperature"] = 0.6
+            self.sampling_params["max_new_tokens"] = max_new_tokens
+        else:
+            self.sampling_params["temperature"] = 0
+            self.sampling_params["max_new_tokens"] = 1
 
         outputs = self.model.generate(
                 input_ids=inputs,
-                sampling_params=params,
+                sampling_params=self.sampling_params,
                 return_logprob=True,
             )
-
+        
         return outputs
 
     def loglikelihood(

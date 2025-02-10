@@ -71,7 +71,6 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 STARTING_BATCH_SIZE = 512
 
-## change to all sglang config
 @dataclass
 class VLLMModelConfig:
     pretrained: str
@@ -130,7 +129,7 @@ class VLLMModel(LightevalModel):
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
         self.sampling_params = SamplingParams(**config.generation_parameters.to_vllm_openai_dict())
         self.pairwise_tokenization = config.pairwise_tokenization
-
+        
     @property
     def tokenizer(self):
         return self._tokenizer
@@ -276,7 +275,7 @@ class VLLMModel(LightevalModel):
                     )
                     context_size = self.max_length
                     inputs = [input[-context_size:] for input in inputs]
-
+            
             vllm_outputs = self._generate(
                 inputs=inputs,
                 max_new_tokens=max_new_tokens,
@@ -284,14 +283,14 @@ class VLLMModel(LightevalModel):
                 returns_logits=returns_logits,
                 num_samples=num_samples,
             )
-
+            
             for vllm_output in vllm_outputs:
                 output_token_ids = [outputs.token_ids for outputs in vllm_output.outputs]
                 logprobs = [output.logprobs for output in vllm_output.outputs] or []
                 logprobs = [logprob[token_id].logprob for token_id, logprob in zip(output_token_ids[0], logprobs[0])]
                 result = [output.text for output in vllm_output.outputs]
                 input_token_ids = vllm_output.prompt_token_ids
-
+                
                 cur_response = GenerativeResponse(
                     result=result,
                     logits=logprobs,
@@ -358,12 +357,13 @@ class VLLMModel(LightevalModel):
                 sampling_params=sampling_params,
                 use_tqdm=True,
             )
-
+            
         return outputs
 
     def loglikelihood(
         self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
     ) -> list[LoglikelihoodResponse]:
+
         for request in requests:
             if request.context == "":
                 request.tokenized_context = [self.tokenizer.eos_token_id]

@@ -1,1 +1,0 @@
-{'top_p': 1.0, 'top_k': -1, 'max_new_tokens': 100, 'stop': ['\n', '</s>'], 'temperature': 1.0, 'repetition_penalty': 1.0, 'skip_special_tokens': True, 'spaces_between_special_tokens': True}

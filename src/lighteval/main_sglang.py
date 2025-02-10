@@ -1,4 +1,3 @@
-# TODO: change to what?
 # MIT License
 
 # Copyright (c) 2024 The HuggingFace Team
@@ -35,7 +34,6 @@ HELP_PANEL_NAME_2 = "Logging Parameters"
 HELP_PANEL_NAME_3 = "Debug Parameters"
 HELP_PANEL_NAME_4 = "Modeling Parameters"
 
-# TODO: change
 def sglang(
     # === general ===
     model_args: Annotated[
@@ -117,7 +115,6 @@ def sglang(
         hub_results_org=results_org,
     )
 
-    ## Jayon02: vllm pipeline parameter
     pipeline_params = PipelineParameters(
         launcher_type=ParallelismManager.SGLANG,
         env_config=env_config,
@@ -132,7 +129,6 @@ def sglang(
         load_responses_from_details_date_id=load_responses_from_details_date_id,
     )
 
-    ## Jayon02: support two ways to load model
     if model_args.endswith(".yaml"):
         with open(model_args, "r") as f:
             config = yaml.safe_load(f)["model"]
@@ -144,7 +140,6 @@ def sglang(
         model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
 
         model_config = SGLANGModelConfig(**model_args_dict)
-
     pipeline = Pipeline(
         tasks=tasks,
         pipeline_parameters=pipeline_params,
