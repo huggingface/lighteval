@@ -66,8 +66,6 @@ class GenerationParameters:
         Returns:
             dict: The parameters to create a litellm.SamplingParams in the model config.
         """
-        # Task specific sampling params to set in model: n, best_of, use_beam_search
-        # Generation specific params to set in model: logprobs, prompt_logprobs
         args = {
             "max_completion_tokens": self.max_new_tokens,
             "stop": self.stop_tokens,

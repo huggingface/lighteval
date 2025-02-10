@@ -67,7 +67,11 @@ class LiteLLMModelConfig:
     provider: Optional[str] = None
     base_url: Optional[str] = None
     api_key: Optional[str] = None
-    generation_parameters: GenerationParameters = None  # sampling parameters to use for generation
+    generation_parameters: GenerationParameters = None
+
+    def __post_init__(self):
+        if self.generation_parameters is None:
+            self.generation_parameters = GenerationParameters()
 
     @classmethod
     def from_path(cls, path):
