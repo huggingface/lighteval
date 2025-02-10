@@ -29,9 +29,11 @@ lighteval vllm \
 import json
 from typing import Any
 
-import lighteval.tasks.extended.lcb.testing_util as testing_util
-from lighteval.metrics.metrics import MetricCategory, MetricUseCase, PassAtK, SampleLevelMetric
-from lighteval.tasks.extended.lcb.testing_util import translate_private_test_cases
+import numpy as np
+from aenum import extend_enum
+
+import lighteval.tasks.extended.lcb.lcb_utils as lcb_utils
+from lighteval.metrics.metrics import MetricCategory, Metrics, MetricUseCase, PassAtK, SampleLevelMetric
 from lighteval.tasks.lighteval_task import Doc, LightevalTaskConfig
 
 
@@ -59,7 +61,7 @@ def lcb_codegeneration_prompt_fn(line, task_name: str = "lcb:codegeneration") ->
     query = prepare_prompt(line)
     # List of dicts of the form: [{"input": "6\nabc\nacb\nbac\nbca\ncab\ncba\n", "output": "YES\nYES\nYES\nNO\nNO\nYES\n", "testtype": "stdin"}]
     public_test_cases = json.loads(line["public_test_cases"])
-    private_test_cases = translate_private_test_cases(line["private_test_cases"])
+    private_test_cases = lcb_utils.translate_private_test_cases(line["private_test_cases"])
     inputs = [test["input"] for test in public_test_cases + private_test_cases]
     outputs = [test["output"] for test in public_test_cases + private_test_cases]
 
@@ -73,27 +75,46 @@ def lcb_codegeneration_prompt_fn(line, task_name: str = "lcb:codegeneration") ->
             "inputs": inputs,
             "outputs": outputs,
             "fn_name": line["metadata"].get("func_name", None),
-            "contest_date": line["contest_date"].isoformat(),  # This should be used to filter the dataset
+            # To determine how to run the function
+            "is_stdin": any(test["testtype"] == "stdin" for test in inputs),
+            # "contest_date": line["contest_date"].isoformat(),  # NOTE: This should be used to filter the dataset
         },
     )
 
 
-# TODO: Needs a special metric that extracts the code, runs it, and then computes the Pass@K over the results
+def lcb_codegen_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> SampleLevelMetric:
+    """LiveCodeBench code generation metric.
+    Steps:
+    1. Extract the code from the prediction
+    2. Run the code on the inputs
+    3. Compute the Pass@1 over the outputs
+    """
+    # Extract generated code snippets
+    generated_code_snippets = [lcb_utils.extract_code(pred) for pred in predictions]  # noqa: F841
+    evaluation_samples = {  # noqa: F841
+        "inputs": formatted_doc.specific["inputs"],
+        "outputs": formatted_doc.specific["outputs"],
+        "fn_name": formatted_doc.specific["fn_name"],
+    }
+
+    def codegen_metrics(reference: str, generated: str) -> dict[str, Any]:
+        return {"passes": 1}
+
+    n = len(predictions)  # The LiveCodeBench repo uses 10 by default
+
+    return SampleLevelMetric(
+        metric_name=f"pass@1:{n}_samples",
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        higher_is_better=True,
+        sample_level_fn=PassAtK(
+            k=kwargs.get("k", 1), n=len(predictions), sample_scoring_function=codegen_metrics
+        ).compute,
+        corpus_level_fn=np.mean,
+    )
 
 
-pass_at_1 = SampleLevelMetric(
-    metric_name="pass@1:16_samples",
-    sample_level_fn=PassAtK(
-        k=1,
-        n=16,
-        strip_strings=True,
-        normalize_pred=testing_util.extract_code,
-    ).compute,
-    category=MetricCategory.GENERATIVE_SAMPLING,
-    use_case=MetricUseCase.REASONING,
-    corpus_level_fn=lambda x: x,
-    higher_is_better=True,
-)
+extend_enum(Metrics, "lcb_codegen_metric", lcb_codegen_metric)
 
 
 task = LightevalTaskConfig(
@@ -109,7 +130,7 @@ task = LightevalTaskConfig(
     hf_version_tag="v3_v5",  # v3_v5 is the version with the new test cases corresponding to the R1 models.
     evaluation_splits=["test"],
     generation_size=32768,
-    metric=[pass_at_1],
+    metric=[Metrics.lcb_codegen_metric],
     stop_sequence=[],  # no stop sequence, will use EOS token
     trust_dataset=True,
     version=0,
