@@ -556,6 +556,7 @@ class LightevalTask:
                     task.trust_dataset,
                     task.dataset_filter,
                     task.dataset_revision,
+                    version_tag=task.dataset_version_tag,
                 )
                 for task in tasks
             ]
