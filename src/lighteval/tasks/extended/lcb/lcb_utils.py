@@ -129,7 +129,7 @@ def prepare_test_input_output_std(test_case):
     return test_input, test_output
 
 
-def run_test_func(completion, is_extracted, test_input, test_output):
+def run_test_func(completion, is_extracted: bool, test_input, test_output):
     namespace = {}
     exec(completion, namespace)
     func_name = completion.split("(")[0].split()[-1]
@@ -170,7 +170,7 @@ def run_test_std(completion, test_input, test_output):
             sys.stdout = sys.__stdout__
 
 
-def prepare_test_input_output_functional(test_case, is_extracted):  # noqa: C901
+def prepare_test_input_output_functional(test_case, is_extracted: bool):  # noqa: C901
     if not is_extracted:
         # Extract input and expected output from JSON directly
         test_input = test_case["input"]
@@ -220,7 +220,7 @@ def prepare_test_input_output_functional(test_case, is_extracted):  # noqa: C901
         return inputs, expected_output
 
 
-def run_tests_for_one_example(test_cases, completion, result_list, is_extracted):
+def run_tests_for_one_example(test_cases, completion, result_list, is_extracted: bool):
     time_elapsed = float("inf")
     test_type = test_cases[0]["testtype"]
     reliability_guard()
@@ -254,7 +254,7 @@ def run_tests_for_one_example(test_cases, completion, result_list, is_extracted)
             return
 
 
-def lcb_run(problem: Dict[str, str], completion, timeout, is_extracted):
+def lcb_run(problem: Dict[str, str], completion, timeout: float, is_extracted: bool):
     test_cases = problem["test"]
     manager = multiprocessing.Manager()
     result = manager.list()
@@ -269,7 +269,7 @@ def lcb_run(problem: Dict[str, str], completion, timeout, is_extracted):
     return result
 
 
-def check_correctness(problem, completion, timeout, is_extracted: bool = False) -> bool:
+def check_correctness(problem, completion, timeout: float, is_extracted: bool = False) -> bool:
     """Evaluates the functional correctness of a completion by running the test
     suite provided in the problem.
     """

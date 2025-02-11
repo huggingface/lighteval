@@ -84,21 +84,36 @@ def lcb_codegeneration_prompt_fn(line, task_name: str = "lcb:codegeneration") ->
 
 def lcb_codegen_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> SampleLevelMetric:
     """LiveCodeBench code generation metric.
+
     Steps:
-    1. Extract the code from the prediction
-    2. Run the code on the inputs
-    3. Compute the Pass@1 over the outputs
+    1. Extract the code from each prediction.
+    2. Run the code for each sample and generations.
+    3. Compute the Pass@1 over the outputs.
+
+    Args:
+        predictions (list[str]): List of generated code snippets, the length of the list is the number
+            of generations requested.
+        formatted_doc (Doc): The document containing the inputs and outputs
+        **kwargs: Additional arguments.
+
+    Returns:
+        A sample level metric that extracts and compares mathematical expressions.
     """
     # Extract generated code snippets
-    generated_code_snippets = [lcb_utils.extract_code(pred) for pred in predictions]  # noqa: F841
-    evaluation_samples = {  # noqa: F841
+    generated_code_snippets: list[str] = [lcb_utils.extract_code(pred) for pred in predictions]  # noqa: F841
+
+    evaluation_sample = {  # noqa: F841
         "inputs": formatted_doc.specific["inputs"],
         "outputs": formatted_doc.specific["outputs"],
         "fn_name": formatted_doc.specific["fn_name"],
     }
 
-    def codegen_metrics(reference: str, generated: str) -> dict[str, Any]:
-        return {"passes": 1}
+    def codegen_metrics(reference: str, generated: str) -> float:
+        # NOTE: This function, following PassAtK docs must have type callable[[str, str], float],
+        # but we need here to run for each sample against all the generated_code_snippets (the n generations).
+        # It should return a list of booleans, True when the code run as expected, False otherwise.
+        # Then for that we should compute the Pass@1 metric.
+        return 1.0
 
     n = len(predictions)  # The LiveCodeBench repo uses 10 by default
 
@@ -107,9 +122,7 @@ def lcb_codegen_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> 
         category=MetricCategory.GENERATIVE_SAMPLING,
         use_case=MetricUseCase.REASONING,
         higher_is_better=True,
-        sample_level_fn=PassAtK(
-            k=kwargs.get("k", 1), n=len(predictions), sample_scoring_function=codegen_metrics
-        ).compute,
+        sample_level_fn=PassAtK(k=kwargs.get("k", 1), n=n, sample_scoring_function=codegen_metrics).compute,
         corpus_level_fn=np.mean,
     )
 
