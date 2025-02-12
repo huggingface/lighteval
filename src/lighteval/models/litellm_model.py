@@ -154,7 +154,7 @@ class LiteLLMClient(LightevalModel):
                     logger.info("Response is empty, retrying without caching")
                     response = litellm.completion(**kwargs)
 
-                if content and "<think>" in content:
+                if content is not None and "<think>" in content:
                     logger.debug(f"Removing <think> tags from response: {content}")
                     response.choices[0].message.content = re.sub(
                         r"<think>.*?</think>", "", content, flags=re.DOTALL
