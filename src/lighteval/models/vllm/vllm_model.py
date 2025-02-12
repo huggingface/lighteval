@@ -290,7 +290,6 @@ class VLLMModel(LightevalModel):
                 logprobs = [logprob[token_id].logprob for token_id, logprob in zip(output_token_ids[0], logprobs[0])]
                 result = [output.text for output in vllm_output.outputs]
                 input_token_ids = vllm_output.prompt_token_ids
-                
                 cur_response = GenerativeResponse(
                     result=result,
                     logits=logprobs,
@@ -357,13 +356,11 @@ class VLLMModel(LightevalModel):
                 sampling_params=sampling_params,
                 use_tqdm=True,
             )
-            
         return outputs
 
     def loglikelihood(
         self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
     ) -> list[LoglikelihoodResponse]:
-
         for request in requests:
             if request.context == "":
                 request.tokenized_context = [self.tokenizer.eos_token_id]

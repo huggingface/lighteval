@@ -73,7 +73,6 @@ class SGLANGModelConfig:
     context_length: int | None = None
     random_seed: Optional[int] = 1234
     trust_remote_code: bool = False
-    chat_template: Optional[str] = None # no use
     use_chat_template: bool = False
     device: str = "cuda"
     skip_tokenizer_init: bool = False
@@ -112,39 +111,10 @@ class SGLANGModel(LightevalModel):
     def tokenizer(self):
         return self._tokenizer
 
-    def cleanup(self):
-        
-        def reap_children(signum, frame):
-            try:
-                while True:
-                    pid, status = os.waitpid(-1, os.WNOHANG)
-                    if pid == 0:
-                        break
-                    print(f"Reaped child process {pid} with status {status}")
-            except ChildProcessError:
-                pass
-
-        signal.signal(signal.SIGCHLD, reap_children)
-        
-        
+    def cleanup(self):        
         destroy_model_parallel()
         if self.model is not None:
             self.model.shutdown()
-            result = subprocess.run(["nvidia-smi", "--query-compute-apps=pid,process_name,gpu_uuid",
-                "--format=csv,noheader,nounits"], capture_output=True, text=True)
-            lines = result.stdout.strip().split("\n")
-            target_pids = []
-
-            for line in lines:
-                parts = [p.strip() for p in line.split(",")]
-                if len(parts) < 2:
-                    continue
-                pid, process_name = parts[:2]
-                if process_name == "sglang::scheduler":
-                    target_pids.append(pid)
-                    
-            for pid in target_pids:
-                os.kill(int(pid), 9)
 
         self.model = None
         gc.collect()
@@ -275,7 +245,6 @@ class SGLANGModel(LightevalModel):
                 output_token_ids = [output[1] for output in output_token_logprobs]
                 logprobs = [output[0] for output in output_token_logprobs]
                 result = [sglang_output["text"]]
-        
                 cur_response = GenerativeResponse(
                     result=result,
                     logits=logprobs,
@@ -296,26 +265,22 @@ class SGLANGModel(LightevalModel):
     ) -> list[GenerativeResponse]:
         """Contains the actual logic of the generation."""
         # TODO: double check
-        
         self.sampling_params["stop"] = stop_tokens
         self.sampling_params["n"] = num_samples
         self.sampling_params["top_p"] = 1.0
         self.sampling_params["top_k"] = -1
         self.sampling_params["skip_special_tokens"] = True
+        self.sampling_params["temperature"] = 0
 
         if generate:
-            self.sampling_params["temperature"] = 0.6
             self.sampling_params["max_new_tokens"] = max_new_tokens
         else:
-            self.sampling_params["temperature"] = 0
             self.sampling_params["max_new_tokens"] = 1
-
         outputs = self.model.generate(
                 input_ids=inputs,
                 sampling_params=self.sampling_params,
                 return_logprob=True,
             )
-        
         return outputs
 
     def loglikelihood(
