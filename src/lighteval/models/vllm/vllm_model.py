@@ -76,7 +76,7 @@ STARTING_BATCH_SIZE = 512
 @dataclass
 class VLLMModelConfig:
     pretrained: str
-    gpu_memory_utilisation: float = 0.9  # lower this if you are running out of memory
+    gpu_memory_utilization: float = 0.9  # lower this if you are running out of memory
     revision: str = "main"  # revision of the model
     dtype: str | None = None
     tensor_parallel_size: int = 1  # how many GPUs to use for tensor parallelism
@@ -174,7 +174,7 @@ class VLLMModel(LightevalModel):
         """
         self.model_args = {
             "model": config.pretrained,
-            "gpu_memory_utilization": float(config.gpu_memory_utilisation),
+            "gpu_memory_utilization": float(config.gpu_memory_utilization),
             "revision": config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
             "dtype": config.dtype,
             "trust_remote_code": config.trust_remote_code,
