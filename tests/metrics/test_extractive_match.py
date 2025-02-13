@@ -1035,7 +1035,7 @@ def test_math_extraction_additional_cases(gold, pred, expected):
         ),
         (
             r"$(2,1),(1,2),(-1,-20),(-20,-1)$",
-            r"solutions are:\n\n\\[\n\\boxed{(1, 2)}, \\boxed{(2, 1)}, \\boxed{(-1, -20)}, \\boxed{(-20, -1)}\n\\]",
+            "solutions are:\n\n\\[\n\\boxed{(1, 2)}, \\boxed{(2, 1)}, \\boxed{(-1, -20)}, \\boxed{(-20, -1)}\n\\]",
             1,
         ),
         (
@@ -1120,6 +1120,16 @@ def test_math_extraction_additional_cases(gold, pred, expected):
             r"$x_{1}=10^{\frac{-5+\sqrt{13}}{6}},\quadx_{2}=10^{\frac{-5-\sqrt{13}}{6}}$",
             r"$\boxed{10^{\frac{\sqrt{13} - 5}{6}}} \quad \text{and} \quad \boxed{10^{-\frac{5 + \sqrt{13}}{6}}}$",
             1,
+        ),
+        (
+            r"\boxed{1} and and and or thus but \boxed{2} and \boxed{3}",
+            r"$\boxed{2,3}$",
+            1,
+        ),
+        (
+            r"\boxed{1} and and and or thus but \boxed{2} and \boxed{3}",
+            r"$\boxed{1,2,3}$",
+            0,
         ),
     ],
 )

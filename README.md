@@ -36,7 +36,7 @@ backends—whether it's
 ease. Dive deep into your model’s performance by saving and exploring detailed,
 sample-by-sample results to debug and see how your models stack-up.
 
-Customization at your fingertips: letting you either browse all our existing [tasks](https://github.com/huggingface/lighteval/wiki/Available-Tasks) and [metrics](https://github.com/huggingface/lighteval/wiki/Metric-List) or effortlessly [create your own](https://github.com/huggingface/lighteval/wiki/Adding-a-Custom-Task), tailored to your needs.
+Customization at your fingertips: letting you either browse all our existing [tasks](https://huggingface.co/docs/lighteval/available-tasks) and [metrics](https://huggingface.co/docs/lighteval/metric-list) or effortlessly create your own [custom task](https://huggingface.co/docs/lighteval/adding-a-custom-task) and [custom metric](https://huggingface.co/docs/lighteval/adding-a-new-metric), tailored to your needs.
 
 Seamlessly experiment, benchmark, and store your results on the Hugging Face
 Hub, S3, or locally.
@@ -123,10 +123,10 @@ pre-commit run --all-files
 
 ```bibtex
 @misc{lighteval,
-  author = {Fourrier, Clémentine and Habib, Nathan and Wolf, Thomas and Tunstall, Lewis},
+  author = {Fourrier, Clémentine and Habib, Nathan and Kydlíček, Hynek and Wolf, Thomas and Tunstall, Lewis},
   title = {LightEval: A lightweight framework for LLM evaluation},
   year = {2023},
-  version = {0.5.0},
+  version = {0.7.0},
   url = {https://github.com/huggingface/lighteval}
 }
 ```

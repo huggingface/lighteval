@@ -215,10 +215,7 @@ def make_latex_env_pattern(prefix: str = "", context: Literal["boxed", "plain"] 
         rf"(?<!\\)\\\((?P<{prefix}latexInlineParenthesis>{inline_content_parenthesis})(?<!\\)\\\)",
         rf"\s\[(?P<{prefix}latexInlineBracket>{inline_content_bracket})\]\s",
     ]
-    if context == "boxed":
-        # allow also matching plain boxed
-        patterns.append(rf"(?P<{prefix}latexBoxed>\\boxed{{.+}})")
-    elif context == "plain":
+    if context == "plain":
         simple_number = r"-?\d+(?:[.,]\d+)?"
         patterns.append(rf"(?P<{prefix}latexFraction>-?\\frac{{{simple_number}}}{{{simple_number}}})")
 
@@ -237,7 +234,7 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) ->
     and_word = translation_literal.and_word
     or_word = translation_literal.or_word
     next_groups = "".join(
-        [rf"(?:\s*(?:{and_word}|{or_word})\s*{make_latex_env_pattern(f'next{i}_')})?" for i in range(1, 6)]
+        [rf"(?:\s*(?:{and_word}|{or_word}|,)\s*{make_latex_env_pattern(f'next{i}_')})?" for i in range(1, 6)]
     )
 
     latex_envs_re = rf"(?:{first_latex_group}{next_groups})"
@@ -269,7 +266,7 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) ->
         latex_re_boxed = make_latex_env_pattern(prefix="first_", context="boxed")
         next_groups = "".join(
             [
-                rf"(?:\s*(?:{and_word}|{or_word})\s*{make_latex_env_pattern(f'next{i}_', context='boxed')})?"
+                rf"(?:\s*(?:{and_word}|{or_word}|,)\s*{make_latex_env_pattern(f'next{i}_', context='boxed')})?"
                 for i in range(1, 6)
             ]
         )
