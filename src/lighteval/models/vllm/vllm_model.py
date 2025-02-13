@@ -99,7 +99,7 @@ class VLLMModelConfig:
     """
 
     pretrained: str
-    gpu_memory_utilisation: float = 0.9  # lower this if you are running out of memory
+    gpu_memory_utilization: float = 0.9  # lower this if you are running out of memory
     revision: str = "main"  # revision of the model
     dtype: str | None = None
     tensor_parallel_size: int = 1  # how many GPUs to use for tensor parallelism
@@ -197,7 +197,7 @@ class VLLMModel(LightevalModel):
         """
         self.model_args = {
             "model": config.pretrained,
-            "gpu_memory_utilization": float(config.gpu_memory_utilisation),
+            "gpu_memory_utilization": float(config.gpu_memory_utilization),
             "revision": config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
             "dtype": config.dtype,
             "trust_remote_code": config.trust_remote_code,
@@ -339,7 +339,9 @@ class VLLMModel(LightevalModel):
         sampling_params = self.sampling_params.clone() or SamplingParams()
         if generate:
             sampling_params.n = num_samples
-            sampling_params.max_tokens = max_new_tokens
+            sampling_params.max_tokens = (
+                max_new_tokens if sampling_params.max_tokens is None else sampling_params.max_tokens
+            )
             sampling_params.stop = stop_tokens
             sampling_params.logprobs = 1 if returns_logits else 0
 
