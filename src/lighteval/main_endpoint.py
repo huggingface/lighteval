@@ -385,8 +385,11 @@ def tgi(
 @app.command(rich_help_panel="Evaluation Backends")
 def litellm(
     # === general ===
-    model_name: Annotated[
-        str, Argument(help="The model name to evaluate (has to be available through the litellm API.")
+    model_args: Annotated[
+        str,
+        Argument(
+            help="config file path for the litellm model, or a comma separated string of model args (model_name={},base_url={},provider={})"
+        ),
     ],
     tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
     # === Common parameters ===
@@ -462,7 +465,11 @@ def litellm(
     # TODO (nathan): better handling of model_args
     parallelism_manager = ParallelismManager.NONE
 
-    model_config = LiteLLMModelConfig(model=model_name)
+    if model_args.endswith(".yaml"):
+        model_config = LiteLLMModelConfig.from_path(model_args)
+    else:
+        model_name = model_args.split(",")[0].strip()
+        model_config = LiteLLMModelConfig(model=model_name)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
