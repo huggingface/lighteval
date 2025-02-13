@@ -179,6 +179,9 @@ def inference_endpoint(
     num_fewshot_seeds: Annotated[
         int, Option(help="Number of seeds to use for few-shot evaluation.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = 1,
+    load_responses_from_details_date_id: Annotated[
+        Optional[str], Option(help="Load responses from details directory.", rich_help_panel=HELP_PANEL_NAME_1)
+    ] = None,
     # === saving ===
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
@@ -247,6 +250,7 @@ def inference_endpoint(
         max_samples=max_samples,
         use_chat_template=use_chat_template,
         system_prompt=system_prompt,
+        load_responses_from_details_date_id=load_responses_from_details_date_id,
     )
     pipeline = Pipeline(
         tasks=tasks,
@@ -292,6 +296,9 @@ def tgi(
     num_fewshot_seeds: Annotated[
         int, Option(help="Number of seeds to use for few-shot evaluation.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = 1,
+    load_responses_from_details_date_id: Annotated[
+        Optional[str], Option(help="Load responses from details directory.", rich_help_panel=HELP_PANEL_NAME_1)
+    ] = None,
     # === saving ===
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
@@ -355,6 +362,7 @@ def tgi(
         max_samples=max_samples,
         use_chat_template=use_chat_template,
         system_prompt=system_prompt,
+        load_responses_from_details_date_id=load_responses_from_details_date_id,
     )
     pipeline = Pipeline(
         tasks=tasks,
@@ -377,8 +385,11 @@ def tgi(
 @app.command(rich_help_panel="Evaluation Backends")
 def litellm(
     # === general ===
-    model_name: Annotated[
-        str, Argument(help="The model name to evaluate (has to be available through the litellm API.")
+    model_args: Annotated[
+        str,
+        Argument(
+            help="config file path for the litellm model, or a comma separated string of model args (model_name={},base_url={},provider={})"
+        ),
     ],
     tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
     # === Common parameters ===
@@ -400,6 +411,9 @@ def litellm(
     num_fewshot_seeds: Annotated[
         int, Option(help="Number of seeds to use for few-shot evaluation.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = 1,
+    load_responses_from_details_date_id: Annotated[
+        Optional[str], Option(help="Load responses from details directory.", rich_help_panel=HELP_PANEL_NAME_1)
+    ] = None,
     # === saving ===
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
@@ -451,7 +465,11 @@ def litellm(
     # TODO (nathan): better handling of model_args
     parallelism_manager = ParallelismManager.NONE
 
-    model_config = LiteLLMModelConfig(model=model_name)
+    if model_args.endswith(".yaml"):
+        model_config = LiteLLMModelConfig.from_path(model_args)
+    else:
+        model_name = model_args.split(",")[0].strip()
+        model_config = LiteLLMModelConfig(model=model_name)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
@@ -464,6 +482,7 @@ def litellm(
         max_samples=max_samples,
         use_chat_template=use_chat_template,
         system_prompt=system_prompt,
+        load_responses_from_details_date_id=load_responses_from_details_date_id,
     )
     pipeline = Pipeline(
         tasks=tasks,

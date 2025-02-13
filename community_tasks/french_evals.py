@@ -46,6 +46,7 @@ from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.extended.ifeval.main import ifeval_metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
+from lighteval.utils.utils import as_list
 
 
 # Ifeval-fr prompt function
@@ -70,7 +71,7 @@ def prompt_gpqa_fr(line, task_name: str = None):
 
     query = f"Question: {line['Question']}\n"
     query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, choices)])
-    query += "Answer: "
+    query += "Réponse: "
     return Doc(
         task_name=task_name,
         query=f"{instruction}{query}",
@@ -78,6 +79,22 @@ def prompt_gpqa_fr(line, task_name: str = None):
         gold_index=gold_index,
         instruction=instruction,
     )
+
+
+# BAC-fr prompt function
+def prompt_bac_fr(line, task_name: str = None):
+    prompt = f"Enoncé: {line['enonce']}\n{line['instruction']}\n"
+    if line["choix"] is not None:  # Multichoice evaluation
+        # prompt += "\n".join([f"{LETTER_INDICES[ix]}.{choix}" for ix, choix in enumerate(line["choix"])])
+        return Doc(
+            task_name=task_name,
+            query=prompt,
+            choices=as_list(line["choix"]),
+            gold_index=line["choix"].index(line["choix correct"]),
+            instruction="",
+        )
+    else:
+        return Doc(task_name=task_name, query=prompt, choices=[line["reponse"]], gold_index=0, instruction="")
 
 
 # IFEVal-fr task
@@ -117,5 +134,23 @@ gpqa_fr_task = LightevalTaskConfig(
     version=0,
 )
 
+# BAC-fr task
+bac_fr_task = LightevalTaskConfig(
+    name="bac-fr",
+    suite=["community"],
+    prompt_function=prompt_bac_fr,
+    hf_repo="fr-gouv-coordination-ia/bac-fr",
+    hf_subset="default",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select="random_sampling",
+    generation_size=1,
+    metric=[Metrics.quasi_exact_match_math, Metrics.exact_match],
+    stop_sequence=["\n"],
+    trust_dataset=True,
+    version=0,
+)
+
 # STORE YOUR EVALS
-TASKS_TABLE = [ifeval_fr_task, gpqa_fr_task]
+TASKS_TABLE = [ifeval_fr_task, gpqa_fr_task, bac_fr_task]
