@@ -196,14 +196,18 @@ class JudgeLM:
             error_message = "ERROR: Failed to get response from the API."
             for _ in range(self.API_MAX_RETRY):
                 try:
+                    max_new_tokens = 512
+                    if "o1" in self.model or "o3" in self.model or "R1" in self.model:
+                        max_new_tokens = min(max_new_tokens * 10, 32000)
+
                     kwargs = {
                         "model": self.model,
                         "messages": prompt,
-                        "response_format": {"type": "text"},
-                        "max_tokens": 512,
+                        "max_tokens": max_new_tokens,
                         "n": 1,
                         "caching": True,
                     }
+
                     response = litellm.completion(**kwargs)
                     text = response.choices[0].message.content
                     if not text or text == error_message:
