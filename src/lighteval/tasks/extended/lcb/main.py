@@ -41,10 +41,6 @@ from lighteval.tasks.extended.lcb.codegen_metrics import (
 from lighteval.tasks.lighteval_task import Doc, LightevalTaskConfig
 
 
-# TODO: This value should be fed by the user
-NUM_GENERATIONS_PER_PROBLEM = 16
-
-
 def prepare_prompt(line: dict[str, Any]) -> str:
     query = "You will be given a question (problem specification) and will generate a correct Python program that matches the specification and passes all tests.\n\n"
     query += f"Question: {line['question_content']}\n\n"
@@ -104,7 +100,7 @@ def codegen_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> floa
 
 
 lcb_codegen_metric = SampleLevelMetric(
-    metric_name=f"maj@{NUM_GENERATIONS_PER_PROBLEM}",  # This is the way of informing the number of generations currently
+    metric_name="codegen_pass@1:16",  # This is the way of informing the number of generations currently
     category=MetricCategory.GENERATIVE_SAMPLING,
     use_case=MetricUseCase.REASONING,
     higher_is_better=True,
