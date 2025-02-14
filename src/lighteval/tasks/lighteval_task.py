@@ -74,7 +74,6 @@ class LightevalTaskConfig:
         hf_repo (str): Path of the hub dataset repository containing the evaluation information.
         hf_subset (str): Subset used for the current task, will be default if none is selected.
         hf_avail_splits (list[str]): All the available splits in the evaluation dataset
-        hf_revision (str): Revision of the dataset used for the evaluation
         evaluation_splits (list[str]): List of the splits actually used for this evaluation
         few_shots_split (str): Name of the split from which to sample few-shot examples
         few_shots_select (str): Method with which to sample few-shot examples
