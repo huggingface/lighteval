@@ -32,12 +32,20 @@ from typing import Any
 import numpy as np
 from aenum import extend_enum
 
-import lighteval.tasks.extended.lcb.lcb_utils as lcb_utils
-from lighteval.metrics.metrics import MetricCategory, Metrics, MetricUseCase, PassAtK, SampleLevelMetric
+from lighteval.metrics.metrics import MetricCategory, Metrics, MetricUseCase, SampleLevelMetric
+from lighteval.tasks.extended.lcb.codegen_metrics import (
+    codegen_metrics,
+    extract_code,
+    translate_private_test_cases,
+)
 from lighteval.tasks.lighteval_task import Doc, LightevalTaskConfig
 
 
-SYSTEM_MESSAGE_DEEPSEEK_R1 = "<｜begin▁of▁sentence｜>A conversation between User and Assistant. The user asks a question, and the Assistant solves it. The assistant first thinks about the reasoning process in the mind and then provides the user with the answer. The reasoning process and answer are enclosed within <think> </think> and <answer> </answer> tags, respectively, i.e., <think> reasoning process here </think> <answer> answer here </answer>.<｜User｜>"
+# TODO: This value should be fed by the user
+NUM_GENERATIONS_PER_PROBLEM = 16
+
+# The tokenizer_config was updated, maybe we can simplify the prompt?
+SYSTEM_MESSAGE_DEEPSEEK_R1 = "A conversation between User and Assistant. The user asks a question, and the Assistant solves it. The assistant first thinks about the reasoning process in the mind and then provides the user with the answer."
 
 
 def prepare_prompt(line: dict[str, Any]) -> str:
@@ -50,81 +58,63 @@ def prepare_prompt(line: dict[str, Any]) -> str:
     else:
         query += "Read the inputs from stdin solve the problem and write the answer to stdout (do not directly test on the sample inputs). Enclose your code within delimiters as follows."
         query += "```python\n# YOUR CODE HERE\n```\n\n"
-    query += "<｜Assistant｜>"
     return query
 
 
 def lcb_codegeneration_prompt_fn(line, task_name: str = "lcb:codegeneration") -> Doc:
-    """ """
     # For the prompt we need a more general function that can be used tweaked like in:
     # https://github.com/LiveCodeBench/LiveCodeBench/blob/main/lcb_runner/prompts/code_generation.py
     query = prepare_prompt(line)
     # List of dicts of the form: [{"input": "6\nabc\nacb\nbac\nbca\ncab\ncba\n", "output": "YES\nYES\nYES\nNO\nNO\nYES\n", "testtype": "stdin"}]
     public_test_cases = json.loads(line["public_test_cases"])
-    private_test_cases = lcb_utils.translate_private_test_cases(line["private_test_cases"])
+    private_test_cases = translate_private_test_cases(line["private_test_cases"])
     inputs = [test["input"] for test in public_test_cases + private_test_cases]
     outputs = [test["output"] for test in public_test_cases + private_test_cases]
-
     return Doc(
         task_name=task_name,
         query=query,
         choices=[""],
         gold_index=0,
-        instruction="",
         specific={
             "inputs": inputs,
             "outputs": outputs,
-            "fn_name": line["metadata"].get("func_name", None),
-            # To determine how to run the function
-            "is_stdin": any(test["testtype"] == "stdin" for test in inputs),
-            # "contest_date": line["contest_date"].isoformat(),  # NOTE: This should be used to filter the dataset
+            "fn_name": json.loads(line["metadata"]).get("func_name", None),
         },
     )
 
 
-def lcb_codegen_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> SampleLevelMetric:
-    """LiveCodeBench code generation metric.
-
-    Steps:
-    1. Extract the code from each prediction.
-    2. Run the code for each sample and generations.
-    3. Compute the Pass@1 over the outputs.
-
-    Args:
-        predictions (list[str]): List of generated code snippets, the length of the list is the number
-            of generations requested.
-        formatted_doc (Doc): The document containing the inputs and outputs
-        **kwargs: Additional arguments.
-
-    Returns:
-        A sample level metric that extracts and compares mathematical expressions.
+def codegen_metric(predictions: list[str], formatted_doc: Doc):
+    """Estimates the Pass@1 metric for the code generation task.
+    Extract the code from each prediction, Runs it for each sample and generations,
+    and computes the Pass@1 over the outputs.
     """
     # Extract generated code snippets
-    generated_code_snippets: list[str] = [lcb_utils.extract_code(pred) for pred in predictions]  # noqa: F841
-
+    generated_code_snippets = [[extract_code(pred) for pred in predictions]]  # noqa: F841
     evaluation_sample = {  # noqa: F841
         "inputs": formatted_doc.specific["inputs"],
         "outputs": formatted_doc.specific["outputs"],
         "fn_name": formatted_doc.specific["fn_name"],
     }
+    # This is a list of lists because
+    evaluation_sample = [{"input_output": json.dumps(evaluation_sample)}]
 
-    def codegen_metrics(reference: str, generated: str) -> float:
-        # NOTE: This function, following PassAtK docs must have type callable[[str, str], float],
-        # but we need here to run for each sample against all the generated_code_snippets (the n generations).
-        # It should return a list of booleans, True when the code run as expected, False otherwise.
-        # Then for that we should compute the Pass@1 metric.
-        return 1.0
-
-    n = len(predictions)  # The LiveCodeBench repo uses 10 by default
-
-    return SampleLevelMetric(
-        metric_name=f"pass@1:{n}_samples",
-        category=MetricCategory.GENERATIVE_SAMPLING,
-        use_case=MetricUseCase.REASONING,
-        higher_is_better=True,
-        sample_level_fn=PassAtK(k=kwargs.get("k", 1), n=n, sample_scoring_function=codegen_metrics).compute,
-        corpus_level_fn=np.mean,
+    metrics, _ = codegen_metrics(
+        evaluation_sample,
+        generated_code_snippets,
+        k_list=[1],  # Only run for Pass@1
+        num_process_evaluate=4,
     )
+    return metrics["pass@1"]
+
+
+lcb_codegen_metric = SampleLevelMetric(
+    metric_name=f"maj@{NUM_GENERATIONS_PER_PROBLEM}",  # This is the way of informing the number of generations currently
+    category=MetricCategory.GENERATIVE_SAMPLING,
+    use_case=MetricUseCase.REASONING,
+    higher_is_better=True,
+    sample_level_fn=codegen_metric,
+    corpus_level_fn=np.mean,
+)
 
 
 extend_enum(Metrics, "lcb_codegen_metric", lcb_codegen_metric)
@@ -134,13 +124,9 @@ task = LightevalTaskConfig(
     name="lcb:codegeneration",
     suite=["extended"],
     prompt_function=lcb_codegeneration_prompt_fn,
-    # Needs the version_tag argument, and an additional filter to avoid running on all the examples
     hf_repo="livecodebench/code_generation_lite",
-    hf_subset="default",
+    hf_subset="v4_v5",  # https://github.com/LiveCodeBench/LiveCodeBench/tree/main?tab=readme-ov-file#dataset-versions
     hf_avail_splits=["test"],
-    # TODO: We need a way of filtering data passing tuple start/end date to have a more fine-grained control of the subset
-    # evaluated
-    hf_version_tag="v3_v5",  # v3_v5 is the version with the new test cases corresponding to the R1 models.
     evaluation_splits=["test"],
     generation_size=32768,
     metric=[Metrics.lcb_codegen_metric],
