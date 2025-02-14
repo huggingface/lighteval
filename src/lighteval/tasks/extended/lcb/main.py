@@ -44,13 +44,9 @@ from lighteval.tasks.lighteval_task import Doc, LightevalTaskConfig
 # TODO: This value should be fed by the user
 NUM_GENERATIONS_PER_PROBLEM = 16
 
-# The tokenizer_config was updated, maybe we can simplify the prompt?
-SYSTEM_MESSAGE_DEEPSEEK_R1 = "A conversation between User and Assistant. The user asks a question, and the Assistant solves it. The assistant first thinks about the reasoning process in the mind and then provides the user with the answer."
-
 
 def prepare_prompt(line: dict[str, Any]) -> str:
-    query = SYSTEM_MESSAGE_DEEPSEEK_R1 + "\n\n"
-    query += "You will be given a question (problem specification) and will generate a correct Python program that matches the specification and passes all tests.\n\n"
+    query = "You will be given a question (problem specification) and will generate a correct Python program that matches the specification and passes all tests.\n\n"
     query += f"Question: {line['question_content']}\n\n"
     if starter_code := line.get("starter_code", None):
         query += "You will use the following starter code to write the solution to the problem and enclose your code within delimiters."
