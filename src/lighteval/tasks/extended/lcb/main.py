@@ -79,7 +79,7 @@ def lcb_codegeneration_prompt_fn(line, task_name: str = "lcb:codegeneration") ->
     )
 
 
-def codegen_metric(predictions: list[str], formatted_doc: Doc):
+def codegen_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> float:
     """Estimates the Pass@1 metric for the code generation task.
     Extract the code from each prediction, Runs it for each sample and generations,
     and computes the Pass@1 over the outputs.
