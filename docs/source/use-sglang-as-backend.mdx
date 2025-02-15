@@ -13,7 +13,7 @@ lighteval sglang \
 parallelism and tensor parallelism.
 You can choose the parallelism method by setting in the the `model_args`.
 
-For example if you have 4 GPUs you can split it across using `tensor_parallelism`:
+For example if you have 4 GPUs you can split it across using `tp_size`:
 
 ```bash
 lighteval sglang \
@@ -21,7 +21,7 @@ lighteval sglang \
     "leaderboard|truthfulqa:mc|0|0"
 ```
 
-Or, if your model fits on a single GPU, you can use `data_parallelism` to speed up the evaluation:
+Or, if your model fits on a single GPU, you can use `dp_size` to speed up the evaluation:
 
 ```bash
 lighteval sglang \
