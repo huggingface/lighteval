@@ -299,7 +299,6 @@ def taskinfo_selector(tasks: str, task_registry: Registry) -> tuple[list[str], d
         expanded_tasks = task_registry.task_groups_dict.get(maybe_task_group, [maybe_task_group])
         expanded_tasks_list.extend(expanded_tasks)
 
-    ## task expand and few shot number record, not load task
     for task in expanded_tasks_list:
         try:
             suite_name, task_name, few_shot, truncate_few_shots = tuple(task.split("|"))

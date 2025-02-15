@@ -51,13 +51,15 @@ from lighteval.utils.imports import (
     NO_ACCELERATE_ERROR_MSG,
     NO_NANOTRON_ERROR_MSG,
     NO_OPENAI_ERROR_MSG,
+    NO_SGLANG_ERROR_MSG,
     NO_TGI_ERROR_MSG,
     NO_VLLM_ERROR_MSG,
     is_accelerate_available,
     is_nanotron_available,
     is_openai_available,
+    is_sglang_available,
     is_tgi_available,
-    is_vllm_available, is_sglang_available, NO_SGLANG_ERROR_MSG,
+    is_vllm_available,
 )
 from lighteval.utils.parallelism import test_all_gather
 from lighteval.utils.utils import EnvConfig, make_results_table
@@ -151,6 +153,7 @@ class Pipeline:
         self.evaluation_tracker = evaluation_tracker
         self.accelerator, self.parallel_context = self._init_parallelism_manager()
         self.model = self._init_model(model_config, model)
+
         self.evaluation_tracker.general_config_logger.log_model_info(self.model.model_info)
         self._init_tasks_and_requests(tasks=tasks)
         self._init_random_seeds()
@@ -193,7 +196,6 @@ class Pipeline:
                 )
             else:
                 return load_model(config=model_config, env_config=self.pipeline_parameters.env_config)
-
         if isinstance(model, TransformersModel):
             return model
         else:
@@ -211,10 +213,10 @@ class Pipeline:
                 cache_dir=self.pipeline_parameters.env_config.cache_dir,
                 custom_tasks=self.pipeline_parameters.custom_tasks_directory,
             )
-
             task_names_list, fewshots_dict = taskinfo_selector(tasks, registry)
             task_dict = registry.get_task_dict(task_names_list)
             LightevalTask.load_datasets(list(task_dict.values()), self.pipeline_parameters.dataset_loading_processes)
+
             self.evaluation_tracker.task_config_logger.log(task_dict)
 
             requests, docs = create_requests_from_tasks(
@@ -449,7 +451,6 @@ class Pipeline:
             responses = run_model(requests, override_bs=self.pipeline_parameters.override_batch_size)
 
             # Storing the responses associated to the same samples together
-
             for response, request in zip(responses, requests):
                 for metric_category in request.metric_categories:
                     sample_id = SampleUid(request.task_name, request.sample_index)

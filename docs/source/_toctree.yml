@@ -17,6 +17,8 @@
     title: Add a custom metric
   - local: use-vllm-as-backend
     title: Use VLLM as backend
+  - local: use-sglang-as-backend
+    title: Use SGLang as backend
   - local: evaluate-the-model-on-a-server-or-container
     title: Evaluate on Server
   - local: contributing-to-multilingual-evaluations
