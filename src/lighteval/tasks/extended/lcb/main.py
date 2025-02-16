@@ -94,7 +94,7 @@ def codegen_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> floa
         evaluation_sample,
         generated_code_snippets,
         k_list=[1],  # Only run for Pass@1
-        num_process_evaluate=4,
+        num_process_evaluate=8,
     )
     return metrics["pass@1"]
 
