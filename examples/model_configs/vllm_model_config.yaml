@@ -1,0 +1,14 @@
+model:
+  base_params:
+    model_args: "pretrained=HuggingFaceTB/SmolLM-1.7B,revision=main,dtype=bfloat16" # pretrained=model_name,trust_remote_code=boolean,revision=revision_to_use,model_parallel=True ...
+  generation:
+    temperature: 0.3
+    repetition_penalty: 1.0
+    frequency_penalty: 0.0
+    presence_penalty: 0.0
+    seed: 42
+    top_k: -1
+    min_p: 0.0
+    top_p: 0.9
+    max_new_tokens: 256
+    stop_tokens: ["<EOS>", "<PAD>"]

@@ -9,6 +9,8 @@
 - sections:
   - local: saving-and-reading-results
     title: Save and read results
+  - local: use-litellm-as-backend
+    title: Use LITELLM as backend
   - local: using-the-python-api
     title: Use the Python API
   - local: adding-a-custom-task
