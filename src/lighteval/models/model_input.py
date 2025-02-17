@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, fields
 from typing import Optional
 
 
@@ -43,6 +43,22 @@ class GenerationParameters:
     top_p: Optional[int] = None  # vllm, transformers, tgi, litellm
     truncate_prompt: Optional[bool] = None  # vllm, tgi
 
+    def __post_init__(self):
+        """Force casting values if they aren't None.
+        This is helpful when building the class from the string arguments, as otherwise
+        all the values would be set to strings.
+        """
+        mapper = {
+            Optional[bool]: bool,
+            Optional[int]: int,
+            Optional[float]: float,
+            Optional[list[str]]: lambda x: x.split(","),
+        }
+        for field in fields(GenerationParameters):
+            value = getattr(self, field.name)
+            if value:
+                setattr(self, field.name, mapper[field.type](value))
+
     @classmethod
     def from_dict(cls, config_dict: dict):
         """Creates a GenerationParameters object from a config dictionary
@@ -58,6 +74,35 @@ class GenerationParameters:
             }
         """
         return GenerationParameters(**config_dict.get("generation", {}))
+
+    @classmethod
+    def from_model_args(cls, model_args: str):
+        """Creates a GenerationParameters object from a model_args string.
+
+        It's used when the model_args are passed as a string in the command line.
+        The generation parameters must follow the following format (at any place in the string):
+        "generation=[key1=value1,key2=value2]"
+
+        Args:
+            model_args (str): A string like the following:
+                "pretrained=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B,dtype=float16,max_model_length=32768,generation=[temperature=0.7,top_p=5]"
+        """
+
+        def parse_model_args(model_args):
+            import re
+
+            pattern = r"generation=\[((?:[a-zA-Z0-9_]+=[^,\]]+,)*[a-zA-Z0-9_]+=[^,\]]+)\]"
+            match = re.search(pattern, model_args)
+            if match:
+                generation_parameters = match.group(0)
+                generation_parameters = generation_parameters.replace("generation=[", "").replace("]", "")
+                model_args_dict = {
+                    k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in generation_parameters.split(",")
+                }
+                return model_args_dict
+
+        params: dict = parse_model_args(model_args) or {}
+        return GenerationParameters(**params)
 
     def to_litellm_dict(self) -> dict:
         """Selects relevant generation and sampling parameters for litellm models.

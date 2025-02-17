@@ -137,7 +137,7 @@ def vllm(
         metric_options = config.get("metric_options", {})
         generation_parameters = GenerationParameters.from_dict(config)
     else:
-        generation_parameters = GenerationParameters()
+        generation_parameters = GenerationParameters.from_model_args(model_args)
         metric_options = {}
 
     model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
