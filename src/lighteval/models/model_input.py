@@ -43,22 +43,6 @@ class GenerationParameters:
     top_p: Optional[int] = None  # vllm, transformers, tgi, litellm
     truncate_prompt: Optional[bool] = None  # vllm, tgi
 
-    # def __post_init__(self):
-    #     """Force casting values if they aren't None.
-    #     This is helpful when building the class from the string arguments, as otherwise
-    #     all the values would be set to strings.
-    #     """
-    #     mapper = {
-    #         Optional[bool]: bool,
-    #         Optional[int]: int,
-    #         Optional[float]: float,
-    #         Optional[list[str]]: lambda x: x.split(","),
-    #     }
-    #     for field in fields(GenerationParameters):
-    #         value = getattr(self, field.name)
-    #         if value:
-    #             setattr(self, field.name, mapper[field.type](value))
-
     @classmethod
     def from_dict(cls, config_dict: dict):
         """Creates a GenerationParameters object from a config dictionary

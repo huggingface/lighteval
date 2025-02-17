@@ -30,16 +30,16 @@ class TestGenerationParameters:
         "model_args, expected",
         [
             (
-                "generation_parameters={temperature: 0.7,top_p: 5},pretrained=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B,dtype=float16,data_parallel_size=4,max_model_length=32768,gpu_memory_utilisation=0.8",
-                {"temperature": 0.7, "top_p": 5},
+                "generation_parameters={temperature: 0.7,top_p: 0.95},pretrained=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B,dtype=float16,data_parallel_size=4,max_model_length=32768,gpu_memory_utilisation=0.8",
+                {"temperature": 0.7, "top_p": 0.95},
             ),
             (
-                "pretrained=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B,dtype=float16,data_parallel_size=4,generation_parameters={temperature: 0.7,top_p: 5},max_model_length=32768,gpu_memory_utilisation=0.8",
-                {"temperature": 0.7, "top_p": 5},
+                "pretrained=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B,dtype=float16,data_parallel_size=4,generation_parameters={temperature: 0.7,top_p: 0.95},max_model_length=32768,gpu_memory_utilisation=0.8",
+                {"temperature": 0.7, "top_p": 0.95},
             ),
             (
-                "pretrained=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B,dtype=float16,data_parallel_size=4,max_model_length=32768,gpu_memory_utilisation=0.8,generation_parameters={temperature: 0.7,top_p: 5}",
-                {"temperature": 0.7, "top_p": 5},
+                "pretrained=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B,dtype=float16,data_parallel_size=4,max_model_length=32768,gpu_memory_utilisation=0.8,generation_parameters={temperature: 0.7,top_p: 0.95}",
+                {"temperature": 0.7, "top_p": 0.95},
             ),
         ],
     )
