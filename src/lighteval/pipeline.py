@@ -243,11 +243,11 @@ class Pipeline:
         As later when constructing the requests the max is taken over the num_samples, this is valid.
         """
         for _, task in task_dict.items():
-            for metric in enumerate(task.metrics):
+            for metric in task.metrics:
                 if metric_data := self._metric_options.get(metric.metric_name, None):
                     num_samples = metric_data.get("num_samples", None)
                     if num_samples:
-                        task.num_samples.append(num_samples)
+                        task.num_samples = [num_samples]
 
     def _init_random_seeds(self):
         logger.info("--- INIT SEEDS ---")
