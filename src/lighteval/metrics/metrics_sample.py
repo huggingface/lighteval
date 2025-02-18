@@ -35,6 +35,7 @@ from nltk.metrics.distance import edit_distance
 from nltk.tokenize import word_tokenize
 from nltk.tokenize.treebank import TreebankWordTokenizer
 from nltk.translate.bleu_score import sentence_bleu
+from pydantic import BaseModel
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from lighteval.metrics.imports.bert_scorer import BERTScorer
@@ -864,7 +865,7 @@ class StringDistance:
 
 
 class JudgeLLM:
-    available_models_openai = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo", "gpt-4"]
+    available_models_openai = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-4o-2024-08-06"]
 
     def __init__(
         self,
@@ -873,6 +874,7 @@ class JudgeLLM:
         process_judge_response: Callable,
         judge_backend: Literal["litellm", "openai", "transformers", "vllm", "tgi"],
         short_judge_name: str | None = None,
+        response_format: BaseModel = None,
     ) -> None:
         match judge_backend:
             case "openai":
@@ -905,6 +907,7 @@ class JudgeLLM:
             api_key=api_key,
             url=url,
             judge_backend=judge_backend,
+            response_format=response_format,
         )
 
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
