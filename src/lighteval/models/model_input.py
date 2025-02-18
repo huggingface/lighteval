@@ -32,15 +32,15 @@ class GenerationParameters:
     length_penalty: Optional[float] = None  # vllm, transformers
     presence_penalty: Optional[float] = None  # vllm
 
-    max_new_tokens: Optional[int] = None  # vllm, transformers, tgi
+    max_new_tokens: Optional[int] = None  # vllm, transformers, tgi, litellm
     min_new_tokens: Optional[int] = None  # vllm, transformers
 
-    seed: Optional[int] = None  # vllm, tgi
-    stop_tokens: Optional[list[str]] = None  # vllm, transformers, tgi
-    temperature: Optional[float] = None  # vllm, transformers, tgi
+    seed: Optional[int] = None  # vllm, tgi litellm
+    stop_tokens: Optional[list[str]] = None  # vllm, transformers, tgi, litellm
+    temperature: Optional[float] = None  # vllm, transformers, tgi, litellm
     top_k: Optional[int] = None  # vllm, transformers, tgi
     min_p: Optional[float] = None  # vllm, transformers
-    top_p: Optional[int] = None  # vllm, transformers, tgi
+    top_p: Optional[int] = None  # vllm, transformers, tgi, litellm
     truncate_prompt: Optional[bool] = None  # vllm, tgi
 
     @classmethod
@@ -58,6 +58,52 @@ class GenerationParameters:
             }
         """
         return GenerationParameters(**config_dict.get("generation", {}))
+
+    @classmethod
+    def from_model_args(cls, model_args: str):
+        """Creates a GenerationParameters object from a model_args string.
+
+        It's used when the model_args are passed as a string in the command line.
+        The generation parameters must follow the following format (at any place in the string):
+        "generation_parameters={key1:value1,key2=value2}"
+
+        Args:
+            model_args (str): A string like the following:
+                "pretrained=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B,dtype=float16,max_model_length=32768,generation={temperature:0.7,top_p:5}"
+        """
+
+        def parse_model_args(model_args):
+            import json
+            import re
+
+            pattern = re.compile(r"(\w+)=(\{.*\}|[^,]+)")
+            matches = pattern.findall(model_args)
+            for key, value in matches:
+                key = key.strip()
+                if key == "generation_parameters":
+                    gen_params = re.sub(r"(\w+):", r'"\1":', value)
+                    return json.loads(gen_params)
+
+        params: dict = parse_model_args(model_args) or {}
+        return GenerationParameters(**params)
+
+    def to_litellm_dict(self) -> dict:
+        """Selects relevant generation and sampling parameters for litellm models.
+        Doc: https://docs.litellm.ai/docs/completion/input#input-params-1
+
+        Returns:
+            dict: The parameters to create a litellm.SamplingParams in the model config.
+        """
+        args = {
+            "max_completion_tokens": self.max_new_tokens,
+            "stop": self.stop_tokens,
+            "temperature": self.temperature,
+            "top_p": self.top_p,
+            "seed": self.seed,
+            "repetition_penalty": self.repetition_penalty,
+            "frequency_penalty": self.frequency_penalty,
+        }
+        return {k: v for k, v in args.items() if v is not None}
 
     def to_vllm_dict(self) -> dict:
         """Selects relevant generation and sampling parameters for vllm models.
