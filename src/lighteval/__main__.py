@@ -34,6 +34,7 @@ import lighteval.main_vllm
 
 
 app = typer.Typer()
+app = typer.Typer(pretty_exceptions_show_locals=False)
 
 logging_config = dict(  # noqa C408
     version=1,
