@@ -51,11 +51,13 @@ from lighteval.utils.imports import (
     NO_ACCELERATE_ERROR_MSG,
     NO_NANOTRON_ERROR_MSG,
     NO_OPENAI_ERROR_MSG,
+    NO_SGLANG_ERROR_MSG,
     NO_TGI_ERROR_MSG,
     NO_VLLM_ERROR_MSG,
     is_accelerate_available,
     is_nanotron_available,
     is_openai_available,
+    is_sglang_available,
     is_tgi_available,
     is_vllm_available,
 )
@@ -86,6 +88,7 @@ class ParallelismManager(Enum):
     OPENAI = auto()
     VLLM = auto()
     NONE = auto()
+    SGLANG = auto()
 
 
 @dataclass
@@ -113,6 +116,9 @@ class PipelineParameters:
         elif self.launcher_type == ParallelismManager.VLLM:
             if not is_vllm_available():
                 raise ImportError(NO_VLLM_ERROR_MSG)
+        elif self.launcher_type == ParallelismManager.SGLANG:
+            if not is_sglang_available():
+                raise ImportError(NO_SGLANG_ERROR_MSG)
         elif self.launcher_type == ParallelismManager.TGI:
             if not is_tgi_available():
                 raise ImportError(NO_TGI_ERROR_MSG)
@@ -132,6 +138,7 @@ class Pipeline:
         evaluation_tracker: EvaluationTracker,
         model_config=None,
         model=None,
+        metric_options=None,
     ):
         if not (model or model_config):
             raise ValueError("Must provide either a model or model config when creating a pipeline.")
@@ -145,6 +152,7 @@ class Pipeline:
 
         self.model_config = model_config
         self.evaluation_tracker = evaluation_tracker
+        self._metric_options = metric_options or {}
         self.accelerator, self.parallel_context = self._init_parallelism_manager()
         self.model = self._init_model(model_config, model)
 
@@ -209,6 +217,10 @@ class Pipeline:
             )
             task_names_list, fewshots_dict = taskinfo_selector(tasks, registry)
             task_dict = registry.get_task_dict(task_names_list)
+            # If there are metric_options defined from the yaml file,
+            # review if they have to be updated.
+            if self._metric_options:
+                self._update_num_samples(task_dict)
             LightevalTask.load_datasets(list(task_dict.values()), self.pipeline_parameters.dataset_loading_processes)
 
             self.evaluation_tracker.task_config_logger.log(task_dict)
@@ -229,6 +241,19 @@ class Pipeline:
             self.fewshot_dict = fewshots_dict
             self.requests = requests
             self.docs = docs
+
+    def _update_num_samples(self, task_dict: dict[str, LightevalTask]):
+        """Helper function to update the num_samples of a given metric via the yaml file.
+        As it has to be done at the metric level, it's better to update the value per metric.
+        It will add a num_samples to the already defined metrics' num_samples if defined in the yaml file.
+        As later when constructing the requests the max is taken over the num_samples, this is valid.
+        """
+        for _, task in task_dict.items():
+            for metric in task.metrics:
+                if metric_data := self._metric_options.get(metric.metric_name, None):
+                    num_samples = metric_data.get("num_samples", None)
+                    if num_samples:
+                        task.num_samples = [num_samples]
 
     def _init_random_seeds(self):
         logger.info("--- INIT SEEDS ---")

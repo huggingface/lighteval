@@ -269,6 +269,11 @@ class VLLMModel(LightevalModel):
                         f"{context_size + max_new_tokens=} which is greather than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
                     )
                     context_size = self.max_length - max_new_tokens
+                    if context_size < 0:
+                        logger.critical(
+                            f"{context_size=} is less than 0, either reduce the max_new_tokens or increase model max length."
+                        )
+                        raise ValueError("Context size is less than 0.")
                     inputs = [input[-context_size:] for input in inputs]
             else:
                 if context_size > self.max_length:
