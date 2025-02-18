@@ -59,6 +59,34 @@ class GenerationParameters:
         """
         return GenerationParameters(**config_dict.get("generation", {}))
 
+    @classmethod
+    def from_model_args(cls, model_args: str):
+        """Creates a GenerationParameters object from a model_args string.
+
+        It's used when the model_args are passed as a string in the command line.
+        The generation parameters must follow the following format (at any place in the string):
+        "generation_parameters={key1:value1,key2=value2}"
+
+        Args:
+            model_args (str): A string like the following:
+                "pretrained=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B,dtype=float16,max_model_length=32768,generation={temperature:0.7,top_p:5}"
+        """
+
+        def parse_model_args(model_args):
+            import json
+            import re
+
+            pattern = re.compile(r"(\w+)=(\{.*\}|[^,]+)")
+            matches = pattern.findall(model_args)
+            for key, value in matches:
+                key = key.strip()
+                if key == "generation_parameters":
+                    gen_params = re.sub(r"(\w+):", r'"\1":', value)
+                    return json.loads(gen_params)
+
+        params: dict = parse_model_args(model_args) or {}
+        return GenerationParameters(**params)
+
     def to_litellm_dict(self) -> dict:
         """Selects relevant generation and sampling parameters for litellm models.
         Doc: https://docs.litellm.ai/docs/completion/input#input-params-1
