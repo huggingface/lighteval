@@ -105,18 +105,27 @@ class JudgeLLMHLE(JudgeLLM):
             response_format=ExtractedAnswer,
         )
 
-    def compute(self, predictions, formatted_doc: Doc, **kwargs):
+    def compute(self, sample_ids: list[str], responses: list, formatted_docs: list[Doc]) -> list[dict[str, float]]:
         # If we are evaluating a multiturn task, we need to have specific field in the formatted doc
-        gold = formatted_doc.get_golds()[0]
+        questions = [formatted_doc.specific["question"] for formatted_doc in formatted_docs]
+        golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
+        predictions = [response[0].result[0] for response in responses]
+        options = [None] * len(questions)
 
-        score, _, _ = self.judge.evaluate_answer(question=formatted_doc.query, answer=predictions[0], gold=gold)
+        score, _, _ = self.judge.evaluate_answer_batch(questions, predictions, options, golds)
 
-        score["correct_answer"] = gold
-        return {
-            "accuracy": score,
-            "confidence_half_width": score,
-            "calibration_error": score,
-        }
+        metrics = []
+        for i in range(len(sample_ids)):
+            score[i]["correct_answer"] = golds[i]
+            metrics.append(
+                {
+                    "accuracy": score[i],
+                    "confidence_half_width": score[i],
+                    "calibration_error": score[i],
+                }
+            )
+
+        return metrics
 
     def compute_corpus(self, scores: List[dict]):
         n = len(scores)
@@ -193,13 +202,14 @@ def hle_text_only(line, task_name: str = None):
         query=f"Question: {line['question']}\nAnswer:",
         choices=[line["answer"]],
         gold_index=0,
+        specific={"question": line["question"]},
     )
 
 
 hle_metrics = CorpusLevelMetricGrouping(
     metric_name=["accuracy", "confidence_half_width", "calibration_error"],
     higher_is_better={n: True for n in ["accuracy", "confidence_half_width", "calibration_error"]},
-    category=MetricCategory.GENERATIVE,
+    category=MetricCategory.LLM_AS_JUDGE,
     use_case=MetricUseCase.ACCURACY,
     sample_level_fn=JudgeLLMHLE().compute,
     corpus_level_fn=JudgeLLMHLE().compute_corpus,

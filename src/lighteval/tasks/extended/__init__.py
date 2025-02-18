@@ -32,7 +32,6 @@ if can_load_extended_tasks():
     import lighteval.tasks.extended.olympiade_bench.main as olympiad_bench
     import lighteval.tasks.extended.tiny_benchmarks.main as tiny_benchmarks
 
-
     AVAILABLE_EXTENDED_TASKS_MODULES = [ifeval, tiny_benchmarks, mt_bench, mix_eval, olympiad_bench, hle, lcb]
 
 else:

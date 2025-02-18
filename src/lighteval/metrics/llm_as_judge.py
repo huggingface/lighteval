@@ -240,7 +240,7 @@ class JudgeLM:
 
     def __call_api_parallel(self, prompts):
         results = []
-        with ThreadPoolExecutor(100) as executor:
+        with ThreadPoolExecutor(10) as executor:
             for entry in tqdm(executor.map(self.__call_api, prompts), total=len(prompts)):
                 results.append(entry)
 
