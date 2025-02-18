@@ -51,11 +51,13 @@ from lighteval.utils.imports import (
     NO_ACCELERATE_ERROR_MSG,
     NO_NANOTRON_ERROR_MSG,
     NO_OPENAI_ERROR_MSG,
+    NO_SGLANG_ERROR_MSG,
     NO_TGI_ERROR_MSG,
     NO_VLLM_ERROR_MSG,
     is_accelerate_available,
     is_nanotron_available,
     is_openai_available,
+    is_sglang_available,
     is_tgi_available,
     is_vllm_available,
 )
@@ -86,6 +88,7 @@ class ParallelismManager(Enum):
     OPENAI = auto()
     VLLM = auto()
     NONE = auto()
+    SGLANG = auto()
 
 
 @dataclass
@@ -113,6 +116,9 @@ class PipelineParameters:
         elif self.launcher_type == ParallelismManager.VLLM:
             if not is_vllm_available():
                 raise ImportError(NO_VLLM_ERROR_MSG)
+        elif self.launcher_type == ParallelismManager.SGLANG:
+            if not is_sglang_available():
+                raise ImportError(NO_SGLANG_ERROR_MSG)
         elif self.launcher_type == ParallelismManager.TGI:
             if not is_tgi_available():
                 raise ImportError(NO_TGI_ERROR_MSG)
