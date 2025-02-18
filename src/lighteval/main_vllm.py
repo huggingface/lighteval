@@ -134,9 +134,11 @@ def vllm(
         with open(model_args, "r") as f:
             config = yaml.safe_load(f)["model"]
         model_args = config["base_params"]["model_args"]
+        metric_options = config.get("metric_options", {})
         generation_parameters = GenerationParameters.from_dict(config)
     else:
-        generation_parameters = GenerationParameters()
+        generation_parameters = GenerationParameters.from_model_args(model_args)
+        metric_options = {}
 
     model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
     model_config = VLLMModelConfig(**model_args_dict, generation_parameters=generation_parameters)
@@ -146,6 +148,7 @@ def vllm(
         pipeline_parameters=pipeline_params,
         evaluation_tracker=evaluation_tracker,
         model_config=model_config,
+        metric_options=metric_options,
     )
 
     pipeline.evaluate()
