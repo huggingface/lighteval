@@ -151,6 +151,10 @@ class LiteLLMClient(LightevalModel):
                 if return_logits and not self.provider == "openai":
                     logger.warning("Returning logits is not supported for this provider, ignoring.")
 
+                # Convert prompt if necessary
+                if isinstance(prompt, str):
+                    prompt =  [{"role": "user", "content": prompt}]
+
                 # Prepare kwargs for completion call
                 kwargs = {
                     "model": self.model,
