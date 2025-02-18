@@ -19,9 +19,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import json
 import os
-import re
 from typing import Optional
 
 from typer import Argument, Option
@@ -135,23 +133,13 @@ def sglang(
     if model_args.endswith(".yaml"):
         with open(model_args, "r") as f:
             config = yaml.safe_load(f)["model"]
+        model_args = config["base_params"]["model_args"]
         generation_parameters = GenerationParameters.from_dict(config)
-        model_config = SGLangModelConfig(config, generation_parameters=generation_parameters)
-
     else:
-        pattern = re.compile(r"(\w+)=(\{.*\}|[^,]+)")
-        matches = pattern.findall(model_args)
-        model_args_dict = {}
-        generation_params = None
-        for key, value in matches:
-            key = key.strip()
-            if key == "generation_parameters":
-                value = re.sub(r"(\w+):", r'"\1":', value)
-                value = json.loads(value)
-                generation_params = GenerationParameters(**value)
-            else:
-                model_args_dict[key] = value
-        model_config = SGLangModelConfig(**model_args_dict, generation_parameters=generation_params)
+        generation_parameters = GenerationParameters()
+
+    model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
+    model_config = SGLangModelConfig(**model_args_dict, generation_parameters=generation_parameters)
 
     pipeline = Pipeline(
         tasks=tasks,

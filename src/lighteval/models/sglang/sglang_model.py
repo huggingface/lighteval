@@ -136,7 +136,7 @@ class SGLangModel(LightevalModel):
             "device": "cuda",
             "random_seed": config.random_seed,
             "load_format": config.load_format,
-            "context_length": int(self._max_length) if self._max_length else 8192,
+            "context_length": self._max_length,
             "dp_size": int(config.dp_size),
             "tp_size": int(config.tp_size),
             "sampling_backend": config.sampling_backend,
@@ -146,7 +146,6 @@ class SGLangModel(LightevalModel):
             "chunked_prefill_size": int(config.chunked_prefill_size),
             "disable_radix_cache": True,
         }
-
         model = Engine(**self.model_args)
 
         if self._max_length is None:

@@ -158,7 +158,6 @@ class GenerationParameters:
     def to_sglang_dict(self) -> dict:
         args = {
             "max_new_tokens": self.max_new_tokens,
-            "stop_token_ids": self.stop_tokens,
             "temperature": self.temperature,
             "stop": self.stop_tokens,
             "top_p": self.top_p,

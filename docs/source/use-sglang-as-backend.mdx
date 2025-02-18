@@ -29,23 +29,32 @@ lighteval sglang \
     "leaderboard|truthfulqa:mc|0|0"
 ```
 
-Available arguments for `sglang` can be found in the `SGLangModelConfig`:
+## Use a config file
 
-- **pretrained** (str): HuggingFace Hub model ID name or the path to a pre-trained model to load.
-- **load_format** (str): The format the weights are loaded in. Defaults to *.safetensors/*.bin.
-- **dtype** (str): Dtype used for the model, defaults to bfloat16.
-- **tp_size** (int): The number of GPUs the model weights get sharded over.
-- **dp_size** (int): The number of data-parallel copies of the model.
-- **context_length** (int | None): The number of tokens our model can process including the input.
-- **random_seed** (int): Can be used to enforce more deterministic behavior.
-- **trust_remote_code** (bool): If True, will use locally cached config files, otherwise use remote configs in HuggingFace.
-- **skip_tokenizer_init** (bool): Set to true to provide the tokens to the engine and get the output tokens directly, typically used in RLHF.
-- **kv_cache_dtype** (str): Dtype of the kv cache, defaults to the auto.
-- **add_special_tokens** (bool): Whether to add special tokens to the input sequences.
-- **sampling_backend** (str | None): The backend for sampling.
-- **attention_backend** (str | None): The backend for attention computation and KV cache management.
-- **mem_fraction_static** (float): Fraction of the free GPU memory used for static memory like model weights and KV cache.
-- **chunked_prefill_size** (int): Perform the prefill in chunks of these size.
+For more advanced configurations, you can use a config file for the model.
+An example of a config file is shown below and can be found at `examples/model_configs/sglang_model_config.yaml`.
+
+```bash
+lighteval sglang \
+    "examples/model_configs/sglang_model_config.yaml" \
+    "leaderboard|truthfulqa:mc|0|0"
+```
+
+```yaml
+model: # Model specific parameters
+  base_params:
+    model_args: "pretrained=HuggingFaceTB/SmolLM-1.7B,dtype=float16,chunked_prefill_size=4096,mem_fraction_static=0.9" # Model args that you would pass in the command line
+  generation: # Generation specific parameters
+    temperature: 0.3
+    repetition_penalty: 1.0
+    frequency_penalty: 0.0
+    presence_penalty: 0.0
+    top_k: -1
+    min_p: 0.0
+    top_p: 0.9
+    max_new_tokens: 256
+    stop_tokens: ["<EOS>", "<PAD>"]
+```
 
 > [!WARNING]
 > In the case of OOM issues, you might need to reduce the context size of the
