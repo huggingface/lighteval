@@ -361,7 +361,6 @@ class VLLMModel(LightevalModel):
                 if x is not None
             ]
         else:
-            breakpoint()
             outputs = self.model.generate(
                 prompt_token_ids=inputs,
                 sampling_params=sampling_params,
