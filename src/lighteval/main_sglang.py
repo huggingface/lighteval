@@ -1,6 +1,6 @@
 # MIT License
 
-# Copyright (c) 2024 The HuggingFace Team
+# Copyright (c) 2024 The SGLang Team
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,7 @@ HELP_PANEL_NAME_3 = "Debug Parameters"
 HELP_PANEL_NAME_4 = "Modeling Parameters"
 
 
-def vllm(
+def sglang(
     # === general ===
     model_args: Annotated[
         str,
@@ -100,7 +100,7 @@ def vllm(
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.model_input import GenerationParameters
-    from lighteval.models.vllm.vllm_model import VLLMModelConfig
+    from lighteval.models.sglang.sglang_model import SGLangModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
 
     TOKEN = os.getenv("HF_TOKEN")
@@ -117,12 +117,12 @@ def vllm(
     )
 
     pipeline_params = PipelineParameters(
-        launcher_type=ParallelismManager.VLLM,
+        launcher_type=ParallelismManager.SGLANG,
         env_config=env_config,
         job_id=job_id,
         dataset_loading_processes=dataset_loading_processes,
         custom_tasks_directory=custom_tasks,
-        override_batch_size=-1,  # Cannot override batch size when using VLLM
+        override_batch_size=-1,
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         use_chat_template=use_chat_template,
@@ -134,21 +134,18 @@ def vllm(
         with open(model_args, "r") as f:
             config = yaml.safe_load(f)["model"]
         model_args = config["base_params"]["model_args"]
-        metric_options = config.get("metric_options", {})
         generation_parameters = GenerationParameters.from_dict(config)
     else:
-        generation_parameters = GenerationParameters.from_model_args(model_args)
-        metric_options = {}
+        generation_parameters = GenerationParameters()
 
     model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
-    model_config = VLLMModelConfig(**model_args_dict, generation_parameters=generation_parameters)
+    model_config = SGLangModelConfig(**model_args_dict, generation_parameters=generation_parameters)
 
     pipeline = Pipeline(
         tasks=tasks,
         pipeline_parameters=pipeline_params,
         evaluation_tracker=evaluation_tracker,
         model_config=model_config,
-        metric_options=metric_options,
     )
 
     pipeline.evaluate()

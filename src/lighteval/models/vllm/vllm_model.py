@@ -76,7 +76,7 @@ STARTING_BATCH_SIZE = 512
 @dataclass
 class VLLMModelConfig:
     pretrained: str
-    gpu_memory_utilisation: float = 0.9  # lower this if you are running out of memory
+    gpu_memory_utilization: float = 0.9  # lower this if you are running out of memory
     revision: str = "main"  # revision of the model
     dtype: str | None = None
     tensor_parallel_size: int = 1  # how many GPUs to use for tensor parallelism
@@ -130,7 +130,7 @@ class VLLMModel(LightevalModel):
         self.precision = _get_dtype(config.dtype, config=self._config)
 
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
-        self.sampling_params = SamplingParams(**config.generation_parameters.to_vllm_openai_dict())
+        self.sampling_params = SamplingParams(**config.generation_parameters.to_vllm_dict())
         self.pairwise_tokenization = config.pairwise_tokenization
 
     @property
@@ -181,7 +181,7 @@ class VLLMModel(LightevalModel):
         """
         self.model_args = {
             "model": config.pretrained,
-            "gpu_memory_utilization": float(config.gpu_memory_utilisation),
+            "gpu_memory_utilization": float(config.gpu_memory_utilization),
             "revision": config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
             "dtype": config.dtype,
             "trust_remote_code": config.trust_remote_code,
@@ -277,6 +277,11 @@ class VLLMModel(LightevalModel):
                         f"{context_size + max_new_tokens=} which is greather than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
                     )
                     context_size = self.max_length - max_new_tokens
+                    if context_size < 0:
+                        logger.critical(
+                            f"{context_size=} is less than 0, either reduce the max_new_tokens or increase model max length."
+                        )
+                        raise ValueError("Context size is less than 0.")
                     inputs = [input[-context_size:] for input in inputs]
             else:
                 if context_size > self.max_length:
@@ -324,7 +329,9 @@ class VLLMModel(LightevalModel):
         sampling_params = self.sampling_params.clone() or SamplingParams()
         if generate:
             sampling_params.n = num_samples
-            sampling_params.max_tokens = max_new_tokens
+            sampling_params.max_tokens = (
+                max_new_tokens if sampling_params.max_tokens is None else sampling_params.max_tokens
+            )
             sampling_params.stop = stop_tokens
             sampling_params.logprobs = 1 if returns_logits else 0
 
