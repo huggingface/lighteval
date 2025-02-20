@@ -21,9 +21,8 @@
 # SOFTWARE.
 """Usage:
 lighteval vllm \
-    "pretrained=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B,dtype=float16,tensor_parallel_size=4,max_model_length=32768,gpu_memory_utilisation=0.8" \
-    "extended|lcb:codegeneration|0|0" \
-    --custom-tasks src/lighteval/tasks/extended/lcb/main.py
+    "pretrained=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B,data_parallel_size=8,max_model_length=32768,gpu_memory_utilization=0.8,generation_parameters={temperature: 0.6,top_p: 0.95}" \
+    "extended|lcb:codegeneration|0|0"
 """
 
 import json
