@@ -20,11 +20,10 @@ Lighteval can be used with a few different commands.
     - `tgi`: evaluate models on one or more GPUs using [🔗 Text Generation Inference](https://huggingface.co/docs/text-generation-inference/en/index)
     - `openai`: evaluate models on one or more GPUs using [🔗 OpenAI API](https://platform.openai.com/)
 
-## Accelerate
+## Basic usage
 
-### Evaluate a model on a GPU
-
-To evaluate `GPT-2` on the Truthful QA benchmark, run:
+To evaluate `GPT-2` on the Truthful QA benchmark with [🤗
+  Accelerate](https://github.com/huggingface/accelerate) , run:
 
 ```bash
 lighteval accelerate \
@@ -32,22 +31,40 @@ lighteval accelerate \
      "leaderboard|truthfulqa:mc|0|0"
 ```
 
-Here, `--tasks` refers to either a comma-separated list of supported tasks from
-the [tasks_list](available-tasks) in the format:
+Here, we first choose a backend (either `accelerate`, `nanotron`, or `vllm`), and then specify the model and task(s) to run.
 
-```bash
-{suite}|{task}|{num_few_shot}|{0 or 1 to automatically reduce `num_few_shot` if prompt is too long}
+The syntax for the model arguments is `key1=value1,key2=value2,etc`.
+Valid key-value pairs correspond with the backend configuration, and are detailed [below](#Model Arguments).
+
+The syntax for the task specification might be a bit hard to grasp at first. The format is as follows:
+
+```txt
+{suite}|{task}|{num_few_shot}|{0 for strict `num_few_shots`, or 1 to allow a truncation if context size is too small}
 ```
 
-or a file path like
-[examples/tasks/recommended_set.txt](https://github.com/huggingface/lighteval/blob/main/examples/tasks/recommended_set.txt)
-which specifies multiple task configurations.
+If the fourth value is set to 1, lighteval will check if the prompt (including the few-shot examples) is too long for the context size of the task or the model.
+If so, the number of few shot examples is automatically reduced.
 
-Tasks details can be found in the
+All officially supported tasks can be found at the [tasks_list](available-tasks) and in the
+[extended folder](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks/extended).
+Moreover, community-provided tasks can be found in the
+[community](https://github.com/huggingface/lighteval/tree/main/community_tasks) folder.
+For more details on the implementation of the tasks, such as how prompts are constructed, or which metrics are used, you can have a look at the
 [file](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/default_tasks.py)
 implementing them.
 
-### Evaluate a model on one or more GPUs
+Running multiple tasks is supported, either with a comma-separated list, or by specifying a file path.
+The file should be structured like [examples/tasks/recommended_set.txt](https://github.com/huggingface/lighteval/blob/main/examples/tasks/recommended_set.txt).
+When specifying a path to file, it should start with `./`.
+
+```bash
+lighteval accelerate \
+     "pretrained=gpt2" \
+     ./path/to/lighteval/examples/tasks/recommended_set.txt
+# or, e.g., "leaderboard|truthfulqa:mc|0|0|,leaderboard|gsm8k|3|1"
+```
+
+## Evaluate a model on one or more GPUs
 
 #### Data parallelism
 
@@ -86,13 +103,13 @@ This will automatically use accelerate to distribute the model across the GPUs.
 > `model_parallel=True` and using accelerate to distribute the data across the
 GPUs.
 
-### Model Arguments
+## Backend configuration
 
 The `model-args` argument takes a string representing a list of model
 argument. The arguments allowed vary depending on the backend you use (vllm or
 accelerate).
 
-#### Accelerate
+### Accelerate
 
 - **pretrained** (str):
     HuggingFace Hub model ID name or the path to a pre-trained
@@ -128,10 +145,10 @@ accelerate).
 - **trust_remote_code** (bool): Whether to trust remote code during model
     loading.
 
-#### VLLM
+### VLLM
 
 - **pretrained** (str): HuggingFace Hub model ID name or the path to a pre-trained model to load.
-- **gpu_memory_utilisation** (float): The fraction of GPU memory to use.
+- **gpu_memory_utilization** (float): The fraction of GPU memory to use.
 - **batch_size** (int): The batch size for model training.
 - **revision** (str): The revision of the model.
 - **dtype** (str, None): The data type to use for the model.

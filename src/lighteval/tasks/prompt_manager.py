@@ -132,7 +132,7 @@ class PromptManager:
         Multi turn tasks need use chat templating.
 
         Args:
-            doc (Doc): Formated document.
+            doc (Doc): Formatted document.
             use_chat_template (bool): wether or not to use chat template. Will fail if false.
             system_prompt (Optional[str]): The system prompt to use
             tokenizer (PreTrainedTokenizer): The tokenizer used for the chat template

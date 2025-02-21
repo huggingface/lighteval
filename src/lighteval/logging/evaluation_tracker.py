@@ -34,7 +34,6 @@ from pathlib import Path
 import torch
 from datasets import Dataset, load_dataset
 from datasets.utils.metadata import MetadataConfigs
-from fsspec import url_to_fs
 from huggingface_hub import DatasetCard, DatasetCardData, HfApi, HFSummaryWriter, hf_hub_url
 
 from lighteval.logging.info_loggers import (
@@ -52,6 +51,11 @@ logger = logging.getLogger(__name__)
 
 if is_nanotron_available():
     from nanotron.config import GeneralArgs  # type: ignore
+
+try:
+    from fsspec import url_to_fs
+except ImportError:
+    from fsspec.core import url_to_fs
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
@@ -149,6 +153,28 @@ class EvaluationTracker:
 
         self.public = public
 
+    @property
+    def results(self):
+        config_general = asdict(self.general_config_logger)
+        # We remove the config from logging, which contains context/accelerator objects
+        config_general.pop("config")
+        results = {
+            "config_general": config_general,
+            "results": self.metrics_logger.metric_aggregated,
+            "versions": self.versions_logger.versions,
+            "config_tasks": self.task_config_logger.tasks_configs,
+            "summary_tasks": self.details_logger.compiled_details,
+            "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
+        }
+        return results
+
+    @property
+    def details(self):
+        return {
+            task_name: [asdict(detail) for detail in task_details]
+            for task_name, task_details in self.details_logger.details.items()
+        }
+
     def save(self) -> None:
         """Saves the experiment information and results to files, and to the hub if requested."""
         logger.info("Saving experiment tracker")
@@ -209,9 +235,45 @@ class EvaluationTracker:
         with self.fs.open(output_results_file, "w") as f:
             f.write(json.dumps(results_dict, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False))
 
-    def save_details(self, date_id: str, details_datasets: dict[str, Dataset]):
+    def _get_details_sub_folder(self, date_id: str):
         output_dir_details = Path(self.output_dir) / "details" / self.general_config_logger.model_name
-        output_dir_details_sub_folder = output_dir_details / date_id
+        if date_id in ["first", "last"]:
+            # Get all folders in output_dir_details
+            if not self.fs.exists(output_dir_details):
+                raise FileNotFoundError(f"Details directory {output_dir_details} does not exist")
+
+            # List all folders and filter out files
+            folders = [f["name"] for f in self.fs.listdir(output_dir_details) if f["type"] == "directory"]
+
+            if not folders:
+                raise FileNotFoundError(f"No timestamp folders found in {output_dir_details}")
+
+            # Parse timestamps and get first or last
+            date_id = max(folders) if date_id == "last" else min(folders)
+        return output_dir_details / date_id
+
+    def load_details_datasets(self, date_id: str, task_names: list[str]) -> dict[str, Dataset]:
+        output_dir_details_sub_folder = self._get_details_sub_folder(date_id)
+        logger.info(f"Loading details from {output_dir_details_sub_folder}")
+        date_id = output_dir_details_sub_folder.name  # Overwrite date_id in case of latest
+        details_datasets = {}
+        for file in self.fs.glob(str(output_dir_details_sub_folder / f"details_*_{date_id}.parquet")):
+            task_name = Path(file).stem.replace("details_", "").replace(f"_{date_id}", "")
+            if "|".join(task_name.split("|")[:-1]) not in task_names:
+                logger.info(f"Skipping {task_name} because it is not in the task_names list")
+                continue
+            dataset = load_dataset("parquet", data_files=file, split="train")
+            details_datasets[task_name] = dataset
+
+        for task_name in task_names:
+            if not any(task_name.startswith(task_name) for task_name in details_datasets.keys()):
+                raise ValueError(
+                    f"Task {task_name} not found in details datasets. Check the tasks to be evaluated or the date_id used to load the details ({date_id})."
+                )
+        return details_datasets
+
+    def save_details(self, date_id: str, details_datasets: dict[str, Dataset]):
+        output_dir_details_sub_folder = self._get_details_sub_folder(date_id)
         self.fs.mkdirs(output_dir_details_sub_folder, exist_ok=True)
         logger.info(f"Saving details to {output_dir_details_sub_folder}")
         for task_name, dataset in details_datasets.items():
@@ -263,12 +325,13 @@ class EvaluationTracker:
         # We upload it both as a json and a parquet file
         result_file_base_name = f"results_{date_id}"
         results_json = json.dumps(results_dict, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False)
-        self.api.upload_file(
+        url = self.api.upload_file(
             repo_id=repo_id,
             path_or_fileobj=BytesIO(results_json.encode("utf-8")),
             path_in_repo=f"{result_file_base_name}.json",
             repo_type="dataset",
         )
+        logger.info(f"Uploaded evaluation details to {url}")
 
         results_dataset = Dataset.from_dict(
             {key: [json.dumps(v, cls=EnhancedJSONEncoder, indent=2)] for key, v in results_dict.items()}
@@ -280,6 +343,31 @@ class EvaluationTracker:
             dataset.to_parquet(f"{fsspec_repo_uri}/{output_file_details}")
 
         self.recreate_metadata_card(repo_id)
+
+    def push_results_to_hub(self, repo_id: str, path_in_repo: str, private: bool | None = None):
+        repo_id = repo_id if "/" in repo_id else f"{self.hub_results_org}/{repo_id}"
+        private = private if private is not None else not self.public
+        self.api.create_repo(repo_id, private=private, repo_type="dataset", exist_ok=True)
+        results_json = json.dumps(self.results, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False)
+        self.api.upload_file(
+            repo_id=repo_id,
+            path_or_fileobj=results_json.encode(),
+            path_in_repo=path_in_repo,
+            repo_type="dataset",
+        )
+
+    def push_details_to_hub(self, repo_id: str, path_in_repo: str, private: bool | None = None):
+        repo_id = repo_id if "/" in repo_id else f"{self.hub_results_org}/{repo_id}"
+        private = private if private is not None else not self.public
+        self.api.create_repo(repo_id, private=private, repo_type="dataset", exist_ok=True)
+        for task_name, details in self.details:
+            details_json = "\n".join([json.dumps(detail) for detail in details])
+            self.api.upload_file(
+                repo_id=repo_id,
+                path_or_fileobj=details_json.encode(),
+                path_in_repo=path_in_repo.format(task_name=task_name),
+                repo_type="dataset",
+            )
 
     def recreate_metadata_card(self, repo_id: str) -> None:  # noqa: C901
         """Fully updates the details repository metadata card for the currently evaluated model
