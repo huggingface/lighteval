@@ -318,6 +318,7 @@ class VLLMModel(LightevalModel):
         generate: bool = True,
     ) -> list[GenerativeResponse]:
         """Contains the actual logic of the generation."""
+        print(f"{self.sampling_params.clone()=}")
         sampling_params = self.sampling_params.clone() or SamplingParams()
         if generate:
             sampling_params.n = num_samples
@@ -343,6 +344,7 @@ class VLLMModel(LightevalModel):
             # as VLLM complains about no GPUs available.
             @ray.remote(num_gpus=1 if self.tensor_parallel_size == 1 else None)
             def run_inference_one_model(model_args: dict, sampling_params: SamplingParams, requests):
+                print(f"Sampling params: {sampling_params}")
                 llm = LLM(**model_args)
                 return llm.generate(prompt_token_ids=requests, sampling_params=sampling_params)
 
