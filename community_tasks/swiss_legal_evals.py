@@ -991,7 +991,7 @@ GPU_METRICS = [
 ]
 API_METRICS = [
     "gemba_mqm_gpt_4o",
-    "slt_judge_gpt_4o",
+    "slt_judge_gemini_1_5_flash_codebook_diverse_deduction",
 ]
 JUDGE_METRICS = [
     f"slt_judge_{judge_model}-{system_style}-{few_shot_style}-{judgment_style}".replace("-", "_")
