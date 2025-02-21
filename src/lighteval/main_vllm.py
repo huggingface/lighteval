@@ -144,6 +144,9 @@ def vllm(
         metric_options = {}
 
     model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
+
+    print(f"{model_args_dict=}")
+    print(f"{generation_parameters=}")
     model_config = VLLMModelConfig(**model_args_dict, generation_parameters=generation_parameters)
 
     pipeline = Pipeline(
