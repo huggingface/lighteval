@@ -29,21 +29,61 @@ lighteval vllm \
     "leaderboard|truthfulqa:mc|0|0"
 ```
 
-Available arguments for `vllm` can be found in the `VLLMModelConfig`:
+## Use a config file
 
-- **pretrained** (str): HuggingFace Hub model ID name or the path to a pre-trained model to load.
-- **gpu_memory_utilisation** (float): The fraction of GPU memory to use.
-- **revision** (str): The revision of the model.
-- **dtype** (str, None): The data type to use for the model.
-- **tensor_parallel_size** (int): The number of tensor parallel units to use.
-- **data_parallel_size** (int): The number of data parallel units to use.
-- **max_model_length** (int): The maximum length of the model.
-- **swap_space** (int): The CPU swap space size (GiB) per GPU.
-- **seed** (int): The seed to use for the model.
-- **trust_remote_code** (bool): Whether to trust remote code during model loading.
-- **add_special_tokens** (bool): Whether to add special tokens to the input sequences.
-- **multichoice_continuations_start_space** (bool): Whether to add a space at the start of each continuation in multichoice generation.
+For more advanced configurations, you can use a config file for the model.
+An example of a config file is shown below and can be found at `examples/model_configs/vllm_model_config.yaml`.
+
+```bash
+lighteval vllm \
+    "examples/model_configs/vllm_model_config.yaml" \
+    "leaderboard|truthfulqa:mc|0|0"
+```
+
+```yaml
+model: # Model specific parameters
+  base_params:
+    model_args: "pretrained=HuggingFaceTB/SmolLM-1.7B,revision=main,dtype=bfloat16" # Model args that you would pass in the command line
+  generation: # Generation specific parameters
+    temperature: 0.3
+    repetition_penalty: 1.0
+    frequency_penalty: 0.0
+    presence_penalty: 0.0
+    seed: 42
+    top_k: 0
+    min_p: 0.0
+    top_p: 0.9
+```
 
 > [!WARNING]
 > In the case of OOM issues, you might need to reduce the context size of the
-> model as well as reduce the `gpu_memory_utilisation` parameter.
+> model as well as reduce the `gpu_memory_utilization` parameter.
+
+
+## Dynamically changing the metric configuration
+
+For special kinds of metrics like `Pass@K` or LiveCodeBench's `codegen` metric, you may need to pass specific values like the number of
+generations. This can be done in the `yaml` file in the following way:
+
+```yaml
+model: # Model specific parameters
+  base_params:
+    model_args: "pretrained=HuggingFaceTB/SmolLM-1.7B,revision=main,dtype=bfloat16" # Model args that you would pass in the command line
+  generation: # Generation specific parameters
+    temperature: 0.3
+    repetition_penalty: 1.0
+    frequency_penalty: 0.0
+    presence_penalty: 0.0
+    seed: 42
+    top_k: 0
+    min_p: 0.0
+    top_p: 0.9
+  metric_options: # Optional metric arguments
+    codegen_pass@1:16:
+      num_samples: 16
+```
+
+An optional key `metric_options` can be passed in the yaml file,
+using the name of the metric or metrics, as defined in the `Metric.metric_name`.
+In this case, the `codegen_pass@1:16` metric defined in our tasks will have the `num_samples` updated to 16,
+independently of  the number defined by default.

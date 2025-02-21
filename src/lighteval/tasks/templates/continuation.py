@@ -112,7 +112,7 @@ def get_continuation_prompt_function(
     C. Continuation 3
     Answer: A/B/C
 
-    This template is very similar to the `Multiple Choice` template, except that it only takes context/continuations as input and don't use the anchor labels (Question/Answer)
+    This template is very similar to the `Multiple Choice` template, except that it only takes context/continuations as input and doesn't use the anchor labels (Question/Answer)
 
     Args:
         language (Language): The language of the Continuation task.

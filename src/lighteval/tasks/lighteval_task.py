@@ -41,7 +41,7 @@ from lighteval.metrics import (
     apply_target_perplexity_metric,
 )
 from lighteval.metrics.metrics import Metric, MetricCategory, Metrics
-from lighteval.models.transformers.base_model import BaseModel
+from lighteval.models.transformers.transformers_model import TransformersModel
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import (
     Doc,
@@ -214,9 +214,8 @@ class LightevalTask:
             metric_names = as_list(metric.metric_name)
 
             for metric_name in metric_names:
-                # If we do maj_at_ metrics, we need to use the correct number of samples
-                if "maj@" in metric_name:
-                    self.num_samples.append(int(metric_name.replace("maj@", "").split("_")[0]))
+                # Update the number of samples to generate using the information in the metric name
+                self.num_samples.append(extract_num_samples(metric_name))
 
         self.formatter = cfg.prompt_function
 
@@ -578,7 +577,7 @@ def create_requests_from_tasks(  # noqa: C901
     task_dict: dict[str, LightevalTask],
     fewshot_dict: dict[str, list[Tuple[int, bool]]],
     num_fewshot_seeds: int,
-    lm: BaseModel,
+    lm: TransformersModel,
     max_samples: int | None,
     evaluation_tracker: "EvaluationTracker",
     use_chat_template: bool,
@@ -594,7 +593,7 @@ def create_requests_from_tasks(  # noqa: C901
         fewshot_dict (dict[str, list[Tuple[int, bool]]]): A dictionary of few
             shot examples.
         num_fewshot_seeds (int): number of few shot seeds.
-        lm (BaseModel): language model class that will be used to eventually
+        lm (TransformersModel): language model class that will be used to eventually
             truncate the few shot examples (we need the maximum input size of the
             model)
         max_samples (int): maximum number of samples.
@@ -621,7 +620,7 @@ def create_requests_from_tasks(  # noqa: C901
         n_samples = min(max_samples, len(task_docs)) if max_samples else len(task_docs)
         evaluation_tracker.task_config_logger.log_num_docs(task_name, len(task_docs), n_samples)
 
-        # logs out the diferent versions of the tasks for every few shot
+        # logs out the different versions of the tasks for every few shot
         for num_fewshot, _ in fewshot_dict[task_name]:
             cur_task_name = f"{task_name}|{num_fewshot}"
             evaluation_tracker.versions_logger.log(cur_task_name, task.version)
@@ -633,7 +632,7 @@ def create_requests_from_tasks(  # noqa: C901
         prompt_manager = PromptManager(lm=lm, task=task)
         seeds = prompt_manager.few_shot_sampler.get_fewshot_seeds(num_fewshot_seeds)
 
-        # We can do several round of fewshots sampling to get some variance informations
+        # We can do several round of fewshots sampling to get some variance information
         for seed in seeds:
             for doc_id in range(n_samples):
                 doc_id_seed = f"{doc_id}_{seed}"  # if we do several rounds of few shot sampling we have several seeds
@@ -657,3 +656,24 @@ def create_requests_from_tasks(  # noqa: C901
                         requests[req_type].extend(reqs)
 
     return requests, docs
+
+
+def extract_num_samples(metric_name: str) -> int:
+    """Gets the number of samples to generate from the metric name.
+    Assumes that any metric with @ in it's name depends on the number of samples.
+
+    Args:
+        metric_name (str): The metric name in the task.
+
+    Returns:
+        int: The number of samples to generate.
+    """
+    if "@" in metric_name:
+        metric_name = metric_name.split("@")[-1]
+        if "_" in metric_name:
+            metric_name = metric_name.split("_")[0]
+        if ":" in metric_name:
+            return int(metric_name.split(":")[-1])
+        else:
+            return int(metric_name)
+    return 1
