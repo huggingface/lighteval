@@ -1,0 +1,13 @@
+model:
+  base_params:
+    model_args: "pretrained=HuggingFaceTB/SmolLM-1.7B,dtype=float16,chunked_prefill_size=4096,mem_fraction_static=0.9"
+  generation:
+    temperature: 0.3
+    repetition_penalty: 1.0
+    frequency_penalty: 0.0
+    presence_penalty: 0.0
+    top_k: -1
+    min_p: 0.0
+    top_p: 0.9
+    max_new_tokens: 256
+    stop_tokens: ["<EOS>", "<PAD>"]
