@@ -191,7 +191,9 @@ def multilingual_extractive_match_metric(
     pred_extraction_target: Sequence[ExtractionTarget] = (ExprExtractionConfig(),),
     aggregation_function: Callable[[list[float]], float] = max,
     fallback_mode: Literal["no_fallback", "first_match"] = "first_match",
+    extraction_mode: Literal["first_match", "any_match"] = "any_match",
     precision: int = 6,
+    timeout_seconds: int = 5,
 ) -> SampleLevelMetric:
     """Creates a language-aware extractive match metric that extracts answers from the model's output.
 
@@ -215,8 +217,14 @@ def multilingual_extractive_match_metric(
             How to perform extraction. Defaults to "first_match".
             - "no_fallback": Only use first successfully parsed matches
             - "first_match": Use the first successfully parsed match + first match irregardless the parsing success
+        extraction_mode: Literal["first_match", "any_match"]
+            - "first_match": Only tries to extract the first regex match if it fails no other matches are tried
+            - "any_match": Tries to extract any regex match
+
         precision: int
             Number of decimal places to use when comparing numerical values. Defaults to 6.
+        timeout_seconds: int
+            Timeout for the extraction (each attempt) and comparison. Defaults to 5.
 
     Returns:
         A sample level metric that extracts and compares mathematical expressions.
@@ -240,13 +248,18 @@ def multilingual_extractive_match_metric(
         pred_extraction_regexes = get_extraction_regexes(formatted_doc, pred_extraction_target, language)
 
         extracted_predictions = [
-            extract_target_from_pred(pred, pred_extraction_regexes, fallback_mode) for pred in predictions
+            extract_target_from_pred(pred, pred_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds)
+            for pred in predictions
         ]
-        extracted_golds = [extract_target_from_pred(gold, gold_extraction_regexes, fallback_mode) for gold in golds]
+        extracted_golds = [
+            extract_target_from_pred(gold, gold_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds)
+            for gold in golds
+        ]
 
         # Assert on empty gold and warn on empty pred
         if any(len(g) == 0 for g in extracted_golds):
-            raise ValueError(f"No gold targets found for at least one gold. Gold: {golds}, Pred: {predictions}")
+            logger.warning(f"We did not manage to extract a gold in the correct format. Gold: {golds}")
+            extracted_golds = [[gold] for gold in golds]
 
         if all(len(p) == 0 for p in extracted_predictions):
             logger.warning(
@@ -256,12 +269,19 @@ def multilingual_extractive_match_metric(
         # We have to use timeout because the sypmy to str conversion can be very slow
         try:
             add_to_specifics_with_timeout(formatted_doc, extracted_predictions, extracted_golds)
-        except:  # noqa: E722
+        except Exception:  # noqa: E722
             logger.warning("Timeout when adding extracted predictions and golds to specific")
 
         return aggregation_function(
             [
-                (1.0 if any(compare_gold_target(gold, pred, precision) for gold in extracted_golds) else 0.0)
+                (
+                    1.0
+                    if any(
+                        compare_gold_target(gold, pred, precision, timeout_seconds=timeout_seconds)
+                        for gold in extracted_golds
+                    )
+                    else 0.0
+                )
                 for pred in extracted_predictions
             ]
         )

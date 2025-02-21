@@ -29,11 +29,13 @@ import lighteval.main_accelerate
 import lighteval.main_baseline
 import lighteval.main_endpoint
 import lighteval.main_nanotron
+import lighteval.main_sglang
 import lighteval.main_tasks
 import lighteval.main_vllm
 
 
 app = typer.Typer()
+app = typer.Typer(pretty_exceptions_show_locals=False)
 
 logging_config = dict(  # noqa C408
     version=1,
@@ -64,6 +66,7 @@ app.command(rich_help_panel="Evaluation Backends")(lighteval.main_accelerate.acc
 app.command(rich_help_panel="Evaluation Utils")(lighteval.main_baseline.baseline)
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_nanotron.nanotron)
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_vllm.vllm)
+app.command(rich_help_panel="Evaluation Backends")(lighteval.main_sglang.sglang)
 app.add_typer(
     lighteval.main_endpoint.app,
     name="endpoint",

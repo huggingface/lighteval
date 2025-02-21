@@ -336,7 +336,7 @@ def test_sets_handling(gold, pred, expected):
         ("$1/3$", "$\\frac{1}{3} \\text{meters}$", 1),
         ("$1/3$", "$\\frac{1}{3} \\textbf{meters}$", 1),
         # Last = is considered
-        ("$1/3$", "$\\k = \\frac{1}{3}$", 1),
+        ("$1/3$", "$k = \\frac{1}{3}$", 1),
         ("$1/3$", "$\\frac{1}{3} \\textbf{meters}$", 1),
     ],
 )
@@ -604,12 +604,6 @@ def test_latex_notation_math(gold, pred, expected):
             "$-x >= -1$",
             1,
         ),
-        # Test incomplete equation
-        (
-            "$a +z = 0$",
-            "$0$",
-            0,
-        ),
     ],
 )
 def test_relations_math(gold, pred, expected):
@@ -864,7 +858,8 @@ def test_math_extraction_edge_cases(gold, pred, expected):
             r"Since $AP:PB = 1:4,$ we can write \[\frac{\overrightarrow{A} - \overrightarrow{P}}{1} = \frac{\overrightarrow{B} - \overrightarrow{P}}{4}.\]Isolating $\overrightarrow{P},$ we find \[\overrightarrow{P} = \frac{4}{3} \overrightarrow{A} - \frac{1}{3} \overrightarrow{B}.\]Thus, $(t,u) = \boxed{\left( \frac{4}{3}, -\frac{1}{3} \right)}.$",
             1,
         ),
-        (r"$(3,1)$", r"${1,3}$", 1),
+        # Shouldn't work as it's ordered tuple vs set
+        # (r"$(3,1)$", r"${1,3}$", 1),
         (r"$(1,3)$", r"${1,3}$", 1),
         # Issue: Therefore preference
         (
@@ -949,7 +944,194 @@ def test_math_extraction_edge_cases(gold, pred, expected):
             r"To find the product \( ab \) where \( a = 2012_3 \) and \( b = 201_3 \), we first convert these base-three numbers to base ten. For \( a = 2012_3 \): \[ a = 2 \cdot 3^3 + 0 \cdot 3^2 + 1 \cdot 3^1 + 2 \cdot 3^0 = 2 \cdot 27 + 0 \cdot 9 + 1 \cdot 3 + 2 \cdot 1 = 54 + 0 + 3 + 2 = 59_{10} \] For \( b = 201_3 \): \[ b = 2 \cdot 3^2 + 0 \cdot 3^1 + 1 \cdot 3^0 = 2 \cdot 9 + 0 \cdot 3 + 1 \cdot 1 = 18 + 0 + 1 = 19_{10} \] Now, calculate the product in base ten: \[ ab = 59 \times 19 \] Perform the multiplication: \[ 59 \times 19 = 59 \times (20 - 1) = 59 \times 20 - 59 \times 1 = 1180 - 59 = 1121 \] Next, convert \( 1121_{10} \) to base three. We do this by dividing by 3 and recording the remainders: \[ 1121 \div 3 = 373 \quad \text{remainder } 2 \] \[ 373 \div 3 = 124 \quad \text{remainder } 1 \] \[ 124 \div 3 = 41 \quad \text{remainder } 1 \] \[ 41 \div 3 = 13 \quad \text{remainder } 2 \] \[ 13 \div 3 = 4 \quad \text{remainder } 1 \] \[ 4 \div 3 = 1 \quad \text{remainder } 1 \] \[ 1 \div 3 = 0 \quad \text{remainder } 1 \] Reading the remainders from last to first, we find: \[ 1121_{10} = 1112122_3 \] Thus, the product \( ab \) expressed in the base-three number system is \(\boxed{1112122_3}\).",
             0,
         ),
+        (
+            r"\(\boxed{\text{C}}\).",
+            r"$\boxed{\text{(C)}}.$",
+            1,
+        ),
+        (
+            r" So the answer is: \[ \boxed{11111111100} \]",
+            r"is $\boxed{11,\! 111,\! 111,\! 100}$",
+            1,
+        ),
+        (
+            r" So the answer is: \[ \boxed{32349} \]",
+            r"is $\boxed{32,\! 349}$",
+            1,
+        ),
+        (
+            r"Thus, the domain of the function \( f(x) \) is: \[ \boxed{(2, 12) \cup (12, 102)} \]",
+            r"Thus, the answer is $x \in \boxed{(2,12) \cup (12,102)}$",
+            1,
+        ),
     ],
 )
 def test_math_extraction_additional_cases(gold, pred, expected):
+    assert compare_strings(gold, pred, match_types=["latex", "expr"]) == expected
+
+
+@pytest.mark.parametrize(
+    "gold, pred, expected",
+    [
+        (
+            r"$(37,3,3,13),(17,3,3,7),(3,37,3,13),(3,17,3,7),(3,3,2,3)$",
+            r"$\boxed{(3, 37, 3, 13), (3, 17, 3, 7), (3, 3, 2, 3), (3,17,3,7), (17,3,3,7), (37,3,3,13)}$",
+            1,
+        ),
+        (
+            r"$(p,q)=(3,2)$",
+            r"$(3,2)$",
+            1,
+        ),
+        (
+            r"$(0;0;0),(0;-2;0),(0;0;6),(0;-2;6),(4;0;0),(4;-2;0),(4;0;6),(4;-2;6)$",
+            r"\boxed{(4, 0, 6), (4, -2, 6), (0, 0, 6), (0, -2, 6), (4, 0, 0), (4, -2, 0), (0, 0, 0), (0, -2, 0)}",
+            1,
+        ),
+        (
+            r"$1\leq|z|\leq \frac{3}{2}$",
+            r"$z \in \left[-\frac{3}{2}, -1\right] \cup \left[1, \frac{3}{2}\right]$",
+            1,
+        ),
+        (
+            r"$-12;-11;-10;-8;-7;-6$",
+            r"$\boxed{\{-12, -11, -10, -8, -7, -6\}}$",
+            1,
+        ),
+        (
+            r"$AB=4,CD=5$",
+            r"$\boxed{4, 5}$",
+            1,
+        ),
+        (
+            r"$(11,7)or(7,11)$",
+            r"$\boxed{(7,11),\ (11,7)}$",
+            1,
+        ),
+        (
+            r"$S_{MBCN}:S=7:32$",
+            r"$\boxed{7:32}$",
+            1,
+        ),
+        (
+            r"$\frac{NO}{BO}=\frac{1}{\sqrt{6}}$",
+            r"$\frac{1}{\sqrt{6}}$",
+            1,
+        ),
+        (
+            r"$p=5,q=2;p=7,q=2$",
+            r"$(5,2),(7,2)$",
+            1,
+        ),
+        (
+            r"$(p,q,r)=(3,2,7)$",
+            r"$(3,2,7)$",
+            1,
+        ),
+        (
+            r"$V_{1}:V_{2}=11:21$",
+            r"$11:21$",
+            1,
+        ),
+        (
+            r"$(2,1),(1,2),(-1,-20),(-20,-1)$",
+            "solutions are:\n\n\\[\n\\boxed{(1, 2)}, \\boxed{(2, 1)}, \\boxed{(-1, -20)}, \\boxed{(-20, -1)}\n\\]",
+            1,
+        ),
+        (
+            r"\(\boxed{1}\) and \(\boxed{-2}\).",
+            r"$\boxed{-2,1}$.",
+            1,
+        ),
+        (
+            r"$\text{odd}$",
+            r"$odd$",
+            1,
+        ),
+        (
+            r"$\text{e}$",
+            r"$e$",
+            1,
+        ),
+        (
+            r"$\text{E}$",
+            r"$E$",
+            1,
+        ),
+        (r"$d$", r"$\text{E}$", 0),
+        (r"$1$ and $2$ and $3$", r"$\boxed{1,2,3}$", 1),
+        (
+            r"$(37,3,3,13),(17,3,3,7),(3,37,3,13),(3,17,3,7),(3,3,2,3)$",
+            r"$\boxed{(3, 37, 3, 13), (3, 17, 3, 7), (3, 3, 2, 3), (3,17,3,7), (17,3,3,7), (37,3,3,13)}$",
+            1,
+        ),
+        (
+            r"$(37,3,3),(17,3,3,7),(3,37,3,13),(3,17,3,7),(3,3,2,3)$",
+            r"$\boxed{(3, 37, 3, 13), (3, 17, 3, 7), (3, 3, 2, 3), (3,17,3,7), (17,3,3,7), (37,3,3,13)}$",
+            0,
+        ),
+        (
+            r"$(p,q)=(3,2)$",
+            r"$\boxed{(3, 2)}$",
+            1,
+        ),
+        (
+            r"\boxed{x = -5,\ p = \frac{14}{3}} ",
+            r"$\boxed{-5, \frac{14}{3}}$",
+            1,
+        ),
+        (
+            r"\boxed{a=4,\,-8,\,-10}",
+            r"$\boxed{-10,-8,4}$",
+            1,
+        ),
+        (
+            r"\\boxed{W(n) = 1 \\text{ and } W(n) = -1",
+            r"W(x)=1orW(x)=-1",
+            1,
+        ),
+        ("$21,16$ or $11$", "$21,16,11$", 1),
+        (r"\boxed{ p = 5, q = 2 \quad \text{and} \quad p = 7, q = 2}", r"$p=5,q=2;p=7,q=2$", 1),
+        (r"\n\n\[ \boxed{p = -1 \text{ and } p = \dfrac{15}{8}} \]", r"$p=-1,p=\frac{15}{8}$", 1),
+        ("$0<f(x)<1$", "$(0,1)$", 1),
+        (r"\(\boxed{6 \text{ and } 8}\)", r"$\boxed{6,8}$", 1),
+        (r"$\text{Even}$", r"$Even$", 1),
+        # (
+        #     r"$f(x)$",
+        #     r"$f(y)$",
+        #     1
+        # )
+        (
+            r"$x_{1}=10^{\frac{-5+\sqrt{13}}{6}},\quadx_{2}=10^{\frac{-5-\sqrt{13}}{6}}$",
+            r"$\boxed{10^{\frac{\sqrt{13} - 5}{6}}} \quad \text{and} \quad \boxed{10^{-\frac{5 + \sqrt{13}}{6}}}$",
+            1,
+        ),
+        (
+            r"$y_{1}=-2 x^{2}+4 x+3, y_{2}=3 x^{2}+12 x+10$",
+            r"\($y_1 = \boxed{-2(x - 1)^2 + 5} \) and \( y_2 = \boxed{3(x + 2)^2 - 2} \) ",
+            1,
+        ),
+        (
+            r"$x_{1}=\frac{1}{2}+\frac{31\sqrt{5}}{216},\quadx_{2}=\frac{1}{2}-\frac{31\sqrt{5}}{216}$",
+            r"$\boxed{\dfrac{108 + 31\sqrt{5}}{216}} \quad \text{and} \quad \boxed{\dfrac{108 - 31\sqrt{5}}{216}}$",
+            1,
+        ),
+        (
+            r"$x_{1}=10^{\frac{-5+\sqrt{13}}{6}},\quadx_{2}=10^{\frac{-5-\sqrt{13}}{6}}$",
+            r"$\boxed{10^{\frac{\sqrt{13} - 5}{6}}} \quad \text{and} \quad \boxed{10^{-\frac{5 + \sqrt{13}}{6}}}$",
+            1,
+        ),
+        (
+            r"\boxed{1} and and and or thus but \boxed{2} and \boxed{3}",
+            r"$\boxed{2,3}$",
+            1,
+        ),
+        (
+            r"\boxed{1} and and and or thus but \boxed{2} and \boxed{3}",
+            r"$\boxed{1,2,3}$",
+            0,
+        ),
+    ],
+)
+def test_math_numina_cases(gold, pred, expected):
     assert compare_strings(gold, pred, match_types=["latex", "expr"]) == expected

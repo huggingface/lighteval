@@ -20,9 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import ast
 import collections
 import os
 import random
+import re
 import shutil
 from contextlib import nullcontext
 from dataclasses import dataclass, field
@@ -30,23 +32,32 @@ from datetime import timedelta
 from enum import Enum, auto
 
 import numpy as np
+from tqdm import tqdm
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.metrics.utils.metric_utils import MetricCategory
 from lighteval.models.model_loader import TransformersModel, load_model
-from lighteval.models.model_output import ModelResponse
+from lighteval.models.model_output import (
+    GenerativeMultiturnResponse,
+    GenerativeResponse,
+    LoglikelihoodResponse,
+    LoglikelihoodSingleTokenResponse,
+    ModelResponse,
+)
 from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_tasks
 from lighteval.tasks.registry import Registry, taskinfo_selector
-from lighteval.tasks.requests import SampleUid
+from lighteval.tasks.requests import RequestType, SampleUid
 from lighteval.utils.imports import (
     NO_ACCELERATE_ERROR_MSG,
     NO_NANOTRON_ERROR_MSG,
     NO_OPENAI_ERROR_MSG,
+    NO_SGLANG_ERROR_MSG,
     NO_TGI_ERROR_MSG,
     NO_VLLM_ERROR_MSG,
     is_accelerate_available,
     is_nanotron_available,
     is_openai_available,
+    is_sglang_available,
     is_tgi_available,
     is_vllm_available,
 )
@@ -77,6 +88,7 @@ class ParallelismManager(Enum):
     OPENAI = auto()
     VLLM = auto()
     NONE = auto()
+    SGLANG = auto()
 
 
 @dataclass
@@ -95,6 +107,7 @@ class PipelineParameters:
     max_samples: int | None = None
     use_chat_template: bool = False
     system_prompt: str | None = None
+    load_responses_from_details_date_id: str | None = None
 
     def __post_init__(self):  # noqa C901
         if self.launcher_type == ParallelismManager.ACCELERATE:
@@ -103,6 +116,9 @@ class PipelineParameters:
         elif self.launcher_type == ParallelismManager.VLLM:
             if not is_vllm_available():
                 raise ImportError(NO_VLLM_ERROR_MSG)
+        elif self.launcher_type == ParallelismManager.SGLANG:
+            if not is_sglang_available():
+                raise ImportError(NO_SGLANG_ERROR_MSG)
         elif self.launcher_type == ParallelismManager.TGI:
             if not is_tgi_available():
                 raise ImportError(NO_TGI_ERROR_MSG)
@@ -122,6 +138,7 @@ class Pipeline:
         evaluation_tracker: EvaluationTracker,
         model_config=None,
         model=None,
+        metric_options=None,
     ):
         if not (model or model_config):
             raise ValueError("Must provide either a model or model config when creating a pipeline.")
@@ -135,6 +152,7 @@ class Pipeline:
 
         self.model_config = model_config
         self.evaluation_tracker = evaluation_tracker
+        self._metric_options = metric_options or {}
         self.accelerator, self.parallel_context = self._init_parallelism_manager()
         self.model = self._init_model(model_config, model)
 
@@ -199,6 +217,10 @@ class Pipeline:
             )
             task_names_list, fewshots_dict = taskinfo_selector(tasks, registry)
             task_dict = registry.get_task_dict(task_names_list)
+            # If there are metric_options defined from the yaml file,
+            # review if they have to be updated.
+            if self._metric_options:
+                self._update_num_samples(task_dict)
             LightevalTask.load_datasets(list(task_dict.values()), self.pipeline_parameters.dataset_loading_processes)
 
             self.evaluation_tracker.task_config_logger.log(task_dict)
@@ -219,6 +241,19 @@ class Pipeline:
             self.fewshot_dict = fewshots_dict
             self.requests = requests
             self.docs = docs
+
+    def _update_num_samples(self, task_dict: dict[str, LightevalTask]):
+        """Helper function to update the num_samples of a given metric via the yaml file.
+        As it has to be done at the metric level, it's better to update the value per metric.
+        It will add a num_samples to the already defined metrics' num_samples if defined in the yaml file.
+        As later when constructing the requests the max is taken over the num_samples, this is valid.
+        """
+        for _, task in task_dict.items():
+            for metric in task.metrics:
+                if metric_data := self._metric_options.get(metric.metric_name, None):
+                    num_samples = metric_data.get("num_samples", None)
+                    if num_samples:
+                        task.num_samples = [num_samples]
 
     def _init_random_seeds(self):
         logger.info("--- INIT SEEDS ---")
@@ -245,7 +280,17 @@ class Pipeline:
             config=self.model_config,
         )
 
-        sample_id_to_responses = self._run_model()
+        if self.pipeline_parameters.load_responses_from_details_date_id:
+            try:
+                sample_id_to_responses = self._load_responses_from_details()
+            except FileNotFoundError as e:
+                logger.warning(
+                    f"No responses found for {self.pipeline_parameters.load_responses_from_details_date_id} in details directory: {e}. Running model instead."
+                )
+                sample_id_to_responses = self._run_model()
+        else:
+            sample_id_to_responses = self._run_model()
+
         self._compute_metrics(sample_id_to_responses)
 
         if self.is_main_process():
@@ -260,6 +305,158 @@ class Pipeline:
                     logger.info(f"Removed {tmp_weights_dir}")
                 except OSError:
                     pass
+
+    def _unpack(self, x):
+        if isinstance(x, str):
+            return x
+        elif isinstance(x, (list, tuple)):
+            return self._unpack(x[0])
+        else:
+            raise ValueError(f"Unknown type {type(x)} of prediction {x}")
+
+    def _parse_tensor_string(self, tensor_string):
+        """
+        Convert a string containing PyTorch-like `tensor([...], device='cuda:0', ...)`
+        into a Python list (or nested lists) of numbers.
+
+        Example:
+            "[tensor([1, 2, 3], device='cuda:0'), tensor([[4,5],[6,7]], dtype=torch.int64)]"
+            -> [[1, 2, 3], [[4, 5], [6, 7]]]
+        """
+
+        # Regex explanation:
+        #   - tensor\(\s*: Matches "tensor(" (possibly with spaces after), literally.
+        #   - (.*?): Captures everything lazily into group(1), until the first subsequent part matches.
+        #     We rely on the next pattern to anchor the end of this capture.
+        #   - \): The literal closing parenthesis, but we anchor the match by ignoring
+        #     further arguments (device=..., dtype=..., etc.) inside.
+        #
+        #   The tricky part: a tensor might look like
+        #   tensor([ ... ], device='cuda:0', dtype=torch.int64)
+        #   so the bracket portion is `[ ... ]`, but it can have newlines, etc.
+        #
+        #   We'll handle that by first capturing the entire content up to the final parenthesis,
+        #   then parse out the bracket portion. This can be done in a function-based re.sub.
+
+        pattern = re.compile(
+            r"tensor\s*\(\s*(.*?)\s*\)",  # capture everything inside tensor(...)
+            flags=re.DOTALL,
+        )
+
+        def tensor_replacer(match):
+            inside = match.group(1).strip()
+            # `inside` might look like: [1, 2, 3], device='cuda:0'
+            # or:
+            #   [
+            #     1, 2, 3,
+            #     4, 5, ...
+            #   ], device='cuda:0', dtype=torch.int64
+            #
+            # 1) Extract the bracketed array portion: the first [ ... ] block
+            #    which might be multi-line. We'll use another regex for that.
+
+            # We look for the bracketed portion from the first '[' to its matching ']'.
+            # Because the inside can be multi-line, we use DOTALL. But we still need
+            # to ensure we don't accidentally go beyond the matching bracket.
+            #
+            # A robust approach to properly match brackets can be done with a small parser,
+            # but for typical well-formed strings, a lazy match of the form
+            # r"\[.*?\]" DOTALL often suffices, assuming no nested brackets inside.
+
+            bracket_pattern = re.compile(r"\[.*?\]", re.DOTALL)
+            bracket_match = bracket_pattern.search(inside)
+            if not bracket_match:
+                # If we fail to find a bracket, just return something safe.
+                # This means the string didn't match the expected format.
+                return "[]"
+
+            # The bracketed portion (e.g. "[1, 2, 3\n, 4]").
+            bracketed_content = bracket_match.group(0)
+
+            # Return just the bracketed content,
+            # effectively replacing "tensor(...)" with "[...]".
+            return bracketed_content
+
+        # Step 1: Replace every `tensor(...)` occurrence with just the bracketed list.
+        processed = pattern.sub(tensor_replacer, tensor_string)
+
+        # Step 2: Now we can safely parse the result with literal_eval.
+        #         If there's still something weird, it may throw ValueError.
+        try:
+            return ast.literal_eval(processed)
+        except Exception as e:
+            raise ValueError(f"Failed to parse after preprocessing. " f"Processed string:\n{processed}\n\nError: {e}")
+
+    def _load_responses_from_details(self):
+        logger.info("--- LOADING RESPONSES FROM DETAILS ---")
+        sample_id_to_responses: dict[(SampleUid, MetricCategory), list[ModelResponse]] = collections.defaultdict(list)
+
+        request_types = list(self.requests.keys())
+        if len(request_types) > 1:
+            raise ValueError(
+                "Loading responses from details when there are multiple request types is currently not supported"
+            )
+        model_response_type = self._get_model_response_type(request_types[0])
+
+        details_datasets = self.evaluation_tracker.load_details_datasets(
+            self.pipeline_parameters.load_responses_from_details_date_id, self.task_names_list
+        )
+
+        for task_name, dataset in tqdm(details_datasets.items(), desc="Loading responses from details for tasks"):
+            task: LightevalTask = self._get_task(task_name)
+            num_samples = len(set(dataset["specifics"]))
+            max_samples = self.pipeline_parameters.max_samples if self.pipeline_parameters.max_samples else num_samples
+            if num_samples > max_samples:
+                logger.warning(
+                    f"Skipping {num_samples - max_samples} samples for {task_name} when loading responses from details because max_samples is set to {max_samples}"
+                )
+                num_samples = self.pipeline_parameters.max_samples
+
+            predictions = [self._unpack(ast.literal_eval(p)) for p in dataset["predictions"][:num_samples]]
+            input_tokens = [self._parse_tensor_string(t) for t in dataset["input_tokens"][:num_samples]]
+            cont_tokens = [self._parse_tensor_string(t) for t in dataset["cont_tokens"][:num_samples]]
+            truncated = [ast.literal_eval(t)[0] for t in dataset["truncated"][:num_samples]]
+            padded = [ast.literal_eval(p)[0] for p in dataset["padded"][:num_samples]]
+
+            if model_response_type == GenerativeResponse:
+                logits = [ast.literal_eval(p) for p in dataset["pred_logits"][:num_samples]]
+
+            for metric_category, has_metric_category in task.has_metric_category.items():
+                if not has_metric_category:
+                    continue
+
+                for idx in range(num_samples):
+                    kwargs = {
+                        "result": predictions[idx],
+                        "input_tokens": input_tokens[idx],
+                        "generated_tokens": cont_tokens[idx],
+                        "truncated_tokens_count": truncated[idx],
+                        "padded_tokens_count": padded[idx],
+                    }
+                    if model_response_type == GenerativeResponse:
+                        kwargs["logits"] = logits[idx]
+
+                    response = model_response_type(**kwargs)
+                    sample_id_to_responses[(SampleUid(task_name, f"{idx}_{0}"), metric_category)] = [response]
+        return sample_id_to_responses
+
+    def _get_model_response_type(self, request_type):
+        if request_type == RequestType.LOGLIKELIHOOD:
+            model_response_type = LoglikelihoodResponse
+        elif request_type == RequestType.LOGLIKELIHOOD_SINGLE_TOKEN:
+            model_response_type = LoglikelihoodSingleTokenResponse
+        elif request_type == RequestType.LOGLIKELIHOOD_ROLLING:
+            model_response_type = LoglikelihoodResponse
+        elif request_type == RequestType.GREEDY_UNTIL_MULTI_TURN:
+            model_response_type = GenerativeMultiturnResponse
+        elif request_type == RequestType.GREEDY_UNTIL:
+            model_response_type = GenerativeResponse
+        else:
+            raise ValueError(
+                f"Loading responses from details for request type {request_type} is currently not supported"
+            )
+
+        return model_response_type
 
     def _run_model(self):
         # Running all requests depending on the model call type (log likelihood, generative, ...)
@@ -282,6 +479,10 @@ class Pipeline:
         self.model.cleanup()
 
         return sample_id_to_responses
+
+    def _get_task(self, task_name: str):
+        short_task_name = task_name.rsplit("|", 1)[0]
+        return self.task_dict[short_task_name]
 
     def _compute_metrics(self, sample_id_to_responses):
         # To compute the metrics we first group the samples and task and then by metrics.
@@ -307,8 +508,7 @@ class Pipeline:
             task_metric_category_groups[sample_id.task_name][metric_category]["docs"].append(self.docs[sample_id])
 
         for task_name, samples_per_metric in task_metric_category_groups.items():
-            short_task_name = task_name.rsplit("|", 1)[0]
-            task: LightevalTask = self.task_dict[short_task_name]
+            task: LightevalTask = self._get_task(task_name)
 
             for metric_category, samples in samples_per_metric.items():
                 sample_ids = samples["ids"]

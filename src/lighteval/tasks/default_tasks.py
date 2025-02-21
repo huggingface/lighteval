@@ -6210,7 +6210,7 @@ commonsenseqa_helm = LightevalTaskConfig(
     evaluation_splits=["validation"],
     few_shots_split=None,
     few_shots_select=None,
-    generation_size=-1,
+    generation_size=1,
     metric=[
         Metrics.exact_match,
         Metrics.quasi_exact_match,
@@ -7717,6 +7717,54 @@ gpqa_lighteval = LightevalTaskConfig(
     generation_size=1,
     metric=[Metrics.loglikelihood_acc_single_token],
     stop_sequence=["\n"],
+    trust_dataset=True,
+    version=0,
+)
+gpqa_diamond_instruct_lighteval = LightevalTaskConfig(
+    name="gpqa:diamond",
+    suite=["lighteval"],
+    prompt_function=prompt.gpqa_instruct,
+    hf_repo="Idavidrein/gpqa",
+    hf_subset="gpqa_diamond",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=32768,  # needed for reasoning models like R1
+    metric=[Metrics.gpqa_instruct_metric],
+    stop_sequence=[],  # no stop sequence, will use eos token
+    trust_dataset=True,
+    version=0,
+)
+gpqa_extended_instruct_lighteval = LightevalTaskConfig(
+    name="gpqa:extended",
+    suite=["lighteval"],
+    prompt_function=prompt.gpqa_instruct,
+    hf_repo="Idavidrein/gpqa",
+    hf_subset="gpqa_extended",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=32768,  # needed for reasoning models like R1
+    metric=[Metrics.gpqa_instruct_metric],
+    stop_sequence=[],  # no stop sequence, will use eos token
+    trust_dataset=True,
+    version=0,
+)
+gpqa_main_instruct_lighteval = LightevalTaskConfig(
+    name="gpqa:main",
+    suite=["lighteval"],
+    prompt_function=prompt.gpqa_instruct,
+    hf_repo="Idavidrein/gpqa",
+    hf_subset="gpqa_main",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=32768,  # needed for reasoning models like R1
+    metric=[Metrics.gpqa_instruct_metric],
+    stop_sequence=[],  # no stop sequence, will use eos token
     trust_dataset=True,
     version=0,
 )
