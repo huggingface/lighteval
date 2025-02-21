@@ -129,7 +129,10 @@ class VLLMModel(LightevalModel):
         self.precision = _get_dtype(config.dtype, config=self._config)
 
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
-        self.sampling_params = SamplingParams(**config.generation_parameters.to_vllm_dict())
+        self.sampling_params = SamplingParams(
+            temperature=0.0, max_tokens=32768
+        )  # SamplingParams(**config.generation_parameters.to_vllm_dict())
+        print(f"Sampling params: {self.sampling_params=}")
         self.pairwise_tokenization = config.pairwise_tokenization
 
     @property
@@ -319,6 +322,7 @@ class VLLMModel(LightevalModel):
     ) -> list[GenerativeResponse]:
         """Contains the actual logic of the generation."""
         sampling_params = self.sampling_params.clone() or SamplingParams()
+        print(f"Sampling params in generate: {sampling_params=}")
         if generate:
             sampling_params.n = num_samples
             sampling_params.max_tokens = (
