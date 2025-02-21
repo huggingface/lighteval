@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import os
+import re
 from typing import Optional
 
 from typer import Argument, Option
@@ -138,6 +139,8 @@ def vllm(
         generation_parameters = GenerationParameters.from_dict(config)
     else:
         generation_parameters = GenerationParameters.from_model_args(model_args)
+        # We slice out generation_parameters from model_args to avoid double-counting in the VLLMModelConfig
+        model_args = re.sub(r"generation_parameters=\{.*?\},?", "", model_args).strip(",")
         metric_options = {}
 
     model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
