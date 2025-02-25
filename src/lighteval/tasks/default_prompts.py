@@ -1284,7 +1284,7 @@ def lsat_qa(line, task_name: str = None):
     )
 
 
-def math(line, task_name: str = None):
+def math_500(line, task_name: str = None):
     # Prompt template adapted from
     # - simple-evals: https://github.com/openai/simple-evals/blob/6e84f4e2aed6b60f6a0c7b8f06bbbf4bfde72e58/math_eval.py#L17
     # - Llama 3: https://huggingface.co/datasets/meta-llama/Llama-3.2-1B-Instruct-evals/viewer/Llama-3.2-1B-Instruct-evals__math__details?views%5B%5D=llama_32_1b_instruct_evals__math__details
@@ -1300,6 +1300,15 @@ Solve the following math problem efficiently and clearly.  The last line of your
         query=MATH_QUERY_TEMPLATE.format(Question=line["problem"]),
         gold_index=0,
         choices=[line["solution"]],
+    )
+
+
+def math(line, task_name: str = None):
+    return Doc(
+        task_name=task_name,
+        query=f"Problem: {line['problem']}\nAnswer:",
+        gold_index=0,
+        choices=[f" {line['solution']}"],
     )
 
 
