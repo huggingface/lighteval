@@ -115,7 +115,7 @@ lcb_codegen_metric = SampleLevelMetric(
 
 extend_enum(Metrics, "lcb_codegen_metric", lcb_codegen_metric)
 
-configs = get_dataset_config_names("livecodebench/code_generation_lite")
+configs = get_dataset_config_names("livecodebench/code_generation_lite", trust_remote_code=True)
 
 tasks = []
 
