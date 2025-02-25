@@ -69,7 +69,7 @@ huggingface-cli login
 
 ## 🚀 Quickstart
 
-Lighteval offers two main entry points for model evaluation:
+Lighteval offers the following entry points for model evaluation:
 
 - `lighteval accelerate` : evaluate models on CPU or one or more GPUs using [🤗
   Accelerate](https://github.com/huggingface/accelerate)
