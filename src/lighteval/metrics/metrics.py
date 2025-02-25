@@ -25,7 +25,9 @@ import numpy as np
 from aenum import Enum
 
 from lighteval.metrics.dynamic_metrics import (
+    ExprExtractionConfig,
     IndicesExtractionConfig,
+    LatexExtractionConfig,
     multilingual_extractive_match_metric,
 )
 from lighteval.metrics.harness_compatibility.drop import drop_metrics
@@ -178,6 +180,15 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
+    expr_gold_metric = multilingual_extractive_match_metric(
+        language=Language.ENGLISH,
+        fallback_mode="first_match",
+        precision=5,
+        gold_extraction_target=(ExprExtractionConfig(),),
+        # Match boxed first before trying other regexes
+        pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
+        aggregation_function=max,
+    )
     extractiveness = SampleLevelMetricGrouping(
         metric_name=["summarization_coverage", "summarization_density", "summarization_compression"],
         sample_level_fn=Extractiveness(
@@ -237,6 +248,15 @@ class Metrics(Enum):
         use_case=MetricUseCase.SUMMARIZATION,
         corpus_level_fn=np.mean,
         higher_is_better=True,
+    )
+    latex_gold_metric = multilingual_extractive_match_metric(
+        language=Language.ENGLISH,
+        fallback_mode="first_match",
+        precision=5,
+        gold_extraction_target=(LatexExtractionConfig(),),
+        # Match boxed first before trying other regexes
+        pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
+        aggregation_function=max,
     )
     loglikelihood_acc = SampleLevelMetric(
         metric_name="acc",

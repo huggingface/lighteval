@@ -468,8 +468,8 @@ def litellm(
     if model_args.endswith(".yaml"):
         model_config = LiteLLMModelConfig.from_path(model_args)
     else:
-        model_name = model_args.split(",")[0].strip()
-        model_config = LiteLLMModelConfig(model=model_name)
+        model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
+        model_config = LiteLLMModelConfig(**model_args_dict)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
