@@ -59,38 +59,38 @@ import json
 import tempfile
 import os
 
-def evaluate_script(code):
+def evaluate_code(code, test_cases):
     outputs = []
     exec_timeout = 5
 
     for test_case in test_cases:
+        script = code.format(args=test_case)
         # Create a temporary Python file with just the code
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py') as f:
-            f.write(code)
-            f.flush()
+        try:
+            process = subprocess.run(
+                ["python", "-c", script],
+                text=True,
+                capture_output=True,
+                timeout=exec_timeout
+            )
 
-            try:
-                process = subprocess.run(
-                    ["python", f.name],
-                    text=True,
-                    capture_output=True,
-                    timeout=exec_timeout
-                )
+            if process.returncode != 0:
+                outputs.append("Execution error: " + process.stderr.strip())
+            else:
+                outputs.append(process.stdout.strip())
 
-                if process.returncode != 0:
-                    outputs.append("Execution error: " + process.stderr.strip())
-                else:
-                    outputs.append(process.stdout.strip())
-
-            except subprocess.TimeoutExpired:
-                outputs.append("Timeout error")
+        except subprocess.TimeoutExpired:
+            outputs.append("Timeout error")
 
     return outputs
 
-evaluate_script({code})
+evaluate_code({code}, json.loads({test_cases}))
 """
 
 
+# TODO: Update the inputs type, it should be a list with dicts, and a list with
+# the inputs inside, so we can gather the data there, i.e.
+# [{input: [input1, input2, ...], "fn_name": ..}, {input: [input1, input2, ...], "fn_name": ..}, ...]
 def code_runner_e2b(inputs: list[list[str]], code: list[str], timeout: int = 300, **kwargs) -> CodeRunnerOutput:
     """Runs the code in an e2b sandbox and returns the output or error: https://e2b.dev/
 
@@ -129,8 +129,10 @@ def code_runner_e2b(inputs: list[list[str]], code: list[str], timeout: int = 300
         # (it shouldn't be present). After that, the function is added to the template
         def populate_template(code: str, info: list[str]) -> str:
             formatted_code = prepare_fn(code, fn_name=kwargs.get("fn_name"))
-            formatted_code = formatted_code.format(args=info)
-            return EVALUATION_SCRIPT_CALL_BASED.format(code=json.dumps(formatted_code))
+
+            return EVALUATION_SCRIPT_CALL_BASED.format(
+                code=json.dumps(formatted_code), test_cases=json.dumps(json.dumps(info))
+            )
 
     else:
         raise ValueError(f"Template {template} is not valid")
