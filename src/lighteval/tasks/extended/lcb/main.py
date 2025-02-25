@@ -114,21 +114,26 @@ lcb_codegen_metric = SampleLevelMetric(
 
 extend_enum(Metrics, "lcb_codegen_metric", lcb_codegen_metric)
 
+tasks = []
 
-task = LightevalTaskConfig(
-    name="lcb:codegeneration",
-    suite=["extended"],
-    prompt_function=lcb_codegeneration_prompt_fn,
-    hf_repo="livecodebench/code_generation_lite",
-    hf_subset="v4_v5",  # https://github.com/LiveCodeBench/LiveCodeBench/tree/main?tab=readme-ov-file#dataset-versions
-    hf_avail_splits=["test"],
-    evaluation_splits=["test"],
-    generation_size=32768,
-    metric=[Metrics.lcb_codegen_metric],
-    stop_sequence=[],  # no stop sequence, will use EOS token
-    trust_dataset=True,
-    version=0,
-)
+for subset in ("v4_v5", "v4", "v5"):
+    # To keep the base subset as the default, the others are named "lcb:codegeneration_v4", "lcb:codegeneration_v5"... etc
+    name = "lcb:codegeneration" if subset == "v4_v5" else f"lcb:codegeneration_{subset}"
+    task = LightevalTaskConfig(
+        name=name,
+        suite=["extended"],
+        prompt_function=lcb_codegeneration_prompt_fn,
+        hf_repo="livecodebench/code_generation_lite",
+        hf_subset=subset,  # https://github.com/LiveCodeBench/LiveCodeBench/tree/main?tab=readme-ov-file#dataset-versions
+        hf_avail_splits=["test"],
+        evaluation_splits=["test"],
+        generation_size=32768,
+        metric=[Metrics.lcb_codegen_metric],
+        stop_sequence=[],  # no stop sequence, will use EOS token
+        trust_dataset=True,
+        version=0,
+    )
+    tasks.append(task)
 
 
-TASKS_TABLE = [task]
+TASKS_TABLE = tasks
