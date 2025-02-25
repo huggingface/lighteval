@@ -99,8 +99,8 @@ def test_results_logging(mock_evaluation_tracker: EvaluationTracker):
 @pytest.mark.evaluation_tracker(save_details=True)
 def test_details_logging(mock_evaluation_tracker, mock_datetime):
     task_details = {
-        "task1": [DetailsLogger.CompiledDetail(truncated=10, padded=5)],
-        "task2": [DetailsLogger.CompiledDetail(truncated=20, padded=10)],
+        "task1": [DetailsLogger.CompiledDetail(hashes=None, truncated=10, padded=5)],
+        "task2": [DetailsLogger.CompiledDetail(hashes=None, truncated=20, padded=10)],
     }
     mock_evaluation_tracker.details_logger.details = task_details
 
