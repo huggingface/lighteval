@@ -950,6 +950,7 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         false="yanlış",
         neither="hiçbiri",
         or_word="veya",
+        and_word="ve",
         full_stop=".",
         comma=",",
         question_mark="?",
