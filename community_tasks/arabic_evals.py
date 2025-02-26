@@ -417,10 +417,10 @@ def alghafa_pfn(line, task_name: str = None):
 
     instruction = "الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح\n\n"
     query = f"{instruction}السؤال: {question}\n"
-    
+
     for index, choice in enumerate(extracted_choices):
         query += f"{index}) {choice}\n"
-    
+
     query += "الإجابة:"
 
     return Doc(
