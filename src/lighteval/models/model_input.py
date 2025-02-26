@@ -42,6 +42,7 @@ class GenerationParameters:
     min_p: Optional[float] = None  # vllm, transformers, sglang
     top_p: Optional[int] = None  # vllm, transformers, tgi, litellm, sglang
     truncate_prompt: Optional[bool] = None  # vllm, tgi
+    grammar: Optional[str] = None  # tgi
 
     @classmethod
     def from_dict(cls, config_dict: dict):
@@ -180,6 +181,7 @@ class GenerationParameters:
             "top_k": self.top_k,
             "top_p": self.top_p,
             "truncate": self.truncate_prompt,
+            "grammar": self.grammar,
         }
         return {k: v for k, v in args.items() if v is not None}
 
