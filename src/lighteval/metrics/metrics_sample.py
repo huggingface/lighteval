@@ -26,17 +26,17 @@ using simple function (min, mean, max, ...) at the corpus level. Most metrics fa
 
 import logging
 import os
-from typing import Callable, Literal, Union, List
+from typing import Callable, List, Literal, Union
 
 import nltk
 import numpy as np
-from scipy.stats import hypergeom
 from huggingface_hub import HfApi
 from nltk.metrics.distance import edit_distance
 from nltk.tokenize import word_tokenize
 from nltk.tokenize.treebank import TreebankWordTokenizer
 from nltk.translate.bleu_score import sentence_bleu
 from pydantic import BaseModel
+from scipy.stats import hypergeom
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from lighteval.metrics.imports.bert_scorer import BERTScorer
@@ -1174,7 +1174,7 @@ class PassAtK:
             return 1.0
 
         return 1.0 - np.prod(1.0 - self.k / np.arange(self.n - c + 1, self.n + 1))
-    
+
 
 class GPassAtK:
     def __init__(
@@ -1246,7 +1246,9 @@ class GPassAtK:
 
         if self.n is None:
             self.n = len(predictions)
-            logger.warning("n undefined in the G-Pass@k. We assume it's the same as the sample's number of predictions.")
+            logger.warning(
+                "n undefined in the G-Pass@k. We assume it's the same as the sample's number of predictions."
+            )
         elif len(predictions) < self.n:
             logger.warning(f"Number of predictions is less than {self.n} for G-Pass@k.")
 
@@ -1304,23 +1306,23 @@ class GPassAtK:
             return _compute_g_pass_at_k(n, c, k, m)
 
         def compute_mg_pass_at_k(n, c, k):
-            l, r = int(np.ceil(k * 0.5)), k
+            low, high = int(np.ceil(k * 0.5)), k
 
             mg_pass_at_k = 0.0
-            for i in range(l + 1, r + 1):
+            for i in range(low + 1, high + 1):
                 mg_pass_at_k += _compute_g_pass_at_k(n, c, k, i)
             mg_pass_at_k = 2 * mg_pass_at_k / k
 
             return mg_pass_at_k
-        
+
         metrics = {}
         for k in ks:
             for t in thresholds:
-                metrics[f'G-Pass@{k}_{t}'] = compute_g_pass_at_k(n, c, k, t)
-            metrics[f'mG-Pass@{k}'] = compute_mg_pass_at_k(n, c, k)
+                metrics[f"G-Pass@{k}_{t}"] = compute_g_pass_at_k(n, c, k, t)
+            metrics[f"mG-Pass@{k}"] = compute_mg_pass_at_k(n, c, k)
 
         return metrics
-    
+
     @property
     def all_metrics(self):
         ks: int = self.k
@@ -1329,7 +1331,7 @@ class GPassAtK:
         metrics = []
         for k in ks:
             for t in thresholds:
-                metrics.append(f'G-Pass@{k}_{t}')
-            metrics.append(f'mG-Pass@{k}')
+                metrics.append(f"G-Pass@{k}_{t}")
+            metrics.append(f"mG-Pass@{k}")
 
         return metrics
