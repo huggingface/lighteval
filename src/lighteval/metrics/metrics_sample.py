@@ -26,10 +26,11 @@ using simple function (min, mean, max, ...) at the corpus level. Most metrics fa
 
 import logging
 import os
-from typing import Callable, Literal, Union
+from typing import Callable, Literal, Union, List
 
 import nltk
 import numpy as np
+from scipy.stats import hypergeom
 from huggingface_hub import HfApi
 from nltk.metrics.distance import edit_distance
 from nltk.tokenize import word_tokenize
@@ -1173,3 +1174,162 @@ class PassAtK:
             return 1.0
 
         return 1.0 - np.prod(1.0 - self.k / np.arange(self.n - c + 1, self.n + 1))
+    
+
+class GPassAtK:
+    def __init__(
+        self,
+        k: Union[int, List[int]],
+        n: int = None,
+        thresholds: List[float] = [0.0, 0.25, 0.5, 0.75, 1.0],
+        normalize_gold: Callable = None,
+        normalize_pred: Callable = None,
+        strip_strings: bool = False,
+        sample_scoring_function: Union[Callable[[str, str], float], str] = None,
+    ):
+        """Computing G-Pass@k from http://arxiv.org/abs/2412.13147
+
+        Args:
+            k (int, list): The number of successful attempts to be considered.
+            n (int): Number of samples to generate.
+            thresholds (list): Thresholds to control successful attempts in k generate.
+            normalize_gold (callable, optional): Function to use to normalize the reference strings.
+                Defaults to None if no normalization is applied.
+            normalize_pred (callable, optional): Function to use to normalize the predicted strings.
+                Defaults to None if no normalization is applied.
+            strip_strings (bool, optional): Whether to strip both reference and predictions. Defaults to False.
+            sample_scoring_function (callable or str, optional): Function to use to score each sample.
+                Either pass the full function (should take a string prediction and a string gold, and return a score between 0 and 1)
+                a string (any of `prefix`, `suffix` or `full`) to define the type of exact match that you want, or nothing to defaults to "full".
+                    `prefix` checks if the prediction starts with the gold,
+                    `suffix` if the prediction ends with the gold,
+                    `full` if the prediction and gold are equal
+        """
+        self.k = as_list(k)
+        self.n = n
+        self.thresholds = thresholds
+        self.normalize_gold = normalize_gold
+        self.normalize_pred = normalize_pred
+        self.strip_strings = strip_strings
+
+        # Managed the logic of the per prediction of sample scoring
+        if callable(sample_scoring_function):
+            self.score_sample = sample_scoring_function
+            self.type_exact_match = None
+        else:
+            if isinstance(sample_scoring_function, str):
+                if sample_scoring_function not in ["prefix", "suffix", "full"]:
+                    raise ValueError(
+                        f"type_exact_match (used in parametrized_exact_match) must be one of prefix, suffix, or full. Was {sample_scoring_function} instead."
+                    )
+                self.type_exact_match = sample_scoring_function
+            else:
+                self.type_exact_match = "full"
+            self.score_sample = self.default_sample_scoring
+
+    def compute(self, predictions: list[str], formatted_doc: list[Doc], **kwargs) -> dict[str, float]:
+        """Computes the metric over a list of golds and predictions for one single item with possibly many samples.
+        It applies normalisation (if needed) to model prediction and gold, computes their per prediction score,
+        then aggregates the scores over the samples using a pass@k.
+
+        Args:
+            golds (list[str]): Reference targets
+            predictions (list[str]): k predicted strings
+
+        Returns:
+            float: Aggregated score over the current sample's items.
+        """
+        golds = formatted_doc.get_golds()
+
+        if len(golds) > 1:
+            raise Exception("Cannot compute G-Pass@k with several golds")
+
+        if self.n is None:
+            self.n = len(predictions)
+            logger.warning("n undefined in the G-Pass@k. We assume it's the same as the sample's number of predictions.")
+        elif len(predictions) < self.n:
+            logger.warning(f"Number of predictions is less than {self.n} for G-Pass@k.")
+
+        gold = self.get_processed_gold(golds[0])
+
+        all_scores = []
+        for pred in predictions[: self.n]:
+            cur_pred = self.get_processed_pred(pred=pred)
+            all_scores.append(self.score_sample(cur_pred, gold, formatted_doc))
+
+        return self.g_pass_at_k(all_scores)
+
+    def get_processed_gold(self, gold: str) -> float:
+        if self.strip_strings:
+            gold = gold.strip()
+
+        if self.normalize_gold:
+            gold = self.normalize_gold(gold)
+
+        return gold
+
+    def get_processed_pred(self, pred: str) -> float:
+        if not pred:
+            return ""
+
+        if self.strip_strings:
+            pred = pred.strip()
+
+        if self.normalize_pred:
+            pred = self.normalize_pred(pred)
+
+        return pred
+
+    def default_sample_scoring(self, pred: str, gold: str) -> int:
+        if self.type_exact_match == "prefix":
+            return 1 if pred.startswith(gold) else 0
+        if self.type_exact_match == "suffix":
+            return 1 if pred.endswith(gold) else 0
+        return 1 if gold == pred else 0
+
+    def g_pass_at_k(self, all_scores: list[int]) -> float:
+        """Computation of G-Pass@k details from http://arxiv.org/abs/2412.13147"""
+        c: int = sum(all_scores)
+        n: int = self.n
+        ks: int = self.k
+        thresholds: List[float] = self.thresholds
+
+        def _compute_g_pass_at_k(n, c, k, m):
+            if m > min(c, k) or k > n or c < 0 or n <= 0 or m < 0:
+                return 0.0
+            return hypergeom.sf(m - 1, n, c, k)
+
+        def compute_g_pass_at_k(n, c, k, t):
+            m = max(int(np.ceil(k * t)), 1)
+            return _compute_g_pass_at_k(n, c, k, m)
+
+        def compute_mg_pass_at_k(n, c, k):
+            l, r = int(np.ceil(k * 0.5)), k
+
+            mg_pass_at_k = 0.0
+            for i in range(l + 1, r + 1):
+                mg_pass_at_k += _compute_g_pass_at_k(n, c, k, i)
+            mg_pass_at_k = 2 * mg_pass_at_k / k
+
+            return mg_pass_at_k
+        
+        metrics = {}
+        for k in ks:
+            for t in thresholds:
+                metrics[f'G-Pass@{k}_{t}'] = compute_g_pass_at_k(n, c, k, t)
+            metrics[f'mG-Pass@{k}'] = compute_mg_pass_at_k(n, c, k)
+
+        return metrics
+    
+    @property
+    def all_metrics(self):
+        ks: int = self.k
+        thresholds: List[float] = self.thresholds
+
+        metrics = []
+        for k in ks:
+            for t in thresholds:
+                metrics.append(f'G-Pass@{k}_{t}')
+            metrics.append(f'mG-Pass@{k}')
+
+        return metrics

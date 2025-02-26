@@ -49,6 +49,7 @@ from lighteval.metrics.metrics_sample import (
     LoglikelihoodAcc,
     MajAtK,
     PassAtK,
+    GPassAtK,
     Recall,
     StringDistance,
     acc_golds_likelihood,
@@ -393,6 +394,22 @@ class Metrics(Enum):
         use_case=MetricUseCase.REASONING,
         corpus_level_fn=np.mean,
         higher_is_better=True,
+    )
+    g_pass_at_16 = SampleLevelMetricGrouping(
+        metric_name="G-Pass@16:48_samples",
+        sample_level_fn=GPassAtK(k=16, n=48, strip_strings=True).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn={np.mean for _ in GPassAtK(k=16, n=48, strip_strings=True).all_metrics},
+        higher_is_better={True for _ in GPassAtK(k=16, n=48, strip_strings=True).all_metrics},
+    )
+    g_pass_at_8_16 = SampleLevelMetricGrouping(
+        metric_name="G-Pass@8-16:48_samples",
+        sample_level_fn=GPassAtK(k=[8, 16], n=48, strip_strings=True).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn={np.mean for _ in GPassAtK(k=[8, 16], n=48, strip_strings=True).all_metrics},
+        higher_is_better={True for _ in GPassAtK(k=[8, 16], n=48, strip_strings=True).all_metrics},
     )
     perfect_exact_match = SampleLevelMetric(
         metric_name="perfect_em",
