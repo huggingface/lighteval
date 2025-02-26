@@ -205,7 +205,7 @@ class VLLMModel(LightevalModel):
             "pipeline_parallel_size": int(config.pipeline_parallel_size),
             "max_model_len": self._max_length,
             "swap_space": 4,
-            "seed": 1234,
+            "seed": config.seed,
         }
         if int(config.data_parallel_size) > 1:
             self.model_args["distributed_executor_backend"] = "ray"
@@ -270,7 +270,11 @@ class VLLMModel(LightevalModel):
                 # the case! Because of that we only use batch size of 1
                 stop_tokens = dataset[0].stop_sequence
 
-            max_new_tokens = dataset[0].generation_size  # could be none
+            max_new_tokens = (
+                dataset[0].generation_size
+                if self.sampling_params.max_tokens is None
+                else self.sampling_params.max_tokens
+            )
             returns_logits = dataset[0].use_logits
             num_samples = dataset[0].num_samples
 
@@ -289,14 +293,19 @@ class VLLMModel(LightevalModel):
             if max_new_tokens is not None:
                 if context_size + max_new_tokens > self.max_length:
                     logger.warning(
-                        f"{context_size + max_new_tokens=} which is greather than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
+                        f"{context_size + max_new_tokens=} which is greater than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
                     )
                     context_size = self.max_length - max_new_tokens
+                    if context_size < 0:
+                        logger.critical(
+                            f"{context_size=} is less than 0, either reduce the max_new_tokens or increase model max length."
+                        )
+                        raise ValueError("Context size is less than 0.")
                     inputs = [input[-context_size:] for input in inputs]
             else:
                 if context_size > self.max_length:
                     logger.warning(
-                        f"{context_size=} which is greather than {self.max_length=}. Truncating context to {self.max_length} tokens."
+                        f"{context_size=} which is greater than {self.max_length=}. Truncating context to {self.max_length} tokens."
                     )
                     context_size = self.max_length
                     inputs = [input[-context_size:] for input in inputs]
@@ -339,9 +348,7 @@ class VLLMModel(LightevalModel):
         sampling_params = self.sampling_params.clone() or SamplingParams()
         if generate:
             sampling_params.n = num_samples
-            sampling_params.max_tokens = (
-                max_new_tokens if sampling_params.max_tokens is None else sampling_params.max_tokens
-            )
+            sampling_params.max_tokens = max_new_tokens
             sampling_params.stop = stop_tokens
             sampling_params.logprobs = 1 if returns_logits else 0
 

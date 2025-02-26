@@ -27,20 +27,20 @@ from typing import Optional
 @dataclass
 class GenerationParameters:
     early_stopping: Optional[bool] = None  # vllm, transformers
-    repetition_penalty: Optional[float] = None  # vllm, transformers, tgi
-    frequency_penalty: Optional[float] = None  # vllm, tgi
+    repetition_penalty: Optional[float] = None  # vllm, transformers, tgi, sglang
+    frequency_penalty: Optional[float] = None  # vllm, tgi, sglang
     length_penalty: Optional[float] = None  # vllm, transformers
-    presence_penalty: Optional[float] = None  # vllm
+    presence_penalty: Optional[float] = None  # vllm, sglang
 
-    max_new_tokens: Optional[int] = None  # vllm, transformers, tgi, litellm
-    min_new_tokens: Optional[int] = None  # vllm, transformers
+    max_new_tokens: Optional[int] = None  # vllm, transformers, tgi, litellm, sglang
+    min_new_tokens: Optional[int] = None  # vllm, transformers, sglang
 
-    seed: Optional[int] = None  # vllm, tgi litellm
-    stop_tokens: Optional[list[str]] = None  # vllm, transformers, tgi, litellm
-    temperature: Optional[float] = None  # vllm, transformers, tgi, litellm
-    top_k: Optional[int] = None  # vllm, transformers, tgi
-    min_p: Optional[float] = None  # vllm, transformers
-    top_p: Optional[int] = None  # vllm, transformers, tgi, litellm
+    seed: Optional[int] = None  # vllm, tgi, litellm
+    stop_tokens: Optional[list[str]] = None  # vllm, transformers, tgi, litellm, sglang
+    temperature: Optional[float] = None  # vllm, transformers, tgi, litellm, sglang
+    top_k: Optional[int] = None  # vllm, transformers, tgi, sglang
+    min_p: Optional[float] = None  # vllm, transformers, sglang
+    top_p: Optional[int] = None  # vllm, transformers, tgi, litellm, sglang
     truncate_prompt: Optional[bool] = None  # vllm, tgi
 
     @classmethod
@@ -180,5 +180,20 @@ class GenerationParameters:
             "top_k": self.top_k,
             "top_p": self.top_p,
             "truncate": self.truncate_prompt,
+        }
+        return {k: v for k, v in args.items() if v is not None}
+
+    def to_sglang_dict(self) -> dict:
+        args = {
+            "max_new_tokens": self.max_new_tokens,
+            "temperature": self.temperature,
+            "stop": self.stop_tokens,
+            "top_p": self.top_p,
+            "top_k": self.top_k,
+            "min_p": self.min_p,
+            "frequency_penalty": self.frequency_penalty,
+            "presence_penalty": self.presence_penalty,
+            "repetition_penalty": self.repetition_penalty,
+            "min_new_tokens": self.min_new_tokens,
         }
         return {k: v for k, v in args.items() if v is not None}

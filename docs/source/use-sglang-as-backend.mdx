@@ -1,0 +1,61 @@
+# Use SGLang as backend
+
+Lighteval allows you to use `sglang` as backend allowing great speedups.
+To use, simply change the `model_args` to reflect the arguments you want to pass to sglang.
+
+```bash
+lighteval sglang \
+    "pretrained=HuggingFaceH4/zephyr-7b-beta,dtype=float16" \
+    "leaderboard|truthfulqa:mc|0|0"
+```
+
+`sglang` is able to distribute the model across multiple GPUs using data
+parallelism and tensor parallelism.
+You can choose the parallelism method by setting in the the `model_args`.
+
+For example if you have 4 GPUs you can split it across using `tp_size`:
+
+```bash
+lighteval sglang \
+    "pretrained=HuggingFaceH4/zephyr-7b-beta,dtype=float16,tp_size=4" \
+    "leaderboard|truthfulqa:mc|0|0"
+```
+
+Or, if your model fits on a single GPU, you can use `dp_size` to speed up the evaluation:
+
+```bash
+lighteval sglang \
+    "pretrained=HuggingFaceH4/zephyr-7b-beta,dtype=float16,dp_size=4" \
+    "leaderboard|truthfulqa:mc|0|0"
+```
+
+## Use a config file
+
+For more advanced configurations, you can use a config file for the model.
+An example of a config file is shown below and can be found at `examples/model_configs/sglang_model_config.yaml`.
+
+```bash
+lighteval sglang \
+    "examples/model_configs/sglang_model_config.yaml" \
+    "leaderboard|truthfulqa:mc|0|0"
+```
+
+```yaml
+model: # Model specific parameters
+  base_params:
+    model_args: "pretrained=HuggingFaceTB/SmolLM-1.7B,dtype=float16,chunked_prefill_size=4096,mem_fraction_static=0.9" # Model args that you would pass in the command line
+  generation: # Generation specific parameters
+    temperature: 0.3
+    repetition_penalty: 1.0
+    frequency_penalty: 0.0
+    presence_penalty: 0.0
+    top_k: -1
+    min_p: 0.0
+    top_p: 0.9
+    max_new_tokens: 256
+    stop_tokens: ["<EOS>", "<PAD>"]
+```
+
+> [!WARNING]
+> In the case of OOM issues, you might need to reduce the context size of the
+> model as well as reduce the `mem_fraction_static` and `chunked_prefill_size` parameter.

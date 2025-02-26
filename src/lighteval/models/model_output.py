@@ -63,7 +63,7 @@ class GenerativeResponse(ModelResponse):
     logits: Optional[list[float]] = None  # Generated text logits
 
     def get_result_for_eval(self):
-        return self.result if self.logits is None else (self.result, self.logits)
+        return self.result
 
 
 @dataclass

@@ -201,6 +201,7 @@ class DetailsLogger:
         num_effective_few_shots: int = 0
         num_asked_few_shots: int = 0
         predictions: list = field(default_factory=list)
+        prediction_logits: list = field(default_factory=list)
         input_tokens: list = field(default_factory=list)
         cont_tokens: list = field(default_factory=list)
         truncated: list = field(default_factory=list)
