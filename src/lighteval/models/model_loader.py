@@ -32,16 +32,19 @@ from lighteval.models.endpoints.endpoint_model import (
 from lighteval.models.endpoints.openai_model import OpenAIClient, OpenAIModelConfig
 from lighteval.models.endpoints.tgi_model import ModelClient, TGIModelConfig
 from lighteval.models.litellm_model import LiteLLMClient, LiteLLMModelConfig
+from lighteval.models.sglang.sglang_model import SGLangModel, SGLangModelConfig
 from lighteval.models.transformers.adapter_model import AdapterModel, AdapterModelConfig
 from lighteval.models.transformers.delta_model import DeltaModel, DeltaModelConfig
 from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
 from lighteval.models.vllm.vllm_model import VLLMModel, VLLMModelConfig
 from lighteval.utils.imports import (
     NO_LITELLM_ERROR_MSG,
+    NO_SGLANG_ERROR_MSG,
     NO_TGI_ERROR_MSG,
     NO_VLLM_ERROR_MSG,
     is_litellm_available,
     is_openai_available,
+    is_sglang_available,
     is_tgi_available,
     is_vllm_available,
 )
@@ -62,6 +65,7 @@ def load_model(  # noqa: C901
         VLLMModelConfig,
         OpenAIModelConfig,
         LiteLLMModelConfig,
+        SGLangModelConfig,
     ],
     env_config: EnvConfig,
 ) -> Union[TransformersModel, AdapterModel, DeltaModel, ModelClient, DummyModel]:
@@ -95,6 +99,9 @@ def load_model(  # noqa: C901
 
     if isinstance(config, VLLMModelConfig):
         return load_model_with_accelerate_or_default(config=config, env_config=env_config)
+
+    if isinstance(config, SGLangModelConfig):
+        return load_sglang_model(config=config, env_config=env_config)
 
     if isinstance(config, OpenAIModelConfig):
         return load_openai_model(config=config, env_config=env_config)
@@ -159,3 +166,10 @@ def load_model_with_accelerate_or_default(
 
 def load_dummy_model(config: DummyModelConfig, env_config: EnvConfig):
     return DummyModel(config=config, env_config=env_config)
+
+
+def load_sglang_model(config: SGLangModelConfig, env_config: EnvConfig):
+    if not is_sglang_available():
+        raise ImportError(NO_SGLANG_ERROR_MSG)
+
+    return SGLangModel(config=config, env_config=env_config)
