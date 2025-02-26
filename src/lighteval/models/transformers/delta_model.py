@@ -28,7 +28,7 @@ import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM
 
-from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
+from lighteval.models.transformers.base_model import BaseModel, BaseModelConfig
 from lighteval.models.utils import _get_dtype, _get_model_sha
 from lighteval.utils.utils import EnvConfig
 
@@ -37,7 +37,11 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class DeltaModelConfig(TransformersModelConfig):
+class DeltaModelConfig(BaseModelConfig):
+    """
+    This class is used to manage the configuration class for delta models.
+    """
+
     # Delta models look at the pretrained (= the delta weights) for the tokenizer and model config
     base_model: str = None
 
@@ -53,13 +57,21 @@ class DeltaModelConfig(TransformersModelConfig):
         return _get_model_sha(repo_id=self.pretrained, revision="main")
 
 
-class DeltaModel(TransformersModel):
+class DeltaModel(BaseModel):
     def _create_auto_model(
         self,
         config: DeltaModelConfig,
         env_config: EnvConfig,
     ) -> AutoModelForCausalLM:
-        """Returns a model created by adding the weights of a delta model to a base model."""
+        """
+        It returns a model created by adding the weights of a delta model to a base model.
+
+         Args:
+        config(AdapterModelConfig): An instance of AdapterModelConfig.
+        env_config(EnvConfig): An instance of EnvConfig.
+
+        Returns: AutoModelForCasualLM
+        """
         config.model_parallel, max_memory, device_map = self.init_model_parallel(config.model_parallel)
         torch_dtype = _get_dtype(config.dtype, self._config)
 
