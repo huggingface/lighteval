@@ -101,22 +101,22 @@ class InferenceEndpointModelConfig:
     This class defines the settings used to deploy inference endpoints automatically. (Inference endpoint docs: https://huggingface.co/docs/inference-endpoints/index)
 
         Attributes:
-        endpoint_name(str, Optional): Inference endpoint name (to use at creation or reuse)
-        model_name(str, optional): The name of the model for inference.
-        reuse_existing(bool, default: False): Indicates whether to reuse an existing endpoint.
-        accelerator(str, default: "gpu"): Specifies the type of hardware accelerator.
-        model_dtype(str, optional): The data type used by the model. Defaults to the framework's choice if None.
-        vendor(str, default: "aws"): Cloud service provider for hosting the endpoint.
-        region(str, default: "us-east-1"): Cloud region, chosen based on hardware availability.
-        instance_size(str, optional): Specifies the size of the instance (e.g., large, xlarge).
-        instance_type(str, optional): Specifies the type of the instance (e.g., g5.4xlarge).
-        framework(str, default: "pytorch"): Framework used for inference (e.g., pytorch, tensorflow).
-        endpoint_type(str, default: "protected"): Security level of the endpoint (e.g., public, protected).
-        add_special_tokens(bool, default: True): Specifies if special tokens should be added during processing.
-        revision(str, default: "main"): The Git branch or commit hash of the model.
-        namespace(str, optional): The namespace under which the endpoint is launched.
-        image_url(str, optional): Docker image URL for the endpoint.
-        env_vars(dict, optional): Environment variables for the endpoint.
+            endpoint_name (str, Optional): Inference endpoint name (to use at creation or reuse)
+            model_name (str, optional): The name of the model for inference.
+            reuse_existing (bool, default: False): Indicates whether to reuse an existing endpoint.
+            accelerator (str, default: "gpu"): Specifies the type of hardware accelerator.
+            model_dtype (str, optional): The data type used by the model. Defaults to the framework's choice if None.
+            vendor (str, default: "aws"): Cloud service provider for hosting the endpoint.
+            region (str, default: "us-east-1"): Cloud region, chosen based on hardware availability.
+            instance_size (str, optional): Specifies the size of the instance (e.g., large, xlarge).
+            instance_type (str, optional): Specifies the type of the instance (e.g., g5.4xlarge).
+            framework (str, default: "pytorch"): Framework used for inference (e.g., pytorch, tensorflow).
+            endpoint_type (str, default: "protected"): Security level of the endpoint (e.g., public, protected).
+            add_special_tokens (bool, default: True): Specifies if special tokens should be added during processing.
+            revision (str, default: "main"): The Git branch or commit hash of the model.
+            namespace (str, optional): The namespace under which the endpoint is launched.
+            image_url (str, optional): Docker image URL for the endpoint.
+            env_vars (dict, optional): Environment variables for the endpoint.
     """
 
     endpoint_name: str = None
@@ -187,8 +187,7 @@ class InferenceEndpointModelConfig:
 
 class InferenceEndpointModel(LightevalModel):
     """InferenceEndpointModels can be used both with the free inference client, or with inference
-    endpoints, which will use text-generation-inference to deploy your model for the duration of the evaluation.
-    """
+    endpoints, which will use text-generation-inference to deploy your model for the duration of the evaluation."""
 
     def __init__(  # noqa: C901
         self, config: Union[InferenceEndpointModelConfig, ServerlessEndpointModelConfig], env_config: EnvConfig

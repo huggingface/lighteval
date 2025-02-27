@@ -46,8 +46,8 @@ class AdapterModelConfig(TransformersModelConfig):
     base model's functionality for specific tasks while keeping most of the base model's parameters frozen.
 
     Attributes:
-        base_model (str): The name of the parent base model. This model provides the tokenizer and configuration for the adapter model.
-                          Defaults to None if not specified.
+        base_model (str): The name of the parent base model.
+            This model provides the tokenizer and configuration for the adapter model.Defaults to None if not specified.
     """
 
     # Adapter models have the specificity that they look at the base model (= the parent) for the tokenizer and config
@@ -70,14 +70,10 @@ class AdapterModelConfig(TransformersModelConfig):
 
 
 class AdapterModel(TransformersModel):
-    """
-    Integrates the adapter models with a pre-trained base model.
-    """
+    """Integrates the adapter models with a pre-trained base model."""
 
     def _create_auto_tokenizer(self, config: AdapterModelConfig, env_config: EnvConfig) -> PreTrainedTokenizer:
-        """
-        Creates and configures the adapter model by applying adapter weights to the base model.
-        """
+        """Creates and configures the adapter model by applying adapter weights to the base model."""
         # By default, we look at the model config for the model stored in `base_model`
         # (= the parent model, not the model of interest)
         return self._create_auto_tokenizer_with_name(
@@ -90,9 +86,7 @@ class AdapterModel(TransformersModel):
         )
 
     def _create_auto_model(self, config: AdapterModelConfig, env_config: EnvConfig) -> AutoModelForCausalLM:
-        """
-        Returns a PeftModel from a base model and a version fined tuned using PEFT.
-        """
+        """Returns a PeftModel from a base model and a version fined tuned using PEFT."""
         torch_dtype = _get_dtype(config.dtype, self._config)
         config.model_parallel, max_memory, device_map = self.init_model_parallel(config.model_parallel)
 
