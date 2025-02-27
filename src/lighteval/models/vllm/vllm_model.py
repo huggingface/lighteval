@@ -95,7 +95,8 @@ class VLLMModelConfig:
         trust_remote_code (bool, default: False): Whether to trust custom code provided by remote repositories.
         use_chat_template (bool, default: False): Specifies if chat-specific templates should be used for input formatting.
         add_special_tokens (bool, default: True): Indicates whether to add special tokens during tokenization.
-        multichoice_continuations_start_space (bool, default: True): Adds a space at the beginning of each continuation during multi-choice generation.
+        multichoice_continuations_start_space (bool, default: True): Adds a space at the beginning of each continuation during
+            multi-choice generation.
         pairwise_tokenization (bool, default: False): Specifies if context and continuation should be tokenized separately or together.
         subfolder (Optional[str], optional): Path to a specific subfolder in the model repository, if applicable.
         temperature (float, default: 0.6): Sampling temperature for stochastic tasks. Ignored for deterministic tasks (set internally to 0).

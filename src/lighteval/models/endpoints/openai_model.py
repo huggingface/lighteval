@@ -80,10 +80,8 @@ class OpenAIModelConfig:
 
     def __post_init__(self):
         """
-
         Post-initialization that ensures the `generation_parameters` is set
-        to a valid `GenerationParameters`. If not provided, initializes a default one.
-        """
+        to a valid `GenerationParameters`. If not provided, initializes a default one."""
         if not self.generation_parameters:
             self.generation_parameters = GenerationParameters()
 

@@ -70,7 +70,8 @@ class AdapterModelConfig(TransformersModelConfig):
 
 
 class AdapterModel(TransformersModel):
-    """Integrates the adapter models with a pre-trained base model."""
+    """Integrates the adapter models with a pre-trained base model.
+    They are are lightweight layers added to pre-trained models for optimizing performance with minimal changes."""
 
     def _create_auto_tokenizer(self, config: AdapterModelConfig, env_config: EnvConfig) -> PreTrainedTokenizer:
         """Creates and configures the adapter model by applying adapter weights to the base model."""

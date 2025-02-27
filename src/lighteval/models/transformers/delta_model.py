@@ -38,7 +38,8 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class DeltaModelConfig(TransformersModelConfig):
-    """This class is used to manage the configuration class for delta models."""
+    """This class is used to manage the configuration class for delta models.
+    They capture the difference between a base model's predictions and actual targets to enhance accuracy."""
 
     # Delta models look at the pretrained (= the delta weights) for the tokenizer and model config
     base_model: str = None

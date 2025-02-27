@@ -54,7 +54,7 @@ class TGIModelConfig:
     Attributes:
         inference_server_address (str, required):Endpoint address of the inference server hosting the model.
         inference_server_auth (str, required): Authentication credentials or token required to access the server.
-    model_id (str, required): Identifier for the model hosted on the inference server.
+        model_id (str, required): Identifier for the model hosted on the inference server.
     """
 
     inference_server_address: str
