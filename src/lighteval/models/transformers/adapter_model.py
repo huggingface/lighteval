@@ -27,7 +27,7 @@ from dataclasses import dataclass
 import torch
 from transformers import AutoModelForCausalLM, PreTrainedTokenizer
 
-from lighteval.models.transformers.base_model import BaseModel, BaseModelConfig
+from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
 from lighteval.models.utils import _get_dtype
 from lighteval.utils.imports import NO_PEFT_ERROR_MSG, is_peft_available
 from lighteval.utils.utils import EnvConfig
@@ -40,7 +40,7 @@ if is_peft_available():
 
 
 @dataclass
-class AdapterModelConfig(BaseModelConfig):
+class AdapterModelConfig(TransformersModelConfig):
     """
     Manages the configuration of adapter models. Adapter models are designed to extend or adapt a
     base model's functionality for specific tasks while keeping most of the base model's parameters frozen.
@@ -65,17 +65,11 @@ class AdapterModelConfig(BaseModelConfig):
     def init_configs(self, env_config: EnvConfig):
         """
         Initializes the configurations of adapter models.
-
-        Args:
-            env_configs(EnvConfig): An instance of EnvConfig.
-
-        Returns:
-            Any: Result of the configuration initialization.
         """
         return self._init_configs(self.base_model, env_config)
 
 
-class AdapterModel(BaseModel):
+class AdapterModel(TransformersModel):
     """
     Integrates the adapter models with a pre-trained base model.
     """
@@ -83,12 +77,6 @@ class AdapterModel(BaseModel):
     def _create_auto_tokenizer(self, config: AdapterModelConfig, env_config: EnvConfig) -> PreTrainedTokenizer:
         """
         Creates and configures the adapter model by applying adapter weights to the base model.
-
-        Args:
-            config(AdapterModelConfig): An instance of AdapterModelConfig.
-            env_config(EnvConfig): An instance of EnvConfig.
-
-        Returns: PreTrainedTokenizer
         """
         # By default, we look at the model config for the model stored in `base_model`
         # (= the parent model, not the model of interest)
@@ -104,12 +92,6 @@ class AdapterModel(BaseModel):
     def _create_auto_model(self, config: AdapterModelConfig, env_config: EnvConfig) -> AutoModelForCausalLM:
         """
         Returns a PeftModel from a base model and a version fined tuned using PEFT.
-
-        Args:
-            config(AdapterModelConfig): An instance of AdapterModelConfig.
-            env_config(EnvConfig): An instance of EnvConfig.
-
-        Returns: AutoModelForCasualLM
         """
         torch_dtype = _get_dtype(config.dtype, self._config)
         config.model_parallel, max_memory, device_map = self.init_model_parallel(config.model_parallel)
