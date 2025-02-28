@@ -1261,7 +1261,7 @@ class GPassAtK:
 
         return self.g_pass_at_k(all_scores)
 
-    def get_processed_gold(self, gold: str) -> float:
+    def get_processed_gold(self, gold: str) -> str:
         if self.strip_strings:
             gold = gold.strip()
 
@@ -1270,7 +1270,7 @@ class GPassAtK:
 
         return gold
 
-    def get_processed_pred(self, pred: str) -> float:
+    def get_processed_pred(self, pred: str) -> str:
         if not pred:
             return ""
 
