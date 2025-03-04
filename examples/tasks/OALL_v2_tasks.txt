@@ -1,6 +1,5 @@
 community|alghafa:meta_ar_dialects|0|0
 community|alghafa:meta_ar_msa|0|0
-community|alghafa:mcq_exams_test_ar|0|0
 community|alghafa:multiple_choice_facts_truefalse_balanced_task|0|0
 community|alghafa:multiple_choice_grounded_statement_soqal_task|0|0
 community|alghafa:multiple_choice_grounded_statement_xglue_mlqa_task|0|0
