@@ -24,6 +24,12 @@
 import numpy as np
 from aenum import Enum
 
+from lighteval.metrics.dynamic_metrics import (
+    ExprExtractionConfig,
+    IndicesExtractionConfig,
+    LatexExtractionConfig,
+    multilingual_extractive_match_metric,
+)
 from lighteval.metrics.harness_compatibility.drop import drop_metrics
 from lighteval.metrics.harness_compatibility.truthful_qa import truthfulqa_mc_metrics
 from lighteval.metrics.metrics_corpus import (
@@ -44,6 +50,7 @@ from lighteval.metrics.metrics_sample import (
     Faithfulness,
     LoglikelihoodAcc,
     MajAtK,
+    PassAtK,
     Recall,
     StringDistance,
     acc_golds_likelihood,
@@ -69,6 +76,7 @@ from lighteval.metrics.utils.metric_utils import (
     SampleLevelMetric,
     SampleLevelMetricGrouping,
 )
+from lighteval.utils.language import Language
 from lighteval.utils.utils import as_list
 
 
@@ -172,6 +180,15 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
+    expr_gold_metric = multilingual_extractive_match_metric(
+        language=Language.ENGLISH,
+        fallback_mode="first_match",
+        precision=5,
+        gold_extraction_target=(ExprExtractionConfig(),),
+        # Match boxed first before trying other regexes
+        pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
+        aggregation_function=max,
+    )
     extractiveness = SampleLevelMetricGrouping(
         metric_name=["summarization_coverage", "summarization_density", "summarization_compression"],
         sample_level_fn=Extractiveness(
@@ -231,6 +248,15 @@ class Metrics(Enum):
         use_case=MetricUseCase.SUMMARIZATION,
         corpus_level_fn=np.mean,
         higher_is_better=True,
+    )
+    latex_gold_metric = multilingual_extractive_match_metric(
+        language=Language.ENGLISH,
+        fallback_mode="first_match",
+        precision=5,
+        gold_extraction_target=(LatexExtractionConfig(),),
+        # Match boxed first before trying other regexes
+        pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
+        aggregation_function=max,
     )
     loglikelihood_acc = SampleLevelMetric(
         metric_name="acc",
@@ -362,6 +388,30 @@ class Metrics(Enum):
         category=MetricCategory.MULTICHOICE_ONE_TOKEN,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=CorpusLevelF1Score(average=None, num_classes=3).compute,
+        higher_is_better=True,
+    )
+    pass_at_1 = SampleLevelMetric(
+        metric_name="pass@1:32_samples",
+        sample_level_fn=PassAtK(k=1, n=32, strip_strings=True).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    pass_at_10 = SampleLevelMetric(
+        metric_name="pass@10:32_samples",
+        sample_level_fn=PassAtK(k=10, n=32, strip_strings=True).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    pass_at_100 = SampleLevelMetric(
+        metric_name="pass@100:32_samples",
+        sample_level_fn=PassAtK(k=100, n=32, strip_strings=True).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     perfect_exact_match = SampleLevelMetric(
@@ -548,6 +598,12 @@ class Metrics(Enum):
         use_case=MetricUseCase.SUMMARIZATION,
         corpus_level_fn=CorpusLevelPerplexityMetric("weighted_perplexity").compute,
         higher_is_better=False,
+    )
+    gpqa_instruct_metric = multilingual_extractive_match_metric(
+        language=Language.ENGLISH,
+        gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+        pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+        precision=6,
     )
 
     def __str__(self):

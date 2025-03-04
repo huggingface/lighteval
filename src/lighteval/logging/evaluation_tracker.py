@@ -198,7 +198,7 @@ class EvaluationTracker:
         details_datasets: dict[str, Dataset] = {}
         for task_name, task_details in self.details_logger.details.items():
             # Create a dataset from the dictionary - we force cast to str to avoid formatting problems for nested objects
-            dataset = Dataset.from_list([{k: str(v) for k, v in asdict(detail).items()} for detail in task_details])
+            dataset = Dataset.from_list([asdict(detail) for detail in task_details])
 
             # We don't keep 'id' around if it's there
             column_names = dataset.column_names
@@ -325,12 +325,13 @@ class EvaluationTracker:
         # We upload it both as a json and a parquet file
         result_file_base_name = f"results_{date_id}"
         results_json = json.dumps(results_dict, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False)
-        self.api.upload_file(
+        url = self.api.upload_file(
             repo_id=repo_id,
             path_or_fileobj=BytesIO(results_json.encode("utf-8")),
             path_in_repo=f"{result_file_base_name}.json",
             repo_type="dataset",
         )
+        logger.info(f"Uploaded evaluation details to {url}")
 
         results_dataset = Dataset.from_dict(
             {key: [json.dumps(v, cls=EnhancedJSONEncoder, indent=2)] for key, v in results_dict.items()}
