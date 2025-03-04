@@ -5512,17 +5512,14 @@ natural_questions = LightevalTaskConfig(
         Language.ENGLISH,
         lambda line: {
             "question": line["question"],
-            "context": line["context"],
-            "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+            "choices": [line["answer"]]
         },
     ),
     suite=("lighteval",),
-    hf_repo="lighteval/SimpleQA",
+    hf_repo="lighteval/small_natural_questions",
     hf_subset="default",
-    evaluation_splits=("validation",),
-    few_shots_split="train",
-    generation_size=200,
-    stop_sequence=("\n",),
+    evaluation_splits=("test",),
+    few_shots_split="few_shot",
     metric=(
         Metrics.prefix_quasi_exact_match,
         Metrics.f1_score_quasi,
@@ -6567,40 +6564,22 @@ copyright_prompt_num_line_5_min_lines_20_helm = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-coqa_lighteval = LightevalTaskConfig(
-    name="coqa",
-    suite=["lighteval"],
-    prompt_function=prompt.coqa,
-    hf_repo="coqa",
-    hf_subset="default",
-    hf_avail_splits=["train", "validation"],
-    evaluation_splits=["validation"],
-    few_shots_split=None,
-    few_shots_select=None,
-    generation_size=10,
-    metric=[Metrics.perfect_exact_match, Metrics.f1_score],
-    stop_sequence=["\n"],
-    trust_dataset=True,
-    version=0,
-)
-
 coqa_first_question = LightevalTaskConfig(
     name="coqa_first_question",
     prompt_function=get_qa_prompt_function(
         Language.ENGLISH,
         lambda line: {
-            "question": line["question"][0],
+            "question": line["questions"][0],
             "context": line["story"],
             "choices": [line["answers"]["input_text"][0]],
         },
     ),
     suite=("lighteval",),
-    hf_repo="stadford/coqa",
+    hf_repo="stanfordnlp/coqa",
     hf_subset="default",
     hf_avail_splits=["train", "validation"],
     evaluation_splits=["validation"],
-    generation_size=150,
-    stop_sequence=("\n",),
+    stop_sequence=["\n"],
     metric=(
         Metrics.prefix_quasi_exact_match,
         Metrics.f1_score_quasi,
@@ -6815,6 +6794,38 @@ drop_lighteval = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
+
+def get_date(x):
+    components = [x["day"], x["month"], x["year"]]
+    components = list(filter(lambda x: x, components))
+    return " ".join(components)
+
+drop_qa = LightevalTaskConfig(
+    name="drop_fixed",
+    prompt_function=get_qa_prompt_function(
+        Language.ENGLISH,
+        lambda line: {
+            "context": line["passage"],
+            "question": line["question"],
+            "choices": list(filter(lambda x: x,
+            [line["answer"].get("number")] + line["answer"]["spans"] + [get_date(line["answer"].get("date"))]))
+        },
+    ),
+    suite=("lighteval",),
+    hf_repo="lighteval/drop_harness",
+    hf_subset="default",
+    hf_filter=lambda line: list(filter(lambda x: x,
+            [line["answer"].get("number")] + line["answer"]["spans"] + [get_date(line["answer"].get("date"))])),
+    evaluation_splits=("validation",),
+    few_shots_split="train",
+    generation_size=250,
+    stop_sequence=["Question:", "Question", "question", "question:", "\n"],
+    metric=(
+        Metrics.prefix_quasi_exact_match,
+        Metrics.f1_score_quasi,
+    ),
+)
+
 dyck_language_2_helm = LightevalTaskConfig(
     name="dyck_language:2",
     suite=["helm"],
@@ -15242,11 +15253,11 @@ squad_v2 = LightevalTaskConfig(
     ),
     suite=("lighteval",),
     hf_repo="rajpurkar/squad_v2",
-    hf_subset="default",
+    hf_subset="squad_v2",
+    hf_filter=lambda line: any(ans for ans in line["answers"]["text"] if len(ans) > 0),
     evaluation_splits=("validation",),
     few_shots_split="train",
     generation_size=200,
-    stop_sequence=("\n",),
     metric=(
         Metrics.prefix_quasi_exact_match,
         Metrics.f1_score_quasi,
@@ -15267,8 +15278,6 @@ jeopardy = LightevalTaskConfig(
     hf_subset="default",
     evaluation_splits=("train",),
     few_shots_split="train",
-    generation_size=50,
-    stop_sequence=("\n",),
     metric=(
         Metrics.prefix_quasi_exact_match,
         Metrics.f1_score_quasi,
@@ -15276,13 +15285,12 @@ jeopardy = LightevalTaskConfig(
 )
 
 simple_qa = LightevalTaskConfig(
-    name="squad_v2",
+    name="simple_qa",
     prompt_function=get_qa_prompt_function(
         Language.ENGLISH,
         lambda line: {
-            "question": line["question"],
-            "context": line["context"],
-            "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+            "question": line["problem"],
+            "choices": [line["answer"]]
         },
     ),
     suite=("lighteval",),
@@ -15291,7 +15299,7 @@ simple_qa = LightevalTaskConfig(
     evaluation_splits=("test",),
     few_shots_split="few_shot",
     generation_size=250,
-    stop_sequence=("\n",),
+    stop_sequence=["Question:", "Question", "question", "question:", "\n"],
     metric=(
         Metrics.prefix_quasi_exact_match,
         Metrics.f1_score_quasi,
