@@ -26,14 +26,19 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Callable, Literal
 
+from pydantic import BaseModel
 from tqdm import tqdm
 
 from lighteval.utils.imports import is_litellm_available, is_openai_available, is_vllm_available
+from lighteval.utils.utils import as_list
 
 
 logging.getLogger("openai").setLevel(logging.ERROR)
 logging.getLogger("httpx").setLevel(logging.ERROR)
 logger = logging.getLogger(__name__)
+
+
+DEFAULT_FORMAT = {"type": "text"}
 
 
 class JudgeLM:
@@ -76,6 +81,7 @@ class JudgeLM:
         judge_backend: Literal["litellm", "openai", "transformers", "tgi", "vllm"],
         url: str | None = None,
         api_key: str | None = None,
+        response_format: BaseModel = None,
     ):
         self.model = model
         self.template = templates
@@ -90,6 +96,8 @@ class JudgeLM:
         self.url = url
         self.api_key = api_key
         self.backend = judge_backend
+
+        self.response_format = response_format if not None else DEFAULT_FORMAT
 
     def __lazy_load_client(self):
         match self.backend:
@@ -236,7 +244,7 @@ class JudgeLM:
 
     def __call_api_parallel(self, prompts):
         results = []
-        with ThreadPoolExecutor(100) as executor:
+        with ThreadPoolExecutor(10) as executor:
             for entry in tqdm(executor.map(self.__call_api, prompts), total=len(prompts)):
                 results.append(entry)
 
@@ -248,16 +256,34 @@ class JudgeLM:
     def __call_api(self, prompt):
         for _ in range(self.API_MAX_RETRY):
             try:
-                response = self.client.chat.completions.create(
+                # Base model
+                response = self.client.beta.chat.completions.parse(
                     model=self.model,
-                    messages=prompt,
-                    response_format={"type": "text"},
-                    max_tokens=512,
+                    messages=as_list(prompt),
+                    response_format=self.response_format,
+                    max_tokens=4096,
+                    temperature=0.0,
                     n=1,
                 )
-                text = response.choices[0].message.content
-                return text
+                answer = response.choices[0].message.parsed
+                return answer
+            except TypeError:
+                try:
+                    # Finetune
+                    response = self.client.chat.completions.create(
+                        model=self.model,
+                        messages=as_list(prompt),
+                        response_format=self.response_format,
+                        max_tokens=512,
+                        n=1,
+                    )
+                    text = response.choices[0].message.content
+                    return text
+                except Exception as e:
+                    logger.warning(f"{type(e), e}")
+                    time.sleep(self.API_RETRY_SLEEP)
             except Exception as e:
                 logger.warning(f"{type(e), e}")
                 time.sleep(self.API_RETRY_SLEEP)
+
         raise Exception("Failed to get response from the API")
