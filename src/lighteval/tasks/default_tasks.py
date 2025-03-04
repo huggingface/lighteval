@@ -5510,10 +5510,7 @@ natural_questions = LightevalTaskConfig(
     name="natural_questions",
     prompt_function=get_qa_prompt_function(
         Language.ENGLISH,
-        lambda line: {
-            "question": line["question"],
-            "choices": [line["answer"]]
-        },
+        lambda line: {"question": line["question"], "choices": [line["answer"]]},
     ),
     suite=("lighteval",),
     hf_repo="lighteval/small_natural_questions",
@@ -6795,10 +6792,12 @@ drop_lighteval = LightevalTaskConfig(
     version=0,
 )
 
+
 def get_date(x):
     components = [x["day"], x["month"], x["year"]]
     components = list(filter(lambda x: x, components))
     return " ".join(components)
+
 
 drop_qa = LightevalTaskConfig(
     name="drop_fixed",
@@ -6807,15 +6806,23 @@ drop_qa = LightevalTaskConfig(
         lambda line: {
             "context": line["passage"],
             "question": line["question"],
-            "choices": list(filter(lambda x: x,
-            [line["answer"].get("number")] + line["answer"]["spans"] + [get_date(line["answer"].get("date"))]))
+            "choices": list(
+                filter(
+                    lambda x: x,
+                    [line["answer"].get("number")] + line["answer"]["spans"] + [get_date(line["answer"].get("date"))],
+                )
+            ),
         },
     ),
     suite=("lighteval",),
     hf_repo="lighteval/drop_harness",
     hf_subset="default",
-    hf_filter=lambda line: list(filter(lambda x: x,
-            [line["answer"].get("number")] + line["answer"]["spans"] + [get_date(line["answer"].get("date"))])),
+    hf_filter=lambda line: list(
+        filter(
+            lambda x: x,
+            [line["answer"].get("number")] + line["answer"]["spans"] + [get_date(line["answer"].get("date"))],
+        )
+    ),
     evaluation_splits=("validation",),
     few_shots_split="train",
     generation_size=250,
@@ -15288,10 +15295,7 @@ simple_qa = LightevalTaskConfig(
     name="simple_qa",
     prompt_function=get_qa_prompt_function(
         Language.ENGLISH,
-        lambda line: {
-            "question": line["problem"],
-            "choices": [line["answer"]]
-        },
+        lambda line: {"question": line["problem"], "choices": [line["answer"]]},
     ),
     suite=("lighteval",),
     hf_repo="lighteval/SimpleQA",

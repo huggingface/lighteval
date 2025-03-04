@@ -617,6 +617,7 @@ def create_requests_from_tasks(  # noqa: C901
 
     # Get lists of each type of request
     for task_name, task in task_dict_items:
+        print(f"Processing task: {task_name}")
         task_docs = list(task.eval_docs())
         n_samples = min(max_samples, len(task_docs)) if max_samples else len(task_docs)
         evaluation_tracker.task_config_logger.log_num_docs(task_name, len(task_docs), n_samples)
