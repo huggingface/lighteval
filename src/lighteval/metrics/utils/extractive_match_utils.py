@@ -398,7 +398,10 @@ def extract_expr(match: re.Match, timeout_seconds: int) -> tuple[str | sympy.Exp
 
         decimal = decimal.replace(",", ".")
         number_str = f"{integer}{decimal}"
-        number = Number(number_str)
+        try:
+            number = Number(number_str)
+        except Exception:
+            return None, number_str
 
         if is_percentage:
             number = convert_to_pct(number)
