@@ -182,7 +182,7 @@ class VLLMModel(LightevalModel):
             "pipeline_parallel_size": int(config.pipeline_parallel_size),
             "max_model_len": self._max_length,
             "swap_space": 4,
-            "seed": config.seed,
+            "seed": int(config.seed),
         }
         if int(config.data_parallel_size) > 1:
             self.model_args["distributed_executor_backend"] = "ray"
