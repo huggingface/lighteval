@@ -71,14 +71,8 @@ def _parse_answer(text: str) -> List[List[str]]:
 
 
 def _answer_without_thoughts(completion: str) -> str:
-    if "<think>" not in completion[:200]:
-        return completion
-
-    chunks = completion.split("</think>")
-    if len(chunks) <= 1:
-        return ""
-
-    return chunks[-1].strip()
+    completion = re.sub(r"(<think>)?[^<]*<\/think>", "", completion).strip()
+    return completion
 
 
 def _check_answer(completion: str, answer: str) -> bool:
