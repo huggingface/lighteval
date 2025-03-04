@@ -114,7 +114,8 @@ class VLLMModel(LightevalModel):
         self.tensor_parallel_size = int(config.tensor_parallel_size)
 
         self._add_special_tokens = (
-            config.add_special_tokens if isinstance(config.add_special_tokens, bool)
+            config.add_special_tokens
+            if isinstance(config.add_special_tokens, bool)
             else str(config.add_special_tokens).lower() == "true"
         )
         self._tokenizer = self._create_auto_tokenizer(config, env_config)
