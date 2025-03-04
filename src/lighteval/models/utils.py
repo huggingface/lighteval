@@ -52,9 +52,6 @@ def _get_dtype(dtype: Union[str, torch.dtype, None], config: Optional[AutoConfig
         elif isinstance(dtype, torch.dtype):
             return dtype
 
-    if config is not None:
-        return config.torch_dtype
-
     return None
 
 

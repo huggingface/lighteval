@@ -102,6 +102,7 @@ def sglang(
     from lighteval.models.model_input import GenerationParameters
     from lighteval.models.sglang.sglang_model import SGLangModelConfig
     from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
+    from lighteval.utils.utils import parse_args
 
     TOKEN = os.getenv("HF_TOKEN")
 
@@ -132,20 +133,20 @@ def sglang(
 
     if model_args.endswith(".yaml"):
         with open(model_args, "r") as f:
-            config = yaml.safe_load(f)["model"]
-        model_args = config["base_params"]["model_args"]
-        generation_parameters = GenerationParameters.from_dict(config)
+            config = yaml.safe_load(f)
     else:
-        generation_parameters = GenerationParameters()
+        config = parse_args(model_args)
 
-    model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
-    model_config = SGLangModelConfig(**model_args_dict, generation_parameters=generation_parameters)
+    metric_options = config.get("metric_options", {})
+    generation_parameters = GenerationParameters(**config.get("generation", {}))
+    model_config = SGLangModelConfig(**config["model"], generation_parameters=generation_parameters)
 
     pipeline = Pipeline(
         tasks=tasks,
         pipeline_parameters=pipeline_params,
         evaluation_tracker=evaluation_tracker,
         model_config=model_config,
+        metric_options=metric_options,
     )
 
     pipeline.evaluate()
