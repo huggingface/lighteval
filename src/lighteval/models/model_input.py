@@ -20,27 +20,28 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from typing import Optional
 
+from pydantic import BaseModel, NonNegativeFloat, NonNegativeInt
 
-@dataclass
-class GenerationParameters:
-    early_stopping: Optional[bool] = None  # vllm, transformers
-    repetition_penalty: Optional[float] = None  # vllm, transformers, tgi, sglang
-    frequency_penalty: Optional[float] = None  # vllm, tgi, sglang
-    length_penalty: Optional[float] = None  # vllm, transformers
-    presence_penalty: Optional[float] = None  # vllm, sglang
 
-    max_new_tokens: Optional[int] = None  # vllm, transformers, tgi, litellm, sglang
-    min_new_tokens: Optional[int] = None  # vllm, transformers, sglang
+class GenerationParameters(BaseModel):
+    early_stopping: Optional[bool] = None  # transformers
+    repetition_penalty: Optional[NonNegativeFloat] = None  # vllm, transformers, tgi, sglang
+    frequency_penalty: Optional[NonNegativeFloat] = None  # vllm, tgi, sglang
+    length_penalty: Optional[NonNegativeFloat] = None  # vllm, transformers
+    presence_penalty: Optional[NonNegativeFloat] = None  # vllm, sglang
 
-    seed: Optional[int] = None  # vllm, tgi, litellm
+    max_new_tokens: Optional[NonNegativeInt] = None  # vllm, transformers, tgi, litellm, sglang
+    min_new_tokens: Optional[NonNegativeInt] = None  # vllm, transformers, sglang
+
+    seed: Optional[NonNegativeInt] = None  # vllm, tgi, litellm
     stop_tokens: Optional[list[str]] = None  # vllm, transformers, tgi, litellm, sglang
-    temperature: Optional[float] = None  # vllm, transformers, tgi, litellm, sglang
-    top_k: Optional[int] = None  # vllm, transformers, tgi, sglang
-    min_p: Optional[float] = None  # vllm, transformers, sglang
-    top_p: Optional[int] = None  # vllm, transformers, tgi, litellm, sglang
+    temperature: Optional[NonNegativeFloat] = None  # vllm, transformers, tgi, litellm, sglang
+    top_k: Optional[NonNegativeInt] = None  # vllm, transformers, tgi, sglang
+    min_p: Optional[NonNegativeFloat] = None  # vllm, transformers, sglang
+    top_p: Optional[NonNegativeFloat] = None  # vllm, transformers, tgi, litellm, sglang
     truncate_prompt: Optional[bool] = None  # vllm, tgi
 
     @classmethod
@@ -69,7 +70,7 @@ class GenerationParameters:
 
         Args:
             model_args (str): A string like the following:
-                "pretrained=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B,dtype=float16,max_model_length=32768,generation={temperature:0.7,top_p:5}"
+                "pretrained=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B,dtype=float16,max_model_length=32768,generation_parameters={temperature:0.7,top_p:5}"
         """
 
         def parse_model_args(model_args):
@@ -120,7 +121,7 @@ class GenerationParameters:
 
         # Task specific sampling params to set in model: n, best_of, use_beam_search
         # Generation specific params to set in model: logprobs, prompt_logprobs
-        return {sampling_params_to_vllm_naming.get(k, k): v for k, v in asdict(self).items() if v is not None}
+        return {sampling_params_to_vllm_naming.get(k, k): v for k, v in self.dict().items() if v is not None}
 
     def to_vllm_openai_dict(self) -> dict:
         """Selects relevant generation and sampling parameters for vllm and openai models.

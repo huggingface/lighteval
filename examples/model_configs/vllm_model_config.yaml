@@ -1,13 +1,30 @@
 model:
-  base_params:
-    model_args: "pretrained=HuggingFaceTB/SmolLM-1.7B-Instruct,revision=main,dtype=bfloat16"
-  generation:
-    temperature: 0.3
-    repetition_penalty: 1.0
-    frequency_penalty: 0.0
-    presence_penalty: 0.0
-    seed: 42
-    top_k: -1
-    min_p: 0.0
-    top_p: 0.9
-    max_new_tokens: 2048
+  pretrained: "HuggingFaceTB/SmolLM-1.7B-Instruct"
+  revision: "main"
+  dtype: "bfloat16"
+  tensor_parallel_size: 1
+  data_parallel_size: 1
+  pipeline_parallel_size: 1
+  gpu_memory_utilization: 0.9
+  max_model_length: 2048
+  swap_space: 4
+  seed: 1
+  trust_remote_code: True
+  add_chat_template: True
+  add_special_tokens: True
+  multichoice_continuation_start_space: True
+  pairwise_tokenization: True
+generation:
+  presence_penalty: 0.0
+  repetition_penalty: 1.0
+  frequency_penalty: 0.0
+  temperature: 1.0
+  top_k: 50
+  min_p: 0.0
+  top_p: 1.0
+  seed: 42
+  stop_tokens: null
+  max_new_tokens: 1024
+  min_new_tokens: 0
+metrics_options:
+  yo: null
