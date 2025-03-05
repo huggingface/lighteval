@@ -147,3 +147,7 @@ def requires_latex2sympy2_extended(func):
 
 
 NO_LATEX2SYMPY2_EXTENDED_ERROR_MSG = "You are trying to parse latex expressions, for which you need `latex2sympy2_extended`, which is not available in your environment. Please install it using `pip install lighteval[math]`."
+
+
+def is_e2b_available():
+    return importlib.util.find_spec("e2b_code_interpreter") is not None
