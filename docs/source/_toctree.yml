@@ -17,6 +17,8 @@
     title: Add a custom task
   - local: adding-a-new-metric
     title: Add a custom metric
+  - local: evaluating-a-custom-model
+    title: Evaluate a custom model
   - local: use-vllm-as-backend
     title: Use VLLM as backend
   - local: use-sglang-as-backend
