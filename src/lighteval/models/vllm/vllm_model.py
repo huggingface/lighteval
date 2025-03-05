@@ -182,7 +182,7 @@ class VLLMModel(LightevalModel):
             "pipeline_parallel_size": int(config.pipeline_parallel_size),
             "max_model_len": self._max_length,
             "swap_space": 4,
-            "seed": 1234,
+            "seed": config.seed,
         }
         if int(config.data_parallel_size) > 1:
             self.model_args["distributed_executor_backend"] = "ray"
@@ -247,7 +247,11 @@ class VLLMModel(LightevalModel):
                 # the case! Because of that we only use batch size of 1
                 stop_tokens = dataset[0].stop_sequence
 
-            max_new_tokens = dataset[0].generation_size  # could be none
+            max_new_tokens = (
+                dataset[0].generation_size
+                if self.sampling_params.max_tokens is None
+                else self.sampling_params.max_tokens
+            )
             returns_logits = dataset[0].use_logits
             num_samples = dataset[0].num_samples
 
@@ -321,9 +325,7 @@ class VLLMModel(LightevalModel):
         sampling_params = self.sampling_params.clone() or SamplingParams()
         if generate:
             sampling_params.n = num_samples
-            sampling_params.max_tokens = (
-                max_new_tokens if sampling_params.max_tokens is None else sampling_params.max_tokens
-            )
+            sampling_params.max_tokens = max_new_tokens
             sampling_params.stop = stop_tokens
             sampling_params.logprobs = 1 if returns_logits else 0
 
