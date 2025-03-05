@@ -428,8 +428,50 @@ class Metrics(Enum):
         sample_level_fn=GPassAtK(k=[8, 16], n=48, strip_strings=True).compute,
         category=MetricCategory.GENERATIVE_SAMPLING,
         use_case=MetricUseCase.REASONING,
-        corpus_level_fn={metric: np.mean for metric in GPassAtK(k=[8, 16], n=48, strip_strings=True).all_metrics},
-        higher_is_better={metric: True for metric in GPassAtK(k=[8, 16], n=48, strip_strings=True).all_metrics},
+        corpus_level_fn={metric: np.mean for metric in GPassAtK(k=16, n=48, strip_strings=True).all_metrics},
+        higher_is_better={metric: True for metric in GPassAtK(k=16, n=48, strip_strings=True).all_metrics},
+    )
+    g_pass_at_16_expr_gold = SampleLevelMetricGrouping(
+        metric_name="G-Pass@16:48_samples",
+        sample_level_fn=GPassAtK(
+            k=16,
+            n=48,
+            strip_strings=True,
+            sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
+                language=Language.ENGLISH,
+                fallback_mode="first_match",
+                precision=5,
+                gold_extraction_target=(ExprExtractionConfig(),),
+                # Match boxed first before trying other regexes
+                pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
+                aggregation_function=max,
+            ).sample_level_fn([ref], [pred], doc),
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn={metric: np.mean for metric in GPassAtK(k=16, n=48, strip_strings=True).all_metrics},
+        higher_is_better={metric: True for metric in GPassAtK(k=16, n=48, strip_strings=True).all_metrics},
+    )
+    g_pass_at_16_latex_gold = SampleLevelMetricGrouping(
+        metric_name="G-Pass@16:48_samples",
+        sample_level_fn=GPassAtK(
+            k=16,
+            n=48,
+            strip_strings=True,
+            sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
+                language=Language.ENGLISH,
+                fallback_mode="first_match",
+                precision=5,
+                gold_extraction_target=(LatexExtractionConfig(),),
+                # Match boxed first before trying other regexes
+                pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
+                aggregation_function=max,
+            ).sample_level_fn([ref], [pred], doc),
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn={metric: np.mean for metric in GPassAtK(k=16, n=48, strip_strings=True).all_metrics},
+        higher_is_better={metric: True for metric in GPassAtK(k=16, n=48, strip_strings=True).all_metrics},
     )
     perfect_exact_match = SampleLevelMetric(
         metric_name="perfect_em",
