@@ -21,17 +21,18 @@
 # SOFTWARE.
 
 import logging
-import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Optional
 
+import yaml
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.endpoints.endpoint_model import ModelInfo
+from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
@@ -63,6 +64,32 @@ if is_litellm_available():
 @dataclass
 class LiteLLMModelConfig:
     model: str
+    provider: Optional[str] = None
+    base_url: Optional[str] = None
+    api_key: Optional[str] = None
+    generation_parameters: GenerationParameters = None
+
+    def __post_init__(self):
+        if self.generation_parameters is None:
+            self.generation_parameters = GenerationParameters()
+
+    @classmethod
+    def from_path(cls, path):
+        with open(path, "r") as f:
+            config = yaml.safe_load(f)["model"]
+
+        model = config["base_params"]["model_name"]
+        provider = config["base_params"].get("provider", None)
+        base_url = config["base_params"].get("base_url", None)
+        api_key = config["base_params"].get("api_key", None)
+        generation_parameters = GenerationParameters.from_dict(config)
+        return cls(
+            model=model,
+            provider=provider,
+            base_url=base_url,
+            generation_parameters=generation_parameters,
+            api_key=api_key,
+        )
 
 
 class LiteLLMClient(LightevalModel):
@@ -79,15 +106,17 @@ class LiteLLMClient(LightevalModel):
             model_dtype=None,
             model_size="",
         )
-        self.provider = config.model.split("/")[0]
-        self.base_url = os.getenv(f"{self.provider.upper()}_BASE_URL", None)
+        self.model = config.model
+        self.provider = config.provider or config.model.split("/")[0]
+        self.base_url = config.base_url
+        self.api_key = config.api_key
+        self.generation_parameters = config.generation_parameters
+
         self.API_MAX_RETRY = 5
         self.API_RETRY_SLEEP = 3
         self.API_RETRY_MULTIPLIER = 2
         self.CONCURENT_CALLS = 20  # 100 leads to hitting Anthropic rate limits
-        self.TEMPERATURE = 0.7
-        self.TOP_P = 0.95
-        self.model = config.model
+
         self._tokenizer = encode
         self.pairwise_tokenization = False
         litellm.drop_params = True
@@ -99,8 +128,6 @@ class LiteLLMClient(LightevalModel):
             # Filter out whitespace-only stop sequences
             if stop_sequence:
                 stop_sequence = [s for s in stop_sequence if s and s.strip()]
-        if not stop_sequence:  # If empty after filtering
-            stop_sequence = ["\n"]
         return stop_sequence
 
     def _prepare_max_new_tokens(self, max_new_tokens):
@@ -128,18 +155,19 @@ class LiteLLMClient(LightevalModel):
                 kwargs = {
                     "model": self.model,
                     "messages": prompt,
-                    "max_completion_tokens": max_new_tokens,
                     "logprobs": return_logits if self.provider == "openai" else None,
                     "base_url": self.base_url,
                     "n": num_samples,
                     "caching": True,
+                    "api_key": self.api_key,
                 }
                 if "o1" in self.model:
                     logger.warning("O1 models do not support temperature, top_p, stop sequence. Disabling.")
                 else:
-                    kwargs["temperature"] = self.TEMPERATURE
-                    kwargs["top_p"] = self.TOP_P
-                    kwargs["stop"] = stop_sequence
+                    kwargs.update(self.generation_parameters.to_litellm_dict())
+
+                if kwargs.get("max_completion_tokens", None) is None:
+                    kwargs["max_completion_tokens"] = max_new_tokens
 
                 response = litellm.completion(**kwargs)
 

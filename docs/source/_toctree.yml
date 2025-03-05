@@ -9,6 +9,8 @@
 - sections:
   - local: saving-and-reading-results
     title: Save and read results
+  - local: use-litellm-as-backend
+    title: Use LITELLM as backend
   - local: using-the-python-api
     title: Use the Python API
   - local: adding-a-custom-task
@@ -17,6 +19,8 @@
     title: Add a custom metric
   - local: use-vllm-as-backend
     title: Use VLLM as backend
+  - local: use-sglang-as-backend
+    title: Use SGLang as backend
   - local: evaluate-the-model-on-a-server-or-container
     title: Evaluate on Server
   - local: contributing-to-multilingual-evaluations

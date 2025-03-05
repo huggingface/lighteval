@@ -214,9 +214,8 @@ class LightevalTask:
             metric_names = as_list(metric.metric_name)
 
             for metric_name in metric_names:
-                # If we do maj_at_ metrics, we need to use the correct number of samples
-                if "maj@" in metric_name:
-                    self.num_samples.append(int(metric_name.replace("maj@", "").split("_")[0]))
+                # Update the number of samples to generate using the information in the metric name
+                self.num_samples.append(extract_num_samples(metric_name))
 
         self.formatter = cfg.prompt_function
 
@@ -657,3 +656,24 @@ def create_requests_from_tasks(  # noqa: C901
                         requests[req_type].extend(reqs)
 
     return requests, docs
+
+
+def extract_num_samples(metric_name: str) -> int:
+    """Gets the number of samples to generate from the metric name.
+    Assumes that any metric with @ in it's name depends on the number of samples.
+
+    Args:
+        metric_name (str): The metric name in the task.
+
+    Returns:
+        int: The number of samples to generate.
+    """
+    if "@" in metric_name:
+        metric_name = metric_name.split("@")[-1]
+        if "_" in metric_name:
+            metric_name = metric_name.split("_")[0]
+        if ":" in metric_name:
+            return int(metric_name.split(":")[-1])
+        else:
+            return int(metric_name)
+    return 1
