@@ -37,7 +37,6 @@ ExprExtractionConfig,
     LatexExtractionConfig,
     ExprExtractionConfig,
 )
-from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.normalizations import LogProbCharNorm, LogProbPMINorm, LogProbTokenNorm
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
@@ -3614,7 +3613,7 @@ mgsm_tasks = [
         few_shots_split="train",
         generation_size=get_cot_generaion_size(cot, 100),
         metric=[
-            multilingual_extractive_match_metric(language),
+            multilingual_extractive_match_metric(language, precision=6),
         ],
         stop_sequence=get_cot_stop_sequence(language, CFFormulation(cot=cot)),
     )
@@ -3650,7 +3649,7 @@ afri_mgsm_tasks = [
         few_shots_split="train",
         generation_size=get_cot_generaion_size(cot, 100),
         metric=[
-            multilingual_extractive_match_metric(language),
+            multilingual_extractive_match_metric(language, precision=6),
         ],
         stop_sequence=get_cot_stop_sequence(language, CFFormulation(cot=cot)),
     )
@@ -3787,7 +3786,7 @@ math23k_tasks = [
         evaluation_splits=("test",),
         few_shots_split="train",
         generation_size=get_cot_generaion_size(cot, 100),  # Similar to other math tasks like msvamp
-        metric=[multilingual_extractive_match_metric(Language.CHINESE)],
+        metric=[multilingual_extractive_match_metric(Language.CHINESE, precision=6)],
         stop_sequence=get_cot_stop_sequence(Language.CHINESE, CFFormulation(cot=cot)),
     )
     for cot in (False, True)
@@ -3886,7 +3885,7 @@ mwp_tr_tasks = [
         few_shots_split="train",
         generation_size=get_cot_generaion_size(cot, 100),  # Similar to other math tasks
         metric=[
-            multilingual_extractive_match_metric(Language.TURKISH),
+            multilingual_extractive_match_metric(Language.TURKISH, precision=15),
         ],
         stop_sequence=get_cot_stop_sequence(Language.TURKISH, CFFormulation(cot=cot)),
     )
@@ -3915,7 +3914,10 @@ mera_arithmetic_tasks = [
         hf_avail_splits=["public_test"] if subset == "rumodar" else ["train"],
         generation_size=get_cot_generaion_size(cot, 100),  # Similar to other math tasks
         metric=[
-            Metrics.quasi_exact_match_math,
+            multilingual_extractive_match_metric(
+                Language.ARABIC,
+                precision=6,
+            ),
         ],
         stop_sequence=get_cot_stop_sequence(Language.RUSSIAN, CFFormulation(cot=cot)),
     )
@@ -3994,7 +3996,10 @@ armath_tasks = [
         few_shots_split="validation",
         generation_size=get_cot_generaion_size(cot, 100),  # Similar to other math tasks
         metric=[
-            multilingual_extractive_match_metric(Language.ARABIC, precision=6),
+            multilingual_extractive_match_metric(
+                Language.ARABIC,
+                precision=6,
+            ),
         ],
         stop_sequence=get_cot_stop_sequence(Language.ARABIC, CFFormulation(cot=cot)),
     )

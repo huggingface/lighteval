@@ -1,0 +1,20 @@
+batch_size: 6
+checkpoints_path: null
+generation: null
+logging:
+  local_output_path: ./tmp
+parallelism:
+  dp: 1
+  expert_parallel_size: 1
+  pp: 1
+  pp_engine: 1f1b
+  tp: 1
+  tp_linear_async_communication: false
+  tp_mode: ALL_REDUCE
+tasks:
+  dataset_loading_processes: 8
+  max_samples: 1000
+  multichoice_continuations_start_space: null
+  no_multichoice_continuations_start_space: null
+  num_fewshot_seeds: null
+  tasks: helm|interactive_qa_mmlu:abstract_algebra|0|0
