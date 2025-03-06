@@ -63,17 +63,48 @@ if is_openai_available():
 
 @dataclass
 class OpenAIModelConfig:
+    """
+    Configuration class to create an [[OpenAIModel]], to call via its API at inference for evaluation.
+
+    Attributes:
+    model(str): name or identifier of the OpenAI model to be used for inference.
+    generation_parameters(None,GenerationParameters): Parameters for model generation. If not
+                                                     provided, defaults to a new instance
+                                                     of `GenerationParameters`.
+    """
+
     model: str
     generation_parameters: GenerationParameters = None
     base_url: str = "https://api.openai.com/v1"
     api_key: str = os.environ.get("OPENAI_API_KEY", None)
 
     def __post_init__(self):
+        """
+        Post-initialization that ensures the `generation_parameters` is set
+        to a valid `GenerationParameters`. If not provided, initializes a default one."""
         if not self.generation_parameters:
             self.generation_parameters = GenerationParameters()
 
     @classmethod
     def from_path(cls, path: str) -> "OpenAIModelConfig":
+        """
+        Creates an instance of `OpenAIModelConfig` from a YAML configuration file.
+
+        Loads the model configuration from a given file path and initializes the
+        `OpenAIModelConfig` with the model name and corresponding `GenerationParameters` parsed
+        from the file.
+
+        Args:
+            path(str): Path to the YAML configuration file containing the model configuration.
+
+        Returns:
+            OpenAIModelConfig: An instance of `OpenAIModelConfig` with the configuration loaded
+                               from the specified YAML file.
+
+        Raises:
+            FileNotFoundError: If the specified file path does not exist.
+            KeyError: If required keys are missing in the YAML configuration file.
+        """
         import yaml
 
         with open(path, "r") as f:
@@ -172,8 +203,8 @@ class OpenAIClient(LightevalModel):
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
-            override_bs (int, optional): Override the batch size for generation. Defaults to None.
+            requests(list[GreedyUntilRequest]): list of requests containing the context and ending conditions.
+            override_bs(int, optional): Override the batch size for generation. Defaults to None.
 
         Returns:
             list[GenerativeResponse]: list of generated responses.
