@@ -144,7 +144,7 @@ class TransformersModelConfig(BaseModel):
     subfolder: str | None = None
     revision: str = "main"
     batch_size: PositiveInt | None = None
-    max_gen_toks: PositiveInt = 256
+    generation_size: PositiveInt = 256
     max_length: PositiveInt | None = None
     add_special_tokens: bool = True
     model_parallel: bool | None = None
@@ -687,7 +687,77 @@ class TransformersModel(LightevalModel):
 
         return results
 
-    def greedy_until(
+    def greedy_until(self, requests: list[GreedyUntilRequest]) -> list[GenerativeResponse]:
+        # Tokenize here to be able to sort by request length
+        for request in requests:
+            request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
+            request.tokenized_context = self.tok_encode(request.context)
+
+        dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=1)
+        results = []
+
+        for _ in tqdm(
+            dataset.splits_start_end_iterator(),
+            total=dataset.num_dataset_splits,
+            desc="Splits",
+            position=0,
+            disable=self.disable_tqdm,
+        ):
+            dataloader = DataLoader(dataset, batch_size=self.config.batch_size, collate_fn=lambda batch: batch)
+            dataloader = self.accelerator.prepare(dataloader)
+
+            for batch in tqdm(
+                dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
+            ):
+                stop_tokens = batch[0].stop_sequence if not self.use_chat_template else None
+                max_new_tokens = self.config.generation_size or batch[0].generation_size
+                returns_logits = batch[0].use_logits
+                num_samples = batch[0].num_samples
+                do_sample = batch[0].do_sample
+
+                context = [c.context for c in batch]
+
+                tokenized = self.tokenizer(
+                    context,
+                    truncation=True,  # we truncate to the model max length if needed
+                    padding=True,  # we pad to the longest sequence
+                    return_tensors="pt",
+                    max_length=self.max_length - 1,  # we always allow minimum one token of generation
+                    add_special_tokens=self.add_special_tokens,
+                ).to(str(self.device))
+
+                generation_config = self.generation_config_dict.copy()
+                generation_config.update(
+                    max_new_tokens=max_new_tokens,
+                    pad_token_id=self.tokenizer.pad_token_id or self.tokenizer.eos_token_id,
+                    eos_token_id=self.tokenizer.eos_token_id,
+                    do_sample=do_sample,
+                    num_return_sequences=num_samples,
+                    output_logits=returns_logits,
+                    renormalize_logits=True,
+                    stop_strings=stop_tokens,
+                )
+
+                outputs = self.model.generate(
+                    **tokenized,
+                    **generation_config,
+                    tokenizer=self.tokenizer,
+                )
+                decoded_outputs = self.tokenizer.batch_decode(outputs.sequences)
+
+                for decoded_output in decoded_outputs:
+                    cur_response = GenerativeResponse(
+                        result=[decoded_output],
+                        logits=None,
+                        input_tokens=None,
+                        truncated_tokens_count=None,
+                        padded_tokens_count=None,
+                    )
+                    results.append(cur_response)
+
+        return dataset.get_original_order(results)
+
+    def greedy_until_old(
         self,
         requests: list[GreedyUntilRequest],
     ) -> list[GenerativeResponse]:
