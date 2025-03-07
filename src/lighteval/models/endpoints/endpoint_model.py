@@ -57,7 +57,7 @@ from lighteval.tasks.requests import (
     LoglikelihoodRollingRequest,
     LoglikelihoodSingleTokenRequest,
 )
-from lighteval.utils.utils import EnvConfig, as_list
+from lighteval.utils.utils import as_list
 
 
 logger = logging.getLogger(__name__)
@@ -169,7 +169,7 @@ class InferenceEndpointModel(LightevalModel):
     """
 
     def __init__(  # noqa: C901
-        self, config: Union[InferenceEndpointModelConfig, ServerlessEndpointModelConfig], env_config: EnvConfig
+        self, config: Union[InferenceEndpointModelConfig, ServerlessEndpointModelConfig]
     ) -> None:
         self.reuse_existing = getattr(config, "reuse_existing", False)
         self._max_length = None
@@ -222,7 +222,6 @@ class InferenceEndpointModel(LightevalModel):
                                 region=region,
                                 instance_size=instance_size,
                                 instance_type=instance_type,
-                                token=env_config.token,
                                 custom_image={
                                     "health_route": "/health",
                                     "env": {
@@ -240,9 +239,7 @@ class InferenceEndpointModel(LightevalModel):
                             )
                         else:  # Endpoint exists
                             logger.info("Reusing existing endpoint.")
-                            self.endpoint = get_inference_endpoint(
-                                name=endpoint_name, token=env_config.token, namespace=config.namespace
-                            )
+                            self.endpoint = get_inference_endpoint(name=endpoint_name, namespace=config.namespace)
 
                     else:
                         # Endpoint exists locally but either failed (and most likely it must be scaled up)
@@ -302,8 +299,8 @@ class InferenceEndpointModel(LightevalModel):
             self.endpoint_name = None
             self.name = config.model_name
             self.revision = "default"
-            self.async_client = AsyncInferenceClient(model=config.model_name, token=env_config.token)
-            self.client = InferenceClient(model=config.model_name, token=env_config.token)
+            self.async_client = AsyncInferenceClient(model=config.model_name)
+            self.client = InferenceClient(model=config.model_name)
 
         self.use_async = True  # set to False for debug - async use is faster
 

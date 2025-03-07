@@ -41,7 +41,7 @@ from lighteval.tasks.requests import (
     LoglikelihoodRequest,
 )
 from lighteval.utils.imports import is_sglang_available
-from lighteval.utils.utils import EnvConfig, as_list
+from lighteval.utils.utils import as_list
 
 
 logger = logging.getLogger(__name__)
@@ -87,7 +87,6 @@ class SGLangModel(LightevalModel):
     def __init__(
         self,
         config: SGLangModelConfig,
-        env_config: EnvConfig,
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self._config = config
@@ -95,9 +94,9 @@ class SGLangModel(LightevalModel):
         self.data_parallel_size = config.dp_size
         self.tensor_parallel_size = config.tp_size
         self._add_special_tokens = config.add_special_tokens
-        self._tokenizer = self._create_auto_tokenizer(config, env_config)
+        self._tokenizer = self._create_auto_tokenizer(config)
         self._max_length = config.context_length if config.context_length is not None else None
-        self.model = self._create_auto_model(config, env_config)
+        self.model = self._create_auto_model(config)
         self.model_name = _simplify_name(config.pretrained)
         self.model_sha = ""  # config.get_model_sha()
         self.precision = _get_dtype(config.dtype, config=self._config)
@@ -127,7 +126,7 @@ class SGLangModel(LightevalModel):
     def max_length(self) -> int:
         return self._max_length
 
-    def _create_auto_model(self, config: SGLangModelConfig, env_config: EnvConfig) -> Optional[Engine]:
+    def _create_auto_model(self, config: SGLangModelConfig) -> Optional[Engine]:
         self.model_args = {
             "model_path": config.pretrained,
             "trust_remote_code": config.trust_remote_code,
@@ -152,7 +151,7 @@ class SGLangModel(LightevalModel):
 
         return model
 
-    def _create_auto_tokenizer(self, config: SGLangModelConfig, env_config: EnvConfig):
+    def _create_auto_tokenizer(self, config: SGLangModelConfig):
         tokenizer = get_tokenizer(
             config.pretrained,
             tokenizer_mode="auto",

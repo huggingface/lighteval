@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import json
-import os
 import re
-from dataclasses import asdict, dataclass, is_dataclass
+from dataclasses import asdict, is_dataclass
 from typing import Callable, TypeVar, Union
 
 import numpy as np
@@ -203,20 +202,6 @@ def make_results_table(result_dict):
     md_writer.value_matrix = values
 
     return md_writer.dumps()
-
-
-@dataclass
-class EnvConfig:
-    """
-    Configuration class for environment settings.
-
-    Attributes:
-        cache_dir (str): directory for caching data.
-        token (str): authentication token used for accessing the HuggingFace Hub.
-    """
-
-    cache_dir: str = os.getenv("HF_HUB_CACHE", "/scratch")
-    token: str = os.getenv("HF_TOKEN")
 
 
 def boolstring_to_bool(x: Union[str, bool, int]) -> Union[bool, None]:

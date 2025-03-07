@@ -40,11 +40,6 @@ def _get_dtype(dtype: Union[str, torch.dtype, None], config: Optional[AutoConfig
     Returns:
         torch.dtype: The torch dtype based on the input arguments.
     """
-
-    if config is not None and hasattr(config, "quantization_config"):
-        # must be infered
-        return None
-
     if dtype is not None:
         if isinstance(dtype, str) and dtype not in ["auto", "4bit", "8bit"]:
             # Convert `str` args torch dtype: `float16` -> `torch.float16`

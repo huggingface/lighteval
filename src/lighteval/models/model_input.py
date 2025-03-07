@@ -21,28 +21,27 @@
 # SOFTWARE.
 
 from dataclasses import asdict
-from typing import Optional
 
 from pydantic import BaseModel, NonNegativeFloat, NonNegativeInt
 
 
 class GenerationParameters(BaseModel):
-    early_stopping: Optional[bool] = None  # transformers
-    repetition_penalty: Optional[NonNegativeFloat] = None  # vllm, transformers, tgi, sglang
-    frequency_penalty: Optional[NonNegativeFloat] = None  # vllm, tgi, sglang
-    length_penalty: Optional[NonNegativeFloat] = None  # vllm, transformers
-    presence_penalty: Optional[NonNegativeFloat] = None  # vllm, sglang
+    early_stopping: bool | None = None  # transformers
+    repetition_penalty: NonNegativeFloat | None = None  # vllm, transformers, tgi, sglang
+    frequency_penalty: NonNegativeFloat | None = None  # vllm, tgi, sglang
+    length_penalty: NonNegativeFloat | None = None  # vllm, transformers
+    presence_penalty: NonNegativeFloat | None = None  # vllm, sglang
 
-    max_new_tokens: Optional[NonNegativeInt] = None  # vllm, transformers, tgi, litellm, sglang
-    min_new_tokens: Optional[NonNegativeInt] = None  # vllm, transformers, sglang
+    max_new_tokens: NonNegativeInt | None = None  # vllm, transformers, tgi, litellm, sglang
+    min_new_tokens: NonNegativeInt | None = None  # vllm, transformers, sglang
 
-    seed: Optional[NonNegativeInt] = None  # vllm, tgi, litellm
-    stop_tokens: Optional[list[str]] = None  # vllm, transformers, tgi, litellm, sglang
-    temperature: Optional[NonNegativeFloat] = None  # vllm, transformers, tgi, litellm, sglang
-    top_k: Optional[NonNegativeInt] = None  # vllm, transformers, tgi, sglang
-    min_p: Optional[NonNegativeFloat] = None  # vllm, transformers, sglang
-    top_p: Optional[NonNegativeFloat] = None  # vllm, transformers, tgi, litellm, sglang
-    truncate_prompt: Optional[bool] = None  # vllm, tgi
+    seed: NonNegativeInt | None = None  # vllm, tgi, litellm
+    stop_tokens: list[str] | None = None  # vllm, transformers, tgi, litellm, sglang
+    temperature: NonNegativeFloat | None = None  # vllm, transformers, tgi, litellm, sglang
+    top_k: NonNegativeInt | None = None  # vllm, transformers, tgi, sglang
+    min_p: NonNegativeFloat | None = None  # vllm, transformers, sglang
+    top_p: NonNegativeFloat | None = None  # vllm, transformers, tgi, litellm, sglang
+    truncate_prompt: bool | None = None  # vllm, tgi
 
     @classmethod
     def from_dict(cls, config_dict: dict):

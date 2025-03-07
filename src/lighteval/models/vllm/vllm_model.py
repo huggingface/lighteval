@@ -43,7 +43,7 @@ from lighteval.tasks.requests import (
     LoglikelihoodRequest,
 )
 from lighteval.utils.imports import is_vllm_available
-from lighteval.utils.utils import EnvConfig, as_list
+from lighteval.utils.utils import as_list
 
 
 logger = logging.getLogger(__name__)
@@ -103,7 +103,6 @@ class VLLMModel(LightevalModel):
     def __init__(
         self,
         config: VLLMModelConfig,
-        env_config: EnvConfig,
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self._config = config
@@ -112,12 +111,12 @@ class VLLMModel(LightevalModel):
         self.tensor_parallel_size = config.tensor_parallel_size
 
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
-        self._tokenizer = self._create_auto_tokenizer(config, env_config)
+        self._tokenizer = self._create_auto_tokenizer(config)
 
         self._max_length = config.max_model_length if config.max_model_length is not None else None
 
         # If model_parallel is not set we compare the number of processes with the number of GPUs
-        self.model = self._create_auto_model(config, env_config)
+        self.model = self._create_auto_model(config)
 
         # self._device = config.accelerator.device if config.accelerator is not None else "cpu"
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
@@ -152,7 +151,7 @@ class VLLMModel(LightevalModel):
     def max_length(self) -> int:
         return self._max_length
 
-    def _create_auto_model(self, config: VLLMModelConfig, env_config: EnvConfig) -> Optional[LLM]:
+    def _create_auto_model(self, config: VLLMModelConfig) -> Optional[LLM]:
         """
         Creates an instance of the pretrained HF model.
 
@@ -197,7 +196,7 @@ class VLLMModel(LightevalModel):
 
         return model
 
-    def _create_auto_tokenizer(self, config: VLLMModelConfig, env_config: EnvConfig):
+    def _create_auto_tokenizer(self, config: VLLMModelConfig):
         tokenizer = get_tokenizer(
             config.pretrained,
             tokenizer_mode="auto",

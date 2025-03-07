@@ -36,7 +36,6 @@ from lighteval.tasks.requests import (
     LoglikelihoodRollingRequest,
     LoglikelihoodSingleTokenRequest,
 )
-from lighteval.utils.utils import EnvConfig
 
 
 @dataclass
@@ -50,10 +49,8 @@ class DummyModel(LightevalModel):
     def __init__(
         self,
         config: DummyModelConfig,
-        env_config: EnvConfig,
     ):
         self.config = config
-        self.env_config = env_config
         self._random = random.Random(self.config.seed)
         self._tokenizer = None
         self.model_info = ModelInfo(model_name="dummy", model_sha=str(config.seed))
