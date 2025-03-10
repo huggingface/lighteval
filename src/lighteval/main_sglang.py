@@ -19,15 +19,11 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import os
 from typing import Optional
 
 from typer import Argument, Option
 from typing_extensions import Annotated
 
-
-TOKEN = os.getenv("HF_TOKEN")
-CACHE_DIR: str = os.getenv("HF_HOME", "/scratch")
 
 HELP_PANEL_NAME_1 = "Common Parameters"
 HELP_PANEL_NAME_2 = "Logging Parameters"
@@ -57,9 +53,6 @@ def sglang(
     custom_tasks: Annotated[
         Optional[str], Option(help="Path to custom tasks directory.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
-    cache_dir: Annotated[
-        str, Option(help="Cache directory for datasets and models.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = CACHE_DIR,
     num_fewshot_seeds: Annotated[
         int, Option(help="Number of seeds to use for few-shot evaluation.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = 1,
@@ -101,12 +94,8 @@ def sglang(
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.model_input import GenerationParameters
     from lighteval.models.sglang.sglang_model import SGLangModelConfig
-    from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
+    from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
     from lighteval.utils.utils import parse_args
-
-    TOKEN = os.getenv("HF_TOKEN")
-
-    env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
 
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
@@ -119,11 +108,9 @@ def sglang(
 
     pipeline_params = PipelineParameters(
         launcher_type=ParallelismManager.SGLANG,
-        env_config=env_config,
         job_id=job_id,
         dataset_loading_processes=dataset_loading_processes,
         custom_tasks_directory=custom_tasks,
-        override_batch_size=-1,
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         use_chat_template=use_chat_template,

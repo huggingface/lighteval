@@ -19,7 +19,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import os
 from typing import Optional
 
 import typer
@@ -29,9 +28,6 @@ from typing_extensions import Annotated
 
 app = typer.Typer()
 
-
-TOKEN = os.getenv("HF_TOKEN")
-CACHE_DIR: str = os.getenv("HF_HOME", "/scratch")
 
 HELP_PANEL_NAME_1 = "Common Parameters"
 HELP_PANEL_NAME_2 = "Logging Parameters"
@@ -66,9 +62,6 @@ def inference_endpoint(
     custom_tasks: Annotated[
         Optional[str], Option(help="Path to custom tasks directory.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
-    cache_dir: Annotated[
-        str, Option(help="Cache directory for datasets and models.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = CACHE_DIR,
     num_fewshot_seeds: Annotated[
         int, Option(help="Number of seeds to use for few-shot evaluation.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = 1,
@@ -98,9 +91,6 @@ def inference_endpoint(
     max_samples: Annotated[
         Optional[int], Option(help="Maximum number of samples to evaluate on.", rich_help_panel=HELP_PANEL_NAME_3)
     ] = None,
-    override_batch_size: Annotated[
-        int, Option(help="Override batch size for evaluation.", rich_help_panel=HELP_PANEL_NAME_3)
-    ] = None,
     job_id: Annotated[
         int, Option(help="Optional job id for future reference.", rich_help_panel=HELP_PANEL_NAME_3)
     ] = 0,
@@ -108,11 +98,13 @@ def inference_endpoint(
     """
     Evaluate models using inference-endpoints as backend.
     """
+    import yaml
+
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.endpoints.endpoint_model import InferenceEndpointModelConfig, ServerlessEndpointModelConfig
-    from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
+    from lighteval.models.model_input import GenerationParameters
+    from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 
-    env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
         save_details=save_details,
@@ -122,23 +114,25 @@ def inference_endpoint(
         hub_results_org=results_org,
     )
 
-    # TODO (nathan): better handling of model_args
-
     parallelism_manager = ParallelismManager.NONE  # since we're using inference endpoints in remote
+
+    with open(model_config_path, "r") as f:
+        config = yaml.safe_load(f)
 
     # Find a way to add this back
     if free_endpoint:
-        model_config = ServerlessEndpointModelConfig.from_path(model_config_path)
+        model_config = ServerlessEndpointModelConfig(**config["model"])
     else:
-        model_config = InferenceEndpointModelConfig.from_path(model_config_path)
+        generation_parameters = GenerationParameters(**config.get("generation", {}))
+        model_config = InferenceEndpointModelConfig(
+            **config["model"], **config.get("instance", {}), generation_parameters=generation_parameters
+        )
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
-        env_config=env_config,
         job_id=job_id,
         dataset_loading_processes=dataset_loading_processes,
         custom_tasks_directory=custom_tasks,
-        override_batch_size=override_batch_size,
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         use_chat_template=use_chat_template,
@@ -183,9 +177,6 @@ def tgi(
     custom_tasks: Annotated[
         Optional[str], Option(help="Path to custom tasks directory.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
-    cache_dir: Annotated[
-        str, Option(help="Cache directory for datasets and models.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = CACHE_DIR,
     num_fewshot_seeds: Annotated[
         int, Option(help="Number of seeds to use for few-shot evaluation.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = 1,
@@ -215,9 +206,6 @@ def tgi(
     max_samples: Annotated[
         Optional[int], Option(help="Maximum number of samples to evaluate on.", rich_help_panel=HELP_PANEL_NAME_3)
     ] = None,
-    override_batch_size: Annotated[
-        int, Option(help="Override batch size for evaluation.", rich_help_panel=HELP_PANEL_NAME_3)
-    ] = -1,
     job_id: Annotated[
         int, Option(help="Optional job id for future reference.", rich_help_panel=HELP_PANEL_NAME_3)
     ] = 0,
@@ -225,11 +213,13 @@ def tgi(
     """
     Evaluate models using TGI as backend.
     """
+    import yaml
+
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.endpoints.tgi_model import TGIModelConfig
-    from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
+    from lighteval.models.model_input import GenerationParameters
+    from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 
-    env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
         save_details=save_details,
@@ -239,18 +229,19 @@ def tgi(
         hub_results_org=results_org,
     )
 
-    # TODO (nathan): better handling of model_args
     parallelism_manager = ParallelismManager.TGI
 
-    model_config = TGIModelConfig.from_path(model_config_path)
+    with open(model_config_path, "r") as f:
+        config = yaml.safe_load(f)
+
+    generation_parameters = GenerationParameters(**config.get("generation", {}))
+    model_config = TGIModelConfig(**config["model"], generation_parameters=generation_parameters)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
-        env_config=env_config,
         job_id=job_id,
         dataset_loading_processes=dataset_loading_processes,
         custom_tasks_directory=custom_tasks,
-        override_batch_size=override_batch_size,
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         use_chat_template=use_chat_template,
@@ -298,9 +289,6 @@ def litellm(
     custom_tasks: Annotated[
         Optional[str], Option(help="Path to custom tasks directory.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
-    cache_dir: Annotated[
-        str, Option(help="Cache directory for datasets and models.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = CACHE_DIR,
     num_fewshot_seeds: Annotated[
         int, Option(help="Number of seeds to use for few-shot evaluation.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = 1,
@@ -330,9 +318,6 @@ def litellm(
     max_samples: Annotated[
         Optional[int], Option(help="Maximum number of samples to evaluate on.", rich_help_panel=HELP_PANEL_NAME_3)
     ] = None,
-    override_batch_size: Annotated[
-        int, Option(help="Override batch size for evaluation.", rich_help_panel=HELP_PANEL_NAME_3)
-    ] = -1,
     job_id: Annotated[
         int, Option(help="Optional job id for future refenrence.", rich_help_panel=HELP_PANEL_NAME_3)
     ] = 0,
@@ -346,10 +331,9 @@ def litellm(
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.litellm_model import LiteLLMModelConfig
     from lighteval.models.model_input import GenerationParameters
-    from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
+    from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
     from lighteval.utils.utils import parse_args
 
-    env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
         save_details=save_details,
@@ -367,20 +351,15 @@ def litellm(
     else:
         config = parse_args(model_args)
 
-    breakpoint()
     metric_options = config.get("metric_options", {})
     generation_parameters = GenerationParameters(**config.get("generation", {}))
     model_config = LiteLLMModelConfig(**config["model"], generation_parameters=generation_parameters)
 
-    breakpoint()
-
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
-        env_config=env_config,
         job_id=job_id,
         dataset_loading_processes=dataset_loading_processes,
         custom_tasks_directory=custom_tasks,
-        override_batch_size=override_batch_size,
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         use_chat_template=use_chat_template,

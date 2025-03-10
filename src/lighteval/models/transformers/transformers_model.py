@@ -177,9 +177,7 @@ class TransformersModelConfig(BaseModel):
         if not self.generation_parameters:
             self.generation_parameters = GenerationParameters()
 
-        self.transformers_config = self._init_configs()
-
-    def _init_configs(self) -> PretrainedConfig:
+    def get_transformers_config(self) -> PretrainedConfig:
         revision = self.revision
 
         if self.subfolder:
@@ -234,6 +232,7 @@ class TransformersModel(LightevalModel):
         self._add_special_tokens = config.add_special_tokens or False
         self.pairwise_tokenization = config.pairwise_tokenization
         self.batch_size = config.batch_size
+        self.transformers_config = config.get_transformers_config()
 
         self.model_sha = config.get_model_sha()
         self._max_length = self._init_max_length()
@@ -487,8 +486,8 @@ class TransformersModel(LightevalModel):
         # Try to get the sequence length from the model config.
         seqlen_config_attrs = ("n_positions", "max_position_embeddings", "n_ctx")
         for attr in seqlen_config_attrs:
-            if hasattr(self.config.transformers_config, attr):
-                return getattr(self.config.transformers_config, attr)
+            if hasattr(self.transformers_config, attr):
+                return getattr(self.transformers_config, attr)
 
         logger.warning(
             "No max_length attribute found in the model config. Using the default max sequence length setting {2048}. It is recomended to set max_length trough the madel args"

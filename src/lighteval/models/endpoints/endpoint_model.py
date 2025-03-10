@@ -24,7 +24,6 @@ import asyncio
 import logging
 import re
 import time
-from dataclasses import dataclass, replace
 from typing import Coroutine, Dict, List, Optional, Union
 
 import requests
@@ -35,13 +34,13 @@ from huggingface_hub import (
     InferenceEndpoint,
     InferenceEndpointError,
     InferenceEndpointTimeoutError,
-    TextGenerationInputGenerateParameters,
     TextGenerationInputGrammarType,
     TextGenerationOutput,
     create_inference_endpoint,
     get_inference_endpoint,
 )
 from huggingface_hub.utils import HfHubHTTPError
+from pydantic import BaseModel
 from requests import ConnectionError
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -76,44 +75,36 @@ SORTED_INSTANCE_SIZES = [  # sorted by incremental overall RAM (to load models)
 ]
 
 
-@dataclass
-class ServerlessEndpointModelConfig:
+class ServerlessEndpointModelConfig(BaseModel):
     model_name: str
     add_special_tokens: bool = True
-    generation_parameters: GenerationParameters = None
+    generation_parameters: GenerationParameters | None = None
 
     def __post_init__(self):
         if not self.generation_parameters:
             self.generation_parameters = GenerationParameters()
 
-    @classmethod
-    def from_path(cls, path: str) -> "ServerlessEndpointModelConfig":
-        import yaml
 
-        with open(path, "r") as f:
-            config = yaml.safe_load(f)["model"]
-        return cls(**config["base_params"])
-
-
-@dataclass
-class InferenceEndpointModelConfig:
-    endpoint_name: str = None
-    model_name: str = None
+class InferenceEndpointModelConfig(BaseModel):
+    endpoint_name: str | None = None
+    model_name: str | None = None
     reuse_existing: bool = False
     accelerator: str = "gpu"
-    model_dtype: str = None  # if empty, we use the default
+    model_dtype: str | None = None  # if empty, we use the default
     vendor: str = "aws"
     region: str = "us-east-1"  # this region has the most hardware options available
-    instance_size: str = None  # if none, we autoscale
-    instance_type: str = None  # if none, we autoscale
+    instance_size: str | None = None  # if none, we autoscale
+    instance_type: str | None = None  # if none, we autoscale
     framework: str = "pytorch"
     endpoint_type: str = "protected"
     add_special_tokens: bool = True
     revision: str = "main"
-    namespace: str = None  # The namespace under which to launch the endpoint. Defaults to the current user's namespace
-    image_url: str = None
-    env_vars: dict = None
-    generation_parameters: GenerationParameters = None
+    namespace: str | None = (
+        None  # The namespace under which to launch the endpoint. Defaults to the current user's namespace
+    )
+    image_url: str | None = None
+    env_vars: dict | None = None
+    generation_parameters: GenerationParameters | None = None
 
     def __post_init__(self):
         # xor operator, one is None but not the other
@@ -127,23 +118,6 @@ class InferenceEndpointModelConfig:
 
         if not self.generation_parameters:
             self.generation_parameters = GenerationParameters()
-
-    @classmethod
-    def from_path(cls, path: str) -> "InferenceEndpointModelConfig":
-        """Load configuration for inference endpoint model from YAML file path.
-
-        Args:
-            path (`str`): Path of the model configuration YAML file.
-
-        Returns:
-            [`InferenceEndpointModelConfig`]: Configuration for inference endpoint model.
-        """
-        import yaml
-
-        with open(path, "r") as f:
-            config = yaml.safe_load(f)["model"]
-        config["base_params"]["model_dtype"] = config["base_params"].pop("dtype", None)
-        return cls(**config["base_params"], **config.get("instance", {}))
 
     def get_dtype_args(self) -> Dict[str, str]:
         if self.model_dtype is None:
@@ -314,7 +288,7 @@ class InferenceEndpointModel(LightevalModel):
             model_size=-1,
         )
         self.generation_parameters = config.generation_parameters
-        self.generation_config = TextGenerationInputGenerateParameters(**self.generation_parameters.to_tgi_ie_dict())
+        self.generation_config = self.generation_parameters.to_tgi_ie_dict()
 
     @staticmethod
     def get_larger_hardware_suggestion(cur_instance_type: str = None, cur_instance_size: str = None):
@@ -398,16 +372,13 @@ class InferenceEndpointModel(LightevalModel):
     ) -> Coroutine[None, list[TextGenerationOutput], str]:
         # Todo: add an option to launch with conversational instead for chat prompts
         # https://huggingface.co/docs/huggingface_hub/v0.20.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.conversational
-        generation_config: TextGenerationInputGenerateParameters = replace(
-            self.generation_config,
-            stop=stop_tokens,
-            max_new_tokens=max_tokens,
-            details=True,
-            decoder_input_details=True,
-            grammar=grammar,
-        )
+        self.generation_config["grammar"] = grammar
+        self.generation_config["stop"] = stop_tokens
+        self.generation_config["max_new_tokens"] = max_tokens
+        self.generation_config["details"] = True
+        self.generation_config["decoder_input_details"] = True
 
-        generated_text = self.async_client.text_generation(prompt=context, generation_config=generation_config)
+        generated_text = self.async_client.text_generation(prompt=context, **self.generation_config)
 
         return generated_text
 
@@ -420,18 +391,15 @@ class InferenceEndpointModel(LightevalModel):
     ) -> TextGenerationOutput:
         # Todo: add an option to launch with conversational instead for chat prompts
         # https://huggingface.co/docs/huggingface_hub/v0.20.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.conversational
-        generation_config: TextGenerationInputGenerateParameters = replace(
-            self.generation_config,
-            stop=stop_tokens,
-            max_new_tokens=max_tokens,
-            details=True,
-            decoder_input_details=True,
-            grammar=grammar,
-        )
+        self.generation_config["stop"] = stop_tokens
+        self.generation_config["max_new_tokens"] = max_tokens
+        self.generation_config["details"] = True
+        self.generation_config["decoder_input_details"] = True
+        self.generation_config["grammar"] = grammar
 
         generated_text = self.client.text_generation(
             prompt=context,
-            generation_config=generation_config,
+            **self.generation_config,
         )
 
         return generated_text

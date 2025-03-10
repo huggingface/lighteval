@@ -75,7 +75,7 @@ class LiteLLMModelConfig(BaseModel):
 class LiteLLMClient(LightevalModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
-    def __init__(self, config, env_config) -> None:
+    def __init__(self, config) -> None:
         """
         IMPORTANT: Your API keys should be set in the environment variables.
         If a base_url is not set, it will default to the public API.
