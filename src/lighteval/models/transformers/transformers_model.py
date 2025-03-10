@@ -80,7 +80,7 @@ if is_accelerate_available():
     from datetime import timedelta
 
     from accelerate import Accelerator, InitProcessGroupKwargs
-    from accelerate.utils import calculate_maximum_sizes, convert_bytes, get_max_memory
+    from accelerate.utils import calculate_maximum_sizes, convert_bytes, gather_object, get_max_memory
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -687,7 +687,7 @@ class TransformersModel(LightevalModel):
 
         return results
 
-    def greedy_until(self, requests: list[GreedyUntilRequest]) -> list[GenerativeResponse]:
+    def greedy_until_tmp(self, requests: list[GreedyUntilRequest]) -> list[GenerativeResponse]:
         # Tokenize here to be able to sort by request length
         for request in requests:
             request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
@@ -703,12 +703,9 @@ class TransformersModel(LightevalModel):
             position=0,
             disable=self.disable_tqdm,
         ):
-            dataloader = DataLoader(dataset, batch_size=self.config.batch_size, collate_fn=lambda batch: batch)
-            dataloader = self.accelerator.prepare(dataloader)
+            with self.accelerator.split_between_processes(requests, apply_padding=True) as batch:
+                logger.info(f"{len(batch)=} rank: {self.accelerator.process_index}")
 
-            for batch in tqdm(
-                dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
-            ):
                 stop_tokens = batch[0].stop_sequence if not self.use_chat_template else None
                 max_new_tokens = self.config.generation_size or batch[0].generation_size
                 returns_logits = batch[0].use_logits
@@ -716,13 +713,16 @@ class TransformersModel(LightevalModel):
                 do_sample = batch[0].do_sample
 
                 context = [c.context for c in batch]
+                logger.info(f"{len(context)=} rank: {self.accelerator.process_index}")
+                logger.info(context)
 
                 tokenized = self.tokenizer(
                     context,
                     truncation=True,  # we truncate to the model max length if needed
                     padding=True,  # we pad to the longest sequence
+                    pad_to_multiple_of=8,
                     return_tensors="pt",
-                    max_length=self.max_length - 1,  # we always allow minimum one token of generation
+                    max_length=self.max_length,  # we always allow minimum one token of generation
                     add_special_tokens=self.add_special_tokens,
                 ).to(str(self.device))
 
@@ -743,21 +743,26 @@ class TransformersModel(LightevalModel):
                     **generation_config,
                     tokenizer=self.tokenizer,
                 )
-                decoded_outputs = self.tokenizer.batch_decode(outputs.sequences)
+
+                decoded_outputs = self.tokenizer.batch_decode(outputs.sequences, skip_special_tokens=True)
+                decoded_outputs = gather_object(decoded_outputs)
+                decoded_outputs = decoded_outputs[: len(batch)]
 
                 for decoded_output in decoded_outputs:
                     cur_response = GenerativeResponse(
                         result=[decoded_output],
-                        logits=None,
-                        input_tokens=None,
-                        truncated_tokens_count=None,
-                        padded_tokens_count=None,
+                        logits=[0],
+                        input_tokens=[0],
+                        truncated_tokens_count=1,
+                        padded_tokens_count=1,
                     )
                     results.append(cur_response)
 
+        logger.info(f"{len(results)=} rank: {self.accelerator.process_index}")
+
         return dataset.get_original_order(results)
 
-    def greedy_until_old(
+    def greedy_until(
         self,
         requests: list[GreedyUntilRequest],
     ) -> list[GenerativeResponse]:
