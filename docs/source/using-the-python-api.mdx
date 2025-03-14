@@ -17,6 +17,7 @@ from lighteval.utils.utils import EnvConfig
 from lighteval.utils.imports import is_accelerate_available
 
 if is_accelerate_available():
+    from datetime import timedelta
     from accelerate import Accelerator, InitProcessGroupKwargs
     accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
 else:
