@@ -1,7 +1,6 @@
 #! /bin/bash
 
 #SBATCH --job-name=EVALUATE_Llama-3.2-1B-Instruct
-#SBATCH --account=brb@h100
 #SBATCH --output=evaluation.log
 #SBATCH --error=evaluation.log
 #SBATCH --nodes=2
