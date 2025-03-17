@@ -97,13 +97,12 @@ class GenerationParameters:
             dict: The parameters to create a litellm.SamplingParams in the model config.
         """
         args = {
-            "repetition_penalty": self.repetition_penalty,
-            "top_p": self.top_p,
-            "temperature": self.temperature,
+            "max_completion_tokens": self.max_new_tokens,
             "stop": self.stop_tokens,
+            "temperature": self.temperature,
+            "top_p": self.top_p,
             "seed": self.seed,
-            "logprobs": None,
-            "logit_bias": None,
+            "repetition_penalty": self.repetition_penalty,
             "frequency_penalty": self.frequency_penalty,
         }
         return {k: v for k, v in args.items() if v is not None}
