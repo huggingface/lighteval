@@ -108,6 +108,7 @@ class PipelineParameters:
     use_chat_template: bool = False
     system_prompt: str | None = None
     load_responses_from_details_date_id: str | None = None
+    generate_until_token: str | None = None
 
     def __post_init__(self):  # noqa C901
         if self.launcher_type == ParallelismManager.ACCELERATE:
@@ -234,6 +235,7 @@ class Pipeline:
                 evaluation_tracker=self.evaluation_tracker,
                 use_chat_template=self.pipeline_parameters.use_chat_template,
                 system_prompt=self.pipeline_parameters.system_prompt,
+                generate_until_token=self.pipeline_parameters.generate_until_token,
             )
 
             self.task_names_list = task_names_list

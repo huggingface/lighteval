@@ -70,6 +70,9 @@ def accelerate(  # noqa C901
     load_responses_from_details_date_id: Annotated[
         Optional[str], Option(help="Load responses from details directory.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
+    generate_until_token: Annotated[
+        Optional[str], Option(help="Continue generating reasoning or chain-of-thought after system prompt and until this stop token.", rich_help_panel=HELP_PANEL_NAME_4)
+    ] = None,
     # === saving ===
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
@@ -121,6 +124,9 @@ def accelerate(  # noqa C901
 
     env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
 
+    if (not use_chat_template) and (generate_until_token is not None):
+        raise Exception("`generate_until_token` must be used with `use_chat_template` flag.")
+
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
         save_details=save_details,
@@ -141,6 +147,7 @@ def accelerate(  # noqa C901
         use_chat_template=use_chat_template,
         system_prompt=system_prompt,
         load_responses_from_details_date_id=load_responses_from_details_date_id,
+        generate_until_token=generate_until_token,
     )
 
     # TODO (nathan): better handling of model_args
@@ -172,6 +179,7 @@ def accelerate(  # noqa C901
             "multichoice_continuations_start_space"
         ]
         args_dict["use_chat_template"] = use_chat_template
+        args_dict["generate_until_token"] = generate_until_token
 
         # Keeping only non null params
         args_dict = {k: v for k, v in args_dict.items() if v is not None}
@@ -192,6 +200,7 @@ def accelerate(  # noqa C901
         model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
         model_args_dict["accelerator"] = accelerator
         model_args_dict["use_chat_template"] = use_chat_template
+        model_args_dict["generate_until_token"] = generate_until_token
         model_args_dict["compile"] = bool(model_args_dict["compile"]) if "compile" in model_args_dict else False
         model_config = TransformersModelConfig(**model_args_dict)
 

@@ -30,6 +30,8 @@ from typing import TYPE_CHECKING, Optional, Tuple, Union
 
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.litellm_model import LiteLLMClient
+from lighteval.models.model_output import Batch
+from lighteval.models.transformers.transformers_model import TransformersModel
 from lighteval.tasks.requests import Doc
 from lighteval.utils.utils import as_list
 
@@ -105,7 +107,8 @@ class PromptManager:
         sampler: Optional[random.Random] = None,
         truncate_few_shots: bool = False,
         use_chat_template=False,
-        system_prompt: str = None,
+        system_prompt: Optional[str] = None,
+        generate_until_token: Optional[str] = None,
     ) -> Doc:
         is_multi_turn = doc.specific is not None and len(doc.specific.get("multi_turn_queries", [])) > 0
         if is_multi_turn:
@@ -120,6 +123,7 @@ class PromptManager:
                 sampler=sampler,
                 use_chat_template=use_chat_template,
                 system_prompt=system_prompt,
+                generate_until_token=generate_until_token,
             )
         doc.num_effective_few_shots = num_effective_few_shots
         doc.num_asked_few_shots = num_fewshot
@@ -173,7 +177,8 @@ class PromptManager:
         sampler: Optional[random.Random] = None,
         truncate_few_shots: bool = False,
         use_chat_template=False,
-        system_prompt: str = None,
+        system_prompt: Optional[str] = None,
+        generate_until_token: Optional[str] = None,
     ):
         """Returns a fewshot context string that is made up of a prepended description
         (if provided), the `num_fewshot` number of examples, and an appended prompt example.
@@ -238,9 +243,29 @@ class PromptManager:
             return output, num_effective_fewshots
 
         elif use_chat_template:
-            return self.model.tokenizer.apply_chat_template(
+            chat_preview = self.model.tokenizer.apply_chat_template(
                 output, tokenize=False, add_generation_prompt=True
-            ), num_effective_fewshots
+            )
+            if generate_until_token is not None:
+                if not isinstance(self.model, TransformersModel):
+                    raise Exception("`generate_until_token` only implemented for `TransformerModel` class")
+                tokenized = self.model.tokenizer(chat_preview, return_tensors="pt").to(self.model.device)
+                prepared_batch = Batch(
+                    input_ids=tokenized["input_ids"],
+                    input_mask=tokenized["attention_mask"],
+                    input_lengths=[len(tokenized["input_ids"][0])],
+                    truncated=[False],
+                    padded=[False],
+                )
+                response = self.model._generate(
+                    batch=prepared_batch,
+                    max_new_tokens=2048,
+                    stop_tokens=[generate_until_token],
+                )
+                full_start = chat_preview + response[0].result[0] + generate_until_token
+                return full_start, num_effective_fewshots
+            else:
+                return chat_preview, num_effective_fewshots
 
         return output, num_effective_fewshots
 
