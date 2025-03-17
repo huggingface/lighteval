@@ -262,6 +262,7 @@ class PromptManager:
                     max_new_tokens=2048,
                     stop_tokens=[generate_until_token],
                 )
+                logger.debug(response[0].result[0])
                 full_start = chat_preview + response[0].result[0] + generate_until_token
                 return full_start, num_effective_fewshots
             else:
