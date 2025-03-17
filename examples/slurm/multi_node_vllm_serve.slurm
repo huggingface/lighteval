@@ -54,7 +54,6 @@ set_VLLM_HOST_IP
 MODEL_NAME="Llama-3.2-1B-Instruct"
 SERVER_PORT=$(find_available_port)
 export OPENAI_API_KEY="I-love-vllm-serve"
-export OPENAI_BASE_URL="http://localhost:$SERVER_PORT/v1"
 
 vllm serve $MODEL_DIRECTORY \
     --served-model-name $MODEL_NAME \
@@ -87,4 +86,4 @@ export TOKENIZER_PATH="$MODEL_DIRECTORY"
 
 TASK_ARGS="community|gpqa-fr|0|0,community|ifeval-fr|0|0"
 
-lighteval endpoint litellm "model_name=${MODEL_NAME},base_url=http://localhost:$SERVER_PORT/v1,provider=openai" "$TASK_ARGS" --custom-tasks $TASK_FILE --use-chat-template
+lighteval endpoint litellm "model_name=${MODEL_NAME},base_url=http://localhost:$SERVER_PORT/v1,provider=openai,api_key=${OPENAI_API_KEY}" "$TASK_ARGS" --custom-tasks $TASK_FILE --use-chat-template
