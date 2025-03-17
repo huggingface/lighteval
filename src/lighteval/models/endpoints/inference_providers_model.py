@@ -136,7 +136,7 @@ class InferenceProvidersClient(LightevalModel):
                 logger.warning(
                     f"Error in API call: {e}, waiting {wait_time} seconds before retry {attempt + 1}/{self.API_MAX_RETRY}"
                 )
-                time.sleep(wait_time)
+                await asyncio.sleep(wait_time)
 
         logger.error(f"API call failed after {self.API_MAX_RETRY} attempts, returning empty response.")
         return None
