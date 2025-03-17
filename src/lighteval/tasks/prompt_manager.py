@@ -259,6 +259,7 @@ class PromptManager:
                 )
                 response = self.model._generate(
                     batch=prepared_batch,
+                    do_sample=True,
                     max_new_tokens=2048,
                     stop_tokens=[generate_until_token],
                 )

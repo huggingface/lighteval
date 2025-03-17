@@ -200,7 +200,6 @@ def accelerate(  # noqa C901
         model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
         model_args_dict["accelerator"] = accelerator
         model_args_dict["use_chat_template"] = use_chat_template
-        model_args_dict["generate_until_token"] = generate_until_token
         model_args_dict["compile"] = bool(model_args_dict["compile"]) if "compile" in model_args_dict else False
         model_config = TransformersModelConfig(**model_args_dict)
 
