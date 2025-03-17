@@ -22,11 +22,12 @@
 
 import asyncio
 import logging
-from dataclasses import dataclass, field
+from dataclasses import field
 from typing import Any, List, Optional
 
 import yaml
 from huggingface_hub import AsyncInferenceClient, ChatCompletionOutput
+from pydantic import BaseModel, NonNegativeInt
 from tqdm import tqdm
 from tqdm.asyncio import tqdm as async_tqdm
 from transformers import AutoTokenizer
@@ -51,8 +52,7 @@ from lighteval.tasks.requests import (
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class InferenceProvidersModelConfig:
+class InferenceProvidersModelConfig(BaseModel):
     """Configuration for InferenceProvidersClient.
 
     Args:
@@ -67,6 +67,7 @@ class InferenceProvidersModelConfig:
     provider: str
     timeout: int | None = None
     proxies: Any | None = None
+    parallel_calls_count: NonNegativeInt = 10
     generation_parameters: GenerationParameters = field(default_factory=GenerationParameters)
 
     @classmethod
@@ -115,6 +116,7 @@ class InferenceProvidersClient(LightevalModel):
         self.API_RETRY_SLEEP = 3
         self.API_RETRY_MULTIPLIER = 2
         self.pairwise_tokenization = False
+        self.semaphore = asyncio.Semaphore(config.parallel_calls_count)  # Limit concurrent API calls
 
         self.client = AsyncInferenceClient(
             provider=self.provider,
@@ -176,7 +178,11 @@ class InferenceProvidersClient(LightevalModel):
             len(prompts) == len(num_sampless)
         ), f"Length of prompts, return_logitss, max_new_tokenss, num_sampless, stop_sequences, system_prompts should be the same but are {len(prompts)}, {len(num_sampless)}"
 
-        tasks = [self.__call_api(prompt, num_samples) for prompt, num_samples in zip(prompts, num_sampless)]
+        async def bounded_api_call(prompt, num_samples):
+            async with self.semaphore:
+                return await self.__call_api(prompt, num_samples)
+
+        tasks = [bounded_api_call(prompt, num_samples) for prompt, num_samples in zip(prompts, num_sampless)]
         results = await async_tqdm.gather(*tasks)
 
         if None in results:
