@@ -22,7 +22,6 @@
 
 import logging
 import os
-import warnings
 from typing import Optional, Tuple, Union
 
 import torch
@@ -53,7 +52,7 @@ from lighteval.models.model_output import (
     LoglikelihoodResponse,
     LoglikelihoodSingleTokenResponse,
 )
-from lighteval.models.utils import _get_dtype, _get_model_sha, _simplify_name, batched
+from lighteval.models.utils import _get_dtype, _get_model_sha, _simplify_name
 from lighteval.tasks.requests import (
     GreedyUntilMultiTurnRequest,
     GreedyUntilRequest,
@@ -80,7 +79,7 @@ if is_accelerate_available():
     from datetime import timedelta
 
     from accelerate import Accelerator, InitProcessGroupKwargs
-    from accelerate.utils import calculate_maximum_sizes, convert_bytes, gather_object, get_max_memory
+    from accelerate.utils import calculate_maximum_sizes, convert_bytes, get_max_memory
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -154,7 +153,7 @@ class TransformersModelConfig(BaseModel):
     use_chat_template: bool = False
     compile: bool = False
 
-    generation_parameters: GenerationParameters | None = None
+    generation_parameters: GenerationParameters = GenerationParameters()
     multichoice_continuations_start_space: bool | None = None
     pairwise_tokenization: bool = False
 
@@ -173,9 +172,6 @@ class TransformersModelConfig(BaseModel):
 
         if self.quantization_config is not None and not is_bnb_available():
             raise ImportError(NO_BNB_ERROR_MSG)
-
-        if not self.generation_parameters:
-            self.generation_parameters = GenerationParameters()
 
     def get_transformers_config(self) -> PretrainedConfig:
         revision = self.revision
@@ -240,10 +236,10 @@ class TransformersModel(LightevalModel):
         self.model = self._create_auto_model()
 
         # We are in DP (and launch the script with `accelerate launch`)
-        # if config.model_parallel is False and not isinstance(config.quantization_config, BitsAndBytesConfig):
-        # logger.info(f"Using Data Parallelism, putting model on device {self._device}")
-        # self.model = self.model.to(self._device)
-        # self.model_name = _simplify_name(config.pretrained)
+        if config.model_parallel is False and self.config.dtype not in ["4bit", "8bit"]:
+            logger.info(f"Using Data Parallelism, putting model on device {self._device}")
+            self.model = self.model.to(self._device)
+        self.model_name = _simplify_name(config.pretrained)
 
         self.generation_config_dict = config.generation_parameters.to_transformers_dict()
 
@@ -355,6 +351,10 @@ class TransformersModel(LightevalModel):
         self.num_local_processes = int(os.environ.get("LOCAL_WORLD_SIZE", 1))
         self.num_machines = torch.cuda.device_count() // self.num_local_processes
 
+        if self.num_machines == 1:
+            logger.info("We are not in a distributed setting. Setting model_parallel to False.")
+            model_parallel = False
+
         if model_parallel is None:
             max_memory_all_gpus = get_max_memory()  # A dict of the max memory for all the gpus
             if "cpu" in max_memory_all_gpus:
@@ -418,7 +418,7 @@ class TransformersModel(LightevalModel):
             trust_remote_code=self.config.trust_remote_code,
             quantization_config=quantization_config,
         )
-        model.to(self.device)
+        # model.to(self.device)
         model.eval()
         torch.set_grad_enabled(False)
 
@@ -444,23 +444,13 @@ class TransformersModel(LightevalModel):
         subfolder = self.config.subfolder
         revision = self.config.revision + (f"/{subfolder}" if subfolder is not None else "")
 
-        try:
-            tokenizer = AutoTokenizer.from_pretrained(
-                tokenizer_name,
-                revision=revision,
-                trust_remote_code=self.config.trust_remote_code,
-                padding_side="left",
-                truncation_side="left",
-            )
-        except RecursionError:
-            tokenizer = AutoTokenizer.from_pretrained(
-                tokenizer_name,
-                revision=revision,
-                trust_remote_code=self.config.trust_remote_code,
-                unk_token="<unk>",
-                padding_side="left",
-                truncation_side="left",
-            )
+        tokenizer = AutoTokenizer.from_pretrained(
+            tokenizer_name,
+            revision=revision,
+            trust_remote_code=self.config.trust_remote_code,
+            padding_side="left",
+            truncation_side="left",
+        )
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.model_max_length = self.max_length
         logger.info("Tokenizer truncation and padding size set to the left side.")
@@ -536,230 +526,7 @@ class TransformersModel(LightevalModel):
         self,
         requests: list[GreedyUntilMultiTurnRequest],
     ) -> GenerativeMultiturnResponse:
-        for request in requests:
-            request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
-            request.tokenized_context = self.tok_encode(request.context)["input_ids"]
-
-        results = []
-
-        dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=1)
-        dataloader = DataLoader(dataset, batch_size=1, collate_fn=lambda batch: batch)
-
-        if self.accelerator:
-            dataloader = self.accelerator.prepare(dataloader)
-
-        logger.warning("Running greedy multi turn generation, the batch size is set to 1 for this task.")
-
-        for request_batch in tqdm(
-            dataloader, desc="Greedy Multi Turn generation", position=1, leave=False, disable=self.disable_tqdm
-        ):
-            request = request_batch[0]
-            # For chat models, generation stops with EOS token, so we don't need to specify stop tokens
-            if self.use_chat_template:
-                stop_tokens = []
-            else:
-                stop_tokens = request.stop_sequence
-            max_generated_tokens = request.generation_size
-            context = request.context[0]
-            max_context_size_allowed = self.max_length - max_generated_tokens
-
-            model_inputs = self.tokenizer(
-                context,
-                padding=True,
-                truncation=True,
-                return_tensors="pt",
-                max_length=max_context_size_allowed,
-                add_special_tokens=self.add_special_tokens,
-            ).to(self.device)
-
-            stopping_criteria = transformers.StoppingCriteriaList(
-                [
-                    *[
-                        MultiTokenEOSCriteria(
-                            sequence, self.tokenizer, input_ids_shape=model_inputs["input_ids"].shape
-                        )
-                        for sequence in stop_tokens
-                    ],
-                ]
-            )
-
-            generation_config = self.generation_config_dict.copy()
-            generation_config.update(
-                {
-                    "max_new_tokens": max_generated_tokens,
-                    "pad_token_id": self.tokenizer.pad_token_id
-                    if self.tokenizer.pad_token_id
-                    else self.tokenizer.eos_token_id,
-                    "eos_token_id": self.tokenizer.eos_token_id,
-                    "do_sample": False,
-                }
-            )
-
-            model_outputs: GenerateOutput = self.model.generate(
-                **model_inputs, stopping_criteria=stopping_criteria, **generation_config
-            )
-            model_outputs = model_outputs.sequences[0, model_inputs["input_ids"].size(1) :]
-
-            # We manage stop tokens in an extra step in case they were incorrectly detected earlier
-            # (which can happen for multitoken stop sequences)
-            decoded_generation = self.tokenizer.decode(model_outputs)  # should we skip_special_tokens=True here?
-            for term in stop_tokens:
-                decoded_generation = decoded_generation.split(term)[0]
-            model_generations = [model_outputs]
-
-            input_tokens = [model_inputs["input_ids"]]
-
-            for i, multi_turn_context in enumerate(request.context[1:]):
-                multi_turn_context = multi_turn_context.format(model_response=decoded_generation)
-
-                model_inputs = self.tokenizer(
-                    multi_turn_context,
-                    padding=True,
-                    truncation=True,
-                    return_tensors="pt",
-                    max_length=max_context_size_allowed,
-                    add_special_tokens=self.add_special_tokens,
-                ).to(self.device)
-
-                stopping_criteria = transformers.StoppingCriteriaList(
-                    [
-                        *[
-                            MultiTokenEOSCriteria(
-                                sequence, self.tokenizer, input_ids_shape=model_inputs["input_ids"].shape
-                            )
-                            for sequence in stop_tokens
-                        ],
-                    ]
-                )
-
-                generation_config = self.generation_config_dict.copy()
-                generation_config.update(
-                    {
-                        "max_new_tokens": max_generated_tokens,
-                        "pad_token_id": self.tokenizer.pad_token_id
-                        if self.tokenizer.pad_token_id
-                        else self.tokenizer.eos_token_id,
-                        "eos_token_id": self.tokenizer.eos_token_id,
-                        "do_sample": False,
-                    }
-                )
-
-                model_outputs: GenerateOutput = self.model.generate(
-                    input_ids=model_inputs["input_ids"],
-                    attention_mask=model_inputs["attention_mask"],
-                    stopping_criteria=stopping_criteria,
-                    **generation_config,
-                )
-                model_outputs = model_outputs.sequences[0, model_inputs["input_ids"].size(1) :]
-                model_generations.append(model_outputs)
-                input_tokens.append(model_inputs["input_ids"])
-
-                decoded_generation = self.tokenizer.decode(model_outputs, skip_special_tokens=True)
-                for term in stop_tokens:
-                    decoded_generation = decoded_generation.split(term)[0]
-
-            if self.accelerator:
-                padding_size = max(gen.shape[0] for gen in model_generations)
-                for i, gen in enumerate(model_generations):
-                    model_generations[i] = F.pad(
-                        gen, (0, padding_size - gen.shape[0]), value=self.tokenizer.pad_token_id
-                    )
-                model_generations = torch.stack(model_generations, dim=0)
-                model_generations, lengths = self.pad_and_gather(model_generations, drop_last_samples=False)
-
-            model_answers = []
-            for generation, _ in zip(model_generations, lengths):
-                generation = generation.cpu().tolist()
-                decoded = self.tokenizer.decode(generation, skip_special_tokens=True)
-                model_answers.append(decoded)
-
-            for answers in batched(model_answers, len(request.context)):
-                results.append(
-                    GenerativeMultiturnResponse(
-                        result=answers,
-                        input_tokens=input_tokens,
-                        generated_tokens=[],
-                        truncated_tokens_count=0,
-                        padded_tokens_count=0,
-                    )
-                )
-
-        return results
-
-    def greedy_until_tmp(self, requests: list[GreedyUntilRequest]) -> list[GenerativeResponse]:
-        # Tokenize here to be able to sort by request length
-        for request in requests:
-            request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
-            request.tokenized_context = self.tok_encode(request.context)
-
-        dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=1)
-        results = []
-
-        for _ in tqdm(
-            dataset.splits_start_end_iterator(),
-            total=dataset.num_dataset_splits,
-            desc="Splits",
-            position=0,
-            disable=self.disable_tqdm,
-        ):
-            with self.accelerator.split_between_processes(requests, apply_padding=True) as batch:
-                logger.info(f"{len(batch)=} rank: {self.accelerator.process_index}")
-
-                stop_tokens = batch[0].stop_sequence if not self.use_chat_template else None
-                max_new_tokens = self.config.generation_size or batch[0].generation_size
-                returns_logits = batch[0].use_logits
-                num_samples = batch[0].num_samples
-                do_sample = batch[0].do_sample
-
-                context = [c.context for c in batch]
-                logger.info(f"{len(context)=} rank: {self.accelerator.process_index}")
-                logger.info(context)
-
-                tokenized = self.tokenizer(
-                    context,
-                    truncation=True,  # we truncate to the model max length if needed
-                    padding=True,  # we pad to the longest sequence
-                    pad_to_multiple_of=8,
-                    return_tensors="pt",
-                    max_length=self.max_length,  # we always allow minimum one token of generation
-                    add_special_tokens=self.add_special_tokens,
-                ).to(str(self.device))
-
-                generation_config = self.generation_config_dict.copy()
-                generation_config.update(
-                    max_new_tokens=max_new_tokens,
-                    pad_token_id=self.tokenizer.pad_token_id or self.tokenizer.eos_token_id,
-                    eos_token_id=self.tokenizer.eos_token_id,
-                    do_sample=do_sample,
-                    num_return_sequences=num_samples,
-                    output_logits=returns_logits,
-                    renormalize_logits=True,
-                    stop_strings=stop_tokens,
-                )
-
-                outputs = self.model.generate(
-                    **tokenized,
-                    **generation_config,
-                    tokenizer=self.tokenizer,
-                )
-
-                decoded_outputs = self.tokenizer.batch_decode(outputs.sequences, skip_special_tokens=True)
-                decoded_outputs = gather_object(decoded_outputs)
-                decoded_outputs = decoded_outputs[: len(batch)]
-
-                for decoded_output in decoded_outputs:
-                    cur_response = GenerativeResponse(
-                        result=[decoded_output],
-                        logits=[0],
-                        input_tokens=[0],
-                        truncated_tokens_count=1,
-                        padded_tokens_count=1,
-                    )
-                    results.append(cur_response)
-
-        logger.info(f"{len(results)=} rank: {self.accelerator.process_index}")
-
-        return dataset.get_original_order(results)
+        raise NotImplementedError("This method is not implemented for this model")
 
     def greedy_until(
         self,
@@ -813,6 +580,9 @@ class TransformersModel(LightevalModel):
             if self.accelerator:
                 dataloader = self.accelerator.prepare(dataloader)
 
+            logger.warning(
+                f"{len(dataloader)} batches of size {batch_size} will be processed, {len(dataset)} requests"
+            )
             for batch in tqdm(
                 dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
             ):
@@ -1338,16 +1108,6 @@ class TransformersModel(LightevalModel):
                 del batch_padded
 
         return dataset.get_original_order(res)
-
-
-class BaseModel(TransformersModel):
-    def __post_init__(self):
-        super().__post_init__()
-
-        warnings.warn(
-            "Careful, the BaseModel name is deprecated and will be removed, you should use TransformersModel instead!",
-            FutureWarning,
-        )
 
 
 class MultiTokenEOSCriteria(transformers.StoppingCriteria):

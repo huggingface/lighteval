@@ -108,6 +108,7 @@ def accelerate(  # noqa C901
     from lighteval.models.transformers.delta_model import DeltaModelConfig
     from lighteval.models.transformers.transformers_model import TransformersModelConfig
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
+    from lighteval.utils.utils import parse_args
 
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
@@ -135,7 +136,7 @@ def accelerate(  # noqa C901
             config = yaml.safe_load(f)
     else:
         # We extract the model args
-        config: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
+        config: dict = parse_args(model_args)
 
     config["use_chat_template"] = use_chat_template
     generation_parameters = GenerationParameters(**config.get("generation", {}))

@@ -58,5 +58,9 @@ class TestTGIModelConfig:
         ],
     )
     def test_from_path(self, config_path, expected_config):
-        config = TGIModelConfig.from_path(config_path)
+        import yaml
+
+        with open(config_path, "r") as f:
+            config = yaml.safe_load(f)
+        config = TGIModelConfig(**config["model"])
         assert asdict(config) == expected_config

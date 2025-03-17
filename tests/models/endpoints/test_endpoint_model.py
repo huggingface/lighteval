@@ -36,8 +36,8 @@ class TestInferenceEndpointModelConfig:
                 "examples/model_configs/endpoint_model.yaml",
                 {
                     "model_name": "meta-llama/Llama-2-7b-hf",
-                    "revision": "main",
                     "model_dtype": "float16",
+                    "revision": "main",
                     "endpoint_name": None,
                     "reuse_existing": False,
                     "accelerator": "gpu",
@@ -80,6 +80,10 @@ class TestInferenceEndpointModelConfig:
         ],
     )
     def test_from_path(self, config_path, expected_config):
-        config = InferenceEndpointModelConfig.from_path(config_path)
+        import yaml
+
+        with open(config_path, "r") as f:
+            config = yaml.safe_load(f)
+        config = InferenceEndpointModelConfig(**config["model"], **config.get("instance", {}))
         for key, value in expected_config.items():
             assert getattr(config, key) == value
