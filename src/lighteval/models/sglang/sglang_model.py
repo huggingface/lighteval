@@ -216,14 +216,14 @@ class SGLangModel(LightevalModel):
             if max_new_tokens is not None:
                 if context_size + max_new_tokens > self.max_length:
                     logger.warning(
-                        f"{context_size + max_new_tokens=} which is greather than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
+                        f"{context_size + max_new_tokens=} which is greater than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
                     )
                     context_size = self.max_length - max_new_tokens
                     inputs = [input[-context_size:] for input in inputs]
             else:
                 if context_size > self.max_length:
                     logger.warning(
-                        f"{context_size=} which is greather than {self.max_length=}. Truncating context to {self.max_length} tokens."
+                        f"{context_size=} which is greater than {self.max_length=}. Truncating context to {self.max_length} tokens."
                     )
                     context_size = self.max_length
                     inputs = [input[-context_size:] for input in inputs]
