@@ -22,9 +22,8 @@
 
 import asyncio
 import logging
-import time
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 import yaml
 from huggingface_hub import AsyncInferenceClient, ChatCompletionOutput
@@ -54,6 +53,16 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class InferenceProvidersModelConfig:
+    """Configuration for InferenceProvidersClient.
+
+    Args:
+        model: Name or path of the model to use
+        provider: Name of the inference provider
+        timeout: Request timeout in seconds
+        proxies: Proxy configuration for requests
+        generation_parameters: Parameters for text generation
+    """
+
     model: str
     provider: str
     timeout: int | None = None
@@ -80,12 +89,18 @@ class InferenceProvidersModelConfig:
 
 
 class InferenceProvidersClient(LightevalModel):
-    def __init__(self, config) -> None:
-        """
-        IMPORTANT: Your API keys should be set in the environment variables.
-        If a base_url is not set, it will default to the public API.
-        """
+    """Client for making inference requests to various providers using the HuggingFace Inference API.
 
+    This class handles batched generation requests with automatic retries and error handling.
+    API keys should be set in environment variables.
+    """
+
+    def __init__(self, config: InferenceProvidersModelConfig) -> None:
+        """Initialize the inference client.
+
+        Args:
+            config: Configuration object containing model and provider settings
+        """
         self.model_info = ModelInfo(
             model_name=config.model,
             model_sha="",
@@ -108,7 +123,7 @@ class InferenceProvidersClient(LightevalModel):
         )
         self._tokenizer = AutoTokenizer.from_pretrained(self.model)
 
-    def _encode(self, text: str):
+    def _encode(self, text: str) -> dict:
         enc = self._tokenizer(text=text)
         return enc
 
@@ -119,8 +134,16 @@ class InferenceProvidersClient(LightevalModel):
             return toks
         return self._encode(text)
 
-    async def __call_api(self, prompt, num_samples):
-        """Make API call with retries."""
+    async def __call_api(self, prompt: List[dict], num_samples: int) -> Optional[ChatCompletionOutput]:
+        """Make API call with exponential backoff retry logic.
+
+        Args:
+            prompt: List of message dictionaries for chat completion
+            num_samples: Number of completions to generate
+
+        Returns:
+            API response or None if all retries failed
+        """
         for attempt in range(self.API_MAX_RETRY):
             try:
                 kwargs = {
