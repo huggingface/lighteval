@@ -130,7 +130,7 @@ Then, once the Ray cluster is running, you can launch vLLM through lighteval.
 set_VLLM_HOST_IP
 
 MODEL_ARGS="pretrained=$MODEL_DIRECTORY,gpu_memory_utilisation=0.5,trust_remote_code=False,dtype=bfloat16,max_model_length=16384,tensor_parallel_size=<gpus_per_node * nnodes>"
-TASK_ARGS="community|gpqa-fr|0|0,community|ifeval-fr|0|0"
+TASK_ARGS="lighteval|gsm8k|0|0"
 
 srun -N1 -n1 -c $(( SLURM_CPUS_PER_TASK/2 )) --overlap -w $MASTER lighteval vllm "$MODEL_ARGS" "$TASK_ARGS" --custom-tasks $TASK_FILE
 ```
@@ -191,7 +191,7 @@ the evaluation.
 ```bash
 export TOKENIZER_PATH="$MODEL_DIRECTORY"
 
-TASK_ARGS="community|gpqa-fr|0|0,community|ifeval-fr|0|0"
+TASK_ARGS="lighteval|gsm8k|0|0"
 
 lighteval endpoint openai "$MODEL_NAME" "$TASK_ARGS" --custom-tasks $TASK_FILE
 ```

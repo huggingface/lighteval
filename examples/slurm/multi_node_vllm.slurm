@@ -51,6 +51,6 @@ fi
 set_VLLM_HOST_IP
 
 MODEL_ARGS="pretrained=$MODEL_DIRECTORY,gpu_memory_utilisation=0.5,trust_remote_code=False,dtype=bfloat16,max_model_length=8192,tensor_parallel_size=8"
-TASK_ARGS="community|gpqa-fr|0|0,community|ifeval-fr|0|0"
+TASK_ARGS="lighteval|gsm8k|0|0"
 
 srun -N1 -n1 -c $(( SLURM_CPUS_PER_TASK/2 )) --overlap -w $MASTER lighteval vllm "$MODEL_ARGS" "$TASK_ARGS" --custom-tasks $TASK_FILE --use-chat-template
