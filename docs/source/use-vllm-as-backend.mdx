@@ -135,7 +135,7 @@ TASK_ARGS="community|gpqa-fr|0|0,community|ifeval-fr|0|0"
 srun -N1 -n1 -c $(( SLURM_CPUS_PER_TASK/2 )) --overlap -w $MASTER lighteval vllm "$MODEL_ARGS" "$TASK_ARGS" --custom-tasks $TASK_FILE
 ```
 
-The full script is available here: [https://github.com/huggingface/lighteval/blob/main/examples/slurm/multi_node_vllm.slurm](https://github.com/huggingface/lighteval/blob/main/examples/slurm/multi_node_vllm.slurm)
+The full script is available [here](https://github.com/huggingface/lighteval/blob/main/examples/slurm/multi_node_vllm.slurm)
 
 ## With vLLM Serve
 
@@ -196,6 +196,5 @@ TASK_ARGS="community|gpqa-fr|0|0,community|ifeval-fr|0|0"
 lighteval endpoint openai "$MODEL_NAME" "$TASK_ARGS" --custom-tasks $TASK_FILE
 ```
 
-The full script is available here:
-[https://github.com/huggingface/lighteval/blob/main/examples/slurm/multi_node_vllm_serve.slurm](https://github.com/huggingface/lighteval/blob/main/examples/slurm/multi_node_vllm_serve.slurm)
+The full script is available [here](https://github.com/huggingface/lighteval/blob/main/examples/slurm/multi_node_vllm_serve.slurm).
 

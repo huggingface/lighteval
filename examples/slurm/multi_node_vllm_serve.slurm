@@ -87,4 +87,4 @@ export TOKENIZER_PATH="$MODEL_DIRECTORY"
 
 TASK_ARGS="community|gpqa-fr|0|0,community|ifeval-fr|0|0"
 
-lighteval endpoint openai "$MODEL_NAME" "$TASK_ARGS" --custom-tasks $TASK_FILE
+lighteval endpoint litellm "model_name=${MODEL_NAME},base_url=http://localhost:$SERVER_PORT/v1,provider=openai" "$TASK_ARGS" --custom-tasks $TASK_FILE --use-chat-template
