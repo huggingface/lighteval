@@ -1,6 +1,6 @@
 # Inference Providers as backend
 
-Lighteval allows to use Hugging Face's Inference Providers to evaluate llms on supported providers such as, Black Forest Labs, Cerebras, Fireworks AI, Nebius, Together AI and many more.
+Lighteval allows to use Hugging Face's Inference Providers to evaluate llms on supported providers such as Black Forest Labs, Cerebras, Fireworks AI, Nebius, Together AI and many more.
 
 ## Quick use
 
@@ -11,7 +11,7 @@ Lighteval allows to use Hugging Face's Inference Providers to evaluate llms on s
 
 ```bash
 lighteval endpoint inference-providers \
-    "model=deepseek-ai/DeepSeek-R1,provider=Novita" \
+    "model=deepseek-ai/DeepSeek-R1,provider=hf-inference" \
     "lighteval|gsm8k|0|0"
 ```
 
@@ -33,6 +33,7 @@ model:
   provider: "novita"
   timeout: null
   proxies: null
+  parallel_calls_count: 10
   generation:
     temperature: 0.8
     top_k: 10
