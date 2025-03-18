@@ -18,9 +18,9 @@
   - local: use-inference-providers-as-backend
     title: Use HF's inference providers as backend
   - local: use-litellm-as-backend
-    title: Use LITELLM as backend
+    title: Use litellm as backend
   - local: use-vllm-as-backend
-    title: Use VLLM as backend
+    title: Use vllm as backend
   - local: use-sglang-as-backend
     title: Use SGLang as backend
   - local: evaluate-the-model-on-a-server-or-container
