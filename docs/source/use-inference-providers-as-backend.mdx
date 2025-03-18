@@ -6,6 +6,7 @@ Lighteval allows to use Hugging Face's Inference Providers to evaluate llms on s
 
 > [!WARNING]
 > Do not forget to set your HuggingFace API key.
+> You can set it using the `HF_TOKEN` environment variable or by using the `huggingface-cli` command.
 
 
 ```bash
@@ -16,10 +17,15 @@ lighteval endpoint inference-providers \
 
 ## Using a config file
 
-Litellm allows generation with any OpenAI compatible endpoint, for example you
-can evaluate a model running on a local vllm server.
+You can use config files to define the model and the provider to use.
 
-To do so you will need to use a config file like so:
+```bash
+lighteval endpoint inference-providers \
+    examples/model_configs/inference_providers.yaml \
+    "lighteval|gsm8k|0|0"
+```
+
+with the following config file:
 
 ```yaml
 model:

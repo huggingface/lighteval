@@ -174,9 +174,9 @@ class InferenceProvidersClient(LightevalModel):
         results = []
 
         num_sampless = [num_samples for _ in prompts] if not isinstance(num_samples, list) else num_samples
-        assert (
-            len(prompts) == len(num_sampless)
-        ), f"Length of prompts, return_logitss, max_new_tokenss, num_sampless, stop_sequences, system_prompts should be the same but are {len(prompts)}, {len(num_sampless)}"
+        assert len(prompts) == len(
+            num_sampless
+        ), f"Length of prompts and max_new_tokenss should be the same but are {len(prompts)}, {len(num_sampless)}"
 
         async def bounded_api_call(prompt, num_samples):
             async with self.semaphore:
@@ -186,7 +186,7 @@ class InferenceProvidersClient(LightevalModel):
         results = await async_tqdm.gather(*tasks)
 
         if None in results:
-            raise ValueError("Some entries are not annotated due to errors in annotate_p, please inspect and retry.")
+            raise ValueError("Some entries are not annotated due to errors in __call_api, please inspect and retry.")
 
         return results
 
@@ -248,7 +248,7 @@ class InferenceProvidersClient(LightevalModel):
     @property
     def max_length(self) -> int:
         """Return the maximum sequence length of the model."""
-        return 4096
+        return self._tokenizer.model_max_length
 
     def loglikelihood(
         self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
