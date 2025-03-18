@@ -43,6 +43,8 @@ class GenerationParameters:
     top_p: Optional[int] = None  # vllm, transformers, tgi, litellm, sglang
     truncate_prompt: Optional[bool] = None  # vllm, tgi
 
+    # response format to be followed by the model,
+    # more info here https://platform.openai.com/docs/api-reference/chat/create#chat-create-response_format
     response_format: Optional[str] = None  # inference_providers
 
     @classmethod
