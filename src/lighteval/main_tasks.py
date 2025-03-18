@@ -75,3 +75,15 @@ def list(custom_tasks: Annotated[Optional[str], Option(help="Path to a file with
 
     registry = Registry(cache_dir=CACHE_DIR, custom_tasks=custom_tasks)
     registry.print_all_tasks()
+
+
+@app.command()
+def create():
+    """
+    Create a new task
+    """
+    with open("custom_yourbench_task.py", "r") as f:
+        content = f.read()
+
+    content = content.replace("HF_DATASET_NAME", "MY_HF_DATASET")
+    print(content)
