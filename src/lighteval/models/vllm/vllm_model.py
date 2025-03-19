@@ -246,11 +246,7 @@ class VLLMModel(LightevalModel):
                 # the case! Because of that we only use batch size of 1
                 stop_tokens = dataset[0].stop_sequence
 
-            max_new_tokens = (
-                dataset[0].generation_size
-                if self._config.generation_parameters.max_new_tokens is None
-                else self._config.generation_parameters.max_new_tokens
-            )
+            max_new_tokens = self._config.generation_parameters.max_new_tokens or dataset[0].generation_size
             returns_logits = dataset[0].use_logits
             num_samples = dataset[0].num_samples
 
