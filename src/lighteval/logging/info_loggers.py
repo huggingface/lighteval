@@ -33,6 +33,7 @@ import xxhash
 
 from lighteval.metrics import MetricCategory
 from lighteval.metrics.stderr import get_stderr_function
+from lighteval.models.abstract_model import ModelInfo
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -134,11 +135,12 @@ class GeneralConfigLogger:
         self.job_id = job_id
         self.config = config
 
-    def log_model_info(self, model_config: dict, model_info) -> None:
+    def log_model_info(self, model_config: dict, model_info: ModelInfo) -> None:
         """
         Logs the model information.
 
         Args:
+            model_config: the model config used to initalize the model.
             model_info (ModelInfo): Model information to be logged.
 
         """
