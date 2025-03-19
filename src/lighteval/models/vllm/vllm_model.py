@@ -129,7 +129,6 @@ class VLLMModel(LightevalModel):
         self.precision = _get_dtype(config.dtype, config=self._config)
 
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
-        # self.sampling_params = #$SamplingParams(**config.generation_parameters.to_vllm_dict())
         self.pairwise_tokenization = config.pairwise_tokenization
 
     @property
@@ -322,7 +321,7 @@ class VLLMModel(LightevalModel):
         if generate:
             sampling_params.n = num_samples
             sampling_params.max_tokens = max_new_tokens
-            # sampling_params.stop = stop_tokens
+            sampling_params.stop = stop_tokens
             sampling_params.logprobs = 1 if returns_logits else 0
 
         else:
