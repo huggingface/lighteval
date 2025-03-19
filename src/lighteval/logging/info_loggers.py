@@ -33,7 +33,6 @@ import xxhash
 
 from lighteval.metrics import MetricCategory
 from lighteval.metrics.stderr import get_stderr_function
-from lighteval.models.abstract_model import ModelInfo
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -90,6 +89,8 @@ class GeneralConfigLogger:
     model_dtype: str = None
     model_size: str = None
 
+    model_config: dict | None = None
+
     # Nanotron config
     config: "Config" = None
 
@@ -133,7 +134,7 @@ class GeneralConfigLogger:
         self.job_id = job_id
         self.config = config
 
-    def log_model_info(self, model_info: ModelInfo) -> None:
+    def log_model_info(self, model_config: dict, model_info) -> None:
         """
         Logs the model information.
 
@@ -141,6 +142,7 @@ class GeneralConfigLogger:
             model_info (ModelInfo): Model information to be logged.
 
         """
+        self.model_config = model_config
         self.model_name = model_info.model_name
         self.model_sha = model_info.model_sha
         self.model_dtype = model_info.model_dtype
