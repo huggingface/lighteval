@@ -191,8 +191,6 @@ class JudgeLM:
         **kwargs,
     ):
         judge_function = self.__lazy_load_client()
-        # kwargs = {k: [e, e, e], k2: [e2, e2, e2]}
-        # [{k: e, k2: e2}, {k: e, k2: e2}, {k: e, k2: e2}]
 
         kwargss = self.dict_of_lists_to_list_of_dicts(kwargs)
         if kwargss is None:
