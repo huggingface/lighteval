@@ -22,6 +22,7 @@
 
 
 import logging
+import re
 
 import numpy as np
 from aenum import extend_enum
@@ -29,7 +30,7 @@ from aenum import extend_enum
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.metrics_sample import JudgeLLM
 from lighteval.metrics.utils.metric_utils import (
-    CorpusLevelMetric,
+    CorpusLevelMetricGrouping,
     MetricCategory,
     MetricUseCase,
 )
@@ -39,7 +40,7 @@ from lighteval.tasks.requests import Doc
 
 logger = logging.getLogger(__name__)
 
-JUDGE_ANSWER_SYSTEM_PROMPT = """You will be provided with the summary of a document, a piece of text, a question generated from that text, and the correct or "gold" answer to the question. Additionally, you will receive two answers: Answer A and Answer B. Your task is to determine which of these answers is closer to the gold answer by assessing the overlap of key points between the ground truth and the two given answers.
+JUDGE_ANSWER_SYSTEM_PROMPT = """You will be provided with the summary of a document, a piece of text, a question generated from that text, and the correct or "gold" answer to the question. Additionally, you will receive a model answer. Your task is to determine wether the model answer is correct using the provided "gold" answer as a reference.
 
 # Steps
 
@@ -55,23 +56,16 @@ JUDGE_ANSWER_SYSTEM_PROMPT = """You will be provided with the summary of a docum
 4. **Ground Truth Answer Understanding**:
    - Understand the provided ground truth answer, identifying its key points.
 
-5. **Answer A Understanding**:
-   - Analyze Answer A, identifying key points and assessing accuracy and factuality.
+6. **Answer Understanding**:
+   - Examine the Model Answer, identifying key points and assessing accuracy and factuality.
 
-6. **Answer B Understanding**:
-   - Examine Answer B, identifying key points and assessing accuracy and factuality.
-
-7. **Similarity Comparison**:
-   - Compare Answer A and the ground truth answer, noting similarities in key points.
-   - Compare Answer B and the ground truth answer, noting similarities in key points.
-
-8. **Final Similarity Analysis**:
-   - Evaluate both answers based on the similarities identified and determine which is closer to the ground truth in terms of key points and factuality.
+8. **Final Answer**:
+   - 0 or 1 (0 if the model answer is incorrect, 1 if it is correct).
 
 # Output Format
 
-- Provide your final evaluation of which answer is closer to the ground truth within `<final_answer>` XML tags.
-- Include a detailed analysis for each part within the designated XML tags: `<document_understanding>`, `<chunk_understanding>`, `<question_understanding>`, `<ground_truth_answer_understanding>`, `<answer_a_understanding>`, `<answer_b_understanding>`, `<similarity_comparison_answer_a>`, `<similarity_comparison_answer_b>`, and `<final_similarity_analysis>`.
+- Provide your final evaluation of whether the answer is correct within `<final_answer>` XML tags.
+- Include a detailed analysis for each part within the designated XML tags: `<document_understanding>`, `<chunk_understanding>`, `<question_understanding>`, `<ground_truth_answer_understanding>`, `<model_answer_understanding>`, and `<final_answer>`.
 
 # Examples
 
@@ -93,13 +87,9 @@ JUDGE_ANSWER_SYSTEM_PROMPT = """You will be provided with the summary of a docum
 [Gold Answer]
 </gold_answer>
 
-<answer_a>
-[Answer A]
-</answer_a>
-
-<answer_b>
-[Answer B]
-</answer_b>
+<model_answer>
+[Model Answer]
+</model_answer>
 ```
 **Output**:
 ```xml
@@ -120,28 +110,12 @@ Comprehension of the question being asked
 Key points from the gold answer
 </ground_truth_answer_understanding>
 
-<answer_a_understanding>
+<model_answer_understanding>
 Key points and accuracy of Answer A
-</answer_a_understanding>
-
-<answer_b_understanding>
-Key points and accuracy of Answer B
-</answer_b_understanding>
-
-<similarity_comparison_answer_a>
-Comparison notes between Answer A and the gold answer
-</similarity_comparison_answer_a>
-
-<similarity_comparison_answer_b>
-Comparison notes between Answer B and the gold answer
-</similarity_comparison_answer_b>
-
-<final_similarity_analysis>
-Overall analysis determining the closer answer
-</final_similarity_analysis>
+</model_answer_understanding>
 
 <final_answer>
-Answer X (where X is the option you pick)
+1 or 0 (1 if the model answer is correct, 0 if it is incorrect)
 </final_answer>
 ```
 
@@ -168,32 +142,34 @@ JUDGE_ANSWER_USER_PROMPT = """<document_summary>
 {oracle_answer}
 </gold_answer>
 
-<answer_a>
-{answer_a}
-</answer_a>
-
-<answer_b>
-{answer_b}
-</answer_b>"""
+<model_answer>
+{model_answer}
+</model_answer>"""
 
 
 def get_judge_prompt(question: str, answer: str, gold: str, **kwargs):
-    chunk = kwargs.get("chunk", "")
-    summary = kwargs.get("summary", "")
+    chunk = kwargs.get("chunks", "")
+    summary = kwargs.get("documents", "")
 
     return [
         {"role": "system", "content": JUDGE_ANSWER_SYSTEM_PROMPT},
         {
             "role": "user",
             "content": JUDGE_ANSWER_USER_PROMPT.format(
-                summary=summary, chunk=chunk, question=question, oracle_answer=gold, answer_a=answer, answer_b=answer
+                summary=summary, chunk=chunk, question=question, oracle_answer=gold, model_answer=answer
             ),
         },
     ]
 
 
 def process_judge_response_yourbench(response):
-    return 1
+    # extract the final answer using regex from the response xml
+    try:
+        answer = re.search(r"<final_answer>(.*?)</final_answer>", response, re.DOTALL).group(1)
+        return int(answer)
+    except Exception as e:
+        logger.error(f"Error processing judge response: {e}")
+    return 0
 
 
 class JudgeLLMYourBench(JudgeLLM):
@@ -212,17 +188,18 @@ class JudgeLLMYourBench(JudgeLLM):
         golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
         predictions = [response[0].result[0] for response in responses]
         options = [None] * len(questions)
+        chunks = [formatted_doc.specific["chunks"][0] for formatted_doc in formatted_docs]
+        documents = [formatted_doc.specific["document"] for formatted_doc in formatted_docs]
 
-        score, _, _ = self.judge.evaluate_answer_batch(questions, predictions, options, golds)
+        score, _, _ = self.judge.evaluate_answer_batch(
+            questions, predictions, options, golds, chunks=chunks, documents=documents
+        )
 
         metrics = []
         for i in range(len(sample_ids)):
-            score[i]["correct_answer"] = golds[i]
             metrics.append(
                 {
                     "accuracy": score[i],
-                    "confidence_half_width": score[i],
-                    "calibration_error": score[i],
                 }
             )
 
@@ -246,39 +223,43 @@ def yourbench_prompt(line, task_name: str = ""):
     return Doc(
         task_name=task_name,
         query=ZEROSHOT_QA_USER_PROMPT.format(question=line["question"]),
-        choices=["EXPECTED ANSWER"],
+        choices=[line["ground_truth_answer"]],
         gold_index=0,
         specific={
-            "chunk": line["chunk"],
-            "summary": line["summary"],
+            "question_category": line["question_category"],
+            "kind": line["kind"],
+            "estimated_difficulty": line["estimated_difficulty"],
+            "document_id": line["document_id"],
+            "question_generating_model": line["question_generating_model"],
+            "chunks": line["chunks"],
             "question": line["question"],
-            "oracle_answer": line["answer"],
+            "document": line["document"],
         },
     )
 
 
-yourbench_metrics = CorpusLevelMetric(
-    metric_name="accuracy",
-    higher_is_better=True,
+yourbench_metrics = CorpusLevelMetricGrouping(
+    metric_name=["accuracy"],
+    higher_is_better={"accuracy": True},
     category=MetricCategory.LLM_AS_JUDGE,
     use_case=MetricUseCase.ACCURACY,
     sample_level_fn=JudgeLLMYourBench().compute,
-    corpus_level_fn=np.mean,
+    corpus_level_fn={"accuracy": np.mean},
 )
 extend_enum(Metrics, "yourbench_metrics", yourbench_metrics)
 
 yourbench = LightevalTaskConfig(
-    name="hle",
-    suite=["lighteval"],
+    name="yourbench",
+    suite=["custom"],
     prompt_function=yourbench_prompt,
     hf_repo=HF_DATASET_NAME,  # noqa: F821
-    hf_subset="default",
-    hf_avail_splits=["test"],
-    evaluation_splits=["test"],
+    hf_subset="lighteval_single_shot_questions",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
     few_shots_split=None,
     few_shots_select=None,
     generation_size=8192,
-    metric=[Metrics.exact_match, Metrics.hle_metrics],
+    metric=[Metrics.yourbench_metrics],
     stop_sequence=[],
     trust_dataset=True,
     version=0,

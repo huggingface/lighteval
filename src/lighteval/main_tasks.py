@@ -78,12 +78,14 @@ def list(custom_tasks: Annotated[Optional[str], Option(help="Path to a file with
 
 
 @app.command()
-def create():
+def create(dataset_name: str):
     """
     Create a new task
     """
     with open("custom_yourbench_task.py", "r") as f:
         content = f.read()
 
-    content = content.replace("HF_DATASET_NAME", "MY_HF_DATASET")
-    print(content)
+    content = content.replace("HF_DATASET_NAME", dataset_name)
+
+    with open(f"custom_{dataset_name.replace('/', '__')}_task.py", "w+") as f:
+        f.write(content)
