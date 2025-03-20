@@ -43,6 +43,10 @@ class GenerationParameters:
     top_p: Optional[int] = None  # vllm, transformers, tgi, litellm, sglang
     truncate_prompt: Optional[bool] = None  # vllm, tgi
 
+    # response format to be followed by the model,
+    # more info here https://platform.openai.com/docs/api-reference/chat/create#chat-create-response_format
+    response_format: Optional[str] = None  # inference_providers
+
     @classmethod
     def from_dict(cls, config_dict: dict):
         """Creates a GenerationParameters object from a config dictionary
@@ -105,6 +109,27 @@ class GenerationParameters:
         }
         return {k: v for k, v in args.items() if v is not None}
 
+    def to_inference_providers_dict(self) -> dict:
+        """Selects relevant generation and sampling parameters for litellm models.
+        Doc: https://docs.litellm.ai/docs/completion/input#input-params-1
+
+        Returns:
+            dict: The parameters to create a litellm.SamplingParams in the model config.
+        """
+        args = {
+            "top_p": self.top_p,
+            "temperature": self.temperature,
+            "stop": self.stop_tokens,
+            "seed": self.seed,
+            "response_format": self.response_format,
+            "presence_penalty": self.presence_penalty,
+            "max_tokens": self.max_new_tokens,
+            "logprobs": None,
+            "logit_bias": None,
+            "frequency_penalty": self.frequency_penalty,
+        }
+        return {k: v for k, v in args.items() if v is not None}
+
     def to_vllm_dict(self) -> dict:
         """Selects relevant generation and sampling parameters for vllm models.
         Doc: https://docs.vllm.ai/en/v0.5.5/dev/sampling_params.html
@@ -120,7 +145,11 @@ class GenerationParameters:
 
         # Task specific sampling params to set in model: n, best_of, use_beam_search
         # Generation specific params to set in model: logprobs, prompt_logprobs
-        return {sampling_params_to_vllm_naming.get(k, k): v for k, v in asdict(self).items() if v is not None}
+        x = {sampling_params_to_vllm_naming.get(k, k): v for k, v in asdict(self).items() if v is not None}
+        # VLLM max_tokens is 16 by default, however the pipeline expect the max_tokens to be None, if the user didn't specify it
+        if not x.get("max_tokens"):
+            x["max_tokens"] = None
+        return x
 
     def to_vllm_openai_dict(self) -> dict:
         """Selects relevant generation and sampling parameters for vllm and openai models.

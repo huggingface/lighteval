@@ -1,0 +1,10 @@
+model:
+  model_name: "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
+  provider: "novita"
+  timeout: null
+  proxies: null
+  parallel_calls_count: 20
+  generation:
+    temperature: 0.8
+    top_k: 10
+    max_new_tokens: 10000

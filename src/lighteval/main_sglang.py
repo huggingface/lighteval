@@ -94,7 +94,7 @@ def sglang(
     ] = 0,
 ):
     """
-    Evaluate models using vllm as backend.
+    Evaluate models using sglang as backend.
     """
     import yaml
 
