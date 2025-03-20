@@ -93,6 +93,8 @@ class VLLMModelConfig:
     )
     pairwise_tokenization: bool = False  # whether to tokenize the context and continuation separately or together.
     generation_parameters: GenerationParameters = None  # sampling parameters to use for generation
+    max_num_seqs: int = 128  # maximum number of sequences per iteration; This variable and `max_num_batched_tokens` effectively control the batch size at prefill stage. See https://github.com/vllm-project/vllm/issues/2492 for detailed explaination.
+    max_num_batched_tokens: int = 2048  # maximum number of tokens per batch
 
     subfolder: Optional[str] = None
 
@@ -181,6 +183,8 @@ class VLLMModel(LightevalModel):
             "max_model_len": self._max_length,
             "swap_space": 4,
             "seed": config.seed,
+            "max_num_seqs": int(config.max_num_seqs),
+            "max_num_batched_tokens": int(config.max_num_batched_tokens),
         }
         if int(config.data_parallel_size) > 1:
             self.model_args["distributed_executor_backend"] = "ray"
