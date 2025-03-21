@@ -41,6 +41,15 @@ if is_peft_available():
 
 @dataclass
 class AdapterModelConfig(TransformersModelConfig):
+    """
+    Manages the configuration of adapter models. Adapter models are designed to extend or adapt a
+    base model's functionality for specific tasks while keeping most of the base model's parameters frozen.
+
+    Attributes:
+        base_model (str): The name of the parent base model.
+            This model provides the tokenizer and configuration for the adapter model.Defaults to None if not specified.
+    """
+
     # Adapter models have the specificity that they look at the base model (= the parent) for the tokenizer and config
     base_model: str = None
 
@@ -54,11 +63,18 @@ class AdapterModelConfig(TransformersModelConfig):
         return super().__post_init__()
 
     def init_configs(self, env_config: EnvConfig):
+        """
+        Initializes the configurations of adapter models.
+        """
         return self._init_configs(self.base_model, env_config)
 
 
 class AdapterModel(TransformersModel):
+    """Integrates the adapter models with a pre-trained base model.
+    They are are lightweight layers added to pre-trained models for optimizing performance with minimal changes."""
+
     def _create_auto_tokenizer(self, config: AdapterModelConfig, env_config: EnvConfig) -> PreTrainedTokenizer:
+        """Creates and configures the adapter model by applying adapter weights to the base model."""
         # By default, we look at the model config for the model stored in `base_model`
         # (= the parent model, not the model of interest)
         return self._create_auto_tokenizer_with_name(

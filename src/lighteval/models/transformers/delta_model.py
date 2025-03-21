@@ -38,6 +38,9 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class DeltaModelConfig(TransformersModelConfig):
+    """This class is used to manage the configuration class for delta models.
+    They capture the difference between a base model's predictions and actual targets to enhance accuracy."""
+
     # Delta models look at the pretrained (= the delta weights) for the tokenizer and model config
     base_model: str = None
 
@@ -59,7 +62,7 @@ class DeltaModel(TransformersModel):
         config: DeltaModelConfig,
         env_config: EnvConfig,
     ) -> AutoModelForCausalLM:
-        """Returns a model created by adding the weights of a delta model to a base model."""
+        """It returns a model created by adding the weights of a delta model to a base model."""
         config.model_parallel, max_memory, device_map = self.init_model_parallel(config.model_parallel)
         torch_dtype = _get_dtype(config.dtype, self._config)
 
