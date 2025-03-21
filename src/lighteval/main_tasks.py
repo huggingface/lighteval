@@ -96,4 +96,4 @@ def create(template: str, task_name: str, dataset_name: str):
     with open(f"custom_{task_name}_task.py", "w+") as f:
         f.write(content)
 
-    logger.info(f"Task created in custom_{dataset_name.replace('/', '__')}_task.py")
+    logger.info(f"Task created in custom_{task_name}_task.py")
