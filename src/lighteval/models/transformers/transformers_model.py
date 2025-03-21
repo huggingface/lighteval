@@ -112,7 +112,7 @@ class TransformersModelConfig:
         add_special_tokens (bool, optional, defaults to True): Whether to add special tokens to the input sequences.
            If `None`, the default value will be set to `True` for seq2seq models (e.g. T5) and
             `False` for causal models.
-        model_parallel (bool, optional, defaults to False):
+        model_parallel (bool, optional, defaults to None):
             True/False: force to use or not the `accelerate` library to load a large
             model across multiple devices.
             Default: None which corresponds to comparing the number of processes with
