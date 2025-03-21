@@ -38,7 +38,7 @@ jobs:
         HF_HOME: "cache/models"
         HF_DATASETS_CACHE: "cache/datasets"
        run: | # PYTHONPATH="${PYTHONPATH}:src" HF_DATASETS_CACHE="cache/datasets" HF_HOME="cache/models"
-        python -m pytest --disable-pytest-warnings
+        python -m pytest -x --disable-pytest-warnings
      - name: Write cache
        uses: actions/cache@v4
        with:
