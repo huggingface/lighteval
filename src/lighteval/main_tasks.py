@@ -19,6 +19,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import logging
 import os
 from typing import Optional
 
@@ -75,3 +76,24 @@ def list(custom_tasks: Annotated[Optional[str], Option(help="Path to a file with
 
     registry = Registry(cache_dir=CACHE_DIR, custom_tasks=custom_tasks)
     registry.print_all_tasks()
+
+
+@app.command()
+def create(template: str, task_name: str, dataset_name: str):
+    """
+    Create a new task
+    """
+    logger = logging.getLogger(__name__)
+
+    logger.info(f"Creating task for dataset {dataset_name}")
+
+    with open(template, "r") as f:
+        content = f.read()
+
+    content = content.replace("HF_TASK_NAME", task_name)
+    content = content.replace("HF_DATASET_NAME", dataset_name)
+
+    with open(f"custom_{task_name}_task.py", "w+") as f:
+        f.write(content)
+
+    logger.info(f"Task created in custom_{task_name}_task.py")
