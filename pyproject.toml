@@ -30,15 +30,15 @@ where = ["src"]
 
 [project]
 name = "lighteval"
-version = "0.6.0.dev0"
+version = "0.9.0"
 authors = [
-  { name="Clémentine Fourrier", email="clementine@huggingface.com" },
   { name="Nathan Habib", email="nathan.habib@huggingface.com" },
+  { name="Clémentine Fourrier", email="clementine@huggingface.com" },
   { name="Thomas Wolf", email="thom@huggingface.com" },
 ]
 maintainers = [
-  { name="Clémentine Fourrier", email="clementine@huggingface.com" },
   { name="Nathan Habib", email="nathan.habib@huggingface.com" },
+  { name="Clémentine Fourrier", email="clementine@huggingface.com" },
 ]
 description = "A lightweight and configurable evaluation package"
 readme = "README.md"
