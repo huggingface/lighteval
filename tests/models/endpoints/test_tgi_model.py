@@ -52,6 +52,7 @@ class TestTGIModelConfig:
                         "top_k": None,
                         "top_p": None,
                         "truncate_prompt": None,
+                        "response_format": None,
                     },
                 },
             ),
