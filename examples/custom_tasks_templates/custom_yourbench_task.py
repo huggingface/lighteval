@@ -59,7 +59,7 @@ JUDGE_ANSWER_SYSTEM_PROMPT = """You will be provided with the summary of a docum
 6. **Answer Understanding**:
    - Examine the Model Answer, identifying key points and assessing accuracy and factuality.
 
-8. **Final Answer**:
+7. **Final Answer**:
    - 0 or 1 (0 if the model answer is incorrect, 1 if it is correct).
 
 # Output Format
@@ -249,7 +249,7 @@ yourbench_metrics = CorpusLevelMetricGrouping(
 extend_enum(Metrics, "yourbench_metrics", yourbench_metrics)
 
 yourbench = LightevalTaskConfig(
-    name="yourbench",
+    name=HF_TASK_NAME,  # noqa: F821
     suite=["custom"],
     prompt_function=yourbench_prompt,
     hf_repo=HF_DATASET_NAME,  # noqa: F821
