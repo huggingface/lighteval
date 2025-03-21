@@ -154,7 +154,7 @@ class LiteLLMClient(LightevalModel):
                 # Prepare kwargs for completion call
                 kwargs = {
                     "model": self.model,
-                    "messages": prompt,
+                    "messages": [{"role": "user", "content": prompt}],
                     "logprobs": return_logits if self.provider == "openai" else None,
                     "base_url": self.base_url,
                     "n": num_samples,
