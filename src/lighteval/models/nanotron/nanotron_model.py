@@ -344,7 +344,9 @@ class NanotronLightevalModel(LightevalModel):
 
     def _model_call(self, inputs: torch.Tensor) -> torch.Tensor:
         position_ids = (
-            torch.arange(inputs.shape[1], device=inputs.device, dtype=torch.int32)
+            torch.arange(
+                inputs.shape[1], device=inputs.device, dtype=torch.int32
+            )
             .unsqueeze(0)
             .repeat(inputs.shape[0], 1)
         )
@@ -716,12 +718,7 @@ class NanotronLightevalModel(LightevalModel):
                     inputs, padding_length=max_context, max_context=max_context, full_attention_masks=True
                 )
                 # batched_inputs, batch_attention, input_lengths, truncated, padded
-
-                position_ids = (
-                    torch.arange(batch_model.input_ids.shape[1], device=self.device, dtype=torch.int32)
-                    .unsqueeze(0)
-                    .repeat(batch_model.input_ids.shape[0], 1)
-                )
+                position_ids = torch.arange(batch_model.input_ids.shape[1], device=self.device, dtype=torch.int32).unsqueeze(0).repeat(batch_model.input_ids.shape[0], 1)
                 out = self.model(input_ids=batch_model.input_ids, position_ids=position_ids)
 
                 if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
@@ -954,11 +951,7 @@ class NanotronLightevalModel(LightevalModel):
                 )
                 # batched_inputs, batch_attention, input_lengths, truncated, padded
                 with torch.no_grad():
-                    position_ids = (
-                        torch.arange(batch_model.input_ids.shape[1], device=self.device, dtype=torch.int32)
-                        .unsqueeze(0)
-                        .repeat(batch_model.input_ids.shape[0], 1)
-                    )
+                    position_ids = torch.arange(batch_model.input_ids.shape[1], device=self.device, dtype=torch.int32).unsqueeze(0).repeat(batch_model.input_ids.shape[0], 1)
                     out = self.model(input_ids=batch_model.input_ids, position_ids=position_ids)
 
                 if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
