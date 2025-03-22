@@ -3,10 +3,10 @@ model:
     model_args: "pretrained=HuggingFaceTB/SmolLM-1.7B,revision=main" # pretrained=model_name,trust_remote_code=boolean,revision=revision_to_use,model_parallel=True ...
     dtype: "bfloat16"
     compile: true
+    multichoice_continuations_start_space: null # If true/false, will force multiple choice continuations to start/not start with a space. If none, will do nothing
   merged_weights: # Ignore this section if you are not using PEFT models
     delta_weights: false # set to True of your model should be merged with a base model, also need to provide the base model name
     adapter_weights: false # set to True of your model has been trained with peft, also need to provide the base model name
     base_model: null # path to the base_model
   generation:
-    multichoice_continuations_start_space: null # If true/false, will force multiple choice continuations to start/not start with a space. If none, will do nothing
     temperature: 0.5
