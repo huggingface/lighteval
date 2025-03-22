@@ -42,17 +42,17 @@ def nanotron(
     checkpoint_config_path: Annotated[
         str, Option(help="Path to the nanotron checkpoint YAML or python config file, potentially on s3.")
     ],
-    lighteval_config_path: Annotated[str, Option(help="Path to a YAML config to be used for the evaluation.")],
+    lighteval_config_path: Annotated[str, Option(help="Path to a YAML config to be used for the evaluation.")] = None,
     cache_dir: Annotated[str, Option(help="Cache directory for datasets and models.")] = CACHE_DIR,
 ):
     """
     Evaluate models using nanotron as backend.
     """
     from nanotron.config import Config, get_config_from_file
+    from nanotron.config.parallelism_config import ParallelismArgs
 
-    from lighteval.config.lighteval_config import FullNanotronConfig, LightEvalConfig
+    from lighteval.config.lighteval_config import FullNanotronConfig, LightEvalConfig, LightEvalLoggingArgs, LightEvalTasksArgs
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.logging.hierarchical_logger import htrack_block
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
     from lighteval.utils.imports import NO_NANOTRON_ERROR_MSG, is_nanotron_available
     from lighteval.utils.utils import EnvConfig
@@ -61,23 +61,38 @@ def nanotron(
 
     if not is_nanotron_available():
         raise ImportError(NO_NANOTRON_ERROR_MSG)
+    
+    # Create nanotron config
+    if not checkpoint_config_path.endswith(".yaml"):
+        raise ValueError("The checkpoint path should point to a YAML file")
 
-    with htrack_block("Load nanotron config"):
-        # Create nanotron config
-        if not checkpoint_config_path.endswith(".yaml"):
-            raise ValueError("The checkpoint path should point to a YAML file")
+    model_config = get_config_from_file(
+        checkpoint_config_path,
+        config_class=Config,
+        model_config_class=None,
+        skip_unused_config_keys=True,
+        skip_null_keys=True,
+    )
 
-        model_config = get_config_from_file(
-            checkpoint_config_path,
-            config_class=Config,
-            model_config_class=None,
-            skip_unused_config_keys=True,
-            skip_null_keys=True,
-        )
-
-        # We are getting an type error, because the get_config_from_file is not correctly typed,
+    # Create or use default lighteval config
+    if lighteval_config_path is not None:
         lighteval_config: LightEvalConfig = get_config_from_file(lighteval_config_path, config_class=LightEvalConfig)  # type: ignore
-        nanotron_config = FullNanotronConfig(lighteval_config, model_config)
+    else:
+        # Create default config with minimal required parameters
+        default_logging = LightEvalLoggingArgs(
+            output_dir="./eval_results"
+        )
+        default_tasks = LightEvalTasksArgs(
+            tasks="lighteval|agieval:aqua-rat|5|0"
+        )
+        default_parallelism = ParallelismArgs(dp=1, pp=1, tp=1)
+        lighteval_config = LightEvalConfig(
+            logging=default_logging,
+            tasks=default_tasks,
+            parallelism=default_parallelism
+        )
+    
+    nanotron_config = FullNanotronConfig(lighteval_config, model_config)
 
     evaluation_tracker = EvaluationTracker(
         output_dir=lighteval_config.logging.output_dir,

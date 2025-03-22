@@ -72,7 +72,7 @@ if is_nanotron_available():
     from nanotron.parallel.context import ParallelContext
     from nanotron.utils import local_ranks_zero_first
 
-    from lighteval.models.nanotron_model import NanotronLightevalModel
+    # from lighteval.models.nanotron import NanotronLightevalModel
 
 
 import logging
@@ -188,16 +188,19 @@ class Pipeline:
         logger.info("--- LOADING MODEL ---")
         if model_config is not None:
             if self.parallel_context:
+                from lighteval.models.nanotron_model import NanotronLightevalModel
+                
                 return NanotronLightevalModel(
                     checkpoint_path=os.path.dirname(self.pipeline_parameters.nanotron_checkpoint_path)
                     if self.pipeline_parameters.nanotron_checkpoint_path
                     else "",
-                    nanotron_config=self.model_config,
+                    nanotron_config=model_config,
                     parallel_context=self.parallel_context,
                     debug_one_layer_model=False,
                     model_class=None,
                     env_config=self.pipeline_parameters.env_config,
                 )
+                # return None
             else:
                 return load_model(config=model_config, env_config=self.pipeline_parameters.env_config)
         if isinstance(model, TransformersModel):
