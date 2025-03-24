@@ -22,7 +22,6 @@
 
 import logging
 import os
-import warnings
 from typing import Optional, Tuple, Union
 
 import torch
@@ -154,7 +153,7 @@ class TransformersModelConfig(BaseModel):
     use_chat_template: bool = False
     compile: bool = False
 
-    generation_parameters: GenerationParameters | None = None
+    generation_parameters: GenerationParameters = GenerationParameters()
     multichoice_continuations_start_space: bool | None = None
     pairwise_tokenization: bool = False
 
@@ -173,9 +172,6 @@ class TransformersModelConfig(BaseModel):
 
         if self.quantization_config is not None and not is_bnb_available():
             raise ImportError(NO_BNB_ERROR_MSG)
-
-        if not self.generation_parameters:
-            self.generation_parameters = GenerationParameters()
 
     def get_transformers_config(self) -> PretrainedConfig:
         revision = self.revision
@@ -1348,16 +1344,6 @@ class TransformersModel(LightevalModel):
                 del batch_padded
 
         return dataset.get_original_order(res)
-
-
-class BaseModel(TransformersModel):
-    def __post_init__(self):
-        super().__post_init__()
-
-        warnings.warn(
-            "Careful, the BaseModel name is deprecated and will be removed, you should use TransformersModel instead!",
-            FutureWarning,
-        )
 
 
 class MultiTokenEOSCriteria(transformers.StoppingCriteria):

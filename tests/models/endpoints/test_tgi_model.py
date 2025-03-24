@@ -20,11 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from dataclasses import asdict
 
 import pytest
+import yaml
 
 from lighteval.models.endpoints.tgi_model import TGIModelConfig
+from lighteval.models.model_input import GenerationParameters
 
 
 class TestTGIModelConfig:
@@ -59,5 +60,9 @@ class TestTGIModelConfig:
         ],
     )
     def test_from_path(self, config_path, expected_config):
-        config = TGIModelConfig.from_path(config_path)
-        assert asdict(config) == expected_config
+        with open(config_path, "r") as f:
+            config = yaml.safe_load(f)
+
+        generation_parameters = GenerationParameters(**config.get("generation", {}))
+        config = TGIModelConfig(**config["model"], generation_parameters=generation_parameters)
+        assert config.dict() == expected_config

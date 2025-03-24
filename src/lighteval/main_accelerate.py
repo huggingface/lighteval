@@ -21,7 +21,6 @@
 # SOFTWARE.
 
 import logging
-import os
 from typing import Optional
 
 from typer import Argument, Option
@@ -29,9 +28,6 @@ from typing_extensions import Annotated
 
 
 logger = logging.getLogger(__name__)
-
-TOKEN = os.getenv("HF_TOKEN")
-CACHE_DIR: str = os.getenv("HF_HOME")
 
 HELP_PANEL_NAME_1 = "Common Parameters"
 HELP_PANEL_NAME_2 = "Logging Parameters"
@@ -108,6 +104,7 @@ def accelerate(  # noqa C901
     from lighteval.models.transformers.delta_model import DeltaModelConfig
     from lighteval.models.transformers.transformers_model import TransformersModelConfig
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
+    from lighteval.utils.utils import parse_args
 
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
@@ -135,16 +132,14 @@ def accelerate(  # noqa C901
             config = yaml.safe_load(f)
     else:
         # We extract the model args
-        config: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
+        config = parse_args(model_args)
 
     config["use_chat_template"] = use_chat_template
     generation_parameters = GenerationParameters(**config.get("generation", {}))
 
     if config["model"].get("delta_weights", False):
-        logger.warning("Delta models are deprecated and will be removed in a future version.")
         model_config = DeltaModelConfig(**config["model"], generation_parameters=generation_parameters)
     elif config["model"].get("adapter_weights", False):
-        logger.warning("Adapter models are deprecated and will be removed in a future version.")
         model_config = AdapterModelConfig(**config["model"], generation_parameters=generation_parameters)
     else:
         model_config = TransformersModelConfig(**config["model"], generation_parameters=generation_parameters)
