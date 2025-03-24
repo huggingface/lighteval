@@ -37,7 +37,7 @@ from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
 )
-from lighteval.models.utils import _get_dtype, _simplify_name
+from lighteval.models.utils import _simplify_name
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -78,7 +78,7 @@ class VLLMModelConfig:
     pretrained: str
     gpu_memory_utilization: float = 0.9  # lower this if you are running out of memory
     revision: str = "main"  # revision of the model
-    dtype: str | None = None
+    dtype: str = "bfloat16"
     tensor_parallel_size: int = 1  # how many GPUs to use for tensor parallelism
     pipeline_parallel_size: int = 1  # how many GPUs to use for pipeline parallelism
     data_parallel_size: int = 1  # how many GPUs to use for data parallelism
@@ -126,7 +126,7 @@ class VLLMModel(LightevalModel):
 
         self.model_name = _simplify_name(config.pretrained)
         self.model_sha = ""  # config.get_model_sha()
-        self.precision = _get_dtype(config.dtype, config=self._config)
+        self.precision = config.dtype
 
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
         self.pairwise_tokenization = config.pairwise_tokenization
