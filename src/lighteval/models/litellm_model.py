@@ -65,11 +65,7 @@ class LiteLLMModelConfig(BaseModel):
     provider: str | None = None
     base_url: str | None = None
     api_key: str | None = None
-    generation_parameters: GenerationParameters | None = None
-
-    def __post_init__(self):
-        if self.generation_parameters is None:
-            self.generation_parameters = GenerationParameters()
+    generation_parameters: GenerationParameters = GenerationParameters()
 
 
 class LiteLLMClient(LightevalModel):

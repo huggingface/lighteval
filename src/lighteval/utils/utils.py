@@ -22,6 +22,40 @@ from pytablewriter import MarkdownTableWriter
 
 
 def parse_args(args: str) -> dict:
+    """Parse a string of arguments into a configuration dictionary.
+
+    This function parses a string containing model arguments and generation parameters
+    into a structured dictionary with two main sections: 'model' and 'generation'.
+    It specifically handles generation parameters enclosed in curly braces.
+
+    Args:
+        args (str): A string containing comma-separated key-value pairs, where generation
+            parameters can be specified in a nested JSON-like format.
+
+    Returns:
+        dict: A dictionary with two keys:
+            - 'model': Contains general model configuration parameters
+            - 'generation': Contains generation-specific parameters
+
+    Examples:
+        >>> parse_args("model_name=gpt2,max_length=100")
+        {
+            'model': {'model_name': 'gpt2', 'max_length': '100'},
+            'generation': {}
+        }
+
+        >>> parse_args("model_name=gpt2,generation_parameters={temperature:0.7,top_p:0.9}")
+        {
+            'model': {'model_name': 'gpt2'},
+            'generation': {'temperature': 0.7, 'top_p': 0.9}
+        }
+
+        >>> parse_args("model_name=gpt2,use_cache,generation_parameters={temperature:0.7}")
+        {
+            'model': {'model_name': 'gpt2', 'use_cache': True},
+            'generation': {'temperature': 0.7}
+        }
+    """
     config = {}
 
     # Looking for generation_parameters in the model_args

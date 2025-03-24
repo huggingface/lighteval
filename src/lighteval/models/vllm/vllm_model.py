@@ -73,7 +73,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 STARTING_BATCH_SIZE = 512
 
 
-class VLLMModelConfig(BaseModel):
+class VLLMModelConfig(BaseModel, extra="forbid"):
     pretrained: str
     gpu_memory_utilization: NonNegativeFloat = 0.9  # lower this if you are running out of memory
     revision: str = "main"  # revision of the model
@@ -91,12 +91,8 @@ class VLLMModelConfig(BaseModel):
         True  # whether to add a space at the start of each continuation in multichoice generation
     )
     pairwise_tokenization: bool = False  # whether to tokenize the context and continuation separately or together.
-    generation_parameters: GenerationParameters | None = None  # sampling parameters to use for generation
+    generation_parameters: GenerationParameters = GenerationParameters()
     subfolder: str | None = None
-
-    def __post_init__(self):
-        if self.generation_parameters is None:
-            self.generation_parameters = GenerationParameters()
 
 
 class VLLMModel(LightevalModel):
