@@ -147,3 +147,10 @@ def requires_latex2sympy2_extended(func):
 
 
 NO_LATEX2SYMPY2_EXTENDED_ERROR_MSG = "You are trying to parse latex expressions, for which you need `latex2sympy2_extended`, which is not available in your environment. Please install it using `pip install lighteval[math]`."
+
+
+def is_spacy_available() -> bool:
+    return importlib.util.find_spec("spacy") is not None
+
+
+NO_SPACY_ERROR_MSG = "You are trying to use some metrics requiring `spacy`, which is not available in your environment. Please install it using pip."
