@@ -142,19 +142,64 @@ class JudgeLM:
             case _:
                 return lambda x: x
 
+    def dict_of_lists_to_list_of_dicts(self, dict_of_lists):
+        """
+        Transform a dictionary of lists into a list of dictionaries.
+
+        Each dictionary in the output list will contain one element from each list in the input dictionary,
+        with the same keys as the input dictionary.
+
+        Args:
+            dict_of_lists: A dictionary where each value is a list.
+                           All lists are expected to have the same length.
+
+        Returns:
+            A list of dictionaries.
+
+        Example:
+            >>> dict_of_lists_to_list_of_dicts({'k': [1, 2, 3], 'k2': ['a', 'b', 'c']})
+            [{'k': 1, 'k2': 'a'}, {'k': 2, 'k2': 'b'}, {'k': 3, 'k2': 'c'}]
+        """
+        # Check if input is empty
+        if not dict_of_lists:
+            return None
+
+        # Get all list lengths to ensure they match
+        list_lengths = [len(values) for values in dict_of_lists.values()]
+
+        # Ensure all lists have the same length
+        if len(set(list_lengths)) > 1:
+            raise ValueError("All lists in the input dictionary must have the same length")
+
+        # Get the length of the lists
+        n = list_lengths[0] if list_lengths else 0
+
+        # Create list of dictionaries
+        result = []
+        for i in range(n):
+            new_dict = {key: values[i] for key, values in dict_of_lists.items()}
+            result.append(new_dict)
+
+        return result
+
     def evaluate_answer_batch(
         self,
         questions: list[str],
         answers: list[str],
         options: list[list[str]] | list[None],
         golds: list[str] | list[None],
+        **kwargs,
     ):
         judge_function = self.__lazy_load_client()
 
+        kwargss = self.dict_of_lists_to_list_of_dicts(kwargs)
+        if kwargss is None:
+            kwargss = [{} for _ in range(len(questions))]
+
         # enumerate over questions answers options and golds to make the
         prompts = [
-            self.template(question=q, answer=a, options=o, gold=g)
-            for q, a, o, g in zip(questions, answers, options, golds)
+            self.template(question=q, answer=a, options=o, gold=g, **k)
+            for q, a, o, g, k in zip(questions, answers, options, golds, kwargss)
         ]
         responses = judge_function(prompts)
         scores = [self.process_judge_response(response) for response in responses]
@@ -204,14 +249,18 @@ class JudgeLM:
             error_message = "ERROR: Failed to get response from the API."
             for _ in range(self.API_MAX_RETRY):
                 try:
+                    max_new_tokens = 512
+                    if "o1" in self.model or "o3" in self.model or "R1" in self.model:
+                        max_new_tokens = min(max_new_tokens * 10, 32000)
+
                     kwargs = {
                         "model": self.model,
                         "messages": prompt,
-                        "response_format": {"type": "text"},
-                        "max_tokens": 512,
+                        "max_tokens": max_new_tokens,
                         "n": 1,
                         "caching": True,
                     }
+
                     response = litellm.completion(**kwargs)
                     text = response.choices[0].message.content
                     if not text or text == error_message:

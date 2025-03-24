@@ -30,7 +30,7 @@ where = ["src"]
 
 [project]
 name = "lighteval"
-version = "0.6.0.dev0"
+version = "0.8.1.dev0"
 authors = [
   { name="Clémentine Fourrier", email="clementine@huggingface.com" },
   { name="Nathan Habib", email="nathan.habib@huggingface.com" },
@@ -72,7 +72,6 @@ dependencies = [
     # Base metrics
     "nltk==3.9.1",
     "scikit-learn",
-    "spacy==3.7.2",
     "sacrebleu",
     "rouge_score==0.1.2",
     "sentencepiece>=0.1.99",
@@ -83,7 +82,7 @@ dependencies = [
 
 [project.optional-dependencies]
 litellm = ["litellm", "diskcache"]
-tgi = ["text-generation==0.6.0"]
+tgi = ["text-generation>=0.6.0"]
 optimum = ["optimum==1.12.0"]
 quantization = ["bitsandbytes>=0.41.0", "auto-gptq>=0.4.2"]
 adapters = ["peft==0.3.0"]

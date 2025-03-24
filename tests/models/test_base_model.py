@@ -26,7 +26,9 @@ from lighteval.utils.utils import EnvConfig
 
 
 def test_empty_requests():
-    model_config = TransformersModelConfig("hf-internal-testing/tiny-random-LlamaForCausalLM")
+    model_config = TransformersModelConfig(
+        "hf-internal-testing/tiny-random-LlamaForCausalLM", model_parallel=False, revision="main"
+    )
     model: TransformersModel = load_model(config=model_config, env_config=EnvConfig(cache_dir="."))
 
     assert model.loglikelihood([]) == []
