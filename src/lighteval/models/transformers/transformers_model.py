@@ -86,7 +86,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 STARTING_BATCH_SIZE = 512
 
 
-class TransformersModelConfig(BaseModel):
+class TransformersModelConfig(BaseModel, extra="forbid"):
     """
     Base configuration class for models.
 
