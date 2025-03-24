@@ -107,7 +107,8 @@ class OpenAIClient(LightevalModel):
         try:
             self._tokenizer = tiktoken.encoding_for_model(self.model)
         except KeyError:
-            self._tokenizer = AutoTokenizer.from_pretrained(self.model)
+            tokenizer_path = os.environ.get("TOKENIZER_PATH", self.model)
+            self._tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
         self.pairwise_tokenization = False
 
     def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, logit_bias):
