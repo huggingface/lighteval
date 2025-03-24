@@ -43,6 +43,10 @@ class GenerationParameters:
     top_p: Optional[int] = None  # vllm, transformers, tgi, litellm, sglang
     truncate_prompt: Optional[bool] = None  # vllm, tgi
 
+    # response format to be followed by the model,
+    # more info here https://platform.openai.com/docs/api-reference/chat/create#chat-create-response_format
+    response_format: Optional[str] = None  # inference_providers
+
     @classmethod
     def from_dict(cls, config_dict: dict):
         """Creates a GenerationParameters object from a config dictionary
@@ -101,6 +105,27 @@ class GenerationParameters:
             "top_p": self.top_p,
             "seed": self.seed,
             "repetition_penalty": self.repetition_penalty,
+            "frequency_penalty": self.frequency_penalty,
+        }
+        return {k: v for k, v in args.items() if v is not None}
+
+    def to_inference_providers_dict(self) -> dict:
+        """Selects relevant generation and sampling parameters for litellm models.
+        Doc: https://docs.litellm.ai/docs/completion/input#input-params-1
+
+        Returns:
+            dict: The parameters to create a litellm.SamplingParams in the model config.
+        """
+        args = {
+            "top_p": self.top_p,
+            "temperature": self.temperature,
+            "stop": self.stop_tokens,
+            "seed": self.seed,
+            "response_format": self.response_format,
+            "presence_penalty": self.presence_penalty,
+            "max_tokens": self.max_new_tokens,
+            "logprobs": None,
+            "logit_bias": None,
             "frequency_penalty": self.frequency_penalty,
         }
         return {k: v for k, v in args.items() if v is not None}
