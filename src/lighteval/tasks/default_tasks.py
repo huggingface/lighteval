@@ -312,6 +312,34 @@ agieval_sat_math_lighteval = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
+aime24 = LightevalTaskConfig(
+    name="aime24",
+    suite=["lighteval"],
+    prompt_function=prompt.aime_prompt_fn,
+    hf_repo="HuggingFaceH4/aime_2024",
+    hf_subset="default",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=32768,
+    metric=[Metrics.expr_gold_metric],
+    version=1,
+)
+aime25 = LightevalTaskConfig(
+    name="aime25",
+    suite=["lighteval"],
+    prompt_function=prompt.aime_prompt_fn,
+    hf_repo="yentinglin/aime_2025",
+    hf_subset="default",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=10000,
+    metric=[Metrics.expr_gold_metric],
+    version=1,
+)
 anachronisms_bigbench = LightevalTaskConfig(
     name="anachronisms",
     suite=["bigbench", "bigbench_json"],
@@ -9596,6 +9624,20 @@ lsat_qa_ordering_helm = LightevalTaskConfig(
     stop_sequence=["\n"],
     trust_dataset=True,
     version=0,
+)
+math_500 = LightevalTaskConfig(
+    name="math_500",
+    suite=["lighteval"],
+    prompt_function=prompt.math_500,
+    hf_repo="HuggingFaceH4/MATH-500",
+    hf_subset="default",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=32768,
+    metric=[Metrics.latex_gold_metric],
+    version=1,
 )
 math_algebra_lighteval = LightevalTaskConfig(
     name="math:algebra",
