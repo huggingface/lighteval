@@ -123,7 +123,7 @@ def vllm(
         job_id=job_id,
         dataset_loading_processes=dataset_loading_processes,
         custom_tasks_directory=custom_tasks,
-        override_batch_size=-1,  # Cannot override batch size when using VLLM
+        override_batch_size=-1,  # Cannot override batch size when using vLLM; Configure `max_num_seqs` and `max_num_batched_tokens` in `VLLMModelConfig` instead.
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         use_chat_template=use_chat_template,
