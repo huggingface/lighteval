@@ -90,6 +90,37 @@ def apps(line, task_name: str = None):
     )
 
 
+def arc_agi_2(line, task_name: str = None):
+    query = """You are participating in a puzzle solving competition. You are an expert at solving puzzles.
+
+Below is a list of input and output pairs with a pattern. Your goal is to identify the pattern or transformation in the training examples that maps the input to the output, then apply that pattern to the test input to give a final output.
+
+Respond in the format of the training output examples
+
+--Training Examples--
+{training_examples}
+--End of Training Examples--
+
+--Test Input--
+{test_input}
+--End of Test Input--
+
+Your response:""".strip()
+
+    training_examples = line["fewshots"]
+    test_input = line["question"][0]["input"]
+
+    gold = str(line["question"][0]["output"])
+    query = query.format(training_examples=training_examples, test_input=test_input)
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=[gold],
+        gold_index=0,
+    )
+
+
 def arc(line, task_name: str = None):
     return Doc(
         task_name=task_name,

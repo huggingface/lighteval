@@ -436,6 +436,22 @@ anli_r3_lighteval = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
+arc_agi_2 = LightevalTaskConfig(
+    name="arc_agi_2",
+    suite=["lighteval"],
+    prompt_function=prompt.arc_agi_2,
+    hf_repo="arc-agi-community/arc-agi-2",
+    hf_subset="default",
+    hf_avail_splits=["train", "test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=2048,
+    metric=[Metrics.exact_match],
+    stop_sequence=None,
+    trust_dataset=False,
+    version=0,
+)
 arc_c_letters_original = LightevalTaskConfig(
     name="arc:c:letters",
     suite=["original", "arc"],
