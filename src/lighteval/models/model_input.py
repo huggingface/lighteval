@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from dataclasses import asdict
 
 from pydantic import BaseModel, NonNegativeFloat, NonNegativeInt
 
@@ -145,7 +144,7 @@ class GenerationParameters(BaseModel):
 
         # Task specific sampling params to set in model: n, best_of, use_beam_search
         # Generation specific params to set in model: logprobs, prompt_logprobs
-        x = {sampling_params_to_vllm_naming.get(k, k): v for k, v in asdict(self).items() if v is not None}
+        x = {sampling_params_to_vllm_naming.get(k, k): v for k, v in self.model_dump().items() if v is not None}
         # VLLM max_tokens is 16 by default, however the pipeline expect the max_tokens to be None, if the user didn't specify it
         if not x.get("max_tokens"):
             x["max_tokens"] = None
@@ -160,7 +159,7 @@ class GenerationParameters(BaseModel):
         """
         # Task specific sampling params to set in model: n, best_of, use_beam_search
         # Generation specific params to set in model: logprobs, prompt_logprobs
-        return {k: v for k, v in asdict(self).items() if v is not None}
+        return {k: v for k, v in self.model_dump().items() if v is not None}
 
     def to_transformers_dict(self) -> dict:
         """Selects relevant generation and sampling parameters for transformers models.

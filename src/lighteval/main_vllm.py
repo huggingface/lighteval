@@ -92,10 +92,8 @@ def vllm(
     import yaml
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.models.model_input import GenerationParameters
     from lighteval.models.vllm.vllm_model import VLLMModelConfig
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
-    from lighteval.utils.utils import parse_args
 
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
@@ -120,13 +118,12 @@ def vllm(
 
     if model_args.endswith(".yaml"):
         with open(model_args, "r") as f:
-            config = yaml.safe_load(f)
-    else:
-        config = parse_args(model_args)
+            metric_options = yaml.safe_load(f).get("metric_options", {})
 
-    metric_options = config.get("metric_options", {})
-    generation_parameters = GenerationParameters(**config.get("generation", {}))
-    model_config = VLLMModelConfig(**config["model"], generation_parameters=generation_parameters)
+        model_config = VLLMModelConfig.from_path(model_args)
+    else:
+        metric_options = {}
+        model_config = VLLMModelConfig.from_args(model_args)
 
     pipeline = Pipeline(
         tasks=tasks,

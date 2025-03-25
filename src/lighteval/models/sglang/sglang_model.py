@@ -25,17 +25,16 @@ import logging
 from typing import Optional
 
 import torch
-from pydantic import BaseModel, PositiveFloat, PositiveInt
+from pydantic import PositiveFloat, PositiveInt
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
 )
-from lighteval.models.utils import _get_dtype, _simplify_name
+from lighteval.models.utils import ModelConfig, _simplify_name
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -57,8 +56,8 @@ else:
     get_tokenizer = None
 
 
-class SGLangModelConfig(BaseModel, extra="forbid"):
-    pretrained: str
+class SGLangModelConfig(ModelConfig):
+    model_name: str
     load_format: str = "auto"
     dtype: str = "auto"
     tp_size: PositiveInt = 1  # how many GPUs to use for tensor parallelism
@@ -76,7 +75,6 @@ class SGLangModelConfig(BaseModel, extra="forbid"):
     attention_backend: str | None = None
     mem_fraction_static: PositiveFloat = 0.8
     chunked_prefill_size: PositiveInt = 4096
-    generation_parameters: GenerationParameters = GenerationParameters()
 
 
 class SGLangModel(LightevalModel):
@@ -93,9 +91,9 @@ class SGLangModel(LightevalModel):
         self._tokenizer = self._create_auto_tokenizer(config)
         self._max_length = config.context_length if config.context_length is not None else None
         self.model = self._create_auto_model(config)
-        self.model_name = _simplify_name(config.pretrained)
+        self.model_name = _simplify_name(config.model_name)
         self.model_sha = ""  # config.get_model_sha()
-        self.precision = _get_dtype(config.dtype, config=self._config)
+        self.precision = config.dtype
         self.sampling_params = config.generation_parameters.to_sglang_dict()
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
         self.sampling_backend = config.sampling_backend
@@ -124,7 +122,7 @@ class SGLangModel(LightevalModel):
 
     def _create_auto_model(self, config: SGLangModelConfig) -> Optional[Engine]:
         self.model_args = {
-            "model_path": config.pretrained,
+            "model_path": config.model_name,
             "trust_remote_code": config.trust_remote_code,
             "dtype": config.dtype,
             "device": "cuda",
@@ -149,7 +147,7 @@ class SGLangModel(LightevalModel):
 
     def _create_auto_tokenizer(self, config: SGLangModelConfig):
         tokenizer = get_tokenizer(
-            config.pretrained,
+            config.model_name,
             tokenizer_mode="auto",
             trust_remote_code=config.trust_remote_code,
             tokenizer_revision="main",

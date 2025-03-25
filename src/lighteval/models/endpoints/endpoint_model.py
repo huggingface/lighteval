@@ -40,7 +40,6 @@ from huggingface_hub import (
     get_inference_endpoint,
 )
 from huggingface_hub.utils import HfHubHTTPError
-from pydantic import BaseModel
 from requests import ConnectionError
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -50,6 +49,7 @@ from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
 from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import GenerativeResponse, LoglikelihoodResponse, LoglikelihoodSingleTokenResponse
+from lighteval.models.utils import ModelConfig
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -75,13 +75,13 @@ SORTED_INSTANCE_SIZES = [  # sorted by incremental overall RAM (to load models)
 ]
 
 
-class ServerlessEndpointModelConfig(BaseModel, extra="forbid"):
+class ServerlessEndpointModelConfig(ModelConfig):
     model_name: str
     add_special_tokens: bool = True
     generation_parameters: GenerationParameters = GenerationParameters()
 
 
-class InferenceEndpointModelConfig(BaseModel, extra="forbid"):
+class InferenceEndpointModelConfig(ModelConfig):
     endpoint_name: str | None = None
     model_name: str | None = None
     reuse_existing: bool = False
@@ -100,7 +100,6 @@ class InferenceEndpointModelConfig(BaseModel, extra="forbid"):
     )
     image_url: str | None = None
     env_vars: dict | None = None
-    generation_parameters: GenerationParameters = GenerationParameters()
 
     def model_post_init(self, __context):
         # xor operator, one is None but not the other

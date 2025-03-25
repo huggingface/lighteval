@@ -27,17 +27,16 @@ import os
 from typing import Optional
 
 import torch
-from pydantic import BaseModel, NonNegativeFloat, PositiveInt
+from pydantic import NonNegativeFloat, PositiveInt
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
 )
-from lighteval.models.utils import _get_dtype, _simplify_name
+from lighteval.models.utils import ModelConfig, _get_dtype, _simplify_name
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -73,14 +72,14 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 STARTING_BATCH_SIZE = 512
 
 
-class VLLMModelConfig(BaseModel, extra="forbid"):
-    pretrained: str
-    gpu_memory_utilization: NonNegativeFloat = 0.9  # lower this if you are running out of memory
+class VLLMModelConfig(ModelConfig):
+    model_name: str
     revision: str = "main"  # revision of the model
     dtype: str = "bfloat16"
     tensor_parallel_size: PositiveInt = 1  # how many GPUs to use for tensor parallelism
-    pipeline_parallel_size: PositiveInt = 1  # how many GPUs to use for pipeline parallelism
     data_parallel_size: PositiveInt = 1  # how many GPUs to use for data parallelism
+    pipeline_parallel_size: PositiveInt = 1  # how many GPUs to use for pipeline parallelism
+    gpu_memory_utilization: NonNegativeFloat = 0.9  # lower this if you are running out of memory
     max_model_length: PositiveInt | None = None  # maximum length of the model, ussually infered automatically. reduce this if you encouter OOM issues, 4096 is usually enough
     swap_space: PositiveInt = 4  # CPU swap space size (GiB) per GPU.
     seed: PositiveInt = 1234
@@ -91,7 +90,6 @@ class VLLMModelConfig(BaseModel, extra="forbid"):
         True  # whether to add a space at the start of each continuation in multichoice generation
     )
     pairwise_tokenization: bool = False  # whether to tokenize the context and continuation separately or together.
-    generation_parameters: GenerationParameters = GenerationParameters()
     subfolder: str | None = None
 
 
@@ -117,7 +115,7 @@ class VLLMModel(LightevalModel):
         # self._device = config.accelerator.device if config.accelerator is not None else "cpu"
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
 
-        self.model_name = _simplify_name(config.pretrained)
+        self.model_name = _simplify_name(config.model_name)
         self.model_sha = ""
         self.precision = _get_dtype(config.dtype, config=self._config)
 
@@ -164,7 +162,7 @@ class VLLMModel(LightevalModel):
             transformers.PreTrainedModel: The created auto model instance.
         """
         self.model_args = {
-            "model": config.pretrained,
+            "model": config.model_name,
             "gpu_memory_utilization": config.gpu_memory_utilization,
             "revision": config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
             "dtype": config.dtype,
@@ -192,7 +190,7 @@ class VLLMModel(LightevalModel):
 
     def _create_auto_tokenizer(self, config: VLLMModelConfig):
         tokenizer = get_tokenizer(
-            config.pretrained,
+            config.model_name,
             tokenizer_mode="auto",
             trust_remote_code=config.trust_remote_code,
             tokenizer_revision=config.revision,

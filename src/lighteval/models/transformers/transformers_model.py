@@ -27,7 +27,7 @@ from typing import Optional, Tuple, Union
 import torch
 import torch.nn.functional as F
 import transformers
-from pydantic import BaseModel, PositiveInt
+from pydantic import PositiveInt
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -44,7 +44,6 @@ from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_N
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     Batch,
     GenerativeMultiturnResponse,
@@ -52,7 +51,7 @@ from lighteval.models.model_output import (
     LoglikelihoodResponse,
     LoglikelihoodSingleTokenResponse,
 )
-from lighteval.models.utils import _get_dtype, _get_model_sha, _simplify_name
+from lighteval.models.utils import ModelConfig, _get_dtype, _get_model_sha, _simplify_name
 from lighteval.tasks.requests import (
     GreedyUntilMultiTurnRequest,
     GreedyUntilRequest,
@@ -86,7 +85,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 STARTING_BATCH_SIZE = 512
 
 
-class TransformersModelConfig(BaseModel, extra="forbid"):
+class TransformersModelConfig(ModelConfig):
     """
     Base configuration class for models.
 
@@ -138,7 +137,7 @@ class TransformersModelConfig(BaseModel, extra="forbid"):
 
     """
 
-    pretrained: str
+    model_name: str
     tokenizer: str | None = None
     subfolder: str | None = None
     revision: str = "main"
@@ -152,8 +151,6 @@ class TransformersModelConfig(BaseModel, extra="forbid"):
     trust_remote_code: bool = False
     use_chat_template: bool = False
     compile: bool = False
-
-    generation_parameters: GenerationParameters = GenerationParameters()
     multichoice_continuations_start_space: bool | None = None
     pairwise_tokenization: bool = False
     base_model: str

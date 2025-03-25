@@ -1,4 +1,4 @@
-model:
+model_parameters:
   model_name: "HuggingFaceTB/SmolLM-1.7B-Instruct"
   revision: "main"
   dtype: "bfloat16"
@@ -10,11 +10,12 @@ model:
   swap_space: 4
   seed: 1
   trust_remote_code: True
-  add_chat_template: True
+  use_chat_template: True
   add_special_tokens: True
-  multichoice_continuation_start_space: True
+  multichoice_continuations_start_space: True
   pairwise_tokenization: True
-generation:
+  subfolder: null
+generation_parameters:
   presence_penalty: 0.0
   repetition_penalty: 1.0
   frequency_penalty: 0.0

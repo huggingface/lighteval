@@ -25,18 +25,17 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
-from pydantic import BaseModel
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.endpoints.endpoint_model import ModelInfo
-from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
     LoglikelihoodSingleTokenResponse,
 )
+from lighteval.models.utils import ModelConfig
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -60,16 +59,11 @@ if is_litellm_available():
     litellm.cache = Cache(type="disk")
 
 
-class LiteLLMModelConfig(BaseModel):
+class LiteLLMModelConfig(ModelConfig):
     model_name: str
     provider: str | None = None
     base_url: str | None = None
     api_key: str | None = None
-    generation_parameters: GenerationParameters | None = None
-
-    def __post_init__(self):
-        if self.generation_parameters is None:
-            self.generation_parameters = GenerationParameters()
 
 
 class LiteLLMClient(LightevalModel):
