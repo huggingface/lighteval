@@ -21,11 +21,12 @@
 # SOFTWARE.
 
 import asyncio
-from dataclasses import dataclass, replace
+from dataclasses import replace
 from typing import Coroutine, Optional
 
 import requests
 from huggingface_hub import TextGenerationInputGenerateParameters, TextGenerationInputGrammarType, TextGenerationOutput
+from pydantic import BaseModel
 from transformers import AutoTokenizer
 
 from lighteval.models.endpoints.endpoint_model import InferenceEndpointModel, ModelInfo
@@ -46,16 +47,11 @@ def divide_chunks(array, n):
         yield array[i : i + n]
 
 
-@dataclass
-class TGIModelConfig:
-    inference_server_address: str
-    inference_server_auth: str
-    model_id: str
-    generation_parameters: GenerationParameters = None
-
-    def __post_init__(self):
-        if not self.generation_parameters:
-            self.generation_parameters = GenerationParameters()
+class TGIModelConfig(BaseModel):
+    inference_server_address: str | None
+    inference_server_auth: str | None
+    model_id: str | None
+    generation_parameters: GenerationParameters = GenerationParameters()
 
     @classmethod
     def from_path(cls, path: str) -> "TGIModelConfig":

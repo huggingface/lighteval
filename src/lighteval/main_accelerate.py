@@ -21,7 +21,6 @@
 # SOFTWARE.
 
 import logging
-import os
 from typing import Optional
 
 from typer import Argument, Option
@@ -29,9 +28,6 @@ from typing_extensions import Annotated
 
 
 logger = logging.getLogger(__name__)
-
-TOKEN = os.getenv("HF_TOKEN")
-CACHE_DIR: str = os.getenv("HF_HOME")
 
 HELP_PANEL_NAME_1 = "Common Parameters"
 HELP_PANEL_NAME_2 = "Logging Parameters"
@@ -142,10 +138,8 @@ def accelerate(  # noqa C901
     generation_parameters = GenerationParameters(**config.get("generation", {}))
 
     if config["model"].get("delta_weights", False):
-        logger.warning("Delta models are deprecated and will be removed in a future version.")
         model_config = DeltaModelConfig(**config["model"], generation_parameters=generation_parameters)
     elif config["model"].get("adapter_weights", False):
-        logger.warning("Adapter models are deprecated and will be removed in a future version.")
         model_config = AdapterModelConfig(**config["model"], generation_parameters=generation_parameters)
     else:
         model_config = TransformersModelConfig(**config["model"], generation_parameters=generation_parameters)

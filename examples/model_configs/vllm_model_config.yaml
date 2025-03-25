@@ -1,5 +1,5 @@
 model:
-  pretrained: "HuggingFaceTB/SmolLM-1.7B-Instruct"
+  model_name: "HuggingFaceTB/SmolLM-1.7B-Instruct"
   revision: "main"
   dtype: "bfloat16"
   tensor_parallel_size: 1

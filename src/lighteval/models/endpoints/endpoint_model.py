@@ -75,17 +75,13 @@ SORTED_INSTANCE_SIZES = [  # sorted by incremental overall RAM (to load models)
 ]
 
 
-class ServerlessEndpointModelConfig(BaseModel):
+class ServerlessEndpointModelConfig(BaseModel, extra="forbid"):
     model_name: str
     add_special_tokens: bool = True
-    generation_parameters: GenerationParameters | None = None
-
-    def __post_init__(self):
-        if not self.generation_parameters:
-            self.generation_parameters = GenerationParameters()
+    generation_parameters: GenerationParameters = GenerationParameters()
 
 
-class InferenceEndpointModelConfig(BaseModel):
+class InferenceEndpointModelConfig(BaseModel, extra="forbid"):
     endpoint_name: str | None = None
     model_name: str | None = None
     reuse_existing: bool = False
@@ -104,9 +100,9 @@ class InferenceEndpointModelConfig(BaseModel):
     )
     image_url: str | None = None
     env_vars: dict | None = None
-    generation_parameters: GenerationParameters | None = None
+    generation_parameters: GenerationParameters = GenerationParameters()
 
-    def __post_init__(self):
+    def model_post_init(self, __context):
         # xor operator, one is None but not the other
         if (self.instance_size is None) ^ (self.instance_type is None):
             raise ValueError(
@@ -115,9 +111,6 @@ class InferenceEndpointModelConfig(BaseModel):
 
         if not (self.endpoint_name is None) ^ int(self.model_name is None):
             raise ValueError("You need to set either endpoint_name or model_name (but not both).")
-
-        if not self.generation_parameters:
-            self.generation_parameters = GenerationParameters()
 
     def get_dtype_args(self) -> Dict[str, str]:
         if self.model_dtype is None:

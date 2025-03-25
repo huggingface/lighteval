@@ -1,5 +1,5 @@
 model:
-  pretrained: "HuggingFaceTB/SmolLM-1.7B-Instruct"
+  model_name: "HuggingFaceTB/SmolLM-1.7B-Instruct"
   dtype: "auto"
   tp_size: 1
   dp_size: 1

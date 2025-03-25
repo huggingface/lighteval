@@ -21,8 +21,10 @@
 # SOFTWARE.
 
 import pytest
+import yaml
 
 from lighteval.models.endpoints.endpoint_model import InferenceEndpointModelConfig
+from lighteval.models.model_input import GenerationParameters
 
 
 # "examples/model_configs/endpoint_model.yaml"
@@ -80,10 +82,12 @@ class TestInferenceEndpointModelConfig:
         ],
     )
     def test_from_path(self, config_path, expected_config):
-        import yaml
-
         with open(config_path, "r") as f:
             config = yaml.safe_load(f)
-        config = InferenceEndpointModelConfig(**config["model"], **config.get("instance", {}))
+
+        generation_parameters = GenerationParameters(**config.get("generation", {}))
+        config = InferenceEndpointModelConfig(
+            **config["model"], **config.get("instance", {}), generation_parameters=generation_parameters
+        )
         for key, value in expected_config.items():
             assert getattr(config, key) == value

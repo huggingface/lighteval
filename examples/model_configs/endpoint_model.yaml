@@ -4,7 +4,7 @@ model:
   # reuse_existing: true # defaults to false; if true, ignore all params in instance, and don't delete the endpoint after evaluation
   model_name: "meta-llama/Llama-2-7b-hf"
   # revision: "main"  # defaults to "main"
-  model_dtype: "float16" # can be any of "awq", "eetq", "gptq", "4bit' or "8bit" (will use bitsandbytes), "bfloat16" or "float16"
+  dtype: "float16" # can be any of "awq", "eetq", "gptq", "4bit' or "8bit" (will use bitsandbytes), "bfloat16" or "float16"
   accelerator: "gpu"
   region: "eu-west-1"
   vendor: "aws"

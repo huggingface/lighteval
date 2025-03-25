@@ -1,5 +1,5 @@
 model:
-  pretrained: "HuggingFaceTB/SmolLM-1.7B"
+  model_name: "HuggingFaceTB/SmolLM-1.7B"
   revision: "main" # revision to use
   dtype: "bfloat16"
   compile: true

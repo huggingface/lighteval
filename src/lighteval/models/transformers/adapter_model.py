@@ -42,13 +42,9 @@ class AdapterModelConfig(TransformersModelConfig):
     # Adapter models have the specificity that they look at the base model (= the parent) for the tokenizer and config
     base_model: str
 
-    def __post_init__(self):
+    def model_post_init(self, __context):
         if not is_peft_available():
             raise ImportError(NO_PEFT_ERROR_MSG)
-        return super().__post_init__()
-
-    def init_configs(self):
-        return self._init_configs()
 
 
 class AdapterModel(TransformersModel):

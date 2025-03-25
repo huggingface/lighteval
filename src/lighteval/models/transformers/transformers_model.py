@@ -86,7 +86,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 STARTING_BATCH_SIZE = 512
 
 
-class TransformersModelConfig(BaseModel):
+class TransformersModelConfig(BaseModel, extra="forbid"):
     """
     Base configuration class for models.
 
@@ -156,11 +156,9 @@ class TransformersModelConfig(BaseModel):
     generation_parameters: GenerationParameters = GenerationParameters()
     multichoice_continuations_start_space: bool | None = None
     pairwise_tokenization: bool = False
+    base_model: str
 
-    # used for delta and adapter models
-    base_model: str | None = None
-
-    def __post_init__(self):
+    def model_post_init(self, __context):
         if self.multichoice_continuations_start_space is True:
             logger.warning(
                 "You set `multichoice_continuations_start_space` to true. This will force multichoice continuations to use a starting space"
@@ -409,6 +407,16 @@ class TransformersModel(LightevalModel):
         subfolder = self.config.subfolder
         revision = self.config.revision + (f"/{subfolder}" if subfolder is not None else "")
 
+        pretrained_config = AutoConfig.from_pretrained(
+            self.config.pretrained,
+            revision=(self.config.revision + (f"/{self.config.subfolder}" if self.config.subfolder else "")),
+            trust_remote_code=self.config.trust_remote_code,
+        )
+
+        kwargs = {}
+        if "quantization_config" not in pretrained_config.to_dict():
+            kwargs["quantization_config"] = quantization_config
+
         model = AutoModelForCausalLM.from_pretrained(
             self.config.pretrained,
             revision=revision,
@@ -416,7 +424,7 @@ class TransformersModel(LightevalModel):
             device_map=device_map,
             torch_dtype=torch_dtype,
             trust_remote_code=self.config.trust_remote_code,
-            quantization_config=quantization_config,
+            **kwargs,
         )
         # model.to(self.device)
         model.eval()

@@ -25,7 +25,7 @@ import logging
 from typing import Optional
 
 import torch
-from pydantic import BaseModel, Extra, PositiveFloat, PositiveInt
+from pydantic import BaseModel, PositiveFloat, PositiveInt
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
@@ -57,7 +57,7 @@ else:
     get_tokenizer = None
 
 
-class SGLangModelConfig(BaseModel, extra=Extra.forbid):
+class SGLangModelConfig(BaseModel, extra="forbid"):
     pretrained: str
     load_format: str = "auto"
     dtype: str = "auto"
@@ -76,11 +76,7 @@ class SGLangModelConfig(BaseModel, extra=Extra.forbid):
     attention_backend: str | None = None
     mem_fraction_static: PositiveFloat = 0.8
     chunked_prefill_size: PositiveInt = 4096
-    generation_parameters: GenerationParameters | None = None
-
-    def __post_init__(self):
-        if not self.generation_parameters:
-            self.generation_parameters = GenerationParameters()
+    generation_parameters: GenerationParameters = GenerationParameters()
 
 
 class SGLangModel(LightevalModel):

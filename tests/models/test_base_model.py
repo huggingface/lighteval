@@ -25,7 +25,9 @@ from lighteval.models.transformers.transformers_model import TransformersModel, 
 
 
 def test_empty_requests():
-    model_config = TransformersModelConfig(pretrained="hf-internal-testing/tiny-random-LlamaForCausalLM")
+    model_config = TransformersModelConfig(
+        pretrained="hf-internal-testing/tiny-random-LlamaForCausalLM", model_parallel=False, revision="main"
+    )
     model: TransformersModel = load_model(config=model_config)
 
     assert model.loglikelihood([]) == []
