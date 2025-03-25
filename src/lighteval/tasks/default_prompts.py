@@ -124,9 +124,9 @@ Your response:""".strip()
     training_examples = ""
     for i, pair in enumerate(training_pairs):
         training_examples += f"--Example {i}-- \n\n INPUT: \n\n"
-        training_examples += convert_2d_list_to_string(pair.input) + "\n\n"
+        training_examples += convert_2d_list_to_string(pair["input"]) + "\n\n"
         training_examples += "OUTPUT: \n\n"
-        training_examples += convert_2d_list_to_string(pair.output) + "\n\n"
+        training_examples += convert_2d_list_to_string(pair["output"]) + "\n\n"
 
     test_input = convert_2d_list_to_string(line["question"][0]["input"])
 
