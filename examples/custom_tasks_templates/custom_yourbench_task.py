@@ -56,10 +56,10 @@ JUDGE_ANSWER_SYSTEM_PROMPT = """You will be provided with the summary of a docum
 4. **Ground Truth Answer Understanding**:
    - Understand the provided ground truth answer, identifying its key points.
 
-6. **Answer Understanding**:
+5. **Answer Understanding**:
    - Examine the Model Answer, identifying key points and assessing accuracy and factuality.
 
-7. **Final Answer**:
+6. **Final Answer**:
    - 0 or 1 (0 if the model answer is incorrect, 1 if it is correct).
 
 # Output Format
