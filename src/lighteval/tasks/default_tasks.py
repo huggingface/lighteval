@@ -323,7 +323,7 @@ aime24 = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=32768,
-    metric=[Metrics.expr_gold_metric],
+    metric=[Metrics.expr_gold_metric, Metrics.math_pass_at_4, Metrics.math_pass_at_64],
     version=1,
 )
 aime25 = LightevalTaskConfig(
@@ -337,7 +337,7 @@ aime25 = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=10000,
-    metric=[Metrics.expr_gold_metric],
+    metric=[Metrics.expr_gold_metric, Metrics.math_pass_at_4, Metrics.math_pass_at_64],
     version=1,
 )
 anachronisms_bigbench = LightevalTaskConfig(
