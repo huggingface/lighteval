@@ -87,8 +87,23 @@ class JudgeLM:
         api_key: str | None = None,
         max_tokens: int = 1024,
         response_format: BaseModel = None,
-        hf_provider: Optional[Literal["black-forest-labs", "cerebras", "cohere", "fal-ai", "fireworks-ai", "hf-inference", "hyperbolic", "nebius", "novita", "openai", "replicate", "sambanova", "together"]] = None
-
+        hf_provider: Optional[
+            Literal[
+                "black-forest-labs",
+                "cerebras",
+                "cohere",
+                "fal-ai",
+                "fireworks-ai",
+                "hf-inference",
+                "hyperbolic",
+                "nebius",
+                "novita",
+                "openai",
+                "replicate",
+                "sambanova",
+                "together",
+            ]
+        ] = None,
     ):
         self.model = model
         self.template = templates
@@ -117,9 +132,9 @@ class JudgeLM:
                     raise RuntimeError("OpenAI backend is not available.")
                 if self.client is None:
                     from openai import OpenAI
+
                     self.client = OpenAI(
-                        api_key=self.api_key if self.url is None else None,
-                        base_url=self.url if self.url else None
+                        api_key=self.api_key if self.url is None else None, base_url=self.url if self.url else None
                     )
                 return self.__call_api_parallel
 
@@ -135,16 +150,9 @@ class JudgeLM:
                     from vllm import LLM, SamplingParams
                     from vllm.transformers_utils.tokenizer import get_tokenizer
 
-                    self.sampling_params = SamplingParams(
-                        temperature=0.8, top_p=0.95, max_tokens=self.max_tokens
-                    )
+                    self.sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=self.max_tokens)
                     self.tokenizer = get_tokenizer(self.model, tokenizer_mode="auto")
-                    self.pipe = LLM(
-                        model=self.model,
-                        max_model_len=2048,
-                        gpu_memory_utilization=0.5,
-                        dtype="float16"
-                    )
+                    self.pipe = LLM(model=self.model, max_model_len=2048, gpu_memory_utilization=0.5, dtype="float16")
                 return self.__call_vllm
 
             case "transformers":
@@ -167,9 +175,7 @@ class JudgeLM:
             case "hf-inference":
                 from huggingface_hub import AsyncInferenceClient
 
-                self.client = AsyncInferenceClient(
-                    token=self.api_key, base_url=self.url, provider=self.hf_provider
-                )
+                self.client = AsyncInferenceClient(token=self.api_key, base_url=self.url, provider=self.hf_provider)
                 return self.__call_hf_inference_async
 
             case _:
@@ -223,7 +229,6 @@ class JudgeLM:
         golds: list[str] | list[None],
         **kwargs,
     ):
-
         judge_function = self.__lazy_load_client()
 
         kwargss = self.dict_of_lists_to_list_of_dicts(kwargs)
