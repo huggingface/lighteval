@@ -892,7 +892,8 @@ class JudgeLLM:
 
             case "tgi":
                 api_key = os.getenv("HF_TOKEN")
-                url = "https://api-inference.huggingface.co/v1/"
+                if base_url is None:
+                    base_url = "https://api-inference.huggingface.co/v1/"
                 logger.debug("Using TGI backend")
 
             case "hf-inference":
