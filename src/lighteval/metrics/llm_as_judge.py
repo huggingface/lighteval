@@ -21,16 +21,15 @@
 # SOFTWARE.
 
 
-import time
-import logging
 import asyncio
+import logging
+import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import Callable, Literal, Optional, Any
+from typing import Callable, Literal, Optional
 
-from huggingface_hub import InferenceTimeoutError, AsyncInferenceClient
-from requests.exceptions import HTTPError
-
+from huggingface_hub import AsyncInferenceClient, InferenceTimeoutError
 from pydantic import BaseModel
+from requests.exceptions import HTTPError
 from tqdm import tqdm
 from tqdm.asyncio import tqdm_asyncio
 
@@ -89,7 +88,7 @@ class JudgeLM:
         max_tokens: int = 1024,
         response_format: BaseModel = None,
         hf_provider: Optional[Literal["black-forest-labs", "cerebras", "cohere", "fal-ai", "fireworks-ai", "hf-inference", "hyperbolic", "nebius", "novita", "openai", "replicate", "sambanova", "together"]] = None
-        
+
     ):
         self.model = model
         self.template = templates
@@ -321,7 +320,7 @@ class JudgeLM:
             raise ValueError("Some entries are not annotated due to errors in annotate_p, please inspect and retry.")
 
         return results
-    
+
     def __call_hf_inference_async(self, prompts):
         async def run_all() -> list[str]:
             """Wrap inference call into function"""
@@ -330,10 +329,10 @@ class JudgeLM:
 
         try:
             loop = asyncio.get_running_loop()
-            logger.debug(f"Exting event loop is found, using loop.create_task")
+            logger.debug("Exting event loop is found, using loop.create_task")
             result = loop.run_until_complete(run_all())
         except RuntimeError:
-            logger.debug(f"No running event loop found, using asyncio.run")
+            logger.debug("No running event loop found, using asyncio.run")
             result = asyncio.run(run_all())
 
         if None in result:
@@ -357,7 +356,7 @@ class JudgeLM:
             except Exception as e:
                 logger.warning(f"Unexpected error during HF inference: {e}")
                 await asyncio.sleep(self.API_RETRY_SLEEP)
-        
+
         raise Exception("Failed to get response from the HF API")
 
     def __call_api_parallel(self, prompts):

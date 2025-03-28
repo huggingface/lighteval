@@ -882,7 +882,7 @@ class JudgeLLM:
         logger.debug(f"Initializing JudgeLLM with backend: {judge_backend}, model: {judge_model_name}")
 
         api_key = None
-    
+
         match judge_backend:
             case "openai":
                 if judge_model_name not in self.available_models_openai:
