@@ -118,3 +118,39 @@ def test_translation_prompt_cf_formatting():
     assert doc.unconditioned_query == ""
     assert doc.choices == [" 你好吗？"]
     assert doc.gold_index == [0]
+
+def test_translation_prompt_mcf_cot():
+    """
+    Tests that translation prompt function works correctly for MCF formulation with COT.
+    """
+    test_input = {
+        "source_text": "Ahoj, jak se máš?",
+        "target_text": ["Bonjour, comment allez-vous?", "Ciao, come stai?"],
+    }
+
+    prompt_fn = get_translation_prompt_function(
+        source_language=Language.CZECH,
+        target_language=Language.FRENCH,
+        adapter=lambda x: {
+            "source_text": x["source_text"],
+            "target_text": x["target_text"],
+            "gold_idx": 0,
+        },
+        formulation=MCFFormulation(cot=True),
+    )
+
+    doc = prompt_fn(test_input, "test_task")
+    assert doc is not None
+
+    assert (
+        doc.query
+        == """\
+CS: Ahoj, jak se máš? FR:
+ A. Bonjour, comment allez-vous?
+ B. Ciao, come stai?
+Step-by-Step Answer:\
+"""
+    )
+    assert doc.unconditioned_query == "Step-by-Step Answer:"
+    assert doc.choices == [" A", " B"]
+    assert doc.gold_index == [0]

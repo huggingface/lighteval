@@ -49,6 +49,7 @@ class HellaswagInput(TypedDict):
     instruction: NotRequired[str]
     activity_label: NotRequired[str]
     ctx_b: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 class HellaswagAdapter(TypedDict):
@@ -58,6 +59,7 @@ class HellaswagAdapter(TypedDict):
     instruction: NotRequired[str]
     activity_label: NotRequired[str]
     ctx_b: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 def get_hellaswag_prompt_function(
@@ -107,7 +109,14 @@ def get_hellaswag_prompt_function(
 
     adapter_fn = create_adapter_from_dict(adapter)
     continuation_prompt_fn = get_continuation_prompt_function(
-        language, {"context": "context", "continuations": "continuations", "gold_idx": "gold_idx"}, formulation
+        language,
+        {
+            "context": "context",
+            "continuations": "continuations",
+            "gold_idx": "gold_idx",
+            "few_shot_cot": "few_shot_cot",
+        },
+        formulation,
     )
 
     def hellaswag_prompt(
@@ -145,10 +154,12 @@ def get_hellaswag_prompt_function(
 
         return continuation_prompt_fn(
             {
+                **{x: line[x] for x in line if x.startswith("__")},
                 "instruction": input_data.get("instruction", ""),
                 "context": full_context,
                 "continuations": choices,
                 "gold_idx": input_data["gold_idx"],
+                "few_shot_cot": input_data.get("few_shot_cot", ""),
             },
             task_name,
         )

@@ -46,7 +46,7 @@ from lighteval.utils.utils import as_list
 
 CONTINUATION_QUERY_CF = "{instruction}{context}"
 
-CONTINUATION_QUERY_MCF = "{instruction}{context}\n{options}{answer_word}{colon}"
+CONTINUATION_QUERY_MCF = "{instruction}{context}\n\n{options_word}{colon}\n{options}{answer_word}{colon}"
 
 
 # Defined for type hinting only
@@ -64,6 +64,7 @@ class ContinuationInput(TypedDict):
     continuations: list[str]
     gold_idx: list[int] | int
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 class ContinuationDictAdapter(TypedDict):
@@ -80,6 +81,7 @@ class ContinuationDictAdapter(TypedDict):
     continuations: str
     gold_idx: str
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 def get_continuation_prompt_function(
@@ -132,7 +134,9 @@ def get_continuation_prompt_function(
             return None
 
         instruction_val = cont_input.get("instruction")
-        instruction = f"{instruction_val}\n" if instruction_val else ""
+        if not instruction_val and isinstance(formulation, MCFFormulation) and formulation.cot:
+            instruction_val = f"{translation_literals.continuation_instruction}{translation_literals.sentence_space}{translation_literals.multichoice_formatting_instruction}"
+        instruction = f"{instruction_val}\n\n" if instruction_val else ""
 
         context = (
             f"{capitalize(fix_ending_punct(cont_input['context'], translation_literals))}"
@@ -180,18 +184,35 @@ def get_continuation_prompt_function(
 
         cont_input, instruction, context, continuations = prepared_prompt
 
+
+
         options = build_choices(continuations, formulation, translation_literals)
         options = f"{options}\n" if options else ""
-        answers = build_answers(continuations, formulation, translation_literals)
 
-        answer_word = capitalize(translation_literals.answer)
-
+        answer_word = capitalize(
+            translation_literals.answer if not formulation.cot else translation_literals.answer_cot
+        )
+        options_word = capitalize(translation_literals.options_word)
         query = CONTINUATION_QUERY_MCF.format(
             instruction=instruction,
             context=context,
             options=options,
             answer_word=answer_word,
             colon=translation_literals.colon,
+            options_word=options_word,
+        )
+
+        few_shot_cot = cont_input.get("few_shot_cot", None)
+        is_few_shot = line.get("__few_shots", False)
+        if formulation.cot and few_shot_cot and is_few_shot:
+            continuations = [
+                capitalize(fix_ending_punct(answer, translation_literals)) for answer in as_list(few_shot_cot)
+            ]
+        answers = build_answers(
+            continuations,
+            formulation,
+            translation_literals,
+            is_few_shot=is_few_shot and bool(few_shot_cot),
         )
 
         return Doc(

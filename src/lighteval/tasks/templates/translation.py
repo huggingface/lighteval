@@ -110,7 +110,7 @@ def get_translation_prompt_function(
     adapter_fn = create_adapter_from_dict(adapter)
     continuation_prompt_fn = get_continuation_prompt_function(
         Language.ENGLISH,
-        {"context": "context", "continuations": "continuations", "gold_idx": "gold_idx"},
+        {"context": "context", "continuations": "continuations", "gold_idx": "gold_idx", "instruction": "instruction"},
         formulation,
         fix_formatting=False,
     )
@@ -143,9 +143,13 @@ def get_translation_prompt_function(
             for text in as_list(input_data["target_text"])
         ]
 
+        instruction = input_data.get("instruction", "")
+        if not instruction and isinstance(formulation, MCFFormulation) and formulation.cot:
+            instruction = f"{target_translation_literals.translation_instruction_mcq}{target_translation_literals.sentence_space}{target_translation_literals.multichoice_formatting_instruction}"
+
         return continuation_prompt_fn(
             {
-                "instruction": input_data.get("instruction", ""),
+                "instruction": instruction,
                 "context": context,
                 "continuations": continuations,
                 "gold_idx": input_data.get("gold_idx", list(range(len(continuations)))),

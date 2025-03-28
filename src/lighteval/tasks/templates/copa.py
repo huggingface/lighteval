@@ -53,6 +53,7 @@ class COPAInput(TypedDict):
     continuations: list[str]
     gold_idx: int | list[int]
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 class COPAAdapter(TypedDict):
@@ -71,6 +72,7 @@ class COPAAdapter(TypedDict):
     continuations: str
     gold_idx: str
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 def get_copa_prompt_function(
@@ -113,7 +115,14 @@ def get_copa_prompt_function(
     """
     adapter_fn = create_adapter_from_dict(adapter)
     continuation_prompt_fn = get_continuation_prompt_function(
-        language, {"context": "context", "continuations": "continuations", "gold_idx": "gold_idx"}, formulation
+        language,
+        {
+            "context": "context",
+            "continuations": "continuations",
+            "gold_idx": "gold_idx",
+            "few_shot_cot": "few_shot_cot",
+        },
+        formulation,
     )
     translation_literals = TRANSLATION_LITERALS[language]
 
@@ -140,10 +149,12 @@ def get_copa_prompt_function(
 
         return continuation_prompt_fn(
             {
+                **{x: line[x] for x in line if x.startswith("__")},
                 "instruction": input_data.get("instruction", ""),
                 "context": context,
                 "continuations": input_data["continuations"],
                 "gold_idx": input_data["gold_idx"],
+                "few_shot_cot": input_data.get("few_shot_cot", ""),
             },
             task_name,
         )

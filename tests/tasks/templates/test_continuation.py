@@ -46,6 +46,8 @@ def test_continuation_prompt_mcf():
         doc.query
         == """\
 The quick brown fox
+
+Options:
  A. jumps over the lazy dog
  B. runs through the forest
  C. chases a rabbit
@@ -131,7 +133,10 @@ def test_continuation_optional_keys():
         doc.query
         == """\
 Choose the most likely continuation:
+
 In the morning, I like to
+
+Options:
  A. drink coffee
  B. go for a run
  C. read the news
@@ -140,5 +145,45 @@ Answer:\
     )
 
     assert doc.unconditioned_query == "Answer:"
+    assert doc.choices == [" A", " B", " C"]
+    assert doc.gold_index == [0]
+
+def test_instruction_mcf_cot():
+    """Test continuation prompt generation with optional instruction key."""
+    test_input = {
+        "context": "In the morning, I like to",
+        "continuations": ["drink coffee", "go for a run", "read the news"],
+        "gold_idx": 0,
+    }
+
+    prompt_fn = get_continuation_prompt_function(
+        Language.ENGLISH,
+        {
+            "context": "context",
+            "continuations": "continuations",
+            "gold_idx": "gold_idx",
+        },
+        MCFFormulation(cot=True),
+    )
+
+    doc = prompt_fn(test_input, "test_continuation_task")
+    pass
+
+    assert (
+        doc.query
+        == """\
+Read the following sentence and select the letter corresponding to the most likely continuation from the provided options. Output the letter of the correct answer on last line in the following format: The final answer is: <LETTER>.
+
+In the morning, I like to
+
+Options:
+ A. drink coffee
+ B. go for a run
+ C. read the news
+Step-by-Step Answer:\
+"""
+    )
+
+    assert doc.unconditioned_query == "Step-by-Step Answer:"
     assert doc.choices == [" A", " B", " C"]
     assert doc.gold_index == [0]

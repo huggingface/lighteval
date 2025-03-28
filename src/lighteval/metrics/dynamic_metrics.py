@@ -61,8 +61,8 @@ def loglikelihood_acc_metric(normalization: LogProbNormalization | None = None) 
     Creates a accuracy (loglikelihood) metric, which returns accuracy given normalization.
     """
 
-    normalization_str = normalization.name if normalization else ""
-    metric_name = f"acc_{normalization_str}"
+    normalization_str = f"_{normalization.name}" if normalization else ""
+    metric_name = f"acc{normalization_str}"
     return SampleLevelMetric(
         metric_name=metric_name,
         sample_level_fn=LoglikelihoodAcc(logprob_normalization=normalization).compute,
@@ -83,8 +83,8 @@ def normalized_multi_choice_prob_metric(
     Creates a normalized multi-choice probability metric, which returns the probability of the gold choice / sum of probabilities of all choices (after logprobs are normalized).
     """
 
-    normalization_str = normalization.name if normalization else ""
-    metric_name = "_".join(filter(None, ["normalized_mc_prob_", normalization_str]))
+    normalization_str = f"_{normalization.name}" if normalization else ""
+    metric_name = f"normalized_mc_prob{normalization_str}"
 
     return SampleLevelMetric(
         metric_name=metric_name,
@@ -108,8 +108,8 @@ def probability_metric(
     Creates a probability metric, which returns the probability of the gold choice given normalization.
     """
 
-    normalization_str = normalization.name if normalization else ""
-    metric_name = "_".join(filter(None, ["prob", normalization_str]))
+    normalization_str = f"_{normalization.name}" if normalization else ""
+    metric_name = f"prob{normalization_str}"
 
     return SampleLevelMetric(
         metric_name=metric_name,

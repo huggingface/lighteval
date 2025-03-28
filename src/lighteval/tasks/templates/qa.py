@@ -26,6 +26,7 @@ from typing_extensions import NotRequired, TypedDict
 
 from lighteval.tasks.templates.multichoice import MCQInput, create_adapter_from_dict, get_mcq_prompt_function
 from lighteval.tasks.templates.utils.formulation import CFFormulation
+from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
 from lighteval.utils.language import Language
 
 
@@ -34,6 +35,7 @@ class QAInput(TypedDict):
     choices: list[str]
     context: NotRequired[str]
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 class QAAdapter(TypedDict):
@@ -41,9 +43,12 @@ class QAAdapter(TypedDict):
     context: str
     context: NotRequired[str]
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
-def get_qa_prompt_function(language: Language, adapter: Callable[[dict], QAInput | None] | QAAdapter):
+def get_qa_prompt_function(
+    language: Language, adapter: Callable[[dict], QAInput | None] | QAAdapter, cot: bool = False,
+):
     """
     Create a templated prompt function for a QA task.
     Example tasks:
@@ -64,16 +69,25 @@ def get_qa_prompt_function(language: Language, adapter: Callable[[dict], QAInput
     """
 
     adapter_fn = create_adapter_from_dict(adapter)
+    translation_literals = TRANSLATION_LITERALS[language]
 
     def adapter_for_mcq(line: dict) -> MCQInput | None:
         input_data = adapter_fn(line)
         if input_data is None:
             return None
 
+        choices = input_data["choices"]
+        instruction = input_data.get("instruction", "")
+        # qa instruciton for generative manner
+        if cot and not instruction:
+            instruction = f"{translation_literals.qa_instruction}{translation_literals.sentence_space}{translation_literals.qa_formatting_instruction}"
+
         return {
             **input_data,
-            "gold_idx": list(range(len(input_data["choices"]))),
+            "gold_idx": list(range(len(choices))),
         }
 
-    multichoice_prompt_fn = get_mcq_prompt_function(language, adapter=adapter_for_mcq, formulation=CFFormulation())
+    multichoice_prompt_fn = get_mcq_prompt_function(
+        language, adapter=adapter_for_mcq, formulation=CFFormulation(cot=cot)
+    )
     return multichoice_prompt_fn

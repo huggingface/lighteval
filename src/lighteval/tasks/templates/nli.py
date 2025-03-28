@@ -51,6 +51,7 @@ class NLIInput(TypedDict):
     hypothesis: str
     gold_idx: int
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 class NLIAdapter(TypedDict):
@@ -67,6 +68,7 @@ class NLIAdapter(TypedDict):
     hypothesis: str
     gold_idx: str
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 RelationType = Literal["entailment", "neutral", "contradiction"]
@@ -219,7 +221,14 @@ def get_nli_prompt_function(
     # For hybrid we use inlined choices so we use the cf formulation in multichoice prompt fn
     mcq_prompt_fn = get_mcq_prompt_function(
         language,
-        {"context": "premise", "question": "hypothesis", "choices": "choices", "gold_idx": "gold_idx"},
+        {
+            "instruction": "instruction",
+            "context": "premise",
+            "question": "hypothesis",
+            "choices": "choices",
+            "gold_idx": "gold_idx",
+            "few_shot_cot": "few_shot_cot",
+        },
         CFFormulation() if isinstance(formulation, HybridFormulation) else formulation,
     )
 
@@ -244,16 +253,23 @@ def get_nli_prompt_function(
             choices_str = f"{translation_literals.comma}{translation_literals.word_space}".join(rearranged_labels[:-1])
             hypothesis = f"{hypothesis.rstrip(PUNCT)}{translation_literals.sentence_space}{choices_str}{translation_literals.word_space}{translation_literals.or_word}{translation_literals.word_space}{rearranged_labels[-1]}{translation_literals.question_mark}"
 
+        instruction = input_data.get("instruction", "")
+        if not instruction and isinstance(formulation, MCFFormulation) and formulation.cot:
+            instruction = f"{translation_literals.nli_instruction}{translation_literals.sentence_space}{translation_literals.multichoice_formatting_instruction}"
+
         # (hynky1999): Ideally we would not compute logprobs of the Yes/No/Also in CF formulation. However as of right now lighteval doesn't allow to
         # use multi-context.
         row = {
-            "instruction": input_data.get("instruction", ""),
+            **{x: line[x] for x in line if x.startswith("__")},
+            "instruction": instruction,
             "premise": premise,
             "hypothesis": hypothesis,
             "gold_idx": gold_idx,
             "choices": labels,
+            "few_shot_cot": input_data.get("few_shot_cot", ""),
         }
 
         return mcq_prompt_fn(row, task_name)
 
     return prompt_fn
+ 

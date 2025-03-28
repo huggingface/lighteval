@@ -91,6 +91,8 @@ def test_hellaswag_prompt_mcf():
         doc.query
         == """\
 Fitness:\nHe is strong he is fast
+
+Options:
  A. he has big muscles
  B. he is weak
 Answer:\
@@ -158,3 +160,52 @@ def test_hellaswag_single_ctx():
 
     doc = prompt_fn(test_input, "test_task")
     assert doc.query == "Fitness:\nHe is strong."
+
+
+def test_hellaswag_prompt_mcf_cot():
+    """
+    Tests that hellaswag prompt function works correctly.
+    Since it's pretty much a wrapper around continuation template we just test single formulation.
+
+    """
+    test_input = {
+        "activity_label": "fitness",
+        "ctx_a": "He is strong",
+        "ctx_b": "He is fast",
+        "continuations": ["he has big muscles", "he is weak"],
+        "gold_idx": 0,
+        "__few_shots": True,
+        "few_shot_cot": "i think it's A. he has big muscles",
+    }
+
+    prompt_fn = get_hellaswag_prompt_function(
+        Language.ENGLISH,
+        {
+            "activity_label": "activity_label",
+            "continuations": "continuations",
+            "gold_idx": "gold_idx",
+            "ctx_a": "ctx_a",
+            "ctx_b": "ctx_b",
+            "few_shot_cot": "few_shot_cot",
+        },
+        MCFFormulation(cot=True),
+    )
+
+    doc = prompt_fn(test_input, "test_task")
+    assert (
+        doc.query
+        == """\
+Read the following sentence and select the letter corresponding to the most likely continuation from the provided options. Output the letter of the correct answer on last line in the following format: The final answer is: <LETTER>.
+
+Fitness:\nHe is strong he is fast
+
+Options:
+ A. he has big muscles
+ B. he is weak
+Step-by-Step Answer:\
+"""
+    )
+
+    assert doc.unconditioned_query == "Step-by-Step Answer:"
+    assert doc.choices == [" I think it's A. he has big muscles"]
+    assert doc.gold_index == [0]

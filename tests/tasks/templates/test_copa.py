@@ -23,7 +23,7 @@
 import pytest
 
 from lighteval.tasks.templates.copa import get_copa_prompt_function
-from lighteval.tasks.templates.utils.formulation import CFFormulation
+from lighteval.tasks.templates.utils.formulation import CFFormulation, MCFFormulation
 from lighteval.utils.language import Language
 
 
@@ -59,4 +59,54 @@ def test_copa_prompt_cf(cause_effect):
 
     assert doc.unconditioned_query == ""
     assert doc.choices == [" he has big muscles", " he is weak"]
+    assert doc.gold_index == [0]
+
+
+@pytest.mark.parametrize("cause_effect", ["cause", "effect"])
+def test_copa_prompt_mcf_cot(cause_effect):
+    """
+    Tests that copa prompt function works correctly for both cause/effect.
+    Since it's pretty much a wrapper around continuation template we just test single formulation.
+
+    """
+    test_input = {
+        "cause_effect": cause_effect,
+        "context": "He is strong",
+        "continuations": ["he has big muscles", "he is weak"],
+        "gold_idx": 0,
+        "__few_shots": True,
+        "few_shot_cot": "i think it's A. he has big muscles",
+    }
+
+    prompt_fn = get_copa_prompt_function(
+        Language.ENGLISH,
+        {
+            "cause_effect": "cause_effect",
+            "context": "context",
+            "continuations": "continuations",
+            "gold_idx": "gold_idx",
+            "few_shot_cot": "few_shot_cot",
+        },
+        MCFFormulation(cot=True),
+    )
+
+    doc = prompt_fn(test_input, "test_task")
+
+    cause_effect_word = "because" if cause_effect == "cause" else "therefore"
+    assert (
+        doc.query
+        == f"""\
+Read the following sentence and select the letter corresponding to the most likely continuation from the provided options. Output the letter of the correct answer on last line in the following format: The final answer is: <LETTER>.
+
+He is strong {cause_effect_word}
+
+Options:
+ A. he has big muscles
+ B. he is weak
+Step-by-Step Answer:\
+"""
+    )
+
+    assert doc.unconditioned_query == "Step-by-Step Answer:"
+    assert doc.choices == [" I think it's A. he has big muscles"]
     assert doc.gold_index == [0]

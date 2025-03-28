@@ -15295,6 +15295,7 @@ simple_qa = LightevalTaskConfig(
     name="simple_qa",
     prompt_function=get_qa_prompt_function(
         Language.ENGLISH,
+
         lambda line: {"question": line["problem"], "choices": [line["answer"]]},
     ),
     suite=("lighteval",),

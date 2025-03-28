@@ -35,6 +35,7 @@ class TranslationLiterals:
 
     question_word: str = None  # type: ignore
     answer: str = None  # type: ignore
+    answer_cot: str = None  # type: ignore
     confirmation_word: str = None  # type: ignore
     yes: str = None  # type: ignore
     no: str = None  # type: ignore
@@ -48,6 +49,9 @@ class TranslationLiterals:
     false: str = None  # type: ignore
     neither: str = None  # type: ignore
 
+    # Options
+    options_word: str = None  # type: ignore
+
     # Punctuation
     full_stop: str = "."
     comma: str = ","
@@ -57,6 +61,22 @@ class TranslationLiterals:
     sentence_space: str = " "
     colon: str = ":"
     semicolon: str = ";"
+
+    # Instructions
+    translation_instruction_mcq: str = "Choose the correct translation from the provided options."
+    continuation_instruction: str = "Read the following sentence and select the letter corresponding to the most likely continuation from the provided options."
+    qa_instruction: str = "Read and answer the following question."
+    nli_instruction: str = "Given a premise and hypothesis, determine whether the hypothesis is implied by the premise."
+    multichoice_instruction: str = "Read the question below and select the letter corresponding to the correct answer from the provided options."
+
+    # Formatting instruction
+    qa_formatting_instruction: str = "Output the answer on last line in the following format: The final answer is: <ANSWER>."
+    multichoice_formatting_instruction: str = "Output the letter of the correct answer on last line in the following format: The final answer is: <LETTER>."
+    math_formatting_instruction: str = "Output the answer in \\boxed{}."
+
+    # Extraction
+    # Hynek: We are bit more lenient here, to allow model to answer the final answer to the question etc... If model answers exactly per format, it will work anyways.
+    final_answer_regex: str = r"(?i:final answer.{{0,100}}?)\s+is\:?\s*<answer>"
 
     # Indices
     indices: list[str] = field(default_factory=lambda: LETTER_INDICES)
@@ -300,6 +320,7 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         language=Language.ENGLISH,
         question_word="question",
         answer="answer",
+        answer_cot="Step-by-Step Answer",
         confirmation_word="right",
         yes="yes",
         no="no",
@@ -309,6 +330,7 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         true="true",
         false="false",
         neither="neither",
+        options_word="options",
         full_stop=".",
         comma=",",
         question_mark="?",
@@ -317,6 +339,7 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
         or_word="or",
+
     ),
     Language.ESPERANTO: TranslationLiterals(language=Language.ESPERANTO),
     Language.ESTONIAN: TranslationLiterals(

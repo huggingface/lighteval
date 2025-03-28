@@ -55,6 +55,7 @@ class MCQInput(TypedDict):
     gold_idx: list[int] | int
     context: NotRequired[str]
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 class MCQDictAdapter(TypedDict):
@@ -73,6 +74,7 @@ class MCQDictAdapter(TypedDict):
     gold_idx: str
     context: NotRequired[str]
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 # Python too dumb to do fancy inference :(
@@ -129,20 +131,26 @@ def get_mcq_prompt_function(
 
         translation_literals = TRANSLATION_LITERALS[language]
 
+        # The generative formulation must use the instruction to ensure that we use an expected instruction
         instruction_val = mcq_input.get("instruction")
-        instruction = f"{instruction_val}\n" if instruction_val else ""
+        if not instruction_val and isinstance(formulation, MCFFormulation) and formulation.cot:
+            instruction_val = f"{translation_literals.multichoice_instruction}{translation_literals.sentence_space}{translation_literals.multichoice_formatting_instruction}"
 
+        instruction = f"{instruction_val}\n\n" if instruction_val else ""
         context_val = mcq_input.get("context")
         context = f"{capitalize(fix_ending_punct(context_val, translation_literals))}\n" if context_val else ""
 
         question = capitalize(fix_ending_punct(mcq_input["question"], translation_literals))
-        answers = [capitalize(fix_ending_punct(answer, translation_literals)) for answer in mcq_input["choices"]]
+        answers = mcq_input["choices"]
+        gold_idx = mcq_input["gold_idx"]
+        answers = [capitalize(fix_ending_punct(answer, translation_literals)) for answer in answers]
 
         options = build_choices(answers, formulation, translation_literals)
         options = f"{options}\n" if options else ""
-        answers = build_answers(answers, formulation, translation_literals)
 
-        answer_word = capitalize(translation_literals.answer)
+        answer_word = capitalize(
+            translation_literals.answer if not formulation.cot else translation_literals.answer_cot
+        )
         question_word = capitalize(translation_literals.question_word)
 
         query = MULTI_CHOICE_QA_QUERY.format(
@@ -156,10 +164,23 @@ def get_mcq_prompt_function(
             options=options,
         )
 
+        # If we are in few-shot mode, then we want to use cot-answers instead of the actual answers
+        # NOTE: it's important to do it after query formatting, because otherwise the options will contain cot
+        is_few_shot = line.get("__few_shots", False)
+        few_shot_cot = mcq_input.get("few_shot_cot", None)
+        if few_shot_cot and formulation.cot and is_few_shot:
+            answers = [capitalize(fix_ending_punct(answer, translation_literals)) for answer in as_list(few_shot_cot)]
+            gold_idx = list(range(len(answers)))
+        gold_idx = as_list(gold_idx)
+
+        answers = build_answers(
+            answers, formulation, translation_literals, is_few_shot=is_few_shot and bool(few_shot_cot)
+        )
+
         return Doc(
             task_name=task_name,
             query=query,
-            gold_index=as_list(mcq_input["gold_idx"]),
+            gold_index=gold_idx,
             choices=answers,
             instruction=instruction_val,
             unconditioned_query=f"{answer_word}{translation_literals.colon}",

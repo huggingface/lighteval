@@ -103,9 +103,14 @@ def get_boolq_prompt_function(
             return None
 
         choices = [translation_literals.yes, translation_literals.no]
+
+        instruction = input_data.get("instruction", "")
+        if isinstance(formulation, MCFFormulation) and formulation.cot and not instruction:
+            instruction = f"{translation_literals.multichoice_instruction}{translation_literals.sentence_space}{translation_literals.multichoice_formatting_instruction}"
+
         return mcq_prompt_fn(
             {
-                "instruction": input_data.get("instruction", ""),
+                "instruction": instruction,
                 "question": input_data["question"],
                 "context": input_data.get("context", ""),
                 "choices": choices,

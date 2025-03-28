@@ -39,10 +39,13 @@ class MCFFormulation:
 
     Args:
         choice_prefix (ChoicePrefix, optional): The choice prefix to use for the task. Defaults to "Letters".
+        cot (bool, optional): Whether to use COT for the task. Defaults to False.
+        generative (bool, optional): Whether to use generative formulation of the task (used for instruction). Defaults to False.
     """
 
     choice_prefix: ChoicePrefix = "Letters"
     name: str = "MCF"
+    cot: bool = False
 
 
 @dataclass
@@ -131,6 +134,7 @@ def build_answers(
     formulation: Formulation,
     translation_literals: TranslationLiterals,
     use_sentence_space: bool = True,
+    is_few_shot: bool = False
 ) -> list[str]:
     """
     Builds a string version of the answers based on passed formulation.
@@ -144,7 +148,7 @@ def build_answers(
         use_sentence_space (bool, optional): Whether to use sentence or word space in front of the answer. Defaults to True.
             The same value should be passed to `build_choices` function to ensure consistent tokenization.
     """
-    if isinstance(formulation, MCFFormulation):
+    if isinstance(formulation, MCFFormulation) and not (formulation.cot and is_few_shot):
         prefixes = get_prefix(formulation.choice_prefix, translation_literals)
         answers = [prefixes[i] for i in range(len(answers))]
 

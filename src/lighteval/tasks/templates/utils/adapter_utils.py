@@ -44,3 +44,7 @@ def create_adapter_from_dict(
         return {key: line[value] for key, value in adapter.items()}
 
     return adapter_fn  # type: ignore
+
+def float_to_choice_string(answer: float | str) -> str:
+    answer = float(answer)
+    return str(int(answer)) if answer.is_integer() else str(answer)
