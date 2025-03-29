@@ -189,7 +189,6 @@ class VLLMModel(LightevalModel):
         if int(config.data_parallel_size) > 1:
             self.model_args["distributed_executor_backend"] = "ray"
             self._batch_size = "auto"
-            return None
 
         model = LLM(**self.model_args)
 
