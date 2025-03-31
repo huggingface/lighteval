@@ -370,7 +370,7 @@ class Metrics(Enum):
         higher_is_better=True,
     )
     math_pass_at_1_4n = SampleLevelMetric(
-        metric_name="math_pass@4:64_samples",
+        metric_name="math_pass@1:4_samples",
         sample_level_fn=PassAtK(
             k=1,
             n=4,
@@ -402,7 +402,7 @@ class Metrics(Enum):
         higher_is_better=True,
     )
     math_pass_at_1_8n = SampleLevelMetric(
-        metric_name="math_pass@8:64_samples",
+        metric_name="math_pass@1:8_samples",
         sample_level_fn=PassAtK(
             k=1,
             n=8,
@@ -434,7 +434,7 @@ class Metrics(Enum):
         higher_is_better=True,
     )
     math_pass_at_1_16n = SampleLevelMetric(
-        metric_name="math_pass@16:64_samples",
+        metric_name="math_pass@1:16_samples",
         sample_level_fn=PassAtK(
             k=1,
             n=16,
@@ -466,7 +466,7 @@ class Metrics(Enum):
         higher_is_better=True,
     )
     math_pass_at_1_32n = SampleLevelMetric(
-        metric_name="math_pass@32:64_samples",
+        metric_name="math_pass@1:32_samples",
         sample_level_fn=PassAtK(
             k=1,
             n=32,
@@ -498,7 +498,7 @@ class Metrics(Enum):
         higher_is_better=True,
     )
     math_pass_at_1_64n = SampleLevelMetric(
-        metric_name="math_pass@64:64_samples",
+        metric_name="math_pass@1:64_samples",
         sample_level_fn=PassAtK(
             k=1,
             n=64,
