@@ -875,7 +875,7 @@ class JudgeLLM:
         judge_backend: Literal["litellm", "openai", "transformers", "vllm", "tgi", "inference-providers"],
         short_judge_name: str | None = None,
         response_format: BaseModel = None,
-        base_url: str | None = None,
+        url: str | None = None,
         hf_provider: str | None = None,
         max_tokens: int | None = None,
     ) -> None:
@@ -892,8 +892,8 @@ class JudgeLLM:
 
             case "tgi":
                 api_key = os.getenv("HF_TOKEN")
-                if base_url is None:
-                    base_url = "https://api-inference.huggingface.co/v1/"
+                if url is None:
+                    url = "https://api-inference.huggingface.co/v1/"
                 logger.debug("Using TGI backend")
 
             case "inference-providers":
@@ -922,7 +922,7 @@ class JudgeLLM:
             judge_backend=judge_backend,
             response_format=response_format,
             api_key=api_key,
-            url=base_url,
+            url=url,
             hf_provider=hf_provider,
             max_tokens=max_tokens,
         )
