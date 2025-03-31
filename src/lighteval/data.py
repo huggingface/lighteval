@@ -110,13 +110,12 @@ class DynamicBatchDataset(Dataset):
             list: new_arr in the original order.
         """
         original_order = [None] * self.total_size
-
         for original_index, v in zip(self.original_order, new_arr):
             original_order[original_index] = v
 
         if None in original_order:
             raise RuntimeError(
-                f"Some elements of the original order are None, meaning that len(new_arr) ({len(new_arr)}) != len(original_array) ({self.total_size})"
+                f"Some elements of the original order are None, meaning that len(new_arr) ({len(new_arr)}) != len(original_array) ({self.total_size}) original_order {len(self.original_order)} {len(new_arr)} {self.total_size} {len(self.sorted_data)}"
             )
 
         return original_order
