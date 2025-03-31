@@ -82,7 +82,7 @@ class JudgeLM:
         model: str,
         templates: Callable,
         process_judge_response: Callable,
-        judge_backend: Literal["litellm", "openai", "transformers", "tgi", "vllm", "hf-inference"],
+        judge_backend: Literal["litellm", "openai", "transformers", "tgi", "vllm", "inference-providers"],
         url: str | None = None,
         api_key: str | None = None,
         max_tokens: int = 1024,
@@ -94,7 +94,7 @@ class JudgeLM:
                 "cohere",
                 "fal-ai",
                 "fireworks-ai",
-                "hf-inference",
+                "inference-providers",
                 "hyperbolic",
                 "nebius",
                 "novita",
@@ -172,7 +172,7 @@ class JudgeLM:
                     )
                 return self.__call_transformers
 
-            case "hf-inference":
+            case "inference-providers":
                 from huggingface_hub import AsyncInferenceClient
 
                 self.client = AsyncInferenceClient(token=self.api_key, base_url=self.url, provider=self.hf_provider)
