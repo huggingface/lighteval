@@ -123,6 +123,10 @@ class JudgeLM:
 
         self.response_format = response_format if not None else DEFAULT_FORMAT
 
+        # Validate that hf_provider is specified when using inference-providers backend
+        if self.backend == "inference-providers" and self.hf_provider is None:
+            raise ValueError("When using 'inference-providers' as backend, you must specify an 'hf_provider'")
+
     def __lazy_load_client(self):
         match self.backend:
             # Both "openai" and "tgi" backends use the OpenAI-compatible API
