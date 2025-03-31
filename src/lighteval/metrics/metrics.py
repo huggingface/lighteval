@@ -369,11 +369,11 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    math_pass_at_4 = SampleLevelMetric(
+    math_pass_at_1_4n = SampleLevelMetric(
         metric_name="math_pass@4:64_samples",
         sample_level_fn=PassAtK(
-            k=4,
-            n=64,
+            k=1,
+            n=4,
             strip_strings=True,
             # Extracting mathematical expressions and latex expressions
             normalize_gold=lambda k: extract_target_from_pred(
@@ -401,11 +401,11 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    math_pass_at_8 = SampleLevelMetric(
+    math_pass_at_1_8n = SampleLevelMetric(
         metric_name="math_pass@8:64_samples",
         sample_level_fn=PassAtK(
-            k=8,
-            n=64,
+            k=1,
+            n=8,
             strip_strings=True,
             # Extracting mathematical expressions and latex expressions
             normalize_gold=lambda k: extract_target_from_pred(
@@ -433,11 +433,11 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    math_pass_at_16 = SampleLevelMetric(
+    math_pass_at_1_16n = SampleLevelMetric(
         metric_name="math_pass@16:64_samples",
         sample_level_fn=PassAtK(
-            k=16,
-            n=64,
+            k=1,
+            n=16,
             strip_strings=True,
             # Extracting mathematical expressions and latex expressions
             normalize_gold=lambda k: extract_target_from_pred(
@@ -465,11 +465,11 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    math_pass_at_32 = SampleLevelMetric(
+    math_pass_at_1_32n = SampleLevelMetric(
         metric_name="math_pass@32:64_samples",
         sample_level_fn=PassAtK(
-            k=32,
-            n=64,
+            k=1,
+            n=32,
             strip_strings=True,
             # Extracting mathematical expressions and latex expressions
             normalize_gold=lambda k: extract_target_from_pred(
@@ -497,10 +497,10 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    math_pass_at_64 = SampleLevelMetric(
+    math_pass_at_1_64n = SampleLevelMetric(
         metric_name="math_pass@64:64_samples",
         sample_level_fn=PassAtK(
-            k=64,
+            k=1,
             n=64,
             strip_strings=True,
             # Extracting mathematical expressions and latex expressions
