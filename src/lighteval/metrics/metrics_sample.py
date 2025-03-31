@@ -886,9 +886,9 @@ class JudgeLLM:
         match judge_backend:
             case "openai":
                 if judge_model_name not in self.available_models_openai:
-                    raise ValueError(f"{judge_model_name} not in available OpenAI models")
+                    raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
                 api_key = os.getenv("OPENAI_API_KEY")
-                logger.debug("Using OpenAI backend")
+                logger.debug("Using OpenAI backend for llm as a judge metric")
 
             case "tgi":
                 api_key = os.getenv("HF_TOKEN")
@@ -901,7 +901,7 @@ class JudgeLLM:
                 logger.debug("Using Hugging Face Inference backend")
 
             case "litellm":
-                logger.debug("Using LiteLLM backend")
+                logger.debug("Using LiteLLM backend for llm as a judge metric")
 
             case "transformers" | "vllm":
                 logger.debug("Checking availability of Transformers or VLLM model")
@@ -911,7 +911,6 @@ class JudgeLLM:
                     raise ValueError(f"{judge_model_name} not found on Hugging Face Hub")
 
             case _:
-                logger.error(f"Invalid judge backend provided: {judge_backend}")
                 raise ValueError(f"{judge_backend} is not a valid backend for llm as a judge metric")
 
         self.short_judge_name = short_judge_name
