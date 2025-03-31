@@ -64,6 +64,8 @@ from lighteval.utils.imports import (
 from lighteval.utils.parallelism import test_all_gather
 from lighteval.utils.utils import make_results_table
 
+from nanotron.src.nanotron.config import models_config
+
 
 if is_accelerate_available():
     from accelerate import Accelerator, InitProcessGroupKwargs
@@ -72,7 +74,7 @@ if is_nanotron_available():
     from nanotron.parallel.context import ParallelContext
     from nanotron.utils import local_ranks_zero_first
 
-    from lighteval.models.nanotron_model import NanotronLightevalModel
+    from lighteval.models.nanotron.nanotron_model import NanotronLightevalModel
 
 
 import logging
@@ -155,7 +157,11 @@ class Pipeline:
         self.accelerator, self.parallel_context = self._init_parallelism_manager()
         self.model = self._init_model(model_config, model)
 
-        generation_parameters = model_config.generation_parameters.model_dump() if model_config else {}
+        generation_parameters = (
+            asdict(model_config.generation_parameters)
+            if model_config and hasattr(model_config, "generation_parameters")
+            else {}
+        )
 
         self.evaluation_tracker.general_config_logger.log_model_info(generation_parameters, self.model.model_info)
         self._init_random_seeds()
