@@ -85,7 +85,7 @@ class JudgeLM:
         judge_backend: Literal["litellm", "openai", "transformers", "tgi", "vllm", "inference-providers"],
         url: str | None = None,
         api_key: str | None = None,
-        max_tokens: int = 1024,
+        max_tokens: int = 512,
         response_format: BaseModel = None,
         hf_provider: Optional[
             Literal[
