@@ -156,11 +156,7 @@ class Pipeline:
         self.accelerator, self.parallel_context = self._init_parallelism_manager()
         self.model = self._init_model(model_config, model)
 
-        generation_parameters = (
-            asdict(model_config.generation_parameters)
-            if model_config and hasattr(model_config, "generation_parameters")
-            else {}
-        )
+        generation_parameters = asdict(model_config.generation_parameters) if model_config else {}
 
         self.evaluation_tracker.general_config_logger.log_model_info(generation_parameters, self.model.model_info)
         self._init_tasks_and_requests(tasks=tasks)
@@ -196,7 +192,7 @@ class Pipeline:
                     checkpoint_path=os.path.dirname(self.pipeline_parameters.nanotron_checkpoint_path)
                     if self.pipeline_parameters.nanotron_checkpoint_path
                     else "",
-                    nanotron_config=self.model_config,
+                    nanotron_config=model_config,
                     parallel_context=self.parallel_context,
                     debug_one_layer_model=False,
                     model_class=None,

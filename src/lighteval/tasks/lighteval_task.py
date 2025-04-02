@@ -107,6 +107,7 @@ class LightevalTaskConfig:
     few_shots_select: Optional[str] = None
 
     # Generation args
+    output_regex: Optional[str] = None
     generation_size: Optional[int] = None
     generation_grammar: Optional[TextGenerationInputGrammarType] = None
     stop_sequence: Optional[ListLike[str]] = None
@@ -120,6 +121,7 @@ class LightevalTaskConfig:
     must_remove_duplicate_docs: bool = False
 
     version: int = 0
+    frozen: bool = False
 
     def __post_init__(self):
         # If we got a Metrics enums instead of a Metric, we convert
