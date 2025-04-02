@@ -37,7 +37,7 @@ from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
 )
-from lighteval.models.utils import _get_dtype, _simplify_name
+from lighteval.models.utils import _simplify_name
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -78,7 +78,7 @@ class VLLMModelConfig:
     pretrained: str
     gpu_memory_utilization: float = 0.9  # lower this if you are running out of memory
     revision: str = "main"  # revision of the model
-    dtype: str | None = None
+    dtype: str = "bfloat16"
     tensor_parallel_size: int = 1  # how many GPUs to use for tensor parallelism
     pipeline_parallel_size: int = 1  # how many GPUs to use for pipeline parallelism
     data_parallel_size: int = 1  # how many GPUs to use for data parallelism
@@ -93,6 +93,8 @@ class VLLMModelConfig:
     )
     pairwise_tokenization: bool = False  # whether to tokenize the context and continuation separately or together.
     generation_parameters: GenerationParameters = None  # sampling parameters to use for generation
+    max_num_seqs: int = 128  # maximum number of sequences per iteration; This variable and `max_num_batched_tokens` effectively control the batch size at prefill stage. See https://github.com/vllm-project/vllm/issues/2492 for detailed explaination.
+    max_num_batched_tokens: int = 2048  # maximum number of tokens per batch
 
     subfolder: Optional[str] = None
 
@@ -126,7 +128,7 @@ class VLLMModel(LightevalModel):
 
         self.model_name = _simplify_name(config.pretrained)
         self.model_sha = ""  # config.get_model_sha()
-        self.precision = _get_dtype(config.dtype, config=self._config)
+        self.precision = config.dtype
 
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
         self.pairwise_tokenization = config.pairwise_tokenization
@@ -181,6 +183,8 @@ class VLLMModel(LightevalModel):
             "max_model_len": self._max_length,
             "swap_space": 4,
             "seed": config.seed,
+            "max_num_seqs": int(config.max_num_seqs),
+            "max_num_batched_tokens": int(config.max_num_batched_tokens),
         }
         if int(config.data_parallel_size) > 1:
             self.model_args["distributed_executor_backend"] = "ray"

@@ -448,6 +448,18 @@ class TransformersModel(LightevalModel):
         config.model_parallel, max_memory, device_map = self.init_model_parallel(config.model_parallel)
         torch_dtype = _get_dtype(config.dtype, self._config)
 
+        pretrained_config = AutoConfig.from_pretrained(
+            config.pretrained,
+            revision=(config.revision + (f"/{config.subfolder}" if config.subfolder else "")),
+            trust_remote_code=config.trust_remote_code,
+            cache_dir=env_config.cache_dir,
+            token=env_config.token,
+        )
+
+        kwargs = {}
+        if "quantization_config" not in pretrained_config.to_dict():
+            kwargs["quantization_config"] = config.quantization_config
+
         model = AutoModelForCausalLM.from_pretrained(
             config.pretrained,
             revision=config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
@@ -458,7 +470,7 @@ class TransformersModel(LightevalModel):
             cache_dir=env_config.cache_dir,
             offload_folder=env_config.cache_dir,
             token=env_config.token,
-            quantization_config=config.quantization_config,
+            **kwargs,
         )
 
         return model
