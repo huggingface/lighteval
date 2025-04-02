@@ -36,7 +36,6 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,
-    GPTQConfig,
     PretrainedConfig,
 )
 from transformers.generation.utils import GenerateOutput
@@ -61,11 +60,7 @@ from lighteval.tasks.requests import (
     Request,
 )
 from lighteval.utils.imports import (
-    NO_AUTOGPTQ_ERROR_MSG,
-    NO_BNB_ERROR_MSG,
     is_accelerate_available,
-    is_autogptq_available,
-    is_bnb_available,
 )
 from lighteval.utils.parallelism import find_executable_batch_size
 from lighteval.utils.utils import as_list
@@ -90,7 +85,7 @@ class TransformersModelConfig(ModelConfig):
     Base configuration class for models.
 
     Attributes:
-        pretrained (str):
+        model_name (str):
             HuggingFace Hub model ID name or the path to a pre-trained
             model to load. This is effectively the `pretrained_model_name_or_path`
             argument of `from_pretrained` in the HuggingFace `transformers` API.
@@ -153,7 +148,10 @@ class TransformersModelConfig(ModelConfig):
     compile: bool = False
     multichoice_continuations_start_space: bool | None = None
     pairwise_tokenization: bool = False
-    base_model: str
+
+    base_model: str | None = None
+    delta_weights: bool = False
+    adapter_weights: bool = False
 
     def model_post_init(self, __context):
         if self.multichoice_continuations_start_space is True:
@@ -165,9 +163,6 @@ class TransformersModelConfig(ModelConfig):
                 "You set `multichoice_continuations_start_space` to false. This will remove a leading space from multichoice continuations, if present."
             )
 
-        if self.quantization_config is not None and not is_bnb_available():
-            raise ImportError(NO_BNB_ERROR_MSG)
-
     def get_transformers_config(self) -> PretrainedConfig:
         revision = self.revision
 
@@ -175,38 +170,15 @@ class TransformersModelConfig(ModelConfig):
             revision = f"{self.revision}/{self.subfolder}"
 
         auto_config = AutoConfig.from_pretrained(
-            self.pretrained,
+            self.model_name,
             revision=revision,
             trust_remote_code=self.trust_remote_code,
         )
 
-        # Gathering the model's automatic quantization config, if available
-        try:
-            model_auto_quantization_config = auto_config.quantization_config
-            logger.info("An automatic quantization config was found in the model's config. Using it to load the model")
-        except (AttributeError, KeyError):
-            model_auto_quantization_config = None
-
-        if model_auto_quantization_config is not None:
-            if self.quantization_config is not None:
-                # We don't load models quantized by default with a different user provided conf
-                raise ValueError("You manually requested quantization on a model already quantized!")
-
-            # We add the quantization to the model params we store
-            if model_auto_quantization_config["quant_method"] == "gptq":
-                if not is_autogptq_available():
-                    raise ImportError(NO_AUTOGPTQ_ERROR_MSG)
-                auto_config.quantization_config["use_exllama"] = None
-                self.quantization_config = GPTQConfig(**auto_config.quantization_config, disable_exllama=True)
-            elif model_auto_quantization_config["quant_method"] == "bitsandbytes":
-                if not is_bnb_available():
-                    raise ImportError(NO_BNB_ERROR_MSG)
-                self.quantization_config = BitsAndBytesConfig(**auto_config.quantization_config)
-
         return auto_config
 
     def get_model_sha(self):
-        return _get_model_sha(repo_id=self.pretrained, revision=self.revision)
+        return _get_model_sha(repo_id=self.model_name, revision=self.revision)
 
 
 class TransformersModel(LightevalModel):
@@ -234,7 +206,14 @@ class TransformersModel(LightevalModel):
         if config.model_parallel is False and self.config.dtype not in ["4bit", "8bit"]:
             logger.info(f"Using Data Parallelism, putting model on device {self._device}")
             self.model = self.model.to(self._device)
-        self.model_name = _simplify_name(config.pretrained)
+        if config.compile:
+            try:
+                logger.info("Compiling the model")
+                self.model.model.compile()
+            except AttributeError as e:
+                logger.warning("Could not compile the model because: ", e)
+
+        self.model_name = _simplify_name(config.model_name)
 
         self.generation_config_dict = config.generation_parameters.to_transformers_dict()
 
@@ -245,7 +224,7 @@ class TransformersModel(LightevalModel):
             model_size = -1
 
         self.model_info = ModelInfo(
-            model_name=self.config.pretrained,
+            model_name=self.config.model_name,
             model_sha=self.model_sha,
             model_dtype=config.dtype,
             model_size=str(model_size),
@@ -360,7 +339,6 @@ class TransformersModel(LightevalModel):
                 f"the number of local processes is {self.num_local_processes} "
                 f"and the number of GPUs is {len(max_memory_all_gpus)}"
             )
-
         if model_parallel is True:
             max_memory_all_gpus = get_max_memory()  # A dict of the max memory for all the gpus
             if "cpu" in max_memory_all_gpus:
@@ -380,7 +358,6 @@ class TransformersModel(LightevalModel):
             logger.info(
                 f"Model parallel was set to False, max memory set to {max_mem_this_process} and device map to {device_map}"
             )
-
         return model_parallel, max_mem_this_process, device_map
 
     def _create_auto_model(self) -> transformers.PreTrainedModel:
@@ -404,18 +381,14 @@ class TransformersModel(LightevalModel):
         subfolder = self.config.subfolder
         revision = self.config.revision + (f"/{subfolder}" if subfolder is not None else "")
 
-        pretrained_config = AutoConfig.from_pretrained(
-            self.config.pretrained,
-            revision=(self.config.revision + (f"/{self.config.subfolder}" if self.config.subfolder else "")),
-            trust_remote_code=self.config.trust_remote_code,
-        )
+        pretrained_config = self.transformers_config
 
         kwargs = {}
         if "quantization_config" not in pretrained_config.to_dict():
             kwargs["quantization_config"] = quantization_config
 
         model = AutoModelForCausalLM.from_pretrained(
-            self.config.pretrained,
+            self.config.model_name,
             revision=revision,
             max_memory=max_memory,
             device_map=device_map,
@@ -445,7 +418,7 @@ class TransformersModel(LightevalModel):
         Returns:
             transformers.PreTrainedTokenizer: The created tokenizer.
         """
-        tokenizer_name = self.config.tokenizer or self.config.pretrained
+        tokenizer_name = self.config.tokenizer or self.config.model_name
         subfolder = self.config.subfolder
         revision = self.config.revision + (f"/{subfolder}" if subfolder is not None else "")
 
@@ -585,9 +558,6 @@ class TransformersModel(LightevalModel):
             if self.accelerator:
                 dataloader = self.accelerator.prepare(dataloader)
 
-            logger.warning(
-                f"{len(dataloader)} batches of size {batch_size} will be processed, {len(dataset)} requests"
-            )
             for batch in tqdm(
                 dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
             ):

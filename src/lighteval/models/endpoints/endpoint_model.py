@@ -86,7 +86,7 @@ class InferenceEndpointModelConfig(ModelConfig):
     model_name: str | None = None
     reuse_existing: bool = False
     accelerator: str = "gpu"
-    model_dtype: str | None = None  # if empty, we use the default
+    dtype: str | None = None  # if empty, we use the default
     vendor: str = "aws"
     region: str = "us-east-1"  # this region has the most hardware options available
     instance_size: str | None = None  # if none, we autoscale
@@ -112,9 +112,9 @@ class InferenceEndpointModelConfig(ModelConfig):
             raise ValueError("You need to set either endpoint_name or model_name (but not both).")
 
     def get_dtype_args(self) -> Dict[str, str]:
-        if self.model_dtype is None:
+        if self.dtype is None:
             return {}
-        model_dtype = self.model_dtype.lower()
+        model_dtype = self.dtype.lower()
         if model_dtype in ["awq", "eetq", "gptq"]:
             return {"QUANTIZE": model_dtype}
         if model_dtype == "8bit":
@@ -276,7 +276,7 @@ class InferenceEndpointModel(LightevalModel):
         self.model_info = ModelInfo(
             model_name=self.name,
             model_sha=self.revision,
-            model_dtype=getattr(config, "model_dtype", "default"),
+            model_dtype=getattr(config, "dtype", "default"),
             model_size=-1,
         )
         self.generation_parameters = config.generation_parameters

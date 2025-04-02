@@ -49,7 +49,7 @@ ModelInput = Tuple[str, str, str, str, Callable[[], dict], float]
 def run_model_predictions_full(model: str, tasks: tuple):
     """Runs the full main as a black box, using the input model and tasks, on all samples without parallelism"""
     results = accelerate(
-        model_args=f"pretrained={model},batch_size=1",
+        model_args=f"model_name={model},batch_size=1",
         tasks=",".join(tasks),
         output_dir="",
         dataset_loading_processes=1,
@@ -62,7 +62,7 @@ def run_model_predictions_full(model: str, tasks: tuple):
 def run_model_predictions_lite(model: str, tasks: tuple):
     """Runs the full main as a black box, using the input model and tasks, on 10 samples without parallelism"""
     results = accelerate(
-        model_args=f"pretrained={model},batch_size=1",
+        model_args=f"model_name={model},batch_size=1",
         tasks=",".join(tasks),
         output_dir="",
         dataset_loading_processes=1,
