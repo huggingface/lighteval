@@ -107,6 +107,7 @@ class PipelineParameters:
     max_samples: int | None = None
     use_chat_template: bool = False
     system_prompt: str | None = None
+    cot_prompt: str | None = None
     load_responses_from_details_date_id: str | None = None
 
     def __post_init__(self):  # noqa C901
@@ -236,6 +237,7 @@ class Pipeline:
                 evaluation_tracker=self.evaluation_tracker,
                 use_chat_template=self.pipeline_parameters.use_chat_template,
                 system_prompt=self.pipeline_parameters.system_prompt,
+                cot_prompt=self.pipeline_parameters.cot_prompt,
             )
 
             self.task_names_list = task_names_list
