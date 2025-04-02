@@ -14,33 +14,26 @@ jobs:
    name: Run tests
    runs-on: ubuntu-latest
    steps:
-     - name: Checkout code
-       uses: actions/checkout@v3
-       with:
-        lfs: 'true'
-     - name: Setup Python environment
-       uses: actions/setup-python@v4
-       with:
-         python-version: '3.10'
-         cache: 'pip'
-     - name: Install lighteval in editable mode
-       run: |
-         pip install -e .[dev,extended_tasks,multilingual,litellm]
-     - name: Get cached files
-       uses: actions/cache@v4
-       id: get-cache
-       with:
-         path: "cache"
-         key: test-cache-HF
-     - name: Test
-       env:
-        HF_TEST_TOKEN: ${{ secrets.HF_TEST_TOKEN }}
-        HF_HOME: "cache/models"
-        HF_DATASETS_CACHE: "cache/datasets"
-       run: | # PYTHONPATH="${PYTHONPATH}:src" HF_DATASETS_CACHE="cache/datasets" HF_HOME="cache/models"
-        python -m pytest -x --disable-pytest-warnings
-     - name: Write cache
-       uses: actions/cache@v4
-       with:
-         path: "cache"
-         key: test-cache-HF
+      - uses: actions/checkout@v4
+        with:
+          lfs: 'true'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install
+        with:
+          python-version-file: "pyproject.toml"
+
+      - name: Install the project
+        run: uv sync --extra dev
+
+      - name: Run tests
+        env:
+          HF_TEST_TOKEN: ${{ secrets.HF_TEST_TOKEN }}
+          HF_HOME: "cache/models"
+          HF_DATASETS_CACHE: "cache/datasets"
+        run: uv run pytest -x --disable-pytest-warnings

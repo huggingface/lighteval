@@ -82,7 +82,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-litellm = ["litellm", "diskcache"]
+litellm = ["litellm>=1.63.0", "diskcache"]
 tgi = ["text-generation>=0.6.0"]
 optimum = ["optimum==1.12.0"]
 quantization = ["bitsandbytes>=0.41.0", "auto-gptq>=0.4.2"]
@@ -99,7 +99,7 @@ dev = ["lighteval[accelerate,quality,tests,multilingual,math,extended_tasks]"]
 docs = ["hf-doc-builder", "watchdog"]
 extended_tasks = [
   "langdetect", # ifeval
-  "openai == 1.55.2", # llm as a judge using openai models
+  "openai", # llm as a judge using openai models
   "tiktoken"
 ]
 s3 = ["s3fs"]
