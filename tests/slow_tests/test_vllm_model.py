@@ -28,7 +28,7 @@ from typing import Callable, Tuple
 import pytest
 from deepdiff import DeepDiff
 
-from lighteval.main_accelerate import accelerate  # noqa: E402
+from lighteval.main_vllm import vllm  # noqa: E402
 
 
 # Set env var for deterministic run of models
@@ -37,9 +37,9 @@ os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 MODELS_ARGS = [
     # {"model_name": "gpt2", "use_chat_template": False, "revision": "main", "results_file": "tests/reference_scores/gpt2-results.json"},
     {
-        "model_name": "examples/model_configs/transformers_model.yaml",
+        "model_name": "examples/model_configs/vllm_model_config.yaml",
         "use_chat_template": True,
-        "results_file": "tests/reference_scores/SmolLM2-1.7B-Instruct-results-accelerate.json",
+        "results_file": "tests/reference_scores/SmolLM2-1.7B-Instruct-results-vllm.json",
     }
 ]
 TASKS_PATH = "examples/test_tasks.txt"
@@ -51,10 +51,9 @@ ModelInput = Tuple[str, Callable[[], dict]]
 @lru_cache(maxsize=len(MODELS_ARGS))
 def run_model(model_name: str, use_chat_template: bool):
     """Runs the full main as a black box, using the input model and tasks, on 10 samples without parallelism"""
-    results = accelerate(
+    results = vllm(
         model_args=model_name,
         tasks=TASKS_PATH,
-        override_batch_size=1,
         use_chat_template=use_chat_template,
         output_dir="",
         dataset_loading_processes=1,
@@ -83,7 +82,7 @@ ids = [f"{model_input[0]['model_name']}" for model_input in tests]
 
 @pytest.mark.slow
 @pytest.mark.parametrize("tests", tests, ids=ids)
-def test_accelerate_model_prediction(tests: list[ModelInput]):
+def test_vllm_model(tests: list[ModelInput]):
     """Evaluates a model on a full task - is parametrized using pytest_generate_test"""
     model_args, get_predictions = tests
 
