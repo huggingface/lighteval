@@ -11,25 +11,38 @@ on:
 
 jobs:
   run_tests:
-   name: Run tests
-   runs-on: ubuntu-latest
-   steps:
-      - uses: actions/checkout@v4
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          lfs: 'true'
+          lfs: true
+
+      - name: Cache Hugging Face models
+        uses: actions/cache@v4
+        with:
+          path: cache/models
+          key: hf-models-${{ runner.os }}-${{ github.ref }}
+          restore-keys: hf-models-${{ runner.os }}-
+
+      - name: Cache Hugging Face datasets
+        uses: actions/cache@v4
+        with:
+          path: cache/datasets
+          key: hf-datasets-${{ runner.os }}-${{ github.ref }}
+          restore-keys: hf-datasets-${{ runner.os }}-
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
 
-      - name: Set up Python
-        run: uv python install
-        with:
-          python-version-file: "pyproject.toml"
-
       - name: Install the project
         run: uv sync --extra dev
+
+      - name: Ensure cache directories exist
+        run: mkdir -p cache/models cache/datasets
 
       - name: Run tests
         env:
