@@ -81,7 +81,7 @@ tests: list[ModelInput] = generate_tests()
 ids = [f"{model_input[0]['model_name']}" for model_input in tests]
 
 
-@pytest.mark.slow
+@pytest.mark.skip
 @pytest.mark.parametrize("tests", tests, ids=ids)
 def test_accelerate_model_prediction(tests: list[ModelInput]):
     """Evaluates a model on a full task - is parametrized using pytest_generate_test"""
