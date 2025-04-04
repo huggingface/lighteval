@@ -12,7 +12,7 @@ on:
 jobs:
   run_tests:
     name: Run tests
-    runs-on: 'aws-general-8-plus-use1-public-80'
+    runs-on: 'aws-g4dn-2xlarge-use1-public-80'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
