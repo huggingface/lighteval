@@ -33,6 +33,13 @@ jobs:
           key: hf-datasets-${{ runner.os }}-${{ github.ref }}
           restore-keys: hf-datasets-${{ runner.os }}-
 
+      - name: Cache uv virtual environment
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: uv-env-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+          restore-keys: uv-env-${{ runner.os }}-
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
