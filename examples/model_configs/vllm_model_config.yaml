@@ -1,6 +1,6 @@
 model:
   base_params:
-    model_args: "pretrained=HuggingFaceTB/SmolLM-1.7B-Instruct,revision=main,dtype=bfloat16"
+    model_args: "pretrained=HuggingFaceTB/SmolLM-1.7B-Instruct,revision=main,dtype=float16,gpu_memory_utilization=0.6,max_num_seqs=1,max_num_batched_tokens=4096"
   generation:
     temperature: 0.3
     repetition_penalty: 1.0
