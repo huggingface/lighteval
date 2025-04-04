@@ -77,4 +77,4 @@ jobs:
             echo "Error: HF_TEST_TOKEN is not set!"
             exit 1
           fi
-          uv run pytest -x --disable-pytest-warnings
+          uv run pytest -x --disable-pytest-warnings --runslow tests/slow_tests
