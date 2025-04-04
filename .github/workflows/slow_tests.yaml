@@ -1,4 +1,4 @@
-name: Tests
+name: Slow end to end tests
 
 on:
   push:
@@ -61,9 +61,14 @@ jobs:
       - name: Ensure cache directories exist
         run: mkdir -p cache/models cache/datasets
 
+      - name: Set Hugging Face Token
+        run: echo "HF_TEST_TOKEN=${{ secrets.HF_TEST_TOKEN }}" >> $GITHUB_ENV
+
+      - name: Debug Environment Variables
+        run: env | sort
+
       - name: Run tests
+        run: uv run pytest -x --disable-pytest-warnings --runslow tests/slow_tests
         env:
-          HF_TEST_TOKEN: ${{ secrets.HF_TEST_TOKEN }}
           HF_HOME: "cache/models"
           HF_DATASETS_CACHE: "cache/datasets"
-        run: uv run pytest -x --disable-pytest-warnings --runslow tests/slow_tests
