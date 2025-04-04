@@ -582,6 +582,7 @@ def create_requests_from_tasks(  # noqa: C901
     evaluation_tracker: "EvaluationTracker",
     use_chat_template: bool,
     system_prompt: str | None,
+    generate_until_token: str | None,
 ) -> Tuple[dict[RequestType, list[Request]], dict[SampleUid, Doc]]:
     """
     Takes a task dict and a fewshot dict and returns a dict of requests, a dict
@@ -646,6 +647,7 @@ def create_requests_from_tasks(  # noqa: C901
                         truncate_few_shots=truncate_few_shots,
                         use_chat_template=use_chat_template,
                         system_prompt=system_prompt,
+                        generate_until_token=generate_until_token,
                     )
 
                     # Constructing the requests
