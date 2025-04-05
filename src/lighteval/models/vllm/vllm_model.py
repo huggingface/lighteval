@@ -115,7 +115,11 @@ class VLLMModel(LightevalModel):
         self.data_parallel_size = int(config.data_parallel_size)
         self.tensor_parallel_size = int(config.tensor_parallel_size)
 
-        self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
+        self._add_special_tokens = (
+            config.add_special_tokens
+            if isinstance(config.add_special_tokens, bool)
+            else str(config.add_special_tokens).lower() == "true"
+        )
         self._tokenizer = self._create_auto_tokenizer(config, env_config)
 
         self._max_length = int(config.max_model_length) if config.max_model_length is not None else None
