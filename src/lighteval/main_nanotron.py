@@ -52,7 +52,6 @@ def nanotron(
 
     from lighteval.config.lighteval_config import FullNanotronConfig, LightEvalConfig
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.logging.hierarchical_logger import htrack_block
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
     from lighteval.utils.imports import NO_NANOTRON_ERROR_MSG, is_nanotron_available
     from lighteval.utils.utils import EnvConfig
@@ -62,22 +61,21 @@ def nanotron(
     if not is_nanotron_available():
         raise ImportError(NO_NANOTRON_ERROR_MSG)
 
-    with htrack_block("Load nanotron config"):
-        # Create nanotron config
-        if not checkpoint_config_path.endswith(".yaml"):
-            raise ValueError("The checkpoint path should point to a YAML file")
+    # Create nanotron config
+    if not checkpoint_config_path.endswith(".yaml"):
+        raise ValueError("The checkpoint path should point to a YAML file")
 
-        model_config = get_config_from_file(
-            checkpoint_config_path,
-            config_class=Config,
-            model_config_class=None,
-            skip_unused_config_keys=True,
-            skip_null_keys=True,
-        )
+    model_config = get_config_from_file(
+        checkpoint_config_path,
+        config_class=Config,
+        model_config_class=None,
+        skip_unused_config_keys=True,
+        skip_null_keys=True,
+    )
 
-        # We are getting an type error, because the get_config_from_file is not correctly typed,
-        lighteval_config: LightEvalConfig = get_config_from_file(lighteval_config_path, config_class=LightEvalConfig)  # type: ignore
-        nanotron_config = FullNanotronConfig(lighteval_config, model_config)
+    # We are getting a type error, because the get_config_from_file is not correctly typed,
+    lighteval_config: LightEvalConfig = get_config_from_file(lighteval_config_path, config_class=LightEvalConfig)  # type: ignore
+    nanotron_config = FullNanotronConfig(lighteval_config, model_config)
 
     evaluation_tracker = EvaluationTracker(
         output_dir=lighteval_config.logging.output_dir,

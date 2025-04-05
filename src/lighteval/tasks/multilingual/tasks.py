@@ -2874,7 +2874,7 @@ xcsqa_tasks = [
         ),
         suite=("lighteval",),
         hf_repo="INK-USC/xcsr",
-        hf_subset=f"X-CSQA-{standardize_tag(language.value)}",
+        hf_subset=f"X-CSQA-{standardize_tag(language.value) if language != Language.JAPANESE else 'jap'}",
         hf_filter=lambda x: all(
             len(x["question"]["choices"]["text"][i].strip()) > 0 for i in range(len(x["question"]["choices"]["text"]))
         ),
@@ -3426,7 +3426,7 @@ xcodah_tasks = [
         prompt_function=get_mcq_prompt_function(language, partial(xcodah_adapter, language), formulation=formulation),
         suite=("lighteval",),
         hf_repo="INK-USC/xcsr",
-        hf_subset=f"X-CODAH-{standardize_tag(language.value)}",
+        hf_subset=f"X-CODAH-{standardize_tag(language.value) if language != Language.JAPANESE else 'jap'}",
         evaluation_splits=("validation",),
         hf_avail_splits=["validation"],
         metric=get_metrics_for_formulation(
@@ -3533,7 +3533,7 @@ xwinograd_tasks = [
             language, partial(winogrand_adapter, language), formulation=formulation
         ),
         hf_repo="Muennighoff/xwinograd",
-        hf_subset=standardize_tag(language.value),
+        hf_subset=standardize_tag(language.value) if language != Language.JAPANESE else "jp",
         evaluation_splits=("test",),
         hf_avail_splits=["test"],
         metric=[
