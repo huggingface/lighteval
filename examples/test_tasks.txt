@@ -1,7 +1,6 @@
 leaderboard|arc:challenge|25|0
 leaderboard|truthfulqa:mc|0|0
 leaderboard|hellaswag|10|0
-leaderboard|mmlu:abstract_algebra|5|0
 leaderboard|mmlu:college_chemistry|5|0
 leaderboard|mmlu:computer_security|5|0
 leaderboard|mmlu:us_foreign_policy|5|0
@@ -19,7 +18,6 @@ lighteval|bigbench:disambiguation_qa|3|0
 lighteval|bigbench:geometric_shapes|3|0
 lighteval|bigbench:logical_deduction_five_objects|3|0
 lighteval|bigbench:logical_deduction_seven_objects|3|0
-lighteval|bigbench:logical_deduction_three_objects|3|0
 lighteval|bigbench:movie_recommendation|3|0
 lighteval|bigbench:navigate|3|0
 lighteval|bigbench:reasoning_about_colored_objects|3|0
@@ -30,5 +28,4 @@ lighteval|bigbench:sports_understanding|3|0
 lighteval|bigbench:temporal_sequences|3|0
 lighteval|bigbench:tracking_shuffled_objects_five_objects|3|0
 lighteval|bigbench:tracking_shuffled_objects_seven_objects|3|0
-lighteval|bigbench:tracking_shuffled_objects_three_objects|3|0
 test|gsm8k|0|1
