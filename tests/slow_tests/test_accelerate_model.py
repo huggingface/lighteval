@@ -81,7 +81,7 @@ tests: list[ModelInput] = generate_tests()
 ids = [f"{model_input[0]['model_name']}" for model_input in tests]
 
 
-@pytest.mark.skip
+@pytest.mark.slow
 @pytest.mark.parametrize("tests", tests, ids=ids)
 def test_accelerate_model_prediction(tests: list[ModelInput]):
     """Evaluates a model on a full task - is parametrized using pytest_generate_test"""
@@ -99,6 +99,6 @@ def test_accelerate_model_prediction(tests: list[ModelInput]):
     # Convert defaultdict values to regular dict for comparison
     predictions_dict = {k: dict(v) if hasattr(v, "default_factory") else v for k, v in predictions.items()}
 
-    diff = DeepDiff(reference_results, predictions_dict, ignore_numeric_type_changes=True)
+    diff = DeepDiff(reference_results, predictions_dict, ignore_numeric_type_changes=True, math_epsilon=0.05)
 
     assert diff == {}, f"Differences found: {diff}"

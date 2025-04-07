@@ -1,7 +1,7 @@
 model:
   base_params:
-    model_args: "pretrained=HuggingFaceTB/SmolLM2-1.7B-Instruct,revision=57aa3c6599c53705406c648e7acca7e11dc45ea3,dtype=bfloat16" # pretrained=model_name,trust_remote_code=boolean,revision=revision_to_use,model_parallel=True ...
-    dtype: "bfloat16"
+    model_args: "pretrained=HuggingFaceTB/SmolLM2-1.7B-Instruct,revision=57aa3c6599c53705406c648e7acca7e11dc45ea3,dtype=float16" # pretrained=model_name,trust_remote_code=boolean,revision=revision_to_use,model_parallel=True ...
+    dtype: "float16"
     compile: false
     multichoice_continuations_start_space: null # If true/false, will force multiple choice continuations to start/not start with a space. If none, will do nothing
   merged_weights: # Ignore this section if you are not using PEFT models
