@@ -99,7 +99,7 @@ dev = ["lighteval[accelerate,quality,tests,multilingual,math,extended_tasks,vllm
 docs = ["hf-doc-builder", "watchdog"]
 extended_tasks = [
   "langdetect", # ifeval
-  "openai", # llm as a judge using openai models
+  "openai==1.55.2", # llm as a judge using openai models
   "tiktoken"
 ]
 s3 = ["s3fs"]
