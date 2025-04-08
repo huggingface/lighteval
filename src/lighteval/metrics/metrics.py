@@ -28,6 +28,9 @@ from lighteval.metrics.dynamic_metrics import (
     ExprExtractionConfig,
     IndicesExtractionConfig,
     LatexExtractionConfig,
+    compare_gold_target,
+    extract_target_from_pred,
+    get_extraction_regexes,
     multilingual_extractive_match_metric,
 )
 from lighteval.metrics.harness_compatibility.drop import drop_metrics
@@ -366,6 +369,167 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
+    math_pass_at_1_4n = SampleLevelMetric(
+        metric_name="math_pass@1:4_samples",
+        sample_level_fn=PassAtK(
+            k=1,
+            n=4,
+            strip_strings=True,
+            # Extracting mathematical expressions and latex expressions
+            normalize_gold=lambda k: extract_target_from_pred(
+                k,
+                get_extraction_regexes(
+                    formatted_doc=None,
+                    target_types=[ExprExtractionConfig(), LatexExtractionConfig()],
+                    language=Language.ENGLISH,
+                ),
+            ),
+            # Extracting mathematical expressions and latex expressions
+            normalize_pred=lambda k: extract_target_from_pred(
+                k,
+                get_extraction_regexes(
+                    formatted_doc=None,
+                    target_types=[ExprExtractionConfig(), LatexExtractionConfig()],
+                    language=Language.ENGLISH,
+                ),
+            ),
+            # Uses sympy for comparision
+            sample_scoring_function=compare_gold_target,
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    math_pass_at_1_8n = SampleLevelMetric(
+        metric_name="math_pass@1:8_samples",
+        sample_level_fn=PassAtK(
+            k=1,
+            n=8,
+            strip_strings=True,
+            # Extracting mathematical expressions and latex expressions
+            normalize_gold=lambda k: extract_target_from_pred(
+                k,
+                get_extraction_regexes(
+                    formatted_doc=None,
+                    target_types=[ExprExtractionConfig(), LatexExtractionConfig()],
+                    language=Language.ENGLISH,
+                ),
+            ),
+            # Extracting mathematical expressions and latex expressions
+            normalize_pred=lambda k: extract_target_from_pred(
+                k,
+                get_extraction_regexes(
+                    formatted_doc=None,
+                    target_types=[ExprExtractionConfig(), LatexExtractionConfig()],
+                    language=Language.ENGLISH,
+                ),
+            ),
+            # Uses sympy for comparision
+            sample_scoring_function=compare_gold_target,
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    math_pass_at_1_16n = SampleLevelMetric(
+        metric_name="math_pass@1:16_samples",
+        sample_level_fn=PassAtK(
+            k=1,
+            n=16,
+            strip_strings=True,
+            # Extracting mathematical expressions and latex expressions
+            normalize_gold=lambda k: extract_target_from_pred(
+                k,
+                get_extraction_regexes(
+                    formatted_doc=None,
+                    target_types=[ExprExtractionConfig(), LatexExtractionConfig()],
+                    language=Language.ENGLISH,
+                ),
+            ),
+            # Extracting mathematical expressions and latex expressions
+            normalize_pred=lambda k: extract_target_from_pred(
+                k,
+                get_extraction_regexes(
+                    formatted_doc=None,
+                    target_types=[ExprExtractionConfig(), LatexExtractionConfig()],
+                    language=Language.ENGLISH,
+                ),
+            ),
+            # Uses sympy for comparision
+            sample_scoring_function=compare_gold_target,
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    math_pass_at_1_32n = SampleLevelMetric(
+        metric_name="math_pass@1:32_samples",
+        sample_level_fn=PassAtK(
+            k=1,
+            n=32,
+            strip_strings=True,
+            # Extracting mathematical expressions and latex expressions
+            normalize_gold=lambda k: extract_target_from_pred(
+                k,
+                get_extraction_regexes(
+                    formatted_doc=None,
+                    target_types=[ExprExtractionConfig(), LatexExtractionConfig()],
+                    language=Language.ENGLISH,
+                ),
+            ),
+            # Extracting mathematical expressions and latex expressions
+            normalize_pred=lambda k: extract_target_from_pred(
+                k,
+                get_extraction_regexes(
+                    formatted_doc=None,
+                    target_types=[ExprExtractionConfig(), LatexExtractionConfig()],
+                    language=Language.ENGLISH,
+                ),
+            ),
+            # Uses sympy for comparision
+            sample_scoring_function=compare_gold_target,
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    math_pass_at_1_64n = SampleLevelMetric(
+        metric_name="math_pass@1:64_samples",
+        sample_level_fn=PassAtK(
+            k=1,
+            n=64,
+            strip_strings=True,
+            # Extracting mathematical expressions and latex expressions
+            normalize_gold=lambda k: extract_target_from_pred(
+                k,
+                get_extraction_regexes(
+                    formatted_doc=None,
+                    target_types=[ExprExtractionConfig(), LatexExtractionConfig()],
+                    language=Language.ENGLISH,
+                ),
+            ),
+            # Extracting mathematical expressions and latex expressions
+            normalize_pred=lambda k: extract_target_from_pred(
+                k,
+                get_extraction_regexes(
+                    formatted_doc=None,
+                    target_types=[ExprExtractionConfig(), LatexExtractionConfig()],
+                    language=Language.ENGLISH,
+                ),
+            ),
+            # Uses sympy for comparision
+            sample_scoring_function=compare_gold_target,
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+
     mrr = SampleLevelMetric(
         metric_name="mrr",
         sample_level_fn=MRR().compute,

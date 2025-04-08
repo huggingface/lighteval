@@ -20,19 +20,43 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from lighteval.models.model_loader import load_model
-from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
-from lighteval.utils.utils import EnvConfig
+import lighteval.tasks.default_prompts as prompt
+from lighteval.metrics.metrics import Metrics
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
-def test_empty_requests():
-    model_config = TransformersModelConfig(
-        "hf-internal-testing/tiny-random-LlamaForCausalLM", model_parallel=False, revision="main"
-    )
-    model: TransformersModel = load_model(config=model_config, env_config=EnvConfig(cache_dir="."))
+gsm8k_test = LightevalTaskConfig(
+    name="gsm8k",
+    suite=["test"],
+    prompt_function=prompt.gsm8k,
+    hf_repo="gsm8k",
+    hf_subset="main",
+    hf_avail_splits=["train", "test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select="random_sampling_from_train",
+    generation_size=512,
+    metric=[Metrics.expr_gold_metric],
+    stop_sequence=None,
+    trust_dataset=True,
+    version=0,
+)
 
-    assert model.loglikelihood([]) == []
-    assert model.loglikelihood_single_token([]) == []
-    assert model.loglikelihood_rolling([]) == []
-    assert model.greedy_until([]) == []
-    assert model.greedy_until_multi_turn([]) == []
+gpqa_diamond_test = LightevalTaskConfig(
+    name="gpqa:diamond",
+    suite=["test"],
+    prompt_function=prompt.gpqa_instruct,
+    hf_repo="Idavidrein/gpqa",
+    hf_subset="gpqa_diamond",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=2048,
+    metric=[Metrics.gpqa_instruct_metric],
+    stop_sequence=[],  # no stop sequence, will use eos token
+    trust_dataset=True,
+    version=0,
+)
+
+TASKS_TABLE = [gsm8k_test, gpqa_diamond_test]
