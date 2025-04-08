@@ -22,6 +22,7 @@
 
 import logging
 import os
+import re
 from typing import Optional
 
 from typer import Argument, Option
@@ -168,7 +169,7 @@ def accelerate(  # noqa C901
         args_dict["accelerator"] = accelerator
         args_dict["quantization_config"] = quantization_config
         args_dict["batch_size"] = override_batch_size
-        args_dict["multichoice_continuations_start_space"] = config["generation"][
+        args_dict["multichoice_continuations_start_space"] = config["base_params"][
             "multichoice_continuations_start_space"
         ]
         args_dict["use_chat_template"] = use_chat_template
@@ -189,11 +190,14 @@ def accelerate(  # noqa C901
         else:
             model_config = TransformersModelConfig(**args_dict)
     else:
+        generation_parameters = GenerationParameters.from_model_args(model_args)
+        # We slice out generation_parameters from model_args to avoid double-counting in the TransformersModelConfig
+        model_args = re.sub(r"generation_parameters=\{.*?\},?", "", model_args).strip(",")
         model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
         model_args_dict["accelerator"] = accelerator
         model_args_dict["use_chat_template"] = use_chat_template
         model_args_dict["compile"] = bool(model_args_dict["compile"]) if "compile" in model_args_dict else False
-        model_config = TransformersModelConfig(**model_args_dict)
+        model_config = TransformersModelConfig(**model_args_dict, generation_parameters=generation_parameters)
 
     pipeline = Pipeline(
         tasks=tasks,

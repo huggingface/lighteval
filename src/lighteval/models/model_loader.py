@@ -29,6 +29,10 @@ from lighteval.models.endpoints.endpoint_model import (
     InferenceEndpointModelConfig,
     ServerlessEndpointModelConfig,
 )
+from lighteval.models.endpoints.inference_providers_model import (
+    InferenceProvidersClient,
+    InferenceProvidersModelConfig,
+)
 from lighteval.models.endpoints.openai_model import OpenAIClient, OpenAIModelConfig
 from lighteval.models.endpoints.tgi_model import ModelClient, TGIModelConfig
 from lighteval.models.litellm_model import LiteLLMClient, LiteLLMModelConfig
@@ -66,6 +70,7 @@ def load_model(  # noqa: C901
         OpenAIModelConfig,
         LiteLLMModelConfig,
         SGLangModelConfig,
+        InferenceProvidersModelConfig,
     ],
     env_config: EnvConfig,
 ) -> Union[TransformersModel, AdapterModel, DeltaModel, ModelClient, DummyModel]:
@@ -108,6 +113,9 @@ def load_model(  # noqa: C901
 
     if isinstance(config, LiteLLMModelConfig):
         return load_litellm_model(config=config, env_config=env_config)
+
+    if isinstance(config, InferenceProvidersModelConfig):
+        return load_inference_providers_model(config=config)
 
 
 def load_model_with_tgi(config: TGIModelConfig):
@@ -166,6 +174,10 @@ def load_model_with_accelerate_or_default(
 
 def load_dummy_model(config: DummyModelConfig, env_config: EnvConfig):
     return DummyModel(config=config, env_config=env_config)
+
+
+def load_inference_providers_model(config: InferenceProvidersModelConfig):
+    return InferenceProvidersClient(config=config)
 
 
 def load_sglang_model(config: SGLangModelConfig, env_config: EnvConfig):

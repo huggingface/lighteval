@@ -52,6 +52,9 @@ def vllm(
     system_prompt: Annotated[
         Optional[str], Option(help="Use system prompt for evaluation.", rich_help_panel=HELP_PANEL_NAME_4)
     ] = None,
+    cot_prompt: Annotated[
+        Optional[str], Option(help="Use chain of thought prompt for evaluation.", rich_help_panel=HELP_PANEL_NAME_4)
+    ] = None,
     dataset_loading_processes: Annotated[
         int, Option(help="Number of processes to use for dataset loading.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = 1,
@@ -123,11 +126,12 @@ def vllm(
         job_id=job_id,
         dataset_loading_processes=dataset_loading_processes,
         custom_tasks_directory=custom_tasks,
-        override_batch_size=-1,  # Cannot override batch size when using VLLM
+        override_batch_size=-1,  # Cannot override batch size when using vLLM; Configure `max_num_seqs` and `max_num_batched_tokens` in `VLLMModelConfig` instead.
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         use_chat_template=use_chat_template,
         system_prompt=system_prompt,
+        cot_prompt=cot_prompt,
         load_responses_from_details_date_id=load_responses_from_details_date_id,
     )
 
