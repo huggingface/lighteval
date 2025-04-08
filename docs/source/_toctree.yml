@@ -15,15 +15,15 @@
     title: Add a custom task
   - local: adding-a-new-metric
     title: Add a custom metric
-  - local: use-huggingface-inference-endpoints-or-tgi-as-backend
-    title: Use HF's inference providers or TGI as backend
+  - local: use-inference-providers-as-backend
+    title: Use HF's inference providers as backend
   - local: use-litellm-as-backend
     title: Use litellm as backend
   - local: use-vllm-as-backend
     title: Use vllm as backend
   - local: use-sglang-as-backend
     title: Use SGLang as backend
-  - local: evaluate-the-model-on-a-server-or-container
+  - local: use-huggingface-inference-endpoints-or-tgi-as-backend
     title: Evaluate on Server
   - local: contributing-to-multilingual-evaluations
     title: Contributing to multilingual evaluations
