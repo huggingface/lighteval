@@ -55,6 +55,7 @@ if is_vllm_available():
     from vllm import LLM, SamplingParams
     from vllm.distributed.parallel_state import destroy_distributed_environment, destroy_model_parallel
     from vllm.transformers_utils.tokenizer import get_tokenizer
+    from vllm.lora.request import LoRARequest
 
     logging.getLogger("vllm").propagate = True
     logging.getLogger("vllm").handlers.clear()
@@ -93,6 +94,7 @@ class VLLMModelConfig:
     )
     pairwise_tokenization: bool = False  # whether to tokenize the context and continuation separately or together.
     generation_parameters: GenerationParameters = None  # sampling parameters to use for generation
+    lora_path: str | None = None  # path to the LoRA modules
     max_num_seqs: int = 128  # maximum number of sequences per iteration; This variable and `max_num_batched_tokens` effectively control the batch size at prefill stage. See https://github.com/vllm-project/vllm/issues/2492 for detailed explaination.
     max_num_batched_tokens: int = 2048  # maximum number of tokens per batch
 
@@ -136,6 +138,12 @@ class VLLMModel(LightevalModel):
 
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
         self.pairwise_tokenization = config.pairwise_tokenization
+        
+        # enable LoRA if lora_path is provided
+        if config.lora_path is not None:
+            self.lora_request = LoRARequest("default", 1, config.lora_path)
+        else:
+            self.lora_request = None
 
     @property
     def tokenizer(self):
@@ -186,6 +194,8 @@ class VLLMModel(LightevalModel):
             "pipeline_parallel_size": int(config.pipeline_parallel_size),
             "max_model_len": self._max_length,
             "swap_space": 4,
+            "seed": int(config.seed),
+            "enable_lora": config.lora_path is not None,
             "seed": int(config.seed),
             "max_num_seqs": int(config.max_num_seqs),
             "max_num_batched_tokens": int(config.max_num_batched_tokens),
@@ -346,10 +356,14 @@ class VLLMModel(LightevalModel):
             # but then tensor_parallel breaks
             # Hynek: With the newest vllm, it actually breaks when tensor_parallel_size == 1 and num_gpus not set,
             # as VLLM complains about no GPUs available.
+            # Haizhou: didn't test lora with data_parallel_size > 1
             @ray.remote(num_gpus=1 if self.tensor_parallel_size == 1 else None)
             def run_inference_one_model(model_args: dict, sampling_params: SamplingParams, requests):
                 llm = LLM(**model_args)
-                return llm.generate(prompt_token_ids=requests, sampling_params=sampling_params)
+                if self.lora_request is not None:
+                    return llm.generate(prompt_token_ids=requests, sampling_params=sampling_params, lora_request=self.lora_request)
+                else:
+                    return llm.generate(prompt_token_ids=requests, sampling_params=sampling_params)
 
             # dispatch requests to all self.data_parallel_size workers, in interleaved fashion
             # interleaved important to balance context lengths across workers
@@ -366,11 +380,19 @@ class VLLMModel(LightevalModel):
                 if x is not None
             ]
         else:
-            outputs = self.model.generate(
-                prompt_token_ids=inputs,
-                sampling_params=sampling_params,
-                use_tqdm=True,
-            )
+            if self.lora_request is not None:
+                outputs = self.model.generate(
+                    prompt_token_ids=inputs,
+                    sampling_params=sampling_params,
+                    lora_request=self.lora_request,
+                    use_tqdm=True,
+                )
+            else:
+                outputs = self.model.generate(
+                    prompt_token_ids=inputs,
+                    sampling_params=sampling_params,
+                    use_tqdm=True,
+                )
 
         return outputs
 
