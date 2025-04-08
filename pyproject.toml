@@ -30,7 +30,7 @@ where = ["src"]
 
 [project]
 name = "lighteval"
-version = "0.6.0.dev0"
+version = "0.8.1.dev0"
 authors = [
   { name="Clémentine Fourrier", email="clementine@huggingface.com" },
   { name="Nathan Habib", email="nathan.habib@huggingface.com" },
@@ -72,18 +72,18 @@ dependencies = [
     # Base metrics
     "nltk==3.9.1",
     "scikit-learn",
-    "spacy==3.7.2",
     "sacrebleu",
     "rouge_score==0.1.2",
     "sentencepiece>=0.1.99",
     "protobuf==3.20.*", # pinned for sentencepiece compat
     "pycountry",
     "fsspec>=2023.12.2",
+    "httpx == 0.27.2",
 ]
 
 [project.optional-dependencies]
 litellm = ["litellm", "diskcache"]
-tgi = ["text-generation==0.6.0"]
+tgi = ["text-generation>=0.6.0"]
 optimum = ["optimum==1.12.0"]
 quantization = ["bitsandbytes>=0.41.0", "auto-gptq>=0.4.2"]
 adapters = ["peft==0.3.0"]
@@ -99,7 +99,7 @@ dev = ["lighteval[accelerate,quality,tests,multilingual,math,extended_tasks]"]
 docs = ["hf-doc-builder", "watchdog"]
 extended_tasks = [
   "langdetect", # ifeval
-  "openai", # llm as a judge using openai models
+  "openai == 1.55.2", # llm as a judge using openai models
   "tiktoken"
 ]
 s3 = ["s3fs"]
