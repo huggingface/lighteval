@@ -104,6 +104,7 @@ class PipelineParameters:
     max_samples: int | None = None
     use_chat_template: bool = False
     system_prompt: str | None = None
+    cot_prompt: str | None = None
     load_responses_from_details_date_id: str | None = None
 
     def __post_init__(self):  # noqa C901
@@ -156,8 +157,8 @@ class Pipeline:
         generation_parameters = model_config.generation_parameters.model_dump() if model_config else {}
 
         self.evaluation_tracker.general_config_logger.log_model_info(generation_parameters, self.model.model_info)
-        self._init_tasks_and_requests(tasks=tasks)
         self._init_random_seeds()
+        self._init_tasks_and_requests(tasks=tasks)
         # Final results
         self.final_dict: dict | None = None
 
@@ -230,6 +231,7 @@ class Pipeline:
                 evaluation_tracker=self.evaluation_tracker,
                 use_chat_template=self.pipeline_parameters.use_chat_template,
                 system_prompt=self.pipeline_parameters.system_prompt,
+                cot_prompt=self.pipeline_parameters.cot_prompt,
             )
 
             self.task_names_list = task_names_list
