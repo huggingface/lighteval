@@ -49,10 +49,10 @@ def prepare_prompt(line: dict[str, Any]) -> str:
     query = "You will be given a question (problem specification) and will generate a correct Python program that matches the specification and passes all tests.\n\n"
     query += f"Question: {line['question_content']}\n\n"
     if starter_code := line.get("starter_code", None):
-        query += "You will use the following starter code to write the solution to the problem and enclose your code within delimiters."
+        query += "You will use the following starter code to write the solution to the problem and enclose your code within delimiters.\n"
         query += f"```python\n{starter_code}\n```\n\n"
     else:
-        query += "Read the inputs from stdin solve the problem and write the answer to stdout (do not directly test on the sample inputs). Enclose your code within delimiters as follows."
+        query += "Read the inputs from stdin solve the problem and write the answer to stdout (do not directly test on the sample inputs). Enclose your code within delimiters as follows. Ensure that when the python program runs, it reads the inputs, runs the algorithm and writes output to STDOUT.\n"
         query += "```python\n# YOUR CODE HERE\n```\n\n"
     return query
 
