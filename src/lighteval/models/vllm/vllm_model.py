@@ -37,7 +37,7 @@ from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
 )
-from lighteval.models.utils import _get_dtype, _simplify_name
+from lighteval.models.utils import _simplify_name
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -76,9 +76,9 @@ STARTING_BATCH_SIZE = 512
 @dataclass
 class VLLMModelConfig:
     pretrained: str
-    gpu_memory_utilisation: float = 0.9  # lower this if you are running out of memory
+    gpu_memory_utilization: float = 0.9  # lower this if you are running out of memory
     revision: str = "main"  # revision of the model
-    dtype: str | None = None
+    dtype: str = "bfloat16"
     tensor_parallel_size: int = 1  # how many GPUs to use for tensor parallelism
     pipeline_parallel_size: int = 1  # how many GPUs to use for pipeline parallelism
     data_parallel_size: int = 1  # how many GPUs to use for data parallelism
@@ -93,6 +93,8 @@ class VLLMModelConfig:
     )
     pairwise_tokenization: bool = False  # whether to tokenize the context and continuation separately or together.
     generation_parameters: GenerationParameters = None  # sampling parameters to use for generation
+    max_num_seqs: int = 128  # maximum number of sequences per iteration; This variable and `max_num_batched_tokens` effectively control the batch size at prefill stage. See https://github.com/vllm-project/vllm/issues/2492 for detailed explaination.
+    max_num_batched_tokens: int = 2048  # maximum number of tokens per batch
 
     subfolder: Optional[str] = None
 
@@ -126,10 +128,9 @@ class VLLMModel(LightevalModel):
 
         self.model_name = _simplify_name(config.pretrained)
         self.model_sha = ""  # config.get_model_sha()
-        self.precision = _get_dtype(config.dtype, config=self._config)
+        self.precision = config.dtype
 
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
-        self.sampling_params = SamplingParams(**config.generation_parameters.to_vllm_openai_dict())
         self.pairwise_tokenization = config.pairwise_tokenization
 
     @property
@@ -139,8 +140,7 @@ class VLLMModel(LightevalModel):
     def cleanup(self):
         destroy_model_parallel()
         if self.model is not None:
-            del self.model.llm_engine.model_executor.driver_worker
-        self.model = None
+            del self.model
         gc.collect()
         ray.shutdown()
         destroy_distributed_environment()
@@ -174,7 +174,7 @@ class VLLMModel(LightevalModel):
         """
         self.model_args = {
             "model": config.pretrained,
-            "gpu_memory_utilization": float(config.gpu_memory_utilisation),
+            "gpu_memory_utilization": float(config.gpu_memory_utilization),
             "revision": config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
             "dtype": config.dtype,
             "trust_remote_code": config.trust_remote_code,
@@ -182,7 +182,9 @@ class VLLMModel(LightevalModel):
             "pipeline_parallel_size": int(config.pipeline_parallel_size),
             "max_model_len": self._max_length,
             "swap_space": 4,
-            "seed": 1234,
+            "seed": config.seed,
+            "max_num_seqs": int(config.max_num_seqs),
+            "max_num_batched_tokens": int(config.max_num_batched_tokens),
         }
         if int(config.data_parallel_size) > 1:
             self.model_args["distributed_executor_backend"] = "ray"
@@ -247,7 +249,7 @@ class VLLMModel(LightevalModel):
                 # the case! Because of that we only use batch size of 1
                 stop_tokens = dataset[0].stop_sequence
 
-            max_new_tokens = dataset[0].generation_size  # could be none
+            max_new_tokens = self._config.generation_parameters.max_new_tokens or dataset[0].generation_size
             returns_logits = dataset[0].use_logits
             num_samples = dataset[0].num_samples
 
@@ -266,14 +268,19 @@ class VLLMModel(LightevalModel):
             if max_new_tokens is not None:
                 if context_size + max_new_tokens > self.max_length:
                     logger.warning(
-                        f"{context_size + max_new_tokens=} which is greather than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
+                        f"{context_size + max_new_tokens=} which is greater than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
                     )
                     context_size = self.max_length - max_new_tokens
+                    if context_size < 0:
+                        logger.critical(
+                            f"{context_size=} is less than 0, either reduce the max_new_tokens or increase model max length."
+                        )
+                        raise ValueError("Context size is less than 0.")
                     inputs = [input[-context_size:] for input in inputs]
             else:
                 if context_size > self.max_length:
                     logger.warning(
-                        f"{context_size=} which is greather than {self.max_length=}. Truncating context to {self.max_length} tokens."
+                        f"{context_size=} which is greater than {self.max_length=}. Truncating context to {self.max_length} tokens."
                     )
                     context_size = self.max_length
                     inputs = [input[-context_size:] for input in inputs]
@@ -313,7 +320,8 @@ class VLLMModel(LightevalModel):
         generate: bool = True,
     ) -> list[GenerativeResponse]:
         """Contains the actual logic of the generation."""
-        sampling_params = self.sampling_params.clone() or SamplingParams()
+        sampling_params = SamplingParams(**self._config.generation_parameters.to_vllm_dict())
+
         if generate:
             sampling_params.n = num_samples
             sampling_params.max_tokens = max_new_tokens

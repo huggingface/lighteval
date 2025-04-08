@@ -35,6 +35,7 @@ from nltk.metrics.distance import edit_distance
 from nltk.tokenize import word_tokenize
 from nltk.tokenize.treebank import TreebankWordTokenizer
 from nltk.translate.bleu_score import sentence_bleu
+from pydantic import BaseModel
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from lighteval.metrics.imports.bert_scorer import BERTScorer
@@ -864,36 +865,51 @@ class StringDistance:
 
 
 class JudgeLLM:
-    available_models_openai = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo", "gpt-4"]
+    available_models_openai = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-4o-2024-08-06"]
 
     def __init__(
         self,
         judge_model_name: str,
         template: Callable,
         process_judge_response: Callable,
-        judge_backend: Literal["litellm", "openai", "transformers", "vllm", "tgi"],
+        judge_backend: Literal["litellm", "openai", "transformers", "vllm", "tgi", "inference-providers"],
         short_judge_name: str | None = None,
+        response_format: BaseModel = None,
+        url: str | None = None,
+        hf_provider: str | None = None,
+        max_tokens: int | None = None,
     ) -> None:
+        logger.debug(f"Initializing JudgeLLM with backend: {judge_backend}, model: {judge_model_name}")
+
+        api_key = None
+
         match judge_backend:
             case "openai":
                 if judge_model_name not in self.available_models_openai:
                     raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
-                else:
-                    api_key = os.getenv("OPENAI_API_KEY")
-                    url = None
+                api_key = os.getenv("OPENAI_API_KEY")
+                logger.debug("Using OpenAI backend for llm as a judge metric")
+
             case "tgi":
                 api_key = os.getenv("HF_TOKEN")
-                url = "https://api-inference.huggingface.co/v1/"
+                if url is None:
+                    url = "https://api-inference.huggingface.co/v1/"
+                logger.debug("Using TGI backend")
+
+            case "inference-providers":
+                api_key = os.getenv("HF_TOKEN")
+                logger.debug("Using Hugging Face Inference backend")
+
             case "litellm":
-                api_key = None
-                url = None
+                logger.debug("Using LiteLLM backend for llm as a judge metric")
+
             case "transformers" | "vllm":
+                logger.debug("Checking availability of Transformers or VLLM model")
                 api = HfApi()
                 models = api.list_models(model_name=judge_model_name)
-                url = None
-                api_key = None
                 if not models:
-                    raise ValueError(f"{judge_model_name} not in available models for llm as a judge metric")
+                    raise ValueError(f"{judge_model_name} not found on Hugging Face Hub")
+
             case _:
                 raise ValueError(f"{judge_backend} is not a valid backend for llm as a judge metric")
 
@@ -902,9 +918,12 @@ class JudgeLLM:
             model=judge_model_name,
             templates=template,
             process_judge_response=process_judge_response,
+            judge_backend=judge_backend,
+            response_format=response_format,
             api_key=api_key,
             url=url,
-            judge_backend=judge_backend,
+            hf_provider=hf_provider,
+            max_tokens=max_tokens,
         )
 
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:

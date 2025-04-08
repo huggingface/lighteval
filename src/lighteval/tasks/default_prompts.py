@@ -43,6 +43,24 @@ INTEGER_INDICES = list(map(str, list(range(1, 27))))
 # fmt: on
 
 
+def aime_prompt_fn(line, task_name: str = None):
+    # Prompt template adapted from
+    # - simple-evals: https://github.com/openai/simple-evals/blob/6e84f4e2aed6b60f6a0c7b8f06bbbf4bfde72e58/math_eval.py#L17
+    # - Llama 3: https://huggingface.co/datasets/meta-llama/Llama-3.2-1B-Instruct-evals/viewer/Llama-3.2-1B-Instruct-evals__math__details?views%5B%5D=llama_32_1b_instruct_evals__math__details
+    # Note that it is important to have the final answer in a box for math-verify to work correctly
+    MATH_QUERY_TEMPLATE = """
+Solve the following math problem efficiently and clearly.  The last line of your response should be of the following format: 'Therefore, the final answer is: $\\boxed{{ANSWER}}$. I hope it is correct' (without quotes) where ANSWER is just the final number or expression that solves the problem. Think step by step before answering.
+
+{Question}
+""".strip()
+    return Doc(
+        task_name=task_name,
+        query=MATH_QUERY_TEMPLATE.format(Question=line["problem"]),
+        choices=[line["answer"]],
+        gold_index=0,
+    )
+
+
 def anli(line, task_name: str = None):
     return Doc(
         task_name=task_name,
@@ -69,6 +87,57 @@ def apps(line, task_name: str = None):
         choices=[json.loads(line["solutions"])],
         gold_index=0,
         specific={"input_output": line["input_output"]},
+    )
+
+
+def arc_agi_2(line, task_name: str = None):
+    # query from: https://github.com/arcprize/model_baseline/blob/main/src/prompts/system_prompt.txt
+    def convert_2d_list_to_string(list_of_lists: list[list[int]]) -> str:
+        """
+        Convert a list of lists to a string
+        """
+
+        string_list = ""
+
+        for row in list_of_lists:
+            string_list += json.dumps(row) + "\n"
+
+        return string_list
+
+    query = """You are participating in a puzzle solving competition. You are an expert at solving puzzles.
+
+Below is a list of input and output pairs with a pattern. Your goal is to identify the pattern or transformation in the training examples that maps the input to the output, then apply that pattern to the test input to give a final output.
+
+Respond in the format of the training output examples
+
+--Training Examples--
+{training_examples}
+--End of Training Examples--
+
+--Test Input--
+{test_input}
+--End of Test Input--
+
+Your response:""".strip()
+
+    training_pairs = line["fewshots"]
+    training_examples = ""
+    for i, pair in enumerate(training_pairs):
+        training_examples += f"--Example {i}-- \n\n INPUT: \n\n"
+        training_examples += convert_2d_list_to_string(pair["input"]) + "\n\n"
+        training_examples += "OUTPUT: \n\n"
+        training_examples += convert_2d_list_to_string(pair["output"]) + "\n\n"
+
+    test_input = convert_2d_list_to_string(line["question"][0]["input"])
+
+    gold = str(line["question"][0]["output"])
+    query = query.format(training_examples=training_examples, test_input=test_input)
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=[gold],
+        gold_index=0,
     )
 
 
@@ -710,22 +779,31 @@ def ethics_virtue(line, task_name: str = None):
 
 
 def gpqa(line, task_name: str = None):
+    # Prompt template from simple-evals: https://github.com/openai/simple-evals/blob/83ed7640a7d9cd26849bcb3340125002ef14abbe/common.py#L14
+    GPQA_QUERY_TEMPLATE = """
+Answer the following multiple choice question. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of ABCD. Think step by step before answering.
+
+{Question}
+
+A) {A}
+B) {B}
+C) {C}
+D) {D}
+""".strip()
     gold_index = random.randint(0, 3)
     choices = [line["Incorrect Answer 1"], line["Incorrect Answer 2"], line["Incorrect Answer 3"]]
     choices.insert(gold_index, line["Correct Answer"])
 
-    instruction = "Select the correct answer to the following questions.\n\n"
-
-    query = f"Question: {line['Question']}\n"
-    query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, choices)])
-    query += "Answer: "
+    query = GPQA_QUERY_TEMPLATE.format(
+        A=choices[0], B=choices[1], C=choices[2], D=choices[3], Question=line["Question"]
+    )
 
     return Doc(
         task_name=task_name,
-        query=f"{instruction}{query}",
+        query=query,
         choices=LETTER_INDICES[: len(choices)],
         gold_index=gold_index,
-        instruction=instruction,
+        instruction=query,
     )
 
 
@@ -1254,6 +1332,25 @@ def lsat_qa(line, task_name: str = None):
         choices=LETTER_INDICES[: len(line["references"])],
         gold_index=line["gold_index"],
         instruction="The following are multiple choice questions (with answers).\n",
+    )
+
+
+def math_500(line, task_name: str = None):
+    # Prompt template adapted from
+    # - simple-evals: https://github.com/openai/simple-evals/blob/6e84f4e2aed6b60f6a0c7b8f06bbbf4bfde72e58/math_eval.py#L17
+    # - Llama 3: https://huggingface.co/datasets/meta-llama/Llama-3.2-1B-Instruct-evals/viewer/Llama-3.2-1B-Instruct-evals__math__details?views%5B%5D=llama_32_1b_instruct_evals__math__details
+    # Note that it is important to have the final answer in a box for math-verify to work correctly
+    MATH_QUERY_TEMPLATE = """
+Solve the following math problem efficiently and clearly.  The last line of your response should be of the following format: 'Therefore, the final answer is: $\\boxed{{ANSWER}}$. I hope it is correct' (without quotes) where ANSWER is just the final number or expression that solves the problem. Think step by step before answering.
+
+{Question}
+""".strip()
+
+    return Doc(
+        task_name=task_name,
+        query=MATH_QUERY_TEMPLATE.format(Question=line["problem"]),
+        gold_index=0,
+        choices=[line["solution"]],
     )
 
 

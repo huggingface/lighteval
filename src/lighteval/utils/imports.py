@@ -91,6 +91,13 @@ def is_vllm_available() -> bool:
 NO_VLLM_ERROR_MSG = "You are trying to use an VLLM model, for which you need `vllm` and `ray`, which are not available in your environment. Please install them using pip, `pip install vllm ray`."
 
 
+def is_sglang_available() -> bool:
+    return importlib.util.find_spec("sglang") is not None and importlib.util.find_spec("flashinfer") is not None
+
+
+NO_SGLANG_ERROR_MSG = "You are trying to use an sglang model, for which you need `sglang` and `flashinfer`, which are not available in your environment. Please install them using pip, `pip install vllm ray`."
+
+
 def can_load_extended_tasks() -> bool:
     imports = []
     for package in ["langdetect", "openai"]:
@@ -140,3 +147,10 @@ def requires_latex2sympy2_extended(func):
 
 
 NO_LATEX2SYMPY2_EXTENDED_ERROR_MSG = "You are trying to parse latex expressions, for which you need `latex2sympy2_extended`, which is not available in your environment. Please install it using `pip install lighteval[math]`."
+
+
+def is_spacy_available() -> bool:
+    return importlib.util.find_spec("spacy") is not None
+
+
+NO_SPACY_ERROR_MSG = "You are trying to use some metrics requiring `spacy`, which is not available in your environment. Please install it using pip."

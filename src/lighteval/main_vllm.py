@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import os
+import re
 from typing import Optional
 
 from typer import Argument, Option
@@ -122,7 +123,7 @@ def vllm(
         job_id=job_id,
         dataset_loading_processes=dataset_loading_processes,
         custom_tasks_directory=custom_tasks,
-        override_batch_size=-1,  # Cannot override batch size when using VLLM
+        override_batch_size=-1,  # Cannot override batch size when using vLLM; Configure `max_num_seqs` and `max_num_batched_tokens` in `VLLMModelConfig` instead.
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         use_chat_template=use_chat_template,
@@ -133,18 +134,24 @@ def vllm(
     if model_args.endswith(".yaml"):
         with open(model_args, "r") as f:
             config = yaml.safe_load(f)["model"]
+        model_args = config["base_params"]["model_args"]
+        metric_options = config.get("metric_options", {})
         generation_parameters = GenerationParameters.from_dict(config)
-        model_config = VLLMModelConfig(config, generation_parameters=generation_parameters)
-
     else:
-        model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
-        model_config = VLLMModelConfig(**model_args_dict)
+        generation_parameters = GenerationParameters.from_model_args(model_args)
+        # We slice out generation_parameters from model_args to avoid double-counting in the VLLMModelConfig
+        model_args = re.sub(r"generation_parameters=\{.*?\},?", "", model_args).strip(",")
+        metric_options = {}
+
+    model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
+    model_config = VLLMModelConfig(**model_args_dict, generation_parameters=generation_parameters)
 
     pipeline = Pipeline(
         tasks=tasks,
         pipeline_parameters=pipeline_params,
         evaluation_tracker=evaluation_tracker,
         model_config=model_config,
+        metric_options=metric_options,
     )
 
     pipeline.evaluate()

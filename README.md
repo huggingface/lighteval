@@ -36,7 +36,7 @@ backends—whether it's
 ease. Dive deep into your model’s performance by saving and exploring detailed,
 sample-by-sample results to debug and see how your models stack-up.
 
-Customization at your fingertips: letting you either browse all our existing [tasks](https://github.com/huggingface/lighteval/wiki/Available-Tasks) and [metrics](https://github.com/huggingface/lighteval/wiki/Metric-List) or effortlessly [create your own](https://github.com/huggingface/lighteval/wiki/Adding-a-Custom-Task), tailored to your needs.
+Customization at your fingertips: letting you either browse all our existing [tasks](https://huggingface.co/docs/lighteval/available-tasks) and [metrics](https://huggingface.co/docs/lighteval/metric-list) or effortlessly create your own [custom task](https://huggingface.co/docs/lighteval/adding-a-custom-task) and [custom metric](https://huggingface.co/docs/lighteval/adding-a-new-metric), tailored to your needs.
 
 Seamlessly experiment, benchmark, and store your results on the Hugging Face
 Hub, S3, or locally.
@@ -69,7 +69,7 @@ huggingface-cli login
 
 ## 🚀 Quickstart
 
-Lighteval offers two main entry points for model evaluation:
+Lighteval offers the following entry points for model evaluation:
 
 - `lighteval accelerate` : evaluate models on CPU or one or more GPUs using [🤗
   Accelerate](https://github.com/huggingface/accelerate)
@@ -126,7 +126,7 @@ pre-commit run --all-files
   author = {Fourrier, Clémentine and Habib, Nathan and Kydlíček, Hynek and Wolf, Thomas and Tunstall, Lewis},
   title = {LightEval: A lightweight framework for LLM evaluation},
   year = {2023},
-  version = {0.7.0},
+  version = {0.8.0},
   url = {https://github.com/huggingface/lighteval}
 }
 ```

@@ -15,8 +15,14 @@
     title: Add a custom task
   - local: adding-a-new-metric
     title: Add a custom metric
+  - local: use-inference-providers-as-backend
+    title: Use HF's inference providers as backend
+  - local: use-litellm-as-backend
+    title: Use litellm as backend
   - local: use-vllm-as-backend
-    title: Use VLLM as backend
+    title: Use vllm as backend
+  - local: use-sglang-as-backend
+    title: Use SGLang as backend
   - local: evaluate-the-model-on-a-server-or-container
     title: Evaluate on Server
   - local: contributing-to-multilingual-evaluations

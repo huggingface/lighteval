@@ -90,6 +90,8 @@ class GeneralConfigLogger:
     model_dtype: str = None
     model_size: str = None
 
+    generation_parameters: dict | None = None
+
     # Nanotron config
     config: "Config" = None
 
@@ -133,14 +135,16 @@ class GeneralConfigLogger:
         self.job_id = job_id
         self.config = config
 
-    def log_model_info(self, model_info: ModelInfo) -> None:
+    def log_model_info(self, generation_parameters: dict, model_info: ModelInfo) -> None:
         """
         Logs the model information.
 
         Args:
+            model_config: the model config used to initalize the model.
             model_info (ModelInfo): Model information to be logged.
 
         """
+        self.generation_parameters = generation_parameters
         self.model_name = model_info.model_name
         self.model_sha = model_info.model_sha
         self.model_dtype = model_info.model_dtype
@@ -201,6 +205,7 @@ class DetailsLogger:
         num_effective_few_shots: int = 0
         num_asked_few_shots: int = 0
         predictions: list = field(default_factory=list)
+        prediction_logits: list = field(default_factory=list)
         input_tokens: list = field(default_factory=list)
         cont_tokens: list = field(default_factory=list)
         truncated: list = field(default_factory=list)
