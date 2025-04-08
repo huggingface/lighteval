@@ -33,11 +33,11 @@ class TestTGIModelConfig:
         "config_path, expected_config",
         [
             (
-                "examples/model_configs/tgi_model.yaml",
+                "examples/model_configs/huggingface_tgi_model.yaml",
                 {
                     "inference_server_address": "",
                     "inference_server_auth": None,
-                    "model_id": None,
+                    "model_name": None,
                     "generation_parameters": {
                         "early_stopping": None,
                         "frequency_penalty": None,

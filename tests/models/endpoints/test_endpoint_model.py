@@ -35,10 +35,10 @@ class TestInferenceEndpointModelConfig:
         "config_path, expected_config",
         [
             (
-                "examples/model_configs/endpoint_model.yaml",
+                "examples/model_configs/huggingface_inference_endpoints.yaml",
                 {
                     "model_name": "meta-llama/Llama-2-7b-hf",
-                    "model_dtype": "float16",
+                    "dtype": "float16",
                     "revision": "main",
                     "endpoint_name": None,
                     "reuse_existing": False,
@@ -60,7 +60,7 @@ class TestInferenceEndpointModelConfig:
                     "model_name": "meta-llama/Llama-3.1-8B-Instruct",
                     # Defaults:
                     "revision": "main",
-                    "model_dtype": None,
+                    "dtype": None,
                     "endpoint_name": None,
                     "reuse_existing": False,
                     "accelerator": "gpu",
@@ -74,10 +74,6 @@ class TestInferenceEndpointModelConfig:
                     "image_url": None,
                     "env_vars": None,
                 },
-            ),
-            (
-                "examples/model_configs/endpoint_model_reuse_existing.yaml",
-                {"endpoint_name": "llama-2-7B-lighteval", "reuse_existing": True},
             ),
         ],
     )

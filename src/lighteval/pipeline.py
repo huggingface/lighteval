@@ -153,7 +153,7 @@ class Pipeline:
         self.accelerator, self.parallel_context = self._init_parallelism_manager()
         self.model = self._init_model(model_config, model)
 
-        generation_parameters = model_config.generation_parameters.dict() if model_config else {}
+        generation_parameters = model_config.generation_parameters.model_dump() if model_config else {}
 
         self.evaluation_tracker.general_config_logger.log_model_info(generation_parameters, self.model.model_info)
         self._init_tasks_and_requests(tasks=tasks)
