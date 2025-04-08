@@ -15,8 +15,8 @@
     title: Add a custom task
   - local: adding-a-new-metric
     title: Add a custom metric
-  - local: use-inference-providers-as-backend
-    title: Use HF's inference providers as backend
+  - local: use-huggingface-inference-endpoints-or-tgi-as-backend
+    title: Use HF's inference providers or TGI as backend
   - local: use-litellm-as-backend
     title: Use litellm as backend
   - local: use-vllm-as-backend
