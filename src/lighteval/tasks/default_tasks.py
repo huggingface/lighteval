@@ -329,6 +329,20 @@ aime24 = LightevalTaskConfig(
     ],
     version=1,
 )
+aime24_gpassk = LightevalTaskConfig(
+    name="aime24_gpassk",
+    suite=["lighteval"],
+    prompt_function=prompt.aime_prompt_fn,
+    hf_repo="HuggingFaceH4/aime_2024",
+    hf_subset="default",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=8192,
+    metric=[Metrics.g_pass_at_16_expr_gold],
+    version=1,
+)
 aime25 = LightevalTaskConfig(
     name="aime25",
     suite=["lighteval"],
@@ -344,6 +358,20 @@ aime25 = LightevalTaskConfig(
         Metrics.expr_gold_metric,
         Metrics.math_pass_at_1_32n,
     ],
+    version=1,
+)
+aime25_gpassk = LightevalTaskConfig(
+    name="aime25_gpassk",
+    suite=["lighteval"],
+    prompt_function=prompt.aime_prompt_fn,
+    hf_repo="yentinglin/aime_2025",
+    hf_subset="default",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=8192,
+    metric=[Metrics.g_pass_at_16_expr_gold],
     version=1,
 )
 anachronisms_bigbench = LightevalTaskConfig(
@@ -9659,6 +9687,20 @@ math_500 = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=32768,
     metric=[Metrics.latex_gold_metric],
+    version=1,
+)
+math_500_gpassk = LightevalTaskConfig(
+    name="math_500_gpassk",
+    suite=["lighteval"],
+    prompt_function=prompt.math_500,
+    hf_repo="HuggingFaceH4/MATH-500",
+    hf_subset="default",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=8192,
+    metric=[Metrics.g_pass_at_16_latex_gold],
     version=1,
 )
 math_algebra_lighteval = LightevalTaskConfig(
