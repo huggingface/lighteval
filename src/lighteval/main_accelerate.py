@@ -99,12 +99,11 @@ def accelerate(  # noqa C901
     import yaml
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.models.model_input import GenerationParameters
     from lighteval.models.transformers.adapter_model import AdapterModelConfig
     from lighteval.models.transformers.delta_model import DeltaModelConfig
     from lighteval.models.transformers.transformers_model import TransformersModelConfig
+    from lighteval.models.utils import ModelConfig
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
-    from lighteval.utils.utils import parse_args
 
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
@@ -128,20 +127,21 @@ def accelerate(  # noqa C901
 
     if model_args.endswith(".yaml"):
         with open(model_args, "r") as f:
-            config = yaml.safe_load(f)
+            config = yaml.safe_load(f)["model_parameters"]
     else:
         # We extract the model args
-        config: dict = parse_args(model_args)
+        config: dict = ModelConfig._parse_args(model_args)
+
+    breakpoint()
 
     config["use_chat_template"] = use_chat_template
-    generation_parameters = GenerationParameters(**config.get("generation", {}))
 
-    if config["model"].get("delta_weights", False):
-        model_config = DeltaModelConfig(**config["model"], generation_parameters=generation_parameters)
-    elif config["model"].get("adapter_weights", False):
-        model_config = AdapterModelConfig(**config["model"], generation_parameters=generation_parameters)
+    if config.get("delta_weights", False):
+        model_config = DeltaModelConfig(**config)
+    elif config.get("adapter_weights", False):
+        model_config = AdapterModelConfig(**config)
     else:
-        model_config = TransformersModelConfig(**config["model"], generation_parameters=generation_parameters)
+        model_config = TransformersModelConfig(**config)
 
     pipeline = Pipeline(
         tasks=tasks,

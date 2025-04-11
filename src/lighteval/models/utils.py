@@ -47,11 +47,11 @@ class ModelConfig(BaseModel, extra="forbid"):
 
     @classmethod
     def from_args(cls, args: str):
-        config = cls.__parse_args(args)
+        config = cls._parse_args(args)
         return cls(**config)
 
     @staticmethod
-    def __parse_args(args: str) -> dict:
+    def _parse_args(args: str) -> dict:
         """Parse a string of arguments into a configuration dictionary.
 
         This function parses a string containing model arguments and generation parameters
@@ -83,8 +83,6 @@ class ModelConfig(BaseModel, extra="forbid"):
                 'model': {'model_name': 'gpt2', 'use_cache': True, 'generation_parameters': {'temperature': 0.7}},
             }
         """
-        config = {}
-
         # Looking for generation_parameters in the model_args
         generation_parameters_dict = None
         pattern = re.compile(r"(\w+)=(\{.*\}|[^,]+)")
@@ -100,7 +98,8 @@ class ModelConfig(BaseModel, extra="forbid"):
 
         if generation_parameters_dict is not None:
             model_config["generation_parameters"] = generation_parameters_dict
-        return config
+
+        return model_config
 
 
 def _get_dtype(dtype: Union[str, torch.dtype, None], config: Optional[AutoConfig] = None) -> Optional[torch.dtype]:

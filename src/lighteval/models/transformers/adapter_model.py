@@ -41,6 +41,7 @@ if is_peft_available():
 class AdapterModelConfig(TransformersModelConfig):
     # Adapter models have the specificity that they look at the base model (= the parent) for the tokenizer and config
     base_model: str
+    adapter_weights: bool
 
     def model_post_init(self, __context):
         if not is_peft_available():

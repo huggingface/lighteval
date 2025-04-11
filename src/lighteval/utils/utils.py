@@ -11,69 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import json
-import re
 from dataclasses import asdict, is_dataclass
 from typing import Callable, TypeVar, Union
 
 import numpy as np
 from datasets import DatasetDict, load_dataset
 from pytablewriter import MarkdownTableWriter
-
-
-def parse_args(args: str) -> dict:
-    """Parse a string of arguments into a configuration dictionary.
-
-    This function parses a string containing model arguments and generation parameters
-    into a structured dictionary with two main sections: 'model' and 'generation'.
-    It specifically handles generation parameters enclosed in curly braces.
-
-    Args:
-        args (str): A string containing comma-separated key-value pairs, where generation
-            parameters can be specified in a nested JSON-like format.
-
-    Returns:
-        dict: A dictionary with two keys:
-            - 'model': Contains general model configuration parameters
-            - 'generation': Contains generation-specific parameters
-
-    Examples:
-        >>> parse_args("model_name=gpt2,max_length=100")
-        {
-            'model': {'model_name': 'gpt2', 'max_length': '100'},
-            'generation': {}
-        }
-
-        >>> parse_args("model_name=gpt2,generation_parameters={temperature:0.7,top_p:0.9}")
-        {
-            'model': {'model_name': 'gpt2'},
-            'generation': {'temperature': 0.7, 'top_p': 0.9}
-        }
-
-        >>> parse_args("model_name=gpt2,use_cache,generation_parameters={temperature:0.7}")
-        {
-            'model': {'model_name': 'gpt2', 'use_cache': True},
-            'generation': {'temperature': 0.7}
-        }
-    """
-    config = {}
-
-    # Looking for generation_parameters in the model_args
-    generation_parameters_dict = {}
-    pattern = re.compile(r"(\w+)=(\{.*\}|[^,]+)")
-    matches = pattern.findall(args)
-    for key, value in matches:
-        key = key.strip()
-        if key == "generation_parameters":
-            gen_params = re.sub(r"(\w+):", r'"\1":', value)
-            generation_parameters_dict = json.loads(gen_params)
-
-    args = re.sub(r"generation_parameters=\{.*?\},?", "", args).strip(",")
-    model_config = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.split(",")}
-
-    config["model"] = model_config
-    config["generation"] = generation_parameters_dict
-    return config
 
 
 def flatten_dict(nested: dict, sep="/") -> dict:
