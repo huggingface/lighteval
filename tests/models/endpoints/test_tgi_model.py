@@ -22,10 +22,8 @@
 
 
 import pytest
-import yaml
 
 from lighteval.models.endpoints.tgi_model import TGIModelConfig
-from lighteval.models.model_input import GenerationParameters
 
 
 class TestTGIModelConfig:
@@ -33,7 +31,7 @@ class TestTGIModelConfig:
         "config_path, expected_config",
         [
             (
-                "examples/model_configs/huggingface_tgi_model.yaml",
+                "examples/model_configs/tgi_model.yaml",
                 {
                     "inference_server_address": "",
                     "inference_server_auth": None,
@@ -60,9 +58,5 @@ class TestTGIModelConfig:
         ],
     )
     def test_from_path(self, config_path, expected_config):
-        with open(config_path, "r") as f:
-            config = yaml.safe_load(f)
-
-        generation_parameters = GenerationParameters(**config.get("generation", {}))
-        config = TGIModelConfig(**config["model"], generation_parameters=generation_parameters)
+        config = TGIModelConfig.from_path(config_path)
         assert config.model_dump() == expected_config

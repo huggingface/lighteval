@@ -37,7 +37,6 @@ logger = logging.getLogger(__name__)
 class DeltaModelConfig(TransformersModelConfig):
     # Delta models look at the pretrained (= the delta weights) for the tokenizer and model config
     base_model: str
-    revision: str = "main"
 
     def get_model_sha(self):
         return _get_model_sha(repo_id=self.pretrained, revision="main")

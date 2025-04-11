@@ -24,7 +24,7 @@
 from pydantic import BaseModel, NonNegativeFloat, NonNegativeInt
 
 
-class GenerationParameters(BaseModel):
+class GenerationParameters(BaseModel, extra="forbid"):
     early_stopping: bool | None = None  # transformers
     repetition_penalty: NonNegativeFloat | None = None  # vllm, transformers, tgi, sglang
     frequency_penalty: NonNegativeFloat | None = None  # vllm, tgi, sglang

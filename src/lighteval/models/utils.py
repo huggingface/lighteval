@@ -42,7 +42,7 @@ class ModelConfig(BaseModel, extra="forbid"):
     def from_path(cls, path: str):
         with open(path, "r") as f:
             config = yaml.safe_load(f)
-        return cls(**config["model_parameters"], generation_parameters=config["generation_parameters"])
+        return cls(**config["model_parameters"])
 
     @classmethod
     def from_args(cls, args: str):
@@ -70,25 +70,22 @@ class ModelConfig(BaseModel, extra="forbid"):
             >>> parse_args("model_name=gpt2,max_length=100")
             {
                 'model': {'model_name': 'gpt2', 'max_length': '100'},
-                'generation': {}
             }
 
             >>> parse_args("model_name=gpt2,generation_parameters={temperature:0.7,top_p:0.9}")
             {
-                'model': {'model_name': 'gpt2'},
-                'generation': {'temperature': 0.7, 'top_p': 0.9}
+                'model': {'model_name': 'gpt2', 'generation_parameters': {'temperature': 0.7, 'top_p': 0.9},
             }
 
             >>> parse_args("model_name=gpt2,use_cache,generation_parameters={temperature:0.7}")
             {
-                'model': {'model_name': 'gpt2', 'use_cache': True},
-                'generation': {'temperature': 0.7}
+                'model': {'model_name': 'gpt2', 'use_cache': True, 'generation_parameters': {'temperature': 0.7}},
             }
         """
         config = {}
 
         # Looking for generation_parameters in the model_args
-        generation_parameters_dict = {}
+        generation_parameters_dict = None
         pattern = re.compile(r"(\w+)=(\{.*\}|[^,]+)")
         matches = pattern.findall(args)
         for key, value in matches:
@@ -100,8 +97,8 @@ class ModelConfig(BaseModel, extra="forbid"):
         args = re.sub(r"generation_parameters=\{.*?\},?", "", args).strip(",")
         model_config = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.split(",")}
 
-        config["model"] = model_config
-        config["generation"] = generation_parameters_dict
+        if generation_parameters_dict is not None:
+            model_config["generation_parameters"] = generation_parameters_dict
         return config
 
 

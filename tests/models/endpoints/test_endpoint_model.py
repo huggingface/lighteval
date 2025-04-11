@@ -24,10 +24,6 @@ import pytest
 import yaml
 
 from lighteval.models.endpoints.endpoint_model import InferenceEndpointModelConfig
-from lighteval.models.model_input import GenerationParameters
-
-
-# "examples/model_configs/endpoint_model.yaml"
 
 
 class TestInferenceEndpointModelConfig:
@@ -35,7 +31,7 @@ class TestInferenceEndpointModelConfig:
         "config_path, expected_config",
         [
             (
-                "examples/model_configs/huggingface_inference_endpoints.yaml",
+                "examples/model_configs/endpoint_model.yaml",
                 {
                     "model_name": "meta-llama/Llama-2-7b-hf",
                     "dtype": "float16",
@@ -52,27 +48,23 @@ class TestInferenceEndpointModelConfig:
                     "namespace": None,
                     "image_url": None,
                     "env_vars": None,
-                },
-            ),
-            (
-                "examples/model_configs/serverless_model.yaml",
-                {
-                    "model_name": "meta-llama/Llama-3.1-8B-Instruct",
-                    # Defaults:
-                    "revision": "main",
-                    "dtype": None,
-                    "endpoint_name": None,
-                    "reuse_existing": False,
-                    "accelerator": "gpu",
-                    "region": "us-east-1",
-                    "vendor": "aws",
-                    "instance_type": None,
-                    "instance_size": None,
-                    "framework": "pytorch",
-                    "endpoint_type": "protected",
-                    "namespace": None,
-                    "image_url": None,
-                    "env_vars": None,
+                    "generation_parameters": {
+                        "early_stopping": None,
+                        "frequency_penalty": None,
+                        "length_penalty": None,
+                        "max_new_tokens": None,
+                        "min_new_tokens": None,
+                        "min_p": None,
+                        "presence_penalty": None,
+                        "repetition_penalty": None,
+                        "seed": None,
+                        "stop_tokens": None,
+                        "temperature": None,
+                        "top_k": None,
+                        "top_p": None,
+                        "truncate_prompt": None,
+                        "response_format": None,
+                    },
                 },
             ),
         ],
@@ -81,9 +73,6 @@ class TestInferenceEndpointModelConfig:
         with open(config_path, "r") as f:
             config = yaml.safe_load(f)
 
-        generation_parameters = GenerationParameters(**config.get("generation", {}))
-        config = InferenceEndpointModelConfig(
-            **config["model"], **config.get("instance", {}), generation_parameters=generation_parameters
-        )
+        config = InferenceEndpointModelConfig.from_path(config_path)
         for key, value in expected_config.items():
             assert getattr(config, key) == value

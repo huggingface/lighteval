@@ -126,7 +126,6 @@ def accelerate(  # noqa C901
         load_responses_from_details_date_id=load_responses_from_details_date_id,
     )
 
-    # TODO (nathan): better handling of model_args
     if model_args.endswith(".yaml"):
         with open(model_args, "r") as f:
             config = yaml.safe_load(f)

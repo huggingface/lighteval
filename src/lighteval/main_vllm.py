@@ -123,7 +123,6 @@ def vllm(
     if model_args.endswith(".yaml"):
         with open(model_args, "r") as f:
             metric_options = yaml.safe_load(f).get("metric_options", {})
-
         model_config = VLLMModelConfig.from_path(model_args)
     else:
         metric_options = {}

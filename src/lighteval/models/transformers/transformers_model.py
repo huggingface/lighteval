@@ -149,10 +149,6 @@ class TransformersModelConfig(ModelConfig):
     multichoice_continuations_start_space: bool | None = None
     pairwise_tokenization: bool = False
 
-    base_model: str | None = None
-    delta_weights: bool = False
-    adapter_weights: bool = False
-
     def model_post_init(self, __context):
         if self.multichoice_continuations_start_space is True:
             logger.warning(

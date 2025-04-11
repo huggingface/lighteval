@@ -98,11 +98,8 @@ def inference_endpoint(
     """
     Evaluate models using inference-endpoints as backend.
     """
-    import yaml
-
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.endpoints.endpoint_model import InferenceEndpointModelConfig, ServerlessEndpointModelConfig
-    from lighteval.models.model_input import GenerationParameters
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 
     evaluation_tracker = EvaluationTracker(
@@ -116,17 +113,10 @@ def inference_endpoint(
 
     parallelism_manager = ParallelismManager.NONE  # since we're using inference endpoints in remote
 
-    with open(model_config_path, "r") as f:
-        config = yaml.safe_load(f)
-
-    # Find a way to add this back
     if free_endpoint:
-        model_config = ServerlessEndpointModelConfig(**config["model"])
+        model_config = ServerlessEndpointModelConfig.from_path(model_config_path)
     else:
-        generation_parameters = GenerationParameters(**config.get("generation", {}))
-        model_config = InferenceEndpointModelConfig(
-            **config["model"], **config.get("instance", {}), generation_parameters=generation_parameters
-        )
+        model_config = InferenceEndpointModelConfig.from_path(model_config_path)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,

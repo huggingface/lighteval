@@ -47,7 +47,6 @@ from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import GenerativeResponse, LoglikelihoodResponse, LoglikelihoodSingleTokenResponse
 from lighteval.models.utils import ModelConfig
 from lighteval.tasks.requests import (
@@ -78,7 +77,6 @@ SORTED_INSTANCE_SIZES = [  # sorted by incremental overall RAM (to load models)
 class ServerlessEndpointModelConfig(ModelConfig):
     model_name: str
     add_special_tokens: bool = True
-    generation_parameters: GenerationParameters = GenerationParameters()
 
 
 class InferenceEndpointModelConfig(ModelConfig):
