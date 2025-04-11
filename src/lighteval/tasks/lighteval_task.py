@@ -582,6 +582,7 @@ def create_requests_from_tasks(  # noqa: C901
     evaluation_tracker: "EvaluationTracker",
     use_chat_template: bool,
     system_prompt: str | None,
+    cot_prompt: str | None,
 ) -> Tuple[dict[RequestType, list[Request]], dict[SampleUid, Doc]]:
     """
     Takes a task dict and a fewshot dict and returns a dict of requests, a dict
@@ -599,6 +600,8 @@ def create_requests_from_tasks(  # noqa: C901
         max_samples (int): maximum number of samples.
         evaluation_tracker (EvaluationTracker): evaluation tracker.
         use_chat_template (bool): Whether to use the chat template.
+        system_prompt (str): System prompt
+        cot_prompt (str): Chain of thought prompt
 
     Raises:
         NotImplementedError: If the request type is not implemented for the
@@ -646,6 +649,7 @@ def create_requests_from_tasks(  # noqa: C901
                         truncate_few_shots=truncate_few_shots,
                         use_chat_template=use_chat_template,
                         system_prompt=system_prompt,
+                        cot_prompt=cot_prompt,
                     )
 
                     # Constructing the requests
