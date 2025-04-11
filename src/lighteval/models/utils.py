@@ -42,6 +42,7 @@ class ModelConfig(BaseModel, extra="forbid"):
     def from_path(cls, path: str):
         with open(path, "r") as f:
             config = yaml.safe_load(f)
+
         return cls(**config["model_parameters"])
 
     @classmethod

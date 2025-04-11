@@ -48,20 +48,21 @@ class TestInferenceEndpointModelConfig:
                     "namespace": None,
                     "image_url": None,
                     "env_vars": None,
+                    "add_special_tokens": True,
                     "generation_parameters": {
                         "early_stopping": None,
                         "frequency_penalty": None,
                         "length_penalty": None,
-                        "max_new_tokens": None,
+                        "max_new_tokens": 256,
                         "min_new_tokens": None,
                         "min_p": None,
                         "presence_penalty": None,
                         "repetition_penalty": None,
                         "seed": None,
                         "stop_tokens": None,
-                        "temperature": None,
+                        "temperature": 0.2,
                         "top_k": None,
-                        "top_p": None,
+                        "top_p": 0.9,
                         "truncate_prompt": None,
                         "response_format": None,
                     },
@@ -74,5 +75,4 @@ class TestInferenceEndpointModelConfig:
             config = yaml.safe_load(f)
 
         config = InferenceEndpointModelConfig.from_path(config_path)
-        for key, value in expected_config.items():
-            assert getattr(config, key) == value
+        assert config.model_dump() == expected_config
