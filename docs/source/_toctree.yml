@@ -23,8 +23,8 @@
     title: Use vllm as backend
   - local: use-sglang-as-backend
     title: Use SGLang as backend
-  - local: evaluate-the-model-on-a-server-or-container
-    title: Evaluate on Server
+  - local: use-huggingface-inference-endpoints-or-tgi-as-backend
+    title: Use Hugging Face inference endpoints or TGI as backend
   - local: contributing-to-multilingual-evaluations
     title: Contributing to multilingual evaluations
   title: Guides

@@ -1,5 +1,0 @@
-model:
-  model_name: "deepseek-ai/DeepSeek-R1" #meta-llama/Llama-3.1-8B-Instruct" #Qwen/Qwen2.5-14B" #Qwen/Qwen2.5-7B"
-api:
-  base_url: "https://huggingface.co/api/inference-proxy/together"
-  api_key: "hf_"

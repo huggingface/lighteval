@@ -24,7 +24,6 @@ import asyncio
 import logging
 import re
 import time
-from dataclasses import dataclass, replace
 from typing import Coroutine, Dict, List, Optional, Union
 
 import requests
@@ -35,7 +34,6 @@ from huggingface_hub import (
     InferenceEndpoint,
     InferenceEndpointError,
     InferenceEndpointTimeoutError,
-    TextGenerationInputGenerateParameters,
     TextGenerationInputGrammarType,
     TextGenerationOutput,
     create_inference_endpoint,
@@ -49,15 +47,15 @@ from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import GenerativeResponse, LoglikelihoodResponse, LoglikelihoodSingleTokenResponse
+from lighteval.models.utils import ModelConfig
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
     LoglikelihoodSingleTokenRequest,
 )
-from lighteval.utils.utils import EnvConfig, as_list
+from lighteval.utils.utils import as_list
 
 
 logger = logging.getLogger(__name__)
@@ -76,46 +74,32 @@ SORTED_INSTANCE_SIZES = [  # sorted by incremental overall RAM (to load models)
 ]
 
 
-@dataclass
-class ServerlessEndpointModelConfig:
+class ServerlessEndpointModelConfig(ModelConfig):
     model_name: str
     add_special_tokens: bool = True
-    generation_parameters: GenerationParameters = None
-
-    def __post_init__(self):
-        if not self.generation_parameters:
-            self.generation_parameters = GenerationParameters()
-
-    @classmethod
-    def from_path(cls, path: str) -> "ServerlessEndpointModelConfig":
-        import yaml
-
-        with open(path, "r") as f:
-            config = yaml.safe_load(f)["model"]
-        return cls(**config["base_params"])
 
 
-@dataclass
-class InferenceEndpointModelConfig:
-    endpoint_name: str = None
-    model_name: str = None
+class InferenceEndpointModelConfig(ModelConfig):
+    endpoint_name: str | None = None
+    model_name: str | None = None
     reuse_existing: bool = False
     accelerator: str = "gpu"
-    model_dtype: str = None  # if empty, we use the default
+    dtype: str | None = None  # if empty, we use the default
     vendor: str = "aws"
     region: str = "us-east-1"  # this region has the most hardware options available
-    instance_size: str = None  # if none, we autoscale
-    instance_type: str = None  # if none, we autoscale
+    instance_size: str | None = None  # if none, we autoscale
+    instance_type: str | None = None  # if none, we autoscale
     framework: str = "pytorch"
     endpoint_type: str = "protected"
     add_special_tokens: bool = True
     revision: str = "main"
-    namespace: str = None  # The namespace under which to launch the endpoint. Defaults to the current user's namespace
-    image_url: str = None
-    env_vars: dict = None
-    generation_parameters: GenerationParameters = None
+    namespace: str | None = (
+        None  # The namespace under which to launch the endpoint. Defaults to the current user's namespace
+    )
+    image_url: str | None = None
+    env_vars: dict | None = None
 
-    def __post_init__(self):
+    def model_post_init(self, __context):
         # xor operator, one is None but not the other
         if (self.instance_size is None) ^ (self.instance_type is None):
             raise ValueError(
@@ -125,30 +109,10 @@ class InferenceEndpointModelConfig:
         if not (self.endpoint_name is None) ^ int(self.model_name is None):
             raise ValueError("You need to set either endpoint_name or model_name (but not both).")
 
-        if not self.generation_parameters:
-            self.generation_parameters = GenerationParameters()
-
-    @classmethod
-    def from_path(cls, path: str) -> "InferenceEndpointModelConfig":
-        """Load configuration for inference endpoint model from YAML file path.
-
-        Args:
-            path (`str`): Path of the model configuration YAML file.
-
-        Returns:
-            [`InferenceEndpointModelConfig`]: Configuration for inference endpoint model.
-        """
-        import yaml
-
-        with open(path, "r") as f:
-            config = yaml.safe_load(f)["model"]
-        config["base_params"]["model_dtype"] = config["base_params"].pop("dtype", None)
-        return cls(**config["base_params"], **config.get("instance", {}))
-
     def get_dtype_args(self) -> Dict[str, str]:
-        if self.model_dtype is None:
+        if self.dtype is None:
             return {}
-        model_dtype = self.model_dtype.lower()
+        model_dtype = self.dtype.lower()
         if model_dtype in ["awq", "eetq", "gptq"]:
             return {"QUANTIZE": model_dtype}
         if model_dtype == "8bit":
@@ -169,7 +133,7 @@ class InferenceEndpointModel(LightevalModel):
     """
 
     def __init__(  # noqa: C901
-        self, config: Union[InferenceEndpointModelConfig, ServerlessEndpointModelConfig], env_config: EnvConfig
+        self, config: Union[InferenceEndpointModelConfig, ServerlessEndpointModelConfig]
     ) -> None:
         self.reuse_existing = getattr(config, "reuse_existing", False)
         self._max_length = None
@@ -222,7 +186,6 @@ class InferenceEndpointModel(LightevalModel):
                                 region=region,
                                 instance_size=instance_size,
                                 instance_type=instance_type,
-                                token=env_config.token,
                                 custom_image={
                                     "health_route": "/health",
                                     "env": {
@@ -240,9 +203,7 @@ class InferenceEndpointModel(LightevalModel):
                             )
                         else:  # Endpoint exists
                             logger.info("Reusing existing endpoint.")
-                            self.endpoint = get_inference_endpoint(
-                                name=endpoint_name, token=env_config.token, namespace=config.namespace
-                            )
+                            self.endpoint = get_inference_endpoint(name=endpoint_name, namespace=config.namespace)
 
                     else:
                         # Endpoint exists locally but either failed (and most likely it must be scaled up)
@@ -302,8 +263,8 @@ class InferenceEndpointModel(LightevalModel):
             self.endpoint_name = None
             self.name = config.model_name
             self.revision = "default"
-            self.async_client = AsyncInferenceClient(model=config.model_name, token=env_config.token)
-            self.client = InferenceClient(model=config.model_name, token=env_config.token)
+            self.async_client = AsyncInferenceClient(model=config.model_name)
+            self.client = InferenceClient(model=config.model_name)
 
         self.use_async = True  # set to False for debug - async use is faster
 
@@ -313,11 +274,11 @@ class InferenceEndpointModel(LightevalModel):
         self.model_info = ModelInfo(
             model_name=self.name,
             model_sha=self.revision,
-            model_dtype=getattr(config, "model_dtype", "default"),
+            model_dtype=getattr(config, "dtype", "default"),
             model_size=-1,
         )
         self.generation_parameters = config.generation_parameters
-        self.generation_config = TextGenerationInputGenerateParameters(**self.generation_parameters.to_tgi_ie_dict())
+        self.generation_config = self.generation_parameters.to_tgi_ie_dict()
 
     @staticmethod
     def get_larger_hardware_suggestion(cur_instance_type: str = None, cur_instance_size: str = None):
@@ -401,17 +362,13 @@ class InferenceEndpointModel(LightevalModel):
     ) -> Coroutine[None, list[TextGenerationOutput], str]:
         # Todo: add an option to launch with conversational instead for chat prompts
         # https://huggingface.co/docs/huggingface_hub/v0.20.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.conversational
-        generation_config: TextGenerationInputGenerateParameters = replace(
-            self.generation_config,
-            stop=stop_tokens,
-            max_new_tokens=max_tokens,
-            details=True,
-            decoder_input_details=True,
-            grammar=grammar,
-        )
-        generation_config_dict = {k: v for k, v in generation_config.__dict__.items() if v is not None}
+        self.generation_config["grammar"] = grammar
+        self.generation_config["stop"] = stop_tokens
+        self.generation_config["max_new_tokens"] = max_tokens
+        self.generation_config["details"] = True
+        self.generation_config["decoder_input_details"] = True
 
-        generated_text = self.async_client.text_generation(prompt=context, **generation_config_dict)
+        generated_text = self.async_client.text_generation(prompt=context, **self.generation_config)
 
         return generated_text
 
@@ -424,19 +381,15 @@ class InferenceEndpointModel(LightevalModel):
     ) -> TextGenerationOutput:
         # Todo: add an option to launch with conversational instead for chat prompts
         # https://huggingface.co/docs/huggingface_hub/v0.20.3/en/package_reference/inference_client#huggingface_hub.AsyncInferenceClient.conversational
-        generation_config: TextGenerationInputGenerateParameters = replace(
-            self.generation_config,
-            stop=stop_tokens,
-            max_new_tokens=max_tokens,
-            details=True,
-            decoder_input_details=True,
-            grammar=grammar,
-        )
-        generation_config_dict = {k: v for k, v in generation_config.__dict__.items() if v is not None}
+        self.generation_config["stop"] = stop_tokens
+        self.generation_config["max_new_tokens"] = max_tokens
+        self.generation_config["details"] = True
+        self.generation_config["decoder_input_details"] = True
+        self.generation_config["grammar"] = grammar
 
         generated_text = self.client.text_generation(
             prompt=context,
-            **generation_config_dict,
+            **self.generation_config,
         )
 
         return generated_text

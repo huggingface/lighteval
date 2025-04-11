@@ -22,17 +22,15 @@
 
 from lighteval.models.model_loader import load_model
 from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
-from lighteval.utils.utils import EnvConfig
 
 
 def test_empty_requests():
     model_config = TransformersModelConfig(
-        "hf-internal-testing/tiny-random-LlamaForCausalLM", model_parallel=False, revision="main"
+        model_name="hf-internal-testing/tiny-random-LlamaForCausalLM", model_parallel=False, revision="main"
     )
-    model: TransformersModel = load_model(config=model_config, env_config=EnvConfig(cache_dir="."))
+    model: TransformersModel = load_model(config=model_config)
 
     assert model.loglikelihood([]) == []
     assert model.loglikelihood_single_token([]) == []
     assert model.loglikelihood_rolling([]) == []
     assert model.greedy_until([]) == []
-    assert model.greedy_until_multi_turn([]) == []
