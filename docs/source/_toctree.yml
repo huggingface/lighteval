@@ -24,7 +24,7 @@
   - local: use-sglang-as-backend
     title: Use SGLang as backend
   - local: use-huggingface-inference-endpoints-or-tgi-as-backend
-    title: Evaluate on Server
+    title: Use Hugging Face inference endpoints or TGI as backend
   - local: contributing-to-multilingual-evaluations
     title: Contributing to multilingual evaluations
   title: Guides
