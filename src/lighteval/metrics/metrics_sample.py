@@ -1195,9 +1195,9 @@ class PassAtK:
 class GPassAtK:
     def __init__(
         self,
-        k: Union[int, List[int]],
+        k: Union[int, list[int]],
         n: int = None,
-        thresholds: List[float] = [0.0, 0.25, 0.5, 0.75, 1.0],
+        thresholds: list[float] = [0.0, 0.25, 0.5, 0.75, 1.0],
         normalize_gold: Callable = None,
         normalize_pred: Callable = None,
         strip_strings: bool = False,
@@ -1310,7 +1310,7 @@ class GPassAtK:
         c: int = sum(all_scores)
         n: int = self.n
         ks: int = self.k
-        thresholds: List[float] = self.thresholds
+        thresholds: list[float] = self.thresholds
 
         def _compute_g_pass_at_k(n, c, k, m):
             if m > min(c, k) or k > n or c < 0 or n <= 0 or m < 0:
@@ -1342,7 +1342,7 @@ class GPassAtK:
     @property
     def all_metrics(self):
         ks: int = self.k
-        thresholds: List[float] = self.thresholds
+        thresholds: list[float] = self.thresholds
 
         metrics = []
         for k in ks:
