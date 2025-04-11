@@ -101,3 +101,11 @@ class LightEvalConfig:
 class FullNanotronConfig:
     lighteval_config: LightEvalConfig
     nanotron_config: "Config"
+
+    @property
+    def generation_parameters(self):
+        # Return the generation parameters from the lighteval config
+        # or create default generation parameters if none are set
+        if self.lighteval_config.generation:
+            return self.lighteval_config.generation
+        return GenerationArgs()
