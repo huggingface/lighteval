@@ -4,7 +4,7 @@ model_parameters:
   dtype: "float16"
   compile: false
   model_parallel: false
+  multichoice_continuations_start_space: null # If true/false, will force multiple choice continuations to start/not start with a space. If none, will do nothing
   generation_parameters:
-    multichoice_continuations_start_space: null # If true/false, will force multiple choice continuations to start/not start with a space. If none, will do nothing
     temperature: 0.2
     top_p: 0.9
