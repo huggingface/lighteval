@@ -23,21 +23,19 @@
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
 from typing import Optional
 
-import yaml
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.endpoints.endpoint_model import ModelInfo
-from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
     LoglikelihoodSingleTokenResponse,
 )
+from lighteval.models.utils import ModelConfig
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -61,53 +59,29 @@ if is_litellm_available():
     litellm.cache = Cache(type="disk")
 
 
-@dataclass
-class LiteLLMModelConfig:
-    model: str
-    provider: Optional[str] = None
-    base_url: Optional[str] = None
-    api_key: Optional[str] = None
-    generation_parameters: GenerationParameters = None
-
-    def __post_init__(self):
-        if self.generation_parameters is None:
-            self.generation_parameters = GenerationParameters()
-
-    @classmethod
-    def from_path(cls, path):
-        with open(path, "r") as f:
-            config = yaml.safe_load(f)["model"]
-
-        model = config["base_params"]["model_name"]
-        provider = config["base_params"].get("provider", None)
-        base_url = config["base_params"].get("base_url", None)
-        api_key = config["base_params"].get("api_key", None)
-        generation_parameters = GenerationParameters.from_dict(config)
-        return cls(
-            model=model,
-            provider=provider,
-            base_url=base_url,
-            generation_parameters=generation_parameters,
-            api_key=api_key,
-        )
+class LiteLLMModelConfig(ModelConfig):
+    model_name: str
+    provider: str | None = None
+    base_url: str | None = None
+    api_key: str | None = None
 
 
 class LiteLLMClient(LightevalModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
-    def __init__(self, config, env_config) -> None:
+    def __init__(self, config) -> None:
         """
         IMPORTANT: Your API keys should be set in the environment variables.
         If a base_url is not set, it will default to the public API.
         """
         self.model_info = ModelInfo(
-            model_name=config.model,
+            model_name=config.model_name,
             model_sha="",
             model_dtype=None,
             model_size="",
         )
-        self.model = config.model
-        self.provider = config.provider or config.model.split("/")[0]
+        self.model = config.model_name
+        self.provider = config.provider or config.model_name.split("/")[0]
         self.base_url = config.base_url
         self.api_key = config.api_key
         self.generation_parameters = config.generation_parameters

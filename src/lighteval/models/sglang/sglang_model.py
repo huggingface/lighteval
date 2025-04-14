@@ -22,26 +22,25 @@
 
 import gc
 import logging
-from dataclasses import dataclass
 from typing import Optional
 
 import torch
+from pydantic import PositiveFloat, PositiveInt
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
 )
-from lighteval.models.utils import _get_dtype, _simplify_name
+from lighteval.models.utils import ModelConfig, _simplify_name
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
 )
 from lighteval.utils.imports import is_sglang_available
-from lighteval.utils.utils import EnvConfig, as_list
+from lighteval.utils.utils import as_list
 
 
 logger = logging.getLogger(__name__)
@@ -57,15 +56,14 @@ else:
     get_tokenizer = None
 
 
-@dataclass
-class SGLangModelConfig:
-    pretrained: str
+class SGLangModelConfig(ModelConfig):
+    model_name: str
     load_format: str = "auto"
     dtype: str = "auto"
-    tp_size: int = 1  # how many GPUs to use for tensor parallelism
-    dp_size: int = 1  # how many GPUs to use for data parallelism
-    context_length: int | None = None
-    random_seed: Optional[int] = 1234
+    tp_size: PositiveInt = 1  # how many GPUs to use for tensor parallelism
+    dp_size: PositiveInt = 1  # how many GPUs to use for data parallelism
+    context_length: PositiveInt | None = None
+    random_seed: PositiveInt | None = 1234
     trust_remote_code: bool = False
     use_chat_template: bool = False
     device: str = "cuda"
@@ -74,34 +72,28 @@ class SGLangModelConfig:
     add_special_tokens: bool = True
     pairwise_tokenization: bool = False
     sampling_backend: str | None = None
-    attention_backend: str = None
-    mem_fraction_static: float = 0.8
-    chunked_prefill_size: int = 4096
-    generation_parameters: GenerationParameters = None
-
-    def __post_init__(self):
-        if not self.generation_parameters:
-            self.generation_parameters = GenerationParameters()
+    attention_backend: str | None = None
+    mem_fraction_static: PositiveFloat = 0.8
+    chunked_prefill_size: PositiveInt = 4096
 
 
 class SGLangModel(LightevalModel):
     def __init__(
         self,
         config: SGLangModelConfig,
-        env_config: EnvConfig,
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self._config = config
         self.use_chat_template = config.use_chat_template
-        self.data_parallel_size = int(config.dp_size)
-        self.tensor_parallel_size = int(config.tp_size)
-        self._add_special_tokens = bool(config.add_special_tokens)
-        self._tokenizer = self._create_auto_tokenizer(config, env_config)
-        self._max_length = int(config.context_length) if config.context_length is not None else None
-        self.model = self._create_auto_model(config, env_config)
-        self.model_name = _simplify_name(config.pretrained)
+        self.data_parallel_size = config.dp_size
+        self.tensor_parallel_size = config.tp_size
+        self._add_special_tokens = config.add_special_tokens
+        self._tokenizer = self._create_auto_tokenizer(config)
+        self._max_length = config.context_length if config.context_length is not None else None
+        self.model = self._create_auto_model(config)
+        self.model_name = _simplify_name(config.model_name)
         self.model_sha = ""  # config.get_model_sha()
-        self.precision = _get_dtype(config.dtype, config=self._config)
+        self.precision = config.dtype
         self.sampling_params = config.generation_parameters.to_sglang_dict()
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
         self.sampling_backend = config.sampling_backend
@@ -128,22 +120,22 @@ class SGLangModel(LightevalModel):
     def max_length(self) -> int:
         return self._max_length
 
-    def _create_auto_model(self, config: SGLangModelConfig, env_config: EnvConfig) -> Optional[Engine]:
+    def _create_auto_model(self, config: SGLangModelConfig) -> Optional[Engine]:
         self.model_args = {
-            "model_path": config.pretrained,
+            "model_path": config.model_name,
             "trust_remote_code": config.trust_remote_code,
             "dtype": config.dtype,
             "device": "cuda",
             "random_seed": config.random_seed,
             "load_format": config.load_format,
             "context_length": self._max_length,
-            "dp_size": int(config.dp_size),
-            "tp_size": int(config.tp_size),
+            "dp_size": config.dp_size,
+            "tp_size": config.tp_size,
             "sampling_backend": config.sampling_backend,
             "attention_backend": config.attention_backend,
-            "mem_fraction_static": float(config.mem_fraction_static),
+            "mem_fraction_static": config.mem_fraction_static,
             "schedule_policy": "fcfs",
-            "chunked_prefill_size": int(config.chunked_prefill_size),
+            "chunked_prefill_size": config.chunked_prefill_size,
             "disable_radix_cache": True,
         }
         model = Engine(**self.model_args)
@@ -153,9 +145,9 @@ class SGLangModel(LightevalModel):
 
         return model
 
-    def _create_auto_tokenizer(self, config: SGLangModelConfig, env_config: EnvConfig):
+    def _create_auto_tokenizer(self, config: SGLangModelConfig):
         tokenizer = get_tokenizer(
-            config.pretrained,
+            config.model_name,
             tokenizer_mode="auto",
             trust_remote_code=config.trust_remote_code,
             tokenizer_revision="main",
