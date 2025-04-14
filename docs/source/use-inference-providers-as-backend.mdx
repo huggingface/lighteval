@@ -11,7 +11,7 @@ Lighteval allows to use Hugging Face's Inference Providers to evaluate llms on s
 
 ```bash
 lighteval endpoint inference-providers \
-    "model=deepseek-ai/DeepSeek-R1,provider=hf-inference" \
+    "model_name=deepseek-ai/DeepSeek-R1,provider=hf-inference" \
     "lighteval|gsm8k|0|0"
 ```
 
@@ -28,13 +28,13 @@ lighteval endpoint inference-providers \
 with the following config file:
 
 ```yaml
-model:
+model_parameters:
   model_name: "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
   provider: "novita"
   timeout: null
   proxies: null
   parallel_calls_count: 10
-  generation:
+  generation_parameters:
     temperature: 0.8
     top_k: 10
     max_new_tokens: 10000
