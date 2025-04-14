@@ -132,8 +132,6 @@ def accelerate(  # noqa C901
         # We extract the model args
         config: dict = ModelConfig._parse_args(model_args)
 
-    breakpoint()
-
     config["use_chat_template"] = use_chat_template
 
     if config.get("delta_weights", False):

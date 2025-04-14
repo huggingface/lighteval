@@ -3,6 +3,10 @@
 Lighteval allows you to use `vllm` as backend allowing great speedups.
 To use, simply change the `model_args` to reflect the arguments you want to pass to vllm.
 
+
+> [!TIP]
+> Documentation for vllm engine args can be found [here](https://docs.vllm.ai/en/latest/serving/engine_args.html)
+
 ```bash
 lighteval vllm \
     "model_name=HuggingFaceH4/zephyr-7b-beta,dtype=float16" \
