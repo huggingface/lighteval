@@ -89,7 +89,7 @@ def test_accelerate_model_prediction(tests: list[ModelInput]):
     # Load the reference results
     with open(model_args["results_file"], "r") as f:
         reference_results = json.load(f)["results"]
-    
+
     # Change the key names, replace '|' with ':'
     reference_results = {k.replace("|", ":"): v for k, v in reference_results.items()}
 
