@@ -195,8 +195,7 @@ class EvaluationTracker:
     def save(self) -> None:
         """Saves the experiment information and results to files, and to the hub if requested."""
         logger.info("Saving experiment tracker")
-        date_id_unix = datetime.now()
-        date_id = date_id_unix.isoformat().replace(":", "-")
+        date_id = datetime.now().isoformat().replace(":", "-")
 
         # We first prepare data to save
         config_general = asdict(self.general_config_logger)
