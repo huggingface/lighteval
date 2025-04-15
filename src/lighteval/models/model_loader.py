@@ -40,6 +40,7 @@ from lighteval.models.sglang.sglang_model import SGLangModel, SGLangModelConfig
 from lighteval.models.transformers.adapter_model import AdapterModel, AdapterModelConfig
 from lighteval.models.transformers.delta_model import DeltaModel, DeltaModelConfig
 from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
+from lighteval.models.transformers.vlm_transformers import VLMTransformersModel
 from lighteval.models.vllm.vllm_model import VLLMModel, VLLMModelConfig
 from lighteval.utils.imports import (
     NO_LITELLM_ERROR_MSG,
@@ -163,7 +164,7 @@ def load_model_with_accelerate_or_default(
         model = VLLMModel(config=config)
         return model
     else:
-        model = TransformersModel(config=config)
+        model = VLMTransformersModel(config=config)
 
     return model
 

@@ -24,6 +24,22 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
 
+mmmu_pro = LightevalTaskConfig(
+    name="mmmu_pro",
+    suite=["lighteval"],
+    prompt_function=prompt.mmmu,
+    hf_repo="MMMU/MMMU_pro",
+    hf_subset="standard (4 options)",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=1,
+    metric=[Metrics.exact_match],
+    stop_sequence=None,
+    trust_dataset=True,
+    version=0,
+)
 abstract_narrative_understanding_bigbench = LightevalTaskConfig(
     name="abstract_narrative_understanding",
     suite=["bigbench", "bigbench_json"],

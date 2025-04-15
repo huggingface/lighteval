@@ -34,7 +34,6 @@ from tqdm import tqdm
 from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
-    AutoTokenizer,
     BitsAndBytesConfig,
     PretrainedConfig,
 )
@@ -414,11 +413,13 @@ class TransformersModel(LightevalModel):
         Returns:
             transformers.PreTrainedTokenizer: The created tokenizer.
         """
+        from transformers import AutoProcessor
+
         tokenizer_name = self.config.tokenizer or self.config.model_name
         subfolder = self.config.subfolder
         revision = self.config.revision + (f"/{subfolder}" if subfolder is not None else "")
 
-        tokenizer = AutoTokenizer.from_pretrained(
+        tokenizer = AutoProcessor.from_pretrained(
             tokenizer_name,
             revision=revision,
             trust_remote_code=self.config.trust_remote_code,

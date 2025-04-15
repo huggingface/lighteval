@@ -43,6 +43,63 @@ INTEGER_INDICES = list(map(str, list(range(1, 27))))
 # fmt: on
 
 
+def mmmu(line, task_name: str = None):
+    import base64
+    from io import BytesIO
+
+    standard = "Answer with the option letter from the given choices directly."
+
+    def replace_images_tokens(input_string):
+        image_order = [int(num) for num in re.findall(r"<image\s+(\d+)>", input_string)]
+        input_string = re.sub(r"<image\s+\d+>", "<image>", input_string)
+        return input_string, image_order
+
+    def parse_options(options):
+        option_letters = [chr(ord("A") + i) for i in range(len(options))]
+        choices_str = "\n".join(
+            [f"{option_letter}. {option}" for option_letter, option in zip(option_letters, options)]
+        )
+        return choices_str
+
+    def construct_prompt(doc):
+        question = doc["question"]
+        parsed_options = parse_options(ast.literal_eval(str(doc["options"])))
+        question = f"{question}\n{parsed_options}\n{standard}"
+        return question
+
+    def origin_mmmu_doc_to_visual(doc, image_order):
+        visual = []
+        for idx in image_order:
+            visual.append(doc[f"image_{idx}"])
+        return visual
+
+    def mmmu_doc_to_text(doc):
+        question = construct_prompt(doc)
+        return replace_images_tokens(question)
+
+    def encode_pil_image(pil_image):
+        # Create a byte stream object
+        buffered = BytesIO()
+        # Save the PIL image object as a byte stream in PNG format
+        pil_image.save(buffered, format="PNG")
+        # Get the byte stream data and perform Base64 encoding
+        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        return img_str
+
+    prompt, image_order = mmmu_doc_to_text(line)
+    images = origin_mmmu_doc_to_visual(line, image_order)
+
+    images = [encode_pil_image(image) for image in images]
+
+    return Doc(
+        task_name=task_name,
+        query=prompt,
+        choices=line["options"],
+        gold_index=string.ascii_uppercase.index(line["answer"]),
+        specific={"images": images, "id": line["id"]},
+    )
+
+
 def aime_prompt_fn(line, task_name: str = None):
     # Prompt template adapted from
     # - simple-evals: https://github.com/openai/simple-evals/blob/6e84f4e2aed6b60f6a0c7b8f06bbbf4bfde72e58/math_eval.py#L17

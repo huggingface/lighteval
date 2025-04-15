@@ -210,12 +210,12 @@ class PromptManager:
             system_prompt=system_prompt,
             use_chat_template=use_chat_template,
             cot_prompt=cot_prompt,
+            doc=doc,
         )
         if not use_chat_template:
             toks = self.model.tok_encode(output)
         else:
-            toks = [self.model.tok_encode(msg["content"]) for msg in output]
-            toks = [t for ts in toks for t in ts]
+            toks = []
 
         # If we need to truncate few-shots to fit in the context
         if truncate_few_shots and self.model.max_length is not None and self.model.tokenizer is not None:
@@ -258,7 +258,9 @@ class PromptManager:
         system_prompt: Union[str | None],
         use_chat_template: bool,
         cot_prompt: Union[str | None],
+        doc,
     ):
+        multimodal = True
         examples = []
         # Few shot examples
         for ex in fewshot_ex:
@@ -272,7 +274,18 @@ class PromptManager:
         content = example + cot_prompt if cot_prompt is not None else example
 
         if use_chat_template:
-            examples.append({"role": "user", "content": content})
+            if multimodal is True:
+                examples.append(
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "image", "content": doc.specific["images"][0]},
+                            {"type": "text", "content": content},
+                        ],
+                    }
+                )
+            else:
+                examples.append({"role": "user", "content": content})
         else:
             examples.append(content)
 
@@ -280,8 +293,8 @@ class PromptManager:
         if use_chat_template:
             if system_prompt is not None:  # We add system prompt and instruction jointly if possible
                 examples.insert(0, {"role": "system", "content": system_prompt + instruction})
-            else:  # Else we add the instruction to the first example
-                examples[0]["content"] = instruction + examples[0]["content"]
+            # else:  # Else we add the instruction to the first example
+            # examples[0]["content"] = instruction + examples[0]["content"]
             return examples
         else:
             if system_prompt is not None:
