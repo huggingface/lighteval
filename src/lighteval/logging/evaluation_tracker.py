@@ -126,6 +126,7 @@ class EvaluationTracker:
         tensorboard_metric_prefix: str = "eval",
         public: bool = False,
         nanotron_run_info: "GeneralArgs" = None,
+        wandb_args: str | None = None,
     ) -> None:
         """Creates all the necessary loggers for evaluation tracking."""
         self.details_logger = DetailsLogger()
@@ -145,6 +146,7 @@ class EvaluationTracker:
 
         self.should_push_to_hub = push_to_hub
         self.should_save_details = save_details
+        self.wandb_args = wandb_args
 
         self.should_push_results_to_tensorboard = push_to_tensorboard
         self.tensorboard_repo = f"{hub_results_org}/tensorboard_logs"
@@ -152,6 +154,21 @@ class EvaluationTracker:
         self.nanotron_run_info = nanotron_run_info
 
         self.public = public
+
+        if wandb_args is not None:
+            import wandb
+
+            self.wandb_args_dict: dict = dict([arg.split("=") for arg in wandb_args.split(",")])
+            if "project" not in self.wandb_args_dict:
+                raise ValueError("You need to specify the project name in wandb_args")
+
+            if "step" in self.wandb_args_dict:
+                try:
+                    self.wandb_args_dict["step"] = int(self.wandb_args_dict["step"])
+                except ValueError:
+                    raise ValueError("The step in wandb_args should be an integer")
+
+            wandb.login()
 
     @property
     def results(self):
@@ -178,7 +195,8 @@ class EvaluationTracker:
     def save(self) -> None:
         """Saves the experiment information and results to files, and to the hub if requested."""
         logger.info("Saving experiment tracker")
-        date_id = datetime.now().isoformat().replace(":", "-")
+        date_id_unix = datetime.now()
+        date_id = date_id_unix.isoformat().replace(":", "-")
 
         # We first prepare data to save
         config_general = asdict(self.general_config_logger)
@@ -222,10 +240,32 @@ class EvaluationTracker:
                 results_dict=results_dict,
             )
 
+        if self.wandb_args is not None:
+            self.push_to_wandb(
+                results_dict=results_dict,
+                details_datasets=details_datasets,
+            )
+
         if self.should_push_results_to_tensorboard:
             self.push_to_tensorboard(
                 results=self.metrics_logger.metric_aggregated, details=self.details_logger.compiled_details
             )
+
+    def push_to_wandb(self, results_dict: dict, details_datasets: dict) -> None:
+        import wandb
+
+        wandb_run = wandb.init(
+            project=self.wandb_args_dict["project"],
+            id=self.wandb_args_dict.get("id", None),
+            name=self.wandb_args_dict.get("run_name", None),
+            config=self.general_config_logger.generation_parameters,
+            resume="allow",
+        )
+        wandb_run.log(
+            {**results_dict["results"]},
+            step=self.wandb_args_dict.get("step", None),
+        )
+        wandb_run.finish()
 
     def save_results(self, date_id: str, results_dict: dict):
         output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name

@@ -81,6 +81,13 @@ def vllm(
     save_details: Annotated[
         bool, Option(help="Save detailed, sample per sample, results.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = False,
+    wandb: Annotated[
+        str | None,
+        Option(
+            help="Arguments for wandb logging. 'project={},id={},run_name={},step={}",
+            rich_help_panel=HELP_PANEL_NAME_2,
+        ),
+    ] = None,
     # === debug ===
     max_samples: Annotated[
         Optional[int], Option(help="Maximum number of samples to evaluate on.", rich_help_panel=HELP_PANEL_NAME_3)
@@ -105,6 +112,7 @@ def vllm(
         push_to_tensorboard=push_to_tensorboard,
         public=public_run,
         hub_results_org=results_org,
+        wandb_args=wandb,
     )
 
     pipeline_params = PipelineParameters(
