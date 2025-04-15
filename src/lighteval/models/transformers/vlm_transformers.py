@@ -21,16 +21,13 @@
 # SOFTWARE.
 
 import logging
-from typing import Optional, Union
+from typing import Union
 
 import torch
 from pydantic import PositiveInt
 from transformers import (
-    AutoConfig,
     AutoModelForVision2Seq,
     AutoProcessor,
-    BitsAndBytesConfig,
-    PretrainedConfig,
     ProcessorMixin,
 )
 
@@ -58,7 +55,6 @@ if is_accelerate_available():
     from datetime import timedelta
 
     from accelerate import Accelerator, InitProcessGroupKwargs
-    from accelerate.utils import calculate_maximum_sizes, convert_bytes
 
 
 class VLMTransformersModelConfig(ModelConfig):
@@ -127,33 +123,8 @@ class VLMTransformersModelConfig(ModelConfig):
     trust_remote_code: bool = False
     use_chat_template: bool = False
     compile: bool = False
-    multichoice_continuations_start_space: bool | None = None
     pairwise_tokenization: bool = False
     device_map: str | None = None
-
-    def model_post_init(self, __context):
-        if self.multichoice_continuations_start_space is True:
-            logger.warning(
-                "You set `multichoice_continuations_start_space` to true. This will force multichoice continuations to use a starting space"
-            )
-        if self.multichoice_continuations_start_space is False:
-            logger.warning(
-                "You set `multichoice_continuations_start_space` to false. This will remove a leading space from multichoice continuations, if present."
-            )
-
-    def get_transformers_config(self) -> PretrainedConfig:
-        revision = self.revision
-
-        if self.subfolder:
-            revision = f"{self.revision}/{self.subfolder}"
-
-        auto_config = AutoConfig.from_pretrained(
-            self.model_name,
-            revision=revision,
-            trust_remote_code=self.trust_remote_code,
-        )
-
-        return auto_config
 
     def get_model_sha(self):
         return _get_model_sha(repo_id=self.model_name, revision=self.revision)
@@ -195,17 +166,10 @@ class VLMTransformersModel(LightevalModel):
 
         self.generation_config_dict = config.generation_parameters.to_transformers_dict()
 
-        if is_accelerate_available():
-            model_size, _ = calculate_maximum_sizes(self.model)
-            model_size = convert_bytes(model_size)
-        else:
-            model_size = -1
-
         self.model_info = ModelInfo(
             model_name=self.config.model_name,
             model_sha=self.model_sha,
             model_dtype=config.dtype,
-            model_size=str(model_size),
         )
 
     @property
@@ -232,27 +196,8 @@ class VLMTransformersModel(LightevalModel):
         return disable_tqdm
 
     def _create_auto_model(self) -> AutoModelForVision2Seq:
-        """
-        Creates an instance of the pretrained HF model.
-
-        Returns:
-            transformers.PreTrainedModel: The created auto model instance.
-        """
-        if self.config.dtype == "4bit":
-            quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.float16)
-        elif self.config.dtype == "8bit":
-            quantization_config = BitsAndBytesConfig(load_in_8bit=True)
-        else:
-            quantization_config = None
-
         subfolder = self.config.subfolder
         revision = self.config.revision + (f"/{subfolder}" if subfolder is not None else "")
-
-        pretrained_config = self.transformers_config
-
-        kwargs = {}
-        if "quantization_config" not in pretrained_config.to_dict():
-            kwargs["quantization_config"] = quantization_config
 
         model = AutoModelForVision2Seq.from_pretrained(
             self.config.model_name,
@@ -260,9 +205,7 @@ class VLMTransformersModel(LightevalModel):
             device_map=self.config.device_map,
             torch_dtype=self.config.dtype,
             trust_remote_code=self.config.trust_remote_code,
-            **kwargs,
         )
-        # model.to(self.device)
         model.eval()
         torch.set_grad_enabled(False)
 
@@ -299,32 +242,11 @@ class VLMTransformersModel(LightevalModel):
         return tokenizer
 
     def _init_max_length(self) -> int:
-        """Return the maximum sequence length of the model.
-        NOTE: Different model configurations have different max sequence length
-        attribute names.
-            - n_positions: (CTRLConfig)
-            - max_position_embeddings: (BartConfig, RoFormerConfig)
-            - n_ctx: (GPT2Config)
-        NOTE: For relative position encoded models you should specify the max
-        sequence length of the model in the constructor via `max_length`.
-
+        """
         Returns:
             int: Max length to use depending on the available args and config
         """
-        if self.config.max_length is not None:
-            return self.config.max_length
-
-        # Try to get the sequence length from the model config.
-        seqlen_config_attrs = ("n_positions", "max_position_embeddings", "n_ctx")
-        for attr in seqlen_config_attrs:
-            if hasattr(self.transformers_config, attr):
-                return getattr(self.transformers_config, attr)
-
-        logger.warning(
-            "No max_length attribute found in the model config. Using the default max sequence length setting {2048}. It is recomended to set max_length trough the madel args"
-        )
-
-        return 2048
+        raise NotImplementedError()
 
     def greedy_until(
         self,
@@ -345,12 +267,11 @@ class VLMTransformersModel(LightevalModel):
     def loglikelihood(
         self,
         requests: list[LoglikelihoodRequest],
-        override_bs: Optional[int] = None,
     ) -> list[LoglikelihoodResponse]:
         raise NotImplementedError()
 
     def loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: Optional[int] = None
+        self, requests: list[LoglikelihoodSingleTokenRequest]
     ) -> list[LoglikelihoodSingleTokenResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
