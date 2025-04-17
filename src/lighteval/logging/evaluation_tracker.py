@@ -164,6 +164,10 @@ class EvaluationTracker:
                 raise ValueError("You need to specify the project name in wandb_args")
 
             wandb.login()
+            self.wandb_run = wandb.init(
+                project=self.wandb_project,
+                resume="allow",
+            )
 
     @property
     def results(self):
@@ -246,16 +250,10 @@ class EvaluationTracker:
             )
 
     def push_to_wandb(self, results_dict: dict, details_datasets: dict) -> None:
-        import wandb
-
-        wandb_run = wandb.init(
-            project=self.wandb_project,
-            resume="allow",
-        )
-        wandb_run.log(
+        self.wandb_run.log(
             {**results_dict["results"]},
         )
-        wandb_run.finish()
+        self.wandb_run.finish()
 
     def save_results(self, date_id: str, results_dict: dict):
         output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name
