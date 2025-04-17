@@ -1,11 +1,10 @@
-model:
-  base_params:
-    model_name: "openai/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
-    base_url: "https://router.huggingface.co/hf-inference/v1"
-  generation:
+model_parameters:
+  model_name: "openai/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
+  provider: "openai"
+  base_url: "https://router.huggingface.co/hf-inference/v1"
+  generation_parameters:
     temperature: 0.5
     max_new_tokens: 256
-    stop_tokens: [""]
     top_p: 0.9
     seed: 0
     repetition_penalty: 1.0

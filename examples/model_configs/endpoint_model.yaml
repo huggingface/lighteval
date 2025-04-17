@@ -1,20 +1,22 @@
-model:
-  base_params:
-    # Pass either model_name, or endpoint_name and true reuse_existing
-    # endpoint_name: "llama-2-7B-lighteval" # needs to be lower case without special characters
-    # reuse_existing: true # defaults to false; if true, ignore all params in instance, and don't delete the endpoint after evaluation
-    model_name: "meta-llama/Llama-2-7b-hf"
-    # revision: "main"  # defaults to "main"
-    dtype: "float16" # can be any of "awq", "eetq", "gptq", "4bit' or "8bit" (will use bitsandbytes), "bfloat16" or "float16"
-  instance:
-    accelerator: "gpu"
-    region: "eu-west-1"
-    vendor: "aws"
-    instance_type: "nvidia-a10g"
-    instance_size: "x1"
-    framework: "pytorch"
-    endpoint_type: "protected"
-    namespace: null # The namespace under which to launch the endpoint. Defaults to the current user's namespace
-    image_url: null # Optionally specify the docker image to use when launching the endpoint model. E.g., launching models with later releases of the TGI container with support for newer models.
-    env_vars:
-      null # Optional environment variables to include when launching the endpoint. e.g., `MAX_INPUT_LENGTH: 2048`
+model_parameters:
+  reuse_existing: false # if true, ignore all params in instance, and don't delete the endpoint after evaluation
+  # endpoint_name: "llama-2-7B-lighteval" # needs to be lower case without special characters
+
+  model_name: "meta-llama/Llama-2-7b-hf"
+  revision: "main"  # defaults to "main"
+  dtype: "float16" # can be any of "awq", "eetq", "gptq", "4bit' or "8bit" (will use bitsandbytes), "bfloat16" or "float16"
+  accelerator: "gpu"
+  region: "eu-west-1"
+  vendor: "aws"
+  instance_type: "nvidia-a10g"
+  instance_size: "x1"
+  framework: "pytorch"
+  endpoint_type: "protected"
+  namespace: null # The namespace under which to launch the endpoint. Defaults to the current user's namespace
+  image_url: null # Optionally specify the docker image to use when launching the endpoint model. E.g., launching models with later releases of the TGI container with support for newer models.
+  env_vars:
+    null # Optional environment variables to include when launching the endpoint. e.g., `MAX_INPUT_LENGTH: 2048`
+  generation_parameters:
+    max_new_tokens: 256 # maximum number of tokens to generate
+    temperature: 0.2
+    top_p: 0.9

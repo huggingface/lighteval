@@ -23,11 +23,10 @@
 from transformers import AutoTokenizer
 
 from lighteval.models.dummy.dummy_model import DummyModel, DummyModelConfig
-from lighteval.utils.utils import EnvConfig
 
 
 def test_tok_encode_pair():
-    model = DummyModel(config=DummyModelConfig(seed=42), env_config=EnvConfig())
+    model = DummyModel(config=DummyModelConfig(seed=42))
     model._tokenizer = AutoTokenizer.from_pretrained("facebook/xglm-564M")
     context = "答案："
     continuation = "1"
