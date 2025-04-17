@@ -14818,6 +14818,22 @@ simp_turing_concept_bigbench = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
+simpleqa = LightevalTaskConfig(
+    name="simpleqa",
+    suite=["lighteval"],
+    prompt_function=prompt.simpleqa,
+    hf_repo="lighteval/SimpleQA",
+    hf_subset="default",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=2048,
+    metric=[Metrics.simpleqa_judge],
+    stop_sequence=["\n"],
+    trust_dataset=True,
+    version=0,
+)
 simple_arithmetic_json_bigbench = LightevalTaskConfig(
     name="simple_arithmetic_json",
     suite=["bigbench", "bigbench_json"],

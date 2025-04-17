@@ -237,7 +237,7 @@ class JudgeLM:
 
         kwargss = self.dict_of_lists_to_list_of_dicts(kwargs)
         if kwargss is None:
-            kwargss = [{} for _ in range(len(questions))]
+            kwargss = [{}] * len(questions)
 
         # enumerate over questions answers options and golds to make the
         prompts = [
