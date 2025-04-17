@@ -126,7 +126,7 @@ class EvaluationTracker:
         tensorboard_metric_prefix: str = "eval",
         public: bool = False,
         nanotron_run_info: "GeneralArgs" = None,
-        wandb_args: str | None = None,
+        wandb: bool = False,
     ) -> None:
         """Creates all the necessary loggers for evaluation tracking."""
         self.details_logger = DetailsLogger()
@@ -146,7 +146,7 @@ class EvaluationTracker:
 
         self.should_push_to_hub = push_to_hub
         self.should_save_details = save_details
-        self.wandb_args = wandb_args
+        self.wandb = wandb
 
         self.should_push_results_to_tensorboard = push_to_tensorboard
         self.tensorboard_repo = f"{hub_results_org}/tensorboard_logs"
@@ -155,18 +155,13 @@ class EvaluationTracker:
 
         self.public = public
 
-        if wandb_args is not None:
+        if wandb is True:
             import wandb
 
-            self.wandb_args_dict: dict = dict([arg.split("=") for arg in wandb_args.split(",")])
-            if "project" not in self.wandb_args_dict:
-                raise ValueError("You need to specify the project name in wandb_args")
+            self.wandb_project = os.environ.get("WANDB_PROJECT", None)
 
-            if "step" in self.wandb_args_dict:
-                try:
-                    self.wandb_args_dict["step"] = int(self.wandb_args_dict["step"])
-                except ValueError:
-                    raise ValueError("The step in wandb_args should be an integer")
+            if self.wandb_project is None:
+                raise ValueError("You need to specify the project name in wandb_args")
 
             wandb.login()
 
@@ -239,7 +234,7 @@ class EvaluationTracker:
                 results_dict=results_dict,
             )
 
-        if self.wandb_args is not None:
+        if self.wandb is True:
             self.push_to_wandb(
                 results_dict=results_dict,
                 details_datasets=details_datasets,
@@ -254,15 +249,11 @@ class EvaluationTracker:
         import wandb
 
         wandb_run = wandb.init(
-            project=self.wandb_args_dict["project"],
-            id=self.wandb_args_dict.get("id", None),
-            name=self.wandb_args_dict.get("run_name", None),
-            config=self.general_config_logger.generation_parameters,
+            project=self.wandb_project,
             resume="allow",
         )
         wandb_run.log(
             {**results_dict["results"]},
-            step=self.wandb_args_dict.get("step", None),
         )
         wandb_run.finish()
 
