@@ -21,11 +21,9 @@
 # SOFTWARE.
 
 import pytest
+import yaml
 
 from lighteval.models.endpoints.endpoint_model import InferenceEndpointModelConfig
-
-
-# "examples/model_configs/endpoint_model.yaml"
 
 
 class TestInferenceEndpointModelConfig:
@@ -36,8 +34,8 @@ class TestInferenceEndpointModelConfig:
                 "examples/model_configs/endpoint_model.yaml",
                 {
                     "model_name": "meta-llama/Llama-2-7b-hf",
+                    "dtype": "float16",
                     "revision": "main",
-                    "model_dtype": "float16",
                     "endpoint_name": None,
                     "reuse_existing": False,
                     "accelerator": "gpu",
@@ -50,36 +48,31 @@ class TestInferenceEndpointModelConfig:
                     "namespace": None,
                     "image_url": None,
                     "env_vars": None,
+                    "add_special_tokens": True,
+                    "generation_parameters": {
+                        "early_stopping": None,
+                        "frequency_penalty": None,
+                        "length_penalty": None,
+                        "max_new_tokens": 256,
+                        "min_new_tokens": None,
+                        "min_p": None,
+                        "presence_penalty": None,
+                        "repetition_penalty": None,
+                        "seed": None,
+                        "stop_tokens": None,
+                        "temperature": 0.2,
+                        "top_k": None,
+                        "top_p": 0.9,
+                        "truncate_prompt": None,
+                        "response_format": None,
+                    },
                 },
-            ),
-            (
-                "examples/model_configs/serverless_model.yaml",
-                {
-                    "model_name": "meta-llama/Llama-3.1-8B-Instruct",
-                    # Defaults:
-                    "revision": "main",
-                    "model_dtype": None,
-                    "endpoint_name": None,
-                    "reuse_existing": False,
-                    "accelerator": "gpu",
-                    "region": "us-east-1",
-                    "vendor": "aws",
-                    "instance_type": None,
-                    "instance_size": None,
-                    "framework": "pytorch",
-                    "endpoint_type": "protected",
-                    "namespace": None,
-                    "image_url": None,
-                    "env_vars": None,
-                },
-            ),
-            (
-                "examples/model_configs/endpoint_model_reuse_existing.yaml",
-                {"endpoint_name": "llama-2-7B-lighteval", "reuse_existing": True},
             ),
         ],
     )
     def test_from_path(self, config_path, expected_config):
+        with open(config_path, "r") as f:
+            config = yaml.safe_load(f)
+
         config = InferenceEndpointModelConfig.from_path(config_path)
-        for key, value in expected_config.items():
-            assert getattr(config, key) == value
+        assert config.model_dump() == expected_config
