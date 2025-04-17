@@ -37,8 +37,8 @@ from transformers import AutoTokenizer, BatchEncoding
 
 from lighteval.config.lighteval_config import FullNanotronConfig
 from lighteval.data import (
-    GenDistributedSampler,
     GenerativeTaskDatasetNanotron,
+    LightevalDistributedSampler,
     LoglikelihoodDataset,
     LoglikelihoodSingleTokenDataset,
 )
@@ -1148,7 +1148,7 @@ class NanotronLightevalModel(LightevalModel):
             starting_batch_size = batch_size * 2
 
             # For the DP replicas
-            distributed_sampler = GenDistributedSampler(
+            distributed_sampler = LightevalDistributedSampler(
                 dataset,
                 num_replicas=self.parallel_context.dp_pg.size(),
                 rank=dist.get_rank(self.parallel_context.dp_pg),

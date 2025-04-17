@@ -87,24 +87,16 @@ def load_model(  # noqa: C901
     Returns:
         Union[TransformersModel, AdapterModel, DeltaModel, ModelClient]: The model that will be evaluated
     """
+    if isinstance(config, DummyModelConfig):
+        return load_dummy_model(config)
+
     # Inference server loading
     if isinstance(config, TGIModelConfig):
         return load_model_with_tgi(config)
 
+    # Endpoints
     if isinstance(config, InferenceEndpointModelConfig) or isinstance(config, ServerlessEndpointModelConfig):
         return load_model_with_inference_endpoints(config)
-
-    if isinstance(config, TransformersModelConfig):
-        return load_model_with_accelerate_or_default(config)
-
-    if isinstance(config, DummyModelConfig):
-        return load_dummy_model(config)
-
-    if isinstance(config, VLLMModelConfig):
-        return load_model_with_accelerate_or_default(config)
-
-    if isinstance(config, SGLangModelConfig):
-        return load_sglang_model(config)
 
     if isinstance(config, OpenAIModelConfig):
         return load_openai_model(config)
@@ -114,6 +106,9 @@ def load_model(  # noqa: C901
 
     if isinstance(config, InferenceProvidersModelConfig):
         return load_inference_providers_model(config=config)
+
+    # Local models
+    return load_local_model(config)
 
 
 def load_model_with_tgi(config: TGIModelConfig):
@@ -150,20 +145,25 @@ def load_model_with_inference_endpoints(config: Union[InferenceEndpointModelConf
     return model
 
 
-def load_model_with_accelerate_or_default(
-    config: Union[AdapterModelConfig, TransformersModelConfig, DeltaModelConfig],
+def load_local_model(
+    config: Union[AdapterModelConfig, TransformersModelConfig, DeltaModelConfig, VLLMModelConfig, SGLangModelConfig],
 ):
     if isinstance(config, AdapterModelConfig):
         model = AdapterModel(config=config)
     elif isinstance(config, DeltaModelConfig):
         model = DeltaModel(config=config)
+    elif isinstance(config, TransformersModelConfig):
+        model = TransformersModel(config=config)
     elif isinstance(config, VLLMModelConfig):
         if not is_vllm_available():
             raise ImportError(NO_VLLM_ERROR_MSG)
         model = VLLMModel(config=config)
-        return model
+    elif isinstance(config, SGLangModelConfig):
+        if not is_sglang_available():
+            raise ImportError(NO_SGLANG_ERROR_MSG)
+        model = SGLangModel(config=config)
     else:
-        model = TransformersModel(config=config)
+        raise Exception(f"Unknown model configuration: {type(config)}.")
 
     return model
 
@@ -174,10 +174,3 @@ def load_dummy_model(config: DummyModelConfig):
 
 def load_inference_providers_model(config: InferenceProvidersModelConfig):
     return InferenceProvidersClient(config=config)
-
-
-def load_sglang_model(config: SGLangModelConfig):
-    if not is_sglang_available():
-        raise ImportError(NO_SGLANG_ERROR_MSG)
-
-    return SGLangModel(config=config)

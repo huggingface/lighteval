@@ -320,7 +320,7 @@ class GenerativeTaskDatasetNanotron(GenerativeTaskDataset):
         return index, self.sorted_data[index + self.split_start]
 
 
-class GenDistributedSampler(DistributedSampler):
+class LightevalDistributedSampler(DistributedSampler):
     """A distributed sampler that copy the last element only when drop_last is False so we keep a small padding in the batches
     as our samples are sorted by length.
     """

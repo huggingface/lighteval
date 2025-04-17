@@ -21,7 +21,6 @@
 # SOFTWARE.
 
 import gc
-import itertools
 import logging
 import os
 from typing import Optional
@@ -30,7 +29,7 @@ import torch
 from pydantic import NonNegativeFloat, PositiveInt
 from tqdm import tqdm
 
-from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
+from lighteval.data import GenerativeTaskDataset, LightevalDistributedSampler, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
 from lighteval.models.model_output import (
     GenerativeResponse,
@@ -49,22 +48,21 @@ logger = logging.getLogger(__name__)
 
 
 if is_vllm_available():
-    import ray
     from more_itertools import distribute
     from vllm import LLM, SamplingParams
-    from vllm.distributed.parallel_state import destroy_distributed_environment, destroy_model_parallel
+    from vllm.distributed.parallel_state import (
+        destroy_distributed_environment,
+        destroy_model_parallel,
+    )
     from vllm.transformers_utils.tokenizer import get_tokenizer
 
     logging.getLogger("vllm").propagate = True
     logging.getLogger("vllm").handlers.clear()
 
-    logging.getLogger("ray").propagate = True
-    logging.getLogger("ray").handlers.clear()
 else:
     LLM = None
     SamplingParams = None
     get_tokenizer = None
-    ray = None
     distribute = None
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -96,10 +94,7 @@ class VLLMModelConfig(ModelConfig):
 
 
 class VLLMModel(LightevalModel):
-    def __init__(
-        self,
-        config: VLLMModelConfig,
-    ):
+    def __init__(self, config: VLLMModelConfig):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self._config = config
         self.use_chat_template = config.use_chat_template
@@ -123,6 +118,14 @@ class VLLMModel(LightevalModel):
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
         self.pairwise_tokenization = config.pairwise_tokenization
 
+        if torch.distributed.is_available() and config.data_parallel_size > 1:
+            world_size = torch.cuda.device_count()
+            if world_size < config.data_parallel_size * config.tensor_parallel_size * config.pipeline_parallel_size:
+                raise Exception(
+                    f"The number of gpus required for your config (DP = {config.data_parallel_size}, TP = {config.tensor_parallel_size}, PP = {config.pipeline_parallel_size}) is bigger than the number of GPUs available ({world_size}). Change your model config and try again"
+                )
+            # torch.distributed.init_process_group(world_size=world_size, rank=rank)
+
     @property
     def tokenizer(self):
         return self._tokenizer
@@ -132,7 +135,6 @@ class VLLMModel(LightevalModel):
         if self.model is not None:
             del self.model
         gc.collect()
-        ray.shutdown()
         destroy_distributed_environment()
         torch.cuda.empty_cache()
 
@@ -175,13 +177,52 @@ class VLLMModel(LightevalModel):
             "seed": int(config.seed),
             "max_num_seqs": int(config.max_num_seqs),
             "max_num_batched_tokens": int(config.max_num_batched_tokens),
+            "distributed_executor_backend": "mp",
         }
-        if config.data_parallel_size > 1:
-            self.model_args["distributed_executor_backend"] = "ray"
-            self._batch_size = "auto"
-            return None
 
-        model = LLM(**self.model_args)
+        if config.data_parallel_size > 1:
+            import vllm.envs
+
+            if vllm.envs.VLLM_USE_V1:
+                from vllm.v1.engine.llm_engine import LLMEngine
+            else:
+                from vllm import LLMEngine
+
+            self._batch_size = "auto"
+
+            vllm_config = vllm.config.VllmConfig(
+                model_config=vllm.config.ModelConfig(
+                    model=self.model_args["model"],
+                    tokenizer=self.model_args["model"],
+                    tokenizer_mode="auto",
+                    task="auto",
+                    revision=self.model_args["revision"],
+                    dtype=self.model_args["dtype"],
+                    trust_remote_code=self.model_args["trust_remote_code"],
+                    seed=self.model_args["seed"],
+                ),
+                parallel_config=vllm.config.ParallelConfig(
+                    pipeline_parallel_size=self.model_args["pipeline_parallel_size"],
+                    data_parallel_size=config.data_parallel_size,
+                    tensor_parallel_size=self.model_args["tensor_parallel_size"],
+                    distributed_executor_backend=self.model_args["distributed_executor_backend"],
+                ),
+                scheduler_config=vllm.config.SchedulerConfig(
+                    max_model_len=self.model_args["max_model_len"],
+                    max_num_seqs=self.model_args["max_num_seqs"],
+                    max_num_batched_tokens=self.model_args["max_num_batched_tokens"],
+                ),
+                cache_config=vllm.config.CacheConfig(
+                    gpu_memory_utilization=self.model_args["gpu_memory_utilization"],
+                    swap_space=self.model_args["swap_space"],
+                    block_size=16,
+                    cache_dtype="auto",
+                ),
+            )
+
+            model = LLMEngine.from_vllm_config(vllm_config)
+        else:
+            model = LLM(**self.model_args)
 
         # If the max_length can't get extracted from the config, it will be inferred from the model
         # Inferring from the tokenizer will cause vllm to bug for models with mismatches between model
@@ -230,73 +271,89 @@ class VLLMModel(LightevalModel):
             position=0,
             disable=False,  # self.disable_tqdm,
         ):
-            # For chat models, generation stops with EOS token, so we don't need to specify stop tokens
-            if self.use_chat_template:
-                stop_tokens = []
-            else:
-                # NOTE: we are assuming all items in a batch behave similarly (same
-                # stop_tokens and max_tokens genrated) which is not necessarily
-                # the case! Because of that we only use batch size of 1
-                stop_tokens = dataset[0].stop_sequence
-
-            max_new_tokens = self._config.generation_parameters.max_new_tokens or dataset[0].generation_size
-            returns_logits = dataset[0].use_logits
-            num_samples = dataset[0].num_samples
-
-            context = [c.context for c in dataset]
-            tokenized = self.tokenizer(context, add_special_tokens=self.add_special_tokens)
-
-            # The main question for this step is the following:
-            # Would we rather truncate the prompt to allow generation to go to max_new_tokens, at the risk
-            # of losing some meaning, or have some generations that are exceedingly short?
-            # The choice we go for here is to avoid truncating the prompt if we can, since it
-            # should have been managed by the prompt creator/few shot manager if requested by the user.
-            inputs = tokenized["input_ids"]
-            context_size = len(inputs[0])
-
-            # left truncate the inputs to the maximum length
-            if max_new_tokens is not None:
-                if context_size + max_new_tokens > self.max_length:
-                    logger.warning(
-                        f"{context_size + max_new_tokens=} which is greater than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
-                    )
-                    context_size = self.max_length - max_new_tokens
-                    if context_size < 0:
-                        logger.critical(
-                            f"{context_size=} is less than 0, either reduce the max_new_tokens or increase model max length."
-                        )
-                        raise ValueError("Context size is less than 0.")
-                    inputs = [input[-context_size:] for input in inputs]
-            else:
-                if context_size > self.max_length:
-                    logger.warning(
-                        f"{context_size=} which is greater than {self.max_length=}. Truncating context to {self.max_length} tokens."
-                    )
-                    context_size = self.max_length
-                    inputs = [input[-context_size:] for input in inputs]
-
-            vllm_outputs = self._generate(
-                inputs=inputs,
-                max_new_tokens=max_new_tokens,
-                stop_tokens=stop_tokens,
-                returns_logits=returns_logits,
-                num_samples=num_samples,
+            # For the DP replicas
+            distributed_sampler = LightevalDistributedSampler(
+                dataset,
+                # rank=torch.distributed.get_rank(),
+                shuffle=False,
+                drop_last=False,
             )
 
-            for vllm_output in vllm_outputs:
-                output_token_ids = [outputs.token_ids for outputs in vllm_output.outputs]
-                logprobs = [output.logprobs for output in vllm_output.outputs] or []
-                logprobs = [logprob[token_id].logprob for token_id, logprob in zip(output_token_ids[0], logprobs[0])]
-                result = [output.text for output in vllm_output.outputs]
-                input_token_ids = vllm_output.prompt_token_ids
+            dataloader = torch.utils.data.DataLoader(
+                dataset,
+                batch_size=override_bs if override_bs else 1,
+                sampler=distributed_sampler,
+                drop_last=False,
+                collate_fn=lambda batch: batch,
+            )
 
-                cur_response = GenerativeResponse(
-                    result=result,
-                    logits=logprobs,
-                    generated_tokens=list(output_token_ids),
-                    input_tokens=input_token_ids,
+            for batch in dataloader:
+                # For chat models, generation stops with EOS token, so we don't need to specify stop tokens
+                if self.use_chat_template:
+                    stop_tokens = []
+                else:
+                    stop_tokens = batch[0].stop_sequence
+
+                max_new_tokens = self._config.generation_parameters.max_new_tokens or batch[0].generation_size
+                returns_logits = batch[0].use_logits
+                num_samples = batch[0].num_samples
+
+                context = [c.context for c in batch]
+                tokenized = self.tokenizer(context, add_special_tokens=self.add_special_tokens)
+
+                # The main question for this step is the following:
+                # Would we rather truncate the prompt to allow generation to go to max_new_tokens, at the risk
+                # of losing some meaning, or have some generations that are exceedingly short?
+                # The choice we go for here is to avoid truncating the prompt if we can, since it
+                # should have been managed by the prompt creator/few shot manager if requested by the user.
+                inputs = tokenized["input_ids"]
+                context_size = len(inputs[0])
+
+                # left truncate the inputs to the maximum length
+                if max_new_tokens is not None:
+                    if context_size + max_new_tokens > self.max_length:
+                        logger.warning(
+                            f"{context_size + max_new_tokens=} which is greater than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
+                        )
+                        context_size = self.max_length - max_new_tokens
+                        if context_size < 0:
+                            logger.critical(
+                                f"{context_size=} is less than 0, either reduce the max_new_tokens or increase model max length."
+                            )
+                            raise ValueError("Context size is less than 0.")
+                        inputs = [input[-context_size:] for input in inputs]
+                else:
+                    if context_size > self.max_length:
+                        logger.warning(
+                            f"{context_size=} which is greater than {self.max_length=}. Truncating context to {self.max_length} tokens."
+                        )
+                        context_size = self.max_length
+                        inputs = [input[-context_size:] for input in inputs]
+
+                vllm_outputs = self._generate(
+                    inputs=inputs,
+                    max_new_tokens=max_new_tokens,
+                    stop_tokens=stop_tokens,
+                    returns_logits=returns_logits,
+                    num_samples=num_samples,
                 )
-                results.append(cur_response)
+
+                for vllm_output in vllm_outputs:
+                    output_token_ids = [outputs.token_ids for outputs in vllm_output.outputs]
+                    logprobs = [output.logprobs for output in vllm_output.outputs] or []
+                    logprobs = [
+                        logprob[token_id].logprob for token_id, logprob in zip(output_token_ids[0], logprobs[0])
+                    ]
+                    result = [output.text for output in vllm_output.outputs]
+                    input_token_ids = vllm_output.prompt_token_ids
+
+                    cur_response = GenerativeResponse(
+                        result=result,
+                        logits=logprobs,
+                        generated_tokens=list(output_token_ids),
+                        input_tokens=input_token_ids,
+                    )
+                    results.append(cur_response)
 
         return dataset.get_original_order(results)
 
@@ -324,39 +381,11 @@ class VLLMModel(LightevalModel):
             sampling_params.max_tokens = 1
             sampling_params.detokenize = False
 
-        if self.data_parallel_size > 1:
-            # vLLM hangs if tensor_parallel > 1 and resources are set in ray.remote
-            # also seems to only work with decorator and not with ray.remote() fn
-            # see https://github.com/vllm-project/vllm/issues/973
-            # note: this has changed on 0.3.3, and it only works now if num_gpus are set.
-            # but then tensor_parallel breaks
-            # Hynek: With the newest vllm, it actually breaks when tensor_parallel_size == 1 and num_gpus not set,
-            # as VLLM complains about no GPUs available.
-            @ray.remote(num_gpus=1 if self.tensor_parallel_size == 1 else None)
-            def run_inference_one_model(model_args: dict, sampling_params: SamplingParams, requests):
-                llm = LLM(**model_args)
-                return llm.generate(prompt_token_ids=requests, sampling_params=sampling_params)
-
-            # dispatch requests to all self.data_parallel_size workers, in interleaved fashion
-            # interleaved important to balance context lengths across workers
-            requests = [list(x) for x in distribute(self.data_parallel_size, inputs)]
-            inputs = ((self.model_args, sampling_params, req) for req in requests)
-            object_refs = [run_inference_one_model.remote(*x) for x in inputs]
-            results = ray.get(object_refs)
-            # Invoke ray.shutdown() to prevent hang-ups if subsequent calls required.
-            ray.shutdown()
-            # flatten results
-            outputs = [
-                x
-                for x in itertools.chain.from_iterable(itertools.zip_longest(*[list(x) for x in results]))
-                if x is not None
-            ]
-        else:
-            outputs = self.model.generate(
-                prompt_token_ids=inputs,
-                sampling_params=sampling_params,
-                use_tqdm=True,
-            )
+        outputs = self.model.generate(
+            prompt_token_ids=inputs,
+            sampling_params=sampling_params,
+            use_tqdm=True,
+        )
 
         return outputs
 

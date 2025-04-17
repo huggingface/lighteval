@@ -179,6 +179,9 @@ class Pipeline:
                 data_parallel_size=self.model_config.lighteval_config.parallelism.dp,
             )
             test_all_gather(parallel_context=parallel_context)
+        # elif self.launcher_type == ParallelismManager.VLLM:
+        #    if not torch.distributed.is_initialized():
+        #        torch.distributed.init_process_group(backend="nccl", init_method=None)
 
         return accelerator, parallel_context
 

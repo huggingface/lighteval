@@ -92,7 +92,7 @@ nanotron = [
   "tensorboardX"
 ]
 tensorboardX = ["tensorboardX"]
-vllm = ["vllm>=0.7.0", "ray", "more_itertools"]
+vllm = ["vllm>=0.8.4", "more_itertools"]
 quality = ["ruff==v0.2.2","pre-commit"]
 tests = ["pytest==7.4.0","deepdiff"]
 dev = ["lighteval[accelerate,quality,tests,multilingual,math,extended_tasks,vllm]"]
