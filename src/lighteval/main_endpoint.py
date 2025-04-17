@@ -316,9 +316,13 @@ def litellm(
     Evaluate models using LiteLLM as backend.
     """
 
+    import yaml
+
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.litellm_model import LiteLLMModelConfig
+    from lighteval.models.model_input import GenerationParameters
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
+    from lighteval.utils.utils import parse_args
 
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
@@ -332,9 +336,14 @@ def litellm(
     parallelism_manager = ParallelismManager.NONE
 
     if model_args.endswith(".yaml"):
-        model_config = LiteLLMModelConfig.from_path(model_args)
+        with open(model_args, "r") as f:
+            config = yaml.safe_load(f)
     else:
-        model_config = LiteLLMModelConfig.from_args(model_args)
+        config = parse_args(model_args)
+
+    metric_options = config.get("metric_options", {})
+    generation_parameters = GenerationParameters(**config.get("generation", {}))
+    model_config = LiteLLMModelConfig(**config["model"], generation_parameters=generation_parameters)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
@@ -352,7 +361,7 @@ def litellm(
         pipeline_parameters=pipeline_params,
         evaluation_tracker=evaluation_tracker,
         model_config=model_config,
-        metric_options=None,
+        metric_options=metric_options,
     )
 
     pipeline.evaluate()
