@@ -343,16 +343,14 @@ class CustomAraTrustTask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=aratrust_pfn,
             hf_repo="asas-ai/AraTrust-categorized",
-            metric=[
-                Metrics.f1_score
-            ],  # Following the paper (AraTrust: An Evaluation of Trustworthiness for LLMs in Arabic)[https://arxiv.org/abs/2403.09017]
+            metric=[Metrics.loglikelihood_acc_norm],
             hf_avail_splits=["train"],
             evaluation_splits=["train"],
             few_shots_split=None,
             few_shots_select=None,
             suite=["community"],
             generation_size=-1,
-            stop_sequence=[],
+            stop_sequence=None,
             trust_dataset=True,
             version=0,
         )
@@ -414,12 +412,15 @@ def alghafa_pfn(line, task_name: str = None):
     question = line["query"]
     answer_index = int(line["label"])
     allowed_keys = [f"sol{i}" for i in range(1, 6)]
-    choices = [line[key] for key in allowed_keys if key in line]
+    extracted_choices = [line[key] for key in allowed_keys if key in line]
+    choices = [str(i) for i in range(len(extracted_choices))]
 
     instruction = "الأسئلة التالية هي أسئلة متعددة الإختيارات مع الجواب الصحيح\n\n"
     query = f"{instruction}السؤال: {question}\n"
-    for index, choice in enumerate(choices):
+
+    for index, choice in enumerate(extracted_choices):
         query += f"{index}) {choice}\n"
+
     query += "الإجابة:"
 
     return Doc(
@@ -772,7 +773,7 @@ MADINAH_QA_SUBSETS = ["Arabic Language (General)", "Arabic Language (Grammar)"]
 
 
 def madinah_qa_pfn(line, task_name: str = None):
-    instruction = "السؤال التالي هو سؤال متعدد الإختيارات. اختر الإجابة الصحيحة:\n\n"
+    instruction = "بناءً على السياق أدناه، اختر الإجابة الصحيحة للسؤال التالي من قائمة الأجوبة:\n\n"
 
     # Define the mapping from Latin to Arabic letters
     latin_to_arabic = {"A": "أ", "B": "ب", "C": "ج", "D": "د", "E": "هـ"}
@@ -793,14 +794,14 @@ def madinah_qa_pfn(line, task_name: str = None):
     # Find the correct index for the answer key in the Arabic version
     answer_index = valid_keys_latin.index(line["Answer Key"])
 
-    query = f"{instruction}{line['Question']}\n"
+    query = f"{instruction}\nالسياق:\n{line['Context']}\nالسؤال:\n{line['Question']}\n"
     query += "".join([f"{key}. {choice}\n" for key, choice in zip(valid_keys_arabic, choices)])
     query += "الإجابة:"
 
     return Doc(
         task_name=task_name,
         query=query,
-        choices=choices,
+        choices=valid_keys_arabic,
         gold_index=answer_index,  # Correct index in the valid keys
         instruction=instruction,
     )

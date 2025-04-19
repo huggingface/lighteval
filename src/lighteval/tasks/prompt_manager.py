@@ -29,6 +29,7 @@ from itertools import cycle
 from typing import TYPE_CHECKING, Optional, Tuple, Union
 
 from lighteval.models.abstract_model import LightevalModel
+from lighteval.models.endpoints.inference_providers_model import InferenceProvidersClient
 from lighteval.models.litellm_model import LiteLLMClient
 from lighteval.tasks.requests import Doc
 from lighteval.utils.utils import as_list
@@ -106,6 +107,7 @@ class PromptManager:
         truncate_few_shots: bool = False,
         use_chat_template=False,
         system_prompt: str = None,
+        cot_prompt: str = None,
     ) -> Doc:
         is_multi_turn = doc.specific is not None and len(doc.specific.get("multi_turn_queries", [])) > 0
         if is_multi_turn:
@@ -120,6 +122,7 @@ class PromptManager:
                 sampler=sampler,
                 use_chat_template=use_chat_template,
                 system_prompt=system_prompt,
+                cot_prompt=cot_prompt,
             )
         doc.num_effective_few_shots = num_effective_few_shots
         doc.num_asked_few_shots = num_fewshot
@@ -174,6 +177,7 @@ class PromptManager:
         truncate_few_shots: bool = False,
         use_chat_template=False,
         system_prompt: str = None,
+        cot_prompt: str = None,
     ):
         """Returns a fewshot context string that is made up of a prepended description
         (if provided), the `num_fewshot` number of examples, and an appended prompt example.
@@ -205,6 +209,7 @@ class PromptManager:
             fewshot_ex=fewshot_ex,
             system_prompt=system_prompt,
             use_chat_template=use_chat_template,
+            cot_prompt=cot_prompt,
         )
         if not use_chat_template:
             toks = self.model.tok_encode(output)
@@ -227,6 +232,7 @@ class PromptManager:
                     fewshot_ex=fewshot_ex[:num_effective_fewshots],
                     system_prompt=system_prompt,
                     use_chat_template=use_chat_template,
+                    cot_prompt=cot_prompt,
                 )
                 if not use_chat_template:
                     toks = self.model.tok_encode(output)
@@ -234,7 +240,7 @@ class PromptManager:
                     toks = [self.model.tok_encode(msg["content"]) for msg in output]
                     toks = [t for ts in toks for t in ts]
 
-        if isinstance(self.model, LiteLLMClient):
+        if type(self.model) in [LiteLLMClient, InferenceProvidersClient]:
             return output, num_effective_fewshots
 
         elif use_chat_template:
@@ -251,6 +257,7 @@ class PromptManager:
         fewshot_ex: list[str],
         system_prompt: Union[str | None],
         use_chat_template: bool,
+        cot_prompt: Union[str | None],
     ):
         examples = []
         # Few shot examples
@@ -262,10 +269,12 @@ class PromptManager:
                 examples.append(self.doc_to_text(ex, return_instructions=False) + self.doc_to_target(ex))
 
         # Actual example
+        content = example + cot_prompt if cot_prompt is not None else example
+
         if use_chat_template:
-            examples.append({"role": "user", "content": example})
+            examples.append({"role": "user", "content": content})
         else:
-            examples.append(example)
+            examples.append(content)
 
         # System prompt and instruction
         if use_chat_template:
