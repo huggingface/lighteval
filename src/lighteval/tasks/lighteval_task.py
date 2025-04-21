@@ -495,6 +495,12 @@ class LightevalTask:
                 )
             ]
 
+        # TODO: What is the best option to pass images to the requests?
+        # dirty hack for now
+        for reqs in requests.values():
+            for req in reqs:
+                req.specific = formatted_doc.specific
+
         return requests
 
     def get_metric_method_from_category(self, metric_category):
@@ -568,6 +574,14 @@ class LightevalTask:
                         for task in tasks
                     ],
                 )
+        
+        # TODO: debug purpose, to remove later
+        import os
+        debug_samples = int(os.getenv("DATASET_SAMPLES", 0))
+        if debug_samples > 0:
+            for dataset in datasets:
+                for split in dataset.keys():
+                    dataset[split] = dataset[split].select(range(debug_samples))
 
         for task, dataset in zip(tasks, datasets):
             task.dataset = dataset

@@ -21,18 +21,21 @@
 # SOFTWARE.
 
 import logging
-from typing import Union
+from typing import Union, Optional
 
 import torch
 from pydantic import PositiveInt
 from transformers import (
     AutoModelForVision2Seq,
+    AutoModelForImageTextToText,
     AutoProcessor,
     ProcessorMixin,
 )
+from tqdm import tqdm
 
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
 from lighteval.models.model_output import (
+    Batch,
     GenerativeResponse,
     LoglikelihoodResponse,
     LoglikelihoodSingleTokenResponse,
@@ -148,7 +151,7 @@ class VLMTransformersModel(LightevalModel):
 
         self.model_sha = config.get_model_sha()
         self._max_length = self._init_max_length()
-        self._tokenizer = self._create_auto_tokenizer()
+        self._processor = self._create_auto_processor()
         self.model = self._create_auto_model()
 
         # We are in DP (and launch the script with `accelerate launch`)
@@ -174,7 +177,7 @@ class VLMTransformersModel(LightevalModel):
 
     @property
     def tokenizer(self):
-        return self._tokenizer
+        return self._processor
 
     @property
     def add_special_tokens(self):
@@ -195,14 +198,14 @@ class VLMTransformersModel(LightevalModel):
             disable_tqdm = bool(not self.accelerator.is_main_process)
         return disable_tqdm
 
-    def _create_auto_model(self) -> AutoModelForVision2Seq:
+    def _create_auto_model(self):
         subfolder = self.config.subfolder
         revision = self.config.revision + (f"/{subfolder}" if subfolder is not None else "")
 
-        model = AutoModelForVision2Seq.from_pretrained(
+        model = AutoModelForImageTextToText.from_pretrained(
             self.config.model_name,
             revision=revision,
-            device_map=self.config.device_map,
+            device_map="auto",  # TODO: self.config.device_map,
             torch_dtype=self.config.dtype,
             trust_remote_code=self.config.trust_remote_code,
         )
@@ -218,9 +221,7 @@ class VLMTransformersModel(LightevalModel):
 
         return model
 
-    def _create_auto_tokenizer(
-        self,
-    ) -> ProcessorMixin:
+    def _create_auto_processor(self):
         """
         Create a Hugging Face AutoTokenizer for language model.
 
@@ -231,7 +232,7 @@ class VLMTransformersModel(LightevalModel):
         subfolder = self.config.subfolder
         revision = self.config.revision + (f"/{subfolder}" if subfolder is not None else "")
 
-        tokenizer = AutoProcessor.from_pretrained(
+        processor = AutoProcessor.from_pretrained(
             tokenizer_name,
             revision=revision,
             trust_remote_code=self.config.trust_remote_code,
@@ -239,14 +240,37 @@ class VLMTransformersModel(LightevalModel):
             truncation_side="left",
         )
 
-        return tokenizer
+        return processor
 
+    # TODO: verify, copied from transformers_model.py
     def _init_max_length(self) -> int:
-        """
+        """Return the maximum sequence length of the model.
+        NOTE: Different model configurations have different max sequence length
+        attribute names.
+            - n_positions: (CTRLConfig)
+            - max_position_embeddings: (BartConfig, RoFormerConfig)
+            - n_ctx: (GPT2Config)
+        NOTE: For relative position encoded models you should specify the max
+        sequence length of the model in the constructor via `max_length`.
+
         Returns:
             int: Max length to use depending on the available args and config
         """
-        raise NotImplementedError()
+        if self.config.max_length is not None:
+            return self.config.max_length
+
+        # Try to get the sequence length from the model config.
+        seqlen_config_attrs = ("n_positions", "max_position_embeddings", "n_ctx")
+        for attr in seqlen_config_attrs:
+            if hasattr(self.transformers_config, attr):
+                return getattr(self.transformers_config, attr)
+
+        logger.warning(
+            "No max_length attribute found in the model config. Using the default max sequence length setting {2048}. It is recomended to set max_length trough the madel args"
+        )
+
+        return 2048
+
 
     def greedy_until(
         self,
@@ -262,7 +286,35 @@ class VLMTransformersModel(LightevalModel):
         Returns:
             list[GenerativeResponse]: list of generated responses.
         """
-        raise NotImplementedError()
+        results  = []
+
+        for request in tqdm(requests, desc="Generating responses"):
+
+            texts = request.context
+            images = request.specific["images"]
+
+            inputs = self._processor(
+                text=texts,
+                images=images,
+                return_tensors="pt",
+            )
+            inputs = inputs.to(self._device)
+
+            outputs = self.model.generate(**inputs, return_dict_in_generate=False)
+            input_ids = inputs.input_ids
+            generated_ids = outputs[:, input_ids.shape[1]:]
+            generated_text = self._processor.batch_decode(generated_ids, skip_special_tokens=True)
+            generated_response = GenerativeResponse(
+                result=generated_text,
+                generated_tokens=generated_ids,
+                input_tokens=input_ids,
+                truncated_tokens_count=0,
+                padded_tokens_count=0,
+            )
+            results.append(generated_response)
+
+        return results
+
 
     def loglikelihood(
         self,
@@ -282,4 +334,10 @@ class VLMTransformersModel(LightevalModel):
         Returns:
             list[Tuple[float, bool]]: _description_
         """
+        raise NotImplementedError()
+
+    def loglikelihood_rolling(
+        self,
+        requests: list[LoglikelihoodRequest],
+    ) -> list[LoglikelihoodResponse]:
         raise NotImplementedError()

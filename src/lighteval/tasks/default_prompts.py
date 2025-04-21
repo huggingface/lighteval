@@ -47,11 +47,16 @@ def mmmu(line, task_name: str = None):
     import base64
     from io import BytesIO
 
-    standard = "Answer with the option letter from the given choices directly."
+    # TODO: Should be different for "vision"/"standard (4 options)" subsets
+    standard = "Answer with the option letter from the given choices directly. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of options."
 
     def replace_images_tokens(input_string):
         image_order = [int(num) for num in re.findall(r"<image\s+(\d+)>", input_string)]
-        input_string = re.sub(r"<image\s+\d+>", "<image>", input_string)
+        # TODO: should we remove <image> at all?
+        # chat template will put images in required place,
+        # alternatively we can split by <image> token, and the construct conversations
+        # with interleaved {"type": "image", "image": ...} content
+        input_string = re.sub(r"<image\s+\d+>", "[image]", input_string)
         return input_string, image_order
 
     def parse_options(options):
@@ -89,7 +94,8 @@ def mmmu(line, task_name: str = None):
     prompt, image_order = mmmu_doc_to_text(line)
     images = origin_mmmu_doc_to_visual(line, image_order)
 
-    images = [encode_pil_image(image) for image in images]
+    # Q: Any reason why we need to encode the images?
+    # images = [encode_pil_image(image) for image in images]
 
     return Doc(
         task_name=task_name,

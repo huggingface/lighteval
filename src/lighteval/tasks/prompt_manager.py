@@ -275,15 +275,11 @@ class PromptManager:
 
         if use_chat_template:
             if multimodal is True:
-                examples.append(
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "image", "content": doc.specific["images"][0]},
-                            {"type": "text", "content": content},
-                        ],
-                    }
-                )
+                multimodal_content = []
+                multimodal_content.append({"type": "text", "text": content})
+                for image in doc.specific["images"]:
+                    multimodal_content.append({"type": "image", "image": image})
+                examples.append({"role": "user", "content": multimodal_content})
             else:
                 examples.append({"role": "user", "content": content})
         else:
