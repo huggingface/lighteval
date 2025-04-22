@@ -59,17 +59,22 @@ def mmmu(line, task_name: str = None):
         input_string = re.sub(r"<image\s+\d+>", "[image]", input_string)
         return input_string, image_order
 
-    def parse_options(options):
-        option_letters = [chr(ord("A") + i) for i in range(len(options))]
-        choices_str = "\n".join(
-            [f"{option_letter}. {option}" for option_letter, option in zip(option_letters, options)]
-        )
-        return choices_str
+    def preprocess_choices(choices: str) -> list[str]:
+        """
+        Preprocess choices:
+            - input (str): "[car, bike, truck, plane]"
+            - output (list[str]): ["A. car", "B. bike", "C. truck", "D. plane"]
+        """
+        choices = ast.literal_eval(str(choices))
+        option_letters = [chr(ord("A") + i) for i in range(len(choices))]
+        return [f"{option_letter}. {option}" for option_letter, option in zip(option_letters, choices)]
+
 
     def construct_prompt(doc):
         question = doc["question"]
-        parsed_options = parse_options(ast.literal_eval(str(doc["options"])))
-        question = f"{question}\n{parsed_options}\n{standard}"
+        choices = preprocess_choices(doc["options"])
+        choices_str = "\n".join(choices)
+        question = f"{question}\n{choices_str}\n{standard}"
         return question
 
     def origin_mmmu_doc_to_visual(doc, image_order):
@@ -100,7 +105,7 @@ def mmmu(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query=prompt,
-        choices=line["options"],
+        choices=preprocess_choices(line["options"]),
         gold_index=string.ascii_uppercase.index(line["answer"]),
         specific={"images": images, "id": line["id"]},
     )
