@@ -43,6 +43,16 @@ INTEGER_INDICES = list(map(str, list(range(1, 27))))
 # fmt: on
 
 
+def simpleqa(line, task_name: str = None):
+    query = line["problem"]
+    choices = [line["answer"]]
+    gold_index = 0
+
+    return Doc(
+        task_name=task_name, query=query, choices=choices, gold_index=gold_index, specific={**eval(line["metadata"])}
+    )
+
+
 def aime_prompt_fn(line, task_name: str = None):
     # Prompt template adapted from
     # - simple-evals: https://github.com/openai/simple-evals/blob/6e84f4e2aed6b60f6a0c7b8f06bbbf4bfde72e58/math_eval.py#L17

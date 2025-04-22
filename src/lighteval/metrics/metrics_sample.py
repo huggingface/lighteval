@@ -50,6 +50,7 @@ from lighteval.metrics.normalizations import (
     remove_braces,
     remove_braces_and_strip,
 )
+from lighteval.metrics.utils.judge_utils import get_judge_prompt_simpleqa, process_judge_response_simpleqa
 from lighteval.tasks.requests import Doc
 from lighteval.utils.utils import as_list, safe_divide
 
@@ -929,6 +930,43 @@ class JudgeLLM:
 
     def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
         raise NotImplementedError("This method should be implemented in the subclass.")
+
+
+class JudgeLLMSimpleQA(JudgeLLM):
+    def __init__(self):
+        super().__init__(
+            judge_model_name="gpt-4o-2024-08-06",
+            template=get_judge_prompt_simpleqa,
+            process_judge_response=process_judge_response_simpleqa,
+            judge_backend="openai",
+            short_judge_name="gpt4o",
+        )
+
+    def compute(self, sample_ids: list[str], responses: list, formatted_docs: list[Doc], **kwargs) -> dict[str, float]:
+        """
+        Compute the score of a generative task using a llm as a judge.
+        The generative task can be multiturn with 2 turns max, in that case, we
+        return scores for turn 1 and 2. Also returns user_prompt and judgement
+        which are ignored later by the aggregator.
+        """
+        questions = [formatted_doc.query for formatted_doc in formatted_docs]
+        options = [formatted_doc.choices for formatted_doc in formatted_docs]
+        golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
+        predictions = [response[0].result[0] for response in responses]
+
+        scores, messages, judgements = self.judge.evaluate_answer_batch(questions, predictions, options, golds)
+
+        metrics = []
+        for i in range(len(sample_ids)):
+            metrics.append(
+                {
+                    "simpleqa_judge": scores[i],
+                    f"user_prompt_{self.short_judge_name}": messages[i],
+                    f"judgement_{self.short_judge_name}": judgements[i],
+                }
+            )
+
+        return metrics
 
 
 class JudgeLLMMTBench(JudgeLLM):
