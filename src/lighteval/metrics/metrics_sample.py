@@ -26,7 +26,7 @@ using simple function (min, mean, max, ...) at the corpus level. Most metrics fa
 
 import logging
 import os
-from typing import Callable, List, Literal, Union
+from typing import Callable, Literal, Union
 
 import nltk
 import numpy as np
