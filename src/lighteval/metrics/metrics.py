@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-
 import numpy as np
 from aenum import Enum
 
@@ -51,8 +50,8 @@ from lighteval.metrics.metrics_sample import (
     Extractiveness,
     F1_score,
     Faithfulness,
-    JudgeLLMSimpleQA,
     GPassAtK,
+    JudgeLLMSimpleQA,
     LoglikelihoodAcc,
     MajAtK,
     PassAtK,
