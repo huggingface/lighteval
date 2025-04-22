@@ -21,21 +21,18 @@
 # SOFTWARE.
 
 import logging
-from typing import Union, Optional
+from typing import Union
 
 import torch
 from pydantic import PositiveInt
+from tqdm import tqdm
 from transformers import (
-    AutoModelForVision2Seq,
     AutoModelForImageTextToText,
     AutoProcessor,
-    ProcessorMixin,
 )
-from tqdm import tqdm
 
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
 from lighteval.models.model_output import (
-    Batch,
     GenerativeResponse,
     LoglikelihoodResponse,
     LoglikelihoodSingleTokenResponse,
@@ -271,7 +268,6 @@ class VLMTransformersModel(LightevalModel):
 
         return 2048
 
-
     def greedy_until(
         self,
         requests: list[GreedyUntilRequest],
@@ -286,10 +282,9 @@ class VLMTransformersModel(LightevalModel):
         Returns:
             list[GenerativeResponse]: list of generated responses.
         """
-        results  = []
+        results = []
 
         for request in tqdm(requests, desc="Generating responses"):
-
             texts = request.context
             images = request.specific["images"]
 
@@ -302,7 +297,7 @@ class VLMTransformersModel(LightevalModel):
 
             outputs = self.model.generate(**inputs, return_dict_in_generate=False)
             input_ids = inputs.input_ids
-            generated_ids = outputs[:, input_ids.shape[1]:]
+            generated_ids = outputs[:, input_ids.shape[1] :]
             generated_text = self._processor.batch_decode(generated_ids, skip_special_tokens=True)
             generated_response = GenerativeResponse(
                 result=generated_text,
@@ -314,7 +309,6 @@ class VLMTransformersModel(LightevalModel):
             results.append(generated_response)
 
         return results
-
 
     def loglikelihood(
         self,
