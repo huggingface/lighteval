@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-
 import numpy as np
 from aenum import Enum
 
@@ -52,6 +51,7 @@ from lighteval.metrics.metrics_sample import (
     F1_score,
     Faithfulness,
     GPassAtK,
+    JudgeLLMSimpleQA,
     LoglikelihoodAcc,
     MajAtK,
     PassAtK,
@@ -789,6 +789,16 @@ class Metrics(Enum):
         use_case=MetricUseCase.SUMMARIZATION,
         corpus_level_fn=np.mean,
         higher_is_better=True,
+    )
+    simpleqa_judge = SampleLevelMetricGrouping(
+        metric_name=["simpleqa_judge"],
+        higher_is_better={"simpleqa_judge": True},
+        category=MetricCategory.LLM_AS_JUDGE,
+        use_case=MetricUseCase.SUMMARIZATION,
+        sample_level_fn=JudgeLLMSimpleQA().compute,
+        corpus_level_fn={
+            "simpleqa_judge": np.mean,
+        },
     )
     target_perplexity = SampleLevelMetric(
         metric_name="ppl",

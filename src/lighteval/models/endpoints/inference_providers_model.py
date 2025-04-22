@@ -63,7 +63,7 @@ class InferenceProvidersModelConfig(ModelConfig):
         generation_parameters: Parameters for text generation
     """
 
-    model: str
+    model_name: str
     provider: str
     timeout: int | None = None
     proxies: Any | None = None
@@ -74,13 +74,13 @@ class InferenceProvidersModelConfig(ModelConfig):
         with open(path, "r") as f:
             config = yaml.safe_load(f)["model"]
 
-        model = config["model_name"]
+        model_name = config["model_name"]
         provider = config.get("provider", None)
         timeout = config.get("timeout", None)
         proxies = config.get("proxies", None)
         generation_parameters = GenerationParameters.from_dict(config)
         return cls(
-            model=model,
+            model=model_name,
             provider=provider,
             timeout=timeout,
             proxies=proxies,
@@ -102,12 +102,12 @@ class InferenceProvidersClient(LightevalModel):
             config: Configuration object containing model and provider settings
         """
         self.model_info = ModelInfo(
-            model_name=config.model,
+            model_name=config.model_name,
             model_sha="",
             model_dtype=None,
             model_size="",
         )
-        self.model = config.model
+        self.model_name = config.model_name
         self.provider = config.provider
         self.generation_parameters = config.generation_parameters
 
@@ -122,7 +122,7 @@ class InferenceProvidersClient(LightevalModel):
             timeout=config.timeout,
             proxies=config.proxies,
         )
-        self._tokenizer = AutoTokenizer.from_pretrained(self.model)
+        self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
     def _encode(self, text: str) -> dict:
         enc = self._tokenizer(text=text)
@@ -148,7 +148,7 @@ class InferenceProvidersClient(LightevalModel):
         for attempt in range(self.API_MAX_RETRY):
             try:
                 kwargs = {
-                    "model": self.model,
+                    "model": self.model_name,
                     "messages": prompt,
                     "n": num_samples,
                 }
