@@ -26,6 +26,7 @@ import logging
 import random
 import re
 import string
+from typing import Optional
 
 import numpy as np
 import pycountry
@@ -43,70 +44,43 @@ INTEGER_INDICES = list(map(str, list(range(1, 27))))
 # fmt: on
 
 
-def mmmu(line, task_name: str = None):
-    import base64
-    from io import BytesIO
+def mmmu_pro(line, task_name: Optional[str] = None):
+    # fmt: off
+    question = line["question"]        # "What is the capital of France?"
+    choices_string = line["options"]   # "[Paris, London, Berlin, Madrid]"
+    answer = line["answer"]            # "A"
+    # fmt: on
 
     # TODO: Should be different for "vision"/"standard (4 options)" subsets
-    standard = "Answer with the option letter from the given choices directly. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of options."
+    instructions = (
+        "Answer with the option letter from the given choices directly. "
+        "The last line of your response should be of the following format: "
+        "'Answer: $LETTER' (without quotes) where LETTER is one of options."
+    )
 
-    def replace_images_tokens(input_string):
-        image_order = [int(num) for num in re.findall(r"<image\s+(\d+)>", input_string)]
-        # TODO: should we remove <image> at all?
-        # chat template will put images in required place,
-        # alternatively we can split by <image> token, and the construct conversations
-        # with interleaved {"type": "image", "image": ...} content
-        input_string = re.sub(r"<image\s+\d+>", "[image]", input_string)
-        return input_string, image_order
+    # Preprocess choices
+    # "[Paris, London, Berlin, Madrid]" -> ["A. Paris", "B. London", "C. Berlin", "D. Madrid"]
+    choices = ast.literal_eval(str(choices_string))
+    choices_letters = [chr(ord("A") + i) for i in range(len(choices))]  # ["A", "B", "C", "D"]
+    choices = [f"{letter}. {choice}" for letter, choice in zip(choices_letters, choices)]
 
-    def preprocess_choices(choices: str) -> list[str]:
-        """
-        Preprocess choices:
-            - input (str): "[car, bike, truck, plane]"
-            - output (list[str]): ["A. car", "B. bike", "C. truck", "D. plane"]
-        """
-        choices = ast.literal_eval(str(choices))
-        option_letters = [chr(ord("A") + i) for i in range(len(choices))]
-        return [f"{option_letter}. {option}" for option_letter, option in zip(option_letters, choices)]
+    # Construct prompt
+    formatted_choices = "\n".join(choices)
+    prompt = f"{question}\n{formatted_choices}\n{instructions}"
 
+    # Replace image placeholders in prompt <image_1>, <image_2>, ... -> [image]
+    image_order = [int(num) for num in re.findall(r"<image\s+(\d+)>", prompt)]
+    prompt = re.sub(r"<image\s+\d+>", "[image]", prompt)
 
-    def construct_prompt(doc):
-        question = doc["question"]
-        choices = preprocess_choices(doc["options"])
-        choices_str = "\n".join(choices)
-        question = f"{question}\n{choices_str}\n{standard}"
-        return question
-
-    def origin_mmmu_doc_to_visual(doc, image_order):
-        visual = []
-        for idx in image_order:
-            visual.append(doc[f"image_{idx}"])
-        return visual
-
-    def mmmu_doc_to_text(doc):
-        question = construct_prompt(doc)
-        return replace_images_tokens(question)
-
-    def encode_pil_image(pil_image):
-        # Create a byte stream object
-        buffered = BytesIO()
-        # Save the PIL image object as a byte stream in PNG format
-        pil_image.save(buffered, format="PNG")
-        # Get the byte stream data and perform Base64 encoding
-        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
-        return img_str
-
-    prompt, image_order = mmmu_doc_to_text(line)
-    images = origin_mmmu_doc_to_visual(line, image_order)
-
-    # Q: Any reason why we need to encode the images?
-    # images = [encode_pil_image(image) for image in images]
+    # Collect images
+    images = [line[f"image_{i}"] for i in image_order]
+    gold_index = string.ascii_uppercase.index(answer)
 
     return Doc(
         task_name=task_name,
         query=prompt,
-        choices=preprocess_choices(line["options"]),
-        gold_index=string.ascii_uppercase.index(line["answer"]),
+        choices=choices,
+        gold_index=gold_index,
         specific={"images": images, "id": line["id"]},
     )
 

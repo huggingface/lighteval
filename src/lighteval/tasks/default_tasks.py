@@ -27,7 +27,7 @@ from lighteval.tasks.lighteval_task import LightevalTaskConfig
 mmmu_pro = LightevalTaskConfig(
     name="mmmu_pro",
     suite=["lighteval"],
-    prompt_function=prompt.mmmu,
+    prompt_function=prompt.mmmu_pro,
     hf_repo="MMMU/MMMU_pro",
     hf_subset="standard (4 options)",
     hf_avail_splits=["test"],
