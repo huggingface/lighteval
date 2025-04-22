@@ -454,7 +454,7 @@ class TransformersModel(LightevalModel):
                 return getattr(self.transformers_config, attr)
 
         logger.warning(
-            "No max_length attribute found in the model config. Using the default max sequence length setting {2048}. It is recomended to set max_length trough the madel args"
+            "No max_length attribute found in the model config. Using the default max sequence length setting {2048}. It is recomended to set max_length through the model args"
         )
 
         return 2048
