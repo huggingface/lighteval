@@ -22,12 +22,11 @@
 
 import asyncio
 import logging
-from dataclasses import field
 from typing import Any, List, Optional
 
 import yaml
 from huggingface_hub import AsyncInferenceClient, ChatCompletionOutput
-from pydantic import BaseModel, NonNegativeInt
+from pydantic import NonNegativeInt
 from tqdm import tqdm
 from tqdm.asyncio import tqdm as async_tqdm
 from transformers import AutoTokenizer
@@ -41,6 +40,7 @@ from lighteval.models.model_output import (
     LoglikelihoodResponse,
     LoglikelihoodSingleTokenResponse,
 )
+from lighteval.models.utils import ModelConfig
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -52,7 +52,7 @@ from lighteval.tasks.requests import (
 logger = logging.getLogger(__name__)
 
 
-class InferenceProvidersModelConfig(BaseModel):
+class InferenceProvidersModelConfig(ModelConfig):
     """Configuration for InferenceProvidersClient.
 
     Args:
@@ -68,7 +68,6 @@ class InferenceProvidersModelConfig(BaseModel):
     timeout: int | None = None
     proxies: Any | None = None
     parallel_calls_count: NonNegativeInt = 10
-    generation_parameters: GenerationParameters = field(default_factory=GenerationParameters)
 
     @classmethod
     def from_path(cls, path):
