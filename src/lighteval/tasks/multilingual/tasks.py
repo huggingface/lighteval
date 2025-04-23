@@ -1734,7 +1734,8 @@ global_mmlu_tasks = [
             lambda subset, sensitivity_label, x: x["subject"].lower() == subset
             and (
                 sensitivity_label == "ALL" or sensitivity_label in x["cultural_sensitivity_label"].replace("-", "UNK")
-            ),
+            )
+            and all(x[f"option_{opt}"] is not None and x[f"option_{opt}"].strip() for opt in "abcd"),
             subset,
             sensitivity_label,
         ),
@@ -3164,6 +3165,7 @@ mgsm_tasks = [
         stop_sequence=("\n",),
     )
     for language in [
+        Language.ENGLISH,
         Language.SPANISH,
         Language.FRENCH,
         Language.GERMAN,
