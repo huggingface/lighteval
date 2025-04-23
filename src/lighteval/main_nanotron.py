@@ -73,8 +73,9 @@ def nanotron(
         skip_null_keys=True,
     )
 
-    # We are getting a type error, because the get_config_from_file is not correctly typed,
+    # Load lighteval config
     lighteval_config: LightEvalConfig = get_config_from_file(lighteval_config_path, config_class=LightEvalConfig)  # type: ignore
+
     nanotron_config = FullNanotronConfig(lighteval_config, model_config)
 
     evaluation_tracker = EvaluationTracker(
