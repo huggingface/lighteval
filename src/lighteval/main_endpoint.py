@@ -87,6 +87,13 @@ def inference_endpoint(
     save_details: Annotated[
         bool, Option(help="Save detailed, sample per sample, results.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = False,
+    wandb: Annotated[
+        bool,
+        Option(
+            help="Push results to wandb. This will only work if you have wandb installed and logged in. We use env variable to configure wandb. see here: https://docs.wandb.ai/guides/track/environment-variables/",
+            rich_help_panel=HELP_PANEL_NAME_2,
+        ),
+    ] = False,
     # === debug ===
     max_samples: Annotated[
         Optional[int], Option(help="Maximum number of samples to evaluate on.", rich_help_panel=HELP_PANEL_NAME_3)
@@ -109,6 +116,7 @@ def inference_endpoint(
         push_to_tensorboard=push_to_tensorboard,
         public=public_run,
         hub_results_org=results_org,
+        wandb=wandb,
     )
 
     parallelism_manager = ParallelismManager.NONE  # since we're using inference endpoints in remote
