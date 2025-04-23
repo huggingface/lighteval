@@ -211,15 +211,15 @@ class InferenceProvidersClient(LightevalModel):
         dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         results = []
 
-        for _ in tqdm(
-            dataset.splits_start_end_iterator(),
+        for split in tqdm(
+            dataset.splits_iterator(),
             total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
             disable=False,  # self.disable_tqdm,
         ):
-            contexts = [c.context for c in dataset]
-            num_samples = dataset[0].num_samples
+            contexts = [sample.context for sample in split]
+            num_samples = split[0].num_samples
 
             responses = asyncio.run(self.__call_api_parallel(contexts, num_samples))
 
