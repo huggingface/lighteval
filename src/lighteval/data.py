@@ -126,7 +126,11 @@ class DynamicBatchDataset(Dataset):
         Yields:
             Subset: A subset of the dataset.
         """
-        for split_start, split_end in self.splits:
+        split_range = self.num_dataset_splits
+        if self.total_size == 0:
+            split_range = 0
+        for i in range(split_range):
+            split_start, split_end = self.splits[i]
             yield Subset(self, range(split_start, split_end))
 
     def __getitem__(self, index) -> Request:
