@@ -75,7 +75,7 @@ dependencies = [
     "sacrebleu",
     "rouge_score==0.1.2",
     "sentencepiece>=0.1.99",
-    "protobuf", # pinned for sentencepiece compat
+    "protobuf",
     "pycountry",
     "fsspec>=2023.12.2",
     "httpx == 0.27.2",
