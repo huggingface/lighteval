@@ -109,7 +109,7 @@ class DynamicBatchDataset(Dataset):
 
         if None in original_order:
             raise RuntimeError(
-                f"Some elements of the original order are None, meaning that len(new_arr) ({len(new_arr)}) != len(original_array) ({self.total_size}) original_order {len(self.original_order)} {len(new_arr)} {self.total_size} {len(self.sorted_data)}"
+                f"Some elements of the original order are None, meaning that len(new_arr) ({len(new_arr)}) != len(original_array) ({self.total_size})"
             )
 
         return original_order
