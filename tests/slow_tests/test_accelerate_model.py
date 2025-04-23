@@ -86,8 +86,6 @@ def test_accelerate_model_prediction(tests: list[ModelInput]):
     """Evaluates a model on a full task - is parametrized using pytest_generate_test"""
     model_args, get_predictions = tests
 
-    predictions = get_predictions()["results"]
-
     # Load the reference results
     with open(model_args["results_file"], "r") as f:
         reference_results = json.load(f)["results"]
@@ -95,9 +93,13 @@ def test_accelerate_model_prediction(tests: list[ModelInput]):
     # Change the key names, replace '|' with ':'
     reference_results = {k.replace("|", ":"): v for k, v in reference_results.items()}
 
+    # Get the predictions
+    predictions = get_predictions()["results"]
+
     # Convert defaultdict values to regular dict for comparison
     predictions_dict = {k: dict(v) if hasattr(v, "default_factory") else v for k, v in predictions.items()}
 
+    # Compare the predictions with the reference results
     diff = DeepDiff(reference_results, predictions_dict, ignore_numeric_type_changes=True, math_epsilon=0.05)
 
     assert diff == {}, f"Differences found: {diff}"
