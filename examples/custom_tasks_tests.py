@@ -20,19 +20,43 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from transformers import AutoTokenizer
+import lighteval.tasks.default_prompts as prompt
+from lighteval.metrics.metrics import Metrics
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
 
-from lighteval.models.dummy.dummy_model import DummyModel, DummyModelConfig
 
+gsm8k_test = LightevalTaskConfig(
+    name="gsm8k",
+    suite=["test"],
+    prompt_function=prompt.gsm8k,
+    hf_repo="gsm8k",
+    hf_subset="main",
+    hf_avail_splits=["train", "test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select="random_sampling_from_train",
+    generation_size=512,
+    metric=[Metrics.expr_gold_metric],
+    stop_sequence=None,
+    trust_dataset=True,
+    version=0,
+)
 
-def test_tok_encode_pair():
-    model = DummyModel(config=DummyModelConfig(seed=42))
-    model._tokenizer = AutoTokenizer.from_pretrained("facebook/xglm-564M")
-    context = "答案："
-    continuation = "1"
-    non_pairwise_tokens = model.tok_encode_pair(context, continuation, pairwise=False)
-    pairwise_tokens = model.tok_encode_pair(context, continuation, pairwise=True)
-    # Non-pairwise merged "：1" to one token
-    assert non_pairwise_tokens == ([6, 47873], [34871])
-    # Pairwise separated "：" and "1"
-    assert pairwise_tokens == ([6, 47873, 13], [82])
+gpqa_diamond_test = LightevalTaskConfig(
+    name="gpqa:diamond",
+    suite=["test"],
+    prompt_function=prompt.gpqa_instruct,
+    hf_repo="Idavidrein/gpqa",
+    hf_subset="gpqa_diamond",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=2048,
+    metric=[Metrics.gpqa_instruct_metric],
+    stop_sequence=[],  # no stop sequence, will use eos token
+    trust_dataset=True,
+    version=0,
+)
+
+TASKS_TABLE = [gsm8k_test, gpqa_diamond_test]

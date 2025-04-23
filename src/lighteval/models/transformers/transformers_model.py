@@ -22,13 +22,12 @@
 
 import logging
 import os
-import warnings
-from dataclasses import dataclass
 from typing import Optional, Tuple, Union
 
 import torch
 import torch.nn.functional as F
 import transformers
+from pydantic import PositiveInt
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -37,15 +36,13 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,
-    GPTQConfig,
     PretrainedConfig,
 )
-from transformers.generation.utils import GenerateOutput, GenerationConfig
+from transformers.generation.utils import GenerateOutput
 from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     Batch,
     GenerativeMultiturnResponse,
@@ -53,7 +50,7 @@ from lighteval.models.model_output import (
     LoglikelihoodResponse,
     LoglikelihoodSingleTokenResponse,
 )
-from lighteval.models.utils import _get_dtype, _get_model_sha, _simplify_name, batched
+from lighteval.models.utils import ModelConfig, _get_dtype, _get_model_sha, _simplify_name
 from lighteval.tasks.requests import (
     GreedyUntilMultiTurnRequest,
     GreedyUntilRequest,
@@ -63,21 +60,19 @@ from lighteval.tasks.requests import (
     Request,
 )
 from lighteval.utils.imports import (
-    NO_AUTOGPTQ_ERROR_MSG,
-    NO_BNB_ERROR_MSG,
     is_accelerate_available,
-    is_autogptq_available,
-    is_bnb_available,
 )
 from lighteval.utils.parallelism import find_executable_batch_size
-from lighteval.utils.utils import EnvConfig, as_list, boolstring_to_bool
+from lighteval.utils.utils import as_list
 
 
 logger = logging.getLogger(__name__)
 
 
 if is_accelerate_available():
-    from accelerate import Accelerator
+    from datetime import timedelta
+
+    from accelerate import Accelerator, InitProcessGroupKwargs
     from accelerate.utils import calculate_maximum_sizes, convert_bytes, get_max_memory
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -85,13 +80,12 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 STARTING_BATCH_SIZE = 512
 
 
-@dataclass
-class TransformersModelConfig:
+class TransformersModelConfig(ModelConfig):
     """
     Base configuration class for models.
 
     Attributes:
-        pretrained (str):
+        model_name (str):
             HuggingFace Hub model ID name or the path to a pre-trained
             model to load. This is effectively the `pretrained_model_name_or_path`
             argument of `from_pretrained` in the HuggingFace `transformers` API.
@@ -112,7 +106,7 @@ class TransformersModelConfig:
         add_special_tokens (bool, optional, defaults to True): Whether to add special tokens to the input sequences.
            If `None`, the default value will be set to `True` for seq2seq models (e.g. T5) and
             `False` for causal models.
-        model_parallel (bool, optional, defaults to False):
+        model_parallel (bool, optional, defaults to None):
             True/False: force to use or not the `accelerate` library to load a large
             model across multiple devices.
             Default: None which corresponds to comparing the number of processes with
@@ -138,140 +132,74 @@ class TransformersModelConfig:
 
     """
 
-    pretrained: str
-    accelerator: "Accelerator" = None
-    tokenizer: Optional[str] = None
-    multichoice_continuations_start_space: Optional[bool] = None
-    pairwise_tokenization: bool = False
-    subfolder: Optional[str] = None
+    model_name: str
+    tokenizer: str | None = None
+    subfolder: str | None = None
     revision: str = "main"
-    batch_size: int = -1
-    max_gen_toks: Optional[int] = 256
-    max_length: Optional[int] = None
+    batch_size: PositiveInt | None = None
+    generation_size: PositiveInt = 256
+    max_length: PositiveInt | None = None
     add_special_tokens: bool = True
-    model_parallel: Optional[bool] = None
-    dtype: Optional[Union[str, torch.dtype]] = None
+    model_parallel: bool | None = None
+    dtype: str | None = None
     device: Union[int, str] = "cuda"
-    quantization_config: Optional[BitsAndBytesConfig] = None
     trust_remote_code: bool = False
     use_chat_template: bool = False
     compile: bool = False
-    generation_parameters: GenerationParameters = None
-    generation_config: GenerationConfig = None
+    multichoice_continuations_start_space: bool | None = None
+    pairwise_tokenization: bool = False
 
-    def __post_init__(self):
-        # Making sure this parameter is a boolean
-        self.multichoice_continuations_start_space = boolstring_to_bool(self.multichoice_continuations_start_space)
-
-        if self.multichoice_continuations_start_space is not None:
-            if self.multichoice_continuations_start_space:
-                logger.info(
-                    "You set `multichoice_continuations_start_space` to true. This will force multichoice continuations to use a starting space"
-                )
-            else:
-                logger.info(
-                    "You set `multichoice_continuations_start_space` to false. This will remove a leading space from multichoice continuations, if present."
-                )
-
-        self.model_parallel = boolstring_to_bool(self.model_parallel)
-        self.compile = boolstring_to_bool(self.compile)
-
-        if self.quantization_config is not None and not is_bnb_available():
-            raise ImportError(NO_BNB_ERROR_MSG)
-
-        if not isinstance(self.pretrained, str):
-            raise ValueError("Pretrained model name must be passed as string.")
-        if not isinstance(self.device, str):
-            raise ValueError("Current device must be passed as string.")
-
-        if self.generation_config and self.generation_parameters:
-            raise ValueError(
-                "Can't use both generation_config and generation_parameters argument. Pass the generation parameters to your generation config object"
+    def model_post_init(self, __context):
+        if self.multichoice_continuations_start_space is True:
+            logger.warning(
+                "You set `multichoice_continuations_start_space` to true. This will force multichoice continuations to use a starting space"
+            )
+        if self.multichoice_continuations_start_space is False:
+            logger.warning(
+                "You set `multichoice_continuations_start_space` to false. This will remove a leading space from multichoice continuations, if present."
             )
 
-        if not self.generation_parameters and not self.generation_config:
-            self.generation_parameters = GenerationParameters()
-
-    def _init_configs(self, model_name: str, env_config: EnvConfig) -> PretrainedConfig:
+    def get_transformers_config(self) -> PretrainedConfig:
         revision = self.revision
+
         if self.subfolder:
             revision = f"{self.revision}/{self.subfolder}"
+
         auto_config = AutoConfig.from_pretrained(
-            model_name,
+            self.model_name,
             revision=revision,
             trust_remote_code=self.trust_remote_code,
-            cache_dir=env_config.cache_dir,
-            token=env_config.token,
         )
-
-        # Gathering the model's automatic quantization config, if available
-        try:
-            model_auto_quantization_config = auto_config.quantization_config
-            logger.info("An automatic quantization config was found in the model's config. Using it to load the model")
-        except (AttributeError, KeyError):
-            model_auto_quantization_config = None
-
-        if model_auto_quantization_config is not None:
-            if self.quantization_config is not None:
-                # We don't load models quantized by default with a different user provided conf
-                raise ValueError("You manually requested quantization on a model already quantized!")
-
-            # We add the quantization to the model params we store
-            if model_auto_quantization_config["quant_method"] == "gptq":
-                if not is_autogptq_available():
-                    raise ImportError(NO_AUTOGPTQ_ERROR_MSG)
-                auto_config.quantization_config["use_exllama"] = None
-                self.quantization_config = GPTQConfig(**auto_config.quantization_config, disable_exllama=True)
-            elif model_auto_quantization_config["quant_method"] == "bitsandbytes":
-                if not is_bnb_available():
-                    raise ImportError(NO_BNB_ERROR_MSG)
-                self.quantization_config = BitsAndBytesConfig(**auto_config.quantization_config)
 
         return auto_config
 
-    def init_configs(self, env_config: EnvConfig) -> PretrainedConfig:
-        return self._init_configs(self.pretrained, env_config=env_config)
-
     def get_model_sha(self):
-        return _get_model_sha(repo_id=self.pretrained, revision=self.revision)
-
-
-@dataclass
-class BaseModelConfig(TransformersModelConfig):
-    def __post_init__(self):
-        super().__post_init__()
-
-        warnings.warn(
-            "BaseModelConfig is deprecated and will be removed. Use TransformersModelConfig instead",
-            FutureWarning,
-        )
+        return _get_model_sha(repo_id=self.model_name, revision=self.revision)
 
 
 class TransformersModel(LightevalModel):
     def __init__(
         self,
-        env_config: EnvConfig,
         config: TransformersModelConfig,
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
-        self._config = config.init_configs(env_config)
-        self.accelerator = config.accelerator
-        self._max_length = self._init_max_length(config.max_length)
+        self.config = config
+        self.accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
+        self._device = self.accelerator.device
         self.use_chat_template = config.use_chat_template
-
-        self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
-        self._tokenizer = self._create_auto_tokenizer(config, env_config)
-
-        # If model_parallel is not set we compare the number of processes with the number of GPUs
-        self.model = self._create_auto_model(config, env_config)
-        self.model.eval()
-        torch.set_grad_enabled(False)
-
-        self._device = config.accelerator.device if config.accelerator is not None else "cpu"
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
+        self._add_special_tokens = config.add_special_tokens or False
+        self.pairwise_tokenization = config.pairwise_tokenization
+        self.batch_size = config.batch_size
+        self.transformers_config = config.get_transformers_config()
+
+        self.model_sha = config.get_model_sha()
+        self._max_length = self._init_max_length()
+        self._tokenizer = self._create_auto_tokenizer()
+        self.model = self._create_auto_model()
 
         # We are in DP (and launch the script with `accelerate launch`)
-        if not config.model_parallel and not isinstance(config.quantization_config, BitsAndBytesConfig):
+        if config.model_parallel is False and self.config.dtype not in ["4bit", "8bit"]:
             logger.info(f"Using Data Parallelism, putting model on device {self._device}")
             self.model = self.model.to(self._device)
         if config.compile:
@@ -281,35 +209,27 @@ class TransformersModel(LightevalModel):
             except AttributeError as e:
                 logger.warning("Could not compile the model because: ", e)
 
-        self.model_name = _simplify_name(config.pretrained)
-        self.model_sha = config.get_model_sha()
+        self.model_name = _simplify_name(config.model_name)
 
-        self.precision = _get_dtype(config.dtype, config=self._config)
-        if config.generation_config is None:
-            self.generation_parameters = config.generation_parameters
-            self.generation_config_dict = self.generation_parameters.to_transformers_dict()
-        else:
-            self.generation_config_dict = config.generation_config.to_dict()
+        self.generation_config_dict = config.generation_parameters.to_transformers_dict()
 
         if is_accelerate_available():
             model_size, _ = calculate_maximum_sizes(self.model)
             model_size = convert_bytes(model_size)
         else:
             model_size = -1
-        self.model_info = ModelInfo(
-            model_name=self.model_name,
-            model_sha=self.model_sha,
-            model_dtype=self.precision,
-            model_size=model_size,
-        )
 
-        self.pairwise_tokenization = config.pairwise_tokenization
+        self.model_info = ModelInfo(
+            model_name=self.config.model_name,
+            model_sha=self.model_sha,
+            model_dtype=config.dtype,
+            model_size=str(model_size),
+        )
 
     @classmethod
     def from_model(
         cls,
         model: Union[AutoModelForCausalLM, LightevalModel],
-        env_config: EnvConfig,
         accelerator: "Accelerator" = None,
         tokenizer_name: str = None,  # custom tokenizer
         trust_remote_code: bool = False,
@@ -332,7 +252,6 @@ class TransformersModel(LightevalModel):
         self._tokenizer = self._create_auto_tokenizer_with_name(
             model_name=model.name_or_path,
             revision=model.config._commit_hash,
-            env_config=env_config,
             trust_remote_code=trust_remote_code,
             tokenizer_name=tokenizer_name,
         )
@@ -383,6 +302,17 @@ class TransformersModel(LightevalModel):
     def max_length(self) -> int:
         return self._max_length
 
+    @property
+    def device(self) -> Union[int, str, torch.device]:
+        return self._device
+
+    @property
+    def disable_tqdm(self) -> bool:
+        disable_tqdm = False
+        if self.accelerator:
+            disable_tqdm = bool(not self.accelerator.is_main_process)
+        return disable_tqdm
+
     def init_model_parallel(self, model_parallel: bool | None = None) -> Tuple[bool, Optional[dict], Optional[str]]:
         """Compute all the parameters related to model_parallel"""
         if not is_accelerate_available():
@@ -390,7 +320,8 @@ class TransformersModel(LightevalModel):
 
         self.num_local_processes = int(os.environ.get("LOCAL_WORLD_SIZE", 1))
         self.num_machines = torch.cuda.device_count() // self.num_local_processes
-        if self.num_machines == 0:
+
+        if self.num_machines == 1:
             logger.info("We are not in a distributed setting. Setting model_parallel to False.")
             model_parallel = False
 
@@ -425,134 +356,82 @@ class TransformersModel(LightevalModel):
             )
         return model_parallel, max_mem_this_process, device_map
 
-    def _create_auto_model(
-        self, config: TransformersModelConfig, env_config: EnvConfig
-    ) -> transformers.PreTrainedModel:
+    def _create_auto_model(self) -> transformers.PreTrainedModel:
         """
         Creates an instance of the pretrained HF model.
-
-        Args:
-            pretrained (str): The name or path of the pretrained model.
-            revision (str): The revision of the model.
-            subfolder (Optional[str], optional): The subfolder within the model. Defaults to None.
-            max_memory (Optional[dict], optional): The maximum memory to allocate for the model per GPU. Defaults to None.
-            device_map (Optional[dict], optional): The device mapping for the model. Defaults to None.
-            torch_dtype (Optional[Union[str, torch.dtype]], optional): The torch data type for the model. Defaults to None.
-            quantization_config (Optional[Union[BitsAndBytesConfig, GPTQConfig]], optional): The quantization configuration for the model. Defaults to None.
-            trust_remote_code (bool, optional): Whether to trust remote code. Defaults to False.
-            cache_dir (str, optional): The cache directory for the model. Defaults to "/scratch".
 
         Returns:
             transformers.PreTrainedModel: The created auto model instance.
         """
-        config.model_parallel, max_memory, device_map = self.init_model_parallel(config.model_parallel)
-        torch_dtype = _get_dtype(config.dtype, self._config)
+        model_parallel, max_memory, device_map = self.init_model_parallel(self.config.model_parallel)
+        self.config.model_parallel = model_parallel
 
-        pretrained_config = AutoConfig.from_pretrained(
-            config.pretrained,
-            revision=(config.revision + (f"/{config.subfolder}" if config.subfolder else "")),
-            trust_remote_code=config.trust_remote_code,
-            cache_dir=env_config.cache_dir,
-            token=env_config.token,
-        )
+        if self.config.dtype == "4bit":
+            quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.float16)
+        elif self.config.dtype == "8bit":
+            quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+        else:
+            quantization_config = None
+
+        torch_dtype = _get_dtype(self.config.dtype)
+        subfolder = self.config.subfolder
+        revision = self.config.revision + (f"/{subfolder}" if subfolder is not None else "")
+
+        pretrained_config = self.transformers_config
 
         kwargs = {}
         if "quantization_config" not in pretrained_config.to_dict():
-            kwargs["quantization_config"] = config.quantization_config
+            kwargs["quantization_config"] = quantization_config
 
         model = AutoModelForCausalLM.from_pretrained(
-            config.pretrained,
-            revision=config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
+            self.config.model_name,
+            revision=revision,
             max_memory=max_memory,
             device_map=device_map,
             torch_dtype=torch_dtype,
-            trust_remote_code=config.trust_remote_code,
-            cache_dir=env_config.cache_dir,
-            offload_folder=env_config.cache_dir,
-            token=env_config.token,
+            trust_remote_code=self.config.trust_remote_code,
             **kwargs,
         )
+        # model.to(self.device)
+        model.eval()
+        torch.set_grad_enabled(False)
+
+        if self.config.compile:
+            try:
+                logger.info("Compiling the model")
+                model.compile()
+            except AttributeError as e:
+                logger.warning("Could not compile the model because: ", e)
 
         return model
 
     def _create_auto_tokenizer(
-        self, config: TransformersModelConfig, env_config: EnvConfig
-    ) -> transformers.PreTrainedTokenizer:
-        return self._create_auto_tokenizer_with_name(
-            model_name=config.pretrained,
-            revision=config.revision,
-            env_config=env_config,
-            tokenizer_name=config.tokenizer,
-            subfolder=config.subfolder,
-            trust_remote_code=config.trust_remote_code,
-        )
-
-    def _create_auto_tokenizer_with_name(
         self,
-        model_name: str,
-        revision: str,
-        env_config: EnvConfig,
-        tokenizer_name: str = None,
-        subfolder: str = None,
-        trust_remote_code: bool = False,
     ) -> transformers.PreTrainedTokenizer:
         """
         Create a Hugging Face AutoTokenizer for language model.
 
-        Args:
-            pretrained (str): The identifier of the pretrained model to load.
-            revision (str): The specific model version to load.
-            subfolder (str): The subfolder within the model repository.
-            tokenizer (str, optional): The identifier of the tokenizer to load. If not provided, the default tokenizer for the pretrained model will be used.
-            cache_dir (str, optional): The directory to cache the downloaded models and tokens. Defaults to "/scratch".
-            trust_remote_code (bool, optional): Whether to trust remote code execution during tokenization. Defaults to False.
-
         Returns:
             transformers.PreTrainedTokenizer: The created tokenizer.
-
-        Raises:
-            RecursionError: If an error occurs during tokenization, a fallback tokenizer with "<unk>" token will be created.
         """
-        try:
-            tokenizer = AutoTokenizer.from_pretrained(
-                model_name if tokenizer_name is None else tokenizer_name,
-                revision=revision + (f"/{subfolder}" if subfolder is not None else ""),
-                cache_dir=env_config.cache_dir,
-                token=env_config.token,
-                trust_remote_code=trust_remote_code,
-                padding_side="left",
-                truncation_side="left",
-            )
-        except RecursionError:
-            tokenizer = AutoTokenizer.from_pretrained(
-                model_name if tokenizer_name is None else tokenizer_name,
-                revision=revision + (f"/{subfolder}" if subfolder is not None else ""),
-                cache_dir=env_config.cache_dir,
-                token=env_config.token,
-                trust_remote_code=trust_remote_code,
-                unk_token="<unk>",
-                padding_side="left",
-                truncation_side="left",
-            )
-        except FileNotFoundError:
-            logger.warning(
-                "Problem when loading the tokenizer in the cache - discarding the provided cache path value."
-            )
-            tokenizer = AutoTokenizer.from_pretrained(
-                model_name if tokenizer_name is None else tokenizer_name,
-                revision=revision + (f"/{subfolder}" if subfolder is not None else ""),
-                token=env_config.token,
-                trust_remote_code=trust_remote_code,
-                padding_side="left",
-                truncation_side="left",
-            )
+        tokenizer_name = self.config.tokenizer or self.config.model_name
+        subfolder = self.config.subfolder
+        revision = self.config.revision + (f"/{subfolder}" if subfolder is not None else "")
+
+        tokenizer = AutoTokenizer.from_pretrained(
+            tokenizer_name,
+            revision=revision,
+            trust_remote_code=self.config.trust_remote_code,
+            padding_side="left",
+            truncation_side="left",
+        )
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.model_max_length = self.max_length
         logger.info("Tokenizer truncation and padding size set to the left side.")
 
         return tokenizer
 
-    def _init_max_length(self, max_length) -> int:
+    def _init_max_length(self) -> int:
         """Return the maximum sequence length of the model.
         NOTE: Different model configurations have different max sequence length
         attribute names.
@@ -562,36 +441,23 @@ class TransformersModel(LightevalModel):
         NOTE: For relative position encoded models you should specify the max
         sequence length of the model in the constructor via `max_length`.
 
-        Args:
-            max_length (Optional[int]): The maximum length of the input sequence. If not provided, it will be determined
-                based on the model's configuration or tokenizer's model_max_length attribute.
-
         Returns:
             int: Max length to use depending on the available args and config
         """
-        if max_length is not None:
-            return int(max_length)
+        if self.config.max_length is not None:
+            return self.config.max_length
+
         # Try to get the sequence length from the model config.
         seqlen_config_attrs = ("n_positions", "max_position_embeddings", "n_ctx")
-
         for attr in seqlen_config_attrs:
-            if hasattr(self._config, attr):
-                return getattr(self._config, attr)
+            if hasattr(self.transformers_config, attr):
+                return getattr(self.transformers_config, attr)
 
-        # Default max sequence length setting for when no `max_length` is provided
-        # or no max length config setting is found in the model or tokenizer.
+        logger.warning(
+            "No max_length attribute found in the model config. Using the default max sequence length setting {2048}. It is recomended to set max_length trough the madel args"
+        )
+
         return 2048
-
-    @property
-    def device(self) -> Union[int, str, torch.device]:
-        return self._device
-
-    @property
-    def disable_tqdm(self) -> bool:
-        disable_tqdm = False
-        if self.accelerator:
-            disable_tqdm = bool(not self.accelerator.is_main_process)
-        return disable_tqdm
 
     def _check_continuations_start_space(self, continuation: str) -> str:
         """Some models tokenizer want a space at the beginning and other not. We update this if needed here.
@@ -611,8 +477,8 @@ class TransformersModel(LightevalModel):
     def _model_call(self, inputs: torch.Tensor) -> torch.Tensor:
         return self.model(inputs).logits
 
-    def _get_batch_size(self, max_input_length: int, override_bs: int = 0, starting_batch_size: int = 512) -> int:
-        if override_bs > 0:
+    def _get_batch_size(self, max_input_length: int, override_bs: int | None, starting_batch_size: int = 512) -> int:
+        if override_bs is not None:
             return override_bs
         logger.info(f"Detecting largest batch size with max_input_length={max_input_length}")
 
@@ -631,162 +497,14 @@ class TransformersModel(LightevalModel):
         return batch_size
 
     def greedy_until_multi_turn(  # noqa: C901
-        self, requests: list[GreedyUntilMultiTurnRequest], override_bs: Optional[int] = None
+        self,
+        requests: list[GreedyUntilMultiTurnRequest],
     ) -> GenerativeMultiturnResponse:
-        for request in requests:
-            request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
-            request.tokenized_context = self.tok_encode(request.context)["input_ids"]
-
-        results = []
-
-        dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=1)
-        dataloader = DataLoader(dataset, batch_size=1, collate_fn=lambda batch: batch)
-
-        if self.accelerator:
-            dataloader = self.accelerator.prepare(dataloader)
-
-        logger.warning("Running greedy multi turn generation, the batch size is set to 1 for this task.")
-
-        for request_batch in tqdm(
-            dataloader, desc="Greedy Multi Turn generation", position=1, leave=False, disable=self.disable_tqdm
-        ):
-            request = request_batch[0]
-            # For chat models, generation stops with EOS token, so we don't need to specify stop tokens
-            if self.use_chat_template:
-                stop_tokens = []
-            else:
-                stop_tokens = request.stop_sequence
-            max_generated_tokens = request.generation_size
-            context = request.context[0]
-            max_context_size_allowed = self.max_length - max_generated_tokens
-
-            model_inputs = self.tokenizer(
-                context,
-                padding=True,
-                truncation=True,
-                return_tensors="pt",
-                max_length=max_context_size_allowed,
-                add_special_tokens=self.add_special_tokens,
-            ).to(self.device)
-
-            stopping_criteria = transformers.StoppingCriteriaList(
-                [
-                    *[
-                        MultiTokenEOSCriteria(
-                            sequence, self.tokenizer, input_ids_shape=model_inputs["input_ids"].shape
-                        )
-                        for sequence in stop_tokens
-                    ],
-                ]
-            )
-
-            generation_config = self.generation_config_dict.copy()
-            generation_config.update(
-                {
-                    "max_new_tokens": max_generated_tokens,
-                    "pad_token_id": self.tokenizer.pad_token_id
-                    if self.tokenizer.pad_token_id
-                    else self.tokenizer.eos_token_id,
-                    "eos_token_id": self.tokenizer.eos_token_id,
-                    "do_sample": False,
-                }
-            )
-
-            model_outputs: GenerateOutput = self.model.generate(
-                **model_inputs, stopping_criteria=stopping_criteria, **generation_config
-            )
-            model_outputs = model_outputs.sequences[0, model_inputs["input_ids"].size(1) :]
-
-            # We manage stop tokens in an extra step in case they were incorrectly detected earlier
-            # (which can happen for multitoken stop sequences)
-            decoded_generation = self.tokenizer.decode(model_outputs)  # should we skip_special_tokens=True here?
-            for term in stop_tokens:
-                decoded_generation = decoded_generation.split(term)[0]
-            model_generations = [model_outputs]
-
-            input_tokens = [model_inputs["input_ids"]]
-
-            for i, multi_turn_context in enumerate(request.context[1:]):
-                multi_turn_context = multi_turn_context.format(model_response=decoded_generation)
-
-                model_inputs = self.tokenizer(
-                    multi_turn_context,
-                    padding=True,
-                    truncation=True,
-                    return_tensors="pt",
-                    max_length=max_context_size_allowed,
-                    add_special_tokens=self.add_special_tokens,
-                ).to(self.device)
-
-                stopping_criteria = transformers.StoppingCriteriaList(
-                    [
-                        *[
-                            MultiTokenEOSCriteria(
-                                sequence, self.tokenizer, input_ids_shape=model_inputs["input_ids"].shape
-                            )
-                            for sequence in stop_tokens
-                        ],
-                    ]
-                )
-
-                generation_config = self.generation_config_dict.copy()
-                generation_config.update(
-                    {
-                        "max_new_tokens": max_generated_tokens,
-                        "pad_token_id": self.tokenizer.pad_token_id
-                        if self.tokenizer.pad_token_id
-                        else self.tokenizer.eos_token_id,
-                        "eos_token_id": self.tokenizer.eos_token_id,
-                        "do_sample": False,
-                    }
-                )
-
-                model_outputs: GenerateOutput = self.model.generate(
-                    input_ids=model_inputs["input_ids"],
-                    attention_mask=model_inputs["attention_mask"],
-                    stopping_criteria=stopping_criteria,
-                    **generation_config,
-                )
-                model_outputs = model_outputs.sequences[0, model_inputs["input_ids"].size(1) :]
-                model_generations.append(model_outputs)
-                input_tokens.append(model_inputs["input_ids"])
-
-                decoded_generation = self.tokenizer.decode(model_outputs, skip_special_tokens=True)
-                for term in stop_tokens:
-                    decoded_generation = decoded_generation.split(term)[0]
-
-            if self.accelerator:
-                padding_size = max(gen.shape[0] for gen in model_generations)
-                for i, gen in enumerate(model_generations):
-                    model_generations[i] = F.pad(
-                        gen, (0, padding_size - gen.shape[0]), value=self.tokenizer.pad_token_id
-                    )
-                model_generations = torch.stack(model_generations, dim=0)
-                model_generations, lengths = self.pad_and_gather(model_generations, drop_last_samples=False)
-
-            model_answers = []
-            for generation, _ in zip(model_generations, lengths):
-                generation = generation.cpu().tolist()
-                decoded = self.tokenizer.decode(generation, skip_special_tokens=True)
-                model_answers.append(decoded)
-
-            for answers in batched(model_answers, len(request.context)):
-                results.append(
-                    GenerativeMultiturnResponse(
-                        result=answers,
-                        input_tokens=input_tokens,
-                        generated_tokens=[],
-                        truncated_tokens_count=0,
-                        padded_tokens_count=0,
-                    )
-                )
-
-        return results
+        raise NotImplementedError("This method is not implemented for this model")
 
     def greedy_until(
         self,
         requests: list[GreedyUntilRequest],
-        override_bs: Optional[int] = None,
     ) -> list[GenerativeResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
@@ -825,7 +543,7 @@ class TransformersModel(LightevalModel):
                     longest_context_continuation_size_in_split, self.max_length
                 )
             batch_size = self._get_batch_size(
-                override_bs=override_bs,
+                override_bs=self.batch_size,
                 max_input_length=max_context_continuation_size_allowed,
                 starting_batch_size=starting_batch_size,
             )
@@ -860,7 +578,7 @@ class TransformersModel(LightevalModel):
                 tokenized = self.tokenizer(
                     context,
                     truncation="longest_first",  # we truncate to the model max length if needed
-                    padding="max_length",  # we pad to the longest sequence
+                    padding="longest",  # we pad to the longest sequence
                     return_tensors="pt",
                     max_length=max_context_continuation_size_allowed,  # we always allow minimum one token of generation
                     add_special_tokens=self.add_special_tokens,
@@ -1361,16 +1079,6 @@ class TransformersModel(LightevalModel):
                 del batch_padded
 
         return dataset.get_original_order(res)
-
-
-class BaseModel(TransformersModel):
-    def __post_init__(self):
-        super().__post_init__()
-
-        warnings.warn(
-            "Careful, the BaseModel name is deprecated and will be removed, you should use TransformersModel instead!",
-            FutureWarning,
-        )
 
 
 class MultiTokenEOSCriteria(transformers.StoppingCriteria):

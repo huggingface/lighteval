@@ -27,7 +27,7 @@ To evaluate `GPT-2` on the Truthful QA benchmark with [🤗
 
 ```bash
 lighteval accelerate \
-     "pretrained=gpt2" \
+     "model_name=openai-community/gpt2" \
      "leaderboard|truthfulqa:mc|0|0"
 ```
 
@@ -59,7 +59,7 @@ When specifying a path to file, it should start with `./`.
 
 ```bash
 lighteval accelerate \
-     "pretrained=gpt2" \
+     "model_name=openai-community/gpt2" \
      ./path/to/lighteval/examples/tasks/recommended_set.txt
 # or, e.g., "leaderboard|truthfulqa:mc|0|0|,leaderboard|gsm8k|3|1"
 ```
@@ -79,7 +79,7 @@ You can then evaluate a model using data parallelism on 8 GPUs like follows:
 ```bash
 accelerate launch --multi_gpu --num_processes=8 -m \
     lighteval accelerate \
-    "pretrained=gpt2" \
+    "model_name=openai-community/gpt2" \
     "leaderboard|truthfulqa:mc|0|0"
 ```
 
@@ -92,7 +92,7 @@ To evaluate a model using pipeline parallelism on 2 or more GPUs, run:
 
 ```bash
 lighteval accelerate \
-    "pretrained=gpt2,model_parallel=True" \
+    "model_name=openai-community/gpt2,model_parallel=True" \
     "leaderboard|truthfulqa:mc|0|0"
 ```
 
@@ -129,7 +129,7 @@ accelerate).
 - **add_special_tokens** (bool, optional, defaults to True): Whether to add special tokens to the input sequences.
    If `None`, the default value will be set to `True` for seq2seq models (e.g. T5) and
     `False` for causal models.
-- **model_parallel** (bool, optional, defaults to False):
+- **model_parallel** (bool, optional, defaults to None):
     True/False: force to use or not the `accelerate` library to load a large
     model across multiple devices.
     Default: None which corresponds to comparing the number of processes with

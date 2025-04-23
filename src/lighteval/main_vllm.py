@@ -19,16 +19,11 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import os
-import re
 from typing import Optional
 
 from typer import Argument, Option
 from typing_extensions import Annotated
 
-
-TOKEN = os.getenv("HF_TOKEN")
-CACHE_DIR: str = os.getenv("HF_HOME", "/scratch")
 
 HELP_PANEL_NAME_1 = "Common Parameters"
 HELP_PANEL_NAME_2 = "Logging Parameters"
@@ -52,15 +47,15 @@ def vllm(
     system_prompt: Annotated[
         Optional[str], Option(help="Use system prompt for evaluation.", rich_help_panel=HELP_PANEL_NAME_4)
     ] = None,
+    cot_prompt: Annotated[
+        Optional[str], Option(help="Use chain of thought prompt for evaluation.", rich_help_panel=HELP_PANEL_NAME_4)
+    ] = None,
     dataset_loading_processes: Annotated[
         int, Option(help="Number of processes to use for dataset loading.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = 1,
     custom_tasks: Annotated[
         Optional[str], Option(help="Path to custom tasks directory.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
-    cache_dir: Annotated[
-        str, Option(help="Cache directory for datasets and models.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = CACHE_DIR,
     num_fewshot_seeds: Annotated[
         int, Option(help="Number of seeds to use for few-shot evaluation.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = 1,
@@ -86,6 +81,13 @@ def vllm(
     save_details: Annotated[
         bool, Option(help="Save detailed, sample per sample, results.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = False,
+    wandb: Annotated[
+        bool,
+        Option(
+            help="Push results to wandb. This will only work if you have wandb installed and logged in. We use env variable to configure wandb. see here: https://docs.wandb.ai/guides/track/environment-variables/",
+            rich_help_panel=HELP_PANEL_NAME_2,
+        ),
+    ] = False,
     # === debug ===
     max_samples: Annotated[
         Optional[int], Option(help="Maximum number of samples to evaluate on.", rich_help_panel=HELP_PANEL_NAME_3)
@@ -100,13 +102,8 @@ def vllm(
     import yaml
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.models.model_input import GenerationParameters
     from lighteval.models.vllm.vllm_model import VLLMModelConfig
-    from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
-
-    TOKEN = os.getenv("HF_TOKEN")
-
-    env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
+    from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
@@ -115,36 +112,29 @@ def vllm(
         push_to_tensorboard=push_to_tensorboard,
         public=public_run,
         hub_results_org=results_org,
+        wandb=wandb,
     )
 
     pipeline_params = PipelineParameters(
         launcher_type=ParallelismManager.VLLM,
-        env_config=env_config,
         job_id=job_id,
         dataset_loading_processes=dataset_loading_processes,
         custom_tasks_directory=custom_tasks,
-        override_batch_size=-1,  # Cannot override batch size when using vLLM; Configure `max_num_seqs` and `max_num_batched_tokens` in `VLLMModelConfig` instead.
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         use_chat_template=use_chat_template,
         system_prompt=system_prompt,
+        cot_prompt=cot_prompt,
         load_responses_from_details_date_id=load_responses_from_details_date_id,
     )
 
     if model_args.endswith(".yaml"):
         with open(model_args, "r") as f:
-            config = yaml.safe_load(f)["model"]
-        model_args = config["base_params"]["model_args"]
-        metric_options = config.get("metric_options", {})
-        generation_parameters = GenerationParameters.from_dict(config)
+            metric_options = yaml.safe_load(f).get("metric_options", {})
+        model_config = VLLMModelConfig.from_path(model_args)
     else:
-        generation_parameters = GenerationParameters.from_model_args(model_args)
-        # We slice out generation_parameters from model_args to avoid double-counting in the VLLMModelConfig
-        model_args = re.sub(r"generation_parameters=\{.*?\},?", "", model_args).strip(",")
         metric_options = {}
-
-    model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
-    model_config = VLLMModelConfig(**model_args_dict, generation_parameters=generation_parameters)
+        model_config = VLLMModelConfig.from_args(model_args)
 
     pipeline = Pipeline(
         tasks=tasks,

@@ -27,7 +27,7 @@ import random
 import re
 import shutil
 from contextlib import nullcontext
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum, auto
 
@@ -62,7 +62,7 @@ from lighteval.utils.imports import (
     is_vllm_available,
 )
 from lighteval.utils.parallelism import test_all_gather
-from lighteval.utils.utils import EnvConfig, make_results_table
+from lighteval.utils.utils import make_results_table
 
 
 if is_accelerate_available():
@@ -95,18 +95,16 @@ class ParallelismManager(Enum):
 class PipelineParameters:
     launcher_type: ParallelismManager
     # Env parameters
-    env_config: EnvConfig = field(default_factory=EnvConfig)
     job_id: int = 0
     dataset_loading_processes: int = 1
     nanotron_checkpoint_path: str | None = None  # only for nanotron models
     # Dataset
     custom_tasks_directory: str | None = None
-    # Generation parameters
-    override_batch_size: int | None = None
     num_fewshot_seeds: int = 1
     max_samples: int | None = None
     use_chat_template: bool = False
     system_prompt: str | None = None
+    cot_prompt: str | None = None
     load_responses_from_details_date_id: str | None = None
 
     def __post_init__(self):  # noqa C901
@@ -156,13 +154,13 @@ class Pipeline:
         self.accelerator, self.parallel_context = self._init_parallelism_manager()
         self.model = self._init_model(model_config, model)
 
-        generation_parameters = asdict(model_config.generation_parameters) if model_config else {}
+        generation_parameters = model_config.generation_parameters.model_dump() if model_config else {}
 
         self.evaluation_tracker.general_config_logger.log_model_info(generation_parameters, self.model.model_info)
-        self._init_tasks_and_requests(tasks=tasks)
         self._init_random_seeds()
+        self._init_tasks_and_requests(tasks=tasks)
         # Final results
-        self.final_dict: dict = None
+        self.final_dict: dict | None = None
 
     def _init_parallelism_manager(self):
         accelerator, parallel_context = None, None
@@ -196,17 +194,15 @@ class Pipeline:
                     parallel_context=self.parallel_context,
                     debug_one_layer_model=False,
                     model_class=None,
-                    env_config=self.pipeline_parameters.env_config,
                 )
             else:
-                return load_model(config=model_config, env_config=self.pipeline_parameters.env_config)
+                return load_model(config=model_config)
         if isinstance(model, TransformersModel):
             return model
         else:
             return TransformersModel.from_model(
                 model=model,
                 use_chat_template=self.pipeline_parameters.use_chat_template,
-                env_config=self.pipeline_parameters.env_config,
                 accelerator=self.accelerator,
             )
 
@@ -214,7 +210,6 @@ class Pipeline:
         with local_ranks_zero_first() if self.launcher_type == ParallelismManager.NANOTRON else nullcontext():
             logger.info("--- LOADING TASKS ---")
             registry = Registry(
-                cache_dir=self.pipeline_parameters.env_config.cache_dir,
                 custom_tasks=self.pipeline_parameters.custom_tasks_directory,
             )
             task_names_list, fewshots_dict = taskinfo_selector(tasks, registry)
@@ -236,6 +231,7 @@ class Pipeline:
                 evaluation_tracker=self.evaluation_tracker,
                 use_chat_template=self.pipeline_parameters.use_chat_template,
                 system_prompt=self.pipeline_parameters.system_prompt,
+                cot_prompt=self.pipeline_parameters.cot_prompt,
             )
 
             self.task_names_list = task_names_list
@@ -276,7 +272,6 @@ class Pipeline:
     def evaluate(self):
         self.evaluation_tracker.general_config_logger.log_args_info(
             num_fewshot_seeds=self.pipeline_parameters.num_fewshot_seeds,
-            override_batch_size=self.pipeline_parameters.override_batch_size,
             max_samples=self.pipeline_parameters.max_samples,
             job_id=self.pipeline_parameters.job_id,
             config=self.model_config,
@@ -469,7 +464,7 @@ class Pipeline:
         for request_type, requests in self.requests.items():
             logger.info(f"Running {request_type} requests")
             run_model = self.model.get_method_from_request_type(request_type=request_type)
-            responses = run_model(requests, override_bs=self.pipeline_parameters.override_batch_size)
+            responses = run_model(requests)
 
             # Storing the responses associated to the same samples together
             for response, request in zip(responses, requests):

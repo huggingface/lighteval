@@ -43,6 +43,16 @@ INTEGER_INDICES = list(map(str, list(range(1, 27))))
 # fmt: on
 
 
+def simpleqa(line, task_name: str = None):
+    query = line["problem"]
+    choices = [line["answer"]]
+    gold_index = 0
+
+    return Doc(
+        task_name=task_name, query=query, choices=choices, gold_index=gold_index, specific={**eval(line["metadata"])}
+    )
+
+
 def aime_prompt_fn(line, task_name: str = None):
     # Prompt template adapted from
     # - simple-evals: https://github.com/openai/simple-evals/blob/6e84f4e2aed6b60f6a0c7b8f06bbbf4bfde72e58/math_eval.py#L17
@@ -87,6 +97,57 @@ def apps(line, task_name: str = None):
         choices=[json.loads(line["solutions"])],
         gold_index=0,
         specific={"input_output": line["input_output"]},
+    )
+
+
+def arc_agi_2(line, task_name: str = None):
+    # query from: https://github.com/arcprize/model_baseline/blob/main/src/prompts/system_prompt.txt
+    def convert_2d_list_to_string(list_of_lists: list[list[int]]) -> str:
+        """
+        Convert a list of lists to a string
+        """
+
+        string_list = ""
+
+        for row in list_of_lists:
+            string_list += json.dumps(row) + "\n"
+
+        return string_list
+
+    query = """You are participating in a puzzle solving competition. You are an expert at solving puzzles.
+
+Below is a list of input and output pairs with a pattern. Your goal is to identify the pattern or transformation in the training examples that maps the input to the output, then apply that pattern to the test input to give a final output.
+
+Respond in the format of the training output examples
+
+--Training Examples--
+{training_examples}
+--End of Training Examples--
+
+--Test Input--
+{test_input}
+--End of Test Input--
+
+Your response:""".strip()
+
+    training_pairs = line["fewshots"]
+    training_examples = ""
+    for i, pair in enumerate(training_pairs):
+        training_examples += f"--Example {i}-- \n\n INPUT: \n\n"
+        training_examples += convert_2d_list_to_string(pair["input"]) + "\n\n"
+        training_examples += "OUTPUT: \n\n"
+        training_examples += convert_2d_list_to_string(pair["output"]) + "\n\n"
+
+    test_input = convert_2d_list_to_string(line["question"][0]["input"])
+
+    gold = str(line["question"][0]["output"])
+    query = query.format(training_examples=training_examples, test_input=test_input)
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=[gold],
+        gold_index=0,
     )
 
 
