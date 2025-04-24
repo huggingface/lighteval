@@ -44,8 +44,8 @@ from lighteval.models.model_output import (
     LoglikelihoodSingleTokenResponse,
     ModelResponse,
 )
-from lighteval.tasks.lighteval_task import LightevalTask, create_requests_from_tasks
-from lighteval.tasks.registry import Registry, taskinfo_selector
+from lighteval.tasks.lighteval_task import LightevalTask
+from lighteval.tasks.registry import Registry
 from lighteval.tasks.requests import RequestType, SampleUid
 from lighteval.utils.imports import (
     NO_ACCELERATE_ERROR_MSG,
@@ -67,12 +67,23 @@ from lighteval.utils.utils import make_results_table
 
 if is_accelerate_available():
     from accelerate import Accelerator, InitProcessGroupKwargs
+else:
+    from unittest.mock import Mock
+
+    Accelerator = InitProcessGroupKwargs = Mock()
 if is_nanotron_available():
     from nanotron import distributed as dist
     from nanotron.parallel.context import ParallelContext
     from nanotron.utils import local_ranks_zero_first
 
     from lighteval.models.nanotron_model import NanotronLightevalModel
+else:
+    from unittest.mock import Mock
+
+    dist = Mock()
+    ParallelContext = Mock()
+    local_ranks_zero_first = Mock()
+    NanotronLightevalModel = Mock()
 
 
 import logging
@@ -143,6 +154,7 @@ class Pipeline:
 
         self.pipeline_parameters = pipeline_parameters
         self.launcher_type = self.pipeline_parameters.launcher_type
+
         if self.pipeline_parameters.max_samples:
             logger.warning(
                 "--max_samples WAS SET. THESE NUMBERS ARE ONLY PARTIAL AND SHOULD NOT BE USED FOR COMPARISON UNLESS YOU KNOW WHAT YOU ARE DOING."
@@ -157,6 +169,7 @@ class Pipeline:
         generation_parameters = model_config.generation_parameters.model_dump() if model_config else {}
 
         self.evaluation_tracker.general_config_logger.log_model_info(generation_parameters, self.model.model_info)
+
         self._init_random_seeds()
         self._init_tasks_and_requests(tasks=tasks)
         # Final results
@@ -209,44 +222,35 @@ class Pipeline:
     def _init_tasks_and_requests(self, tasks: str):
         with local_ranks_zero_first() if self.launcher_type == ParallelismManager.NANOTRON else nullcontext():
             logger.info("--- LOADING TASKS ---")
+
             registry = Registry(
                 custom_tasks=self.pipeline_parameters.custom_tasks_directory,
             )
-            task_names_list, fewshots_dict = taskinfo_selector(tasks, registry)
-            task_dict = registry.get_task_dict(task_names_list)
+            task_configs = registry.get_tasks_configs(tasks)
+            tasks: list[LightevalTask] = registry.get_tasks_from_configs(task_configs)
+            LightevalTask.load_datasets(tasks, self.pipeline_parameters.dataset_loading_processes)
+            requests_list = [task.get_requests() for task in tasks]
+            requests = {}
+            for request in requests_list:
+                for key, value in request.items():
+                    requests.setdefault(key, []).extend(value)
+
             # If there are metric_options defined from the yaml file,
             # review if they have to be updated.
             if self._metric_options:
-                self._update_num_samples(task_dict)
-            LightevalTask.load_datasets(list(task_dict.values()), self.pipeline_parameters.dataset_loading_processes)
+                self._update_num_samples(tasks)
 
-            self.evaluation_tracker.task_config_logger.log(task_dict)
-
-            requests, docs = create_requests_from_tasks(
-                task_dict=task_dict,
-                fewshot_dict=fewshots_dict,
-                num_fewshot_seeds=self.pipeline_parameters.num_fewshot_seeds,
-                lm=self.model,
-                max_samples=self.pipeline_parameters.max_samples,
-                evaluation_tracker=self.evaluation_tracker,
-                use_chat_template=self.pipeline_parameters.use_chat_template,
-                system_prompt=self.pipeline_parameters.system_prompt,
-                cot_prompt=self.pipeline_parameters.cot_prompt,
-            )
-
-            self.task_names_list = task_names_list
-            self.task_dict = task_dict
-            self.fewshot_dict = fewshots_dict
+            # self.evaluation_tracker.task_config_logger.log(tasks)
             self.requests = requests
-            self.docs = docs
+            self.tasks = tasks
 
-    def _update_num_samples(self, task_dict: dict[str, LightevalTask]):
+    def _update_num_samples(self, tasks: list[LightevalTask]):
         """Helper function to update the num_samples of a given metric via the yaml file.
         As it has to be done at the metric level, it's better to update the value per metric.
         It will add a num_samples to the already defined metrics' num_samples if defined in the yaml file.
         As later when constructing the requests the max is taken over the num_samples, this is valid.
         """
-        for _, task in task_dict.items():
+        for task in tasks:
             for metric in task.metrics:
                 if metric_data := self._metric_options.get(metric.metric_name, None):
                     num_samples = metric_data.get("num_samples", None)

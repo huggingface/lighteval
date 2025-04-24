@@ -61,11 +61,11 @@ if is_vllm_available():
     logging.getLogger("ray").propagate = True
     logging.getLogger("ray").handlers.clear()
 else:
-    LLM = None
-    SamplingParams = None
-    get_tokenizer = None
-    ray = None
-    distribute = None
+    from unittest.mock import Mock
+
+    LLM = (
+        SamplingParams
+    ) = get_tokenizer = ray = distribute = destroy_distributed_environment = destroy_model_parallel = Mock()
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -84,7 +84,6 @@ class VLLMModelConfig(ModelConfig):
     swap_space: PositiveInt = 4  # CPU swap space size (GiB) per GPU.
     seed: PositiveInt = 1234
     trust_remote_code: bool = False
-    use_chat_template: bool = False
     add_special_tokens: bool = True
     multichoice_continuations_start_space: bool = (
         True  # whether to add a space at the start of each continuation in multichoice generation
@@ -93,6 +92,7 @@ class VLLMModelConfig(ModelConfig):
     max_num_seqs: PositiveInt = 128  # maximum number of sequences per iteration; This variable and `max_num_batched_tokens` effectively control the batch size at prefill stage. See https://github.com/vllm-project/vllm/issues/2492 for detailed explaination.
     max_num_batched_tokens: PositiveInt = 2048  # maximum number of tokens per batch
     subfolder: str | None = None
+    use_chat_template: bool = True
 
 
 class VLLMModel(LightevalModel):
@@ -410,4 +410,7 @@ class VLLMModel(LightevalModel):
         pass
 
     def loglikelihood_single_token():
+        pass
+
+    def prompt_manager(self, requests):
         pass

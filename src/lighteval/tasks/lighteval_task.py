@@ -25,7 +25,7 @@ import inspect
 import logging
 import random
 from dataclasses import asdict, dataclass, field
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional
 
 from datasets import DatasetDict
 from huggingface_hub import TextGenerationInputGrammarType
@@ -41,8 +41,7 @@ from lighteval.metrics import (
     apply_target_perplexity_metric,
 )
 from lighteval.metrics.metrics import Metric, MetricCategory, Metrics
-from lighteval.models.transformers.transformers_model import TransformersModel
-from lighteval.tasks.prompt_manager import PromptManager
+from lighteval.tasks.prompt_manager import FewShotSampler
 from lighteval.tasks.requests import (
     Doc,
     GreedyUntilMultiTurnRequest,
@@ -52,13 +51,12 @@ from lighteval.tasks.requests import (
     LoglikelihoodSingleTokenRequest,
     Request,
     RequestType,
-    SampleUid,
 )
 from lighteval.utils.utils import ListLike, as_list, download_dataset_worker
 
 
 if TYPE_CHECKING:
-    from lighteval.logging.evaluation_tracker import EvaluationTracker
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -118,6 +116,9 @@ class LightevalTaskConfig:
     effective_num_docs: int = -1
 
     must_remove_duplicate_docs: bool = False
+
+    num_fewshots = 0
+    truncate_fewshots = False
 
     version: int = 0
 
@@ -223,6 +224,7 @@ class LightevalTask:
         self.generation_grammar = cfg.generation_grammar
         self.stop_sequence = cfg.stop_sequence
         self.must_remove_duplicate_docs = cfg.must_remove_duplicate_docs
+        self.fewshot_sampler = FewShotSampler(self)
 
     @property
     def cfg(self):
@@ -292,6 +294,7 @@ class LightevalTask:
                 # Some tasks require to know which is the current item index in order to apply a different prompt template
                 item["__index"] = ix
                 cur_docs = self.formatter(item, self.name)
+                cur_docs.id = f"{self.name}_{ix}"
                 if cur_docs is None:
                     continue
                 docs.extend(as_list(cur_docs))
@@ -337,8 +340,28 @@ class LightevalTask:
                 self._docs = self.remove_duplicate_docs(self._docs)
         return self._docs
 
-    def construct_requests(
-        self, formatted_doc: Doc, context: str, document_id_seed: str, current_task_name: str
+    def get_requests(self, max_samples: int | None = None) -> dict[RequestType, list[Request]]:
+        eval_docs = list(self.eval_docs())
+
+        if len(eval_docs) == 0:
+            logger.warning(f"Task {self.name} has no documents to evaluate skipping.")
+            return {}
+
+        n_samples = min(max_samples, len(eval_docs)) if max_samples else len(eval_docs)
+        # evaluation_tracker.task_config_logger.log_num_docs(self.name, len(eval_docs), n_samples)
+        random.shuffle(eval_docs)
+
+        for doc in eval_docs[:n_samples]:
+            num_fewshots = self.cfg.num_fewshots
+            doc.task_name = f"{self.name}|{num_fewshots}"
+            doc.fewshots = self.fewshot_sampler.sample_fewshot_examples(num_fewshots, 1, formatted_doc=doc)
+            req_type_reqs_dict = self.construct_requests_for_doc(doc)
+
+        return req_type_reqs_dict
+
+    def construct_requests_for_doc(
+        self,
+        doc: Doc,
     ) -> Dict[RequestType, List[Request]]:
         """
         Constructs a list of requests from the task based on the given parameters.
@@ -355,26 +378,28 @@ class LightevalTask:
         requests: dict[RequestType, list[Request]] = collections.defaultdict(list)
 
         if self.has_metric_category[MetricCategory.TARGET_PERPLEXITY]:
-            golds = formatted_doc.get_golds()
+            golds = doc.get_golds()
             requests[RequestType.LOGLIKELIHOOD] += [
                 LoglikelihoodRequest(
-                    task_name=current_task_name,
-                    sample_index=document_id_seed,
+                    task_name=doc.task_name,
+                    sample_index=doc.id,
                     request_index=i,
-                    context=context,
+                    context=doc.query,
                     choice=gold,
                     metric_categories=[MetricCategory.TARGET_PERPLEXITY],
+                    fewshots=doc.fewshots,
                 )
                 for i, gold in enumerate(golds)
             ]
         if self.has_metric_category[MetricCategory.PERPLEXITY]:
             requests[RequestType.LOGLIKELIHOOD_ROLLING] += [
                 LoglikelihoodRollingRequest(
-                    task_name=current_task_name,
-                    sample_index=document_id_seed,
+                    task_name=doc.task_name,
+                    sample_index=doc.id,
                     request_index=0,
-                    context=context,
+                    context=doc.query,
                     metric_categories=[MetricCategory.PERPLEXITY],
+                    fewshots=doc.fewshots,
                 )
             ]
         if self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]:
@@ -383,10 +408,10 @@ class LightevalTask:
             # relevant number of tiems
             requests[RequestType.GREEDY_UNTIL] += [
                 GreedyUntilRequest(
-                    task_name=current_task_name,
-                    sample_index=document_id_seed,
+                    task_name=doc.task_name,
+                    sample_index=doc.id,
                     request_index=0,
-                    context=context,
+                    context=doc.query,
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
                     generation_grammar=self.generation_grammar,
@@ -394,6 +419,7 @@ class LightevalTask:
                     do_sample=True,
                     use_logits=False,
                     metric_categories=[MetricCategory.GENERATIVE_SAMPLING],
+                    fewshots=doc.fewshots,
                 )
             ]
         if (
@@ -403,15 +429,16 @@ class LightevalTask:
             use_logits = self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]
             requests[RequestType.GREEDY_UNTIL] += [
                 GreedyUntilRequest(
-                    task_name=current_task_name,
-                    sample_index=document_id_seed,
+                    task_name=doc.task_name,
+                    sample_index=doc.id,
                     request_index=0,
-                    context=context,
+                    context=doc.query,
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
                     generation_grammar=self.generation_grammar,
                     num_samples=1,
                     use_logits=use_logits,
+                    fewshots=doc.fewshots,
                     metric_categories=[
                         c
                         for c in [
@@ -428,70 +455,73 @@ class LightevalTask:
         ):
             requests[RequestType.LOGLIKELIHOOD] += [
                 LoglikelihoodRequest(
-                    task_name=current_task_name,
-                    sample_index=document_id_seed,
+                    task_name=doc.task_name,
+                    sample_index=doc.id,
                     request_index=i,
-                    context=context,
+                    context=doc.query,
                     choice=choice,
+                    fewshots=doc.fewshots,
                     metric_categories=[
                         c
                         for c in [MetricCategory.MULTICHOICE, MetricCategory.MULTICHOICE_PMI]
                         if self.has_metric_category[c]
                     ],
                 )
-                for i, choice in enumerate(formatted_doc.choices)
+                for i, choice in enumerate(doc.choices)
             ]
         if self.has_metric_category[MetricCategory.MULTICHOICE_PMI]:
-            assert (
-                formatted_doc.unconditioned_query is not None
-            ), "Unconditioned query is required for PMI normalization"
+            assert doc.unconditioned_query is not None, "Unconditioned query is required for PMI normalization"
             requests[RequestType.LOGLIKELIHOOD] += [
                 LoglikelihoodRequest(
-                    task_name=current_task_name,
-                    sample_index=document_id_seed,
+                    task_name=doc.task_name,
+                    sample_index=doc.id,
                     # The normalization should come after the choices
-                    request_index=i + len(formatted_doc.choices),
-                    context=formatted_doc.unconditioned_query,
+                    request_index=i + len(doc.choices),
+                    context=doc.unconditioned_query,
                     choice=choice,
                     metric_categories=[MetricCategory.MULTICHOICE_PMI],
+                    fewshots=doc.fewshots,
                 )
-                for i, choice in enumerate(formatted_doc.choices)
+                for i, choice in enumerate(doc.choices)
             ]
         if self.has_metric_category[MetricCategory.MULTICHOICE_ONE_TOKEN]:
             requests[RequestType.LOGLIKELIHOOD_SINGLE_TOKEN] += [
                 LoglikelihoodSingleTokenRequest(
-                    task_name=current_task_name,
-                    sample_index=document_id_seed,
+                    task_name=doc.task_name,
+                    sample_index=doc.id,
                     request_index=0,
-                    context=context,
-                    choices=formatted_doc.choices,
+                    context=doc.query,
+                    choices=doc.choices,
                     metric_categories=[MetricCategory.MULTICHOICE_ONE_TOKEN],
+                    fewshots=doc.fewshots,
                 )
             ]
         if self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]:
             requests[RequestType.GREEDY_UNTIL_MULTI_TURN] += [
                 GreedyUntilMultiTurnRequest(
-                    task_name=current_task_name,
-                    sample_index=document_id_seed,
+                    task_name=doc.task_name,
+                    sample_index=doc.id,
                     request_index=0,
-                    context=context,
+                    context=doc.query,
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
                     metric_categories=[MetricCategory.LLM_AS_JUDGE_MULTI_TURN],
+                    fewshots=doc.fewshots,
                 )
             ]
         if self.has_metric_category[MetricCategory.LLM_AS_JUDGE]:
             requests[RequestType.GREEDY_UNTIL] += [
                 GreedyUntilRequest(
-                    task_name=current_task_name,
-                    sample_index=document_id_seed,
+                    task_name=doc.task_name,
+                    sample_index=doc.id,
                     request_index=0,
-                    context=context,
+                    context=doc.query,
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
                     generation_grammar=self.generation_grammar,
                     num_samples=1,
                     metric_categories=[MetricCategory.LLM_AS_JUDGE],
+                    fewshots=doc.fewshots,
                 )
             ]
 
@@ -571,95 +601,6 @@ class LightevalTask:
 
         for task, dataset in zip(tasks, datasets):
             task.dataset = dataset
-
-
-def create_requests_from_tasks(  # noqa: C901
-    task_dict: dict[str, LightevalTask],
-    fewshot_dict: dict[str, list[Tuple[int, bool]]],
-    num_fewshot_seeds: int,
-    lm: TransformersModel,
-    max_samples: int | None,
-    evaluation_tracker: "EvaluationTracker",
-    use_chat_template: bool,
-    system_prompt: str | None,
-    cot_prompt: str | None,
-) -> Tuple[dict[RequestType, list[Request]], dict[SampleUid, Doc]]:
-    """
-    Takes a task dict and a fewshot dict and returns a dict of requests, a dict
-    of docs, and a dict of requests origins. The construction of prompts and
-    thus the managing of few shots is done here.
-
-    Args:
-        task_dict (dict[str, LightevalTask]): A dictionary of tasks.
-        fewshot_dict (dict[str, list[Tuple[int, bool]]]): A dictionary of few
-            shot examples.
-        num_fewshot_seeds (int): number of few shot seeds.
-        lm (TransformersModel): language model class that will be used to eventually
-            truncate the few shot examples (we need the maximum input size of the
-            model)
-        max_samples (int): maximum number of samples.
-        evaluation_tracker (EvaluationTracker): evaluation tracker.
-        use_chat_template (bool): Whether to use the chat template.
-        system_prompt (str): System prompt
-        cot_prompt (str): Chain of thought prompt
-
-    Raises:
-        NotImplementedError: If the request type is not implemented for the
-            task.
-
-    Returns:
-        Tuple[dict[RequestType, list[Request]], dict[SampleUid, Doc]]: A
-            tuple containing the requests and the documents.
-    """
-    docs: dict[SampleUid, Doc] = {}
-    requests: dict[RequestType, list[Request]] = collections.defaultdict(list)
-
-    # Filter out tasks that don't have any docs
-    task_dict_items = [(name, task) for name, task in task_dict.items() if len(task.eval_docs()) > 0]
-
-    # Get lists of each type of request
-    for task_name, task in task_dict_items:
-        task_docs = list(task.eval_docs())
-        n_samples = min(max_samples, len(task_docs)) if max_samples else len(task_docs)
-        evaluation_tracker.task_config_logger.log_num_docs(task_name, len(task_docs), n_samples)
-
-        # logs out the different versions of the tasks for every few shot
-        for num_fewshot, _ in fewshot_dict[task_name]:
-            cur_task_name = f"{task_name}|{num_fewshot}"
-            evaluation_tracker.versions_logger.log(cur_task_name, task.version)
-
-        rnd = random.Random()
-        rnd.seed(42)
-        rnd.shuffle(task_docs)
-
-        prompt_manager = PromptManager(lm=lm, task=task)
-        seeds = prompt_manager.few_shot_sampler.get_fewshot_seeds(num_fewshot_seeds)
-
-        # We can do several round of fewshots sampling to get some variance information
-        for seed in seeds:
-            for doc_id in range(n_samples):
-                doc_id_seed = f"{doc_id}_{seed}"  # if we do several rounds of few shot sampling we have several seeds
-                for num_fewshot, truncate_few_shots in fewshot_dict[task_name]:
-                    doc = task_docs[doc_id]
-                    doc = prompt_manager.add_context_to_doc(
-                        doc,
-                        num_fewshot=num_fewshot,
-                        seed=seed,
-                        sampler=rnd,
-                        truncate_few_shots=truncate_few_shots,
-                        use_chat_template=use_chat_template,
-                        system_prompt=system_prompt,
-                        cot_prompt=cot_prompt,
-                    )
-
-                    # Constructing the requests
-                    cur_task_name = f"{task_name}|{num_fewshot}"
-                    docs[SampleUid(cur_task_name, doc_id_seed)] = doc
-                    req_type_reqs_dict = task.construct_requests(doc, doc.ctx, doc_id_seed, cur_task_name)
-                    for req_type, reqs in req_type_reqs_dict.items():
-                        requests[req_type].extend(reqs)
-
-    return requests, docs
 
 
 def extract_num_samples(metric_name: str) -> int:
