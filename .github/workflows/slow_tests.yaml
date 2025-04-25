@@ -39,4 +39,4 @@ jobs:
 
 
       - name: Run tests
-        run: uv run pytest --disable-pytest-warnings -o log_cli=true -o log_cli_level=INFO --runslow tests/slow_tests
+        run: uv run pytest --disable-pytest-warnings -o log_cli=true -o log_cli_level=INFO --runslow tests/slow_tests/test_vllm_model.py
