@@ -7874,7 +7874,7 @@ gsm8k_leaderboard = LightevalTaskConfig(
     few_shots_select="random_sampling_from_train",
     generation_size=256,
     metric=[Metrics.quasi_exact_match_gsm8k],
-    stop_sequence=["Question=", "Question", "="],
+    stop_sequence=["Question:"],
     trust_dataset=True,
     version=0,
 )
@@ -7889,8 +7889,11 @@ gsm8k_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling_from_train",
     generation_size=256,
-    metric=[Metrics.quasi_exact_match_gsm8k, Metrics.maj_at_8_gsm8k],
-    stop_sequence=["Question="],
+    metric=[
+        Metrics.expr_gold_metric,
+        #Metrics.math_pass_at_1_32n,
+    ],
+    stop_sequence=["Question:"],
     trust_dataset=True,
     version=0,
 )
