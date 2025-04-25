@@ -266,6 +266,8 @@ class TransformersModel(LightevalModel):
         if accelerator is not None:
             self._device = accelerator.device
             self.model = self.accelerator.prepare(self.model.to(accelerator.device))
+        elif self.config.device is not None:
+            self._device = self.config.device
         else:
             self._device = "cpu"
 
