@@ -230,6 +230,7 @@ class TransformersModel(LightevalModel):
     def from_model(
         cls,
         model: Union[AutoModelForCausalLM, LightevalModel],
+        config: TransformersModelConfig = None,
         accelerator: "Accelerator" = None,
         tokenizer_name: str = None,  # custom tokenizer
         trust_remote_code: bool = False,
@@ -247,16 +248,14 @@ class TransformersModel(LightevalModel):
 
         # Instanciate the object without using __init__
         self = cls.__new__(cls)
-        self._config = model.config
-        self._max_length = self._init_max_length(max_length=model.config.max_length)
-        self._tokenizer = self._create_auto_tokenizer_with_name(
-            model_name=model.name_or_path,
-            revision=model.config._commit_hash,
-            trust_remote_code=trust_remote_code,
-            tokenizer_name=tokenizer_name,
-        )
+        self.config = config
+        self.transformers_config = model.config
+        self.generation_config_dict = config.generation_parameters.to_transformers_dict()
+        self._max_length = self._init_max_length()
+        self._tokenizer = self._create_auto_tokenizer()
+        self.batch_size = config.batch_size
         self.model_name = _simplify_name(model.name_or_path)
-        self.model_sha = model.config._commit_hash
+        self.model_sha = config.get_model_sha()
 
         # If model_parallel is not set we compare the number of processes with the number of GPUs
         self.model = model
@@ -275,7 +274,7 @@ class TransformersModel(LightevalModel):
         self.pairwise_tokenization = pairwise_tokenization
         self.multichoice_continuations_start_space = multichoice_continuations_start_space
 
-        self.precision = _get_dtype(model.dtype, config=self._config)
+        self.precision = _get_dtype(model.dtype, config=self.transformers_config)
 
         if is_accelerate_available():
             model_size, _ = calculate_maximum_sizes(self.model)
@@ -444,6 +443,7 @@ class TransformersModel(LightevalModel):
         Returns:
             int: Max length to use depending on the available args and config
         """
+
         if self.config.max_length is not None:
             return self.config.max_length
 
@@ -454,7 +454,7 @@ class TransformersModel(LightevalModel):
                 return getattr(self.transformers_config, attr)
 
         logger.warning(
-            "No max_length attribute found in the model config. Using the default max sequence length setting {2048}. It is recomended to set max_length through the model args"
+            "No max_length attribute found in the model config. Using the default max sequence length setting {2048}. It is recomended to set max_length trough the madel args"
         )
 
         return 2048
