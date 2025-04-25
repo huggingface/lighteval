@@ -38,7 +38,7 @@ jobs:
         run: uv sync --extra dev
 
       - name: Ensure cache directories exist
-        run: rm -f /home/runner/.cache/huggingface
+        run: rm -r /home/runner/.cache/huggingface
 
       - name: Run tests
         run: uv run pytest --disable-pytest-warnings -o log_cli=true -o log_cli_level=INFO --runslow tests/slow_tests
