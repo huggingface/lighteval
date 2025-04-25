@@ -7891,7 +7891,6 @@ gsm8k_lighteval = LightevalTaskConfig(
     generation_size=256,
     metric=[
         Metrics.expr_gold_metric,
-        #Metrics.math_pass_at_1_32n,
     ],
     stop_sequence=["Question:"],
     trust_dataset=True,
