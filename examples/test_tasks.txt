@@ -10,12 +10,4 @@ lighteval|agieval:lsat-lr|0|0
 lighteval|agieval:lsat-rc|0|0
 lighteval|agieval:sat-en-without-passage|0|0
 lighteval|agieval:sat-en|0|0
-lighteval|bigbench:causal_judgment|3|0
-lighteval|bigbench:date_understanding|3|0
-lighteval|bigbench:disambiguation_qa|3|0
-lighteval|bigbench:geometric_shapes|3|0
-lighteval|bigbench:movie_recommendation|3|0
-lighteval|bigbench:navigate|3|0
-lighteval|bigbench:ruin_names|3|0
-lighteval|bigbench:salient_translation_error_detection|3|0
 test|gsm8k|0|1
