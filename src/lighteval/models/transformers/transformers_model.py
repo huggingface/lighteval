@@ -266,10 +266,8 @@ class TransformersModel(LightevalModel):
         if accelerator is not None:
             self._device = accelerator.device
             self.model = self.accelerator.prepare(self.model.to(accelerator.device))
-        elif self.config.device is not None:
-            self._device = self.config.device
         else:
-            self._device = "cpu"
+            self._device = self.config.device
 
         self.use_chat_template = use_chat_template
         self._add_special_tokens = add_special_tokens if add_special_tokens is not None else False
