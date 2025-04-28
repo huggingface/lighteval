@@ -1734,7 +1734,8 @@ global_mmlu_tasks = [
             lambda subset, sensitivity_label, x: x["subject"].lower() == subset
             and (
                 sensitivity_label == "ALL" or sensitivity_label in x["cultural_sensitivity_label"].replace("-", "UNK")
-            ),
+            )
+            and all(x[f"option_{opt}"] is not None and x[f"option_{opt}"].strip() for opt in "abcd"),
             subset,
             sensitivity_label,
         ),
@@ -2874,7 +2875,7 @@ xcsqa_tasks = [
         ),
         suite=("lighteval",),
         hf_repo="INK-USC/xcsr",
-        hf_subset=f"X-CSQA-{standardize_tag(language.value)}",
+        hf_subset=f"X-CSQA-{standardize_tag(language.value) if language != Language.JAPANESE else 'jap'}",
         hf_filter=lambda x: all(
             len(x["question"]["choices"]["text"][i].strip()) > 0 for i in range(len(x["question"]["choices"]["text"]))
         ),
@@ -3164,6 +3165,7 @@ mgsm_tasks = [
         stop_sequence=("\n",),
     )
     for language in [
+        Language.ENGLISH,
         Language.SPANISH,
         Language.FRENCH,
         Language.GERMAN,
@@ -3426,7 +3428,7 @@ xcodah_tasks = [
         prompt_function=get_mcq_prompt_function(language, partial(xcodah_adapter, language), formulation=formulation),
         suite=("lighteval",),
         hf_repo="INK-USC/xcsr",
-        hf_subset=f"X-CODAH-{standardize_tag(language.value)}",
+        hf_subset=f"X-CODAH-{standardize_tag(language.value) if language != Language.JAPANESE else 'jap'}",
         evaluation_splits=("validation",),
         hf_avail_splits=["validation"],
         metric=get_metrics_for_formulation(
@@ -3533,7 +3535,7 @@ xwinograd_tasks = [
             language, partial(winogrand_adapter, language), formulation=formulation
         ),
         hf_repo="Muennighoff/xwinograd",
-        hf_subset=standardize_tag(language.value),
+        hf_subset=standardize_tag(language.value) if language != Language.JAPANESE else "jp",
         evaluation_splits=("test",),
         hf_avail_splits=["test"],
         metric=[
