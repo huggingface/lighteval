@@ -126,6 +126,7 @@ class EvaluationTracker:
         tensorboard_metric_prefix: str = "eval",
         public: bool = False,
         nanotron_run_info: "GeneralArgs" = None,
+        wandb: bool = False,
     ) -> None:
         """Creates all the necessary loggers for evaluation tracking."""
         self.details_logger = DetailsLogger()
@@ -145,6 +146,7 @@ class EvaluationTracker:
 
         self.should_push_to_hub = push_to_hub
         self.should_save_details = save_details
+        self.wandb = wandb
 
         self.should_push_results_to_tensorboard = push_to_tensorboard
         self.tensorboard_repo = f"{hub_results_org}/tensorboard_logs"
@@ -152,6 +154,20 @@ class EvaluationTracker:
         self.nanotron_run_info = nanotron_run_info
 
         self.public = public
+
+        if wandb is True:
+            import wandb
+
+            self.wandb_project = os.environ.get("WANDB_PROJECT", None)
+
+            if self.wandb_project is None:
+                raise ValueError("You need to specify the project name in wandb_args")
+
+            wandb.login()
+            self.wandb_run = wandb.init(
+                project=self.wandb_project,
+                resume="allow",
+            )
 
     @property
     def results(self):
@@ -222,10 +238,22 @@ class EvaluationTracker:
                 results_dict=results_dict,
             )
 
+        if self.wandb is True:
+            self.push_to_wandb(
+                results_dict=results_dict,
+                details_datasets=details_datasets,
+            )
+
         if self.should_push_results_to_tensorboard:
             self.push_to_tensorboard(
                 results=self.metrics_logger.metric_aggregated, details=self.details_logger.compiled_details
             )
+
+    def push_to_wandb(self, results_dict: dict, details_datasets: dict) -> None:
+        self.wandb_run.log(
+            {**results_dict["results"]},
+        )
+        self.wandb_run.finish()
 
     def save_results(self, date_id: str, results_dict: dict):
         output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name

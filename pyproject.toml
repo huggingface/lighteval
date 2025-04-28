@@ -110,6 +110,7 @@ multilingual = [
     "pyvi", # for vietnamese tokenizer
 ]
 math = ["latex2sympy2_extended==1.0.6"]
+wandb = ["wandb"]
 
 [project.urls]
 Homepage = "https://github.com/huggingface/lighteval"
