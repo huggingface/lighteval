@@ -56,7 +56,7 @@ def run_model(model_name: str, use_chat_template: bool):
         tasks=TASKS_PATH,
         use_chat_template=use_chat_template,
         output_dir="",
-        dataset_loading_processes=8,
+        dataset_loading_processes=1,
         save_details=False,
         max_samples=10,
         custom_tasks=CUSTOM_TASKS_PATH,
