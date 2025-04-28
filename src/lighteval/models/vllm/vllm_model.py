@@ -53,7 +53,11 @@ if is_vllm_available():
     import ray
     from more_itertools import distribute
     from vllm import LLM, RequestOutput, SamplingParams
-    from vllm.distributed.parallel_state import destroy_distributed_environment, destroy_model_parallel
+    from vllm.distributed.parallel_state import (
+        cleanup_dist_env_and_memory,
+        destroy_distributed_environment,
+        destroy_model_parallel,
+    )
     from vllm.transformers_utils.tokenizer import get_tokenizer
     from vllm.v1.engine.async_llm import AsyncEngineArgs, AsyncLLM
 
@@ -427,9 +431,9 @@ class AsyncVLLMModel(VLLMModel):
         if self.model is not None:
             del self.model
         gc.collect()
-        torch.distributed.destroy_process_group()
         destroy_distributed_environment()
         torch.cuda.empty_cache()
+        cleanup_dist_env_and_memory()
 
     def _create_auto_model(self, config: VLLMModelConfig) -> Optional[AsyncLLM]:
         """
@@ -477,33 +481,38 @@ class AsyncVLLMModel(VLLMModel):
 
         return model
 
-    async def _async_generate_one_item(
+    async def _async_one_item(
         self,
         index: int,
         request: GreedyUntilRequest,
+        logprob: bool,
     ) -> Coroutine[None, list, str]:
         """Contains the actual logic of the generation."""
         sampling_params = SamplingParams(**self._config.generation_parameters.to_vllm_dict())
 
-        sampling_params.n = request.num_samples
-        sampling_params.max_tokens = self._config.generation_parameters.max_new_tokens or request.generation_size
-        sampling_params.stop = [] if self.use_chat_template else request.stop_sequence
-        sampling_params.logprobs = int(request.use_logits)
+        if logprob:
+            sampling_params.temperature = 0
+            sampling_params.prompt_logprobs = 1
+            sampling_params.max_tokens = 1
+            sampling_params.detokenize = False
+            prompt = request.context + request.choice
+            index = f"logprob_{index}"
+        else:
+            sampling_params.n = request.num_samples
+            sampling_params.max_tokens = self._config.generation_parameters.max_new_tokens or request.generation_size
+            sampling_params.stop = [] if self.use_chat_template else request.stop_sequence
+            sampling_params.logprobs = int(request.use_logits)
+            prompt = request.context
+            index = f"generative_{index}"
 
         output = await anext(
-            self.model.generate(request_id=str(index), prompt=request.context, sampling_params=sampling_params)
+            self.model.generate(request_id=str(index), prompt=prompt, sampling_params=sampling_params)
         )
         return output
 
-    async def _async_generate(
-        self,
-        requests: list[GreedyUntilRequest],
-    ) -> list:
+    async def _async_batch(self, requests: list[GreedyUntilRequest], logprob: bool) -> list:
         processed_requests = [
-            self._async_generate_one_item(
-                index=index,
-                request=request,
-            )
+            self._async_one_item(index=index, request=request, logprob=logprob)
             for index, request in enumerate(requests)
         ]
         results = await asyncio.gather(*processed_requests)
@@ -530,7 +539,7 @@ class AsyncVLLMModel(VLLMModel):
 
         results = []
 
-        responses: list[RequestOutput] = asyncio.run(self._async_generate(requests=requests))
+        responses: list[RequestOutput] = asyncio.run(self._async_batch(requests=requests, logprob=False))
 
         for response in responses:
             output_token_ids = [outputs.token_ids for outputs in response.outputs]
@@ -552,9 +561,30 @@ class AsyncVLLMModel(VLLMModel):
         return results
 
     def loglikelihood(
-        self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
+        self,
+        requests: list[LoglikelihoodRequest],
+        override_bs: Optional[int] = None,
+        return_bool_score: bool = True,
+        rolling: bool = False,
     ) -> list[LoglikelihoodResponse]:
-        raise NotImplementedError
+        results = []
+
+        responses: list[RequestOutput] = asyncio.run(self._async_batch(requests=requests, logprob=True))
+
+        for response, input in zip(responses, requests):
+            continuation_logprobs = []
+            for token, logprobs in zip(input.tokenized_continuation[::-1], response.prompt_logprobs[::-1]):
+                continuation_logprobs.append(logprobs[token])
+            bool_score = all(logprob.rank == 1 for logprob in continuation_logprobs)
+            continuation_logprobs = [logprob.logprob for logprob in continuation_logprobs]
+            answer = LoglikelihoodResponse(
+                input_tokens=input.tokenized_context + input.tokenized_continuation,
+                generated_tokens=input.tokenized_continuation,
+                result=(sum(continuation_logprobs), bool_score if return_bool_score else None),
+            )
+            results.append(answer)
+
+        return results
 
     def loglikelihood_rolling():
         pass
