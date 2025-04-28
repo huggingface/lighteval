@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from dataclasses import asdict
 
 import pytest
 
@@ -35,7 +36,7 @@ class TestTGIModelConfig:
                 {
                     "inference_server_address": "",
                     "inference_server_auth": None,
-                    "model_name": None,
+                    "model_id": None,
                     "generation_parameters": {
                         "early_stopping": None,
                         "frequency_penalty": None,
@@ -59,4 +60,4 @@ class TestTGIModelConfig:
     )
     def test_from_path(self, config_path, expected_config):
         config = TGIModelConfig.from_path(config_path)
-        assert config.model_dump() == expected_config
+        assert asdict(config) == expected_config

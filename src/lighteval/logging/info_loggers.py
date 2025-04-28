@@ -77,6 +77,7 @@ class GeneralConfigLogger:
     # general
     lighteval_sha: str = None
     num_fewshot_seeds: int = None
+    override_batch_size: int = None
     max_samples: int = None
     job_id: int = None
     start_time: float = None
@@ -107,6 +108,7 @@ class GeneralConfigLogger:
     def log_args_info(
         self,
         num_fewshot_seeds: int,
+        override_batch_size: Union[None, int],
         max_samples: Union[None, int],
         job_id: str,
         config: "Config" = None,
@@ -128,6 +130,7 @@ class GeneralConfigLogger:
 
         """
         self.num_fewshot_seeds = num_fewshot_seeds
+        self.override_batch_size = override_batch_size
         self.max_samples = max_samples
         self.job_id = job_id
         self.config = config

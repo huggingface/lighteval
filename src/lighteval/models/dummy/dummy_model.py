@@ -23,9 +23,9 @@
 # inspired by https://github.com/EleutherAI/lm-evaluation-harness/blob/main/lm_eval/models/dummy.py
 
 import random
+from dataclasses import dataclass
 from typing import Optional
 
-from pydantic import BaseModel
 from transformers import AutoTokenizer
 
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
@@ -36,9 +36,11 @@ from lighteval.tasks.requests import (
     LoglikelihoodRollingRequest,
     LoglikelihoodSingleTokenRequest,
 )
+from lighteval.utils.utils import EnvConfig
 
 
-class DummyModelConfig(BaseModel, extra="forbid"):
+@dataclass
+class DummyModelConfig:
     seed: int = 42
 
 
@@ -48,8 +50,10 @@ class DummyModel(LightevalModel):
     def __init__(
         self,
         config: DummyModelConfig,
+        env_config: EnvConfig,
     ):
         self.config = config
+        self.env_config = env_config
         self._random = random.Random(self.config.seed)
         self._tokenizer = None
         self.model_info = ModelInfo(model_name="dummy", model_sha=str(config.seed))

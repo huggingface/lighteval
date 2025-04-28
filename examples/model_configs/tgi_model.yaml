@@ -1,4 +1,5 @@
-model_parameters:
-  inference_server_address: ""
-  inference_server_auth: null
-  model_name: null # Optional, only required if the TGI container was launched with model_id pointing to a local directory
+model:
+  instance:
+    inference_server_address: ""
+    inference_server_auth: null
+    model_id: null # Optional, only required if the TGI container was launched with model_id pointing to a local directory

@@ -87,7 +87,7 @@ Here’s a quick command to evaluate using the Accelerate backend:
 
 ```shell
 lighteval accelerate \
-    "model_name=gpt2" \
+    "pretrained=gpt2" \
     "leaderboard|truthfulqa:mc|0|0"
 ```
 

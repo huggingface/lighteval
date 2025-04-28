@@ -21,17 +21,13 @@
 # SOFTWARE.
 
 
-import asyncio
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import Callable, Literal, Optional
+from typing import Callable, Literal
 
-from huggingface_hub import AsyncInferenceClient, InferenceTimeoutError
 from pydantic import BaseModel
-from requests.exceptions import HTTPError
 from tqdm import tqdm
-from tqdm.asyncio import tqdm_asyncio
 
 from lighteval.utils.imports import is_litellm_available, is_openai_available, is_vllm_available
 from lighteval.utils.utils import as_list
@@ -82,28 +78,10 @@ class JudgeLM:
         model: str,
         templates: Callable,
         process_judge_response: Callable,
-        judge_backend: Literal["litellm", "openai", "transformers", "tgi", "vllm", "inference-providers"],
+        judge_backend: Literal["litellm", "openai", "transformers", "tgi", "vllm"],
         url: str | None = None,
         api_key: str | None = None,
-        max_tokens: int = 512,
         response_format: BaseModel = None,
-        hf_provider: Optional[
-            Literal[
-                "black-forest-labs",
-                "cerebras",
-                "cohere",
-                "fal-ai",
-                "fireworks-ai",
-                "inference-providers",
-                "hyperbolic",
-                "nebius",
-                "novita",
-                "openai",
-                "replicate",
-                "sambanova",
-                "together",
-            ]
-        ] = None,
     ):
         self.model = model
         self.template = templates
@@ -118,47 +96,33 @@ class JudgeLM:
         self.url = url
         self.api_key = api_key
         self.backend = judge_backend
-        self.hf_provider = hf_provider
-        self.max_tokens = max_tokens
 
         self.response_format = response_format if not None else DEFAULT_FORMAT
 
-        # Validate that hf_provider is specified when using inference-providers backend
-        if self.backend == "inference-providers" and self.hf_provider is None:
-            raise ValueError("When using 'inference-providers' as backend, you must specify an 'hf_provider'")
-
     def __lazy_load_client(self):
         match self.backend:
-            # Both "openai" and "tgi" backends use the OpenAI-compatible API
-            # They are handled separately to allow for backend-specific validation and setup
-            case "openai" | "tgi":
-                if not is_openai_available():
-                    raise RuntimeError("OpenAI backend is not available.")
+            # Wether we use openai or TGI models, we go through the openai API
+            # to route to the endpoint
+            case "openai" | "tgi" if is_openai_available():
                 if self.client is None:
                     from openai import OpenAI
 
-                    self.client = OpenAI(
-                        api_key=self.api_key if self.url is None else None, base_url=self.url if self.url else None
-                    )
+                    if self.url is None:
+                        self.client = OpenAI(api_key=self.api_key)
+                    else:
+                        self.client = OpenAI(base_url=self.url, api_key=self.api_key)
                 return self.__call_api_parallel
-
-            case "litellm":
-                if not is_litellm_available():
-                    raise RuntimeError("litellm is not available.")
+            case "litellm" if is_litellm_available():
                 return self.__call_litellm
-
-            case "vllm":
-                if not is_vllm_available():
-                    raise RuntimeError("vllm is not available.")
+            case "vllm" if is_vllm_available():
                 if self.pipe is None:
                     from vllm import LLM, SamplingParams
                     from vllm.transformers_utils.tokenizer import get_tokenizer
 
-                    self.sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=self.max_tokens)
+                    self.sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=512)
                     self.tokenizer = get_tokenizer(self.model, tokenizer_mode="auto")
                     self.pipe = LLM(model=self.model, max_model_len=2048, gpu_memory_utilization=0.5, dtype="float16")
                 return self.__call_vllm
-
             case "transformers":
                 if self.pipe is None:
                     import torch
@@ -172,18 +136,11 @@ class JudgeLM:
                         "text-generation",
                         model=transformers_model,
                         tokenizer=tokenizer,
-                        max_new_tokens=self.max_tokens,
+                        max_new_tokens=256,
                     )
                 return self.__call_transformers
-
-            case "inference-providers":
-                from huggingface_hub import AsyncInferenceClient
-
-                self.client = AsyncInferenceClient(token=self.api_key, base_url=self.url, provider=self.hf_provider)
-                return self.__call_hf_inference_async
-
             case _:
-                raise ValueError(f"Unsupported backend: {self.backend}")
+                return lambda x: x
 
     def dict_of_lists_to_list_of_dicts(self, dict_of_lists):
         """
@@ -329,44 +286,6 @@ class JudgeLM:
             raise ValueError("Some entries are not annotated due to errors in annotate_p, please inspect and retry.")
 
         return results
-
-    def __call_hf_inference_async(self, prompts):
-        async def run_all() -> list[str]:
-            """Wrap inference call into function"""
-            tasks = (self.__call_hf_inference(prompt) for prompt in prompts)
-            return await tqdm_asyncio.gather(*tasks, desc="HF inference", total=len(prompts))
-
-        try:
-            loop = asyncio.get_running_loop()
-            logger.debug("Exting event loop is found, using loop.create_task")
-            result = loop.run_until_complete(run_all())
-        except RuntimeError:
-            logger.debug("No running event loop found, using asyncio.run")
-            result = asyncio.run(run_all())
-
-        if None in result:
-            logger.warning("None found in inference results")
-
-        return result
-
-    async def __call_hf_inference(self, prompt):
-        self.client: AsyncInferenceClient
-        for _ in range(self.API_MAX_RETRY):
-            try:
-                response = await self.client.chat_completion(
-                    model=self.model,
-                    messages=prompt,
-                    max_tokens=self.max_tokens,
-                )
-                return response.choices[0].message.content
-            except (InferenceTimeoutError, HTTPError) as e:
-                logger.warning(f"HTTP error during HF inference: {e}")
-                await asyncio.sleep(self.API_RETRY_SLEEP)
-            except Exception as e:
-                logger.warning(f"Unexpected error during HF inference: {e}")
-                await asyncio.sleep(self.API_RETRY_SLEEP)
-
-        raise Exception("Failed to get response from the HF API")
 
     def __call_api_parallel(self, prompts):
         results = []

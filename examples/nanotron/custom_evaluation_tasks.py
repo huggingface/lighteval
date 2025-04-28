@@ -256,7 +256,7 @@ class CustomMathEvaluationTask(LightevalTaskConfig):
         self,
         name,
         prompt_function=prompt.math,
-        hf_repo="DigitalLearningGmbH/MATH-lighteval",
+        hf_repo="lighteval/MATH",
         hf_subset=None,
         metric=[Metrics.quasi_exact_match_math],
         hf_avail_splits=None,
