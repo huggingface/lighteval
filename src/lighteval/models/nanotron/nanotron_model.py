@@ -56,7 +56,7 @@ from lighteval.tasks.requests import (
 )
 from lighteval.utils.imports import is_nanotron_available
 from lighteval.utils.parallelism import find_executable_batch_size
-from lighteval.utils.utils import EnvConfig, as_list
+from lighteval.utils.utils import as_list
 
 
 logger = logging.getLogger(__name__)
@@ -96,12 +96,12 @@ class NanotronLightevalModel(LightevalModel):
         parallel_context: "ParallelContext",
         max_gen_toks: Optional[int] = 256,
         max_length: Optional[int] = None,
-        add_special_tokens: Optional[bool] = True,
+        add_special_tokens: Optional[bool] = False,
         dtype: Optional[Union[str, torch.dtype]] = None,
         trust_remote_code: bool = False,
         debug_one_layer_model: bool = False,
         model_class: Optional[Type] = None,
-        env_config: EnvConfig = None,
+        env_config: "EnvConfig" = None,
     ):
         """Initializes a nanotron model for evaluation.
         Args:
@@ -230,7 +230,7 @@ class NanotronLightevalModel(LightevalModel):
         *,
         pretrained: str,
         tokenizer: Optional[str] = None,
-        env_config: EnvConfig = None,
+        env_config: "EnvConfig" = None,
         trust_remote_code: bool = False,
     ) -> transformers.PreTrainedTokenizer:
         """Returns a pre-trained tokenizer from a pre-trained tokenizer configuration."""
@@ -448,6 +448,7 @@ class NanotronLightevalModel(LightevalModel):
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
+        # requests = requests[:10256]
         for request in tqdm(
             requests, desc="Tokenizing", disable=bool(dist.get_rank(self.parallel_context.world_pg) != 0)
         ):
@@ -497,10 +498,8 @@ class NanotronLightevalModel(LightevalModel):
         We truncate to keep only at most `max_context` tokens
         We pad to `padding_length` tokens
         """
-        # if not full_attention_masks:
-        #     raise ValueError(
-        #         "Only full attention masks are supported for now - fix Flash Attention 2 support for more"
-        #     )
+        assert full_attention_masks == False, "full_attention_masks=True means we would be doing attention of padding tokens, which would affect negatively the results."
+        assert pad_on_left == False, "pad_on_left=True not supported yet, see TODOs below"
         current_pp_rank = dist.get_rank(self.parallel_context.pp_pg)
 
         if current_pp_rank != self.input_pp_rank:
@@ -516,25 +515,26 @@ class NanotronLightevalModel(LightevalModel):
         if max_context is None:
             max_context = self.max_length
 
-        if max_context % self.parallel_config.tp != 0:
-            # We need to round up to the next multiple of self.parallel_config.tp
-            if (max_context + (self.parallel_config.tp - max_context % self.parallel_config.tp)) < self.max_length:
-                # We can add some tokens
-                max_context = max_context + (self.parallel_config.tp - max_context % self.parallel_config.tp)
-            else:
-                # We need to remove some tokens
-                max_context = max_context - (max_context % self.parallel_config.tp)
+        assert self.parallel_config.tp_mode == TensorParallelLinearMode.ALL_REDUCE, "No reason to have tp_mode==REDUCE_SCATTER when doing inference"
+        # if max_context % self.parallel_config.tp != 0:
+        #     # We need to round up to the next multiple of self.parallel_config.tp
+        #     if (max_context + (self.parallel_config.tp - max_context % self.parallel_config.tp)) < self.max_length:
+        #         # We can add some tokens
+        #         max_context = max_context + (self.parallel_config.tp - max_context % self.parallel_config.tp)
+        #     else:
+        #         # We need to remove some tokens
+        #         max_context = max_context - (max_context % self.parallel_config.tp)
 
-        if padding_length % self.parallel_config.tp != 0:
-            # We need to round up to the next multiple of self.parallel_config.tp
-            if (
-                padding_length + (self.parallel_config.tp - padding_length % self.parallel_config.tp)
-            ) < self.max_length:
-                # We can add some tokens
-                padding_length = padding_length + (self.parallel_config.tp - padding_length % self.parallel_config.tp)
-            else:
-                # We need to remove some tokens
-                padding_length = padding_length - (padding_length % self.parallel_config.tp)
+        # if padding_length % self.parallel_config.tp != 0:
+        #     # We need to round up to the next multiple of self.parallel_config.tp
+        #     if (
+        #         padding_length + (self.parallel_config.tp - padding_length % self.parallel_config.tp)
+        #     ) < self.max_length:
+        #         # We can add some tokens
+        #         padding_length = padding_length + (self.parallel_config.tp - padding_length % self.parallel_config.tp)
+        #     else:
+        #         # We need to remove some tokens
+        #         padding_length = padding_length - (padding_length % self.parallel_config.tp)
 
         # because vectorizing is annoying, we first convert each (context, continuation) pair to padded
         # tensors, then we pack them together into a batch, call the model, and then pick it all apart
@@ -576,7 +576,7 @@ class NanotronLightevalModel(LightevalModel):
             if pad_on_left:
                 inp = torch.cat(
                     [
-                        torch.zeros(padding_length - inplen, dtype=torch.long),  # [padding_length - seq]
+                        torch.zeros(padding_length - inplen, dtype=torch.long),  # [padding_length - seq] #TODO: padding_token not always 0
                         inp,  # [seq]
                     ],
                     dim=0,
@@ -585,7 +585,7 @@ class NanotronLightevalModel(LightevalModel):
                 inp = torch.cat(
                     [
                         inp,  # [seq]
-                        torch.zeros(padding_length - inplen, dtype=torch.long),  # [padding_length - seq]
+                        torch.zeros(padding_length - inplen, dtype=torch.long),  # [padding_length - seq] #TODO: padding_token not always 0
                     ],
                     dim=0,
                 )
@@ -715,10 +715,14 @@ class NanotronLightevalModel(LightevalModel):
                 inputs = [item.tokenized_context for item in batch_data]
 
                 batch_model = self.prepare_batch(
-                    inputs, padding_length=max_context, max_context=max_context, full_attention_masks=True
+                    inputs, padding_length=max_context, max_context=max_context, full_attention_masks=False
                 )
                 # batched_inputs, batch_attention, input_lengths, truncated, padded
-                position_ids = torch.arange(batch_model.input_ids.shape[1], device=self.device, dtype=torch.int32).unsqueeze(0).repeat(batch_model.input_ids.shape[0], 1)
+                position_ids = (
+                    torch.arange(batch_model.input_ids.shape[1], device=self.device, dtype=torch.int32)
+                    .unsqueeze(0)
+                    .repeat(batch_model.input_ids.shape[0], 1)
+                )
                 out = self.model(input_ids=batch_model.input_ids, position_ids=position_ids)
 
                 if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
@@ -946,12 +950,21 @@ class NanotronLightevalModel(LightevalModel):
                 inputs = [
                     item.tokenized_context + item.tokenized_continuation[:-1] for item in batch_data
                 ]  # The last token doesn't need to be input in the model
+
+                pad_on_left = False # if we unpad in modeling, it doesn't matter if left or right # TODO: not supported yet
                 batch_model = self.prepare_batch(
-                    inputs, padding_length=max_context, max_context=max_context, full_attention_masks=True
+                    inputs, padding_length=max_context, max_context=max_context, full_attention_masks=False, pad_on_left=pad_on_left
                 )
                 # batched_inputs, batch_attention, input_lengths, truncated, padded
                 with torch.no_grad():
-                    position_ids = torch.arange(batch_model.input_ids.shape[1], device=self.device, dtype=torch.int32).unsqueeze(0).repeat(batch_model.input_ids.shape[0], 1)
+                    # Create sequential position_ids initialized to -1 (for padding)
+                    position_ids = torch.full(batch_model.input_ids.shape, fill_value=-1, dtype=torch.long)
+
+                    for i, length in enumerate(batch_model.input_lengths):
+                        if pad_on_left:
+                            position_ids[i, -length:] = torch.arange(length, device=self.device, dtype=torch.int32)
+                        else:
+                            position_ids[i, :length] = torch.arange(length, device=self.device, dtype=torch.int32)
                     out = self.model(input_ids=batch_model.input_ids, position_ids=position_ids)
 
                 if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
@@ -990,7 +1003,7 @@ class NanotronLightevalModel(LightevalModel):
 
                             cur_logits = (
                                 cur_logits[inplen - contlen : inplen].unsqueeze(0).to(self.device)
-                            )  # [1, seq, voc]
+                            )  # [1, seq, voc] #TODO: this assumes padding on the right
                             cont_toks = cont_toks.unsqueeze(0).to(self.device)  # [1, seq]
 
                         # Check if per-token argmax is exactly equal to continuation
