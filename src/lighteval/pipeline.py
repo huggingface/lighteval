@@ -218,11 +218,7 @@ class Pipeline:
             # review if they have to be updated.
             if self._metric_options:
                 self._update_num_samples(task_dict)
-            logger.info(
-                f"loading {len(task_dict)} tasks with {self.pipeline_parameters.dataset_loading_processes} processes."
-            )
             LightevalTask.load_datasets(list(task_dict.values()), self.pipeline_parameters.dataset_loading_processes)
-            logger.info(f"loaded {len(task_dict)} tasks")
 
             self.evaluation_tracker.task_config_logger.log(task_dict)
 
