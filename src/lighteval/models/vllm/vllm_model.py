@@ -178,7 +178,7 @@ class VLLMModel(LightevalModel):
             "max_num_seqs": int(config.max_num_seqs),
             "max_num_batched_tokens": int(config.max_num_batched_tokens),
         }
-        
+
         if config.quantization is not None:
             self.model_args["quantization"] = config.quantization
         if config.load_format is not None:
