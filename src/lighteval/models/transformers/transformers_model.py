@@ -226,6 +226,12 @@ class TransformersModel(LightevalModel):
             model_size=str(model_size),
         )
 
+    def cleanup(self):
+        """Clean up operations if needed, such as closing an endpoint."""
+        del self.model
+        del self._tokenizer
+        torch.cuda.empty_cache()
+
     @classmethod
     def from_model(
         cls,
@@ -543,7 +549,7 @@ class TransformersModel(LightevalModel):
                     longest_context_continuation_size_in_split, self.max_length
                 )
             batch_size = self._get_batch_size(
-                override_bs=self.batch_size,
+                override_bs=self.config.batch_size,
                 max_input_length=max_context_continuation_size_allowed,
                 starting_batch_size=starting_batch_size,
             )
@@ -710,7 +716,6 @@ class TransformersModel(LightevalModel):
     def loglikelihood(
         self,
         requests: list[LoglikelihoodRequest],
-        override_bs: Optional[int] = None,
     ) -> list[LoglikelihoodResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
@@ -731,12 +736,11 @@ class TransformersModel(LightevalModel):
                     request.context, request.choice, pairwise=self.pairwise_tokenization
                 )
 
-        return self._loglikelihood_tokens(requests, override_bs=override_bs)
+        return self._loglikelihood_tokens(requests)
 
     def loglikelihood_rolling(
         self,
         requests: list[LoglikelihoodRollingRequest],
-        override_bs=None,
     ) -> list[LoglikelihoodResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
 
@@ -746,7 +750,6 @@ class TransformersModel(LightevalModel):
 
         results = self._loglikelihood_tokens(
             requests,
-            override_bs=override_bs,
             return_bool_score=False,
             rolling=True,
         )
@@ -755,7 +758,6 @@ class TransformersModel(LightevalModel):
     def _loglikelihood_tokens(
         self,
         requests: list[LoglikelihoodRequest],
-        override_bs: int = -1,
         return_bool_score: bool = True,
         rolling: bool = False,
     ) -> list[LoglikelihoodResponse]:
@@ -774,7 +776,7 @@ class TransformersModel(LightevalModel):
                 )
 
             batch_size = self._get_batch_size(
-                override_bs=override_bs,
+                override_bs=self.config.batch_size,
                 max_input_length=max_context_continuation_size_allowed,
                 starting_batch_size=starting_batch_size,
             )
@@ -967,7 +969,8 @@ class TransformersModel(LightevalModel):
         return output_tensor, length_tensor
 
     def loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: Optional[int] = None
+        self,
+        requests: list[LoglikelihoodSingleTokenRequest],
     ) -> list[LoglikelihoodSingleTokenResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
@@ -996,10 +999,11 @@ class TransformersModel(LightevalModel):
                 )
             request.tokenized_continuation = continuations_enc
 
-        return self._loglikelihood_single_token(requests, override_bs=override_bs)
+        return self._loglikelihood_single_token(requests)
 
     def _loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: int = -1
+        self,
+        requests: list[LoglikelihoodSingleTokenRequest],
     ) -> list[LoglikelihoodSingleTokenResponse]:
         dataset = LoglikelihoodSingleTokenDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
@@ -1008,7 +1012,7 @@ class TransformersModel(LightevalModel):
         for split_start, split_end in tqdm(dataset.splits_start_end_iterator()):
             context_enc = dataset[0].tokenized_context
             max_context = len(context_enc[-self.max_length :])
-            batch_size = self._get_batch_size(override_bs=override_bs, max_input_length=max_context)
+            batch_size = self._get_batch_size(override_bs=self.config.batch_size, max_input_length=max_context)
             starting_batch_size = batch_size * 2
 
             dataloader = DataLoader(dataset, batch_size=starting_batch_size, collate_fn=lambda batch: batch)
