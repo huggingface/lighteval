@@ -750,7 +750,6 @@ class TransformersModel(LightevalModel):
 
         results = self._loglikelihood_tokens(
             requests,
-            override_bs=self.config.batch_size,
             return_bool_score=False,
             rolling=True,
         )
