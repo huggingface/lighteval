@@ -510,14 +510,14 @@ class AsyncVLLMModel(VLLMModel):
         return output
 
     async def _async_batch(self, requests: list[GreedyUntilRequest], logprob: bool) -> list:
-        if self.model.engine_core.is_sleeping_async():
-            await self.model.engine_core.wake_up_async()
+        # if self.model.engine_core.is_sleeping_async():
+        #    await self.model.engine_core.wake_up_async()
         processed_requests = [
             self._async_one_item(index=index, request=request, logprob=logprob)
             for index, request in enumerate(requests)
         ]
         results = await asyncio.gather(*processed_requests)
-        await self.model.engine_core.sleep_async()
+        # await self.model.engine_core.sleep_async()
         return results
 
     def greedy_until(
