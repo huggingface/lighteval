@@ -8592,6 +8592,27 @@ iwslt17_zh_en_lighteval = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
+jeopardy = LightevalTaskConfig(
+    name="jeopardy",
+    prompt_function=get_qa_prompt_function(
+        Language.ENGLISH,
+        lambda line: {
+            "question": line["question"],
+            "choices": [line["answer"]],
+        },
+    ),
+    suite=("lighteval",),
+    hf_repo="openaccess-ai-collective/jeopardy",
+    hf_subset="default",
+    evaluation_splits=("train",),
+    few_shots_split="train",
+    generation_size=250,
+    stop_sequence=["\n", "Question:", "question:"],
+    metric=(
+        Metrics.prefix_quasi_exact_match,
+        Metrics.f1_score_quasi,
+    ),
+)
 kanji_ascii_bigbench = LightevalTaskConfig(
     name="kanji_ascii",
     suite=["bigbench", "bigbench_json"],
@@ -14911,7 +14932,7 @@ simpleqa = LightevalTaskConfig(
     hf_subset="default",
     hf_avail_splits=["test"],
     evaluation_splits=["test"],
-    few_shots_split=None,
+    few_shots_split="few_shot",
     few_shots_select=None,
     generation_size=2048,
     metric=[Metrics.simpleqa_judge],
