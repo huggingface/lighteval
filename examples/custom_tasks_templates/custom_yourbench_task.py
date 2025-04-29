@@ -199,9 +199,11 @@ class JudgeLLMYourBench(JudgeLLM):
 
         metrics = []
         for i in range(len(sample_ids)):
-            metrics.append({
-                "accuracy": score[i],
-            })
+            metrics.append(
+                {
+                    "accuracy": score[i],
+                }
+            )
 
         return metrics
 
