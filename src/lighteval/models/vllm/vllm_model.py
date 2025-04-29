@@ -25,6 +25,7 @@ import gc
 import itertools
 import logging
 import os
+import time
 from typing import Coroutine, Optional
 
 import torch
@@ -54,7 +55,6 @@ if is_vllm_available():
     from more_itertools import distribute
     from vllm import LLM, RequestOutput, SamplingParams
     from vllm.distributed.parallel_state import (
-        cleanup_dist_env_and_memory,
         destroy_distributed_environment,
         destroy_model_parallel,
     )
@@ -429,11 +429,10 @@ class AsyncVLLMModel(VLLMModel):
 
     def cleanup(self):
         if self.model is not None:
-            del self.model
+            self.model.shutdown()
         gc.collect()
         destroy_distributed_environment()
         torch.cuda.empty_cache()
-        cleanup_dist_env_and_memory()
 
     def _create_auto_model(self, config: VLLMModelConfig) -> Optional[AsyncLLM]:
         """
@@ -511,11 +510,14 @@ class AsyncVLLMModel(VLLMModel):
         return output
 
     async def _async_batch(self, requests: list[GreedyUntilRequest], logprob: bool) -> list:
+        if self.model.engine_core.is_sleeping_async():
+            await self.model.engine_core.wake_up_async()
         processed_requests = [
             self._async_one_item(index=index, request=request, logprob=logprob)
             for index, request in enumerate(requests)
         ]
         results = await asyncio.gather(*processed_requests)
+        await self.model.engine_core.sleep_async()
         return results
 
     def greedy_until(
@@ -558,6 +560,11 @@ class AsyncVLLMModel(VLLMModel):
             )
             results.append(cur_response)
 
+        # Note(clefourrier)
+        # For an unexplained reason, just going through the pipeline at once causes the LLMEngine to fail
+        # but adding a timer allows some background processes to go through on the vllm side
+        time.sleep(2)
+
         return results
 
     def loglikelihood(
@@ -567,6 +574,16 @@ class AsyncVLLMModel(VLLMModel):
         return_bool_score: bool = True,
         rolling: bool = False,
     ) -> list[LoglikelihoodResponse]:
+        for request in requests:
+            if request.context == "":
+                request.tokenized_context = [self.tokenizer.eos_token_id]
+                request.tokenized_continuation = self.tok_encode(request.choice)
+            else:
+                # The following line is mandatory for compatibility with the harness
+                request.tokenized_context, request.tokenized_continuation = self.tok_encode_pair(
+                    request.context, request.choice, pairwise=self.pairwise_tokenization
+                )
+
         results = []
 
         responses: list[RequestOutput] = asyncio.run(self._async_batch(requests=requests, logprob=True))
@@ -583,6 +600,11 @@ class AsyncVLLMModel(VLLMModel):
                 result=(sum(continuation_logprobs), bool_score if return_bool_score else None),
             )
             results.append(answer)
+
+        # Note(clefourrier)
+        # For an unexplained reason, just going through the pipeline at once causes the LLMEngine to fail
+        # but adding a timer allows some background processes to go through on the vllm side
+        time.sleep(2)
 
         return results
 
