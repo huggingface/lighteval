@@ -25,7 +25,6 @@ import collections
 import os
 import random
 import re
-import shutil
 from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import timedelta
@@ -294,14 +293,6 @@ class Pipeline:
             self.evaluation_tracker.general_config_logger.log_end_time()
             self.evaluation_tracker.metrics_logger.aggregate(task_dict=self.task_dict, bootstrap_iters=1000)
             self.evaluation_tracker.details_logger.aggregate()
-
-            for weights in ["delta", "adapter"]:
-                try:
-                    tmp_weights_dir = f"{self.evaluation_tracker.general_config_logger.model_name}-{weights}-applied"
-                    shutil.rmtree(tmp_weights_dir)
-                    logger.info(f"Removed {tmp_weights_dir}")
-                except OSError:
-                    pass
 
     def _unpack(self, x):
         if isinstance(x, str):
