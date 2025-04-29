@@ -22,6 +22,8 @@
 import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.templates.qa import get_qa_prompt_function
+from lighteval.utils.language import Language
 
 
 abstract_narrative_understanding_bigbench = LightevalTaskConfig(
@@ -6619,21 +6621,27 @@ copyright_prompt_num_line_5_min_lines_20_helm = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-coqa_lighteval = LightevalTaskConfig(
-    name="coqa",
-    suite=["lighteval"],
-    prompt_function=prompt.coqa,
-    hf_repo="coqa",
+coqa_first_question = LightevalTaskConfig(
+    name="coqa_first_question",
+    prompt_function=get_qa_prompt_function(
+        Language.ENGLISH,
+        lambda line: {
+            "question": line["questions"][0],
+            "context": line["story"],
+            "choices": [line["answers"]["input_text"][0]],
+        },
+    ),
+    suite=("lighteval",),
+    hf_repo="stanfordnlp/coqa",
     hf_subset="default",
     hf_avail_splits=["train", "validation"],
     evaluation_splits=["validation"],
-    few_shots_split=None,
-    few_shots_select=None,
-    generation_size=10,
-    metric=[Metrics.perfect_exact_match, Metrics.f1_score],
-    stop_sequence=["\n"],
-    trust_dataset=True,
-    version=0,
+    stop_sequence=["\n", "Question:", "question:"],
+    generation_size=100,
+    metric=(
+        Metrics.prefix_quasi_exact_match,
+        Metrics.f1_score_quasi,
+    ),
 )
 coqa_bb_lighteval = LightevalTaskConfig(
     name="coqa_bb",
@@ -6827,21 +6835,38 @@ disfl_qa_bigbench = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-drop_lighteval = LightevalTaskConfig(
-    name="drop",
-    suite=["lighteval"],
-    prompt_function=prompt.drop,
+drop_qa = LightevalTaskConfig(
+    name="drop_fixed",
+    prompt_function=get_qa_prompt_function(
+        Language.ENGLISH,
+        lambda line: {
+            "context": line["passage"],
+            "question": line["question"],
+            "choices": list(
+                filter(
+                    lambda x: x,
+                    [line["answer"].get("number")] + line["answer"]["spans"] + [prompt.get_drop_date(line["answer"].get("date"))],
+                )
+            ),
+        },
+    ),
+    suite=("lighteval",),
     hf_repo="lighteval/drop_harness",
     hf_subset="default",
-    hf_avail_splits=["train", "validation"],
-    evaluation_splits=["validation"],
+    hf_filter=lambda line: list(
+        filter(
+            lambda x: x,
+            [line["answer"].get("number")] + line["answer"]["spans"] + [prompt.get_drop_date(line["answer"].get("date"))],
+        )
+    ),
+    evaluation_splits=("validation",),
     few_shots_split="train",
-    few_shots_select="random_sampling_from_train",
-    generation_size=None,
-    metric=[Metrics.drop],
-    stop_sequence=["."],
-    trust_dataset=True,
-    version=0,
+    generation_size=250,
+    stop_sequence=["Question:", "Question", "question", "question:", "\n"],
+    metric=(
+        Metrics.prefix_quasi_exact_match,
+        Metrics.f1_score_quasi,
+    ),
 )
 dyck_language_2_helm = LightevalTaskConfig(
     name="dyck_language:2",
@@ -13648,6 +13673,24 @@ natural_instructions_bigbench = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
+natural_questions = LightevalTaskConfig(
+    name="natural_questions",
+    prompt_function=get_qa_prompt_function(
+        Language.ENGLISH,
+        lambda line: {"question": line["question"], "choices": [line["answer"]]},
+    ),
+    suite=("lighteval",),
+    hf_repo="lighteval/small_natural_questions",
+    hf_subset="default",
+    evaluation_splits=("test",),
+    few_shots_split="few_shot",
+    generation_size=250,
+    stop_sequence=["\n", "Question:", "question:"],
+    metric=(
+        Metrics.prefix_quasi_exact_match,
+        Metrics.f1_score_quasi,
+    ),
+)
 navigate_bigbench = LightevalTaskConfig(
     name="navigate",
     suite=["bigbench", "bigbench_json"],
@@ -15056,6 +15099,29 @@ sports_understanding_bigbench = LightevalTaskConfig(
     stop_sequence=["\n"],
     trust_dataset=True,
     version=0,
+)
+squad_v2 = LightevalTaskConfig(
+    name="squad_v2",
+    prompt_function=get_qa_prompt_function(
+        Language.ENGLISH,
+        lambda line: {
+            "question": line["question"],
+            "context": line["context"],
+            "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+        },
+    ),
+    suite=("lighteval",),
+    hf_repo="rajpurkar/squad_v2",
+    hf_subset="squad_v2",
+    hf_filter=lambda line: any(ans for ans in line["answers"]["text"] if len(ans) > 0),
+    evaluation_splits=("validation",),
+    few_shots_split="train",
+    stop_sequence=["\n", "Question:", "question:"],
+    generation_size=200,
+    metric=(
+        Metrics.prefix_quasi_exact_match,
+        Metrics.f1_score_quasi,
+    ),
 )
 storycloze_2016_lighteval = LightevalTaskConfig(
     name="storycloze:2016",
