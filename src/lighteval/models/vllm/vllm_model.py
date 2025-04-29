@@ -426,6 +426,7 @@ class AsyncVLLMModel(VLLMModel):
     """VLLM models which deploy async natively (no ray). Handle DP and PP but not batch size > 1"""
 
     DATASET_SPLITS = 1
+    is_async = True
 
     def cleanup(self):
         if self.model is not None:
@@ -483,20 +484,19 @@ class AsyncVLLMModel(VLLMModel):
     async def _async_one_item(
         self,
         index: int,
-        request: GreedyUntilRequest,
-        logprob: bool,
+        request: GreedyUntilRequest | LoglikelihoodRequest,
     ) -> Coroutine[None, list, str]:
         """Contains the actual logic of the generation."""
         sampling_params = SamplingParams(**self._config.generation_parameters.to_vllm_dict())
 
-        if logprob:
+        if isinstance(request, LoglikelihoodRequest):
             sampling_params.temperature = 0
             sampling_params.prompt_logprobs = 1
             sampling_params.max_tokens = 1
             sampling_params.detokenize = False
             prompt = request.context + request.choice
             index = f"logprob_{index}"
-        else:
+        elif isinstance(request, GreedyUntilRequest):
             sampling_params.n = request.num_samples
             sampling_params.max_tokens = self._config.generation_parameters.max_new_tokens or request.generation_size
             sampling_params.stop = [] if self.use_chat_template else request.stop_sequence
@@ -509,18 +509,17 @@ class AsyncVLLMModel(VLLMModel):
         )
         return output
 
-    async def _async_batch(self, requests: list[GreedyUntilRequest], logprob: bool) -> list:
+    async def _async_batch(self, requests: list[GreedyUntilRequest | LoglikelihoodRequest]) -> list:
         # if self.model.engine_core.is_sleeping_async():
         #    await self.model.engine_core.wake_up_async()
         processed_requests = [
-            self._async_one_item(index=index, request=request, logprob=logprob)
-            for index, request in enumerate(requests)
+            self._async_one_item(index=index, request=request) for index, request in enumerate(requests)
         ]
         results = await asyncio.gather(*processed_requests)
         # await self.model.engine_core.sleep_async()
         return results
 
-    def greedy_until(
+    async def greedy_until(
         self,
         requests: list[GreedyUntilRequest],
         override_bs: Optional[int] = None,
@@ -541,7 +540,7 @@ class AsyncVLLMModel(VLLMModel):
 
         results = []
 
-        responses: list[RequestOutput] = asyncio.run(self._async_batch(requests=requests, logprob=False))
+        responses: list[RequestOutput] = await self._async_batch(requests=requests)
 
         for response in responses:
             output_token_ids = [outputs.token_ids for outputs in response.outputs]
@@ -567,7 +566,7 @@ class AsyncVLLMModel(VLLMModel):
 
         return results
 
-    def loglikelihood(
+    async def loglikelihood(
         self,
         requests: list[LoglikelihoodRequest],
         override_bs: Optional[int] = None,
@@ -586,7 +585,7 @@ class AsyncVLLMModel(VLLMModel):
 
         results = []
 
-        responses: list[RequestOutput] = asyncio.run(self._async_batch(requests=requests, logprob=True))
+        responses: list[RequestOutput] = await self._async_batch(requests=requests)
 
         for response, input in zip(responses, requests):
             continuation_logprobs = []

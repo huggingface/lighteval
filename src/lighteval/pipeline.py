@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import ast
+import asyncio
 import collections
 import os
 import random
@@ -446,12 +447,22 @@ class Pipeline:
 
         return model_response_type
 
-    def _run_model(self):
-        # Running all requests depending on the model call type (log likelihood, generative, ...)
-        # to be able to batch them
-        logger.info("--- RUNNING MODEL ---")
+    async def _run_model_async(self):
         sample_id_to_responses: dict[(SampleUid, MetricCategory), list[ModelResponse]] = collections.defaultdict(list)
+        for request_type, requests in self.requests.items():
+            logger.info(f"Sending {request_type} requests")
+            run_model = self.model.get_method_from_request_type(request_type=request_type)
+            responses = await run_model(requests)
 
+            # Storing the responses associated to the same samples together
+            for response, request in zip(responses, requests):
+                for metric_category in request.metric_categories:
+                    sample_id = SampleUid(request.task_name, request.sample_index)
+                    sample_id_to_responses[(sample_id, metric_category)].append(response)
+        return sample_id_to_responses
+
+    def _run_model_sync(self):
+        sample_id_to_responses: dict[(SampleUid, MetricCategory), list[ModelResponse]] = collections.defaultdict(list)
         for request_type, requests in self.requests.items():
             logger.info(f"Running {request_type} requests")
             run_model = self.model.get_method_from_request_type(request_type=request_type)
@@ -462,6 +473,18 @@ class Pipeline:
                 for metric_category in request.metric_categories:
                     sample_id = SampleUid(request.task_name, request.sample_index)
                     sample_id_to_responses[(sample_id, metric_category)].append(response)
+        return sample_id_to_responses
+
+    def _run_model(self):
+        # Running all requests depending on the model call type (log likelihood, generative, ...)
+        # to be able to batch them
+        logger.info("--- RUNNING MODEL ---")
+
+        if self.model.is_async:
+            sample_id_to_responses = asyncio.run(self._run_model_async())
+
+        else:
+            sample_id_to_responses = self._run_model_sync()
 
         # Cleaning up the model before running metrics
         self.model.cleanup()
