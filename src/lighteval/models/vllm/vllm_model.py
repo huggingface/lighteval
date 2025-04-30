@@ -510,13 +510,10 @@ class AsyncVLLMModel(VLLMModel):
         return output
 
     async def _async_batch(self, requests: list[GreedyUntilRequest | LoglikelihoodRequest]) -> list:
-        # if self.model.engine_core.is_sleeping_async():
-        #    await self.model.engine_core.wake_up_async()
         processed_requests = [
             self._async_one_item(index=index, request=request) for index, request in enumerate(requests)
         ]
         results = await asyncio.gather(*processed_requests)
-        # await self.model.engine_core.sleep_async()
         return results
 
     async def greedy_until(
@@ -546,9 +543,7 @@ class AsyncVLLMModel(VLLMModel):
             output_token_ids = [outputs.token_ids for outputs in response.outputs]
             full_logprobs = [output.logprobs for output in response.outputs] or []
             logprobs = [logprob[token_id].logprob for token_id, logprob in zip(output_token_ids[0], full_logprobs[0])]
-            result = [
-                output.text for output in response.outputs
-            ]  # [logprob[token_id].decoded_token for token_id, logprob in zip(output_token_ids[0], full_logprobs[0])]
+            result = [output.text for output in response.outputs]
             input_token_ids = response.prompt_token_ids
 
             cur_response = GenerativeResponse(
