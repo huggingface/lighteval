@@ -25,7 +25,6 @@ import gc
 import itertools
 import logging
 import os
-import time
 from typing import Coroutine, Optional
 
 import torch
@@ -429,8 +428,8 @@ class AsyncVLLMModel(VLLMModel):
     is_async = True
 
     def cleanup(self):
-        if self.model is not None:
-            self.model.shutdown()
+        # if self.model is not None:
+        #    self.model.shutdown()
         gc.collect()
         destroy_distributed_environment()
         torch.cuda.empty_cache()
@@ -493,9 +492,13 @@ class AsyncVLLMModel(VLLMModel):
             prompt = request.context
             index = f"generative_{index}"
 
-        output = await anext(
-            self.model.generate(request_id=str(index), prompt=prompt, sampling_params=sampling_params)
-        )
+        generator = self.model.generate(request_id=str(index), prompt=prompt, sampling_params=sampling_params)
+        try:
+            while output := await anext(generator):
+                continue
+        except StopAsyncIteration:
+            pass
+
         return output
 
     async def _async_batch(self, requests: list[GreedyUntilRequest | LoglikelihoodRequest]) -> list:
@@ -542,11 +545,6 @@ class AsyncVLLMModel(VLLMModel):
             )
             results.append(cur_response)
 
-        # Note(clefourrier)
-        # For an unexplained reason, just going through the pipeline at once causes the LLMEngine to fail
-        # but adding a timer allows some background processes to go through on the vllm side
-        time.sleep(2)
-
         return results
 
     async def loglikelihood(
@@ -592,11 +590,6 @@ class AsyncVLLMModel(VLLMModel):
                 result=(sum(continuation_logprobs), bool_score if return_bool_score else None),
             )
             results.append(answer)
-
-        # Note(clefourrier)
-        # For an unexplained reason, just going through the pipeline at once causes the LLMEngine to fail
-        # but adding a timer allows some background processes to go through on the vllm side
-        time.sleep(2)
 
         return results
 
