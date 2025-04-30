@@ -437,21 +437,10 @@ class AsyncVLLMModel(VLLMModel):
 
     def _create_auto_model(self, config: VLLMModelConfig) -> Optional[AsyncLLM]:
         """
-        Creates an instance of the async vllm model loaded from HF.
-
-        Args:
-            pretrained (str): The name or path of the pretrained model.
-            revision (str): The revision of the model.
-            subfolder (Optional[str], optional): The subfolder within the model. Defaults to None.
-            max_memory (Optional[dict], optional): The maximum memory to allocate for the model per GPU. Defaults to None.
-            device_map (Optional[dict], optional): The device mapping for the model. Defaults to None.
-            torch_dtype (Optional[Union[str, torch.dtype]], optional): The torch data type for the model. Defaults to None.
-            quantization_config (Optional[Union[BitsAndBytesConfig, GPTQConfig]], optional): The quantization configuration for the model. Defaults to None.
-            trust_remote_code (bool, optional): Whether to trust remote code. Defaults to False.
-            cache_dir (str, optional): The cache directory for the model. Defaults to "/scratch".
+        Creates an instance of the async vllm model loaded from HF. Requires using the v1 of VLLM.
 
         Returns:
-            transformers.PreTrainedModel: The created auto model instance.
+            AsyncLLM: The created async VLLM instance
         """
         self.model_args = {
             "model": config.model_name,
@@ -519,14 +508,13 @@ class AsyncVLLMModel(VLLMModel):
     async def greedy_until(
         self,
         requests: list[GreedyUntilRequest],
-        override_bs: Optional[int] = None,
+        **kwargs,
     ) -> list[GenerativeResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
             requests (list[Request]): list of requests containing the context and ending conditions.
-            override_bs (int, optional): Override the batch size for generation. Defaults to None.
 
         Returns:
             list[GenerateReturn]: list of generated responses.
@@ -564,10 +552,20 @@ class AsyncVLLMModel(VLLMModel):
     async def loglikelihood(
         self,
         requests: list[LoglikelihoodRequest],
-        override_bs: Optional[int] = None,
         return_bool_score: bool = True,
-        rolling: bool = False,
+        **kwargs,
     ) -> list[LoglikelihoodResponse]:
+        """
+        Generates responses using a greedy decoding strategy until certain ending conditions are met and
+        stores the logprobs.
+
+        Args:
+            requests (list[Request]): list of requests containing the context and ending conditions.
+
+        Returns:
+            list[LoglikelihoodResponse]: list of generated responses.
+        """
+
         for request in requests:
             if request.context == "":
                 request.tokenized_context = [self.tokenizer.eos_token_id]
