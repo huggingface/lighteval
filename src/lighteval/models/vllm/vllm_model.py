@@ -423,7 +423,7 @@ class VLLMModel(LightevalModel):
 
 
 class AsyncVLLMModel(VLLMModel):
-    """VLLM models which deploy async natively (no ray). Handle DP and PP but not batch size > 1"""
+    """VLLM models which deploy async natively (no ray). Supports DP and PP/TP but not batch size > 1"""
 
     DATASET_SPLITS = 1
     is_async = True
