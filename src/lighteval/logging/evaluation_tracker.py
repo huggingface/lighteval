@@ -250,8 +250,11 @@ class EvaluationTracker:
             )
 
     def push_to_wandb(self, results_dict: dict, details_datasets: dict) -> None:
+        # reformat the results key to replace ':' with '/'
+        results_dict = {k.replace(":", "/"): v for k, v in results_dict["results"].items()}
+
         self.wandb_run.log(
-            {**results_dict["results"]},
+            {**results_dict},
         )
         self.wandb_run.finish()
 
