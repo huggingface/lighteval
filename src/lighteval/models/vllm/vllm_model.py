@@ -428,8 +428,6 @@ class AsyncVLLMModel(VLLMModel):
     is_async = True
 
     def cleanup(self):
-        # if self.model is not None:
-        #    self.model.shutdown()
         gc.collect()
         destroy_distributed_environment()
         torch.cuda.empty_cache()
