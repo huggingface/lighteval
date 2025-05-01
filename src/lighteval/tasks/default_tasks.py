@@ -9701,8 +9701,11 @@ math_500 = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=32768,
-    metric=[Metrics.latex_gold_metric],
-    version=1,
+    metric=[
+        Metrics.math_pass_at_1_1n,
+        Metrics.math_pass_at_1_4n,
+    ],
+    version=2,
 )
 math_500_gpassk = LightevalTaskConfig(
     name="math_500_gpassk",
