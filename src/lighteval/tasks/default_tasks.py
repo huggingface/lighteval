@@ -7821,7 +7821,6 @@ gpqa_diamond_instruct_lighteval = LightevalTaskConfig(
         Metrics.gpqa_instruct_pass_at_1_1n,
         Metrics.gpqa_instruct_pass_at_1_4n,
         Metrics.gpqa_instruct_pass_at_1_8n,
-        Metrics.gpqa_instruct_pass_at_1_64n,
     ],
     stop_sequence=[],  # no stop sequence, will use eos token
     trust_dataset=True,
