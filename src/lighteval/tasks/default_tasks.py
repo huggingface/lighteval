@@ -324,10 +324,14 @@ aime24 = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=32768,
     metric=[
-        Metrics.expr_gold_metric,
+        Metrics.math_pass_at_1_1n,
+        Metrics.math_pass_at_1_4n,
+        Metrics.math_pass_at_1_8n,
+        Metrics.math_pass_at_1_16n,
         Metrics.math_pass_at_1_32n,
+        Metrics.math_pass_at_1_64n,
     ],
-    version=1,
+    version=2,
 )
 aime24_gpassk = LightevalTaskConfig(
     name="aime24_gpassk",
@@ -355,10 +359,14 @@ aime25 = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=10000,
     metric=[
-        Metrics.expr_gold_metric,
+        Metrics.math_pass_at_1_1n,
+        Metrics.math_pass_at_1_4n,
+        Metrics.math_pass_at_1_8n,
+        Metrics.math_pass_at_1_16n,
         Metrics.math_pass_at_1_32n,
+        Metrics.math_pass_at_1_64n,
     ],
-    version=1,
+    version=2,
 )
 aime25_gpassk = LightevalTaskConfig(
     name="aime25_gpassk",
@@ -7809,10 +7817,14 @@ gpqa_diamond_instruct_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=32768,  # needed for reasoning models like R1
-    metric=[Metrics.gpqa_instruct_metric],
+    metric=[
+        Metrics.gpqa_instruct_pass_at_1_1n,
+        Metrics.gpqa_instruct_pass_at_1_4n,
+        Metrics.gpqa_instruct_pass_at_1_8n,
+    ],
     stop_sequence=[],  # no stop sequence, will use eos token
     trust_dataset=True,
-    version=0,
+    version=1,
 )
 gpqa_extended_instruct_lighteval = LightevalTaskConfig(
     name="gpqa:extended",
