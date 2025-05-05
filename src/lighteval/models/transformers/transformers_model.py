@@ -236,6 +236,7 @@ class TransformersModel(LightevalModel):
     def from_model(
         cls,
         model: Union[AutoModelForCausalLM, LightevalModel],
+        config: TransformersModelConfig = None,
         accelerator: "Accelerator" = None,
         tokenizer_name: str = None,  # custom tokenizer
         trust_remote_code: bool = False,
@@ -253,16 +254,14 @@ class TransformersModel(LightevalModel):
 
         # Instanciate the object without using __init__
         self = cls.__new__(cls)
-        self._config = model.config
-        self._max_length = self._init_max_length(max_length=model.config.max_length)
-        self._tokenizer = self._create_auto_tokenizer_with_name(
-            model_name=model.name_or_path,
-            revision=model.config._commit_hash,
-            trust_remote_code=trust_remote_code,
-            tokenizer_name=tokenizer_name,
-        )
+        self.config = config
+        self.transformers_config = model.config
+        self.generation_config_dict = config.generation_parameters.to_transformers_dict()
+        self._max_length = self._init_max_length()
+        self._tokenizer = self._create_auto_tokenizer()
+        self.batch_size = config.batch_size
         self.model_name = _simplify_name(model.name_or_path)
-        self.model_sha = model.config._commit_hash
+        self.model_sha = config.get_model_sha()
 
         # If model_parallel is not set we compare the number of processes with the number of GPUs
         self.model = model
@@ -274,14 +273,14 @@ class TransformersModel(LightevalModel):
             self._device = accelerator.device
             self.model = self.accelerator.prepare(self.model.to(accelerator.device))
         else:
-            self._device = "cpu"
+            self._device = self.config.device
 
         self.use_chat_template = use_chat_template
         self._add_special_tokens = add_special_tokens if add_special_tokens is not None else False
         self.pairwise_tokenization = pairwise_tokenization
         self.multichoice_continuations_start_space = multichoice_continuations_start_space
 
-        self.precision = _get_dtype(model.dtype, config=self._config)
+        self.precision = _get_dtype(model.dtype, config=self.transformers_config)
 
         if is_accelerate_available():
             model_size, _ = calculate_maximum_sizes(self.model)
@@ -450,6 +449,7 @@ class TransformersModel(LightevalModel):
         Returns:
             int: Max length to use depending on the available args and config
         """
+
         if self.config.max_length is not None:
             return self.config.max_length
 
