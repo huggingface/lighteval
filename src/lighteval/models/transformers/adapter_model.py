@@ -22,15 +22,14 @@
 
 import logging
 from contextlib import nullcontext
-from dataclasses import dataclass
 
 import torch
-from transformers import AutoModelForCausalLM, PreTrainedTokenizer
+import transformers
+from transformers import AutoModelForCausalLM
 
 from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
 from lighteval.models.utils import _get_dtype
 from lighteval.utils.imports import NO_PEFT_ERROR_MSG, is_peft_available
-from lighteval.utils.utils import EnvConfig
 
 
 logger = logging.getLogger(__name__)
@@ -39,50 +38,41 @@ if is_peft_available():
     from peft import PeftModel
 
 
-@dataclass
 class AdapterModelConfig(TransformersModelConfig):
     # Adapter models have the specificity that they look at the base model (= the parent) for the tokenizer and config
-    base_model: str = None
+    base_model: str
+    adapter_weights: bool
 
-    def __post_init__(self):
+    def model_post_init(self, __context):
         if not is_peft_available():
             raise ImportError(NO_PEFT_ERROR_MSG)
 
-        if not self.base_model:  # must have a default value bc of dataclass inheritance, but can't actually be None
-            raise ValueError("The base_model argument must not be null for an adapter model config")
-
-        return super().__post_init__()
-
-    def init_configs(self, env_config: EnvConfig):
-        return self._init_configs(self.base_model, env_config)
-
 
 class AdapterModel(TransformersModel):
-    def _create_auto_tokenizer(self, config: AdapterModelConfig, env_config: EnvConfig) -> PreTrainedTokenizer:
-        # By default, we look at the model config for the model stored in `base_model`
-        # (= the parent model, not the model of interest)
-        return self._create_auto_tokenizer_with_name(
-            model_name=config.base_model,
-            revision=config.revision,
-            env_config=env_config,
-            tokenizer_name=config.tokenizer,
-            subfolder=config.subfolder,
-            trust_remote_code=config.trust_remote_code,
-        )
-
-    def _create_auto_model(self, config: AdapterModelConfig, env_config: EnvConfig) -> AutoModelForCausalLM:
+    def _create_auto_model(self) -> transformers.PreTrainedModel:
         """Returns a PeftModel from a base model and a version fined tuned using PEFT."""
-        torch_dtype = _get_dtype(config.dtype, self._config)
-        config.model_parallel, max_memory, device_map = self.init_model_parallel(config.model_parallel)
+        torch_dtype = _get_dtype(self.config.dtype)
+        model_parallel, max_memory, device_map = self.init_model_parallel(self.config.model_parallel)
+        self.config.model_parallel = model_parallel
 
-        adapter_weights = config.pretrained
-
+        adapter_weights = self.config.pretrained
         merged_path = f"{adapter_weights}-adapter-applied"
 
+        if self.config.dtype == "4bit":
+            from transformers import BitsAndBytesConfig
+
+            quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.float16)
+        elif self.config.dtype == "8bit":
+            from transformers import BitsAndBytesConfig
+
+            quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+        else:
+            quantization_config = None
+
         if self.accelerator.is_local_main_process if self.accelerator is not None else nullcontext():
-            logger.info(f"Loading model from {adapter_weights} and applying adapter to {config.base_model}")
+            logger.info(f"Loading model from {adapter_weights} and applying adapter to {self.config.base_model}")
             base = AutoModelForCausalLM.from_pretrained(
-                config.base_model, torch_dtype=torch.float16, low_cpu_mem_usage=True, token=env_config.token
+                self.config.base_model, torch_dtype=torch.float16, low_cpu_mem_usage=True
             )
             # resize model for adapters with added tokens
             token_diff = len(self._tokenizer) - base.config.vocab_size
@@ -110,10 +100,8 @@ class AdapterModel(TransformersModel):
             max_memory=max_memory,
             device_map=device_map,
             torch_dtype=torch_dtype,
-            trust_remote_code=config.trust_remote_code,
-            cache_dir=env_config.cache_dir,
-            quantization_config=config.quantization_config,
-            token=env_config.token,
+            trust_remote_code=self.config.trust_remote_code,
+            quantization_config=quantization_config,
         )
 
         return model

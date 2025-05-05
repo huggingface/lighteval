@@ -31,6 +31,20 @@ This will create a Tensorboard dashboard in a HF org set with the `--results-org
 option.
 
 
+## Pushing results to WandB
+
+You can push the results to WandB by setting `--wandb`. This will init a WandB
+run and log the results.
+
+Wandb args need to be set in your env variables.
+
+```
+export WANDB_PROJECT="lighteval"
+```
+
+You can find a list of variable in the [wandb documentation](https://docs.wandb.ai/guides/track/environment-variables/).
+
+
 ## How to load and investigate details
 
 ### Load from local detail files

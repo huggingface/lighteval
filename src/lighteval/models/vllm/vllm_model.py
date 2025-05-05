@@ -24,26 +24,25 @@ import gc
 import itertools
 import logging
 import os
-from dataclasses import dataclass
 from typing import Optional
 
 import torch
+from pydantic import NonNegativeFloat, PositiveInt
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
 )
-from lighteval.models.utils import _get_dtype, _simplify_name
+from lighteval.models.utils import ModelConfig, _simplify_name
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
 )
 from lighteval.utils.imports import is_vllm_available
-from lighteval.utils.utils import EnvConfig, as_list
+from lighteval.utils.utils import as_list
 
 
 logger = logging.getLogger(__name__)
@@ -73,18 +72,17 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 STARTING_BATCH_SIZE = 512
 
 
-@dataclass
-class VLLMModelConfig:
-    pretrained: str
-    gpu_memory_utilization: float = 0.9  # lower this if you are running out of memory
+class VLLMModelConfig(ModelConfig):
+    model_name: str
     revision: str = "main"  # revision of the model
-    dtype: str | None = None
-    tensor_parallel_size: int = 1  # how many GPUs to use for tensor parallelism
-    pipeline_parallel_size: int = 1  # how many GPUs to use for pipeline parallelism
-    data_parallel_size: int = 1  # how many GPUs to use for data parallelism
-    max_model_length: int | None = None  # maximum length of the model, ussually infered automatically. reduce this if you encouter OOM issues, 4096 is usually enough
-    swap_space: int = 4  # CPU swap space size (GiB) per GPU.
-    seed: int = 1234
+    dtype: str = "bfloat16"
+    tensor_parallel_size: PositiveInt = 1  # how many GPUs to use for tensor parallelism
+    data_parallel_size: PositiveInt = 1  # how many GPUs to use for data parallelism
+    pipeline_parallel_size: PositiveInt = 1  # how many GPUs to use for pipeline parallelism
+    gpu_memory_utilization: NonNegativeFloat = 0.9  # lower this if you are running out of memory
+    max_model_length: PositiveInt | None = None  # maximum length of the model, ussually infered automatically. reduce this if you encouter OOM issues, 4096 is usually enough
+    swap_space: PositiveInt = 4  # CPU swap space size (GiB) per GPU.
+    seed: PositiveInt = 1234
     trust_remote_code: bool = False
     use_chat_template: bool = False
     add_special_tokens: bool = True
@@ -92,44 +90,37 @@ class VLLMModelConfig:
         True  # whether to add a space at the start of each continuation in multichoice generation
     )
     pairwise_tokenization: bool = False  # whether to tokenize the context and continuation separately or together.
-    generation_parameters: GenerationParameters = None  # sampling parameters to use for generation
-
-    subfolder: Optional[str] = None
-
-    def __post_init__(self):
-        if not self.generation_parameters:
-            self.generation_parameters = GenerationParameters()
+    max_num_seqs: PositiveInt = 128  # maximum number of sequences per iteration; This variable and `max_num_batched_tokens` effectively control the batch size at prefill stage. See https://github.com/vllm-project/vllm/issues/2492 for detailed explaination.
+    max_num_batched_tokens: PositiveInt = 2048  # maximum number of tokens per batch
+    subfolder: str | None = None
 
 
 class VLLMModel(LightevalModel):
     def __init__(
         self,
         config: VLLMModelConfig,
-        env_config: EnvConfig,
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self._config = config
         self.use_chat_template = config.use_chat_template
-        self.data_parallel_size = int(config.data_parallel_size)
-        self.tensor_parallel_size = int(config.tensor_parallel_size)
-
+        self.data_parallel_size = config.data_parallel_size
+        self.tensor_parallel_size = config.tensor_parallel_size
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
-        self._tokenizer = self._create_auto_tokenizer(config, env_config)
+        self._tokenizer = self._create_auto_tokenizer(config)
 
-        self._max_length = int(config.max_model_length) if config.max_model_length is not None else None
+        self._max_length = config.max_model_length if config.max_model_length is not None else None
 
         # If model_parallel is not set we compare the number of processes with the number of GPUs
-        self.model = self._create_auto_model(config, env_config)
+        self.model = self._create_auto_model(config)
 
         # self._device = config.accelerator.device if config.accelerator is not None else "cpu"
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
 
-        self.model_name = _simplify_name(config.pretrained)
-        self.model_sha = ""  # config.get_model_sha()
-        self.precision = _get_dtype(config.dtype, config=self._config)
+        self.model_name = _simplify_name(config.model_name)
+        self.model_sha = ""
+        self.precision = config.dtype
 
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
-        self.sampling_params = SamplingParams(**config.generation_parameters.to_vllm_dict())
         self.pairwise_tokenization = config.pairwise_tokenization
 
     @property
@@ -139,8 +130,7 @@ class VLLMModel(LightevalModel):
     def cleanup(self):
         destroy_model_parallel()
         if self.model is not None:
-            del self.model.llm_engine.model_executor.driver_worker
-        self.model = None
+            del self.model
         gc.collect()
         ray.shutdown()
         destroy_distributed_environment()
@@ -154,7 +144,7 @@ class VLLMModel(LightevalModel):
     def max_length(self) -> int:
         return self._max_length
 
-    def _create_auto_model(self, config: VLLMModelConfig, env_config: EnvConfig) -> Optional[LLM]:
+    def _create_auto_model(self, config: VLLMModelConfig) -> Optional[LLM]:
         """
         Creates an instance of the pretrained HF model.
 
@@ -173,18 +163,20 @@ class VLLMModel(LightevalModel):
             transformers.PreTrainedModel: The created auto model instance.
         """
         self.model_args = {
-            "model": config.pretrained,
-            "gpu_memory_utilization": float(config.gpu_memory_utilization),
+            "model": config.model_name,
+            "gpu_memory_utilization": config.gpu_memory_utilization,
             "revision": config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
             "dtype": config.dtype,
             "trust_remote_code": config.trust_remote_code,
-            "tensor_parallel_size": int(config.tensor_parallel_size),
-            "pipeline_parallel_size": int(config.pipeline_parallel_size),
+            "tensor_parallel_size": config.tensor_parallel_size,
+            "pipeline_parallel_size": config.pipeline_parallel_size,
             "max_model_len": self._max_length,
             "swap_space": 4,
-            "seed": 1234,
+            "seed": int(config.seed),
+            "max_num_seqs": int(config.max_num_seqs),
+            "max_num_batched_tokens": int(config.max_num_batched_tokens),
         }
-        if int(config.data_parallel_size) > 1:
+        if config.data_parallel_size > 1:
             self.model_args["distributed_executor_backend"] = "ray"
             self._batch_size = "auto"
             return None
@@ -199,9 +191,9 @@ class VLLMModel(LightevalModel):
 
         return model
 
-    def _create_auto_tokenizer(self, config: VLLMModelConfig, env_config: EnvConfig):
+    def _create_auto_tokenizer(self, config: VLLMModelConfig):
         tokenizer = get_tokenizer(
-            config.pretrained,
+            config.model_name,
             tokenizer_mode="auto",
             trust_remote_code=config.trust_remote_code,
             tokenizer_revision=config.revision,
@@ -247,7 +239,7 @@ class VLLMModel(LightevalModel):
                 # the case! Because of that we only use batch size of 1
                 stop_tokens = dataset[0].stop_sequence
 
-            max_new_tokens = dataset[0].generation_size  # could be none
+            max_new_tokens = self._config.generation_parameters.max_new_tokens or dataset[0].generation_size
             returns_logits = dataset[0].use_logits
             num_samples = dataset[0].num_samples
 
@@ -318,12 +310,11 @@ class VLLMModel(LightevalModel):
         generate: bool = True,
     ) -> list[GenerativeResponse]:
         """Contains the actual logic of the generation."""
-        sampling_params = self.sampling_params.clone() or SamplingParams()
+        sampling_params = SamplingParams(**self._config.generation_parameters.to_vllm_dict())
+
         if generate:
             sampling_params.n = num_samples
-            sampling_params.max_tokens = (
-                max_new_tokens if sampling_params.max_tokens is None else sampling_params.max_tokens
-            )
+            sampling_params.max_tokens = max_new_tokens
             sampling_params.stop = stop_tokens
             sampling_params.logprobs = 1 if returns_logits else 0
 

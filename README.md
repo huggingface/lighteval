@@ -69,7 +69,7 @@ huggingface-cli login
 
 ## 🚀 Quickstart
 
-Lighteval offers two main entry points for model evaluation:
+Lighteval offers the following entry points for model evaluation:
 
 - `lighteval accelerate` : evaluate models on CPU or one or more GPUs using [🤗
   Accelerate](https://github.com/huggingface/accelerate)
@@ -87,7 +87,7 @@ Here’s a quick command to evaluate using the Accelerate backend:
 
 ```shell
 lighteval accelerate \
-    "pretrained=gpt2" \
+    "model_name=gpt2" \
     "leaderboard|truthfulqa:mc|0|0"
 ```
 
@@ -126,7 +126,7 @@ pre-commit run --all-files
   author = {Fourrier, Clémentine and Habib, Nathan and Kydlíček, Hynek and Wolf, Thomas and Tunstall, Lewis},
   title = {LightEval: A lightweight framework for LLM evaluation},
   year = {2023},
-  version = {0.7.0},
+  version = {0.8.0},
   url = {https://github.com/huggingface/lighteval}
 }
 ```
