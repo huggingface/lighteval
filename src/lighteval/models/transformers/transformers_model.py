@@ -530,21 +530,19 @@ class TransformersModel(LightevalModel):
         starting_batch_size = STARTING_BATCH_SIZE
         results = []
 
-        for split_start, split_end in tqdm(
-            dataset.splits_start_end_iterator(),
+        for split in tqdm(
+            dataset.splits_iterator(),
             total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
             disable=self.disable_tqdm,
         ):
-            if dataset[0].generation_size is None:
+            if split[0].generation_size is None:
                 # No constraints on the generation size: max length allowed is the max model context
                 max_context_continuation_size_allowed = self.max_length
             else:
                 # Longest context in the current split is the first item (since we sort reversed)
-                longest_context_continuation_size_in_split = (
-                    len(dataset[0].tokenized_context) + dataset[0].generation_size
-                )
+                longest_context_continuation_size_in_split = len(split[0].tokenized_context) + split[0].generation_size
                 max_context_continuation_size_allowed = min(
                     longest_context_continuation_size_in_split, self.max_length
                 )
@@ -556,7 +554,7 @@ class TransformersModel(LightevalModel):
             # For next iteration, since the batch will be smaller, we'll test a bigger batch size
             starting_batch_size = batch_size * 2
 
-            dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda batch: batch)
+            dataloader = DataLoader(split, batch_size=batch_size, collate_fn=lambda batch: batch)
             if self.accelerator:
                 dataloader = self.accelerator.prepare(dataloader)
 
@@ -765,9 +763,9 @@ class TransformersModel(LightevalModel):
         starting_batch_size = STARTING_BATCH_SIZE
         res = []
 
-        for split_start, split_end in tqdm(dataset.splits_start_end_iterator()):
-            context_enc = dataset[0].tokenized_context
-            continuation_enc = dataset[0].tokenized_continuation
+        for split in tqdm(dataset.splits_iterator()):
+            context_enc = split[0].tokenized_context
+            continuation_enc = split[0].tokenized_continuation
             if rolling:  # we take all the sequence in rolling mode
                 max_context_continuation_size_allowed = len(context_enc + continuation_enc)
             else:  # in normal mode, we left cut the context if needed
@@ -782,7 +780,7 @@ class TransformersModel(LightevalModel):
             )
             starting_batch_size = batch_size * 2
 
-            dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda batch: batch)
+            dataloader = DataLoader(split, batch_size=batch_size, collate_fn=lambda batch: batch)
             if self.accelerator:
                 dataloader = self.accelerator.prepare(dataloader)
 
@@ -1009,13 +1007,13 @@ class TransformersModel(LightevalModel):
         starting_batch_size = STARTING_BATCH_SIZE
         res = []
 
-        for split_start, split_end in tqdm(dataset.splits_start_end_iterator()):
-            context_enc = dataset[0].tokenized_context
+        for split in tqdm(dataset.splits_iterator()):
+            context_enc = split[0].tokenized_context
             max_context = len(context_enc[-self.max_length :])
             batch_size = self._get_batch_size(override_bs=self.config.batch_size, max_input_length=max_context)
             starting_batch_size = batch_size * 2
 
-            dataloader = DataLoader(dataset, batch_size=starting_batch_size, collate_fn=lambda batch: batch)
+            dataloader = DataLoader(split, batch_size=starting_batch_size, collate_fn=lambda batch: batch)
             if self.accelerator is not None:
                 dataloader = self.accelerator.prepare(dataloader)
 
