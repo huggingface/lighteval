@@ -107,7 +107,7 @@ def load_model(  # noqa: C901
         return load_model_with_accelerate_or_default(config)
 
     if isinstance(config, CustomModelConfig):
-        return load_custom_model(config=config, env_config=env_config)
+        return load_custom_model(config=config)
 
     if isinstance(config, SGLangModelConfig):
         return load_sglang_model(config)
@@ -177,6 +177,7 @@ def load_custom_model(config: CustomModelConfig):
     model = model_class(config)
 
     return model
+
 
 def load_model_with_inference_endpoints(config: Union[InferenceEndpointModelConfig, ServerlessEndpointModelConfig]):
     logger.info("Spin up model using inference endpoint.")
