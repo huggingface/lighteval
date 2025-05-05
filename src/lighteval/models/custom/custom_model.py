@@ -20,11 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from dataclasses import dataclass
+from lighteval.models.utils import ModelConfig
 
 
-@dataclass
-class CustomModelConfig:
+class CustomModelConfig(ModelConfig):
     """
     Configuration class for loading custom model implementations in Lighteval.
 
@@ -74,5 +73,5 @@ class CustomModelConfig:
         - Exercise caution when loading custom model files as they can execute arbitrary code
     """
 
-    model: str
+    model_name: str
     model_definition_file_path: str

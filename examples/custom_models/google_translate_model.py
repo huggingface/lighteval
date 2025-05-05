@@ -24,7 +24,6 @@ import hashlib
 import logging
 import os
 import time
-from typing import Optional
 
 import diskcache
 import tenacity
@@ -51,8 +50,8 @@ logger = logging.getLogger(__name__)
 
 
 class GoogleTranslateClient(LightevalModel):
-    def __init__(self, config, env_config) -> None:
-        self.model = config.model
+    def __init__(self, config) -> None:
+        self.model = config.model_name
         self.model_definition_file_path = config.model_definition_file_path
 
         self.model_info = ModelInfo(
@@ -115,7 +114,6 @@ class GoogleTranslateClient(LightevalModel):
     def greedy_until(
         self,
         requests: list[GreedyUntilRequest],
-        override_bs: Optional[int] = None,
     ) -> list[GenerativeResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
@@ -177,22 +175,22 @@ class GoogleTranslateClient(LightevalModel):
         """Return the maximum sequence length of the model."""
         return 4096
 
-    def loglikelihood(
-        self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
+    def loglikelihood(self, requests: list[LoglikelihoodRequest]) -> list[LoglikelihoodResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
         raise NotImplementedError
 
     def loglikelihood_rolling(
-        self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
+        self,
+        requests: list[LoglikelihoodRollingRequest],
     ) -> list[LoglikelihoodResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         raise NotImplementedError
 
     def loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: Optional[int] = None
+        self,
+        requests: list[LoglikelihoodSingleTokenRequest],
     ) -> list[LoglikelihoodSingleTokenResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.

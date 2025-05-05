@@ -12,8 +12,8 @@ Here's a basic example:
 from lighteval.models.abstract_model import LightevalModel
 
 class MyCustomModel(LightevalModel):
-    def __init__(self, config, env_config):
-        super().__init__(config, env_config)
+    def __init__(self, config):
+        super().__init__(config)
         # Initialize your model here...
 
     def greedy_until(self, requests, max_tokens=None, stop_sequences=None):
@@ -45,11 +45,10 @@ You can evaluate your custom model using either the command line interface or th
 ### Using the Command Line
 
 ```bash
-python -m lighteval custom \
+lighteval custom \
     "google-translate" \
     "examples/custom_models/google_translate_model.py" \
     "lighteval|wmt20:fr-de|0|0" \
-    --output-dir results \
     --max-samples 10
 ```
 
@@ -74,7 +73,6 @@ evaluation_tracker = EvaluationTracker(
 # Configure the pipeline
 pipeline_params = PipelineParameters(
     launcher_type=ParallelismManager.CUSTOM,
-    env_config=EnvConfig(cache_dir="tmp/")
 )
 
 # Configure your custom model
