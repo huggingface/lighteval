@@ -34,7 +34,6 @@ from typing import Any
 
 import numpy as np
 from aenum import extend_enum
-from datasets import get_dataset_config_names
 
 from lighteval.metrics.metrics import MetricCategory, Metrics, MetricUseCase, SampleLevelMetric
 from lighteval.tasks.extended.lcb.codegen_metrics import (
@@ -49,10 +48,10 @@ def prepare_prompt(line: dict[str, Any]) -> str:
     query = "You will be given a question (problem specification) and will generate a correct Python program that matches the specification and passes all tests.\n\n"
     query += f"Question: {line['question_content']}\n\n"
     if starter_code := line.get("starter_code", None):
-        query += "You will use the following starter code to write the solution to the problem and enclose your code within delimiters."
+        query += "You will use the following starter code to write the solution to the problem and enclose your code within delimiters.\n"
         query += f"```python\n{starter_code}\n```\n\n"
     else:
-        query += "Read the inputs from stdin solve the problem and write the answer to stdout (do not directly test on the sample inputs). Enclose your code within delimiters as follows."
+        query += "Read the inputs from stdin solve the problem and write the answer to stdout (do not directly test on the sample inputs). Enclose your code within delimiters as follows. Ensure that when the python program runs, it reads the inputs, runs the algorithm and writes output to STDOUT.\n"
         query += "```python\n# YOUR CODE HERE\n```\n\n"
     return query
 
@@ -115,7 +114,29 @@ lcb_codegen_metric = SampleLevelMetric(
 
 extend_enum(Metrics, "lcb_codegen_metric", lcb_codegen_metric)
 
-configs = get_dataset_config_names("livecodebench/code_generation_lite", trust_remote_code=True)
+configs = [
+    "release_v1",
+    "release_v2",
+    "release_v3",
+    "release_v4",
+    "release_v5",
+    "release_latest",
+    "v1",
+    "v2",
+    "v3",
+    "v4",
+    "v5",
+    "v1_v2",
+    "v1_v3",
+    "v1_v4",
+    "v1_v5",
+    "v2_v3",
+    "v2_v4",
+    "v2_v5",
+    "v3_v4",
+    "v3_v5",
+    "v4_v5",
+]
 
 tasks = []
 

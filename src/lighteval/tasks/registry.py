@@ -56,6 +56,7 @@ DEFAULT_SUITES = [
     "extended",
     "custom",
     "community",
+    "test",
 ]
 
 TRUNCATE_FEW_SHOTS_DEFAULTS = True
