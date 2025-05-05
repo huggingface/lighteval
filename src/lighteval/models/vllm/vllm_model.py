@@ -27,7 +27,7 @@ import os
 from typing import Optional
 
 import torch
-from pydantic import NonNegativeFloat, PositiveInt
+from pydantic import NonNegativeFloat, NonNegativeInt, PositiveInt
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
@@ -82,7 +82,7 @@ class VLLMModelConfig(ModelConfig):
     gpu_memory_utilization: NonNegativeFloat = 0.9  # lower this if you are running out of memory
     max_model_length: PositiveInt | None = None  # maximum length of the model, ussually infered automatically. reduce this if you encouter OOM issues, 4096 is usually enough
     swap_space: PositiveInt = 4  # CPU swap space size (GiB) per GPU.
-    seed: PositiveInt = 1234
+    seed: NonNegativeInt = 1234
     trust_remote_code: bool = False
     use_chat_template: bool = False
     add_special_tokens: bool = True
