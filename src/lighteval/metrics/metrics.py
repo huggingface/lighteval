@@ -370,6 +370,38 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
+    math_pass_at_1_1n = SampleLevelMetric(
+        metric_name="math_pass@1:1_samples",
+        sample_level_fn=PassAtK(
+            k=1,
+            n=1,
+            strip_strings=True,
+            # Extracting mathematical expressions and latex expressions
+            normalize_gold=lambda k: extract_target_from_pred(
+                k,
+                get_extraction_regexes(
+                    formatted_doc=None,
+                    target_types=[ExprExtractionConfig(), LatexExtractionConfig()],
+                    language=Language.ENGLISH,
+                ),
+            ),
+            # Extracting mathematical expressions and latex expressions
+            normalize_pred=lambda k: extract_target_from_pred(
+                k,
+                get_extraction_regexes(
+                    formatted_doc=None,
+                    target_types=[ExprExtractionConfig(), LatexExtractionConfig()],
+                    language=Language.ENGLISH,
+                ),
+            ),
+            # Uses sympy for comparision
+            sample_scoring_function=compare_gold_target,
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
     math_pass_at_1_4n = SampleLevelMetric(
         metric_name="math_pass@1:4_samples",
         sample_level_fn=PassAtK(
@@ -837,6 +869,57 @@ class Metrics(Enum):
         gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
         pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
         precision=6,
+    )
+    gpqa_instruct_pass_at_1_1n = SampleLevelMetric(
+        metric_name="gpqa_pass@1:1_samples",
+        sample_level_fn=PassAtK(
+            k=1,
+            n=1,
+            sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
+                language=Language.ENGLISH,
+                gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                precision=6,
+            ).sample_level_fn([ref], [pred], doc),
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    gpqa_instruct_pass_at_1_4n = SampleLevelMetric(
+        metric_name="gpqa_pass@1:4_samples",
+        sample_level_fn=PassAtK(
+            k=1,
+            n=4,
+            sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
+                language=Language.ENGLISH,
+                gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                precision=6,
+            ).sample_level_fn([ref], [pred], doc),
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    gpqa_instruct_pass_at_1_8n = SampleLevelMetric(
+        metric_name="gpqa_pass@1:8_samples",
+        sample_level_fn=PassAtK(
+            k=1,
+            n=8,
+            sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
+                language=Language.ENGLISH,
+                gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                precision=6,
+            ).sample_level_fn([ref], [pred], doc),
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
     )
 
     def __str__(self):
