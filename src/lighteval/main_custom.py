@@ -89,9 +89,6 @@ def custom(
     max_samples: Annotated[
         Optional[int], Option(help="Maximum number of samples to evaluate on.", rich_help_panel=HELP_PANNEL_NAME_3)
     ] = None,
-    override_batch_size: Annotated[
-        int, Option(help="Override batch size for evaluation.", rich_help_panel=HELP_PANNEL_NAME_3)
-    ] = None,
     job_id: Annotated[
         int, Option(help="Optional job id for future refenrence.", rich_help_panel=HELP_PANNEL_NAME_3)
     ] = 0,
@@ -100,9 +97,8 @@ def custom(
     Evaluate custom models (can be anything).
     """
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.pipeline import EnvConfig, ParallelismManager, Pipeline, PipelineParameters
+    from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 
-    env_config = EnvConfig(token=TOKEN, cache_dir=cache_dir)
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
         save_details=save_details,
@@ -117,11 +113,9 @@ def custom(
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
-        env_config=env_config,
         job_id=job_id,
         dataset_loading_processes=dataset_loading_processes,
         custom_tasks_directory=custom_tasks,
-        override_batch_size=override_batch_size,
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         use_chat_template=use_chat_template,
