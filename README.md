@@ -21,7 +21,7 @@
 
 ---
 
-**Documentation**: <a href="https://huggingface.co/docs/lighteval/main/en/index" target="_blank">Documentation</a>
+**Documentation**: <a href="https://huggingface.co/docs/lighteval/main/en/index" target="_blank">HF's doc</a>
 
 ---
 
