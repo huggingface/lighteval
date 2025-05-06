@@ -26,6 +26,7 @@ from typing import Any, List, Optional
 
 import yaml
 from huggingface_hub import AsyncInferenceClient, ChatCompletionOutput
+from huggingface_hub.errors import HfHubHTTPError
 from pydantic import NonNegativeInt
 from tqdm import tqdm
 from tqdm.asyncio import tqdm as async_tqdm
@@ -60,6 +61,7 @@ class InferenceProvidersModelConfig(ModelConfig):
         provider: Name of the inference provider
         timeout: Request timeout in seconds
         proxies: Proxy configuration for requests
+        org_to_bill: Organisation to bill if not the user
         generation_parameters: Parameters for text generation
     """
 
@@ -67,6 +69,7 @@ class InferenceProvidersModelConfig(ModelConfig):
     provider: str
     timeout: int | None = None
     proxies: Any | None = None
+    org_to_bill: str | None = None
     parallel_calls_count: NonNegativeInt = 10
 
     @classmethod
@@ -78,12 +81,14 @@ class InferenceProvidersModelConfig(ModelConfig):
         provider = config.get("provider", None)
         timeout = config.get("timeout", None)
         proxies = config.get("proxies", None)
+        org_to_bill = config.get("org_to_bill", None)
         generation_parameters = GenerationParameters.from_dict(config)
         return cls(
             model=model_name,
             provider=provider,
             timeout=timeout,
             proxies=proxies,
+            org_to_bill=org_to_bill,
             generation_parameters=generation_parameters,
         )
 
@@ -121,19 +126,20 @@ class InferenceProvidersClient(LightevalModel):
             provider=self.provider,
             timeout=config.timeout,
             proxies=config.proxies,
+            bill_to=config.org_to_bill,
         )
-        self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        try:
+            self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        except HfHubHTTPError:
+            logger.warning("Could not load model's tokenizer: {e}.")
+            self._tokenizer = None
 
     def _encode(self, text: str) -> dict:
-        enc = self._tokenizer(text=text)
-        return enc
-
-    def tok_encode(self, text: str | list[str]):
-        if isinstance(text, list):
-            toks = [self._encode(t["content"]) for t in text]
-            toks = [tok for tok in toks if tok]
-            return toks
-        return self._encode(text)
+        if self._tokenizer:
+            enc = self._tokenizer(text=text)
+            return enc
+        logger.warning("Tokenizer is not loaded, can't encore the text, returning it as such.")
+        return text
 
     async def __call_api(self, prompt: List[dict], num_samples: int) -> Optional[ChatCompletionOutput]:
         """Make API call with exponential backoff retry logic.
@@ -204,9 +210,6 @@ class InferenceProvidersClient(LightevalModel):
         Returns:
             list[GenerativeResponse]: list of generated responses.
         """
-        for request in requests:
-            request.tokenized_context = self.tok_encode(request.context)
-
         dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         results = []
 
@@ -247,7 +250,11 @@ class InferenceProvidersClient(LightevalModel):
     @property
     def max_length(self) -> int:
         """Return the maximum sequence length of the model."""
-        return self._tokenizer.model_max_length
+        try:
+            return self._tokenizer.model_max_length
+        except AttributeError:
+            logger.warning("Tokenizer was not correctly loaded. Max model context length is assumed to be 30K tokens")
+            return 30000
 
     def loglikelihood(
         self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
