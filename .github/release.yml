@@ -1,0 +1,23 @@
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+  categories:
+    - title: New Features 🎉
+      labels:
+        - feature/enhancement
+    - title: Documentation 📚
+      labels:
+        - documentation
+    - title: New Tasks
+      labels:
+        - new-task
+    - title: Task and Metrics changes 🛠️
+      labels:
+        - task-update
+    - title: Bug Fixes 🐛
+      labels:
+        - bug
+    - title: Other Changes
+      labels:
+        - "*"
