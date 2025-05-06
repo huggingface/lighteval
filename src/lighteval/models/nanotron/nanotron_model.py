@@ -336,14 +336,9 @@ class NanotronLightevalModel(LightevalModel):
         return self.tokenizer.batch_decode(tokens, skip_special_tokens=True)
 
     def _model_call(self, inputs: torch.Tensor) -> torch.Tensor:
-        position_ids = (
-            torch.arange(
-                inputs.shape[1], device=inputs.device, dtype=torch.int32
-            )
-            .unsqueeze(0)
-            .repeat(inputs.shape[0], 1)
-        )
-        return self.model(inputs, position_ids)
+        # This is only called for detecting the batch size so we just need a mock input_mask
+        input_mask = torch.ones_like(inputs)
+        return self.model(inputs, input_mask)
 
     def homogeneize_ending_conditions(self, ending_condition: tuple | dict | list | str) -> tuple[list, int]:
         """Ending conditions are submitted in several possible formats.
@@ -711,8 +706,7 @@ class NanotronLightevalModel(LightevalModel):
                     inputs, padding_length=max_context, max_context=max_context, full_attention_masks=True
                 )
                 # batched_inputs, batch_attention, input_lengths, truncated, padded
-                position_ids = torch.arange(batch_model.input_ids.shape[1], device=self.device, dtype=torch.int32).unsqueeze(0).repeat(batch_model.input_ids.shape[0], 1)
-                out = self.model(input_ids=batch_model.input_ids, position_ids=position_ids)
+                out = self.model(input_ids=batch_model.input_ids, input_mask=batch_model.input_mask)
 
                 if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
                     # This process got outputs
@@ -944,8 +938,7 @@ class NanotronLightevalModel(LightevalModel):
                 )
                 # batched_inputs, batch_attention, input_lengths, truncated, padded
                 with torch.no_grad():
-                    position_ids = torch.arange(batch_model.input_ids.shape[1], device=self.device, dtype=torch.int32).unsqueeze(0).repeat(batch_model.input_ids.shape[0], 1)
-                    out = self.model(input_ids=batch_model.input_ids, position_ids=position_ids)
+                    out = self.model(input_ids=batch_model.input_ids, input_mask=batch_model.input_mask)
 
                 if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
                     # This process got outputs
