@@ -239,14 +239,9 @@ class VLMTransformersModel(LightevalModel):
 
         return processor
 
-    # TODO: verify, copied from transformers_model.py
     def _init_max_length(self) -> int:
         """Return the maximum sequence length of the model.
-        NOTE: Different model configurations have different max sequence length
-        attribute names.
-            - n_positions: (CTRLConfig)
-            - max_position_embeddings: (BartConfig, RoFormerConfig)
-            - n_ctx: (GPT2Config)
+
         NOTE: For relative position encoded models you should specify the max
         sequence length of the model in the constructor via `max_length`.
 
@@ -256,14 +251,15 @@ class VLMTransformersModel(LightevalModel):
         if self.config.max_length is not None:
             return self.config.max_length
 
-        # Try to get the sequence length from the model config.
-        seqlen_config_attrs = ("n_positions", "max_position_embeddings", "n_ctx")
-        for attr in seqlen_config_attrs:
-            if hasattr(self.transformers_config, attr):
-                return getattr(self.transformers_config, attr)
+        # Try to get the sequence length from the model config. It's no super robust
+        text_model_config = self.transformers_config.get_text_config()
+        max_seq_length = getattr(text_model_config, "max_position_embeddings", None)
+        if max_seq_length is not None:
+            return max_seq_length
 
         logger.warning(
-            "No max_length attribute found in the model config. Using the default max sequence length setting {2048}. It is recomended to set max_length trough the madel args"
+            "No max_length attribute found in the model config. Using the default max sequence length setting `2048`. "
+            "It is recommended to set max_length trough the model args: max_length=..."
         )
 
         return 2048
