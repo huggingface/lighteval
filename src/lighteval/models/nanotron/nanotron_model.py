@@ -336,7 +336,14 @@ class NanotronLightevalModel(LightevalModel):
         return self.tokenizer.batch_decode(tokens, skip_special_tokens=True)
 
     def _model_call(self, inputs: torch.Tensor) -> torch.Tensor:
-        return self.model(inputs)
+        position_ids = (
+            torch.arange(
+                inputs.shape[1], device=inputs.device, dtype=torch.int32
+            )
+            .unsqueeze(0)
+            .repeat(inputs.shape[0], 1)
+        )
+        return self.model(inputs, position_ids)
 
     def homogeneize_ending_conditions(self, ending_condition: tuple | dict | list | str) -> tuple[list, int]:
         """Ending conditions are submitted in several possible formats.

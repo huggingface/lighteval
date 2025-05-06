@@ -45,8 +45,9 @@ def nanotron(
     Evaluate models using nanotron as backend.
     """
     from nanotron.config import Config, get_config_from_file
+    from nanotron.config.parallelism_config import ParallelismArgs
 
-    from lighteval.config.lighteval_config import FullNanotronConfig, LightEvalConfig
+    from lighteval.config.lighteval_config import FullNanotronConfig, LightEvalConfig, LightEvalLoggingArgs, LightEvalTasksArgs
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
     from lighteval.utils.imports import NO_NANOTRON_ERROR_MSG, is_nanotron_available
@@ -57,6 +58,13 @@ def nanotron(
     if not checkpoint_config_path.endswith(".yaml"):
         raise ValueError("The checkpoint path should point to a YAML file")
 
+    model_config = get_config_from_file(
+        checkpoint_config_path,
+        config_class=Config,
+        model_config_class=None,
+        skip_unused_config_keys=True,
+        skip_null_keys=True,
+    )
     model_config = get_config_from_file(
         checkpoint_config_path,
         config_class=Config,
