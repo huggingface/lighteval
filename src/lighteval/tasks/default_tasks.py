@@ -340,9 +340,27 @@ aime24 = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=32768,
     metric=[
-        Metrics.expr_gold_metric,
+        Metrics.math_pass_at_1_1n,
+        Metrics.math_pass_at_1_4n,
+        Metrics.math_pass_at_1_8n,
+        Metrics.math_pass_at_1_16n,
         Metrics.math_pass_at_1_32n,
+        Metrics.math_pass_at_1_64n,
     ],
+    version=2,
+)
+aime24_gpassk = LightevalTaskConfig(
+    name="aime24_gpassk",
+    suite=["lighteval"],
+    prompt_function=prompt.aime_prompt_fn,
+    hf_repo="HuggingFaceH4/aime_2024",
+    hf_subset="default",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=8192,
+    metric=[Metrics.g_pass_at_16_expr_gold],
     version=1,
 )
 aime25 = LightevalTaskConfig(
@@ -357,9 +375,27 @@ aime25 = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=10000,
     metric=[
-        Metrics.expr_gold_metric,
+        Metrics.math_pass_at_1_1n,
+        Metrics.math_pass_at_1_4n,
+        Metrics.math_pass_at_1_8n,
+        Metrics.math_pass_at_1_16n,
         Metrics.math_pass_at_1_32n,
+        Metrics.math_pass_at_1_64n,
     ],
+    version=2,
+)
+aime25_gpassk = LightevalTaskConfig(
+    name="aime25_gpassk",
+    suite=["lighteval"],
+    prompt_function=prompt.aime_prompt_fn,
+    hf_repo="yentinglin/aime_2025",
+    hf_subset="default",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=8192,
+    metric=[Metrics.g_pass_at_16_expr_gold],
     version=1,
 )
 anachronisms_bigbench = LightevalTaskConfig(
@@ -7797,10 +7833,14 @@ gpqa_diamond_instruct_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=32768,  # needed for reasoning models like R1
-    metric=[Metrics.gpqa_instruct_metric],
+    metric=[
+        Metrics.gpqa_instruct_pass_at_1_1n,
+        Metrics.gpqa_instruct_pass_at_1_4n,
+        Metrics.gpqa_instruct_pass_at_1_8n,
+    ],
     stop_sequence=[],  # no stop sequence, will use eos token
     trust_dataset=True,
-    version=0,
+    version=1,
 )
 gpqa_extended_instruct_lighteval = LightevalTaskConfig(
     name="gpqa:extended",
@@ -7862,7 +7902,7 @@ gsm8k_leaderboard = LightevalTaskConfig(
     few_shots_select="random_sampling_from_train",
     generation_size=256,
     metric=[Metrics.quasi_exact_match_gsm8k],
-    stop_sequence=["Question=", "Question", "="],
+    stop_sequence=["Question:"],
     trust_dataset=True,
     version=0,
 )
@@ -7877,8 +7917,10 @@ gsm8k_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling_from_train",
     generation_size=256,
-    metric=[Metrics.quasi_exact_match_gsm8k, Metrics.maj_at_8_gsm8k],
-    stop_sequence=["Question="],
+    metric=[
+        Metrics.expr_gold_metric,
+    ],
+    stop_sequence=["Question:"],
     trust_dataset=True,
     version=0,
 )
@@ -9674,7 +9716,24 @@ math_500 = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=32768,
-    metric=[Metrics.latex_gold_metric],
+    metric=[
+        Metrics.math_pass_at_1_1n,
+        Metrics.math_pass_at_1_4n,
+    ],
+    version=2,
+)
+math_500_gpassk = LightevalTaskConfig(
+    name="math_500_gpassk",
+    suite=["lighteval"],
+    prompt_function=prompt.math_500,
+    hf_repo="HuggingFaceH4/MATH-500",
+    hf_subset="default",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=8192,
+    metric=[Metrics.g_pass_at_16_latex_gold],
     version=1,
 )
 math_algebra_lighteval = LightevalTaskConfig(
@@ -14830,6 +14889,22 @@ simp_turing_concept_bigbench = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=1,
     metric=[Metrics.perfect_exact_match],
+    stop_sequence=["\n"],
+    trust_dataset=True,
+    version=0,
+)
+simpleqa = LightevalTaskConfig(
+    name="simpleqa",
+    suite=["lighteval"],
+    prompt_function=prompt.simpleqa,
+    hf_repo="lighteval/SimpleQA",
+    hf_subset="default",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=2048,
+    metric=[Metrics.simpleqa_judge],
     stop_sequence=["\n"],
     trust_dataset=True,
     version=0,

@@ -226,10 +226,17 @@ class TransformersModel(LightevalModel):
             model_size=str(model_size),
         )
 
+    def cleanup(self):
+        """Clean up operations if needed, such as closing an endpoint."""
+        del self.model
+        del self._tokenizer
+        torch.cuda.empty_cache()
+
     @classmethod
     def from_model(
         cls,
         model: Union[AutoModelForCausalLM, LightevalModel],
+        config: TransformersModelConfig = None,
         accelerator: "Accelerator" = None,
         tokenizer_name: str = None,  # custom tokenizer
         trust_remote_code: bool = False,
@@ -247,16 +254,14 @@ class TransformersModel(LightevalModel):
 
         # Instanciate the object without using __init__
         self = cls.__new__(cls)
-        self._config = model.config
-        self._max_length = self._init_max_length(max_length=model.config.max_length)
-        self._tokenizer = self._create_auto_tokenizer_with_name(
-            model_name=model.name_or_path,
-            revision=model.config._commit_hash,
-            trust_remote_code=trust_remote_code,
-            tokenizer_name=tokenizer_name,
-        )
+        self.config = config
+        self.transformers_config = model.config
+        self.generation_config_dict = config.generation_parameters.to_transformers_dict()
+        self._max_length = self._init_max_length()
+        self._tokenizer = self._create_auto_tokenizer()
+        self.batch_size = config.batch_size
         self.model_name = _simplify_name(model.name_or_path)
-        self.model_sha = model.config._commit_hash
+        self.model_sha = config.get_model_sha()
 
         # If model_parallel is not set we compare the number of processes with the number of GPUs
         self.model = model
@@ -268,14 +273,14 @@ class TransformersModel(LightevalModel):
             self._device = accelerator.device
             self.model = self.accelerator.prepare(self.model.to(accelerator.device))
         else:
-            self._device = "cpu"
+            self._device = self.config.device
 
         self.use_chat_template = use_chat_template
         self._add_special_tokens = add_special_tokens if add_special_tokens is not None else False
         self.pairwise_tokenization = pairwise_tokenization
         self.multichoice_continuations_start_space = multichoice_continuations_start_space
 
-        self.precision = _get_dtype(model.dtype, config=self._config)
+        self.precision = _get_dtype(model.dtype, config=self.transformers_config)
 
         if is_accelerate_available():
             model_size, _ = calculate_maximum_sizes(self.model)
@@ -444,6 +449,7 @@ class TransformersModel(LightevalModel):
         Returns:
             int: Max length to use depending on the available args and config
         """
+
         if self.config.max_length is not None:
             return self.config.max_length
 
@@ -454,7 +460,7 @@ class TransformersModel(LightevalModel):
                 return getattr(self.transformers_config, attr)
 
         logger.warning(
-            "No max_length attribute found in the model config. Using the default max sequence length setting {2048}. It is recomended to set max_length trough the madel args"
+            "No max_length attribute found in the model config. Using the default max sequence length setting {2048}. It is recomended to set max_length through the model args"
         )
 
         return 2048
@@ -524,33 +530,31 @@ class TransformersModel(LightevalModel):
         starting_batch_size = STARTING_BATCH_SIZE
         results = []
 
-        for split_start, split_end in tqdm(
-            dataset.splits_start_end_iterator(),
+        for split in tqdm(
+            dataset.splits_iterator(),
             total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
             disable=self.disable_tqdm,
         ):
-            if dataset[0].generation_size is None:
+            if split[0].generation_size is None:
                 # No constraints on the generation size: max length allowed is the max model context
                 max_context_continuation_size_allowed = self.max_length
             else:
                 # Longest context in the current split is the first item (since we sort reversed)
-                longest_context_continuation_size_in_split = (
-                    len(dataset[0].tokenized_context) + dataset[0].generation_size
-                )
+                longest_context_continuation_size_in_split = len(split[0].tokenized_context) + split[0].generation_size
                 max_context_continuation_size_allowed = min(
                     longest_context_continuation_size_in_split, self.max_length
                 )
             batch_size = self._get_batch_size(
-                override_bs=self.batch_size,
+                override_bs=self.config.batch_size,
                 max_input_length=max_context_continuation_size_allowed,
                 starting_batch_size=starting_batch_size,
             )
             # For next iteration, since the batch will be smaller, we'll test a bigger batch size
             starting_batch_size = batch_size * 2
 
-            dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda batch: batch)
+            dataloader = DataLoader(split, batch_size=batch_size, collate_fn=lambda batch: batch)
             if self.accelerator:
                 dataloader = self.accelerator.prepare(dataloader)
 
@@ -578,7 +582,7 @@ class TransformersModel(LightevalModel):
                 tokenized = self.tokenizer(
                     context,
                     truncation="longest_first",  # we truncate to the model max length if needed
-                    padding="max_length",  # we pad to the longest sequence
+                    padding="longest",  # we pad to the longest sequence
                     return_tensors="pt",
                     max_length=max_context_continuation_size_allowed,  # we always allow minimum one token of generation
                     add_special_tokens=self.add_special_tokens,
@@ -710,7 +714,6 @@ class TransformersModel(LightevalModel):
     def loglikelihood(
         self,
         requests: list[LoglikelihoodRequest],
-        override_bs: Optional[int] = None,
     ) -> list[LoglikelihoodResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
@@ -731,12 +734,11 @@ class TransformersModel(LightevalModel):
                     request.context, request.choice, pairwise=self.pairwise_tokenization
                 )
 
-        return self._loglikelihood_tokens(requests, override_bs=override_bs)
+        return self._loglikelihood_tokens(requests)
 
     def loglikelihood_rolling(
         self,
         requests: list[LoglikelihoodRollingRequest],
-        override_bs=None,
     ) -> list[LoglikelihoodResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
 
@@ -746,7 +748,6 @@ class TransformersModel(LightevalModel):
 
         results = self._loglikelihood_tokens(
             requests,
-            override_bs=override_bs,
             return_bool_score=False,
             rolling=True,
         )
@@ -755,7 +756,6 @@ class TransformersModel(LightevalModel):
     def _loglikelihood_tokens(
         self,
         requests: list[LoglikelihoodRequest],
-        override_bs: int = -1,
         return_bool_score: bool = True,
         rolling: bool = False,
     ) -> list[LoglikelihoodResponse]:
@@ -763,9 +763,9 @@ class TransformersModel(LightevalModel):
         starting_batch_size = STARTING_BATCH_SIZE
         res = []
 
-        for split_start, split_end in tqdm(dataset.splits_start_end_iterator()):
-            context_enc = dataset[0].tokenized_context
-            continuation_enc = dataset[0].tokenized_continuation
+        for split in tqdm(dataset.splits_iterator()):
+            context_enc = split[0].tokenized_context
+            continuation_enc = split[0].tokenized_continuation
             if rolling:  # we take all the sequence in rolling mode
                 max_context_continuation_size_allowed = len(context_enc + continuation_enc)
             else:  # in normal mode, we left cut the context if needed
@@ -774,13 +774,13 @@ class TransformersModel(LightevalModel):
                 )
 
             batch_size = self._get_batch_size(
-                override_bs=override_bs,
+                override_bs=self.config.batch_size,
                 max_input_length=max_context_continuation_size_allowed,
                 starting_batch_size=starting_batch_size,
             )
             starting_batch_size = batch_size * 2
 
-            dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda batch: batch)
+            dataloader = DataLoader(split, batch_size=batch_size, collate_fn=lambda batch: batch)
             if self.accelerator:
                 dataloader = self.accelerator.prepare(dataloader)
 
@@ -967,7 +967,8 @@ class TransformersModel(LightevalModel):
         return output_tensor, length_tensor
 
     def loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: Optional[int] = None
+        self,
+        requests: list[LoglikelihoodSingleTokenRequest],
     ) -> list[LoglikelihoodSingleTokenResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
@@ -996,22 +997,23 @@ class TransformersModel(LightevalModel):
                 )
             request.tokenized_continuation = continuations_enc
 
-        return self._loglikelihood_single_token(requests, override_bs=override_bs)
+        return self._loglikelihood_single_token(requests)
 
     def _loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: int = -1
+        self,
+        requests: list[LoglikelihoodSingleTokenRequest],
     ) -> list[LoglikelihoodSingleTokenResponse]:
         dataset = LoglikelihoodSingleTokenDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
         res = []
 
-        for split_start, split_end in tqdm(dataset.splits_start_end_iterator()):
-            context_enc = dataset[0].tokenized_context
+        for split in tqdm(dataset.splits_iterator()):
+            context_enc = split[0].tokenized_context
             max_context = len(context_enc[-self.max_length :])
-            batch_size = self._get_batch_size(override_bs=override_bs, max_input_length=max_context)
+            batch_size = self._get_batch_size(override_bs=self.config.batch_size, max_input_length=max_context)
             starting_batch_size = batch_size * 2
 
-            dataloader = DataLoader(dataset, batch_size=starting_batch_size, collate_fn=lambda batch: batch)
+            dataloader = DataLoader(split, batch_size=starting_batch_size, collate_fn=lambda batch: batch)
             if self.accelerator is not None:
                 dataloader = self.accelerator.prepare(dataloader)
 

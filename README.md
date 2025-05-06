@@ -21,7 +21,7 @@
 
 ---
 
-**Documentation**: <a href="https://huggingface.co/docs/lighteval/index" target="_blank">Lighteval's Wiki</a>
+**Documentation**: <a href="https://huggingface.co/docs/lighteval/main/en/index" target="_blank">HF's doc</a>
 
 ---
 
@@ -123,7 +123,7 @@ pre-commit run --all-files
 
 ```bibtex
 @misc{lighteval,
-  author = {Fourrier, Clémentine and Habib, Nathan and Kydlíček, Hynek and Wolf, Thomas and Tunstall, Lewis},
+  author = {Habib, Nathan and Fourrier, Clémentine and Kydlíček, Hynek and Wolf, Thomas and Tunstall, Lewis},
   title = {LightEval: A lightweight framework for LLM evaluation},
   year = {2023},
   version = {0.8.0},
