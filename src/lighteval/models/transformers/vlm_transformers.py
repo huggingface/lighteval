@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 import logging
-from typing import Union
+from typing import Optional, Tuple, Union
 
 import torch
 from pydantic import PositiveInt
@@ -29,6 +29,9 @@ from tqdm import tqdm
 from transformers import (
     AutoModelForImageTextToText,
     AutoProcessor,
+    AutoConfig,
+    BitsAndBytesConfig,
+    PretrainedConfig,
 )
 
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
@@ -37,7 +40,7 @@ from lighteval.models.model_output import (
     LoglikelihoodResponse,
     LoglikelihoodSingleTokenResponse,
 )
-from lighteval.models.utils import ModelConfig, _get_model_sha, _simplify_name
+from lighteval.models.utils import ModelConfig, _get_dtype, _get_model_sha, _simplify_name
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -110,7 +113,7 @@ class VLMTransformersModelConfig(ModelConfig):
     """
 
     model_name: str
-    tokenizer: str | None = None
+    tokenizer: str | None = None  # TODO: rename to processor if possible
     subfolder: str | None = None
     revision: str = "main"
     batch_size: PositiveInt | None = None
@@ -128,6 +131,20 @@ class VLMTransformersModelConfig(ModelConfig):
 
     def get_model_sha(self):
         return _get_model_sha(repo_id=self.model_name, revision=self.revision)
+    
+    def get_transformers_config(self) -> PretrainedConfig:
+        
+        revision = self.revision
+        if self.subfolder:
+            revision = f"{self.revision}/{self.subfolder}"
+
+        config = AutoConfig.from_pretrained(
+            self.model_name,
+            revision=revision,
+            trust_remote_code=self.trust_remote_code,
+        )
+
+        return config
 
 
 class VLMTransformersModel(LightevalModel):
@@ -147,23 +164,16 @@ class VLMTransformersModel(LightevalModel):
         self.transformers_config = config.get_transformers_config()
 
         self.model_sha = config.get_model_sha()
-        self._max_length = self._init_max_length()
-        self._processor = self._create_auto_processor()
         self.model = self._create_auto_model()
+        self._processor = self._create_auto_processor()
+        self._max_length = self._init_max_length()
 
         # We are in DP (and launch the script with `accelerate launch`)
         if config.model_parallel is False and self.config.dtype not in ["4bit", "8bit"]:
             logger.info(f"Using Data Parallelism, putting model on device {self._device}")
             self.model = self.model.to(self._device)
-        if config.compile:
-            try:
-                logger.info("Compiling the model")
-                self.model.model.compile()
-            except AttributeError as e:
-                logger.warning("Could not compile the model because: ", e)
 
         self.model_name = _simplify_name(config.model_name)
-
         self.generation_config_dict = config.generation_parameters.to_transformers_dict()
 
         self.model_info = ModelInfo(
@@ -195,26 +205,42 @@ class VLMTransformersModel(LightevalModel):
             disable_tqdm = bool(not self.accelerator.is_main_process)
         return disable_tqdm
 
+    def init_model_parallel(self, model_parallel: bool | None = None) -> Tuple[bool, Optional[dict], Optional[str]]:
+        raise NotImplementedError("Model parallel is not supported for VLM models yet.")
+
+    @staticmethod
+    def _get_quantization_config(config: VLMTransformersModelConfig) -> BitsAndBytesConfig | None:
+        if config.dtype == "4bit":
+            quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.float16)
+        elif config.dtype == "8bit":
+            quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+        else:
+            quantization_config = None
+        return quantization_config
+
     def _create_auto_model(self):
+
+        # TODO: device_map / tp_plan / pp_plan ?
+
+        torch_dtype = _get_dtype(self.config.dtype)
+        quantization_config = self._get_quantization_config(self.config)
+
         subfolder = self.config.subfolder
         revision = self.config.revision + (f"/{subfolder}" if subfolder is not None else "")
 
         model = AutoModelForImageTextToText.from_pretrained(
             self.config.model_name,
             revision=revision,
-            device_map="auto",  # TODO: self.config.device_map,
-            torch_dtype=self.config.dtype,
+            device_map="auto",
+            torch_dtype=torch_dtype,
+            quantization_config=quantization_config,
             trust_remote_code=self.config.trust_remote_code,
         )
         model.eval()
         torch.set_grad_enabled(False)
 
         if self.config.compile:
-            try:
-                logger.info("Compiling the model")
-                model.compile()
-            except AttributeError as e:
-                logger.warning("Could not compile the model because: ", e)
+            raise NotImplementedError("Compiling VLM models is not supported yet")
 
         return model
 
