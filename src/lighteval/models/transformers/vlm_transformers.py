@@ -220,21 +220,21 @@ class VLMTransformersModel(LightevalModel):
 
     def _create_auto_processor(self):
         """
-        Create a Hugging Face AutoTokenizer for language model.
+        Create a transformers AutoProcessor for VLM (image-text-to-text) model.
 
         Returns:
-            transformers.PreTrainedTokenizer: The created tokenizer.
+            transformers.AutoProcessor: The created processor.
         """
-        tokenizer_name = self.config.tokenizer or self.config.model_name
+        processor_name = self.config.tokenizer or self.config.model_name
         subfolder = self.config.subfolder
         revision = self.config.revision + (f"/{subfolder}" if subfolder is not None else "")
 
         processor = AutoProcessor.from_pretrained(
-            tokenizer_name,
+            processor_name,
             revision=revision,
-            trust_remote_code=self.config.trust_remote_code,
             padding_side="left",
             truncation_side="left",
+            trust_remote_code=self.config.trust_remote_code,
         )
 
         return processor
