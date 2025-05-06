@@ -137,7 +137,7 @@ class GeneralConfigLogger:
         Logs the model information.
 
         Args:
-            model_config: the model config used to initalize the model.
+            model_config: the model config used to initialize the model.
             model_info (ModelInfo): Model information to be logged.
 
         """
