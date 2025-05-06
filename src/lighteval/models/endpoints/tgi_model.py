@@ -70,7 +70,7 @@ class ModelClient(InferenceEndpointModel):
         self._max_gen_toks = 256
         self.model_info = requests.get(f"{config.inference_server_address}/info", headers=headers).json()
         if "model_id" not in self.model_info:
-            raise ValueError("Error occured when fetching info: " + str(self.model_info))
+            raise ValueError("Error occurred when fetching info: " + str(self.model_info))
         if config.model_id:
             self.model_info["model_id"] = config.model_id
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_info["model_id"])
