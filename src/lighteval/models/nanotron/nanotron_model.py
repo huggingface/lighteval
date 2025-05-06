@@ -114,6 +114,10 @@ class NanotronLightevalModel(LightevalModel):
         self._max_length = max_length
         self.parallel_config = parallel_config
         self.parallel_context = parallel_context
+        if hasattr(lighteval_config, "batch_size"):
+            self.batch_size = lighteval_config.batch_size
+        else:
+            self.batch_size = None
 
         if parallel_config.pp > 1:
             # To implement PP parallelism we need to think about how we want to sync the output for the PP ranks without outputs
@@ -298,9 +302,9 @@ class NanotronLightevalModel(LightevalModel):
     def device(self) -> Union[int, str, torch.device]:
         return "cuda"
 
-    def _get_batch_size(self, max_input_length: int, override_bs: int = 0, starting_batch_size: int = 512) -> int:
-        if override_bs:
-            return override_bs
+    def _get_batch_size(self, max_input_length: int, starting_batch_size: int = 512) -> int:
+        if self.batch_size is not None:
+            return self.batch_size
         logger.warning("Detecting largest batch size")
 
         @find_executable_batch_size(
@@ -395,7 +399,7 @@ class NanotronLightevalModel(LightevalModel):
         return continuation
 
     def loglikelihood_single_token(
-        self, requests: List[Tuple[str, dict]], override_bs=0
+        self, requests: List[Tuple[str, dict]],
     ) -> List[LoglikelihoodSingleTokenResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
@@ -428,11 +432,10 @@ class NanotronLightevalModel(LightevalModel):
 
         return self._loglikelihood_single_token(
             requests,
-            override_bs=override_bs,
             disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
         )
 
-    def loglikelihood(self, requests: List[LoglikelihoodRequest], override_bs=None) -> List[LoglikelihoodResponse]:
+    def loglikelihood(self, requests: List[LoglikelihoodRequest]) -> List[LoglikelihoodResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
@@ -450,12 +453,11 @@ class NanotronLightevalModel(LightevalModel):
 
         return self._loglikelihood_tokens(
             requests,
-            override_bs=override_bs,
             disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
         )
 
     def loglikelihood_rolling(
-        self, requests: List[LoglikelihoodRollingRequest], override_bs: int = 0
+        self, requests: List[LoglikelihoodRollingRequest],
     ) -> List[LoglikelihoodResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         for request in tqdm(
@@ -466,7 +468,6 @@ class NanotronLightevalModel(LightevalModel):
 
         results = self._loglikelihood_tokens(
             requests,
-            override_bs=override_bs,
             disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
             return_bool_score=False,
         )
@@ -632,7 +633,7 @@ class NanotronLightevalModel(LightevalModel):
 
     @torch.inference_mode()
     def _loglikelihood_single_token(
-        self, requests, disable_tqdm: bool = False, override_bs: int = 0, num_dataset_splits: int = 1
+        self, requests, disable_tqdm: bool = False, num_dataset_splits: int = 1
     ) -> List[LoglikelihoodSingleTokenResponse]:
         dataset = LoglikelihoodSingleTokenDataset(requests=requests)
         res = []
@@ -660,7 +661,7 @@ class NanotronLightevalModel(LightevalModel):
             context_enc = dataset[0].tokenized_context
             max_context = len(context_enc[-self.max_length :])
             batch_size = self._get_batch_size(
-                override_bs=override_bs, max_input_length=max_context, starting_batch_size=starting_batch_size
+                max_input_length=max_context, starting_batch_size=starting_batch_size
             )
 
             starting_batch_size = batch_size * 2  # for the next round
@@ -860,7 +861,6 @@ class NanotronLightevalModel(LightevalModel):
         self,
         requests,
         disable_tqdm: bool = False,
-        override_bs: int = -1,
         num_dataset_splits: int = 1,
         return_bool_score: bool = True,
     ) -> List[LoglikelihoodResponse]:
@@ -892,7 +892,7 @@ class NanotronLightevalModel(LightevalModel):
             max_context = len((context_enc + continuation_enc)[-(self.max_length + 1) :][:-1])
 
             batch_size = self._get_batch_size(
-                override_bs=override_bs, max_input_length=max_context, starting_batch_size=starting_batch_size
+                max_input_length=max_context, starting_batch_size=starting_batch_size
             )
             starting_batch_size = batch_size * 2  # for the next round
 
@@ -1094,7 +1094,6 @@ class NanotronLightevalModel(LightevalModel):
         self,
         requests: List[GreedyUntilRequest],
         disable_tqdm: bool = False,
-        override_bs: int = -1,
         num_dataset_splits: int = 1,
     ) -> List[GenerativeResponse]:
         """Greedy generation until a stop token is generated."""
@@ -1134,7 +1133,6 @@ class NanotronLightevalModel(LightevalModel):
                 max_input_length = min(len(context_enc) + max_gen, self.max_length)
 
             batch_size = self._get_batch_size(
-                override_bs=override_bs,
                 max_input_length=max_input_length,
                 starting_batch_size=starting_batch_size,
             )
