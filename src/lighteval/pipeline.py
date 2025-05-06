@@ -72,7 +72,7 @@ if is_nanotron_available():
     from nanotron.parallel.context import ParallelContext
     from nanotron.utils import local_ranks_zero_first
 
-    from lighteval.models.nanotron_model import NanotronLightevalModel
+    from lighteval.models.nanotron.nanotron_model import NanotronLightevalModel
 
 
 import logging
