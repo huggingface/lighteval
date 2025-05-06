@@ -56,7 +56,7 @@ from lighteval.tasks.requests import (
 )
 from lighteval.utils.imports import is_nanotron_available
 from lighteval.utils.parallelism import find_executable_batch_size
-from lighteval.utils.utils import EnvConfig, as_list
+from lighteval.utils.utils import as_list
 
 
 logger = logging.getLogger(__name__)
@@ -101,7 +101,6 @@ class NanotronLightevalModel(LightevalModel):
         trust_remote_code: bool = False,
         debug_one_layer_model: bool = False,
         model_class: Optional[Type] = None,
-        env_config: EnvConfig = None,
     ):
         """Initializes a nanotron model for evaluation.
         Args:
@@ -138,7 +137,6 @@ class NanotronLightevalModel(LightevalModel):
         self._add_special_tokens = add_special_tokens
         self._tokenizer = self._create_auto_tokenizer(
             pretrained=tokenizer.tokenizer_name_or_path,
-            env_config=env_config,
             trust_remote_code=trust_remote_code,
         )
         self._tokenizer.model_max_length = self.max_length
@@ -230,7 +228,6 @@ class NanotronLightevalModel(LightevalModel):
         *,
         pretrained: str,
         tokenizer: Optional[str] = None,
-        env_config: EnvConfig = None,
         trust_remote_code: bool = False,
     ) -> transformers.PreTrainedTokenizer:
         """Returns a pre-trained tokenizer from a pre-trained tokenizer configuration."""
@@ -238,15 +235,11 @@ class NanotronLightevalModel(LightevalModel):
         try:
             tokenizer = AutoTokenizer.from_pretrained(
                 pretrained if tokenizer is None else tokenizer,
-                cache_dir=env_config.cache_dir,
-                token=env_config.token,
                 trust_remote_code=trust_remote_code,
             )
         except RecursionError:
             tokenizer = AutoTokenizer.from_pretrained(
                 pretrained if tokenizer is None else tokenizer,
-                cache_dir=env_config.cache_dir,
-                token=env_config.token,
                 unk_token="<unk>",
                 trust_remote_code=trust_remote_code,
             )
@@ -711,14 +704,14 @@ class NanotronLightevalModel(LightevalModel):
                     inputs, padding_length=max_context, max_context=max_context, full_attention_masks=True
                 )
                 # batched_inputs, batch_attention, input_lengths, truncated, padded
-
-                out = self.model(input_ids=batch_model.input_ids, input_mask=batch_model.input_mask)
+                position_ids = torch.arange(batch_model.input_ids.shape[1], device=self.device, dtype=torch.int32).unsqueeze(0).repeat(batch_model.input_ids.shape[0], 1)
+                out = self.model(input_ids=batch_model.input_ids, position_ids=position_ids)
 
                 if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
                     # This process got outputs
 
-                    # Gather all the output across TP
-                    out = out.transpose(0, 1).contiguous()  # [batch, seq_length, vocab]
+                    # Gather all the output accross TP
+                    out = out.view(*batch_model.input_ids.shape, -1).contiguous()  # [batch, seq_length, vocab]
 
                     gathered_out = [torch.zeros_like(out) for _ in range(self.parallel_context.tp_pg.size())]
                     dist.all_gather(gathered_out, out, group=self.parallel_context.tp_pg, async_op=False)
@@ -944,7 +937,8 @@ class NanotronLightevalModel(LightevalModel):
                 )
                 # batched_inputs, batch_attention, input_lengths, truncated, padded
                 with torch.no_grad():
-                    out = self.model(input_ids=batch_model.input_ids, input_mask=batch_model.input_mask)
+                    position_ids = torch.arange(batch_model.input_ids.shape[1], device=self.device, dtype=torch.int32).unsqueeze(0).repeat(batch_model.input_ids.shape[0], 1)
+                    out = self.model(input_ids=batch_model.input_ids, position_ids=position_ids)
 
                 if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
                     # This process got outputs
@@ -954,7 +948,7 @@ class NanotronLightevalModel(LightevalModel):
                     dist.all_gather(gathered_out, out, group=self.parallel_context.tp_pg, async_op=False)
                     out = torch.cat(gathered_out, dim=-1)
 
-                    out = out.transpose(0, 1)  # [batch, seq_length, vocab]
+                    out = out.view(*batch_model.input_ids.shape, -1)  # [batch, seq_length, vocab]
                     multi_logits = F.log_softmax(out, dim=-1)  # [batch, padding_length, vocab]
 
                     logits_sum = []
