@@ -394,7 +394,7 @@ class Metrics(Enum):
                     language=Language.ENGLISH,
                 ),
             ),
-            # Uses sympy for comparision
+            # Uses sympy for comparison
             sample_scoring_function=compare_gold_target,
         ).compute,
         category=MetricCategory.GENERATIVE_SAMPLING,
@@ -426,7 +426,7 @@ class Metrics(Enum):
                     language=Language.ENGLISH,
                 ),
             ),
-            # Uses sympy for comparision
+            # Uses sympy for comparison
             sample_scoring_function=compare_gold_target,
         ).compute,
         category=MetricCategory.GENERATIVE_SAMPLING,
@@ -458,7 +458,7 @@ class Metrics(Enum):
                     language=Language.ENGLISH,
                 ),
             ),
-            # Uses sympy for comparision
+            # Uses sympy for comparison
             sample_scoring_function=compare_gold_target,
         ).compute,
         category=MetricCategory.GENERATIVE_SAMPLING,
@@ -490,7 +490,7 @@ class Metrics(Enum):
                     language=Language.ENGLISH,
                 ),
             ),
-            # Uses sympy for comparision
+            # Uses sympy for comparison
             sample_scoring_function=compare_gold_target,
         ).compute,
         category=MetricCategory.GENERATIVE_SAMPLING,
@@ -522,7 +522,7 @@ class Metrics(Enum):
                     language=Language.ENGLISH,
                 ),
             ),
-            # Uses sympy for comparision
+            # Uses sympy for comparison
             sample_scoring_function=compare_gold_target,
         ).compute,
         category=MetricCategory.GENERATIVE_SAMPLING,
@@ -554,7 +554,7 @@ class Metrics(Enum):
                     language=Language.ENGLISH,
                 ),
             ),
-            # Uses sympy for comparision
+            # Uses sympy for comparison
             sample_scoring_function=compare_gold_target,
         ).compute,
         category=MetricCategory.GENERATIVE_SAMPLING,

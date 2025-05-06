@@ -58,7 +58,7 @@ logger = logging.getLogger(__name__)
 
 def loglikelihood_acc_metric(normalization: LogProbNormalization | None = None) -> SampleLevelMetric:
     """
-    Creates a accuracy (loglikelihood) metric, which returns accuracy given normalization.
+    Creates an accuracy (loglikelihood) metric, which returns accuracy given normalization.
     """
 
     normalization_str = normalization.name if normalization else ""
@@ -199,7 +199,7 @@ def multilingual_extractive_match_metric(
 
     Known issues:
     - If the task is to simplify an expression, the metric might overestimate the accuracy. This is because if the model doesn't output any anchor for the extraction (e.g final answer is..),
-        it's possible that the the extracted prediction will be the expression to simplify. Because we do simplifications ourselves, it can thus happen that sympy will correctly simplify the expression,
+        it's possible that the extracted prediction will be the expression to simplify. Because we do simplifications ourselves, it can thus happen that sympy will correctly simplify the expression,
         thus it will match gold, despite model not doing anything. PRs to fix this are welcome.
 
     - There is currently no StringExtractionConfig, so if the gold is \boxed{\text{Friday}} and model outputs Friday it will not match, because nothing will be extracted.

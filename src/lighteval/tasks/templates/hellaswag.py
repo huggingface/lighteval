@@ -78,7 +78,7 @@ def get_hellaswag_prompt_function(
             Must map data from the dataset row to the HellaswagInput format.
             Note: The gold_idx must be an index or list of indices in the continuations list, indicating the correct continuation(s).
         formulation (Formulation, optional): The formulation to use for the task. Defaults to MCFFormulation().
-        wikihow_artifacts (list[str], optional): A list of strings to replace with dot. We have to replace the the texts with dots because
+        wikihow_artifacts (list[str], optional): A list of strings to replace with dot. We have to replace the texts with dots because
             of wikihow source.
 
     Returns:
