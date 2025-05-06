@@ -315,15 +315,6 @@ class VLMTransformersModel(LightevalModel):
     def loglikelihood_single_token(
         self, requests: list[LoglikelihoodSingleTokenRequest]
     ) -> list[LoglikelihoodSingleTokenResponse]:
-        """Tokenize the context and continuation and compute the log likelihood of those
-        tokenized sequences.
-
-        Args:
-            requests (list[Tuple[str, dict]]): _description_
-
-        Returns:
-            list[Tuple[float, bool]]: _description_
-        """
         raise NotImplementedError()
 
     def loglikelihood_rolling(
