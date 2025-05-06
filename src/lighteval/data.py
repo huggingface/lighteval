@@ -279,7 +279,7 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         splits_indices = [tuple(e) for e in splits_indices]
         return num_dataset_splits, splits_indices
 
-    def _sorting_criteria(self, request: GreedyUntilRequest) -> tuple[bool, bool, list, int, int]:
+    def _sorting_criteria(self, request: GreedyUntilRequest) -> tuple[bool, bool, tuple, int, int]:
         """
         Collate function for generating batches.
 
