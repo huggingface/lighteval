@@ -60,6 +60,7 @@ class InferenceProvidersModelConfig(ModelConfig):
         provider: Name of the inference provider
         timeout: Request timeout in seconds
         proxies: Proxy configuration for requests
+        org_to_bill: Organisation to bill if not the user
         generation_parameters: Parameters for text generation
     """
 
@@ -67,6 +68,7 @@ class InferenceProvidersModelConfig(ModelConfig):
     provider: str
     timeout: int | None = None
     proxies: Any | None = None
+    org_to_bill: str | None = None
     parallel_calls_count: NonNegativeInt = 10
 
     @classmethod
@@ -78,12 +80,14 @@ class InferenceProvidersModelConfig(ModelConfig):
         provider = config.get("provider", None)
         timeout = config.get("timeout", None)
         proxies = config.get("proxies", None)
+        org_to_bill = config.get("org_to_bill", None)
         generation_parameters = GenerationParameters.from_dict(config)
         return cls(
             model=model_name,
             provider=provider,
             timeout=timeout,
             proxies=proxies,
+            org_to_bill=org_to_bill,
             generation_parameters=generation_parameters,
         )
 
@@ -121,6 +125,7 @@ class InferenceProvidersClient(LightevalModel):
             provider=self.provider,
             timeout=config.timeout,
             proxies=config.proxies,
+            bill_to=config.org_to_bill,
         )
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
