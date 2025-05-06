@@ -56,7 +56,7 @@ custom_metric = SampleLevelMetric(
     category=MetricCategory.IGNORED,
     use_case=MetricUseCase.NONE,
     sample_level_fn=lambda x: x,  # how to compute score for one sample
-    corpus_level_fn=np.mean,  # How to aggreagte the samples metrics
+    corpus_level_fn=np.mean,  # How to aggregate the samples metrics
 )
 ```
 

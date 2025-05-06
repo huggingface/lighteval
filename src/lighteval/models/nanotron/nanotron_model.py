@@ -533,7 +533,7 @@ class NanotronLightevalModel(LightevalModel):
         # tensors, then we pack them together into a batch, call the model, and then pick it all apart
         # again because vectorizing is annoying
 
-        # Each sample is concatenated and cut to lenght or padded to max_length
+        # Each sample is concatenated and cut to length or padded to max_length
         for tokens in batch:
             truncated.append(max(len(tokens) - max_context, 0))
 
@@ -717,7 +717,7 @@ class NanotronLightevalModel(LightevalModel):
                 if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
                     # This process got outputs
 
-                    # Gather all the output accross TP
+                    # Gather all the output across TP
                     out = out.transpose(0, 1).contiguous()  # [batch, seq_length, vocab]
 
                     gathered_out = [torch.zeros_like(out) for _ in range(self.parallel_context.tp_pg.size())]
@@ -768,7 +768,7 @@ class NanotronLightevalModel(LightevalModel):
                         batch_cont_tokens.append(cont_toks)
 
                     # Sync all
-                    # Need reshape/padding both locally (on each node) and generally accross nodes
+                    # Need reshape/padding both locally (on each node) and generally across nodes
                     batched_inputs, _ = self.pad_and_gather(batch_model.input_ids)
                     lengths = torch.tensor(batch_model.input_lengths, device=self.device)
                     batched_lengths = self.gather(lengths)
@@ -949,7 +949,7 @@ class NanotronLightevalModel(LightevalModel):
                 if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
                     # This process got outputs
 
-                    # Gather all the output accross TP
+                    # Gather all the output across TP
                     gathered_out = [torch.zeros_like(out) for _ in range(self.parallel_context.tp_pg.size())]
                     dist.all_gather(gathered_out, out, group=self.parallel_context.tp_pg, async_op=False)
                     out = torch.cat(gathered_out, dim=-1)
@@ -1234,7 +1234,7 @@ class NanotronLightevalModel(LightevalModel):
                     padded=[sum(mask == 0) for mask in tokenized["attention_mask"]],
                 )
 
-                # responses, logits and input_ids have all been gathered accross GPUs already
+                # responses, logits and input_ids have all been gathered across GPUs already
                 # but we also grab the original length of these vectors, which have been padded
                 # while being gathered - the added info
                 outputs = decode_tokenized(
