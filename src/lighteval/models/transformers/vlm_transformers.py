@@ -286,8 +286,8 @@ class VLMTransformersModel(LightevalModel):
             transformers.AutoProcessor: The created processor.
         """
         processor_name = self.config.tokenizer or self.config.model_name
-        subfolder = self.config.subfolder
-        revision = self.config.revision + (f"/{subfolder}" if subfolder is not None else "")
+        revision, subfolder = self.config.revision, self.config.subfolder
+        revision = revision if not subfolder else f"{revision}/{subfolder}"
 
         processor = AutoProcessor.from_pretrained(
             processor_name,
