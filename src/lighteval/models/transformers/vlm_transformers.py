@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import logging
+import multiprocessing as mp
 from typing import Optional, Tuple, Union
 
 import torch
@@ -49,7 +50,10 @@ from lighteval.tasks.requests import (
 from lighteval.utils.imports import (
     is_accelerate_available,
 )
-
+from lighteval.data import DynamicBatchDataset, GenerativeTaskDataset
+from torch.utils.data import DataLoader
+from lighteval.utils.utils import as_list
+from functools import partial
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +62,27 @@ if is_accelerate_available():
     from datetime import timedelta
 
     from accelerate import Accelerator, InitProcessGroupKwargs
+
+
+def preprocess_request(request, processor):
+    """Preprocess request to fill in the tokenized_context field for sorting in the dataset"""
+    request.stop_sequence = as_list(request.stop_sequence) + [processor.tokenizer.eos_token]
+    inputs = processor(text=request.context, images=request.specific["images"])
+    request.tokenized_context = inputs["input_ids"][0]
+    return request
+
+
+class BatchCollator:
+    """Collator for batching requests"""
+    def __init__(self, processor, **kwargs):
+        self.processor = processor
+        self.kwargs = kwargs
+
+    def __call__(self, requests: list[GreedyUntilRequest]) -> Tuple[dict[str, torch.Tensor], list[GreedyUntilRequest]]:
+        texts = [request.context for request in requests]
+        images = [request.specific["images"] for request in requests]
+        inputs = self.processor(text=texts, images=images, **self.kwargs)
+        return inputs, requests
 
 
 class VLMTransformersModelConfig(ModelConfig):
@@ -133,17 +158,12 @@ class VLMTransformersModelConfig(ModelConfig):
         return _get_model_sha(repo_id=self.model_name, revision=self.revision)
     
     def get_transformers_config(self) -> PretrainedConfig:
-        
-        revision = self.revision
-        if self.subfolder:
-            revision = f"{self.revision}/{self.subfolder}"
-
+        revision = f"{self.revision}/{self.subfolder}" if self.subfolder else self.revision
         config = AutoConfig.from_pretrained(
             self.model_name,
             revision=revision,
             trust_remote_code=self.trust_remote_code,
         )
-
         return config
 
 
@@ -174,7 +194,12 @@ class VLMTransformersModel(LightevalModel):
             self.model = self.model.to(self._device)
 
         self.model_name = _simplify_name(config.model_name)
+
+        # Generation config
         self.generation_config_dict = config.generation_parameters.to_transformers_dict()
+        self.generation_config_dict["pad_token_id"] = self.pad_token_id
+        self.generation_config_dict["eos_token_id"] = self.eos_token_id
+        self.generation_config_dict["renormalize_logits"] = True
 
         self.model_info = ModelInfo(
             model_name=self.config.model_name,
@@ -184,7 +209,15 @@ class VLMTransformersModel(LightevalModel):
 
     @property
     def tokenizer(self):
-        return self._processor
+        return self._processor.tokenizer
+
+    @property
+    def pad_token_id(self):
+        return self.tokenizer.pad_token_id if self.tokenizer.pad_token_id else self.tokenizer.eos_token_id
+
+    @property
+    def eos_token_id(self):
+        return self.tokenizer.eos_token_id
 
     @property
     def add_special_tokens(self):
@@ -226,7 +259,7 @@ class VLMTransformersModel(LightevalModel):
         quantization_config = self._get_quantization_config(self.config)
 
         subfolder = self.config.subfolder
-        revision = self.config.revision + (f"/{subfolder}" if subfolder is not None else "")
+        revision = f"{self.config.revision}/{subfolder}" if subfolder is not None else self.config.revision
 
         model = AutoModelForImageTextToText.from_pretrained(
             self.config.model_name,
@@ -290,6 +323,14 @@ class VLMTransformersModel(LightevalModel):
 
         return 2048
 
+    def _preprocess_requests(self, requests: list[GreedyUntilRequest]) -> list[GreedyUntilRequest]:
+        """Preprocess requests to fill in the tokenized_context field for sorting in the dataset"""
+        preprocess_function = partial(preprocess_request, processor=self._processor)
+        with mp.Pool(mp.cpu_count()) as pool:
+            pool_map = pool.imap(preprocess_function, requests)
+            requests = list(tqdm(pool_map, desc="Pre-tokenizing context", total=len(requests)))
+        return requests
+
     def greedy_until(
         self,
         requests: list[GreedyUntilRequest],
@@ -304,33 +345,54 @@ class VLMTransformersModel(LightevalModel):
         Returns:
             list[GenerativeResponse]: list of generated responses.
         """
+
+        requests = self._preprocess_requests(requests)
+
+        dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
+        collator = BatchCollator(
+            self._processor,
+            truncation="longest_first",      # we truncate to the model max length if needed
+            padding="longest",               # we pad to the longest sequence
+            max_length=self.max_length - 1,  # we should always allow minimum one token of generation
+            add_special_tokens=self.add_special_tokens,
+            return_tensors="pt",
+        )
+
         results = []
+        for split in dataset.splits_iterator():
+            # TODO: dynamic batch size?
+            dataloader = DataLoader(split, batch_size=2, collate_fn=collator)
+            if self.accelerator:
+                dataloader = self.accelerator.prepare(dataloader)
 
-        for request in tqdm(requests, desc="Generating responses"):
-            texts = request.context
-            images = request.specific["images"]
+            for batch_inputs, batch_requests in tqdm(dataloader, desc="Greedy generation", position=1, leave=True, disable=self.disable_tqdm):
+                batch_inputs = batch_inputs.to(self._device)
+                outputs = self.model.generate(
+                    **batch_inputs,
+                    **self.generation_config_dict,  # custom generation params
+                    max_new_tokens=batch_requests[0].generation_size,
+                    do_sample=batch_requests[0].do_sample,
+                    num_return_sequences=batch_requests[0].num_samples,
+                    output_logits=batch_requests[0].use_logits,
+                )
+                input_tokens = batch_inputs.input_ids
+                generated_tokens = outputs.sequences[:, input_tokens.shape[1] :]
+                generated_texts = self._processor.batch_decode(generated_tokens, skip_special_tokens=True)
+                attention_mask = batch_inputs["attention_mask"]
+                padded_tokens_count = (attention_mask == 0).sum(dim=1)
 
-            inputs = self._processor(
-                text=texts,
-                images=images,
-                return_tensors="pt",
-            )
-            inputs = inputs.to(self._device)
+                for i in range(len(generated_texts)):
+                    generated_response = GenerativeResponse(
+                        result=generated_texts[i],
+                        generated_tokens=generated_tokens[i],
+                        input_tokens=input_tokens[i],
+                        truncated_tokens_count=0,  # TODO: can we not provide it?
+                        padded_tokens_count=padded_tokens_count[i].item(),
+                        logits=outputs.logits[i] if outputs.logits is not None else None,
+                    )
+                    results.append(generated_response)
 
-            outputs = self.model.generate(**inputs, return_dict_in_generate=False)
-            input_ids = inputs.input_ids
-            generated_ids = outputs[:, input_ids.shape[1] :]
-            generated_text = self._processor.batch_decode(generated_ids, skip_special_tokens=True)
-            generated_response = GenerativeResponse(
-                result=generated_text,
-                generated_tokens=generated_ids,
-                input_tokens=input_ids,
-                truncated_tokens_count=0,
-                padded_tokens_count=0,
-            )
-            results.append(generated_response)
-
-        return results
+        return dataset.get_original_order(results)
 
     def loglikelihood(
         self,
