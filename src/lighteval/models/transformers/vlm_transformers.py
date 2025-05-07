@@ -178,6 +178,7 @@ class VLMTransformersModel(LightevalModel):
 
         self.accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
         self.device = self.accelerator.device
+        self.torch_dtype = _get_dtype(config.dtype)
 
         # Config attributes
         self.config = config
@@ -255,7 +256,6 @@ class VLMTransformersModel(LightevalModel):
     def _create_auto_model(self):
         # TODO: model parallel / device_map
 
-        torch_dtype = _get_dtype(self.config.dtype)
         quantization_config = self._get_quantization_config(self.config)
 
         subfolder = self.config.subfolder
@@ -265,7 +265,7 @@ class VLMTransformersModel(LightevalModel):
             self.config.model_name,
             revision=revision,
             device_map="auto",
-            torch_dtype=torch_dtype,
+            torch_dtype=self.torch_dtype,
             quantization_config=quantization_config,
             trust_remote_code=self.config.trust_remote_code,
         )
@@ -370,6 +370,8 @@ class VLMTransformersModel(LightevalModel):
                 dataloader, desc="Greedy generation", position=1, leave=True, disable=self.disable_tqdm
             ):
                 batch_inputs = batch_inputs.to(self.device)
+                if self.torch_dtype is not None:
+                    batch_inputs = batch_inputs.to(self.torch_dtype)
                 outputs = self.model.generate(
                     **batch_inputs,
                     **self.generation_config_dict,  # custom generation params
