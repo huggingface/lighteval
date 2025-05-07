@@ -26,6 +26,7 @@ import logging
 import random
 import re
 import string
+from typing import Optional
 
 import numpy as np
 import pycountry
@@ -41,6 +42,54 @@ logger = logging.getLogger(__name__)
 LETTER_INDICES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
 INTEGER_INDICES = list(map(str, list(range(1, 27))))
 # fmt: on
+
+
+def mmmu_pro(line, task_name: Optional[str] = None):
+    # fmt: off
+    question = line["question"]        # "What is the capital of France?"
+    choices_string = line["options"]   # "[Paris, London, Berlin, Madrid]"
+    answer = line["answer"]            # "A"
+    # fmt: on
+
+    # TODO: Should be different for "vision"/"standard (4 options)" subsets
+    instructions = (
+        "Answer with the option letter from the given choices directly. "
+        "The last line of your response should be of the following format: "
+        "'Answer: $LETTER' (without quotes) where LETTER is one of options."
+    )
+
+    # Preprocess choices
+    # "[Paris, London, Berlin, Madrid]" -> ["A. Paris", "B. London", "C. Berlin", "D. Madrid"]
+    choices = ast.literal_eval(str(choices_string))
+    choices_letters = [chr(ord("A") + i) for i in range(len(choices))]  # ["A", "B", "C", "D"]
+    choices = [f"{letter}. {choice}" for letter, choice in zip(choices_letters, choices)]
+
+    # Construct prompt
+    formatted_choices = "\n".join(choices)
+    prompt = f"{question}\n{formatted_choices}\n{instructions}"
+
+    # Collect images
+    image_order = []
+    for num in re.findall(r"<image\s+(\d+)>", prompt):
+        num = int(num)
+        if num not in image_order:
+            image_order.append(num)
+    images = [line[f"image_{i}"] for i in image_order]
+
+    gold_index = string.ascii_uppercase.index(answer)
+
+    # Replace image placeholders in prompt <image 1>, <image 2>, ... with [image 1], [image 2], ...
+    prompt = re.sub(r"<image\s+(\d+)>", "[image \\1]", prompt)
+    choices = [re.sub(r"<image\s+(\d+)>", "[image \\1]", choice) for choice in choices]
+
+    return Doc(
+        task_name=task_name,
+        query=prompt,
+        choices=choices,
+        gold_index=gold_index,
+        images=images,
+        specific={"id": line["id"]},
+    )
 
 
 def simpleqa(line, task_name: str = None):
