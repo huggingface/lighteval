@@ -265,8 +265,6 @@ class PromptManager:
         cot_prompt: Union[str | None],
         doc: Doc,
     ):
-        examples = []
-
         is_multimodal = doc.images is not None
 
         if is_multimodal and not use_chat_template:
@@ -274,6 +272,17 @@ class PromptManager:
 
         if is_multimodal and fewshot_ex:
             raise NotImplementedError("Multi-modal tasks do not support fewshot evaluation yet.")
+
+        content = example + cot_prompt if cot_prompt is not None else example
+
+        if is_multimodal:
+            text_content = [{"type": "text", "text": content}]
+            image_content = [{"type": "image", "image": image} for image in doc.images]
+            message = {"role": "user", "content": text_content + image_content}
+            return [message]
+
+        # Regular text (not multimodal)
+        examples = []
 
         # Few shot examples
         for ex in fewshot_ex:
@@ -284,15 +293,7 @@ class PromptManager:
                 examples.append(self.doc_to_text(ex, return_instructions=False) + self.doc_to_target(ex))
 
         # Actual example
-        content = example + cot_prompt if cot_prompt is not None else example
-
-        if use_chat_template and is_multimodal:
-            multimodal_content = []
-            multimodal_content.append({"type": "text", "text": content})
-            for image in doc.images:
-                multimodal_content.append({"type": "image", "image": image})
-            examples.append({"role": "user", "content": multimodal_content})
-        elif use_chat_template:
+        if use_chat_template:
             examples.append({"role": "user", "content": content})
         else:
             examples.append(content)
@@ -301,14 +302,12 @@ class PromptManager:
         if use_chat_template:
             if system_prompt is not None:  # We add system prompt and instruction jointly if possible
                 examples.insert(0, {"role": "system", "content": system_prompt + instruction})
-            # else:  # Else we add the instruction to the first example
-            # examples[0]["content"] = instruction + examples[0]["content"]
+            else:  # Else we add the instruction to the first example
+                examples[0]["content"] = instruction + examples[0]["content"]
             return examples
         else:
-            if system_prompt is not None:
-                output = system_prompt + instruction + "\n\n".join(examples)
-            else:
-                output = instruction + "\n\n".join(examples)
+            system_prompt = system_prompt if system_prompt is not None else ""
+            output = system_prompt + instruction + "\n\n".join(examples)
             if output == "\n\n":
                 return ""
             return output
