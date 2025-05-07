@@ -261,7 +261,7 @@ class PromptManager:
         doc: Doc,
     ):
         examples = []
-        
+
         is_multimodal = doc.images is not None
 
         if is_multimodal and not use_chat_template:
@@ -269,7 +269,7 @@ class PromptManager:
 
         if is_multimodal and fewshot_ex:
             raise NotImplementedError("Multi-modal tasks do not support fewshot evaluation yet.")
-        
+
         # Few shot examples
         for ex in fewshot_ex:
             if use_chat_template:
