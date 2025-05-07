@@ -66,6 +66,7 @@ class _bootstrap_internal:
                     [(rnd.choices(population, k=len(population)),) for _ in range(self.number_draws)],
                     total=self.number_draws,
                     desc="Sampling bootstrap iterations",
+                    disable=True,
                 ),
             )
         return samplings
