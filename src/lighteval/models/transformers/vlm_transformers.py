@@ -361,7 +361,8 @@ class VLMTransformersModel(LightevalModel):
         results = []
         for split in dataset.splits_iterator():
             # TODO: dynamic batch size?
-            dataloader = DataLoader(split, batch_size=self.batch_size, collate_fn=collator)
+            batch_size = self.batch_size or 1
+            dataloader = DataLoader(split, batch_size=batch_size, collate_fn=collator)
             if self.accelerator:
                 dataloader = self.accelerator.prepare(dataloader)
 
