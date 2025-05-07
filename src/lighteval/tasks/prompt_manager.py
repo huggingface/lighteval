@@ -44,7 +44,6 @@ if TYPE_CHECKING:
 
 class PromptManager:
     def __init__(self, task: "LightevalTask", lm: LightevalModel):
-        self.model = lm
         self.task = task
         self.few_shot_sampler = FewShotSampler(task)
 
