@@ -388,7 +388,7 @@ class VLMTransformersModel(LightevalModel):
                         result=generated_texts[i],
                         generated_tokens=generated_tokens[i],
                         input_tokens=input_tokens[i],
-                        truncated_tokens_count=0,  # TODO: can we avoid providing it?
+                        truncated_tokens_count=-1,  # TODO: can we avoid providing it?
                         padded_tokens_count=padded_tokens_count[i].item(),
                         logits=outputs.logits[i] if outputs.logits is not None else None,
                     )
