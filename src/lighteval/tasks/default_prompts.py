@@ -68,13 +68,19 @@ def mmmu_pro(line, task_name: Optional[str] = None):
     formatted_choices = "\n".join(choices)
     prompt = f"{question}\n{formatted_choices}\n{instructions}"
 
-    # Replace image placeholders in prompt <image_1>, <image_2>, ... -> [image]
-    image_order = [int(num) for num in re.findall(r"<image\s+(\d+)>", prompt)]
-    prompt = re.sub(r"<image\s+\d+>", "[image]", prompt)
-
     # Collect images
+    image_order = []
+    for num in re.findall(r"<image\s+(\d+)>", prompt):
+        num = int(num)
+        if num not in image_order:
+            image_order.append(num)
     images = [line[f"image_{i}"] for i in image_order]
+
     gold_index = string.ascii_uppercase.index(answer)
+
+    # Replace image placeholders in prompt <image 1>, <image 2>, ... with [image 1], [image 2], ...
+    prompt = re.sub(r"<image\s+(\d+)>", "[image \\1]", prompt)
+    choices = [re.sub(r"<image\s+(\d+)>", "[image \\1]", choice) for choice in choices]
 
     return Doc(
         task_name=task_name,
