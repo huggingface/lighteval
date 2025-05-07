@@ -258,10 +258,18 @@ class PromptManager:
         system_prompt: Union[str | None],
         use_chat_template: bool,
         cot_prompt: Union[str | None],
-        doc,
+        doc: Doc,
     ):
-        multimodal = True
         examples = []
+        
+        is_multimodal = doc.images is not None
+
+        if is_multimodal and not use_chat_template:
+            raise NotImplementedError("Multi-modal tasks do not support formatting without chat template yet.")
+
+        if is_multimodal and fewshot_ex:
+            raise NotImplementedError("Multi-modal tasks do not support fewshot evaluation yet.")
+        
         # Few shot examples
         for ex in fewshot_ex:
             if use_chat_template:
@@ -273,15 +281,14 @@ class PromptManager:
         # Actual example
         content = example + cot_prompt if cot_prompt is not None else example
 
-        if use_chat_template:
-            if multimodal is True:
-                multimodal_content = []
-                multimodal_content.append({"type": "text", "text": content})
-                for image in doc.specific["images"]:
-                    multimodal_content.append({"type": "image", "image": image})
-                examples.append({"role": "user", "content": multimodal_content})
-            else:
-                examples.append({"role": "user", "content": content})
+        if use_chat_template and is_multimodal:
+            multimodal_content = []
+            multimodal_content.append({"type": "text", "text": content})
+            for image in doc.images:
+                multimodal_content.append({"type": "image", "image": image})
+            examples.append({"role": "user", "content": multimodal_content})
+        elif use_chat_template:
+            examples.append({"role": "user", "content": content})
         else:
             examples.append(content)
 
