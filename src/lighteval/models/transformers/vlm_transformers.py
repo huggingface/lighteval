@@ -175,27 +175,30 @@ class VLMTransformersModel(LightevalModel):
         config: VLMTransformersModelConfig,
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
-        self.config = config
+
         self.accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
-        self._device = self.accelerator.device
+        self.device = self.accelerator.device
+
+        # Config attributes
+        self.config = config
         self.use_chat_template = config.use_chat_template
-        self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
-        self._add_special_tokens = config.add_special_tokens or False
-        self.pairwise_tokenization = config.pairwise_tokenization
         self.batch_size = config.batch_size
+
+        # Model, config, and processor
+        self.model_sha = config.get_model_sha()
+        self.model_name = _simplify_name(config.model_name)
+        self.model = self._create_auto_model()
+        self.processor = self._create_auto_processor()
         self.transformers_config = config.get_transformers_config()
 
-        self.model_sha = config.get_model_sha()
-        self.model = self._create_auto_model()
-        self._processor = self._create_auto_processor()
+        # Attributes exposed by @property
         self._max_length = self._init_max_length()
+        self._add_special_tokens = config.add_special_tokens or False
 
         # We are in DP (and launch the script with `accelerate launch`)
         if config.model_parallel is False and self.config.dtype not in ["4bit", "8bit"]:
-            logger.info(f"Using Data Parallelism, putting model on device {self._device}")
-            self.model = self.model.to(self._device)
-
-        self.model_name = _simplify_name(config.model_name)
+            logger.info(f"Using Data Parallelism, putting model on device {self.device}")
+            self.model = self.model.to(self.device)
 
         # Generation config
         self.generation_config_dict = config.generation_parameters.to_transformers_dict()
@@ -211,7 +214,7 @@ class VLMTransformersModel(LightevalModel):
 
     @property
     def tokenizer(self):
-        return self._processor.tokenizer
+        return self.processor.tokenizer
 
     @property
     def pad_token_id(self):
@@ -226,12 +229,8 @@ class VLMTransformersModel(LightevalModel):
         return self._add_special_tokens
 
     @property
-    def max_length(self) -> int:
+    def max_length(self):
         return self._max_length
-
-    @property
-    def device(self) -> Union[int, str, torch.device]:
-        return self._device
 
     @property
     def disable_tqdm(self) -> bool:
@@ -254,7 +253,7 @@ class VLMTransformersModel(LightevalModel):
         return quantization_config
 
     def _create_auto_model(self):
-        # TODO: device_map / tp_plan / pp_plan ?
+        # TODO: model parallel / device_map
 
         torch_dtype = _get_dtype(self.config.dtype)
         quantization_config = self._get_quantization_config(self.config)
@@ -280,10 +279,10 @@ class VLMTransformersModel(LightevalModel):
 
     def _create_auto_processor(self):
         """
-        Create a transformers AutoProcessor for VLM (image-text-to-text) model.
+        Create a transformers `Processor` for VLM (image-text-to-text) model.
 
         Returns:
-            transformers.AutoProcessor: The created processor.
+            transformers.ProcessorMixin: The created processor.
         """
         processor_name = self.config.tokenizer or self.config.model_name
         revision, subfolder = self.config.revision, self.config.subfolder
@@ -326,7 +325,7 @@ class VLMTransformersModel(LightevalModel):
 
     def _preprocess_requests(self, requests: list[GreedyUntilRequest]) -> list[GreedyUntilRequest]:
         """Preprocess requests to fill in the tokenized_context field for sorting in the dataset"""
-        preprocess_function = partial(preprocess_request, processor=self._processor)
+        preprocess_function = partial(preprocess_request, processor=self.processor)
         with mp.Pool(mp.cpu_count()) as pool:
             pool_map = pool.imap(preprocess_function, requests)
             requests = list(tqdm(pool_map, desc="Pre-tokenizing context", total=len(requests)))
@@ -351,7 +350,7 @@ class VLMTransformersModel(LightevalModel):
 
         dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         collator = BatchCollator(
-            self._processor,
+            self.processor,
             truncation="longest_first",  # we truncate to the model max length if needed
             padding="longest",  # we pad to the longest sequence
             max_length=self.max_length - 1,  # we should always allow minimum one token of generation
@@ -362,14 +361,14 @@ class VLMTransformersModel(LightevalModel):
         results = []
         for split in dataset.splits_iterator():
             # TODO: dynamic batch size?
-            dataloader = DataLoader(split, batch_size=2, collate_fn=collator)
+            dataloader = DataLoader(split, batch_size=self.batch_size, collate_fn=collator)
             if self.accelerator:
                 dataloader = self.accelerator.prepare(dataloader)
 
             for batch_inputs, batch_requests in tqdm(
                 dataloader, desc="Greedy generation", position=1, leave=True, disable=self.disable_tqdm
             ):
-                batch_inputs = batch_inputs.to(self._device)
+                batch_inputs = batch_inputs.to(self.device)
                 outputs = self.model.generate(
                     **batch_inputs,
                     **self.generation_config_dict,  # custom generation params
@@ -380,7 +379,7 @@ class VLMTransformersModel(LightevalModel):
                 )
                 input_tokens = batch_inputs.input_ids
                 generated_tokens = outputs.sequences[:, input_tokens.shape[1] :]
-                generated_texts = self._processor.batch_decode(generated_tokens, skip_special_tokens=True)
+                generated_texts = self.processor.batch_decode(generated_tokens, skip_special_tokens=True)
                 attention_mask = batch_inputs["attention_mask"]
                 padded_tokens_count = (attention_mask == 0).sum(dim=1)
 
