@@ -36,7 +36,7 @@ from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
 )
-from lighteval.models.utils import ModelConfig, _simplify_name
+from lighteval.models.utils import ModelConfig, _simplify_name, _get_dtype, _get_model_sha
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -94,6 +94,9 @@ class VLLMModelConfig(ModelConfig):
     max_num_batched_tokens: PositiveInt = 2048  # maximum number of tokens per batch
     subfolder: str | None = None
 
+    def get_model_sha(self):
+        return _get_model_sha(repo_id=self.pretrained, revision=self.revision)
+
 
 class VLLMModel(LightevalModel):
     def __init__(
@@ -116,11 +119,10 @@ class VLLMModel(LightevalModel):
         # self._device = config.accelerator.device if config.accelerator is not None else "cpu"
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
 
-        self.model_name = _simplify_name(config.model_name)
-        self.model_sha = ""
+        self.model_name = _simplify_name(config.pretrained)
+        self.model_sha = config.get_model_sha()
         self.precision = config.dtype
-
-        self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
+        self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha, model_dtype=config.dtype)
         self.pairwise_tokenization = config.pairwise_tokenization
 
     @property
@@ -196,7 +198,7 @@ class VLLMModel(LightevalModel):
             config.model_name,
             tokenizer_mode="auto",
             trust_remote_code=config.trust_remote_code,
-            tokenizer_revision=config.revision,
+            revision=config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
         )
         tokenizer.pad_token = tokenizer.eos_token
         return tokenizer
