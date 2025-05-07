@@ -81,7 +81,8 @@ def mmmu_pro(line, task_name: Optional[str] = None):
         query=prompt,
         choices=choices,
         gold_index=gold_index,
-        specific={"images": images, "id": line["id"]},
+        images=images,
+        specific={"id": line["id"]},
     )
 
 
