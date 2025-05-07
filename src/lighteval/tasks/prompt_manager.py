@@ -212,13 +212,18 @@ class PromptManager:
             cot_prompt=cot_prompt,
             doc=doc,
         )
-        if not use_chat_template:
-            toks = self.model.tok_encode(output)
-        else:
-            toks = []
+
+        if truncate_few_shots and doc.images is not None:
+            raise NotImplementedError("Few shot evaluation is not supported for multi-modal tasks yet.")
 
         # If we need to truncate few-shots to fit in the context
         if truncate_few_shots and self.model.max_length is not None and self.model.tokenizer is not None:
+            if not use_chat_template:
+                toks = self.model.tok_encode(output)
+            else:
+                toks = [self.model.tok_encode(msg["content"]) for msg in output]
+                toks = [t for ts in toks for t in ts]
+
             # If self.generation_size is None, the maximum allowed generation size depends
             # on the model maximum context length, not on the task - we don't take it into account here
             # but we probably should
