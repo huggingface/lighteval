@@ -68,7 +68,7 @@ if is_accelerate_available():
 def preprocess_request(request, processor):
     """Preprocess request to fill in the tokenized_context field for sorting in the dataset"""
     request.stop_sequence = as_list(request.stop_sequence) + [processor.tokenizer.eos_token]
-    inputs = processor(text=request.context, images=request.specific["images"])
+    inputs = processor(text=request.context, images=request.images)
     request.tokenized_context = inputs["input_ids"][0]
     return request
 
@@ -82,7 +82,7 @@ class BatchCollator:
 
     def __call__(self, requests: list[GreedyUntilRequest]) -> Tuple[dict[str, torch.Tensor], list[GreedyUntilRequest]]:
         texts = [request.context for request in requests]
-        images = [request.specific["images"] for request in requests]
+        images = [request.images for request in requests]
         inputs = self.processor(text=texts, images=images, **self.kwargs)
         return inputs, requests
 

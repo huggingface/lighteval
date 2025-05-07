@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from enum import Enum, auto
 from typing import NamedTuple, Optional, Union
 
@@ -75,6 +75,7 @@ class LoglikelihoodRequest(Request):
     request_type = RequestType.LOGLIKELIHOOD
     tokenized_context: list[int] = None
     tokenized_continuation: list[int] = None
+    images: list = field(default_factory=list)
 
 
 @dataclass
@@ -92,6 +93,7 @@ class LoglikelihoodSingleTokenRequest(Request):
     request_type = RequestType.LOGLIKELIHOOD_SINGLE_TOKEN
     tokenized_context: list[int] = None
     tokenized_continuation: list[int] = None
+    images: list = field(default_factory=list)
 
 
 @dataclass
@@ -105,6 +107,7 @@ class LoglikelihoodRollingRequest(Request):
     request_type = RequestType.LOGLIKELIHOOD_ROLLING
     tokenized_context: list[int] = None
     tokenized_continuation: list[int] = None
+    images: list = field(default_factory=list)
 
 
 @dataclass
@@ -128,6 +131,7 @@ class GreedyUntilRequest(Request):
     num_samples: int = None
     do_sample: bool = False
     use_logits: bool = False
+    images: list = field(default_factory=list)
 
 
 @dataclass
@@ -145,6 +149,7 @@ class GreedyUntilMultiTurnRequest(Request):
     generation_size: int
     request_type = RequestType.GREEDY_UNTIL_MULTI_TURN
     use_logits: bool = False
+    images: list = field(default_factory=list)
 
 
 class SampleUid(NamedTuple):
