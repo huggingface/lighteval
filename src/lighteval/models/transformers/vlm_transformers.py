@@ -1,6 +1,6 @@
 # MIT License
 
-# Copyright (c) 2024 The HuggingFace Team
+# Copyright (c) 2025 The HuggingFace Team
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,19 +22,22 @@
 
 import logging
 import multiprocessing as mp
+from functools import partial
 from typing import Optional, Tuple, Union
 
 import torch
 from pydantic import PositiveInt
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import (
+    AutoConfig,
     AutoModelForImageTextToText,
     AutoProcessor,
-    AutoConfig,
     BitsAndBytesConfig,
     PretrainedConfig,
 )
 
+from lighteval.data import GenerativeTaskDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
 from lighteval.models.model_output import (
     GenerativeResponse,
@@ -50,10 +53,8 @@ from lighteval.tasks.requests import (
 from lighteval.utils.imports import (
     is_accelerate_available,
 )
-from lighteval.data import DynamicBatchDataset, GenerativeTaskDataset
-from torch.utils.data import DataLoader
 from lighteval.utils.utils import as_list
-from functools import partial
+
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +75,7 @@ def preprocess_request(request, processor):
 
 class BatchCollator:
     """Collator for batching requests"""
+
     def __init__(self, processor, **kwargs):
         self.processor = processor
         self.kwargs = kwargs
@@ -156,7 +158,7 @@ class VLMTransformersModelConfig(ModelConfig):
 
     def get_model_sha(self):
         return _get_model_sha(repo_id=self.model_name, revision=self.revision)
-    
+
     def get_transformers_config(self) -> PretrainedConfig:
         revision = f"{self.revision}/{self.subfolder}" if self.subfolder else self.revision
         config = AutoConfig.from_pretrained(
@@ -252,7 +254,6 @@ class VLMTransformersModel(LightevalModel):
         return quantization_config
 
     def _create_auto_model(self):
-
         # TODO: device_map / tp_plan / pp_plan ?
 
         torch_dtype = _get_dtype(self.config.dtype)
@@ -351,8 +352,8 @@ class VLMTransformersModel(LightevalModel):
         dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         collator = BatchCollator(
             self._processor,
-            truncation="longest_first",      # we truncate to the model max length if needed
-            padding="longest",               # we pad to the longest sequence
+            truncation="longest_first",  # we truncate to the model max length if needed
+            padding="longest",  # we pad to the longest sequence
             max_length=self.max_length - 1,  # we should always allow minimum one token of generation
             add_special_tokens=self.add_special_tokens,
             return_tensors="pt",
@@ -365,7 +366,9 @@ class VLMTransformersModel(LightevalModel):
             if self.accelerator:
                 dataloader = self.accelerator.prepare(dataloader)
 
-            for batch_inputs, batch_requests in tqdm(dataloader, desc="Greedy generation", position=1, leave=True, disable=self.disable_tqdm):
+            for batch_inputs, batch_requests in tqdm(
+                dataloader, desc="Greedy generation", position=1, leave=True, disable=self.disable_tqdm
+            ):
                 batch_inputs = batch_inputs.to(self._device)
                 outputs = self.model.generate(
                     **batch_inputs,
