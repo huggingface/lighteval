@@ -27,11 +27,10 @@ from lighteval.utils.imports import is_nanotron_available
 
 
 if is_nanotron_available():
-    from nanotron.config import Config
+    from nanotron.config import ModelArgs, TokenizerArgs, GeneralArgs
     from nanotron.config.parallelism_config import ParallelismArgs
     from nanotron.generation.sampler import SamplerType
     from nanotron.logging import get_logger
-
     logger = get_logger(__name__)
 
 DEFAULT_GENERATION_SEED = 42
@@ -100,7 +99,9 @@ class LightEvalConfig:
 @dataclass
 class FullNanotronConfig:
     lighteval_config: LightEvalConfig
-    nanotron_config: "Config"
+    nanotron_model: "ModelArgs"
+    nanotron_tokenizer: "TokenizerArgs"
+    nanotron_general: "GeneralArgs"
 
     @property
     def generation_parameters(self):
