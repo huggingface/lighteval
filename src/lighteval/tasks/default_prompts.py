@@ -2853,8 +2853,3 @@ def xsum(line, task_name: str = None):
     )
 
 
-# Utility for drop task
-def get_drop_date(x):
-    components = [x["day"], x["month"], x["year"]]
-    components = list(filter(lambda x: x, components))
-    return " ".join(components)

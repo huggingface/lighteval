@@ -106,8 +106,8 @@ class NanotronLightevalModel(LightevalModel):
         """Initializes a nanotron model for evaluation.
         Args:
         """
-        model_args = nanotron_config.nanotron_config.model
-        tokenizer = nanotron_config.nanotron_config.tokenizer
+        model_args = nanotron_config.nanotron_model
+        tokenizer = nanotron_config.nanotron_tokenizer
         lighteval_config = nanotron_config.lighteval_config
         parallel_config = nanotron_config.lighteval_config.parallelism
 
@@ -218,7 +218,7 @@ class NanotronLightevalModel(LightevalModel):
         self.pairwise_tokenization = nanotron_config.lighteval_config.tasks.pairwise_tokenization
 
         self.model_info = ModelInfo(
-            model_name=f"{nanotron_config.nanotron_config.general.run}/{nanotron_config.nanotron_config.general.step}"
+            model_name=f"{nanotron_config.nanotron_general.run}/{nanotron_config.nanotron_general.step}"
         )
 
     @property
@@ -1266,6 +1266,7 @@ class NanotronLightevalModel(LightevalModel):
                     max_new_tokens=max_new_tokens,
                     max_micro_batch_size=batch_size,  # ok for PP=1 for PP>1 we'll need to split the batch
                     returns_logits=returns_logits,
+                    tokenizer=self.tokenizer,
                     generation_config=self.generation_config,
                 )
                 dist.barrier()  # Got everyone to send their stuff

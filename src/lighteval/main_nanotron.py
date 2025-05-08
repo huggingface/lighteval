@@ -25,6 +25,8 @@ import os
 
 from typer import Option
 from typing_extensions import Annotated
+import yaml
+from yaml import SafeLoader
 
 
 CACHE_DIR: str = os.getenv("HF_HOME", "/scratch")
@@ -48,8 +50,7 @@ def nanotron(
     """
     Evaluate models using nanotron as backend.
     """
-    from nanotron.config import Config, get_config_from_file
-    from nanotron.config.parallelism_config import ParallelismArgs
+    from nanotron.config import get_config_from_dict, get_config_from_file, ModelArgs, TokenizerArgs, GeneralArgs
 
     from lighteval.config.lighteval_config import FullNanotronConfig, LightEvalConfig, LightEvalLoggingArgs, LightEvalTasksArgs
     from lighteval.logging.evaluation_tracker import EvaluationTracker
@@ -66,18 +67,19 @@ def nanotron(
     if not checkpoint_config_path.endswith(".yaml"):
         raise ValueError("The checkpoint path should point to a YAML file")
 
-    model_config = get_config_from_file(
-        checkpoint_config_path,
-        config_class=Config,
-        model_config_class=None,
+    with open(checkpoint_config_path) as f:
+        nanotron_yaml = yaml.load(f, Loader=SafeLoader)
+
+    model_config, tokenizer_config, general_config = [get_config_from_dict(
+        nanotron_yaml[key],
+        config_class=config_class,
         skip_unused_config_keys=True,
         skip_null_keys=True,
-    )
+    ) for key, config_class in [("model", ModelArgs), ("tokenizer", TokenizerArgs), ("general", GeneralArgs)]]
 
     # Load lighteval config
     lighteval_config: LightEvalConfig = get_config_from_file(lighteval_config_path, config_class=LightEvalConfig)  # type: ignore
-    
-    nanotron_config = FullNanotronConfig(lighteval_config, model_config)
+    nanotron_config = FullNanotronConfig(lighteval_config, model_config, tokenizer_config, general_config)
 
     evaluation_tracker = EvaluationTracker(
         output_dir=lighteval_config.logging.output_dir,
@@ -87,7 +89,7 @@ def nanotron(
         push_to_tensorboard=lighteval_config.logging.push_to_tensorboard,
         save_details=lighteval_config.logging.save_details,
         tensorboard_metric_prefix=lighteval_config.logging.tensorboard_metric_prefix,
-        nanotron_run_info=nanotron_config.nanotron_config.general,
+        nanotron_run_info=nanotron_config.nanotron_general,
     )
 
     pipeline_parameters = PipelineParameters(
