@@ -597,9 +597,9 @@ class TransformersModel(LightevalModel):
             result = []
 
             # for output in _output.outputs:
-            output_token_ids.append(_output)
+            output_token_ids.append(_output["output_ids"])
             # logprobs_raw.append(output.logprobs)
-            result.append(self.tokenizer.decode(_output))
+            result.append(self.tokenizer.decode(_output["output_ids"]))
 
             if logprobs_raw and output_token_ids and False:
                 logprobs = [
@@ -609,13 +609,13 @@ class TransformersModel(LightevalModel):
             else:
                 logprobs = []
 
-            input_token_ids = _output.prompt_token_ids
+            input_token_ids = _output["prompt_token_ids"]
 
             cur_response = GenerativeResponse(
                 result=result,
                 logits=logprobs,
                 generated_tokens=output_token_ids,
-                # input_tokens=input_token_ids,
+                input_tokens=input_token_ids,
             )
             results.append(cur_response)
 
