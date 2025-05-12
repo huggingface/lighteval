@@ -6866,7 +6866,7 @@ drop_qa = LightevalTaskConfig(
     evaluation_splits=("validation",),
     few_shots_split="train",
     generation_size=250,
-    stop_sequence=["Question:", "Question", "question", "question:", "\n"],
+    stop_sequence=["Question:", "question:", "\n"],
     metric=(
         Metrics.prefix_quasi_exact_match,
         Metrics.f1_score_quasi,
