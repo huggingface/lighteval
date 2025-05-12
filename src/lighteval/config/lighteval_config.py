@@ -38,7 +38,7 @@ DEFAULT_GENERATION_SEED = 42
 
 @dataclass
 class GenerationArgs:
-    sampler: Optional[Union[str, "SamplerType"]] = None
+    sampler: Optional["SamplerType"] = None
     temperature: Optional[float] = None
     top_k: Optional[int] = None
     top_p: Optional[float] = None
@@ -48,8 +48,6 @@ class GenerationArgs:
     use_cache: Optional[bool] = False
 
     def __post_init__(self):
-        if isinstance(self.sampler, str):
-            self.sampler = SamplerType[self.sampler.upper()]
         if self.seed is None:
             self.seed = DEFAULT_GENERATION_SEED
 
