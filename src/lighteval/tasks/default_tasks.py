@@ -6845,7 +6845,9 @@ drop_qa = LightevalTaskConfig(
             "choices": list(
                 filter(
                     lambda x: x,
-                    [line["answer"].get("number")] + line["answer"]["spans"] + [prompt.get_drop_date(line["answer"].get("date"))],
+                    [line["answer"].get("number")]
+                    + line["answer"]["spans"]
+                    + [prompt.get_drop_date(line["answer"].get("date"))],
                 )
             ),
         },
@@ -6856,7 +6858,9 @@ drop_qa = LightevalTaskConfig(
     hf_filter=lambda line: list(
         filter(
             lambda x: x,
-            [line["answer"].get("number")] + line["answer"]["spans"] + [prompt.get_drop_date(line["answer"].get("date"))],
+            [line["answer"].get("number")]
+            + line["answer"]["spans"]
+            + [prompt.get_drop_date(line["answer"].get("date"))],
         )
     ),
     evaluation_splits=("validation",),
