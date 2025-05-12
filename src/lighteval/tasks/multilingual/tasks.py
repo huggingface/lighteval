@@ -63,6 +63,8 @@ from lighteval.tasks.templates.utils.formulation import (
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
 from lighteval.utils.language import Language, iso_639_3_ind_to_iso_639_3_macro, manage_duplicate_language_codes
 
+from lighteval.tasks.multilingual.adapters import enem_adapter
+
 
 TASKS_TABLE = []
 # ------------------------------- NLI Tasks ------------------------------- #
@@ -125,6 +127,7 @@ xnli_tasks = [
     ]
     for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
 ]
+
 
 # Improvement on XNLI with better translation, from our experience models tend to
 # perform better on XNLI2.0 than XNLI
@@ -860,6 +863,66 @@ xquad_tasks = [
     ]
 ]
 
+# GermanQuAD: High-quality German QA dataset with 13,722 questions
+# https://arxiv.org/abs/2104.12741
+germanquad_tasks = [
+    LightevalTaskConfig(
+        name=f"germanquad_{Language.GERMAN.value}",
+        prompt_function=get_qa_prompt_function(
+            Language.GERMAN,
+            lambda line: {
+                "question": line["question"],
+                "context": line["context"],
+                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+            },
+        ),
+        suite=("lighteval",),
+        hf_repo="deepset/germanquad",
+        hf_subset="plain_text",
+        trust_dataset=True,
+        hf_revision="fff05ceaf2ffbe5b65c7e0c57e678f7b7e1a0581",
+        hf_filter=lambda line: any(len(ans) > 0 for ans in line["answers"]["text"]),
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        generation_size=400,
+        stop_sequence=("\n",),
+        metric=(
+            multilingual_quasi_exact_match_metric(Language.GERMAN, "prefix"),
+            multilingual_quasi_f1_score_metric(Language.GERMAN),
+        ),
+    )
+]
+
+
+# SQuAD-it: Italian translation of the SQuAD dataset
+# https://github.com/crux82/squad-it
+squad_it_tasks = [
+    LightevalTaskConfig(
+        name=f"squad_{Language.ITALIAN.value}",
+        prompt_function=get_qa_prompt_function(
+            Language.ITALIAN,
+            lambda line: {
+                "question": line["question"],
+                "context": line["context"], 
+                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+            },
+        ),
+        suite=("lighteval",),
+        hf_repo="crux82/squad_it",
+        hf_subset="default",
+        hf_filter=lambda line: any(len(ans) > 0 for ans in line["answers"]["text"]),
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        generation_size=400,
+        stop_sequence=("\n",),
+        metric=(
+            multilingual_quasi_exact_match_metric(Language.ITALIAN, "prefix"),
+            multilingual_quasi_f1_score_metric(Language.ITALIAN),
+        ),
+    )
+]
+
+
 # ThaiQA: A question answering dataset for the Thai language.
 thaiqa_tasks = [
     LightevalTaskConfig(
@@ -912,6 +975,67 @@ sber_squad_tasks = [
         stop_sequence=("\n",),
     )
 ]
+
+# FaQuAD: A Portuguese Reading Comprehension Dataset
+# https://arxiv.org/abs/2007.15671
+faquad_tasks = [
+    LightevalTaskConfig(
+        name=f"faquad_{Language.PORTUGUESE.value}",
+        prompt_function=get_qa_prompt_function(
+            Language.PORTUGUESE,
+            lambda line: {
+                "question": line["question"],
+                "context": line["context"],
+                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+            },
+        ),
+        suite=("lighteval",),
+        hf_repo="eraldoluis/faquad",
+        hf_subset="plain_text",
+        trust_dataset=True,
+        hf_revision="205ba826a2282a4a5aa9bd3651e55ee4f2da1546",
+        hf_filter=lambda line: any(len(ans) > 0 for ans in line["answers"]["text"]),
+        evaluation_splits=("validation",),
+        few_shots_split="train",
+        metric=(
+            multilingual_quasi_exact_match_metric(Language.PORTUGUESE, "prefix"),
+            multilingual_quasi_f1_score_metric(Language.PORTUGUESE),
+        ),
+        generation_size=400,
+        stop_sequence=("\n",),
+    )
+]
+
+
+# SQuAD-es: Spanish translation of the Stanford Question Answering Dataset
+# https://huggingface.co/datasets/ccasimiro/squad_es
+squad_es_tasks = [
+    LightevalTaskConfig(
+        name=f"squad_{Language.SPANISH.value}",
+        prompt_function=get_qa_prompt_function(
+            Language.SPANISH,
+            lambda line: {
+                "question": line["question"],
+                "context": line["context"], 
+                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+            },
+        ),
+        suite=("lighteval",),
+        hf_repo="ccasimiro/squad_es",
+        hf_subset="v2.0.0",
+        hf_filter=lambda line: any(len(ans) > 0 for ans in line["answers"]["text"]),
+        evaluation_splits=("validation",),
+        few_shots_split="train",
+        metric=(
+            multilingual_quasi_exact_match_metric(Language.SPANISH, "prefix"),
+            multilingual_quasi_f1_score_metric(Language.SPANISH),
+        ),
+        generation_size=400,
+        stop_sequence=("\n",),
+    )
+]
+
+
 
 # ARCD: Arabic Reading Comprehension Dataset.
 # https://arxiv.org/pdf/1906.05394
@@ -1467,6 +1591,10 @@ TASKS_TABLE.extend(
         *race_ar_task,
         *belebele_tasks,
         *c3_tasks,
+        *squad_it_tasks,
+        *squad_es_tasks,
+        *faquad_tasks,
+        *germanquad_tasks,
     ]
 )
 
@@ -2997,6 +3125,41 @@ openbook_ara_tasks = [
     ]
 ]
 
+# Spanish version of OpenBookQA from BSC Language Technology group
+# Dataset: https://huggingface.co/datasets/BSC-LT/openbookqa-es
+openbook_es_tasks = [
+    LightevalTaskConfig(
+        name=f"openbookqa_{Language.SPANISH.value}_{formulation.name.lower()}",
+        prompt_function=get_mcq_prompt_function(
+            Language.SPANISH,
+            lambda line: {
+                "question": line["question_stem"],
+                "choices": line["choices"]["text"],
+                "gold_idx": LETTER_INDICES.index(line["answerKey"]),
+            },
+            formulation=formulation,
+        ),
+        suite=["lighteval"],
+        hf_repo="BSC-LT/openbookqa-es",
+        hf_subset="default",
+        evaluation_splits=("test",),
+        few_shots_split="validation",
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(), 
+        HybridFormulation(),
+    ]
+]
+
+
 # The Russian version is part of the MERA (Multilingual Enhanced Russian NLP Architectures) project.
 # Paper: https://arxiv.org/abs/2401.04531
 openbook_rus_tasks = [
@@ -3035,6 +3198,7 @@ TASKS_TABLE.extend(
     [
         *openbook_rus_tasks,
         *openbook_ara_tasks,
+        *openbook_es_tasks,
     ]
 )
 
@@ -3379,6 +3543,79 @@ ceval_tasks = [
 ]
 
 
+# OAB Exams: A collection of questions from the Brazilian Bar Association exam
+# The exam is required for anyone who wants to practice law in Brazil
+# Dataset: https://huggingface.co/datasets/eduagarcia/oab_exams
+oab_exams_tasks = [
+    LightevalTaskConfig(
+        name=f"oab_exams_{Language.PORTUGUESE.value}_{formulation.name.lower()}",
+        prompt_function=get_mcq_prompt_function(
+            Language.PORTUGUESE,
+            lambda line: {
+                "question": line["question"],
+                "choices": line["choices"]["text"],
+                "gold_idx": LETTER_INDICES.index(line["answerKey"]),
+            },
+            formulation=formulation,
+        ),
+        suite=("lighteval",),
+        hf_repo="eduagarcia/oab_exams",
+        hf_subset="default",
+        evaluation_splits=("train",),
+        hf_avail_splits=["train"],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
+    )
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+# ENEM (Exame Nacional do Ensino Médio) is a standardized Brazilian national secondary 
+# education examination. The exam is used both as a university admission test and as a 
+# high school evaluation test.
+# Dataset: https://huggingface.co/datasets/maritaca-ai/enem
+enem_tasks = [
+    LightevalTaskConfig(
+        name=f"enem_{Language.PORTUGUESE.value}_{formulation.name.lower()}:{year}",
+        prompt_function=get_mcq_prompt_function(
+            Language.PORTUGUESE,
+            partial(
+                enem_adapter,
+                Language.PORTUGUESE,
+            ),
+            formulation=formulation,
+        ),
+        suite=("lighteval",),
+        hf_repo="maritaca-ai/enem",
+        hf_subset=year,
+        evaluation_splits=("train",),
+        hf_avail_splits=["train"],
+        metric=get_metrics_for_formulation(
+            formulation,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
+    )
+    for year in ["2022", "2023", "2024"]
+    for formulation in [
+        MCFFormulation(),
+        CFFormulation(),
+        HybridFormulation(),
+    ]
+]
+
+
+
 # WorldTree is a dataset for multi-hop inference in science question answering.
 # It provides explanations for elementary science questions by combining facts from a semi-structured knowledge base.
 # This Russian version is part of the MERA (Multilingual Evaluation of Reasoning Abilities) benchmark.
@@ -3420,6 +3657,8 @@ TASKS_TABLE.extend(
         *agieval_tasks_zh,
         *worldtree_rus_tasks,
         *ceval_tasks,
+        *oab_exams_tasks,
+        *enem_tasks,
     ]
 )
 
