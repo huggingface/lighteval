@@ -285,7 +285,8 @@ class PromptManager:
             ):  # We add system prompt and instruction jointly if possible
                 system_prompt = system_prompt if system_prompt is not None else ""
                 instruction = instruction if instruction is not None else ""
-                system_prompt_message = {"role": "system", "content": system_prompt + instruction}
+                system_content = [{"type": "text", "text": system_prompt + instruction}]
+                system_prompt_message = {"role": "system", "content": system_content}
                 return [system_prompt_message, message]
 
             return [message]
