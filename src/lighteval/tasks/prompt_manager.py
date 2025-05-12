@@ -255,7 +255,7 @@ class PromptManager:
 
         return output, num_effective_fewshots
 
-    def get_examples(
+    def get_examples(  # noqa: C901
         self,
         example: str,
         instruction: Union[str | None],
@@ -279,6 +279,15 @@ class PromptManager:
             text_content = [{"type": "text", "text": content}]
             image_content = [{"type": "image", "image": image} for image in doc.images]
             message = {"role": "user", "content": text_content + image_content}
+
+            if (
+                system_prompt is not None or instruction is not None
+            ):  # We add system prompt and instruction jointly if possible
+                system_prompt = system_prompt if system_prompt is not None else ""
+                instruction = instruction if instruction is not None else ""
+                system_prompt_message = {"role": "system", "content": system_prompt + instruction}
+                return [system_prompt_message, message]
+
             return [message]
 
         # Regular text (not multimodal)

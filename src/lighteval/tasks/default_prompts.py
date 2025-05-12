@@ -66,7 +66,7 @@ def mmmu_pro(line, task_name: Optional[str] = None):
 
     # Construct prompt
     formatted_choices = "\n".join(choices)
-    prompt = f"{question}\n{formatted_choices}\n{instructions}"
+    prompt = f"{instructions}\n{question}\n{formatted_choices}"
 
     # Collect images
     image_order = []
@@ -74,7 +74,7 @@ def mmmu_pro(line, task_name: Optional[str] = None):
         num = int(num)
         if num not in image_order:
             image_order.append(num)
-    images = [line[f"image_{i}"] for i in image_order]
+    images = [line[f"image_{i}"].convert("RGB") for i in image_order]
 
     gold_index = string.ascii_uppercase.index(answer)
 
@@ -89,6 +89,7 @@ def mmmu_pro(line, task_name: Optional[str] = None):
         gold_index=gold_index,
         images=images,
         specific={"id": line["id"]},
+        instruction=instructions,
     )
 
 

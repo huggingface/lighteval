@@ -42,7 +42,8 @@ from lighteval.models.sglang.sglang_model import SGLangModel, SGLangModelConfig
 from lighteval.models.transformers.adapter_model import AdapterModel, AdapterModelConfig
 from lighteval.models.transformers.delta_model import DeltaModel, DeltaModelConfig
 from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
-from lighteval.models.transformers.vlm_transformers import VLMTransformersModel
+from lighteval.models.transformers.vlm_transformers_model import VLMTransformersModel, VLMTransformersModelConfig
+from lighteval.models.utils import ModelConfig
 from lighteval.models.vllm.vllm_model import VLLMModel, VLLMModelConfig
 from lighteval.utils.imports import (
     NO_LITELLM_ERROR_MSG,
@@ -61,21 +62,8 @@ logger = logging.getLogger(__name__)
 
 
 def load_model(  # noqa: C901
-    config: Union[
-        TransformersModelConfig,
-        AdapterModelConfig,
-        DeltaModelConfig,
-        TGIModelConfig,
-        InferenceEndpointModelConfig,
-        DummyModelConfig,
-        VLLMModelConfig,
-        CustomModelConfig,
-        OpenAIModelConfig,
-        LiteLLMModelConfig,
-        SGLangModelConfig,
-        InferenceProvidersModelConfig,
-    ],
-) -> Union[TransformersModel, AdapterModel, DeltaModel, ModelClient, DummyModel]:
+    config: ModelConfig,
+) -> LightevalModel:
     """Will load either a model from an inference server or a model from a checkpoint, depending
     on the config type.
 
@@ -99,6 +87,9 @@ def load_model(  # noqa: C901
         return load_model_with_inference_endpoints(config)
 
     if isinstance(config, TransformersModelConfig):
+        return load_model_with_accelerate_or_default(config)
+
+    if isinstance(config, VLMTransformersModelConfig):
         return load_model_with_accelerate_or_default(config)
 
     if isinstance(config, DummyModelConfig):
@@ -187,7 +178,9 @@ def load_model_with_inference_endpoints(config: Union[InferenceEndpointModelConf
 
 
 def load_model_with_accelerate_or_default(
-    config: Union[AdapterModelConfig, TransformersModelConfig, DeltaModelConfig],
+    config: Union[
+        AdapterModelConfig, TransformersModelConfig, DeltaModelConfig, VLLMModelConfig, VLMTransformersModelConfig
+    ],
 ):
     if isinstance(config, AdapterModelConfig):
         model = AdapterModel(config=config)
@@ -198,8 +191,11 @@ def load_model_with_accelerate_or_default(
             raise ImportError(NO_VLLM_ERROR_MSG)
         model = VLLMModel(config=config)
         return model
-    else:
+    elif isinstance(config, VLMTransformersModelConfig):
         model = VLMTransformersModel(config=config)
+        return model
+    else:
+        model = TransformersModel(config=config)
 
     return model
 
