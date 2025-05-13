@@ -375,9 +375,9 @@ class VLMTransformersModel(LightevalModel):
         """
 
         # Tokenizing context for sorting in the dataset
-        logger.info(f"Tokenizing requests context for sorting in the dataset")
+        logger.info("Tokenizing requests context for sorting in the dataset")
         self._tokenize_requests_context_inplace(requests)
-        logger.info(f"Done tokenizing!")
+        logger.info("Done tokenizing!")
 
         dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         collator = BatchCollator(
@@ -402,7 +402,7 @@ class VLMTransformersModel(LightevalModel):
                 batch_inputs = batch_inputs.to(self.device)
                 if self.torch_dtype is not None:
                     batch_inputs = batch_inputs.to(self.torch_dtype)
-                
+
                 max_new_tokens = self.config.generation_size or batch_requests[0].generation_size
                 outputs = self.model.generate(
                     **batch_inputs,
