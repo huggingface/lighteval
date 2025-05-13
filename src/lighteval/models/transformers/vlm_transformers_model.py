@@ -90,6 +90,8 @@ class VLMTransformersModelConfig(ModelConfig):
             argument of `from_pretrained` in the HuggingFace `transformers` API.
         processor (Optional[str]): HuggingFace Hub processor ID that will be
             used for preprocessing images and text.
+        use_fast_image_processor (Optional[bool]):
+            Whether to use a fast image processor. Not all VLMs support this yet.
         subfolder (Optional[str]): The subfolder within the model repository.
         revision (str): The revision of the model.
         batch_size (int): The batch size for model training.
@@ -124,6 +126,7 @@ class VLMTransformersModelConfig(ModelConfig):
 
     model_name: str
     processor: str | None = None
+    use_fast_image_processor: bool | None = None
     subfolder: str | None = None
     revision: str = "main"
     batch_size: PositiveInt = 1
@@ -319,6 +322,7 @@ class VLMTransformersModel(LightevalModel):
             padding_side="left",
             truncation_side="left",
             trust_remote_code=self.config.trust_remote_code,
+            use_fast=self.config.use_fast_image_processor,
         )
 
         return processor
@@ -371,7 +375,9 @@ class VLMTransformersModel(LightevalModel):
         """
 
         # Tokenizing context for sorting in the dataset
+        logger.info(f"Tokenizing requests context for sorting in the dataset")
         self._tokenize_requests_context_inplace(requests)
+        logger.info(f"Done tokenizing!")
 
         dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         collator = BatchCollator(
