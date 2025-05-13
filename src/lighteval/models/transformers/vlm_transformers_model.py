@@ -65,14 +65,6 @@ if is_accelerate_available():
     from accelerate.utils import gather_object, get_max_memory
 
 
-def preprocess_request(request, processor):
-    """Preprocess request to fill in the tokenized_context field for sorting in the dataset"""
-    request.stop_sequence = as_list(request.stop_sequence) + [processor.tokenizer.eos_token]
-    inputs = processor(text=request.context, images=request.images)
-    request.tokenized_context = inputs["input_ids"][0]
-    return request
-
-
 class BatchCollator:
     """Collator for batching requests"""
 
@@ -96,29 +88,20 @@ class VLMTransformersModelConfig(ModelConfig):
             HuggingFace Hub model ID name or the path to a pre-trained
             model to load. This is effectively the `pretrained_model_name_or_path`
             argument of `from_pretrained` in the HuggingFace `transformers` API.
-        accelerator (Accelerator): accelerator to use for model training.
-        tokenizer (Optional[str]): HuggingFace Hub tokenizer ID that will be
-            used for tokenization.
-        multichoice_continuations_start_space (Optional[bool]): Whether to add a
-            space at the start of each continuation in multichoice generation.
-            For example, context: "What is the capital of France?" and choices: "Paris", "London".
-            Will be tokenized as: "What is the capital of France? Paris" and "What is the capital of France? London".
-            True adds a space, False strips a space, None does nothing
-        pairwise_tokenization (bool): Whether to tokenize the context and continuation as separately or together.
+        processor (Optional[str]): HuggingFace Hub processor ID that will be
+            used for preprocessing images and text.
         subfolder (Optional[str]): The subfolder within the model repository.
         revision (str): The revision of the model.
         batch_size (int): The batch size for model training.
-        max_gen_toks (Optional[int]): The maximum number of tokens to generate.
+        generation_size (Optional[int]): The maximum number of tokens to generate.
         max_length (Optional[int]): The maximum length of the generated output.
         add_special_tokens (bool, optional, defaults to True): Whether to add special tokens to the input sequences.
-           If `None`, the default value will be set to `True` for seq2seq models (e.g. T5) and
-            `False` for causal models.
         model_parallel (bool, optional, defaults to None):
             True/False: force to use or not the `accelerate` library to load a large
             model across multiple devices.
             Default: None which corresponds to comparing the number of processes with
                 the number of GPUs. If it's smaller => model-parallelism, else not.
-        dtype (Union[str, torch.dtype], optional, defaults to None):):
+        dtype (Union[str, torch.dtype], optional, defaults to None):
             Converts the model weights to `dtype`, if specified. Strings get
             converted to `torch.dtype` objects (e.g. `float16` -> `torch.float16`).
             Use `dtype="auto"` to derive the type from the model's weights.
@@ -140,11 +123,11 @@ class VLMTransformersModelConfig(ModelConfig):
     """
 
     model_name: str
-    tokenizer: str | None = None  # TODO: rename to processor if possible
+    processor: str | None = None
     subfolder: str | None = None
     revision: str = "main"
-    batch_size: PositiveInt | None = None
-    generation_size: PositiveInt = 256
+    batch_size: PositiveInt = 1
+    generation_size: PositiveInt | None = None
     max_length: PositiveInt | None = None
     add_special_tokens: bool = True
     model_parallel: bool | None = None
@@ -153,7 +136,6 @@ class VLMTransformersModelConfig(ModelConfig):
     trust_remote_code: bool = False
     use_chat_template: bool = False
     compile: bool = False
-    pairwise_tokenization: bool = False
     device_map: str | None = None
 
     def get_model_sha(self):
@@ -327,7 +309,7 @@ class VLMTransformersModel(LightevalModel):
         Returns:
             transformers.ProcessorMixin: The created processor.
         """
-        processor_name = self.config.tokenizer or self.config.model_name
+        processor_name = self.config.processor or self.config.model_name
         revision, subfolder = self.config.revision, self.config.subfolder
         revision = revision if not subfolder else f"{revision}/{subfolder}"
 
@@ -366,13 +348,12 @@ class VLMTransformersModel(LightevalModel):
 
         return 2048
 
-    def _preprocess_requests(self, requests: list[GreedyUntilRequest]) -> list[GreedyUntilRequest]:
+    def _tokenize_requests_context_inplace(self, requests: list[GreedyUntilRequest]):
         """Preprocess requests to fill in the tokenized_context field for sorting in the dataset"""
-        new_requests = []
         for request in requests:
-            request = preprocess_request(request, self.processor)
-            new_requests.append(request)
-        return new_requests
+            request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
+            inputs = self.processor(text=request.context, images=request.images)
+            request.tokenized_context = inputs["input_ids"][0]
 
     def greedy_until(
         self,
@@ -389,7 +370,8 @@ class VLMTransformersModel(LightevalModel):
             list[GenerativeResponse]: list of generated responses.
         """
 
-        requests = self._preprocess_requests(requests)
+        # Tokenizing context for sorting in the dataset
+        self._tokenize_requests_context_inplace(requests)
 
         dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         collator = BatchCollator(
@@ -414,10 +396,12 @@ class VLMTransformersModel(LightevalModel):
                 batch_inputs = batch_inputs.to(self.device)
                 if self.torch_dtype is not None:
                     batch_inputs = batch_inputs.to(self.torch_dtype)
+                
+                max_new_tokens = self.config.generation_size or batch_requests[0].generation_size
                 outputs = self.model.generate(
                     **batch_inputs,
                     **self.generation_config_dict,  # custom generation params
-                    max_new_tokens=batch_requests[0].generation_size,
+                    max_new_tokens=max_new_tokens,
                     do_sample=batch_requests[0].do_sample,
                     num_return_sequences=batch_requests[0].num_samples,
                     output_logits=batch_requests[0].use_logits,
