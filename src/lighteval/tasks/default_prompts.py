@@ -51,12 +51,7 @@ def mmmu_pro(line, task_name: Optional[str] = None):
     answer = line["answer"]            # "A"
     # fmt: on
 
-    # TODO: Should be different for "vision"/"standard (4 options)" subsets
-    instructions = (
-        "Answer with the option letter from the given choices directly. "
-        "The last line of your response should be of the following format: "
-        "'Answer: $LETTER' (without quotes) where LETTER is one of options."
-    )
+    instructions = "Answer with the option letter from the given choices directly."
 
     # Preprocess choices
     # "[Paris, London, Berlin, Madrid]" -> ["A. Paris", "B. London", "C. Berlin", "D. Madrid"]
@@ -90,6 +85,38 @@ def mmmu_pro(line, task_name: Optional[str] = None):
         images=images,
         specific={"id": line["id"]},
         instruction=instructions,
+    )
+
+
+def mmmu_pro_vision(line, task_name: str = None):
+    instruction = (
+        "Answer with the option letter from the given choices directly."
+        " The last line of your response should be of the following format: "
+        "'Answer: $LETTER' (without quotes) where LETTER is one of options."
+    )
+
+    # Preprocess choices
+    # "[Paris, London, Berlin, Madrid]" -> ["A. Paris", "B. London", "C. Berlin", "D. Madrid"]
+    choices_string = line["options"]
+    choices = ast.literal_eval(str(choices_string))
+    choices_letters = [chr(ord("A") + i) for i in range(len(choices))]  # ["A", "B", "C", "D"]
+    choices = [f"{letter}. {choice}" for letter, choice in zip(choices_letters, choices)]
+
+    # Preprocess answer
+    # e.g. "A" -> 0
+    answer = line["answer"]
+    gold_index = string.ascii_uppercase.index(answer)
+
+    # Preprocess images
+    images = [line["image"]]
+
+    return Doc(
+        task_name=task_name,
+        query=instruction,
+        choices=choices,
+        gold_index=gold_index,
+        images=images,
+        instruction=instruction,
     )
 
 
