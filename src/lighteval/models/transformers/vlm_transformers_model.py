@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import logging
+import os
 from typing import Optional, Tuple, Union
 
 import torch
@@ -61,12 +62,13 @@ if is_accelerate_available():
     from datetime import timedelta
 
     from accelerate import Accelerator, InitProcessGroupKwargs
+    from accelerate.utils import gather_object, get_max_memory
 
 
 def preprocess_request(request, processor):
     """Preprocess request to fill in the tokenized_context field for sorting in the dataset"""
     request.stop_sequence = as_list(request.stop_sequence) + [processor.tokenizer.eos_token]
-    inputs = processor(text=request.context, images=request.images, do_convert_rgb=True)
+    inputs = processor(text=request.context, images=request.images)
     request.tokenized_context = inputs["input_ids"][0]
     return request
 
@@ -194,11 +196,6 @@ class VLMTransformersModel(LightevalModel):
         self._max_length = self._init_max_length()
         self._add_special_tokens = config.add_special_tokens or False
 
-        # We are in DP (and launch the script with `accelerate launch`)
-        if config.model_parallel is False and self.config.dtype not in ["4bit", "8bit"]:
-            logger.info(f"Using Data Parallelism, putting model on device {self.device}")
-            self.model = self.model.to(self.device)
-
         # Generation config
         self.generation_config_dict = config.generation_parameters.to_transformers_dict()
         self.generation_config_dict["pad_token_id"] = self.pad_token_id
@@ -238,8 +235,49 @@ class VLMTransformersModel(LightevalModel):
             disable_tqdm = bool(not self.accelerator.is_main_process)
         return disable_tqdm
 
+    # Copied from ./transformers_model.py
     def init_model_parallel(self, model_parallel: bool | None = None) -> Tuple[bool, Optional[dict], Optional[str]]:
-        raise NotImplementedError("Model parallel is not supported for VLM models yet.")
+        """Compute all the parameters related to model_parallel"""
+        if not is_accelerate_available():
+            return False, None, None
+
+        self.num_local_processes = int(os.environ.get("LOCAL_WORLD_SIZE", 1))
+        self.num_machines = torch.cuda.device_count() // self.num_local_processes
+
+        if self.num_machines == 1:
+            logger.info("We are not in a distributed setting. Setting model_parallel to False.")
+            model_parallel = False
+
+        if model_parallel is None:
+            max_memory_all_gpus = get_max_memory()  # A dict of the max memory for all the gpus
+            if "cpu" in max_memory_all_gpus:
+                del max_memory_all_gpus["cpu"]
+            model_parallel = bool(self.num_local_processes < len(max_memory_all_gpus))
+            logger.info(
+                f"Setting model parallel to {model_parallel} since "
+                f"the number of local processes is {self.num_local_processes} "
+                f"and the number of GPUs is {len(max_memory_all_gpus)}"
+            )
+        if model_parallel is True:
+            max_memory_all_gpus = get_max_memory()  # A dict of the max memory for all the gpus
+            if "cpu" in max_memory_all_gpus:
+                del max_memory_all_gpus["cpu"]
+            max_mem_this_process = {
+                k: v
+                for k, v in max_memory_all_gpus.items()
+                if k % self.num_local_processes == (self.accelerator.process_index % self.num_local_processes)
+            }
+            device_map = "auto"
+            logger.info(
+                f"Model parallel was set to True, setting max memory per GPU to {max_mem_this_process} and device map to {device_map}"
+            )
+        else:
+            max_mem_this_process = None
+            device_map = None
+            logger.info(
+                f"Model parallel was set to False, max memory set to {max_mem_this_process} and device map to {device_map}"
+            )
+        return model_parallel, max_mem_this_process, device_map
 
     @staticmethod
     def _get_quantization_config(config: VLMTransformersModelConfig) -> BitsAndBytesConfig | None:
@@ -252,7 +290,8 @@ class VLMTransformersModel(LightevalModel):
         return quantization_config
 
     def _create_auto_model(self):
-        # TODO: model parallel / device_map
+        model_parallel, max_memory, device_map = self.init_model_parallel(self.config.model_parallel)
+        self.config.model_parallel = model_parallel
 
         quantization_config = self._get_quantization_config(self.config)
 
@@ -262,7 +301,8 @@ class VLMTransformersModel(LightevalModel):
         model = AutoModelForImageTextToText.from_pretrained(
             self.config.model_name,
             revision=revision,
-            device_map="auto",
+            device_map=device_map,
+            max_memory=max_memory,
             torch_dtype=self.torch_dtype,
             quantization_config=quantization_config,
             trust_remote_code=self.config.trust_remote_code,
@@ -272,6 +312,11 @@ class VLMTransformersModel(LightevalModel):
 
         if self.config.compile:
             raise NotImplementedError("Compiling VLM models is not supported yet")
+
+        # We are in DP (and launch the script with `accelerate launch`)
+        if model_parallel is False and self.config.dtype not in ["4bit", "8bit"]:
+            logger.info(f"Using Data Parallelism, putting model on device {self.device}")
+            model = model.to(self.device)
 
         return model
 
@@ -358,7 +403,6 @@ class VLMTransformersModel(LightevalModel):
 
         results = []
         for split in dataset.splits_iterator():
-            # TODO: dynamic batch size?
             batch_size = self.batch_size or 1
             dataloader = DataLoader(split, batch_size=batch_size, collate_fn=collator)
             if self.accelerator:
@@ -384,16 +428,22 @@ class VLMTransformersModel(LightevalModel):
                 attention_mask = batch_inputs["attention_mask"]
                 padded_tokens_count = (attention_mask == 0).sum(dim=1)
 
+                batch_results = []
                 for i in range(len(generated_texts)):
                     generated_response = GenerativeResponse(
                         result=generated_texts[i],
-                        generated_tokens=generated_tokens[i],
-                        input_tokens=input_tokens[i],
-                        truncated_tokens_count=-1,  # TODO: can we avoid providing it?
+                        generated_tokens=generated_tokens[i].cpu().numpy(),
+                        input_tokens=input_tokens[i].cpu().numpy(),
+                        truncated_tokens_count=-1,
                         padded_tokens_count=padded_tokens_count[i].item(),
-                        logits=outputs.logits[i] if outputs.logits is not None else None,
+                        logits=outputs.logits[i].cpu().numpy() if outputs.logits is not None else None,
                     )
-                    results.append(generated_response)
+                    batch_results.append(generated_response)
+
+                if self.accelerator:
+                    batch_results = gather_object(batch_results)
+
+                results.extend(batch_results)
 
         return dataset.get_original_order(results)
 
