@@ -151,7 +151,7 @@ class Language(Enum):
     NORTH_AZERBAIJANI = "azj"
     NORTH_LEVANTINE_ARABIC = "apc"
     NORWEGIAN = "nor"
-    NORWEGIAN_BOKMÅL = "nob"
+    NORWEGIAN_BOKMAL = "nob"
     NORWEGIAN_NYNORSK = "nno"
     NUER = "nus"
     NYANJA = "nya"
