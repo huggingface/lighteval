@@ -3908,7 +3908,7 @@ TASKS_TABLE.extend(
 )
 
 # ------------------------------- Translation Tasks ------------------------------- #
-flores_languages = [
+flores_200_languages = [
     "ace_Arab",
     "ace_Latn",
     "acm_Arab",
@@ -4119,8 +4119,8 @@ flores200_tasks = [
     LightevalTaskConfig(
         name=f"flores200_{language1}_{language2}",
         prompt_function=get_translation_prompt_function(
-            source_language=Language(language1.split("_")[0]),
-            target_language=Language(language2.split("_")[0]),
+            source_language=Language(language1),
+            target_language=Language(language2),
             adapter=lambda line: {"source_text": line[language1], "target_text": line[language2]},
             formulation=CFFormulation(),
         ),
@@ -4137,32 +4137,7 @@ flores200_tasks = [
         trust_dataset=True,
         version=0,
     )
-    for (language1, language2) in combinations(flores_languages, 2)
-]
-
-flores_plus_tasks = [
-    LightevalTaskConfig(
-        name=f"flores_plus_{language1}_{language2}",
-        prompt_function=get_translation_prompt_function(
-            source_language=Language(language1.split("_")[0]),
-            target_language=Language(language2.split("_")[0]),
-            adapter=lambda line: {"source_text": line[language1], "target_text": line[language2]},
-            formulation=CFFormulation(),
-        ),
-        suite=("lighteval",),
-        hf_repo="lighteval/flores_plus",  # todo
-        hf_subset=f"{language1}-{language2}",
-        hf_avail_splits=["dev", "devtest"],
-        evaluation_splits=["devtest"],
-        few_shots_split="dev",
-        few_shots_select=None,
-        generation_size=300,
-        metric=[Metrics.chrf, Metrics.bleu, Metrics.bleu_1, Metrics.bleu_4],
-        stop_sequence=["\n"],
-        trust_dataset=True,
-        version=0,
-    )
-    for (language1, language2) in combinations(flores_languages, 2)
+    for (language1, language2) in combinations(flores_200_languages, 2)
 ]
 
 TASKS_TABLE.extend(
