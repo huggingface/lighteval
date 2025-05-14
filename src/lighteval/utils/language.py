@@ -143,7 +143,6 @@ class Language(Enum):
     MOSSI = "mos"
     NAJDI_ARABIC = "ars"
     NEPALI = "nep"
-    # NEPALI = "npi"
     NIGERIAN_FULFULDE = "fuv"
     NORTHERN_KURDISH = "kmr"
     NORTHERN_SOTHO = "nso"
@@ -199,7 +198,6 @@ class Language(Enum):
     STANDARD_TIBETAN = "bod"
     SUNDANESE = "sun"
     SWAHILI = "swa"
-    # SWAHILI = "swh"
     SWATI = "ssw"
     SWEDISH = "swe"
     TAGALOG = "tgl"
@@ -256,6 +254,14 @@ class Language(Enum):
 #     lang = lang_old.macro() if lang_old.macro() else lang_old
 #     output[lang_old.pt3] = lang.pt3
 # ```
+
+
+def manage_duplicate_language_codes(langcode):
+    if langcode == "npi":  # Nepali
+        langcode = "nep"
+    if langcode == "swh":  # Swahili
+        langcode = "swa"
+    return langcode
 
 
 iso_639_3_ind_to_iso_639_3_macro = {

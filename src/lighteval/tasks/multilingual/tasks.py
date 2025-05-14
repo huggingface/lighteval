@@ -61,7 +61,7 @@ from lighteval.tasks.templates.utils.formulation import (
     MCFFormulation,
 )
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
-from lighteval.utils.language import Language, iso_639_3_ind_to_iso_639_3_macro
+from lighteval.utils.language import Language, iso_639_3_ind_to_iso_639_3_macro, manage_duplicate_language_codes
 
 
 TASKS_TABLE = []
@@ -4115,33 +4115,37 @@ flores_200_languages = [
     "zul_Latn",
 ]
 
+
+def flores_adapter(lang1, lang2):
+    return lambda line: {
+        "source_text": line[f"sentence_{lang1}"],
+        "target_text": line[f"sentence_{lang2}"],
+    }
+
+
 flores200_tasks = [
     LightevalTaskConfig(
-        name=f"flores200:{language1}-{language2}",
+        name=f"flores200:{lang1}-{lang2}",
         prompt_function=get_translation_prompt_function(
-            source_language=Language(language1.split("_")[0])
-            if language1 not in ["npi", "swh"]
-            else (Language.NEPALI if language1 == "npi" else Language.SWAHILI),
-            target_language=Language(language2.split("_")[0])
-            if language2 not in ["npi", "swh"]
-            else (Language.NEPALI if language2 == "npi" else Language.SWAHILI),
-            adapter=lambda line: {"source_text": line[language1], "target_text": line[language2]},
+            source_language=Language(manage_duplicate_language_codes(lang1.split("_")[0])),
+            target_language=Language(manage_duplicate_language_codes(lang2.split("_")[0])),
+            adapter=flores_adapter(lang1, lang2),
             formulation=CFFormulation(),
         ),
         suite=("lighteval",),
         hf_repo="facebook/flores",
-        hf_subset=f"{language1}-{language2}",
+        hf_subset=f"{lang1}-{lang2}",
         hf_avail_splits=["dev", "devtest"],
         evaluation_splits=["devtest"],
         few_shots_split="dev",
         few_shots_select=None,
         generation_size=300,
-        metric=[Metrics.chrf, Metrics.bleu, Metrics.bleu_1, Metrics.bleu_4],
+        metric=[Metrics.chrf_plus, Metrics.bleu, Metrics.bleu_1, Metrics.bleu_4],
         stop_sequence=["\n"],
         trust_dataset=True,
         version=0,
     )
-    for (language1, language2) in combinations(flores_200_languages, 2)
+    for (lang1, lang2) in combinations(flores_200_languages, 2)
 ]
 
 TASKS_TABLE.extend(

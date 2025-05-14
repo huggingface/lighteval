@@ -779,6 +779,8 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         colon=":",
         indices=["А", "Б", "В", "Г", "Д", "Е"],
     ),
+    Language.SAMOAN: TranslationLiterals(language=Language.SAMOAN),
+    Language.SANGO: TranslationLiterals(language=Language.SANGO),
     Language.SANSKRIT: TranslationLiterals(language=Language.SANSKRIT),
     Language.SANTALI: TranslationLiterals(language=Language.SANTALI),
     Language.SARDINIAN: TranslationLiterals(language=Language.SARDINIAN),
