@@ -4117,10 +4117,14 @@ flores_200_languages = [
 
 flores200_tasks = [
     LightevalTaskConfig(
-        name=f"flores200_{language1}_{language2}",
+        name=f"flores200:{language1}-{language2}",
         prompt_function=get_translation_prompt_function(
-            source_language=Language(language1),
-            target_language=Language(language2),
+            source_language=Language(language1)
+            if language1 not in ["npi", "swh"]
+            else (Language.NEPALI if language1 == "npi" else Language.SWAHILI),
+            target_language=Language(language2)
+            if language2 not in ["npi", "swh"]
+            else (Language.NEPALI if language2 == "npi" else Language.SWAHILI),
             adapter=lambda line: {"source_text": line[language1], "target_text": line[language2]},
             formulation=CFFormulation(),
         ),
