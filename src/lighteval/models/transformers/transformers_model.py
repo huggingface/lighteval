@@ -22,7 +22,7 @@
 
 import logging
 import os
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, Dict
 
 import torch
 import torch.nn.functional as F
@@ -591,33 +591,32 @@ class TransformersModel(LightevalModel):
                 num_samples=num_samples,
             )
 
-        for _output in _outputs:
-            output_token_ids = []
-            logprobs_raw = []
-            result = []
+            for req_id, _output in _outputs.items():
+                output_token_ids = []
+                logprobs_raw = []
+                result = []
 
-            # for output in _output.outputs:
-            output_token_ids.append(_output["output_ids"])
-            # logprobs_raw.append(output.logprobs)
-            result.append(self.tokenizer.decode(_output["output_ids"]))
+                # for output in _output.outputs:
+                output_token_ids.append(_output.static_outputs)
+                # logprobs_raw.append(output.logprobs)
+                result.append(self.tokenizer.decode(_output.static_outputs))
 
-            if logprobs_raw and output_token_ids and False:
-                logprobs = [
-                    logprobs_raw[0][token_id].logprob
-                    for token_id in output_token_ids[0]
-                ]
-            else:
-                logprobs = []
+                if logprobs_raw and output_token_ids and False:
+                    logprobs = [
+                        logprobs_raw[0][token_id].logprob
+                        for token_id in output_token_ids[0]
+                    ]
+                else:
+                    logprobs = []
 
-            input_token_ids = _output["prompt_token_ids"]
-
-            cur_response = GenerativeResponse(
-                result=result,
-                logits=logprobs,
-                generated_tokens=output_token_ids,
-                input_tokens=input_token_ids,
-            )
-            results.append(cur_response)
+                input_token_ids = _output.full_prompt_ids
+                cur_response = GenerativeResponse(
+                    result=result,
+                    logits=logprobs,
+                    generated_tokens=output_token_ids,
+                    input_tokens=input_token_ids,
+                )
+                results.append(cur_response)
 
         return dataset.get_original_order(results)
 
@@ -762,7 +761,7 @@ class TransformersModel(LightevalModel):
         returns_logits: Optional[bool] = False,
         num_samples: int = 1,
         generate: bool = True,
-    ) -> list[GenerativeResponse]:
+    ) -> Dict[str, GenerativeResponse]:
         # Compute model generation
         batch_outputs = self.model.generate_batch(
             inputs=inputs,
