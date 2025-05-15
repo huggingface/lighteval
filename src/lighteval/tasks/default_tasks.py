@@ -40,7 +40,6 @@ ruler_niah_single_1_131072 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_single_3_131072 = LightevalTaskConfig(
     name="ruler_131072:niah_single_3",
     suite=["lighteval"],
@@ -57,7 +56,6 @@ ruler_niah_single_3_131072 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_single_2_131072 = LightevalTaskConfig(
     name="ruler_131072:niah_single_2",
     suite=["lighteval"],
@@ -74,7 +72,6 @@ ruler_niah_single_2_131072 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multikey_1_131072 = LightevalTaskConfig(
     name="ruler_131072:niah_multikey_1",
     suite=["lighteval"],
@@ -91,7 +88,6 @@ ruler_niah_multikey_1_131072 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multikey_2_131072 = LightevalTaskConfig(
     name="ruler_131072:niah_multikey_2",
     suite=["lighteval"],
@@ -108,7 +104,6 @@ ruler_niah_multikey_2_131072 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multiquery_131072 = LightevalTaskConfig(
     name="ruler_131072:niah_multiquery",
     suite=["lighteval"],
@@ -125,7 +120,6 @@ ruler_niah_multiquery_131072 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multikey_3_131072 = LightevalTaskConfig(
     name="ruler_131072:niah_multikey_3",
     suite=["lighteval"],
@@ -142,7 +136,6 @@ ruler_niah_multikey_3_131072 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multivalue_131072 = LightevalTaskConfig(
     name="ruler_131072:niah_multivalue",
     suite=["lighteval"],
@@ -159,7 +152,6 @@ ruler_niah_multivalue_131072 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_vt_131072 = LightevalTaskConfig(
     name="ruler_131072:vt",
     suite=["lighteval"],
@@ -176,7 +168,6 @@ ruler_vt_131072 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_cwe_131072 = LightevalTaskConfig(
     name="ruler_131072:cwe",
     suite=["lighteval"],
@@ -193,7 +184,6 @@ ruler_cwe_131072 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_fwe_131072 = LightevalTaskConfig(
     name="ruler_131072:fwe",
     suite=["lighteval"],
@@ -210,7 +200,6 @@ ruler_fwe_131072 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_qa_1_131072 = LightevalTaskConfig(
     name="ruler_131072:qa_1",
     suite=["lighteval"],
@@ -227,7 +216,6 @@ ruler_qa_1_131072 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_qa_2_131072 = LightevalTaskConfig(
     name="ruler_131072:qa_2",
     suite=["lighteval"],
@@ -244,24 +232,6 @@ ruler_qa_2_131072 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
-ruler_niah_single_1_65536 = LightevalTaskConfig(
-    name="ruler_65536:niah_single_1",
-    suite=["lighteval"],
-    prompt_function=prompt.ruler,
-    hf_repo="SaylorTwift/RULER-65536-llama-3.1-tokenizer-chat-template",
-    hf_subset="default",
-    hf_avail_splits=["niah_single_1"],
-    evaluation_splits=["niah_single_1"],
-    few_shots_split=None,
-    few_shots_select=None,
-    generation_size=128,
-    metric=[Metrics.ruler_match_all],
-    stop_sequence=None,
-    trust_dataset=False,
-    version=0,
-)
-
 ruler_niah_single_3_65536 = LightevalTaskConfig(
     name="ruler_65536:niah_single_3",
     suite=["lighteval"],
@@ -278,7 +248,6 @@ ruler_niah_single_3_65536 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_single_2_65536 = LightevalTaskConfig(
     name="ruler_65536:niah_single_2",
     suite=["lighteval"],
@@ -295,7 +264,6 @@ ruler_niah_single_2_65536 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multikey_1_65536 = LightevalTaskConfig(
     name="ruler_65536:niah_multikey_1",
     suite=["lighteval"],
@@ -312,7 +280,6 @@ ruler_niah_multikey_1_65536 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multikey_2_65536 = LightevalTaskConfig(
     name="ruler_65536:niah_multikey_2",
     suite=["lighteval"],
@@ -329,7 +296,6 @@ ruler_niah_multikey_2_65536 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multiquery_65536 = LightevalTaskConfig(
     name="ruler_65536:niah_multiquery",
     suite=["lighteval"],
@@ -346,7 +312,6 @@ ruler_niah_multiquery_65536 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multikey_3_65536 = LightevalTaskConfig(
     name="ruler_65536:niah_multikey_3",
     suite=["lighteval"],
@@ -363,7 +328,6 @@ ruler_niah_multikey_3_65536 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multivalue_65536 = LightevalTaskConfig(
     name="ruler_65536:niah_multivalue",
     suite=["lighteval"],
@@ -380,7 +344,6 @@ ruler_niah_multivalue_65536 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_vt_65536 = LightevalTaskConfig(
     name="ruler_65536:vt",
     suite=["lighteval"],
@@ -397,7 +360,6 @@ ruler_vt_65536 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_cwe_65536 = LightevalTaskConfig(
     name="ruler_65536:cwe",
     suite=["lighteval"],
@@ -414,7 +376,6 @@ ruler_cwe_65536 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_fwe_65536 = LightevalTaskConfig(
     name="ruler_65536:fwe",
     suite=["lighteval"],
@@ -431,7 +392,6 @@ ruler_fwe_65536 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_qa_1_65536 = LightevalTaskConfig(
     name="ruler_65536:qa_1",
     suite=["lighteval"],
@@ -448,7 +408,6 @@ ruler_qa_1_65536 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_qa_2_65536 = LightevalTaskConfig(
     name="ruler_65536:qa_2",
     suite=["lighteval"],
@@ -465,7 +424,6 @@ ruler_qa_2_65536 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_single_1_32768 = LightevalTaskConfig(
     name="ruler_32768:niah_single_1",
     suite=["lighteval"],
@@ -482,7 +440,6 @@ ruler_niah_single_1_32768 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_single_3_32768 = LightevalTaskConfig(
     name="ruler_32768:niah_single_3",
     suite=["lighteval"],
@@ -499,7 +456,6 @@ ruler_niah_single_3_32768 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_single_2_32768 = LightevalTaskConfig(
     name="ruler_32768:niah_single_2",
     suite=["lighteval"],
@@ -516,7 +472,6 @@ ruler_niah_single_2_32768 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multikey_1_32768 = LightevalTaskConfig(
     name="ruler_32768:niah_multikey_1",
     suite=["lighteval"],
@@ -533,7 +488,6 @@ ruler_niah_multikey_1_32768 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multikey_2_32768 = LightevalTaskConfig(
     name="ruler_32768:niah_multikey_2",
     suite=["lighteval"],
@@ -550,7 +504,6 @@ ruler_niah_multikey_2_32768 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multiquery_32768 = LightevalTaskConfig(
     name="ruler_32768:niah_multiquery",
     suite=["lighteval"],
@@ -567,7 +520,6 @@ ruler_niah_multiquery_32768 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multikey_3_32768 = LightevalTaskConfig(
     name="ruler_32768:niah_multikey_3",
     suite=["lighteval"],
@@ -584,7 +536,6 @@ ruler_niah_multikey_3_32768 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multivalue_32768 = LightevalTaskConfig(
     name="ruler_32768:niah_multivalue",
     suite=["lighteval"],
@@ -601,7 +552,6 @@ ruler_niah_multivalue_32768 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_vt_32768 = LightevalTaskConfig(
     name="ruler_32768:vt",
     suite=["lighteval"],
@@ -618,7 +568,6 @@ ruler_vt_32768 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_cwe_32768 = LightevalTaskConfig(
     name="ruler_32768:cwe",
     suite=["lighteval"],
@@ -635,7 +584,6 @@ ruler_cwe_32768 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_fwe_32768 = LightevalTaskConfig(
     name="ruler_32768:fwe",
     suite=["lighteval"],
@@ -652,7 +600,6 @@ ruler_fwe_32768 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_qa_1_32768 = LightevalTaskConfig(
     name="ruler_32768:qa_1",
     suite=["lighteval"],
@@ -669,7 +616,6 @@ ruler_qa_1_32768 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_qa_2_32768 = LightevalTaskConfig(
     name="ruler_32768:qa_2",
     suite=["lighteval"],
@@ -686,7 +632,6 @@ ruler_qa_2_32768 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_single_1_16384 = LightevalTaskConfig(
     name="ruler_16384:niah_single_1",
     suite=["lighteval"],
@@ -703,7 +648,6 @@ ruler_niah_single_1_16384 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_single_3_16384 = LightevalTaskConfig(
     name="ruler_16384:niah_single_3",
     suite=["lighteval"],
@@ -720,7 +664,6 @@ ruler_niah_single_3_16384 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_single_2_16384 = LightevalTaskConfig(
     name="ruler_16384:niah_single_2",
     suite=["lighteval"],
@@ -737,7 +680,6 @@ ruler_niah_single_2_16384 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multikey_1_16384 = LightevalTaskConfig(
     name="ruler_16384:niah_multikey_1",
     suite=["lighteval"],
@@ -754,7 +696,6 @@ ruler_niah_multikey_1_16384 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multikey_2_16384 = LightevalTaskConfig(
     name="ruler_16384:niah_multikey_2",
     suite=["lighteval"],
@@ -771,7 +712,6 @@ ruler_niah_multikey_2_16384 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multiquery_16384 = LightevalTaskConfig(
     name="ruler_16384:niah_multiquery",
     suite=["lighteval"],
@@ -788,7 +728,6 @@ ruler_niah_multiquery_16384 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multikey_3_16384 = LightevalTaskConfig(
     name="ruler_16384:niah_multikey_3",
     suite=["lighteval"],
@@ -805,7 +744,6 @@ ruler_niah_multikey_3_16384 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multivalue_16384 = LightevalTaskConfig(
     name="ruler_16384:niah_multivalue",
     suite=["lighteval"],
@@ -822,7 +760,6 @@ ruler_niah_multivalue_16384 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_vt_16384 = LightevalTaskConfig(
     name="ruler_16384:vt",
     suite=["lighteval"],
@@ -839,7 +776,6 @@ ruler_vt_16384 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_cwe_16384 = LightevalTaskConfig(
     name="ruler_16384:cwe",
     suite=["lighteval"],
@@ -856,7 +792,6 @@ ruler_cwe_16384 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_fwe_16384 = LightevalTaskConfig(
     name="ruler_16384:fwe",
     suite=["lighteval"],
@@ -873,7 +808,6 @@ ruler_fwe_16384 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_qa_1_16384 = LightevalTaskConfig(
     name="ruler_16384:qa_1",
     suite=["lighteval"],
@@ -890,7 +824,6 @@ ruler_qa_1_16384 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_qa_2_16384 = LightevalTaskConfig(
     name="ruler_16384:qa_2",
     suite=["lighteval"],
@@ -907,7 +840,6 @@ ruler_qa_2_16384 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_single_1_8192 = LightevalTaskConfig(
     name="ruler_8192:niah_single_1",
     suite=["lighteval"],
@@ -924,7 +856,6 @@ ruler_niah_single_1_8192 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_single_3_8192 = LightevalTaskConfig(
     name="ruler_8192:niah_single_3",
     suite=["lighteval"],
@@ -941,7 +872,6 @@ ruler_niah_single_3_8192 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_single_2_8192 = LightevalTaskConfig(
     name="ruler_8192:niah_single_2",
     suite=["lighteval"],
@@ -958,7 +888,6 @@ ruler_niah_single_2_8192 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multikey_1_8192 = LightevalTaskConfig(
     name="ruler_8192:niah_multikey_1",
     suite=["lighteval"],
@@ -975,7 +904,6 @@ ruler_niah_multikey_1_8192 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multikey_2_8192 = LightevalTaskConfig(
     name="ruler_8192:niah_multikey_2",
     suite=["lighteval"],
@@ -992,7 +920,6 @@ ruler_niah_multikey_2_8192 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multiquery_8192 = LightevalTaskConfig(
     name="ruler_8192:niah_multiquery",
     suite=["lighteval"],
@@ -1009,7 +936,6 @@ ruler_niah_multiquery_8192 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multikey_3_8192 = LightevalTaskConfig(
     name="ruler_8192:niah_multikey_3",
     suite=["lighteval"],
@@ -1026,7 +952,6 @@ ruler_niah_multikey_3_8192 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multivalue_8192 = LightevalTaskConfig(
     name="ruler_8192:niah_multivalue",
     suite=["lighteval"],
@@ -1043,7 +968,6 @@ ruler_niah_multivalue_8192 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_vt_8192 = LightevalTaskConfig(
     name="ruler_8192:vt",
     suite=["lighteval"],
@@ -1060,7 +984,6 @@ ruler_vt_8192 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_cwe_8192 = LightevalTaskConfig(
     name="ruler_8192:cwe",
     suite=["lighteval"],
@@ -1077,7 +1000,6 @@ ruler_cwe_8192 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_fwe_8192 = LightevalTaskConfig(
     name="ruler_8192:fwe",
     suite=["lighteval"],
@@ -1094,7 +1016,6 @@ ruler_fwe_8192 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_qa_1_8192 = LightevalTaskConfig(
     name="ruler_8192:qa_1",
     suite=["lighteval"],
@@ -1111,7 +1032,6 @@ ruler_qa_1_8192 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_qa_2_8192 = LightevalTaskConfig(
     name="ruler_8192:qa_2",
     suite=["lighteval"],
@@ -1128,7 +1048,6 @@ ruler_qa_2_8192 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_single_1_4096 = LightevalTaskConfig(
     name="ruler_4096:niah_single_1",
     suite=["lighteval"],
@@ -1145,7 +1064,6 @@ ruler_niah_single_1_4096 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_single_3_4096 = LightevalTaskConfig(
     name="ruler_4096:niah_single_3",
     suite=["lighteval"],
@@ -1162,7 +1080,6 @@ ruler_niah_single_3_4096 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_single_2_4096 = LightevalTaskConfig(
     name="ruler_4096:niah_single_2",
     suite=["lighteval"],
@@ -1179,7 +1096,6 @@ ruler_niah_single_2_4096 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multikey_1_4096 = LightevalTaskConfig(
     name="ruler_4096:niah_multikey_1",
     suite=["lighteval"],
@@ -1196,7 +1112,6 @@ ruler_niah_multikey_1_4096 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multikey_2_4096 = LightevalTaskConfig(
     name="ruler_4096:niah_multikey_2",
     suite=["lighteval"],
@@ -1213,7 +1128,6 @@ ruler_niah_multikey_2_4096 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multiquery_4096 = LightevalTaskConfig(
     name="ruler_4096:niah_multiquery",
     suite=["lighteval"],
@@ -1230,7 +1144,6 @@ ruler_niah_multiquery_4096 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multikey_3_4096 = LightevalTaskConfig(
     name="ruler_4096:niah_multikey_3",
     suite=["lighteval"],
@@ -1247,7 +1160,6 @@ ruler_niah_multikey_3_4096 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_niah_multivalue_4096 = LightevalTaskConfig(
     name="ruler_4096:niah_multivalue",
     suite=["lighteval"],
@@ -1264,7 +1176,6 @@ ruler_niah_multivalue_4096 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_vt_4096 = LightevalTaskConfig(
     name="ruler_4096:vt",
     suite=["lighteval"],
@@ -1281,7 +1192,6 @@ ruler_vt_4096 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_cwe_4096 = LightevalTaskConfig(
     name="ruler_4096:cwe",
     suite=["lighteval"],
@@ -1298,7 +1208,6 @@ ruler_cwe_4096 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_fwe_4096 = LightevalTaskConfig(
     name="ruler_4096:fwe",
     suite=["lighteval"],
@@ -1315,7 +1224,6 @@ ruler_fwe_4096 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_qa_1_4096 = LightevalTaskConfig(
     name="ruler_4096:qa_1",
     suite=["lighteval"],
@@ -1332,7 +1240,6 @@ ruler_qa_1_4096 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
 ruler_qa_2_4096 = LightevalTaskConfig(
     name="ruler_4096:qa_2",
     suite=["lighteval"],
@@ -1349,8 +1256,6 @@ ruler_qa_2_4096 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
-
-
 agieval_aqua_rat_lighteval = LightevalTaskConfig(
     name="agieval:aqua-rat",
     suite=["lighteval"],
