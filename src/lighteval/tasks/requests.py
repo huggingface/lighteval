@@ -55,10 +55,11 @@ class Request:
     """
 
     task_name: str
-    sample_index: int
+    sample_index: str
     request_index: int
     context: str
     metric_categories: list["MetricCategory"]  # noqa F821
+    fewshots: list[str]
 
 
 @dataclass
@@ -172,8 +173,9 @@ class Doc:
     query: str
     choices: list[str]
     gold_index: Union[int, list[int]]
+    id: str = ""
     original_query: Optional[str] = ""  # the query before preprocessing, if stored
-    specific: dict = None  # Information which is specific to the current eval
+    specific: dict | None = None  # Information which is specific to the current eval
     task_name: str = ""
 
     # For few-shot
@@ -189,6 +191,8 @@ class Doc:
     # log P(choice | Query) - log P(choice | Unconditioned Query)
     # The uncoditioned query shouldn't contain any information about the task, thus usually it's empty string or 'Answer:'.
     unconditioned_query: Optional[str] = None
+
+    fewshots: list[str] | None = None
 
     def __post_init__(self):
         if self.instruction is None:
