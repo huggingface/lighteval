@@ -43,13 +43,28 @@ INTEGER_INDICES = list(map(str, list(range(1, 27))))
 # fmt: on
 
 
+def ruler(line, task_name: str = None):
+    query = line["input"]
+    choices = line["outputs"]
+    gold_index = 0
+
+    return Doc(query=query, choices=choices, gold_index=gold_index, task_name=task_name)
+
+
 def simpleqa(line, task_name: str = None):
     query = line["problem"]
     choices = [line["answer"]]
     gold_index = 0
+    instruction = "Only answer the question to complete the prompt, without any additional text.\n"
+    query = f"{instruction}{query}"
 
     return Doc(
-        task_name=task_name, query=query, choices=choices, gold_index=gold_index, specific={**eval(line["metadata"])}
+        task_name=task_name,
+        query=query,
+        choices=choices,
+        instruction=instruction,
+        gold_index=gold_index,
+        specific={**eval(line["metadata"])},
     )
 
 
