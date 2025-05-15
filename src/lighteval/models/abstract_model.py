@@ -56,6 +56,7 @@ class ModelInfo:
 
 class LightevalModel(ABC):
     DATASET_SPLITS = 4
+    is_async = False
 
     """Abstract model class defining the API that every model to plug into lighteval must follow."""
 
