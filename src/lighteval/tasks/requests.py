@@ -23,11 +23,15 @@
 import json
 from dataclasses import asdict, dataclass
 from enum import Enum, auto
-from typing import NamedTuple, Optional, Union
+from typing import TYPE_CHECKING, NamedTuple, Optional, Union
 
 from huggingface_hub import TextGenerationInputGrammarType
 
 from lighteval.utils.utils import as_list
+
+
+if TYPE_CHECKING:
+    from PIL.Image import Image
 
 
 class RequestType(Enum):
@@ -75,6 +79,7 @@ class LoglikelihoodRequest(Request):
     request_type = RequestType.LOGLIKELIHOOD
     tokenized_context: list[int] = None
     tokenized_continuation: list[int] = None
+    images: Optional[list["Image"]] = None
 
 
 @dataclass
@@ -92,6 +97,7 @@ class LoglikelihoodSingleTokenRequest(Request):
     request_type = RequestType.LOGLIKELIHOOD_SINGLE_TOKEN
     tokenized_context: list[int] = None
     tokenized_continuation: list[int] = None
+    images: Optional[list["Image"]] = None
 
 
 @dataclass
@@ -105,6 +111,7 @@ class LoglikelihoodRollingRequest(Request):
     request_type = RequestType.LOGLIKELIHOOD_ROLLING
     tokenized_context: list[int] = None
     tokenized_continuation: list[int] = None
+    images: Optional[list["Image"]] = None
 
 
 @dataclass
@@ -128,6 +135,7 @@ class GreedyUntilRequest(Request):
     num_samples: int = None
     do_sample: bool = False
     use_logits: bool = False
+    images: Optional[list["Image"]] = None
 
 
 @dataclass
@@ -145,6 +153,7 @@ class GreedyUntilMultiTurnRequest(Request):
     generation_size: int
     request_type = RequestType.GREEDY_UNTIL_MULTI_TURN
     use_logits: bool = False
+    images: Optional[list["Image"]] = None
 
 
 class SampleUid(NamedTuple):
@@ -189,6 +198,9 @@ class Doc:
     # log P(choice | Query) - log P(choice | Unconditioned Query)
     # The uncoditioned query shouldn't contain any information about the task, thus usually it's empty string or 'Answer:'.
     unconditioned_query: Optional[str] = None
+
+    # For multi-modal tasks
+    images: Optional[list["Image"]] = None
 
     def __post_init__(self):
         if self.instruction is None:
