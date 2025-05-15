@@ -1256,6 +1256,22 @@ ruler_qa_2_4096 = LightevalTaskConfig(
     trust_dataset=False,
     version=0,
 )
+abstract_narrative_understanding_bigbench = LightevalTaskConfig(
+    name="abstract_narrative_understanding",
+    suite=["bigbench", "bigbench_json"],
+    prompt_function=prompt.bigbench,
+    hf_repo="bigbench",
+    hf_subset="abstract_narrative_understanding",
+    hf_avail_splits=["default", "train", "validation"],
+    evaluation_splits=["default"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=1,
+    metric=[Metrics.loglikelihood_acc],
+    stop_sequence=["\n"],
+    trust_dataset=True,
+    version=0,
+)
 agieval_aqua_rat_lighteval = LightevalTaskConfig(
     name="agieval:aqua-rat",
     suite=["lighteval"],
