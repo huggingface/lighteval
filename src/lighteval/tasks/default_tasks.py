@@ -6622,7 +6622,7 @@ copyright_prompt_num_line_5_min_lines_20_helm = LightevalTaskConfig(
     version=0,
 )
 coqa_first_question = LightevalTaskConfig(
-    name="coqa_first_question",
+    name="coqa",
     prompt_function=get_qa_prompt_function(
         Language.ENGLISH,
         lambda line: {
@@ -6638,6 +6638,7 @@ coqa_first_question = LightevalTaskConfig(
     evaluation_splits=["validation"],
     stop_sequence=["\n", "Question:", "question:"],
     generation_size=100,
+    version=1,
     metric=(
         Metrics.prefix_quasi_exact_match,
         Metrics.f1_score_quasi,
@@ -6836,7 +6837,7 @@ disfl_qa_bigbench = LightevalTaskConfig(
     version=0,
 )
 drop_qa = LightevalTaskConfig(
-    name="drop_fixed",
+    name="drop",
     prompt_function=get_qa_prompt_function(
         Language.ENGLISH,
         lambda line: {
@@ -6871,6 +6872,7 @@ drop_qa = LightevalTaskConfig(
         Metrics.prefix_quasi_exact_match,
         Metrics.f1_score_quasi,
     ),
+    version=1,
 )
 dyck_language_2_helm = LightevalTaskConfig(
     name="dyck_language:2",
