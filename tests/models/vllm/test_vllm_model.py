@@ -30,7 +30,7 @@ from lighteval.models.vllm.vllm_model import VLLMModel, VLLMModelConfig
 class TestVLLMTokenizerCreation(unittest.TestCase):
     def test_tokenizer_created_with_correct_revision(self):
         config = VLLMModelConfig(
-            model_name="lighteval-internal-testing/different-chat-templates-per-revision", revision="new_chat_template"
+            model_name="lighteval/different-chat-templates-per-revision", revision="new_chat_template"
         )
         vllm_tokenizer = VLLMModel.__new__(VLLMModel)._create_auto_tokenizer(config)
         tokenizer = AutoTokenizer.from_pretrained(
