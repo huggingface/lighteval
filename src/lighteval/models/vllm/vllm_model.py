@@ -204,7 +204,7 @@ class VLLMModel(LightevalModel):
             config.model_name,
             tokenizer_mode="auto",
             trust_remote_code=config.trust_remote_code,
-            tokenizer_revision=config.revision,
+            revision=config.revision,
         )
         tokenizer.pad_token = tokenizer.eos_token
         return tokenizer
