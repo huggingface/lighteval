@@ -28,7 +28,6 @@ import numpy as np
 from aenum import extend_enum
 
 from lighteval.metrics.metrics import Metrics
-from lighteval.metrics.metrics_sample import JudgeLLM
 from lighteval.metrics.utils.metric_utils import (
     CorpusLevelMetricGrouping,
     MetricCategory,
@@ -69,7 +68,7 @@ def extract_content_from_xml_tags(full_content, xml_tag):
 
 
 def custom_metric_compute(golds, predictions, formatted_doc) -> list[dict[str, float]]:
-    try: 
+    try:
         answer = extract_content_from_xml_tags(predictions[0], xml_tag="answer")
         if answer and formatted_doc.gold_index == ord(str(answer)) - ord("A"):
             return {"accuracy": 1}
@@ -77,6 +76,7 @@ def custom_metric_compute(golds, predictions, formatted_doc) -> list[dict[str, f
         logger.error(f"Error during parsing the response {type(e)} {e}")
 
     return {"accuracy": 0}
+
 
 # Prompt template for zero-shot MCQ
 ZEROSHOT_QA_USER_PROMPT = """You are given a question multiple-choice question. Select one correct answer from the provided options. Respond with the letter of the correct choice inside <answer> tags.
@@ -94,10 +94,11 @@ Enclose your answer like this:
 B
 </answer>"""
 
+
 def yourbench_prompt(line, task_name: str = ""):
     return Doc(
         task_name=task_name,
-        query=ZEROSHOT_QA_USER_PROMPT.format(question=line["question"], options='\n'.join(line["choices"])),
+        query=ZEROSHOT_QA_USER_PROMPT.format(question=line["question"], options="\n".join(line["choices"])),
         choices=line["choices"],
         gold_index=line["gold"][0],
         specific={
@@ -111,7 +112,6 @@ def yourbench_prompt(line, task_name: str = ""):
             "document": line["document"],
         },
     )
-
 
 
 yourbench_metrics = CorpusLevelMetricGrouping(
