@@ -28,10 +28,11 @@ import numpy as np
 from aenum import extend_enum
 
 from lighteval.metrics.metrics import Metrics
+from lighteval.metrics.metrics_sample import ExactMatches
 from lighteval.metrics.utils.metric_utils import (
-    CorpusLevelMetricGrouping,
     MetricCategory,
     MetricUseCase,
+    SampleLevelMetric,
 )
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -67,15 +68,13 @@ def extract_content_from_xml_tags(full_content, xml_tag):
         return ""
 
 
-def custom_metric_compute(golds, predictions, formatted_doc) -> list[dict[str, float]]:
-    try:
-        answer = extract_content_from_xml_tags(predictions[0], xml_tag="answer")
-        if answer and formatted_doc.gold_index == ord(str(answer)) - ord("A"):
-            return {"accuracy": 1}
-    except Exception as e:
-        logger.error(f"Error during parsing the response {type(e)} {e}")
+def extract_answer_letter_from_pred(line: str) -> str | None:
+    return extract_content_from_xml_tags(line, xml_tag="answer")
 
-    return {"accuracy": 0}
+
+def extract_answer_letter_from_gold(line: str) -> str | None:
+    match = re.match(r"\(([A-Za-z0-9])\)", line)
+    return match.group(1) if match else None
 
 
 # Prompt template for zero-shot MCQ
@@ -114,13 +113,15 @@ def yourbench_prompt(line, task_name: str = ""):
     )
 
 
-yourbench_metrics = CorpusLevelMetricGrouping(
-    metric_name=["accuracy"],
-    higher_is_better={"accuracy": True},
+yourbench_metrics = SampleLevelMetric(
+    metric_name="mcq_accuracy",
+    higher_is_better=True,
     category=MetricCategory.GENERATIVE,
     use_case=MetricUseCase.ACCURACY,
-    sample_level_fn=custom_metric_compute,
-    corpus_level_fn={"accuracy": np.mean},
+    sample_level_fn=ExactMatches(
+        normalize_gold=extract_answer_letter_from_gold, normalize_pred=extract_answer_letter_from_pred
+    ).compute,
+    corpus_level_fn=np.mean,
 )
 
 extend_enum(Metrics, "yourbench_metrics", yourbench_metrics)
