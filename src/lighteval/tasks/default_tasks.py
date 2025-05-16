@@ -326,10 +326,14 @@ aime24 = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=32768,
     metric=[
-        Metrics.expr_gold_metric,
+        Metrics.math_pass_at_1_1n,
+        Metrics.math_pass_at_1_4n,
+        Metrics.math_pass_at_1_8n,
+        Metrics.math_pass_at_1_16n,
         Metrics.math_pass_at_1_32n,
+        Metrics.math_pass_at_1_64n,
     ],
-    version=1,
+    version=2,
 )
 aime24_gpassk = LightevalTaskConfig(
     name="aime24_gpassk",
@@ -357,10 +361,14 @@ aime25 = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=10000,
     metric=[
-        Metrics.expr_gold_metric,
+        Metrics.math_pass_at_1_1n,
+        Metrics.math_pass_at_1_4n,
+        Metrics.math_pass_at_1_8n,
+        Metrics.math_pass_at_1_16n,
         Metrics.math_pass_at_1_32n,
+        Metrics.math_pass_at_1_64n,
     ],
-    version=1,
+    version=2,
 )
 aime25_gpassk = LightevalTaskConfig(
     name="aime25_gpassk",
@@ -7840,10 +7848,14 @@ gpqa_diamond_instruct_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=32768,  # needed for reasoning models like R1
-    metric=[Metrics.gpqa_instruct_metric],
+    metric=[
+        Metrics.gpqa_instruct_pass_at_1_1n,
+        Metrics.gpqa_instruct_pass_at_1_4n,
+        Metrics.gpqa_instruct_pass_at_1_8n,
+    ],
     stop_sequence=[],  # no stop sequence, will use eos token
     trust_dataset=True,
-    version=0,
+    version=1,
 )
 gpqa_extended_instruct_lighteval = LightevalTaskConfig(
     name="gpqa:extended",
@@ -7905,7 +7917,7 @@ gsm8k_leaderboard = LightevalTaskConfig(
     few_shots_select="random_sampling_from_train",
     generation_size=256,
     metric=[Metrics.quasi_exact_match_gsm8k],
-    stop_sequence=["Question=", "Question", "="],
+    stop_sequence=["Question:"],
     trust_dataset=True,
     version=0,
 )
@@ -7920,8 +7932,10 @@ gsm8k_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling_from_train",
     generation_size=256,
-    metric=[Metrics.quasi_exact_match_gsm8k, Metrics.maj_at_8_gsm8k],
-    stop_sequence=["Question="],
+    metric=[
+        Metrics.expr_gold_metric,
+    ],
+    stop_sequence=["Question:"],
     trust_dataset=True,
     version=0,
 )
@@ -9738,8 +9752,11 @@ math_500 = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=32768,
-    metric=[Metrics.latex_gold_metric],
-    version=1,
+    metric=[
+        Metrics.math_pass_at_1_1n,
+        Metrics.math_pass_at_1_4n,
+    ],
+    version=2,
 )
 math_500_gpassk = LightevalTaskConfig(
     name="math_500_gpassk",

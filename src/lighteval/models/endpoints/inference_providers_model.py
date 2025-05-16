@@ -24,8 +24,8 @@ import asyncio
 import logging
 from typing import Any, List, Optional
 
-import yaml
 from huggingface_hub import AsyncInferenceClient, ChatCompletionOutput
+from huggingface_hub.errors import HfHubHTTPError
 from pydantic import NonNegativeInt
 from tqdm import tqdm
 from tqdm.asyncio import tqdm as async_tqdm
@@ -34,7 +34,6 @@ from transformers import AutoTokenizer
 from lighteval.data import GenerativeTaskDataset
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.endpoints.endpoint_model import ModelInfo
-from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
@@ -60,6 +59,7 @@ class InferenceProvidersModelConfig(ModelConfig):
         provider: Name of the inference provider
         timeout: Request timeout in seconds
         proxies: Proxy configuration for requests
+        org_to_bill: Organisation to bill if not the user
         generation_parameters: Parameters for text generation
     """
 
@@ -67,25 +67,8 @@ class InferenceProvidersModelConfig(ModelConfig):
     provider: str
     timeout: int | None = None
     proxies: Any | None = None
+    org_to_bill: str | None = None
     parallel_calls_count: NonNegativeInt = 10
-
-    @classmethod
-    def from_path(cls, path):
-        with open(path, "r") as f:
-            config = yaml.safe_load(f)["model"]
-
-        model_name = config["model_name"]
-        provider = config.get("provider", None)
-        timeout = config.get("timeout", None)
-        proxies = config.get("proxies", None)
-        generation_parameters = GenerationParameters.from_dict(config)
-        return cls(
-            model=model_name,
-            provider=provider,
-            timeout=timeout,
-            proxies=proxies,
-            generation_parameters=generation_parameters,
-        )
 
 
 class InferenceProvidersClient(LightevalModel):
@@ -121,19 +104,20 @@ class InferenceProvidersClient(LightevalModel):
             provider=self.provider,
             timeout=config.timeout,
             proxies=config.proxies,
+            bill_to=config.org_to_bill,
         )
-        self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        try:
+            self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        except HfHubHTTPError:
+            logger.warning("Could not load model's tokenizer: {e}.")
+            self._tokenizer = None
 
     def _encode(self, text: str) -> dict:
-        enc = self._tokenizer(text=text)
-        return enc
-
-    def tok_encode(self, text: str | list[str]):
-        if isinstance(text, list):
-            toks = [self._encode(t["content"]) for t in text]
-            toks = [tok for tok in toks if tok]
-            return toks
-        return self._encode(text)
+        if self._tokenizer:
+            enc = self._tokenizer(text=text)
+            return enc
+        logger.warning("Tokenizer is not loaded, can't encore the text, returning it as such.")
+        return text
 
     async def __call_api(self, prompt: List[dict], num_samples: int) -> Optional[ChatCompletionOutput]:
         """Make API call with exponential backoff retry logic.
@@ -192,7 +176,6 @@ class InferenceProvidersClient(LightevalModel):
     def greedy_until(
         self,
         requests: list[GreedyUntilRequest],
-        override_bs: Optional[int] = None,
     ) -> list[GenerativeResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
@@ -204,21 +187,18 @@ class InferenceProvidersClient(LightevalModel):
         Returns:
             list[GenerativeResponse]: list of generated responses.
         """
-        for request in requests:
-            request.tokenized_context = self.tok_encode(request.context)
-
         dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         results = []
 
-        for _ in tqdm(
-            dataset.splits_start_end_iterator(),
+        for split in tqdm(
+            dataset.splits_iterator(),
             total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
             disable=False,  # self.disable_tqdm,
         ):
-            contexts = [c.context for c in dataset]
-            num_samples = dataset[0].num_samples
+            contexts = [sample.context for sample in split]
+            num_samples = split[0].num_samples
 
             responses = asyncio.run(self.__call_api_parallel(contexts, num_samples))
 
@@ -247,24 +227,24 @@ class InferenceProvidersClient(LightevalModel):
     @property
     def max_length(self) -> int:
         """Return the maximum sequence length of the model."""
-        return self._tokenizer.model_max_length
+        try:
+            return self._tokenizer.model_max_length
+        except AttributeError:
+            logger.warning("Tokenizer was not correctly loaded. Max model context length is assumed to be 30K tokens")
+            return 30000
 
-    def loglikelihood(
-        self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
+    def loglikelihood(self, requests: list[LoglikelihoodRequest]) -> list[LoglikelihoodResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
         raise NotImplementedError
 
-    def loglikelihood_rolling(
-        self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
+    def loglikelihood_rolling(self, requests: list[LoglikelihoodRollingRequest]) -> list[LoglikelihoodResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         raise NotImplementedError
 
     def loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: Optional[int] = None
+        self, requests: list[LoglikelihoodSingleTokenRequest]
     ) -> list[LoglikelihoodSingleTokenResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.

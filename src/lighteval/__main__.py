@@ -27,6 +27,7 @@ import typer
 
 import lighteval.main_accelerate
 import lighteval.main_baseline
+import lighteval.main_custom
 import lighteval.main_endpoint
 import lighteval.main_nanotron
 import lighteval.main_sglang
@@ -66,6 +67,7 @@ app.command(rich_help_panel="Evaluation Backends")(lighteval.main_accelerate.acc
 app.command(rich_help_panel="Evaluation Utils")(lighteval.main_baseline.baseline)
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_nanotron.nanotron)
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_vllm.vllm)
+app.command(rich_help_panel="Evaluation Backends")(lighteval.main_custom.custom)
 app.command(rich_help_panel="Evaluation Backends")(lighteval.main_sglang.sglang)
 app.add_typer(
     lighteval.main_endpoint.app,

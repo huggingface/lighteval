@@ -250,8 +250,11 @@ class EvaluationTracker:
             )
 
     def push_to_wandb(self, results_dict: dict, details_datasets: dict) -> None:
+        # reformat the results key to replace ':' with '/'
+        results_dict = {k.replace(":", "/"): v for k, v in results_dict["results"].items()}
+
         self.wandb_run.log(
-            {**results_dict["results"]},
+            {**results_dict},
         )
         self.wandb_run.finish()
 
@@ -581,7 +584,7 @@ class EvaluationTracker:
             dataset_summary=f"Dataset automatically created during the evaluation run of model "
             f"[{self.general_config_logger.model_name}](https://huggingface.co/{self.general_config_logger.model_name})"
             f"{org_string}.\n\n"
-            f"The dataset is composed of {len(card_metadata) - 1} configuration, each one coresponding to one of the evaluated task.\n\n"
+            f"The dataset is composed of {len(card_metadata) - 1} configuration, each one corresponding to one of the evaluated task.\n\n"
             f"The dataset has been created from {len(results_files)} run(s). Each run can be found as a specific split in each "
             f'configuration, the split being named using the timestamp of the run.The "train" split is always pointing to the latest results.\n\n'
             f'An additional configuration "results" store all the aggregated results of the run.\n\n'

@@ -27,7 +27,7 @@ import os
 from typing import Optional
 
 import torch
-from pydantic import NonNegativeFloat, PositiveInt
+from pydantic import NonNegativeFloat, NonNegativeInt, PositiveInt
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
@@ -81,8 +81,10 @@ class VLLMModelConfig(ModelConfig):
     pipeline_parallel_size: PositiveInt = 1  # how many GPUs to use for pipeline parallelism
     gpu_memory_utilization: NonNegativeFloat = 0.9  # lower this if you are running out of memory
     max_model_length: PositiveInt | None = None  # maximum length of the model, ussually infered automatically. reduce this if you encouter OOM issues, 4096 is usually enough
+    quantization: str | None = None
+    load_format: str | None = None
     swap_space: PositiveInt = 4  # CPU swap space size (GiB) per GPU.
-    seed: PositiveInt = 1234
+    seed: NonNegativeInt = 1234
     trust_remote_code: bool = False
     use_chat_template: bool = False
     add_special_tokens: bool = True
@@ -176,6 +178,12 @@ class VLLMModel(LightevalModel):
             "max_num_seqs": int(config.max_num_seqs),
             "max_num_batched_tokens": int(config.max_num_batched_tokens),
         }
+
+        if config.quantization is not None:
+            self.model_args["quantization"] = config.quantization
+        if config.load_format is not None:
+            self.model_args["load_format"] = config.load_format
+
         if config.data_parallel_size > 1:
             self.model_args["distributed_executor_backend"] = "ray"
             self._batch_size = "auto"
@@ -196,7 +204,7 @@ class VLLMModel(LightevalModel):
             config.model_name,
             tokenizer_mode="auto",
             trust_remote_code=config.trust_remote_code,
-            tokenizer_revision=config.revision,
+            revision=config.revision,
         )
         tokenizer.pad_token = tokenizer.eos_token
         return tokenizer
@@ -223,8 +231,8 @@ class VLLMModel(LightevalModel):
         dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         results = []
 
-        for _ in tqdm(
-            dataset.splits_start_end_iterator(),
+        for split in tqdm(
+            dataset.splits_iterator(),
             total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
@@ -237,13 +245,13 @@ class VLLMModel(LightevalModel):
                 # NOTE: we are assuming all items in a batch behave similarly (same
                 # stop_tokens and max_tokens genrated) which is not necessarily
                 # the case! Because of that we only use batch size of 1
-                stop_tokens = dataset[0].stop_sequence
+                stop_tokens = split[0].stop_sequence
 
-            max_new_tokens = self._config.generation_parameters.max_new_tokens or dataset[0].generation_size
-            returns_logits = dataset[0].use_logits
-            num_samples = dataset[0].num_samples
+            max_new_tokens = self._config.generation_parameters.max_new_tokens or split[0].generation_size
+            returns_logits = split[0].use_logits
+            num_samples = split[0].num_samples
 
-            context = [c.context for c in dataset]
+            context = [sample.context for sample in split]
             tokenized = self.tokenizer(context, add_special_tokens=self.add_special_tokens)
 
             # The main question for this step is the following:
@@ -384,14 +392,15 @@ class VLLMModel(LightevalModel):
         dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=1)
         res = []
 
-        for _ in tqdm(dataset.splits_start_end_iterator()):
+        for split in tqdm(dataset.splits_iterator()):
             # the last token is an eos token, so we don't need to add it
-            inputs = [dataset[i].tokenized_context + dataset[i].tokenized_continuation for i in range(len(dataset))]
+            inputs = [sample.tokenized_context + sample.tokenized_continuation for sample in split]
             # Left truncate the inputs to the maximum length
             inputs = [input[-self.max_length :] for input in inputs]
             outputs = self._generate(inputs, generate=False)
 
-            for output, input in zip(outputs, dataset):
+            for i, output in enumerate(outputs):
+                input = split[i]
                 continuation_logprobs = []
                 for token, logprobs in zip(input.tokenized_continuation[::-1], output.prompt_logprobs[::-1]):
                     continuation_logprobs.append(logprobs[token])

@@ -22,11 +22,11 @@
 
 import logging
 import math
-from typing import Iterator, Tuple
+from typing import Iterator
 
 import torch
 from packaging import version
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, Subset
 
 
 if version.parse(torch.__version__) >= version.parse("2.5.0"):
@@ -67,10 +67,6 @@ class DynamicBatchDataset(Dataset):
             requests (List): A list of requests.
             num_dataset_splits (int): The number of dataset splits.
         """
-        # We make sure the requests contain the tokenized versions of their values
-        if any(r.tokenized_context is None for r in requests):
-            raise ValueError("You passed a request for which tokenization had not happened yet.")
-
         # sort the requests using the collate function and save the original order
         enumerated_requests = list(enumerate(requests))
         sorted_enumerated_requests = sorted(enumerated_requests, key=lambda x: self._sorting_criteria(x[1]))
@@ -81,8 +77,6 @@ class DynamicBatchDataset(Dataset):
         self.total_size = len(self.sorted_data)
 
         self.num_dataset_splits, self.splits = self.init_split_limits(num_dataset_splits)
-
-        self.split_start, self.split_end = self.splits[0]
 
     def init_split_limits(self, num_dataset_splits):
         if num_dataset_splits >= self.total_size:
@@ -121,40 +115,23 @@ class DynamicBatchDataset(Dataset):
 
         return original_order
 
-    def get_split_start_end(self, split_id: int) -> Tuple[int, int]:
+    def splits_iterator(self) -> Iterator[Subset]:
         """
-        Get the start and end indices of a dataset split.
-
-        Args:
-            split_id (int): The ID of the split.
-
-        Returns:
-            tuple: A tuple containing the start and end indices of the split.
-        """
-        self.split_start, self.split_end = self.splits[split_id]
-        return self.split_start, self.split_end
-
-    def splits_start_end_iterator(self) -> Iterator[Tuple[int, int]]:
-        """
-        Iterator that yields the start and end indices of each dataset split.
-        Also updates the starting batch size for each split (trying to double
-        the batch every time we move to a new split).
+        Iterator that yields the dataset splits based on the split limits.
 
         Yields:
-            tuple: A tuple containing the start and end indices of a split.
+            Subset: A subset of the dataset.
         """
         split_range = self.num_dataset_splits
         if self.total_size == 0:
             split_range = 0
-        for split_id in range(split_range):
-            yield self.get_split_start_end(split_id)
+        for i in range(split_range):
+            split_start, split_end = self.splits[i]
+            yield Subset(self, range(split_start, split_end))
 
     def __getitem__(self, index) -> Request:
         """
-        Get an item from the dataset depending on the split we are currently in.
-        For instance, if we are in split 0, we will get the item at index 0, if
-        we are in split 1, we will get the item at index self.split_size, etc.
-        Used for dynamic batching.
+        Get an item from the dataset.
 
         Args:
             index (int): The index of the item.
@@ -162,7 +139,7 @@ class DynamicBatchDataset(Dataset):
         Returns:
             Any: The item at the specified index.
         """
-        return self.sorted_data[index + self.split_start]
+        return self.sorted_data[index]
 
     def __len__(self) -> int:
         """
@@ -173,7 +150,7 @@ class DynamicBatchDataset(Dataset):
         Returns:
             int: The length of the dataset.
         """
-        return self.split_end - self.split_start
+        return len(self.sorted_data)
 
     def __iter__(self) -> Iterator[Request]:
         """
@@ -186,7 +163,7 @@ class DynamicBatchDataset(Dataset):
         Yields:
             Any: The items of the dataset.
         """
-        for i in range(self.split_start, self.split_end):
+        for i in range(len(self)):
             yield self.sorted_data[i]
 
     def _sorting_criteria(self, request) -> int:
@@ -289,11 +266,13 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         Returns:
             Any: The collated data.
         """
-        toks = request.tokenized_context
+        toks = request.context
         gen_length = request.generation_size
+
         # The generative task has no limit except the model context
         if gen_length is None:
             gen_length = 0
+
         return (
             request.do_sample,
             request.use_logits,
