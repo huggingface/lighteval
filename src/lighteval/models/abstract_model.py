@@ -81,7 +81,7 @@ class LightevalModel(ABC):
 
     @property
     def disable_tqdm(self) -> bool:
-        raise NotImplementedError
+        return False
 
     def get_method_from_request_type(self, request_type: RequestType):
         if request_type == RequestType.LOGLIKELIHOOD:
