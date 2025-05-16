@@ -104,6 +104,8 @@ class CorpusLevelTranslationMetric:
             return sacrebleu.BLEU(trg_lang=self.lang)
         elif self.metric_type == "chrf":
             return sacrebleu.CHRF()
+        elif self.metric_type == "chrf++":
+            return sacrebleu.CHRF(word_order=2)
         elif self.metric_type == "ter":
             return sacrebleu.TER(asian_support=True if self.lang != "" else False)
         else:
