@@ -41,75 +41,53 @@ from lighteval.tasks.requests import Doc
 logger = logging.getLogger(__name__)
 
 
-def extract_content_from_xml_tags(full_content, xml_tag):
-    # This function extracts the content between the XML tags
-    # It uses regex to find the content and includes error handling
-
-    # Define the regex patterns to match the content
-    pattern_with_closing_tag = f"<{xml_tag}>(.*?)</{xml_tag}>"
-    pattern_without_closing_tag = f"<{xml_tag}>(.*)"
-
-    try:
-        # First, try to find matches with both opening and closing tags
-        matches_with_closing = re.findall(pattern_with_closing_tag, full_content, re.DOTALL)
-        if matches_with_closing:
-            return matches_with_closing[0].strip()
-
-        # If no matches found, try to find content with only opening tag
-        matches_without_closing = re.findall(pattern_without_closing_tag, full_content, re.DOTALL)
-        if matches_without_closing:
-            return matches_without_closing[0].strip()
-
-        # If still no matches found, return an empty string
-        return ""
-
-    except Exception as extraction_error:
-        logger.error(f"Error extracting content from XML tags: {extraction_error}")
-        return ""
-
-
 def extract_answer_letter_from_pred(line: str) -> str | None:
-    return extract_content_from_xml_tags(line, xml_tag="answer")
+    # Find all standalone A–D letters, and use the last one
+    matches = re.findall(r"\b([A-Da-d])\b", line)
+    if matches:
+        pred = matches[-1].upper()
+        return pred
+    return None
 
 
 def extract_answer_letter_from_gold(line: str) -> str | None:
-    match = re.match(r"\(([A-Za-z0-9])\)", line)
-    return match.group(1) if match else None
+    # Match (A), (B) OR lines starting with A., B.
+    match = re.match(r"^\(?([A-Da-d0-9])\)?[).]?\s+", line.strip())
+    if match:
+        gold = match.group(1).upper()
+        return gold
+    return None
 
 
-# Prompt template for zero-shot MCQ
-ZEROSHOT_QA_USER_PROMPT = """You are given a question multiple-choice question. Select one correct answer from the provided options. Respond with the letter of the correct choice inside <answer> tags.
+ZEROSHOT_QA_USER_PROMPT = """
+Answer the following multiple-choice question by selecting only one letter: A, B, C, or D. Do not explain your answer.
 
-<question>
-{question}
-</question>
+Question: {question}
 
-<options>
+Choices:
 {options}
-</options>
 
-Enclose your answer like this:
-<answer>
-B
-</answer>"""
+Answer:
+"""
 
 
 def yourbench_prompt(line, task_name: str = ""):
+    options = "\n".join(f"{chr(65 + i)}. {choice}" for i, choice in enumerate(line["choices"]))
+
+    gold_raw = line["gold"][0]
+
+    if isinstance(gold_raw, str) and gold_raw.strip().isalpha():
+        gold_index = ord(gold_raw.strip().upper()) - ord("A")
+    elif isinstance(gold_raw, int):
+        gold_index = gold_raw
+    else:
+        raise ValueError(f"Unexpected gold label format: {gold_raw!r}")
+
     return Doc(
         task_name=task_name,
-        query=ZEROSHOT_QA_USER_PROMPT.format(question=line["question"], options="\n".join(line["choices"])),
+        query=ZEROSHOT_QA_USER_PROMPT.format(question=line["question"], options=options),
         choices=line["choices"],
-        gold_index=line["gold"][0],
-        specific={
-            "question_category": line["question_category"],
-            "kind": line["kind"],
-            "estimated_difficulty": line["estimated_difficulty"],
-            "document_id": line["document_id"],
-            "question_generating_model": line["question_generating_model"],
-            "chunks": line["chunks"],
-            "question": line["question"],
-            "document": line["document"],
-        },
+        gold_index=gold_index,
     )
 
 
@@ -138,7 +116,6 @@ yourbench_mcq = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=8192,
     metric=[Metrics.yourbench_metrics],
-    stop_sequence=["</answer>"],
     trust_dataset=True,
     version=0,
 )
