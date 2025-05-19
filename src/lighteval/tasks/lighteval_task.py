@@ -364,6 +364,7 @@ class LightevalTask:
                     context=context,
                     choice=gold,
                     metric_categories=[MetricCategory.TARGET_PERPLEXITY],
+                    images=formatted_doc.images,
                 )
                 for i, gold in enumerate(golds)
             ]
@@ -375,12 +376,13 @@ class LightevalTask:
                     request_index=0,
                     context=context,
                     metric_categories=[MetricCategory.PERPLEXITY],
+                    images=formatted_doc.images,
                 )
             ]
         if self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]:
             # All the possible sampling tasks require the same generation process - we can do them in one step
             # so we select the maximum number of samples and the metrics will select only the
-            # relevant number of tiems
+            # relevant number of items
             requests[RequestType.GREEDY_UNTIL] += [
                 GreedyUntilRequest(
                     task_name=current_task_name,
@@ -394,6 +396,7 @@ class LightevalTask:
                     do_sample=True,
                     use_logits=False,
                     metric_categories=[MetricCategory.GENERATIVE_SAMPLING],
+                    images=formatted_doc.images,
                 )
             ]
         if (
@@ -420,6 +423,7 @@ class LightevalTask:
                         ]
                         if self.has_metric_category[c]
                     ],
+                    images=formatted_doc.images,
                 )
             ]
         if (
@@ -438,6 +442,7 @@ class LightevalTask:
                         for c in [MetricCategory.MULTICHOICE, MetricCategory.MULTICHOICE_PMI]
                         if self.has_metric_category[c]
                     ],
+                    images=formatted_doc.images,
                 )
                 for i, choice in enumerate(formatted_doc.choices)
             ]
@@ -454,6 +459,7 @@ class LightevalTask:
                     context=formatted_doc.unconditioned_query,
                     choice=choice,
                     metric_categories=[MetricCategory.MULTICHOICE_PMI],
+                    images=formatted_doc.images,
                 )
                 for i, choice in enumerate(formatted_doc.choices)
             ]
@@ -466,6 +472,7 @@ class LightevalTask:
                     context=context,
                     choices=formatted_doc.choices,
                     metric_categories=[MetricCategory.MULTICHOICE_ONE_TOKEN],
+                    images=formatted_doc.images,
                 )
             ]
         if self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]:
@@ -478,6 +485,7 @@ class LightevalTask:
                     stop_sequence=self.stop_sequence,
                     generation_size=self.generation_size,
                     metric_categories=[MetricCategory.LLM_AS_JUDGE_MULTI_TURN],
+                    images=formatted_doc.images,
                 )
             ]
         if self.has_metric_category[MetricCategory.LLM_AS_JUDGE]:
@@ -492,6 +500,7 @@ class LightevalTask:
                     generation_grammar=self.generation_grammar,
                     num_samples=1,
                     metric_categories=[MetricCategory.LLM_AS_JUDGE],
+                    images=formatted_doc.images,
                 )
             ]
 
