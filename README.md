@@ -54,6 +54,8 @@ Hub, S3, or locally.
 
 ## ⚡️ Installation
 
+Note that lighteval is currently completely untested on Windows, and we don't support it yet. (Should be fully functional on Mac/Linux)
+
 ```bash
 pip install lighteval
 ```
