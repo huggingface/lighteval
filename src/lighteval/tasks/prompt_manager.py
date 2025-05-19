@@ -334,7 +334,7 @@ class FewShotSampler:
         variance_seed: int,
         sampler: random.Random = None,
         formatted_doc: Doc = None,
-    ):
+    ) -> list[str]:
         if num_fewshot == 0:
             return []
 

@@ -25,7 +25,7 @@ import inspect
 import logging
 import random
 from dataclasses import asdict, dataclass, field
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional
+from typing import Callable
 
 from datasets import DatasetDict
 from huggingface_hub import TextGenerationInputGrammarType
@@ -54,9 +54,6 @@ from lighteval.tasks.requests import (
 )
 from lighteval.utils.utils import ListLike, as_list, download_dataset_worker
 
-
-if TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -87,28 +84,31 @@ class LightevalTaskConfig:
     """
 
     name: str
-    prompt_function: Callable[[dict, str], Doc | None]
+    prompt_function: Callable[
+        [dict, str], Doc
+    ]  # The prompt function should be used to map a line in the dataset to a Sample
     hf_repo: str
     hf_subset: str
-    metric: ListLike[Metric | Metrics]
+    metric: ListLike[Metric | Metrics]  # List of metric , should be configurable
 
     # Additional hf dataset config
-    hf_revision: Optional[str] = None
-    hf_filter: Optional[Callable[[dict], bool]] = None
-    hf_avail_splits: Optional[ListLike[str]] = field(default_factory=lambda: ["train", "validation", "test"])
+    hf_revision: str | None = None
+    hf_filter: Callable[[dict], bool] | None = None
+    hf_avail_splits: ListLike[str] = field(default_factory=lambda: ["train", "validation", "test"])
+
     # We default to false, to reduce security issues
     trust_dataset: bool = False
 
     # Splits
     evaluation_splits: ListLike[str] = field(default_factory=lambda: ["validation"])
-    few_shots_split: Optional[str] = None
-    few_shots_select: Optional[str] = None
+    few_shots_split: str | None = None
+    few_shots_select: str | None = None
 
     # Generation args
-    generation_size: Optional[int] = None
-    generation_grammar: Optional[TextGenerationInputGrammarType] = None
-    stop_sequence: Optional[ListLike[str]] = None
-    num_samples: Optional[list[int]] = None
+    generation_size: int | None = None
+    generation_grammar: TextGenerationInputGrammarType | None = None
+    stop_sequence: ListLike[str] | None = None
+    num_samples: list[int] | None = None
 
     suite: ListLike[str] = field(default_factory=lambda: ["custom"])
 
@@ -117,8 +117,8 @@ class LightevalTaskConfig:
 
     must_remove_duplicate_docs: bool = False
 
-    num_fewshots = 0
-    truncate_fewshots = False
+    num_fewshots: int = 0
+    truncate_fewshots: bool = False
 
     version: int = 0
 
@@ -128,7 +128,7 @@ class LightevalTaskConfig:
 
         # Convert list to tuple for hashing
         self.metric = tuple(self.metric)
-        self.hf_avail_splits = tuple(self.hf_avail_splits) if self.hf_avail_splits is not None else None
+        self.hf_avail_splits = tuple(self.hf_avail_splits)
         self.evaluation_splits = tuple(self.evaluation_splits)
         self.suite = tuple(self.suite)
         self.stop_sequence = tuple(self.stop_sequence) if self.stop_sequence is not None else ()
@@ -160,47 +160,47 @@ class LightevalTaskConfig:
 
 
 class LightevalTask:
-    def __init__(  # noqa: C901
-        self, name: str, cfg: LightevalTaskConfig, cache_dir: Optional[str] = None
+    def __init__(
+        self,
+        config: LightevalTaskConfig,
     ):
         """
         Initialize a LightEval task.
 
         Args:
-            name (str): name of the task.
-            cfg (dict): configuration dictionary containing
+            config (dict): configuration dictionary containing
                 task-specific settings (from the task_table.json file).
-            cache_dir (Optional[str], optional): directory to cache the
-                dataset. Defaults to None.
         """
-        self.name = name
-        self.version = cfg.version
-        self.cache_dir = cache_dir
-        self._cfg = cfg
+        self.name = config.name
+        self.version = config.version
+        self.suite = config.suite
+        self.dataset_config = config
 
         # Dataset info
-        self.dataset_path = cfg.hf_repo
-        self.dataset_config_name = cfg.hf_subset
-        self.dataset_revision = cfg.hf_revision
-        self.dataset_filter = cfg.hf_filter
-        self.trust_dataset = cfg.trust_dataset
-        self.dataset: Optional[DatasetDict] = None  # Delayed download
-        logger.info(f"{self.dataset_path} {self.dataset_config_name}")
-        self._fewshot_docs = None
+        self.dataset_path = config.hf_repo
+        self.dataset_config_name = config.hf_subset
+        self.dataset_revision = config.hf_revision
+        self.dataset_filter = config.hf_filter
+        self.trust_dataset = config.trust_dataset
+        self.dataset: DatasetDict | None = None  # Delayed download
+        self.evaluation_split = as_list(config.evaluation_splits)
         self._docs = None
 
-        self.evaluation_split = as_list(cfg.evaluation_splits)
+        self._fewshot_docs = None
+        self.fewshot_split: str | None = config.few_shots_split or self.get_first_possible_fewshot_splits(
+            config.hf_avail_splits or []
+        )
+        self.fewshot_selection = config.few_shots_select
 
-        self.fewshot_split: list[str] | None
-        if cfg.few_shots_split is not None:
-            self.fewshot_split = as_list(cfg.few_shots_split)
-        else:
-            self.fewshot_split = self.get_first_possible_fewshot_splits(cfg.hf_avail_splits or [])
-        self.fewshot_selection = cfg.few_shots_select
+        self.formatter = config.prompt_function
+        self.generation_size = config.generation_size
+        self.generation_grammar = config.generation_grammar
+        self.stop_sequence = config.stop_sequence
+        self.must_remove_duplicate_docs = config.must_remove_duplicate_docs
+        self.fewshot_sampler = FewShotSampler(self)
 
         # Metrics
-        self.metrics = as_list(cfg.metric)
-        self.suite = as_list(cfg.suite)
+        self.metrics = config.metric
         ignored = [metric for metric in self.metrics if metric.category == MetricCategory.IGNORED]
 
         if len(ignored) > 0:
@@ -218,32 +218,14 @@ class LightevalTask:
                 # Update the number of samples to generate using the information in the metric name
                 self.num_samples.append(extract_num_samples(metric_name))
 
-        self.formatter = cfg.prompt_function
-
-        self.generation_size = cfg.generation_size
-        self.generation_grammar = cfg.generation_grammar
-        self.stop_sequence = cfg.stop_sequence
-        self.must_remove_duplicate_docs = cfg.must_remove_duplicate_docs
-        self.fewshot_sampler = FewShotSampler(self)
-
-    @property
-    def cfg(self):
-        return self._cfg
-
-    def get_first_possible_fewshot_splits(
-        self, available_splits: ListLike[str], number_of_splits: int = 1
-    ) -> list[str] | None:
+    def get_first_possible_fewshot_splits(self, available_splits: ListLike[str]) -> str | None:
         """
         Parses the possible fewshot split keys in order: train, then validation
         keys and matches them with the available keys.  Returns the first
         available.
 
-        Args:
-            number_of_splits (int, optional): Number of splits to return.
-                Defaults to 1.
-
         Returns:
-            list[str]: List of the first available fewshot splits.
+            str: the first available fewshot splits or None if nothing is available
         """
         # Possible few shot splits are the available splits not used for evaluation
         possible_fewshot_splits = [k for k in available_splits if k not in self.evaluation_split]
@@ -257,7 +239,7 @@ class LightevalTask:
             stored_splits.extend(available_splits)
 
         if len(stored_splits) > 0:
-            return stored_splits[:number_of_splits]
+            return stored_splits[0]
 
         logger.warning(f"Careful, the task {self.name} is using evaluation data to build the few shot examples.")
         return None
@@ -282,7 +264,8 @@ class LightevalTask:
                 self.dataset_filter,
                 self.dataset_revision,
             )
-        splits = as_list(splits)
+
+        assert self.dataset is not None, f"Dataset {self.dataset_path} not found."
 
         docs = []
         for split in splits:
@@ -293,11 +276,10 @@ class LightevalTask:
                 item["__few_shots"] = few_shots
                 # Some tasks require to know which is the current item index in order to apply a different prompt template
                 item["__index"] = ix
-                cur_docs = self.formatter(item, self.name)
-                cur_docs.id = f"{self.name}_{ix}"
-                if cur_docs is None:
-                    continue
-                docs.extend(as_list(cur_docs))
+                doc = self.formatter(item, self.name)
+                doc.id = f"{self.name}_{ix}"
+                docs.append(doc)
+
         return docs
 
     def remove_duplicate_docs(self, docs: list[Doc]) -> list[Doc]:
@@ -324,7 +306,8 @@ class LightevalTask:
             if self.fewshot_split is None:
                 self._fewshot_docs = self._get_docs_from_split(self.evaluation_split, few_shots=True)
             else:  # Normal case
-                self._fewshot_docs = self._get_docs_from_split(self.fewshot_split, few_shots=True)
+                self._fewshot_docs = self._get_docs_from_split([self.fewshot_split], few_shots=True)
+
         return self._fewshot_docs
 
     def eval_docs(self) -> list[Doc]:
@@ -341,7 +324,7 @@ class LightevalTask:
         return self._docs
 
     def get_requests(self, max_samples: int | None = None) -> dict[RequestType, list[Request]]:
-        eval_docs = list(self.eval_docs())
+        eval_docs = self.eval_docs()
 
         if len(eval_docs) == 0:
             logger.warning(f"Task {self.name} has no documents to evaluate skipping.")
@@ -350,19 +333,25 @@ class LightevalTask:
         n_samples = min(max_samples, len(eval_docs)) if max_samples else len(eval_docs)
         # evaluation_tracker.task_config_logger.log_num_docs(self.name, len(eval_docs), n_samples)
         random.shuffle(eval_docs)
+        breakpoint()
 
+        request_type_reqs_dict: dict[RequestType, list[Request]] = collections.defaultdict(list)
         for doc in eval_docs[:n_samples]:
-            num_fewshots = self.cfg.num_fewshots
+            num_fewshots = self.dataset_config.num_fewshots
             doc.task_name = f"{self.name}|{num_fewshots}"
             doc.fewshots = self.fewshot_sampler.sample_fewshot_examples(num_fewshots, 1, formatted_doc=doc)
             req_type_reqs_dict = self.construct_requests_for_doc(doc)
 
-        return req_type_reqs_dict
+            for req_type, reqs in req_type_reqs_dict.items():
+                request_type_reqs_dict[req_type] += reqs
+
+        breakpoint()
+        return request_type_reqs_dict
 
     def construct_requests_for_doc(
         self,
         doc: Doc,
-    ) -> Dict[RequestType, List[Request]]:
+    ) -> dict[RequestType, list[Request]]:
         """
         Constructs a list of requests from the task based on the given parameters.
 

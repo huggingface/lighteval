@@ -21,13 +21,13 @@
 # SOFTWARE.
 
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from enum import Enum, auto
 from typing import NamedTuple, Optional, Union
 
 from huggingface_hub import TextGenerationInputGrammarType
 
-from lighteval.utils.utils import as_list
+from lighteval.utils.utils import ListLike, as_list
 
 
 class RequestType(Enum):
@@ -121,12 +121,12 @@ class GreedyUntilRequest(Request):
         request_type (RequestType): The type of the request, set to RequestType.GREEDY_UNTIL.
     """
 
-    stop_sequence: Union[str, tuple[str], list[str]]
+    stop_sequence: ListLike[str] | None
     generation_size: Union[int, None]
     generation_grammar: Union[TextGenerationInputGrammarType, None] = None
     request_type = RequestType.GREEDY_UNTIL
-    tokenized_context: list[int] = None
-    num_samples: int = None
+    tokenized_context: list[int] | None = None
+    num_samples: int | None = None
     do_sample: bool = False
     use_logits: bool = False
 
@@ -192,7 +192,7 @@ class Doc:
     # The uncoditioned query shouldn't contain any information about the task, thus usually it's empty string or 'Answer:'.
     unconditioned_query: Optional[str] = None
 
-    fewshots: list[str] | None = None
+    fewshots: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         if self.instruction is None:

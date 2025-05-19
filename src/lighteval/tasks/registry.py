@@ -87,7 +87,7 @@ class Registry:
         self._custom_tasks = custom_tasks
 
     def get_tasks_from_configs(self, task_configs: list[LightevalTaskConfig]) -> list[LightevalTask]:
-        return [LightevalTask(name=config.name, cfg=config) for config in task_configs]
+        return [LightevalTask(config=config) for config in task_configs]
 
     def get_tasks_configs(self, task: str) -> list[LightevalTaskConfig]:
         """

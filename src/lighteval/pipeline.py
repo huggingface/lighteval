@@ -229,7 +229,7 @@ class Pipeline:
             task_configs = registry.get_tasks_configs(tasks)
             tasks: list[LightevalTask] = registry.get_tasks_from_configs(task_configs)
             LightevalTask.load_datasets(tasks, self.pipeline_parameters.dataset_loading_processes)
-            requests_list = [task.get_requests() for task in tasks]
+            requests_list = [task.get_requests(self.pipeline_parameters.max_samples) for task in tasks]
             requests = {}
             for request in requests_list:
                 for key, value in request.items():

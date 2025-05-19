@@ -152,6 +152,7 @@ class InferenceProvidersClient(LightevalModel):
                     "messages": prompt,
                     "n": num_samples,
                 }
+                breakpoint()
                 kwargs.update(self.generation_parameters.to_inference_providers_dict())
                 response: ChatCompletionOutput = await self.client.chat.completions.create(**kwargs)
                 return response
