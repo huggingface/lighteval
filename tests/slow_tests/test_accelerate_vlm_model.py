@@ -38,7 +38,7 @@ MODELS_ARGS = [
     {
         "model_name": "examples/model_configs/transformers_vlm_model.yaml",
         "use_chat_template": True,
-        "results_file": "tests/reference_scores/Qwen2.5-VL-7B-Instruct-results-vlm.json",
+        "results_file": "tests/reference_scores/Qwen2.5-VL-3B-Instruct-results-vlm.json",
     }
 ]
 TASKS = "lighteval|mmmu_pro:standard-4|0|0"
