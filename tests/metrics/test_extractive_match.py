@@ -83,6 +83,12 @@ def compare_strings(
         ("D", "The answer: D, doesn't makese nsense for answer to be A or B", 1),
         # Test minimal answer format
         ("D", "D. it can't be A or B", 1),
+        ("(D) Alina", "D", 1),
+        ("(A) Cecile", "C", 0),
+        ("C Cecile", "C", 1),
+        ("Alina and the answer is\n(C) Cecile", "C", 1),
+        ("Alina and the answer is\nC Cecile", "C", 1),
+        ("A Peter\nCelina bum", "A", 1),
     ],
 )
 def test_extraction_abc(gold, pred, expected):
