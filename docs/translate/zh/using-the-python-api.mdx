@@ -1,0 +1,63 @@
+# 使用Python API
+
+Lighteval可以从自定义Python脚本中使用。要评估模型，您需要设置
+[`~logging.evaluation_tracker.EvaluationTracker`]、[`~pipeline.PipelineParameters`]、
+[`model`](package_reference/models)或[`model_config`](package_reference/model_config)
+以及[`~pipeline.Pipeline`]。
+
+之后，只需运行流水线并保存结果。
+
+
+```python
+import lighteval
+from lighteval.logging.evaluation_tracker import EvaluationTracker
+from lighteval.models.vllm.vllm_model import VLLMModelConfig
+from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
+from lighteval.utils.utils import EnvConfig
+from lighteval.utils.imports import is_accelerate_available
+
+if is_accelerate_available():
+    from datetime import timedelta
+    from accelerate import Accelerator, InitProcessGroupKwargs
+    accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
+else:
+    accelerator = None
+
+def main():
+    evaluation_tracker = EvaluationTracker(
+        output_dir="./results",
+        save_details=True,
+        push_to_hub=True,
+        hub_results_org="您的用户名",
+    )
+
+    pipeline_params = PipelineParameters(
+        launcher_type=ParallelismManager.ACCELERATE,
+        env_config=EnvConfig(cache_dir="tmp/"),
+        custom_task_directory=None, # 如果使用自定义任务
+        # 一旦您的配置经过测试，删除以下2个参数
+        override_batch_size=1,
+        max_samples=10
+    )
+
+    model_config = VLLMModelConfig(
+            model_name="HuggingFaceH4/zephyr-7b-beta",
+            dtype="float16",
+            use_chat_template=True,
+    )
+
+    task = "helm|mmlu|5|1"
+
+    pipeline = Pipeline(
+        tasks=task,
+        pipeline_parameters=pipeline_params,
+        evaluation_tracker=evaluation_tracker,
+        model_config=model_config,
+    )
+
+    pipeline.evaluate()
+    pipeline.save_and_push_results()
+    pipeline.show_results()
+
+if __name__ == "__main__":
+    main() 

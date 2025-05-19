@@ -1,0 +1,77 @@
+# 使用SGLang作为后端
+
+Lighteval支持使用`sglang`作为后端，这能显著提升评估速度。
+要启用此功能，只需在`model_args`中指定您希望传递给sglang的相关参数即可。
+
+```bash
+lighteval sglang \
+    "model_name=HuggingFaceH4/zephyr-7b-beta,dtype=float16" \
+    "leaderboard|truthfulqa:mc|0|0"
+```
+
+`sglang`能够通过数据并行和张量并行方式在多GPU环境中分布式部署模型。
+您可以在`model_args`中设置相应参数来选择合适的并行策略。
+
+例如，如果您有4个GPU，可以使用`tp_size`参数实现张量并行：
+
+```bash
+lighteval sglang \
+    "model_name=HuggingFaceH4/zephyr-7b-beta,dtype=float16,tp_size=4" \
+    "leaderboard|truthfulqa:mc|0|0"
+```
+
+或者，如果您的模型能够适合单个GPU，可以利用`dp_size`参数实现数据并行来加速评估过程：
+
+```bash
+lighteval sglang \
+    "model_name=HuggingFaceH4/zephyr-7b-beta,dtype=float16,dp_size=4" \
+    "leaderboard|truthfulqa:mc|0|0"
+```
+
+## 使用配置文件
+
+对于更高级的配置需求，您可以使用配置文件来定义模型参数。
+以下是一个示例配置文件，完整版本可在`examples/model_configs/sglang_model_config.yaml`中找到：
+
+```bash
+lighteval sglang \
+    "examples/model_configs/sglang_model_config.yaml" \
+    "leaderboard|truthfulqa:mc|0|0"
+```
+
+> [!TIP]
+> sglang的详细配置参数文档可在[此处](https://docs.sglang.ai/backend/server_arguments.html)查阅
+
+```yaml
+model_parameters:
+    model_name: "HuggingFaceTB/SmolLM-1.7B-Instruct"
+    dtype: "auto"
+    tp_size: 1
+    dp_size: 1
+    context_length: null
+    random_seed: 1
+    trust_remote_code: False
+    use_chat_template: False
+    device: "cuda"
+    skip_tokenizer_init: False
+    kv_cache_dtype: "auto"
+    add_special_tokens: True
+    pairwise_tokenization: False
+    sampling_backend: null
+    attention_backend: null
+    mem_fraction_static: 0.8
+    chunked_prefill_size: 4096
+    generation_parameters:
+      max_new_tokens: 1024
+      min_new_tokens: 0
+      temperature: 1.0
+      top_k: 50
+      min_p: 0.0
+      top_p: 1.0
+      presence_penalty: 0.0
+      repetition_penalty: 1.0
+      frequency_penalty: 0.0
+```
+
+> [!WARNING]
+> 如果遇到内存溢出(OOM)问题，您可能需要减小模型的上下文窗口大小，并降低`mem_fraction_static`和`chunked_prefill_size`参数值。 

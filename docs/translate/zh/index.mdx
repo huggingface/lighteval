@@ -1,0 +1,14 @@
+# Lighteval
+
+🤗 Lighteval 是一款多功能的大语言模型评估工具箱，支持多种后端平台 — 无论您使用的是
+[transformers](https://github.com/huggingface/transformers)、
+[tgi](https://github.com/huggingface/text-generation-inference)、
+[inference providers](https://huggingface.co/docs/huggingface_hub/en/guides/inference)、
+[vllm](https://github.com/vllm-project/vllm) 还是
+[nanotron](https://github.com/huggingface/nanotron)，
+都能轻松实现评估。通过保存和分析详细的样本级结果，您可以深入了解模型性能，进行调试并比较不同模型的表现。
+
+Lighteval 提供了灵活的自定义功能：您可以根据需求轻松创建[新任务](adding-a-custom-task)和[新指标](adding-a-new-metric)，
+也可以直接使用我们已有的丰富任务和指标库。
+
+您可以无缝地进行实验、基准测试，并将结果存储在 Hugging Face Hub、S3 或本地环境中。 

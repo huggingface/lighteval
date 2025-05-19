@@ -1,0 +1,76 @@
+# 指标列表
+
+## 多项选择任务的自动指标
+
+这些指标基于不同可能答案选项的对数似然值计算。
+- `loglikelihood_acc`：选择对数概率最高选项且选择正确的样本比例 - 对于选项仅包含单个token的任务，有一个更高效的版本 (`loglikelihood_acc_single_token`)。
+- `loglikelihood_acc_norm`：选择按序列长度归一化后对数概率最高选项且选择正确的样本比例 - 对于选项仅包含单个token的任务，有一个更高效的版本 (`loglikelihood_acc_norm_single_token`)。
+- `loglikelihood_acc_norm_nospace`：选择按序列长度归一化后对数概率最高选项且选择正确的样本比例，忽略首个空格。
+- `loglikelihood_f1`：多项选择的语料库级别F1分数 - 对于选项仅包含单个token的任务，有一个更高效的版本 (`loglikelihood_f1_single_token`)。
+- `mcc`：马修斯相关系数（衡量统计分布之间一致性的指标）。
+- `recall_at_1`：选择对数概率最高选项且选择正确的样本比例 - 对于每个选项仅包含单个token的任务，有一个更高效的版本 (`recall_at_1_single_token`)。
+- `recall_at_2`：选择对数概率第二高或更高选项且选择正确的样本比例 - 对于每个选项仅包含单个token的任务，有一个更高效的版本 (`recall_at_2_single_token`)。
+- `mrr`：平均倒数排名，评估按正确性/相关性排序的选项质量 - 对于选项仅包含单个token的任务，有一个更高效的版本 (`mrr_single_token`)。
+- `target_perplexity`：不同选项的困惑度。
+- `acc_golds_likelihood`：检查单个目标的平均对数概率是否高于或低于0.5。
+- `multi_f1_numeric`：多个正确答案选项的对数似然F1分数。
+
+上述所有指标都有"单token"版本（`loglikelihood_acc_single_token`、`loglikelihood_acc_norm_single_token`、`loglikelihood_f1_single_token`、`mcc_single_token`、`recall@2_single_token` 和 `mrr_single_token`）。当多项选择选项仅比较单个token（例如："A"vs"B"vs"C"vs"D"，或"是"vs"否"）时，使用这些单token版本可以将评估时间缩短至原来的1/N（N为选项数量）。单token评估还包括：
+- `multi_f1_numeric`：计算所有可能选项的F1分数并取平均值。
+
+## 困惑度和语言建模的自动指标
+这些指标基于输入文本的对数似然值计算。
+- `word_perplexity`：按序列词数加权的困惑度（输入的对数概率）。
+- `byte_perplexity`：按序列字节数加权的困惑度（输入的对数概率）。
+- `bits_per_byte`：根据模型概率计算的每字节平均位数。
+- `log_prob`：预测输出的平均对数概率（语言建模的输入对数概率）。
+
+## 生成任务的自动指标
+这些指标需要模型生成输出文本，因此评估速度相对较慢。
+- 基本指标：
+    - `perfect_exact_match`：预测与参考答案完全匹配的样本比例。
+    - `exact_match`：预测在去除首尾空白后与参考答案匹配的样本比例（即对两者应用`strip`后比较）。
+    - `quasi_exact_match`：归一化预测与归一化参考答案匹配的样本比例（归一化处理包括空白、冠词、大小写等）。还有其他变体使用不同归一化方法，例如`quasi_exact_match_triviaqa`，仅在对所有文本应用`strip`后比较。
+    - `prefix_exact_match`：预测的开头部分与参考答案匹配的样本比例（去除首尾空白后比较）。
+    - `prefix_quasi_exact_match`：预测的归一化开头部分与归一化参考答案匹配的样本比例。
+    - `exact_match_indicator`：移除特定指示符前的上下文后的精确匹配。
+    - `f1_score_quasi`：模型输出和参考答案之间词语重叠的平均F1分数，两者都先进行归一化。
+    - `f1_score`：模型输出和参考答案之间词语重叠的平均F1分数，不进行归一化。
+    - `f1_score_macro`：语料库级别的宏观F1分数。
+    - `f1_score_micro`：语料库级别的微观F1分数。
+    - `maj_at_5` 和 `maj_at_8`：模型多数投票。从模型中获取n（5或8）个生成结果，并将出现频率最高的结果作为最终预测。
+- 摘要指标：
+    - `rouge`：平均ROUGE分数 [(Lin, 2004)](https://aclanthology.org/W04-1013/)。
+    - `rouge1`：基于1-gram重叠的平均ROUGE分数 [(Lin, 2004)](https://aclanthology.org/W04-1013/)。
+    - `rouge2`：基于2-gram重叠的平均ROUGE分数 [(Lin, 2004)](https://aclanthology.org/W04-1013/)。
+    - `rougeL`：基于最长公共子序列重叠的平均ROUGE分数 [(Lin, 2004)](https://aclanthology.org/W04-1013/)。
+    - `rougeLsum`：基于最长公共子序列重叠的平均ROUGE分数 [(Lin, 2004)](https://aclanthology.org/W04-1013/)。
+    - `rouge_t5` (BigBench)：所有可用ROUGE指标的语料库级别ROUGE分数。
+    - `faithfulness`：基于SummaC方法 [(Laban et al. (2022)](https://aclanthology.org/2022.tacl-1.10/)) 的忠实度评分。
+    - `extractiveness`：基于 [(Grusky et al., 2018)](https://aclanthology.org/N18-1065/) 的内容评估：
+        - `summarization_coverage`：模型生成摘要中来自源文档的抽取片段比例，
+        - `summarization_density`：模型生成摘要对源文档的抽取程度，
+        - `summarization_compression`：模型生成摘要相对源文档的压缩比率。
+    - `bert_score`：模型生成摘要和参考摘要之间的平均BERTScore精确率、召回率和F1分数 [(Zhang et al., 2020)](https://openreview.net/pdf?id=SkeHuCVFDr)。
+- 翻译指标：
+    - `bleu`：语料库级别BLEU分数 [(Papineni et al., 2002)](https://aclanthology.org/P02-1040/) - 使用sacrebleu实现。
+    - `bleu_1`：基于1-gram重叠的平均样本BLEU分数 [(Papineni et al., 2002)](https://aclanthology.org/P02-1040/) - 使用nltk实现。
+    - `bleu_4`：基于4-gram重叠的平均样本BLEU分数 [(Papineni et al., 2002)](https://aclanthology.org/P02-1040/) - 使用nltk实现。
+    - `chrf`：字符n-gram匹配的F值评分。
+    - `ter`：翻译编辑/错误率。
+- 版权相关指标：
+    - `copyright`：评估以下方面：
+        - `longest_common_prefix_length`：模型生成和参考文本之间最长公共前缀的平均长度，
+        - `edit_distance`：模型生成和参考文本之间的平均Levenshtein编辑距离，
+        - `edit_similarity`：模型生成和参考文本之间的平均Levenshtein编辑相似度（按较长序列长度归一化）。
+- 数学评估指标：
+    - `quasi_exact_match_math`：归一化预测与归一化参考答案匹配的样本比例（针对数学问题特别优化，删除了LaTeX符号、单位等）。
+    - `maj_at_4_math`：多数投票评估，对预测和参考答案使用数学专用归一化。
+    - `quasi_exact_match_gsm8k`：归一化预测与归一化参考答案匹配的样本比例（针对gsm8k问题特别优化，删除了LaTeX符号、单位等）。
+    - `maj_at_8_gsm8k`：多数投票评估，对预测和参考答案使用gsm8k专用归一化。
+
+## LLM作为评判
+- `llm_judge_gpt3p5`：适用于任何生成任务，使用OpenAI API的GPT-3.5模型评分。
+- `llm_judge_llama_3_405b`：适用于任何生成任务，使用HuggingFace API的Llama 3 405B模型评分。
+- `llm_judge_multi_turn_gpt3p5`：适用于多轮对话任务（如mt-bench），使用OpenAI API的GPT-3.5模型评分。
+- `llm_judge_multi_turn_llama_3_405b`：适用于多轮对话任务（如mt-bench），使用HuggingFace API的Llama 3 405B模型评分。 

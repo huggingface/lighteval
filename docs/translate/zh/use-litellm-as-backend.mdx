@@ -1,0 +1,38 @@
+# 使用Litellm作为后端
+
+Lighteval支持使用litellm作为后端，这是一个统一接口工具，允许您以OpenAI格式调用各种LLM API（包括Bedrock、Huggingface、VertexAI、TogetherAI、Azure、OpenAI、Groq等）。
+
+关于可用API和兼容端点的详细文档可在[此处](https://docs.litellm.ai/docs/)查阅。
+
+## 快速使用
+
+```bash
+lighteval endpoint litellm \
+    "provider=openai,model_name=gpt-3.5-turbo" \
+    "lighteval|gsm8k|0|0" \
+    --use-chat-template
+```
+
+> [!WARNING]
+> 使用litellm时必须添加`--use-chat-template`参数才能正常工作。
+
+## 使用配置文件
+
+Litellm能够连接任何与OpenAI兼容的端点进行文本生成，例如，您可以评估在本地vllm服务器上运行的模型。
+
+要实现这一点，您需要使用类似以下的配置文件：
+
+```yaml
+model_parameters:
+    model_name: "openai/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
+    base_url: "您要使用的端点的URL"
+    api_key: "" # 根据需要删除或保留为空
+    generation_parameters:
+      temperature: 0.5
+      max_new_tokens: 256
+      stop_tokens: [""]
+      top_p: 0.9
+      seed: 0
+      repetition_penalty: 1.0
+      frequency_penalty: 0.0
+``` 

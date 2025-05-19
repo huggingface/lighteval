@@ -1,0 +1,143 @@
+# 添加自定义任务
+
+要添加新任务，首先打开一个issue，确定它是否将被集成到lighteval的核心评估中、扩展任务中还是社区任务中，并在hub上添加其数据集。
+
+- 核心评估是在其度量和处理中只需要标准逻辑的评估，我们会将其添加到我们的测试套件中，以确保随着时间的推移不会出现回归。它们在社区中已经有很高的使用率。
+- 扩展评估是在其度量中需要自定义逻辑的评估（复杂的规范化、LLM作为评判等），我们添加它们是为了方便用户。它们在社区中已经有很高的使用率。
+- 社区评估是社区提交的新任务。
+
+随着时间的推移，一个受欢迎的社区评估可以发展成为扩展评估或核心评估。
+
+> [!TIP]
+> 您可以在<a href="https://github.com/huggingface/lighteval/tree/main/community_tasks">community_task</a>目录中找到自定义任务的示例。
+
+## 逐步创建自定义任务
+
+> [!WARNING]
+> 要将您的自定义指标贡献给lighteval仓库，您首先需要通过运行`pip install -e .[dev]`安装所需的开发依赖项，然后运行`pre-commit install`安装pre-commit钩子。
+
+首先，在`community_tasks`目录下创建一个Python文件。
+
+您需要定义一个提示函数，该函数将把来自数据集的一行转换为用于评估的文档。
+
+```python
+# 根据您不同的任务需求定义尽可能多的函数
+def prompt_fn(line, task_name: str = None):
+    """定义如何从数据集行到doc对象。
+    参考src/lighteval/tasks/default_prompts.py中的例子，
+    或者在README中获取关于此函数应该做什么的更多信息。
+    """
+    return Doc(
+        task_name=task_name,
+        query=line["question"],
+        choices=[f" {c}" for c in line["choices"]],
+        gold_index=line["gold"],
+        instruction="",
+    )
+```
+
+然后，您需要选择一个指标：您可以使用现有的指标（在[`lighteval.metrics.metrics.Metrics`]中定义）或[创建自定义指标](adding-a-new-metric)。
+[//]: # (TODO: 一旦添加了自动文档，将lighteval.metrics.metrics.Metrics替换为~metrics.metrics.Metrics)
+
+```python
+custom_metric = SampleLevelMetric(
+    metric_name="my_custom_metric_name",
+    higher_is_better=True,
+    category=MetricCategory.IGNORED,
+    use_case=MetricUseCase.NONE,
+    sample_level_fn=lambda x: x,  # 如何计算一个样本的分数
+    corpus_level_fn=np.mean,  # 如何聚合样本指标
+)
+```
+
+然后，您需要使用[`~tasks.lighteval_task.LightevalTaskConfig`]定义您的任务。
+您可以定义有或没有子集的任务。
+要定义没有子集的任务：
+
+```python
+# 这是如何创建一个简单的任务（如hellaswag），它有一个单一的子集附加到它，并且可能有一个评估。
+task = LightevalTaskConfig(
+    name="myothertask",
+    prompt_function=prompt_fn,  # 必须在文件中定义或从src/lighteval/tasks/tasks_prompt_formatting.py导入
+    suite=["community"],
+    hf_repo="",
+    hf_subset="default",
+    hf_avail_splits=[],
+    evaluation_splits=[],
+    few_shots_split=None,
+    few_shots_select=None,
+    metric=[],  # 在Metrics中选择您的指标
+)
+```
+
+如果您想创建具有多个子集的任务，请将它们添加到`SAMPLE_SUBSETS`列表中，并为每个子集创建一个任务。
+
+```python
+SAMPLE_SUBSETS = []  # 用于此评估的所有子集列表
+
+
+class CustomSubsetTask(LightevalTaskConfig):
+    def __init__(
+        self,
+        name,
+        hf_subset,
+    ):
+        super().__init__(
+            name=name,
+            hf_subset=hf_subset,
+            prompt_function=prompt_fn,  # 必须在文件中定义或从src/lighteval/tasks/tasks_prompt_formatting.py导入
+            hf_repo="",
+            metric=[custom_metric],  # 在Metrics中选择您的指标或使用您的custom_metric
+            hf_avail_splits=[],
+            evaluation_splits=[],
+            few_shots_split=None,
+            few_shots_select=None,
+            suite=["community"],
+            generation_size=-1,
+            stop_sequence=None,
+        )
+SUBSET_TASKS = [CustomSubsetTask(name=f"mytask:{subset}", hf_subset=subset) for subset in SAMPLE_SUBSETS]
+```
+
+以下是参数及其含义的列表：
+
+- `name` (str)，您的评估名称
+- `suite` (list)，您的评估应该属于的套件。此字段允许我们比较不同的任务实现，并用作任务选择以区分要启动的版本。目前，您会找到关键词["helm", "bigbench", "original", "lighteval", "community", "custom"]；对于核心评估，请选择`lighteval`。
+- `prompt_function` (Callable)，您在上面步骤中定义的提示函数
+- `hf_repo` (str)，hub上您的评估数据集的路径
+- `hf_subset` (str)，您想用于评估的特定子集（注意：当数据集没有子集时，请用`"default"`填充此字段，而不是用`None`或`""`)
+- `hf_avail_splits` (list)，您的数据集可用的所有分割（训练、验证、测试、其他...）
+- `evaluation_splits` (list)，您想用于评估的分割
+- `few_shots_split` (str，可以为`null`)，您想从中选择样本作为少量样本示例的特定分割。它应该与`evaluation_splits`中包含的集合不同
+- `few_shots_select` (str，可以为`null`)，您将用来为少量样本示例选择项目的方法。可以为`null`，或以下之一：
+    - `balanced` 从`few_shots_split`中选择带有平衡标签的示例，以避免将少量样本示例（因此是模型生成）偏向特定标签
+    - `random` 从`few_shots_split`中随机选择示例
+    - `random_sampling` 为每个新项目从`few_shots_split`中随机选择新示例，但如果采样项等于当前项，则从可用样本中删除
+    - `random_sampling_from_train` 为每个新项目从`few_shots_split`中随机选择新示例，但如果采样项等于当前项，则保留！仅在您知道自己在做什么时使用此选项。
+    - `sequential` 选择`few_shots_split`的前`n`个示例
+- `generation_size` (int)，生成评估允许的最大令牌数。如果您的评估是对数似然评估（多选），此值应为-1
+- `stop_sequence` (list)，作为生成的句子结束标记的字符串列表
+- `metric` (list)，您想用于评估的指标（有关详细说明，请参见下一节）
+- `trust_dataset` (bool)，如果您信任数据集，则设置为True
+
+
+然后，您需要将您的任务添加到`TASKS_TABLE`列表中。
+
+```python
+# 存储您的评估
+
+# 带有子集的任务：
+TASKS_TABLE = SUBSET_TASKS
+
+# 不带子集的任务：
+# TASKS_TABLE = [task]
+```
+
+创建文件后，您可以使用以下命令运行评估：
+
+```bash
+lighteval accelerate \
+    "model_name=HuggingFaceH4/zephyr-7b-beta" \
+    "community|{custom_task}|{fewshots}|{truncate_few_shot}" \
+    --custom-tasks {path_to_your_custom_task_file}
+``` 

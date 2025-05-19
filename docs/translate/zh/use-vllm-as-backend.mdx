@@ -1,0 +1,124 @@
+# 使用VLLM作为后端
+
+Lighteval支持使用`vllm`作为后端，这能显著提升评估速度。
+要启用此功能，只需在`model_args`中指定您希望传递给vllm的相关参数即可。
+
+
+> [!TIP]
+> vllm引擎的详细参数文档可在[此处](https://docs.vllm.ai/en/latest/serving/engine_args.html)查阅
+
+```bash
+lighteval vllm \
+    "model_name=HuggingFaceH4/zephyr-7b-beta,dtype=float16" \
+    "leaderboard|truthfulqa:mc|0|0"
+```
+
+`vllm`能够通过数据并行、流水线并行或张量并行方式在多GPU环境中分布式部署模型。
+您可以在`model_args`中设置相应参数来选择合适的并行策略。
+
+例如，如果您有4个GPU，可以使用`tensor_parallelism`将模型拆分：
+
+```bash
+export VLLM_WORKER_MULTIPROC_METHOD=spawn && lighteval vllm \
+    "model_name=HuggingFaceH4/zephyr-7b-beta,dtype=float16,tensor_parallel_size=4" \
+    "leaderboard|truthfulqa:mc|0|0"
+```
+
+或者，如果您的模型能够适合单个GPU，可以利用`data_parallelism`来加速评估过程：
+
+```bash
+lighteval vllm \
+    "model_name=HuggingFaceH4/zephyr-7b-beta,dtype=float16,data_parallel_size=4" \
+    "leaderboard|truthfulqa:mc|0|0"
+```
+
+## 使用配置文件
+
+对于更高级的配置需求，您可以使用配置文件来定义模型参数。
+以下是一个示例配置文件，完整版本可在`examples/model_configs/vllm_model_config.yaml`中找到：
+
+```bash
+lighteval vllm \
+    "examples/model_configs/vllm_model_config.yaml" \
+    "leaderboard|truthfulqa:mc|0|0"
+```
+
+```yaml
+model_parameters:
+    model_name: "HuggingFaceTB/SmolLM-1.7B-Instruct"
+    revision: "main"
+    dtype: "bfloat16"
+    tensor_parallel_size: 1
+    data_parallel_size: 1
+    pipeline_parallel_size: 1
+    gpu_memory_utilization: 0.9
+    max_model_length: 2048
+    swap_space: 4
+    seed: 1
+    trust_remote_code: True
+    use_chat_template: True
+    add_special_tokens: True
+    multichoice_continuations_start_space: True
+    pairwise_tokenization: True
+    subfolder: null
+    generation_parameters:
+      presence_penalty: 0.0
+      repetition_penalty: 1.0
+      frequency_penalty: 0.0
+      temperature: 1.0
+      top_k: 50
+      min_p: 0.0
+      top_p: 1.0
+      seed: 42
+      stop_tokens: null
+      max_new_tokens: 1024
+      min_new_tokens: 0
+```
+
+> [!WARNING]
+> 如果遇到内存溢出(OOM)问题，您可能需要减小模型的上下文窗口大小，并降低`gpu_memory_utilization`参数值。
+
+
+## 动态调整指标配置
+
+对于特殊类型的指标，如`Pass@K`或LiveCodeBench的`codegen`指标，有时需要传递特定参数值，例如生成样本数量。这可以在`yaml`配置文件中通过以下方式实现：
+
+```yaml
+model_parameters:
+    model_name: "HuggingFaceTB/SmolLM-1.7B-Instruct"
+    revision: "main"
+    dtype: "bfloat16"
+    tensor_parallel_size: 1
+    data_parallel_size: 1
+    pipeline_parallel_size: 1
+    gpu_memory_utilization: 0.9
+    max_model_length: 2048
+    swap_space: 4
+    seed: 1
+    trust_remote_code: True
+    use_chat_template: True
+    add_special_tokens: True
+    multichoice_continuations_start_space: True
+    pairwise_tokenization: True
+    subfolder: null
+    generation_parameters:
+      presence_penalty: 0.0
+      repetition_penalty: 1.0
+      frequency_penalty: 0.0
+      temperature: 1.0
+      top_k: 50
+      min_p: 0.0
+      top_p: 1.0
+      seed: 42
+      stop_tokens: null
+      max_new_tokens: 1024
+      min_new_tokens: 0
+metric_options: # 可选的指标参数
+    codegen_pass@1:16:
+        num_samples: 16
+```
+
+您可以通过在yaml文件中添加可选的`metric_options`键来自定义指标参数，
+使用的指标名称应与`Metric.metric_name`中定义的一致。
+在上例中，我们为任务中定义的`codegen_pass@1:16`指标将`num_samples`值设置为16，
+这会覆盖该指标原本的默认值。 
