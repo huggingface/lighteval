@@ -259,7 +259,7 @@ class OpenAIClient(LightevalModel):
                 new_tokens == 1 for new_tokens in max_new_tokens
             ), "Only single token continuations are supported when using openai API."
 
-            logit_biases = [{tok: 100 for tok in sample.tokenized_continuation} for sample in split]
+            logit_biases = [dict.fromkeys(sample.tokenized_continuation, 100) for sample in split]
 
             outputs = self.__call_api_parallel(
                 inputs, return_logits=True, max_new_tokens=max_new_tokens, num_samples=1, logit_bias=logit_biases

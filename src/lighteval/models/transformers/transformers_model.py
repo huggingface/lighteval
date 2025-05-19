@@ -22,7 +22,7 @@
 
 import logging
 import os
-from typing import Optional, Tuple, Union, Dict
+from typing import Dict, Optional, Tuple, Union
 
 import torch
 import torch.nn.functional as F
@@ -509,8 +509,7 @@ class TransformersModel(LightevalModel):
     ) -> GenerativeMultiturnResponse:
         raise NotImplementedError("This method is not implemented for this model")
 
-
-    def _continious_greedy_until( 
+    def _continious_greedy_until(
         self,
         requests: list[GreedyUntilRequest],
     ) -> list[GenerativeResponse]:
@@ -602,10 +601,7 @@ class TransformersModel(LightevalModel):
                 result.append(self.tokenizer.decode(_output.static_outputs))
 
                 if logprobs_raw and output_token_ids and False:
-                    logprobs = [
-                        logprobs_raw[0][token_id].logprob
-                        for token_id in output_token_ids[0]
-                    ]
+                    logprobs = [logprobs_raw[0][token_id].logprob for token_id in output_token_ids[0]]
                 else:
                     logprobs = []
 
@@ -737,7 +733,7 @@ class TransformersModel(LightevalModel):
                     returns_logits=returns_logits,
                     num_samples=num_samples,
                     do_sample=do_sample,
-                    use_fast=False
+                    use_fast=False,
                 )
                 results.extend(cur_reponses)
 
