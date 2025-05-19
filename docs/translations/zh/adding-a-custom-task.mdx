@@ -108,7 +108,7 @@ SUBSET_TASKS = [CustomSubsetTask(name=f"mytask:{subset}", hf_subset=subset) for 
 - `hf_subset` (str)，您想用于评估的特定子集（注意：当数据集没有子集时，请用`"default"`填充此字段，而不是用`None`或`""`)
 - `hf_avail_splits` (list)，您的数据集可用的所有分割（训练、验证、测试、其他...）
 - `evaluation_splits` (list)，您想用于评估的分割
-- `few_shots_split` (str，可以为`null`)，您想从中选择样本作为少量样本示例的特定分割。它应该与`evaluation_splits`中包含的集合不同
+- `few_shots_split` (str，可以为`null`)，您想从中选择少量示例样本的特定数据划分。它应该与`evaluation_splits`中包含的集合不同
 - `few_shots_select` (str，可以为`null`)，您将用来为少量样本示例选择项目的方法。可以为`null`，或以下之一：
     - `balanced` 从`few_shots_split`中选择带有平衡标签的示例，以避免将少量样本示例（因此是模型生成）偏向特定标签
     - `random` 从`few_shots_split`中随机选择示例
