@@ -914,7 +914,7 @@ class TransformersModel(LightevalModel):
         starting_batch_size = STARTING_BATCH_SIZE
         res = []
 
-        for split in tqdm(dataset.splits_iterator()):
+        for split in tqdm(dataset.splits_iterator(), disable=self.disable_tqdm):
             context_enc = split[0].tokenized_context
             continuation_enc = split[0].tokenized_continuation
             if rolling:  # we take all the sequence in rolling mode
@@ -1158,7 +1158,7 @@ class TransformersModel(LightevalModel):
         starting_batch_size = STARTING_BATCH_SIZE
         res = []
 
-        for split in tqdm(dataset.splits_iterator()):
+        for split in tqdm(dataset.splits_iterator(), disable=self.disable_tqdm):
             context_enc = split[0].tokenized_context
             max_context = len(context_enc[-self.max_length :])
             batch_size = self._get_batch_size(override_bs=self.config.batch_size, max_input_length=max_context)
