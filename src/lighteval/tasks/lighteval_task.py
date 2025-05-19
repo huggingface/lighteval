@@ -578,15 +578,6 @@ class LightevalTask:
                     ],
                 )
 
-        # TODO: debug purpose, to remove later
-        import os
-
-        debug_samples = int(os.getenv("DATASET_SAMPLES", 0))
-        if debug_samples > 0:
-            for dataset in datasets:
-                for split in dataset.keys():
-                    dataset[split] = dataset[split].select(range(debug_samples))
-
         for task, dataset in zip(tasks, datasets):
             task.dataset = dataset
 
