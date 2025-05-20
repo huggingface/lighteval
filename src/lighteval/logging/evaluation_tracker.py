@@ -264,11 +264,15 @@ class EvaluationTracker:
         self.wandb_run.finish()
 
     def save_results(self, date_id: str, results_dict: dict):
-        org = self.general_config_logger.model_name.split("/")[0]
-        model = self.general_config_logger.model_name.split("/")[1]
-        output_dir = self.output_dir
-
         if self.results_path_template is not None:
+            org_model_split = self.results_path_template.split("/")
+            if len(org_model_split) < 2:
+                org = ""
+                model = org_model_split[0]
+            else:
+                org = org_model_split[0]
+                model = org_model_split[1]
+            output_dir = self.output_dir
             output_dir_results = Path(self.results_path_template.format(output_dir=output_dir, org=org, model=model))
         else:
             output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name
