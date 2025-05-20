@@ -1163,7 +1163,9 @@ class PassAtK:
                 self.type_exact_match = "full"
             self.score_sample = self.default_sample_scoring
 
-    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> dict[str, float]:
+    def compute(
+        self, golds: list[str], predictions: list[str], formatted_doc: Doc = None, **kwargs
+    ) -> dict[str, float]:
         """Computes the metric over a list of golds and predictions for one single item with possibly many samples.
         It applies normalisation (if needed) to model prediction and gold, computes their per prediction score,
         then aggregates the scores over the samples using a pass@k.
@@ -1189,7 +1191,7 @@ class PassAtK:
         all_scores = []
         for pred in predictions[: self.n]:
             cur_pred = self.get_processed_pred(pred=pred)
-            all_scores.append(self.score_sample(cur_pred, gold))
+            all_scores.append(self.score_sample(cur_pred, gold, formatted_doc))
 
         return self.pass_at_k(all_scores)
 

@@ -184,17 +184,17 @@ class OpenAIClient(LightevalModel):
         dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         results = []
 
-        for _ in tqdm(
-            dataset.splits_start_end_iterator(),
+        for split in tqdm(
+            dataset.splits_iterator(),
             total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
             disable=False,  # self.disable_tqdm,
         ):
-            max_new_tokens = dataset[0].generation_size  # could be none
-            return_logits = dataset[0].use_logits
-            num_samples = dataset[0].num_samples
-            contexts = [c.context for c in dataset]
+            max_new_tokens = split[0].generation_size  # could be none
+            return_logits = split[0].use_logits
+            num_samples = split[0].num_samples
+            contexts = [sample.context for sample in split]
 
             responses = self.__call_api_parallel(contexts, return_logits, max_new_tokens, num_samples)
 
@@ -251,24 +251,22 @@ class OpenAIClient(LightevalModel):
         dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=1)
         results = []
 
-        for _ in tqdm(dataset.splits_start_end_iterator()):
-            inputs = [dataset[i].context for i in range(len(dataset))]
-            logit_biass = []
-            max_new_tokens = [len(dataset[i].tokenized_continuation) for i in range(len(dataset))]
+        for split in tqdm(dataset.splits_iterator()):
+            inputs = [sample.context for sample in split]
+            max_new_tokens = [len(sample.tokenized_continuation) for sample in split]
 
             assert all(
                 new_tokens == 1 for new_tokens in max_new_tokens
             ), "Only single token continuations are supported when using openai API."
 
-            for i in range(len(dataset)):
-                logit_bias = {tok: 100 for tok in dataset[i].tokenized_continuation}
-                logit_biass.append(logit_bias)
+            logit_biases = [{tok: 100 for tok in sample.tokenized_continuation} for sample in split]
 
             outputs = self.__call_api_parallel(
-                inputs, return_logits=True, max_new_tokens=max_new_tokens, num_samples=1, logit_bias=logit_biass
+                inputs, return_logits=True, max_new_tokens=max_new_tokens, num_samples=1, logit_bias=logit_biases
             )
 
-            for output, input in zip(outputs, dataset):
+            for i, output in enumerate(outputs):
+                input = split[i]
                 continuation_logprobs = [content.logprob for content in output.choices[0].logprobs.content]
                 answer = LoglikelihoodResponse(
                     input_tokens=input.tokenized_context + input.tokenized_continuation,

@@ -1,0 +1,10 @@
+model_parameters:
+  model_name: "Qwen/Qwen2.5-VL-3B-Instruct"
+  revision: "main"
+  dtype: "float16"
+  compile: false
+  model_parallel: false
+  batch_size: 1
+  generation_parameters:
+    temperature: 0.2
+    top_p: 0.9

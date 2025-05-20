@@ -22,8 +22,58 @@
 import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.templates.qa import get_qa_prompt_function
+from lighteval.utils.language import Language
 
 
+mmmu_pro_standard_4_options = LightevalTaskConfig(
+    name="mmmu_pro:standard-4",
+    suite=["lighteval"],
+    prompt_function=prompt.mmmu_pro,
+    hf_repo="MMMU/MMMU_pro",
+    hf_subset="standard (4 options)",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=30,  # expected an answer in a format 'Answer: B'
+    metric=[Metrics.gpqa_instruct_metric],
+    stop_sequence=None,
+    trust_dataset=True,
+    version=0,
+)
+mmmu_pro_standard_10_options = LightevalTaskConfig(
+    name="mmmu_pro:standard-10",
+    suite=["lighteval"],
+    prompt_function=prompt.mmmu_pro,
+    hf_repo="MMMU/MMMU_pro",
+    hf_subset="standard (10 options)",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=30,  # expected an answer in a format 'Answer: B'
+    metric=[Metrics.gpqa_instruct_metric],
+    stop_sequence=None,
+    trust_dataset=True,
+    version=0,
+)
+mmmu_pro_vision = LightevalTaskConfig(
+    name="mmmu_pro:vision",
+    suite=["lighteval"],
+    prompt_function=prompt.mmmu_pro_vision,
+    hf_repo="MMMU/MMMU_pro",
+    hf_subset="vision",
+    hf_avail_splits=["test"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=30,  # expected an answer in a format 'Answer: B'
+    metric=[Metrics.gpqa_instruct_metric],
+    stop_sequence=None,
+    trust_dataset=True,
+    version=0,
+)
 abstract_narrative_understanding_bigbench = LightevalTaskConfig(
     name="abstract_narrative_understanding",
     suite=["bigbench", "bigbench_json"],
@@ -324,10 +374,14 @@ aime24 = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=32768,
     metric=[
-        Metrics.expr_gold_metric,
+        Metrics.math_pass_at_1_1n,
+        Metrics.math_pass_at_1_4n,
+        Metrics.math_pass_at_1_8n,
+        Metrics.math_pass_at_1_16n,
         Metrics.math_pass_at_1_32n,
+        Metrics.math_pass_at_1_64n,
     ],
-    version=1,
+    version=2,
 )
 aime24_gpassk = LightevalTaskConfig(
     name="aime24_gpassk",
@@ -355,10 +409,14 @@ aime25 = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=10000,
     metric=[
-        Metrics.expr_gold_metric,
+        Metrics.math_pass_at_1_1n,
+        Metrics.math_pass_at_1_4n,
+        Metrics.math_pass_at_1_8n,
+        Metrics.math_pass_at_1_16n,
         Metrics.math_pass_at_1_32n,
+        Metrics.math_pass_at_1_64n,
     ],
-    version=1,
+    version=2,
 )
 aime25_gpassk = LightevalTaskConfig(
     name="aime25_gpassk",
@@ -6619,21 +6677,28 @@ copyright_prompt_num_line_5_min_lines_20_helm = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-coqa_lighteval = LightevalTaskConfig(
+coqa_first_question = LightevalTaskConfig(
     name="coqa",
-    suite=["lighteval"],
-    prompt_function=prompt.coqa,
-    hf_repo="coqa",
+    prompt_function=get_qa_prompt_function(
+        Language.ENGLISH,
+        lambda line: {
+            "question": line["questions"][0],
+            "context": line["story"],
+            "choices": [line["answers"]["input_text"][0]],
+        },
+    ),
+    suite=("lighteval",),
+    hf_repo="stanfordnlp/coqa",
     hf_subset="default",
     hf_avail_splits=["train", "validation"],
     evaluation_splits=["validation"],
-    few_shots_split=None,
-    few_shots_select=None,
-    generation_size=10,
-    metric=[Metrics.perfect_exact_match, Metrics.f1_score],
-    stop_sequence=["\n"],
-    trust_dataset=True,
-    version=0,
+    stop_sequence=["\n", "Question:", "question:"],
+    generation_size=100,
+    version=1,
+    metric=(
+        Metrics.prefix_quasi_exact_match,
+        Metrics.f1_score_quasi,
+    ),
 )
 coqa_bb_lighteval = LightevalTaskConfig(
     name="coqa_bb",
@@ -6662,7 +6727,14 @@ covid_dialogue_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=128,
-    metric=[Metrics.exact_match, Metrics.quasi_exact_match, Metrics.f1_score, Metrics.rougeL, "bleu_1", "bleu_4"],
+    metric=[
+        Metrics.exact_match,
+        Metrics.quasi_exact_match,
+        Metrics.f1_score,
+        Metrics.rougeL,
+        Metrics.bleu_1,
+        Metrics.bleu_4,
+    ],
     stop_sequence=["\n"],
     trust_dataset=True,
     version=0,
@@ -6827,21 +6899,43 @@ disfl_qa_bigbench = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
-drop_lighteval = LightevalTaskConfig(
+drop_qa = LightevalTaskConfig(
     name="drop",
-    suite=["lighteval"],
-    prompt_function=prompt.drop,
+    prompt_function=get_qa_prompt_function(
+        Language.ENGLISH,
+        lambda line: {
+            "context": line["passage"],
+            "question": line["question"],
+            "choices": list(
+                filter(
+                    lambda x: x,
+                    [line["answer"].get("number")]
+                    + line["answer"]["spans"]
+                    + [prompt.get_drop_date(line["answer"].get("date"))],
+                )
+            ),
+        },
+    ),
+    suite=("lighteval",),
     hf_repo="lighteval/drop_harness",
     hf_subset="default",
-    hf_avail_splits=["train", "validation"],
-    evaluation_splits=["validation"],
+    hf_filter=lambda line: list(
+        filter(
+            lambda x: x,
+            [line["answer"].get("number")]
+            + line["answer"]["spans"]
+            + [prompt.get_drop_date(line["answer"].get("date"))],
+        )
+    ),
+    evaluation_splits=("validation",),
     few_shots_split="train",
-    few_shots_select="random_sampling_from_train",
-    generation_size=None,
-    metric=[Metrics.drop],
-    stop_sequence=["."],
-    trust_dataset=True,
-    version=0,
+    generation_size=250,
+    stop_sequence=["Question:", "question:", "\n"],
+    metric=(
+        Metrics.prefix_quasi_exact_match,
+        Metrics.f1_score_quasi,
+    ),
+    version=1,
 )
 dyck_language_2_helm = LightevalTaskConfig(
     name="dyck_language:2",
@@ -7665,7 +7759,7 @@ glue_mrpc_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metric=[Metrics.loglikelihood_acc, "loglikelihood_f1"],
+    metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_f1],
     stop_sequence=["\n"],
     trust_dataset=True,
     version=0,
@@ -7697,7 +7791,7 @@ glue_qqp_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metric=[Metrics.loglikelihood_acc, "loglikelihood_f1"],
+    metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_f1],
     stop_sequence=["\n"],
     trust_dataset=True,
     version=0,
@@ -7809,10 +7903,14 @@ gpqa_diamond_instruct_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=32768,  # needed for reasoning models like R1
-    metric=[Metrics.gpqa_instruct_metric],
+    metric=[
+        Metrics.gpqa_instruct_pass_at_1_1n,
+        Metrics.gpqa_instruct_pass_at_1_4n,
+        Metrics.gpqa_instruct_pass_at_1_8n,
+    ],
     stop_sequence=[],  # no stop sequence, will use eos token
     trust_dataset=True,
-    version=0,
+    version=1,
 )
 gpqa_extended_instruct_lighteval = LightevalTaskConfig(
     name="gpqa:extended",
@@ -7874,7 +7972,7 @@ gsm8k_leaderboard = LightevalTaskConfig(
     few_shots_select="random_sampling_from_train",
     generation_size=256,
     metric=[Metrics.quasi_exact_match_gsm8k],
-    stop_sequence=["Question=", "Question", "="],
+    stop_sequence=["Question:"],
     trust_dataset=True,
     version=0,
 )
@@ -7889,8 +7987,10 @@ gsm8k_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling_from_train",
     generation_size=256,
-    metric=[Metrics.quasi_exact_match_gsm8k, Metrics.maj_at_8_gsm8k],
-    stop_sequence=["Question="],
+    metric=[
+        Metrics.expr_gold_metric,
+    ],
+    stop_sequence=["Question:"],
     trust_dataset=True,
     version=0,
 )
@@ -8566,6 +8666,27 @@ iwslt17_zh_en_lighteval = LightevalTaskConfig(
     stop_sequence=["\n"],
     trust_dataset=True,
     version=0,
+)
+jeopardy = LightevalTaskConfig(
+    name="jeopardy",
+    prompt_function=get_qa_prompt_function(
+        Language.ENGLISH,
+        lambda line: {
+            "question": line["question"],
+            "choices": [line["answer"]],
+        },
+    ),
+    suite=("lighteval",),
+    hf_repo="openaccess-ai-collective/jeopardy",
+    hf_subset="default",
+    evaluation_splits=("train",),
+    few_shots_split="train",
+    generation_size=250,
+    stop_sequence=["\n", "Question:", "question:"],
+    metric=(
+        Metrics.prefix_quasi_exact_match,
+        Metrics.f1_score_quasi,
+    ),
 )
 kanji_ascii_bigbench = LightevalTaskConfig(
     name="kanji_ascii",
@@ -9686,8 +9807,11 @@ math_500 = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=32768,
-    metric=[Metrics.latex_gold_metric],
-    version=1,
+    metric=[
+        Metrics.math_pass_at_1_1n,
+        Metrics.math_pass_at_1_4n,
+    ],
+    version=2,
 )
 math_500_gpassk = LightevalTaskConfig(
     name="math_500_gpassk",
@@ -9986,7 +10110,14 @@ me_q_sum_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=128,
-    metric=[Metrics.exact_match, Metrics.quasi_exact_match, Metrics.f1_score, Metrics.rougeL, "bleu_1", "bleu_4"],
+    metric=[
+        Metrics.exact_match,
+        Metrics.quasi_exact_match,
+        Metrics.f1_score,
+        Metrics.rougeL,
+        Metrics.bleu_1,
+        Metrics.bleu_4,
+    ],
     stop_sequence=["\n"],
     trust_dataset=True,
     version=0,
@@ -10002,7 +10133,14 @@ med_dialog_healthcaremagic_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=128,
-    metric=[Metrics.exact_match, Metrics.quasi_exact_match, Metrics.f1_score, Metrics.rougeL, "bleu_1", "bleu_4"],
+    metric=[
+        Metrics.exact_match,
+        Metrics.quasi_exact_match,
+        Metrics.f1_score,
+        Metrics.rougeL,
+        Metrics.bleu_1,
+        Metrics.bleu_4,
+    ],
     stop_sequence=["\n"],
     trust_dataset=True,
     version=0,
@@ -10018,7 +10156,14 @@ med_dialog_icliniq_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=128,
-    metric=[Metrics.exact_match, Metrics.quasi_exact_match, Metrics.f1_score, Metrics.rougeL, "bleu_1", "bleu_4"],
+    metric=[
+        Metrics.exact_match,
+        Metrics.quasi_exact_match,
+        Metrics.f1_score,
+        Metrics.rougeL,
+        Metrics.bleu_1,
+        Metrics.bleu_4,
+    ],
     stop_sequence=["\n"],
     trust_dataset=True,
     version=0,
@@ -10056,7 +10201,14 @@ med_paragraph_simplification_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=512,
-    metric=[Metrics.exact_match, Metrics.quasi_exact_match, Metrics.f1_score, Metrics.rougeL, "bleu_1", "bleu_4"],
+    metric=[
+        Metrics.exact_match,
+        Metrics.quasi_exact_match,
+        Metrics.f1_score,
+        Metrics.rougeL,
+        Metrics.bleu_1,
+        Metrics.bleu_4,
+    ],
     stop_sequence=["\n"],
     trust_dataset=True,
     version=0,
@@ -13627,7 +13779,14 @@ narrativeqa_helm = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=100,
-    metric=[Metrics.exact_match, Metrics.quasi_exact_match, Metrics.f1_score, Metrics.rougeL, "bleu_1", "bleu_4"],
+    metric=[
+        Metrics.exact_match,
+        Metrics.quasi_exact_match,
+        Metrics.f1_score,
+        Metrics.rougeL,
+        Metrics.bleu_1,
+        Metrics.bleu_4,
+    ],
     stop_sequence=["\n"],
     trust_dataset=True,
     version=0,
@@ -13647,6 +13806,24 @@ natural_instructions_bigbench = LightevalTaskConfig(
     stop_sequence=["\n"],
     trust_dataset=True,
     version=0,
+)
+natural_questions = LightevalTaskConfig(
+    name="natural_questions",
+    prompt_function=get_qa_prompt_function(
+        Language.ENGLISH,
+        lambda line: {"question": line["question"], "choices": [line["answer"]]},
+    ),
+    suite=("lighteval",),
+    hf_repo="lighteval/small_natural_questions",
+    hf_subset="default",
+    evaluation_splits=("test",),
+    few_shots_split="few_shot",
+    generation_size=250,
+    stop_sequence=["\n", "Question:", "question:"],
+    metric=(
+        Metrics.prefix_quasi_exact_match,
+        Metrics.f1_score_quasi,
+    ),
 )
 navigate_bigbench = LightevalTaskConfig(
     name="navigate",
@@ -14868,7 +15045,7 @@ simpleqa = LightevalTaskConfig(
     hf_subset="default",
     hf_avail_splits=["test"],
     evaluation_splits=["test"],
-    few_shots_split=None,
+    few_shots_split="few_shot",
     few_shots_select=None,
     generation_size=2048,
     metric=[Metrics.simpleqa_judge],
@@ -15056,6 +15233,29 @@ sports_understanding_bigbench = LightevalTaskConfig(
     stop_sequence=["\n"],
     trust_dataset=True,
     version=0,
+)
+squad_v2 = LightevalTaskConfig(
+    name="squad_v2",
+    prompt_function=get_qa_prompt_function(
+        Language.ENGLISH,
+        lambda line: {
+            "question": line["question"],
+            "context": line["context"],
+            "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
+        },
+    ),
+    suite=("lighteval",),
+    hf_repo="rajpurkar/squad_v2",
+    hf_subset="squad_v2",
+    hf_filter=lambda line: any(ans for ans in line["answers"]["text"] if len(ans) > 0),
+    evaluation_splits=("validation",),
+    few_shots_split="train",
+    stop_sequence=["\n", "Question:", "question:"],
+    generation_size=200,
+    metric=(
+        Metrics.prefix_quasi_exact_match,
+        Metrics.f1_score_quasi,
+    ),
 )
 storycloze_2016_lighteval = LightevalTaskConfig(
     name="storycloze:2016",
@@ -15249,7 +15449,7 @@ super_glue_cb_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=1,
-    metric=[Metrics.loglikelihood_acc, "multi_f1_numeric"],
+    metric=[Metrics.loglikelihood_acc, Metrics.multi_f1_numeric],
     stop_sequence=["\n"],
     trust_dataset=True,
     version=0,

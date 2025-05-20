@@ -286,7 +286,10 @@ def lazy_indices_regex(
     translation_literal = TRANSLATION_LITERALS[language]
     # First get indices to predict
     indices = get_prefix(indices_config.prefix_for_extraction, translation_literal)[:len_choices]
-    indice_str_re = f"(?P<indices>{'|'.join([re.escape(i) for i in indices])})"
+    indices_escaped = [re.escape(i) for i in indices]
+    # We allow both (A) and A
+    indices_wrapped = [rf"(?:{i}|\({i}\))" for i in indices_escaped]
+    indice_str_re = f"(?P<indices>{'|'.join(indices_wrapped)})"
 
     # The answer keys are either surrounded with <space>**answer**., or '<space>answer.' or the same without the dot
     full_stop_re = rf"[{re.escape(translation_literal.full_stop)}\.]"
@@ -294,10 +297,11 @@ def lazy_indices_regex(
     colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
     space_re = re.escape(translation_literal.sentence_space)
 
-    answer_prefix_re = rf"(^|{space_re})(?:\*\*)?"
+    answer_prefix_re = rf"(?:^|{space_re})(?:\*\*)?"
     answer_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|$)"
     answer_re = f"{answer_prefix_re}{indice_str_re}{answer_suffix_re}"
     answer_re_start = rf"^(?:\*\*)?{indice_str_re}{answer_suffix_re}"
+    answer_re_line_start = rf"\n(?:\*\*)?{indice_str_re}{answer_suffix_re}"
 
     answer_word = f"(?i:{translation_literal.answer})"
 
@@ -320,8 +324,10 @@ def lazy_indices_regex(
             (f"{answer_word}{colon_re}.{{0,50}}?{answer_re}", 100),
             # Answer word patterns
             (f"{answer_word}.{{0,50}}?{answer_re}", 150),
-            # Start of line patterns
+            # Start of the string
             (answer_re_start, 200),
+            # Start of the line
+            (answer_re_line_start, 210),
         ]
     )
 
@@ -490,6 +496,15 @@ def extract_latex(
     return latex_exprs[0], latex_strs[0]
 
 
+def extract_indices(
+    match: re.Match, target_type: IndicesExtractionConfig, timeout_seconds: int
+) -> tuple[str | None, str]:
+    def normalize_index(index: str) -> str:
+        return index.replace("(", "").replace(")", "").strip()
+
+    return normalize_index(match.group("indices")), normalize_index(match.group("indices"))
+
+
 def extract_match(
     match: re.Match, target_type: ExtractionTarget, timeout_seconds: int
 ) -> tuple[Basic | MatrixBase | str | None, str]:
@@ -510,7 +525,7 @@ def extract_match(
     elif isinstance(target_type, ExprExtractionConfig):
         return extract_expr(match, timeout_seconds=timeout_seconds)
     elif isinstance(target_type, IndicesExtractionConfig):
-        return match.group("indices"), match.group("indices")
+        return extract_indices(match, target_type, timeout_seconds=timeout_seconds)
 
 
 def extract_target_from_pred(
