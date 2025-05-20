@@ -848,11 +848,20 @@ class TransformersModel(LightevalModel):
                     batch_padded = self.accelerator.gather_for_metrics(batch_padded)
                     batch_cont_token_lengths = self.accelerator.gather_for_metrics(batch_cont_token_lengths)
 
-                for (logit, cont_tokens, maxe, batched_input, trunc, padded, len_input, len_token) in zip(logits, batch_cont_tokens, max_equal, batched_inputs, batch_truncated, batch_padded, len_inputs, batch_cont_token_lengths):
+                for logit, cont_tokens, maxe, batched_input, trunc, padded, len_input, len_token in zip(
+                    logits,
+                    batch_cont_tokens,
+                    max_equal,
+                    batched_inputs,
+                    batch_truncated,
+                    batch_padded,
+                    len_inputs,
+                    batch_cont_token_lengths,
+                ):
                     # Filter out padding tokens from input_tokens and generated_tokens
-                    input_tokens = batched_input[: len_input].cpu().tolist()
-                    generated_tokens = cont_tokens[: len_token].cpu().tolist()
-                    
+                    input_tokens = batched_input[:len_input].cpu().tolist()
+                    generated_tokens = cont_tokens[:len_token].cpu().tolist()
+
                     answer = LoglikelihoodResponse(
                         # todo: we might want to store the logits unsummed
                         result=(float(logit.sum()), bool(maxe)) if return_bool_score else float(logit.sum()),

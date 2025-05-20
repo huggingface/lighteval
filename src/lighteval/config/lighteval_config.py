@@ -22,16 +22,18 @@
 
 from dataclasses import dataclass
 from typing import Dict, Optional, Union
+
 from pydantic import BaseModel
 
 from lighteval.utils.imports import is_nanotron_available
 
 
 if is_nanotron_available():
-    from nanotron.config import ModelArgs, TokenizerArgs, GeneralArgs
+    from nanotron.config import GeneralArgs, ModelArgs, TokenizerArgs
     from nanotron.config.parallelism_config import ParallelismArgs
     from nanotron.generation.sampler import SamplerType
     from nanotron.logging import get_logger
+
     logger = get_logger(__name__)
 
 DEFAULT_GENERATION_SEED = 42

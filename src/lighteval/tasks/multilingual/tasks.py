@@ -39,6 +39,7 @@ from lighteval.tasks.multilingual.adapters import (
     agieval_adapter,
     alghafa_adapter,
     ceval_adapter,
+    enem_adapter,
     get_m3exam_adapter,
     get_mkqa_adapter,
     sciqa_adapter,
@@ -62,8 +63,6 @@ from lighteval.tasks.templates.utils.formulation import (
 )
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
 from lighteval.utils.language import Language, iso_639_3_ind_to_iso_639_3_macro, manage_duplicate_language_codes
-
-from lighteval.tasks.multilingual.adapters import enem_adapter
 
 
 TASKS_TABLE = []
@@ -903,7 +902,7 @@ squad_it_tasks = [
             Language.ITALIAN,
             lambda line: {
                 "question": line["question"],
-                "context": line["context"], 
+                "context": line["context"],
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
@@ -1016,7 +1015,7 @@ squad_es_tasks = [
             Language.SPANISH,
             lambda line: {
                 "question": line["question"],
-                "context": line["context"], 
+                "context": line["context"],
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
@@ -1034,7 +1033,6 @@ squad_es_tasks = [
         stop_sequence=("\n",),
     )
 ]
-
 
 
 # ARCD: Arabic Reading Comprehension Dataset.
@@ -3154,7 +3152,7 @@ openbook_es_tasks = [
     )
     for formulation in [
         MCFFormulation(),
-        CFFormulation(), 
+        CFFormulation(),
         HybridFormulation(),
     ]
 ]
@@ -3578,8 +3576,8 @@ oab_exams_tasks = [
     ]
 ]
 
-# ENEM (Exame Nacional do Ensino Médio) is a standardized Brazilian national secondary 
-# education examination. The exam is used both as a university admission test and as a 
+# ENEM (Exame Nacional do Ensino Médio) is a standardized Brazilian national secondary
+# education examination. The exam is used both as a university admission test and as a
 # high school evaluation test.
 # Dataset: https://huggingface.co/datasets/maritaca-ai/enem
 enem_tasks = [
@@ -3613,7 +3611,6 @@ enem_tasks = [
         HybridFormulation(),
     ]
 ]
-
 
 
 # WorldTree is a dataset for multi-hop inference in science question answering.

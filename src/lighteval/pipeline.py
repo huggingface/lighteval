@@ -65,7 +65,6 @@ from lighteval.utils.parallelism import test_all_gather
 from lighteval.utils.utils import make_results_table
 
 
-
 if is_accelerate_available():
     from accelerate import Accelerator, InitProcessGroupKwargs
 if is_nanotron_available():
