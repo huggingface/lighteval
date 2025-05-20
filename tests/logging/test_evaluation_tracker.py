@@ -96,6 +96,30 @@ def test_results_logging(mock_evaluation_tracker: EvaluationTracker):
     assert saved_results["config_general"]["model_name"] == "test_model"
 
 
+def test_results_logging_template(mock_evaluation_tracker: EvaluationTracker):
+    task_metrics = {
+        "task1": {"accuracy": 0.8, "f1": 0.75},
+        "task2": {"precision": 0.9, "recall": 0.85},
+    }
+    mock_evaluation_tracker.metrics_logger.metric_aggregated = task_metrics
+    mock_evaluation_tracker.results_path_template = "{output_dir}/{org}_{model}"
+
+    mock_evaluation_tracker.save()
+
+    results_dir = Path(mock_evaluation_tracker.output_dir) / "_test_model"
+    assert results_dir.exists()
+
+    result_files = list(results_dir.glob("results_*.json"))
+    assert len(result_files) == 1
+
+    with open(result_files[0], "r") as f:
+        saved_results = json.load(f)
+
+    assert "results" in saved_results
+    assert saved_results["results"] == task_metrics
+    assert saved_results["config_general"]["model_name"] == "test_model"
+
+
 @pytest.mark.evaluation_tracker(save_details=True)
 def test_details_logging(mock_evaluation_tracker, mock_datetime):
     task_details = {
