@@ -68,13 +68,6 @@ def nanotron(
         skip_unused_config_keys=True,
         skip_null_keys=True,
     )
-    model_config = get_config_from_file(
-        checkpoint_config_path,
-        config_class=Config,
-        model_config_class=None,
-        skip_unused_config_keys=True,
-        skip_null_keys=True,
-    )
 
     # We are getting an type error, because the get_config_from_file is not correctly typed,
     lighteval_config: LightEvalConfig = get_config_from_file(lighteval_config_path, config_class=LightEvalConfig)  # type: ignore
@@ -115,4 +108,8 @@ def nanotron(
 
     pipeline.show_results()
 
+    results = pipeline.get_results()
+
     pipeline.save_and_push_results()
+
+    return results
