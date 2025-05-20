@@ -137,7 +137,6 @@ class TransformersModelConfig(ModelConfig):
     subfolder: str | None = None
     revision: str = "main"
     batch_size: PositiveInt | None = None
-    generation_size: PositiveInt = 256  # why isn't this in generation config
     max_length: PositiveInt | None = None
     model_loading_kwargs: dict = {}
     add_special_tokens: bool = True
@@ -387,8 +386,6 @@ class TransformersModel(LightevalModel):
 
         if "quantization_config" not in pretrained_config.to_dict():
             self.config.model_loading_kwargs["quantization_config"] = quantization_config
-
-        breakpoint()
 
         model = AutoModelForCausalLM.from_pretrained(
             self.config.model_name,
