@@ -97,7 +97,7 @@ class EvaluationTracker:
 
     Args:
         output_dir (`str`): Local folder path where you want results to be saved.
-        overwrite_output_dir (`str`, *optional*): template to use for the results output diretory. for example,
+        results_path_template (`str`, *optional*): template to use for the results output diretory. for example,
             `"{output_dir}/results_this_time_it_will_work/{org}_{model}"` will create a folder named `results` in the output directory
             with the model name and the organization name.
         save_details (`bool`, defaults to True): If True, details are saved to the `output_dir`.
