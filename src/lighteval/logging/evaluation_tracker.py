@@ -265,7 +265,7 @@ class EvaluationTracker:
 
     def save_results(self, date_id: str, results_dict: dict):
         if self.results_path_template is not None:
-            org_model_split = self.results_path_template.split("/")
+            org_model_split = self.general_config_logger.model_name.split("/")
             if len(org_model_split) < 2:
                 org = ""
                 model = org_model_split[0]
