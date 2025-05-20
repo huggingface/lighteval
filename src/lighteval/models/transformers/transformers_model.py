@@ -27,7 +27,7 @@ from typing import Optional, Tuple, Union
 import torch
 import torch.nn.functional as F
 import transformers
-from pydantic import PositiveInt
+from pydantic import Field, PositiveInt
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -384,8 +384,9 @@ class TransformersModel(LightevalModel):
 
         pretrained_config = self.transformers_config
 
+        kwargs = self.config.model_loading_kwargs.copy()
         if "quantization_config" not in pretrained_config.to_dict():
-            self.config.model_loading_kwargs["quantization_config"] = quantization_config
+            kwargs["quantization_config"] = quantization_config
 
         model = AutoModelForCausalLM.from_pretrained(
             self.config.model_name,
@@ -394,7 +395,7 @@ class TransformersModel(LightevalModel):
             device_map=device_map,
             torch_dtype=torch_dtype,
             trust_remote_code=self.config.trust_remote_code,
-            **self.config.model_loading_kwargs,
+            **kwargs,
         )
         # model.to(self.device)
         model.eval()
