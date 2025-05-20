@@ -353,8 +353,7 @@ class Probability:
             choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
             unconditioned_logprob (list[float] | None): Unconditioned log-probabilities for PMI normalization, ordered as the choices.
             choices_tokens (list[list[int]] | None): Tokenized choices for token normalization, ordered as the choices.
-            formatted_doc (Doc): Original document for the sample.
-                Used to get the original choices' length for possible normalization
+            reference_texts (list[str] | None): Reference texts for token normalization, ordered as the choices.
 
         Returns:
             float: The probability of the best log-prob choice being a gold choice.
