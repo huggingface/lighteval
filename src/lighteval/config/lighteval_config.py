@@ -22,6 +22,7 @@
 
 from dataclasses import dataclass
 from typing import Dict, Optional, Union
+from pydantic import BaseModel
 
 from lighteval.utils.imports import is_nanotron_available
 
@@ -36,8 +37,7 @@ if is_nanotron_available():
 DEFAULT_GENERATION_SEED = 42
 
 
-@dataclass
-class GenerationArgs:
+class GenerationArgs(BaseModel):
     sampler: Optional["SamplerType"] = None
     temperature: Optional[float] = None
     top_k: Optional[int] = None

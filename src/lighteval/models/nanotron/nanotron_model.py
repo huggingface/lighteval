@@ -101,7 +101,6 @@ class NanotronLightevalModel(LightevalModel):
         trust_remote_code: bool = False,
         debug_one_layer_model: bool = False,
         model_class: Optional[Type] = None,
-        env_config: "EnvConfig" = None,
     ):
         """Initializes a nanotron model for evaluation.
         Args:
@@ -138,7 +137,6 @@ class NanotronLightevalModel(LightevalModel):
         self._add_special_tokens = add_special_tokens
         self._tokenizer = self._create_auto_tokenizer(
             pretrained=tokenizer.tokenizer_name_or_path,
-            env_config=env_config,
             trust_remote_code=trust_remote_code,
         )
         self._tokenizer.model_max_length = self.max_length
@@ -216,6 +214,7 @@ class NanotronLightevalModel(LightevalModel):
 
         self.multichoice_continuations_start_space = multichoice_continuations_start_space
         self.pairwise_tokenization = nanotron_config.lighteval_config.tasks.pairwise_tokenization
+        self.batch_size = nanotron_config.lighteval_config.batch_size
 
         self.model_info = ModelInfo(
             model_name=f"{nanotron_config.nanotron_general.run}/{nanotron_config.nanotron_general.step}"
@@ -230,7 +229,6 @@ class NanotronLightevalModel(LightevalModel):
         *,
         pretrained: str,
         tokenizer: Optional[str] = None,
-        env_config: "EnvConfig" = None,
         trust_remote_code: bool = False,
     ) -> transformers.PreTrainedTokenizer:
         """Returns a pre-trained tokenizer from a pre-trained tokenizer configuration."""
@@ -238,15 +236,11 @@ class NanotronLightevalModel(LightevalModel):
         try:
             tokenizer = AutoTokenizer.from_pretrained(
                 pretrained if tokenizer is None else tokenizer,
-                cache_dir=env_config.cache_dir,
-                token=env_config.token,
                 trust_remote_code=trust_remote_code,
             )
         except RecursionError:
             tokenizer = AutoTokenizer.from_pretrained(
                 pretrained if tokenizer is None else tokenizer,
-                cache_dir=env_config.cache_dir,
-                token=env_config.token,
                 unk_token="<unk>",
                 trust_remote_code=trust_remote_code,
             )
@@ -444,7 +438,7 @@ class NanotronLightevalModel(LightevalModel):
             disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
         )
 
-    def loglikelihood(self, requests: List[LoglikelihoodRequest], override_bs=None) -> List[LoglikelihoodResponse]:
+    def loglikelihood(self, requests: List[LoglikelihoodRequest]) -> List[LoglikelihoodResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
@@ -463,12 +457,11 @@ class NanotronLightevalModel(LightevalModel):
 
         return self._loglikelihood_tokens(
             requests,
-            override_bs=override_bs,
             disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
         )
 
     def loglikelihood_rolling(
-        self, requests: List[LoglikelihoodRollingRequest], override_bs: int = 0
+        self, requests: List[LoglikelihoodRollingRequest]
     ) -> List[LoglikelihoodResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         for request in tqdm(
@@ -479,7 +472,6 @@ class NanotronLightevalModel(LightevalModel):
 
         results = self._loglikelihood_tokens(
             requests,
-            override_bs=override_bs,
             disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
             return_bool_score=False,
         )
@@ -644,7 +636,7 @@ class NanotronLightevalModel(LightevalModel):
 
     @torch.inference_mode()
     def _loglikelihood_single_token(
-        self, requests, disable_tqdm: bool = False, override_bs: int = 0, num_dataset_splits: int = 1
+        self, requests, disable_tqdm: bool = False, num_dataset_splits: int = 1
     ) -> List[LoglikelihoodSingleTokenResponse]:
         dataset = LoglikelihoodSingleTokenDataset(requests=requests)
         res = []
@@ -672,7 +664,9 @@ class NanotronLightevalModel(LightevalModel):
             context_enc = dataset[0].tokenized_context
             max_context = len(context_enc[-self.max_length :])
             batch_size = self._get_batch_size(
-                override_bs=override_bs, max_input_length=max_context, starting_batch_size=starting_batch_size
+                max_input_length=max_context,
+                override_bs=self.batch_size,
+                starting_batch_size=starting_batch_size,
             )
 
             starting_batch_size = batch_size * 2  # for the next round
@@ -877,7 +871,6 @@ class NanotronLightevalModel(LightevalModel):
         self,
         requests,
         disable_tqdm: bool = False,
-        override_bs: int = -1,
         num_dataset_splits: int = 1,
         return_bool_score: bool = True,
     ) -> List[LoglikelihoodResponse]:
@@ -909,7 +902,9 @@ class NanotronLightevalModel(LightevalModel):
             max_context = len((context_enc + continuation_enc)[-(self.max_length + 1) :][:-1])
 
             batch_size = self._get_batch_size(
-                override_bs=override_bs, max_input_length=max_context, starting_batch_size=starting_batch_size
+                max_input_length=max_context,
+                override_bs=self.batch_size,
+                starting_batch_size=starting_batch_size,
             )
             starting_batch_size = batch_size * 2  # for the next round
 
@@ -958,7 +953,7 @@ class NanotronLightevalModel(LightevalModel):
                 # batched_inputs, batch_attention, input_lengths, truncated, padded
                 with torch.no_grad():
                     # Create sequential position_ids initialized to -1 (for padding)
-                    position_ids = torch.full(batch_model.input_ids.shape, fill_value=-1, dtype=torch.long)
+                    position_ids = torch.full(batch_model.input_ids.shape, fill_value=-1, dtype=torch.long, device=self.device)
 
                     for i, length in enumerate(batch_model.input_lengths):
                         if pad_on_left:
@@ -1121,7 +1116,6 @@ class NanotronLightevalModel(LightevalModel):
         self,
         requests: List[GreedyUntilRequest],
         disable_tqdm: bool = False,
-        override_bs: int = -1,
         num_dataset_splits: int = 1,
     ) -> List[GenerativeResponse]:
         """Greedy generation until a stop token is generated."""
@@ -1161,7 +1155,7 @@ class NanotronLightevalModel(LightevalModel):
                 max_input_length = min(len(context_enc) + max_gen, self.max_length)
 
             batch_size = self._get_batch_size(
-                override_bs=override_bs,
+                override_bs=self.batch_size,
                 max_input_length=max_input_length,
                 starting_batch_size=starting_batch_size,
             )

@@ -343,6 +343,7 @@ class Probability:
         self,
         logprobs: list[float],
         target_tokens: list[list[int]],
+        reference_texts: list[str],
         **kwargs,
     ) -> float:
         """Computes the log likelihood probability: chance of choosing the best choice.
@@ -364,7 +365,7 @@ class Probability:
                 normalization=self.log_prob_normalization,
                 choices_tokens=target_tokens,
                 choices_logprob=logprobs,
-                choices_text=None,
+                choices_text=reference_texts,
                 unconditioned_logprob=None,
             )
             if self.log_prob_normalization
