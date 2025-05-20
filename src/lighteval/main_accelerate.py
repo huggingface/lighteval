@@ -60,9 +60,6 @@ def accelerate(  # noqa C901
     custom_tasks: Annotated[
         Optional[str], Option(help="Path to custom tasks directory.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
-    cache_dir: Annotated[
-        Optional[str], Option(help="Cache directory for datasets and models.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = None,
     num_fewshot_seeds: Annotated[
         int, Option(help="Number of seeds to use for few-shot evaluation.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = 1,
@@ -73,6 +70,13 @@ def accelerate(  # noqa C901
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = "results",
+    results_path_template: Annotated[
+        str | None,
+        Option(
+            help="Template path for where to save the results, you have access to 3 variables, `output_dir`, `org` and `model`. for example a template can be `'{output_dir}/1234/{org}+{model}'`",
+            rich_help_panel=HELP_PANEL_NAME_2,
+        ),
+    ] = None,
     push_to_hub: Annotated[
         bool, Option(help="Push results to the huggingface hub.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = False,
@@ -118,6 +122,7 @@ def accelerate(  # noqa C901
 
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
+        results_path_template=results_path_template,
         save_details=save_details,
         push_to_hub=push_to_hub,
         push_to_tensorboard=push_to_tensorboard,

@@ -81,6 +81,7 @@ def nanotron(
 
     evaluation_tracker = EvaluationTracker(
         output_dir=lighteval_config.logging.output_dir,
+        results_path_template=lighteval_config.logging.results_path_template,
         hub_results_org=lighteval_config.logging.results_org,
         public=lighteval_config.logging.public_run,
         push_to_hub=lighteval_config.logging.push_to_hub,
