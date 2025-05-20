@@ -342,8 +342,8 @@ class Probability:
     def compute(
         self,
         logprobs: list[float],
-        target_tokens: list[list[int]],
-        reference_texts: list[str],
+        target_tokens: list[list[int]] | None = None,
+        reference_texts: list[str] | None = None,
         **kwargs,
     ) -> float:
         """Computes the log likelihood probability: chance of choosing the best choice.
