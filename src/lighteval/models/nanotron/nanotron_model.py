@@ -1260,7 +1260,6 @@ class NanotronLightevalModel(LightevalModel):
                     max_new_tokens=max_new_tokens,
                     max_micro_batch_size=batch_size,  # ok for PP=1 for PP>1 we'll need to split the batch
                     returns_logits=returns_logits,
-                    tokenizer=self.tokenizer,
                     generation_config=self.generation_config,
                 )
                 dist.barrier()  # Got everyone to send their stuff

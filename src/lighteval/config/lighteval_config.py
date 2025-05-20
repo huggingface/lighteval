@@ -23,6 +23,7 @@
 from dataclasses import dataclass
 from typing import Dict, Optional, Union
 from pydantic import BaseModel
+from dataclasses import field
 
 from lighteval.utils.imports import is_nanotron_available
 
@@ -38,19 +39,14 @@ DEFAULT_GENERATION_SEED = 42
 
 
 class GenerationArgs(BaseModel):
-    sampler: Optional["SamplerType"] = None
+    sampler: Optional["SamplerType"] = field(default_factory=lambda: SamplerType.GREEDY)
     temperature: Optional[float] = None
     top_k: Optional[int] = None
     top_p: Optional[float] = None
     n_samples: Optional[int] = None
     eos: Optional[str] = None
-    seed: Optional[int] = None
+    seed: Optional[int] = DEFAULT_GENERATION_SEED
     use_cache: Optional[bool] = False
-
-    def __post_init__(self):
-        if self.seed is None:
-            self.seed = DEFAULT_GENERATION_SEED
-
 
 @dataclass
 class LightEvalLoggingArgs:
@@ -91,7 +87,7 @@ class LightEvalConfig:
     tasks: LightEvalTasksArgs
     parallelism: "ParallelismArgs"
     batch_size: int = 0
-    generation: Optional[Union[GenerationArgs, Dict[str, GenerationArgs]]] = None
+    generation: Union[GenerationArgs, Dict[str, GenerationArgs]] = field(default_factory=lambda: GenerationArgs())
 
 
 @dataclass
@@ -105,6 +101,4 @@ class FullNanotronConfig:
     def generation_parameters(self):
         # Return the generation parameters from the lighteval config
         # or create default generation parameters if none are set
-        if self.lighteval_config.generation:
-            return self.lighteval_config.generation
-        return GenerationArgs()
+        return self.lighteval_config.generation
