@@ -109,3 +109,9 @@ class FullNanotronConfig:
         if self.lighteval_config.generation:
             return self.lighteval_config.generation
         return GenerationArgs()
+
+    def __getattr__(self, name):
+        # Delegate attribute access to nanotron_config if not found in FullNanotronConfig
+        if hasattr(self.nanotron_config, name):
+            return getattr(self.nanotron_config, name)
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")

@@ -1236,6 +1236,7 @@ class NanotronLightevalModel(LightevalModel):
                     max_micro_batch_size=batch_size,  # ok for PP=1 for PP>1 we'll need to split the batch
                     returns_logits=returns_logits,
                     generation_config=self.generation_config,
+                    # tokenizer=self.tokenizer #NOTE[duynht]; This is needed for the current nanotron@main, but that is not compatible with HuggingfaceTB/SmolLM2-nanotron-ckpt
                 )
                 dist.barrier()  # Got everyone to send their stuff
                 outputs = list(outputs)
