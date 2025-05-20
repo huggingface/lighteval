@@ -600,7 +600,7 @@ class AsyncVLLMModel(VLLMModel):
 
         return results
 
-    def loglikelihood_rolling():
+    def loglikelihood_rolling(self):
         pass
 
     def loglikelihood_single_token():
