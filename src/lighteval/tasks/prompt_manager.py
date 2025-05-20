@@ -210,15 +210,20 @@ class PromptManager:
             system_prompt=system_prompt,
             use_chat_template=use_chat_template,
             cot_prompt=cot_prompt,
+            doc=doc,
         )
-        if not use_chat_template:
-            toks = self.model.tok_encode(output)
-        else:
-            toks = [self.model.tok_encode(msg["content"]) for msg in output]
-            toks = [t for ts in toks for t in ts]
+
+        if truncate_few_shots and doc.images is not None:
+            raise NotImplementedError("Few shot evaluation is not supported for multi-modal tasks yet.")
 
         # If we need to truncate few-shots to fit in the context
         if truncate_few_shots and self.model.max_length is not None and self.model.tokenizer is not None:
+            if not use_chat_template:
+                toks = self.model.tok_encode(output)
+            else:
+                toks = [self.model.tok_encode(msg["content"]) for msg in output]
+                toks = [t for ts in toks for t in ts]
+
             # If self.generation_size is None, the maximum allowed generation size depends
             # on the model maximum context length, not on the task - we don't take it into account here
             # but we probably should
@@ -250,7 +255,7 @@ class PromptManager:
 
         return output, num_effective_fewshots
 
-    def get_examples(
+    def get_examples(  # noqa: C901
         self,
         example: str,
         instruction: Union[str | None],
@@ -258,8 +263,37 @@ class PromptManager:
         system_prompt: Union[str | None],
         use_chat_template: bool,
         cot_prompt: Union[str | None],
+        doc: Doc,
     ):
+        is_multimodal = doc.images is not None
+
+        if is_multimodal and not use_chat_template:
+            raise NotImplementedError("Multi-modal tasks do not support formatting without chat template yet.")
+
+        if is_multimodal and fewshot_ex:
+            raise NotImplementedError("Multi-modal tasks do not support fewshot evaluation yet.")
+
+        content = example + cot_prompt if cot_prompt is not None else example
+
+        if is_multimodal:
+            text_content = [{"type": "text", "text": content}]
+            image_content = [{"type": "image", "image": image} for image in doc.images]
+            message = {"role": "user", "content": text_content + image_content}
+
+            if (
+                system_prompt is not None or instruction is not None
+            ):  # We add system prompt and instruction jointly if possible
+                system_prompt = system_prompt if system_prompt is not None else ""
+                instruction = instruction if instruction is not None else ""
+                system_content = [{"type": "text", "text": system_prompt + instruction}]
+                system_prompt_message = {"role": "system", "content": system_content}
+                return [system_prompt_message, message]
+
+            return [message]
+
+        # Regular text (not multimodal)
         examples = []
+
         # Few shot examples
         for ex in fewshot_ex:
             if use_chat_template:
@@ -269,8 +303,6 @@ class PromptManager:
                 examples.append(self.doc_to_text(ex, return_instructions=False) + self.doc_to_target(ex))
 
         # Actual example
-        content = example + cot_prompt if cot_prompt is not None else example
-
         if use_chat_template:
             examples.append({"role": "user", "content": content})
         else:
@@ -284,10 +316,8 @@ class PromptManager:
                 examples[0]["content"] = instruction + examples[0]["content"]
             return examples
         else:
-            if system_prompt is not None:
-                output = system_prompt + instruction + "\n\n".join(examples)
-            else:
-                output = instruction + "\n\n".join(examples)
+            system_prompt = system_prompt if system_prompt is not None else ""
+            output = system_prompt + instruction + "\n\n".join(examples)
             if output == "\n\n":
                 return ""
             return output

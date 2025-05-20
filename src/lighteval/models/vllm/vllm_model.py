@@ -81,6 +81,8 @@ class VLLMModelConfig(ModelConfig):
     pipeline_parallel_size: PositiveInt = 1  # how many GPUs to use for pipeline parallelism
     gpu_memory_utilization: NonNegativeFloat = 0.9  # lower this if you are running out of memory
     max_model_length: PositiveInt | None = None  # maximum length of the model, ussually infered automatically. reduce this if you encouter OOM issues, 4096 is usually enough
+    quantization: str | None = None
+    load_format: str | None = None
     swap_space: PositiveInt = 4  # CPU swap space size (GiB) per GPU.
     seed: NonNegativeInt = 1234
     trust_remote_code: bool = False
@@ -176,6 +178,12 @@ class VLLMModel(LightevalModel):
             "max_num_seqs": int(config.max_num_seqs),
             "max_num_batched_tokens": int(config.max_num_batched_tokens),
         }
+
+        if config.quantization is not None:
+            self.model_args["quantization"] = config.quantization
+        if config.load_format is not None:
+            self.model_args["load_format"] = config.load_format
+
         if config.data_parallel_size > 1:
             self.model_args["distributed_executor_backend"] = "ray"
             self._batch_size = "auto"
@@ -196,7 +204,7 @@ class VLLMModel(LightevalModel):
             config.model_name,
             tokenizer_mode="auto",
             trust_remote_code=config.trust_remote_code,
-            tokenizer_revision=config.revision,
+            revision=config.revision,
         )
         tokenizer.pad_token = tokenizer.eos_token
         return tokenizer

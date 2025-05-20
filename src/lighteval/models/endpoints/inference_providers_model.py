@@ -24,7 +24,6 @@ import asyncio
 import logging
 from typing import Any, List, Optional
 
-import yaml
 from huggingface_hub import AsyncInferenceClient, ChatCompletionOutput
 from huggingface_hub.errors import HfHubHTTPError
 from pydantic import NonNegativeInt
@@ -35,7 +34,6 @@ from transformers import AutoTokenizer
 from lighteval.data import GenerativeTaskDataset
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.endpoints.endpoint_model import ModelInfo
-from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
@@ -71,26 +69,6 @@ class InferenceProvidersModelConfig(ModelConfig):
     proxies: Any | None = None
     org_to_bill: str | None = None
     parallel_calls_count: NonNegativeInt = 10
-
-    @classmethod
-    def from_path(cls, path):
-        with open(path, "r") as f:
-            config = yaml.safe_load(f)["model"]
-
-        model_name = config["model_name"]
-        provider = config.get("provider", None)
-        timeout = config.get("timeout", None)
-        proxies = config.get("proxies", None)
-        org_to_bill = config.get("org_to_bill", None)
-        generation_parameters = GenerationParameters.from_dict(config)
-        return cls(
-            model=model_name,
-            provider=provider,
-            timeout=timeout,
-            proxies=proxies,
-            org_to_bill=org_to_bill,
-            generation_parameters=generation_parameters,
-        )
 
 
 class InferenceProvidersClient(LightevalModel):
@@ -198,7 +176,6 @@ class InferenceProvidersClient(LightevalModel):
     def greedy_until(
         self,
         requests: list[GreedyUntilRequest],
-        override_bs: Optional[int] = None,
     ) -> list[GenerativeResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
@@ -256,22 +233,18 @@ class InferenceProvidersClient(LightevalModel):
             logger.warning("Tokenizer was not correctly loaded. Max model context length is assumed to be 30K tokens")
             return 30000
 
-    def loglikelihood(
-        self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
+    def loglikelihood(self, requests: list[LoglikelihoodRequest]) -> list[LoglikelihoodResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
         raise NotImplementedError
 
-    def loglikelihood_rolling(
-        self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
+    def loglikelihood_rolling(self, requests: list[LoglikelihoodRollingRequest]) -> list[LoglikelihoodResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         raise NotImplementedError
 
     def loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: Optional[int] = None
+        self, requests: list[LoglikelihoodSingleTokenRequest]
     ) -> list[LoglikelihoodSingleTokenResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.

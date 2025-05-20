@@ -48,6 +48,9 @@ def accelerate(  # noqa C901
     use_chat_template: Annotated[
         bool, Option(help="Use chat template for evaluation.", rich_help_panel=HELP_PANEL_NAME_4)
     ] = False,
+    vision_model: Annotated[
+        bool, Option(help="Use vision model for evaluation.", rich_help_panel=HELP_PANEL_NAME_4)
+    ] = False,
     system_prompt: Annotated[
         Optional[str], Option(help="Use system prompt for evaluation.", rich_help_panel=HELP_PANEL_NAME_4)
     ] = None,
@@ -109,6 +112,7 @@ def accelerate(  # noqa C901
     from lighteval.models.transformers.adapter_model import AdapterModelConfig
     from lighteval.models.transformers.delta_model import DeltaModelConfig
     from lighteval.models.transformers.transformers_model import TransformersModelConfig
+    from lighteval.models.transformers.vlm_transformers_model import VLMTransformersModelConfig
     from lighteval.models.utils import ModelConfig
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 
@@ -147,7 +151,10 @@ def accelerate(  # noqa C901
     elif config.get("adapter_weights", False):
         model_config = AdapterModelConfig(**config)
     else:
-        model_config = TransformersModelConfig(**config)
+        if vision_model:
+            model_config = VLMTransformersModelConfig(**config)
+        else:
+            model_config = TransformersModelConfig(**config)
 
     pipeline = Pipeline(
         tasks=tasks,
