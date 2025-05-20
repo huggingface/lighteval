@@ -27,7 +27,7 @@ import random
 import re
 import shutil
 from contextlib import nullcontext
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, is_dataclass
 from datetime import timedelta
 from enum import Enum, auto
 
@@ -154,7 +154,15 @@ class Pipeline:
         self._metric_options = metric_options or {}
         self.accelerator, self.parallel_context = self._init_parallelism_manager()
         self.model = self._init_model(model_config, model)
-        generation_parameters = asdict(model_config.generation_parameters) if model_config and hasattr(model_config, "generation_parameters") else {}
+
+        if model_config and hasattr(model_config, "generation_parameters"):
+            generation_parameters = (
+                asdict(model_config.generation_parameters)
+                if is_dataclass(model_config.generation_parameters)
+                else model_config.generation_parameters.model_dump()
+            )
+        else:
+            generation_parameters = {}
 
         self.evaluation_tracker.general_config_logger.log_model_info(generation_parameters, self.model.model_info)
         self._init_random_seeds()
@@ -185,7 +193,7 @@ class Pipeline:
     def _init_model(self, model_config, model):
         logger.info("--- LOADING MODEL ---")
         if model_config is not None:
-            if self.parallel_context:                
+            if self.parallel_context:
                 return NanotronLightevalModel(
                     checkpoint_path=os.path.dirname(self.pipeline_parameters.nanotron_checkpoint_path)
                     if self.pipeline_parameters.nanotron_checkpoint_path

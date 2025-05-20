@@ -26,6 +26,7 @@ import os
 from typer import Option
 from typing_extensions import Annotated
 
+
 HELP_PANEL_NAME_1 = "Common Parameters"
 HELP_PANEL_NAME_2 = "Logging Parameters"
 HELP_PANEL_NAME_3 = "Debug Parameters"
@@ -39,15 +40,17 @@ def nanotron(
     checkpoint_config_path: Annotated[
         str, Option(help="Path to the nanotron checkpoint YAML or python config file, potentially on s3.")
     ],
-    lighteval_config_path: Annotated[str, Option(help="Path to a YAML config to be used for the evaluation.")]
+    lighteval_config_path: Annotated[str, Option(help="Path to a YAML config to be used for the evaluation.")],
 ):
     """
     Evaluate models using nanotron as backend.
     """
     from nanotron.config import Config, get_config_from_file
-    from nanotron.config.parallelism_config import ParallelismArgs
 
-    from lighteval.config.lighteval_config import FullNanotronConfig, LightEvalConfig, LightEvalLoggingArgs, LightEvalTasksArgs
+    from lighteval.config.lighteval_config import (
+        FullNanotronConfig,
+        LightEvalConfig,
+    )
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
     from lighteval.utils.imports import NO_NANOTRON_ERROR_MSG, is_nanotron_available
@@ -76,7 +79,7 @@ def nanotron(
     # We are getting an type error, because the get_config_from_file is not correctly typed,
     lighteval_config: LightEvalConfig = get_config_from_file(lighteval_config_path, config_class=LightEvalConfig)  # type: ignore
     nanotron_config = FullNanotronConfig(lighteval_config, model_config)
-    
+
     evaluation_tracker = EvaluationTracker(
         output_dir=lighteval_config.logging.output_dir,
         hub_results_org=lighteval_config.logging.results_org,

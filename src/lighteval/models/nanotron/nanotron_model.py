@@ -399,7 +399,8 @@ class NanotronLightevalModel(LightevalModel):
         return continuation
 
     def loglikelihood_single_token(
-        self, requests: List[Tuple[str, dict]],
+        self,
+        requests: List[Tuple[str, dict]],
     ) -> List[LoglikelihoodSingleTokenResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
@@ -457,7 +458,8 @@ class NanotronLightevalModel(LightevalModel):
         )
 
     def loglikelihood_rolling(
-        self, requests: List[LoglikelihoodRollingRequest],
+        self,
+        requests: List[LoglikelihoodRollingRequest],
     ) -> List[LoglikelihoodResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         for request in tqdm(
@@ -660,9 +662,7 @@ class NanotronLightevalModel(LightevalModel):
             # pull longest context sample from request
             context_enc = dataset[0].tokenized_context
             max_context = len(context_enc[-self.max_length :])
-            batch_size = self._get_batch_size(
-                max_input_length=max_context, starting_batch_size=starting_batch_size
-            )
+            batch_size = self._get_batch_size(max_input_length=max_context, starting_batch_size=starting_batch_size)
 
             starting_batch_size = batch_size * 2  # for the next round
 
@@ -891,9 +891,7 @@ class NanotronLightevalModel(LightevalModel):
 
             max_context = len((context_enc + continuation_enc)[-(self.max_length + 1) :][:-1])
 
-            batch_size = self._get_batch_size(
-                max_input_length=max_context, starting_batch_size=starting_batch_size
-            )
+            batch_size = self._get_batch_size(max_input_length=max_context, starting_batch_size=starting_batch_size)
             starting_batch_size = batch_size * 2  # for the next round
 
             # For the DP replicas
