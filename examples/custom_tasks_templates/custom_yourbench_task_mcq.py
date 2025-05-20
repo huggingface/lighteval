@@ -22,46 +22,27 @@
 
 
 import logging
-import re
 
-import numpy as np
 from aenum import extend_enum
 
+from lighteval.metrics.dynamic_metrics import multilingual_extractive_match_metric
 from lighteval.metrics.metrics import Metrics
-from lighteval.metrics.metrics_sample import ExactMatches
-from lighteval.metrics.utils.metric_utils import (
-    MetricCategory,
-    MetricUseCase,
-    SampleLevelMetric,
-)
+from lighteval.metrics.utils.extractive_match_utils import IndicesExtractionConfig
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
+from lighteval.utils.language import Language
 
 
 logger = logging.getLogger(__name__)
 
 
-def extract_answer_letter_from_pred(line: str) -> str | None:
-    # Find all standalone A–D letters, and use the last one
-    matches = re.findall(r"\b([A-Da-d])\b", line)
-    if matches:
-        pred = matches[-1].upper()
-        return pred
-    return None
-
-
-def extract_answer_letter_from_gold(line: str) -> str | None:
-    # Match (A), (B) OR lines starting with A., B.
-    match = re.match(r"^\(?([A-Da-d0-9])\)?[).]?\s+", line.strip())
-    if match:
-        gold = match.group(1).upper()
-        return gold
-    return None
-
-
-ZEROSHOT_QA_USER_PROMPT = """
+ZEROSHOT_QA_INSTRUCTION = """
 Answer the following multiple-choice question by selecting only one letter: A, B, C, or D. Do not explain your answer.
+"""
 
+ZEROSHOT_QA_USER_PROMPT = (
+    ZEROSHOT_QA_INSTRUCTION
+    + """
 Question: {question}
 
 Choices:
@@ -69,6 +50,7 @@ Choices:
 
 Answer:
 """
+)
 
 
 def yourbench_prompt(line, task_name: str = ""):
@@ -84,6 +66,7 @@ def yourbench_prompt(line, task_name: str = ""):
         raise ValueError(f"Unexpected gold label format: {gold_raw!r}")
 
     return Doc(
+        instruction=ZEROSHOT_QA_INSTRUCTION,
         task_name=task_name,
         query=ZEROSHOT_QA_USER_PROMPT.format(question=line["question"], options=options),
         choices=line["choices"],
@@ -91,15 +74,11 @@ def yourbench_prompt(line, task_name: str = ""):
     )
 
 
-yourbench_metrics = SampleLevelMetric(
-    metric_name="mcq_accuracy",
-    higher_is_better=True,
-    category=MetricCategory.GENERATIVE,
-    use_case=MetricUseCase.ACCURACY,
-    sample_level_fn=ExactMatches(
-        normalize_gold=extract_answer_letter_from_gold, normalize_pred=extract_answer_letter_from_pred
-    ).compute,
-    corpus_level_fn=np.mean,
+yourbench_metrics = multilingual_extractive_match_metric(
+    language=Language.ENGLISH,
+    gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+    pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+    precision=6,
 )
 
 extend_enum(Metrics, "yourbench_metrics", yourbench_metrics)
