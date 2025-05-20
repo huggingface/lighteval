@@ -138,7 +138,7 @@ class TransformersModelConfig(ModelConfig):
     revision: str = "main"
     batch_size: PositiveInt | None = None
     max_length: PositiveInt | None = None
-    model_loading_kwargs: dict = {}
+    model_loading_kwargs: dict = Field(default_factory=dict)
     add_special_tokens: bool = True
     model_parallel: bool | None = None
     dtype: str | None = None
