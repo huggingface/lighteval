@@ -80,7 +80,7 @@ def compare_strings(
         # Test answer with reasoning
         ("B", "Let's think step by step. It's not A because it doesn't make sense, therefore I think it's B", 1),
         ("D", "The answer is for sure D, it can't be A or B", 1),
-        ("D", "The answer: D, doesn't makese nsense for answer to be A or B", 1),
+        ("D", "The answer: D, it doesn't make sense for it to be A or B.", 1),
         # Test minimal answer format
         ("D", "D. it can't be A or B", 1),
         ("(D) Alina", "D", 1),
