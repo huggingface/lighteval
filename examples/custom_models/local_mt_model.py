@@ -84,33 +84,33 @@ class LocalMTClient(LightevalModel):
     """
 
     def __init__(self, config, env_config) -> None:
-        self.model = config.model
+        self.model_name = config.model_name
         self.model_definition_file_path = config.model_definition_file_path
         self.batch_size = 32
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         self.model_info = ModelInfo(
-            model_name=config.model,
+            model_name=config.model_name,
             model_sha="",
             model_dtype=None,
             model_size="",
         )
 
         # Update model initialization to handle both models
-        if "seamless-m4t" in config.model:
-            self._tokenizer = AutoProcessor.from_pretrained(config.model)
-            self._model = SeamlessM4Tv2ForTextToText.from_pretrained(config.model)
+        if "seamless-m4t" in config.model_name:
+            self._tokenizer = AutoProcessor.from_pretrained(config.model_name)
+            self._model = SeamlessM4Tv2ForTextToText.from_pretrained(config.model_name)
             self.model_type = "seamless-4mt"
             self.batch_size = 1
             logger.info(
                 "Using batch size of 1 for seamless-4mt model because it the target language needs to be set for the entire batch."
             )
-        elif "madlad400" in config.model:
-            self._tokenizer = AutoTokenizer.from_pretrained(config.model)
-            self._model = AutoModelForSeq2SeqLM.from_pretrained(config.model)
+        elif "madlad400" in config.model_name:
+            self._tokenizer = AutoTokenizer.from_pretrained(config.model_name)
+            self._model = AutoModelForSeq2SeqLM.from_pretrained(config.model_name)
             self.model_type = "madlad400"
         else:
-            raise ValueError(f"Unsupported model: {config.model}")
+            raise ValueError(f"Unsupported model: {config.model_name}")
 
         self._model.to(self.device)
         self._model.eval()
