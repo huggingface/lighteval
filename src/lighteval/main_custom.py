@@ -117,7 +117,7 @@ def custom(
     )
 
     parallelism_manager = ParallelismManager.CUSTOM
-    model_config = CustomModelConfig(model=model_name, model_definition_file_path=model_definition_file_path)
+    model_config = CustomModelConfig(model_name=model_name, model_definition_file_path=model_definition_file_path)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
