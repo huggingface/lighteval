@@ -26,6 +26,7 @@ import logging
 import random
 import re
 import string
+from typing import Optional
 
 import numpy as np
 import pycountry
@@ -52,6 +53,79 @@ def ruler(line, task_name: str = None):
 
     return Doc(query=query, instruction=instruction, choices=choices, gold_index=gold_index, task_name=task_name)
 
+def mmmu_pro(line, task_name: Optional[str] = None):
+    # fmt: off
+    question = line["question"]        # "What is the capital of France?"
+    choices_string = line["options"]   # "[Paris, London, Berlin, Madrid]"
+    answer = line["answer"]            # "A"
+    # fmt: on
+
+    instructions = "Answer with the option letter from the given choices directly."
+
+    # Preprocess choices
+    # "[Paris, London, Berlin, Madrid]" -> ["A. Paris", "B. London", "C. Berlin", "D. Madrid"]
+    choices = ast.literal_eval(str(choices_string))
+    choices_letters = [chr(ord("A") + i) for i in range(len(choices))]  # ["A", "B", "C", "D"]
+    choices = [f"{letter}. {choice}" for letter, choice in zip(choices_letters, choices)]
+
+    # Construct prompt
+    formatted_choices = "\n".join(choices)
+    prompt = f"{instructions}\n{question}\n{formatted_choices}"
+
+    # Collect images
+    image_order = []
+    for num in re.findall(r"<image\s+(\d+)>", prompt):
+        num = int(num)
+        if num not in image_order:
+            image_order.append(num)
+    images = [line[f"image_{i}"].convert("RGB") for i in image_order]
+
+    gold_index = string.ascii_uppercase.index(answer)
+
+    # Replace image placeholders in prompt <image 1>, <image 2>, ... with [image 1], [image 2], ...
+    prompt = re.sub(r"<image\s+(\d+)>", "[image \\1]", prompt)
+    choices = [re.sub(r"<image\s+(\d+)>", "[image \\1]", choice) for choice in choices]
+
+    return Doc(
+        task_name=task_name,
+        query=prompt,
+        choices=choices,
+        gold_index=gold_index,
+        images=images,
+        specific={"id": line["id"]},
+        instruction=instructions,
+    )
+
+def mmmu_pro_vision(line, task_name: str = None):
+    instruction = (
+        "Answer with the option letter from the given choices directly."
+        " The last line of your response should be of the following format: "
+        "'Answer: $LETTER' (without quotes) where LETTER is one of options."
+    )
+
+    # Preprocess choices
+    # "[Paris, London, Berlin, Madrid]" -> ["A. Paris", "B. London", "C. Berlin", "D. Madrid"]
+    choices_string = line["options"]
+    choices = ast.literal_eval(str(choices_string))
+    choices_letters = [chr(ord("A") + i) for i in range(len(choices))]  # ["A", "B", "C", "D"]
+    choices = [f"{letter}. {choice}" for letter, choice in zip(choices_letters, choices)]
+
+    # Preprocess answer
+    # e.g. "A" -> 0
+    answer = line["answer"]
+    gold_index = string.ascii_uppercase.index(answer)
+
+    # Preprocess images
+    images = [line["image"]]
+
+    return Doc(
+        task_name=task_name,
+        query=instruction,
+        choices=choices,
+        gold_index=gold_index,
+        images=images,
+        instruction=instruction,
+    )
 
 def simpleqa(line, task_name: str = None):
     query = line["problem"]
@@ -191,7 +265,7 @@ def arc_with_options(line, task_name: str = None):
     query += "".join([f"\n{key}. {choice}" for key, choice in zip(LETTER_INDICES, line["choices"]["text"])])
     query += "\nAnswer:"
     return Doc(
-        task_name=task_name,
+mm        task_name=task_name,
         query=query,
         choices=line["choices"]["text"],
         gold_index=line["choices"]["label"].index(line["answerKey"]),
@@ -2788,3 +2862,10 @@ def xsum(line, task_name: str = None):
         choices=[str(line["summary"])],
         specific={"text": line["article"]},
     )
+
+
+# Utility for drop task
+def get_drop_date(x):
+    components = [x["day"], x["month"], x["year"]]
+    components = list(filter(lambda x: x, components))
+    return " ".join(components)

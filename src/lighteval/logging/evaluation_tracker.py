@@ -97,6 +97,9 @@ class EvaluationTracker:
 
     Args:
         output_dir (`str`): Local folder path where you want results to be saved.
+        results_path_template (`str`, *optional*): template to use for the results output directory. for example,
+            `"{output_dir}/results_this_time_it_will_work/{org}_{model}"` will create a folder named `results` in the output directory
+            with the model name and the organization name.
         save_details (`bool`, defaults to True): If True, details are saved to the `output_dir`.
         push_to_hub (`bool`, defaults to False): If True, details are pushed to the hub.
             Results are pushed to `{hub_results_org}/details__{sanitized model_name}` for the model `model_name`, a public dataset,
@@ -119,6 +122,7 @@ class EvaluationTracker:
     def __init__(
         self,
         output_dir: str,
+        results_path_template: str | None = None,
         save_details: bool = True,
         push_to_hub: bool = False,
         push_to_tensorboard: bool = False,
@@ -152,6 +156,7 @@ class EvaluationTracker:
         self.tensorboard_repo = f"{hub_results_org}/tensorboard_logs"
         self.tensorboard_metric_prefix = tensorboard_metric_prefix
         self.nanotron_run_info = nanotron_run_info
+        self.results_path_template = results_path_template
 
         self.public = public
 
@@ -259,7 +264,14 @@ class EvaluationTracker:
         self.wandb_run.finish()
 
     def save_results(self, date_id: str, results_dict: dict):
-        output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name
+        if self.results_path_template is not None:
+            org_model_parts = self.general_config_logger.model_name.split("/")
+            org = org_model_parts[0] if len(org_model_parts) >= 2 else ""
+            model = org_model_parts[1] if len(org_model_parts) >= 2 else org_model_parts[0]
+            output_dir = self.output_dir
+            output_dir_results = Path(self.results_path_template.format(output_dir=output_dir, org=org, model=model))
+        else:
+            output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name
         self.fs.mkdirs(output_dir_results, exist_ok=True)
         output_results_file = output_dir_results / f"results_{date_id}.json"
         logger.info(f"Saving results to {output_results_file}")

@@ -178,6 +178,14 @@ class Metrics(Enum):
         corpus_level_fn=CorpusLevelTranslationMetric("chrf").compute,
         higher_is_better=True,
     )
+    chrf_plus = CorpusLevelMetric(
+        metric_name="chrf++",
+        sample_level_fn=GenerativePreparator().prepare,
+        category=MetricCategory.GENERATIVE,
+        use_case=MetricUseCase.TRANSLATION,
+        corpus_level_fn=CorpusLevelTranslationMetric("chrf++").compute,
+        higher_is_better=True,
+    )
     copyright = SampleLevelMetricGrouping(
         metric_name=["longest_common_prefix_length", "edit_distance", "edit_similarity"],
         sample_level_fn=StringDistance(

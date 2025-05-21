@@ -55,7 +55,7 @@ class GoogleTranslateClient(LightevalModel):
         self.model_definition_file_path = config.model_definition_file_path
 
         self.model_info = ModelInfo(
-            model_name=config.model,
+            model_name=config.model_name,
             model_sha="",
             model_dtype=None,
             model_size="",
@@ -132,14 +132,14 @@ class GoogleTranslateClient(LightevalModel):
         dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         results = []
 
-        for _ in tqdm(
-            dataset.splits_start_end_iterator(),
+        for split in tqdm(
+            dataset.splits_iterator(),
             total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
             disable=False,  # self.disable_tqdm,
         ):
-            for r in tqdm(dataset, desc="Batch", position=1, disable=False):
+            for r in tqdm(split, desc="Batch", position=1, disable=False):
                 # Extract source and target languages from task name
                 # Format is like "community|sdst-text_level:de-fr|0"
                 src_lang, tgt_lang = r.task_name.split("|")[1].split(":")[-1].split("-")

@@ -72,6 +72,13 @@ def inference_endpoint(
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = "results",
+    results_path_template: Annotated[
+        str | None,
+        Option(
+            help="Template path for where to save the results, you have access to 3 variables, `output_dir`, `org` and `model`. for example a template can be `'{output_dir}/1234/{org}+{model}'`",
+            rich_help_panel=HELP_PANEL_NAME_2,
+        ),
+    ] = None,
     push_to_hub: Annotated[
         bool, Option(help="Push results to the huggingface hub.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = False,
@@ -111,6 +118,7 @@ def inference_endpoint(
 
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
+        results_path_template=results_path_template,
         save_details=save_details,
         push_to_hub=push_to_hub,
         push_to_tensorboard=push_to_tensorboard,
@@ -185,6 +193,13 @@ def tgi(
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = "results",
+    results_path_template: Annotated[
+        str | None,
+        Option(
+            help="Template path for where to save the results, you have access to 3 variables, `output_dir`, `org` and `model`. for example a template can be `'{output_dir}/1234/{org}+{model}'`",
+            rich_help_panel=HELP_PANEL_NAME_2,
+        ),
+    ] = None,
     push_to_hub: Annotated[
         bool, Option(help="Push results to the huggingface hub.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = False,
@@ -227,6 +242,7 @@ def tgi(
 
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
+        results_path_template=results_path_template,
         save_details=save_details,
         push_to_hub=push_to_hub,
         push_to_tensorboard=push_to_tensorboard,
@@ -283,9 +299,6 @@ def litellm(
     ],
     tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
     # === Common parameters ===
-    use_chat_template: Annotated[
-        bool, Option(help="Use chat template for evaluation.", rich_help_panel=HELP_PANEL_NAME_4)
-    ] = False,
     system_prompt: Annotated[
         Optional[str], Option(help="Use system prompt for evaluation.", rich_help_panel=HELP_PANEL_NAME_4)
     ] = None,
@@ -305,6 +318,13 @@ def litellm(
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = "results",
+    results_path_template: Annotated[
+        str | None,
+        Option(
+            help="Template path for where to save the results, you have access to 3 variables, `output_dir`, `org` and `model`. for example a template can be `'{output_dir}/1234/{org}+{model}'`",
+            rich_help_panel=HELP_PANEL_NAME_2,
+        ),
+    ] = None,
     push_to_hub: Annotated[
         bool, Option(help="Push results to the huggingface hub.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = False,
@@ -347,6 +367,7 @@ def litellm(
 
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
+        results_path_template=results_path_template,
         save_details=save_details,
         push_to_hub=push_to_hub,
         push_to_tensorboard=push_to_tensorboard,
@@ -373,7 +394,7 @@ def litellm(
         custom_tasks_directory=custom_tasks,
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
-        use_chat_template=use_chat_template,
+        use_chat_template=True,
         system_prompt=system_prompt,
         load_responses_from_details_date_id=load_responses_from_details_date_id,
     )
@@ -423,6 +444,13 @@ def inference_providers(
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = "results",
+    results_path_template: Annotated[
+        str | None,
+        Option(
+            help="Template path for where to save the results, you have access to 3 variables, `output_dir`, `org` and `model`. for example a template can be `'{output_dir}/1234/{org}+{model}'`",
+            rich_help_panel=HELP_PANEL_NAME_2,
+        ),
+    ] = None,
     push_to_hub: Annotated[
         bool, Option(help="Push results to the huggingface hub.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = False,
@@ -465,6 +493,7 @@ def inference_providers(
 
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
+        results_path_template=results_path_template,
         save_details=save_details,
         push_to_hub=push_to_hub,
         push_to_tensorboard=push_to_tensorboard,
