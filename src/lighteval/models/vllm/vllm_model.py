@@ -268,7 +268,6 @@ class VLLMModel(LightevalModel):
                     logger.warning(
                         f"{context_size + max_new_tokens=} which is greater than {self.max_length=}. Truncating context to {self.max_length=} - {max_new_tokens=} = {self.max_length - max_new_tokens} tokens."
                     )
-                    breakpoint()
                     context_size = self.max_length - max_new_tokens
                     if context_size < 0:
                         logger.critical(
