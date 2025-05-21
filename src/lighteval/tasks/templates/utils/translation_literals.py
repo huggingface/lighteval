@@ -755,7 +755,7 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         effect_word="chaymi",
     ),
     Language.ROMANIAN: TranslationLiterals(
-        language=Language.ROMANIAN
+        language=Language.ROMANIAN,
         question_word="întrebare", 
         answer="răspuns",
         confirmation_word="corect", 
