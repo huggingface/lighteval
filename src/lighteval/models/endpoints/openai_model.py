@@ -94,7 +94,7 @@ class OpenAIClient(LightevalModel):
         self.sampling_params = self.generation_parameters.to_vllm_openai_dict()
 
         self.model_info = ModelInfo(
-            model_name=config.model,
+            model_name=config.model_name,
             model_sha="",
             model_dtype=None,
             model_size="",
@@ -103,7 +103,7 @@ class OpenAIClient(LightevalModel):
         self.API_RETRY_SLEEP = 3
         self.API_RETRY_MULTIPLIER = 2
         self.CONCURENT_CALLS = 100
-        self.model = config.model
+        self.model_name = config.model_name
         try:
             self._tokenizer = tiktoken.encoding_for_model(self.model)
         except KeyError:
