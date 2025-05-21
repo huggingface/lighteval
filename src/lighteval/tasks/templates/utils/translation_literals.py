@@ -776,7 +776,6 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         word_space=" ",
         sentence_space=" ",
         colon=":",
-        indices=["A", "Ă", "Â", "B", "C", "D", ...]
     ),
     Language.RUNDI: TranslationLiterals(language=Language.RUNDI),
     Language.RUSSIAN: TranslationLiterals(
