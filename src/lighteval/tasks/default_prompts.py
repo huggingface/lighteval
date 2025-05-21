@@ -265,7 +265,7 @@ def arc_with_options(line, task_name: str = None):
     query += "".join([f"\n{key}. {choice}" for key, choice in zip(LETTER_INDICES, line["choices"]["text"])])
     query += "\nAnswer:"
     return Doc(
-mm        task_name=task_name,
+        task_name=task_name,
         query=query,
         choices=line["choices"]["text"],
         gold_index=line["choices"]["label"].index(line["answerKey"]),
