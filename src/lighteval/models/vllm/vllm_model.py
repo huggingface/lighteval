@@ -493,6 +493,11 @@ class AsyncVLLMModel(VLLMModel):
             index = f"logprob_{index}"
         elif isinstance(request, GreedyUntilRequest):
             sampling_params.n = request.num_samples
+            if sampling_params.n > 1:
+                # Todo clementine: investigate more
+                logger.warning(
+                    "Careful, there can be unexpected behavior when using sampling evals with the async vllm model"
+                )
             sampling_params.max_tokens = self._config.generation_parameters.max_new_tokens or request.generation_size
             sampling_params.stop = [] if self.use_chat_template else request.stop_sequence
             sampling_params.logprobs = int(request.use_logits)
