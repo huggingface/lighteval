@@ -374,7 +374,7 @@ def sympy_compare_relational(gold: Relational | And, pred: Relational | And, pre
 
     # Same type of relation (e.g. both <= or both >=)
     try:
-        if type(gold) == type(pred) and sympy_expr_eq(gold.lhs - gold.rhs, pred.lhs - pred.rhs, precision):  # type: ignore
+        if type(gold) is type(pred) and sympy_expr_eq(gold.lhs - gold.rhs, pred.lhs - pred.rhs, precision):  # type: ignore
             return True
     except TimeoutError:
         raise

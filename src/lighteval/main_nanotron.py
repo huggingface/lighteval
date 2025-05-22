@@ -23,11 +23,11 @@
 # flake8: noqa: C901
 import os
 
+import yaml
 from typer import Option
 from typing_extensions import Annotated
+from yaml import SafeLoader
 
-
-CACHE_DIR: str = os.getenv("HF_HOME", "/scratch")
 
 HELP_PANEL_NAME_1 = "Common Parameters"
 HELP_PANEL_NAME_2 = "Logging Parameters"
@@ -43,41 +43,43 @@ def nanotron(
         str, Option(help="Path to the nanotron checkpoint YAML or python config file, potentially on s3.")
     ],
     lighteval_config_path: Annotated[str, Option(help="Path to a YAML config to be used for the evaluation.")],
-    cache_dir: Annotated[str, Option(help="Cache directory for datasets and models.")] = CACHE_DIR,
 ):
     """
     Evaluate models using nanotron as backend.
     """
-    from nanotron.config import Config, get_config_from_file
+    from nanotron.config import GeneralArgs, ModelArgs, TokenizerArgs, get_config_from_dict, get_config_from_file
 
-    from lighteval.config.lighteval_config import FullNanotronConfig, LightEvalConfig
+    from lighteval.config.lighteval_config import (
+        FullNanotronConfig,
+        LightEvalConfig,
+    )
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.logging.hierarchical_logger import htrack_block
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
     from lighteval.utils.imports import NO_NANOTRON_ERROR_MSG, is_nanotron_available
-    from lighteval.utils.utils import EnvConfig
-
-    env_config = EnvConfig(token=os.getenv("HF_TOKEN"), cache_dir=cache_dir)
 
     if not is_nanotron_available():
         raise ImportError(NO_NANOTRON_ERROR_MSG)
 
-    with htrack_block("Load nanotron config"):
-        # Create nanotron config
-        if not checkpoint_config_path.endswith(".yaml"):
-            raise ValueError("The checkpoint path should point to a YAML file")
+    # Create nanotron config
+    if not checkpoint_config_path.endswith(".yaml"):
+        raise ValueError("The checkpoint path should point to a YAML file")
 
-        model_config = get_config_from_file(
-            checkpoint_config_path,
-            config_class=Config,
-            model_config_class=None,
+    with open(checkpoint_config_path) as f:
+        nanotron_yaml = yaml.load(f, Loader=SafeLoader)
+
+    model_config, tokenizer_config, general_config = [
+        get_config_from_dict(
+            nanotron_yaml[key],
+            config_class=config_class,
             skip_unused_config_keys=True,
             skip_null_keys=True,
         )
+        for key, config_class in [("model", ModelArgs), ("tokenizer", TokenizerArgs), ("general", GeneralArgs)]
+    ]
 
-        # We are getting an type error, because the get_config_from_file is not correctly typed,
-        lighteval_config: LightEvalConfig = get_config_from_file(lighteval_config_path, config_class=LightEvalConfig)  # type: ignore
-        nanotron_config = FullNanotronConfig(lighteval_config, model_config)
+    # Load lighteval config
+    lighteval_config: LightEvalConfig = get_config_from_file(lighteval_config_path, config_class=LightEvalConfig)  # type: ignore
+    nanotron_config = FullNanotronConfig(lighteval_config, model_config, tokenizer_config, general_config)
 
     evaluation_tracker = EvaluationTracker(
         output_dir=lighteval_config.logging.output_dir,
@@ -88,17 +90,15 @@ def nanotron(
         push_to_tensorboard=lighteval_config.logging.push_to_tensorboard,
         save_details=lighteval_config.logging.save_details,
         tensorboard_metric_prefix=lighteval_config.logging.tensorboard_metric_prefix,
-        nanotron_run_info=nanotron_config.nanotron_config.general,
+        nanotron_run_info=nanotron_config.nanotron_general,
     )
 
     pipeline_parameters = PipelineParameters(
         launcher_type=ParallelismManager.NANOTRON,
-        env_config=env_config,
         job_id=os.environ.get("SLURM_JOB_ID", 0),
         nanotron_checkpoint_path=checkpoint_config_path,
         dataset_loading_processes=lighteval_config.tasks.dataset_loading_processes,
         custom_tasks_directory=lighteval_config.tasks.custom_tasks,
-        override_batch_size=lighteval_config.batch_size,
         num_fewshot_seeds=1,
         max_samples=lighteval_config.tasks.max_samples,
         use_chat_template=False,

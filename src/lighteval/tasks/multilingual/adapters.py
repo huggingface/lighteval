@@ -283,3 +283,18 @@ def get_mkqa_adapter(lang: Language, line: dict) -> QAInput | None:
         "question": line["queries"][lang_key],
         "choices": answers,
     }
+
+
+def enem_adapter(lang: Language, line: dict) -> MCQInput | None:
+    if line["label"] == "Anulado":
+        return None
+
+    question = line["question"]
+    for desc in line["description"]:
+        question = question.replace("[[placeholder]]", desc, 1)  # Replace only first occurrence each time
+
+    return {
+        "question": question,
+        "choices": line["alternatives"],
+        "gold_idx": LETTER_INDICES.index(line["label"]),
+    }
