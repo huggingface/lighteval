@@ -22,7 +22,6 @@
 
 import logging
 from contextlib import nullcontext
-from dataclasses import dataclass
 
 import torch
 from tqdm import tqdm
@@ -30,34 +29,24 @@ from transformers import AutoModelForCausalLM
 
 from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
 from lighteval.models.utils import _get_dtype, _get_model_sha
-from lighteval.utils.utils import EnvConfig
 
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
 class DeltaModelConfig(TransformersModelConfig):
     # Delta models look at the pretrained (= the delta weights) for the tokenizer and model config
-    base_model: str = None
-
-    def __post_init__(self):
-        self.revision = "main"
-
-        if not self.base_model:  # must have a default value bc of dataclass inheritance, but can't actually be None
-            raise ValueError("The base_model argument must not be null for a delta model config")
-
-        return super().__post_init__()
+    base_model: str
+    delta_weights: bool
 
     def get_model_sha(self):
-        return _get_model_sha(repo_id=self.pretrained, revision="main")
+        return _get_model_sha(repo_id=self.model_name, revision="main")
 
 
 class DeltaModel(TransformersModel):
     def _create_auto_model(
         self,
         config: DeltaModelConfig,
-        env_config: EnvConfig,
     ) -> AutoModelForCausalLM:
         """Returns a model created by adding the weights of a delta model to a base model."""
         config.model_parallel, max_memory, device_map = self.init_model_parallel(config.model_parallel)
@@ -70,14 +59,13 @@ class DeltaModel(TransformersModel):
         if self.accelerator.is_main_process if self.accelerator is not None else nullcontext():
             logger.info(f"Loading base and delta models from {config.base_model} and {delta_model}")
             base = AutoModelForCausalLM.from_pretrained(
-                config.base_model, torch_dtype=torch.float16, low_cpu_mem_usage=True, token=env_config.token
+                config.base_model, torch_dtype=torch.float16, low_cpu_mem_usage=True
             )
             delta = AutoModelForCausalLM.from_pretrained(
                 delta_model,
                 revision=config.revision + (f"/{config.subfolder}" if config.subfolder is not None else ""),
                 torch_dtype=torch.float16,
                 low_cpu_mem_usage=True,
-                token=env_config.token,
             )
 
             for name, param in tqdm(base.state_dict().items(), desc="Applying delta"):
@@ -95,9 +83,7 @@ class DeltaModel(TransformersModel):
             device_map=device_map,
             torch_dtype=torch_dtype,
             trust_remote_code=config.trust_remote_code,
-            cache_dir=env_config.cache_dir,
             quantization_config=config.quantization_config,
-            token=env_config.token,
         )
 
         return model

@@ -26,6 +26,7 @@ import logging
 import random
 import re
 import string
+from typing import Optional
 
 import numpy as np
 import pycountry
@@ -41,6 +42,92 @@ logger = logging.getLogger(__name__)
 LETTER_INDICES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
 INTEGER_INDICES = list(map(str, list(range(1, 27))))
 # fmt: on
+
+
+def mmmu_pro(line, task_name: Optional[str] = None):
+    # fmt: off
+    question = line["question"]        # "What is the capital of France?"
+    choices_string = line["options"]   # "[Paris, London, Berlin, Madrid]"
+    answer = line["answer"]            # "A"
+    # fmt: on
+
+    instructions = "Answer with the option letter from the given choices directly."
+
+    # Preprocess choices
+    # "[Paris, London, Berlin, Madrid]" -> ["A. Paris", "B. London", "C. Berlin", "D. Madrid"]
+    choices = ast.literal_eval(str(choices_string))
+    choices_letters = [chr(ord("A") + i) for i in range(len(choices))]  # ["A", "B", "C", "D"]
+    choices = [f"{letter}. {choice}" for letter, choice in zip(choices_letters, choices)]
+
+    # Construct prompt
+    formatted_choices = "\n".join(choices)
+    prompt = f"{instructions}\n{question}\n{formatted_choices}"
+
+    # Collect images
+    image_order = []
+    for num in re.findall(r"<image\s+(\d+)>", prompt):
+        num = int(num)
+        if num not in image_order:
+            image_order.append(num)
+    images = [line[f"image_{i}"].convert("RGB") for i in image_order]
+
+    gold_index = string.ascii_uppercase.index(answer)
+
+    # Replace image placeholders in prompt <image 1>, <image 2>, ... with [image 1], [image 2], ...
+    prompt = re.sub(r"<image\s+(\d+)>", "[image \\1]", prompt)
+    choices = [re.sub(r"<image\s+(\d+)>", "[image \\1]", choice) for choice in choices]
+
+    return Doc(
+        task_name=task_name,
+        query=prompt,
+        choices=choices,
+        gold_index=gold_index,
+        images=images,
+        specific={"id": line["id"]},
+        instruction=instructions,
+    )
+
+
+def mmmu_pro_vision(line, task_name: str = None):
+    instruction = (
+        "Answer with the option letter from the given choices directly."
+        " The last line of your response should be of the following format: "
+        "'Answer: $LETTER' (without quotes) where LETTER is one of options."
+    )
+
+    # Preprocess choices
+    # "[Paris, London, Berlin, Madrid]" -> ["A. Paris", "B. London", "C. Berlin", "D. Madrid"]
+    choices_string = line["options"]
+    choices = ast.literal_eval(str(choices_string))
+    choices_letters = [chr(ord("A") + i) for i in range(len(choices))]  # ["A", "B", "C", "D"]
+    choices = [f"{letter}. {choice}" for letter, choice in zip(choices_letters, choices)]
+
+    # Preprocess answer
+    # e.g. "A" -> 0
+    answer = line["answer"]
+    gold_index = string.ascii_uppercase.index(answer)
+
+    # Preprocess images
+    images = [line["image"]]
+
+    return Doc(
+        task_name=task_name,
+        query=instruction,
+        choices=choices,
+        gold_index=gold_index,
+        images=images,
+        instruction=instruction,
+    )
+
+
+def simpleqa(line, task_name: str = None):
+    query = line["problem"]
+    choices = [line["answer"]]
+    gold_index = 0
+
+    return Doc(
+        task_name=task_name, query=query, choices=choices, gold_index=gold_index, specific={**eval(line["metadata"])}
+    )
 
 
 def aime_prompt_fn(line, task_name: str = None):
@@ -87,6 +174,57 @@ def apps(line, task_name: str = None):
         choices=[json.loads(line["solutions"])],
         gold_index=0,
         specific={"input_output": line["input_output"]},
+    )
+
+
+def arc_agi_2(line, task_name: str = None):
+    # query from: https://github.com/arcprize/model_baseline/blob/main/src/prompts/system_prompt.txt
+    def convert_2d_list_to_string(list_of_lists: list[list[int]]) -> str:
+        """
+        Convert a list of lists to a string
+        """
+
+        string_list = ""
+
+        for row in list_of_lists:
+            string_list += json.dumps(row) + "\n"
+
+        return string_list
+
+    query = """You are participating in a puzzle solving competition. You are an expert at solving puzzles.
+
+Below is a list of input and output pairs with a pattern. Your goal is to identify the pattern or transformation in the training examples that maps the input to the output, then apply that pattern to the test input to give a final output.
+
+Respond in the format of the training output examples
+
+--Training Examples--
+{training_examples}
+--End of Training Examples--
+
+--Test Input--
+{test_input}
+--End of Test Input--
+
+Your response:""".strip()
+
+    training_pairs = line["fewshots"]
+    training_examples = ""
+    for i, pair in enumerate(training_pairs):
+        training_examples += f"--Example {i}-- \n\n INPUT: \n\n"
+        training_examples += convert_2d_list_to_string(pair["input"]) + "\n\n"
+        training_examples += "OUTPUT: \n\n"
+        training_examples += convert_2d_list_to_string(pair["output"]) + "\n\n"
+
+    test_input = convert_2d_list_to_string(line["question"][0]["input"])
+
+    gold = str(line["question"][0]["output"])
+    query = query.format(training_examples=training_examples, test_input=test_input)
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=[gold],
+        gold_index=0,
     )
 
 
@@ -2713,3 +2851,10 @@ def xsum(line, task_name: str = None):
         choices=[str(line["summary"])],
         specific={"text": line["article"]},
     )
+
+
+# Utility for drop task
+def get_drop_date(x):
+    components = [x["day"], x["month"], x["year"]]
+    components = list(filter(lambda x: x, components))
+    return " ".join(components)

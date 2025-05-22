@@ -29,6 +29,7 @@ from itertools import cycle
 from typing import TYPE_CHECKING, Optional, Tuple, Union
 
 from lighteval.models.abstract_model import LightevalModel
+from lighteval.models.endpoints.inference_providers_model import InferenceProvidersClient
 from lighteval.models.litellm_model import LiteLLMClient
 from lighteval.tasks.requests import Doc
 from lighteval.utils.utils import as_list
@@ -106,6 +107,7 @@ class PromptManager:
         truncate_few_shots: bool = False,
         use_chat_template=False,
         system_prompt: str = None,
+        cot_prompt: str = None,
     ) -> Doc:
         is_multi_turn = doc.specific is not None and len(doc.specific.get("multi_turn_queries", [])) > 0
         if is_multi_turn:
@@ -120,6 +122,7 @@ class PromptManager:
                 sampler=sampler,
                 use_chat_template=use_chat_template,
                 system_prompt=system_prompt,
+                cot_prompt=cot_prompt,
             )
         doc.num_effective_few_shots = num_effective_few_shots
         doc.num_asked_few_shots = num_fewshot
@@ -174,6 +177,7 @@ class PromptManager:
         truncate_few_shots: bool = False,
         use_chat_template=False,
         system_prompt: str = None,
+        cot_prompt: str = None,
     ):
         """Returns a fewshot context string that is made up of a prepended description
         (if provided), the `num_fewshot` number of examples, and an appended prompt example.
@@ -205,15 +209,21 @@ class PromptManager:
             fewshot_ex=fewshot_ex,
             system_prompt=system_prompt,
             use_chat_template=use_chat_template,
+            cot_prompt=cot_prompt,
+            doc=doc,
         )
-        if not use_chat_template:
-            toks = self.model.tok_encode(output)
-        else:
-            toks = [self.model.tok_encode(msg["content"]) for msg in output]
-            toks = [t for ts in toks for t in ts]
+
+        if truncate_few_shots and doc.images is not None:
+            raise NotImplementedError("Few shot evaluation is not supported for multi-modal tasks yet.")
 
         # If we need to truncate few-shots to fit in the context
         if truncate_few_shots and self.model.max_length is not None and self.model.tokenizer is not None:
+            if not use_chat_template:
+                toks = self.model.tok_encode(output)
+            else:
+                toks = [self.model.tok_encode(msg["content"]) for msg in output]
+                toks = [t for ts in toks for t in ts]
+
             # If self.generation_size is None, the maximum allowed generation size depends
             # on the model maximum context length, not on the task - we don't take it into account here
             # but we probably should
@@ -227,6 +237,7 @@ class PromptManager:
                     fewshot_ex=fewshot_ex[:num_effective_fewshots],
                     system_prompt=system_prompt,
                     use_chat_template=use_chat_template,
+                    cot_prompt=cot_prompt,
                 )
                 if not use_chat_template:
                     toks = self.model.tok_encode(output)
@@ -234,7 +245,7 @@ class PromptManager:
                     toks = [self.model.tok_encode(msg["content"]) for msg in output]
                     toks = [t for ts in toks for t in ts]
 
-        if isinstance(self.model, LiteLLMClient):
+        if type(self.model) in [LiteLLMClient, InferenceProvidersClient]:
             return output, num_effective_fewshots
 
         elif use_chat_template:
@@ -244,15 +255,45 @@ class PromptManager:
 
         return output, num_effective_fewshots
 
-    def get_examples(
+    def get_examples(  # noqa: C901
         self,
         example: str,
         instruction: Union[str | None],
         fewshot_ex: list[str],
         system_prompt: Union[str | None],
         use_chat_template: bool,
+        cot_prompt: Union[str | None],
+        doc: Doc,
     ):
+        is_multimodal = doc.images is not None
+
+        if is_multimodal and not use_chat_template:
+            raise NotImplementedError("Multi-modal tasks do not support formatting without chat template yet.")
+
+        if is_multimodal and fewshot_ex:
+            raise NotImplementedError("Multi-modal tasks do not support fewshot evaluation yet.")
+
+        content = example + cot_prompt if cot_prompt is not None else example
+
+        if is_multimodal:
+            text_content = [{"type": "text", "text": content}]
+            image_content = [{"type": "image", "image": image} for image in doc.images]
+            message = {"role": "user", "content": text_content + image_content}
+
+            if (
+                system_prompt is not None or instruction is not None
+            ):  # We add system prompt and instruction jointly if possible
+                system_prompt = system_prompt if system_prompt is not None else ""
+                instruction = instruction if instruction is not None else ""
+                system_content = [{"type": "text", "text": system_prompt + instruction}]
+                system_prompt_message = {"role": "system", "content": system_content}
+                return [system_prompt_message, message]
+
+            return [message]
+
+        # Regular text (not multimodal)
         examples = []
+
         # Few shot examples
         for ex in fewshot_ex:
             if use_chat_template:
@@ -263,9 +304,9 @@ class PromptManager:
 
         # Actual example
         if use_chat_template:
-            examples.append({"role": "user", "content": example})
+            examples.append({"role": "user", "content": content})
         else:
-            examples.append(example)
+            examples.append(content)
 
         # System prompt and instruction
         if use_chat_template:
@@ -275,10 +316,8 @@ class PromptManager:
                 examples[0]["content"] = instruction + examples[0]["content"]
             return examples
         else:
-            if system_prompt is not None:
-                output = system_prompt + instruction + "\n\n".join(examples)
-            else:
-                output = instruction + "\n\n".join(examples)
+            system_prompt = system_prompt if system_prompt is not None else ""
+            output = system_prompt + instruction + "\n\n".join(examples)
             if output == "\n\n":
                 return ""
             return output

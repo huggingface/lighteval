@@ -48,7 +48,7 @@ def nanotron(
     """
     Evaluate models using nanotron as backend.
     """
-    from nanotron.config import Config, get_config_from_file
+    from nanotron.config import get_config_from_file
 
     from lighteval.config.lighteval_config import FullNanotronConfig, LightEvalConfig
     from lighteval.logging.evaluation_tracker import EvaluationTracker
@@ -81,6 +81,7 @@ def nanotron(
 
     evaluation_tracker = EvaluationTracker(
         output_dir=lighteval_config.logging.output_dir,
+        results_path_template=lighteval_config.logging.results_path_template,
         hub_results_org=lighteval_config.logging.results_org,
         public=lighteval_config.logging.public_run,
         push_to_hub=lighteval_config.logging.push_to_hub,

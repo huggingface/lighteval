@@ -21,19 +21,9 @@
 # SOFTWARE.
 
 import logging
-import os
-import re
-from functools import lru_cache
-from itertools import product
-from typing import Callable, Literal
+from typing import Callable, Literal, Sequence
 
 import numpy as np
-import sympy
-from latex2sympy2_extended import NormalizationConfig, normalize_latex
-from latex2sympy2_extended import latex2sympy as parse_latex
-from sympy import Basic, FiniteSet, Interval, MatrixBase, MatrixExpr, Set, Symbol
-from sympy.core.relational import Eq, Relational
-from sympy.parsing.sympy_parser import parse_expr
 
 from lighteval.metrics.metrics_sample import (
     ExactMatches,
@@ -56,7 +46,7 @@ from lighteval.metrics.utils.extractive_match_utils import (  # noqa: F401
     extract_target_from_pred,
     get_extraction_regexes,
 )
-from lighteval.metrics.utils.math_comparison import compare_gold_target, should_treat_as_complex
+from lighteval.metrics.utils.math_comparison import compare_gold_target
 from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase, SampleLevelMetric
 from lighteval.tasks.requests import Doc
 from lighteval.utils.language import Language
@@ -66,101 +56,13 @@ from lighteval.utils.timeout import timeout
 logger = logging.getLogger(__name__)
 
 
-class TimeoutException(Exception):
-    pass
-
-
-def timeout(timeout_seconds: int = 10):
-    """
-    A decorator that applies a timeout to the decorated function.
-    On Unix: uses signal-based alarm.
-    On Windows: uses a multiprocessing-based approach.
-
-    Preferably the unix approach is better, because we don't have to spawn a new process,
-    but it's not available on windows.
-    """
-    if os.name == "posix":
-        # Unix-like approach: signal.alarm
-
-        import signal
-
-        def decorator(func):
-            def handler(signum, frame):
-                raise TimeoutException("Operation timed out!")
-
-            def wrapper(*args, **kwargs):
-                old_handler = signal.getsignal(signal.SIGALRM)
-                signal.signal(signal.SIGALRM, handler)
-                signal.alarm(timeout_seconds)
-                try:
-                    return func(*args, **kwargs)
-                finally:
-                    # Cancel the alarm and restore previous handler
-                    signal.alarm(0)
-                    signal.signal(signal.SIGALRM, old_handler)
-
-            return wrapper
-
-        return decorator
-
-    else:
-        # Windows approach: use multiprocessing
-        from multiprocessing import Process, Queue
-
-        def decorator(func):
-            def wrapper(*args, **kwargs):
-                q = Queue()
-
-                def run_func(q, args, kwargs):
-                    try:
-                        result = func(*args, **kwargs)
-                        q.put((True, result))
-                    except Exception as e:
-                        q.put((False, e))
-
-                p = Process(target=run_func, args=(q, args, kwargs))
-                p.start()
-                p.join(timeout_seconds)
-
-                if p.is_alive():
-                    # Timeout: Terminate the process
-                    p.terminate()
-                    p.join()
-                    raise TimeoutException("Operation timed out!")
-
-                # If we got here, the process completed in time.
-                success, value = q.get()
-                if success:
-                    return value
-                else:
-                    # The child raised an exception; re-raise it here
-                    raise value
-
-            return wrapper
-
-        return decorator
-
-
-# Small cache, to catche repeated calls invalid parsing
-@lru_cache(maxsize=20)
-@timeout(timeout_seconds=5)
-def parse_latex_with_timeout(latex: str):
-    return parse_latex(latex, is_real=not should_treat_as_complex(latex), convert_degrees=False)
-
-
-@lru_cache(maxsize=20)
-@timeout(timeout_seconds=5)
-def parse_expr_with_timeout(expr: str):
-    return parse_expr(expr)
-
-
 def loglikelihood_acc_metric(normalization: LogProbNormalization | None = None) -> SampleLevelMetric:
     """
-    Creates a accuracy (loglikelihood) metric, which returns accuracy given normalization.
+    Creates an accuracy (loglikelihood) metric, which returns accuracy given normalization.
     """
 
-    normalization_str = normalization.name if normalization else ""
-    metric_name = f"acc{'_' + normalization_str if normalization_str else ''}"
+    normalization_str = f"_{normalization.name}" if normalization else ""
+    metric_name = f"acc{normalization_str}"
     return SampleLevelMetric(
         metric_name=metric_name,
         sample_level_fn=LoglikelihoodAcc(logprob_normalization=normalization).compute,
@@ -181,8 +83,8 @@ def normalized_multi_choice_prob_metric(
     Creates a normalized multi-choice probability metric, which returns the probability of the gold choice / sum of probabilities of all choices (after logprobs are normalized).
     """
 
-    normalization_str = normalization.name if normalization else ""
-    metric_name = f"normalized_mc_prob{'_' + normalization_str if normalization_str else ''}"
+    normalization_str = f"_{normalization.name}" if normalization else ""
+    metric_name = f"normalized_mc_prob{normalization_str}"
 
     return SampleLevelMetric(
         metric_name=metric_name,
@@ -206,8 +108,8 @@ def probability_metric(
     Creates a probability metric, which returns the probability of the gold choice given normalization.
     """
 
-    normalization_str = normalization.name if normalization else ""
-    metric_name = f"prob{'_' + normalization_str if normalization_str else ''}"
+    normalization_str = f"_{normalization.name}" if normalization else ""
+    metric_name = f"prob{normalization_str}"
 
     return SampleLevelMetric(
         metric_name=metric_name,
@@ -283,230 +185,94 @@ def multilingual_quasi_exact_match_metric(
     )
 
 
-def extract_expr(match: re.Match) -> tuple[str | sympy.Expr | None, str]:
-    # First combine the number
-    groups = match.groupdict()
-    # This musst always exist
-    expr = groups["expr"]
-    integer = next((val for name, val in groups.items() if name.startswith("integer") and val), None)
-    decimal = next((val for name, val in groups.items() if name.startswith("decimal") and val), None)
+def multilingual_extractive_match_metric(
+    language: Language = Language.ENGLISH,
+    gold_extraction_target: Sequence[ExtractionTarget] = (ExprExtractionConfig(),),
+    pred_extraction_target: Sequence[ExtractionTarget] = (ExprExtractionConfig(), LatexExtractionConfig()),
+    aggregation_function: Callable[[list[float]], float] = max,
+    fallback_mode: Literal["no_fallback", "first_match"] = "first_match",
+    extraction_mode: Literal["first_match", "any_match"] = "any_match",
+    precision: int = 6,
+    timeout_seconds: int = 5,
+) -> SampleLevelMetric:
+    """Creates a language-aware extractive match metric that extracts answers from the model's output.
 
-    is_percentage = True if groups.get("percent", None) else False
+    Known issues:
+    - If the task is to simplify an expression, the metric might overestimate the accuracy. This is because if the model doesn't output any anchor for the extraction (e.g final answer is..),
+        it's possible that the extracted prediction will be the expression to simplify. Because we do simplifications ourselves, it can thus happen that sympy will correctly simplify the expression,
+        thus it will match gold, despite model not doing anything. PRs to fix this are welcome.
 
-    if integer:
-        # Remove thousand separators and convert to float
-        num_str = integer.translate(str.maketrans("", "", ", "))
+    - There is currently no StringExtractionConfig, so if the gold is \boxed{\text{Friday}} and model outputs Friday it will not match, because nothing will be extracted.
 
-        if decimal:
-            # Add decimal part if present
-            num_str += f"{decimal.replace(',', '.')}"
-        number = sympy.Number(num_str)
-        if is_percentage:
-            number = number / sympy.Number(100)
-        return number, expr
-    elif decimal:
-        # Just decimal part, convert to float, make sure to use sympy directly to avoid floating point errors
-        number = sympy.Float(f"0{decimal}")
-        if is_percentage:
-            number = number / sympy.Number(100)
-        return number, expr
+    Args:
+        language: Language
+            The language of the samples.
+        gold_extraction_target: Sequence[ExtractionTarget]
+            Extraction targets to use for gold answers. Defaults to extracting simple math expressions.
+        pred_extraction_target: Sequence[ExtractionTarget]
+            Extraction targets to use for predictions. Defaults to extracting simple math expressions.
+        aggregation_function: Callable[[list[float]], float]
+            Function to aggregate scores when multiple golds/predictions are present. Defaults to max.
+        fallback_mode: Literal["no_fallback", "first_match"]
+            How to perform extraction. Defaults to "first_match".
+            - "no_fallback": Only use first successfully parsed matches
+            - "first_match": Use the first successfully parsed match + first match irregardless the parsing success
+        extraction_mode: Literal["first_match", "any_match"]
+            - "first_match": Only tries to extract the first regex match if it fails no other matches are tried
+            - "any_match": Tries to extract any regex match
 
-    # Otherwise just return the expression
-    # Remove new lines and spaces
-    try:
-        return parse_expr_with_timeout(expr.replace("\n", " ").replace(" ", " ").replace("^", "**")), expr
-    except:
-        return None, expr
+        precision: int
+            Number of decimal places to use when comparing numerical values. Defaults to 6.
+        timeout_seconds: int
+            Timeout for the extraction (each attempt) and comparison. Defaults to 5.
 
+    Returns:
+        A sample level metric that extracts and compares mathematical expressions.
 
-@lru_cache(maxsize=1000)
-def extract_latex(match: re.Match, target_type: LatexExtractionConfig) -> tuple[sympy.Expr | str | None, str]:
-    latex_group, latex = next(
-        ((name, val) for name, val in match.groupdict().items() if name.startswith("latex") and val), ("", "")
-    )
-    is_percentage = True if match.group("percent") else False
-
-    normalized_latex = normalize_latex(
-        latex,
-        NormalizationConfig(
-            basic_latex=True,
-            units=True,
-            malformed_operators=True,
-            nits=True,
-            boxed=True,
-            equations=True,
-        ),
-    )
-
-    try:
-        parsed_latex = parse_latex_with_timeout(normalized_latex)
-        if is_percentage:
-            parsed_latex = parsed_latex / sympy.Number(100)
-    except:
-        return None, normalized_latex
-    return parsed_latex, normalized_latex
-
-
-def extract_match(match: re.Match, target_type: ExtractionTarget) -> tuple[str | sympy.Expr | float | None, str]:
     """
-    Extracts the match from the regex match.
-    Returns a tuple of the extracted value and string representation of the match
-    """
-    if isinstance(target_type, LatexExtractionConfig):
-        return extract_latex(match, target_type)
-    elif isinstance(target_type, ExprExtractionConfig):
-        return extract_expr(match)
-    elif isinstance(target_type, IndicesExtractionConfig):
-        return match.group("indices"), match.group("indices")
 
+    @timeout(2)
+    def add_to_specifics_with_timeout(
+        formatted_doc: Doc, extracted_predictions: list[list[str]], extracted_golds: list[list[str]]
+    ) -> None:
+        if formatted_doc.specific is None:
+            formatted_doc.specific = {}
 
-@lru_cache(maxsize=1)
-def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> list[tuple[re.Pattern[str], int]]:
-    translation_literal = TRANSLATION_LITERALS[language]
+        formatted_doc.specific["extracted_predictions"] = [
+            str(pred) for preds in extracted_predictions for pred in preds
+        ]
+        formatted_doc.specific["extracted_golds"] = [str(gold) for golds in extracted_golds for gold in golds]
 
-    # TODO: Possibly we should also nesure that the expression doesn't appear in latex env
-    # Basic number patterns (no LaTeX)
-    number_re = (
-        # Format 1: Numbers with thousand separators (e.g., "1,234.56" or "1 234.56")
-        r"(?:"
-        r"(?P<integer1>-?\d{1,3}(?:[ ,]\d{3})+)(?P<decimal1>\.\d+)?|"
-        # Format 2: Simple numbers with decimal point or comma (e.g., "123.45" or "123,45")
-        r"(?P<integer2>-?\d+)(?P<decimal2>[.,]\d+)|"
-        # Format 3: Decimal part only (e.g., ".123")
-        r"(?P<decimal3>\.\d+)|"
-        # Format 4: Integer only (e.g., "123")
-        r"(?P<integer3>-?\d+)"
-        r")(?P<percent>\s*(?:%|[Pp]ercent|\s*[Pp]ercentage|\s*[Pp]ct))?"
-    )
+    def sample_level_fn(golds: list[str], predictions: list[str], formatted_doc: Doc) -> float:
+        gold_extraction_regexes = get_extraction_regexes(formatted_doc, gold_extraction_target, language)
+        pred_extraction_regexes = get_extraction_regexes(formatted_doc, pred_extraction_target, language)
 
-    operators = [r"\+", r"\-", r"\*", r"\×", r"\/", r"\^", r"\(", r"\)", r"\÷"]
-    operators_re = "".join(operators)
-    all_expr_chars = r"[\d\.\s" + operators_re + r"]"
-    # Expression should have at minimum at least one operator, must start with a digit
-    expr_re = rf"-?\(?-?\d{all_expr_chars}*[{operators_re}]{all_expr_chars}+\)?"
+        extracted_predictions = [
+            extract_target_from_pred(pred, pred_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds)
+            for pred in predictions
+        ]
+        extracted_golds = [
+            extract_target_from_pred(gold, gold_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds)
+            for gold in golds
+        ]
 
-    # Punctuation regexes
-    full_stop_re = rf"[{re.escape(translation_literal.full_stop)}\.]"
-    comma_re = rf"[{re.escape(translation_literal.comma)}\,]"
-    colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
-    space_re = rf"(?:\s|{re.escape(translation_literal.sentence_space)})"
+        # Assert on empty gold and warn on empty pred
+        if any(len(g) == 0 for g in extracted_golds):
+            logger.warning(f"We did not manage to extract a gold in the correct format. Gold: {golds}")
+            extracted_golds = [[gold] for gold in golds]
 
-    # For expressions we also allow = prefix without any space, for suffix we allow ) because sometimes the answer is wrapped in parenthesis
-    expr_prefix_re = rf"(?:^|{space_re}|\=)(?:\*\*)?"
-    expr_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|\)|\$|$)"
+        if all(len(p) == 0 for p in extracted_predictions):
+            logger.warning(
+                f"We did not manage to extract a prediction in the correct format. Gold: {golds}, Pred: {predictions}"
+            )
 
-    expr = f"(?P<expr>{expr_re}|{number_re})"
-    full_expr = rf"(?:{expr_prefix_re}{expr}{expr_suffix_re})"
-    regexes: list[tuple[str, int]] = []
-    if language == Language.ENGLISH:
-        final_answer_prefixed_re = rf"(?i:final answer is)\:?\s*{full_expr}\.?\s?I hope"
-        final_answer_prefixed_just_is = rf"(?i:final answer.{{0,100}}?)\s+is\:?{full_expr}"
-        regexes.append((final_answer_prefixed_re, 0))
-        regexes.append((final_answer_prefixed_just_is, 50))
+        # We have to use timeout because the sypmy to str conversion can be very slow
+        try:
+            add_to_specifics_with_timeout(formatted_doc, extracted_predictions, extracted_golds)
+        except Exception:  # noqa: E722
+            logger.warning("Timeout when adding extracted predictions and golds to specific")
 
-    answer_prefix_re = rf"(?i:{translation_literal.answer}|{translation_literal.result_word})"
-    # Match after the last equals with answer word - require the number pattern
-    # Not sure about the equals matchings
-
-    equals_re_colon = rf"{answer_prefix_re}{colon_re}(?:.{{0,100}}=\s*|.{{0,50}}?){full_expr}(?!\s*=)"
-    equals_re = rf"{answer_prefix_re}(?:.{{0,100}}=\s*|.{{0,50}}?){full_expr}(?!\s*=)"
-    regexes.extend([(equals_re_colon, 100), (equals_re, 200)])
-
-    if expr_config.try_last_expr_match:
-        # Priority 3-4: Less specific patterns
-        regexes.append((f"({expr_prefix_re})(?P<expr>{expr_re})({expr_suffix_re})", 300))
-        regexes.append((f"({expr_prefix_re})(?P<expr>{number_re})({expr_suffix_re})", 300))
-
-    # We first try to match the answer then the plain number
-    return [(re.compile(pattern), priority) for pattern, priority in regexes]
-
-
-@lru_cache(maxsize=1)
-def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) -> list[tuple[re.Pattern[str], int]]:
-    # Only LaTeX expressions between delimiters
-    simple_number = r"-?\d+(?:[.,]\d+)?"
-    percent_re_group = r"(?P<percent>\s*(?:\\?%|[Pp]ercent|[Pp]ercentage|[Pp]ct))"
-    latex_envs_re = (
-        r"("
-        r"(?<!\\)\$\$(?P<latexDisplayDollar>[\s\S]+?)(?<!\\)\$\$|"  # $$...$$ (display math, can be multiline)
-        r"(?<!\\)\\\[(?P<latexDisplayBracket>[\s\S]+?)(?<!\\)\\\]|"  # \[...\] (display math, can be multiline)
-        r"(?<!\\|\d)\$(?P<latexInlineDollar>(?:\\[$]|[^\n$])+?)(?<!\\)\$|"  # $...$ (inline math, single line, allows escaped $), we make sure it's not preceed by a digit to minimize false positives with actualy dollar unit
-        r"(?<!\\)\\\((?P<latexInlineParenthesis>[^\n)]+?)(?<!\\)\\\)|"  # \(...\) (inline math, single line)
-        r"(?<!\\)\[(?P<latexInlineBracket>[^\n$]+?)(?<!\\)\]"  # [....] While this is no a valid display math llms like to generate it, allow it
-        rf"){percent_re_group}?"
-    )
-
-    # Match latex without environments
-    latex_boxed = rf"(?P<latexBoxed>\\boxed{{.+}})\$?{percent_re_group}?"  # Boxed number, it's fine to be as greedy as possible as we will find the correct end afterwards
-    latex_fraction = rf"(?P<latexFraction>-?\\frac{{{simple_number}}}{{{simple_number}}})\$?{percent_re_group}?"
-
-    translation_literal = TRANSLATION_LITERALS[language]
-    colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
-
-    answer_prefix_re = rf"(?i:{translation_literal.answer}|{translation_literal.result_word})"
-
-    # We first match boxed env, for some reason that's the most common case of output
-    # Then we match the latex with environments, then we try to match the fraction
-    regexes: list[tuple[str, int]] = []
-    for latex_re, base_priority in [(latex_envs_re, 2), (latex_fraction, 3)]:
-        if language == Language.ENGLISH:
-            final_answer_prefixed_re = rf"(?i:final answer is)\:?\s*{latex_re}\.?\s?I hope"
-            final_answer_prefixed_just_is = rf"(?i:final answer.{{0,100}}?)\s+is\:?\s*{latex_re}"
-            regexes.append((final_answer_prefixed_re, 0))
-            regexes.append((final_answer_prefixed_just_is, 50))
-
-        # Match with answer word - higher priority than plain latex
-        # Priority 50
-        answer_re_colon = f"{answer_prefix_re}{colon_re}.{{0,50}}?{latex_re}"
-        answer_re = f"{answer_prefix_re}.{{0,50}}?{latex_re}"
-
-        regexes.extend([(answer_re_colon, 100), (answer_re, 200)])
-
-        # Match plain LaTeX - lowest priority
-        if latex_config.try_last_latex_match:
-            regexes.append((latex_re, 300))
-
-    # This ensures that boxed is matched right after the final answer xxxx
-    if latex_config.enforce_boxed_match:
-        regexes.append((latex_boxed, 55))
-
-    return [(re.compile(pattern, re.DOTALL), priority) for pattern, priority in regexes]
-
-
-@lru_cache(maxsize=100)
-def lazy_indices_regex(
-    indices_config: IndicesExtractionConfig, len_choices: int, language: Language
-) -> list[tuple[re.Pattern[str], int]]:
-    translation_literal = TRANSLATION_LITERALS[language]
-    # First get indices to predict
-    indices = get_prefix(indices_config.prefix_for_extraction, translation_literal)[:len_choices]
-    indice_str_re = f"(?P<indices>{'|'.join([re.escape(i) for i in indices])})"
-
-    # The answer keys are either surrounded with <space>**answer**., or '<space>answer.' or the same without the dot
-    full_stop_re = rf"[{re.escape(translation_literal.full_stop)}\.]"
-    comma_re = rf"[{re.escape(translation_literal.comma)}\,]"
-    colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
-    space_re = rf"(?:\s|{re.escape(translation_literal.sentence_space)})"
-
-    answer_prefix_re = rf"(^|{space_re})(?:\*\*)?"
-    answer_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|$)"
-    answer_re = f"{answer_prefix_re}{indice_str_re}{answer_suffix_re}"
-    answer_re_start = rf"^(?:\*\*)?{indice_str_re}{answer_suffix_re}"
-
-    answer_word = f"(?i:{translation_literal.answer})"
-
-    regexes = [
-        # Priority 1: Most specific patterns first
-        (f"{answer_word}{colon_re}.{{0,50}}?{answer_re}", 0),
-        # Priority 2: Answer word patterns
-        (f"{answer_word}.{{0,50}}?{answer_re}", 50),
-        # Priority 3: Start of line patterns
-        (answer_re_start, 100),
-    ]
-
-    if indices_config.try_last_indices_match:
-        # Priority 4-5: Less specific patterns
-        regexes.extend(
+        return aggregation_function(
             [
                 (
                     1.0
@@ -520,387 +286,9 @@ def lazy_indices_regex(
             ]
         )
 
-    return [(re.compile(pattern), priority) for pattern, priority in regexes]
-
-
-def get_extraction_regexes(
-    formatted_doc: Doc, target_types: tuple[ExtractionTarget], language: Language
-) -> list[tuple[list[tuple[re.Pattern[str], int]], ExtractionTarget]]:
-    extraction_regexes = [
-        (lazy_latex_regex(target_type, language), target_type)
-        if isinstance(target_type, LatexExtractionConfig)
-        else (lazy_expr_regex(target_type, language), target_type)
-        if isinstance(target_type, ExprExtractionConfig)
-        else (lazy_indices_regex(target_type, len(formatted_doc.choices), language), target_type)
-        for target_type in target_types
-    ]
-
-    # Sort the extraction res so that order is indices, latex, expr
-    def get_target_type_order(target_type: ExtractionTarget) -> int:
-        match target_type:
-            case IndicesExtractionConfig():
-                return 0
-            case LatexExtractionConfig():
-                return 1
-            case ExprExtractionConfig():
-                return 2
-
-    extraction_regexes = sorted(extraction_regexes, key=lambda x: get_target_type_order(x[1]))
-
-    return extraction_regexes
-
-
-def extract_target_from_pred(
-    pred: str,
-    target_res: list[tuple[list[tuple[re.Pattern[str], int]], ExtractionTarget]],
-    extraction_mode: Literal["first_match", "extract_each_target", "first_fallback"] = "first_match",
-    fallback_mode: Literal["no_fallback", "first_match", "any_match"] = "no_fallback",
-) -> list[str | sympy.Expr | None | float]:
-    extracted_predictions = []
-    fallbacks = []
-
-    # Get all patterns and sort by priority
-    all_patterns = [
-        (pattern, target_type, priority)
-        for target_patterns, target_type in target_res
-        for pattern, priority in target_patterns
-    ]
-
-    # Group patterns by priority using itertools.groupby
-    for priority, patterns_group in itertools.groupby(sorted(all_patterns, key=lambda x: x[2]), key=lambda x: x[2]):
-        # Find all matches for each pattern in this priority group
-        matches_with_pos = (
-            (match, match.start(), match.end(), target_type)
-            for pattern, target_type, _ in patterns_group
-            for match in pattern.finditer(pred)
-        )
-
-        # Sort matches by end position (rightmost first) and then by start position (leftmost first)
-        matches_with_pos = sorted(matches_with_pos, key=lambda x: (x[2], -x[1]), reverse=True)
-
-        # Try to extract from each match, starting from rightmost
-        for match, _, _, target_type in matches_with_pos:
-            extracted_match, str_fallback = extract_match(match, target_type)
-
-            if extracted_match is not None:
-                extracted_predictions.append(extracted_match)
-                if extraction_mode == "first_match":
-                    break
-
-            if str_fallback:
-                fallbacks.append(str_fallback)
-                if extraction_mode == "first_fallback":
-                    break
-
-        # If we found something and we're in first_match mode, stop processing other priorities
-        if (extraction_mode == "first_match" and extracted_predictions) or (
-            extraction_mode == "first_fallback" and fallbacks
-        ):
-            break
-
-    # Handle fallback modes
-    if not extracted_predictions:  # Only use fallbacks if no successful extractions
-        if fallback_mode == "first_match" and fallbacks:
-            return [fallbacks[0]]  # Return first fallback
-        elif fallback_mode == "any_match" and fallbacks:
-            return fallbacks  # Return all fallbacks
-        elif fallback_mode == "no_fallback":
-            return []  # Return empty list if no successful extractions
-
-    return extracted_predictions
-
-
-def safe_sympy_doit(a: sympy.Expr | MatrixBase):
-    try:
-        return a.doit()
-    except TimeoutException:
-        raise
-    except:
-        pass
-    return a
-
-
-def is_atomic_or_negative_atomic(expr: Basic | MatrixBase, atomic_type: type) -> bool:
-    """
-    Check if expression is either:
-    - An instance of the specified atomic type
-    - A negative number represented as Mul(-1, atomic_type)
-    """
-    return isinstance(expr, atomic_type) or (
-        isinstance(expr, sympy.Mul)
-        and len(expr.args) == 2
-        and expr.args[0] == -1
-        and isinstance(expr.args[1], atomic_type)
-    )
-
-
-def sympy_numeric_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase, precision: int):
-    # Only do this when one of the two is a float, in other cases use symbolic equality as this could lead to false positives
-    # E.g we want 1/3 == 0.333333 to work
-    if isinstance(a, (MatrixBase, MatrixExpr)) and isinstance(b, (MatrixBase, MatrixExpr)):
-        a = safe_sympy_doit(a)
-        b = safe_sympy_doit(b)
-
-        # If we have matrices and one of them is only made of floats, we can use the same logic as above
-        if isinstance(a, (MatrixBase)) and isinstance(b, (MatrixBase)) and a.shape == b.shape:
-            return all(sympy_numeric_eq(a_elem, b_elem, precision) for a_elem, b_elem in zip(a.flat(), b.flat()))
-
-    # Ensure this also works for negative numbers
-    elif is_atomic_or_negative_atomic(a, sympy.Atom) or is_atomic_or_negative_atomic(b, sympy.Atom):
-        # If one of them is a float or a negative atomic number, we can try to use precision
-        if is_atomic_or_negative_atomic(a, sympy.Float) or is_atomic_or_negative_atomic(b, sympy.Float):
-            a = safe_sympy_doit(a)
-            b = safe_sympy_doit(b)
-            # Now if both are numbers, we can use precision
-            if isinstance(a, (sympy.Number)) and isinstance(b, (sympy.Number)):
-                return a.round(precision) == b.round(precision)
-        else:
-            return safe_sympy_doit(a) == safe_sympy_doit(b)
-
-    else:
-        try:
-            return bool(abs((a - b).evalf()) < 1e-10)
-        except TimeoutException:
-            raise
-        except:
-            pass
-
-    return False
-
-
-def sympy_symbolic_eq(a: Basic | MatrixBase, b: Basic | MatrixBase) -> bool:
-    try:
-        a_b_diff = sympy.simplify((a - b))
-        if isinstance(a_b_diff, MatrixBase) and a_b_diff.is_zero_matrix:
-            return True
-        elif isinstance(a_b_diff, Basic) and a_b_diff.is_zero:
-            return True
-    except TimeoutException:
-        raise
-    except:
-        pass
-
-    return False
-
-
-def sympy_deep_compare_finite_set(a: FiniteSet, b: FiniteSet, precision: int) -> bool:
-    # This ensures it works for {1/3} and {0.333333}
-    if len(a) == len(b) and all(sympy_expr_eq(a, b, precision) for a, b in zip(a, b)):
-        return True
-
-    return False
-
-
-def sympy_compare_set_interval(a: FiniteSet, b: Interval, precision: int) -> bool:
-    # Only compare if it's the special case of 2 elements
-    if len(a) == 2 and b.is_open:
-        return sympy_deep_compare_finite_set(a, FiniteSet(b.start, b.end), precision)
-
-    return False
-
-
-def sympy_compare_interval(a: Interval, b: Interval, precision: int) -> bool:
-    return (
-        a.left_open == b.left_open
-        and a.right_open == b.right_open
-        and sympy_expr_eq(a.start, b.start, precision)
-        and sympy_expr_eq(a.end, b.end, precision)
-    )
-
-
-def sympy_str_eq(a: sympy.Expr | MatrixBase, b: sympy.Expr | MatrixBase) -> bool:
-    # First just do a simple str comparison
-    # Because of float comparison, we only use doit() during the string conversion, but keep the original expr
-    a_doit = safe_sympy_doit(a)
-    b_doit = safe_sympy_doit(b)
-
-    try:
-        # Structural equality, the cheapest but the dumbest one, it will fail for a + b vs b + a
-        if a_doit == b_doit:
-            return True
-        # Then do a simple str comparison
-        if str(a_doit).strip() == str(b_doit).strip():
-            return True
-    except TimeoutException:
-        raise
-    except:
-        pass
-    return False
-
-
-def sympy_expr_eq(gold: sympy.Expr | MatrixBase, pred: sympy.Expr | MatrixBase, precision: int) -> bool:
-    # If refernce is relational, but target it's not it's possible it's case of k=x+1+z, so we just take x+1+z
-    # We assume that the gold never contains symplifications, so we don't handle that case
-    # e.g 1+1+1=3 will never be simplified to 3, it would be possibly by doing lhs-rhs == 0, but ehhh just make the gold simpler
-    # The new latex2sympy2 will actually convert such cases automatically, but so this is in theory not needed
-    if isinstance(gold, Eq) and not isinstance(pred, Relational) and isinstance(gold.lhs, Symbol):
-        gold = gold.rhs
-
-    # Here we respect the gold and simplify accordingly, thus any of
-    # k=x+1+z or 1+1+1=3 will be simplified to rhs
-    if isinstance(pred, Eq) and not isinstance(gold, Eq):
-        pred = pred.rhs
-
-    # Start with simple str and expr comparisson as it's the fastest
-    # str comparison is better, than simple eq, because it will also handle missarangments
-    if sympy_str_eq(gold, pred):
-        return True
-
-    # Support for equations
-    if isinstance(gold, Relational) and isinstance(pred, Relational):
-        # Helper to check if expressions are equivalent when flipped
-        def are_flipped_inequalities_equal(a: Relational, b: Relational) -> bool:
-            return sympy_expr_eq(a.lhs - a.rhs, b.rhs - b.lhs, precision)
-
-        # Same type of relation (e.g. both <= or both >=)
-        if type(gold) == type(pred) and sympy_expr_eq(gold.lhs - gold.rhs, pred.lhs - pred.rhs, precision):
-            return True
-
-        # Check flipped inequalities (a <= b equals b >= a)
-        if (
-            isinstance(gold, sympy.GreaterThan)
-            and isinstance(pred, sympy.LessThan)
-            or isinstance(gold, sympy.LessThan)
-            and isinstance(pred, sympy.GreaterThan)
-            or isinstance(gold, sympy.StrictGreaterThan)
-            and isinstance(pred, sympy.StrictLessThan)
-            or isinstance(gold, sympy.StrictLessThan)
-            and isinstance(pred, sympy.StrictGreaterThan)
-            or isinstance(gold, sympy.Eq)
-            and isinstance(pred, sympy.Eq)
-        ) and are_flipped_inequalities_equal(gold, pred):
-            return True
-
-        return False
-
-    elif isinstance(gold, (Set)) or isinstance(pred, (Set)):
-        # This way we can also evalute {1} and 1 to be equal
-        a_set = gold if isinstance(gold, Set) else FiniteSet(gold)
-        b_set = pred if isinstance(pred, Set) else FiniteSet(pred)
-
-        # If both are finite sets, we can compare per element
-        if isinstance(a_set, Interval) and isinstance(b_set, Interval):
-            return sympy_compare_interval(a_set, b_set, precision)
-
-        if a_set == b_set:
-            return True
-        if a_set.symmetric_difference(b_set).is_empty:
-            return True
-        if isinstance(a_set, FiniteSet) and isinstance(b_set, FiniteSet):
-            return sympy_deep_compare_finite_set(a_set, b_set, precision)
-
-        # Special case for interval and set, it's very hard to distinguish between them 2 element set and interval
-        # so in this case we also try to treat them as equal
-        if isinstance(a_set, Interval) and isinstance(b_set, FiniteSet):
-            return sympy_compare_set_interval(b_set, a_set, precision)
-
-        if isinstance(a_set, FiniteSet) and isinstance(b_set, Interval):
-            return sympy_compare_set_interval(a_set, b_set, precision)
-
-        return False
-
-    elif isinstance(gold, (Basic, MatrixBase)) and isinstance(pred, (Basic, MatrixBase)):
-        # Mostly so that 0.333333 = 1/3
-        if sympy_numeric_eq(gold, pred, precision):
-            return True
-        # Then try symbolic equality
-        if sympy_symbolic_eq(gold, pred):
-            return True
-
-    return False
-
-
-def compare_gold_target(
-    gold: list[sympy.Expr | Relational | str], target: list[sympy.Expr | Relational | str], precision: int
-) -> bool:
-    # REVERT BACK TO 10
-    @timeout(timeout_seconds=1000)
-    def compare_single_extraction(gold: str | sympy.Expr | float, target: str | sympy.Expr | float) -> float:
-        # Expression case
-
-        # If both are sympy expressions, we can use sympy to compare them
-        if isinstance(gold, (Basic, MatrixBase)) and isinstance(target, (Basic, MatrixBase)):
-            return sympy_expr_eq(gold, target, precision)
-
-        # We don't support str / sympy.Expr comparison. Imo there is no point in doing this, as chances
-        # of this happening are very low.  The only why one of them is not converted to sympy expression
-        # is usually because the parsing logic failed in this case we should improve the parsing logic
-        # instead of somehow fixing adhoc.
-        elif isinstance(gold, str) and isinstance(target, str):
-            # We just do string comparison for everything else
-            gold = gold.strip()
-            target = target.strip()
-
-            # Ensure it's both not empty and equal
-            return len(gold) > 0 and len(target) > 0 and gold == target
-
-        else:
-            return False
-            # raise ValueError(f"Unsupported comparison between {type(gold)} and {type(target)}")
-
-    def compare_single_extraction_wrapper(g, t):
-        try:
-            return compare_single_extraction(g, t)
-        except TimeoutException:
-            return False
-
-    return any(compare_single_extraction_wrapper(g, t) for g, t in product(gold, target))
-
-
-def extract_target(
-    golds: list[str],
-    predictions: list[str],
-    formatted_doc: Doc,
-    language: Language,
-    gold_extraction_target: tuple[ExtractionTarget],
-    pred_extraction_target: tuple[ExtractionTarget],
-    aggregation_function: Callable[[list[float]], float] = max,
-    extraction_mode: Literal["first_match", "extract_each_target", "first_fallback"] = "first_match",
-    fallback_mode: Literal["no_fallback", "first_match", "any_match"] = "no_fallback",
-    precision: int = 6,
-) -> float:
-    # Try each target type in order
-    gold_extraction_regexes = get_extraction_regexes(formatted_doc, gold_extraction_target, language)
-    pred_extraction_regexes = get_extraction_regexes(formatted_doc, pred_extraction_target, language)
-
-    extracted_predictions = [
-        extract_target_from_pred(pred, pred_extraction_regexes, extraction_mode, fallback_mode) for pred in predictions
-    ]
-    extracted_golds = [
-        extract_target_from_pred(gold, gold_extraction_regexes, "first_match", "first_match") for gold in golds
-    ]
-
-    # Assert on empty gold and warn on empty pred
-    if any(len(g) == 0 for g in extracted_golds):
-        raise ValueError(f"No gold targets found for at least one gold. Gold: {golds}, Pred: {predictions}")
-
-    if all(len(p) == 0 for p in extracted_predictions):
-        hlog_warn(f"No predictions found for all predictions. Gold: {golds}, Pred: {predictions}")
-
-    if formatted_doc.specific is None:
-        formatted_doc.specific = {}
-
-    formatted_doc.specific["extracted_predictions"] = [str(pred) for preds in extracted_predictions for pred in preds]
-    formatted_doc.specific["extracted_golds"] = [str(gold) for golds in extracted_golds for gold in golds]
-
-    return aggregation_function(
-        (1.0 if any(compare_gold_target(gold, pred, precision) for gold in extracted_golds) else 0.0)
-        for pred in extracted_predictions
-    )
-
-
-def multilingual_extractive_match_metric(
-    language: Language,
-    gold_extraction_target: tuple[ExtractionTarget] = (ExprExtractionConfig(),),
-    pred_extraction_target: tuple[ExtractionTarget] = (LatexExtractionConfig(), ExprExtractionConfig()),
-    aggregation_function: Callable[[list[float]], float] = max,
-    extraction_mode: Literal["first_match", "extract_each_target", "first_fallback"] = "first_match",
-    fallback_mode: Literal["no_fallback", "first_match", "any_match"] = "first_match",
-    precision: int = 6,
-) -> SampleLevelMetric:
     return SampleLevelMetric(
         metric_name="extractive_match",
-        sample_level_fn=extract_target,
+        sample_level_fn=sample_level_fn,
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.ACCURACY,
         corpus_level_fn=np.mean,

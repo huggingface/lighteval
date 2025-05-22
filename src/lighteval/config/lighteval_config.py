@@ -23,9 +23,9 @@
 from dataclasses import dataclass
 from typing import Dict, Optional, Union
 
-from lighteval.utils.imports import is_nanotron_available
-
 from brrr.config import Config
+
+from lighteval.utils.imports import is_nanotron_available
 
 
 if is_nanotron_available():
@@ -62,6 +62,7 @@ class LightEvalLoggingArgs:
     """Arguments related to logging for LightEval"""
 
     output_dir: str
+    results_path_template: str | None = None
     save_details: bool = True
     push_to_hub: bool = False
     push_to_tensorboard: bool = False

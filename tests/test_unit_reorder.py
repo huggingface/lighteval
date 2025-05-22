@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import pytest
 from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset
@@ -81,10 +80,6 @@ DATASET_SPLITS = 1
 
 
 class TestReorderGenerativeTaskDataset:
-    def test_dataset_needs_tokenization(self):
-        with pytest.raises(ValueError):
-            GenerativeTaskDataset(requests=TEST_DATA, num_dataset_splits=DATASET_SPLITS)
-
     def test_reorder_dataset(self):
         tokenizer = AutoTokenizer.from_pretrained("gpt2")
         data = TEST_DATA.copy()

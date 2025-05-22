@@ -26,6 +26,7 @@
 
 import logging
 import math
+import os
 import random
 from typing import Callable, Optional
 
@@ -35,6 +36,8 @@ from tqdm import tqdm
 
 
 logger = logging.getLogger(__name__)
+
+LIGHTEVAL_DISABLE_TQDM = int(os.environ.get("LIGHTEVAL_DISABLE_TQDM", "0"))
 
 
 def _stddev(arr):
@@ -66,6 +69,7 @@ class _bootstrap_internal:
                     [(rnd.choices(population, k=len(population)),) for _ in range(self.number_draws)],
                     total=self.number_draws,
                     desc="Sampling bootstrap iterations",
+                    disable=bool(LIGHTEVAL_DISABLE_TQDM),
                 ),
             )
         return samplings
