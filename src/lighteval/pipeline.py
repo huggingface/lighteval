@@ -383,7 +383,7 @@ class Pipeline:
         try:
             return ast.literal_eval(processed)
         except Exception as e:
-            raise ValueError(f"Failed to parse after preprocessing. " f"Processed string:\n{processed}\n\nError: {e}")
+            raise ValueError(f"Failed to parse after preprocessing. Processed string:\n{processed}\n\nError: {e}")
 
     def _load_responses_from_details(self):
         logger.info("--- LOADING RESPONSES FROM DETAILS ---")

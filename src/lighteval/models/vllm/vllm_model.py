@@ -80,7 +80,9 @@ class VLLMModelConfig(ModelConfig):
     data_parallel_size: PositiveInt = 1  # how many GPUs to use for data parallelism
     pipeline_parallel_size: PositiveInt = 1  # how many GPUs to use for pipeline parallelism
     gpu_memory_utilization: NonNegativeFloat = 0.9  # lower this if you are running out of memory
-    max_model_length: PositiveInt | None = None  # maximum length of the model, ussually infered automatically. reduce this if you encouter OOM issues, 4096 is usually enough
+    max_model_length: PositiveInt | None = (
+        None  # maximum length of the model, ussually infered automatically. reduce this if you encouter OOM issues, 4096 is usually enough
+    )
     quantization: str | None = None
     load_format: str | None = None
     swap_space: PositiveInt = 4  # CPU swap space size (GiB) per GPU.

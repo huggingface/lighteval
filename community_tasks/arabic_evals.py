@@ -26,6 +26,7 @@ Custom evaluation tasks for lighteval
 
 This file generally creates just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
 """
+
 import random
 import re
 from typing import Any, Dict, List, Optional, Union
