@@ -13,6 +13,7 @@
 # limitations under the License.
 
 """Registry of all instructions."""
+
 import lighteval.tasks.extended.ifeval.instructions as instructions
 
 

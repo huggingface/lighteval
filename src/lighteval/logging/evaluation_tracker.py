@@ -603,7 +603,7 @@ class EvaluationTracker:
             f"To load the details from a run, you can for instance do the following:\n"
             f'```python\nfrom datasets import load_dataset\ndata = load_dataset("{repo_id}",\n\t"{sanitized_task}",\n\tsplit="train")\n```\n\n'
             f"## Latest results\n\n"
-            f'These are the [latest results from run {max_last_eval_date_results}]({last_results_file_path.replace("/resolve/", "/blob/")})'
+            f"These are the [latest results from run {max_last_eval_date_results}]({last_results_file_path.replace('/resolve/', '/blob/')})"
             f"(note that their might be results for other tasks in the repos if successive evals didn't cover the same tasks. "
             f'You find each in the results and the "latest" split for each eval):\n\n'
             f"```python\n{results_string}\n```",

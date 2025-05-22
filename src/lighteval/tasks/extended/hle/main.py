@@ -208,7 +208,7 @@ def hle_text_only(line, task_name: str = None):
 
 hle_metrics = CorpusLevelMetricGrouping(
     metric_name=["accuracy", "confidence_half_width", "calibration_error"],
-    higher_is_better={n: True for n in ["accuracy", "confidence_half_width", "calibration_error"]},
+    higher_is_better=dict.fromkeys(["accuracy", "confidence_half_width", "calibration_error"], True),
     category=MetricCategory.LLM_AS_JUDGE,
     use_case=MetricUseCase.ACCURACY,
     sample_level_fn=JudgeLLMHLE().compute,
