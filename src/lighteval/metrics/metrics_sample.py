@@ -342,7 +342,8 @@ class Probability:
     def compute(
         self,
         logprobs: list[float],
-        target_tokens: list[list[int]],
+        target_tokens: list[list[int]] | None = None,
+        reference_texts: list[str] | None = None,
         **kwargs,
     ) -> float:
         """Computes the log likelihood probability: chance of choosing the best choice.
@@ -352,8 +353,7 @@ class Probability:
             choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
             unconditioned_logprob (list[float] | None): Unconditioned log-probabilities for PMI normalization, ordered as the choices.
             choices_tokens (list[list[int]] | None): Tokenized choices for token normalization, ordered as the choices.
-            formatted_doc (Doc): Original document for the sample.
-                Used to get the original choices' length for possible normalization
+            reference_texts (list[str] | None): Reference texts for token normalization, ordered as the choices.
 
         Returns:
             float: The probability of the best log-prob choice being a gold choice.
@@ -364,7 +364,7 @@ class Probability:
                 normalization=self.log_prob_normalization,
                 choices_tokens=target_tokens,
                 choices_logprob=logprobs,
-                choices_text=None,
+                choices_text=reference_texts,
                 unconditioned_logprob=None,
             )
             if self.log_prob_normalization
