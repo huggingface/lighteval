@@ -51,8 +51,6 @@ CONTINUATION_QUERY_CF = "{instruction}{context}"
 
 CONTINUATION_QUERY_MCF = "{instruction}{context}\n\n{options_word}{colon}\n{options}{answer_word}{colon}"
 
-WARNED_ABOUT_COT_INSTRUCTION = False
-
 
 # Defined for type hinting only
 class ContinuationInput(TypedDict):
@@ -114,6 +112,8 @@ def get_continuation_prompt_function(
 
     *MCF*
     Context
+
+    Options:
     A. Continuation 1
     B. Continuation 2
     C. Continuation 3
@@ -133,6 +133,8 @@ def get_continuation_prompt_function(
     adapter_fn = create_adapter_from_dict(adapter)
     translation_literals = TRANSLATION_LITERALS[language]
 
+    WARNED_ABOUT_COT_INSTRUCTION = False
+
     def prepare_prompt(line: dict):
         cont_input = adapter_fn(line)
         if cont_input is None:
@@ -140,7 +142,7 @@ def get_continuation_prompt_function(
 
         instruction_val = cont_input.get("instruction")
         if formulation.cot and not instruction_val:
-            if not isinstance(formulation, MCFFormulation) and formulation.choice_prefix not in [
+            if not isinstance(formulation, MCFFormulation) or formulation.choice_prefix not in [
                 "Letters",
                 "NativeLetters",
             ]:
@@ -148,7 +150,8 @@ def get_continuation_prompt_function(
                     "You are using a COT with a unsupported formulation. Either use MCF formulation or provide an instruction."
                 )
 
-            instruction_val = f"{translation_literals.continuation_instruction}\n{translation_literals.default_formatting_instruction}"
+            instruction_val = f"{translation_literals.continuation_mcf_instruction}\n{translation_literals.default_formatting_instruction}"
+            nonlocal WARNED_ABOUT_COT_INSTRUCTION
             if not WARNED_ABOUT_COT_INSTRUCTION:
                 logger.warning(
                     f" You are using a COT with MCF formulation but did not provide an instruction. Defaulting to {instruction_val}"

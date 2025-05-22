@@ -83,6 +83,8 @@ def test_translation_prompt_mcf():
         doc.query
         == """\
 CS: Ahoj, jak se máš? FR:
+
+Options:
  A. Bonjour, comment allez-vous?
  B. Ciao, come stai?
 Answer:\
@@ -177,7 +179,7 @@ def test_translation_cot_default_instruction_mcf():
 
     # Check that both default instructions are included
     expected_instructions = (
-        "Choose the the letter of the correct answer.\nOutput the final answer in format: <b></b>\n\n"
+        "Choose the letter of the correct answer.\nOutput the final answer in format: <b></b>.\n\n"
     )
     assert doc.query.startswith(expected_instructions)
     assert "CS: Ahoj, jak se máš? FR:" in doc.query
@@ -213,7 +215,7 @@ def test_translation_cot_user_instruction():
 
     # Check that the user instruction is included with formatting instruction
     expected_instructions = (
-        "Please translate this English text to Chinese:\nOutput the final answer in format: <b></b>\n\n"
+        "Please translate this English text to Chinese:\n\n"
     )
     assert doc.query.startswith(expected_instructions)
     assert "EN: How are you? ZH:" in doc.query
@@ -225,6 +227,10 @@ def test_translation_cot_mcf_number_prefix_error():
     """
     Tests that translation prompt function raises an error when using CoT with MCF and Number choice prefix.
     """
+    test_input = {
+        "source_text": "How are you?",
+        "target_text": "你好吗?",
+    }
 
     with pytest.raises(ValueError, match="You are using a COT with a unsupported formulation"):
         prompt_fn = get_translation_prompt_function(
@@ -237,3 +243,54 @@ def test_translation_cot_mcf_number_prefix_error():
             },
             formulation=MCFFormulation(cot=True, choice_prefix="Numbers"),
         )
+
+        prompt_fn(test_input, "test_task")
+
+
+def test_translation_prompt_mcf_cot():
+    """
+    Tests that translation prompt function works correctly for both cause/effect.
+    Since it's pretty much a wrapper around continuation template we just test single formulation.
+
+    """
+    test_input = {
+        "source_text": "How are you?",
+        "target_text": ["你好吗?", "你怎么样?"],
+        "__few_shots": True,
+        "few_shot_cot": "i think it's A.",
+        "gold_idx": 0,
+        "instruction": "Choose the letter of the most likely continuation.",
+    }
+
+    prompt_fn = get_translation_prompt_function(
+        Language.ENGLISH,
+        Language.CHINESE,
+        {
+            "source_text": "source_text",
+            "target_text": "target_text",
+            "gold_idx": "gold_idx",
+            "few_shot_cot": "few_shot_cot",
+            "instruction": "instruction",
+        },
+        MCFFormulation(cot=True),
+    )
+
+    doc = prompt_fn(test_input, "test_task")
+
+    assert (
+        doc.query
+        == f"""\
+Choose the letter of the most likely continuation.
+
+EN: How are you? ZH:
+
+Options:
+ A. 你好吗？
+ B. 你怎么样？
+Step-by-Step Answer:\
+"""
+    )
+
+    assert doc.unconditioned_query == "Step-by-Step Answer:"
+    assert doc.choices == [" I think it's A."]
+    assert doc.gold_index == [0]

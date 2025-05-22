@@ -121,6 +121,7 @@ def get_copa_prompt_function(
             "continuations": "continuations",
             "gold_idx": "gold_idx",
             "few_shot_cot": "few_shot_cot",
+            "instruction": "instruction",
         },
         formulation,
     )

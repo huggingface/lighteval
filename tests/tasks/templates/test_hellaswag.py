@@ -176,6 +176,7 @@ def test_hellaswag_prompt_mcf_cot():
         "gold_idx": 0,
         "__few_shots": True,
         "few_shot_cot": "i think it's A. he has big muscles",
+        "instruction": "Choose the letter of the most likely continuation.",
     }
 
     prompt_fn = get_hellaswag_prompt_function(
@@ -187,6 +188,7 @@ def test_hellaswag_prompt_mcf_cot():
             "ctx_a": "ctx_a",
             "ctx_b": "ctx_b",
             "few_shot_cot": "few_shot_cot",
+            "instruction": "instruction",
         },
         MCFFormulation(cot=True),
     )
@@ -195,7 +197,10 @@ def test_hellaswag_prompt_mcf_cot():
     assert (
         doc.query
         == """\
-Fitness:\nHe is strong he is fast
+Choose the letter of the most likely continuation.
+
+Fitness:
+He is strong he is fast
 
 Options:
  A. he has big muscles
@@ -206,4 +211,49 @@ Step-by-Step Answer:\
 
     assert doc.unconditioned_query == "Step-by-Step Answer:"
     assert doc.choices == [" I think it's A. he has big muscles"]
+    assert doc.gold_index == [0]
+
+
+def test_hellaswag_default_instruction_mcf():
+    """Test default instruction for MCF hellaswag prompt."""
+    test_input = {
+        "activity_label": "fitness",
+        "ctx_a": "He is strong",
+        "ctx_b": "He is fast",
+        "continuations": ["he has big muscles", "he is weak"],
+        "gold_idx": 0,
+    }
+
+    # Note: "instruction" key is NOT in the key_map
+    prompt_fn = get_hellaswag_prompt_function(
+        Language.ENGLISH,
+        {
+            "activity_label": "activity_label",
+            "continuations": "continuations",
+            "gold_idx": "gold_idx",
+            "ctx_a": "ctx_a",
+            "ctx_b": "ctx_b",
+        },
+        MCFFormulation(cot=True),
+    )
+
+    doc = prompt_fn(test_input, "test_task_default_mcf")
+
+    expected_instruction = "Choose the letter of the most likely continuation.\nOutput the final answer in format: <b></b>."
+    assert (
+        doc.query
+        == f"""\
+{expected_instruction}
+
+Fitness:
+He is strong he is fast
+
+Options:
+ A. he has big muscles
+ B. he is weak
+Step-by-Step Answer:\
+"""
+    )
+    assert doc.unconditioned_query == "Step-by-Step Answer:"
+    assert doc.choices == [" A", " B"]
     assert doc.gold_index == [0]

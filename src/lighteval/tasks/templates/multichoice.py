@@ -45,7 +45,6 @@ logger = logging.getLogger(__name__)
 MULTI_CHOICE_QA_QUERY = (
     "{instruction}{context}{question_word}{colon}{sentence_space}{question}\n{options}{answer_word}{colon}"
 )
-WARNED_ABOUT_COT_INSTRUCTION = False
 
 
 # Defined for type hinting only
@@ -134,6 +133,8 @@ def get_mcq_prompt_function(
 
     adapter_fn = create_adapter_from_dict(adapter)
 
+    WARNED_ABOUT_COT_INSTRUCTION = False
+
     def prompt_fn(line, task_name: str):
         mcq_input = adapter_fn(line)
         if mcq_input is None:
@@ -145,7 +146,7 @@ def get_mcq_prompt_function(
         if formulation.cot and not instruction_val:
             match formulation:
                 case MCFFormulation(choice_prefix="Letters") | MCFFormulation(choice_prefix="NativeLetters"):
-                    instruction_val = f"{translation_literals.multichoice_instruction}\n{translation_literals.default_formatting_instruction}"
+                    instruction_val = f"{translation_literals.multichoice_mcf_instruction}\n{translation_literals.default_formatting_instruction}"
                 case CFFormulation():
                     instruction_val = (
                         f"{translation_literals.qa_instruction}\n{translation_literals.default_formatting_instruction}"
@@ -155,6 +156,7 @@ def get_mcq_prompt_function(
                         "You are using a COT with a unsupported formulation. Either use CF/MCF formulation or provide an instruction."
                     )
 
+            nonlocal WARNED_ABOUT_COT_INSTRUCTION
             if not WARNED_ABOUT_COT_INSTRUCTION:
                 logger.warning(
                     f"You are using a COT with CF/MCF formulation but did not provide an instruction. Defaulting to {instruction_val}"

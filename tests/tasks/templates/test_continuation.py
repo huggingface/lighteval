@@ -133,6 +133,7 @@ def test_continuation_optional_keys():
         doc.query
         == """\
 Choose the most likely continuation:
+
 In the morning, I like to
 
 Options:
@@ -156,6 +157,7 @@ def test_continuation_prompt_mcf_cot():
         "gold_idx": 0,
         "__few_shots": True,
         "few_shot_cot": "i think it's A. jumps over the lazy dog",
+        "instruction": "Choose the letter of the most likely continuation.",
     }
 
     prompt_fn = get_continuation_prompt_function(
@@ -165,6 +167,7 @@ def test_continuation_prompt_mcf_cot():
             "continuations": "continuations",
             "gold_idx": "gold_idx",
             "few_shot_cot": "few_shot_cot",
+            "instruction": "instruction",
         },
         MCFFormulation(cot=True),
     )
@@ -175,6 +178,8 @@ def test_continuation_prompt_mcf_cot():
     assert (
         doc.query
         == """\
+Choose the letter of the most likely continuation.
+
 The quick brown fox
 
 Options:
@@ -187,4 +192,41 @@ Step-by-Step Answer:\
 
     assert doc.unconditioned_query == "Step-by-Step Answer:"
     assert doc.choices == [" I think it's A. jumps over the lazy dog"]
+    assert doc.gold_index == [0]
+
+
+def test_continuation_default_instruction_mcf():
+    """Test default instruction for MCF continuation prompt."""
+    test_input = {
+        "context": "The quick brown fox",
+        "continuations": ["jumps over the lazy dog", "Runs through the forest", "Chases a rabbit"],
+        "gold_idx": 0,
+    }
+
+    # Note: "instruction" key is NOT in the key_map
+    prompt_fn = get_continuation_prompt_function(
+        Language.ENGLISH,
+        {"context": "context", "continuations": "continuations", "gold_idx": "gold_idx"},
+        MCFFormulation(cot=True),
+    )
+
+    doc = prompt_fn(test_input, "test_continuation_task_default_mcf")
+
+    expected_instruction = "Choose the letter of the most likely continuation.\nOutput the final answer in format: <b></b>."
+    assert (
+        doc.query
+        == f"""\
+{expected_instruction}
+
+The quick brown fox
+
+Options:
+ A. jumps over the lazy dog
+ B. runs through the forest
+ C. chases a rabbit
+Step-by-Step Answer:\
+"""
+    )
+    assert doc.unconditioned_query == "Step-by-Step Answer:"
+    assert doc.choices == [" A", " B", " C"]
     assert doc.gold_index == [0]

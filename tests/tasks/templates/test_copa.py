@@ -76,6 +76,7 @@ def test_copa_prompt_mcf_cot(cause_effect):
         "gold_idx": 0,
         "__few_shots": True,
         "few_shot_cot": "i think it's A. he has big muscles",
+        "instruction": "Choose the letter of the most likely continuation.",
     }
 
     prompt_fn = get_copa_prompt_function(
@@ -86,6 +87,7 @@ def test_copa_prompt_mcf_cot(cause_effect):
             "continuations": "continuations",
             "gold_idx": "gold_idx",
             "few_shot_cot": "few_shot_cot",
+            "instruction": "instruction",
         },
         MCFFormulation(cot=True),
     )
@@ -96,6 +98,8 @@ def test_copa_prompt_mcf_cot(cause_effect):
     assert (
         doc.query
         == f"""\
+Choose the letter of the most likely continuation.
+
 He is strong {cause_effect_word}
 
 Options:

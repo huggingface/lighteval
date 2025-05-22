@@ -67,13 +67,14 @@ class TranslationLiterals:
     indices: list[str] = field(default_factory=lambda: LETTER_INDICES)
 
     # Instructions
-    continuation_instruction: str = "Choose the letter of the most likely continuation."
+    continuation_mcf_instruction: str = "Choose the letter of the most likely continuation."
+    nli_mcf_instruction: str = "Choose the letter of the most likely relation between the premise and hypothesis."
+    multichoice_mcf_instruction: str = "Choose the letter of the correct answer."
     qa_instruction: str = "Answer the following question."
-    multichoice_instruction: str = "Choose the the letter of the correct answer."
     # Formatting instruction
     # This format seems to work quite well across models. We don't put the answer in <b> tags because sometimes models will repeat
     # the answer resulting in <b>answer ACTUAL ANSWER</b>
-    default_formatting_instruction: str = "Output the final answer in format: <b></b>"
+    default_formatting_instruction: str = "Output the final answer in format: <b></b>."
     math_formatting_instruction: str = "Output the answer in \\boxed{}."
 
     def __getattribute__(self, name: str) -> str:
@@ -122,9 +123,9 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         colon=":",
         indices=["أ", "ب", "ج", "د", "هـ", "و", "ز", "ح"],
         # Translated using gpt4-o
-        continuation_instruction="اختر الحرف الذي يمثل الاستمرار الأكثر احتمالاً",
+        continuation_mcf_instruction="اختر الحرف الذي يمثل الاستمرار الأكثر احتمالاً",
         qa_instruction="أجب عن السؤال التالي",
-        multichoice_instruction="اختر الحرف الذي يمثل الإجابة الصحيحة",
+        multichoice_mcf_instruction="اختر الحرف الذي يمثل الإجابة الصحيحة",
         default_formatting_instruction="اكتب الإجابة بالتنسيق: الإجابة النهائية هي: <الإجابة>",
         math_formatting_instruction="اكتب الإجابة في \\boxed{}",
     ),
@@ -272,9 +273,9 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         colon="：",
         indices=["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
         # Translated using gpt4-o
-        continuation_instruction="选择最可能的继续的字母。",
+        continuation_mcf_instruction="选择最可能的继续的字母。",
         qa_instruction="回答以下问题。",
-        multichoice_instruction="选择正确答案的字母。",
+        multichoice_mcf_instruction="选择正确答案的字母。",
         default_formatting_instruction="以格式输出答案：最终答案是：<答案>。",
         math_formatting_instruction="在 \\boxed{} 环境中输出答案。",
     ),
@@ -380,12 +381,6 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
         or_word="or",
-        continuation_instruction="Choose the letter of the most likely continuation.",
-        qa_instruction="Answer the following question.",
-        multichoice_instruction="Choose the the letter of the correct answer.",
-        # Formatting instruction
-        default_formatting_instruction="Output the answer in format: The final answer is: <answer>.",
-        math_formatting_instruction="Output the answer in \\boxed{}.",
         and_word="and",
     ),
     Language.ESPERANTO: TranslationLiterals(language=Language.ESPERANTO),
@@ -447,9 +442,9 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         word_space=" ",
         sentence_space=" ",
         colon=":",
-        continuation_instruction="Choisissez la lettre de la continuation la plus probable.",
+        continuation_mcf_instruction="Choisissez la lettre de la continuation la plus probable.",
         qa_instruction="Répondez à la question suivante.",
-        multichoice_instruction="Choisissez la lettre de la réponse correcte.",
+        multichoice_mcf_instruction="Choisissez la lettre de la réponse correcte.",
         # Formatting instruction
         default_formatting_instruction="Donnez la réponse au format : La réponse finale est: <réponse>.",
         math_formatting_instruction="Donnez la réponse dans \\boxed{}.",
@@ -565,9 +560,9 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
         indices=["क", "ख", "ग", "घ", "ङ", "च"],
-        continuation_instruction="अत्यधिक संभावित निरंतरता का अक्षर चुनें।",
+        continuation_mcf_instruction="अत्यधिक संभावित निरंतरता का अक्षर चुनें।",
         qa_instruction="निम्नलिखित प्रश्न का उत्तर दें।",
-        multichoice_instruction="सही उत्तर का अक्षर चुनें।",
+        multichoice_mcf_instruction="सही उत्तर का अक्षर चुनें।",
         # Formatting instruction
         default_formatting_instruction="उत्तर को इस प्रारूप में आउटपुट करें: अंतिम उत्तर है: <उत्तर>।",
         math_formatting_instruction="उत्तर को \\boxed{} में आउटपुट करें।",
@@ -842,9 +837,9 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
         indices=["А", "Б", "В", "Г", "Д", "Е"],
-        continuation_instruction="Выберите букву наиболее вероятного продолжения.",
+        continuation_mcf_instruction="Выберите букву наиболее вероятного продолжения.",
         qa_instruction="Ответьте на следующий вопрос.",
-        multichoice_instruction="Выберите букву правильного ответа.",
+        multichoice_mcf_instruction="Выберите букву правильного ответа.",
         # Formatting instruction
         default_formatting_instruction="Выведите ответ в формате: Окончательный ответ это: <ответ>.",
         math_formatting_instruction="Выведите ответ в \\boxed{}.",
@@ -1004,9 +999,9 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
         # Translated using gpt-4o
-        continuation_instruction="Chagua herufi ya mwendelezo unaowezekana zaidi.",
+        continuation_mcf_instruction="Chagua herufi ya mwendelezo unaowezekana zaidi.",
         qa_instruction="Jibu swali lifuatalo.",
-        multichoice_instruction="Chagua herufi ya jibu sahihi.",
+        multichoice_mcf_instruction="Chagua herufi ya jibu sahihi.",
         # Formatting instruction
         default_formatting_instruction="Toa jibu katika muundo: Jibu la mwisho ni: <jibu>.",
         math_formatting_instruction="Toa jibu katika \\boxed{}.",
@@ -1092,9 +1087,9 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
         indices=["అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ"],
-        continuation_instruction="అత్యంత సాధ్యమైన కొనసాగింపును సూచించే అక్షరాన్ని ఎంచుకోండి.",
+        continuation_mcf_instruction="అత్యంత సాధ్యమైన కొనసాగింపును సూచించే అక్షరాన్ని ఎంచుకోండి.",
         qa_instruction="క్రింది ప్రశ్నకు సమాధానం ఇవ్వండి.",
-        multichoice_instruction="సరైన సమాధానాన్ని సూచించే అక్షరాన్ని ఎంచుకోండి.",
+        multichoice_mcf_instruction="సరైన సమాధానాన్ని సూచించే అక్షరాన్ని ఎంచుకోండి.",
         # Formatting instruction
         default_formatting_instruction="సమాధానాన్ని ఈ ఫార్మాట్‌లో ఇవ్వండి: తుది సమాధానం అని ఉంది: <సమాధానం>.",
         math_formatting_instruction="సమాధానాన్ని \\boxed{} లో ఇవ్వండి.",
@@ -1124,9 +1119,9 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
         indices=["ก", "ข", "ค", "ง", "จ", "ฉ", "ช", "ซ"],
-        continuation_instruction="เลือกตัวอักษรของการดำเนินการต่อที่มีความเป็นไปได้มากที่สุด",
+        continuation_mcf_instruction="เลือกตัวอักษรของการดำเนินการต่อที่มีความเป็นไปได้มากที่สุด",
         qa_instruction="ตอบคำถามต่อไปนี้",
-        multichoice_instruction="เลือกตัวอักษรของคำตอบที่ถูกต้อง",
+        multichoice_mcf_instruction="เลือกตัวอักษรของคำตอบที่ถูกต้อง",
         # Formatting instruction
         default_formatting_instruction="แสดงคำตอบในรูปแบบ: คำตอบสุดท้ายคือ: <คำตอบ>",
         math_formatting_instruction="แสดงคำตอบใน \\boxed{}",
@@ -1162,9 +1157,9 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         word_space=" ",
         sentence_space=" ",
         colon=":",
-        continuation_instruction="En olası devamı temsil eden harfi seçin.",
+        continuation_mcf_instruction="En olası devamı temsil eden harfi seçin.",
         qa_instruction="Aşağıdaki soruyu yanıtlayın.",
-        multichoice_instruction="Doğru cevabı temsil eden harfi seçin.",
+        multichoice_mcf_instruction="Doğru cevabı temsil eden harfi seçin.",
         # Formatting instruction
         default_formatting_instruction="Cevabı şu formatta verin: Nihai cevap şudur: <cevap>.",
         math_formatting_instruction="Cevabı \\boxed{} içinde verin.",

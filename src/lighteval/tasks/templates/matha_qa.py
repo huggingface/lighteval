@@ -20,28 +20,25 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import logging
 from typing import Callable
 
+from typing_extensions import NotRequired, TypedDict
+
 from lighteval.tasks.templates.multichoice import MCQInput, create_adapter_from_dict, get_mcq_prompt_function
-from lighteval.tasks.templates.qa import QAAdapter, QAInput
 from lighteval.tasks.templates.utils.formulation import CFFormulation
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
 from lighteval.utils.language import Language
-
-
-logger = logging.get_logger(__name__)
-
-WARNED_ABOUT_COT_INSTRUCTION = False
-
+from lighteval.tasks.templates.qa import QAInput, QAAdapter
+import logging
+logger = logging.getLogger(__name__)
 
 def get_math_qa_prompt_function(
     language: Language, adapter: Callable[[dict], QAInput | None] | QAAdapter, cot: bool = False
 ):
     """
-    Create a templated prompt function for a MathQA task.
+    Create a templated prompt function for a QA task.
     Example tasks:
-    - MGSM
+    - MathQA
     - GSM8K
 
     Format:
@@ -49,15 +46,16 @@ def get_math_qa_prompt_function(
     Answer: | Answer
 
     Args:
-        language (Language): The language of the MathQA task.
+        language (Language): The language of the QA task.
         adapter (Callable[[dict], QAInput] | QAAdapter): A function or dictionary to adapt the input data to the required QAInput format.
             Must map data from the dataset row to the QAInput format.
 
     Returns:
-        Callable: A function that generates MathQA prompts based on the given parameters.
+        Callable: A function that generates QA prompts based on the given parameters.
     """
 
     adapter_fn = create_adapter_from_dict(adapter)
+    WARNED_ABOUT_INSTRUCTION = False
 
     def adapter_for_mcq(line: dict) -> MCQInput | None:
         input_data = adapter_fn(line)
@@ -65,20 +63,16 @@ def get_math_qa_prompt_function(
             return None
 
         choices = input_data["choices"]
-        translation_literals = TRANSLATION_LITERALS[language]
-
-        instruction_val = input_data.get("instruction")
-        if cot and not instruction_val:
-            instruction_val = (
-                f"{translation_literals.qa_instruction}\n{translation_literals.math_formatting_instruction}"
-            )
-            if not WARNED_ABOUT_COT_INSTRUCTION:
+        instruction = input_data.get("instruction", "")
+        if cot and not instruction:
+            translation_literals = TRANSLATION_LITERALS[language]
+            instruction = f"{translation_literals.qa_instruction}\n{translation_literals.math_formatting_instruction}"
+            nonlocal WARNED_ABOUT_INSTRUCTION
+            if not WARNED_ABOUT_INSTRUCTION:
                 logger.warning(
-                    f" You are using a COT with MCF formulation but did not provide an instruction. Defaulting to {instruction_val}"
+                    f"You are using Math-QA with cot, but did not provide instruction. Default to {instruction}."
                 )
-                WARNED_ABOUT_COT_INSTRUCTION = True
-
-        instruction = f"{instruction_val}\n\n" if instruction_val else ""
+                WARNED_ABOUT_INSTRUCTION = True
 
         return {
             **input_data,

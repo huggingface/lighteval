@@ -177,6 +177,7 @@ def test_multichoice_optional_keys():
         doc.query
         == """\
 Please answer the following question about geography.
+
 France is big.
 Question: What is the capital of France?
  A. London
@@ -194,6 +195,7 @@ def test_multichoice_prompt_mcf_cot():
         "question": "What is the capital of France?",
         "choices": ["London", "Paris", "Berlin", "Madrid"],
         "gold_idx": 1,
+        "instruction": "Please answer the following question about geography.",
         "__few_shots": True,
         "few_shot_cot": "i think it's D",
     }
@@ -205,6 +207,7 @@ def test_multichoice_prompt_mcf_cot():
             "choices": "choices",
             "gold_idx": "gold_idx",
             "few_shot_cot": "few_shot_cot",
+            "instruction": "instruction",
         },
         MCFFormulation(cot=True),
     )
@@ -215,6 +218,8 @@ def test_multichoice_prompt_mcf_cot():
     assert (
         doc.query
         == """\
+Please answer the following question about geography.
+
 Question: What is the capital of France?
  A. London
  B. Paris
@@ -226,3 +231,79 @@ Step-by-Step Answer:\
 
     assert doc.unconditioned_query == "Step-by-Step Answer:"
     assert doc.choices == [" I think it's D"]
+
+
+def test_multichoice_default_instruction_mcf():
+    """Test default instruction for MCF multichoice prompt."""
+    test_input = {
+        "question": "What is the capital of France?",
+        "choices": ["London", "Paris", "Berlin", "Madrid"],
+        "gold_idx": 1,
+    }
+
+    # Note: "instruction" key is NOT in the key_map
+    prompt_fn = get_mcq_prompt_function(
+        Language.ENGLISH,
+        {
+            "question": "question",
+            "choices": "choices",
+            "gold_idx": "gold_idx",
+        },
+        MCFFormulation(cot=True),
+    )
+
+    doc = prompt_fn(test_input, "test_task_default_mcf")
+
+    # Default instruction from TranslationLiterals.ENGLISH.multichoice_instruction
+    expected_instruction = "Choose the letter of the correct answer.\nOutput the final answer in format: <b></b>."
+    expected_query = f"""\
+{expected_instruction}
+
+Question: What is the capital of France?
+ A. London
+ B. Paris
+ C. Berlin
+ D. Madrid
+Step-by-Step Answer:\
+"""
+    assert doc.query == expected_query
+    assert doc.unconditioned_query == "Step-by-Step Answer:"
+    assert doc.choices == [" A", " B", " C", " D"]
+    assert doc.gold_index == [1]
+
+
+def test_multichoice_default_instruction_cf():
+    """Test default instruction for CF multichoice prompt."""
+    test_input = {
+        "question": "What is the capital of France?",
+        "choices": ["London", "Paris", "Berlin", "Madrid"],
+        "gold_idx": 1,
+    }
+
+    # Note: "instruction" key is NOT in the key_map
+    prompt_fn = get_mcq_prompt_function(
+        Language.ENGLISH,
+        {
+            "question": "question",
+            "choices": "choices",
+            "gold_idx": "gold_idx",
+        },
+        CFFormulation(cot=True),
+    )
+
+    doc = prompt_fn(test_input, "test_task_default_cf")
+
+    # Default instruction from TranslationLiterals.ENGLISH.multichoice_instruction
+    expected_instruction = "Answer the following question.\nOutput the final answer in format: <b></b>."
+    assert (
+        doc.query
+        == f"""\
+{expected_instruction}
+
+Question: What is the capital of France?
+Step-by-Step Answer:\
+"""
+    )
+    assert doc.unconditioned_query == "Step-by-Step Answer:"
+    assert doc.choices == [" London", " Paris", " Berlin", " Madrid"]
+    assert doc.gold_index == [1]

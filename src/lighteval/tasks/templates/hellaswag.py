@@ -114,6 +114,7 @@ def get_hellaswag_prompt_function(
             "context": "context",
             "continuations": "continuations",
             "gold_idx": "gold_idx",
+            "instruction": "instruction",
             "few_shot_cot": "few_shot_cot",
         },
         formulation,
