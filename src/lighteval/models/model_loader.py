@@ -44,7 +44,7 @@ from lighteval.models.transformers.delta_model import DeltaModel, DeltaModelConf
 from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
 from lighteval.models.transformers.vlm_transformers_model import VLMTransformersModel, VLMTransformersModelConfig
 from lighteval.models.utils import ModelConfig
-from lighteval.models.vllm.vllm_model import VLLMModel, VLLMModelConfig
+from lighteval.models.vllm.vllm_model import AsyncVLLMModel, VLLMModel, VLLMModelConfig
 from lighteval.utils.imports import (
     NO_LITELLM_ERROR_MSG,
     NO_SGLANG_ERROR_MSG,
