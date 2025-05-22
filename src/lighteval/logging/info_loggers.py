@@ -556,7 +556,7 @@ class MetricsLogger:
             if len(list_of_subtasks) > 1:
                 metrics = list(self.metric_aggregated[list_of_subtasks[0]].keys())
                 self.metric_aggregated[average_task] = {
-                    metric: sum([self.metric_aggregated[k][metric] for k in list_of_subtasks]) / len(list_of_subtasks)
+                    metric: sum(self.metric_aggregated[k][metric] for k in list_of_subtasks) / len(list_of_subtasks)
                     for metric in metrics
                 }
 

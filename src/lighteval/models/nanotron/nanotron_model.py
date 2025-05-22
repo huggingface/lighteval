@@ -486,9 +486,9 @@ class NanotronLightevalModel(LightevalModel):
         We truncate to keep only at most `max_context` tokens
         We pad to `padding_length` tokens
         """
-        assert (
-            full_attention_masks is False
-        ), "full_attention_masks=True means we would be doing attention of padding tokens, which would affect negatively the results."
+        assert full_attention_masks is False, (
+            "full_attention_masks=True means we would be doing attention of padding tokens, which would affect negatively the results."
+        )
         assert pad_on_left is False, "pad_on_left=True not supported yet, see TODOs below"
         current_pp_rank = dist.get_rank(self.parallel_context.pp_pg)
 
@@ -505,9 +505,9 @@ class NanotronLightevalModel(LightevalModel):
         if max_context is None:
             max_context = self.max_length
 
-        assert (
-            self.parallel_config.tp_mode == TensorParallelLinearMode.ALL_REDUCE
-        ), "No reason to have tp_mode==REDUCE_SCATTER when doing inference"
+        assert self.parallel_config.tp_mode == TensorParallelLinearMode.ALL_REDUCE, (
+            "No reason to have tp_mode==REDUCE_SCATTER when doing inference"
+        )
         # if max_context % self.parallel_config.tp != 0:
         #     # We need to round up to the next multiple of self.parallel_config.tp
         #     if (max_context + (self.parallel_config.tp - max_context % self.parallel_config.tp)) < self.max_length:
@@ -860,9 +860,9 @@ class NanotronLightevalModel(LightevalModel):
         #         print(f"i {i} padded: {r.padded}")
 
         if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
-            assert (
-                len(res) == total_length
-            ), f"we didn't cover all the data: len(res) == total_length ({len(res)} == {total_length})"
+            assert len(res) == total_length, (
+                f"we didn't cover all the data: len(res) == total_length ({len(res)} == {total_length})"
+            )
 
         if len(res) == 0:
             # We are in a process which return no output (beginning/middle of the PP group)
@@ -1338,9 +1338,9 @@ class NanotronLightevalModel(LightevalModel):
             res = res[: len(res) - to_remove_at_the_end]
 
         if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
-            assert (
-                len(res) == total_length
-            ), f"we didn't cover all the data: len(res) == total_length ({len(res)} == {total_length})"
+            assert len(res) == total_length, (
+                f"we didn't cover all the data: len(res) == total_length ({len(res)} == {total_length})"
+            )
 
         if len(res) == 0:
             # We are in a process which return no output (beginning/middle of the PP group)
