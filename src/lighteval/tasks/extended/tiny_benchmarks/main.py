@@ -26,6 +26,7 @@ See https://github.com/felipemaiapolo/tinyBenchmarks/ for the original code.
 
 Test with `python run_evals_accelerate.py --model_args "pretrained=EleutherAI/pythia-70m" --tasks "extended|tiny:winogrande|0|0,extended|tiny:gsm8k|0|0,extended|tiny:hellaswag|0|0,extended|tiny:arc|0|0,extended|tiny:truthfulqa|0|0" --extended_tasks extended_tasks --output_dir "./evals"`
 """
+
 import os
 import pathlib
 import pickle
@@ -105,10 +106,10 @@ class TinyCorpusAggregator:
             res = ExactMatches(
                 strip_strings=True, normalize_pred=gsm8k_normalizer, normalize_gold=gsm8k_normalizer
             ).compute(**args)
-            return {m: res for m in self.METRICS}
+            return dict.fromkeys(self.METRICS, res)
         else:
             res = LoglikelihoodAcc().compute(**args)
-            return {m: res for m in self.METRICS}
+            return dict.fromkeys(self.METRICS, res)
 
     def aggregate(self, y_input):
         if len(y_input) == self.num_samples and self.estimates is not None:
@@ -276,7 +277,7 @@ for task_param in task_params:
         f"tinybench_metric_{name}",
         CorpusLevelMetricGrouping(
             metric_name=TinyCorpusAggregator.METRICS,
-            higher_is_better={m: True for m in TinyCorpusAggregator.METRICS},
+            higher_is_better=dict.fromkeys(TinyCorpusAggregator.METRICS, True),
             sample_level_fn=TinyCorpusAggregator(name).compute,
             category=category,
             use_case=use_case,
