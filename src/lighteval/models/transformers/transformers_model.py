@@ -767,15 +767,13 @@ class TransformersModel(LightevalModel):
             context_enc = split[0].tokenized_context
             continuation_enc = split[0].tokenized_continuation
             if rolling:  # we take all the sequence in rolling mode
-                max_context_continuation_size_allowed = len(context_enc + continuation_enc)
+                max_input_length = len(context_enc + continuation_enc)
             else:  # in normal mode, we left cut the context if needed
-                max_context_continuation_size_allowed = len(
-                    (context_enc + continuation_enc)[-(self.max_length + 1) :][:-1]
-                )
+                max_input_length = max(min(self.max_length, len(context_enc + continuation_enc) - 1), 1)
 
             batch_size = self._get_batch_size(
                 override_bs=self.config.batch_size,
-                max_input_length=max_context_continuation_size_allowed,
+                max_input_length=max_input_length,
                 starting_batch_size=starting_batch_size,
             )
             starting_batch_size = batch_size * 2
@@ -787,8 +785,8 @@ class TransformersModel(LightevalModel):
             for batch in tqdm(dataloader, disable=self.disable_tqdm):
                 prepared_batch = self.prepare_batch_logprob(
                     batch,
-                    padding_length=max_context_continuation_size_allowed,
-                    max_context=max_context_continuation_size_allowed,
+                    padding_length=max_input_length,
+                    max_context=max_input_length,
                 )
 
                 model_output = self._model_call(prepared_batch.input_ids)
@@ -828,6 +826,8 @@ class TransformersModel(LightevalModel):
                 # Need reshaping before gather
                 batched_inputs, len_inputs = self.pad_and_gather(prepared_batch.input_ids)
                 max_cont_tokens_length = max(len(c[0]) for c in batch_cont_tokens)
+                # These are the true lengths of the continuation tokens, we have to save them to be able to removed padding tokens from the generated tokens.
+                batch_cont_token_lengths = torch.tensor([c.shape[1] for c in batch_cont_tokens], device=self.device)
                 batch_cont_tokens = torch.cat(
                     [
                         F.pad(c, (0, max_cont_tokens_length - c.shape[1], 0, 0), value=self.tokenizer.pad_token_id)
@@ -835,7 +835,7 @@ class TransformersModel(LightevalModel):
                     ],
                     dim=0,
                 )
-                batch_cont_tokens, len_tokens = self.pad_and_gather(batch_cont_tokens)
+                batch_cont_tokens, _ = self.pad_and_gather(batch_cont_tokens)
                 # Can be gathered as such
                 logits = torch.tensor(logits_sum, device=self.device)
                 max_equal = torch.tensor(max_equals, device=self.device)
@@ -846,15 +846,27 @@ class TransformersModel(LightevalModel):
                     max_equal = self.accelerator.gather_for_metrics(max_equal)
                     batch_truncated = self.accelerator.gather_for_metrics(batch_truncated)
                     batch_padded = self.accelerator.gather_for_metrics(batch_padded)
+                    batch_cont_token_lengths = self.accelerator.gather_for_metrics(batch_cont_token_lengths)
 
-                for ix, (logit, cont_tokens, maxe, batched_input, trunc, padded) in enumerate(
-                    zip(logits, batch_cont_tokens, max_equal, batched_inputs, batch_truncated, batch_padded)
+                for logit, cont_tokens, maxe, batched_input, trunc, padded, len_input, len_token in zip(
+                    logits,
+                    batch_cont_tokens,
+                    max_equal,
+                    batched_inputs,
+                    batch_truncated,
+                    batch_padded,
+                    len_inputs,
+                    batch_cont_token_lengths,
                 ):
+                    # Filter out padding tokens from input_tokens and generated_tokens
+                    input_tokens = batched_input[:len_input].cpu().tolist()
+                    generated_tokens = cont_tokens[:len_token].cpu().tolist()
+
                     answer = LoglikelihoodResponse(
                         # todo: we might want to store the logits unsummed
                         result=(float(logit.sum()), bool(maxe)) if return_bool_score else float(logit.sum()),
-                        input_tokens=batched_input[: len_inputs[ix]].cpu().tolist(),
-                        generated_tokens=cont_tokens[: len_tokens[ix]].cpu().tolist(),
+                        input_tokens=input_tokens,
+                        generated_tokens=generated_tokens,
                         truncated_tokens_count=trunc.cpu().item(),
                         padded_tokens_count=padded.cpu().item(),
                     )
