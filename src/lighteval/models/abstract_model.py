@@ -81,7 +81,7 @@ class LightevalModel(ABC):
 
     @property
     def disable_tqdm(self) -> bool:
-        raise NotImplementedError
+        return False
 
     def get_method_from_request_type(self, request_type: RequestType):
         if request_type == RequestType.LOGLIKELIHOOD:
@@ -97,7 +97,7 @@ class LightevalModel(ABC):
         raise NotImplementedError(f"Request type {request_type} not supported")
 
     def greedy_until_multi_turn(  # noqa: C901
-        self, requests: list[GreedyUntilMultiTurnRequest], override_bs: Optional[int] = None
+        self, requests: list[GreedyUntilMultiTurnRequest]
     ) -> GenerativeMultiturnResponse:
         """Generates responses using a greedy decoding strategy until certain ending conditions are met."""
         return NotImplemented
@@ -106,7 +106,6 @@ class LightevalModel(ABC):
     def greedy_until(
         self,
         requests: list[GreedyUntilRequest],
-        override_bs: Optional[int] = None,
     ) -> list[GenerativeResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
@@ -122,24 +121,20 @@ class LightevalModel(ABC):
         return NotImplemented
 
     @abstractmethod
-    def loglikelihood(
-        self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
+    def loglikelihood(self, requests: list[LoglikelihoodRequest]) -> list[LoglikelihoodResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
         return NotImplemented
 
     @abstractmethod
-    def loglikelihood_rolling(
-        self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
+    def loglikelihood_rolling(self, requests: list[LoglikelihoodRollingRequest]) -> list[LoglikelihoodResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         return NotImplemented
 
     @abstractmethod
     def loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: Optional[int] = None
+        self, requests: list[LoglikelihoodSingleTokenRequest]
     ) -> list[LoglikelihoodSingleTokenResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
