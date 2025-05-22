@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 from typing import Callable
 
 from typing_extensions import NotRequired, TypedDict
@@ -44,9 +45,13 @@ from lighteval.utils.language import Language
 from lighteval.utils.utils import as_list
 
 
+logger = logging.getLogger(__name__)
+
 CONTINUATION_QUERY_CF = "{instruction}{context}"
 
 CONTINUATION_QUERY_MCF = "{instruction}{context}\n\n{options_word}{colon}\n{options}{answer_word}{colon}"
+
+WARNED_ABOUT_COT_INSTRUCTION = False
 
 
 # Defined for type hinting only
@@ -134,7 +139,22 @@ def get_continuation_prompt_function(
             return None
 
         instruction_val = cont_input.get("instruction")
-        instruction = f"{instruction_val}\n" if instruction_val else ""
+        if formulation.cot and not instruction_val:
+            if not isinstance(formulation, MCFFormulation) and formulation.choice_prefix not in [
+                "Letters",
+                "NativeLetters",
+            ]:
+                raise ValueError(
+                    "You are using a COT with a unsupported formulation. Either use MCF formulation or provide an instruction."
+                )
+
+            instruction_val = f"{translation_literals.continuation_instruction}\n{translation_literals.default_formatting_instruction}"
+            if not WARNED_ABOUT_COT_INSTRUCTION:
+                logger.warning(
+                    f" You are using a COT with MCF formulation but did not provide an instruction. Defaulting to {instruction_val}"
+                )
+                WARNED_ABOUT_COT_INSTRUCTION = True
+        instruction = f"{instruction_val}\n\n" if instruction_val else ""
 
         context = (
             f"{capitalize(fix_ending_punct(cont_input['context'], translation_literals))}"

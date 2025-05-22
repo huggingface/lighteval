@@ -135,7 +135,7 @@ def build_answers(
     formulation: Formulation,
     translation_literals: TranslationLiterals,
     use_sentence_space: bool = True,
-    is_few_shot: bool = False
+    is_few_shot: bool = False,
 ) -> list[str]:
     """
     Builds a string version of the answers based on passed formulation.

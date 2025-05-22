@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 from typing import Callable
 
 from typing_extensions import NotRequired, TypedDict
@@ -27,15 +28,24 @@ from typing_extensions import NotRequired, TypedDict
 from lighteval.tasks.requests import Doc
 from lighteval.tasks.templates.utils.adapter_utils import create_adapter_from_dict
 from lighteval.tasks.templates.utils.formatting_utils import capitalize, fix_ending_punct
-from lighteval.tasks.templates.utils.formulation import Formulation, MCFFormulation, build_answers, build_choices
+from lighteval.tasks.templates.utils.formulation import (
+    CFFormulation,
+    Formulation,
+    MCFFormulation,
+    build_answers,
+    build_choices,
+)
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
 from lighteval.utils.language import Language
 from lighteval.utils.utils import as_list
 
 
+logger = logging.getLogger(__name__)
+
 MULTI_CHOICE_QA_QUERY = (
     "{instruction}{context}{question_word}{colon}{sentence_space}{question}\n{options}{answer_word}{colon}"
 )
+WARNED_ABOUT_COT_INSTRUCTION = False
 
 
 # Defined for type hinting only
@@ -132,7 +142,26 @@ def get_mcq_prompt_function(
         translation_literals = TRANSLATION_LITERALS[language]
 
         instruction_val = mcq_input.get("instruction")
-        instruction = f"{instruction_val}\n" if instruction_val else ""
+        if formulation.cot and not instruction_val:
+            match formulation:
+                case MCFFormulation(choice_prefix="Letters") | MCFFormulation(choice_prefix="NativeLetters"):
+                    instruction_val = f"{translation_literals.multichoice_instruction}\n{translation_literals.default_formatting_instruction}"
+                case CFFormulation():
+                    instruction_val = (
+                        f"{translation_literals.qa_instruction}\n{translation_literals.default_formatting_instruction}"
+                    )
+                case _:
+                    raise ValueError(
+                        "You are using a COT with a unsupported formulation. Either use CF/MCF formulation or provide an instruction."
+                    )
+
+            if not WARNED_ABOUT_COT_INSTRUCTION:
+                logger.warning(
+                    f"You are using a COT with CF/MCF formulation but did not provide an instruction. Defaulting to {instruction_val}"
+                )
+                WARNED_ABOUT_COT_INSTRUCTION = True
+
+        instruction = f"{instruction_val}\n\n" if instruction_val else ""
 
         context_val = mcq_input.get("context")
         context = f"{capitalize(fix_ending_punct(context_val, translation_literals))}\n" if context_val else ""

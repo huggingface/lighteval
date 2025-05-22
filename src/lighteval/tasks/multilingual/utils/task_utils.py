@@ -49,7 +49,7 @@ def get_metrics_for_mcq_formulation(
     Choose the appropriate metrics for the given formulation otherwise fallback to the original metrics.
     """
     match (formulation, eval_type):
-        # In case of
+        # In case of Letters or Numbers, we use the loglikelihood metric
         case MCFFormulation(choice_prefix=("Letters" | "Numbers")), "logprobs":
             return [loglikelihood_acc_metric(normalization=None)]
         case _, "logprobs":

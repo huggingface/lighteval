@@ -70,13 +70,11 @@ class TranslationLiterals:
     continuation_instruction: str = "Choose the letter of the most likely continuation."
     qa_instruction: str = "Answer the following question."
     multichoice_instruction: str = "Choose the the letter of the correct answer."
-
     # Formatting instruction
-    default_formatting_instruction: str = "Output the answer in format: The final answer is: <answer>."
+    # This format seems to work quite well across models. We don't put the answer in <b> tags because sometimes models will repeat
+    # the answer resulting in <b>answer ACTUAL ANSWER</b>
+    default_formatting_instruction: str = "Output the final answer in format: <b></b>"
     math_formatting_instruction: str = "Output the answer in \\boxed{}."
-
-    # Extraction
-    final_answer_regex: str = r"(?i:final answer.{{0,100}}?)\s+is\:?\s*<answer>"
 
     def __getattribute__(self, name: str) -> str:
         value = super().__getattribute__(name)
@@ -127,7 +125,6 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         multichoice_instruction="اختر الحرف الذي يمثل الإجابة الصحيحة",
         default_formatting_instruction="اكتب الإجابة بالتنسيق: الإجابة النهائية هي: <الإجابة>",
         math_formatting_instruction="اكتب الإجابة في \\boxed{}",
-        final_answer_regex=r"(?i:الإجابة النهائية.{{0,100}}?)\s+هي\:?\s*<answer>",
     ),
     Language.ARMENIAN: TranslationLiterals(language=Language.ARMENIAN),
     Language.ASSAMESE: TranslationLiterals(language=Language.ASSAMESE),
@@ -264,7 +261,6 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         multichoice_instruction="选择正确答案的字母。",
         default_formatting_instruction="以格式输出答案：最终答案是：<答案>。",
         math_formatting_instruction="在 \\boxed{} 环境中输出答案。",
-        final_answer_regex=r"(?i:最终答案.{{0,100}}?)\s+是：?\s*<answer>",
     ),
     Language.CROATIAN: TranslationLiterals(
         language=Language.CROATIAN,
@@ -366,7 +362,6 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         # Formatting instruction
         default_formatting_instruction="Output the answer in format: The final answer is: <answer>.",
         math_formatting_instruction="Output the answer in \\boxed{}.",
-        final_answer_regex=r"(?i:final answer.{{0,100}}?)\s+is\:?\s*<answer>",
         and_word="and",
     ),
     Language.ESPERANTO: TranslationLiterals(language=Language.ESPERANTO),
@@ -430,7 +425,6 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         # Formatting instruction
         default_formatting_instruction="Donnez la réponse au format : La réponse finale est: <réponse>.",
         math_formatting_instruction="Donnez la réponse dans \\boxed{}.",
-        final_answer_regex=r"(?i:réponse finale.{{0,100}}?)\s+est\:?\s*<answer>",
     ),
     Language.GALICIAN: TranslationLiterals(
         language=Language.GALICIAN,
@@ -543,7 +537,6 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         # Formatting instruction
         default_formatting_instruction="उत्तर को इस प्रारूप में आउटपुट करें: अंतिम उत्तर है: <उत्तर>।",
         math_formatting_instruction="उत्तर को \\boxed{} में आउटपुट करें।",
-        final_answer_regex=r"(?i:अंतिम उत्तर.{{0,100}}?)\s+है\:?\s*<answer>",
     ),
     Language.HUNGARIAN: TranslationLiterals(
         language=Language.HUNGARIAN,
@@ -776,7 +769,6 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         # Formatting instruction
         default_formatting_instruction="Выведите ответ в формате: Окончательный ответ это: <ответ>.",
         math_formatting_instruction="Выведите ответ в \\boxed{}.",
-        final_answer_regex=r"(?i:окончательный ответ.{{0,100}}?)\s+это\:?\s*<answer>",
     ),
     Language.SANSKRIT: TranslationLiterals(language=Language.SANSKRIT),
     # Latin serbian script for future when separating scipts
@@ -922,7 +914,6 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         # Formatting instruction
         default_formatting_instruction="Toa jibu katika muundo: Jibu la mwisho ni: <jibu>.",
         math_formatting_instruction="Toa jibu katika \\boxed{}.",
-        final_answer_regex=r"(?i:jibu la mwisho.{{0,100}}?)\s+ni\:?\s*<answer>",
     ),
     Language.SWEDISH: TranslationLiterals(
         language=Language.SWEDISH,
@@ -1008,7 +999,6 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         # Formatting instruction
         default_formatting_instruction="సమాధానాన్ని ఈ ఫార్మాట్‌లో ఇవ్వండి: తుది సమాధానం అని ఉంది: <సమాధానం>.",
         math_formatting_instruction="సమాధానాన్ని \\boxed{} లో ఇవ్వండి.",
-        final_answer_regex=r"(?i:తుది సమాధానం.{{0,100}}?)\s+అని\s*ఉంది\:?\s*<answer>",
     ),
     Language.THAI: TranslationLiterals(
         language=Language.THAI,
@@ -1041,7 +1031,6 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         # Formatting instruction
         default_formatting_instruction="แสดงคำตอบในรูปแบบ: คำตอบสุดท้ายคือ: <คำตอบ>",
         math_formatting_instruction="แสดงคำตอบใน \\boxed{}",
-        final_answer_regex=r"(?i:คำตอบสุดท้าย.{{0,100}}?)\s+\:?\s*<answer>",
     ),
     Language.TURKISH: TranslationLiterals(
         language=Language.TURKISH,
@@ -1073,7 +1062,6 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         # Formatting instruction
         default_formatting_instruction="Cevabı şu formatta verin: Nihai cevap şudur: <cevap>.",
         math_formatting_instruction="Cevabı \\boxed{} içinde verin.",
-        final_answer_regex=r"(?i:nihai cevap.{{0,100}}?)\s+şudur\:?\s*<answer>",
     ),
     Language.TURKMEN: TranslationLiterals(language=Language.TURKMEN),
     Language.UDMURT: TranslationLiterals(

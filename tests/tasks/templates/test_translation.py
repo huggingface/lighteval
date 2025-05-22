@@ -21,6 +21,8 @@
 # SOFTWARE.
 
 
+import pytest
+
 from lighteval.tasks.templates.translation import get_translation_prompt_function
 from lighteval.tasks.templates.utils.formulation import CFFormulation, MCFFormulation
 from lighteval.utils.language import Language
@@ -118,3 +120,120 @@ def test_translation_prompt_cf_formatting():
     assert doc.unconditioned_query == ""
     assert doc.choices == [" 你好吗？"]
     assert doc.gold_index == [0]
+
+
+def test_translation_cot_default_instruction():
+    """
+    Tests that translation prompt function uses default instruction when CoT is set to true.
+    """
+    test_input = {
+        "source_text": "How are you?",
+        "target_text": "你好吗?",
+    }
+
+    prompt_fn = get_translation_prompt_function(
+        source_language=Language.ENGLISH,
+        target_language=Language.CHINESE,
+        adapter=lambda x: {
+            "source_text": x["source_text"],
+            "target_text": x["target_text"],
+        },
+        formulation=CFFormulation(cot=True),
+    )
+
+    doc = prompt_fn(test_input, "test_task")
+    assert doc is not None
+
+    # Check that the default instruction is included
+    expected_instruction = "Translate the following text from English to Chinese.\n"
+    assert doc.query.startswith(expected_instruction)
+    assert "EN: How are you? ZH:" in doc.query
+    assert doc.choices == [" 你好吗？"]
+    assert doc.gold_index == [0]
+
+
+def test_translation_cot_default_instruction_mcf():
+    """
+    Tests that translation prompt function uses default instruction when CoT is set to true for MCF formulation.
+    """
+    test_input = {
+        "source_text": "Ahoj, jak se máš?",
+        "target_text": ["Bonjour, comment allez-vous?", "Ciao, come stai?"],
+    }
+
+    prompt_fn = get_translation_prompt_function(
+        source_language=Language.CZECH,
+        target_language=Language.FRENCH,
+        adapter=lambda x: {
+            "source_text": x["source_text"],
+            "target_text": x["target_text"],
+            "gold_idx": 0,
+        },
+        formulation=MCFFormulation(cot=True),
+    )
+
+    doc = prompt_fn(test_input, "test_task")
+    assert doc is not None
+
+    # Check that both default instructions are included
+    expected_instructions = (
+        "Choose the the letter of the correct answer.\nOutput the final answer in format: <b></b>\n\n"
+    )
+    assert doc.query.startswith(expected_instructions)
+    assert "CS: Ahoj, jak se máš? FR:" in doc.query
+    assert "A. Bonjour, comment allez-vous?" in doc.query
+    assert "B. Ciao, come stai?" in doc.query
+    assert doc.choices == [" A", " B"]
+    assert doc.gold_index == [0]
+
+
+def test_translation_cot_user_instruction():
+    """
+    Tests that translation prompt function uses user provided instruction when available.
+    """
+    test_input = {
+        "source_text": "How are you?",
+        "target_text": "你好吗?",
+        "instruction": "Please translate this English text to Chinese:",
+    }
+
+    prompt_fn = get_translation_prompt_function(
+        source_language=Language.ENGLISH,
+        target_language=Language.CHINESE,
+        adapter=lambda x: {
+            "source_text": x["source_text"],
+            "target_text": x["target_text"],
+            "instruction": x["instruction"],
+        },
+        formulation=CFFormulation(cot=True),
+    )
+
+    doc = prompt_fn(test_input, "test_task")
+    assert doc is not None
+
+    # Check that the user instruction is included with formatting instruction
+    expected_instructions = (
+        "Please translate this English text to Chinese:\nOutput the final answer in format: <b></b>\n\n"
+    )
+    assert doc.query.startswith(expected_instructions)
+    assert "EN: How are you? ZH:" in doc.query
+    assert doc.choices == [" 你好吗？"]
+    assert doc.gold_index == [0]
+
+
+def test_translation_cot_mcf_number_prefix_error():
+    """
+    Tests that translation prompt function raises an error when using CoT with MCF and Number choice prefix.
+    """
+
+    with pytest.raises(ValueError, match="You are using a COT with a unsupported formulation"):
+        prompt_fn = get_translation_prompt_function(
+            source_language=Language.ENGLISH,
+            target_language=Language.CHINESE,
+            adapter=lambda x: {
+                "source_text": x["source_text"],
+                "target_text": x["target_text"],
+                "gold_idx": 0,
+            },
+            formulation=MCFFormulation(cot=True, choice_prefix="Numbers"),
+        )
