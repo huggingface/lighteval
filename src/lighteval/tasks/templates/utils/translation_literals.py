@@ -35,6 +35,8 @@ class TranslationLiterals:
 
     question_word: str = None  # type: ignore
     answer: str = None  # type: ignore
+    answer_cot: str = None  # type: ignore
+    options_word: str = "options"  # type: ignore
     confirmation_word: str = None  # type: ignore
     yes: str = None  # type: ignore
     no: str = None  # type: ignore
@@ -50,7 +52,7 @@ class TranslationLiterals:
     neither: str = None  # type: ignore
 
     # Punctuation
-    full_stop: str = "."
+    full_stop: str = "."  # Separating sequence
     comma: str = ","
     question_mark: str = "?"
     exclamation_mark: str = "!"
@@ -61,6 +63,17 @@ class TranslationLiterals:
 
     # Indices
     indices: list[str] = field(default_factory=lambda: LETTER_INDICES)
+
+    # Instructions
+    continuation_mcf_instruction: str = "Choose the letter of the most likely continuation."
+    nli_mcf_instruction: str = "Choose the letter of the most likely relation between the premise and hypothesis."
+    multichoice_mcf_instruction: str = "Choose the letter of the correct answer."
+    qa_instruction: str = "Answer the following question."
+    # Formatting instruction
+    # This format seems to work quite well across models. We don't put the answer in <b> tags because sometimes models will repeat
+    # the answer resulting in <b>answer ACTUAL ANSWER</b>
+    default_formatting_instruction: str = "Output the final answer in format: <b></b>."
+    math_formatting_instruction: str = "Output the answer in \\boxed{}."
 
     def __getattribute__(self, name: str) -> str:
         value = super().__getattribute__(name)
@@ -84,6 +97,8 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         language=Language.ARABIC,
         question_word="سؤال",
         answer="إجابة",
+        answer_cot="الإجابة خطوة بخطوة",
+        options_word="خيارات",
         confirmation_word="صحيح",
         yes="نعم",
         no="لا",
@@ -103,6 +118,13 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
         indices=["أ", "ب", "ج", "د", "هـ", "و", "ز", "ح"],
+        # Translated using gpt4-o
+        continuation_mcf_instruction="اختر الحرف الذي يمثل الاستمرار الأكثر احتمالاً",
+        nli_mcf_instruction="اختر حرف العلاقة الأكثر احتمالا بين المقدمة والفرضية",
+        qa_instruction="أجب عن السؤال التالي",
+        multichoice_mcf_instruction="اختر الحرف الذي يمثل الإجابة الصحيحة",
+        default_formatting_instruction="إخراج الإجابة النهائية بالتنسيق: <b></b>.",
+        math_formatting_instruction="اكتب الإجابة في \\boxed{}",
     ),
     Language.ARMENIAN: TranslationLiterals(language=Language.ARMENIAN),
     Language.ASSAMESE: TranslationLiterals(language=Language.ASSAMESE),
@@ -224,6 +246,8 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         language=Language.CHINESE,
         question_word="问题",
         answer="答案",
+        answer_cot="逐步解答",
+        options_word="选项",
         confirmation_word="对吗",
         yes="是的",
         no="不是",
@@ -243,6 +267,13 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space="",
         colon="：",
         indices=["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+        # Translated using gpt4-o
+        continuation_mcf_instruction="选择最可能的继续的字母。",
+        nli_mcf_instruction="选择前提和假设之间最可能的关系的字母。",
+        qa_instruction="回答以下问题。",
+        multichoice_mcf_instruction="选择正确答案的字母。",
+        default_formatting_instruction="以<b></b>格式输出最终答案。",
+        math_formatting_instruction="在 \\boxed{} 环境中输出答案。",
     ),
     Language.CHOKWE: TranslationLiterals(language=Language.CHOKWE),
     Language.CRIMEAN_TATAR: TranslationLiterals(language=Language.CRIMEAN_TATAR),
@@ -327,6 +358,7 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         language=Language.ENGLISH,
         question_word="question",
         answer="answer",
+        answer_cot="Step-by-Step Answer",
         confirmation_word="right",
         yes="yes",
         no="no",
@@ -384,7 +416,9 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         language=Language.FRENCH,
         question_word="question",
         answer="réponse",
+        answer_cot="Réponse étape par étape",
         confirmation_word="n'est-ce pas",
+        options_word="options",
         yes="oui",
         no="non",
         also="de plus",
@@ -402,6 +436,13 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         word_space=" ",
         sentence_space=" ",
         colon=":",
+        continuation_mcf_instruction="Choisissez la lettre de la continuation la plus probable.",
+        nli_mcf_instruction="Choisissez la lettre de la relation la plus probable entre la prémisse et l’hypothèse.",
+        qa_instruction="Répondez à la question suivante.",
+        multichoice_mcf_instruction="Choisissez la lettre de la réponse correcte.",
+        # Formatting instruction
+        default_formatting_instruction="Affichez la réponse finale au format: <b></b>.",
+        math_formatting_instruction="Donnez la réponse dans \\boxed{}.",
     ),
     Language.FRIULIAN: TranslationLiterals(language=Language.FRIULIAN),
     Language.GALICIAN: TranslationLiterals(
@@ -491,6 +532,9 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         language=Language.HINDI,
         question_word="सवाल",
         answer="उत्तर",
+        answer_cot="चरण दर चरण उत्तर",
+        result_word="परिणाम",
+        options_word="विकल्प",
         confirmation_word="है ना",
         yes="हाँ",
         no="नहीं",
@@ -510,6 +554,13 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
         indices=["क", "ख", "ग", "घ", "ङ", "च"],
+        continuation_mcf_instruction="अत्यधिक संभावित निरंतरता का अक्षर चुनें।",
+        nli_mcf_instruction="आधार और परिकल्पना के बीच सबसे संभावित संबंध का अक्षर चुनें।",
+        qa_instruction="निम्नलिखित प्रश्न का उत्तर दें।",
+        multichoice_mcf_instruction="सही उत्तर का अक्षर चुनें।",
+        # Formatting instruction
+        default_formatting_instruction="अंतिम उत्तर को इस प्रारूप में आउटपुट करें: <b></b>।",
+        math_formatting_instruction="उत्तर को \\boxed{} में आउटपुट करें।",
     ),
     Language.HUNGARIAN: TranslationLiterals(
         language=Language.HUNGARIAN,
@@ -760,6 +811,8 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         language=Language.RUSSIAN,
         question_word="вопрос",
         answer="ответ",
+        answer_cot="Пошаговое решение",
+        options_word="варианты",
         confirmation_word="верно",
         yes="да",
         no="нет",
@@ -778,6 +831,13 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         sentence_space=" ",
         colon=":",
         indices=["А", "Б", "В", "Г", "Д", "Е"],
+        continuation_mcf_instruction="Выберите букву наиболее вероятного продолжения.",
+        nli_mcf_instruction="Выберите букву наиболее вероятной связи между предпосылкой и гипотезой.",
+        qa_instruction="Ответьте на следующий вопрос.",
+        multichoice_mcf_instruction="Выберите букву правильного ответа.",
+        # Formatting instruction
+        default_formatting_instruction="Выведите окончательный ответ в формате: <b></b>.",
+        math_formatting_instruction="Выведите ответ в \\boxed{}.",
     ),
     Language.SAMOAN: TranslationLiterals(language=Language.SAMOAN),
     Language.SANGO: TranslationLiterals(language=Language.SANGO),
@@ -914,7 +974,9 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         language=Language.SWAHILI,
         question_word="swali",
         answer="jibu",
+        answer_cot="jibu la Hatua kwa Hatua",
         confirmation_word="sahihi",
+        options_word="chaguo",
         yes="ndiyo",
         no="hapana",
         also="pia",
@@ -931,6 +993,14 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         word_space=" ",
         sentence_space=" ",
         colon=":",
+        # Translated using gpt-4o
+        continuation_mcf_instruction="Chagua herufi ya mwendelezo unaowezekana zaidi.",
+        nli_mcf_instruction="Chagua herufi ya uhusiano unaowezekana kati ya dhana na dhana.",
+        qa_instruction="Jibu swali lifuatalo.",
+        multichoice_mcf_instruction="Chagua herufi ya jibu sahihi.",
+        # Formatting instruction
+        default_formatting_instruction="Toa jibu la mwisho katika umbizo: <b></b>.",
+        math_formatting_instruction="Toa jibu katika \\boxed{}.",
     ),
     Language.SWATI: TranslationLiterals(language=Language.SWATI),
     Language.SWEDISH: TranslationLiterals(
@@ -993,6 +1063,8 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         language=Language.TELUGU,
         question_word="ప్రశ్న",
         answer="జవాబు",
+        answer_cot="దశలవారీగా సమాధానం",
+        options_word="ఎంపికలు",
         confirmation_word="కదా",
         yes="అవును",
         no="కాదు",
@@ -1010,12 +1082,21 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         word_space=" ",
         sentence_space=" ",
         colon=":",
-        indices=["ఎ", "బి", "సి", "డి", "ఇ"],
+        indices=["అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ"],
+        continuation_mcf_instruction="అత్యంత సాధ్యమైన కొనసాగింపును సూచించే అక్షరాన్ని ఎంచుకోండి.",
+        nli_mcf_instruction="పూర్వాపరం మరియు పరికల్పన మధ్య అత్యంత సంభావ్య సంబంధం యొక్క అక్షరాన్ని ఎంచుకోండి.",
+        qa_instruction="క్రింది ప్రశ్నకు సమాధానం ఇవ్వండి.",
+        multichoice_mcf_instruction="సరైన సమాధానాన్ని సూచించే అక్షరాన్ని ఎంచుకోండి.",
+        # Formatting instruction
+        default_formatting_instruction="తుది సమాధానాన్ని ఈ ఫార్మాట్‌లో అవుట్‌పుట్ చేయండి: <b></b>.",
+        math_formatting_instruction="సమాధానాన్ని \\boxed{} లో ఇవ్వండి.",
     ),
     Language.THAI: TranslationLiterals(
         language=Language.THAI,
         question_word="คำถาม",
         answer="คำตอบ",
+        answer_cot="คำตอบทีละขั้นตอน",
+        options_word="ตัวเลือก",
         confirmation_word="ใช่ไหม",
         yes="ใช่",
         no="ไม่",
@@ -1027,13 +1108,19 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         neither="ไม่ใช่ทั้งสองอย่าง",
         or_word="หรือ",
         full_stop=".",
-        comma=",",
         question_mark="?",
         exclamation_mark="!",
         word_space="",
         sentence_space=" ",
         colon=":",
-        indices=["๑", "๒", "๓", "๔", "๕", "๖", "๗", "๘", "๙", "๐"],
+        indices=["ก", "ข", "ค", "ง", "จ", "ฉ", "ช", "ซ"],
+        continuation_mcf_instruction="เลือกตัวอักษรของการดำเนินการต่อที่มีความเป็นไปได้มากที่สุด",
+        nli_mcf_instruction="เลือกตัวอักษรที่มีความสัมพันธ์ที่เป็นไปได้มากที่สุดระหว่างข้อตั้งและสมมติฐาน",
+        qa_instruction="ตอบคำถามต่อไปนี้",
+        multichoice_mcf_instruction="เลือกตัวอักษรของคำตอบที่ถูกต้อง",
+        # Formatting instruction
+        default_formatting_instruction="ส่งออกคำตอบสุดท้ายในรูปแบบ: <b></b>",
+        math_formatting_instruction="แสดงคำตอบใน \\boxed{}",
     ),
     Language.TIGRINYA: TranslationLiterals(language=Language.TIGRINYA),
     Language.TOK_PISIN: TranslationLiterals(language=Language.TOK_PISIN),
@@ -1046,7 +1133,9 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         language=Language.TURKISH,
         question_word="soru",
         answer="cevap",
+        answer_cot="adım adım cevap",
         confirmation_word="değil mi",
+        options_word="seçenekler",
         yes="evet",
         no="hayır",
         also="ayrıca",
@@ -1064,6 +1153,13 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         word_space=" ",
         sentence_space=" ",
         colon=":",
+        continuation_mcf_instruction="En olası devamı temsil eden harfi seçin.",
+        nli_mcf_instruction="Öncül ile hipotez arasındaki olası ilişkinin harfini seçiniz.",
+        qa_instruction="Aşağıdaki soruyu yanıtlayın.",
+        multichoice_mcf_instruction="Doğru cevabı temsil eden harfi seçin.",
+        # Formatting instruction
+        default_formatting_instruction="Son cevabı şu formatta çıktı olarak verin: <b></b>.",
+        math_formatting_instruction="Cevabı \\boxed{} içinde verin.",
     ),
     Language.TURKMEN: TranslationLiterals(language=Language.TURKMEN),
     Language.TWI: TranslationLiterals(language=Language.TWI),
