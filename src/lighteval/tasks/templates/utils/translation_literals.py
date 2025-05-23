@@ -533,7 +533,6 @@ TRANSLATION_LITERALS: dict[Language, TranslationLiterals] = {
         question_word="सवाल",
         answer="उत्तर",
         answer_cot="चरण दर चरण उत्तर",
-        result_word="परिणाम",
         options_word="विकल्प",
         confirmation_word="है ना",
         yes="हाँ",

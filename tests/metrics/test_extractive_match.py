@@ -44,7 +44,7 @@ def compare_strings(
     gold: str,
     pred: str,
     language: Language = Language.ENGLISH,
-    match_types: list[str] = ["latex", "expr"],
+    match_types: list[str] = ["latex", "expr", "NativeLetters"],
     precision: int = 6,
 ):
     """Helper function to compare strings using the math extraction metrics"""
@@ -56,7 +56,9 @@ def compare_strings(
         elif match_type == "expr":
             extraction_targets.append(ExprExtractionConfig())
         elif match_type == "NativeLetters":
-            extraction_targets.append(IndicesExtractionConfig(prefix_for_extraction="NativeLetters"))
+            extraction_targets.append(
+                IndicesExtractionConfig(prefix_for_extraction="NativeLetters", bb_match_priority=0)
+            )
 
     extraction_targets = tuple(extraction_targets)  # Convert to tuple
 
@@ -104,6 +106,7 @@ def test_extraction_abc(gold, pred, expected):
         ("B", "B。 不是 A", Language.CHINESE, 1),
         ("B", "B。不是 A", Language.CHINESE, 1),
         ("B", "B不是 A", Language.CHINESE, 1),
+        ("B", "Hmm I am not sure it's A ?? Not it's <b>B</b>. Surely not D", Language.CHINESE, 1),
     ],
 )
 def test_multilingual_extraction_abc(gold, pred, language, expected):

@@ -89,6 +89,7 @@ class IndicesExtractionConfig:
     """
 
     prefix_for_extraction: ChoicePrefix
+    bb_match_priority: int = -1
     try_extract_without_anchor: bool = True
 
 
@@ -339,6 +340,9 @@ def lazy_indices_regex(
                 (indice_str_re, 300),
             ]
         )
+
+    if indices_config.bb_match_priority >= 0:
+        regexes.append((rf"<b>\s*{indice_str_re}\s*</b>", indices_config.bb_match_priority))
 
     return [(re.compile(pattern), priority) for pattern, priority in regexes]
 

@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 from typing import Callable
 
 from typing_extensions import NotRequired, TypedDict
@@ -44,9 +45,11 @@ from lighteval.utils.language import Language
 from lighteval.utils.utils import as_list
 
 
+logger = logging.getLogger(__name__)
+
 CONTINUATION_QUERY_CF = "{instruction}{context}"
 
-CONTINUATION_QUERY_MCF = "{instruction}{context}\n{options}{answer_word}{colon}"
+CONTINUATION_QUERY_MCF = "{instruction}{context}\n\n{options_word}{colon}\n{options}{answer_word}{colon}"
 
 
 # Defined for type hinting only
@@ -64,6 +67,7 @@ class ContinuationInput(TypedDict):
     continuations: list[str]
     gold_idx: list[int] | int
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 class ContinuationDictAdapter(TypedDict):
@@ -80,6 +84,7 @@ class ContinuationDictAdapter(TypedDict):
     continuations: str
     gold_idx: str
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 def get_continuation_prompt_function(
@@ -107,6 +112,8 @@ def get_continuation_prompt_function(
 
     *MCF*
     Context
+
+    Options:
     A. Continuation 1
     B. Continuation 2
     C. Continuation 3
@@ -126,13 +133,31 @@ def get_continuation_prompt_function(
     adapter_fn = create_adapter_from_dict(adapter)
     translation_literals = TRANSLATION_LITERALS[language]
 
+    WARNED_ABOUT_COT_INSTRUCTION = False
+
     def prepare_prompt(line: dict):
         cont_input = adapter_fn(line)
         if cont_input is None:
             return None
 
         instruction_val = cont_input.get("instruction")
-        instruction = f"{instruction_val}\n" if instruction_val else ""
+        if formulation.cot and not instruction_val:
+            if not isinstance(formulation, MCFFormulation) or formulation.choice_prefix not in [
+                "Letters",
+                "NativeLetters",
+            ]:
+                raise ValueError(
+                    "You are using a COT with a unsupported formulation. Either use MCF formulation or provide an instruction."
+                )
+
+            instruction_val = f"{translation_literals.continuation_mcf_instruction}\n{translation_literals.default_formatting_instruction}"
+            nonlocal WARNED_ABOUT_COT_INSTRUCTION
+            if not WARNED_ABOUT_COT_INSTRUCTION:
+                logger.warning(
+                    f" You are using a COT with MCF formulation but did not provide an instruction. Defaulting to {instruction_val}"
+                )
+                WARNED_ABOUT_COT_INSTRUCTION = True
+        instruction = f"{instruction_val}\n\n" if instruction_val else ""
 
         context = (
             f"{capitalize(fix_ending_punct(cont_input['context'], translation_literals))}"
@@ -182,16 +207,31 @@ def get_continuation_prompt_function(
 
         options = build_choices(continuations, formulation, translation_literals)
         options = f"{options}\n" if options else ""
-        answers = build_answers(continuations, formulation, translation_literals)
 
-        answer_word = capitalize(translation_literals.answer)
-
+        answer_word = capitalize(
+            translation_literals.answer if not formulation.cot else translation_literals.answer_cot
+        )
+        options_word = capitalize(translation_literals.options_word)
         query = CONTINUATION_QUERY_MCF.format(
             instruction=instruction,
             context=context,
             options=options,
             answer_word=answer_word,
             colon=translation_literals.colon,
+            options_word=options_word,
+        )
+
+        few_shot_cot = cont_input.get("few_shot_cot", None)
+        is_few_shot = line.get("__few_shots", False)
+        if formulation.cot and few_shot_cot and is_few_shot:
+            continuations = [
+                capitalize(fix_ending_punct(answer, translation_literals)) for answer in as_list(few_shot_cot)
+            ]
+        answers = build_answers(
+            continuations,
+            formulation,
+            translation_literals,
+            is_few_shot=is_few_shot and bool(few_shot_cot),
         )
 
         return Doc(

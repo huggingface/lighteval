@@ -20,24 +20,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 from typing import Callable
 
+from langcodes import Language as LangCodeLanguage
 from langcodes import standardize_tag
 from typing_extensions import NotRequired, TypedDict
 
 from lighteval.tasks.templates.continuation import get_continuation_prompt_function
 from lighteval.tasks.templates.multichoice import create_adapter_from_dict
 from lighteval.tasks.templates.utils.formatting_utils import capitalize, fix_ending_punct
-from lighteval.tasks.templates.utils.formulation import Formulation, MCFFormulation
+from lighteval.tasks.templates.utils.formulation import CFFormulation, Formulation, MCFFormulation
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
 from lighteval.utils.language import Language
 from lighteval.utils.utils import as_list
 
 
+logger = logging.getLogger(__name__)
+
 # Template chosen so that it's not very language-dependent, as it's not clear whether one should use the target or source language.
 # It's also the best template based on https://arxiv.org/pdf/2301.07069.
 
 
+TRANSLATION_INSTRUCTION = "Translate the following text from {source_language} to {target_language}."
 TRANSLATION_CONTEXT = "{source_label}{colon}{sentence_space}{source_text}{sentence_space}{target_label}{colon}"
 
 
@@ -55,6 +60,7 @@ class TranslationInput(TypedDict):
     target_text: str | list[str]
     gold_idx: NotRequired[int | list[int]]
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 class TranslationAdapter(TypedDict):
@@ -68,8 +74,9 @@ class TranslationAdapter(TypedDict):
 
     source_text: str
     target_text: str
-    gold_idx: NotRequired[int | list[int]]
+    gold_idx: NotRequired[str]
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 def get_translation_prompt_function(
@@ -110,7 +117,13 @@ def get_translation_prompt_function(
     adapter_fn = create_adapter_from_dict(adapter)
     continuation_prompt_fn = get_continuation_prompt_function(
         Language.ENGLISH,
-        {"context": "context", "continuations": "continuations", "gold_idx": "gold_idx"},
+        {
+            "context": "context",
+            "continuations": "continuations",
+            "gold_idx": "gold_idx",
+            "instruction": "instruction",
+            "few_shot_cot": "few_shot_cot",
+        },
         formulation,
         fix_formatting=False,
     )
@@ -119,6 +132,10 @@ def get_translation_prompt_function(
 
     source_label_string = standardize_tag(source_language.value).upper()
     target_label_string = standardize_tag(target_language.value).upper()
+    source_language_display_name = LangCodeLanguage.get(source_language.value).display_name()
+    target_language_display_name = LangCodeLanguage.get(target_language.value).display_name()
+
+    WARNED_ABOUT_COT_INSTRUCTION = False
 
     def translation_prompt(
         line: dict,
@@ -143,12 +160,41 @@ def get_translation_prompt_function(
             for text in as_list(input_data["target_text"])
         ]
 
+        # Handle instruction
+        instruction_val = input_data.get("instruction")
+        if formulation.cot and not instruction_val:
+            match formulation:
+                case CFFormulation():
+                    translation_instruction = TRANSLATION_INSTRUCTION.format(
+                        source_language=source_language_display_name, target_language=target_language_display_name
+                    )
+                    instruction_val = (
+                        f"{translation_instruction}\n{source_translation_literals.default_formatting_instruction}"
+                    )
+                case MCFFormulation(choice_prefix="NativeLetters") | MCFFormulation(choice_prefix="Letters"):
+                    instruction_val = f"{source_translation_literals.multichoice_mcf_instruction}\n{source_translation_literals.default_formatting_instruction}"
+                case _:
+                    raise ValueError(
+                        "You are using a COT with a unsupported formulation. Either use CF/MCF formulation or provide an instruction."
+                    )
+
+            nonlocal WARNED_ABOUT_COT_INSTRUCTION
+            if not WARNED_ABOUT_COT_INSTRUCTION:
+                logger.warning(
+                    f" You are using a COT with MCF formulation but did not provide an instruction. Defaulting to {instruction_val}"
+                )
+                WARNED_ABOUT_COT_INSTRUCTION = True
+
+        instruction = f"{instruction_val}" if instruction_val else ""
+
         return continuation_prompt_fn(
             {
-                "instruction": input_data.get("instruction", ""),
+                **{x: line[x] for x in line if x.startswith("__")},
+                "instruction": instruction,
                 "context": context,
                 "continuations": continuations,
                 "gold_idx": input_data.get("gold_idx", list(range(len(continuations)))),
+                "few_shot_cot": input_data.get("few_shot_cot", ""),
             },
             task_name,
         )

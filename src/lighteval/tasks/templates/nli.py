@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 from typing import Callable, Literal
 
 from typing_extensions import NotRequired, TypedDict
@@ -31,6 +32,9 @@ from lighteval.tasks.templates.utils.formatting_utils import PUNCT, capitalize, 
 from lighteval.tasks.templates.utils.formulation import CFFormulation, Formulation, HybridFormulation, MCFFormulation
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS, TranslationLiterals
 from lighteval.utils.language import Language
+
+
+logger = logging.getLogger(__name__)
 
 
 NLI_TEMPLATE_QUERY_CF = "{instruction}{premise}{word_space}{confirmation_word}{question_mark}"
@@ -51,6 +55,7 @@ class NLIInput(TypedDict):
     hypothesis: str
     gold_idx: int
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 class NLIAdapter(TypedDict):
@@ -67,6 +72,7 @@ class NLIAdapter(TypedDict):
     hypothesis: str
     gold_idx: str
     instruction: NotRequired[str]
+    few_shot_cot: NotRequired[str]
 
 
 RelationType = Literal["entailment", "neutral", "contradiction"]
@@ -201,6 +207,7 @@ def get_nli_prompt_function(
         Callable: A function that generates NLI prompts based on the given parameters.
     """
     # We use natural implementation for CF formulation to comply with standard evaluation formats
+    WARNED_ABOUT_COT_INSTRUCTION = False
     if isinstance(formulation, CFFormulation):
         return _nli_prompt_function_natural(language, adapter, relations)
 
@@ -219,8 +226,15 @@ def get_nli_prompt_function(
     # For hybrid we use inlined choices so we use the cf formulation in multichoice prompt fn
     mcq_prompt_fn = get_mcq_prompt_function(
         language,
-        {"context": "premise", "question": "hypothesis", "choices": "choices", "gold_idx": "gold_idx"},
-        CFFormulation() if isinstance(formulation, HybridFormulation) else formulation,
+        {
+            "context": "premise",
+            "question": "hypothesis",
+            "choices": "choices",
+            "gold_idx": "gold_idx",
+            "few_shot_cot": "few_shot_cot",
+            "instruction": "instruction",
+        },
+        CFFormulation(cot=formulation.cot) if isinstance(formulation, HybridFormulation) else formulation,
     )
 
     def prompt_fn(line: dict, task_name: str):
@@ -234,6 +248,7 @@ def get_nli_prompt_function(
         premise, hypothesis, gold_idx = input_data["premise"], input_data["hypothesis"], input_data["gold_idx"]
         premise = fix_ending_punct(capitalize(input_data["premise"]), translation_literals)
         hypothesis = input_data["hypothesis"]
+        instruction = input_data.get("instruction", "")
         if isinstance(formulation, HybridFormulation):
             # If we have the neither option move it to the end to be consistent with standard NLI evaluation
             rearranged_labels = labels
@@ -243,15 +258,32 @@ def get_nli_prompt_function(
 
             choices_str = f"{translation_literals.comma}{translation_literals.word_space}".join(rearranged_labels[:-1])
             hypothesis = f"{hypothesis.rstrip(PUNCT)}{translation_literals.sentence_space}{choices_str}{translation_literals.word_space}{translation_literals.or_word}{translation_literals.word_space}{rearranged_labels[-1]}{translation_literals.question_mark}"
+        elif isinstance(formulation, MCFFormulation):
+            if formulation.cot and not instruction:
+                match formulation:
+                    case MCFFormulation(choice_prefix="Letters") | MCFFormulation(choice_prefix="NativeLetters"):
+                        instruction = f"{translation_literals.nli_mcf_instruction}\n{translation_literals.default_formatting_instruction}"
+                        nonlocal WARNED_ABOUT_COT_INSTRUCTION
+                        if not WARNED_ABOUT_COT_INSTRUCTION:
+                            logger.warning(
+                                f"You are using a COT with MCF formulation but did not provide an instruction. Defaulting to {instruction}"
+                            )
+                            WARNED_ABOUT_COT_INSTRUCTION = True
+                    case _:
+                        raise ValueError(
+                            "You are using a COT with a unsupported formulation. Either use MCF formulation or provide an instruction."
+                        )
 
         # (hynky1999): Ideally we would not compute logprobs of the Yes/No/Also in CF formulation. However as of right now lighteval doesn't allow to
         # use multi-context.
         row = {
-            "instruction": input_data.get("instruction", ""),
+            **{x: line[x] for x in line if x.startswith("__")},
+            "instruction": instruction,
             "premise": premise,
             "hypothesis": hypothesis,
             "gold_idx": gold_idx,
             "choices": labels,
+            "few_shot_cot": input_data.get("few_shot_cot", ""),
         }
 
         return mcq_prompt_fn(row, task_name)
