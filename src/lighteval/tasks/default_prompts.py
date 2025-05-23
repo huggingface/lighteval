@@ -914,7 +914,7 @@ def gpqa_instruct(line, task_name: str = None):
 def gsm_plus(line, task_name: str = None):
     # GSM8K with 8 prompt variations per sample
 
-    # Some prompt requiere critical thinking (around 1k/10k), we skip them as
+    # Some prompts require critical thinking (around 1k/10k), we skip them as
     # they are a bit trickier to eval with regular text extraction.
     if line["perturbation_type"] == "critical thinking":
         return None
