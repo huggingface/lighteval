@@ -911,6 +911,22 @@ def gpqa_instruct(line, task_name: str = None):
     )
 
 
+def gsm_plus(line, task_name: str = None):
+    # GSM8K with 8 prompt variations per sample
+
+    # Some prompts require critical thinking (around 1k/10k), we skip them as
+    # they are a bit trickier to eval with regular text extraction.
+    if line["perturbation_type"] == "critical thinking":
+        return None
+
+    return Doc(
+        task_name=task_name,
+        query=f"Question: {line['question']}\n\nAnswer:",
+        choices=[line["answer"]],
+        gold_index=0,
+    )
+
+
 def gsm8k(line, task_name: str = None):
     # Has special analysis in metric for number decomposition
     return Doc(
