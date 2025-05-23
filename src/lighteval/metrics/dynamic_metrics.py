@@ -25,7 +25,9 @@ from typing import Callable, Literal, Sequence
 
 import numpy as np
 
+from lighteval.metrics.metrics_corpus import CorpusLevelTranslationMetric
 from lighteval.metrics.metrics_sample import (
+    BLEU,
     ExactMatches,
     F1_score,
     LoglikelihoodAcc,
@@ -38,6 +40,7 @@ from lighteval.metrics.normalizations import (
     LogProbTokenNorm,
     get_multilingual_normalizer,
 )
+from lighteval.metrics.sample_preparator import GenerativePreparator
 from lighteval.metrics.utils.extractive_match_utils import (  # noqa: F401
     ExprExtractionConfig,
     ExtractionTarget,
@@ -47,7 +50,7 @@ from lighteval.metrics.utils.extractive_match_utils import (  # noqa: F401
     get_extraction_regexes,
 )
 from lighteval.metrics.utils.math_comparison import compare_gold_target
-from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase, SampleLevelMetric
+from lighteval.metrics.utils.metric_utils import CorpusLevelMetric, MetricCategory, MetricUseCase, SampleLevelMetric
 from lighteval.tasks.requests import Doc
 from lighteval.utils.language import Language
 from lighteval.utils.timeout import timeout
@@ -122,7 +125,10 @@ def probability_metric(
 
 
 def multilingual_quasi_f1_score_metric(
-    language: Language, aggregation_function: Callable[[list[float]], float] = max
+    language: Language,
+    aggregation_function: Callable[[list[float]], float] = max,
+    normalize_gold: Callable[[str], str] | None = None,
+    normalize_pred: Callable[[str], str] | None = None,
 ) -> SampleLevelMetric:
     """
     Creates a language-aware F1 score metric, which returns the F1 score.
@@ -130,18 +136,23 @@ def multilingual_quasi_f1_score_metric(
     Args:
         language: The language of the samples.
         aggregation_function: Aggregation samples to use when multiple golds are present.
+        normalize_gold: Normalization function for gold answers.
+        normalize_pred: Normalization function for predictions.
 
     Returns:
         F1 score metric.
     """
     metric_name = f"f1_{language.value}"
 
-    multilang_normalizer = get_multilingual_normalizer(language)
+    base_normalizer = get_multilingual_normalizer(language)
+    gold_normalizer = (lambda x: base_normalizer(normalize_gold(x))) if normalize_gold is not None else base_normalizer
+    pred_normalizer = (lambda x: base_normalizer(normalize_pred(x))) if normalize_pred is not None else base_normalizer
+
     return SampleLevelMetric(
         metric_name=metric_name,
         sample_level_fn=F1_score(
-            normalize_gold=multilang_normalizer,
-            normalize_pred=multilang_normalizer,
+            normalize_gold=gold_normalizer,
+            normalize_pred=pred_normalizer,
             aggregation_function=aggregation_function,
         ).compute,
         category=MetricCategory.GENERATIVE,
@@ -155,6 +166,8 @@ def multilingual_quasi_exact_match_metric(
     language: Language,
     match_type: Literal["prefix", "suffix", "full"] = "full",
     aggregation_function: Callable[[list[float]], float] = max,
+    normalize_gold: Callable[[str], str] | None = None,
+    normalize_pred: Callable[[str], str] | None = None,
 ) -> SampleLevelMetric:
     """
     Creates a language-aware exact match metric, which returns the exact match score
@@ -165,16 +178,21 @@ def multilingual_quasi_exact_match_metric(
             - "suffix": Suffixes must match
             - "full": Full strings must match
         aggregation_function: Aggregation samples to use when multiple golds are present.
+        normalize_gold: Normalization function for gold answers.
+        normalize_pred: Normalization function for predictions.
     Returns:
         Exact match metric.
     """
     metric_name = f"exact_match_{language.value}_{match_type}"
-    multilang_normalizer = get_multilingual_normalizer(language)
+    base_normalizer = get_multilingual_normalizer(language)
+    gold_normalizer = (lambda x: base_normalizer(normalize_gold(x))) if normalize_gold is not None else base_normalizer
+    pred_normalizer = (lambda x: base_normalizer(normalize_pred(x))) if normalize_pred is not None else base_normalizer
+
     return SampleLevelMetric(
         metric_name=metric_name,
         sample_level_fn=ExactMatches(
-            normalize_gold=multilang_normalizer,
-            normalize_pred=multilang_normalizer,
+            normalize_gold=gold_normalizer,
+            normalize_pred=pred_normalizer,
             aggregation_function=aggregation_function,
             type_exact_match=match_type,
         ).compute,
@@ -183,6 +201,38 @@ def multilingual_quasi_exact_match_metric(
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
+
+
+def translation_metric(
+    metric_name: Literal["bleu", "bleu_1", "bleu_4", "chrf", "chrf++"],
+    normalize_pred: Callable[[str], str] | None = None,
+    normalize_gold: Callable[[str], str] | None = None,
+) -> CorpusLevelMetric | SampleLevelMetric:
+    """
+    Creates a translation metric, which returns the translation score.
+    """
+    if metric_name.startswith("bleu_"):
+        return SampleLevelMetric(
+            metric_name=metric_name,
+            sample_level_fn=BLEU(
+                n_gram=int(metric_name.split("_")[1]), normalize_pred=normalize_pred, normalize_gold=normalize_gold
+            ).compute,
+            category=MetricCategory.GENERATIVE,
+            use_case=MetricUseCase.TRANSLATION,
+            corpus_level_fn=np.mean,
+            higher_is_better=True,
+        )
+    else:
+        return CorpusLevelMetric(
+            metric_name=metric_name,
+            sample_level_fn=GenerativePreparator().prepare,
+            category=MetricCategory.GENERATIVE,
+            use_case=MetricUseCase.TRANSLATION,
+            corpus_level_fn=CorpusLevelTranslationMetric(
+                metric_name, normalize_pred=normalize_pred, normalize_gold=normalize_gold
+            ).compute,  # type: ignore
+            higher_is_better=True,
+        )
 
 
 def multilingual_extractive_match_metric(

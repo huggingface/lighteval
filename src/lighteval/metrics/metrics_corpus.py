@@ -27,7 +27,7 @@ A number of these aggregations come from the EleutherAIHarness
 
 import logging
 import math
-from typing import Literal
+from typing import Callable, Literal
 
 import numpy as np
 import sacrebleu
@@ -91,7 +91,13 @@ class CorpusLevelF1Score:
 
 
 class CorpusLevelTranslationMetric:
-    def __init__(self, metric_type: str, lang: Literal["zh", "ja", "ko", ""] = ""):
+    def __init__(
+        self,
+        metric_type: Literal["bleu", "chrf", "chrf++", "ter"],
+        lang: Literal["zh", "ja", "ko", ""] = "",
+        normalize_pred: Callable[[str], str] | None = None,
+        normalize_gold: Callable[[str], str] | None = None,
+    ):
         """Stores the relevant parameters for a corpus level translation metric.
 
         Args:
@@ -99,6 +105,8 @@ class CorpusLevelTranslationMetric:
         """
         self.metric_type = metric_type
         self.lang = lang
+        self.normalize_pred = normalize_pred if normalize_pred is not None else lambda x: x
+        self.normalize_gold = normalize_gold if normalize_gold is not None else lambda x: x
 
     def get_metric(self):
         if self.metric_type == "bleu":
@@ -115,7 +123,7 @@ class CorpusLevelTranslationMetric:
     def compute(self, items: list[GenerativeCorpusMetricInput]) -> float:
         """Computes the metric score over all the corpus generated items, by using the sacrebleu implementation."""
         metric = self.get_metric()
-        golds = [i.golds for i in items]
+        golds = [[self.normalize_gold(gold) for gold in i.golds] for i in items]
         preds = []
         for i in items:
             pred = as_list(i.preds)
@@ -123,7 +131,7 @@ class CorpusLevelTranslationMetric:
                 logger.info(
                     f"Multiple predictions present, keeping only the first prediction (when computing sacrebleu.{metric.__name__})."
                 )
-            preds.append(pred[0])
+            preds.append(self.normalize_pred(pred[0]))
         return float(metric.corpus_score(hypotheses=preds, references=golds).score)
 
 

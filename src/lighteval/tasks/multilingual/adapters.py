@@ -29,6 +29,7 @@ from langcodes import standardize_tag
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.multilingual.utils.adapters_utils import (
     extract_answers_from_string,
+    float_to_choice_string,
     multichoice_join,
     multichoice_to_single_choice,
 )
@@ -79,7 +80,7 @@ def thai_exams_adapter(line: dict) -> MCQInput | None:
 
 def alghafa_adapter(line: dict) -> MCQInput | None:
     answer_index = int(line["label"])
-    choices_keys = [key for key in line.keys() if key not in ["query", "label", "__few_shots"]]
+    choices_keys = [key for key in line.keys() if key not in ["query", "label", "__index", "__few_shots"]]
     choices = [line[key] for key in choices_keys]
     return {
         "question": line["query"],
@@ -298,3 +299,55 @@ def enem_adapter(lang: Language, line: dict) -> MCQInput | None:
         "choices": line["alternatives"],
         "gold_idx": LETTER_INDICES.index(line["label"]),
     }
+
+
+CMM_MATH_ANSWER_RE = re.compile(r"([A-D])\.(.*?)(?=[A-D]\.|$)")
+
+
+def cmm_math_adapter(line: dict) -> MCQInput | None:
+    """Adapter for CMM-Math dataset.
+
+    Processes questions and options, handling cases where:
+    - Question ends with parentheses that need to be stripped
+    - Options are space-separated strings starting with A./B./C./D.
+    """
+    # Strip ending parentheses from question
+    question = line["question"].strip().rstrip("( )")
+
+    # Split options and store as dict with letter keys
+    choices = {}
+    for match in CMM_MATH_ANSWER_RE.finditer(line["options"]):
+        letter, choice = match.groups()
+        choices[letter] = choice.strip()
+
+    try:
+        gold_idx = list(choices.keys()).index(line["answer"])
+    except ValueError:
+        gold_idx = None
+
+    # Validate we have enough options and answer
+    if len(choices) <= 1 or not line.get("answer") or gold_idx is None:
+        return None
+
+    return {"question": question, "choices": list(choices.values()), "gold_idx": gold_idx}
+
+
+def qazuntv2_adapter(line: dict) -> MCQInput | None:
+    gold_idx = LETTER_INDICES.index(line["answer"])
+    choices = line["options"]
+    if gold_idx >= len(choices):
+        return None
+    return {"question": line["question"], "choices": choices, "gold_idx": gold_idx}
+
+
+MGSM_COT_PREFIX_RE = re.compile(
+    r"\s*(ধাপে ধাপে উত্তর|Schritt-für-Schritt-Antwort|Step-by-Step Answer|Respuesta paso a paso|Réponse étape par étape|ステップごとの答え|Пошаговое решение|Jibu la Hatua kwa Hatua|దశలవారీగా సమాధానంi|คำตอบทีละขั้นตอน|逐步解答)\s*:\s*"
+)
+MGSM_QUESTION_RE = re.compile(r"\s*(প্রশ্ন|Frage|Question|Pregunta|Question|問題|Задача|Swali|ప్రశ్న|โจทย์|问题)\s*:\s*")
+
+
+def mgsm_adapter(line: dict) -> QAInput | None:
+    question = MGSM_QUESTION_RE.sub("", line["question"])
+    answer_cot = MGSM_COT_PREFIX_RE.sub("", line["answer"]) if line["answer"] else ""
+    answer_number = line["answer_number"]
+    return {"question": question, "few_shot_cot": answer_cot, "choices": [float_to_choice_string(answer_number)]}

@@ -21,22 +21,74 @@
 # SOFTWARE.
 
 
-from lighteval.metrics.dynamic_metrics import loglikelihood_acc_metric
+import re
+from typing import Callable
+
+from lighteval.metrics.dynamic_metrics import (
+    IndicesExtractionConfig,
+    loglikelihood_acc_metric,
+    multilingual_extractive_match_metric,
+)
 from lighteval.metrics.utils.metric_utils import Metric
 from lighteval.tasks.templates.utils.formulation import Formulation, MCFFormulation
+from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
+from lighteval.utils.language import Language
 
 
 def normalize_subset(subset: str) -> str:
     return subset.replace(" ", "_").replace("(", "").replace(")", "").lower()
 
 
-def get_metrics_for_formulation(formulation: Formulation, metrics: list[Metric]) -> list[Metric]:
+def get_metrics_for_mcq_formulation(
+    formulation: Formulation, language: Language, metrics: list[Metric]
+) -> list[Metric]:
     """
     Choose the appropriate metrics for the given formulation otherwise fallback to the original metrics.
     """
     match formulation:
-        #
-        case MCFFormulation(choice_prefix="Letters"):
+        case MCFFormulation(choice_prefix="Letters" | "Numbers", cot=False):
             return [loglikelihood_acc_metric(normalization=None)]
+        # In case of NativeLetters we can't use just acc_metric, because the letters can be made of multiple tokens
+        case MCFFormulation(cot=False):
+            return metrics
+        case MCFFormulation(cot=True):
+            return [
+                multilingual_extractive_match_metric(
+                    language,
+                    gold_extraction_target=(IndicesExtractionConfig(prefix_for_extraction=formulation.choice_prefix),),
+                ),
+            ]
         case _:
             return metrics
+
+
+def get_cot_generaion_size(cot: bool, generation_size: int) -> int | None:
+    return None if cot else generation_size
+
+
+def get_stop_sequence(language: Language, cot: bool) -> list[str] | None:
+    stop_sequence = ["\n"] if cot else []
+    try:
+        trans = TRANSLATION_LITERALS[language]
+        # Ensure it's on a new line as otherwise LLM's sometimes like to generate:
+        # "**Répondez à la" or "1. **Comprendre la" in their cot generations
+        return [
+            f"\n{trans.question_word}{trans.colon}",
+            f"\n{trans.question_word.capitalize()}{trans.colon}",
+        ] + stop_sequence
+    except (AttributeError, KeyError):
+        return stop_sequence
+
+
+def get_cot_answer_normalization(cot: bool = False) -> Callable[[str], str] | None:
+    if not cot:
+        return None
+
+    compiled_b_regex = re.compile(r"<b>(.*?)</b>")
+
+    def bb_normalizer(text: str) -> str:
+        matches = compiled_b_regex.findall(text)
+        last = matches[-1] if matches else text
+        return last
+
+    return bb_normalizer

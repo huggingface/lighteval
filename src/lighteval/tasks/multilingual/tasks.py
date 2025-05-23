@@ -28,8 +28,10 @@ from langcodes import standardize_tag
 
 from lighteval.metrics.dynamic_metrics import (
     loglikelihood_acc_metric,
+    multilingual_extractive_match_metric,
     multilingual_quasi_exact_match_metric,
     multilingual_quasi_f1_score_metric,
+    translation_metric,
 )
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.normalizations import LogProbCharNorm, LogProbPMINorm, LogProbTokenNorm
@@ -39,25 +41,36 @@ from lighteval.tasks.multilingual.adapters import (
     agieval_adapter,
     alghafa_adapter,
     ceval_adapter,
-    enem_adapter,
+    cmm_math_adapter,
     get_m3exam_adapter,
     get_mkqa_adapter,
+    mgsm_adapter,
+    qazuntv2_adapter,
     sciqa_adapter,
     thai_exams_adapter,
     winogrand_adapter,
     xcodah_adapter,
 )
-from lighteval.tasks.multilingual.utils.task_utils import get_metrics_for_formulation, normalize_subset
+from lighteval.tasks.multilingual.utils.adapters_utils import float_to_choice_string
+from lighteval.tasks.multilingual.utils.task_utils import (
+    get_cot_answer_normalization,
+    get_cot_generaion_size,
+    get_metrics_for_mcq_formulation,
+    get_stop_sequence,
+    normalize_subset,
+)
 from lighteval.tasks.templates.boolq import get_boolq_prompt_function
 from lighteval.tasks.templates.continuation import get_continuation_prompt_function
 from lighteval.tasks.templates.copa import get_copa_prompt_function
 from lighteval.tasks.templates.hellaswag import get_hellaswag_prompt_function
+from lighteval.tasks.templates.math_qa import get_math_qa_prompt_function
 from lighteval.tasks.templates.multichoice import get_mcq_prompt_function
 from lighteval.tasks.templates.nli import get_nli_prompt_function
 from lighteval.tasks.templates.qa import get_qa_prompt_function
 from lighteval.tasks.templates.translation import get_translation_prompt_function
 from lighteval.tasks.templates.utils.formulation import (
     CFFormulation,
+    Formulation,
     HybridFormulation,
     MCFFormulation,
 )
@@ -65,7 +78,23 @@ from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LIT
 from lighteval.utils.language import Language, iso_639_3_ind_to_iso_639_3_macro, manage_duplicate_language_codes
 
 
+# Philospohy of formulations:
+# 1. For early-stage pretrained model, we recommend using CF formulation with few-shots (task_cf_native), this allows to get reasonable signal even at this stage
+# 2. For later stage, we recommend using MCF formulation with few-shots (task_mcf_native), as models at this point should be able to do MCF formulation
+# 3. For post-trained models, we recommend using MCF formulation without few-shots with cot (task_mcf_cot_native), this allows the best match to their real usage and they should be capable to
+# follow expected format
+
+# Similarly for generative tasks, we recommend using non-cot variants for all pre-trained models, and cot variants for post-trained models
+
+
 TASKS_TABLE = []
+DEFAULT_FORMULATIONS: list[Formulation] = [
+    MCFFormulation(),
+    MCFFormulation(cot=True),
+    MCFFormulation("NativeLetters"),
+    MCFFormulation("NativeLetters", cot=True),
+    CFFormulation(),
+]
 # ------------------------------- NLI Tasks ------------------------------- #
 # NLI (Natural Language Inference) tasks involve determining the logical relationship
 # between two given sentences: a premise and a hypothesis. The goal is to classify
@@ -76,12 +105,41 @@ TASKS_TABLE = []
 
 # The XNLI dataset is a multilingual variant of MultiNLI
 # https://aclanthology.org/D18-1269/
+
+
+def get_formulation_name(formulation: Formulation) -> str:
+    match formulation:
+        case MCFFormulation("NativeLetters") | HybridFormulation("NativeLetters"):
+            name = formulation.name.lower() + "_native"
+        case MCFFormulation("Numbers") | HybridFormulation("Numbers"):
+            name = formulation.name.lower() + "_numbers"
+        case _:
+            name = formulation.name.lower()
+    if formulation.cot:
+        name += "_cot"
+    return name
+
+
+def get_mcf_task_name(base_name: str, language: Language | str, formulation: Formulation | None) -> str:
+    """Helper function to generate consistent task names."""
+    formulation_name = f"_{get_formulation_name(formulation)}" if formulation else ""
+
+    language_name = language.value if isinstance(language, Language) else language
+    return f"{base_name}_{language_name}{formulation_name}"
+
+
+def get_generative_task_name(base_name: str, language: Language | str, cot: bool) -> str:
+    language_name = language.value if isinstance(language, Language) else language
+    return f"{base_name}_{language_name}{'_cot' if cot else ''}"
+
+
 xnli_tasks = [
     LightevalTaskConfig(
-        name=f"xnli_{language.value}_{formulation.name.lower()}",
+        name=get_mcf_task_name("xnli", language, formulation),
         suite=["lighteval"],
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            language,
             [
                 loglikelihood_acc_metric(normalization=None),
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
@@ -104,6 +162,7 @@ xnli_tasks = [
         hf_subset=standardize_tag(language.value),
         evaluation_splits=["validation"],
         few_shots_split="train",
+        stop_sequence=get_stop_sequence(language, formulation.cot),
     )
     for language in [
         Language.ARABIC,
@@ -124,19 +183,19 @@ xnli_tasks = [
         Language.VIETNAMESE,
         Language.CHINESE,
     ]
-    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+    for formulation in DEFAULT_FORMULATIONS
 ]
-
 
 # Improvement on XNLI with better translation, from our experience models tend to
 # perform better on XNLI2.0 than XNLI
 # https://arxiv.org/abs/2301.06527
 xnli2_tasks = [
     LightevalTaskConfig(
-        name=f"xnli2.0_{language.value}_{formulation.name.lower()}",
+        name=get_mcf_task_name("xnli2.0", language, formulation),
         suite=["lighteval"],
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            language,
             [
                 loglikelihood_acc_metric(normalization=None),
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
@@ -161,6 +220,7 @@ xnli2_tasks = [
         hf_subset="default",
         evaluation_splits=["train"],
         hf_avail_splits=["train"],
+        stop_sequence=get_stop_sequence(language, formulation.cot),
     )
     for language in [
         Language.ENGLISH,
@@ -189,14 +249,14 @@ xnli2_tasks = [
         Language.ARABIC,
         # Theoretically also: Bhojpuri, Gujarati, Odiya
     ]
-    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # Another variant of XNLI, with emphasis on Indic languages
 # https://arxiv.org/abs/2204.08776
 xnli_indic_tasks = [
     LightevalTaskConfig(
-        name=f"indicnxnli_{language.value}_{formulation.name.lower()}",
+        name=get_mcf_task_name("indicxnli", language, formulation),
         suite=["lighteval"],
         prompt_function=get_nli_prompt_function(
             language=language,
@@ -215,14 +275,16 @@ xnli_indic_tasks = [
         hf_filter=lambda x: int(x["label"]) in [0, 2],
         evaluation_splits=["validation"],
         few_shots_split="train",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            language,
             [
                 loglikelihood_acc_metric(normalization=None),
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(language, formulation.cot),
     )
     for language in [
         Language.ASSAMESE,
@@ -237,14 +299,14 @@ xnli_indic_tasks = [
         Language.TAMIL,
         Language.TELUGU,
     ]
-    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # African XNLI: African XNLI
 # From https://arxiv.org/abs/2406.03368. Human translated MMLU.
 afri_xnli_tasks = [
     LightevalTaskConfig(
-        name=f"afri_xnli_{language.value}_{formulation.name.lower()}",
+        name=get_mcf_task_name("afri_xnli", language, formulation),
         suite=("lighteval",),
         prompt_function=get_nli_prompt_function(
             language=language,
@@ -262,14 +324,16 @@ afri_xnli_tasks = [
         hf_filter=lambda x: int(x["label"]) in [0, 2],
         evaluation_splits=("test",),
         few_shots_split="validation",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            language,
             [
                 loglikelihood_acc_metric(normalization=None),
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(language, formulation.cot),
     )
     for language in [
         Language.AMHARIC,
@@ -290,7 +354,7 @@ afri_xnli_tasks = [
         Language.YORUBA,
         # Language.ZULU,
     ]
-    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # PAWS-X: A Cross-lingual Adversarial Dataset for Paraphrase Identification
@@ -301,7 +365,7 @@ afri_xnli_tasks = [
 
 paws_x_tasks = [
     LightevalTaskConfig(
-        name=f"pawsx_{language.value}_{formulation.name.lower()}",
+        name=get_mcf_task_name("pawsx", language, formulation),
         suite=("lighteval",),
         prompt_function=get_nli_prompt_function(
             language=language,
@@ -318,14 +382,16 @@ paws_x_tasks = [
         hf_subset=standardize_tag(language.value),
         evaluation_splits=("test",),
         few_shots_split="train",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            language,
             [
                 loglikelihood_acc_metric(normalization=None),
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(language, formulation.cot),
     )
     for language in [
         Language.GERMAN,
@@ -336,7 +402,7 @@ paws_x_tasks = [
         Language.KOREAN,
         Language.CHINESE,
     ]
-    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # Russian Commitment Bank (RCB) is a large-scale NLI dataset with Russian sentences,
@@ -344,13 +410,12 @@ paws_x_tasks = [
 # https://arxiv.org/abs/2401.04531
 rcb_tasks = [
     LightevalTaskConfig(
-        name=f"rcb_{Language.RUSSIAN.value}_{formulation.name.lower()}",
+        name=get_mcf_task_name("rcb", Language.RUSSIAN, formulation),
         prompt_function=get_nli_prompt_function(
             language=Language.RUSSIAN,
             adapter=lambda line: {
                 "premise": line["inputs"]["premise"],
                 "hypothesis": line["inputs"]["hypothesis"],
-                # Since we ignore the neutral label
                 "gold_idx": int(line["outputs"]) - 1,
             },
             relations=["entailment", "contradiction"],
@@ -359,20 +424,21 @@ rcb_tasks = [
         suite=("lighteval",),
         hf_repo="ai-forever/MERA",
         hf_subset="rcb",
-        # Ignore neutral label
         hf_filter=lambda x: int(x["outputs"] or "0") in [1, 2],
         evaluation_splits=("train",),
         few_shots_split="validation",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.RUSSIAN,
             [
                 loglikelihood_acc_metric(normalization=None),
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.RUSSIAN, formulation.cot),
     )
-    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # Native Chinese NLI dataset based.
@@ -380,13 +446,12 @@ rcb_tasks = [
 # We find this benchmark to have really good signal compared to other Chinese NLI
 ocnli_tasks = [
     LightevalTaskConfig(
-        name=f"ocnli_{Language.CHINESE.value}_{formulation.name.lower()}",
+        name=get_mcf_task_name("ocnli", Language.CHINESE, formulation),
         prompt_function=get_nli_prompt_function(
             language=Language.CHINESE,
             adapter=lambda line: {
                 "premise": line["sentence1"],
                 "hypothesis": line["sentence2"],
-                # Since we ignore the neutral label
                 "gold_idx": {1: 0, 2: 1}[line["label"]],
             },
             relations=["entailment", "contradiction"],
@@ -395,33 +460,33 @@ ocnli_tasks = [
         suite=("lighteval",),
         hf_repo="clue/clue",
         hf_subset="ocnli",
-        # Only keep the positive and negative examples
         hf_filter=lambda x: int(x["label"]) in [1, 2],
         evaluation_splits=("validation",),
         few_shots_split="train",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.CHINESE,
             [
                 loglikelihood_acc_metric(normalization=None),
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.CHINESE, formulation.cot),
     )
-    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # https://arxiv.org/abs/2004.05986
 # Native Chinese NLI dataset based on MNLI approach (Machine Translated)
 cmnli_tasks = [
     LightevalTaskConfig(
-        name=f"cmnli_{Language.CHINESE.value}_{formulation.name.lower()}",
+        name=get_mcf_task_name("cmnli", Language.CHINESE, formulation),
         prompt_function=get_nli_prompt_function(
             language=Language.CHINESE,
             adapter=lambda line: {
                 "premise": line["sentence1"],
                 "hypothesis": line["sentence2"],
-                # Since we ignore the neutral label
                 "gold_idx": {"entailment": 0, "contradiction": 1}[line["label"]],
             },
             relations=["entailment", "contradiction"],
@@ -431,19 +496,20 @@ cmnli_tasks = [
         hf_repo="fenffef/cmnli",
         hf_subset="default",
         hf_filter=lambda x: x["label"] in ["entailment", "contradiction"],
-        # Only keep the positive and negative examples
         evaluation_splits=("validation",),
         few_shots_split="train",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.CHINESE,
             [
                 loglikelihood_acc_metric(normalization=None),
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.CHINESE, formulation.cot),
     )
-    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 TASKS_TABLE.extend(
@@ -467,7 +533,7 @@ TASKS_TABLE.extend(
 # XCOPA extends the original English COPA task to 11 typologically diverse languages.
 xcopa_tasks = [
     LightevalTaskConfig(
-        name=f"xcopa_{language.value}_{formulation.name.lower()}",
+        name=get_mcf_task_name("xcopa", language, formulation),
         suite=["lighteval"],
         prompt_function=get_copa_prompt_function(
             language,
@@ -483,13 +549,15 @@ xcopa_tasks = [
         hf_subset=("copa_ext_ar" if language == Language.ARABIC else standardize_tag(language.value)),
         evaluation_splits=["test"],
         few_shots_split="validation",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            language,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(language, formulation.cot),
     )
     for language in [
         Language.ARABIC,
@@ -505,7 +573,7 @@ xcopa_tasks = [
         Language.HAITIAN,
         Language.QUECHUA,
     ]
-    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # IndicCOPA: COPA for Indic Languages
@@ -514,7 +582,7 @@ xcopa_tasks = [
 # evaluating common sense reasoning in these languages.
 copa_indic_tasks = [
     LightevalTaskConfig(
-        name=f"indicxcopa_{language.value}_{formulation.name.lower()}",
+        name=get_mcf_task_name("indicxcopa", language, formulation),
         suite=["lighteval"],
         prompt_function=get_copa_prompt_function(
             language,
@@ -533,14 +601,16 @@ copa_indic_tasks = [
         hf_revision="d356ef19a4eb287e88a51d07a56b73ba88c7f188",
         evaluation_splits=["test"],
         hf_avail_splits=["test"],
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            language,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
         trust_dataset=True,
+        stop_sequence=get_stop_sequence(language, formulation.cot),
     )
     for language in [
         Language.ASSAMESE,
@@ -560,7 +630,7 @@ copa_indic_tasks = [
         Language.URDU,
         # Optionally: Maithili, Santali, Sindhi, Konkani
     ]
-    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # PARus: Plausible Alternatives for Russian
@@ -569,7 +639,7 @@ copa_indic_tasks = [
 # It evaluates common sense reasoning and causal inference abilities in Russian language models.
 parus_tasks = [
     LightevalTaskConfig(
-        name=f"parus_{Language.RUSSIAN.value}_{formulation.name.lower()}",
+        name=get_mcf_task_name("parus", Language.RUSSIAN, formulation),
         suite=["lighteval"],
         prompt_function=get_copa_prompt_function(
             language=Language.RUSSIAN,
@@ -585,17 +655,21 @@ parus_tasks = [
         hf_subset="parus",
         evaluation_splits=["train"],
         few_shots_split="validation",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.RUSSIAN,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.RUSSIAN, formulation.cot),
     )
-    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
+# Rerun hellaswag tasks
+# Add xcopa to thai
 
 TASKS_TABLE.extend([*xcopa_tasks, *copa_indic_tasks, *parus_tasks])
 # ------------------------------- Hellaswag Tasks ------------------------------- #
@@ -609,12 +683,12 @@ TASKS_TABLE.extend([*xcopa_tasks, *copa_indic_tasks, *parus_tasks])
 # It evaluates commonsense reasoning abilities across multiple languages.
 mlmm_hellaswag_tasks = [
     LightevalTaskConfig(
-        name=f"mlmm_hellaswag_{lang.value}_{formulation.name.lower()}",
+        name=get_mcf_task_name("mlmm_hellaswag", lang, formulation),
         suite=["lighteval"],
         prompt_function=get_hellaswag_prompt_function(
             language=lang,
             adapter=lambda line: {
-                # We don't use activity_label as they are not available
+                # activity_label is only available in english, thus we don't use it
                 "ctx_a": line["ctx_a"],
                 "ctx_b": line["ctx_b"],
                 "continuations": line["endings"],
@@ -629,14 +703,16 @@ mlmm_hellaswag_tasks = [
         hf_revision="96ed8e0dfc6172dad1d3df338d7b8ba6c1ff9d83",
         evaluation_splits=["validation"],
         hf_avail_splits=["validation"],
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            lang,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
         trust_dataset=True,
+        stop_sequence=get_stop_sequence(lang, formulation.cot),
     )
     for lang in [
         Language.ARABIC,
@@ -673,7 +749,7 @@ mlmm_hellaswag_tasks = [
         Language.VIETNAMESE,
         Language.CHINESE,
     ]
-    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # Hellaswag Turkish
@@ -685,13 +761,12 @@ mlmm_hellaswag_tasks = [
 # which would make it hard to read
 hellaswag_tur_tasks = [
     LightevalTaskConfig(
-        name=f"community_hellaswag_{Language.TURKISH.value}_{formulation.name.lower()}",
+        name=get_mcf_task_name("community_hellaswag", Language.TURKISH, formulation),
         suite=["lighteval"],
         prompt_function=get_hellaswag_prompt_function(
             language=Language.TURKISH,
             adapter=lambda line: {
-                "ctx_a": line["ctx_a"],
-                "ctx_b": line["ctx_b"],
+                "ctx_a": line["ctx"],
                 "continuations": line["endings"],
                 "gold_idx": int(line["label"]),
             },
@@ -703,15 +778,17 @@ hellaswag_tur_tasks = [
         hf_subset="default",
         evaluation_splits=["validation"],
         hf_avail_splits=["validation"],
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.TURKISH,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.TURKISH, formulation.cot),
     )
-    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # Hellaswag Thai
@@ -720,13 +797,13 @@ hellaswag_tur_tasks = [
 # for evaluating Thai language models on commonsense reasoning tasks.
 hellaswag_tha_tasks = [
     LightevalTaskConfig(
-        name=f"community_hellaswag_{Language.THAI.value}_{formulation.name.lower()}",
+        name=get_mcf_task_name("community_hellaswag", Language.THAI, formulation),
         suite=["lighteval"],
         prompt_function=get_hellaswag_prompt_function(
             language=Language.THAI,
             adapter=lambda line: {
-                "ctx_a": line["ctx_a"],
-                "ctx_b": line["ctx_b"],
+                "activity_label": line["activity_label"],
+                "ctx_a": line["ctx"],
                 "continuations": line["endings"],
                 "gold_idx": int(line["label"]),
             },
@@ -737,72 +814,49 @@ hellaswag_tha_tasks = [
         hf_subset="default",
         evaluation_splits=["validation"],
         few_shots_split="train",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.THAI,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.THAI, formulation.cot),
     )
-    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
-]
-
-hellaswag_hin_tasks = [
-    LightevalTaskConfig(
-        name=f"community_hellaswag_{Language.HINDI.value}_{formulation.name.lower()}",
-        suite=["lighteval"],
-        prompt_function=get_hellaswag_prompt_function(
-            language=Language.HINDI,
-            adapter=lambda line: {
-                "ctx_a": line["ctx_a"],
-                "continuations": line["endings"],
-                "gold_idx": int(line["label"]),
-            },
-            formulation=formulation,
-        ),
-        hf_repo="ai4bharat/hellaswag-hi",
-        hf_filter=lambda line: all(len(choice.strip()) > 0 for choice in line["endings"]),
-        hf_subset="hi",
-        evaluation_splits=("validation",),
-        few_shots_split="validation",
-        metric=get_metrics_for_formulation(
-            formulation,
-            [
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            ],
-        ),
-    )
-    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 hellaswag_tel_tasks = [
     LightevalTaskConfig(
-        name=f"community_hellaswag_{Language.TELUGU.value}_{formulation.name.lower()}",
+        name=get_mcf_task_name("community_hellaswag", Language.TELUGU, formulation),
         suite=["lighteval"],
         prompt_function=get_hellaswag_prompt_function(
             language=Language.TELUGU,
             adapter=lambda line: {
+                # Activity label is only available in english, thus we don't use it
                 "ctx_a": line["ctx_a"],
-                "continuations": line["endings"],
+                "continuations": [line["a"], line["b"], line["c"], line["d"]],
                 "gold_idx": int(line["label"]),
             },
             formulation=formulation,
+            wikihow_artifacts=[" [శీర్షిక]", " [హెడర్]", " [header]", " [Header]"],
         ),
-        hf_repo="LightFury9/hellaswag-telugu",
+        hf_repo="indiehackers/hellaswag-telugu-custom-2k",
         hf_subset="default",
-        evaluation_splits=("valid",),
-        few_shots_split="train",
-        metric=get_metrics_for_formulation(
+        evaluation_splits=("train",),
+        hf_avail_splits=("train",),
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.TELUGU,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.TELUGU, formulation.cot),
     )
-    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 TASKS_TABLE.extend(
@@ -810,7 +864,6 @@ TASKS_TABLE.extend(
         *mlmm_hellaswag_tasks,
         *hellaswag_tur_tasks,
         *hellaswag_tha_tasks,
-        *hellaswag_hin_tasks,
         *hellaswag_tel_tasks,
     ]
 )
@@ -825,7 +878,7 @@ TASKS_TABLE.extend(
 # https://arxiv.org/abs/1910.11856
 xquad_tasks = [
     LightevalTaskConfig(
-        name=f"xquad_{language.value}",
+        name=get_generative_task_name("xquad", language, cot),
         prompt_function=get_qa_prompt_function(
             language,
             lambda line: {
@@ -833,18 +886,21 @@ xquad_tasks = [
                 "context": line["context"],
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="google/xquad",
         hf_subset=f"xquad.{standardize_tag(language.value)}",
         evaluation_splits=("validation",),
         few_shots_split="validation",
-        generation_size=400,
-        stop_sequence=("\n",),
+        generation_size=get_cot_generaion_size(cot, 400),
         metric=(
-            multilingual_quasi_exact_match_metric(language, "prefix"),
-            multilingual_quasi_f1_score_metric(language),
+            multilingual_quasi_exact_match_metric(
+                language, "prefix", normalize_pred=get_cot_answer_normalization(cot)
+            ),
+            multilingual_quasi_f1_score_metric(language, normalize_pred=get_cot_answer_normalization(cot)),
         ),
+        stop_sequence=get_stop_sequence(language, cot),
     )
     for language in [
         Language.ARABIC,
@@ -860,72 +916,13 @@ xquad_tasks = [
         Language.VIETNAMESE,
         Language.CHINESE,
     ]
+    for cot in [False, True]
 ]
-
-# GermanQuAD: High-quality German QA dataset with 13,722 questions
-# https://arxiv.org/abs/2104.12741
-germanquad_tasks = [
-    LightevalTaskConfig(
-        name=f"germanquad_{Language.GERMAN.value}",
-        prompt_function=get_qa_prompt_function(
-            Language.GERMAN,
-            lambda line: {
-                "question": line["question"],
-                "context": line["context"],
-                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
-            },
-        ),
-        suite=("lighteval",),
-        hf_repo="deepset/germanquad",
-        hf_subset="plain_text",
-        trust_dataset=True,
-        hf_revision="fff05ceaf2ffbe5b65c7e0c57e678f7b7e1a0581",
-        hf_filter=lambda line: any(len(ans) > 0 for ans in line["answers"]["text"]),
-        evaluation_splits=("test",),
-        few_shots_split="train",
-        generation_size=400,
-        stop_sequence=("\n",),
-        metric=(
-            multilingual_quasi_exact_match_metric(Language.GERMAN, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.GERMAN),
-        ),
-    )
-]
-
-
-# SQuAD-it: Italian translation of the SQuAD dataset
-# https://github.com/crux82/squad-it
-squad_it_tasks = [
-    LightevalTaskConfig(
-        name=f"squad_{Language.ITALIAN.value}",
-        prompt_function=get_qa_prompt_function(
-            Language.ITALIAN,
-            lambda line: {
-                "question": line["question"],
-                "context": line["context"],
-                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
-            },
-        ),
-        suite=("lighteval",),
-        hf_repo="crux82/squad_it",
-        hf_subset="default",
-        hf_filter=lambda line: any(len(ans) > 0 for ans in line["answers"]["text"]),
-        evaluation_splits=("test",),
-        few_shots_split="train",
-        generation_size=400,
-        stop_sequence=("\n",),
-        metric=(
-            multilingual_quasi_exact_match_metric(Language.ITALIAN, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.ITALIAN),
-        ),
-    )
-]
-
 
 # ThaiQA: A question answering dataset for the Thai language.
 thaiqa_tasks = [
     LightevalTaskConfig(
-        name=f"thaiqa_{Language.THAI.value}",
+        name=get_generative_task_name("thaiqa", Language.THAI, cot),
         prompt_function=get_qa_prompt_function(
             Language.THAI,
             lambda line: {
@@ -933,26 +930,30 @@ thaiqa_tasks = [
                 "context": line["context"],
                 "choices": [ans for ans in line["answers"]["answer"] if len(ans) > 0],
             },
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="lighteval/thaiqa_squad_fixed",
         hf_subset="default",
         evaluation_splits=("train",),
         few_shots_split="validation",
-        generation_size=400,
-        stop_sequence=("\n",),
+        generation_size=get_cot_generaion_size(cot, 400),
+        stop_sequence=get_stop_sequence(Language.THAI, cot),
         metric=(
-            multilingual_quasi_exact_match_metric(Language.THAI, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.THAI),
+            multilingual_quasi_exact_match_metric(
+                Language.THAI, "prefix", normalize_pred=get_cot_answer_normalization(cot)
+            ),
+            multilingual_quasi_f1_score_metric(Language.THAI, normalize_pred=get_cot_answer_normalization(cot)),
         ),
     )
+    for cot in [False, True]
 ]
 
 # SberQuAD: A large-scale Russian reading comprehension dataset.
 # https://arxiv.org/abs/1912.09723
 sber_squad_tasks = [
     LightevalTaskConfig(
-        name=f"sber_squad_{Language.RUSSIAN.value}",
+        name=get_generative_task_name("sber_squad", Language.RUSSIAN, cot),
         prompt_function=get_qa_prompt_function(
             Language.RUSSIAN,
             lambda line: {
@@ -960,6 +961,7 @@ sber_squad_tasks = [
                 "context": line["context"],
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="kuznetsoffandrey/sberquad",
@@ -967,79 +969,22 @@ sber_squad_tasks = [
         evaluation_splits=("validation",),
         few_shots_split="train",
         metric=(
-            multilingual_quasi_exact_match_metric(Language.RUSSIAN, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.RUSSIAN),
+            multilingual_quasi_exact_match_metric(
+                Language.RUSSIAN, "prefix", normalize_pred=get_cot_answer_normalization(cot)
+            ),
+            multilingual_quasi_f1_score_metric(Language.RUSSIAN, normalize_pred=get_cot_answer_normalization(cot)),
         ),
-        generation_size=400,
-        stop_sequence=("\n",),
+        generation_size=get_cot_generaion_size(cot, 400),
+        stop_sequence=get_stop_sequence(Language.RUSSIAN, cot),
     )
+    for cot in [False, True]
 ]
-
-# FaQuAD: A Portuguese Reading Comprehension Dataset
-# https://arxiv.org/abs/2007.15671
-faquad_tasks = [
-    LightevalTaskConfig(
-        name=f"faquad_{Language.PORTUGUESE.value}",
-        prompt_function=get_qa_prompt_function(
-            Language.PORTUGUESE,
-            lambda line: {
-                "question": line["question"],
-                "context": line["context"],
-                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
-            },
-        ),
-        suite=("lighteval",),
-        hf_repo="eraldoluis/faquad",
-        hf_subset="plain_text",
-        trust_dataset=True,
-        hf_revision="205ba826a2282a4a5aa9bd3651e55ee4f2da1546",
-        hf_filter=lambda line: any(len(ans) > 0 for ans in line["answers"]["text"]),
-        evaluation_splits=("validation",),
-        few_shots_split="train",
-        metric=(
-            multilingual_quasi_exact_match_metric(Language.PORTUGUESE, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.PORTUGUESE),
-        ),
-        generation_size=400,
-        stop_sequence=("\n",),
-    )
-]
-
-
-# SQuAD-es: Spanish translation of the Stanford Question Answering Dataset
-# https://huggingface.co/datasets/ccasimiro/squad_es
-squad_es_tasks = [
-    LightevalTaskConfig(
-        name=f"squad_{Language.SPANISH.value}",
-        prompt_function=get_qa_prompt_function(
-            Language.SPANISH,
-            lambda line: {
-                "question": line["question"],
-                "context": line["context"],
-                "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
-            },
-        ),
-        suite=("lighteval",),
-        hf_repo="ccasimiro/squad_es",
-        hf_subset="v2.0.0",
-        hf_filter=lambda line: any(len(ans) > 0 for ans in line["answers"]["text"]),
-        evaluation_splits=("validation",),
-        few_shots_split="train",
-        metric=(
-            multilingual_quasi_exact_match_metric(Language.SPANISH, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.SPANISH),
-        ),
-        generation_size=400,
-        stop_sequence=("\n",),
-    )
-]
-
 
 # ARCD: Arabic Reading Comprehension Dataset.
 # https://arxiv.org/pdf/1906.05394
 arcd_tasks = [
     LightevalTaskConfig(
-        name=f"arcd_{Language.ARABIC.value}",
+        name=get_generative_task_name("arcd", Language.ARABIC, cot),
         prompt_function=get_qa_prompt_function(
             Language.ARABIC,
             lambda line: {
@@ -1047,6 +992,7 @@ arcd_tasks = [
                 "context": line["context"],
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="hsseinmz/arcd",
@@ -1057,16 +1003,17 @@ arcd_tasks = [
             multilingual_quasi_exact_match_metric(Language.ARABIC, "prefix"),
             multilingual_quasi_f1_score_metric(Language.ARABIC),
         ),
-        generation_size=400,
-        stop_sequence=("\n",),
+        generation_size=get_cot_generaion_size(cot, 400),
+        stop_sequence=get_stop_sequence(Language.ARABIC, cot),
     )
+    for cot in [False, True]
 ]
 
 # KenSwQuAD: A question answering dataset for Kenyan Swahili.
 # https://arxiv.org/abs/2205.02364
 kenswquad_tasks = [
     LightevalTaskConfig(
-        name=f"kenswquad_{Language.SWAHILI.value}",
+        name=get_generative_task_name("kenswquad", Language.SWAHILI, cot),
         prompt_function=get_qa_prompt_function(
             Language.SWAHILI,
             lambda line: {
@@ -1074,6 +1021,7 @@ kenswquad_tasks = [
                 "context": line["context"],
                 "choices": [line["answer"]],
             },
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="lighteval/KenSwQuAD",
@@ -1081,19 +1029,22 @@ kenswquad_tasks = [
         evaluation_splits=("test",),
         few_shots_split="validation",
         metric=(
-            multilingual_quasi_exact_match_metric(Language.SWAHILI, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.SWAHILI),
+            multilingual_quasi_exact_match_metric(
+                Language.SWAHILI, "prefix", normalize_pred=get_cot_answer_normalization(cot)
+            ),
+            multilingual_quasi_f1_score_metric(Language.SWAHILI, normalize_pred=get_cot_answer_normalization(cot)),
         ),
-        generation_size=400,
-        stop_sequence=("\n",),
+        generation_size=get_cot_generaion_size(cot, 400),
+        stop_sequence=get_stop_sequence(Language.SWAHILI, cot),
     )
+    for cot in [False, True]
 ]
 
 # ChineseSquad: A reading comprehension dataset for Chinese.
 # https://github.com/pluto-junzeng/ChineseSquad
 chinese_squad_tasks = [
     LightevalTaskConfig(
-        name=f"chinese_squad_{Language.CHINESE.value}",
+        name=get_generative_task_name("chinese_squad", Language.CHINESE, cot),
         prompt_function=get_qa_prompt_function(
             Language.CHINESE,
             lambda line: {
@@ -1101,6 +1052,7 @@ chinese_squad_tasks = [
                 "context": line["context"],
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="lighteval/ChineseSquad",
@@ -1108,19 +1060,22 @@ chinese_squad_tasks = [
         evaluation_splits=("validation",),
         few_shots_split="train",
         metric=(
-            multilingual_quasi_exact_match_metric(Language.CHINESE, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.CHINESE),
+            multilingual_quasi_exact_match_metric(
+                Language.CHINESE, "prefix", normalize_pred=get_cot_answer_normalization(cot)
+            ),
+            multilingual_quasi_f1_score_metric(Language.CHINESE, normalize_pred=get_cot_answer_normalization(cot)),
         ),
-        generation_size=400,
-        stop_sequence=("\n",),
+        generation_size=get_cot_generaion_size(cot, 400),
+        stop_sequence=get_stop_sequence(Language.CHINESE, cot),
     )
+    for cot in [False, True]
 ]
 
 # CMRC 2018: A span-extraction machine reading comprehension dataset for Chinese.
 # https://arxiv.org/abs/1810.07366
 cmrc2018_tasks = [
     LightevalTaskConfig(
-        name=f"cmrc2018_{Language.CHINESE.value}",
+        name=get_generative_task_name("cmrc2018", Language.CHINESE, cot),
         prompt_function=get_qa_prompt_function(
             Language.CHINESE,
             lambda line: {
@@ -1128,26 +1083,30 @@ cmrc2018_tasks = [
                 "context": line["context"],
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="clue/clue",
         hf_subset="cmrc2018",
         evaluation_splits=("trial",),
         few_shots_split="train",
-        generation_size=400,
+        generation_size=get_cot_generaion_size(cot, 400),
         metric=(
-            multilingual_quasi_exact_match_metric(Language.CHINESE, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.CHINESE),
+            multilingual_quasi_exact_match_metric(
+                Language.CHINESE, "prefix", normalize_pred=get_cot_answer_normalization(cot)
+            ),
+            multilingual_quasi_f1_score_metric(Language.CHINESE, normalize_pred=get_cot_answer_normalization(cot)),
         ),
-        stop_sequence=("\n",),
+        stop_sequence=get_stop_sequence(Language.CHINESE, cot),
     )
+    for cot in [False, True]
 ]
 
 # IndicQA: A reading comprehension dataset for 11 Indian languages.
 # https://arxiv.org/abs/2407.13522
 indicqa_tasks = [
     LightevalTaskConfig(
-        name=f"indicqa_{language.value}",
+        name=get_generative_task_name("indicqa", language, cot),
         prompt_function=get_qa_prompt_function(
             language,
             lambda line: {
@@ -1155,6 +1114,7 @@ indicqa_tasks = [
                 "context": line["context"],
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="ai4bharat/IndicQA",
@@ -1166,12 +1126,14 @@ indicqa_tasks = [
         trust_dataset=True,
         evaluation_splits=("test",),
         hf_avail_splits=("test",),
-        generation_size=400,
+        generation_size=get_cot_generaion_size(cot, 400),
         metric=(
-            multilingual_quasi_exact_match_metric(language, "prefix"),
-            multilingual_quasi_f1_score_metric(language),
+            multilingual_quasi_exact_match_metric(
+                language, "prefix", normalize_pred=get_cot_answer_normalization(cot)
+            ),
+            multilingual_quasi_f1_score_metric(language, normalize_pred=get_cot_answer_normalization(cot)),
         ),
-        stop_sequence=("\n",),
+        stop_sequence=get_stop_sequence(language, cot),
     )
     for language in [
         Language.ASSAMESE,
@@ -1186,13 +1148,14 @@ indicqa_tasks = [
         Language.TAMIL,
         Language.TELUGU,
     ]
+    for cot in [False, True]
 ]
 
 # FQuAD v2: French Question Answering Dataset version 2.
 # https://arxiv.org/abs/2002.06071
 fquad_v2_tasks = [
     LightevalTaskConfig(
-        name=f"fquadv2_{Language.FRENCH.value}",
+        name=get_generative_task_name("fquadv2", Language.FRENCH, cot),
         prompt_function=get_qa_prompt_function(
             Language.FRENCH,
             lambda line: {
@@ -1200,25 +1163,29 @@ fquad_v2_tasks = [
                 "context": line["context"],
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="manu/fquad2_test",
         hf_subset="default",
         evaluation_splits=("test_hasAns",),
         few_shots_split="valid_hasAns",
-        generation_size=400,
-        stop_sequence=("\n",),
+        generation_size=get_cot_generaion_size(cot, 400),
         metric=(
-            multilingual_quasi_exact_match_metric(Language.FRENCH, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.FRENCH),
+            multilingual_quasi_exact_match_metric(
+                Language.FRENCH, "prefix", normalize_pred=get_cot_answer_normalization(cot)
+            ),
+            multilingual_quasi_f1_score_metric(Language.FRENCH, normalize_pred=get_cot_answer_normalization(cot)),
         ),
+        stop_sequence=get_stop_sequence(Language.FRENCH, cot),
     )
+    for cot in [False, True]
 ]
 
 # TQuAD v2: Turkish Question Answering Dataset version 2.
 tquad_v2_tasks = [
     LightevalTaskConfig(
-        name=f"tquadv2_{Language.TURKISH.value}",
+        name=get_generative_task_name("tquadv2", Language.TURKISH, cot),
         prompt_function=get_qa_prompt_function(
             Language.TURKISH,
             lambda line: {
@@ -1226,19 +1193,23 @@ tquad_v2_tasks = [
                 "context": line["context"],
                 "choices": [a["text"] for a in line["answers"]],
             },
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="erdometo/tquad2",
         hf_subset="default",
         evaluation_splits=("validation",),
         few_shots_split="train",
-        generation_size=400,
-        stop_sequence=("\n",),
+        generation_size=get_cot_generaion_size(cot, 400),
         metric=(
-            multilingual_quasi_exact_match_metric(Language.TURKISH, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.TURKISH),
+            multilingual_quasi_exact_match_metric(
+                Language.TURKISH, "prefix", normalize_pred=get_cot_answer_normalization(cot)
+            ),
+            multilingual_quasi_f1_score_metric(Language.TURKISH, normalize_pred=get_cot_answer_normalization(cot)),
         ),
+        stop_sequence=get_stop_sequence(Language.TURKISH, cot),
     )
+    for cot in [False, True]
 ]
 
 # Other QA tasks for RC
@@ -1247,7 +1218,7 @@ tquad_v2_tasks = [
 # https://arxiv.org/abs/2003.05002
 tydiqa_tasks = [
     LightevalTaskConfig(
-        name=f"tydiqa_{language.value}",
+        name=get_generative_task_name("tydiqa", language, cot),
         prompt_function=get_qa_prompt_function(
             language,
             lambda line: {
@@ -1255,18 +1226,21 @@ tydiqa_tasks = [
                 "context": line["context"],
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="google-research-datasets/tydiqa",
         hf_subset="secondary_task",
         evaluation_splits=("validation",),
         few_shots_split="train",
-        generation_size=400,
-        stop_sequence=("\n",),
+        generation_size=get_cot_generaion_size(cot, 400),
         metric=(
-            multilingual_quasi_exact_match_metric(language, "prefix"),
-            multilingual_quasi_f1_score_metric(language),
+            multilingual_quasi_exact_match_metric(
+                language, "prefix", normalize_pred=get_cot_answer_normalization(cot)
+            ),
+            multilingual_quasi_f1_score_metric(language, normalize_pred=get_cot_answer_normalization(cot)),
         ),
+        stop_sequence=get_stop_sequence(language, cot),
     )
     for language in [
         Language.ENGLISH,
@@ -1281,6 +1255,7 @@ tydiqa_tasks = [
         Language.TELUGU,
         Language.THAI,
     ]
+    for cot in [False, True]
 ]
 
 # C3: A Chinese Challenge Corpus for Cross-lingual and Cross-modal Tasks
@@ -1288,7 +1263,7 @@ tydiqa_tasks = [
 # Paper: https://arxiv.org/abs/2004.05986
 c3_tasks = [
     LightevalTaskConfig(
-        name=f"c3_{Language.CHINESE.value}_{formulation.name.lower()}",
+        name=get_mcf_task_name("c3", Language.CHINESE, formulation),
         suite=("lighteval",),
         prompt_function=get_mcq_prompt_function(
             Language.CHINESE,
@@ -1304,19 +1279,17 @@ c3_tasks = [
         hf_subset="c3",
         evaluation_splits=("validation",),
         few_shots_split="train",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.CHINESE,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.CHINESE, formulation.cot),
     )
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # Other MCF tasks for RC
@@ -1326,7 +1299,7 @@ c3_tasks = [
 # Paper: https://aclanthology.org/2023.arabicnlp-1.21/
 race_ar_task = [
     LightevalTaskConfig(
-        name=f"alghafa_race_{Language.ARABIC.value}_{formulation.name.lower()}",
+        name=get_mcf_task_name("alghafa_race", Language.ARABIC, formulation),
         prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter, formulation=formulation),
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
@@ -1338,44 +1311,40 @@ race_ar_task = [
         evaluation_splits=["test"],
         few_shots_split="validation",
         trust_dataset=True,
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.ARABIC,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.ARABIC, formulation.cot),
     )
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 # SOQAL: A large-scale Arabic reading comprehension dataset.
 # https://arxiv.org/abs/1906.05394
 soqal_tasks = [
     LightevalTaskConfig(
-        name=f"soqal_{Language.ARABIC.value}_{formulation.name.lower()}",
+        name=get_mcf_task_name("soqal", Language.ARABIC, formulation),
         hf_subset="multiple_choice_grounded_statement_soqal_task",
         prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter, formulation=formulation),
         evaluation_splits=["test"],
         few_shots_split="validation",
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Native",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.ARABIC,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.ARABIC, formulation.cot),
     )
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # MLQA (MultiLingual Question Answering) is a benchmark dataset for evaluating cross-lingual question answering performance.
@@ -1384,7 +1353,7 @@ soqal_tasks = [
 # Paper: https://arxiv.org/abs/1910.07475
 mlqa_tasks = [
     LightevalTaskConfig(
-        name=f"mlqa_{lang.value}",
+        name=get_generative_task_name("mlqa", lang, cot),
         prompt_function=get_qa_prompt_function(
             lang,
             lambda line: {
@@ -1392,6 +1361,7 @@ mlqa_tasks = [
                 "question": line["question"],
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="facebook/mlqa",
@@ -1400,12 +1370,12 @@ mlqa_tasks = [
         trust_dataset=True,
         evaluation_splits=("test",),
         hf_avail_splits=["test"],
-        generation_size=400,
-        stop_sequence=("\n",),
+        generation_size=get_cot_generaion_size(cot, 400),
         metric=[
-            multilingual_quasi_exact_match_metric(lang, "prefix"),
-            multilingual_quasi_f1_score_metric(lang),
+            multilingual_quasi_exact_match_metric(lang, "prefix", normalize_pred=get_cot_answer_normalization(cot)),
+            multilingual_quasi_f1_score_metric(lang, normalize_pred=get_cot_answer_normalization(cot)),
         ],
+        stop_sequence=get_stop_sequence(lang, cot),
     )
     for lang in [
         Language.ARABIC,
@@ -1415,13 +1385,18 @@ mlqa_tasks = [
         Language.HINDI,
         Language.VIETNAMESE,
     ]
+    for cot in [False, True]
 ]
 
 # Belebele: A large-scale reading comprehension dataset covering 122 languages.
 # https://arxiv.org/abs/2308.16884
 belebele_tasks = [
     LightevalTaskConfig(
-        name=f"belebele_{language}_{formulation.name.lower()}",
+        name=get_mcf_task_name(
+            "belebele",
+            language,
+            formulation,
+        ),
         prompt_function=get_mcq_prompt_function(
             iso_639_3_ind_to_iso_639_3_macro[LangCodeLanguage.get(language).to_alpha3()],
             lambda line: {
@@ -1437,15 +1412,20 @@ belebele_tasks = [
         hf_subset=language,
         evaluation_splits=("test",),
         hf_avail_splits=["test"],
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.ARABIC,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(
+            iso_639_3_ind_to_iso_639_3_macro[LangCodeLanguage.get(language).to_alpha3()],
+            formulation.cot,
+        ),
     )
-    for formulation in [MCFFormulation(), CFFormulation(), HybridFormulation()]
+    for formulation in DEFAULT_FORMULATIONS
     for language in [
         "acm_Arab",
         "arz_Arab",
@@ -1589,10 +1569,6 @@ TASKS_TABLE.extend(
         *race_ar_task,
         *belebele_tasks,
         *c3_tasks,
-        *squad_it_tasks,
-        *squad_es_tasks,
-        *faquad_tasks,
-        *germanquad_tasks,
     ]
 )
 
@@ -1670,7 +1646,7 @@ MMLU_SUBSETS = [
 # Paper: https://arxiv.org/abs/2407.21783
 meta_mmlu_tasks = [
     LightevalTaskConfig(
-        name=f"meta_mmlu_{language.value}_{formulation.name.lower()}:{subset}",
+        name=f"{get_mcf_task_name('meta_mmlu', language, formulation)}:{subset}",
         prompt_function=get_mcq_prompt_function(
             language,
             lambda line: {
@@ -1691,14 +1667,16 @@ meta_mmlu_tasks = [
         ),
         evaluation_splits=("latest",),
         hf_avail_splits=["latest"],
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            language,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
                 loglikelihood_acc_metric(normalization=LogProbPMINorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(language, formulation.cot),
     )
     for subset in MMLU_SUBSETS
     for language in [
@@ -1710,18 +1688,14 @@ meta_mmlu_tasks = [
         Language.PORTUGUESE,
         Language.THAI,
     ]
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # MLMM MMLU: Another multilingual version of MMLU
 # Paper: https://github.com/nlp-uoregon/mlmm-evaluation
 mlmm_mmlu_tasks = [
     LightevalTaskConfig(
-        name=f"mlmm_mmlu_{language.value}_{formulation.name.lower()}:{subset}",
+        name=f"{get_mcf_task_name('mlmm_mmlu', language, formulation)}:{subset}",
         prompt_function=get_mcq_prompt_function(
             language,
             lambda line: {
@@ -1739,14 +1713,16 @@ mlmm_mmlu_tasks = [
         trust_dataset=True,
         evaluation_splits=("test",),
         few_shots_split="dev",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            language,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
                 loglikelihood_acc_metric(normalization=LogProbPMINorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(language, formulation.cot),
     )
     for subset in MMLU_SUBSETS
     for language in [
@@ -1777,16 +1753,12 @@ mlmm_mmlu_tasks = [
         Language.TELUGU,
         Language.KANNADA,
     ]
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 openai_mmlu_tasks = [
     LightevalTaskConfig(
-        name=f"openai_mmlu_{language[0].value}_{formulation.name.lower()}:{subset}",
+        name=f"{get_mcf_task_name('openai_mmlu', language[0], formulation)}:{subset}",
         prompt_function=get_mcq_prompt_function(
             language[0],
             lambda line: {
@@ -1803,14 +1775,16 @@ openai_mmlu_tasks = [
         hf_avail_splits=["test"],
         hf_filter=partial(lambda subset, x: x["Subject"].lower() == subset, subset),
         hf_revision="038c7808122969ead7456361af05cb8f47d247f8",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            language[0],
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
                 loglikelihood_acc_metric(normalization=LogProbPMINorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(language[0], formulation.cot),
     )
     for subset in MMLU_SUBSETS
     for language in [
@@ -1829,11 +1803,7 @@ openai_mmlu_tasks = [
         (Language.YORUBA, "YO_NG"),
         (Language.CHINESE, "ZH_CN"),
     ]
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # Translated MMLU using both professional and non-professional translators. Contains tags for cultural sensitivity.
@@ -1863,13 +1833,13 @@ global_mmlu_tasks = [
             lambda subset, sensitivity_label, x: x["subject"].lower() == subset
             and (
                 sensitivity_label == "ALL" or sensitivity_label in x["cultural_sensitivity_label"].replace("-", "UNK")
-            )
-            and all(x[f"option_{opt}"] is not None and x[f"option_{opt}"].strip() for opt in "abcd"),
+            ),
             subset,
             sensitivity_label,
         ),
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            language,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -1914,11 +1884,7 @@ global_mmlu_tasks = [
         Language.YORUBA,
         Language.ZULU,
     ]
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
     for sensitivity_label in ["ALL", "CA", "CS", "UNK"]
 ]
 
@@ -1936,7 +1902,7 @@ AFRI_MMLU_SUBSETS = [
 # From https://arxiv.org/abs/2406.03368. Human translated MMLU.
 afri_mmlu_tasks = [
     LightevalTaskConfig(
-        name=f"afri_mmlu_{language.value}_{formulation.name.lower()}:{subset}",
+        name=f"{get_mcf_task_name('afri_mmlu', language, formulation)}:{subset}",
         prompt_function=get_mcq_prompt_function(
             language,
             lambda line: {
@@ -1954,14 +1920,16 @@ afri_mmlu_tasks = [
         hf_filter=partial(lambda subset, line: line["subject"] == subset, subset),
         evaluation_splits=("test",),
         few_shots_split="dev",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            language,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
                 loglikelihood_acc_metric(normalization=LogProbPMINorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(language, formulation.cot),
     )
     for subset in AFRI_MMLU_SUBSETS
     for language in [
@@ -1983,18 +1951,14 @@ afri_mmlu_tasks = [
         Language.YORUBA,
         # Language.ZULU,
     ]
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # RUMMLU: Russian Massive Multitask Language Understanding
 # Paper: https://arxiv.org/html/2401.04531v2
 rummlu = [
     LightevalTaskConfig(
-        name=f"rummlu_{Language.RUSSIAN.value}_{formulation.name.lower()}:{subset}",
+        name=f"{get_mcf_task_name('rummlu', Language.RUSSIAN, formulation)}:{subset}",
         prompt_function=get_mcq_prompt_function(
             Language.RUSSIAN,
             lambda line: {
@@ -2010,28 +1974,26 @@ rummlu = [
         hf_filter=lambda x: x["meta"]["domain"] == subset,
         evaluation_splits=("public_test",),
         hf_avail_splits=["public_test"],
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.RUSSIAN,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
                 loglikelihood_acc_metric(normalization=LogProbPMINorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.RUSSIAN, formulation.cot),
     )
     for subset in MMLU_SUBSETS
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # MMLU Turkish: Turkish version of MMLU
 # Translated using openai GPT
 mmlu_turkish = [
     LightevalTaskConfig(
-        name=f"community_mmlu_{Language.TURKISH.value}_{formulation.name.lower()}:{subset}",
+        name=f"{get_mcf_task_name('community_mmlu', Language.TURKISH, formulation)}:{subset}",
         prompt_function=get_mcq_prompt_function(
             Language.TURKISH,
             lambda line: {"question": line["question"], "choices": line["choices"], "gold_idx": int(line["answer"])},
@@ -2042,21 +2004,19 @@ mmlu_turkish = [
         hf_subset=subset,
         evaluation_splits=("test",),
         few_shots_split="dev",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.TURKISH,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
                 loglikelihood_acc_metric(normalization=LogProbPMINorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.TURKISH, formulation.cot),
     )
     for subset in MMLU_SUBSETS
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # CMMLU: Chinese Massive Multitask Language Understanding
@@ -2134,7 +2094,7 @@ CMMLU_SUBSETS = [
 
 cmmlu_tasks = [
     LightevalTaskConfig(
-        name=f"cmmlu_{Language.CHINESE.value}_{formulation.name.lower()}:{subset}",
+        name=f"{get_mcf_task_name('cmmlu', Language.CHINESE, formulation)}:{subset}",
         prompt_function=get_mcq_prompt_function(
             Language.CHINESE,
             lambda line: {
@@ -2149,21 +2109,19 @@ cmmlu_tasks = [
         hf_subset=subset,
         evaluation_splits=("test",),
         few_shots_split="dev",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.CHINESE,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
                 loglikelihood_acc_metric(normalization=LogProbPMINorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.CHINESE, formulation.cot),
     )
     for subset in CMMLU_SUBSETS
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # Arabic MMLU: Arabic version of MMLU
@@ -2214,7 +2172,7 @@ ARABIC_MMLU_SUBSETS = [
 
 arabic_mmlu_tasks = [
     LightevalTaskConfig(
-        name=f"mmlu_{Language.ARABIC.value}_{formulation.name.lower()}:{normalize_subset(subset)}",
+        name=f"{get_mcf_task_name('mmlu', Language.ARABIC, formulation)}:{normalize_subset(subset)}",
         prompt_function=get_mcq_prompt_function(
             Language.ARABIC,
             lambda line: {
@@ -2230,21 +2188,19 @@ arabic_mmlu_tasks = [
         hf_subset=subset,
         evaluation_splits=("test",),
         hf_avail_splits=["dev"],
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.ARABIC,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
                 loglikelihood_acc_metric(normalization=LogProbPMINorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.ARABIC, formulation.cot),
     )
     for subset in ARABIC_MMLU_SUBSETS
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 
@@ -2262,7 +2218,7 @@ TURKISH_MMLU_SUBSET = [
 
 turkish_mmlu_tasks = [
     LightevalTaskConfig(
-        name=f"mmlu_{Language.TURKISH.value}_{formulation.name.lower()}:{normalize_subset(subset)}",
+        name=f"{get_mcf_task_name('mmlu', Language.TURKISH, formulation)}:{normalize_subset(subset)}",
         prompt_function=get_mcq_prompt_function(
             Language.TURKISH,
             lambda line: {
@@ -2277,21 +2233,19 @@ turkish_mmlu_tasks = [
         hf_subset=subset,
         evaluation_splits=("test",),
         few_shots_split="dev",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.TURKISH,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
                 loglikelihood_acc_metric(normalization=LogProbPMINorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.TURKISH, formulation.cot),
     )
     for subset in TURKISH_MMLU_SUBSET
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 TASKS_TABLE.extend(
@@ -2323,7 +2277,7 @@ TASKS_TABLE.extend(
 # github: https://github.com/nlp-uoregon/mlmm-evaluation
 mlmm_arc_challenge_tasks = [
     LightevalTaskConfig(
-        name=f"mlmm_arc_{language.value}_{formulation.name.lower()}:challenge",
+        name=f"{get_mcf_task_name('mlmm_arc', language, formulation)}:challenge",
         prompt_function=get_mcq_prompt_function(
             language,
             lambda line: {
@@ -2342,14 +2296,16 @@ mlmm_arc_challenge_tasks = [
         trust_dataset=True,
         evaluation_splits=("test",),
         few_shots_split="train",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            language,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
                 loglikelihood_acc_metric(normalization=LogProbPMINorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(language, formulation.cot),
     )
     for language in [
         Language.RUSSIAN,
@@ -2379,11 +2335,7 @@ mlmm_arc_challenge_tasks = [
         Language.TELUGU,
         Language.KANNADA,
     ]
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # Arabic ARC Easy
@@ -2392,7 +2344,7 @@ mlmm_arc_challenge_tasks = [
 # Paper: https://aclanthology.org/2023.arabicnlp-1.21/
 arabic_ledarboard_arc_easy = [
     LightevalTaskConfig(
-        name=f"alghafa_arc_{Language.ARABIC.value}_{formulation.name.lower()}:easy",
+        name=f"{get_mcf_task_name('alghafa_arc', Language.ARABIC, formulation)}:easy",
         prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter, formulation=formulation),
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
@@ -2401,25 +2353,23 @@ arabic_ledarboard_arc_easy = [
         trust_dataset=True,
         evaluation_splits=["test"],
         few_shots_split="validation",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.ARABIC,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.ARABIC, formulation.cot),
     )
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 
 lumi_arc = [
     LightevalTaskConfig(
-        name=f"lumi_arc_{language.value}_{formulation.name.lower()}:challenge",
+        name=f"{get_mcf_task_name('lumi_arc', language, formulation)}:challenge",
         prompt_function=get_mcq_prompt_function(
             language,
             lambda line: {
@@ -2436,20 +2386,18 @@ lumi_arc = [
         hf_subset=standardize_tag(language.value),
         evaluation_splits=["test"],
         few_shots_split="validation",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            language,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
                 loglikelihood_acc_metric(normalization=LogProbPMINorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(language, formulation.cot),
     )
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
     for language in [
         Language.DANISH,
         Language.GERMAN,
@@ -2469,7 +2417,7 @@ lumi_arc = [
 # Comes from the Turkish leaderboard
 turkish_arc_tasks = [
     LightevalTaskConfig(
-        name=f"community_arc_{Language.TURKISH.value}_{formulation.name.lower()}:{subset}",
+        name=f"{get_mcf_task_name('community_arc', Language.TURKISH, formulation)}:{subset}",
         prompt_function=get_mcq_prompt_function(
             Language.TURKISH,
             lambda line: {
@@ -2486,26 +2434,24 @@ turkish_arc_tasks = [
         hf_subset=f"ARC-{subset.capitalize()}",
         evaluation_splits=("test",),
         hf_avail_splits=["train"],
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.TURKISH,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ]
             + ([loglikelihood_acc_metric(normalization=LogProbPMINorm())] if subset == "challenge" else []),  # type: ignore
         ),
+        stop_sequence=get_stop_sequence(Language.TURKISH, formulation.cot),
     )
     for subset in ["easy", "challenge"]
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 hindi_arc_tasks = [
     LightevalTaskConfig(
-        name=f"community_arc_{Language.HINDI.value}_{formulation.name.lower()}:{subset}",
+        name=f"{get_mcf_task_name('community_arc', Language.HINDI, formulation)}:{subset}",
         prompt_function=get_mcq_prompt_function(
             Language.HINDI,
             lambda line: {
@@ -2522,26 +2468,24 @@ hindi_arc_tasks = [
         hf_subset=f"ARC-{subset.capitalize()}",
         evaluation_splits=("test",),
         few_shots_split="validation",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.HINDI,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ]
             + ([loglikelihood_acc_metric(normalization=LogProbPMINorm())] if subset == "challenge" else []),  # type: ignore
         ),
+        stop_sequence=get_stop_sequence(Language.HINDI, formulation.cot),
     )
     for subset in ["easy", "challenge"]
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 arabic_arc_tasks = [
     LightevalTaskConfig(
-        name=f"alghafa_arc_{Language.ARABIC.value}_{formulation.name.lower()}:easy",
+        name=f"{get_mcf_task_name('alghafa_arc', Language.ARABIC, formulation)}:easy",
         prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter, formulation=formulation),
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
@@ -2550,25 +2494,23 @@ arabic_arc_tasks = [
         evaluation_splits=["test"],
         few_shots_split="validation",
         few_shots_select="sequential",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.ARABIC,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
         trust_dataset=True,
+        stop_sequence=get_stop_sequence(Language.ARABIC, formulation.cot),
     )
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 swahili_arc_tasks = [
     LightevalTaskConfig(
-        name=f"community_arc_{Language.SWAHILI.value}_{formulation.name.lower()}:{subset}",
+        name=f"{get_mcf_task_name('community_arc', Language.SWAHILI, formulation)}:{subset}",
         prompt_function=get_mcq_prompt_function(
             Language.SWAHILI,
             lambda line: {
@@ -2588,21 +2530,19 @@ swahili_arc_tasks = [
         else "dc1df9df632d14c251594d9129fb833d2ca4429c",
         evaluation_splits=("test",),
         few_shots_split="train",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.SWAHILI,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ]
             + ([loglikelihood_acc_metric(normalization=LogProbPMINorm())] if subset == "challenge" else []),  # type: ignore
         ),
+        stop_sequence=get_stop_sequence(Language.SWAHILI, formulation.cot),
     )
     for subset in ["easy", "challenge"]
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 
@@ -2628,7 +2568,7 @@ TASKS_TABLE.extend(
 # github: https://github.com/nlp-uoregon/mlmm-evaluation
 mlmm_truthfulqa_tasks = [
     LightevalTaskConfig(
-        name=f"mlmm_truthfulqa_{language.value}_{formulation.name.lower()}:{subset}",
+        name=f"{get_mcf_task_name('mlmm_truthfulqa', language, formulation)}:{subset}",
         prompt_function=get_mcq_prompt_function(
             language,
             partial(
@@ -2648,13 +2588,15 @@ mlmm_truthfulqa_tasks = [
         trust_dataset=True,
         evaluation_splits=("validation",),
         hf_avail_splits=["validation"],
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            language,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(language, formulation.cot),
     )
     for subset in ["mc1", "mc2"]
     for language in [
@@ -2692,18 +2634,14 @@ mlmm_truthfulqa_tasks = [
         Language.VIETNAMESE,
         Language.CHINESE,
     ]
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # Turkish TruthfulQA
 # Based on turkish leaderboard
 turkish_truthfulqa = [
     LightevalTaskConfig(
-        name=f"community_truthfulqa_{Language.TURKISH.value}_{formulation.name.lower()}:{subset}",
+        name=f"{get_mcf_task_name('community_truthfulqa', Language.TURKISH, formulation)}:{subset}",
         prompt_function=get_mcq_prompt_function(
             Language.TURKISH,
             partial(
@@ -2721,20 +2659,18 @@ turkish_truthfulqa = [
         hf_subset="default",
         evaluation_splits=("validation",),
         hf_avail_splits=["validation"],
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.TURKISH,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.TURKISH, formulation.cot),
     )
     for subset in ["mc1", "mc2"]
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 TASKS_TABLE.extend(
@@ -2861,7 +2797,7 @@ exams_subjects_by_lang: dict[Language, set[str]] = {
 
 exams_tasks = [
     LightevalTaskConfig(
-        name=f"exams_{language.value}_{formulation.name.lower()}:{normalize_subset(subject)}",
+        name=f"{get_mcf_task_name('exams', language, formulation)}:{normalize_subset(subject)}",
         prompt_function=get_mcq_prompt_function(
             language,
             lambda line: {
@@ -2884,21 +2820,19 @@ exams_tasks = [
         ),
         evaluation_splits=("test",),
         few_shots_split="train",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            language,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(language, formulation.cot),
     )
     for language in exams_subjects_by_lang.keys()
     for subject in exams_subjects_by_lang[language]
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # M3Exam: Multitask Multilingual Multimodal Evaluation Benchmark
@@ -2906,7 +2840,7 @@ exams_tasks = [
 # Paper: https://arxiv.org/abs/2306.05179
 m3exams_tasks = [
     LightevalTaskConfig(
-        name=f"m3exams_{language.value}_{formulation.name.lower()}",
+        name=get_mcf_task_name("m3exams", language, formulation),
         suite=("lighteval",),
         prompt_function=get_mcq_prompt_function(
             language,
@@ -2917,14 +2851,15 @@ m3exams_tasks = [
         hf_subset=LangCodeLanguage(standardize_tag(language.value)).language_name().lower(),
         evaluation_splits=("test",),
         few_shots_split="dev",
-        generation_size=-1,
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            language,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(language, formulation.cot),
     )
     for language in [
         Language.AFRIKAANS,
@@ -2937,11 +2872,7 @@ m3exams_tasks = [
         Language.THAI,
         Language.VIETNAMESE,
     ]
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 # Thai Exams
@@ -2953,27 +2884,29 @@ THAI_EXAMS_SUBSETS = ["a_level", "ic", "onet", "tgat", "tpat1"]
 
 thai_exams_tasks = [
     LightevalTaskConfig(
-        name=f"thai_exams_{Language.THAI.value}_{formulation.name.lower()}:{subset}",
-        prompt_function=get_mcq_prompt_function(Language.THAI, thai_exams_adapter, formulation=formulation),
+        name=f"{get_mcf_task_name('thai_exams', Language.THAI, formulation)}:{subset}",
+        prompt_function=get_mcq_prompt_function(
+            Language.THAI,
+            thai_exams_adapter,
+            formulation=formulation,
+        ),
         suite=("lighteval",),
         hf_repo="scb10x/thai_exam",
         hf_subset=subset,
         evaluation_splits=("test",),
         few_shots_split="train",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.THAI,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.THAI, formulation.cot),
     )
     for subset in THAI_EXAMS_SUBSETS
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 TASKS_TABLE.extend(
@@ -2992,7 +2925,7 @@ TASKS_TABLE.extend(
 # Paper: https://arxiv.org/abs/2110.08462
 xcsqa_tasks = [
     LightevalTaskConfig(
-        name=f"xcsqa_{language.value}_{formulation.name.lower()}",
+        name=f"{get_mcf_task_name('xcsqa', language, formulation)}",
         prompt_function=get_mcq_prompt_function(
             language,
             lambda line: {
@@ -3004,20 +2937,22 @@ xcsqa_tasks = [
         ),
         suite=("lighteval",),
         hf_repo="INK-USC/xcsr",
-        hf_subset=f"X-CSQA-{standardize_tag(language.value) if language != Language.JAPANESE else 'jap'}",
+        hf_subset=f"X-CSQA-{standardize_tag(language.value)}",
         hf_filter=lambda x: all(
             len(x["question"]["choices"]["text"][i].strip()) > 0 for i in range(len(x["question"]["choices"]["text"]))
         ),
         evaluation_splits=("validation",),
         hf_avail_splits=["validation"],
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            language,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
                 loglikelihood_acc_metric(normalization=LogProbPMINorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(language, formulation.cot),
     )
     for language in [
         Language.ARABIC,
@@ -3037,11 +2972,7 @@ xcsqa_tasks = [
         Language.VIETNAMESE,
         Language.CHINESE,
     ]
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 TASKS_TABLE.extend(
@@ -3059,29 +2990,30 @@ TASKS_TABLE.extend(
 # Arabic version: https://aclanthology.org/2023.arabicnlp-1.21/
 piqa_ar_tasks = [
     LightevalTaskConfig(
-        name=f"alghafa_piqa_{Language.ARABIC.value}_{formulation.name.lower()}",
-        prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter, formulation=formulation),
+        name=f"{get_mcf_task_name('alghafa_piqa', Language.ARABIC, formulation)}",
+        prompt_function=get_mcq_prompt_function(
+            Language.ARABIC,
+            alghafa_adapter,
+            formulation=formulation,
+        ),
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
         hf_revision="08663706ee7cab30c4b7dc1bb00042a3227ce1ff",
         hf_subset="piqa_ar",
         hf_avail_splits=["test", "validation"],
         evaluation_splits=["test"],
-        few_shots_split="validation",
         trust_dataset=True,
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.ARABIC,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.ARABIC, formulation.cot),
     )
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 TASKS_TABLE.extend(
@@ -3099,8 +3031,12 @@ TASKS_TABLE.extend(
 # Arabic version: https://aclanthology.org/2023.arabicnlp-1.21/
 openbook_ara_tasks = [
     LightevalTaskConfig(
-        name=f"alghafa_openbookqa_{Language.ARABIC.value}_{formulation.name.lower()}",
-        prompt_function=get_mcq_prompt_function(Language.ARABIC, alghafa_adapter, formulation=formulation),
+        name=f"{get_mcf_task_name('alghafa_openbookqa', Language.ARABIC, formulation)}",
+        prompt_function=get_mcq_prompt_function(
+            Language.ARABIC,
+            alghafa_adapter,
+            formulation=formulation,
+        ),
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
         hf_subset="openbook_qa_ext_ar",
@@ -3108,61 +3044,24 @@ openbook_ara_tasks = [
         trust_dataset=True,
         evaluation_splits=["test"],
         few_shots_split="validation",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.ARABIC,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.ARABIC, formulation.cot),
     )
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
-
-# Spanish version of OpenBookQA from BSC Language Technology group
-# Dataset: https://huggingface.co/datasets/BSC-LT/openbookqa-es
-openbook_es_tasks = [
-    LightevalTaskConfig(
-        name=f"openbookqa_{Language.SPANISH.value}_{formulation.name.lower()}",
-        prompt_function=get_mcq_prompt_function(
-            Language.SPANISH,
-            lambda line: {
-                "question": line["question_stem"],
-                "choices": line["choices"]["text"],
-                "gold_idx": LETTER_INDICES.index(line["answerKey"]),
-            },
-            formulation=formulation,
-        ),
-        suite=["lighteval"],
-        hf_repo="BSC-LT/openbookqa-es",
-        hf_subset="default",
-        evaluation_splits=("test",),
-        few_shots_split="validation",
-        metric=get_metrics_for_formulation(
-            formulation,
-            [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-            ],
-        ),
-    )
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
-]
-
 
 # The Russian version is part of the MERA (Multilingual Enhanced Russian NLP Architectures) project.
 # Paper: https://arxiv.org/abs/2401.04531
 openbook_rus_tasks = [
     LightevalTaskConfig(
-        name=f"mera_openbookqa_{Language.RUSSIAN.value}_{formulation.name.lower()}",
+        name=f"{get_mcf_task_name('mera_openbookqa', Language.RUSSIAN, formulation)}",
         prompt_function=get_mcq_prompt_function(
             Language.RUSSIAN,
             lambda line: {
@@ -3177,26 +3076,23 @@ openbook_rus_tasks = [
         hf_subset="ruopenbookqa",
         evaluation_splits=("train",),
         hf_avail_splits=["train"],
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.RUSSIAN,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.RUSSIAN, formulation.cot),
     )
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 TASKS_TABLE.extend(
     [
         *openbook_rus_tasks,
         *openbook_ara_tasks,
-        *openbook_es_tasks,
     ]
 )
 
@@ -3209,7 +3105,7 @@ TASKS_TABLE.extend(
 # Paper: https://aclanthology.org/2023.arabicnlp-1.21/
 sciqa_ar_task = [
     LightevalTaskConfig(
-        name=f"alghafa_sciqa_{Language.ARABIC.value}_{formulation.name.lower()}",
+        name=f"{get_mcf_task_name('alghafa_sciqa', Language.ARABIC, formulation)}",
         prompt_function=get_mcq_prompt_function(
             Language.ARABIC,
             sciqa_adapter,
@@ -3223,20 +3119,18 @@ sciqa_ar_task = [
         evaluation_splits=["test"],
         few_shots_split="validation",
         few_shots_select="sequential",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.ARABIC,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
         trust_dataset=True,
+        stop_sequence=get_stop_sequence(Language.ARABIC, formulation.cot),
     )
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 TASKS_TABLE.extend(
@@ -3253,7 +3147,7 @@ TASKS_TABLE.extend(
 # MERA: https://github.com/ai-forever/MERA
 mathlogicqa_rus_tasks = [
     LightevalTaskConfig(
-        name=f"mathlogic_qa_{Language.RUSSIAN.value}_{formulation.name.lower()}",
+        name=f"{get_mcf_task_name('mathlogic_qa', Language.RUSSIAN, formulation)}",
         prompt_function=get_mcq_prompt_function(
             Language.RUSSIAN,
             lambda line: {
@@ -3268,69 +3162,64 @@ mathlogicqa_rus_tasks = [
         hf_subset="mathlogicqa",
         evaluation_splits=("train",),
         hf_avail_splits=["train"],
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.RUSSIAN,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.RUSSIAN, formulation.cot),
     )
-    for formulation in [
-        CFFormulation(),
-        MCFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 cmath_tasks = [
     LightevalTaskConfig(
-        name=f"cmath_{Language.CHINESE.value}",
-        prompt_function=get_qa_prompt_function(
+        name=get_generative_task_name("cmath", Language.CHINESE, cot),
+        prompt_function=get_math_qa_prompt_function(
             Language.CHINESE,
             lambda line: {
                 "question": line["question"],
                 "choices": [line["golden"]],
             },
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="weitianwen/cmath",
         hf_subset="default",
         evaluation_splits=("test",),
         few_shots_split="validation",
-        generation_size=25,
+        generation_size=get_cot_generaion_size(cot, 100),
         metric=[
-            multilingual_quasi_exact_match_metric(Language.CHINESE, "full"),
+            multilingual_extractive_match_metric(Language.CHINESE),
         ],
-        stop_sequence=("\n",),
+        stop_sequence=get_stop_sequence(Language.CHINESE, cot),
     )
+    for cot in (False, True)
 ]
 
 mgsm_tasks = [
     LightevalTaskConfig(
-        name=f"mgsm_{language.value}",
-        prompt_function=get_qa_prompt_function(
+        name=get_generative_task_name("mgsm", language, cot),
+        prompt_function=get_math_qa_prompt_function(
             language,
-            lambda line: {
-                "question": line["question"],
-                # The cot is available but we have no use:
-                # line["answer"]
-                "choices": [str(line["answer_number"])],
-            },
+            mgsm_adapter,
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="juletxara/mgsm",
         hf_subset=standardize_tag(language.value),
         evaluation_splits=("test",),
         few_shots_split="train",
-        generation_size=25,
+        generation_size=get_cot_generaion_size(cot, 100),
         metric=[
-            multilingual_quasi_exact_match_metric(language, "full"),
+            multilingual_extractive_match_metric(language),
         ],
-        stop_sequence=("\n",),
+        stop_sequence=get_stop_sequence(language, cot),
     )
     for language in [
-        Language.ENGLISH,
         Language.SPANISH,
         Language.FRENCH,
         Language.GERMAN,
@@ -3342,31 +3231,29 @@ mgsm_tasks = [
         Language.BENGALI,
         Language.TELUGU,
     ]
+    for cot in (False, True)
 ]
+
 # African MGSM: MGSM for African Languages
 # From https://arxiv.org/abs/2406.03368. Human translated MGSM.
 afri_mgsm_tasks = [
     LightevalTaskConfig(
-        name=f"afri_mgsm_{language.value}",
-        prompt_function=get_qa_prompt_function(
+        name=get_generative_task_name("mgsm", language, cot),
+        prompt_function=get_math_qa_prompt_function(
             language,
-            lambda line: {
-                "question": line["question"],
-                # The cot is available but we have no use:
-                # line["answer"]
-                "choices": [str(line["answer_number"])],
-            },
+            mgsm_adapter,
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="masakhane/afrimgsm",
         hf_subset=language.value,
         evaluation_splits=("test",),
         few_shots_split="train",
-        generation_size=25,
+        generation_size=get_cot_generaion_size(cot, 100),
         metric=[
-            multilingual_quasi_exact_match_metric(language, "full"),
+            multilingual_extractive_match_metric(language),
         ],
-        stop_sequence=("\n",),
+        stop_sequence=get_stop_sequence(language, cot),
     )
     for language in [
         Language.AMHARIC,
@@ -3387,13 +3274,353 @@ afri_mgsm_tasks = [
         Language.YORUBA,
         # Language.ZULU,
     ]
+    for cot in (False, True)
 ]
+
+# MSVAMP - Math Word Problems (Translated from SVAMP using Google Translate)
+msvamp_tasks = [
+    LightevalTaskConfig(
+        name=get_generative_task_name("msvamp", language, cot),
+        prompt_function=get_math_qa_prompt_function(
+            language,
+            lambda line: {
+                "question": line["m_query"],  # Using the translated version of the question
+                "choices": [float_to_choice_string(line["response"])],  # The answer as a string
+            },
+            cot=cot,
+        ),
+        suite=("lighteval",),
+        hf_repo="Mathoctopus/MSVAMP",
+        hf_subset=standardize_tag(language.value),
+        evaluation_splits=("test",),
+        # Don't use balanced here as the biggest clusters are 1,2,3,4,5 which results
+        # in some llms just output 6
+        few_shots_select="random",
+        hf_avail_splits=["test"],
+        generation_size=get_cot_generaion_size(cot, 100),
+        metric=[
+            multilingual_extractive_match_metric(language),
+        ],
+        stop_sequence=get_stop_sequence(language, cot),
+    )
+    for language in [
+        Language.BENGALI,
+        Language.GERMAN,
+        Language.ENGLISH,
+        Language.SPANISH,
+        Language.FRENCH,
+        Language.JAPANESE,
+        Language.RUSSIAN,
+        Language.SWAHILI,
+        Language.THAI,
+        Language.CHINESE,
+    ]
+    for cot in (False, True)
+]
+
+
+# CMM-Math - Chinese Multimodal Math Dataset
+# CMM-Math is a comprehensive Chinese mathematical reasoning dataset containing over 28,000 high-quality samples
+# across 12 grade levels from elementary to high school. It includes multiple-choice and fill-in-the-blank questions
+# with detailed solutions. The dataset features both text-only and multimodal problems (with visual context in
+# questions/options). It consists of 22k+ training samples and 5k+ evaluation samples, designed to evaluate and
+# enhance mathematical reasoning capabilities of large language and multimodal models.
+# Note: Only the MCQ subset is implemented
+cmm_math_mc_tasks = [
+    LightevalTaskConfig(
+        name=get_mcf_task_name("cmm_math", Language.CHINESE, formulation),
+        prompt_function=get_mcq_prompt_function(
+            Language.CHINESE,
+            cmm_math_adapter,
+            formulation=formulation,
+        ),
+        suite=("lighteval",),
+        hf_repo="ecnu-icalk/cmm-math",
+        hf_subset="default",
+        hf_filter=lambda x: x["image"] == "[]"
+        and x["options"]
+        != "[]",  # Only include examples without images (it's a string for some reason) and mcq questions
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        metric=get_metrics_for_mcq_formulation(
+            formulation,
+            Language.CHINESE,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
+        stop_sequence=get_stop_sequence(Language.CHINESE, formulation.cot),
+    )
+    for formulation in DEFAULT_FORMULATIONS
+]
+
+
+# Math23K - Chinese Math Word Problem Dataset
+# Math23K is a dataset containing 23,162 Chinese math word problems crawled from the internet.
+# Originally introduced in "Deep Neural Solver for Math Word Problems", it consists of math word
+# problems in Chinese text along with their corresponding numerical answers. The dataset is split
+# into training and test sets and is commonly used to evaluate mathematical reasoning capabilities
+# of language models on Chinese text. Each example contains the original Chinese problem text and
+# its corresponding numerical solution.
+math23k_tasks = [
+    LightevalTaskConfig(
+        name=get_generative_task_name("math23k", Language.CHINESE, cot),
+        prompt_function=get_math_qa_prompt_function(
+            Language.CHINESE,
+            lambda line: {
+                "question": line["original_text"],  # Use the original Chinese text
+                "choices": [str(line["ans"])],  # Answer has computed number while ans is symbolic
+            },
+            cot=cot,
+        ),
+        suite=("lighteval",),
+        hf_repo="Gxg/Math23K",
+        hf_subset="default",
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        generation_size=get_cot_generaion_size(cot, 100),  # Similar to other math tasks like msvamp
+        metric=[multilingual_extractive_match_metric(Language.CHINESE)],
+        stop_sequence=get_stop_sequence(Language.CHINESE, cot),
+    )
+    for cot in (False, True)
+]
+
+# TAL-SCQ5K - Chinese Math Word Problem Dataset
+# TAL-SCQ5K is a high-quality mathematical competition dataset created by TAL Education Group,
+# consisting of 5K multiple-choice questions (3K training, 2K testing) covering math topics from
+# primary through high school levels. The dataset includes detailed solution steps and standardized
+# LaTeX expressions.
+
+tal_scq5k_tasks = [
+    LightevalTaskConfig(
+        name=get_mcf_task_name("tal_scq5k", Language.CHINESE, formulation),
+        prompt_function=get_mcq_prompt_function(
+            Language.CHINESE,
+            lambda line: {
+                "question": line["problem"].strip(),
+                "choices": [
+                    opt[0]["content"] for opt in sorted(line["answer_option_list"], key=lambda x: x[0]["aoVal"])
+                ],
+                "gold_idx": LETTER_INDICES.index(line["answer_value"]),
+            },
+            formulation=formulation,
+        ),
+        suite=("lighteval",),
+        hf_repo="math-eval/TAL-SCQ5K",
+        hf_subset="default",
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        metric=get_metrics_for_mcq_formulation(
+            formulation,
+            Language.CHINESE,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
+        stop_sequence=get_stop_sequence(Language.CHINESE, formulation.cot),
+    )
+    for formulation in DEFAULT_FORMULATIONS
+]
+
+# MathQA-TR - Turkish Math Question Answering Dataset
+# Sourced from https://github.com/esingedik/Turkish-MWP-Corpora-and-Code
+# Translated using Google Translate
+# MWP is collected from MAWPS, ASDiv-A, SVAMP.
+mathqa_tr_tasks = [
+    LightevalTaskConfig(
+        name=get_generative_task_name("mathqa", Language.TURKISH, cot),
+        prompt_function=get_math_qa_prompt_function(
+            Language.TURKISH,
+            lambda line: {
+                "question": line["question"],
+                "choices": [line["answer"]],
+            },
+            cot=cot,
+        ),
+        suite=("lighteval",),
+        hf_repo="lighteval/MathQA-TR",
+        hf_subset="default",
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        generation_size=get_cot_generaion_size(cot, 100),  # Similar to other math tasks
+        metric=[
+            multilingual_extractive_match_metric(Language.TURKISH),
+        ],
+        stop_sequence=get_stop_sequence(Language.TURKISH, cot),
+    )
+    for cot in (False, True)
+]
+
+mwp_tr_tasks = [
+    LightevalTaskConfig(
+        name=get_generative_task_name("mwp", Language.TURKISH, cot),
+        prompt_function=get_math_qa_prompt_function(
+            Language.TURKISH,
+            lambda line: {
+                "question": line["question"],
+                "choices": [line["answer"]],
+            },
+            cot=cot,
+        ),
+        suite=("lighteval",),
+        hf_repo="lighteval/MWP-TR",
+        hf_subset="default",
+        evaluation_splits=("test",),
+        few_shots_split="train",
+        generation_size=get_cot_generaion_size(cot, 100),  # Similar to other math tasks
+        metric=[
+            multilingual_extractive_match_metric(Language.TURKISH),
+        ],
+        stop_sequence=get_stop_sequence(Language.TURKISH, cot),
+    )
+    for cot in (False, True)
+]
+
+# MERA Arithmetic Tasks
+# Paper: https://arxiv.org/abs/2401.04531
+mera_arithmetic_tasks = [
+    LightevalTaskConfig(
+        name=get_generative_task_name("mera_arithmetic", Language.RUSSIAN, cot),
+        prompt_function=get_math_qa_prompt_function(
+            Language.RUSSIAN,
+            lambda line: {
+                "question": line["inputs"],
+                "choices": [str(line["outputs"])],
+            },
+            cot=cot,
+        ),
+        suite=("lighteval",),
+        hf_repo="ai-forever/MERA",
+        hf_subset=subset,
+        evaluation_splits=("public_test",)
+        if subset == "rumodar"
+        else ("train",),  # MERA uses train split for evaluation
+        hf_avail_splits=["public_test"] if subset == "rumodar" else ["train"],
+        generation_size=get_cot_generaion_size(cot, 100),  # Similar to other math tasks
+        metric=[
+            Metrics.quasi_exact_match_math,
+        ],
+        stop_sequence=get_stop_sequence(Language.RUSSIAN, cot),
+    )
+    for subset in ["rumodar", "rumultiar", "simplear"]
+    for cot in (False, True)
+]
+
+# QazUNTv2 Tasks - High school math problems in English and Russian
+# A bilingual dataset for evaluating LLMs on high school math problems covering:
+# - Algebra (436 problems)
+# - Logic (312 problems)
+# - Probability (163 problems)
+# Each problem includes multiple choice options and detailed solutions.
+# The dataset was manually curated, with English translations via Google Translate.
+# Paper: https://doi.org/10.17632/52vc6v4czj.1
+
+qazuntv2_tasks = [
+    LightevalTaskConfig(
+        name=get_mcf_task_name("qazuntv2", lang, formulation),
+        prompt_function=get_mcq_prompt_function(
+            lang,
+            qazuntv2_adapter,
+            formulation=formulation,
+        ),
+        suite=("lighteval",),
+        hf_repo="lighteval/QazUNTv2",
+        hf_subset=standardize_tag(lang.value),
+        hf_filter=lambda x: x["section"].lower() == subset,
+        evaluation_splits=("train",),  # Dataset only has train split
+        hf_avail_splits=["train"],
+        metric=get_metrics_for_mcq_formulation(
+            formulation,
+            lang,
+            [
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
+        stop_sequence=get_stop_sequence(lang, formulation.cot),
+    )
+    for lang in [
+        Language.ENGLISH,
+        Language.RUSSIAN,
+    ]
+    for subset in ["algebra", "logic", "probability"]
+    for formulation in DEFAULT_FORMULATIONS
+]
+
+
+# ArMATH - Arabic Math Word Problems
+# A dataset of 6,000 primary-school math word problems in Modern Standard Arabic (MSA).
+# Paper: https://github.com/reem-codes/ArMATH
+armath_tasks = [
+    LightevalTaskConfig(
+        name=get_generative_task_name("armath", Language.ARABIC, cot),
+        prompt_function=get_math_qa_prompt_function(
+            Language.ARABIC,
+            lambda line: {
+                "question": line["question"],
+                "choices": [float_to_choice_string(line["answer"])],  # Evaluate the equation to get answer
+            },
+            cot=cot,
+        ),
+        suite=("lighteval",),
+        hf_repo="khalidalt/arMath",
+        hf_subset="default",
+        evaluation_splits=("test",),  # Dataset only has test split
+        few_shots_split="validation",
+        generation_size=get_cot_generaion_size(cot, 100),  # Similar to other math tasks
+        metric=[
+            multilingual_extractive_match_metric(Language.ARABIC),
+        ],
+        stop_sequence=get_stop_sequence(Language.ARABIC, cot),
+    )
+    for cot in (False, True)
+]
+
+# HAWP - Hindi Arithmetic Word Problems
+# A dataset containing 2.3k arithmetic word problems in Hindi, designed to evaluate
+# mathematical reasoning capabilities of language models. Each problem includes the
+# question text, equation, and numerical answer.
+hawp_tasks = [
+    LightevalTaskConfig(
+        name=get_generative_task_name("hawp", Language.HINDI, cot),
+        prompt_function=get_math_qa_prompt_function(
+            Language.HINDI,
+            lambda line: {
+                "question": line["Problem"],
+                "choices": [str(line["answer"])],
+            },
+            cot=cot,
+        ),
+        suite=("lighteval",),
+        hf_repo="lighteval/HAWP",
+        hf_subset="default",
+        evaluation_splits=("test",),
+        few_shots_split="dev",
+        generation_size=get_cot_generaion_size(cot, 100),
+        metric=[multilingual_extractive_match_metric(Language.HINDI, precision=6)],
+        stop_sequence=get_stop_sequence(Language.HINDI, cot),
+    )
+    for cot in (False, True)
+]
+
 TASKS_TABLE.extend(
     [
         *cmath_tasks,
         *mathlogicqa_rus_tasks,
         *mgsm_tasks,
         *afri_mgsm_tasks,
+        *armath_tasks,
+        *msvamp_tasks,
+        *cmm_math_mc_tasks,
+        *math23k_tasks,
+        *tal_scq5k_tasks,
+        *mathqa_tr_tasks,
+        *mwp_tr_tasks,
+        *mera_arithmetic_tasks,
+        *qazuntv2_tasks,
+        *hawp_tasks,
     ]
 )
 
@@ -3417,7 +3644,7 @@ CHINESE_AGIEVAL_SUBSET = [
 
 agieval_tasks_zh = [
     LightevalTaskConfig(
-        name=f"agieval_{Language.CHINESE.value}_{formulation.name.lower()}:{subset}",
+        name=f"{get_mcf_task_name('agieval', Language.CHINESE, formulation)}:{subset}",
         prompt_function=get_mcq_prompt_function(
             Language.CHINESE,
             partial(
@@ -3433,21 +3660,19 @@ agieval_tasks_zh = [
         evaluation_splits=("test",),
         hf_avail_splits=["test"],
         few_shots_split=None,
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.CHINESE,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
                 loglikelihood_acc_metric(normalization=LogProbPMINorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.CHINESE, formulation.cot),
     )
     for subset in CHINESE_AGIEVAL_SUBSET
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 # C-Eval: Chinese Evaluation suite
 # Similar to MMLu but with different categories
@@ -3467,7 +3692,6 @@ CEVAL_SUBSET = [
     "high_school_mathematics",
     "high_school_physics",
     "high_school_chemistry",
-    "high_school_biology",
     "middle_school_mathematics",
     "middle_school_biology",
     "middle_school_physics",
@@ -3509,7 +3733,7 @@ CEVAL_SUBSET = [
 
 ceval_tasks = [
     LightevalTaskConfig(
-        name=f"ceval_{Language.CHINESE.value}_{formulation.name.lower()}:{subset}",
+        name=f"{get_mcf_task_name('ceval', Language.CHINESE, formulation)}:{subset}",
         prompt_function=get_mcq_prompt_function(
             Language.CHINESE,
             partial(
@@ -3524,92 +3748,18 @@ ceval_tasks = [
         hf_subset=subset,
         evaluation_splits=("val",),
         few_shots_split="dev",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.CHINESE,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.CHINESE, formulation.cot),
     )
     for subset in CEVAL_SUBSET
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
-]
-
-
-# OAB Exams: A collection of questions from the Brazilian Bar Association exam
-# The exam is required for anyone who wants to practice law in Brazil
-# Dataset: https://huggingface.co/datasets/eduagarcia/oab_exams
-oab_exams_tasks = [
-    LightevalTaskConfig(
-        name=f"oab_exams_{Language.PORTUGUESE.value}_{formulation.name.lower()}",
-        prompt_function=get_mcq_prompt_function(
-            Language.PORTUGUESE,
-            lambda line: {
-                "question": line["question"],
-                "choices": line["choices"]["text"],
-                "gold_idx": LETTER_INDICES.index(line["answerKey"]),
-            },
-            formulation=formulation,
-        ),
-        suite=("lighteval",),
-        hf_repo="eduagarcia/oab_exams",
-        hf_subset="default",
-        evaluation_splits=("train",),
-        hf_avail_splits=["train"],
-        metric=get_metrics_for_formulation(
-            formulation,
-            [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-            ],
-        ),
-    )
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
-]
-
-# ENEM (Exame Nacional do Ensino Médio) is a standardized Brazilian national secondary
-# education examination. The exam is used both as a university admission test and as a
-# high school evaluation test.
-# Dataset: https://huggingface.co/datasets/maritaca-ai/enem
-enem_tasks = [
-    LightevalTaskConfig(
-        name=f"enem_{Language.PORTUGUESE.value}_{formulation.name.lower()}:{year}",
-        prompt_function=get_mcq_prompt_function(
-            Language.PORTUGUESE,
-            partial(
-                enem_adapter,
-                Language.PORTUGUESE,
-            ),
-            formulation=formulation,
-        ),
-        suite=("lighteval",),
-        hf_repo="maritaca-ai/enem",
-        hf_subset=year,
-        evaluation_splits=("train",),
-        hf_avail_splits=["train"],
-        metric=get_metrics_for_formulation(
-            formulation,
-            [
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-            ],
-        ),
-    )
-    for year in ["2022", "2023", "2024"]
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 
@@ -3619,7 +3769,7 @@ enem_tasks = [
 # MERA: https://github.com/ai-forever/MERA
 worldtree_rus_tasks = [
     LightevalTaskConfig(
-        name=f"mera_worldtree_{Language.RUSSIAN.value}_{formulation.name.lower()}",
+        name=f"{get_mcf_task_name('mera_worldtree', Language.RUSSIAN, formulation)}",
         prompt_function=get_mcq_prompt_function(
             Language.RUSSIAN,
             lambda line: {
@@ -3634,19 +3784,17 @@ worldtree_rus_tasks = [
         hf_subset="ruworldtree",
         evaluation_splits=("train",),
         hf_avail_splits=["train"],
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            Language.RUSSIAN,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(Language.RUSSIAN, formulation.cot),
     )
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 TASKS_TABLE.extend(
@@ -3654,8 +3802,6 @@ TASKS_TABLE.extend(
         *agieval_tasks_zh,
         *worldtree_rus_tasks,
         *ceval_tasks,
-        *oab_exams_tasks,
-        *enem_tasks,
     ]
 )
 
@@ -3663,20 +3809,22 @@ TASKS_TABLE.extend(
 # ------------------------------- Continuation Tasks ------------------------------- #
 xcodah_tasks = [
     LightevalTaskConfig(
-        name=f"xcodah_{language.value}_{formulation.name.lower()}",
+        name=f"{get_mcf_task_name('xcodah', language, formulation)}",
         prompt_function=get_mcq_prompt_function(language, partial(xcodah_adapter, language), formulation=formulation),
         suite=("lighteval",),
         hf_repo="INK-USC/xcsr",
-        hf_subset=f"X-CODAH-{standardize_tag(language.value) if language != Language.JAPANESE else 'jap'}",
+        hf_subset=f"X-CODAH-{standardize_tag(language.value)}",
         evaluation_splits=("validation",),
         hf_avail_splits=["validation"],
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            language,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(language, formulation.cot),
     )
     for language in [
         Language.ARABIC,
@@ -3696,16 +3844,12 @@ xcodah_tasks = [
         Language.VIETNAMESE,
         Language.CHINESE,
     ]
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 xstory_tasks = [
     LightevalTaskConfig(
-        name=f"xstory_cloze_{lang.value}_{formulation.name.lower()}",
+        name=f"{get_mcf_task_name('xstory_cloze', lang, formulation)}",
         prompt_function=get_continuation_prompt_function(
             lang,
             partial(
@@ -3730,13 +3874,15 @@ xstory_tasks = [
         hf_subset=standardize_tag(lang.value),
         evaluation_splits=["eval"],
         few_shots_split="train",
-        metric=get_metrics_for_formulation(
+        metric=get_metrics_for_mcq_formulation(
             formulation,
+            lang,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
                 loglikelihood_acc_metric(normalization=LogProbCharNorm()),
             ],
         ),
+        stop_sequence=get_stop_sequence(lang, formulation.cot),
     )
     for lang in [
         Language.RUSSIAN,
@@ -3750,11 +3896,7 @@ xstory_tasks = [
         Language.BASQUE,
         Language.BURMESE,
     ]
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 TASKS_TABLE.extend(
@@ -3768,20 +3910,27 @@ TASKS_TABLE.extend(
 
 xwinograd_tasks = [
     LightevalTaskConfig(
-        name=f"xwinograd_{language.value}_{formulation.name.lower()}",
+        name=f"{get_mcf_task_name('xwinograd', language, formulation)}",
         suite=("lighteval",),
         prompt_function=get_continuation_prompt_function(
-            language, partial(winogrand_adapter, language), formulation=formulation
+            language,
+            partial(winogrand_adapter, language),
+            formulation=formulation,
         ),
         hf_repo="Muennighoff/xwinograd",
-        hf_subset=standardize_tag(language.value) if language != Language.JAPANESE else "jp",
+        hf_subset=standardize_tag(language.value),
         evaluation_splits=("test",),
         hf_avail_splits=["test"],
-        metric=[
-            loglikelihood_acc_metric(normalization=None),
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_mcq_formulation(
+            formulation,
+            language,
+            [
+                loglikelihood_acc_metric(normalization=None),
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
+        stop_sequence=get_stop_sequence(language, formulation.cot),
     )
     for language in [
         Language.ENGLISH,
@@ -3791,35 +3940,34 @@ xwinograd_tasks = [
         Language.RUSSIAN,
         Language.CHINESE,
     ]
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 winograd_turkish_task = [
     LightevalTaskConfig(
-        name=f"community_xwinograd_{Language.TURKISH.value}_{formulation.name.lower()}",
+        name=f"{get_mcf_task_name('community_xwinograd', Language.TURKISH, formulation)}",
         suite=("lighteval",),
         prompt_function=get_continuation_prompt_function(
-            Language.TURKISH, partial(winogrand_adapter, Language.TURKISH), formulation=formulation
+            Language.TURKISH,
+            partial(winogrand_adapter, Language.TURKISH),
+            formulation=formulation,
         ),
         hf_repo="malhajar/winogrande-tr-v0.2",
         hf_subset="default",
         evaluation_splits=("validation",),
         few_shots_split="train",
-        metric=[
-            loglikelihood_acc_metric(normalization=None),
-            loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-            loglikelihood_acc_metric(normalization=LogProbCharNorm()),
-        ],
+        metric=get_metrics_for_mcq_formulation(
+            formulation,
+            Language.TURKISH,
+            [
+                loglikelihood_acc_metric(normalization=None),
+                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
+                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+            ],
+        ),
+        stop_sequence=get_stop_sequence(Language.TURKISH, formulation.cot),
     )
-    for formulation in [
-        MCFFormulation(),
-        CFFormulation(),
-        HybridFormulation(),
-    ]
+    for formulation in DEFAULT_FORMULATIONS
 ]
 
 TASKS_TABLE.extend(
@@ -3844,8 +3992,8 @@ MKQA_TASK_TO_ID = {
 
 mkqa_tasks = [
     LightevalTaskConfig(
-        name=f"mkqa_{language.value}:{subset}",
-        prompt_function=get_qa_prompt_function(language, partial(get_mkqa_adapter, language)),
+        name=get_generative_task_name("mkqa", language, cot),
+        prompt_function=get_qa_prompt_function(language, partial(get_mkqa_adapter, language), cot=cot),
         suite=("lighteval",),
         hf_repo="apple/mkqa",
         hf_subset="mkqa",
@@ -3861,15 +4009,17 @@ mkqa_tasks = [
         trust_dataset=True,
         evaluation_splits=("train",),
         hf_avail_splits=["train"],
-        stop_sequence=("\n",),
         metric=[
-            multilingual_quasi_exact_match_metric(language, "prefix"),
-            multilingual_quasi_f1_score_metric(language),
+            multilingual_quasi_exact_match_metric(
+                language, "prefix", normalize_pred=get_cot_answer_normalization(cot)
+            ),
+            multilingual_quasi_f1_score_metric(language, normalize_pred=get_cot_answer_normalization(cot)),
         ]
         if subset in ["entity", "long_answer", "short_phrase"]
         else [
-            multilingual_quasi_exact_match_metric(language, "full"),
+            multilingual_quasi_exact_match_metric(language, "full", normalize_pred=get_cot_answer_normalization(cot)),
         ],
+        stop_sequence=get_stop_sequence(language, cot),
     )
     for subset in MKQA_TASK_TO_ID.keys()
     for language in [
@@ -3900,6 +4050,7 @@ mkqa_tasks = [
         # Language.CHINESE_HONG_KONG,
         # Language.CHINESE_TRADITIONAL,
     ]
+    for cot in (False, True)
 ]
 
 mintaka_tasks = [
@@ -3911,18 +4062,19 @@ mintaka_tasks = [
                 "question": line["question"],
                 "choices": [line["answerText"]],
             },
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="AmazonScience/mintaka",
         hf_subset=standardize_tag(lang.value),
         evaluation_splits=("test",),
         few_shots_split="train",
-        generation_size=400,
-        stop_sequence=("\n",),
+        generation_size=get_cot_generaion_size(cot, 400),
         metric=[
             multilingual_quasi_exact_match_metric(lang, "prefix"),
             multilingual_quasi_f1_score_metric(lang),
         ],
+        stop_sequence=get_stop_sequence(lang, cot=cot),
     )
     for lang in [
         Language.ARABIC,
@@ -3935,55 +4087,64 @@ mintaka_tasks = [
         Language.JAPANESE,
         Language.PORTUGUESE,
     ]
+    for cot in (False, True)
 ]
 
 french_triviqa_tasks = [
     LightevalTaskConfig(
-        name=f"community_triviaqa_{Language.FRENCH.value}",
+        name=get_generative_task_name("community_triviaqa", Language.FRENCH, cot),
         prompt_function=get_qa_prompt_function(
             Language.FRENCH,
             lambda line: {
                 "question": line["Question"],
                 "choices": [line["Answer"]],
             },
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="manu/french-trivia",
         hf_subset="default",
         evaluation_splits=("train",),
         hf_avail_splits=["train"],
-        generation_size=400,
-        stop_sequence=("\n",),
+        generation_size=get_cot_generaion_size(cot, 400),
         metric=[
-            multilingual_quasi_exact_match_metric(Language.FRENCH, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.FRENCH),
+            multilingual_quasi_exact_match_metric(
+                Language.FRENCH, "prefix", normalize_pred=get_cot_answer_normalization(cot)
+            ),
+            multilingual_quasi_f1_score_metric(Language.FRENCH, normalize_pred=get_cot_answer_normalization(cot)),
         ],
+        stop_sequence=get_stop_sequence(Language.FRENCH, cot),
     )
+    for cot in (False, True)
 ]
 
 
 chegeka_tasks = [
     LightevalTaskConfig(
-        name=f"chegeka_{Language.RUSSIAN.value}",
+        name=get_generative_task_name("chegeka", Language.RUSSIAN, cot),
         prompt_function=get_qa_prompt_function(
             Language.RUSSIAN,
             lambda line: {
                 "question": line["inputs"]["text"],
                 "choices": [line["outputs"]],
             },
+            cot=cot,
         ),
         suite=("lighteval",),
         hf_repo="ai-forever/MERA",
         hf_subset="chegeka",
         evaluation_splits=("train",),
         hf_avail_splits=["train"],
-        generation_size=400,
-        stop_sequence=("\n",),
+        generation_size=get_cot_generaion_size(cot, 400),
         metric=[
-            multilingual_quasi_exact_match_metric(Language.RUSSIAN, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.RUSSIAN),
+            multilingual_quasi_exact_match_metric(
+                Language.RUSSIAN, "prefix", normalize_pred=get_cot_answer_normalization(cot)
+            ),
+            multilingual_quasi_f1_score_metric(Language.RUSSIAN, normalize_pred=get_cot_answer_normalization(cot)),
         ],
+        stop_sequence=get_stop_sequence(Language.RUSSIAN, cot),
     )
+    for cot in (False, True)
 ]
 
 TASKS_TABLE.extend(
@@ -4061,7 +4222,7 @@ ACVA_SUBSET = [
 
 acva_tasks = [
     LightevalTaskConfig(
-        name=f"acva_{Language.ARABIC.value}:{subset}",
+        name=get_generative_task_name("acva", Language.ARABIC, cot),
         prompt_function=get_boolq_prompt_function(
             Language.ARABIC,
             lambda line: {
@@ -4075,11 +4236,17 @@ acva_tasks = [
         hf_subset=subset,
         evaluation_splits=("test",),
         few_shots_split="validation",
-        metric=[multilingual_quasi_exact_match_metric(Language.ARABIC, "full"), loglikelihood_acc_metric()],
-        generation_size=5,
+        metric=[
+            multilingual_quasi_exact_match_metric(
+                Language.ARABIC, "full", normalize_pred=get_cot_answer_normalization(cot)
+            ),
+            loglikelihood_acc_metric(),
+        ],
+        generation_size=get_cot_generaion_size(cot, 5),
         stop_sequence=("\n",),
     )
     for subset in ACVA_SUBSET
+    for cot in (False, True)
 ]
 
 
@@ -4368,7 +4535,7 @@ flores200_tasks = [
             source_language=Language(manage_duplicate_language_codes(lang1.split("_")[0])),
             target_language=Language(manage_duplicate_language_codes(lang2.split("_")[0])),
             adapter=flores_adapter(lang1, lang2),
-            formulation=CFFormulation(),
+            formulation=CFFormulation(cot=cot),
         ),
         suite=("lighteval",),
         hf_repo="facebook/flores",
@@ -4377,13 +4544,19 @@ flores200_tasks = [
         evaluation_splits=["devtest"],
         few_shots_split="dev",
         few_shots_select=None,
-        generation_size=300,
-        metric=[Metrics.chrf_plus, Metrics.bleu, Metrics.bleu_1, Metrics.bleu_4],
-        stop_sequence=["\n"],
+        generation_size=get_cot_generaion_size(cot, 300),
+        metric=[
+            translation_metric(metric_name="chrf++", normalize_pred=get_cot_answer_normalization(cot)),
+            translation_metric(metric_name="bleu", normalize_pred=get_cot_answer_normalization(cot)),
+            translation_metric(metric_name="bleu_1", normalize_pred=get_cot_answer_normalization(cot)),
+            translation_metric(metric_name="bleu_4", normalize_pred=get_cot_answer_normalization(cot)),
+        ],
+        stop_sequence=get_stop_sequence(Language.ENGLISH, cot),
         trust_dataset=True,
         version=0,
     )
     for (lang1, lang2) in combinations(flores_200_languages, 2)
+    for cot in (False, True)
 ]
 
 TASKS_TABLE.extend(

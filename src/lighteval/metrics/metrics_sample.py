@@ -744,7 +744,12 @@ class BLEURT:
 
 
 class BLEU:
-    def __init__(self, n_gram: int):
+    def __init__(
+        self,
+        n_gram: int,
+        normalize_pred: Callable[[str], str] | None = None,
+        normalize_gold: Callable[[str], str] | None = None,
+    ):
         """BLEU scorer class. Relies on `nltk`'s sentencebleu for scoring.
         TODO: Will have to move this to sacrebleu.
 
@@ -752,6 +757,8 @@ class BLEU:
             n_gram (int): Number of n_grams to use for scoring.
         """
         self.n_gram = n_gram
+        self.normalize_pred = normalize_pred
+        self.normalize_gold = normalize_gold
 
     def compute(self, golds: list[str], predictions: list[str], **kwargs):
         """Computes the sentence level BLEU between the golds and each prediction, then takes the average.
@@ -763,6 +770,10 @@ class BLEU:
         Returns:
             float: Score over the current sample's items.
         """
+        if self.normalize_pred:
+            predictions = [self.normalize_pred(p) for p in predictions]
+        if self.normalize_gold:
+            golds = [self.normalize_gold(g) for g in golds]
         return np.mean([self._bleu_score(golds, p) for p in predictions])
 
     def _bleu_score(self, gold: list[str], pred: str) -> float:

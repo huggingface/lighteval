@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 from lighteval.tasks.templates.nli import get_nli_prompt_function
-from lighteval.tasks.templates.utils.formulation import CFFormulation, HybridFormulation
+from lighteval.tasks.templates.utils.formulation import CFFormulation, HybridFormulation, MCFFormulation
 from lighteval.utils.language import Language
 
 
@@ -114,3 +114,85 @@ Answer:\
     assert doc.unconditioned_query == "Answer:"
     assert doc.choices == [" True", " Neither", " False"]
     assert doc.gold_index == [2]
+
+
+def test_nli_prompt_mcf_cot():
+    """Test multiple-choice format NLI prompt generation with cot."""
+    test_input = {
+        "premise": "The cat is sleeping on the couch.",
+        "hypothesis": "The cat is awake.",
+        "gold_idx": 2,
+        "__few_shots": True,
+        "few_shot_cot": "i think it's A. True",
+        "instruction": "Choose the correct relation between the premise and hypothesis",
+    }
+
+    prompt_fn = get_nli_prompt_function(
+        Language.ENGLISH,
+        {
+            "hypothesis": "hypothesis",
+            "premise": "premise",
+            "gold_idx": "gold_idx",
+            "few_shot_cot": "few_shot_cot",
+            "instruction": "instruction",
+        },
+        ["entailment", "neutral", "contradiction"],
+        formulation=MCFFormulation(cot=True),
+    )
+
+    doc = prompt_fn(test_input, "test_nli_task")
+
+    assert (
+        doc.query
+        == """\
+Choose the correct relation between the premise and hypothesis
+
+The cat is sleeping on the couch.
+Question: The cat is awake.
+ A. True
+ B. Neither
+ C. False
+Step-by-Step Answer:\
+"""
+    )
+    assert doc.unconditioned_query == "Step-by-Step Answer:"
+    assert doc.choices == [" I think it's A. True"]
+    assert doc.gold_index == [0]
+
+
+def test_nli_prompt_mcf_cot_default_instruction():
+    """Test multiple-choice format NLI prompt generation with cot."""
+    test_input = {
+        "premise": "The cat is sleeping on the couch.",
+        "hypothesis": "The cat is awake.",
+        "gold_idx": 2,
+        "__few_shots": True,
+        "few_shot_cot": "i think it's A. True",
+    }
+
+    prompt_fn = get_nli_prompt_function(
+        Language.ENGLISH,
+        {"hypothesis": "hypothesis", "premise": "premise", "gold_idx": "gold_idx", "few_shot_cot": "few_shot_cot"},
+        ["entailment", "neutral", "contradiction"],
+        formulation=MCFFormulation(cot=True),
+    )
+
+    doc = prompt_fn(test_input, "test_nli_task")
+
+    assert (
+        doc.query
+        == """\
+Choose the letter of the most likely relation between the premise and hypothesis.
+Output the final answer in format: <b></b>.
+
+The cat is sleeping on the couch.
+Question: The cat is awake.
+ A. True
+ B. Neither
+ C. False
+Step-by-Step Answer:\
+"""
+    )
+    assert doc.unconditioned_query == "Step-by-Step Answer:"
+    assert doc.choices == [" I think it's A. True"]
+    assert doc.gold_index == [0]
