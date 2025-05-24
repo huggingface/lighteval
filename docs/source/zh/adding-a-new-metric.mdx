@@ -1,0 +1,86 @@
+# 添加新指标
+
+首先，检查是否可以使用[语料库指标](package_reference/metrics#corpus-metrics)或[样本指标](package_reference/metrics#sample-metrics)中的参数化函数。
+
+如果不能，您可以使用`custom_task`系统注册您的新指标：
+
+> [!TIP]
+> 要查看与自定义任务一起添加的自定义指标示例，请查看<a href="">IFEval自定义任务</a>。
+
+
+> [!WARNING]
+> 要将您的自定义指标贡献给lighteval仓库，您首先需要通过运行`pip install -e .[dev]`安装所需的开发依赖项，然后运行`pre-commit install`安装pre-commit钩子。
+
+
+- 创建一个包含指标完整逻辑的新Python文件。
+- 该文件还需要以这些导入开始
+
+```python
+from aenum import extend_enum
+from lighteval.metrics import Metrics
+```
+
+您需要定义一个样本级指标：
+
+```python
+def custom_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> bool:
+    response = predictions[0]
+    return response == formatted_doc.choices[formatted_doc.gold_index]
+```
+
+这里的样本级指标只返回一个指标，如果您想为每个样本返回多个指标，您需要返回一个字典，以指标为键，值为值。
+
+```python
+def custom_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dict:
+    response = predictions[0]
+    return {"accuracy": response == formatted_doc.choices[formatted_doc.gold_index], "other_metric": 0.5}
+```
+
+然后，如果需要，您可以定义一个聚合函数，常见的聚合函数是`np.mean`。
+
+```python
+def agg_function(items):
+    flat_items = [item for sublist in items for item in sublist]
+    score = sum(flat_items) / len(flat_items)
+    return score
+```
+
+最后，您可以定义您的指标。如果是样本级指标，您可以使用以下代码和[`~metrics.utils.metric_utils.SampleLevelMetric`]：
+
+```python
+my_custom_metric = SampleLevelMetric(
+    metric_name={custom_metric_name},
+    higher_is_better={True或False},
+    category={MetricCategory},
+    use_case={MetricUseCase},
+    sample_level_fn=custom_metric,
+    corpus_level_fn=agg_function,
+)
+```
+
+如果您的指标为每个样本定义多个指标，您可以使用以下代码和[`~metrics.utils.metric_utils.SampleLevelMetricGrouping`]：
+
+```python
+custom_metric = SampleLevelMetricGrouping(
+    metric_name={submetric_names},
+    higher_is_better={n: {True或False} for n in submetric_names},
+    category={MetricCategory},
+    use_case={MetricUseCase},
+    sample_level_fn=custom_metric,
+    corpus_level_fn={
+        "accuracy": np.mean,
+        "other_metric": agg_function,
+    },
+)
+```
+
+最后，添加以下内容，以便在作为模块加载时将您的指标添加到我们的指标列表中。
+
+```python
+# 将指标添加到指标列表！
+extend_enum(Metrics, "metric_name", metric_function)
+if __name__ == "__main__":
+    print("Imported metric")
+```
+
+您可以通过在启动lighteval时使用`--custom-tasks path_to_your_file`来提供您的自定义指标。 

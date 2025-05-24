@@ -1,0 +1,127 @@
+# 评估自定义模型
+
+Lighteval允许您通过创建继承自`LightevalModel`的自定义模型类来评估自定义模型实现。当您想评估标准后端（transformers、vllm等）不直接支持的模型时，这非常有用。
+
+## 创建自定义模型
+
+1. 创建包含您的自定义模型实现的Python文件。该模型必须继承自`LightevalModel`并实现所有必需的方法。
+
+以下是一个基本示例：
+
+```python
+from lighteval.models.abstract_model import LightevalModel
+
+class MyCustomModel(LightevalModel):
+    def __init__(self, config):
+        super().__init__(config)
+        # 在这里初始化您的模型...
+
+    def greedy_until(self, requests, max_tokens=None, stop_sequences=None):
+        # 实现生成逻辑
+        pass
+
+    def loglikelihood(self, requests, log=True):
+        # 实现对数似然计算
+        pass
+
+    def loglikelihood_rolling(self, requests):
+        # 实现滚动对数似然计算
+        pass
+
+    def loglikelihood_single_token(self, requests):
+        # 实现单个令牌对数似然计算
+        pass
+```
+
+2. 自定义模型文件应该只包含一个继承自`LightevalModel`的类。在加载模型时，这个类将被自动检测并实例化。
+
+> [!TIP]
+> 您可以在`examples/custom_models/google_translate_model.py`中找到一个完整的自定义模型实现示例。
+
+## 运行评估
+
+您可以使用命令行界面或Python API评估您的自定义模型。
+
+### 使用命令行
+
+```bash
+lighteval custom \
+    "google-translate" \
+    "examples/custom_models/google_translate_model.py" \
+    "lighteval|wmt20:fr-de|0|0" \
+    --max-samples 10
+```
+
+该命令需要三个必要参数：
+- 模型名称（用于在结果/日志中跟踪）
+- 您的模型实现文件的路径
+- 要评估的任务（格式与其他后端相同）
+
+### 使用Python API
+
+```python
+from lighteval.logging.evaluation_tracker import EvaluationTracker
+from lighteval.models.custom.custom_model import CustomModelConfig
+from lighteval.pipeline import Pipeline, PipelineParameters
+
+# 设置评估跟踪
+evaluation_tracker = EvaluationTracker(
+    output_dir="results",
+    save_details=True
+)
+
+# 配置流水线
+pipeline_params = PipelineParameters(
+    launcher_type=ParallelismManager.CUSTOM,
+)
+
+# 配置您的自定义模型
+model_config = CustomModelConfig(
+    model="my-custom-model",
+    model_definition_file_path="path/to/my_model.py"
+)
+
+# 创建并运行流水线
+pipeline = Pipeline(
+    tasks="leaderboard|truthfulqa:mc|0|0",
+    pipeline_parameters=pipeline_params,
+    evaluation_tracker=evaluation_tracker,
+    model_config=model_config
+)
+
+pipeline.evaluate()
+pipeline.save_and_push_results()
+```
+
+## 必需的方法
+
+您的自定义模型必须实现这些核心方法：
+
+- `greedy_until`：用于生成文本，直到达到停止序列或最大令牌数
+- `loglikelihood`：用于计算特定续写的对数概率
+- `loglikelihood_rolling`：用于计算序列的滚动对数概率
+- `loglikelihood_single_token`：用于计算单个令牌的对数概率
+
+有关详细的方法签名和要求，请参阅`LightevalModel`基类文档。
+
+## 最佳实践
+
+1. **错误处理**：在您的模型方法中实现健壮的错误处理，以优雅地处理边缘情况。
+
+2. **批处理**：考虑在您的模型方法中实现高效的批处理，以提高性能。
+
+3. **资源管理**：在您的模型的`__init__`和`__del__`方法中正确管理任何资源（例如，API连接、模型权重）。
+
+4. **文档**：为您的模型类和方法添加清晰的文档字符串，解释任何特定的要求或限制。
+
+## 示例用例
+
+自定义模型特别适用于：
+
+- 评估通过自定义API访问的模型
+- 包装具有专门预处理/后处理的模型
+- 测试新型模型架构
+- 评估集成模型
+- 与外部服务或工具集成
+
+有关包装Google Translate API的自定义模型的完整示例，请参阅`examples/custom_models/google_translate_model.py`。 

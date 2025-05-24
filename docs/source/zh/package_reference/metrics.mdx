@@ -1,0 +1,70 @@
+# 指标
+
+## 指标
+[//]: # (TODO: aenum.Enum raises error when generating docs: not supported by inspect.signature. See: https://github.com/ethanfurman/aenum/issues/44)
+[//]: # (### Metrics)
+[//]: # ([[autodoc]] metrics.metrics.Metrics)
+### Metric（指标）
+[[autodoc]] metrics.utils.metric_utils.Metric
+### CorpusLevelMetric（语料级指标）
+[[autodoc]] metrics.utils.metric_utils.CorpusLevelMetric
+### SampleLevelMetric（样本级指标）
+[[autodoc]] metrics.utils.metric_utils.SampleLevelMetric
+### MetricGrouping（指标分组）
+[[autodoc]] metrics.utils.metric_utils.MetricGrouping
+### CorpusLevelMetricGrouping（语料级指标分组）
+[[autodoc]] metrics.utils.metric_utils.CorpusLevelMetricGrouping
+### SampleLevelMetricGrouping（样本级指标分组）
+[[autodoc]] metrics.utils.metric_utils.SampleLevelMetricGrouping
+
+## Corpus Metrics（语料级指标）
+### CorpusLevelF1Score
+[[autodoc]] metrics.metrics_corpus.CorpusLevelF1Score
+### CorpusLevelPerplexityMetric
+[[autodoc]] metrics.metrics_corpus.CorpusLevelPerplexityMetric
+### CorpusLevelTranslationMetric
+[[autodoc]] metrics.metrics_corpus.CorpusLevelTranslationMetric
+### matthews_corrcoef
+[[autodoc]] metrics.metrics_corpus.matthews_corrcoef
+
+## Sample Metrics（样本级指标）
+### ExactMatches（精确匹配）
+[[autodoc]] metrics.metrics_sample.ExactMatches
+### F1_score（F1分数）
+[[autodoc]] metrics.metrics_sample.F1_score
+### LoglikelihoodAcc
+[[autodoc]] metrics.metrics_sample.LoglikelihoodAcc
+### NormalizedMultiChoiceProbability（归一化多选概率）
+[[autodoc]] metrics.metrics_sample.NormalizedMultiChoiceProbability
+### Probability（概率）
+[[autodoc]] metrics.metrics_sample.Probability
+### Recall（召回率）
+[[autodoc]] metrics.metrics_sample.Recall
+### MRR
+[[autodoc]] metrics.metrics_sample.MRR
+### ROUGE
+[[autodoc]] metrics.metrics_sample.ROUGE
+### BertScore
+[[autodoc]] metrics.metrics_sample.BertScore
+### Extractiveness（抽取性）
+[[autodoc]] metrics.metrics_sample.Extractiveness
+### Faithfulness（忠实度）
+[[autodoc]] metrics.metrics_sample.Faithfulness
+### BLEURT
+[[autodoc]] metrics.metrics_sample.BLEURT
+### BLEU
+[[autodoc]] metrics.metrics_sample.BLEU
+### StringDistance（字符串距离）
+[[autodoc]] metrics.metrics_sample.StringDistance
+### JudgeLLM
+[[autodoc]] metrics.metrics_sample.JudgeLLM
+### JudgeLLMMTBench
+[[autodoc]] metrics.metrics_sample.JudgeLLMMTBench
+### JudgeLLMMixEval
+[[autodoc]] metrics.metrics_sample.JudgeLLMMixEval
+### MajAtK
+[[autodoc]] metrics.metrics_sample.MajAtK
+
+## LLM-as-a-Judge（LLM作为评判）
+### JudgeLM
+[[autodoc]] metrics.llm_as_judge.JudgeLM 

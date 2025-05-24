@@ -1,0 +1,54 @@
+- sections:
+  - local: index
+    title: 🤗 Lighteval
+  - local: installation
+    title: 安装
+  - local: quicktour
+    title: 快速上手
+  title: 入门指南
+- sections:
+  - local: saving-and-reading-results
+    title: 保存和读取结果
+  - local: using-the-python-api
+    title: 使用Python API
+  - local: adding-a-custom-task
+    title: 添加自定义任务
+  - local: adding-a-new-metric
+    title: 添加自定义指标
+  - local: evaluating-a-custom-model
+    title: 评估自定义模型
+  - local: use-inference-providers-as-backend
+    title: 使用HF的推理提供商作为后端
+  - local: use-litellm-as-backend
+    title: 使用litellm作为后端
+  - local: use-vllm-as-backend
+    title: 使用vllm作为后端
+  - local: use-sglang-as-backend
+    title: 使用SGLang作为后端
+  - local: use-huggingface-inference-endpoints-or-tgi-as-backend
+    title: 使用Hugging Face推理端点或TGI作为后端
+  - local: contributing-to-multilingual-evaluations
+    title: 贡献多语言评估
+  title: 指南
+- sections:
+  - local: metric-list
+    title: 可用指标
+  - local: available-tasks
+    title: 可用任务
+  title: API
+- sections:
+  - sections:
+    - local: package_reference/evaluation_tracker
+      title: EvaluationTracker
+    - local: package_reference/models
+      title: 模型和模型配置
+    - local: package_reference/pipeline
+      title: 流水线
+    title: 主要类
+  - local: package_reference/metrics
+    title: 指标
+  - local: package_reference/tasks
+    title: 任务
+  - local: package_reference/logging
+    title: 日志
+  title: 参考 

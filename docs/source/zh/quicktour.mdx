@@ -1,0 +1,179 @@
+<!--
+Copyright 2024 The HuggingFace Team. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+⚠️ Note that this file is in Markdown but contain specific syntax for our doc-builder (similar to MDX) that may not be
+rendered properly in your Markdown viewer.
+
+-->
+
+# 快速上手
+
+
+> [!TIP]
+> 建议使用`--help`参数了解每个命令的可用选项。
+> `lighteval --help`
+
+Lighteval 支持多种命令方式：
+
+- `lighteval accelerate`: 使用[🤗 Accelerate](https://github.com/huggingface/accelerate)在CPU或多GPU环境评估模型
+- `lighteval nanotron`: 通过[⚡️ Nanotron](https://github.com/huggingface/nanotron)在分布式环境中评估模型
+- `lighteval vllm`: 基于[🚀 VLLM](https://github.com/vllm-project/vllm)在单个或多个GPU上评估模型
+- `lighteval endpoint`
+    - `inference-endpoint`: 使用[🔗 Inference Endpoint](https://huggingface.co/inference-endpoints/dedicated)评估模型
+    - `tgi`: 通过[🔗 Text Generation Inference](https://huggingface.co/docs/text-generation-inference/en/index)评估模型
+    - `openai`: 基于[🔗 OpenAI API](https://platform.openai.com/)评估模型
+
+## 基本用法
+
+要使用[🤗 Accelerate](https://github.com/huggingface/accelerate)在Truthful QA基准上评估`GPT-2`模型，运行：
+
+```bash
+lighteval accelerate \
+     "model_name=openai-community/gpt2" \
+     "leaderboard|truthfulqa:mc|0|0"
+```
+
+在这里，首先选择后端（`accelerate`、`nanotron`或`vllm`），然后指定要评估的模型和任务。
+
+模型参数采用`key1=value1,key2=value2`这样的语法格式。
+有效的键值对取决于所选后端，详细说明请参见[下文](#模型参数)。
+
+任务规范的语法格式如下：
+
+```txt
+{套件}|{任务}|{少样本数量}|{0表示严格使用指定的少样本数量，1表示允许在上下文过长时自动截断}
+```
+
+当第四个值设为1时，lighteval会检查整个提示（包括少样本示例）是否超出任务或模型的上下文长度限制。
+如果超出限制，系统会自动减少少样本示例的数量。
+
+所有官方支持的任务可在[任务列表](available-tasks)和
+[extended文件夹](https://github.com/huggingface/lighteval/tree/main/src/lighteval/tasks/extended)中找到。
+社区贡献的任务则位于
+[community](https://github.com/huggingface/lighteval/tree/main/community_tasks)文件夹。
+关于任务实现的更多细节，如提示构建方式或使用的评估指标，请查阅
+[源文件](https://github.com/huggingface/lighteval/blob/main/src/lighteval/tasks/default_tasks.py)。
+
+Lighteval支持同时运行多个任务，可通过逗号分隔列表或指定配置文件路径来实现。
+配置文件应按照[examples/tasks/recommended_set.txt](https://github.com/huggingface/lighteval/blob/main/examples/tasks/recommended_set.txt)的结构编写。
+指定文件路径时应以`./`开头。
+
+```bash
+lighteval accelerate \
+     "model_name=openai-community/gpt2" \
+     ./path/to/lighteval/examples/tasks/recommended_set.txt
+# 或者使用逗号分隔的任务列表，例如："leaderboard|truthfulqa:mc|0|0|,leaderboard|gsm8k|3|1"
+```
+
+## 在多GPU环境中评估模型
+
+#### 数据并行
+
+要在多GPU环境中评估模型，首先需要创建多GPU配置：
+
+```bash
+accelerate config
+```
+
+然后，可以使用8个GPU的数据并行方式来评估模型：
+
+```bash
+accelerate launch --multi_gpu --num_processes=8 -m \
+    lighteval accelerate \
+    "model_name=openai-community/gpt2" \
+    "leaderboard|truthfulqa:mc|0|0"
+```
+
+其中，`--override_batch_size`定义每个设备的批处理大小，实际总批处理大小为`override_batch_size * num_gpus`。
+
+#### 流水线并行
+
+要使用2个或更多GPU的流水线并行方式评估模型，运行：
+
+```bash
+lighteval accelerate \
+    "model_name=openai-community/gpt2,model_parallel=True" \
+    "leaderboard|truthfulqa:mc|0|0"
+```
+
+这会自动使用accelerate将模型分布在多个GPU上。
+
+> [!TIP]
+> 数据并行和流水线并行可以结合使用，只需设置`model_parallel=True`并使用accelerate进行数据分布。
+
+## 后端配置
+
+`model-args`参数接受一个模型参数列表字符串。可用参数取决于所选后端（vllm或accelerate）。
+
+### Accelerate
+
+- **pretrained** (str):
+    HuggingFace Hub模型ID或预训练模型路径，相当于HuggingFace `transformers` API中`from_pretrained`的`pretrained_model_name_or_path`参数。
+- **tokenizer** (Optional[str]): 用于分词的HuggingFace Hub分词器ID。
+- **multichoice_continuations_start_space** (Optional[bool]): 在多选项生成中是否在每个选项开头添加空格。
+    例如，对于问题"法国的首都是什么？"和选项"巴黎"、"伦敦"，
+    会被分词为"法国的首都是什么？巴黎"和"法国的首都是什么？伦敦"。
+    True表示添加空格，False表示去除空格，None表示不做处理。
+- **subfolder** (Optional[str]): 模型仓库中的子文件夹。
+- **revision** (str): 模型的版本。
+- **max_gen_toks** (Optional[int]): 生成的最大token数量。
+- **max_length** (Optional[int]): 生成输出的最大长度。
+- **add_special_tokens** (bool, optional, defaults to True): 是否向输入序列添加特殊token。
+   如果为`None`，对于seq2seq模型（如T5）默认值为`True`，对于因果模型默认为`False`。
+- **model_parallel** (bool, optional, defaults to None):
+    True/False: 强制使用或不使用`accelerate`库在多设备间分布大型模型。
+    默认为None，会比较进程数与GPU数：若进程数小于GPU数则启用模型并行，否则不启用。
+- **dtype** (Union[str, torch.dtype], optional, defaults to None):
+    如指定，则将模型权重转换为该数据类型。字符串会被转换为`torch.dtype`对象（如`float16` -> `torch.float16`）。
+    使用`dtype="auto"`可从模型权重自动推导类型。
+- **device** (Union[int, str]): 用于模型训练的设备。
+- **quantization_config** (Optional[BitsAndBytesConfig]): 模型量化配置，用于以量化精度加载原本为浮点的模型。4位和8位精度需要此配置。
+- **trust_remote_code** (bool): 加载模型时是否信任远程代码。
+
+### VLLM
+
+- **pretrained** (str): HuggingFace Hub模型ID或预训练模型路径。
+- **gpu_memory_utilization** (float): GPU内存使用比例。
+- **batch_size** (int): 模型训练的批处理大小。
+- **revision** (str): 模型版本。
+- **dtype** (str, None): 模型使用的数据类型。
+- **tensor_parallel_size** (int): 使用的张量并行单元数量。
+- **data_parallel_size** (int): 使用的数据并行单元数量。
+- **max_model_length** (int): 模型的最大长度。
+- **swap_space** (int): 每个GPU的CPU交换空间大小（GiB）。
+- **seed** (int): 模型使用的随机种子。
+- **trust_remote_code** (bool): 加载模型时是否信任远程代码。
+- **use_chat_template** (bool): 是否使用聊天模板。
+- **add_special_tokens** (bool): 是否向输入序列添加特殊token。
+- **multichoice_continuations_start_space** (bool): 在多选项生成中是否在每个选项开头添加空格。
+- **subfolder** (Optional[str]): 模型仓库中的子文件夹。
+
+## Nanotron
+
+要评估使用nanotron训练的模型：
+
+> [!WARNING]
+> Nanotron模型必须使用torchrun进行评估。
+
+
+```bash
+ torchrun --standalone --nnodes=1 --nproc-per-node=1  \
+ src/lighteval/__main__.py nanotron \
+ --checkpoint-config-path ../nanotron/checkpoints/10/config.yaml \
+ --lighteval-config-path examples/nanotron/lighteval_config_override_template.yaml
+ ```
+
+`nproc-per-node`参数应与`lighteval_config_template.yaml`文件中配置的并行设置匹配，
+即：`nproc-per-node = data_parallelism * tensor_parallelism * pipeline_parallelism`。 

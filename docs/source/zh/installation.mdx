@@ -1,0 +1,66 @@
+<!--
+Copyright 2024 The HuggingFace Team. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+⚠️ Note that this file is in Markdown but contain specific syntax for our doc-builder (similar to MDX) that may not be
+rendered properly in your Markdown viewer.
+
+-->
+
+# 安装
+
+Lighteval可以通过PyPi或源代码两种方式安装。
+
+## 从PyPi安装
+
+```bash
+pip install lighteval
+```
+
+## 从源代码安装
+此方式主要适用于希望在`lighteval`上进行开发的用户：
+
+```bash
+git clone https://github.com/huggingface/lighteval.git
+cd lighteval
+pip install -e .
+```
+
+## 额外依赖
+
+Lighteval提供了多个可选依赖包，可以通过指定额外组来安装：
+`pip install lighteval[<group>]`或`pip install -e .[<group>]`
+
+如需使用`sglang`作为Lighteval后端，请参考[sglang安装文档](https://docs.sglang.ai/start/install.html)。
+
+| 额外名称     | 描述                                              |
+|--------------|---------------------------------------------------|
+| tgi          | 使用Text Generation Inference API评估模型         |
+| nanotron     | 支持评估nanotron模型                              |
+| quantization | 支持评估量化模型                                  |
+| adapters     | 支持评估适配器模型（delta和peft）                 |
+| tensorboardX | 允许将结果上传到tensorboard                       |
+| vllm         | 使用vllm作为推理后端                              |
+| sglang       | 使用sglang作为推理后端                            |
+| s3           | 支持将结果上传到s3存储                            |
+
+
+## Hugging Face登录
+
+如果您希望将评估结果推送到Hugging Face Hub或评估私有模型，
+需要将访问令牌添加到环境变量`HF_TOKEN`中，可通过以下命令完成：
+
+```bash
+huggingface-cli login
+``` 
