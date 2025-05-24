@@ -193,12 +193,12 @@ class TestBaseMetrics:
     def test_prob(self):
         # Simple case
         prob_metric = probability_metric()
-        result = prob_metric.sample_level_fn(logprobs=np.log([0.7]), target_tokens=None)
+        result = prob_metric.sample_level_fn(logprobs=np.log([0.7]), target_tokens=None, reference_texts=None)
         assert result == pytest.approx(0.7)
 
         # Aggregation function test
         prob_min_metric = probability_metric(aggregation_function=np.min)
-        result = prob_min_metric.sample_level_fn(logprobs=np.log([0.7, 0.1]), target_tokens=None)
+        result = prob_min_metric.sample_level_fn(logprobs=np.log([0.7, 0.1]), target_tokens=None, reference_texts=None)
         assert result == pytest.approx(0.1)
 
     def test_mc_probability_metric(self):

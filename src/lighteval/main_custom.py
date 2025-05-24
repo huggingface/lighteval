@@ -70,6 +70,13 @@ def custom(
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANNEL_NAME_2)
     ] = "results",
+    results_path_template: Annotated[
+        str | None,
+        Option(
+            help="Template path for where to save the results, you have access to 3 variables, `output_dir`, `org` and `model`. for example a template can be `'{output_dir}/1234/{org}+{model}'`",
+            rich_help_panel=HELP_PANNEL_NAME_2,
+        ),
+    ] = None,
     push_to_hub: Annotated[
         bool, Option(help="Push results to the huggingface hub.", rich_help_panel=HELP_PANNEL_NAME_2)
     ] = False,
@@ -101,6 +108,7 @@ def custom(
 
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
+        results_path_template=results_path_template,
         save_details=save_details,
         push_to_hub=push_to_hub,
         push_to_tensorboard=push_to_tensorboard,
@@ -109,7 +117,7 @@ def custom(
     )
 
     parallelism_manager = ParallelismManager.CUSTOM
-    model_config = CustomModelConfig(model=model_name, model_definition_file_path=model_definition_file_path)
+    model_config = CustomModelConfig(model_name=model_name, model_definition_file_path=model_definition_file_path)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
