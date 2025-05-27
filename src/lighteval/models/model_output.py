@@ -28,11 +28,23 @@ import torch
 
 @dataclass
 class ModelResponse:
-    result: Union[tuple, list, str]
+    """
+    Used for Both Loglikelihood and Generative responses.
+    """
+
+    text: list[str] = field(default_factory=list)  # The text of the response
+    logprobs: list[float] = field(default_factory=list)  # Log probabilities of the response
+    argmax_logits_eq_gold: list[bool] = field(default_factory=list)  # Whether the argmax logits match the gold text
+
+    truncated_tokens_count: int = 0  # How many tokens truncated
+    padded_tokens_count: int = 0  # How many tokens of padding
+
     input_tokens: list[int] = field(default_factory=list)  # model inputs
-    generated_tokens: list[int] = field(default_factory=list)  # model generations
-    truncated_tokens_count: Optional[int] = 0  # How many tokens truncated
-    padded_tokens_count: Optional[int] = 0  # How many tokens of padding
+    output_tokens: list[int] = field(default_factory=list)  # model generations
+
+    unconditioned_logprobs: Optional[
+        list[float]
+    ] = None  # Log probabilities of the unconditioned model (if applicable)
 
     def get_result_for_eval(self):
         raise NotImplementedError()

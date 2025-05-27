@@ -47,13 +47,12 @@ from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_output import GenerativeResponse, LoglikelihoodResponse, LoglikelihoodSingleTokenResponse
+from lighteval.models.model_output import GenerativeResponse, LoglikelihoodResponse
 from lighteval.models.utils import ModelConfig
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
-    LoglikelihoodSingleTokenRequest,
 )
 from lighteval.utils.utils import as_list
 
@@ -593,10 +592,3 @@ class InferenceEndpointModel(LightevalModel):
                     )
 
         return dataset.get_original_order(results)
-
-    def loglikelihood_single_token(
-        self,
-        requests: list[LoglikelihoodSingleTokenRequest],
-        override_bs: Optional[int] = None,
-    ) -> list[LoglikelihoodSingleTokenResponse]:
-        raise ValueError("Endpoint models can't use single token metrics. Change the metric to the standard version")

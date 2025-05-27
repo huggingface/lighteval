@@ -38,14 +38,12 @@ from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
-    LoglikelihoodSingleTokenResponse,
 )
 from lighteval.models.utils import ModelConfig
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
-    LoglikelihoodSingleTokenRequest,
 )
 
 
@@ -152,7 +150,6 @@ class InferenceProvidersClient(LightevalModel):
                     "messages": prompt,
                     "n": num_samples,
                 }
-                breakpoint()
                 kwargs.update(self.generation_parameters.to_inference_providers_dict())
                 response: ChatCompletionOutput = await self.client.chat.completions.create(**kwargs)
                 return response
@@ -262,12 +259,4 @@ class InferenceProvidersClient(LightevalModel):
         self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
     ) -> list[LoglikelihoodResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
-        raise NotImplementedError
-
-    def loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodSingleTokenResponse]:
-        """Tokenize the context and continuation and compute the log likelihood of those
-        tokenized sequences.
-        """
         raise NotImplementedError

@@ -51,6 +51,7 @@ from lighteval.metrics.normalizations import (
     remove_braces_and_strip,
 )
 from lighteval.metrics.utils.judge_utils import get_judge_prompt_simpleqa, process_judge_response_simpleqa
+from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
 from lighteval.utils.utils import as_list, safe_divide
 
@@ -928,7 +929,7 @@ class JudgeLLM:
             max_tokens=max_tokens,
         )
 
-    def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
+    def compute(self, predictions: list[str], docs: Doc, **kwargs) -> dict[str, float]:
         raise NotImplementedError("This method should be implemented in the subclass.")
 
 
@@ -942,22 +943,22 @@ class JudgeLLMSimpleQA(JudgeLLM):
             short_judge_name="gpt4o",
         )
 
-    def compute(self, sample_ids: list[str], responses: list, formatted_docs: list[Doc], **kwargs) -> dict[str, float]:
+    def compute(self, responses: list[ModelResponse], docs: list[Doc], **kwargs) -> dict[str, float]:
         """
         Compute the score of a generative task using a llm as a judge.
         The generative task can be multiturn with 2 turns max, in that case, we
         return scores for turn 1 and 2. Also returns user_prompt and judgement
         which are ignored later by the aggregator.
         """
-        questions = [formatted_doc.query for formatted_doc in formatted_docs]
-        options = [formatted_doc.choices for formatted_doc in formatted_docs]
-        golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
-        predictions = [response[0].result[0] for response in responses]
+        questions = [formatted_doc.query for formatted_doc in docs]
+        options = [formatted_doc.choices for formatted_doc in docs]
+        golds = [formatted_doc.get_golds()[0] for formatted_doc in docs]
+        predictions = [response.text[0] for response in responses]
 
         scores, messages, judgements = self.judge.evaluate_answer_batch(questions, predictions, options, golds)
 
         metrics = []
-        for i in range(len(sample_ids)):
+        for i in range(len(docs)):
             metrics.append(
                 {
                     "simpleqa_judge": scores[i],
@@ -970,7 +971,7 @@ class JudgeLLMSimpleQA(JudgeLLM):
 
 
 class JudgeLLMMTBench(JudgeLLM):
-    def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs):
+    def compute(self, predictions: list[str], docs: Doc, **kwargs):
         """
         Compute the score of a generative task using a llm as a judge.
         The generative task can be multiturn with 2 turns max, in that case, we
@@ -980,8 +981,8 @@ class JudgeLLMMTBench(JudgeLLM):
         import json
 
         # If we are evaluating a multiturn task, we need to have specific field in the formatted doc
-        questions = formatted_doc.specific["multi_turn_queries"]
-        golds = formatted_doc.specific.get("reference", None)
+        questions = docs.specific["multi_turn_queries"]
+        golds = docs.specific.get("reference", None)
 
         query_context_1 = {"query": questions[0], "context": ""}
         query_context_2 = {"query": questions[1], "context": predictions[0]}
@@ -1002,22 +1003,22 @@ class JudgeLLMMTBench(JudgeLLM):
 
 
 class JudgeLLMMixEval(JudgeLLM):
-    def compute(self, sample_ids: list[str], responses: list, formatted_docs: list[Doc], **kwargs) -> dict[str, float]:
+    def compute(self, responses: list, docs: list[Doc], **kwargs) -> dict[str, float]:
         """
         Compute the score of a generative task using a llm as a judge.
         The generative task can be multiturn with 2 turns max, in that case, we
         return scores for turn 1 and 2. Also returns user_prompt and judgement
         which are ignored later by the aggregator.
         """
-        questions = [formatted_doc.specific["question"] for formatted_doc in formatted_docs]
-        options = [formatted_doc.choices for formatted_doc in formatted_docs]
-        golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
+        questions = [formatted_doc.specific["question"] for formatted_doc in docs]
+        options = [formatted_doc.choices for formatted_doc in docs]
+        golds = [formatted_doc.get_golds()[0] for formatted_doc in docs]
         predictions = [response[0].result[0] for response in responses]
 
         scores, messages, judgements = self.judge.evaluate_answer_batch(questions, predictions, options, golds)
 
         metrics = []
-        for i in range(len(sample_ids)):
+        for i in range(len(docs)):
             metrics.append(
                 {
                     f"judge_score_{self.short_judge_name}": scores[i],

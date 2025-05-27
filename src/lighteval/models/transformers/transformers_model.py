@@ -28,7 +28,6 @@ import torch
 import torch.nn.functional as F
 import transformers
 from pydantic import PositiveInt
-from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import (
@@ -41,29 +40,25 @@ from transformers import (
 from transformers.generation.utils import GenerateOutput
 from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 
-from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset, LoglikelihoodSingleTokenDataset
+from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
 from lighteval.models.model_output import (
     Batch,
-    GenerativeMultiturnResponse,
     GenerativeResponse,
     LoglikelihoodResponse,
-    LoglikelihoodSingleTokenResponse,
+    ModelResponse,
 )
 from lighteval.models.utils import ModelConfig, _get_dtype, _get_model_sha, _simplify_name
 from lighteval.tasks.requests import (
-    GreedyUntilMultiTurnRequest,
-    GreedyUntilRequest,
+    Doc,
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
-    LoglikelihoodSingleTokenRequest,
     Request,
 )
 from lighteval.utils.imports import (
     is_accelerate_available,
 )
 from lighteval.utils.parallelism import find_executable_batch_size
-from lighteval.utils.utils import as_list
 
 
 logger = logging.getLogger(__name__)
@@ -496,16 +491,10 @@ class TransformersModel(LightevalModel):
         logger.info(f"Determined largest batch size: {batch_size}")
         return batch_size
 
-    def greedy_until_multi_turn(  # noqa: C901
-        self,
-        requests: list[GreedyUntilMultiTurnRequest],
-    ) -> GenerativeMultiturnResponse:
-        raise NotImplementedError("This method is not implemented for this model")
-
     def greedy_until(
         self,
-        requests: list[GreedyUntilRequest],
-    ) -> list[GenerativeResponse]:
+        docs: list[Doc],
+    ) -> list[ModelResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
@@ -516,11 +505,10 @@ class TransformersModel(LightevalModel):
         Returns:
             list[GenerativeResponse]: list of generated responses.
         """
-        for request in requests:
-            request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
-            request.tokenized_context = self.tok_encode(request.context)
+        t = ["#### 480", "#### 480", "2010"]
+        return [ModelResponse(text=[v]) for v in t]
 
-        dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
+        dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
         results = []
 
@@ -965,120 +953,6 @@ class TransformersModel(LightevalModel):
             else:
                 output_tensor = self.accelerator.gather(output_tensor)
         return output_tensor, length_tensor
-
-    def loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodSingleTokenResponse]:
-        """Tokenize the context and continuation and compute the log likelihood of those
-        tokenized sequences.
-
-        Args:
-            requests (list[Tuple[str, dict]]): _description_
-
-        Returns:
-            list[Tuple[float, bool]]: _description_
-        """
-        for request in requests:
-            if request.context == "":
-                request.tokenized_context = [self.tokenizer.eos_token_id]
-            else:
-                request.tokenized_context = self.tok_encode(request.context)
-
-            # Some models tokenizer want a space at the beginning and other not
-            continuations = [self._check_continuations_start_space(c) for c in request.choices]
-
-            # We must not accidentally prepend a continuation with a start of sentence token.
-            continuations_enc = [self.tok_encode(c, add_special_tokens=False) for c in continuations]
-            if any(len(c) > 1 for c in continuations_enc):
-                raise ValueError(
-                    f"Trying to do single token multiple choice but one choice has several tokens: {continuations_enc}. "
-                    "If the additional pre-token is a space, try to set `multichoice_continuations_start_space=False` in the model parameters "
-                )
-            request.tokenized_continuation = continuations_enc
-
-        return self._loglikelihood_single_token(requests, override_bs=override_bs)
-
-    def _loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: int = -1
-    ) -> list[LoglikelihoodSingleTokenResponse]:
-        dataset = LoglikelihoodSingleTokenDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
-        starting_batch_size = STARTING_BATCH_SIZE
-        res = []
-
-        for split_start, split_end in tqdm(dataset.splits_start_end_iterator()):
-            context_enc = dataset[0].tokenized_context
-            max_context = len(context_enc[-self.max_length :])
-            batch_size = self._get_batch_size(override_bs=override_bs, max_input_length=max_context)
-            starting_batch_size = batch_size * 2
-
-            dataloader = DataLoader(dataset, batch_size=starting_batch_size, collate_fn=lambda batch: batch)
-            if self.accelerator is not None:
-                dataloader = self.accelerator.prepare(dataloader)
-
-            for batch in tqdm(dataloader, disable=self.disable_tqdm, position=1):
-                prepared_batch = self.prepare_batch_logprob(
-                    batch, padding_length=max_context, max_context=max_context, single_token=True
-                )
-
-                out = self._model_call(prepared_batch.input_ids)  # [batch, padding_length, vocab]
-                out = F.log_softmax(out, dim=-1)  # we do a softmax over the options, no the vocab
-
-                batch_probs = []
-                batch_cont_tokens = []
-                for cur_request, logits, inplen in zip(batch, out, prepared_batch.input_lengths):
-                    # Get the last token
-                    logits = logits[inplen - 1]  # [vocab]
-
-                    cont_toks = torch.tensor(
-                        cur_request.tokenized_continuation, dtype=torch.long, device=self.device
-                    ).squeeze(-1)  # [num_choices]
-
-                    # Obtain log-probs at the corresponding continuation token indices
-                    # last_token_slice = logits[:, -1, :].squeeze(0).tolist()
-                    probs = torch.gather(logits, dim=0, index=cont_toks)  # [num_choices]
-
-                    # Answer: (log prob, is-exact-match)
-                    # probs = torch.nn.functional.softmax(logits.float(), dim=0)  # [num_choices]
-                    batch_probs.append(probs)
-                    batch_cont_tokens.append(cont_toks)
-
-                # Sync all
-                # Need reshape before gather
-                batched_inputs, len_inputs = self.pad_and_gather(prepared_batch.input_ids)
-                # We sometimes have different tasks with a different number of choices.
-                # Padding to -10000 makes sure that we won't reach index problems later as all log probs will be smaller than that
-                batch_probs = pad_sequence(batch_probs, batch_first=True, padding_value=-10000000)
-                batch_probs, len_probs = self.pad_and_gather(batch_probs)
-                batch_cont_tokens = pad_sequence(batch_cont_tokens, batch_first=True, padding_value=-10000000)
-                batch_cont_tokens, len_cont = self.pad_and_gather(batch_cont_tokens)
-
-                # No reshape
-                batch_truncated = torch.tensor(prepared_batch.truncated, device=self.device)
-                batch_padded = torch.tensor(prepared_batch.padded, device=self.device)
-                if self.accelerator:
-                    batch_truncated = self.accelerator.gather_for_metrics(batch_truncated)
-                    batch_padded = self.accelerator.gather_for_metrics(batch_padded)
-
-                for ix, (probs, cont_tokens, batched_input, trunc, padded) in enumerate(
-                    zip(batch_probs, batch_cont_tokens, batched_inputs, batch_truncated, batch_padded)
-                ):
-                    answer = LoglikelihoodSingleTokenResponse(
-                        result=probs[: len_probs[ix]].detach().cpu().tolist(),
-                        input_tokens=batched_input[: len_inputs[ix]].cpu().tolist(),
-                        generated_tokens=cont_tokens[: len_cont[ix]].cpu().tolist(),
-                        truncated_tokens_count=trunc.cpu().item(),
-                        padded_tokens_count=padded.cpu().item(),
-                    )
-                    res.append(answer)
-
-                # Clean up GPUs
-                del out
-                del batch_probs
-                del batched_inputs
-                del batch_truncated
-                del batch_padded
-
-        return dataset.get_original_order(res)
 
 
 class MultiTokenEOSCriteria(transformers.StoppingCriteria):

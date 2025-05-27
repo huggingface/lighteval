@@ -32,10 +32,17 @@ from lighteval.utils.utils import ListLike, as_list
 
 class RequestType(Enum):
     LOGLIKELIHOOD = auto()
-    LOGLIKELIHOOD_SINGLE_TOKEN = auto()
     LOGLIKELIHOOD_ROLLING = auto()
     GREEDY_UNTIL = auto()
-    GREEDY_UNTIL_MULTI_TURN = auto()
+
+
+class SamplingMethod(str, Enum):
+    """
+    Enum representing different sampling methods for text generation.
+    """
+
+    GENERATIVE = "GENERATIVE"
+    LOGPROBS = "LOGPROBS"
 
 
 @dataclass
@@ -79,23 +86,6 @@ class LoglikelihoodRequest(Request):
 
 
 @dataclass
-class LoglikelihoodSingleTokenRequest(Request):
-    """
-    Represents a request for calculating the log-likelihood of a single token.
-    Faster because we can get all the loglikelihoods in one pass.
-
-    Attributes:
-        choices (list[str]): The list of token choices.
-        request_type (RequestType): The type of the request.
-    """
-
-    choices: list[str]
-    request_type = RequestType.LOGLIKELIHOOD_SINGLE_TOKEN
-    tokenized_context: list[int] = None
-    tokenized_continuation: list[int] = None
-
-
-@dataclass
 class LoglikelihoodRollingRequest(Request):
     """
     Represents a request for log-likelihood rolling evaluation.
@@ -128,23 +118,6 @@ class GreedyUntilRequest(Request):
     tokenized_context: list[int] | None = None
     num_samples: int | None = None
     do_sample: bool = False
-    use_logits: bool = False
-
-
-@dataclass
-class GreedyUntilMultiTurnRequest(Request):
-    """
-    Represents a request for generating text using the Greedy-Until algorithm.
-
-    Attributes:
-        stop_sequence (str): The sequence of tokens that indicates when to stop generating text.
-        generation_size (int): The maximum number of tokens to generate.
-        request_type (RequestType): The type of the request, set to RequestType.GREEDY_UNTIL.
-    """
-
-    stop_sequence: str
-    generation_size: int
-    request_type = RequestType.GREEDY_UNTIL_MULTI_TURN
     use_logits: bool = False
 
 
@@ -192,7 +165,8 @@ class Doc:
     # The uncoditioned query shouldn't contain any information about the task, thus usually it's empty string or 'Answer:'.
     unconditioned_query: Optional[str] = None
 
-    fewshots: list[str] = field(default_factory=list)
+    fewshot_samples: list["Doc"] = field(default_factory=list)
+    sampling_methods: list[SamplingMethod] = field(default_factory=list)
 
     def __post_init__(self):
         if self.instruction is None:

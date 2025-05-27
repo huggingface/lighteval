@@ -34,23 +34,17 @@ from pytablewriter import MarkdownTableWriter
 
 from lighteval.metrics import (
     apply_generative_metric,
-    apply_llm_as_judge_metric,
-    apply_multichoice_metric,
-    apply_multichoice_metric_one_token,
-    apply_perplexity_metric,
-    apply_target_perplexity_metric,
 )
 from lighteval.metrics.metrics import Metric, MetricCategory, Metrics
 from lighteval.tasks.prompt_manager import FewShotSampler
 from lighteval.tasks.requests import (
     Doc,
-    GreedyUntilMultiTurnRequest,
     GreedyUntilRequest,
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
-    LoglikelihoodSingleTokenRequest,
     Request,
     RequestType,
+    SamplingMethod,
 )
 from lighteval.utils.utils import ListLike, as_list, download_dataset_worker
 
@@ -132,6 +126,7 @@ class LightevalTaskConfig:
         self.evaluation_splits = tuple(self.evaluation_splits)
         self.suite = tuple(self.suite)
         self.stop_sequence = tuple(self.stop_sequence) if self.stop_sequence is not None else ()
+        self.full_name = f"{self.name}|{self.num_fewshots}"
 
     def print(self):
         md_writer = MarkdownTableWriter()
@@ -172,6 +167,7 @@ class LightevalTask:
                 task-specific settings (from the task_table.json file).
         """
         self.name = config.name
+        self.full_name = f"{self.name}|{config.num_fewshots}"
         self.version = config.version
         self.suite = config.suite
         self.dataset_config = config
@@ -206,8 +202,8 @@ class LightevalTask:
         if len(ignored) > 0:
             logger.warning(f"Not implemented yet: ignoring the metric {' ,'.join(ignored)} for task {self.name}.")
 
-        current_categories = [metric.category for metric in self.metrics]
-        self.has_metric_category = {category: (category in current_categories) for category in MetricCategory}
+        self.current_categories = [metric.category for metric in self.metrics]
+        self.has_metric_category = {category: (category in self.current_categories) for category in MetricCategory}
 
         # We assume num_samples always contains 1 (for base generative evals)
         self.num_samples = [1]
@@ -277,7 +273,7 @@ class LightevalTask:
                 # Some tasks require to know which is the current item index in order to apply a different prompt template
                 item["__index"] = ix
                 doc = self.formatter(item, self.name)
-                doc.id = f"{self.name}_{ix}"
+                doc.id = str(ix)
                 docs.append(doc)
 
         return docs
@@ -323,30 +319,25 @@ class LightevalTask:
                 self._docs = self.remove_duplicate_docs(self._docs)
         return self._docs
 
-    def get_requests(self, max_samples: int | None = None) -> dict[RequestType, list[Request]]:
+    def get_docs(self, max_samples: int | None = None) -> list[Doc]:
         eval_docs = self.eval_docs()
 
         if len(eval_docs) == 0:
-            logger.warning(f"Task {self.name} has no documents to evaluate skipping.")
-            return {}
+            raise ValueError(f"Task {self.name} has no documents to evaluate skipping.")
 
         n_samples = min(max_samples, len(eval_docs)) if max_samples else len(eval_docs)
-        # evaluation_tracker.task_config_logger.log_num_docs(self.name, len(eval_docs), n_samples)
         random.shuffle(eval_docs)
-        breakpoint()
 
-        request_type_reqs_dict: dict[RequestType, list[Request]] = collections.defaultdict(list)
+        docs = []
+
         for doc in eval_docs[:n_samples]:
             num_fewshots = self.dataset_config.num_fewshots
             doc.task_name = f"{self.name}|{num_fewshots}"
-            doc.fewshots = self.fewshot_sampler.sample_fewshot_examples(num_fewshots, 1, formatted_doc=doc)
-            req_type_reqs_dict = self.construct_requests_for_doc(doc)
+            doc.fewshot_samples = self.fewshot_sampler.sample_fewshot_examples(num_fewshots, 1, formatted_doc=doc)
+            doc.sampling_methods.append(SamplingMethod.GENERATIVE)
+            docs.append(doc)
 
-            for req_type, reqs in req_type_reqs_dict.items():
-                request_type_reqs_dict[req_type] += reqs
-
-        breakpoint()
-        return request_type_reqs_dict
+        return docs
 
     def construct_requests_for_doc(
         self,
@@ -473,31 +464,6 @@ class LightevalTask:
                 )
                 for i, choice in enumerate(doc.choices)
             ]
-        if self.has_metric_category[MetricCategory.MULTICHOICE_ONE_TOKEN]:
-            requests[RequestType.LOGLIKELIHOOD_SINGLE_TOKEN] += [
-                LoglikelihoodSingleTokenRequest(
-                    task_name=doc.task_name,
-                    sample_index=doc.id,
-                    request_index=0,
-                    context=doc.query,
-                    choices=doc.choices,
-                    metric_categories=[MetricCategory.MULTICHOICE_ONE_TOKEN],
-                    fewshots=doc.fewshots,
-                )
-            ]
-        if self.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]:
-            requests[RequestType.GREEDY_UNTIL_MULTI_TURN] += [
-                GreedyUntilMultiTurnRequest(
-                    task_name=doc.task_name,
-                    sample_index=doc.id,
-                    request_index=0,
-                    context=doc.query,
-                    stop_sequence=self.stop_sequence,
-                    generation_size=self.generation_size,
-                    metric_categories=[MetricCategory.LLM_AS_JUDGE_MULTI_TURN],
-                    fewshots=doc.fewshots,
-                )
-            ]
         if self.has_metric_category[MetricCategory.LLM_AS_JUDGE]:
             requests[RequestType.GREEDY_UNTIL] += [
                 GreedyUntilRequest(
@@ -517,29 +483,10 @@ class LightevalTask:
         return requests
 
     def get_metric_method_from_category(self, metric_category):
-        if not self.has_metric_category[metric_category]:
-            raise ValueError(f"Requested a metric category {metric_category} absent from the task list.")
-
-        return LightevalTask._get_metric_method_from_category(metric_category)
-
-    @staticmethod
-    def _get_metric_method_from_category(metric_category):
-        if metric_category == MetricCategory.TARGET_PERPLEXITY:
-            return apply_target_perplexity_metric
-        if metric_category in [MetricCategory.MULTICHOICE, MetricCategory.MULTICHOICE_PMI]:
-            return apply_multichoice_metric
-        if metric_category == MetricCategory.MULTICHOICE_ONE_TOKEN:
-            return apply_multichoice_metric_one_token
-        if metric_category == MetricCategory.PERPLEXITY:
-            return apply_perplexity_metric
         if metric_category in [
-            MetricCategory.GENERATIVE,
-            MetricCategory.GENERATIVE_SAMPLING,
-            MetricCategory.GENERATIVE_LOGPROB,
+            SamplingMethod.GENERATIVE,
         ]:
             return apply_generative_metric
-        if metric_category in [MetricCategory.LLM_AS_JUDGE_MULTI_TURN, MetricCategory.LLM_AS_JUDGE]:
-            return apply_llm_as_judge_metric
 
     def aggregation(self):
         """
@@ -549,7 +496,7 @@ class LightevalTask:
         return Metrics.corpus_level_fns(self.metrics)
 
     @staticmethod
-    def load_datasets(tasks: list["LightevalTask"], dataset_loading_processes: int = 1) -> None:
+    def load_datasets(tasks: dict[str, "LightevalTask"], dataset_loading_processes: int = 1) -> None:
         """
         Load datasets from the HuggingFace Hub for the given tasks.
 
@@ -570,7 +517,7 @@ class LightevalTask:
                     task.dataset_filter,
                     task.dataset_revision,
                 )
-                for task in tasks
+                for task in tasks.values()
             ]
         else:
             with Pool(processes=dataset_loading_processes) as pool:
@@ -584,12 +531,12 @@ class LightevalTask:
                             task.dataset_filter,
                             task.dataset_revision,
                         )
-                        for task in tasks
+                        for task in tasks.values()
                     ],
                 )
 
         for task, dataset in zip(tasks, datasets):
-            task.dataset = dataset
+            tasks[task].dataset = dataset
 
 
 def extract_num_samples(metric_name: str) -> int:

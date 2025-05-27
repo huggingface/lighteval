@@ -29,12 +29,11 @@ from pydantic import BaseModel
 from transformers import AutoTokenizer
 
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_output import GenerativeResponse, LoglikelihoodResponse, LoglikelihoodSingleTokenResponse
+from lighteval.models.model_output import GenerativeResponse, LoglikelihoodResponse
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
     LoglikelihoodRollingRequest,
-    LoglikelihoodSingleTokenRequest,
 )
 
 
@@ -82,11 +81,3 @@ class DummyModel(LightevalModel):
         self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
     ) -> list[LoglikelihoodResponse]:
         return [LoglikelihoodResponse((-self._random.random(), False)) for _ in requests]
-
-    def loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodSingleTokenResponse]:
-        return [
-            LoglikelihoodSingleTokenResponse(result=[-self._random.random() for _ in req.tokenized_continuation])
-            for req in requests
-        ]

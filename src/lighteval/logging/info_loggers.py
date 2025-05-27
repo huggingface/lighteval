@@ -36,7 +36,7 @@ from lighteval.metrics.stderr import get_stderr_function
 from lighteval.models.abstract_model import ModelInfo
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.imports import is_nanotron_available
 from lighteval.utils.utils import as_list, sanitize_numpy
 
@@ -319,7 +319,7 @@ class DetailsLogger:
         task_name: str,
         task: LightevalTask,
         doc: Doc,
-        outputs: list[ModelResponse],
+        model_response: ModelResponse,
         metrics: dict,
         llm_as_prompt_judgement: Optional[tuple[str, str]] = None,
     ) -> None:
@@ -339,7 +339,7 @@ class DetailsLogger:
         detail.instruction = doc.instruction
         detail.full_prompt = doc.ctx
 
-        predictions = [model_response.get_result_for_eval() for model_response in outputs]
+        predictions = model_response.text
 
         if isinstance(predictions[0], list):
             # loglikelihood_single_token returns a list of list of floats (but has
@@ -347,10 +347,10 @@ class DetailsLogger:
             predictions = [x for resp in predictions for x in resp]
 
         detail.predictions = predictions
-        detail.input_tokens = [o.input_tokens for o in outputs]
-        detail.cont_tokens = [o.generated_tokens for o in outputs]
-        detail.truncated = [o.truncated_tokens_count for o in outputs]
-        detail.padded = [o.padded_tokens_count for o in outputs]
+        detail.input_tokens = []  # [o.input_tokens for o in outputs]
+        detail.cont_tokens = []  # [o.generated_tokens for o in outputs]
+        detail.truncated = []  # [o.truncated_tokens_count for o in outputs]
+        detail.padded = []  # [o.padded_tokens_count for o in outputs]
         detail.num_effective_few_shots = doc.num_effective_few_shots
         detail.num_asked_few_shots = doc.num_asked_few_shots
 
@@ -361,15 +361,12 @@ class DetailsLogger:
         ):
             pred_saved = True
             pass  # should we log something?
-        if (
-            task.has_metric_category[MetricCategory.GENERATIVE]
-            or task.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]
-        ):
+        if task.has_metric_category[MetricCategory.GENERATIVE] or SamplingMethod.GENERATIVE in task.current_categories:
             detail.gold = doc.get_golds()
             pred_saved = True
         if task.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]:
             detail.gold = doc.get_golds()
-            detail.pred_logits = [o.logits for o in outputs]
+            detail.pred_logits = []  # [o.logits for o in outputs]
             pred_saved = True
         if task.has_metric_category[MetricCategory.MULTICHOICE]:
             detail.choices = doc.choices
@@ -405,8 +402,8 @@ class DetailsLogger:
         hash = self.Hash()
         hash.example = xxhash.xxh64(doc.query).hexdigest()
         hash.full_prompt = xxhash.xxh64(str(doc.ctx)).hexdigest()
-        hash.input_tokens = xxhash.xxh64(str([o.input_tokens for o in outputs])).hexdigest()
-        hash.cont_tokens = xxhash.xxh64(str([o.generated_tokens for o in outputs])).hexdigest()
+        hash.input_tokens = xxhash.xxh64(str(model_response.input_tokens)).hexdigest()
+        hash.cont_tokens = xxhash.xxh64(str(model_response.output_tokens)).hexdigest()
         self.hashes[task_name].append(hash)
 
     def aggregate(self):
@@ -499,9 +496,8 @@ class MetricsLogger:
         """
 
         for task_name, metrics in self.metrics_values.items():
-            cur_task_name, _ = task_name.rsplit("|", 1)
             # fix the fact that we need the task_dict
-            task = task_dict[cur_task_name]
+            task = task_dict[task_name]
 
             skip_metric = []
             for metric_name, metric_values in metrics.items():
@@ -545,8 +541,8 @@ class MetricsLogger:
         # Build aggregation
         for k, metrics in self.metric_aggregated.items():
             if "|" in k:
-                suite, task, fewshot = k.split("|")
-                grouped_tasks[f"{suite}|{task.split(':')[0]}:_average|{fewshot}"].append(k)
+                task, fewshot = k.split("|")
+                grouped_tasks[f"lighteval|{task.split(':')[0]}:_average|{fewshot}"].append(k)
             for metric, value in metrics.items():
                 suite_average[metric] = suite_average.get(metric, 0) + value
                 suite_nb[metric] = suite_nb.get(metric, 0) + 1

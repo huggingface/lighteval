@@ -80,6 +80,7 @@ from lighteval.metrics.utils.metric_utils import (
     SampleLevelMetric,
     SampleLevelMetricGrouping,
 )
+from lighteval.tasks.requests import SamplingMethod
 from lighteval.utils.language import Language
 from lighteval.utils.utils import as_list
 
@@ -708,8 +709,7 @@ class Metrics(Enum):
         sample_level_fn=ExactMatches(
             strip_strings=True, normalize_pred=gsm8k_normalizer, normalize_gold=gsm8k_normalizer
         ).compute,
-        category=MetricCategory.GENERATIVE,
-        use_case=MetricUseCase.MATH,
+        category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
@@ -793,9 +793,9 @@ class Metrics(Enum):
     simpleqa_judge = SampleLevelMetricGrouping(
         metric_name=["simpleqa_judge"],
         higher_is_better={"simpleqa_judge": True},
-        category=MetricCategory.LLM_AS_JUDGE,
-        use_case=MetricUseCase.SUMMARIZATION,
+        category=SamplingMethod.GENERATIVE,
         sample_level_fn=JudgeLLMSimpleQA().compute,
+        batched_compute=True,
         corpus_level_fn={
             "simpleqa_judge": np.mean,
         },

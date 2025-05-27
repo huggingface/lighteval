@@ -38,8 +38,6 @@ else:
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
-    LoglikelihoodRollingRequest,
-    LoglikelihoodSingleTokenRequest,
     Request,
 )
 
@@ -194,7 +192,7 @@ class DynamicBatchDataset(Dataset):
 
 
 class LoglikelihoodDataset(DynamicBatchDataset):
-    def _sorting_criteria(self, request: LoglikelihoodRequest | LoglikelihoodRollingRequest) -> int:
+    def _sorting_criteria(self, request: LoglikelihoodRequest) -> int:
         """
         Collates the input data for batching.
 
@@ -215,25 +213,6 @@ class LoglikelihoodDataset(DynamicBatchDataset):
             tuple: A tuple containing the sorted input data.
         """
         toks = request.tokenized_context + request.tokenized_continuation
-        return -len(toks)
-
-
-class LoglikelihoodSingleTokenDataset(DynamicBatchDataset):
-    def _sorting_criteria(self, request: LoglikelihoodSingleTokenRequest) -> int:
-        """
-        Collates the input data for batching.
-
-        the negative sign on len(toks) sorts descending - this has a few # advantages:
-        - time estimates will always be over not underestimates, which is
-        more useful for planning
-        - to know the size of a batch when going through the list, you
-        know the first one is always the batch padded context length. this
-        is useful to simplify the batching logic and more importantly to make
-        automatic adaptive batches much much easier to implement
-        - any OOMs will happen right away rather than near the end
-        """
-        # We take only the prompt, no need for the continuation (since it's a list of single tokens)
-        toks = request.tokenized_context
         return -len(toks)
 
 

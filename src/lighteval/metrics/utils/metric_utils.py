@@ -23,6 +23,8 @@
 from dataclasses import dataclass
 from enum import Enum, auto
 
+from lighteval.tasks.requests import SamplingMethod
+
 
 class MetricCategory(str, Enum):
     TARGET_PERPLEXITY = auto()
@@ -57,10 +59,12 @@ class MetricUseCase(str, Enum):
 class Metric:
     metric_name: str
     higher_is_better: bool
-    category: MetricCategory
-    use_case: MetricUseCase
+    category: MetricCategory | SamplingMethod
     sample_level_fn: callable
     corpus_level_fn: callable
+    use_case: MetricUseCase = None
+
+    batched_compute: bool = False
 
     def get_doc(self):
         return self.sample_level_fn.__doc__

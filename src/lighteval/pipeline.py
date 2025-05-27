@@ -38,13 +38,11 @@ from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.metrics.utils.metric_utils import MetricCategory
 from lighteval.models.model_loader import TransformersModel, load_model
 from lighteval.models.model_output import (
-    GenerativeMultiturnResponse,
     GenerativeResponse,
     LoglikelihoodResponse,
-    LoglikelihoodSingleTokenResponse,
     ModelResponse,
 )
-from lighteval.tasks.lighteval_task import LightevalTask
+from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.registry import Registry
 from lighteval.tasks.requests import RequestType, SampleUid
 from lighteval.utils.imports import (
@@ -223,26 +221,32 @@ class Pipeline:
         with local_ranks_zero_first() if self.launcher_type == ParallelismManager.NANOTRON else nullcontext():
             logger.info("--- LOADING TASKS ---")
 
+            # The registry contains all the potential tasks
             registry = Registry(
                 custom_tasks=self.pipeline_parameters.custom_tasks_directory,
             )
-            task_configs = registry.get_tasks_configs(tasks)
-            tasks: list[LightevalTask] = registry.get_tasks_from_configs(task_configs)
-            LightevalTask.load_datasets(tasks, self.pipeline_parameters.dataset_loading_processes)
-            requests_list = [task.get_requests(self.pipeline_parameters.max_samples) for task in tasks]
-            requests = {}
-            for request in requests_list:
-                for key, value in request.items():
-                    requests.setdefault(key, []).extend(value)
+
+            # load the tasks fro the configs and their datasets
+            task_configs: list[LightevalTaskConfig] = registry.get_tasks_configs(tasks)
+            self.tasks_dict: dict[str, LightevalTask] = registry.get_tasks_from_configs(task_configs)
+            LightevalTask.load_datasets(self.tasks_dict, self.pipeline_parameters.dataset_loading_processes)
+            self.documents_dict = {
+                task.full_name: task.get_docs(self.pipeline_parameters.max_samples)
+                for _, task in self.tasks_dict.items()
+            }
+
+            self.sampling_docs = collections.defaultdict(list)
+            for _, docs in self.documents_dict.items():
+                for doc in docs:
+                    for sampling in doc.sampling_methods:
+                        self.sampling_docs[sampling].append(doc)
 
             # If there are metric_options defined from the yaml file,
             # review if they have to be updated.
             if self._metric_options:
-                self._update_num_samples(tasks)
+                self._update_num_samples(list(self.tasks_dict.values()))
 
             # self.evaluation_tracker.task_config_logger.log(tasks)
-            self.requests = requests
-            self.tasks = tasks
 
     def _update_num_samples(self, tasks: list[LightevalTask]):
         """Helper function to update the num_samples of a given metric via the yaml file.
@@ -296,7 +300,7 @@ class Pipeline:
 
         if self.is_main_process():
             self.evaluation_tracker.general_config_logger.log_end_time()
-            self.evaluation_tracker.metrics_logger.aggregate(task_dict=self.task_dict, bootstrap_iters=1000)
+            self.evaluation_tracker.metrics_logger.aggregate(task_dict=self.tasks_dict, bootstrap_iters=1000)
             self.evaluation_tracker.details_logger.aggregate()
 
             for weights in ["delta", "adapter"]:
@@ -444,12 +448,8 @@ class Pipeline:
     def _get_model_response_type(self, request_type):
         if request_type == RequestType.LOGLIKELIHOOD:
             model_response_type = LoglikelihoodResponse
-        elif request_type == RequestType.LOGLIKELIHOOD_SINGLE_TOKEN:
-            model_response_type = LoglikelihoodSingleTokenResponse
         elif request_type == RequestType.LOGLIKELIHOOD_ROLLING:
             model_response_type = LoglikelihoodResponse
-        elif request_type == RequestType.GREEDY_UNTIL_MULTI_TURN:
-            model_response_type = GenerativeMultiturnResponse
         elif request_type == RequestType.GREEDY_UNTIL:
             model_response_type = GenerativeResponse
         else:
@@ -463,65 +463,68 @@ class Pipeline:
         # Running all requests depending on the model call type (log likelihood, generative, ...)
         # to be able to batch them
         logger.info("--- RUNNING MODEL ---")
-        sample_id_to_responses: dict[(SampleUid, MetricCategory), list[ModelResponse]] = collections.defaultdict(list)
 
-        for request_type, requests in self.requests.items():
-            logger.info(f"Running {request_type} requests")
-            run_model = self.model.get_method_from_request_type(request_type=request_type)
-            responses = run_model(requests)
+        outputs = {}
+        for sampling_method, docs in self.sampling_docs.items():
+            logger.info(f"Running {sampling_method} requests")
+            match sampling_method:
+                case "GENERATIVE":
+                    model_outputs = self.model.greedy_until(docs)
+                    outputs[sampling_method] = model_outputs
+                case "LOGLIKELIHOOD":
+                    model_outputs = self.model.loglikelihood(docs)
+                    outputs[sampling_method] = model_outputs
 
             # Storing the responses associated to the same samples together
-            for response, request in zip(responses, requests):
-                for metric_category in request.metric_categories:
-                    sample_id = SampleUid(request.task_name, request.sample_index)
-                    sample_id_to_responses[(sample_id, metric_category)].append(response)
+            # for response, request in zip(responses, requests):
+            # for metric_category in request.metric_categories:
+            # sample_id = SampleUid(request.task_name, request.sample_index)
+            # sample_id_to_responses[(sample_id, metric_category)].append(response)
 
         # Cleaning up the model before running metrics
         self.model.cleanup()
 
-        return sample_id_to_responses
+        return outputs
 
     def _get_task(self, task_name: str):
         short_task_name = task_name.rsplit("|", 1)[0]
-        return self.task_dict[short_task_name]
+        task = [task for task in self.tasks if task.name == short_task_name]
+        return task[0] if task else None
 
-    def _compute_metrics(self, sample_id_to_responses):
+    def _compute_metrics(self, sampling_method_responses: dict[str, list[ModelResponse]]):
         # To compute the metrics we first group the samples and task and then by metrics.
         # This way we can batch the metrics computation for each task and metric category
 
         # This variable will hold the samples grouped by task and metric category
         # example:
         # task_metric_category_groups = {
-        #     "task_name": {
-        #         "metric_category": {
-        #             "ids": [sample_id1, sample_id2, ...],
-        #             "responses": [[response1_1, response1_2, ...], [response2_1, response2_2, ...], ...],
-        #             "docs": [doc1, doc2, ...]
+        #     "gsm8k_1": {
+        #         "GENERATIVE": [
+        #             (doc1, response1), (doc2, response2), ...,
         #         }
+        #         "LOGLIKELIHOOD": [
+        #             (doc1, response1), (doc2, response2), ...,
+        #         ]
         logger.info("--- COMPUTING METRICS ---")
-        task_metric_category_groups = collections.defaultdict(
-            lambda: collections.defaultdict(lambda: collections.defaultdict(list))
-        )
+        task_metric_category_groups = collections.defaultdict(lambda: collections.defaultdict(list))
 
-        for (sample_id, metric_category), sample_responses in sample_id_to_responses.items():
-            task_metric_category_groups[sample_id.task_name][metric_category]["ids"].append(sample_id.doc_id_seed)
-            task_metric_category_groups[sample_id.task_name][metric_category]["responses"].append(sample_responses)
-            task_metric_category_groups[sample_id.task_name][metric_category]["docs"].append(self.docs[sample_id])
+        for sampling_method, model_responses in sampling_method_responses.items():
+            for doc, model_reponse in zip(self.sampling_docs[sampling_method], model_responses):
+                task_metric_category_groups[doc.task_name][sampling_method].append((doc, model_reponse))
 
-        for task_name, samples_per_metric in task_metric_category_groups.items():
-            task: LightevalTask = self._get_task(task_name)
+        for task_name, samples_per_method in task_metric_category_groups.items():
+            task: LightevalTask = self.tasks_dict[task_name]
 
-            for metric_category, samples in samples_per_metric.items():
-                sample_ids = samples["ids"]
-                responses = samples["responses"]
-                docs = samples["docs"]
-                metric_function = task.get_metric_method_from_category(metric_category=metric_category)
-                metric_category_metrics = [metric for metric in task.metrics if metric.category == metric_category]
+            for sampling_method, samples in samples_per_method.items():
+                metric_function = task.get_metric_method_from_category(metric_category=sampling_method)
+                metric_category_metrics = [metric for metric in task.metrics if metric.category == sampling_method]
+
+                docs = [doc for doc, _ in samples]
+                responses = [response for _, response in samples]
 
                 outputs = metric_function(
-                    sample_ids=sample_ids,
+                    docs=docs,
                     responses=responses,
-                    formatted_docs=docs,
                     metrics=metric_category_metrics,
                 )
 
