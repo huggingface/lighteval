@@ -293,7 +293,9 @@ class Pipeline:
 
         if self.is_main_process():
             self.evaluation_tracker.general_config_logger.log_end_time()
-            self.evaluation_tracker.metrics_logger.aggregate(task_dict=self.task_dict, bootstrap_iters=self.pipeline_parameters.bootstrap_iters)
+            self.evaluation_tracker.metrics_logger.aggregate(
+                task_dict=self.task_dict, bootstrap_iters=self.pipeline_parameters.bootstrap_iters
+            )
             self.evaluation_tracker.details_logger.aggregate()
 
             for weights in ["delta", "adapter"]:

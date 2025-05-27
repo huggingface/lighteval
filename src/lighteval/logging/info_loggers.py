@@ -523,8 +523,10 @@ class MetricsLogger:
                 else:
                     self.metric_aggregated[task_name][metric_name] = metric_result
 
-                if isinstance(metric_result, dict):
-                    stderr = None  # We skip stderr for some corpus metrics that return dicts
+                if isinstance(metric_result, dict) or bootstrap_iters == 0:
+                    stderr = (
+                        None  # We skip stderr for some corpus metrics that return dicts, or if bootstrap_iters is 0
+                    )
                 else:
                     aggregation = task.aggregation()[metric_name]
                     stderr = get_stderr_function(aggregation=aggregation, number_experiments=bootstrap_iters)
