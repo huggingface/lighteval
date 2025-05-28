@@ -44,6 +44,15 @@ INTEGER_INDICES = list(map(str, list(range(1, 27))))
 # fmt: on
 
 
+def ruler(line, task_name: str = None):
+    query = line["input"]
+    choices = line["outputs"]
+    gold_index = 0
+    instruction = "Only answer the question to complete the prompt, without any additional text.\n"
+    query = f"{instruction}{query}"
+
+    return Doc(query=query, instruction=instruction, choices=choices, gold_index=gold_index, task_name=task_name)
+
 def mmmu_pro(line, task_name: Optional[str] = None):
     # fmt: off
     question = line["question"]        # "What is the capital of France?"
@@ -87,7 +96,6 @@ def mmmu_pro(line, task_name: Optional[str] = None):
         instruction=instructions,
     )
 
-
 def mmmu_pro_vision(line, task_name: str = None):
     instruction = (
         "Answer with the option letter from the given choices directly."
@@ -119,14 +127,17 @@ def mmmu_pro_vision(line, task_name: str = None):
         instruction=instruction,
     )
 
-
 def simpleqa(line, task_name: str = None):
     query = line["problem"]
     choices = [line["answer"]]
     gold_index = 0
 
     return Doc(
-        task_name=task_name, query=query, choices=choices, gold_index=gold_index, specific={**eval(line["metadata"])}
+        task_name=task_name,
+        query=query,
+        choices=choices,
+        gold_index=gold_index,
+        specific={**eval(line["metadata"])},
     )
 
 
