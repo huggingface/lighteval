@@ -192,7 +192,7 @@ class LightevalTask:
         # Metrics
         self.metrics = config.metrics
 
-        self.sampling_methods = {metric.category for metric in self.metrics}
+        self.sampling_methods = list({metric.category for metric in self.metrics})
         self.has_metric_category = {category: (category in self.sampling_methods) for category in SamplingMethod}
 
         # We assume num_samples always contains 1 (for base generative evals)
@@ -324,7 +324,7 @@ class LightevalTask:
             num_fewshots = self.dataset_config.num_fewshots
             doc.task_name = f"{self.name}|{num_fewshots}"
             doc.fewshot_samples = self.fewshot_sampler.sample_fewshot_examples(num_fewshots, 1, formatted_doc=doc)
-            doc.sampling_methods.update(self.sampling_methods)
+            doc.sampling_methods.extend(self.sampling_methods)
             docs.append(doc)
 
         return docs
@@ -473,10 +473,7 @@ class LightevalTask:
         #        return requests
 
     def get_metric_method_from_category(self, metric_category):
-        if metric_category in [
-            SamplingMethod.GENERATIVE,
-        ]:
-            return apply_generative_metric
+        return apply_generative_metric
 
     def aggregation(self):
         """

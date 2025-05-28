@@ -339,12 +339,6 @@ class DetailsLogger:
         detail.full_prompt = doc.ctx
 
         predictions = model_response.text
-
-        if isinstance(predictions[0], list):
-            # loglikelihood_single_token returns a list of list of floats (but has
-            # only one request), we therefore need to flatten the responses in this case.
-            predictions = [x for resp in predictions for x in resp]
-
         detail.predictions = predictions
         detail.input_tokens = []  # [o.input_tokens for o in outputs]
         detail.cont_tokens = []  # [o.generated_tokens for o in outputs]

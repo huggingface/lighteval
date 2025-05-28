@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 from dataclasses import dataclass, field
-from typing import Optional, Union
+from typing import Optional
 
 import torch
 
@@ -48,42 +48,6 @@ class ModelResponse:
 
     def get_result_for_eval(self):
         raise NotImplementedError()
-
-
-@dataclass
-class LoglikelihoodResponse(ModelResponse):
-    # Float: Total log prob of the continuation
-    # Optional(Bool): Whether the continuation is greedy (= all the tokens in the continuation are argmax of prob)
-    result: Union[tuple[float, bool], float] = field(default_factory=tuple[float, bool])
-
-    def get_result_for_eval(self):
-        return self.result
-
-
-@dataclass
-class LoglikelihoodSingleTokenResponse(ModelResponse):
-    # Log probs of the various single token options
-    result: list[float] = field(default_factory=list)
-
-    def get_result_for_eval(self):
-        return self.result
-
-
-@dataclass
-class GenerativeResponse(ModelResponse):
-    result: list[str] = field(default_factory=str)  # generated text continuation
-    logits: Optional[list[float]] = None  # Generated text logits
-
-    def get_result_for_eval(self):
-        return self.result
-
-
-@dataclass
-class GenerativeMultiturnResponse(ModelResponse):
-    result: list[str] = field(default_factory=list)
-
-    def get_result_for_eval(self):
-        return self.result
 
 
 @dataclass

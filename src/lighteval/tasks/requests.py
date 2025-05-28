@@ -69,7 +69,7 @@ class Doc:
     unconditioned_query: Optional[str] = None
 
     fewshot_samples: list = field(default_factory=list)
-    sampling_methods: set[SamplingMethod] = field(default_factory=set)
+    sampling_methods: list[SamplingMethod] = field(default_factory=list)
 
     def __post_init__(self):
         if self.instruction is None:
