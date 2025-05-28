@@ -185,7 +185,9 @@ class LiteLLMClient(LightevalModel):
         stop_sequencess = [stop_sequence for _ in prompts]
         assert (
             len(prompts) == len(return_logitss) == len(max_new_tokenss) == len(num_sampless) == len(stop_sequencess)
-        ), f"Length of prompts, return_logitss, max_new_tokenss, num_sampless, stop_sequences, system_prompts should be the same but are {len(prompts)}, {len(return_logitss)}, {len(max_new_tokenss)}, {len(num_sampless)}, {len(stop_sequencess)}"
+        ), (
+            f"Length of prompts, return_logitss, max_new_tokenss, num_sampless, stop_sequences, system_prompts should be the same but are {len(prompts)}, {len(return_logitss)}, {len(max_new_tokenss)}, {len(num_sampless)}, {len(stop_sequencess)}"
+        )
 
         with ThreadPoolExecutor(self.CONCURENT_CALLS) as executor:
             for entry in tqdm(
@@ -227,17 +229,17 @@ class LiteLLMClient(LightevalModel):
         dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         results = []
 
-        for _ in tqdm(
-            dataset.splits_start_end_iterator(),
+        for split in tqdm(
+            dataset.splits_iterator(),
             total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
-            disable=False,  # self.disable_tqdm,
+            disable=self.disable_tqdm,
         ):
-            contexts = [c.context for c in dataset]
-            max_new_tokens = dataset[0].generation_size  # could be none
-            return_logits = dataset[0].use_logits
-            num_samples = dataset[0].num_samples
+            contexts = [sample.context for sample in split]
+            max_new_tokens = split[0].generation_size  # could be none
+            return_logits = split[0].use_logits
+            num_samples = split[0].num_samples
             stop_sequence = requests[0].stop_sequence
 
             responses = self.__call_api_parallel(contexts, return_logits, max_new_tokens, num_samples, stop_sequence)

@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import logging
+import shutil
 from contextlib import nullcontext
 
 import torch
@@ -105,3 +106,11 @@ class AdapterModel(TransformersModel):
         )
 
         return model
+
+    def cleanup(self):
+        try:
+            tmp_weights_dir = f"{self.model_name}-adapter-applied"
+            shutil.rmtree(tmp_weights_dir)
+            logger.info(f"Removed {tmp_weights_dir}")
+        except OSError:
+            pass

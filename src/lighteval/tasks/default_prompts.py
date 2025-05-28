@@ -26,6 +26,7 @@ import logging
 import random
 import re
 import string
+from typing import Optional
 
 import numpy as np
 import pycountry
@@ -41,6 +42,82 @@ logger = logging.getLogger(__name__)
 LETTER_INDICES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
 INTEGER_INDICES = list(map(str, list(range(1, 27))))
 # fmt: on
+
+
+def mmmu_pro(line, task_name: Optional[str] = None):
+    # fmt: off
+    question = line["question"]        # "What is the capital of France?"
+    choices_string = line["options"]   # "[Paris, London, Berlin, Madrid]"
+    answer = line["answer"]            # "A"
+    # fmt: on
+
+    instructions = "Answer with the option letter from the given choices directly."
+
+    # Preprocess choices
+    # "[Paris, London, Berlin, Madrid]" -> ["A. Paris", "B. London", "C. Berlin", "D. Madrid"]
+    choices = ast.literal_eval(str(choices_string))
+    choices_letters = [chr(ord("A") + i) for i in range(len(choices))]  # ["A", "B", "C", "D"]
+    choices = [f"{letter}. {choice}" for letter, choice in zip(choices_letters, choices)]
+
+    # Construct prompt
+    formatted_choices = "\n".join(choices)
+    prompt = f"{instructions}\n{question}\n{formatted_choices}"
+
+    # Collect images
+    image_order = []
+    for num in re.findall(r"<image\s+(\d+)>", prompt):
+        num = int(num)
+        if num not in image_order:
+            image_order.append(num)
+    images = [line[f"image_{i}"].convert("RGB") for i in image_order]
+
+    gold_index = string.ascii_uppercase.index(answer)
+
+    # Replace image placeholders in prompt <image 1>, <image 2>, ... with [image 1], [image 2], ...
+    prompt = re.sub(r"<image\s+(\d+)>", "[image \\1]", prompt)
+    choices = [re.sub(r"<image\s+(\d+)>", "[image \\1]", choice) for choice in choices]
+
+    return Doc(
+        task_name=task_name,
+        query=prompt,
+        choices=choices,
+        gold_index=gold_index,
+        images=images,
+        specific={"id": line["id"]},
+        instruction=instructions,
+    )
+
+
+def mmmu_pro_vision(line, task_name: str = None):
+    instruction = (
+        "Answer with the option letter from the given choices directly."
+        " The last line of your response should be of the following format: "
+        "'Answer: $LETTER' (without quotes) where LETTER is one of options."
+    )
+
+    # Preprocess choices
+    # "[Paris, London, Berlin, Madrid]" -> ["A. Paris", "B. London", "C. Berlin", "D. Madrid"]
+    choices_string = line["options"]
+    choices = ast.literal_eval(str(choices_string))
+    choices_letters = [chr(ord("A") + i) for i in range(len(choices))]  # ["A", "B", "C", "D"]
+    choices = [f"{letter}. {choice}" for letter, choice in zip(choices_letters, choices)]
+
+    # Preprocess answer
+    # e.g. "A" -> 0
+    answer = line["answer"]
+    gold_index = string.ascii_uppercase.index(answer)
+
+    # Preprocess images
+    images = [line["image"]]
+
+    return Doc(
+        task_name=task_name,
+        query=instruction,
+        choices=choices,
+        gold_index=gold_index,
+        images=images,
+        instruction=instruction,
+    )
 
 
 def simpleqa(line, task_name: str = None):
@@ -749,7 +826,7 @@ def ethics_commonsense(line, task_name: str = None):
 def ethics_deontology(line, task_name: str = None):
     return Doc(
         task_name=task_name,
-        query=f"Question: Would most people believe this reasonable or unreasonable to say? \"{line['scenario']} {line['excuse']}\"\nAnswer:",
+        query=f'Question: Would most people believe this reasonable or unreasonable to say? "{line["scenario"]} {line["excuse"]}"\nAnswer:',
         choices=[" unreasonable", " reasonable"],
         gold_index=int(line["label"]),
         instruction="Question: Would most people believe this reasonable or unreasonable to say?",
@@ -759,7 +836,7 @@ def ethics_deontology(line, task_name: str = None):
 def ethics_justice(line, task_name: str = None):
     return Doc(
         task_name=task_name,
-        query=f"Question: Would most people believe this reasonable or unreasonable to say? \"{line['scenario']}\"\nAnswer:",
+        query=f'Question: Would most people believe this reasonable or unreasonable to say? "{line["scenario"]}"\nAnswer:',
         choices=[" unreasonable", " reasonable"],
         gold_index=int(line["label"]),
         instruction="Question: Would most people believe this reasonable or unreasonable to say?",
@@ -782,7 +859,7 @@ def ethics_utilitarianism(line, task_name: str = None):
 def ethics_virtue(line, task_name: str = None):
     return Doc(
         task_name=task_name,
-        query=f"Sentence: {line['scenario']}\nQuestion: Does the character in this sentence exhibit the trait \"{line['trait']}\"?\nAnswer:",
+        query=f'Sentence: {line["scenario"]}\nQuestion: Does the character in this sentence exhibit the trait "{line["trait"]}"?\nAnswer:',
         choices=[" no", " yes"],
         gold_index=int(line["label"]),
     )
@@ -831,6 +908,22 @@ def gpqa_instruct(line, task_name: str = None):
         choices=LETTER_INDICES[: len(choices)],
         gold_index=gold_index,
         instruction=query,
+    )
+
+
+def gsm_plus(line, task_name: str = None):
+    # GSM8K with 8 prompt variations per sample
+
+    # Some prompts require critical thinking (around 1k/10k), we skip them as
+    # they are a bit trickier to eval with regular text extraction.
+    if line["perturbation_type"] == "critical thinking":
+        return None
+
+    return Doc(
+        task_name=task_name,
+        query=f"Question: {line['question']}\n\nAnswer:",
+        choices=[line["answer"]],
+        gold_index=0,
     )
 
 
@@ -1159,24 +1252,21 @@ def lextreme_covid19_emergency_event(line, task_name: str = None):
 
 def lextreme_multi_eurlex_level_1(line, task_name: str = None):
     instruction = (
-        "In this task, you are given a document from an EU law. "
-        "Predict the level 1 concept in the EUROVOC taxonomy."
+        "In this task, you are given a document from an EU law. Predict the level 1 concept in the EUROVOC taxonomy."
     )
     return lextreme(line, instruction, task_name)
 
 
 def lextreme_multi_eurlex_level_2(line, task_name: str = None):
     instruction = (
-        "In this task, you are given a document from an EU law. "
-        "Predict the level 2 concept in the EUROVOC taxonomy."
+        "In this task, you are given a document from an EU law. Predict the level 2 concept in the EUROVOC taxonomy."
     )
     return lextreme(line, instruction, task_name)
 
 
 def lextreme_multi_eurlex_level_3(line, task_name: str = None):
     instruction = (
-        "In this task, you are given a document from an EU law. "
-        "Predict the level 3 concept in the EUROVOC taxonomy."
+        "In this task, you are given a document from an EU law. Predict the level 3 concept in the EUROVOC taxonomy."
     )
 
     return lextreme(line, instruction, task_name)
@@ -1184,8 +1274,7 @@ def lextreme_multi_eurlex_level_3(line, task_name: str = None):
 
 def lextreme_greek_legal_ner(line, task_name: str = None):
     instruction = (
-        "In this task, you are given a sentence from Greek legislation. "
-        "Predict the named entity type for each token."
+        "In this task, you are given a sentence from Greek legislation. Predict the named entity type for each token."
     )
     return lextreme(line, instruction, task_name)
 
@@ -1236,7 +1325,7 @@ def legal_summarization(line, task_name: str = None):
 def mgsm(line, question_key, answer_key, task_name: str = None):
     if line["answer"] is not None:
         query = f"{line['question']}\n{answer_key}"
-        gold = f" {line['answer'][len(answer_key) + 1:]}"
+        gold = f" {line['answer'][len(answer_key) + 1 :]}"
     else:
         query = f"{question_key} {line['question']}\n{answer_key}"
         gold = f" {str(line['answer_number'])}"

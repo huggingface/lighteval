@@ -342,7 +342,8 @@ class Probability:
     def compute(
         self,
         logprobs: list[float],
-        target_tokens: list[list[int]],
+        target_tokens: list[list[int]] | None = None,
+        reference_texts: list[str] | None = None,
         **kwargs,
     ) -> float:
         """Computes the log likelihood probability: chance of choosing the best choice.
@@ -352,8 +353,7 @@ class Probability:
             choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
             unconditioned_logprob (list[float] | None): Unconditioned log-probabilities for PMI normalization, ordered as the choices.
             choices_tokens (list[list[int]] | None): Tokenized choices for token normalization, ordered as the choices.
-            formatted_doc (Doc): Original document for the sample.
-                Used to get the original choices' length for possible normalization
+            reference_texts (list[str] | None): Reference texts for token normalization, ordered as the choices.
 
         Returns:
             float: The probability of the best log-prob choice being a gold choice.
@@ -364,7 +364,7 @@ class Probability:
                 normalization=self.log_prob_normalization,
                 choices_tokens=target_tokens,
                 choices_logprob=logprobs,
-                choices_text=None,
+                choices_text=reference_texts,
                 unconditioned_logprob=None,
             )
             if self.log_prob_normalization
@@ -1163,7 +1163,9 @@ class PassAtK:
                 self.type_exact_match = "full"
             self.score_sample = self.default_sample_scoring
 
-    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> dict[str, float]:
+    def compute(
+        self, golds: list[str], predictions: list[str], formatted_doc: Doc = None, **kwargs
+    ) -> dict[str, float]:
         """Computes the metric over a list of golds and predictions for one single item with possibly many samples.
         It applies normalisation (if needed) to model prediction and gold, computes their per prediction score,
         then aggregates the scores over the samples using a pass@k.
@@ -1189,7 +1191,7 @@ class PassAtK:
         all_scores = []
         for pred in predictions[: self.n]:
             cur_pred = self.get_processed_pred(pred=pred)
-            all_scores.append(self.score_sample(cur_pred, gold))
+            all_scores.append(self.score_sample(cur_pred, gold, formatted_doc))
 
         return self.pass_at_k(all_scores)
 

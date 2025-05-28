@@ -21,11 +21,11 @@
 # SOFTWARE.
 
 import ast
+import asyncio
 import collections
 import os
 import random
 import re
-import shutil
 from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import timedelta
@@ -72,7 +72,7 @@ if is_nanotron_available():
     from nanotron.parallel.context import ParallelContext
     from nanotron.utils import local_ranks_zero_first
 
-    from lighteval.models.nanotron_model import NanotronLightevalModel
+    from lighteval.models.nanotron.nanotron_model import NanotronLightevalModel
 
 
 import logging
@@ -87,6 +87,7 @@ class ParallelismManager(Enum):
     TGI = auto()
     OPENAI = auto()
     VLLM = auto()
+    CUSTOM = auto()
     NONE = auto()
     SGLANG = auto()
 
@@ -191,7 +192,7 @@ class Pipeline:
                     checkpoint_path=os.path.dirname(self.pipeline_parameters.nanotron_checkpoint_path)
                     if self.pipeline_parameters.nanotron_checkpoint_path
                     else "",
-                    nanotron_config=self.model_config,
+                    nanotron_config=model_config,
                     parallel_context=self.parallel_context,
                     debug_one_layer_model=False,
                     model_class=None,
@@ -298,14 +299,6 @@ class Pipeline:
             )
             self.evaluation_tracker.details_logger.aggregate()
 
-            for weights in ["delta", "adapter"]:
-                try:
-                    tmp_weights_dir = f"{self.evaluation_tracker.general_config_logger.model_name}-{weights}-applied"
-                    shutil.rmtree(tmp_weights_dir)
-                    logger.info(f"Removed {tmp_weights_dir}")
-                except OSError:
-                    pass
-
     def _unpack(self, x):
         if isinstance(x, str):
             return x
@@ -385,7 +378,7 @@ class Pipeline:
         try:
             return ast.literal_eval(processed)
         except Exception as e:
-            raise ValueError(f"Failed to parse after preprocessing. " f"Processed string:\n{processed}\n\nError: {e}")
+            raise ValueError(f"Failed to parse after preprocessing. Processed string:\n{processed}\n\nError: {e}")
 
     def _load_responses_from_details(self):
         logger.info("--- LOADING RESPONSES FROM DETAILS ---")
@@ -458,12 +451,22 @@ class Pipeline:
 
         return model_response_type
 
-    def _run_model(self):
-        # Running all requests depending on the model call type (log likelihood, generative, ...)
-        # to be able to batch them
-        logger.info("--- RUNNING MODEL ---")
+    async def _run_model_async(self):
         sample_id_to_responses: dict[(SampleUid, MetricCategory), list[ModelResponse]] = collections.defaultdict(list)
+        for request_type, requests in self.requests.items():
+            logger.info(f"Sending {request_type} requests")
+            run_model = self.model.get_method_from_request_type(request_type=request_type)
+            responses = await run_model(requests)
 
+            # Storing the responses associated to the same samples together
+            for response, request in zip(responses, requests):
+                for metric_category in request.metric_categories:
+                    sample_id = SampleUid(request.task_name, request.sample_index)
+                    sample_id_to_responses[(sample_id, metric_category)].append(response)
+        return sample_id_to_responses
+
+    def _run_model_sync(self):
+        sample_id_to_responses: dict[(SampleUid, MetricCategory), list[ModelResponse]] = collections.defaultdict(list)
         for request_type, requests in self.requests.items():
             logger.info(f"Running {request_type} requests")
             run_model = self.model.get_method_from_request_type(request_type=request_type)
@@ -474,6 +477,18 @@ class Pipeline:
                 for metric_category in request.metric_categories:
                     sample_id = SampleUid(request.task_name, request.sample_index)
                     sample_id_to_responses[(sample_id, metric_category)].append(response)
+        return sample_id_to_responses
+
+    def _run_model(self):
+        # Running all requests depending on the model call type (log likelihood, generative, ...)
+        # to be able to batch them
+        logger.info("--- RUNNING MODEL ---")
+
+        if self.model.is_async:
+            sample_id_to_responses = asyncio.run(self._run_model_async())
+
+        else:
+            sample_id_to_responses = self._run_model_sync()
 
         # Cleaning up the model before running metrics
         self.model.cleanup()
