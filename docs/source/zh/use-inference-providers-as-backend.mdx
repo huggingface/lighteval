@@ -1,0 +1,41 @@
+# 使用Inference Providers作为后端
+
+Lighteval支持通过Hugging Face的Inference Providers在多种服务提供商上评估大语言模型，包括Black Forest Labs、Cerebras、Fireworks AI、Nebius、Together AI等。
+
+## 快速使用
+
+> [!WARNING]
+> 请务必设置您的HuggingFace API密钥。
+> 您可以通过`HF_TOKEN`环境变量或使用`huggingface-cli`命令来设置密钥。
+
+
+```bash
+lighteval endpoint inference-providers \
+    "model_name=deepseek-ai/DeepSeek-R1,provider=hf-inference" \
+    "lighteval|gsm8k|0|0"
+```
+
+## 使用配置文件
+
+您可以通过配置文件来定义要使用的模型和服务提供商。
+
+```bash
+lighteval endpoint inference-providers \
+    examples/model_configs/inference_providers.yaml \
+    "lighteval|gsm8k|0|0"
+```
+
+配置文件示例：
+
+```yaml
+model_parameters:
+  model_name: "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
+  provider: "novita"
+  timeout: null
+  proxies: null
+  parallel_calls_count: 10
+  generation_parameters:
+    temperature: 0.8
+    top_k: 10
+    max_new_tokens: 10000
+``` 

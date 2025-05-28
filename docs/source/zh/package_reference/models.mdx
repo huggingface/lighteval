@@ -1,0 +1,40 @@
+# 模型
+
+## 模型
+### LightevalModel
+[[autodoc]] models.abstract_model.LightevalModel
+
+
+## Accelerate和Transformers模型
+### TransformersModel
+[[autodoc]] models.transformers.transformers_model.TransformersModelConfig
+[[autodoc]] models.transformers.transformers_model.TransformersModel
+
+### AdapterModel
+[[autodoc]] models.transformers.adapter_model.AdapterModelConfig
+[[autodoc]] models.transformers.adapter_model.AdapterModel
+
+### DeltaModel
+[[autodoc]] models.transformers.delta_model.DeltaModelConfig
+[[autodoc]] models.transformers.delta_model.DeltaModel
+
+## 基于端点的模型
+### InferenceEndpointModel
+[[autodoc]] models.endpoints.endpoint_model.InferenceEndpointModelConfig
+[[autodoc]] models.endpoints.endpoint_model.ServerlessEndpointModelConfig
+[[autodoc]] models.endpoints.endpoint_model.InferenceEndpointModel
+
+### TGI ModelClient
+[[autodoc]] models.endpoints.tgi_model.TGIModelConfig
+[[autodoc]] models.endpoints.tgi_model.ModelClient
+
+### 自定义模型
+[[autodoc]] models.custom.custom_model.CustomModelConfig
+
+### Open AI模型
+[[autodoc]] models.endpoints.openai_model.OpenAIClient
+
+## VLLM模型
+### VLLMModel
+[[autodoc]] models.vllm.vllm_model.VLLMModelConfig
+[[autodoc]] models.vllm.vllm_model.VLLMModel 

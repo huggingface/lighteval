@@ -1,0 +1,50 @@
+# 在服务器或容器上评估模型
+
+除了本地运行评估外，您还可以在兼容TGI的服务器或容器上部署模型，然后通过向服务器发送请求来执行评估。命令格式与前面相同，只需额外指定yaml配置文件的路径：
+
+```bash
+lighteval endpoint {tgi,inference-endpoint} \
+    "/path/to/config/file"\
+    <task parameters>
+```
+
+服务器上运行支持两种类型的配置文件：
+
+### Hugging Face Inference Endpoints
+
+要使用HuggingFace的Inference Endpoints部署模型，您需要提供`endpoint_model.yaml`配置文件。Lighteval会自动部署端点，运行评估，并在完成后删除端点（除非您指定使用已启动的端点，这种情况下评估结束后不会删除端点）。
+
+__配置文件示例：__
+
+```yaml
+model_parameters:
+    reuse_existing: false # 如果设为true，将忽略实例中的所有参数，且评估后不删除端点
+# endpoint_name: "llama-2-7B-lighteval" # 名称必须使用小写字母，不含特殊字符
+    model_name: "meta-llama/Llama-2-7b-hf"
+    revision: "main"  # 默认为"main"
+    dtype: "float16" # 可选值包括"awq"、"eetq"、"gptq"、"4bit"或"8bit"（使用bitsandbytes）、"bfloat16"或"float16"
+    accelerator: "gpu"
+    region: "eu-west-1"
+    vendor: "aws"
+    instance_type: "nvidia-a10g"
+    instance_size: "x1"
+    framework: "pytorch"
+    endpoint_type: "protected"
+    namespace: null # 端点部署的命名空间，默认为当前用户的命名空间
+    image_url: null # （可选）指定部署端点时使用的docker镜像，例如使用支持更新模型的最新TGI容器
+    env_vars:
+    null # （可选）启动端点时设置的环境变量，例如：`MAX_INPUT_LENGTH: 2048`
+```
+
+### Text Generation Inference (TGI)
+
+如需使用已部署在TGI服务器上的模型（例如HuggingFace的无服务器推理服务）：
+
+__配置文件示例：__
+
+```yaml
+model_parameters:
+    inference_server_address: ""
+    inference_server_auth: null
+    model_id: null # 可选，仅当TGI容器以指向本地目录的model_id启动时需要
+``` 
