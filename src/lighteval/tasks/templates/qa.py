@@ -70,9 +70,12 @@ def get_qa_prompt_function(language: Language, adapter: Callable[[dict], QAInput
         if input_data is None:
             return None
 
+        choices = list(set(input_data["choices"]))
+
         return {
             **input_data,
-            "gold_idx": list(range(len(input_data["choices"]))),
+            "gold_idx": list(range(len(choices))),
+            "choices": choices,
         }
 
     multichoice_prompt_fn = get_mcq_prompt_function(language, adapter=adapter_for_mcq, formulation=CFFormulation())
