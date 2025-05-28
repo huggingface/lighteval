@@ -27,15 +27,8 @@ from typing import Optional, Union
 import torch
 from transformers import BatchEncoding, PreTrainedTokenizerBase
 
-from lighteval.models.model_output import (
-    GenerativeResponse,
-    LoglikelihoodResponse,
-)
-from lighteval.tasks.requests import (
-    GreedyUntilRequest,
-    LoglikelihoodRequest,
-    RequestType,
-)
+from lighteval.models.model_output import ModelResponse
+from lighteval.tasks.requests import Doc, SamplingMethod
 
 
 TokenSequence = Union[list[int], torch.LongTensor, torch.Tensor, BatchEncoding]
@@ -78,18 +71,17 @@ class LightevalModel(ABC):
     def disable_tqdm(self) -> bool:
         raise NotImplementedError
 
-    def get_method_from_request_type(self, request_type: RequestType):
-        if request_type == RequestType.LOGLIKELIHOOD:
+    def get_method_from_request_type(self, request_type: SamplingMethod):
+        if request_type == SamplingMethod.LOGPROBS:
             return self.loglikelihood
-        if request_type == RequestType.GREEDY_UNTIL:
+        if request_type == SamplingMethod.GENERATIVE:
             return self.greedy_until
 
     @abstractmethod
     def greedy_until(
         self,
-        requests: list[GreedyUntilRequest],
-        override_bs: Optional[int] = None,
-    ) -> list[GenerativeResponse]:
+        requests: list[Doc],
+    ) -> list[ModelResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
@@ -104,9 +96,7 @@ class LightevalModel(ABC):
         return NotImplemented
 
     @abstractmethod
-    def loglikelihood(
-        self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
+    def loglikelihood(self, requests: list[Doc], override_bs: Optional[int] = None) -> list[ModelResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """

@@ -22,6 +22,7 @@
 
 from dataclasses import dataclass
 from enum import Enum, auto
+from typing import Callable
 
 from lighteval.tasks.requests import SamplingMethod
 
@@ -40,29 +41,13 @@ class MetricCategory(str, Enum):
     IGNORED = auto()
 
 
-class MetricUseCase(str, Enum):
-    # General
-    ACCURACY = auto()
-    PERPLEXITY = auto()
-    # Task specific
-    CODE = auto()
-    COPYRIGHT = auto()
-    MATH = auto()
-    REASONING = auto()
-    SOCIAL_IMPACTS = auto()
-    SUMMARIZATION = auto()
-    TRANSLATION = auto()
-    NONE = auto()
-
-
 @dataclass
 class Metric:
     metric_name: str
     higher_is_better: bool
-    category: MetricCategory | SamplingMethod
-    sample_level_fn: callable
-    corpus_level_fn: callable
-    use_case: MetricUseCase = None
+    category: SamplingMethod
+    sample_level_fn: Callable
+    corpus_level_fn: Callable
 
     batched_compute: bool = False
 
@@ -72,8 +57,6 @@ class Metric:
     def compute(
         self, **kwargs
     ) -> dict:  # result: Union[list[ModelResponse], ModelResponse], formatted_doc: Doc) -> dict:
-        if self.category == MetricCategory.IGNORED:
-            return {}
         if isinstance(self, MetricGrouping):
             return self.sample_level_fn(**kwargs)  # result, formatted_doc,
         return {self.metric_name: self.sample_level_fn(**kwargs)}  # result, formatted_doc,
@@ -86,8 +69,8 @@ class MetricGrouping(Metric):
     """
 
     metric_name: list[str]
-    corpus_level_fn: dict[str:callable]
-    higher_is_better: dict[str:callable]
+    corpus_level_fn: dict[str, Callable]
+    higher_is_better: dict[str, Callable]
 
 
 @dataclass

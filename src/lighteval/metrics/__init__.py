@@ -21,10 +21,9 @@
 # SOFTWARE.
 
 
-from lighteval.metrics.metrics import Metric, MetricCategory
+from lighteval.metrics.metrics import Metric
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
-from lighteval.utils.utils import as_list
 
 
 def apply_target_perplexity_metric(responses: list[ModelResponse], docs: list[Doc], metrics: list[Metric]):
@@ -37,15 +36,14 @@ def apply_target_perplexity_metric(responses: list[ModelResponse], docs: list[Do
         assert len(model_reponse.logprobs) == len(target_golds), "You should return as many results as there are golds"
 
         for metric in metrics:
-            if metric.category == MetricCategory.TARGET_PERPLEXITY:
-                output.update(
-                    metric.compute(
-                        logprobs=model_reponse.logprobs,
-                        argmax_logits_eq_gold_list=model_reponse.argmax_logits_eq_gold,
-                        reference_texts=target_golds,
-                        target_tokens=model_reponse.output_tokens,
-                    )
+            output.update(
+                metric.compute(
+                    logprobs=model_reponse.logprobs,
+                    argmax_logits_eq_gold_list=model_reponse.argmax_logits_eq_gold,
+                    reference_texts=target_golds,
+                    target_tokens=model_reponse.output_tokens,
                 )
+            )
         outputs.append(output)
 
     return outputs
@@ -67,8 +65,7 @@ def apply_perplexity_metric(responses: list[ModelResponse], docs: list[Doc], met
             reference_text = formatted_doc.query
 
         for metric in metrics:
-            if metric.category == MetricCategory.PERPLEXITY:
-                output.update(metric.compute(logprobs=model_reponse.logprobs, reference_texts=[reference_text]))
+            output.update(metric.compute(logprobs=model_reponse.logprobs, reference_texts=[reference_text]))
 
         outputs.append(output)
 
@@ -96,20 +93,13 @@ def apply_generative_metric(  # noqa: C901
                 outputs.append(output)
 
         else:
-            for model_response, formatted_doc in zip(responses, docs):
+            for model_response, doc in zip(responses, docs):
                 output = {}
-
-                try:
-                    golds = formatted_doc.get_golds()
-                except (KeyError, IndexError):
-                    golds = None
-
                 for metric in metrics:
                     output.update(
                         metric.compute(
-                            golds=golds,
-                            predictions=model_response.text,
-                            docs=formatted_doc,
+                            model_response=model_response,
+                            doc=doc,
                         )
                     )
                 outputs.append(output)
@@ -119,46 +109,15 @@ def apply_generative_metric(  # noqa: C901
 
 def apply_multichoice_metric(responses: list[ModelResponse], docs: list[Doc], metrics: list[Metric]):
     outputs = []
-    for model_reponse, formatted_doc in zip(responses, docs):
+    for model_reponse, doc in zip(responses, docs):
         output = {}
-        n_choices = len(formatted_doc.choices)
-        is_pmi_category = all(metric.category == MetricCategory.MULTICHOICE_PMI for metric in metrics)
-
-        if n_choices <= 1:
-            raise ValueError(
-                "You can't use a multi choice metric with only one choice. Use `acc_golds_likelihood` instead."
-            )
-
-        if not is_pmi_category and len(model_reponse.logprobs) != len(formatted_doc.choices):
-            raise Exception(
-                f"You shoud have returned as many model outputs as choices when using an multi choice metric. Returned {len(model_reponse.logprobs)} instead of {len(formatted_doc.choices)}"
-            )
-
-        if is_pmi_category and len(model_reponse.logprobs) != n_choices * 2:
-            raise Exception(
-                f"You shoud have returned twice as many model outputs as choices when using an probability multi choice metric. Returned {len(model_reponse.logprobs)} instead of {n_choices * 2} (conditioned and unconditioned)"
-            )
-
-        conditioned_logprobs = model_reponse.logprobs[:n_choices]
-        # Todo: make better system with return_bool_score instead of taking first element
-        unconditioned_logprobs = None
-        if is_pmi_category:
-            unconditioned_logprobs = model_reponse.logprobs[n_choices : n_choices * 2]
-
-        gold_ixs = as_list(formatted_doc.gold_index)
-        choices_tokens = model_reponse.output_tokens[:n_choices]
-
         for metric in metrics:
-            if metric.category == MetricCategory.MULTICHOICE_PMI or metric.category == MetricCategory.MULTICHOICE:
-                output.update(
-                    metric.compute(
-                        gold_ixs=gold_ixs,
-                        choices_logprob=conditioned_logprobs,
-                        unconditioned_logprob=unconditioned_logprobs,
-                        choices_tokens=choices_tokens,
-                        formatted_doc=formatted_doc,
-                    )
+            output.update(
+                metric.compute(
+                    model_response=model_reponse,
+                    doc=doc,
                 )
+            )
         outputs.append(output)
 
     return outputs
@@ -173,8 +132,7 @@ def apply_llm_as_judge_metric(responses: list[ModelResponse], docs: list[Doc], m
     outputs_per_metrics: list[list[dict]] = []
 
     for metric in metrics:
-        if metric.category in [MetricCategory.LLM_AS_JUDGE_MULTI_TURN, MetricCategory.LLM_AS_JUDGE]:
-            outputs_per_metrics.append(metric.compute(responses=responses, doc=docs))
+        outputs_per_metrics.append(metric.compute(responses=responses, doc=docs))
 
     # We merge the outputs per metric in a list of dict for each sample
     # example: [{metric1_sample1, metric2_sample1}, {metric1_sample2, metric2_sample2}]

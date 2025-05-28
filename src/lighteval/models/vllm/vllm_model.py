@@ -32,15 +32,9 @@ from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_output import (
-    GenerativeResponse,
-    LoglikelihoodResponse,
-)
+from lighteval.models.model_output import ModelResponse
 from lighteval.models.utils import ModelConfig, _simplify_name
-from lighteval.tasks.requests import (
-    GreedyUntilRequest,
-    LoglikelihoodRequest,
-)
+from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import is_vllm_available
 from lighteval.utils.utils import as_list
 
@@ -203,9 +197,9 @@ class VLLMModel(LightevalModel):
 
     def greedy_until(
         self,
-        requests: list[GreedyUntilRequest],
+        requests: list[Doc],
         override_bs: Optional[int] = None,
-    ) -> list[GenerativeResponse]:
+    ) -> list[ModelResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
@@ -290,7 +284,7 @@ class VLLMModel(LightevalModel):
                 result = [output.text for output in vllm_output.outputs]
                 input_token_ids = vllm_output.prompt_token_ids
 
-                cur_response = GenerativeResponse(
+                cur_response = ModelResponse(
                     result=result,
                     logits=logprobs,
                     generated_tokens=list(output_token_ids),
@@ -308,7 +302,7 @@ class VLLMModel(LightevalModel):
         returns_logits: Optional[bool] = False,
         num_samples: int = 1,
         generate: bool = True,
-    ) -> list[GenerativeResponse]:
+    ) -> list[ModelResponse]:
         """Contains the actual logic of the generation."""
         sampling_params = SamplingParams(**self._config.generation_parameters.to_vllm_dict())
 
@@ -360,9 +354,7 @@ class VLLMModel(LightevalModel):
 
         return outputs
 
-    def loglikelihood(
-        self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
+    def loglikelihood(self, requests: list[Doc], override_bs: Optional[int] = None) -> list[ModelResponse]:
         for request in requests:
             if request.context == "":
                 request.tokenized_context = [self.tokenizer.eos_token_id]
@@ -376,11 +368,11 @@ class VLLMModel(LightevalModel):
 
     def _loglikelihood_tokens(
         self,
-        requests: list[LoglikelihoodRequest],
+        requests: list[Doc],
         override_bs: int = -1,
         return_bool_score: bool = True,
         rolling: bool = False,
-    ) -> list[LoglikelihoodResponse]:
+    ) -> list[ModelResponse]:
         dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=1)
         res = []
 
@@ -397,7 +389,7 @@ class VLLMModel(LightevalModel):
                     continuation_logprobs.append(logprobs[token])
                 bool_score = all(logprob.rank == 1 for logprob in continuation_logprobs)
                 continuation_logprobs = [logprob.logprob for logprob in continuation_logprobs]
-                answer = LoglikelihoodResponse(
+                answer = ModelResponse(
                     input_tokens=input.tokenized_context + input.tokenized_continuation,
                     generated_tokens=input.tokenized_continuation,
                     result=(sum(continuation_logprobs), bool_score if return_bool_score else None),

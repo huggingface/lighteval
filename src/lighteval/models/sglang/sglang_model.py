@@ -30,15 +30,9 @@ from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_output import (
-    GenerativeResponse,
-    LoglikelihoodResponse,
-)
+from lighteval.models.model_output import ModelResponse
 from lighteval.models.utils import ModelConfig, _simplify_name
-from lighteval.tasks.requests import (
-    GreedyUntilRequest,
-    LoglikelihoodRequest,
-)
+from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import is_sglang_available
 from lighteval.utils.utils import as_list
 
@@ -157,9 +151,9 @@ class SGLangModel(LightevalModel):
 
     def greedy_until(
         self,
-        requests: list[GreedyUntilRequest],
+        requests: list[Doc],
         override_bs: Optional[int] = None,
-    ) -> list[GenerativeResponse]:
+    ) -> list[ModelResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
@@ -233,7 +227,7 @@ class SGLangModel(LightevalModel):
                 output_token_ids = [output[1] for output in output_token_logprobs]
                 logprobs = [output[0] for output in output_token_logprobs]
                 result = [sglang_output["text"]]
-                cur_response = GenerativeResponse(
+                cur_response = ModelResponse(
                     result=result,
                     logits=logprobs,
                     generated_tokens=list(output_token_ids),
@@ -249,7 +243,7 @@ class SGLangModel(LightevalModel):
         stop_tokens: Optional[list[str]] = None,
         num_samples: int = 1,
         generate: bool = True,
-    ) -> list[GenerativeResponse]:
+    ) -> list[ModelResponse]:
         """Contains the actual logic of the generation."""
 
         logprob_start_len = None
@@ -273,9 +267,7 @@ class SGLangModel(LightevalModel):
         )
         return outputs
 
-    def loglikelihood(
-        self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
+    def loglikelihood(self, requests: list[Doc], override_bs: Optional[int] = None) -> list[ModelResponse]:
         for request in requests:
             if request.context == "":
                 request.tokenized_context = [self.tokenizer.eos_token_id]
@@ -290,11 +282,11 @@ class SGLangModel(LightevalModel):
 
     def _loglikelihood_tokens(
         self,
-        requests: list[LoglikelihoodRequest],
+        requests: list[Doc],
         override_bs: int = -1,
         return_bool_score: bool = True,
         rolling: bool = False,
-    ) -> list[LoglikelihoodResponse]:
+    ) -> list[ModelResponse]:
         dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=1)
         res = []
 
@@ -315,7 +307,7 @@ class SGLangModel(LightevalModel):
                 bool_score = all(
                     top[0][1] == input[1] for top, input in zip(input_top_logprobs, continuation_logprobs[0])
                 )
-                answer = LoglikelihoodResponse(
+                answer = ModelResponse(
                     input_tokens=input.tokenized_context + input.tokenized_continuation,
                     generated_tokens=input.tokenized_continuation,
                     result=(sum(item[0] for item in continuation_logprobs[0]), bool_score),

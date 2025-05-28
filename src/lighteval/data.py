@@ -36,9 +36,7 @@ else:
     from torch.utils.data.distributed import T_co as _T_co
 
 from lighteval.tasks.requests import (
-    GreedyUntilRequest,
-    LoglikelihoodRequest,
-    Request,
+    Doc,
 )
 
 
@@ -147,7 +145,7 @@ class DynamicBatchDataset(Dataset):
         for split_id in range(split_range):
             yield self.get_split_start_end(split_id)
 
-    def __getitem__(self, index) -> Request:
+    def __getitem__(self, index) -> Doc:
         """
         Get an item from the dataset depending on the split we are currently in.
         For instance, if we are in split 0, we will get the item at index 0, if
@@ -173,7 +171,7 @@ class DynamicBatchDataset(Dataset):
         """
         return self.split_end - self.split_start
 
-    def __iter__(self) -> Iterator[Request]:
+    def __iter__(self) -> Iterator[Doc]:
         """
         Iterator that yields the items of the dataset depending on the split we
         are currently in. For instance, if we are in split 0, we will get the
@@ -192,7 +190,7 @@ class DynamicBatchDataset(Dataset):
 
 
 class LoglikelihoodDataset(DynamicBatchDataset):
-    def _sorting_criteria(self, request: LoglikelihoodRequest) -> int:
+    def _sorting_criteria(self, request: Doc) -> int:
         """
         Collates the input data for batching.
 
@@ -258,7 +256,7 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         splits_indices = [tuple(e) for e in splits_indices]
         return num_dataset_splits, splits_indices
 
-    def _sorting_criteria(self, request: GreedyUntilRequest) -> tuple[bool, bool, list, int, int]:
+    def _sorting_criteria(self, request: Doc) -> tuple[bool, bool, list, int, int]:
         """
         Collate function for generating batches.
 
@@ -283,7 +281,7 @@ class GenerativeTaskDataset(DynamicBatchDataset):
 
 
 class GenerativeTaskDatasetNanotron(GenerativeTaskDataset):
-    def __getitem__(self, index) -> Request:
+    def __getitem__(self, index) -> Doc:
         """
         Get an item from the dataset depending on the split we are currently in.
         For instance, if we are in split 0, we will get the item at index 0, if

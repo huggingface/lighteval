@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import collections
 import inspect
 import logging
 import random
@@ -35,15 +34,10 @@ from pytablewriter import MarkdownTableWriter
 from lighteval.metrics import (
     apply_generative_metric,
 )
-from lighteval.metrics.metrics import Metric, MetricCategory, Metrics
+from lighteval.metrics.metrics import Metric, Metrics
 from lighteval.tasks.prompt_manager import FewShotSampler
 from lighteval.tasks.requests import (
     Doc,
-    GreedyUntilRequest,
-    LoglikelihoodRequest,
-    LoglikelihoodRollingRequest,
-    Request,
-    RequestType,
     SamplingMethod,
 )
 from lighteval.utils.utils import ListLike, as_list, download_dataset_worker
@@ -83,7 +77,7 @@ class LightevalTaskConfig:
     ]  # The prompt function should be used to map a line in the dataset to a Sample
     hf_repo: str
     hf_subset: str
-    metric: ListLike[Metric | Metrics]  # List of metric , should be configurable
+    metrics: ListLike[Metric]  # List of metric , should be configurable
 
     # Additional hf dataset config
     hf_revision: str | None = None
@@ -118,10 +112,10 @@ class LightevalTaskConfig:
 
     def __post_init__(self):
         # If we got a Metrics enums instead of a Metric, we convert
-        self.metric = [metric.value if isinstance(metric, Metrics) else metric for metric in self.metric]
+        self.metrics = [metric.value if isinstance(metric, Metrics) else metric for metric in self.metrics]
 
         # Convert list to tuple for hashing
-        self.metric = tuple(self.metric)
+        self.metrics = tuple(self.metrics)
         self.hf_avail_splits = tuple(self.hf_avail_splits)
         self.evaluation_splits = tuple(self.evaluation_splits)
         self.suite = tuple(self.suite)
@@ -196,14 +190,10 @@ class LightevalTask:
         self.fewshot_sampler = FewShotSampler(self)
 
         # Metrics
-        self.metrics = config.metric
-        ignored = [metric for metric in self.metrics if metric.category == MetricCategory.IGNORED]
+        self.metrics = config.metrics
 
-        if len(ignored) > 0:
-            logger.warning(f"Not implemented yet: ignoring the metric {' ,'.join(ignored)} for task {self.name}.")
-
-        self.current_categories = [metric.category for metric in self.metrics]
-        self.has_metric_category = {category: (category in self.current_categories) for category in MetricCategory}
+        self.sampling_methods = {metric.category for metric in self.metrics}
+        self.has_metric_category = {category: (category in self.sampling_methods) for category in SamplingMethod}
 
         # We assume num_samples always contains 1 (for base generative evals)
         self.num_samples = [1]
@@ -334,153 +324,153 @@ class LightevalTask:
             num_fewshots = self.dataset_config.num_fewshots
             doc.task_name = f"{self.name}|{num_fewshots}"
             doc.fewshot_samples = self.fewshot_sampler.sample_fewshot_examples(num_fewshots, 1, formatted_doc=doc)
-            doc.sampling_methods.append(SamplingMethod.GENERATIVE)
+            doc.sampling_methods.update(self.sampling_methods)
             docs.append(doc)
 
         return docs
 
-    def construct_requests_for_doc(
-        self,
-        doc: Doc,
-    ) -> dict[RequestType, list[Request]]:
-        """
-        Constructs a list of requests from the task based on the given parameters.
-
-        Args:
-            formatted_doc (Doc): Formatted document almost straight from the dataset.
-            ctx (str): Context, which is the few shot examples + the query.
-            document_id_seed (str): Index of the document in the task appended with the seed used for the few shot sampling.
-            current_task_name (str): Name of the current task.
-
-        Returns:
-            dict[RequestType, List[Request]]: List of requests.
-        """
-        requests: dict[RequestType, list[Request]] = collections.defaultdict(list)
-
-        if self.has_metric_category[MetricCategory.TARGET_PERPLEXITY]:
-            golds = doc.get_golds()
-            requests[RequestType.LOGLIKELIHOOD] += [
-                LoglikelihoodRequest(
-                    task_name=doc.task_name,
-                    sample_index=doc.id,
-                    request_index=i,
-                    context=doc.query,
-                    choice=gold,
-                    metric_categories=[MetricCategory.TARGET_PERPLEXITY],
-                    fewshots=doc.fewshots,
-                )
-                for i, gold in enumerate(golds)
-            ]
-        if self.has_metric_category[MetricCategory.PERPLEXITY]:
-            requests[RequestType.LOGLIKELIHOOD_ROLLING] += [
-                LoglikelihoodRollingRequest(
-                    task_name=doc.task_name,
-                    sample_index=doc.id,
-                    request_index=0,
-                    context=doc.query,
-                    metric_categories=[MetricCategory.PERPLEXITY],
-                    fewshots=doc.fewshots,
-                )
-            ]
-        if self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]:
-            # All the possible sampling tasks require the same generation process - we can do them in one step
-            # so we select the maximum number of samples and the metrics will select only the
-            # relevant number of tiems
-            requests[RequestType.GREEDY_UNTIL] += [
-                GreedyUntilRequest(
-                    task_name=doc.task_name,
-                    sample_index=doc.id,
-                    request_index=0,
-                    context=doc.query,
-                    stop_sequence=self.stop_sequence,
-                    generation_size=self.generation_size,
-                    generation_grammar=self.generation_grammar,
-                    num_samples=max(self.num_samples),
-                    do_sample=True,
-                    use_logits=False,
-                    metric_categories=[MetricCategory.GENERATIVE_SAMPLING],
-                    fewshots=doc.fewshots,
-                )
-            ]
-        if (
-            self.has_metric_category[MetricCategory.GENERATIVE]
-            or self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]
-        ):
-            use_logits = self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]
-            requests[RequestType.GREEDY_UNTIL] += [
-                GreedyUntilRequest(
-                    task_name=doc.task_name,
-                    sample_index=doc.id,
-                    request_index=0,
-                    context=doc.query,
-                    stop_sequence=self.stop_sequence,
-                    generation_size=self.generation_size,
-                    generation_grammar=self.generation_grammar,
-                    num_samples=1,
-                    use_logits=use_logits,
-                    fewshots=doc.fewshots,
-                    metric_categories=[
-                        c
-                        for c in [
-                            MetricCategory.GENERATIVE,
-                            MetricCategory.GENERATIVE_LOGPROB,
-                        ]
-                        if self.has_metric_category[c]
-                    ],
-                )
-            ]
-        if (
-            self.has_metric_category[MetricCategory.MULTICHOICE]
-            or self.has_metric_category[MetricCategory.MULTICHOICE_PMI]
-        ):
-            requests[RequestType.LOGLIKELIHOOD] += [
-                LoglikelihoodRequest(
-                    task_name=doc.task_name,
-                    sample_index=doc.id,
-                    request_index=i,
-                    context=doc.query,
-                    choice=choice,
-                    fewshots=doc.fewshots,
-                    metric_categories=[
-                        c
-                        for c in [MetricCategory.MULTICHOICE, MetricCategory.MULTICHOICE_PMI]
-                        if self.has_metric_category[c]
-                    ],
-                )
-                for i, choice in enumerate(doc.choices)
-            ]
-        if self.has_metric_category[MetricCategory.MULTICHOICE_PMI]:
-            assert doc.unconditioned_query is not None, "Unconditioned query is required for PMI normalization"
-            requests[RequestType.LOGLIKELIHOOD] += [
-                LoglikelihoodRequest(
-                    task_name=doc.task_name,
-                    sample_index=doc.id,
-                    # The normalization should come after the choices
-                    request_index=i + len(doc.choices),
-                    context=doc.unconditioned_query,
-                    choice=choice,
-                    metric_categories=[MetricCategory.MULTICHOICE_PMI],
-                    fewshots=doc.fewshots,
-                )
-                for i, choice in enumerate(doc.choices)
-            ]
-        if self.has_metric_category[MetricCategory.LLM_AS_JUDGE]:
-            requests[RequestType.GREEDY_UNTIL] += [
-                GreedyUntilRequest(
-                    task_name=doc.task_name,
-                    sample_index=doc.id,
-                    request_index=0,
-                    context=doc.query,
-                    stop_sequence=self.stop_sequence,
-                    generation_size=self.generation_size,
-                    generation_grammar=self.generation_grammar,
-                    num_samples=1,
-                    metric_categories=[MetricCategory.LLM_AS_JUDGE],
-                    fewshots=doc.fewshots,
-                )
-            ]
-
-        return requests
+        #    def construct_requests_for_doc(
+        #        self,
+        #        doc: Doc,
+        #    ) -> dict[RequestType, list[Request]]:
+        #        """
+        #        Constructs a list of requests from the task based on the given parameters.
+        #
+        #        Args:
+        #            formatted_doc (Doc): Formatted document almost straight from the dataset.
+        #            ctx (str): Context, which is the few shot examples + the query.
+        #            document_id_seed (str): Index of the document in the task appended with the seed used for the few shot sampling.
+        #            current_task_name (str): Name of the current task.
+        #
+        #        Returns:
+        #            dict[RequestType, List[Request]]: List of requests.
+        #        """
+        #        requests: dict[RequestType, list[Request]] = collections.defaultdict(list)
+        #
+        #        if self.has_metric_category[MetricCategory.TARGET_PERPLEXITY]:
+        #            golds = doc.get_golds()
+        #            requests[RequestType.LOGLIKELIHOOD] += [
+        #                LoglikelihoodRequest(
+        #                    task_name=doc.task_name,
+        #                    sample_index=doc.id,
+        #                    request_index=i,
+        #                    context=doc.query,
+        #                    choice=gold,
+        #                    metric_categories=[MetricCategory.TARGET_PERPLEXITY],
+        #                    fewshots=doc.fewshots,
+        #                )
+        #                for i, gold in enumerate(golds)
+        #            ]
+        #        if self.has_metric_category[MetricCategory.PERPLEXITY]:
+        #            requests[RequestType.LOGLIKELIHOOD_ROLLING] += [
+        #                LoglikelihoodRollingRequest(
+        #                    task_name=doc.task_name,
+        #                    sample_index=doc.id,
+        #                    request_index=0,
+        #                    context=doc.query,
+        #                    metric_categories=[MetricCategory.PERPLEXITY],
+        #                    fewshots=doc.fewshots,
+        #                )
+        #            ]
+        #        if self.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]:
+        #            # All the possible sampling tasks require the same generation process - we can do them in one step
+        #            # so we select the maximum number of samples and the metrics will select only the
+        #            # relevant number of tiems
+        #            requests[RequestType.GREEDY_UNTIL] += [
+        #                GreedyUntilRequest(
+        #                    task_name=doc.task_name,
+        #                    sample_index=doc.id,
+        #                    request_index=0,
+        #                    context=doc.query,
+        #                    stop_sequence=self.stop_sequence,
+        #                    generation_size=self.generation_size,
+        #                    generation_grammar=self.generation_grammar,
+        #                    num_samples=max(self.num_samples),
+        #                    do_sample=True,
+        #                    use_logits=False,
+        #                    metric_categories=[MetricCategory.GENERATIVE_SAMPLING],
+        #                    fewshots=doc.fewshots,
+        #                )
+        #            ]
+        #        if (
+        #            self.has_metric_category[MetricCategory.GENERATIVE]
+        #            or self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]
+        #        ):
+        #            use_logits = self.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]
+        #            requests[RequestType.GREEDY_UNTIL] += [
+        #                GreedyUntilRequest(
+        #                    task_name=doc.task_name,
+        #                    sample_index=doc.id,
+        #                    request_index=0,
+        #                    context=doc.query,
+        #                    stop_sequence=self.stop_sequence,
+        #                    generation_size=self.generation_size,
+        #                    generation_grammar=self.generation_grammar,
+        #                    num_samples=1,
+        #                    use_logits=use_logits,
+        #                    fewshots=doc.fewshots,
+        #                    metric_categories=[
+        #                        c
+        #                        for c in [
+        #                            MetricCategory.GENERATIVE,
+        #                            MetricCategory.GENERATIVE_LOGPROB,
+        #                        ]
+        #                        if self.has_metric_category[c]
+        #                    ],
+        #                )
+        #            ]
+        #        if (
+        #            self.has_metric_category[MetricCategory.MULTICHOICE]
+        #            or self.has_metric_category[MetricCategory.MULTICHOICE_PMI]
+        #        ):
+        #            requests[RequestType.LOGLIKELIHOOD] += [
+        #                LoglikelihoodRequest(
+        #                    task_name=doc.task_name,
+        #                    sample_index=doc.id,
+        #                    request_index=i,
+        #                    context=doc.query,
+        #                    choice=choice,
+        #                    fewshots=doc.fewshots,
+        #                    metric_categories=[
+        #                        c
+        #                        for c in [MetricCategory.MULTICHOICE, MetricCategory.MULTICHOICE_PMI]
+        #                        if self.has_metric_category[c]
+        #                    ],
+        #                )
+        #                for i, choice in enumerate(doc.choices)
+        #            ]
+        #        if self.has_metric_category[MetricCategory.MULTICHOICE_PMI]:
+        #            assert doc.unconditioned_query is not None, "Unconditioned query is required for PMI normalization"
+        #            requests[RequestType.LOGLIKELIHOOD] += [
+        #                LoglikelihoodRequest(
+        #                    task_name=doc.task_name,
+        #                    sample_index=doc.id,
+        #                    # The normalization should come after the choices
+        #                    request_index=i + len(doc.choices),
+        #                    context=doc.unconditioned_query,
+        #                    choice=choice,
+        #                    metric_categories=[MetricCategory.MULTICHOICE_PMI],
+        #                    fewshots=doc.fewshots,
+        #                )
+        #                for i, choice in enumerate(doc.choices)
+        #            ]
+        #        if self.has_metric_category[MetricCategory.LLM_AS_JUDGE]:
+        #            requests[RequestType.GREEDY_UNTIL] += [
+        #                GreedyUntilRequest(
+        #                    task_name=doc.task_name,
+        #                    sample_index=doc.id,
+        #                    request_index=0,
+        #                    context=doc.query,
+        #                    stop_sequence=self.stop_sequence,
+        #                    generation_size=self.generation_size,
+        #                    generation_grammar=self.generation_grammar,
+        #                    num_samples=1,
+        #                    metric_categories=[MetricCategory.LLM_AS_JUDGE],
+        #                    fewshots=doc.fewshots,
+        #                )
+        #            ]
+        #
+        #        return requests
 
     def get_metric_method_from_category(self, metric_category):
         if metric_category in [

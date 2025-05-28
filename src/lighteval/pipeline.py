@@ -35,16 +35,13 @@ import numpy as np
 from tqdm import tqdm
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
-from lighteval.metrics.utils.metric_utils import MetricCategory
 from lighteval.models.model_loader import TransformersModel, load_model
 from lighteval.models.model_output import (
     GenerativeResponse,
-    LoglikelihoodResponse,
     ModelResponse,
 )
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.registry import Registry
-from lighteval.tasks.requests import RequestType, SampleUid
 from lighteval.utils.imports import (
     NO_ACCELERATE_ERROR_MSG,
     NO_NANOTRON_ERROR_MSG,
@@ -394,7 +391,7 @@ class Pipeline:
 
     def _load_responses_from_details(self):
         logger.info("--- LOADING RESPONSES FROM DETAILS ---")
-        sample_id_to_responses: dict[(SampleUid, MetricCategory), list[ModelResponse]] = collections.defaultdict(list)
+        sample_id_to_responses: dict = collections.defaultdict(list)
 
         request_types = list(self.requests.keys())
         if len(request_types) > 1:
@@ -441,23 +438,9 @@ class Pipeline:
                     if model_response_type == GenerativeResponse:
                         kwargs["logits"] = logits[idx]
 
-                    response = model_response_type(**kwargs)
-                    sample_id_to_responses[(SampleUid(task_name, f"{idx}_{0}"), metric_category)] = [response]
+                    # response = model_response_type(**kwargs)
+                    # sample_id_to_responses[(SampleUid(task_name, f"{idx}_{0}"), metric_category)] = [response]
         return sample_id_to_responses
-
-    def _get_model_response_type(self, request_type):
-        if request_type == RequestType.LOGLIKELIHOOD:
-            model_response_type = LoglikelihoodResponse
-        elif request_type == RequestType.LOGLIKELIHOOD_ROLLING:
-            model_response_type = LoglikelihoodResponse
-        elif request_type == RequestType.GREEDY_UNTIL:
-            model_response_type = GenerativeResponse
-        else:
-            raise ValueError(
-                f"Loading responses from details for request type {request_type} is currently not supported"
-            )
-
-        return model_response_type
 
     def _run_model(self):
         # Running all requests depending on the model call type (log likelihood, generative, ...)

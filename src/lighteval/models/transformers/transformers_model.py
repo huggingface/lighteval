@@ -44,17 +44,10 @@ from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
 from lighteval.models.model_output import (
     Batch,
-    GenerativeResponse,
-    LoglikelihoodResponse,
     ModelResponse,
 )
 from lighteval.models.utils import ModelConfig, _get_dtype, _get_model_sha, _simplify_name
-from lighteval.tasks.requests import (
-    Doc,
-    LoglikelihoodRequest,
-    LoglikelihoodRollingRequest,
-    Request,
-)
+from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import (
     is_accelerate_available,
 )
@@ -622,7 +615,7 @@ class TransformersModel(LightevalModel):
         returns_logits: Optional[bool] = False,
         num_samples: Optional[int] = 1,
         do_sample: Optional[bool] = False,
-    ) -> list[GenerativeResponse]:
+    ) -> list[ModelResponse]:
         """Contains the actual logic of the generation.
         First computes the stop sequences, then generates the predictions, then converts the outputs to GenerativeResponse.
         """
@@ -683,7 +676,7 @@ class TransformersModel(LightevalModel):
 
                 decoded_generations.append(decoded_generation)
 
-            cur_response = GenerativeResponse(
+            cur_response = ModelResponse(
                 result=decoded_generations,
                 logits=logits[ix][: len_logits[ix]] if returns_logits else None,
                 generated_tokens=result_generations,
@@ -697,9 +690,9 @@ class TransformersModel(LightevalModel):
 
     def loglikelihood(
         self,
-        requests: list[LoglikelihoodRequest],
+        requests: list[Doc],
         override_bs: Optional[int] = None,
-    ) -> list[LoglikelihoodResponse]:
+    ) -> list[ModelResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
 
@@ -723,9 +716,9 @@ class TransformersModel(LightevalModel):
 
     def loglikelihood_rolling(
         self,
-        requests: list[LoglikelihoodRollingRequest],
+        requests: list[Doc],
         override_bs=None,
-    ) -> list[LoglikelihoodResponse]:
+    ) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
 
         for request in requests:  # tuple of one elem
@@ -742,11 +735,11 @@ class TransformersModel(LightevalModel):
 
     def _loglikelihood_tokens(
         self,
-        requests: list[LoglikelihoodRequest],
+        requests: list[Doc],
         override_bs: int = -1,
         return_bool_score: bool = True,
         rolling: bool = False,
-    ) -> list[LoglikelihoodResponse]:
+    ) -> list[ModelResponse]:
         dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
         res = []
@@ -838,7 +831,7 @@ class TransformersModel(LightevalModel):
                 for ix, (logit, cont_tokens, maxe, batched_input, trunc, padded) in enumerate(
                     zip(logits, batch_cont_tokens, max_equal, batched_inputs, batch_truncated, batch_padded)
                 ):
-                    answer = LoglikelihoodResponse(
+                    answer = ModelResponse(
                         # todo: we might want to store the logits unsummed
                         result=(float(logit.sum()), bool(maxe)) if return_bool_score else float(logit.sum()),
                         input_tokens=batched_input[: len_inputs[ix]].cpu().tolist(),
@@ -858,7 +851,7 @@ class TransformersModel(LightevalModel):
         return dataset.get_original_order(res)
 
     def prepare_batch_logprob(
-        self, batch: list[Request], padding_length: int, max_context: Optional[int] = None, single_token: bool = False
+        self, batch: list[Doc], padding_length: int, max_context: Optional[int] = None, single_token: bool = False
     ):
         """Tokenize a batch of inputs and return also the length, truncations and padding.
         This step is done manually since we tokenize log probability inputs together with their continuation,

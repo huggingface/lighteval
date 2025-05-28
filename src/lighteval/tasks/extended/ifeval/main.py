@@ -26,12 +26,10 @@ from aenum import extend_enum
 import lighteval.tasks.extended.ifeval.instructions_registry as instructions_registry
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.utils.metric_utils import (
-    MetricCategory,
-    MetricUseCase,
     SampleLevelMetricGrouping,
 )
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Doc, SamplingMethod
 
 
 # Very specific task where there are no precise outputs but instead we test if the format obeys rules
@@ -128,8 +126,7 @@ def agg_inst_level_acc(items):
 ifeval_metrics = SampleLevelMetricGrouping(
     metric_name=submetric_names,
     higher_is_better={n: True for n in submetric_names},
-    category=MetricCategory.GENERATIVE,
-    use_case=MetricUseCase.ACCURACY,
+    category=SamplingMethod.GENERATIVE,
     sample_level_fn=ifeval_metric,
     corpus_level_fn={
         "prompt_level_strict_acc": np.mean,
@@ -146,7 +143,7 @@ ifeval = LightevalTaskConfig(
     suite=["extended"],
     hf_repo="google/IFEval",
     hf_subset="default",
-    metric=[ifeval_metrics],
+    metrics=[ifeval_metrics],
     hf_avail_splits=["train"],
     evaluation_splits=["train"],
     few_shots_split="train",

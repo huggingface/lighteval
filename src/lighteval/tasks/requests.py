@@ -22,18 +22,10 @@
 
 import json
 from dataclasses import asdict, dataclass, field
-from enum import Enum, auto
-from typing import NamedTuple, Optional, Union
+from enum import Enum
+from typing import Optional, Union
 
-from huggingface_hub import TextGenerationInputGrammarType
-
-from lighteval.utils.utils import ListLike, as_list
-
-
-class RequestType(Enum):
-    LOGLIKELIHOOD = auto()
-    LOGLIKELIHOOD_ROLLING = auto()
-    GREEDY_UNTIL = auto()
+from lighteval.utils.utils import as_list
 
 
 class SamplingMethod(str, Enum):
@@ -43,95 +35,6 @@ class SamplingMethod(str, Enum):
 
     GENERATIVE = "GENERATIVE"
     LOGPROBS = "LOGPROBS"
-
-
-@dataclass
-class Request:
-    """
-    Represents a request for a specific task, example and request within that
-    example in the evaluation process.
-    For example in the task "boolq", the example "Is the sun hot?" and the
-    requests for that example "Is the sun hot? Yes" and "Is the sun hot? No".
-
-    Attributes:
-        task_name (str): The name of the task.
-        sample_index (int): The index of the example.
-        request_index (int): The index of the request.
-        context (str): The context for the request.
-        metric_categories (list[MetricCategory]): All the metric categories which concern this request
-    """
-
-    task_name: str
-    sample_index: str
-    request_index: int
-    context: str
-    metric_categories: list["MetricCategory"]  # noqa F821
-    fewshots: list[str]
-
-
-@dataclass
-class LoglikelihoodRequest(Request):
-    """
-    Represents a request for log-likelihood evaluation.
-
-    Attributes:
-        choice (str): The choice to evaluate the log-likelihood for.
-        request_type (RequestType): The type of the request (LOGLIKELIHOOD).
-    """
-
-    choice: str
-    request_type = RequestType.LOGLIKELIHOOD
-    tokenized_context: list[int] = None
-    tokenized_continuation: list[int] = None
-
-
-@dataclass
-class LoglikelihoodRollingRequest(Request):
-    """
-    Represents a request for log-likelihood rolling evaluation.
-
-    Inherits from the base Request class.
-    """
-
-    request_type = RequestType.LOGLIKELIHOOD_ROLLING
-    tokenized_context: list[int] = None
-    tokenized_continuation: list[int] = None
-
-
-@dataclass
-class GreedyUntilRequest(Request):
-    """
-    Represents a request for generating text using the Greedy-Until algorithm.
-
-    Attributes:
-        stop_sequence (str): The sequence of tokens that indicates when to stop generating text.
-        generation_size (int): The maximum number of tokens to generate.
-        generation_grammar (TextGenerationInputGrammarType): The grammar to generate completion according to.
-            Currently only available for TGI models.
-        request_type (RequestType): The type of the request, set to RequestType.GREEDY_UNTIL.
-    """
-
-    stop_sequence: ListLike[str] | None
-    generation_size: Union[int, None]
-    generation_grammar: Union[TextGenerationInputGrammarType, None] = None
-    request_type = RequestType.GREEDY_UNTIL
-    tokenized_context: list[int] | None = None
-    num_samples: int | None = None
-    do_sample: bool = False
-    use_logits: bool = False
-
-
-class SampleUid(NamedTuple):
-    """
-    Represents the identifier for an example in a task.
-
-    Attributes:
-        task_name (str): The name of the task in `name|num_fewshot` format.
-        doc_id_seed (str): The document id with the seed used for few_shot appended at the end.
-    """
-
-    task_name: str
-    doc_id_seed: str
 
 
 @dataclass(slots=True)
@@ -165,8 +68,8 @@ class Doc:
     # The uncoditioned query shouldn't contain any information about the task, thus usually it's empty string or 'Answer:'.
     unconditioned_query: Optional[str] = None
 
-    fewshot_samples: list["Doc"] = field(default_factory=list)
-    sampling_methods: list[SamplingMethod] = field(default_factory=list)
+    fewshot_samples: list = field(default_factory=list)
+    sampling_methods: set[SamplingMethod] = field(default_factory=set)
 
     def __post_init__(self):
         if self.instruction is None:

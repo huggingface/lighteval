@@ -40,7 +40,7 @@ class ModelResponse:
     padded_tokens_count: int = 0  # How many tokens of padding
 
     input_tokens: list[int] = field(default_factory=list)  # model inputs
-    output_tokens: list[int] = field(default_factory=list)  # model generations
+    output_tokens: list[list[int]] = field(default_factory=list)  # model generations
 
     unconditioned_logprobs: Optional[
         list[float]

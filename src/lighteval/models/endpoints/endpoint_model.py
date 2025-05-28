@@ -47,13 +47,9 @@ from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_output import GenerativeResponse, LoglikelihoodResponse
+from lighteval.models.model_output import ModelResponse
 from lighteval.models.utils import ModelConfig
-from lighteval.tasks.requests import (
-    GreedyUntilRequest,
-    LoglikelihoodRequest,
-    LoglikelihoodRollingRequest,
-)
+from lighteval.tasks.requests import Doc
 from lighteval.utils.utils import as_list
 
 
@@ -395,7 +391,7 @@ class InferenceEndpointModel(LightevalModel):
 
     async def _async_process_batch_generate(
         self,
-        requests: list[GreedyUntilRequest],
+        requests: list[Doc],
     ) -> list[TextGenerationOutput]:
         return await asyncio.gather(
             *[
@@ -411,7 +407,7 @@ class InferenceEndpointModel(LightevalModel):
 
     def _process_batch_generate(
         self,
-        requests: list[GreedyUntilRequest],
+        requests: list[Doc],
     ) -> list[TextGenerationOutput]:
         return [
             self._process_request(
@@ -424,7 +420,7 @@ class InferenceEndpointModel(LightevalModel):
         ]
 
     async def _async_process_batch_logprob(
-        self, requests: list[LoglikelihoodRequest], rolling: bool = False
+        self, requests: list[Doc], rolling: bool = False
     ) -> list[TextGenerationOutput]:
         return await asyncio.gather(
             *[
@@ -437,9 +433,7 @@ class InferenceEndpointModel(LightevalModel):
             ]
         )
 
-    def _process_batch_logprob(
-        self, requests: list[LoglikelihoodRequest], rolling: bool = False
-    ) -> list[TextGenerationOutput]:
+    def _process_batch_logprob(self, requests: list[Doc], rolling: bool = False) -> list[TextGenerationOutput]:
         return [
             self._process_request(
                 context=request.context if rolling else request.context + request.choice,
@@ -451,9 +445,9 @@ class InferenceEndpointModel(LightevalModel):
 
     def greedy_until(
         self,
-        requests: List[GreedyUntilRequest],
+        requests: List[Doc],
         override_bs: Optional[int] = None,
-    ) -> List[GenerativeResponse]:
+    ) -> List[ModelResponse]:
         for request in requests:
             request.tokenized_context = self.tok_encode(request.context)
             request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
@@ -488,7 +482,7 @@ class InferenceEndpointModel(LightevalModel):
                     responses = self._process_batch_generate(batch)
                 for i, response in enumerate(responses):
                     results.append(
-                        GenerativeResponse(
+                        ModelResponse(
                             result=response.generated_text,
                             logits=[item.logprob for item in response.details.prefill] if returns_logits else None,
                             generated_tokens=[token.id for token in response.details.tokens],
@@ -501,15 +495,13 @@ class InferenceEndpointModel(LightevalModel):
 
         return dataset.get_original_order(results)
 
-    def loglikelihood(
-        self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
+    def loglikelihood(self, requests: list[Doc], override_bs: Optional[int] = None) -> list[ModelResponse]:
         for request in requests:
             request.tokenized_context = self.tok_encode(request.context)
             request.tokenized_continuation = self.tok_encode(request.choice)
         dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         batch_size = override_bs if override_bs is not None else BATCH_SIZE
-        results: List[str] = []
+        results: list[ModelResponse] = []
 
         for _, _ in tqdm(
             dataset.splits_start_end_iterator(),
@@ -539,7 +531,7 @@ class InferenceEndpointModel(LightevalModel):
                     greedy_tokens = torch.tensor(logits).argmax(dim=-1)
                     max_equal = (greedy_tokens == cont_toks).all().squeeze(0)
                     results.append(
-                        LoglikelihoodResponse(
+                        ModelResponse(
                             result=(sum(logits), bool(max_equal)),
                             input_tokens=[t.id for t in response.details.prefill[:-len_choice]],
                             generated_tokens=[t.id for t in response.details.prefill[-len_choice:]],
@@ -550,9 +542,7 @@ class InferenceEndpointModel(LightevalModel):
 
         return dataset.get_original_order(results)
 
-    def loglikelihood_rolling(
-        self, requests: list[LoglikelihoodRollingRequest], override_bs=None
-    ) -> list[LoglikelihoodResponse]:
+    def loglikelihood_rolling(self, requests: list[Doc], override_bs=None) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         for request in requests:
             request.tokenized_context = [self.tokenizer.eos_token_id]
@@ -560,7 +550,7 @@ class InferenceEndpointModel(LightevalModel):
 
         dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         batch_size = override_bs if override_bs is not None else BATCH_SIZE
-        results: List[str] = []
+        results: list[ModelResponse] = []
 
         for _, _ in tqdm(
             dataset.splits_start_end_iterator(),
@@ -582,7 +572,7 @@ class InferenceEndpointModel(LightevalModel):
                     logits = [t.logprob for t in response.details.tokens[:-1]]
 
                     results.append(
-                        LoglikelihoodResponse(
+                        ModelResponse(
                             result=sum(logits),
                             input_tokens=[t.id for t in response.details.prefill],
                             generated_tokens=[t.id for t in response.details.tokens[:-1]],

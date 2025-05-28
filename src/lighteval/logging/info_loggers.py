@@ -31,14 +31,13 @@ import git
 import numpy as np
 import xxhash
 
-from lighteval.metrics import MetricCategory
 from lighteval.metrics.stderr import get_stderr_function
 from lighteval.models.abstract_model import ModelInfo
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
-from lighteval.tasks.requests import Doc, SamplingMethod
+from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import is_nanotron_available
-from lighteval.utils.utils import as_list, sanitize_numpy
+from lighteval.utils.utils import sanitize_numpy
 
 
 logger = logging.getLogger(__name__)
@@ -354,42 +353,8 @@ class DetailsLogger:
         detail.num_effective_few_shots = doc.num_effective_few_shots
         detail.num_asked_few_shots = doc.num_asked_few_shots
 
-        pred_saved = False
-        if (
-            task.has_metric_category[MetricCategory.PERPLEXITY]
-            or task.has_metric_category[MetricCategory.TARGET_PERPLEXITY]
-        ):
-            pred_saved = True
-            pass  # should we log something?
-        if task.has_metric_category[MetricCategory.GENERATIVE] or SamplingMethod.GENERATIVE in task.current_categories:
-            detail.gold = doc.get_golds()
-            pred_saved = True
-        if task.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]:
-            detail.gold = doc.get_golds()
-            detail.pred_logits = []  # [o.logits for o in outputs]
-            pred_saved = True
-        if task.has_metric_category[MetricCategory.MULTICHOICE]:
-            detail.choices = doc.choices
-            detail.gold_index = as_list(doc.gold_index)
-            pred_saved = True
-        if task.has_metric_category[MetricCategory.MULTICHOICE_ONE_TOKEN]:
-            detail.choices = doc.choices
-            detail.gold_index = as_list(doc.gold_index)
-            pred_saved = True
-        if task.has_metric_category[MetricCategory.MULTICHOICE_PMI]:
-            detail.choices = doc.choices
-            detail.gold_index = as_list(doc.gold_index)
-            doc.specific = {**(doc.specific or {}), **{"unconditioned_query": doc.unconditioned_query}}
-            pred_saved = True
-        if (
-            task.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]
-            or task.has_metric_category[MetricCategory.LLM_AS_JUDGE]
-        ):
-            detail.choices = doc.choices
-            detail.gold_index = as_list(doc.gold_index)
-            pred_saved = True
-
-        detail.specifics = doc.specific
+        pred_saved = True
+        # detail.specifics = doc.specific
 
         if not pred_saved:
             raise NotImplementedError(

@@ -34,7 +34,6 @@ from lighteval.metrics.metrics_sample import (
 )
 from lighteval.metrics.normalizations import (
     LogProbNormalization,
-    LogProbPMINorm,
     LogProbTokenNorm,
     get_multilingual_normalizer,
 )
@@ -47,8 +46,8 @@ from lighteval.metrics.utils.extractive_match_utils import (  # noqa: F401
     get_extraction_regexes,
 )
 from lighteval.metrics.utils.math_comparison import compare_gold_target
-from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase, SampleLevelMetric
-from lighteval.tasks.requests import Doc
+from lighteval.metrics.utils.metric_utils import SampleLevelMetric
+from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.language import Language
 from lighteval.utils.timeout import timeout
 
@@ -66,10 +65,7 @@ def loglikelihood_acc_metric(normalization: LogProbNormalization | None = None) 
     return SampleLevelMetric(
         metric_name=metric_name,
         sample_level_fn=LoglikelihoodAcc(logprob_normalization=normalization).compute,
-        category=MetricCategory.MULTICHOICE
-        if not normalization == LogProbPMINorm()
-        else MetricCategory.MULTICHOICE_PMI,
-        use_case=MetricUseCase.ACCURACY,
+        category=SamplingMethod.LOGPROBS,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
@@ -91,10 +87,7 @@ def normalized_multi_choice_prob_metric(
         sample_level_fn=NormalizedMultiChoiceProbability(
             log_prob_normalization=normalization, aggregation_function=aggregation_function
         ).compute,
-        category=MetricCategory.MULTICHOICE
-        if not normalization == LogProbPMINorm()
-        else MetricCategory.MULTICHOICE_PMI,
-        use_case=MetricUseCase.ACCURACY,
+        category=SamplingMethod.LOGPROBS,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
@@ -114,8 +107,7 @@ def probability_metric(
     return SampleLevelMetric(
         metric_name=metric_name,
         sample_level_fn=Probability(normalization=normalization, aggregation_function=aggregation_function).compute,
-        category=MetricCategory.TARGET_PERPLEXITY,
-        use_case=MetricUseCase.PERPLEXITY,
+        category=SamplingMethod.LOGPROBS,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
@@ -144,8 +136,7 @@ def multilingual_quasi_f1_score_metric(
             normalize_pred=multilang_normalizer,
             aggregation_function=aggregation_function,
         ).compute,
-        category=MetricCategory.GENERATIVE,
-        use_case=MetricUseCase.ACCURACY,
+        category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
@@ -178,8 +169,7 @@ def multilingual_quasi_exact_match_metric(
             aggregation_function=aggregation_function,
             type_exact_match=match_type,
         ).compute,
-        category=MetricCategory.GENERATIVE,
-        use_case=MetricUseCase.ACCURACY,
+        category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
@@ -289,8 +279,7 @@ def multilingual_extractive_match_metric(
     return SampleLevelMetric(
         metric_name="extractive_match",
         sample_level_fn=sample_level_fn,
-        category=MetricCategory.GENERATIVE,
-        use_case=MetricUseCase.ACCURACY,
+        category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )

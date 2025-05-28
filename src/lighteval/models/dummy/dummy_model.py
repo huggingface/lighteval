@@ -29,12 +29,8 @@ from pydantic import BaseModel
 from transformers import AutoTokenizer
 
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_output import GenerativeResponse, LoglikelihoodResponse
-from lighteval.tasks.requests import (
-    GreedyUntilRequest,
-    LoglikelihoodRequest,
-    LoglikelihoodRollingRequest,
-)
+from lighteval.models.model_output import ModelResponse
+from lighteval.tasks.requests import Doc
 
 
 class DummyModelConfig(BaseModel, extra="forbid"):
@@ -67,17 +63,11 @@ class DummyModel(LightevalModel):
     def max_length(self) -> int:
         return 2048
 
-    def greedy_until(
-        self, requests: list[GreedyUntilRequest], override_bs: Optional[int] = None
-    ) -> list[GenerativeResponse]:
-        return [GenerativeResponse(result="random baseline") for _ in range(len(requests))]
+    def greedy_until(self, requests: list[Doc], override_bs: Optional[int] = None) -> list[ModelResponse]:
+        return [ModelResponse(text=["random baseline"]) for _ in range(len(requests))]
 
-    def loglikelihood(
-        self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
-        return [LoglikelihoodResponse((-self._random.random(), False)) for _ in requests]
+    def loglikelihood(self, requests: list[Doc], override_bs: Optional[int] = None) -> list[ModelResponse]:
+        return [ModelResponse((-self._random.random(), False)) for _ in requests]
 
-    def loglikelihood_rolling(
-        self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
-        return [LoglikelihoodResponse((-self._random.random(), False)) for _ in requests]
+    def loglikelihood_rolling(self, requests: list[Doc], override_bs: Optional[int] = None) -> list[ModelResponse]:
+        return [ModelResponse((-self._random.random(), False)) for _ in requests]
