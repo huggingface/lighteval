@@ -16139,6 +16139,7 @@ ruler_qa_2_4096 = LightevalTaskConfig(
     metric=[Metrics.ruler_match_any],
     stop_sequence=None,
     trust_dataset=False,
+)
 ruin_names_bigbench = LightevalTaskConfig(
     name="ruin_names",
     suite=["bigbench", "bigbench_json"],
