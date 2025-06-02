@@ -35,6 +35,7 @@ class ModelResponse:
     text: list[str] = field(default_factory=list)  # The text of the response
     logprobs: list[float] = field(default_factory=list)  # Log probabilities of the response
     argmax_logits_eq_gold: list[bool] = field(default_factory=list)  # Whether the argmax logits match the gold text
+    logits: list[list[float]] | None = None  # Logits of the response, if applicable
 
     truncated_tokens_count: int = 0  # How many tokens truncated
     padded_tokens_count: int = 0  # How many tokens of padding

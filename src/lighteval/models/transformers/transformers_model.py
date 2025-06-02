@@ -132,7 +132,7 @@ class TransformersModelConfig(ModelConfig):
     dtype: str | None = None
     device: Union[int, str] = "cuda"
     trust_remote_code: bool = False
-    use_chat_template: bool = False
+    use_chat_template: bool = True
     compile: bool = False
     multichoice_continuations_start_space: bool | None = None
     pairwise_tokenization: bool = False
@@ -291,7 +291,7 @@ class TransformersModel(LightevalModel):
         return self._max_length
 
     @property
-    def device(self) -> Union[int, str, torch.device]:
+    def device(self) -> Union[str, torch.device]:
         return self._device
 
     @property
@@ -484,6 +484,42 @@ class TransformersModel(LightevalModel):
         logger.info(f"Determined largest batch size: {batch_size}")
         return batch_size
 
+    def prepare_prompt(self, doc: Doc) -> str:
+        if self.config.use_chat_template:
+            messages = []
+            if doc.system_prompt is not None:  # We add system prompt and instruction jointly if possible
+                messages.append({"role": "system", "content": doc.system_prompt})
+
+            for fewshot_sample in doc.fewshot_samples:
+                messages.append({"role": "user", "content": fewshot_sample.query})
+                messages.append({"role": "assistant", "content": fewshot_sample.get_golds()[0]})
+
+            messages.append({"role": "user", "content": doc.query})
+
+            output = self.tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,  # We don't want to tokenize here, we just want to format the chat template
+                add_generation_prompt=True,  # We don't want to add the generation prompt here
+            )
+        else:
+            if doc.system_prompt is not None:
+                output = doc.system_prompt
+            else:
+                output = ""
+
+            for fewshot_sample in doc.fewshot_samples:
+                if output != "":
+                    output += "\n\n" + fewshot_sample.query + fewshot_sample.get_golds()[0]
+                else:
+                    output = fewshot_sample.query + fewshot_sample.get_golds()[0]
+
+            if output == "":
+                output = doc.query
+            else:
+                output += "\n\n" + doc.query
+
+        return output
+
     def greedy_until(
         self,
         docs: list[Doc],
@@ -498,12 +534,13 @@ class TransformersModel(LightevalModel):
         Returns:
             list[GenerativeResponse]: list of generated responses.
         """
-        t = ["#### 480", "#### 480", "2010"]
-        return [ModelResponse(text=[v]) for v in t]
-
+        results = []
+        # 1. Prepare the prompts
+        # 2. create dataset
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
-        results = []
+        # 3. run model
+        # 4. gather results
 
         for split_start, split_end in tqdm(
             dataset.splits_start_end_iterator(),
@@ -512,13 +549,16 @@ class TransformersModel(LightevalModel):
             position=0,
             disable=self.disable_tqdm,
         ):
+            contexts = [self.prepare_prompt(doc) for doc in dataset]
+
             if dataset[0].generation_size is None:
                 # No constraints on the generation size: max length allowed is the max model context
                 max_context_continuation_size_allowed = self.max_length
             else:
                 # Longest context in the current split is the first item (since we sort reversed)
                 longest_context_continuation_size_in_split = (
-                    len(dataset[0].tokenized_context) + dataset[0].generation_size
+                    len(dataset[0].query)
+                    + dataset[0].generation_size  # TODO: query is string so it will not be accurate once tokenized
                 )
                 max_context_continuation_size_allowed = min(
                     longest_context_continuation_size_in_split, self.max_length
@@ -552,12 +592,10 @@ class TransformersModel(LightevalModel):
                 num_samples = batch[0].num_samples
                 do_sample = batch[0].do_sample
 
-                context = [c.context for c in batch]
-
                 # See doc https://huggingface.co/docs/transformers/v4.38.2/en/pad_truncation#padding-and-truncation
                 # Will do left truncation and padding, as defined when creating the tokenizer
                 tokenized = self.tokenizer(
-                    context,
+                    contexts,
                     truncation="longest_first",  # we truncate to the model max length if needed
                     padding="longest",  # we pad to the longest sequence
                     return_tensors="pt",
@@ -591,7 +629,7 @@ class TransformersModel(LightevalModel):
                     input_ids=tokenized["input_ids"],
                     input_lengths=[len(item == 1) for item in tokenized["attention_mask"]],
                     input_mask=tokenized["attention_mask"],
-                    truncated=[max(len(c) - tokenized["input_ids"].shape[1], 0) for c in context],
+                    truncated=[max(len(c) - tokenized["input_ids"].shape[1], 0) for c in contexts],
                     padded=[sum(mask == 0) for mask in tokenized["attention_mask"]],
                 )
 
@@ -677,10 +715,10 @@ class TransformersModel(LightevalModel):
                 decoded_generations.append(decoded_generation)
 
             cur_response = ModelResponse(
-                result=decoded_generations,
+                text=decoded_generations,
+                output_tokens=result_generations,
                 logits=logits[ix][: len_logits[ix]] if returns_logits else None,
-                generated_tokens=result_generations,
-                input_tokens=batched_input[: len_ids[ix]],
+                input_tokens=batched_input[: len_ids[ix]].tolist(),
                 truncated_tokens_count=trunc.cpu().item(),
                 padded_tokens_count=padded.cpu().item(),
             )
@@ -690,7 +728,7 @@ class TransformersModel(LightevalModel):
 
     def loglikelihood(
         self,
-        requests: list[Doc],
+        docs: list[Doc],
         override_bs: Optional[int] = None,
     ) -> list[ModelResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
@@ -702,21 +740,18 @@ class TransformersModel(LightevalModel):
         Returns:
             list[Tuple[float, bool]]: _description_
         """
-        return [
-            ModelResponse(logprobs=[-0.0001, -0.89, -0.2, -0.21], argmax_logits_eq_gold=[False, False, True, True])
-            for _ in requests
-        ]
-        for request in requests:
-            if request.context == "":
-                request.tokenized_context = [self.tokenizer.eos_token_id]
-                request.tokenized_continuation = self.tok_encode(request.choice)
+
+        for doc in docs:
+            if doc.context == "":
+                doc.tokenized_context = [self.tokenizer.eos_token_id]
+                doc.tokenized_continuation = self.tok_encode(doc.choice)
             else:
                 # The following line is mandatory for compatibility with the harness
-                request.tokenized_context, request.tokenized_continuation = self.tok_encode_pair(
-                    request.context, request.choice, pairwise=self.pairwise_tokenization
+                doc.tokenized_context, doc.tokenized_continuation = self.tok_encode_pair(
+                    doc.context, doc.choice, pairwise=self.pairwise_tokenization
                 )
 
-        return self._loglikelihood_tokens(requests, override_bs=override_bs)
+        return self._loglikelihood_tokens(doc, override_bs=override_bs)
 
     def loglikelihood_rolling(
         self,
@@ -837,9 +872,10 @@ class TransformersModel(LightevalModel):
                 ):
                     answer = ModelResponse(
                         # todo: we might want to store the logits unsummed
-                        result=(float(logit.sum()), bool(maxe)) if return_bool_score else float(logit.sum()),
+                        argmax_logits_eq_gold=logit.sum(),
+                        logprobs=bool(maxe),
                         input_tokens=batched_input[: len_inputs[ix]].cpu().tolist(),
-                        generated_tokens=cont_tokens[: len_tokens[ix]].cpu().tolist(),
+                        output_tokens=cont_tokens[: len_tokens[ix]].cpu().tolist(),
                         truncated_tokens_count=trunc.cpu().item(),
                         padded_tokens_count=padded.cpu().item(),
                     )

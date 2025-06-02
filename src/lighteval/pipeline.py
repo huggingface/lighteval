@@ -402,7 +402,6 @@ class Pipeline:
 
         for task_name, samples_per_method in task_metric_category_groups.items():
             task: LightevalTask = self.tasks_dict[task_name]
-
             for sampling_method, samples in samples_per_method.items():
                 metric_function = task.get_metric_method_from_category(metric_category=sampling_method)
                 metric_category_metrics = [metric for metric in task.metrics if metric.category == sampling_method]

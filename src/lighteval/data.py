@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 class DynamicBatchDataset(Dataset):
     def __init__(
         self,
-        requests: list,
+        requests: list[Doc],
         num_dataset_splits: int,
     ):
         """
@@ -63,10 +63,6 @@ class DynamicBatchDataset(Dataset):
             requests (List): A list of requests.
             num_dataset_splits (int): The number of dataset splits.
         """
-        # We make sure the requests contain the tokenized versions of their values
-        if any(r.tokenized_context is None for r in requests):
-            raise ValueError("You passed a request for which tokenization had not happened yet.")
-
         # sort the requests using the collate function and save the original order
         enumerated_requests = list(enumerate(requests))
         sorted_enumerated_requests = sorted(enumerated_requests, key=lambda x: self._sorting_criteria(x[1]))
@@ -185,12 +181,12 @@ class DynamicBatchDataset(Dataset):
         for i in range(self.split_start, self.split_end):
             yield self.sorted_data[i]
 
-    def _sorting_criteria(self, request) -> int:
+    def _sorting_criteria(self, doc: Doc):
         raise NotImplementedError()
 
 
 class LoglikelihoodDataset(DynamicBatchDataset):
-    def _sorting_criteria(self, request: Doc) -> int:
+    def _sorting_criteria(self, doc: Doc) -> int:
         """
         Collates the input data for batching.
 
@@ -210,8 +206,7 @@ class LoglikelihoodDataset(DynamicBatchDataset):
         Returns:
             tuple: A tuple containing the sorted input data.
         """
-        toks = request.tokenized_context + request.tokenized_continuation
-        return -len(toks)
+        return -len(doc.query)
 
 
 class GenerativeTaskDataset(DynamicBatchDataset):
@@ -256,7 +251,7 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         splits_indices = [tuple(e) for e in splits_indices]
         return num_dataset_splits, splits_indices
 
-    def _sorting_criteria(self, request: Doc) -> tuple[bool, bool, list, int, int]:
+    def _sorting_criteria(self, doc: Doc) -> tuple[bool, bool, tuple, int, int]:
         """
         Collate function for generating batches.
 
@@ -266,17 +261,19 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         Returns:
             Any: The collated data.
         """
-        toks = request.tokenized_context
-        gen_length = request.generation_size
+        query = doc.query
+        gen_length = doc.generation_size
+
         # The generative task has no limit except the model context
         if gen_length is None:
             gen_length = 0
+
         return (
-            request.do_sample,
-            request.use_logits,
-            tuple(request.stop_sequence),
+            doc.do_sample,
+            doc.use_logits,
+            tuple(doc.stop_sequences),
             gen_length,
-            -(len(toks) + gen_length),
+            -(len(query) + gen_length),
         )
 
 
@@ -294,7 +291,7 @@ class GenerativeTaskDatasetNanotron(GenerativeTaskDataset):
         Returns:
             Any: The item at the specified index.
         """
-        return index, self.sorted_data[index + self.split_start]
+        return self.sorted_data[index + self.split_start]
 
 
 class GenDistributedSampler(DistributedSampler):

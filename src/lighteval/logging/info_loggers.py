@@ -336,7 +336,7 @@ class DetailsLogger:
         detail = self.Detail()
         detail.example = doc.query
         detail.instruction = doc.instruction
-        detail.full_prompt = doc.ctx
+        detail.full_prompt = doc.full_prompt
 
         predictions = model_response.text
         detail.predictions = predictions
@@ -360,7 +360,7 @@ class DetailsLogger:
 
         hash = self.Hash()
         hash.example = xxhash.xxh64(doc.query).hexdigest()
-        hash.full_prompt = xxhash.xxh64(str(doc.ctx)).hexdigest()
+        hash.full_prompt = xxhash.xxh64(str(doc.full_prompt)).hexdigest()
         hash.input_tokens = xxhash.xxh64(str(model_response.input_tokens)).hexdigest()
         hash.cont_tokens = xxhash.xxh64(str(model_response.output_tokens)).hexdigest()
         self.hashes[task_name].append(hash)

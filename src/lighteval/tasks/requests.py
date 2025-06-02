@@ -53,13 +53,14 @@ class Doc:
     original_query: Optional[str] = ""  # the query before preprocessing, if stored
     specific: dict | None = None  # Information which is specific to the current eval
     task_name: str = ""
+    system_prompt: str | None = None  # system prompt to use for the model, if any
+    full_prompt: Optional[str] = None  # full prompt to use for the model, if any
 
     # For few-shot
     instruction: Optional[str] = ""
     fewshot_sorting_class: Optional[str] = None  # class to use to select balanced few-shot samples
 
     # Filled when parsing and adding the few-shot context
-    ctx: Optional[str] = ""
     num_asked_few_shots: int = -1
     num_effective_few_shots: int = -1
 
@@ -70,6 +71,13 @@ class Doc:
 
     fewshot_samples: list = field(default_factory=list)
     sampling_methods: list[SamplingMethod] = field(default_factory=list)
+
+    # Generation parameters
+    generation_size: int | None = None  # number of tokens to generate for each sample
+    do_sample: bool = False  # whether to sample or not
+    stop_sequences: list[str] = field(default_factory=list)
+    use_logits: bool = False  # whether to use logits for the generation or not
+    num_samples: int = 1  # number of samples to generate for each sample
 
     def __post_init__(self):
         if self.instruction is None:
