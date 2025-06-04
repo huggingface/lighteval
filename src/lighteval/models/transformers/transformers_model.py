@@ -826,7 +826,7 @@ class TransformersModel(LightevalModel):
                             )  # [1, seq]
                         else:
                             logits_for_request = (
-                                logits_for_request[input_length - continuation_length : input_length]
+                                logits_for_request[input_length - continuation_length - 1 : input_length - 1]
                                 .unsqueeze(0)
                                 .to(self.device)
                             )
@@ -884,7 +884,6 @@ class TransformersModel(LightevalModel):
         padded = []
 
         if max_context is None:
-            logger.warning("max_context is None, using max_length")
             max_context = self.max_length
 
         # First, find the longest sequence length in the batch
