@@ -549,8 +549,6 @@ class TransformersModel(LightevalModel):
             position=0,
             disable=self.disable_tqdm,
         ):
-            contexts = [self.prepare_prompt(doc) for doc in dataset]
-
             if dataset[0].generation_size is None:
                 # No constraints on the generation size: max length allowed is the max model context
                 max_context_continuation_size_allowed = self.max_length
@@ -578,6 +576,7 @@ class TransformersModel(LightevalModel):
             for batch in tqdm(
                 dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
             ):
+                contexts = [self.prepare_prompt(doc) for doc in batch]
                 # For chat models, generation stops with EOS token, so we don't need to specify stop tokens
                 if self.use_chat_template:
                     stop_tokens = []
@@ -585,7 +584,7 @@ class TransformersModel(LightevalModel):
                     # NOTE: we are assuming all items in a batch behave similarly (same
                     # stop_tokens and max_tokens genrated) which is not necessarily
                     # the case! Because of that we only use batch size of 1
-                    stop_tokens = batch[0].stop_sequence
+                    stop_tokens = batch[0].stop_sequences
 
                 max_new_tokens = batch[0].generation_size
                 returns_logits = batch[0].use_logits
@@ -729,7 +728,6 @@ class TransformersModel(LightevalModel):
     def loglikelihood(
         self,
         docs: list[Doc],
-        override_bs: Optional[int] = None,
     ) -> list[ModelResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
@@ -745,7 +743,6 @@ class TransformersModel(LightevalModel):
     def loglikelihood_rolling(
         self,
         requests: list[Doc],
-        override_bs=None,
     ) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
 
@@ -755,8 +752,6 @@ class TransformersModel(LightevalModel):
 
         results = self._loglikelihood_tokens(
             requests,
-            override_bs=override_bs,
-            return_bool_score=False,
             rolling=True,
         )
         return results
@@ -764,6 +759,7 @@ class TransformersModel(LightevalModel):
     def _loglikelihood_tokens(
         self,
         docs: list[Doc],
+        rolling=False,
     ) -> list[ModelResponse]:
         dataset = LoglikelihoodDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         res = []
@@ -848,7 +844,6 @@ class TransformersModel(LightevalModel):
                         batch_cont_tokens_doc.append(tokenized_continuation)
 
                     answer = ModelResponse(
-                        # todo: we might want to store the logits unsummed
                         argmax_logits_eq_gold=[max_equal.cpu().item() for max_equal in max_equals_doc],
                         logprobs=[sum.cpu().item() for sum in logits_sum_doc],
                         input_tokens=tokenized_contexts_batch[i],
