@@ -170,9 +170,6 @@ class PromptManager:
     def _single_turn_context(
         self,
         doc: Doc,
-        num_fewshot: int,
-        seed: int,
-        sampler: Optional[random.Random] = None,
         truncate_few_shots: bool = False,
         use_chat_template=False,
         system_prompt: str = None,
@@ -196,11 +193,12 @@ class PromptManager:
 
         example, instruction = self.doc_to_text(doc, return_instructions=True)
 
-        fewshot_ex = self.few_shot_sampler.sample_fewshot_examples(
-            num_fewshot=num_fewshot, formatted_doc=doc, variance_seed=seed, sampler=sampler
-        )
+        fewshot_ex = None
+        # self.few_shot_sampler.sample_fewshot_examples(
+        # num_fewshot=num_fewshot, formatted_doc=doc, variance_seed=seed, sampler=sampler
+        # )
 
-        num_effective_fewshots = num_fewshot
+        num_effective_fewshots = 0
 
         output = self.get_examples(
             example=example,

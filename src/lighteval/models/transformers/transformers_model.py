@@ -740,18 +740,7 @@ class TransformersModel(LightevalModel):
         Returns:
             list[Tuple[float, bool]]: _description_
         """
-
-        for doc in docs:
-            if doc.context == "":
-                doc.tokenized_context = [self.tokenizer.eos_token_id]
-                doc.tokenized_continuation = self.tok_encode(doc.choice)
-            else:
-                # The following line is mandatory for compatibility with the harness
-                doc.tokenized_context, doc.tokenized_continuation = self.tok_encode_pair(
-                    doc.context, doc.choice, pairwise=self.pairwise_tokenization
-                )
-
-        return self._loglikelihood_tokens(doc, override_bs=override_bs)
+        return self._loglikelihood_tokens(docs)
 
     def loglikelihood_rolling(
         self,
@@ -774,135 +763,119 @@ class TransformersModel(LightevalModel):
 
     def _loglikelihood_tokens(
         self,
-        requests: list[Doc],
-        override_bs: int = -1,
-        return_bool_score: bool = True,
-        rolling: bool = False,
+        docs: list[Doc],
     ) -> list[ModelResponse]:
-        dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
-        starting_batch_size = STARTING_BATCH_SIZE
+        dataset = LoglikelihoodDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         res = []
 
         for split_start, split_end in tqdm(dataset.splits_start_end_iterator()):
-            context_enc = dataset[0].tokenized_context
-            continuation_enc = dataset[0].tokenized_continuation
-            if rolling:  # we take all the sequence in rolling mode
-                max_context_continuation_size_allowed = len(context_enc + continuation_enc)
-            else:  # in normal mode, we left cut the context if needed
-                max_context_continuation_size_allowed = len(
-                    (context_enc + continuation_enc)[-(self.max_length + 1) :][:-1]
-                )
+            dataloader = DataLoader(dataset, batch_size=2, collate_fn=lambda batch: batch)
 
-            batch_size = self._get_batch_size(
-                override_bs=override_bs,
-                max_input_length=max_context_continuation_size_allowed,
-                starting_batch_size=starting_batch_size,
-            )
-            starting_batch_size = batch_size * 2
-
-            dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda batch: batch)
             if self.accelerator:
                 dataloader = self.accelerator.prepare(dataloader)
 
             for batch in tqdm(dataloader, disable=self.disable_tqdm):
+                contexts = [self.prepare_prompt(doc) for doc in batch]
+                tokenized_contexts_batch = []
+                tokenized_continuations_batch = []
+
+                for context, doc in zip(contexts, batch):
+                    tokenized_context, tokenized_continuations = self.tok_encode_pair(
+                        context, doc.choices, pairwise=True
+                    )
+                    tokenized_contexts_batch.append(tokenized_context)
+                    tokenized_continuations_batch.append(tokenized_continuations)
+
                 prepared_batch = self.prepare_batch_logprob(
-                    batch,
-                    padding_length=max_context_continuation_size_allowed,
-                    max_context=max_context_continuation_size_allowed,
+                    tokenized_contexts=tokenized_contexts_batch,
+                    tokenized_continuations=tokenized_continuations_batch,
+                    padding_length=None,
+                    max_context=None,
                 )
 
                 model_output = self._model_call(prepared_batch.input_ids)
-                logits = F.log_softmax(model_output, dim=-1)  # [batch, padding_length, vocab]
+                logits = F.log_softmax(model_output, dim=-1)  # [batch, sequence_length, vocab]
 
-                logits_sum = []
-                max_equals = []
-                batch_cont_tokens = []
-                for cur_request, cur_logits, inplen in zip(batch, logits, prepared_batch.input_lengths):
-                    cont_toks = torch.tensor(cur_request.tokenized_continuation, dtype=torch.long, device=self.device)
-                    contlen = cont_toks.shape[0]
-                    # We only look at the continuation tokens
-                    if contlen > inplen:
-                        # Continuation is longer than the input size, we are in rolling mode (only continuation)
-                        cur_logits = cur_logits.unsqueeze(0).to(self.device)  # [1, seq, vocab]
-                        cont_toks = cont_toks[:inplen].unsqueeze(0).to(self.device)  # [1, seq]
-                    else:
-                        cur_logits = (
-                            cur_logits[inplen - contlen : inplen].unsqueeze(0).to(self.device)
-                        )  # [1, seq, voc]
-                        cont_toks = cont_toks.unsqueeze(0).to(self.device)  # [1, seq]
+                flat_index = 0
+                for i, doc in enumerate(batch):
+                    # Get the size of the corresponding nested list
+                    choices_count = len(tokenized_continuations_batch[i])
+                    tokenized_continuations = tokenized_continuations_batch[i]
+                    # Extract the corresponding elements from flat_values
+                    logits_for_doc = logits[flat_index : flat_index + choices_count]
+                    input_lengths = prepared_batch.input_lengths[flat_index : flat_index + choices_count]
+                    # Move the index forward
+                    flat_index += choices_count
 
-                    # Check if per-token argmax is exactly equal to continuation
-                    greedy_tokens = cur_logits.argmax(dim=-1).to(self.device)
-                    # Sometimes the continuation is longer than allowed by the model, we only look at the first tokens
-                    max_equal = (greedy_tokens == cont_toks).all().squeeze(0).to(self.device)
+                    logits_sum_doc = []
+                    max_equals_doc = []
+                    batch_cont_tokens_doc = []
 
-                    # Obtain log-probs at the corresponding continuation token indices
-                    cur_logits = torch.gather(cur_logits, 2, cont_toks.unsqueeze(-1)).squeeze(-1)  # [1, seq]
+                    for logits_for_request, input_length, tokenized_continuation in zip(
+                        logits_for_doc, input_lengths, tokenized_continuations
+                    ):
+                        tokenized_continuation = torch.tensor(
+                            tokenized_continuation, dtype=torch.long, device=self.device
+                        )
+                        continuation_length = len(tokenized_continuation)
+                        if continuation_length > input_length:
+                            # Continuation is longer than the input size, we are in rolling mode (only continuation)
+                            logits_for_request = logits_for_request.unsqueeze(0).to(self.device)  # [1, seq, vocab]
+                            tokenized_continuation = (
+                                tokenized_continuation[:input_length].unsqueeze(0).to(self.device)
+                            )  # [1, seq]
+                        else:
+                            logits_for_request = (
+                                logits_for_request[input_length - continuation_length : input_length]
+                                .unsqueeze(0)
+                                .to(self.device)
+                            )
+                            tokenized_continuation = tokenized_continuation.unsqueeze(0).to(self.device)  # [1, seq]
 
-                    # Answer: (log prob, is-exact-match)
-                    logits_sum.append(cur_logits.sum())
-                    max_equals.append(max_equal)
-                    batch_cont_tokens.append(cont_toks)
+                        # Check if per-token argmax is exactly equal to continuation
+                        greedy_tokens = logits_for_request.argmax(dim=-1).to(self.device)
+                        # Sometimes the continuation is longer than allowed by the model, we only look at the first tokens
+                        max_equal = (greedy_tokens == tokenized_continuation).all().squeeze(0).to(self.device)
 
-                # Sync all
-                # Need reshaping before gather
-                batched_inputs, len_inputs = self.pad_and_gather(prepared_batch.input_ids)
-                max_cont_tokens_length = max(len(c[0]) for c in batch_cont_tokens)
-                batch_cont_tokens = torch.cat(
-                    [
-                        F.pad(c, (0, max_cont_tokens_length - c.shape[1], 0, 0), value=self.tokenizer.pad_token_id)
-                        for c in batch_cont_tokens
-                    ],
-                    dim=0,
-                )
-                batch_cont_tokens, len_tokens = self.pad_and_gather(batch_cont_tokens)
-                # Can be gathered as such
-                logits = torch.tensor(logits_sum, device=self.device)
-                max_equal = torch.tensor(max_equals, device=self.device)
-                batch_truncated = torch.tensor(prepared_batch.truncated, device=self.device)
-                batch_padded = torch.tensor(prepared_batch.padded, device=self.device)
-                if self.accelerator:
-                    logits = self.accelerator.gather_for_metrics(logits)
-                    max_equal = self.accelerator.gather_for_metrics(max_equal)
-                    batch_truncated = self.accelerator.gather_for_metrics(batch_truncated)
-                    batch_padded = self.accelerator.gather_for_metrics(batch_padded)
+                        # Obtain log-probs at the corresponding continuation token indices
+                        logits_for_request = torch.gather(
+                            logits_for_request, 2, tokenized_continuation.unsqueeze(-1)
+                        ).squeeze(-1)  # [1, seq]
 
-                for ix, (logit, cont_tokens, maxe, batched_input, trunc, padded) in enumerate(
-                    zip(logits, batch_cont_tokens, max_equal, batched_inputs, batch_truncated, batch_padded)
-                ):
+                        # Answer: (log prob, is-exact-match)
+                        logits_sum_doc.append(logits_for_request.sum())
+                        max_equals_doc.append(max_equal)
+                        batch_cont_tokens_doc.append(tokenized_continuation)
+
                     answer = ModelResponse(
                         # todo: we might want to store the logits unsummed
-                        argmax_logits_eq_gold=logit.sum(),
-                        logprobs=bool(maxe),
-                        input_tokens=batched_input[: len_inputs[ix]].cpu().tolist(),
-                        output_tokens=cont_tokens[: len_tokens[ix]].cpu().tolist(),
-                        truncated_tokens_count=trunc.cpu().item(),
-                        padded_tokens_count=padded.cpu().item(),
+                        argmax_logits_eq_gold=[max_equal.cpu().item() for max_equal in max_equals_doc],
+                        logprobs=[sum.cpu().item() for sum in logits_sum_doc],
+                        input_tokens=tokenized_contexts_batch[i],
+                        output_tokens=tokenized_continuations_batch[i],
                     )
                     res.append(answer)
-
-                # Clean up GPUs
-                del model_output
-                del logits
-                del batched_inputs
-                del batch_truncated
-                del batch_padded
 
         return dataset.get_original_order(res)
 
     def prepare_batch_logprob(
-        self, batch: list[Doc], padding_length: int, max_context: Optional[int] = None, single_token: bool = False
+        self,
+        tokenized_contexts: list[list[int]],
+        tokenized_continuations: list[list[list[int]]],
+        padding_length: int | None,
+        max_context: Optional[int] = None,
+        single_token: bool = False,
     ):
         """Tokenize a batch of inputs and return also the length, truncations and padding.
         This step is done manually since we tokenize log probability inputs together with their continuation,
         to manage possible extra spaces added at the start by tokenizers, see tok_encode_pair.
         """
         if single_token:
-            inputs = [request.tokenized_context for request in batch]
+            inputs = tokenized_contexts
         else:
-            inputs = [
-                request.tokenized_context + request.tokenized_continuation[:-1] for request in batch
-            ]  # The last token (an eos) doesn't need to be given to the model
+            inputs = []
+            for tokenized_context, tokenized_continuation in zip(tokenized_contexts, tokenized_continuations):
+                inputs.extend([tokenized_context + continuation for continuation in tokenized_continuation])
 
         input_tokens = []
         attention_masks = []
@@ -914,34 +887,37 @@ class TransformersModel(LightevalModel):
             logger.warning("max_context is None, using max_length")
             max_context = self.max_length
 
+        # First, find the longest sequence length in the batch
+        max_sequence_length = max(len(seq) for seq in inputs)
+        # If max_sequence_length is longer than max_context, we need to truncate
+        effective_max_length = min(max_sequence_length, max_context)
+
         # Each sample is concatenated and cut to length or padded to max_length
         for orig_tokens in inputs:
-            truncated.append(max(len(orig_tokens) - max_context, 0))
+            # Calculate truncation
+            truncated.append(max(len(orig_tokens) - effective_max_length, 0))
 
             # Truncate from the left if needed to fit in the model's context
-            tokens = torch.tensor((orig_tokens)[-max_context:], dtype=torch.long).to(self.device)
+            tokens = torch.tensor((orig_tokens)[-effective_max_length:], dtype=torch.long).to(self.device)
             sequence_len = tokens.shape[0]
 
-            # We add padding, if needed
-            padding_length = padding_length if padding_length is not None else sequence_len
+            # Calculate padding needed to reach effective_max_length
+            padding_needed = effective_max_length - sequence_len
+            padded.append(padding_needed)
 
-            if padding_length - sequence_len < 0:
-                logger.warning(f"Padding length {padding_length} is smaller than input length {sequence_len}")
-                raise ValueError("Negative padding")
+            # Right padding to reach effective_max_length
+            tokens = F.pad(tokens, (0, padding_needed), value=self.tokenizer.pad_token_id)
 
-            padded.append(padding_length - sequence_len)
-            # Right padding, since we ignore these logprobs in the end
-            tokens = F.pad(tokens, (0, padding_length - sequence_len), value=self.tokenizer.pad_token_id)
-
-            # We create the attention mask to ignore padding
-            mask = tokens == self.tokenizer.pad_token_id
+            # Create attention mask (1 for real tokens, 0 for padding)
+            mask = torch.ones_like(tokens, dtype=torch.bool)
+            mask[sequence_len:] = False
             attention_masks.append(mask)
 
-            input_tokens.append(tokens.unsqueeze(0))  # [1, padding_length]
+            input_tokens.append(tokens.unsqueeze(0))  # [1, effective_max_length]
             input_lengths.append(sequence_len)
 
-        batched_inputs = torch.cat(input_tokens, dim=0)  # [batch, padding_length]
-        attention_masks = torch.cat(attention_masks, dim=0)
+        batched_inputs = torch.cat(input_tokens, dim=0)  # [batch, effective_max_length]
+        attention_masks = torch.cat(attention_masks, dim=0)  # [batch, effective_max_length]
 
         return Batch(
             input_ids=batched_inputs,

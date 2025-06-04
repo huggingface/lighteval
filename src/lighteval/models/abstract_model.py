@@ -114,36 +114,34 @@ class LightevalModel(ABC):
             return_tensors="pt",
         )
 
-    def tok_encode_pair(self, context, continuation, pairwise: bool = False):
-        """Encodes a context, continuation pair by taking care of the spaces in between.
+    def tok_encode_pair(self, context, continuations: list[str], pairwise: bool = False):
+        """Encodes a context with a list of continuations by taking care of the spaces in between.
         Args:
             context (str): The context string to be encoded.
-            continuation (str): The continuation string to be encoded.
+            continuation (list[str]): List of continuation strings to be encoded.
             pairwise (bool):
-                If True, encode context and continuation separately.
+                If True, encode context and continuations separately.
                 If False, encode them together and then split.
 
         Returns:
-            Tuple[TokenSequence, TokenSequence]: A tuple containing the encoded context and continuation.
+            Tuple[TokenSequence, list[TokenSequence]]:
+                A tuple containing the encoded context and a list of encoded continuations.
 
         The advantage of pairwise is:
         1) It better aligns with how LLM predicts tokens
         2) Works in case len(tok(context,cont)) != len(tok(context)) + len(tok(continuation)).
         E.g this can happen for chinese if no space is used between context/continuation
         """
-
         n_spaces = len(context) - len(context.rstrip())
         if n_spaces > 0:
-            continuation = context[-n_spaces:] + continuation
+            continuations = [context[-n_spaces:] + cont for cont in continuations]
             context = context[:-n_spaces]
 
         if pairwise:
             # We don't add special tokens to the continuation as if bos is added
             # models tend to to completely ignore a context
-            context_enc, continuation_enc = (
-                self.tok_encode(context, add_special_tokens=self.add_special_tokens),
-                self.tok_encode(continuation, add_special_tokens=False),
-            )
+            context_enc = self.tok_encode(context, add_special_tokens=self.add_special_tokens)
+            continuation_enc = [self.tok_encode(cont, add_special_tokens=False) for cont in continuations]
 
             # In theory the context_enc can be ended with eos token, this would again
             # cause the model to ignore the context. We thus strip the eos token from context_enc
@@ -152,16 +150,16 @@ class LightevalModel(ABC):
 
             return context_enc, continuation_enc
 
-        whole_enc = self.tok_encode(context + continuation)
+        # Handle list of continuations
         context_enc = self.tok_encode(context)
-        context_enc_len = len(context_enc)
-        # In case continuation tokens merge with context tokens we use the merged token as continuation
-        if len(context_enc) == len(whole_enc):
-            context_enc_len = len(context_enc) - 1
-            context_enc = whole_enc[:context_enc_len]
-
-        continuation_enc = whole_enc[context_enc_len:]
-        return context_enc, continuation_enc
+        continuations_encs = []
+        for cont in continuations:
+            whole_enc = self.tok_encode(context + cont)
+            context_enc_len = len(context_enc)
+            if len(context_enc) == len(whole_enc):
+                context_enc_len = len(context_enc) - 1
+            continuations_encs.append(whole_enc[context_enc_len:])
+        return context_enc, continuations_encs
 
     def tok_decode(self, tokens: torch.LongTensor) -> list[str]:
         return self.tokenizer.batch_decode(tokens, skip_special_tokens=True)

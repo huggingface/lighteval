@@ -75,7 +75,7 @@ class Doc:
     # Generation parameters
     generation_size: int | None = None  # number of tokens to generate for each sample
     do_sample: bool = False  # whether to sample or not
-    stop_sequences: list[str] = field(default_factory=list)
+    stop_sequence: list[str] = field(default_factory=list)
     use_logits: bool = False  # whether to use logits for the generation or not
     num_samples: int = 1  # number of samples to generate for each sample
 
