@@ -789,7 +789,6 @@ class TransformersModel(LightevalModel):
                     max_context=max_input_length,
                 )
 
-                breakpoint()
                 model_output = self._model_call(prepared_batch.input_ids)
                 logits = F.log_softmax(model_output, dim=-1)  # [batch, padding_length, vocab]
 
