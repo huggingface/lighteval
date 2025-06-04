@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import re
 
 import numpy as np
 from aenum import extend_enum
@@ -55,10 +54,31 @@ submetric_names = [
     "inst_level_loose_acc",
 ]
 
+THINK_TAG_PAIRS = [
+    ("<think>", "</think>"),
+]
+
+
+def remove_think_tags(text: str, tag_pairs: list[tuple[str, str]]) -> str:
+    """Remove all instances of think tag pairs from text."""
+    result = text
+
+    for start_tag, end_tag in tag_pairs:
+        while start_tag in result and end_tag in result:
+            start = result.find(start_tag)
+            end = result.find(end_tag, start)
+            if start != -1 and end != -1:
+                result = result[:start] + result[end + len(end_tag) :]
+            else:
+                break
+
+    return result
+
 
 def ifeval_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dict:
     response = predictions[0]
-    response = re.sub(r"(<think>)?[\s\S]*?<\/think>", "", response)
+    # Remove the reasoning block to avoid false negatives: https://github.com/huggingface/lighteval/issues/790
+    response = remove_think_tags(response, THINK_TAG_PAIRS)
 
     # Strict instructions
     instruction_list = formatted_doc.specific["instructions_id_list"]
