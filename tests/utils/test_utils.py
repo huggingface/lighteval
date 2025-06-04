@@ -49,3 +49,15 @@ class TestRemoveReasoningTags(unittest.TestCase):
         tag_pairs = [("<think>", "</think>")]
         result = remove_reasoning_tags(text, tag_pairs)
         self.assertEqual(result, "")
+
+    def test_no_opening_tag(self):
+        text = "No opening tag <think> Reasoning section. </think> Answer section"
+        tag_pairs = [("<think>", "</think>")]
+        result = remove_reasoning_tags(text, tag_pairs)
+        self.assertEqual(result, "No opening tag  Answer section")
+
+    def test_no_closing_tag(self):
+        text = "<think> Reasoning section. Answer section"
+        tag_pairs = [("<think>", "</think>")]
+        result = remove_reasoning_tags(text, tag_pairs)
+        self.assertEqual(result, "<think> Reasoning section. Answer section")
