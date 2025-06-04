@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import re
+
 import numpy as np
 from aenum import extend_enum
 
@@ -56,6 +58,7 @@ submetric_names = [
 
 def ifeval_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dict:
     response = predictions[0]
+    response = re.sub(r"(<think>)?[\s\S]*?<\/think>", "", response)
 
     # Strict instructions
     instruction_list = formatted_doc.specific["instructions_id_list"]
