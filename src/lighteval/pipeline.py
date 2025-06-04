@@ -32,6 +32,7 @@ from enum import Enum, auto
 import numpy as np
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
+from lighteval.metrics import apply_metric
 from lighteval.models.model_loader import TransformersModel, load_model
 from lighteval.models.model_output import (
     ModelResponse,
@@ -403,13 +404,12 @@ class Pipeline:
         for task_name, samples_per_method in task_metric_category_groups.items():
             task: LightevalTask = self.tasks_dict[task_name]
             for sampling_method, samples in samples_per_method.items():
-                metric_function = task.get_metric_method_from_category(metric_category=sampling_method)
                 metric_category_metrics = [metric for metric in task.metrics if metric.category == sampling_method]
 
                 docs = [doc for doc, _ in samples]
                 responses = [response for _, response in samples]
 
-                outputs = metric_function(
+                outputs = apply_metric(
                     docs=docs,
                     responses=responses,
                     metrics=metric_category_metrics,

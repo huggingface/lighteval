@@ -742,16 +742,12 @@ class TransformersModel(LightevalModel):
 
     def loglikelihood_rolling(
         self,
-        requests: list[Doc],
+        docs: list[Doc],
     ) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
 
-        for request in requests:  # tuple of one elem
-            request.tokenized_context = [self.tokenizer.eos_token_id]  # Fake context
-            request.tokenized_continuation = self.tok_encode(request.context)
-
         results = self._loglikelihood_tokens(
-            requests,
+            docs,
             rolling=True,
         )
         return results
