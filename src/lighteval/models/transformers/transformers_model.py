@@ -496,7 +496,7 @@ class TransformersModel(LightevalModel):
 
             messages.append({"role": "user", "content": doc.query})
 
-            output = self.tokenizer.apply_chat_template(
+            output: str = self.tokenizer.apply_chat_template(
                 messages,
                 tokenize=False,  # We don't want to tokenize here, we just want to format the chat template
                 add_generation_prompt=True,  # We don't want to add the generation prompt here
@@ -535,12 +535,8 @@ class TransformersModel(LightevalModel):
             list[GenerativeResponse]: list of generated responses.
         """
         results = []
-        # 1. Prepare the prompts
-        # 2. create dataset
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         starting_batch_size = STARTING_BATCH_SIZE
-        # 3. run model
-        # 4. gather results
 
         for split_start, split_end in tqdm(
             dataset.splits_start_end_iterator(),
@@ -746,11 +742,10 @@ class TransformersModel(LightevalModel):
     ) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
 
-        results = self._loglikelihood_tokens(
+        return self._loglikelihood_tokens(
             docs,
             rolling=True,
         )
-        return results
 
     def _loglikelihood_tokens(
         self,
@@ -782,7 +777,7 @@ class TransformersModel(LightevalModel):
                     tokenized_contexts=tokenized_contexts_batch,
                     tokenized_continuations=tokenized_continuations_batch,
                     padding_length=None,
-                    max_context=None,
+                    max_context=None,  # computed as model max length in the function
                 )
 
                 model_output = self._model_call(prepared_batch.input_ids)

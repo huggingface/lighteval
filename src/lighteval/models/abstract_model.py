@@ -80,7 +80,7 @@ class LightevalModel(ABC):
     @abstractmethod
     def greedy_until(
         self,
-        requests: list[Doc],
+        docs: list[Doc],
     ) -> list[ModelResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
@@ -96,7 +96,7 @@ class LightevalModel(ABC):
         return NotImplemented
 
     @abstractmethod
-    def loglikelihood(self, requests: list[Doc], override_bs: Optional[int] = None) -> list[ModelResponse]:
+    def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
@@ -148,10 +148,13 @@ class LightevalModel(ABC):
             if len(context_enc) > 0 and context_enc[-1] == self.tokenizer.eos_token_id:
                 context_enc = context_enc[:-1]
 
-            return context_enc, continuation_enc
+            context_encs = [context_enc] * len(continuation_enc)
+
+            return context_encs, continuation_enc
 
         # Handle list of continuations
         context_enc = self.tok_encode(context)
+        context_encs = []
         continuations_encs = []
         for cont in continuations:
             whole_enc = self.tok_encode(context + cont)
@@ -159,7 +162,9 @@ class LightevalModel(ABC):
             if len(context_enc) == len(whole_enc):
                 context_enc_len = len(context_enc) - 1
             continuations_encs.append(whole_enc[context_enc_len:])
-        return context_enc, continuations_encs
+            context_encs.append(whole_enc[:context_enc_len])
+
+        return context_encs, continuations_encs
 
     def tok_decode(self, tokens: torch.LongTensor) -> list[str]:
         return self.tokenizer.batch_decode(tokens, skip_special_tokens=True)

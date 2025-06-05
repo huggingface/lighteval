@@ -71,7 +71,12 @@ from lighteval.metrics.normalizations import (
     remove_braces,
     remove_braces_and_strip,
 )
-from lighteval.metrics.sample_preparator import GenerativePreparator, LoglikelihoodPreparator, PerplexityPreparator
+from lighteval.metrics.sample_preparator import (
+    GenerativePreparator,
+    LoglikelihoodPreparator,
+    PerplexityPreparator,
+    TargetPerplexityPreparator,
+)
 from lighteval.metrics.utils.metric_utils import (
     CorpusLevelMetric,
     CorpusLevelMetricGrouping,
@@ -740,7 +745,7 @@ class Metrics(Enum):
     )
     target_perplexity = SampleLevelMetric(
         metric_name="ppl",
-        sample_level_fn=PerplexityPreparator(units_type="words").prepare,
+        sample_level_fn=TargetPerplexityPreparator(units_type="words").prepare,
         category=SamplingMethod.LOGPROBS,
         corpus_level_fn=CorpusLevelPerplexityMetric("perplexity").compute,
         higher_is_better=False,

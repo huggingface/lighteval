@@ -553,7 +553,7 @@ class TaskConfigLogger:
     tasks_configs: dict[str, LightevalTaskConfig] = field(default_factory=dict)
 
     def log(self, task_dict: dict[str, LightevalTask]) -> None:
-        self.tasks_configs = {name: task.cfg for name, task in task_dict.items()}
+        self.tasks_configs = {name: task.config for name, task in task_dict.items()}
 
     def log_num_docs(self, task_name: str, original_num_docs: int, effective_num_docs: int) -> None:
         self.tasks_configs[task_name].original_num_docs = original_num_docs

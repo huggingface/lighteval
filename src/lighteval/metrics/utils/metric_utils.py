@@ -58,6 +58,7 @@ class Metric:
         self, **kwargs
     ) -> dict:  # result: Union[list[ModelResponse], ModelResponse], formatted_doc: Doc) -> dict:
         if isinstance(self, MetricGrouping):
+            print(kwargs)
             return self.sample_level_fn(**kwargs)  # result, formatted_doc,
         return {self.metric_name: self.sample_level_fn(**kwargs)}  # result, formatted_doc,
 

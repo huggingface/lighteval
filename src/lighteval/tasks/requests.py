@@ -69,6 +69,8 @@ class Doc:
     # The uncoditioned query shouldn't contain any information about the task, thus usually it's empty string or 'Answer:'.
     unconditioned_query: Optional[str] = None
 
+    original_query: str | None = None  # the query before preprocessing, if stored
+
     fewshot_samples: list = field(default_factory=list)
     sampling_methods: list[SamplingMethod] = field(default_factory=list)
 

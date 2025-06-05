@@ -157,6 +157,7 @@ class LightevalTask:
             config (dict): configuration dictionary containing
                 task-specific settings (from the task_table.json file).
         """
+        self.config = config
         self.name = config.name
         self.full_name = f"{self.name}|{config.num_fewshots}"
         self.version = config.version

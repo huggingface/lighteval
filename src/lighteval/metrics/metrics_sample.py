@@ -232,8 +232,8 @@ class LoglikelihoodAcc:
     # Solve the choices token lengths properly
     def compute(
         self,
-        model_response: ModelResponse,
         doc: Doc,
+        model_response: ModelResponse,
         **kwargs,
     ) -> int:
         """Computes the log likelihood accuracy: is the choice with the highest logprob in `choices_logprob` present
@@ -294,8 +294,8 @@ class NormalizedMultiChoiceProbability:
 
     def compute(
         self,
-        model_response: ModelResponse,
         doc: Doc,
+        model_response: ModelResponse,
         **kwargs,
     ) -> float:
         """Computes the log likelihood probability: chance of choosing the best choice.
@@ -455,7 +455,7 @@ class MRR:
         return 1.0 / (min(ranked_choices) + 1)
 
 
-def acc_golds_likelihood(argmax_logits_eq_gold_list: list[int], **kwargs) -> int:
+def acc_golds_likelihood(doc, model_response, **kwargs) -> int:
     """Tests if at least one of predicted gold targets' argmax of logits equals the gold.
 
     Args:
@@ -464,7 +464,7 @@ def acc_golds_likelihood(argmax_logits_eq_gold_list: list[int], **kwargs) -> int
     Returns:
         int: 1 if at least one of the possible golds has argmax of logits == gold, 0 otherwise
     """
-    return int(any(argmax_logits_eq_gold_list))
+    return int(any(model_response.argmax_logits_eq_gold))
 
 
 class ROUGE:

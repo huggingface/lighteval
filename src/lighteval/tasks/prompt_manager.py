@@ -330,9 +330,9 @@ class FewShotSampler:
         self,
         num_fewshot: int,
         variance_seed: int,
-        sampler: random.Random = None,
-        formatted_doc: Doc = None,
-    ) -> list[str]:
+        sampler: random.Random | None = None,
+        formatted_doc: Doc | None = None,
+    ) -> list[Doc]:
         if num_fewshot == 0:
             return []
 
