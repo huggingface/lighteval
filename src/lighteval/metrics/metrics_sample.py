@@ -696,7 +696,9 @@ class Faithfulness:
             dict[str, float]: The faithfulness scores.
         """
         if self.summac is None:
-            SummaCZS(granularity="sentence", model_name="vitc", imager_load_cache=False)  # , device=device)
+            self.summac = SummaCZS(
+                granularity="sentence", model_name="vitc", imager_load_cache=False
+            )  # , device=device)
         inp = formatted_doc.specific[self.input_column]
         prediction = predictions[0]
         if self.normalize_input:
