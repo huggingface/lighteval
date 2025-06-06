@@ -87,7 +87,7 @@ class OpenAIModelConfig:
 class OpenAIClient(LightevalModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
-    def __init__(self, config: OpenAIModelConfig, env_config) -> None:
+    def __init__(self, config: OpenAIModelConfig) -> None:
         self.client = OpenAI(api_key=config.api_key, base_url=config.base_url)
         self.config = config
         self.generation_parameters = config.generation_parameters
@@ -107,7 +107,7 @@ class OpenAIClient(LightevalModel):
         try:
             self._tokenizer = tiktoken.encoding_for_model(self.model)
         except KeyError:
-            self._tokenizer = AutoTokenizer.from_pretrained(self.model)
+            self._tokenizer = tiktoken.encoding_for_model("gpt-4o")
         self.pairwise_tokenization = False
 
     def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, logit_bias):
