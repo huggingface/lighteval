@@ -492,7 +492,7 @@ class TransformersModel(LightevalModel):
 
             for fewshot_sample in doc.fewshot_samples:
                 messages.append({"role": "user", "content": fewshot_sample.query})
-                messages.append({"role": "assistant", "content": fewshot_sample.get_golds()[0]})
+                messages.append({"role": "assistant", "content": fewshot_sample.get_golds()[0].strip()})
 
             messages.append({"role": "user", "content": doc.query})
 
@@ -509,9 +509,9 @@ class TransformersModel(LightevalModel):
 
             for fewshot_sample in doc.fewshot_samples:
                 if output != "":
-                    output += "\n\n" + fewshot_sample.query + fewshot_sample.get_golds()[0]
+                    output += "\n\n" + fewshot_sample.query + fewshot_sample.get_golds()[0].strip()
                 else:
-                    output = fewshot_sample.query + fewshot_sample.get_golds()[0]
+                    output = fewshot_sample.query + fewshot_sample.get_golds()[0].strip()
 
             if output == "":
                 output = doc.query
@@ -756,7 +756,7 @@ class TransformersModel(LightevalModel):
         res = []
 
         for split_start, split_end in tqdm(dataset.splits_start_end_iterator()):
-            dataloader = DataLoader(dataset, batch_size=2, collate_fn=lambda batch: batch)
+            dataloader = DataLoader(dataset, batch_size=1, collate_fn=lambda batch: batch)
 
             if self.accelerator:
                 dataloader = self.accelerator.prepare(dataloader)
@@ -767,10 +767,10 @@ class TransformersModel(LightevalModel):
                 tokenized_continuations_batch = []
 
                 for context, doc in zip(contexts, batch):
-                    tokenized_context, tokenized_continuations = self.tok_encode_pair(
+                    tokenized_contexts, tokenized_continuations = self.tok_encode_pair(
                         context, doc.choices, pairwise=True
                     )
-                    tokenized_contexts_batch.append(tokenized_context)
+                    tokenized_contexts_batch.append(tokenized_contexts)
                     tokenized_continuations_batch.append(tokenized_continuations)
 
                 prepared_batch = self.prepare_batch_logprob(
@@ -846,7 +846,7 @@ class TransformersModel(LightevalModel):
 
     def prepare_batch_logprob(
         self,
-        tokenized_contexts: list[list[int]],
+        tokenized_contexts: list[list[list[int]]],
         tokenized_continuations: list[list[list[int]]],
         padding_length: int | None,
         max_context: Optional[int] = None,
@@ -860,8 +860,14 @@ class TransformersModel(LightevalModel):
             inputs = tokenized_contexts
         else:
             inputs = []
+            # we used to remove the last token of continuation, but it's not needed
             for tokenized_context, tokenized_continuation in zip(tokenized_contexts, tokenized_continuations):
-                inputs.extend([tokenized_context + continuation for continuation in tokenized_continuation])
+                inputs.extend(
+                    [
+                        context + continuation
+                        for context, continuation in zip(tokenized_context, tokenized_continuation)
+                    ]
+                )
 
         input_tokens = []
         attention_masks = []

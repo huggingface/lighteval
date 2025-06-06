@@ -47,6 +47,7 @@ from lighteval.metrics.utils.extractive_match_utils import (  # noqa: F401
 )
 from lighteval.metrics.utils.math_comparison import compare_gold_target
 from lighteval.metrics.utils.metric_utils import SampleLevelMetric
+from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.language import Language
 from lighteval.utils.timeout import timeout
@@ -233,9 +234,12 @@ def multilingual_extractive_match_metric(
         ]
         formatted_doc.specific["extracted_golds"] = [str(gold) for golds in extracted_golds for gold in golds]
 
-    def sample_level_fn(golds: list[str], predictions: list[str], formatted_doc: Doc) -> float:
-        gold_extraction_regexes = get_extraction_regexes(formatted_doc, gold_extraction_target, language)
-        pred_extraction_regexes = get_extraction_regexes(formatted_doc, pred_extraction_target, language)
+    def sample_level_fn(doc: Doc, model_response: ModelResponse) -> float:
+        golds = doc.get_golds()
+        predictions = model_response.text
+
+        gold_extraction_regexes = get_extraction_regexes(doc, gold_extraction_target, language)
+        pred_extraction_regexes = get_extraction_regexes(doc, pred_extraction_target, language)
 
         extracted_predictions = [
             extract_target_from_pred(pred, pred_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds)
@@ -258,7 +262,7 @@ def multilingual_extractive_match_metric(
 
         # We have to use timeout because the sypmy to str conversion can be very slow
         try:
-            add_to_specifics_with_timeout(formatted_doc, extracted_predictions, extracted_golds)
+            add_to_specifics_with_timeout(doc, extracted_predictions, extracted_golds)
         except Exception:  # noqa: E722
             logger.warning("Timeout when adding extracted predictions and golds to specific")
 
