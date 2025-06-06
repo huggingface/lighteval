@@ -1,6 +1,6 @@
 model_parameters:
   model_name: "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B" # pretrained=model_name,trust_remote_code=boolean,revision=revision_to_use,model_parallel=True ... For a PEFT model, the pretrained model should be the one trained with PEFT and the base model below will contain the original model on which the adapters will be applied.
-  tokenizer: null # name of tokenier to use if defferent from the model's default
+  tokenizer: null # name of tokenizer to use if different from the model's default
   subfolder: null # subfolder in the model's directory to use
   dtype: "float16"  # Specifying the model to be loaded in 4 bit uses BitsAndBytesConfig. The other option is to use "8bit" quantization.
   compile: true

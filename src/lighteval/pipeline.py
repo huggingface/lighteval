@@ -107,6 +107,7 @@ class PipelineParameters:
     system_prompt: str | None = None
     cot_prompt: str | None = None
     load_responses_from_details_date_id: str | None = None
+    bootstrap_iters: int = 1000
 
     def __post_init__(self):  # noqa C901
         if self.launcher_type == ParallelismManager.ACCELERATE:
@@ -293,7 +294,9 @@ class Pipeline:
 
         if self.is_main_process():
             self.evaluation_tracker.general_config_logger.log_end_time()
-            self.evaluation_tracker.metrics_logger.aggregate(task_dict=self.task_dict, bootstrap_iters=1000)
+            self.evaluation_tracker.metrics_logger.aggregate(
+                task_dict=self.task_dict, bootstrap_iters=self.pipeline_parameters.bootstrap_iters
+            )
             self.evaluation_tracker.details_logger.aggregate()
 
     def _unpack(self, x):
