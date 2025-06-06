@@ -147,9 +147,9 @@ class OpenAIClient(LightevalModel):
         num_sampless = [num_samples for _ in prompts] if not isinstance(num_samples, list) else num_samples
         logit_biass = [logit_bias for _ in prompts] if logit_bias is None else logit_bias
 
-        assert (
-            len(prompts) == len(return_logitss) == len(max_new_tokenss) == len(num_sampless) == len(logit_biass)
-        ), "Length of prompts, return_logitss, max_new_tokenss, num_sampless, logit_biass should be same"
+        assert len(prompts) == len(return_logitss) == len(max_new_tokenss) == len(num_sampless) == len(logit_biass), (
+            "Length of prompts, return_logitss, max_new_tokenss, num_sampless, logit_biass should be same"
+        )
 
         with ThreadPoolExecutor(self.CONCURENT_CALLS) as executor:
             for entry in tqdm(
@@ -255,9 +255,9 @@ class OpenAIClient(LightevalModel):
             inputs = [sample.context for sample in split]
             max_new_tokens = [len(sample.tokenized_continuation) for sample in split]
 
-            assert all(
-                new_tokens == 1 for new_tokens in max_new_tokens
-            ), "Only single token continuations are supported when using openai API."
+            assert all(new_tokens == 1 for new_tokens in max_new_tokens), (
+                "Only single token continuations are supported when using openai API."
+            )
 
             logit_biases = [dict.fromkeys(sample.tokenized_continuation, 100) for sample in split]
 

@@ -80,9 +80,15 @@ def compare_strings(
         # Test answer with reasoning
         ("B", "Let's think step by step. It's not A because it doesn't make sense, therefore I think it's B", 1),
         ("D", "The answer is for sure D, it can't be A or B", 1),
-        ("D", "The answer: D, doesn't makese nsense for answer to be A or B", 1),
+        ("D", "The answer: D, it doesn't make sense for it to be A or B", 1),
         # Test minimal answer format
         ("D", "D. it can't be A or B", 1),
+        ("(D) Alina", "D", 1),
+        ("(A) Cecile", "C", 0),
+        ("C Cecile", "C", 1),
+        ("Alina and the answer is\n(C) Cecile", "C", 1),
+        ("Alina and the answer is\nC Cecile", "C", 1),
+        ("A Peter\nCelina bum", "A", 1),
     ],
 )
 def test_extraction_abc(gold, pred, expected):
