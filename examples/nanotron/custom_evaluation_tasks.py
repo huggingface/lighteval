@@ -26,6 +26,7 @@ Custom evaluation tasks for lighteval
 
 This file generally creates just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
 """
+
 import re
 from dataclasses import asdict
 from typing import Dict, List, Tuple
@@ -256,7 +257,7 @@ class CustomMathEvaluationTask(LightevalTaskConfig):
         self,
         name,
         prompt_function=prompt.math,
-        hf_repo="lighteval/MATH",
+        hf_repo="DigitalLearningGmbH/MATH-lighteval",
         hf_subset=None,
         metric=[Metrics.quasi_exact_match_math],
         hf_avail_splits=None,

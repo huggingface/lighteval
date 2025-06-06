@@ -13,6 +13,11 @@ To save the details of the evaluation, you can use the `--save-details`
 option. The details will be saved in a parquet file
 `{output_dir}/details/{model_name}/{timestamp}/details_{task}_{timestamp}.parquet`.
 
+If you want results to be saved in a custom path, you can set the `results-path-template` option.
+This allows you to set a string template for the path. The template need to contain the following
+variables: `output_dir`, `model_name`, `org`. For example
+`{output_dir}/{org}_{model}`. The template will be used to create the path for the results file.
+
 ## Pushing results to the HuggingFace hub
 
 You can push the results and evaluation details to the HuggingFace hub. To do
@@ -29,6 +34,20 @@ setting the `--public-run` option.
 You can push the results to Tensorboard by setting `--push-to-tensorboard`.
 This will create a Tensorboard dashboard in a HF org set with the `--results-org`
 option.
+
+
+## Pushing results to WandB
+
+You can push the results to WandB by setting `--wandb`. This will init a WandB
+run and log the results.
+
+Wandb args need to be set in your env variables.
+
+```
+export WANDB_PROJECT="lighteval"
+```
+
+You can find a list of variable in the [wandb documentation](https://docs.wandb.ai/guides/track/environment-variables/).
 
 
 ## How to load and investigate details

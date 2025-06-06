@@ -1,11 +1,16 @@
-model:
-  base_params:
-    model_args: "pretrained=predibase/customer_support,revision=main" # pretrained=model_name,trust_remote_code=boolean,revision=revision_to_use,model_parallel=True ... For a PEFT model, the pretrained model should be the one trained with PEFT and the base model below will contain the original model on which the adapters will be applied.
-    dtype: "4bit"  # Specifying the model to be loaded in 4 bit uses BitsAndBytesConfig. The other option is to use "8bit" quantization.
-    compile: true
-  merged_weights: # Ignore this section if you are not using PEFT models
-    delta_weights: false # set to True of your model should be merged with a base model, also need to provide the base model name
-    adapter_weights: true # set to True of your model has been trained with peft, also need to provide the base model name
-    base_model: "mistralai/Mistral-7B-v0.1" # path to the base_model - needs to be specified only if delta_weights or adapter_weights is set to True
-  generation:
-    multichoice_continuations_start_space: null # If true/false, will force multiple choice continuations to start/not start with a space. If none, will do nothing
+model_parameters:
+  model_name: "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B" # pretrained=model_name,trust_remote_code=boolean,revision=revision_to_use,model_parallel=True ... For a PEFT model, the pretrained model should be the one trained with PEFT and the base model below will contain the original model on which the adapters will be applied.
+  tokenizer: null # name of tokenizer to use if different from the model's default
+  subfolder: null # subfolder in the model's directory to use
+  dtype: "float16"  # Specifying the model to be loaded in 4 bit uses BitsAndBytesConfig. The other option is to use "8bit" quantization.
+  compile: true
+  revision: "main" # revision to use
+  trust_remote_code: true # Trust remote code
+  model_parallel: null # Model parallel
+  use_chat_template: true # Use chat template
+  max_length: 2048 # maximum length of the input text and the generated text
+
+  # should go in generation
+  max_generation_toks: 256 # maximum number of tokens to generate
+    #use_chat_template: true # Use chat template
+  batch_size: 10 # batch size to use

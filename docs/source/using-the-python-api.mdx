@@ -17,6 +17,7 @@ from lighteval.utils.utils import EnvConfig
 from lighteval.utils.imports import is_accelerate_available
 
 if is_accelerate_available():
+    from datetime import timedelta
     from accelerate import Accelerator, InitProcessGroupKwargs
     accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
 else:
@@ -33,13 +34,14 @@ def main():
     pipeline_params = PipelineParameters(
         launcher_type=ParallelismManager.ACCELERATE,
         env_config=EnvConfig(cache_dir="tmp/"),
+        custom_task_directory=None, # if using a custom task
         # Remove the 2 parameters below once your configuration is tested
         override_batch_size=1,
         max_samples=10
     )
 
     model_config = VLLMModelConfig(
-            pretrained="HuggingFaceH4/zephyr-7b-beta",
+            model_name="HuggingFaceH4/zephyr-7b-beta",
             dtype="float16",
             use_chat_template=True,
     )
@@ -51,7 +53,6 @@ def main():
         pipeline_parameters=pipeline_params,
         evaluation_tracker=evaluation_tracker,
         model_config=model_config,
-        custom_task_directory=None, # if using a custom task
     )
 
     pipeline.evaluate()

@@ -3,21 +3,25 @@
 Lighteval allows you to use `vllm` as backend allowing great speedups.
 To use, simply change the `model_args` to reflect the arguments you want to pass to vllm.
 
+
+> [!TIP]
+> Documentation for vllm engine args can be found [here](https://docs.vllm.ai/en/latest/serving/engine_args.html)
+
 ```bash
 lighteval vllm \
-    "pretrained=HuggingFaceH4/zephyr-7b-beta,dtype=float16" \
+    "model_name=HuggingFaceH4/zephyr-7b-beta,dtype=float16" \
     "leaderboard|truthfulqa:mc|0|0"
 ```
 
 `vllm` is able to distribute the model across multiple GPUs using data
 parallelism, pipeline parallelism or tensor parallelism.
-You can choose the parallelism method by setting in the the `model_args`.
+You can choose the parallelism method by setting in the `model_args`.
 
 For example if you have 4 GPUs you can split it across using `tensor_parallelism`:
 
 ```bash
 export VLLM_WORKER_MULTIPROC_METHOD=spawn && lighteval vllm \
-    "pretrained=HuggingFaceH4/zephyr-7b-beta,dtype=float16,tensor_parallel_size=4" \
+    "model_name=HuggingFaceH4/zephyr-7b-beta,dtype=float16,tensor_parallel_size=4" \
     "leaderboard|truthfulqa:mc|0|0"
 ```
 
@@ -25,7 +29,7 @@ Or, if your model fits on a single GPU, you can use `data_parallelism` to speed 
 
 ```bash
 lighteval vllm \
-    "pretrained=HuggingFaceH4/zephyr-7b-beta,dtype=float16,data_parallel_size=4" \
+    "model_name=HuggingFaceH4/zephyr-7b-beta,dtype=float16,data_parallel_size=4" \
     "leaderboard|truthfulqa:mc|0|0"
 ```
 
@@ -41,18 +45,35 @@ lighteval vllm \
 ```
 
 ```yaml
-model: # Model specific parameters
-  base_params:
-    model_args: "pretrained=HuggingFaceTB/SmolLM-1.7B,revision=main,dtype=bfloat16" # Model args that you would pass in the command line
-  generation: # Generation specific parameters
-    temperature: 0.3
-    repetition_penalty: 1.0
-    frequency_penalty: 0.0
-    presence_penalty: 0.0
-    seed: 42
-    top_k: 0
-    min_p: 0.0
-    top_p: 0.9
+model_parameters:
+    model_name: "HuggingFaceTB/SmolLM-1.7B-Instruct"
+    revision: "main"
+    dtype: "bfloat16"
+    tensor_parallel_size: 1
+    data_parallel_size: 1
+    pipeline_parallel_size: 1
+    gpu_memory_utilization: 0.9
+    max_model_length: 2048
+    swap_space: 4
+    seed: 1
+    trust_remote_code: True
+    use_chat_template: True
+    add_special_tokens: True
+    multichoice_continuations_start_space: True
+    pairwise_tokenization: True
+    subfolder: null
+    generation_parameters:
+      presence_penalty: 0.0
+      repetition_penalty: 1.0
+      frequency_penalty: 0.0
+      temperature: 1.0
+      top_k: 50
+      min_p: 0.0
+      top_p: 1.0
+      seed: 42
+      stop_tokens: null
+      max_new_tokens: 1024
+      min_new_tokens: 0
 ```
 
 > [!WARNING]
@@ -66,21 +87,38 @@ For special kinds of metrics like `Pass@K` or LiveCodeBench's `codegen` metric, 
 generations. This can be done in the `yaml` file in the following way:
 
 ```yaml
-model: # Model specific parameters
-  base_params:
-    model_args: "pretrained=HuggingFaceTB/SmolLM-1.7B,revision=main,dtype=bfloat16" # Model args that you would pass in the command line
-  generation: # Generation specific parameters
-    temperature: 0.3
-    repetition_penalty: 1.0
-    frequency_penalty: 0.0
-    presence_penalty: 0.0
-    seed: 42
-    top_k: 0
-    min_p: 0.0
-    top_p: 0.9
-  metric_options: # Optional metric arguments
+model_parameters:
+    model_name: "HuggingFaceTB/SmolLM-1.7B-Instruct"
+    revision: "main"
+    dtype: "bfloat16"
+    tensor_parallel_size: 1
+    data_parallel_size: 1
+    pipeline_parallel_size: 1
+    gpu_memory_utilization: 0.9
+    max_model_length: 2048
+    swap_space: 4
+    seed: 1
+    trust_remote_code: True
+    use_chat_template: True
+    add_special_tokens: True
+    multichoice_continuations_start_space: True
+    pairwise_tokenization: True
+    subfolder: null
+    generation_parameters:
+      presence_penalty: 0.0
+      repetition_penalty: 1.0
+      frequency_penalty: 0.0
+      temperature: 1.0
+      top_k: 50
+      min_p: 0.0
+      top_p: 1.0
+      seed: 42
+      stop_tokens: null
+      max_new_tokens: 1024
+      min_new_tokens: 0
+metric_options: # Optional metric arguments
     codegen_pass@1:16:
-      num_samples: 16
+        num_samples: 16
 ```
 
 An optional key `metric_options` can be passed in the yaml file,

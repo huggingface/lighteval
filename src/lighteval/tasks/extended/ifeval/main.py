@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+
 import numpy as np
 from aenum import extend_enum
 
@@ -32,6 +33,7 @@ from lighteval.metrics.utils.metric_utils import (
 )
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
+from lighteval.utils.utils import remove_reasoning_tags
 
 
 # Very specific task where there are no precise outputs but instead we test if the format obeys rules
@@ -53,9 +55,15 @@ submetric_names = [
     "inst_level_loose_acc",
 ]
 
+REASONING_TAG_PAIRS = [
+    ("<think>", "</think>"),
+]
+
 
 def ifeval_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dict:
     response = predictions[0]
+    # Remove the reasoning block to avoid false negatives: https://github.com/huggingface/lighteval/issues/790
+    response = remove_reasoning_tags(response, REASONING_TAG_PAIRS)
 
     # Strict instructions
     instruction_list = formatted_doc.specific["instructions_id_list"]
@@ -127,7 +135,7 @@ def agg_inst_level_acc(items):
 
 ifeval_metrics = SampleLevelMetricGrouping(
     metric_name=submetric_names,
-    higher_is_better={n: True for n in submetric_names},
+    higher_is_better=dict.fromkeys(submetric_names, True),
     category=MetricCategory.GENERATIVE,
     use_case=MetricUseCase.ACCURACY,
     sample_level_fn=ifeval_metric,

@@ -21,13 +21,13 @@
 # SOFTWARE.
 
 import ast
+import asyncio
 import collections
 import os
 import random
 import re
-import shutil
 from contextlib import nullcontext
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum, auto
 
@@ -62,7 +62,7 @@ from lighteval.utils.imports import (
     is_vllm_available,
 )
 from lighteval.utils.parallelism import test_all_gather
-from lighteval.utils.utils import EnvConfig, make_results_table
+from lighteval.utils.utils import make_results_table
 
 
 if is_accelerate_available():
@@ -72,7 +72,7 @@ if is_nanotron_available():
     from nanotron.parallel.context import ParallelContext
     from nanotron.utils import local_ranks_zero_first
 
-    from lighteval.models.nanotron_model import NanotronLightevalModel
+    from lighteval.models.nanotron.nanotron_model import NanotronLightevalModel
 
 
 import logging
@@ -87,6 +87,7 @@ class ParallelismManager(Enum):
     TGI = auto()
     OPENAI = auto()
     VLLM = auto()
+    CUSTOM = auto()
     NONE = auto()
     SGLANG = auto()
 
@@ -95,19 +96,18 @@ class ParallelismManager(Enum):
 class PipelineParameters:
     launcher_type: ParallelismManager
     # Env parameters
-    env_config: EnvConfig = field(default_factory=EnvConfig)
     job_id: int = 0
     dataset_loading_processes: int = 1
     nanotron_checkpoint_path: str | None = None  # only for nanotron models
     # Dataset
     custom_tasks_directory: str | None = None
-    # Generation parameters
-    override_batch_size: int | None = None
     num_fewshot_seeds: int = 1
     max_samples: int | None = None
     use_chat_template: bool = False
     system_prompt: str | None = None
+    cot_prompt: str | None = None
     load_responses_from_details_date_id: str | None = None
+    bootstrap_iters: int = 1000
 
     def __post_init__(self):  # noqa C901
         if self.launcher_type == ParallelismManager.ACCELERATE:
@@ -156,11 +156,13 @@ class Pipeline:
         self.accelerator, self.parallel_context = self._init_parallelism_manager()
         self.model = self._init_model(model_config, model)
 
-        self.evaluation_tracker.general_config_logger.log_model_info(self.model.model_info)
-        self._init_tasks_and_requests(tasks=tasks)
+        generation_parameters = model_config.generation_parameters.model_dump() if model_config else {}
+
+        self.evaluation_tracker.general_config_logger.log_model_info(generation_parameters, self.model.model_info)
         self._init_random_seeds()
+        self._init_tasks_and_requests(tasks=tasks)
         # Final results
-        self.final_dict: dict = None
+        self.final_dict: dict | None = None
 
     def _init_parallelism_manager(self):
         accelerator, parallel_context = None, None
@@ -190,21 +192,19 @@ class Pipeline:
                     checkpoint_path=os.path.dirname(self.pipeline_parameters.nanotron_checkpoint_path)
                     if self.pipeline_parameters.nanotron_checkpoint_path
                     else "",
-                    nanotron_config=self.model_config,
+                    nanotron_config=model_config,
                     parallel_context=self.parallel_context,
                     debug_one_layer_model=False,
                     model_class=None,
-                    env_config=self.pipeline_parameters.env_config,
                 )
             else:
-                return load_model(config=model_config, env_config=self.pipeline_parameters.env_config)
+                return load_model(config=model_config)
         if isinstance(model, TransformersModel):
             return model
         else:
             return TransformersModel.from_model(
                 model=model,
                 use_chat_template=self.pipeline_parameters.use_chat_template,
-                env_config=self.pipeline_parameters.env_config,
                 accelerator=self.accelerator,
             )
 
@@ -212,7 +212,6 @@ class Pipeline:
         with local_ranks_zero_first() if self.launcher_type == ParallelismManager.NANOTRON else nullcontext():
             logger.info("--- LOADING TASKS ---")
             registry = Registry(
-                cache_dir=self.pipeline_parameters.env_config.cache_dir,
                 custom_tasks=self.pipeline_parameters.custom_tasks_directory,
             )
             task_names_list, fewshots_dict = taskinfo_selector(tasks, registry)
@@ -234,6 +233,7 @@ class Pipeline:
                 evaluation_tracker=self.evaluation_tracker,
                 use_chat_template=self.pipeline_parameters.use_chat_template,
                 system_prompt=self.pipeline_parameters.system_prompt,
+                cot_prompt=self.pipeline_parameters.cot_prompt,
             )
 
             self.task_names_list = task_names_list
@@ -274,7 +274,6 @@ class Pipeline:
     def evaluate(self):
         self.evaluation_tracker.general_config_logger.log_args_info(
             num_fewshot_seeds=self.pipeline_parameters.num_fewshot_seeds,
-            override_batch_size=self.pipeline_parameters.override_batch_size,
             max_samples=self.pipeline_parameters.max_samples,
             job_id=self.pipeline_parameters.job_id,
             config=self.model_config,
@@ -295,16 +294,10 @@ class Pipeline:
 
         if self.is_main_process():
             self.evaluation_tracker.general_config_logger.log_end_time()
-            self.evaluation_tracker.metrics_logger.aggregate(task_dict=self.task_dict, bootstrap_iters=1000)
+            self.evaluation_tracker.metrics_logger.aggregate(
+                task_dict=self.task_dict, bootstrap_iters=self.pipeline_parameters.bootstrap_iters
+            )
             self.evaluation_tracker.details_logger.aggregate()
-
-            for weights in ["delta", "adapter"]:
-                try:
-                    tmp_weights_dir = f"{self.evaluation_tracker.general_config_logger.model_name}-{weights}-applied"
-                    shutil.rmtree(tmp_weights_dir)
-                    logger.info(f"Removed {tmp_weights_dir}")
-                except OSError:
-                    pass
 
     def _unpack(self, x):
         if isinstance(x, str):
@@ -385,7 +378,7 @@ class Pipeline:
         try:
             return ast.literal_eval(processed)
         except Exception as e:
-            raise ValueError(f"Failed to parse after preprocessing. " f"Processed string:\n{processed}\n\nError: {e}")
+            raise ValueError(f"Failed to parse after preprocessing. Processed string:\n{processed}\n\nError: {e}")
 
     def _load_responses_from_details(self):
         logger.info("--- LOADING RESPONSES FROM DETAILS ---")
@@ -458,22 +451,44 @@ class Pipeline:
 
         return model_response_type
 
-    def _run_model(self):
-        # Running all requests depending on the model call type (log likelihood, generative, ...)
-        # to be able to batch them
-        logger.info("--- RUNNING MODEL ---")
+    async def _run_model_async(self):
         sample_id_to_responses: dict[(SampleUid, MetricCategory), list[ModelResponse]] = collections.defaultdict(list)
-
         for request_type, requests in self.requests.items():
-            logger.info(f"Running {request_type} requests")
+            logger.info(f"Sending {request_type} requests")
             run_model = self.model.get_method_from_request_type(request_type=request_type)
-            responses = run_model(requests, override_bs=self.pipeline_parameters.override_batch_size)
+            responses = await run_model(requests)
 
             # Storing the responses associated to the same samples together
             for response, request in zip(responses, requests):
                 for metric_category in request.metric_categories:
                     sample_id = SampleUid(request.task_name, request.sample_index)
                     sample_id_to_responses[(sample_id, metric_category)].append(response)
+        return sample_id_to_responses
+
+    def _run_model_sync(self):
+        sample_id_to_responses: dict[(SampleUid, MetricCategory), list[ModelResponse]] = collections.defaultdict(list)
+        for request_type, requests in self.requests.items():
+            logger.info(f"Running {request_type} requests")
+            run_model = self.model.get_method_from_request_type(request_type=request_type)
+            responses = run_model(requests)
+
+            # Storing the responses associated to the same samples together
+            for response, request in zip(responses, requests):
+                for metric_category in request.metric_categories:
+                    sample_id = SampleUid(request.task_name, request.sample_index)
+                    sample_id_to_responses[(sample_id, metric_category)].append(response)
+        return sample_id_to_responses
+
+    def _run_model(self):
+        # Running all requests depending on the model call type (log likelihood, generative, ...)
+        # to be able to batch them
+        logger.info("--- RUNNING MODEL ---")
+
+        if self.model.is_async:
+            sample_id_to_responses = asyncio.run(self._run_model_async())
+
+        else:
+            sample_id_to_responses = self._run_model_sync()
 
         # Cleaning up the model before running metrics
         self.model.cleanup()

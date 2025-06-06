@@ -77,7 +77,6 @@ class GeneralConfigLogger:
     # general
     lighteval_sha: str = None
     num_fewshot_seeds: int = None
-    override_batch_size: int = None
     max_samples: int = None
     job_id: int = None
     start_time: float = None
@@ -89,6 +88,8 @@ class GeneralConfigLogger:
     model_sha: str = None
     model_dtype: str = None
     model_size: str = None
+
+    generation_parameters: dict | None = None
 
     # Nanotron config
     config: "Config" = None
@@ -106,7 +107,6 @@ class GeneralConfigLogger:
     def log_args_info(
         self,
         num_fewshot_seeds: int,
-        override_batch_size: Union[None, int],
         max_samples: Union[None, int],
         job_id: str,
         config: "Config" = None,
@@ -128,19 +128,20 @@ class GeneralConfigLogger:
 
         """
         self.num_fewshot_seeds = num_fewshot_seeds
-        self.override_batch_size = override_batch_size
         self.max_samples = max_samples
         self.job_id = job_id
         self.config = config
 
-    def log_model_info(self, model_info: ModelInfo) -> None:
+    def log_model_info(self, generation_parameters: dict, model_info: ModelInfo) -> None:
         """
         Logs the model information.
 
         Args:
+            model_config: the model config used to initialize the model.
             model_info (ModelInfo): Model information to be logged.
 
         """
+        self.generation_parameters = generation_parameters
         self.model_name = model_info.model_name
         self.model_sha = model_info.model_sha
         self.model_dtype = model_info.model_dtype
@@ -201,6 +202,7 @@ class DetailsLogger:
         num_effective_few_shots: int = 0
         num_asked_few_shots: int = 0
         predictions: list = field(default_factory=list)
+        prediction_logits: list = field(default_factory=list)
         input_tokens: list = field(default_factory=list)
         cont_tokens: list = field(default_factory=list)
         truncated: list = field(default_factory=list)
@@ -521,11 +523,13 @@ class MetricsLogger:
                 else:
                     self.metric_aggregated[task_name][metric_name] = metric_result
 
-                if isinstance(metric_result, dict):
-                    stderr = None  # We skip stderr for some corpus metrics that return dicts
+                if isinstance(metric_result, dict) or bootstrap_iters == 0:
+                    stderr = (
+                        None  # We skip stderr for some corpus metrics that return dicts, or if bootstrap_iters is 0
+                    )
                 else:
                     aggregation = task.aggregation()[metric_name]
-                    stderr = get_stderr_function(aggregation=aggregation, number_experiments=1000)
+                    stderr = get_stderr_function(aggregation=aggregation, number_experiments=bootstrap_iters)
                 if stderr is not None and len(metric_values) > 1:
                     try:
                         self.metric_aggregated[task_name][f"{metric_name}_stderr"] = stderr(metric_values)
@@ -554,7 +558,7 @@ class MetricsLogger:
             if len(list_of_subtasks) > 1:
                 metrics = list(self.metric_aggregated[list_of_subtasks[0]].keys())
                 self.metric_aggregated[average_task] = {
-                    metric: sum([self.metric_aggregated[k][metric] for k in list_of_subtasks]) / len(list_of_subtasks)
+                    metric: sum(self.metric_aggregated[k][metric] for k in list_of_subtasks) / len(list_of_subtasks)
                     for metric in metrics
                 }
 
