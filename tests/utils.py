@@ -92,13 +92,13 @@ class FakeModel(LightevalModel):
 
 
 def fake_evaluate_task(
-    task: LightevalTask, lm: FakeModel, max_samples: int = 1, n_fewshot: int = 0, n_fewshot_seeds: int = 1
+    lighteval_task: LightevalTask, lm: FakeModel, max_samples: int = 1, n_fewshot: int = 0, n_fewshot_seeds: int = 1
 ):
     # Mock the Registry.get_task_dict method
 
-    task_name = f"{task.suite[0]}|{task.name}"
+    task_name = f"{lighteval_task.suite[0]}|{lighteval_task.name}"
 
-    task_dict = {task_name: task}
+    task_dict = {task_name: lighteval_task}
     evaluation_tracker = EvaluationTracker(output_dir="outputs")
     evaluation_tracker.task_config_logger.log(task_dict)
     # Create a mock Registry class
@@ -110,8 +110,12 @@ def fake_evaluate_task(
         def get_task_dict(self, task_names: list[str]):
             return task_dict
 
-        def get_tasks_configs(self, task_names: list[str]):
-            return [task.config for task in task_dict.values()]
+        def get_tasks_configs(self, task: str):
+            config = lighteval_task.config
+            config.num_fewshots = n_fewshot
+            config.truncate_fewshots = False
+            config.full_name = f"{task_name}|{config.num_fewshots}"
+            return [config]
 
     # This is due to logger complaining we have no initialised the accelerator
     # It's hard to mock as it's global singleton
@@ -122,10 +126,10 @@ def fake_evaluate_task(
 
     # This is a bit hacky, because there is no way to run end to end, with
     # dynamic task :(, so we just mock the registry
-    task_run_string = f"{task_name}|{n_fewshot}|{n_fewshot_seeds}"
+    # task_run_string = f"{task_name}|{n_fewshot}|{n_fewshot_seeds}"
     with patch("lighteval.pipeline.Registry", FakeRegistry):
         pipeline = Pipeline(
-            tasks=task_run_string,
+            tasks=task_name,
             pipeline_parameters=PipelineParameters(max_samples=max_samples, launcher_type=ParallelismManager.NONE),
             evaluation_tracker=evaluation_tracker,
             model=lm,

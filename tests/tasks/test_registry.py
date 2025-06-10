@@ -138,7 +138,7 @@ def test_task_creation():
     """
     registry = Registry()
     task_config = registry.get_tasks_configs("lighteval|storycloze:2016|0|0")
-    task = registry.get_tasks_from_configs(task_config)["storycloze:2016|0"]
+    task = registry.get_tasks_from_configs(task_config)["lighteval|storycloze:2016|0"]
 
     assert isinstance(task, LightevalTask)
     assert task.name == "storycloze:2016"
