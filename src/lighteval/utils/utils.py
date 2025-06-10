@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from dataclasses import asdict, is_dataclass
 from typing import Callable, TypeVar, Union
 
@@ -210,6 +211,11 @@ def download_dataset_worker(
     Worker function to download a dataset from the HuggingFace Hub.
     Used for parallel dataset loading.
     """
+    local_dataset_path = os.getenv("LOCAL_DATASET_PATH", None)
+    if local_dataset_path is not None:
+        # If LOCAL_DATASET_PATH is set, use it as the dataset path
+        dataset_path = local_dataset_path
+
     dataset = load_dataset(
         path=dataset_path,
         name=dataset_config_name,
