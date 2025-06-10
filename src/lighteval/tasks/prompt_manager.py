@@ -29,6 +29,7 @@ from itertools import cycle
 from typing import TYPE_CHECKING
 
 from lighteval.tasks.requests import Doc
+from lighteval.utils.utils import as_list
 
 
 logger = logging.getLogger(__name__)
@@ -220,7 +221,7 @@ class FewShotSampler:
         # (or the gold target, if the class is undefined)
         label_to_instances = defaultdict(list)
         for instance in fewshotpool:
-            target = PromptManager.doc_to_fewshot_sorting_class(instance)
+            target = instance.fewshot_sorting_class or as_list(instance.get_golds())[0]
             label_to_instances[target].append(instance)
 
         # Sort by counts of class labels
