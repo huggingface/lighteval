@@ -159,10 +159,11 @@ class LightevalTask:
         """
         self.config = config
         self.name = config.name
-        self.full_name = f"{self.name}|{config.num_fewshots}"
         self.version = config.version
         self.suite = config.suite
         self.dataset_config = config
+
+        self.full_name = config.full_name
 
         # Dataset info
         self.dataset_path = config.hf_repo
@@ -179,12 +180,9 @@ class LightevalTask:
             config.hf_avail_splits or []
         )
         self.fewshot_selection = config.few_shots_select
+        self.must_remove_duplicate_docs = config.must_remove_duplicate_docs
 
         self.formatter = config.prompt_function
-        self.generation_size = config.generation_size
-        self.generation_grammar = config.generation_grammar
-        self.stop_sequence = config.stop_sequence
-        self.must_remove_duplicate_docs = config.must_remove_duplicate_docs
         self.fewshot_sampler = FewShotSampler(self)
 
         # Metrics
@@ -192,6 +190,11 @@ class LightevalTask:
 
         self.sampling_methods = list({metric.category for metric in self.metrics})
         self.has_metric_category = {category: (category in self.sampling_methods) for category in SamplingMethod}
+
+        # generation parameters
+        self.generation_size = config.generation_size
+        self.generation_grammar = config.generation_grammar
+        self.stop_sequence = config.stop_sequence
 
         # We assume num_samples always contains 1 (for base generative evals)
         self.num_samples = [1]
@@ -322,9 +325,16 @@ class LightevalTask:
 
         for doc in eval_docs[:n_samples]:
             num_fewshots = self.dataset_config.num_fewshots
-            doc.task_name = f"{self.name}|{num_fewshots}"
-            doc.fewshot_samples = self.fewshot_sampler.sample_fewshot_examples(num_fewshots, 1, formatted_doc=doc)
+            doc.task_name = self.full_name
+            doc.fewshot_samples = self.fewshot_sampler.sample_fewshot_examples(
+                num_fewshots, 0, formatted_doc=doc, sampler=rnd
+            )
             doc.sampling_methods.extend(self.sampling_methods)
+            doc.generation_size = self.generation_size
+            doc.do_sample = True
+            doc.use_logits = True
+            doc.stop_sequences = self.stop_sequence
+            doc.num_samples = max(self.num_samples)
             docs.append(doc)
 
         return docs

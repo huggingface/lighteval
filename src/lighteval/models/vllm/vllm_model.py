@@ -34,6 +34,7 @@ from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
 from lighteval.models.model_output import ModelResponse
 from lighteval.models.utils import ModelConfig, _simplify_name
+from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import is_vllm_available
 
@@ -116,6 +117,8 @@ class VLLMModel(LightevalModel):
         self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
         self.pairwise_tokenization = config.pairwise_tokenization
 
+        self.prompt_manager = PromptManager(self.use_chat_template, self.tokenizer)
+
     @property
     def tokenizer(self):
         return self._tokenizer
@@ -194,42 +197,6 @@ class VLLMModel(LightevalModel):
         tokenizer.pad_token = tokenizer.eos_token
         return tokenizer
 
-    def prepare_prompt(self, doc: Doc) -> str:
-        if self._config.use_chat_template:
-            messages = []
-            if doc.system_prompt is not None:  # We add system prompt and instruction jointly if possible
-                messages.append({"role": "system", "content": doc.system_prompt})
-
-            for fewshot_sample in doc.fewshot_samples:
-                messages.append({"role": "user", "content": fewshot_sample.query})
-                messages.append({"role": "assistant", "content": fewshot_sample.get_golds()[0].strip()})
-
-            messages.append({"role": "user", "content": doc.query})
-
-            output: str = self.tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,  # We don't want to tokenize here, we just want to format the chat template
-                add_generation_prompt=True,  # We don't want to add the generation prompt here
-            )
-        else:
-            if doc.system_prompt is not None:
-                output = doc.system_prompt
-            else:
-                output = ""
-
-            for fewshot_sample in doc.fewshot_samples:
-                if output != "":
-                    output += "\n\n" + fewshot_sample.query + fewshot_sample.get_golds()[0].strip()
-                else:
-                    output = fewshot_sample.query + fewshot_sample.get_golds()[0].strip()
-
-            if output == "":
-                output = doc.query
-            else:
-                output += "\n\n" + doc.query
-
-        return output
-
     def greedy_until(
         self,
         docs: list[Doc],
@@ -267,7 +234,7 @@ class VLLMModel(LightevalModel):
             returns_logits = dataset[0].use_logits
             num_samples = dataset[0].num_samples
 
-            context = [self.prepare_prompt(doc) for doc in dataset]
+            context = [self.prompt_manager.prepare_prompt(doc) for doc in dataset]
             tokenized = self.tokenizer(context, add_special_tokens=self.add_special_tokens)
 
             # The main question for this step is the following:
@@ -395,7 +362,7 @@ class VLLMModel(LightevalModel):
         res = []
 
         for _ in tqdm(dataset.splits_start_end_iterator()):
-            contexts = [self.prepare_prompt(doc) for doc in dataset]
+            contexts = [self.prompt_manager.prepare_prompt(doc) for doc in dataset]
 
             inputs = []
             tokenized_continuations_batch = []
@@ -448,11 +415,8 @@ class VLLMModel(LightevalModel):
 
         return dataset.get_original_order(res)
 
-    def loglikelihood_rolling():
+    def loglikelihood_rolling(self, docs):
         pass
 
-    def loglikelihood_single_token():
-        pass
-
-    def prompt_manager(self, requests):
+    def loglikelihood_single_token(self, docs):
         pass

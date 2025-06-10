@@ -47,6 +47,7 @@ from lighteval.models.model_output import (
     ModelResponse,
 )
 from lighteval.models.utils import ModelConfig, _get_dtype, _get_model_sha, _simplify_name
+from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import (
     is_accelerate_available,
@@ -213,6 +214,8 @@ class TransformersModel(LightevalModel):
             model_dtype=config.dtype,
             model_size=str(model_size),
         )
+
+        self.prompt_manager = PromptManager(self.use_chat_template, self.tokenizer)
 
     @classmethod
     def from_model(
@@ -484,42 +487,6 @@ class TransformersModel(LightevalModel):
         logger.info(f"Determined largest batch size: {batch_size}")
         return batch_size
 
-    def prepare_prompt(self, doc: Doc) -> str:
-        if self.config.use_chat_template:
-            messages = []
-            if doc.system_prompt is not None:  # We add system prompt and instruction jointly if possible
-                messages.append({"role": "system", "content": doc.system_prompt})
-
-            for fewshot_sample in doc.fewshot_samples:
-                messages.append({"role": "user", "content": fewshot_sample.query})
-                messages.append({"role": "assistant", "content": fewshot_sample.get_golds()[0].strip()})
-
-            messages.append({"role": "user", "content": doc.query})
-
-            output: str = self.tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,  # We don't want to tokenize here, we just want to format the chat template
-                add_generation_prompt=True,  # We don't want to add the generation prompt here
-            )
-        else:
-            if doc.system_prompt is not None:
-                output = doc.system_prompt
-            else:
-                output = ""
-
-            for fewshot_sample in doc.fewshot_samples:
-                if output != "":
-                    output += "\n\n" + fewshot_sample.query + fewshot_sample.get_golds()[0].strip()
-                else:
-                    output = fewshot_sample.query + fewshot_sample.get_golds()[0].strip()
-
-            if output == "":
-                output = doc.query
-            else:
-                output += "\n\n" + doc.query
-
-        return output
-
     def greedy_until(
         self,
         docs: list[Doc],
@@ -572,7 +539,7 @@ class TransformersModel(LightevalModel):
             for batch in tqdm(
                 dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
             ):
-                contexts = [self.prepare_prompt(doc) for doc in batch]
+                contexts = [self.prompt_manager.prepare_prompt(doc) for doc in batch]
                 # For chat models, generation stops with EOS token, so we don't need to specify stop tokens
                 if self.use_chat_template:
                     stop_tokens = []
@@ -583,7 +550,6 @@ class TransformersModel(LightevalModel):
                     stop_tokens = batch[0].stop_sequences
 
                 max_new_tokens = batch[0].generation_size
-                returns_logits = batch[0].use_logits
                 num_samples = batch[0].num_samples
                 do_sample = batch[0].do_sample
 
@@ -632,7 +598,7 @@ class TransformersModel(LightevalModel):
                     batch=prepared_batch,
                     max_new_tokens=max_new_tokens,
                     stop_tokens=stop_tokens,
-                    returns_logits=returns_logits,
+                    returns_logits=False,
                     num_samples=num_samples,
                     do_sample=do_sample,
                 )
@@ -762,7 +728,7 @@ class TransformersModel(LightevalModel):
                 dataloader = self.accelerator.prepare(dataloader)
 
             for batch in tqdm(dataloader, disable=self.disable_tqdm):
-                contexts = [self.prepare_prompt(doc) for doc in batch]
+                contexts = [self.prompt_manager.prepare_prompt(doc) for doc in batch]
                 tokenized_contexts_batch = []
                 tokenized_continuations_batch = []
 

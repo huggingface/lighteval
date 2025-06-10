@@ -87,7 +87,7 @@ class Registry:
         self._custom_tasks = custom_tasks
 
     def get_tasks_from_configs(self, task_configs: list[LightevalTaskConfig]) -> dict[str, LightevalTask]:
-        return {f"{config.name}|{config.num_fewshots}": LightevalTask(config=config) for config in task_configs}
+        return {f"{config.full_name}": LightevalTask(config=config) for config in task_configs}
 
     def get_tasks_configs(self, task: str) -> list[LightevalTaskConfig]:
         """
@@ -106,6 +106,7 @@ class Registry:
                     config = copy.deepcopy(config)
                     config.num_fewshots = task_info_dict["fewshots"]
                     config.truncate_fewshots = task_info_dict["truncate_fewshots"]
+                    config.full_name = f"{task_name}|{config.num_fewshots}"
                     configs.append(config)
                 else:
                     raise ValueError(f"Cannot find task {task_name} in task list or in custom task registry")

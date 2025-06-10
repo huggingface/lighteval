@@ -102,6 +102,4 @@ def test_accelerate_model_prediction(tests: list[ModelInput]):
     # Compare the predictions with the reference results
     diff = DeepDiff(reference_results, predictions_dict, ignore_numeric_type_changes=True, math_epsilon=0.05)
 
-    breakpoint()
-
     assert diff == {}, f"Differences found: {diff}"
