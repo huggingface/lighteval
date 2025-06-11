@@ -39,6 +39,7 @@ class TestTGIModelConfig:
                     "generation_parameters": {
                         "early_stopping": None,
                         "frequency_penalty": None,
+                        "grammar": None,
                         "length_penalty": None,
                         "max_new_tokens": None,
                         "min_new_tokens": None,
