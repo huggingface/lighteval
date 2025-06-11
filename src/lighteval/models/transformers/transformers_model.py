@@ -540,6 +540,7 @@ class TransformersModel(LightevalModel):
                 dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
             ):
                 contexts = [self.prompt_manager.prepare_prompt(doc) for doc in batch]
+
                 # For chat models, generation stops with EOS token, so we don't need to specify stop tokens
                 if self.use_chat_template:
                     stop_tokens = []
@@ -626,7 +627,7 @@ class TransformersModel(LightevalModel):
             max_new_tokens=max_new_tokens,
             pad_token_id=self.tokenizer.pad_token_id if self.tokenizer.pad_token_id else self.tokenizer.eos_token_id,
             eos_token_id=self.tokenizer.eos_token_id,
-            do_sample=do_sample,
+            do_sample=do_sample if generation_config.get("temperature", 1.0) > 0 else False,
             num_return_sequences=num_samples,
             output_logits=returns_logits,
             renormalize_logits=True,
