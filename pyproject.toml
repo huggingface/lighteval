@@ -61,7 +61,7 @@ dependencies = [
     "GitPython>=3.1.41", # for logging
     "datasets>=3.5.0",
     "pydantic",
-    "numpy<2",  # pinned to avoid incompatibilities
+    "numpy<2", # pinned to avoid incompatibilities
     # Prettiness
     "typer",
     "termcolor==2.3.0",
@@ -110,6 +110,7 @@ multilingual = [
     "spacy[ja,ko,th]",
     "jieba", # for chinese tokenizer
     "pyvi", # for vietnamese tokenizer
+    "langcodes>=3.5.0",
 ]
 math = ["latex2sympy2_extended==1.0.6"]
 wandb = ["wandb"]
