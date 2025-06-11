@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import pytest
 from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset
@@ -81,10 +80,6 @@ DATASET_SPLITS = 1
 
 
 class TestReorderGenerativeTaskDataset:
-    def test_dataset_needs_tokenization(self):
-        with pytest.raises(ValueError):
-            GenerativeTaskDataset(requests=TEST_DATA, num_dataset_splits=DATASET_SPLITS)
-
     def test_reorder_dataset(self):
         tokenizer = AutoTokenizer.from_pretrained("gpt2")
         data = TEST_DATA.copy()
@@ -97,13 +92,13 @@ class TestReorderGenerativeTaskDataset:
         original_data = dataset.get_original_order(sorted_data)
 
         for i in range(len(sorted_data) - 1):
-            assert (
-                len(sorted_data[i].context) >= len(sorted_data[i + 1].context)
-            ), f"dataset[{i}][0] = {sorted_data[i].context} is shorter than dataset[{i + 1}][0] = {sorted_data[i + 1].context}"
+            assert len(sorted_data[i].context) >= len(sorted_data[i + 1].context), (
+                f"dataset[{i}][0] = {sorted_data[i].context} is shorter than dataset[{i + 1}][0] = {sorted_data[i + 1].context}"
+            )
 
-        assert len(sorted_data) == len(
-            original_data
-        ), f"reordered dataset has length {len(sorted_data)}, should be {len(dataset)}"
+        assert len(sorted_data) == len(original_data), (
+            f"reordered dataset has length {len(sorted_data)}, should be {len(dataset)}"
+        )
 
         for sorted_data, orignal in zip(original_data, data):
             assert sorted_data == orignal

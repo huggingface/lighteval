@@ -34,7 +34,6 @@ from typing import Any
 
 import numpy as np
 from aenum import extend_enum
-from datasets import get_dataset_config_names
 
 from lighteval.metrics.metrics import MetricCategory, Metrics, MetricUseCase, SampleLevelMetric
 from lighteval.tasks.extended.lcb.codegen_metrics import (
@@ -115,7 +114,31 @@ lcb_codegen_metric = SampleLevelMetric(
 
 extend_enum(Metrics, "lcb_codegen_metric", lcb_codegen_metric)
 
-configs = get_dataset_config_names("livecodebench/code_generation_lite", trust_remote_code=True)
+configs = [
+    "release_v1",
+    "release_v2",
+    "release_v3",
+    "release_v4",
+    "release_v5",
+    "release_v6",
+    "release_latest",
+    "v1",
+    "v2",
+    "v3",
+    "v4",
+    "v5",
+    "v6",
+    "v1_v2",
+    "v1_v3",
+    "v1_v4",
+    "v1_v5",
+    "v2_v3",
+    "v2_v4",
+    "v2_v5",
+    "v3_v4",
+    "v3_v5",
+    "v4_v5",
+]
 
 tasks = []
 

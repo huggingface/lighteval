@@ -465,14 +465,14 @@ class InferenceEndpointModel(LightevalModel):
         batch_size = override_bs if override_bs is not None else BATCH_SIZE
         results: List[str] = []
 
-        for _, _ in tqdm(
-            dataset.splits_start_end_iterator(),
+        for split in tqdm(
+            dataset.splits_iterator(),
             total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
             disable=self.disable_tqdm,
         ):
-            dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda batch: batch)
+            dataloader = DataLoader(split, batch_size=batch_size, collate_fn=lambda batch: batch)
 
             for batch in tqdm(
                 dataloader, desc="Greedy generation", position=1, leave=False, disable=self.disable_tqdm
@@ -514,14 +514,14 @@ class InferenceEndpointModel(LightevalModel):
         batch_size = override_bs if override_bs is not None else BATCH_SIZE
         results: List[str] = []
 
-        for _, _ in tqdm(
-            dataset.splits_start_end_iterator(),
+        for split in tqdm(
+            dataset.splits_iterator(),
             total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
             disable=self.disable_tqdm,
         ):
-            dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda batch: batch)
+            dataloader = DataLoader(split, batch_size=batch_size, collate_fn=lambda batch: batch)
 
             for batch in tqdm(dataloader, desc="Loglikelihoods", position=1, leave=False, disable=self.disable_tqdm):
                 if self.use_async:
@@ -565,14 +565,14 @@ class InferenceEndpointModel(LightevalModel):
         batch_size = override_bs if override_bs is not None else BATCH_SIZE
         results: List[str] = []
 
-        for _, _ in tqdm(
-            dataset.splits_start_end_iterator(),
+        for split in tqdm(
+            dataset.splits_iterator(),
             total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
             disable=self.disable_tqdm,
         ):
-            dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=lambda batch: batch)
+            dataloader = DataLoader(split, batch_size=batch_size, collate_fn=lambda batch: batch)
 
             for batch in tqdm(
                 dataloader, desc="Loglikelihoods, rolling", position=1, leave=False, disable=self.disable_tqdm

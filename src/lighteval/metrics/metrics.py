@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-
 import numpy as np
 from aenum import Enum
 
@@ -51,6 +50,8 @@ from lighteval.metrics.metrics_sample import (
     Extractiveness,
     F1_score,
     Faithfulness,
+    GPassAtK,
+    JudgeLLMSimpleQA,
     LoglikelihoodAcc,
     MajAtK,
     PassAtK,
@@ -155,6 +156,14 @@ class Metrics(Enum):
         category=MetricCategory.GENERATIVE,
         use_case=MetricUseCase.TRANSLATION,
         corpus_level_fn=CorpusLevelTranslationMetric("chrf").compute,
+        higher_is_better=True,
+    )
+    chrf_plus = CorpusLevelMetric(
+        metric_name="chrf++",
+        sample_level_fn=GenerativePreparator().prepare,
+        category=MetricCategory.GENERATIVE,
+        use_case=MetricUseCase.TRANSLATION,
+        corpus_level_fn=CorpusLevelTranslationMetric("chrf++").compute,
         higher_is_better=True,
     )
     copyright = SampleLevelMetricGrouping(
@@ -369,6 +378,38 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
+    math_pass_at_1_1n = SampleLevelMetric(
+        metric_name="math_pass@1:1_samples",
+        sample_level_fn=PassAtK(
+            k=1,
+            n=1,
+            strip_strings=True,
+            # Extracting mathematical expressions and latex expressions
+            normalize_gold=lambda k: extract_target_from_pred(
+                k,
+                get_extraction_regexes(
+                    formatted_doc=None,
+                    target_types=[ExprExtractionConfig(), LatexExtractionConfig()],
+                    language=Language.ENGLISH,
+                ),
+            ),
+            # Extracting mathematical expressions and latex expressions
+            normalize_pred=lambda k: extract_target_from_pred(
+                k,
+                get_extraction_regexes(
+                    formatted_doc=None,
+                    target_types=[ExprExtractionConfig(), LatexExtractionConfig()],
+                    language=Language.ENGLISH,
+                ),
+            ),
+            # Uses sympy for comparison
+            sample_scoring_function=compare_gold_target,
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
     math_pass_at_1_4n = SampleLevelMetric(
         metric_name="math_pass@1:4_samples",
         sample_level_fn=PassAtK(
@@ -393,7 +434,7 @@ class Metrics(Enum):
                     language=Language.ENGLISH,
                 ),
             ),
-            # Uses sympy for comparision
+            # Uses sympy for comparison
             sample_scoring_function=compare_gold_target,
         ).compute,
         category=MetricCategory.GENERATIVE_SAMPLING,
@@ -425,7 +466,7 @@ class Metrics(Enum):
                     language=Language.ENGLISH,
                 ),
             ),
-            # Uses sympy for comparision
+            # Uses sympy for comparison
             sample_scoring_function=compare_gold_target,
         ).compute,
         category=MetricCategory.GENERATIVE_SAMPLING,
@@ -457,7 +498,7 @@ class Metrics(Enum):
                     language=Language.ENGLISH,
                 ),
             ),
-            # Uses sympy for comparision
+            # Uses sympy for comparison
             sample_scoring_function=compare_gold_target,
         ).compute,
         category=MetricCategory.GENERATIVE_SAMPLING,
@@ -489,7 +530,7 @@ class Metrics(Enum):
                     language=Language.ENGLISH,
                 ),
             ),
-            # Uses sympy for comparision
+            # Uses sympy for comparison
             sample_scoring_function=compare_gold_target,
         ).compute,
         category=MetricCategory.GENERATIVE_SAMPLING,
@@ -521,7 +562,7 @@ class Metrics(Enum):
                     language=Language.ENGLISH,
                 ),
             ),
-            # Uses sympy for comparision
+            # Uses sympy for comparison
             sample_scoring_function=compare_gold_target,
         ).compute,
         category=MetricCategory.GENERATIVE_SAMPLING,
@@ -577,6 +618,64 @@ class Metrics(Enum):
         use_case=MetricUseCase.REASONING,
         corpus_level_fn=np.mean,
         higher_is_better=True,
+    )
+    g_pass_at_16 = SampleLevelMetricGrouping(
+        metric_name="G-Pass@16:48_samples",
+        sample_level_fn=GPassAtK(k=16, n=48, strip_strings=True).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, np.mean),
+        higher_is_better=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, True),
+    )
+    g_pass_at_8_16 = SampleLevelMetricGrouping(
+        metric_name="G-Pass@8-16:48_samples",
+        sample_level_fn=GPassAtK(k=[8, 16], n=48, strip_strings=True).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, np.mean),
+        higher_is_better=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, True),
+    )
+    g_pass_at_16_expr_gold = SampleLevelMetricGrouping(
+        metric_name="G-Pass@16:48_samples",
+        sample_level_fn=GPassAtK(
+            k=16,
+            n=48,
+            strip_strings=True,
+            sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
+                language=Language.ENGLISH,
+                fallback_mode="first_match",
+                precision=5,
+                gold_extraction_target=(ExprExtractionConfig(),),
+                # Match boxed first before trying other regexes
+                pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
+                aggregation_function=max,
+            ).sample_level_fn([ref], [pred], doc),
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, np.mean),
+        higher_is_better=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, True),
+    )
+    g_pass_at_16_latex_gold = SampleLevelMetricGrouping(
+        metric_name="G-Pass@16:48_samples",
+        sample_level_fn=GPassAtK(
+            k=16,
+            n=48,
+            strip_strings=True,
+            sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
+                language=Language.ENGLISH,
+                fallback_mode="first_match",
+                precision=5,
+                gold_extraction_target=(LatexExtractionConfig(),),
+                # Match boxed first before trying other regexes
+                pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
+                aggregation_function=max,
+            ).sample_level_fn([ref], [pred], doc),
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, np.mean),
+        higher_is_better=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, True),
     )
     perfect_exact_match = SampleLevelMetric(
         metric_name="perfect_em",
@@ -731,6 +830,16 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
+    simpleqa_judge = SampleLevelMetricGrouping(
+        metric_name=["simpleqa_judge"],
+        higher_is_better={"simpleqa_judge": True},
+        category=MetricCategory.LLM_AS_JUDGE,
+        use_case=MetricUseCase.SUMMARIZATION,
+        sample_level_fn=JudgeLLMSimpleQA().compute,
+        corpus_level_fn={
+            "simpleqa_judge": np.mean,
+        },
+    )
     target_perplexity = SampleLevelMetric(
         metric_name="ppl",
         sample_level_fn=PerplexityPreparator(units_type="words").prepare,
@@ -768,6 +877,57 @@ class Metrics(Enum):
         gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
         pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
         precision=6,
+    )
+    gpqa_instruct_pass_at_1_1n = SampleLevelMetric(
+        metric_name="gpqa_pass@1:1_samples",
+        sample_level_fn=PassAtK(
+            k=1,
+            n=1,
+            sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
+                language=Language.ENGLISH,
+                gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                precision=6,
+            ).sample_level_fn([ref], [pred], doc),
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    gpqa_instruct_pass_at_1_4n = SampleLevelMetric(
+        metric_name="gpqa_pass@1:4_samples",
+        sample_level_fn=PassAtK(
+            k=1,
+            n=4,
+            sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
+                language=Language.ENGLISH,
+                gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                precision=6,
+            ).sample_level_fn([ref], [pred], doc),
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    gpqa_instruct_pass_at_1_8n = SampleLevelMetric(
+        metric_name="gpqa_pass@1:8_samples",
+        sample_level_fn=PassAtK(
+            k=1,
+            n=8,
+            sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
+                language=Language.ENGLISH,
+                gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                precision=6,
+            ).sample_level_fn([ref], [pred], doc),
+        ).compute,
+        category=MetricCategory.GENERATIVE_SAMPLING,
+        use_case=MetricUseCase.REASONING,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
     )
 
     def __str__(self):

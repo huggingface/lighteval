@@ -37,11 +37,6 @@ jobs:
       - name: Install the project
         run: uv sync --extra dev
 
-      - name: Ensure cache directories exist
-        run: mkdir -p cache/models cache/datasets
 
       - name: Run tests
-        env:
-          HF_HOME: "cache/models"
-          HF_DATASETS_CACHE: "cache/datasets"
-        run: uv run pytest --disable-pytest-warnings --runslow tests/slow_tests
+        run: uv run pytest --disable-pytest-warnings -o log_cli=true -o log_cli_level=INFO --runslow tests/slow_tests/

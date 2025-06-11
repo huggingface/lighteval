@@ -151,7 +151,7 @@ def get_judge_prompt(question: str, answer: str, gold: str, **kwargs):
     chunk = kwargs.get("chunks", "")
     summary = kwargs.get("documents", "")
 
-    return [
+    prompt = [
         {"role": "system", "content": JUDGE_ANSWER_SYSTEM_PROMPT},
         {
             "role": "user",
@@ -160,6 +160,8 @@ def get_judge_prompt(question: str, answer: str, gold: str, **kwargs):
             ),
         },
     ]
+
+    return prompt
 
 
 def process_judge_response_yourbench(response):
@@ -249,11 +251,11 @@ yourbench_metrics = CorpusLevelMetricGrouping(
 extend_enum(Metrics, "yourbench_metrics", yourbench_metrics)
 
 yourbench = LightevalTaskConfig(
-    name=HF_TASK_NAME,  # noqa: F821
+    name="HF_TASK_NAME",  # noqa: F821
     suite=["custom"],
     prompt_function=yourbench_prompt,
-    hf_repo=HF_DATASET_NAME,  # noqa: F821
-    hf_subset="lighteval_single_shot_questions",
+    hf_repo="HF_DATASET_NAME",  # noqa: F821
+    hf_subset="lighteval",
     hf_avail_splits=["train"],
     evaluation_splits=["train"],
     few_shots_split=None,

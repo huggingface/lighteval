@@ -58,11 +58,11 @@ logger = logging.getLogger(__name__)
 
 def loglikelihood_acc_metric(normalization: LogProbNormalization | None = None) -> SampleLevelMetric:
     """
-    Creates a accuracy (loglikelihood) metric, which returns accuracy given normalization.
+    Creates an accuracy (loglikelihood) metric, which returns accuracy given normalization.
     """
 
-    normalization_str = normalization.name if normalization else ""
-    metric_name = f"acc_{normalization_str}"
+    normalization_str = f"_{normalization.name}" if normalization else ""
+    metric_name = f"acc{normalization_str}"
     return SampleLevelMetric(
         metric_name=metric_name,
         sample_level_fn=LoglikelihoodAcc(logprob_normalization=normalization).compute,
@@ -83,8 +83,8 @@ def normalized_multi_choice_prob_metric(
     Creates a normalized multi-choice probability metric, which returns the probability of the gold choice / sum of probabilities of all choices (after logprobs are normalized).
     """
 
-    normalization_str = normalization.name if normalization else ""
-    metric_name = "_".join(filter(None, ["normalized_mc_prob_", normalization_str]))
+    normalization_str = f"_{normalization.name}" if normalization else ""
+    metric_name = f"normalized_mc_prob{normalization_str}"
 
     return SampleLevelMetric(
         metric_name=metric_name,
@@ -108,8 +108,8 @@ def probability_metric(
     Creates a probability metric, which returns the probability of the gold choice given normalization.
     """
 
-    normalization_str = normalization.name if normalization else ""
-    metric_name = "_".join(filter(None, ["prob", normalization_str]))
+    normalization_str = f"_{normalization.name}" if normalization else ""
+    metric_name = f"prob{normalization_str}"
 
     return SampleLevelMetric(
         metric_name=metric_name,
@@ -188,7 +188,7 @@ def multilingual_quasi_exact_match_metric(
 def multilingual_extractive_match_metric(
     language: Language = Language.ENGLISH,
     gold_extraction_target: Sequence[ExtractionTarget] = (ExprExtractionConfig(),),
-    pred_extraction_target: Sequence[ExtractionTarget] = (ExprExtractionConfig(),),
+    pred_extraction_target: Sequence[ExtractionTarget] = (ExprExtractionConfig(), LatexExtractionConfig()),
     aggregation_function: Callable[[list[float]], float] = max,
     fallback_mode: Literal["no_fallback", "first_match"] = "first_match",
     extraction_mode: Literal["first_match", "any_match"] = "any_match",
@@ -199,7 +199,7 @@ def multilingual_extractive_match_metric(
 
     Known issues:
     - If the task is to simplify an expression, the metric might overestimate the accuracy. This is because if the model doesn't output any anchor for the extraction (e.g final answer is..),
-        it's possible that the the extracted prediction will be the expression to simplify. Because we do simplifications ourselves, it can thus happen that sympy will correctly simplify the expression,
+        it's possible that the extracted prediction will be the expression to simplify. Because we do simplifications ourselves, it can thus happen that sympy will correctly simplify the expression,
         thus it will match gold, despite model not doing anything. PRs to fix this are welcome.
 
     - There is currently no StringExtractionConfig, so if the gold is \boxed{\text{Friday}} and model outputs Friday it will not match, because nothing will be extracted.

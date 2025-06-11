@@ -177,8 +177,8 @@ class SGLangModel(LightevalModel):
         dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
         results = []
 
-        for _ in tqdm(
-            dataset.splits_start_end_iterator(),
+        for split in tqdm(
+            dataset.splits_iterator(),
             total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
@@ -187,12 +187,12 @@ class SGLangModel(LightevalModel):
             if self.use_chat_template:
                 stop_tokens = []
             else:
-                stop_tokens = dataset[0].stop_sequence
+                stop_tokens = split[0].stop_sequence
 
-            max_new_tokens = dataset[0].generation_size  # could be none
-            num_samples = dataset[0].num_samples
+            max_new_tokens = split[0].generation_size  # could be none
+            num_samples = split[0].num_samples
 
-            context = [c.context for c in dataset]
+            context = [sample.context for sample in split]
             tokenized = self.tokenizer(context, add_special_tokens=self.add_special_tokens)
 
             # The main question for this step is the following:
@@ -298,14 +298,15 @@ class SGLangModel(LightevalModel):
         dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=1)
         res = []
 
-        for _ in tqdm(dataset.splits_start_end_iterator(), disable=False):
+        for split in tqdm(dataset.splits_iterator(), disable=False):
             # the last token is an eos token, so we don't need to add it
-            inputs = [dataset[i].tokenized_context + dataset[i].tokenized_continuation for i in range(len(dataset))]
+            inputs = [sample.tokenized_context + sample.tokenized_continuation for sample in split]
             # Left truncate the inputs to the maximum length
             inputs = [input[-self.max_length :] for input in inputs]
             outputs = self._generate(inputs, generate=False)
 
-            for output, input in zip(outputs, dataset):
+            for i, output in enumerate(outputs):
+                input = split[i]
                 continuation_logprobs = []
                 meta_info = output["meta_info"]
                 input_token_logprobs = meta_info["input_token_logprobs"][::-1]

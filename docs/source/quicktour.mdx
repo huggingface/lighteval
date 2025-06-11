@@ -27,7 +27,7 @@ To evaluate `GPT-2` on the Truthful QA benchmark with [🤗
 
 ```bash
 lighteval accelerate \
-     "pretrained=gpt2" \
+     "model_name=openai-community/gpt2" \
      "leaderboard|truthfulqa:mc|0|0"
 ```
 
@@ -59,7 +59,7 @@ When specifying a path to file, it should start with `./`.
 
 ```bash
 lighteval accelerate \
-     "pretrained=gpt2" \
+     "model_name=openai-community/gpt2" \
      ./path/to/lighteval/examples/tasks/recommended_set.txt
 # or, e.g., "leaderboard|truthfulqa:mc|0|0|,leaderboard|gsm8k|3|1"
 ```
@@ -79,7 +79,7 @@ You can then evaluate a model using data parallelism on 8 GPUs like follows:
 ```bash
 accelerate launch --multi_gpu --num_processes=8 -m \
     lighteval accelerate \
-    "pretrained=gpt2" \
+    "model_name=openai-community/gpt2" \
     "leaderboard|truthfulqa:mc|0|0"
 ```
 
@@ -92,7 +92,7 @@ To evaluate a model using pipeline parallelism on 2 or more GPUs, run:
 
 ```bash
 lighteval accelerate \
-    "pretrained=gpt2,model_parallel=True" \
+    "model_name=openai-community/gpt2,model_parallel=True" \
     "leaderboard|truthfulqa:mc|0|0"
 ```
 
@@ -179,6 +179,6 @@ To evaluate a model trained with nanotron on a single gpu.
  ```
 
 The `nproc-per-node` argument should match the data, tensor and pipeline
-parallelism confidured in the `lighteval_config_template.yaml` file.
+parallelism configured in the `lighteval_config_template.yaml` file.
 That is: `nproc-per-node = data_parallelism * tensor_parallelism *
 pipeline_parallelism`.

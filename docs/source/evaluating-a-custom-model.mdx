@@ -1,0 +1,127 @@
+# Evaluating a Custom Model
+
+Lighteval allows you to evaluate custom model implementations by creating a custom model class that inherits from `LightevalModel`. This is useful when you want to evaluate models that aren't directly supported by the standard backends (transformers, vllm, etc).
+
+## Creating a Custom Model
+
+1. Create a Python file containing your custom model implementation. The model must inherit from `LightevalModel` and implement all required methods.
+
+Here's a basic example:
+
+```python
+from lighteval.models.abstract_model import LightevalModel
+
+class MyCustomModel(LightevalModel):
+    def __init__(self, config):
+        super().__init__(config)
+        # Initialize your model here...
+
+    def greedy_until(self, requests, max_tokens=None, stop_sequences=None):
+        # Implement generation logic
+        pass
+
+    def loglikelihood(self, requests, log=True):
+        # Implement loglikelihood computation
+        pass
+
+    def loglikelihood_rolling(self, requests):
+        # Implement rolling loglikelihood computation
+        pass
+
+    def loglikelihood_single_token(self, requests):
+        # Implement single token loglikelihood computation
+        pass
+```
+
+2. The custom model file should contain exactly one class that inherits from `LightevalModel`. This class will be automatically detected and instantiated when loading the model.
+
+> [!TIP]
+> You can find a complete example of a custom model implementation in `examples/custom_models/google_translate_model.py`.
+
+## Running the Evaluation
+
+You can evaluate your custom model using either the command line interface or the Python API.
+
+### Using the Command Line
+
+```bash
+lighteval custom \
+    "google-translate" \
+    "examples/custom_models/google_translate_model.py" \
+    "lighteval|wmt20:fr-de|0|0" \
+    --max-samples 10
+```
+
+The command takes three required arguments:
+- The model name (used for tracking in results/logs)
+- The path to your model implementation file
+- The tasks to evaluate on (same format as other backends)
+
+### Using the Python API
+
+```python
+from lighteval.logging.evaluation_tracker import EvaluationTracker
+from lighteval.models.custom.custom_model import CustomModelConfig
+from lighteval.pipeline import Pipeline, PipelineParameters
+
+# Set up evaluation tracking
+evaluation_tracker = EvaluationTracker(
+    output_dir="results",
+    save_details=True
+)
+
+# Configure the pipeline
+pipeline_params = PipelineParameters(
+    launcher_type=ParallelismManager.CUSTOM,
+)
+
+# Configure your custom model
+model_config = CustomModelConfig(
+    model="my-custom-model",
+    model_definition_file_path="path/to/my_model.py"
+)
+
+# Create and run the pipeline
+pipeline = Pipeline(
+    tasks="leaderboard|truthfulqa:mc|0|0",
+    pipeline_parameters=pipeline_params,
+    evaluation_tracker=evaluation_tracker,
+    model_config=model_config
+)
+
+pipeline.evaluate()
+pipeline.save_and_push_results()
+```
+
+## Required Methods
+
+Your custom model must implement these core methods:
+
+- `greedy_until`: For generating text until a stop sequence or max tokens is reached
+- `loglikelihood`: For computing log probabilities of specific continuations
+- `loglikelihood_rolling`: For computing rolling log probabilities of sequences
+- `loglikelihood_single_token`: For computing log probabilities of single tokens
+
+See the `LightevalModel` base class documentation for detailed method signatures and requirements.
+
+## Best Practices
+
+1. **Error Handling**: Implement robust error handling in your model methods to gracefully handle edge cases.
+
+2. **Batching**: Consider implementing efficient batching in your model methods to improve performance.
+
+3. **Resource Management**: Properly manage any resources (e.g., API connections, model weights) in your model's `__init__` and `__del__` methods.
+
+4. **Documentation**: Add clear docstrings to your model class and methods explaining any specific requirements or limitations.
+
+## Example Use Cases
+
+Custom models are particularly useful for:
+
+- Evaluating models accessed through custom APIs
+- Wrapping models with specialized preprocessing/postprocessing
+- Testing novel model architectures
+- Evaluating ensemble models
+- Integrating with external services or tools
+
+For a complete example of a custom model that wraps the Google Translate API, see `examples/custom_models/google_translate_model.py`.
