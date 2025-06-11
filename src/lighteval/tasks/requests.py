@@ -80,6 +80,7 @@ class Doc:
     stop_sequences: list[str] | None = None
     use_logits: bool = False  # whether to use logits for the generation or not
     num_samples: int = 1  # number of samples to generate for each sample
+    generation_grammar: None = None
 
     def __post_init__(self):
         if self.instruction is None:

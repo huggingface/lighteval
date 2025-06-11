@@ -182,8 +182,8 @@ class SGLangModel(LightevalModel):
             max_new_tokens = dataset[0].generation_size  # could be none
             num_samples = dataset[0].num_samples
 
-            context = [self.prompt_manager.prepare_prompt(doc) for doc in dataset]
-            tokenized = self.tokenizer(context, add_special_tokens=self.add_special_tokens)
+            contexts = [self.prompt_manager.prepare_prompt(doc) for doc in dataset]
+            tokenized = self.tokenizer(contexts, add_special_tokens=self.add_special_tokens)
 
             # The main question for this step is the following:
             # Would we rather truncate the prompt to allow generation to go to max_new_tokens, at the risk

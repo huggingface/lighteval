@@ -26,7 +26,7 @@ from typing import Coroutine, Optional
 
 import requests
 from huggingface_hub import TextGenerationInputGenerateParameters, TextGenerationInputGrammarType, TextGenerationOutput
-from transformers import AutoTokenizer
+from transformers.models.auto.tokenization_auto import AutoTokenizer
 
 from lighteval.models.endpoints.endpoint_model import InferenceEndpointModel, ModelInfo
 from lighteval.models.utils import ModelConfig
@@ -35,6 +35,10 @@ from lighteval.utils.imports import NO_TGI_ERROR_MSG, is_tgi_available
 
 if is_tgi_available():
     from text_generation import AsyncClient
+else:
+    from unittest.mock import Mock
+
+    AsyncClient = Mock()
 
 
 BATCH_SIZE = 50
@@ -71,8 +75,8 @@ class ModelClient(InferenceEndpointModel):
         self.model_info = requests.get(f"{config.inference_server_address}/info", headers=headers).json()
         if "model_id" not in self.model_info:
             raise ValueError("Error occured when fetching info: " + str(self.model_info))
-        if config.model_id:
-            self.model_info["model_id"] = config.model_id
+        if config.model_name:
+            self.model_info["model_id"] = config.model_name
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_info["model_id"])
         self._add_special_tokens = True
         self.use_async = True
@@ -84,7 +88,7 @@ class ModelClient(InferenceEndpointModel):
             model_name=model_name,
             model_sha=model_sha,
             model_dtype=model_precision,
-            model_size=-1,
+            model_size="",
         )
 
     def _async_process_request(
@@ -131,7 +135,7 @@ class ModelClient(InferenceEndpointModel):
 
     @property
     def disable_tqdm(self) -> bool:
-        False
+        return False
 
     def cleanup(self):
         pass

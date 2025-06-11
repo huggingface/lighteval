@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from typing import Optional, Union
 
 import torch
-from transformers import BatchEncoding, PreTrainedTokenizerBase
+from transformers.tokenization_utils_base import BatchEncoding, PreTrainedTokenizerBase
 
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc, SamplingMethod
@@ -86,9 +86,7 @@ class LightevalModel(ABC):
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
-            disable_tqdm (bool, optional): Whether to disable the progress bar. Defaults to False.
-            override_bs (int, optional): Override the batch size for generation. Defaults to None.
+            docs (list[Doc]): List of documents containing the context for generation.
 
         Returns:
             list[GenerativeResponse]: list of generated responses.

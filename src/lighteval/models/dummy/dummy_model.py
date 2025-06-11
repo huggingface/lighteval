@@ -23,17 +23,16 @@
 # inspired by https://github.com/EleutherAI/lm-evaluation-harness/blob/main/lm_eval/models/dummy.py
 
 import random
-from typing import Optional
 
-from pydantic import BaseModel
-from transformers import AutoTokenizer
+from transformers.models.auto.tokenization_auto import AutoTokenizer
 
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
 from lighteval.models.model_output import ModelResponse
+from lighteval.models.utils import ModelConfig
 from lighteval.tasks.requests import Doc
 
 
-class DummyModelConfig(BaseModel, extra="forbid"):
+class DummyModelConfig(ModelConfig):
     seed: int = 42
 
 
@@ -63,11 +62,29 @@ class DummyModel(LightevalModel):
     def max_length(self) -> int:
         return 2048
 
-    def greedy_until(self, requests: list[Doc], override_bs: Optional[int] = None) -> list[ModelResponse]:
-        return [ModelResponse(text=["random baseline"]) for _ in range(len(requests))]
+    def greedy_until(self, docs: list[Doc]) -> list[ModelResponse]:
+        return [ModelResponse(text=["random baseline"]) for _ in range(len(docs))]
 
-    def loglikelihood(self, requests: list[Doc], override_bs: Optional[int] = None) -> list[ModelResponse]:
-        return [ModelResponse((-self._random.random(), False)) for _ in requests]
+    def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
+        model_responses = []
+        for doc in docs:
+            model_responses.append(
+                ModelResponse(
+                    logprobs=[-self._random.random() for _ in doc.choices],
+                    argmax_logits_eq_gold=[False for _ in doc.choices],
+                )
+            )
 
-    def loglikelihood_rolling(self, requests: list[Doc], override_bs: Optional[int] = None) -> list[ModelResponse]:
-        return [ModelResponse((-self._random.random(), False)) for _ in requests]
+        return model_responses
+
+    def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
+        model_responses = []
+        for doc in docs:
+            model_responses.append(
+                ModelResponse(
+                    logprobs=[-self._random.random() for _ in doc.choices],
+                    argmax_logits_eq_gold=[False for _ in doc.choices],
+                )
+            )
+
+        return model_responses
