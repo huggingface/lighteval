@@ -356,9 +356,9 @@ class VLLMModel(LightevalModel):
 
     def _loglikelihood_tokens(
         self,
-        requests: list[Doc],
+        docs: list[Doc],
     ) -> list[ModelResponse]:
-        dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=1)
+        dataset = LoglikelihoodDataset(requests=docs, num_dataset_splits=1)
         res = []
 
         for _ in tqdm(dataset.splits_start_end_iterator()):

@@ -32,9 +32,9 @@ from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
 from lighteval.models.model_output import ModelResponse
 from lighteval.models.utils import ModelConfig, _simplify_name
+from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import is_sglang_available
-from lighteval.utils.utils import as_list
 
 
 logger = logging.getLogger(__name__)
@@ -93,6 +93,7 @@ class SGLangModel(LightevalModel):
         self.sampling_backend = config.sampling_backend
         self.attention_backend = config.attention_backend
         self.pairwise_tokenization = config.pairwise_tokenization
+        self.prompt_manager = PromptManager(self.use_chat_template, self.tokenizer)
 
     @property
     def tokenizer(self):
@@ -151,8 +152,7 @@ class SGLangModel(LightevalModel):
 
     def greedy_until(
         self,
-        requests: list[Doc],
-        override_bs: Optional[int] = None,
+        docs: list[Doc],
     ) -> list[ModelResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
@@ -164,11 +164,7 @@ class SGLangModel(LightevalModel):
         Returns:
             list[GenerateReturn]: list of generated responses.
         """
-        for request in requests:
-            request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
-            request.tokenized_context = self.tok_encode(request.context)
-
-        dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
+        dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         results = []
 
         for _ in tqdm(
@@ -181,12 +177,12 @@ class SGLangModel(LightevalModel):
             if self.use_chat_template:
                 stop_tokens = []
             else:
-                stop_tokens = dataset[0].stop_sequence
+                stop_tokens = dataset[0].stop_sequences
 
             max_new_tokens = dataset[0].generation_size  # could be none
             num_samples = dataset[0].num_samples
 
-            context = [c.context for c in dataset]
+            context = [self.prompt_manager.prepare_prompt(doc) for doc in dataset]
             tokenized = self.tokenizer(context, add_special_tokens=self.add_special_tokens)
 
             # The main question for this step is the following:
@@ -228,9 +224,9 @@ class SGLangModel(LightevalModel):
                 logprobs = [output[0] for output in output_token_logprobs]
                 result = [sglang_output["text"]]
                 cur_response = ModelResponse(
-                    result=result,
-                    logits=logprobs,
-                    generated_tokens=list(output_token_ids),
+                    text=result,
+                    logprobs=logprobs,
+                    output_tokens=list(output_token_ids),
                     input_tokens=input_token_ids,
                 )
                 results.append(cur_response)
@@ -243,7 +239,7 @@ class SGLangModel(LightevalModel):
         stop_tokens: Optional[list[str]] = None,
         num_samples: int = 1,
         generate: bool = True,
-    ) -> list[ModelResponse]:
+    ) -> list:
         """Contains the actual logic of the generation."""
 
         logprob_start_len = None
@@ -267,56 +263,70 @@ class SGLangModel(LightevalModel):
         )
         return outputs
 
-    def loglikelihood(self, requests: list[Doc], override_bs: Optional[int] = None) -> list[ModelResponse]:
-        for request in requests:
-            if request.context == "":
-                request.tokenized_context = [self.tokenizer.eos_token_id]
-                request.tokenized_continuation = self.tok_encode(request.choice)
-            else:
-                # The following line is mandatory for compatibility with the harness
-                request.tokenized_context, request.tokenized_continuation = self.tok_encode_pair(
-                    request.context, request.choice, pairwise=self.pairwise_tokenization
-                )
-
-        return self._loglikelihood_tokens(requests, override_bs=override_bs)
+    def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
+        return self._loglikelihood_tokens(docs)
 
     def _loglikelihood_tokens(
         self,
-        requests: list[Doc],
-        override_bs: int = -1,
-        return_bool_score: bool = True,
-        rolling: bool = False,
+        docs: list[Doc],
     ) -> list[ModelResponse]:
-        dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=1)
+        dataset = LoglikelihoodDataset(requests=docs, num_dataset_splits=1)
         res = []
 
         for _ in tqdm(dataset.splits_start_end_iterator(), disable=False):
-            # the last token is an eos token, so we don't need to add it
-            inputs = [dataset[i].tokenized_context + dataset[i].tokenized_continuation for i in range(len(dataset))]
+            contexts = [self.prompt_manager.prepare_prompt(doc) for doc in dataset]
             # Left truncate the inputs to the maximum length
+            inputs = []
+            tokenized_continuations_batch = []
+            tokenized_contexts_batch = []
+
+            for context, doc in zip(contexts, dataset):
+                tokenized_contexts, tokenized_continuations = self.tok_encode_pair(context, doc.choices, pairwise=True)
+                for tokenized_context, tokenized_continuation in zip(tokenized_contexts, tokenized_continuations):
+                    inputs.append(tokenized_context + tokenized_continuation)
+                    tokenized_continuations_batch.append(tokenized_continuation)
+                    tokenized_contexts_batch.append(tokenized_context)
+
             inputs = [input[-self.max_length :] for input in inputs]
             outputs = self._generate(inputs, generate=False)
 
-            for output, input in zip(outputs, dataset):
-                continuation_logprobs = []
-                meta_info = output["meta_info"]
-                input_token_logprobs = meta_info["input_token_logprobs"][::-1]
-                input_top_logprobs = meta_info["input_top_logprobs"][::-1]
-                input_top_logprobs = input_top_logprobs[: len(input.tokenized_continuation)]
-                continuation_logprobs.append(input_token_logprobs[: len(input.tokenized_continuation)])
-                bool_score = all(
-                    top[0][1] == input[1] for top, input in zip(input_top_logprobs, continuation_logprobs[0])
-                )
+            flat_index = 0
+            for _, doc in enumerate(dataset):
+                outputs_doc = outputs[flat_index : flat_index + len(doc.choices)]
+                tokenized_continuations_doc = tokenized_continuations_batch[flat_index : flat_index + len(doc.choices)]
+                tokenized_contexts_doc = tokenized_contexts_batch[flat_index : flat_index + len(doc.choices)]
+                logprobs_doc = []
+                argmax_doc = []
+                output_tokens_doc = []
+                input_tokens_doc = []
+
+                for output, context, continuation in zip(
+                    outputs_doc, tokenized_contexts_doc, tokenized_continuations_doc
+                ):
+                    meta_info = output["meta_info"]
+
+                    input_top_logprobs = meta_info["input_top_logprobs"][::-1]
+                    input_token_logprobs = meta_info["input_token_logprobs"][::-1]
+                    input_top_logprobs = input_top_logprobs[: len(continuation)]
+                    logprobs = input_token_logprobs[: len(continuation)]
+                    bool_score = all(top[0][1] == input[1] for top, input in zip(input_top_logprobs, logprobs))
+                    logprobs = [logprob[0] for logprob in logprobs]
+                    logprobs_doc.append(logprobs)
+                    argmax_doc.append(bool_score)
+                    output_tokens_doc.append(output["text"])
+                    input_tokens_doc.append(context + continuation)
+
                 answer = ModelResponse(
-                    input_tokens=input.tokenized_context + input.tokenized_continuation,
-                    generated_tokens=input.tokenized_continuation,
-                    result=(sum(item[0] for item in continuation_logprobs[0]), bool_score),
+                    input_tokens=input_tokens_doc,
+                    output_tokens=output_tokens_doc,
+                    logprobs=logprobs_doc,
+                    argmax_logits_eq_gold=argmax_doc,
                 )
                 res.append(answer)
         return dataset.get_original_order(res)
 
-    def loglikelihood_rolling():
+    def loglikelihood_rolling(self, docs):
         pass
 
-    def loglikelihood_single_token():
+    def loglikelihood_single_token(self, docs):
         pass
