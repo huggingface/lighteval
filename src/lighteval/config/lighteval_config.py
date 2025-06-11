@@ -23,11 +23,13 @@
 from dataclasses import dataclass
 from typing import Dict, Optional, Union
 
+from pydantic import BaseModel
+
 from lighteval.utils.imports import is_nanotron_available
 
 
 if is_nanotron_available():
-    from nanotron.config import Config
+    from nanotron.config import GeneralArgs, ModelArgs, TokenizerArgs
     from nanotron.config.parallelism_config import ParallelismArgs
     from nanotron.generation.sampler import SamplerType
     from nanotron.logging import get_logger
@@ -37,9 +39,8 @@ if is_nanotron_available():
 DEFAULT_GENERATION_SEED = 42
 
 
-@dataclass
-class GenerationArgs:
-    sampler: Optional[Union[str, "SamplerType"]] = None
+class GenerationArgs(BaseModel):
+    sampler: Optional["SamplerType"] = None
     temperature: Optional[float] = None
     top_k: Optional[int] = None
     top_p: Optional[float] = None
@@ -49,8 +50,6 @@ class GenerationArgs:
     use_cache: Optional[bool] = False
 
     def __post_init__(self):
-        if isinstance(self.sampler, str):
-            self.sampler = SamplerType[self.sampler.upper()]
         if self.seed is None:
             self.seed = DEFAULT_GENERATION_SEED
 
@@ -60,6 +59,7 @@ class LightEvalLoggingArgs:
     """Arguments related to logging for LightEval"""
 
     output_dir: str
+    results_path_template: str | None = None
     save_details: bool = True
     push_to_hub: bool = False
     push_to_tensorboard: bool = False
@@ -100,4 +100,14 @@ class LightEvalConfig:
 @dataclass
 class FullNanotronConfig:
     lighteval_config: LightEvalConfig
-    nanotron_config: "Config"
+    nanotron_model: "ModelArgs"
+    nanotron_tokenizer: "TokenizerArgs"
+    nanotron_general: "GeneralArgs"
+
+    @property
+    def generation_parameters(self):
+        # Return the generation parameters from the lighteval config
+        # or create default generation parameters if none are set
+        if self.lighteval_config.generation:
+            return self.lighteval_config.generation
+        return GenerationArgs()

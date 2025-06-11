@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-
 from lighteval.data import GenerativeTaskDataset
 from lighteval.metrics.utils.metric_utils import SamplingMethod
 from lighteval.tasks.requests import Doc
@@ -88,13 +87,13 @@ class TestReorderGenerativeTaskDataset:
         original_data = dataset.get_original_order(sorted_data)
 
         for i in range(len(sorted_data) - 1):
-            assert (
-                len(sorted_data[i].query) >= len(sorted_data[i + 1].query)
-            ), f"dataset[{i}][0] = {sorted_data[i].query} is shorter than dataset[{i + 1}][0] = {sorted_data[i + 1].query}"
+            assert len(sorted_data[i].query) >= len(sorted_data[i + 1].query), (
+                f"dataset[{i}][0] = {sorted_data[i].query} is shorter than dataset[{i + 1}][0] = {sorted_data[i + 1].query}"
+            )
 
-        assert len(sorted_data) == len(
-            original_data
-        ), f"reordered dataset has length {len(sorted_data)}, should be {len(dataset)}"
+        assert len(sorted_data) == len(original_data), (
+            f"reordered dataset has length {len(sorted_data)}, should be {len(dataset)}"
+        )
 
         for sorted_data, orignal in zip(original_data, data):
             assert sorted_data == orignal

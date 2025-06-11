@@ -44,6 +44,7 @@ class ModelInfo:
 
 class LightevalModel(ABC):
     DATASET_SPLITS = 4
+    is_async = False
 
     """Abstract model class defining the API that every model to plug into lighteval must follow."""
 
@@ -69,7 +70,7 @@ class LightevalModel(ABC):
 
     @property
     def disable_tqdm(self) -> bool:
-        raise NotImplementedError
+        return False
 
     def get_method_from_request_type(self, request_type: SamplingMethod):
         if request_type == SamplingMethod.LOGPROBS:
@@ -100,6 +101,19 @@ class LightevalModel(ABC):
         """
         return NotImplemented
 
+    @abstractmethod
+    def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
+        """This function is used to compute the log likelihood of the context for perplexity metrics."""
+        return NotImplemented
+
+    @abstractmethod
+    def loglikelihood_single_token(self, docs: list[Doc]) -> list[ModelResponse]:
+        """Tokenize the context and continuation and compute the log likelihood of those
+        tokenized sequences.
+        """
+        return NotImplemented
+
+    # Tokenization utils
     def tok_encode(self, str_to_encode: str | list[str], add_special_tokens: Optional[bool] = None) -> TokenSequence:
         if add_special_tokens is None:
             add_special_tokens = self.add_special_tokens

@@ -23,9 +23,13 @@
 import json
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 from lighteval.utils.utils import as_list
+
+
+if TYPE_CHECKING:
+    from PIL.Image import Image
 
 
 class SamplingMethod(str, Enum):
@@ -55,6 +59,8 @@ class Doc:
     task_name: str = ""
     system_prompt: str | None = None  # system prompt to use for the model, if any
     full_prompt: Optional[str] = None  # full prompt to use for the model, if any
+    # For multi-modal tasks
+    images: Optional[list["Image"]] = None
 
     # For few-shot
     instruction: Optional[str] = ""

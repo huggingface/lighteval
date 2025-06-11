@@ -368,21 +368,21 @@ class Probability:
             choices_logprob (list[float]): Summed log-probabilities of all the possible choices for the model, ordered as the choices.
             unconditioned_logprob (list[float] | None): Unconditioned log-probabilities for PMI normalization, ordered as the choices.
             choices_tokens (list[list[int]] | None): Tokenized choices for token normalization, ordered as the choices.
-            formatted_doc (Doc): Original document for the sample.
-                Used to get the original choices' length for possible normalization
+            reference_texts (list[str] | None): Reference texts for token normalization, ordered as the choices.
 
         Returns:
             float: The probability of the best log-prob choice being a gold choice.
         """
         choices_tokens = model_response.output_tokens
         logprobs = model_response.logprobs
+        reference_texts = doc.choices
 
         normalized_log_probs = (
             normalize_log_probs(
                 normalization=self.log_prob_normalization,
                 choices_tokens=choices_tokens,
                 choices_logprob=logprobs,
-                choices_text=None,
+                choices_text=reference_texts,
                 unconditioned_logprob=None,
             )
             if self.log_prob_normalization
@@ -730,9 +730,12 @@ class Faithfulness:
             dict[str, float]: The faithfulness scores.
         """
         if self.summac is None:
-            SummaCZS(granularity="sentence", model_name="vitc", imager_load_cache=False)  # , device=device)
+            self.summac = SummaCZS(
+                granularity="sentence", model_name="vitc", imager_load_cache=False
+            )  # , device=device)
         inp = doc.specific[self.input_column]
-        prediction = model_response.text[0]
+        predictions = model_response.text
+        prediction = predictions[0]
         if self.normalize_input:
             inp = self.normalize_input(inp)
         if self.normalize_pred:
@@ -1237,7 +1240,7 @@ class PassAtK:
         all_scores = []
         for pred in predictions[: self.n]:
             cur_pred = self.get_processed_pred(pred=pred)
-            all_scores.append(self.score_sample(cur_pred, gold))
+            all_scores.append(self.score_sample(cur_pred, gold, doc))
 
         return self.pass_at_k(all_scores)
 

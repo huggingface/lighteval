@@ -167,8 +167,8 @@ class SGLangModel(LightevalModel):
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         results = []
 
-        for _ in tqdm(
-            dataset.splits_start_end_iterator(),
+        for split in tqdm(
+            dataset.splits_iterator(),
             total=dataset.num_dataset_splits,
             desc="Splits",
             position=0,
@@ -177,12 +177,12 @@ class SGLangModel(LightevalModel):
             if self.use_chat_template:
                 stop_tokens = []
             else:
-                stop_tokens = dataset[0].stop_sequences
+                stop_tokens = split[0].stop_sequences
 
-            max_new_tokens = dataset[0].generation_size  # could be none
-            num_samples = dataset[0].num_samples
+            max_new_tokens = split[0].generation_size  # could be none
+            num_samples = split[0].num_samples
 
-            contexts = [self.prompt_manager.prepare_prompt(doc) for doc in dataset]
+            contexts = [self.prompt_manager.prepare_prompt(doc) for doc in split]
             tokenized = self.tokenizer(contexts, add_special_tokens=self.add_special_tokens)
 
             # The main question for this step is the following:
@@ -273,8 +273,9 @@ class SGLangModel(LightevalModel):
         dataset = LoglikelihoodDataset(requests=docs, num_dataset_splits=1)
         res = []
 
-        for _ in tqdm(dataset.splits_start_end_iterator(), disable=False):
-            contexts = [self.prompt_manager.prepare_prompt(doc) for doc in dataset]
+        for split in tqdm(dataset.splits_iterator(), disable=False):
+            contexts = [self.prompt_manager.prepare_prompt(doc) for doc in split]
+            # the last token is an eos token, so we don't need to add it
             # Left truncate the inputs to the maximum length
             inputs = []
             tokenized_continuations_batch = []

@@ -20,10 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import asyncio
 import collections
 import os
 import random
-import shutil
 from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import timedelta
@@ -69,14 +69,7 @@ if is_nanotron_available():
     from nanotron.parallel.context import ParallelContext
     from nanotron.utils import local_ranks_zero_first
 
-    from lighteval.models.nanotron_model import NanotronLightevalModel
-else:
-    from unittest.mock import Mock
-
-    dist = Mock()
-    ParallelContext = Mock()
-    local_ranks_zero_first = Mock()
-    NanotronLightevalModel = Mock()
+    from lighteval.models.nanotron.nanotron_model import NanotronLightevalModel
 
 
 import logging
@@ -91,6 +84,7 @@ class ParallelismManager(Enum):
     TGI = auto()
     OPENAI = auto()
     VLLM = auto()
+    CUSTOM = auto()
     NONE = auto()
     SGLANG = auto()
 
@@ -110,6 +104,7 @@ class PipelineParameters:
     system_prompt: str | None = None
     cot_prompt: str | None = None
     load_responses_from_details_date_id: str | None = None
+    bootstrap_iters: int = 1000
 
     def __post_init__(self):  # noqa C901
         if self.launcher_type == ParallelismManager.ACCELERATE:
@@ -196,7 +191,7 @@ class Pipeline:
                     checkpoint_path=os.path.dirname(self.pipeline_parameters.nanotron_checkpoint_path)
                     if self.pipeline_parameters.nanotron_checkpoint_path
                     else "",
-                    nanotron_config=self.model_config,
+                    nanotron_config=model_config,
                     parallel_context=self.parallel_context,
                     debug_one_layer_model=False,
                     model_class=None,
@@ -295,71 +290,23 @@ class Pipeline:
 
         if self.is_main_process():
             self.evaluation_tracker.general_config_logger.log_end_time()
-            self.evaluation_tracker.metrics_logger.aggregate(task_dict=self.tasks_dict, bootstrap_iters=1000)
+            self.evaluation_tracker.metrics_logger.aggregate(
+                task_dict=self.task_dict, bootstrap_iters=self.pipeline_parameters.bootstrap_iters
+            )
             self.evaluation_tracker.details_logger.aggregate()
 
-            for weights in ["delta", "adapter"]:
-                try:
-                    tmp_weights_dir = f"{self.evaluation_tracker.general_config_logger.model_name}-{weights}-applied"
-                    shutil.rmtree(tmp_weights_dir)
-                    logger.info(f"Removed {tmp_weights_dir}")
-                except OSError:
-                    pass
+    def _unpack(self, x):
+        if isinstance(x, str):
+            return x
+        elif isinstance(x, (list, tuple)):
+            return self._unpack(x[0])
+        else:
+            raise ValueError(f"Unknown type {type(x)} of prediction {x}")
 
-        #    def _load_responses_from_details(self):
-        #        logger.info("--- LOADING RESPONSES FROM DETAILS ---")
-        #        sample_id_to_responses: dict = collections.defaultdict(list)
-        #
-        #        request_types = list(self.requests.keys())
-        #        if len(request_types) > 1:
-        #            raise ValueError(
-        #                "Loading responses from details when there are multiple request types is currently not supported"
-        #            )
-        #        model_response_type = self._get_model_response_type(request_types[0])
-        #
-        #        details_datasets = self.evaluation_tracker.load_details_datasets(
-        #            self.pipeline_parameters.load_responses_from_details_date_id, self.task_names_list
-        #        )
-        #
-        #        for task_name, dataset in tqdm(details_datasets.items(), desc="Loading responses from details for tasks"):
-        #            task: LightevalTask = self._get_task(task_name)
-        #            num_samples = len(set(dataset["specifics"]))
-        #            max_samples = self.pipeline_parameters.max_samples if self.pipeline_parameters.max_samples else num_samples
-        #            if num_samples > max_samples:
-        #                logger.warning(
-        #                    f"Skipping {num_samples - max_samples} samples for {task_name} when loading responses from details because max_samples is set to {max_samples}"
-        #                )
-        #                num_samples = self.pipeline_parameters.max_samples
-        #
-        #            predictions = [self._unpack(ast.literal_eval(p)) for p in dataset["predictions"][:num_samples]]
-        #            input_tokens = [self._parse_tensor_string(t) for t in dataset["input_tokens"][:num_samples]]
-        #            cont_tokens = [self._parse_tensor_string(t) for t in dataset["cont_tokens"][:num_samples]]
-        #            truncated = [ast.literal_eval(t)[0] for t in dataset["truncated"][:num_samples]]
-        #            padded = [ast.literal_eval(p)[0] for p in dataset["padded"][:num_samples]]
-        #
-        #            if model_response_type == GenerativeResponse:
-        #                logits = [ast.literal_eval(p) for p in dataset["pred_logits"][:num_samples]]
-        #
-        #            for metric_category, has_metric_category in task.has_metric_category.items():
-        #                if not has_metric_category:
-        #                    continue
-        #
-        #                for idx in range(num_samples):
-        #                    kwargs = {
-        #                        "result": predictions[idx],
-        #                        "input_tokens": input_tokens[idx],
-        #                        "generated_tokens": cont_tokens[idx],
-        #                        "truncated_tokens_count": truncated[idx],
-        #                        "padded_tokens_count": padded[idx],
-        #                    }
-        #                    if model_response_type == GenerativeResponse:
-        #                        kwargs["logits"] = logits[idx]
-        #
-        #                    # response = model_response_type(**kwargs)
-        #                    # sample_id_to_responses[(SampleUid(task_name, f"{idx}_{0}"), metric_category)] = [response]
-        #        return sample_id_to_responses
+    async def _run_model_async(self):
+        return None
 
-    def _run_model(self):
+    def _run_model_sync(self):
         # Running all requests depending on the model call type (log likelihood, generative, ...)
         # to be able to batch them
         logger.info("--- RUNNING MODEL ---")
@@ -374,6 +321,18 @@ class Pipeline:
                 case SamplingMethod.LOGPROBS:
                     model_outputs = self.model.loglikelihood(docs)
                     outputs[sampling_method] = model_outputs
+
+        return outputs
+
+    def _run_model(self):
+        # Running all requests depending on the model call type (log likelihood, generative, ...)
+        # to be able to batch them
+        logger.info("--- RUNNING MODEL ---")
+
+        if self.model.is_async:
+            outputs = asyncio.run(self._run_model_async())
+        else:
+            outputs = self._run_model_sync()
 
         # Cleaning up the model before running metrics
         self.model.cleanup()

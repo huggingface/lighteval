@@ -191,7 +191,7 @@ def calib_err(confidence, correct, p="2", beta=100):
 
 def hle_text_only(line, task_name: str = None):
     if line["image"] not in [None, ""]:
-        return
+        return None
 
     return Doc(
         task_name=task_name,
@@ -204,7 +204,7 @@ def hle_text_only(line, task_name: str = None):
 
 hle_metrics = CorpusLevelMetricGrouping(
     metric_name=["accuracy", "confidence_half_width", "calibration_error"],
-    higher_is_better={n: True for n in ["accuracy", "confidence_half_width", "calibration_error"]},
+    higher_is_better=dict.fromkeys(["accuracy", "confidence_half_width", "calibration_error"], True),
     category=SamplingMethod.GENERATIVE,
     sample_level_fn=JudgeLLMHLE().compute,
     corpus_level_fn=JudgeLLMHLE().compute_corpus,

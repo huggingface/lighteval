@@ -22,6 +22,7 @@
 # SOFTWARE.
 
 """Simplified version of the BertScorer lib - we only import what we need."""
+
 import logging
 import os
 import time
@@ -73,7 +74,7 @@ def bert_encode(model, x, attention_mask, all_layers=False):
 
 def collate_idf(arr, tokenizer, idf_dict, device="cuda:0"):
     """
-    Helper function that pads a list of sentences to hvae the same length and
+    Helper function that pads a list of sentences to have the same length and
     loads idf score for words in the sentences.
 
     Args:
@@ -160,7 +161,7 @@ def greedy_cos_idf(
     Args:
         - :param: `ref_embedding` (torch.Tensor):
                    embeddings of reference sentences, BxKxd,
-                   B: batch size, K: longest length, d: bert dimenison
+                   B: batch size, K: longest length, d: bert dimension
         - :param: `ref_lens` (list of int): list of reference sentence length.
         - :param: `ref_masks` (torch.LongTensor): BxKxK, BERT attention mask for
                    reference sentences.
@@ -168,12 +169,12 @@ def greedy_cos_idf(
                    piece in the reference sentence
         - :param: `hyp_embedding` (torch.Tensor):
                    embeddings of candidate sentences, BxKxd,
-                   B: batch size, K: longest length, d: bert dimenison
+                   B: batch size, K: longest length, d: bert dimension
         - :param: `hyp_lens` (list of int): list of candidate sentence length.
         - :param: `hyp_masks` (torch.LongTensor): BxKxK, BERT attention mask for
                    candidate sentences.
         - :param: `hyp_idf` (torch.Tensor): BxK, idf score of each word
-                   piece in the candidate setence
+                   piece in the candidate sentence
     """
     ref_embedding.div_(torch.norm(ref_embedding, dim=-1).unsqueeze(-1))
     hyp_embedding.div_(torch.norm(hyp_embedding, dim=-1).unsqueeze(-1))
@@ -254,7 +255,7 @@ def bert_cos_score_idf(
         - :param: `model` : a BERT model in `pytorch_pretrained_bert`
         - :param: `refs` (list of str): reference sentences
         - :param: `hyps` (list of str): candidate sentences
-        - :param: `tokenzier` : a BERT tokenizer corresponds to `model`
+        - :param: `tokenizer` : a BERT tokenizer corresponds to `model`
         - :param: `idf_dict` : a dictionary mapping a word piece index to its
                                inverse document frequency
         - :param: `verbose` (bool): turn on intermediate status update
@@ -338,7 +339,7 @@ class BERTScorer:
     ):
         """
         Args:
-            - :param: `model_type` (str): contexual embedding model specification, default using the suggested
+            - :param: `model_type` (str): contextual embedding model specification, default using the suggested
                       model for the target langauge; has to specify at least one of
                       `model_type` or `lang`
             - :param: `num_layers` (int): the layer of representation to use.
