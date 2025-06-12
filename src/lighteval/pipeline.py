@@ -277,21 +277,21 @@ class Pipeline:
 
         if self.pipeline_parameters.load_responses_from_details_date_id:
             try:
-                sample_id_to_responses = self._load_responses_from_details()
+                outputs = self._load_responses_from_details()
             except FileNotFoundError as e:
                 logger.warning(
                     f"No responses found for {self.pipeline_parameters.load_responses_from_details_date_id} in details directory: {e}. Running model instead."
                 )
-                sample_id_to_responses = self._run_model()
+                outputs = self._run_model()
         else:
-            sample_id_to_responses = self._run_model()
+            outputs = self._run_model()
 
-        self._compute_metrics(sample_id_to_responses)
+        self._compute_metrics(outputs)
 
         if self.is_main_process():
             self.evaluation_tracker.general_config_logger.log_end_time()
             self.evaluation_tracker.metrics_logger.aggregate(
-                task_dict=self.task_dict, bootstrap_iters=self.pipeline_parameters.bootstrap_iters
+                task_dict=self.tasks_dict, bootstrap_iters=self.pipeline_parameters.bootstrap_iters
             )
             self.evaluation_tracker.details_logger.aggregate()
 
@@ -304,6 +304,20 @@ class Pipeline:
             raise ValueError(f"Unknown type {type(x)} of prediction {x}")
 
     async def _run_model_async(self):
+        logger.info("--- RUNNING MODEL ---")
+
+        outputs = {}
+        for sampling_method, docs in self.sampling_docs.items():
+            logger.info(f"Running {sampling_method} requests")
+            match sampling_method:
+                case SamplingMethod.GENERATIVE:
+                    model_outputs = await self.model.greedy_until(docs)
+                    outputs[sampling_method] = model_outputs
+                case SamplingMethod.LOGPROBS:
+                    model_outputs = await self.model.loglikelihood(docs)
+                    outputs[sampling_method] = model_outputs
+
+        return outputs
         return None
 
     def _run_model_sync(self):

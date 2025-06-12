@@ -106,13 +106,6 @@ class LightevalModel(ABC):
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         return NotImplemented
 
-    @abstractmethod
-    def loglikelihood_single_token(self, docs: list[Doc]) -> list[ModelResponse]:
-        """Tokenize the context and continuation and compute the log likelihood of those
-        tokenized sequences.
-        """
-        return NotImplemented
-
     # Tokenization utils
     def tok_encode(self, str_to_encode: str | list[str], add_special_tokens: Optional[bool] = None) -> TokenSequence:
         if add_special_tokens is None:

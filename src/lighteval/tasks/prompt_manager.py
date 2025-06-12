@@ -54,6 +54,35 @@ class PromptManager:
         else:
             return self._prepare_plain_text(doc)
 
+    def prepare_prompt_multimodal(self, doc: Doc) -> str:
+        if self.use_chat_template is False or self.tokenizer is None:
+            raise ValueError("Multimodal prompts are only supported with chat template format.")
+
+        if doc.images is None:
+            raise ValueError("Multimodal prompts require images to be provided in the document.")
+
+        text_content = [{"type": "text", "text": doc.query}]
+        image_content = [{"type": "image", "image": image} for image in doc.images]
+        message = {"role": "user", "content": text_content + image_content}
+
+        if (
+            doc.system_prompt is not None or doc.instruction is not None
+        ):  # We add system prompt and instruction jointly if possible
+            system_prompt = doc.system_prompt if doc.system_prompt is not None else ""
+            instruction = doc.instruction if doc.instruction is not None else ""
+            system_content = [{"type": "text", "text": system_prompt + instruction}]
+            system_prompt_message = {"role": "system", "content": system_content}
+            message = [system_prompt_message, message]
+
+        else:
+            message = [message]
+
+        return self.tokenizer.apply_chat_template(
+            message,
+            tokenize=False,
+            add_generation_prompt=True,
+        )
+
     def _prepare_chat_template(self, doc: Doc) -> str:
         """Prepare prompt using chat template format."""
         messages = []

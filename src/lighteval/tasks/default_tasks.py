@@ -7971,7 +7971,7 @@ gsm_plus = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=None,
-    metric=[Metrics.expr_gold_metric],
+    metrics=[Metrics.expr_gold_metric],
     stop_sequence=None,
     trust_dataset=True,
     version=0,
@@ -8699,7 +8699,7 @@ jeopardy = LightevalTaskConfig(
     few_shots_split="train",
     generation_size=250,
     stop_sequence=["\n", "Question:", "question:"],
-    metric=(
+    metrics=(
         Metrics.prefix_quasi_exact_match,
         Metrics.f1_score_quasi,
     ),
@@ -13836,7 +13836,7 @@ natural_questions = LightevalTaskConfig(
     few_shots_split="few_shot",
     generation_size=250,
     stop_sequence=["\n", "Question:", "question:"],
-    metric=(
+    metrics=(
         Metrics.prefix_quasi_exact_match,
         Metrics.f1_score_quasi,
     ),
@@ -15268,7 +15268,7 @@ squad_v2 = LightevalTaskConfig(
     few_shots_split="train",
     stop_sequence=["\n", "Question:", "question:"],
     generation_size=200,
-    metric=(
+    metrics=(
         Metrics.prefix_quasi_exact_match,
         Metrics.f1_score_quasi,
     ),

@@ -522,8 +522,11 @@ class TransformersModel(LightevalModel):
                 # No constraints on the generation size: max length allowed is the max model context
                 max_context_continuation_size_allowed = self.max_length
             else:
+                context = self.prompt_manager.prepare_prompt(split[0])
+                tokenized_context = self.tokenizer(context)
+
                 # Longest context in the current split is the first item (since we sort reversed)
-                longest_context_continuation_size_in_split = len(split[0].tokenized_context) + split[0].generation_size
+                longest_context_continuation_size_in_split = len(tokenized_context) + split[0].generation_size
                 max_context_continuation_size_allowed = min(
                     longest_context_continuation_size_in_split, self.max_length
                 )
@@ -727,12 +730,17 @@ class TransformersModel(LightevalModel):
         res = []
 
         for split in tqdm(dataset.splits_iterator(), disable=self.disable_tqdm):
-            context_enc = split[0].tokenized_context
-            continuation_enc = split[0].tokenized_continuation
+            context = self.prompt_manager.prepare_prompt(split[0])
+            tokenized_contexts, tokenized_continuations = self.tok_encode_pair(
+                context, split[0].choices, pairwise=self.pairwise_tokenization
+            )
+
             if rolling:  # we take all the sequence in rolling mode
-                max_input_length = len(context_enc + continuation_enc)
+                max_input_length = len(tokenized_contexts[0] + tokenized_continuations[0])
             else:  # in normal mode, we left cut the context if needed
-                max_input_length = max(min(self.max_length, len(context_enc + continuation_enc) - 1), 1)
+                max_input_length = max(
+                    min(self.max_length, len(tokenized_contexts[0] + tokenized_continuations[0]) - 1), 1
+                )
 
             batch_size = self._get_batch_size(
                 override_bs=self.config.batch_size,

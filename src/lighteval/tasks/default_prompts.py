@@ -61,7 +61,7 @@ def mmmu_pro(line, task_name: Optional[str] = None):
 
     # Construct prompt
     formatted_choices = "\n".join(choices)
-    prompt = f"{instructions}\n{question}\n{formatted_choices}"
+    prompt = f"\n{question}\n{formatted_choices}"
 
     # Collect images
     image_order = []

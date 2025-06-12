@@ -386,7 +386,9 @@ class VLLMModel(LightevalModel):
             tokenized_contexts_batch = []
 
             for context, doc in zip(contexts, split):
-                tokenized_contexts, tokenized_continuations = self.tok_encode_pair(context, doc.choices, pairwise=True)
+                tokenized_contexts, tokenized_continuations = self.tok_encode_pair(
+                    context, doc.choices, pairwise=self.pairwise_tokenization
+                )
                 for tokenized_context, tokenized_continuation in zip(tokenized_contexts, tokenized_continuations):
                     inputs.append(tokenized_context + tokenized_continuation)
                     tokenized_continuations_batch.append(tokenized_continuation)
@@ -450,7 +452,7 @@ class AsyncVLLMModel(VLLMModel):
         destroy_distributed_environment()
         torch.cuda.empty_cache()
 
-    def _create_auto_model(self, config: VLLMModelConfig) -> AsyncLLM | None:
+    def _create_auto_model(self, config: VLLMModelConfig):
         """
         Creates an instance of the async vllm model loaded from HF. Requires using the v1 of VLLM.
 

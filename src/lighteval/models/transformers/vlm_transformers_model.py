@@ -22,9 +22,12 @@
 
 import logging
 import os
+from datetime import timedelta
 from typing import Optional, Tuple, Union
 
 import torch
+from accelerate import Accelerator, InitProcessGroupKwargs
+from accelerate.utils import gather_object, get_max_memory
 from pydantic import PositiveInt
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -38,42 +41,28 @@ from transformers import (
 
 from lighteval.data import GenerativeTaskDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_output import (
-    GenerativeResponse,
-    LoglikelihoodResponse,
-    LoglikelihoodSingleTokenResponse,
-)
+from lighteval.models.model_output import ModelResponse
 from lighteval.models.utils import ModelConfig, _get_dtype, _get_model_sha, _simplify_name
-from lighteval.tasks.requests import (
-    GreedyUntilRequest,
-    LoglikelihoodRequest,
-    LoglikelihoodSingleTokenRequest,
-)
+from lighteval.tasks.prompt_manager import PromptManager
+from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import (
     is_accelerate_available,
 )
-from lighteval.utils.utils import as_list
 
 
 logger = logging.getLogger(__name__)
 
 
-if is_accelerate_available():
-    from datetime import timedelta
-
-    from accelerate import Accelerator, InitProcessGroupKwargs
-    from accelerate.utils import gather_object, get_max_memory
-
-
 class BatchCollator:
     """Collator for batching requests"""
 
-    def __init__(self, processor, **kwargs):
+    def __init__(self, prompt_manager, processor, **kwargs):
         self.processor = processor
+        self.prompt_manager = prompt_manager
         self.kwargs = kwargs
 
-    def __call__(self, requests: list[GreedyUntilRequest]) -> Tuple[dict[str, torch.Tensor], list[GreedyUntilRequest]]:
-        texts = [request.context for request in requests]
+    def __call__(self, requests: list[Doc]) -> Tuple[dict[str, torch.Tensor], list[Doc]]:
+        texts = [self.prompt_manager.prepare_prompt_multimodal(request) for request in requests]
         images = [request.images for request in requests]
         inputs = self.processor(text=texts, images=images, **self.kwargs)
         return inputs, requests
@@ -186,6 +175,8 @@ class VLMTransformersModel(LightevalModel):
         self.generation_config_dict["pad_token_id"] = self.pad_token_id
         self.generation_config_dict["eos_token_id"] = self.eos_token_id
         self.generation_config_dict["renormalize_logits"] = True
+
+        self.prompt_manager = PromptManager(use_chat_template=True, tokenizer=self.tokenizer)
 
         self.model_info = ModelInfo(
             model_name=self.config.model_name,
@@ -352,17 +343,10 @@ class VLMTransformersModel(LightevalModel):
 
         return 2048
 
-    def _tokenize_requests_context_inplace(self, requests: list[GreedyUntilRequest]):
-        """Preprocess requests to fill in the tokenized_context field for sorting in the dataset"""
-        for request in requests:
-            request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
-            inputs = self.processor(text=request.context, images=request.images)
-            request.tokenized_context = inputs["input_ids"][0]
-
     def greedy_until(
         self,
-        requests: list[GreedyUntilRequest],
-    ) -> list[GenerativeResponse]:
+        docs: list[Doc],
+    ) -> list[ModelResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
@@ -375,12 +359,10 @@ class VLMTransformersModel(LightevalModel):
         """
 
         # Tokenizing context for sorting in the dataset
-        logger.info("Tokenizing requests context for sorting in the dataset")
-        self._tokenize_requests_context_inplace(requests)
-        logger.info("Done tokenizing!")
 
-        dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
+        dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         collator = BatchCollator(
+            self.prompt_manager,
             self.processor,
             truncation="longest_first",  # we truncate to the model max length if needed
             padding="longest",  # we pad to the longest sequence
@@ -420,9 +402,9 @@ class VLMTransformersModel(LightevalModel):
 
                 batch_results = []
                 for i in range(len(generated_texts)):
-                    generated_response = GenerativeResponse(
-                        result=generated_texts[i],
-                        generated_tokens=generated_tokens[i].cpu().numpy(),
+                    generated_response = ModelResponse(
+                        text=generated_texts[i],
+                        output_tokens=generated_tokens[i].cpu().numpy(),
                         input_tokens=input_tokens[i].cpu().numpy(),
                         truncated_tokens_count=-1,
                         padded_tokens_count=padded_tokens_count[i].item(),
@@ -439,17 +421,12 @@ class VLMTransformersModel(LightevalModel):
 
     def loglikelihood(
         self,
-        requests: list[LoglikelihoodRequest],
-    ) -> list[LoglikelihoodResponse]:
-        raise NotImplementedError()
-
-    def loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest]
-    ) -> list[LoglikelihoodSingleTokenResponse]:
+        docs: list[Doc],
+    ) -> list[ModelResponse]:
         raise NotImplementedError()
 
     def loglikelihood_rolling(
         self,
-        requests: list[LoglikelihoodRequest],
-    ) -> list[LoglikelihoodResponse]:
+        docs: list[Doc],
+    ) -> list[ModelResponse]:
         raise NotImplementedError()
