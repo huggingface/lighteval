@@ -35,9 +35,9 @@ from transformers import (
     AutoConfig,
     AutoModelForImageTextToText,
     AutoProcessor,
-    BitsAndBytesConfig,
-    PretrainedConfig,
 )
+from transformers.configuration_utils import PretrainedConfig
+from transformers.utils.quantization_config import BitsAndBytesConfig
 
 from lighteval.data import GenerativeTaskDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo

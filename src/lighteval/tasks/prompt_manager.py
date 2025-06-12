@@ -83,6 +83,25 @@ class PromptManager:
             add_generation_prompt=True,
         )
 
+    def prepare_prompt_api(self, doc: Doc) -> list[dict[str, str]]:
+        """
+        Prepare a prompt for API calls, using a chat-like format.
+        Will not tokenize the message because APIs will usually handle this.
+        """
+        message = {"role": "user", "content": doc.query}
+
+        if (
+            doc.system_prompt is not None or doc.instruction is not None
+        ):  # We add system prompt and instruction jointly if possible
+            system_prompt = doc.system_prompt if doc.system_prompt is not None else ""
+            instruction = doc.instruction if doc.instruction is not None else ""
+            system_prompt_message = {"role": "system", "content": system_prompt + instruction}
+            message = [system_prompt_message, message]
+        else:
+            message = [message]
+
+        return message
+
     def _prepare_chat_template(self, doc: Doc) -> str:
         """Prepare prompt using chat template format."""
         messages = []

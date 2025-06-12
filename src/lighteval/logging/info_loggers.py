@@ -25,7 +25,7 @@ import logging
 import os
 import time
 from dataclasses import asdict, dataclass, field
-from typing import Optional, Union
+from typing import Union
 
 import git
 import numpy as np
@@ -211,7 +211,7 @@ class DetailsLogger:
         choices: list = field(default_factory=list)
         gold_index: list = field(default_factory=list)
         metrics: dict = field(default_factory=dict)
-        specifics: dict = field(default_factory=dict)
+        specifics: dict | None = None
 
     @dataclass
     class CompiledDetail:
@@ -316,11 +316,9 @@ class DetailsLogger:
     def log(
         self,
         task_name: str,
-        task: LightevalTask,
         doc: Doc,
         model_response: ModelResponse,
         metrics: dict,
-        llm_as_prompt_judgement: Optional[tuple[str, str]] = None,
     ) -> None:
         """Stores the relevant information for one sample of one task to the total list of samples stored in the DetailsLogger.
 
@@ -336,7 +334,6 @@ class DetailsLogger:
         detail = self.Detail()
         detail.example = doc.query
         detail.instruction = doc.instruction
-        detail.full_prompt = doc.full_prompt
 
         predictions = model_response.text
         detail.predictions = predictions
@@ -346,6 +343,7 @@ class DetailsLogger:
         detail.padded = []  # [o.padded_tokens_count for o in outputs]
         detail.num_effective_few_shots = doc.num_effective_few_shots
         detail.num_asked_few_shots = doc.num_asked_few_shots
+        detail.specifics = doc.specific
 
         pred_saved = True
         # detail.specifics = doc.specific

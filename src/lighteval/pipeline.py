@@ -304,8 +304,6 @@ class Pipeline:
             raise ValueError(f"Unknown type {type(x)} of prediction {x}")
 
     async def _run_model_async(self):
-        logger.info("--- RUNNING MODEL ---")
-
         outputs = {}
         for sampling_method, docs in self.sampling_docs.items():
             logger.info(f"Running {sampling_method} requests")
@@ -318,13 +316,10 @@ class Pipeline:
                     outputs[sampling_method] = model_outputs
 
         return outputs
-        return None
 
     def _run_model_sync(self):
         # Running all requests depending on the model call type (log likelihood, generative, ...)
         # to be able to batch them
-        logger.info("--- RUNNING MODEL ---")
-
         outputs = {}
         for sampling_method, docs in self.sampling_docs.items():
             logger.info(f"Running {sampling_method} requests")
@@ -390,7 +385,7 @@ class Pipeline:
 
                 for output, doc, response in zip(outputs, docs, responses):
                     self.evaluation_tracker.metrics_logger.log(task_name, output)
-                    self.evaluation_tracker.details_logger.log(task_name, task, doc, response, output)
+                    self.evaluation_tracker.details_logger.log(task_name, doc, response, output)
 
     def save_and_push_results(self):
         logger.info("--- SAVING AND PUSHING RESULTS ---")

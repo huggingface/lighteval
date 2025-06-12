@@ -434,11 +434,8 @@ class VLLMModel(LightevalModel):
 
         return dataset.get_original_order(res)
 
-    def loglikelihood_rolling(self, docs):
-        pass
-
-    def loglikelihood_single_token(self, docs):
-        pass
+    def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
+        raise NotImplementedError()
 
 
 class AsyncVLLMModel(VLLMModel):
@@ -501,8 +498,8 @@ class AsyncVLLMModel(VLLMModel):
             sampling_params.prompt_logprobs = 1
             sampling_params.max_tokens = 1
             sampling_params.detokenize = False
-            prompt = doc.context + doc.choice
-            index = f"logprob_{index}"
+            prompt = self.prompt_manager.prepare_prompt(doc) + doc.choice
+            index_str = f"logprob_{index}"
         else:
             sampling_params.n = doc.num_samples
             if sampling_params.n > 1:
@@ -513,10 +510,10 @@ class AsyncVLLMModel(VLLMModel):
             sampling_params.max_tokens = self._config.generation_parameters.max_new_tokens or doc.generation_size
             sampling_params.stop = [] if self.use_chat_template else doc.stop_sequences
             sampling_params.logprobs = int(doc.use_logits)
-            prompt = doc.context
-            index = f"generative_{index}"
+            prompt = self.prompt_manager.prepare_prompt(doc)
+            index_str = f"generative_{index}"
 
-        generator = self.model.generate(request_id=str(index), prompt=prompt, sampling_params=sampling_params)
+        generator = self.model.generate(request_id=index_str, prompt=prompt, sampling_params=sampling_params)
         try:
             while output := await anext(generator):
                 continue
@@ -535,7 +532,6 @@ class AsyncVLLMModel(VLLMModel):
     async def greedy_until(
         self,
         docs: list[Doc],
-        **kwargs,
     ) -> list[ModelResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
@@ -570,7 +566,6 @@ class AsyncVLLMModel(VLLMModel):
     async def loglikelihood(
         self,
         docs: list[Doc],
-        **kwargs,
     ) -> list[ModelResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met and

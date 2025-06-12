@@ -136,8 +136,6 @@ def aime_prompt_fn(line, task_name: str = None):
     # - Llama 3: https://huggingface.co/datasets/meta-llama/Llama-3.2-1B-Instruct-evals/viewer/Llama-3.2-1B-Instruct-evals__math__details?views%5B%5D=llama_32_1b_instruct_evals__math__details
     # Note that it is important to have the final answer in a box for math-verify to work correctly
     MATH_QUERY_TEMPLATE = """
-Solve the following math problem efficiently and clearly.  The last line of your response should be of the following format: 'Therefore, the final answer is: $\\boxed{{ANSWER}}$. I hope it is correct' (without quotes) where ANSWER is just the final number or expression that solves the problem. Think step by step before answering.
-
 {Question}
 """.strip()
     return Doc(
@@ -145,6 +143,7 @@ Solve the following math problem efficiently and clearly.  The last line of your
         query=MATH_QUERY_TEMPLATE.format(Question=line["problem"]),
         choices=[line["answer"]],
         gold_index=0,
+        system_prompt="Solve the following math problem efficiently and clearly.  The last line of your response should be of the following format: 'Therefore, the final answer is: $\\boxed{{ANSWER}}$. I hope it is correct' (without quotes) where ANSWER is just the final number or expression that solves the problem. Think step by step before answering.",
     )
 
 

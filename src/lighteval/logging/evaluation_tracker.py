@@ -321,6 +321,7 @@ class EvaluationTracker:
         logger.info(f"Saving details to {output_dir_details_sub_folder}")
         for task_name, dataset in details_datasets.items():
             output_file_details = output_dir_details_sub_folder / f"details_{task_name}_{date_id}.parquet"
+            breakpoint()
             with self.fs.open(str(output_file_details), "wb") as f:
                 dataset.to_parquet(f)
 

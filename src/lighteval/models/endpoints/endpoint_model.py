@@ -33,7 +33,6 @@ from huggingface_hub import (
     InferenceClient,
     InferenceEndpoint,
     InferenceEndpointError,
-    InferenceEndpointTimeoutError,
     TextGenerationInputGrammarType,
     TextGenerationOutput,
     create_inference_endpoint,
@@ -137,7 +136,6 @@ class InferenceEndpointModel(LightevalModel):
         self._max_length = None
         self.endpoint = None
         self.model_name = None
-        self.prompt_manager = PromptManager(True, self.tokenizer)
         if isinstance(config, InferenceEndpointModelConfig):
             if config.instance_type and config.instance_size and config.vendor and config.region:
                 vendor, region, instance_type, instance_size = (
@@ -216,20 +214,14 @@ class InferenceEndpointModel(LightevalModel):
                     logger.info("Trying to deploy your endpoint. Please wait for 10 min.")
                     self.endpoint.wait(timeout=600, refresh_every=60)  # We wait for 10 min
                 except InferenceEndpointError as e:
+                    logger.info(
+                        f"Endpoint failed to start on current hardware with error {e}. Trying to autoscale to ({instance_type}, {instance_size})."
+                    )
                     instance_type, instance_size = InferenceEndpointModel.get_larger_hardware_suggestion(
                         instance_type, instance_size
                     )
                     must_scaleup_endpoint = True
 
-                    logger.info(
-                        f"Endpoint failed to start on current hardware with error {e}. Trying to autoscale to ({instance_type}, {instance_size})."
-                    )
-                except InferenceEndpointTimeoutError as e:
-                    logger.error(
-                        "Endpoint did not start within 30 minutes, there was a timeout. Please inspect the logs."
-                    )
-                    self.cleanup()
-                    raise e
                 except HfHubHTTPError as e:
                     # The endpoint actually already exists, we'll spin it up instead of trying to create a new one
                     if "409 Client Error: Conflict for url:" in str(e):
@@ -270,6 +262,7 @@ class InferenceEndpointModel(LightevalModel):
         self._tokenizer = AutoTokenizer.from_pretrained(self.name)
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
 
+        self.prompt_manager = PromptManager(True, self.tokenizer)
         self.model_info = ModelInfo(
             model_name=self.name,
             model_sha=self.revision,

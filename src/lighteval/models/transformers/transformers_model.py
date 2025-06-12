@@ -22,11 +22,14 @@
 
 import logging
 import os
+from datetime import timedelta
 from typing import Optional, Tuple, Union
 
 import torch
 import torch.nn.functional as F
 import transformers
+from accelerate import Accelerator, InitProcessGroupKwargs
+from accelerate.utils import calculate_maximum_sizes, convert_bytes, get_max_memory
 from pydantic import Field, PositiveInt
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -56,13 +59,6 @@ from lighteval.utils.parallelism import find_executable_batch_size
 
 
 logger = logging.getLogger(__name__)
-
-
-if is_accelerate_available():
-    from datetime import timedelta
-
-    from accelerate import Accelerator, InitProcessGroupKwargs
-    from accelerate.utils import calculate_maximum_sizes, convert_bytes, get_max_memory
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -768,7 +764,6 @@ class TransformersModel(LightevalModel):
                 prepared_batch = self.prepare_batch_logprob(
                     tokenized_contexts=tokenized_contexts_batch,
                     tokenized_continuations=tokenized_continuations_batch,
-                    padding_length=None,
                     max_context=None,  # computed as model max length in the function
                 )
 
@@ -840,7 +835,6 @@ class TransformersModel(LightevalModel):
         self,
         tokenized_contexts: list[list[list[int]]],
         tokenized_continuations: list[list[list[int]]],
-        padding_length: int | None,
         max_context: Optional[int] = None,
         single_token: bool = False,
     ):

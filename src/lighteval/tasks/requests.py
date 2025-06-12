@@ -63,7 +63,7 @@ class Doc:
     images: Optional[list["Image"]] = None
 
     # For few-shot
-    instruction: Optional[str] = ""
+    instruction: str | None = ""
     fewshot_sorting_class: Optional[str] = None  # class to use to select balanced few-shot samples
 
     # Filled when parsing and adding the few-shot context
