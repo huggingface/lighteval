@@ -395,6 +395,7 @@ class TransformersModel(LightevalModel):
             device_map=device_map,
             torch_dtype=torch_dtype,
             trust_remote_code=self.config.trust_remote_code,
+            _attn_implementation="flash_attention_2",
             **kwargs,
         )
         # model.to(self.device)
