@@ -200,6 +200,7 @@ class InferenceEndpointModel(LightevalModel):
                             )
                         else:  # Endpoint exists
                             logger.info("Reusing existing endpoint.")
+                            breakpoint()
                             self.endpoint = get_inference_endpoint(name=endpoint_name, namespace=config.namespace)
 
                     else:
@@ -323,12 +324,7 @@ class InferenceEndpointModel(LightevalModel):
 
     def cleanup(self):
         if self.endpoint is not None:
-            if self.reuse_existing:
-                self.endpoint.pause()
-                logger.warning(
-                    "Since your endpoint was existing before, we did not delete it, but paused it instead. You might want to delete it if you're done using it."
-                )
-            else:
+            if not self.reuse_existing:
                 self.endpoint.delete()
                 logger.warning(
                     "We deleted the spinned up endpoint after using it. You'll need to create it again if you need to reuse it."

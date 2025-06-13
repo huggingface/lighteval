@@ -28,7 +28,6 @@ from dataclasses import asdict, dataclass, field
 from typing import Union
 
 import git
-import numpy as np
 import xxhash
 
 from lighteval.metrics.stderr import get_stderr_function
@@ -37,7 +36,6 @@ from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import is_nanotron_available
-from lighteval.utils.utils import sanitize_numpy
 
 
 logger = logging.getLogger(__name__)
@@ -195,23 +193,9 @@ class DetailsLogger:
 
         """
 
-        example: str = ""
-        instruction: str = ""
-        full_prompt: str = ""
-        num_effective_few_shots: int = 0
-        num_asked_few_shots: int = 0
-        predictions: list = field(default_factory=list)
-        prediction_logits: list = field(default_factory=list)
-        input_tokens: list = field(default_factory=list)
-        cont_tokens: list = field(default_factory=list)
-        truncated: list = field(default_factory=list)
-        padded: list = field(default_factory=list)
-        gold: list = field(default_factory=list)
-        pred_logits: list = field(default_factory=list)
-        choices: list = field(default_factory=list)
-        gold_index: list = field(default_factory=list)
-        metrics: dict = field(default_factory=dict)
-        specifics: dict | None = None
+        doc: Doc
+        model_response: ModelResponse
+        metric: dict
 
     @dataclass
     class CompiledDetail:
@@ -331,29 +315,7 @@ class DetailsLogger:
             llm_as_prompt_judgement (tuple[str, str]): Tuple containing the
                 prompt passed to the judge and the judgement for the current sample when using llm-as-judge metric.
         """
-        detail = self.Detail()
-        detail.example = doc.query
-        detail.instruction = doc.instruction
-
-        predictions = model_response.text
-        detail.predictions = predictions
-        detail.input_tokens = []  # [o.input_tokens for o in outputs]
-        detail.cont_tokens = []  # [o.generated_tokens for o in outputs]
-        detail.truncated = []  # [o.truncated_tokens_count for o in outputs]
-        detail.padded = []  # [o.padded_tokens_count for o in outputs]
-        detail.num_effective_few_shots = doc.num_effective_few_shots
-        detail.num_asked_few_shots = doc.num_asked_few_shots
-        detail.specifics = doc.specific
-
-        pred_saved = True
-        # detail.specifics = doc.specific
-
-        if not pred_saved:
-            raise NotImplementedError(
-                "No metric prediction saved."
-            )  # We probably need to handle this case if we're here.
-
-        detail.metrics = sanitize_numpy(metrics)
+        detail = self.Detail(doc, model_response, metrics)
         self.details[task_name].append(detail)
 
         hash = self.Hash()
@@ -385,20 +347,8 @@ class DetailsLogger:
             ).hexdigest()  # hash of all the hash - sorted for reproducibility
             self.compiled_hashes[task_name] = compiled_hash
 
-        for task_name, task_examples in self.details.items():
+        for task_name, _ in self.details.items():
             self.compiled_details[task_name].hashes = asdict(self.compiled_hashes[task_name])
-            self.compiled_details[task_name].truncated = sum(di > 0 for d in task_examples for di in d.truncated)
-            self.compiled_details[task_name].non_truncated = (
-                len(task_examples) - self.compiled_details[task_name].truncated
-            )
-            self.compiled_details[task_name].padded = sum(di > 0 for d in task_examples for di in d.padded)
-            self.compiled_details[task_name].non_padded = sum(di == 0 for d in task_examples for di in d.padded)
-            self.compiled_details[task_name].effective_few_shots = np.mean(
-                [d.num_effective_few_shots for d in task_examples]
-            )
-            self.compiled_details[task_name].num_truncated_few_shots = sum(
-                d.num_effective_few_shots != d.num_asked_few_shots for d in task_examples
-            )
 
         hash_types: list[str] = list(self.compiled_details.values())[0].hashes.keys()
 
@@ -408,16 +358,6 @@ class DetailsLogger:
                     compiled_detail.hashes[hash_type] for _, compiled_detail in sorted(self.compiled_details.items())
                 )
             ).hexdigest()
-
-        self.compiled_details_over_all_tasks.truncated = sum(d.truncated for d in self.compiled_details.values())
-        self.compiled_details_over_all_tasks.non_truncated = sum(
-            d.non_truncated for d in self.compiled_details.values()
-        )
-        self.compiled_details_over_all_tasks.padded = sum(d.padded for d in self.compiled_details.values())
-        self.compiled_details_over_all_tasks.non_padded = sum(d.non_padded for d in self.compiled_details.values())
-        self.compiled_details_over_all_tasks.num_truncated_few_shots = sum(
-            d.num_truncated_few_shots for d in self.compiled_details.values()
-        )
 
 
 @dataclass

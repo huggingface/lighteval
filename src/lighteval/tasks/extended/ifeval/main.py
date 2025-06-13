@@ -29,6 +29,7 @@ from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.utils.metric_utils import (
     SampleLevelMetricGrouping,
 )
+from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.utils import remove_reasoning_tags
@@ -58,15 +59,15 @@ REASONING_TAG_PAIRS = [
 ]
 
 
-def ifeval_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dict:
-    response = predictions[0]
+def ifeval_metric(doc: Doc, model_response: ModelResponse, **kwargs) -> dict:
+    response = model_response.text[0]
     # Remove the reasoning block to avoid false negatives: https://github.com/huggingface/lighteval/issues/790
     response = remove_reasoning_tags(response, REASONING_TAG_PAIRS)
 
     # Strict instructions
-    instruction_list = formatted_doc.specific["instructions_id_list"]
-    all_kwargs = formatted_doc.specific["kwargs"]
-    prompt = formatted_doc.query
+    instruction_list = doc.specific["instructions_id_list"]
+    all_kwargs = doc.specific["kwargs"]
+    prompt = doc.query
 
     # Loose instructions
     r = response.split("\n")

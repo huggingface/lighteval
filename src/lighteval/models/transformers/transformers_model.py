@@ -822,6 +822,7 @@ class TransformersModel(LightevalModel):
                         batch_cont_tokens_doc.append(tokenized_continuation)
 
                     answer = ModelResponse(
+                        input=contexts[i],
                         argmax_logits_eq_gold=[max_equal.cpu().item() for max_equal in max_equals_doc],
                         logprobs=[sum.cpu().item() for sum in logits_sum_doc],
                         input_tokens=tokenized_contexts_batch[i],

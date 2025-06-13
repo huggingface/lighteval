@@ -63,7 +63,7 @@ class Doc:
     images: Optional[list["Image"]] = None
 
     # For few-shot
-    instruction: str | None = ""
+    instruction: str | None = None
     fewshot_sorting_class: Optional[str] = None  # class to use to select balanced few-shot samples
 
     # Filled when parsing and adding the few-shot context
@@ -87,10 +87,6 @@ class Doc:
     use_logits: bool = False  # whether to use logits for the generation or not
     num_samples: int = 1  # number of samples to generate for each sample
     generation_grammar: None = None
-
-    def __post_init__(self):
-        if self.instruction is None:
-            self.instruction = ""
 
     def get_golds(self):
         """Return gold targets extracted from the target dict"""

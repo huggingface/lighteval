@@ -176,6 +176,7 @@ class InferenceProvidersClient(LightevalModel):
         """
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         results = []
+        breakpoint()
 
         for split in tqdm(
             dataset.splits_iterator(),
@@ -189,12 +190,13 @@ class InferenceProvidersClient(LightevalModel):
 
             responses = asyncio.run(self.__call_api_parallel(contexts, num_samples))
 
-            for response in responses:
+            for response, context in zip(responses, contexts):
                 result: list[str] = [choice.message.content for choice in response.choices]
 
                 cur_response = ModelResponse(
                     # In empty responses, the model should return an empty string instead of None
                     text=result if result[0] else [""],
+                    input=context,
                 )
                 results.append(cur_response)
 

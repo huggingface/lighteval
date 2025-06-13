@@ -1,6 +1,6 @@
 model_parameters:
   reuse_existing: true # if true, ignore all params in instance, and don't delete the endpoint after evaluation
-  endpoint_name: "llama-2-7b-lighteval" # needs to be lower case without special characters
+  endpoint_name: "llama-3-2-1b-instruct-uip" # needs to be lower case without special characters
 
     #model_name: "meta-llama/Llama-2-7b-hf"
   revision: "main"  # defaults to "main"

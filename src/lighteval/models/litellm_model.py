@@ -238,12 +238,13 @@ class LiteLLMClient(LightevalModel):
 
             responses = self.__call_api_parallel(contexts, return_logits, max_new_tokens, num_samples, stop_sequence)
 
-            for response in responses:
+            for response, context in zip(responses, contexts):
                 result: list[str] = [choice.message.content for choice in response.choices]
 
                 cur_response = ModelResponse(
                     # In empty responses, the model should return an empty string instead of None
                     text=result if result[0] else [""],
+                    input=context,
                 )
                 results.append(cur_response)
 

@@ -61,11 +61,11 @@ class BatchCollator:
         self.prompt_manager = prompt_manager
         self.kwargs = kwargs
 
-    def __call__(self, requests: list[Doc]) -> Tuple[dict[str, torch.Tensor], list[Doc]]:
+    def __call__(self, requests: list[Doc]) -> Tuple[dict[str, torch.Tensor], list[Doc], list[str]]:
         texts = [self.prompt_manager.prepare_prompt_multimodal(request) for request in requests]
         images = [request.images for request in requests]
         inputs = self.processor(text=texts, images=images, **self.kwargs)
-        return inputs, requests
+        return inputs, requests, texts
 
 
 class VLMTransformersModelConfig(ModelConfig):
@@ -378,7 +378,7 @@ class VLMTransformersModel(LightevalModel):
             if self.accelerator:
                 dataloader = self.accelerator.prepare(dataloader)
 
-            for batch_inputs, batch_requests in tqdm(
+            for batch_inputs, batch_requests, input_context in tqdm(
                 dataloader, desc="Greedy generation", position=1, leave=True, disable=self.disable_tqdm
             ):
                 batch_inputs = batch_inputs.to(self.device)
@@ -403,6 +403,7 @@ class VLMTransformersModel(LightevalModel):
                 batch_results = []
                 for i in range(len(generated_texts)):
                     generated_response = ModelResponse(
+                        input=input_context[i],
                         text=generated_texts[i],
                         output_tokens=generated_tokens[i].cpu().numpy(),
                         input_tokens=input_tokens[i].cpu().numpy(),

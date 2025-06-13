@@ -32,6 +32,7 @@ class ModelResponse:
     Used for Both Loglikelihood and Generative responses.
     """
 
+    input: str | list | None = None
     text: list[str] = field(default_factory=list)  # The text of the response
     logprobs: list[float] = field(default_factory=list)  # Log probabilities of the response
     argmax_logits_eq_gold: list[bool] = field(default_factory=list)  # Whether the argmax logits match the gold text
@@ -43,9 +44,9 @@ class ModelResponse:
     input_tokens: list[int] = field(default_factory=list)  # model inputs
     output_tokens: list[list[int]] = field(default_factory=list)  # model generations
 
-    unconditioned_logprobs: Optional[
-        list[float]
-    ] = None  # Log probabilities of the unconditioned model (if applicable)
+    unconditioned_logprobs: Optional[list[float]] = (
+        None  # Log probabilities of the unconditioned model (if applicable)
+    )
 
     def get_result_for_eval(self):
         raise NotImplementedError()

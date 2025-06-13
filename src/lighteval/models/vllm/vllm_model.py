@@ -291,7 +291,7 @@ class VLLMModel(LightevalModel):
                 num_samples=num_samples,
             )
 
-            for vllm_output in vllm_outputs:
+            for i, vllm_output in enumerate(vllm_outputs):
                 output_token_ids = [outputs.token_ids for outputs in vllm_output.outputs]
                 logprobs = [output.logprobs for output in vllm_output.outputs] or []
                 logprobs = [logprob[token_id].logprob for token_id, logprob in zip(output_token_ids[0], logprobs[0])]
@@ -299,6 +299,7 @@ class VLLMModel(LightevalModel):
                 input_token_ids = vllm_output.prompt_token_ids
 
                 cur_response = ModelResponse(
+                    input=context[i],
                     text=result,
                     logprobs=logprobs,
                     output_tokens=list(output_token_ids),
@@ -399,7 +400,7 @@ class VLLMModel(LightevalModel):
             outputs = self._generate(inputs, generate=False)
 
             flat_index = 0
-            for _, doc in enumerate(split):
+            for i, doc in enumerate(split):
                 outputs_doc = outputs[flat_index : flat_index + len(doc.choices)]
                 tokenized_continuations_doc = tokenized_continuations_batch[flat_index : flat_index + len(doc.choices)]
                 tokenized_contexts_doc = tokenized_contexts_batch[flat_index : flat_index + len(doc.choices)]
@@ -424,6 +425,7 @@ class VLLMModel(LightevalModel):
                     input_tokens_doc.append(context)
 
                 answer = ModelResponse(
+                    input=contexts[i],
                     input_tokens=input_tokens_doc,
                     output_tokens=output_tokens_doc,
                     logprobs=logprobs_doc,
