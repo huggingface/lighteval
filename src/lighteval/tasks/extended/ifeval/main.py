@@ -27,17 +27,16 @@ from aenum import extend_enum
 import lighteval.tasks.extended.ifeval.instructions_registry as instructions_registry
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.utils.metric_utils import (
-    MetricCategory,
-    MetricUseCase,
     SampleLevelMetricGrouping,
 )
+from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.utils import remove_reasoning_tags
 
 
 # Very specific task where there are no precise outputs but instead we test if the format obeys rules
-def ifeval_prompt(line, task_name: str = None):
+def ifeval_prompt(line, task_name: str = ""):
     return Doc(
         task_name=task_name,
         query=line["prompt"],
@@ -60,15 +59,15 @@ REASONING_TAG_PAIRS = [
 ]
 
 
-def ifeval_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dict:
-    response = predictions[0]
+def ifeval_metric(doc: Doc, model_response: ModelResponse, **kwargs) -> dict:
+    response = model_response.text[0]
     # Remove the reasoning block to avoid false negatives: https://github.com/huggingface/lighteval/issues/790
     response = remove_reasoning_tags(response, REASONING_TAG_PAIRS)
 
     # Strict instructions
-    instruction_list = formatted_doc.specific["instructions_id_list"]
-    all_kwargs = formatted_doc.specific["kwargs"]
-    prompt = formatted_doc.query
+    instruction_list = doc.specific["instructions_id_list"]
+    all_kwargs = doc.specific["kwargs"]
+    prompt = doc.query
 
     # Loose instructions
     r = response.split("\n")
@@ -136,8 +135,7 @@ def agg_inst_level_acc(items):
 ifeval_metrics = SampleLevelMetricGrouping(
     metric_name=submetric_names,
     higher_is_better=dict.fromkeys(submetric_names, True),
-    category=MetricCategory.GENERATIVE,
-    use_case=MetricUseCase.ACCURACY,
+    category=SamplingMethod.GENERATIVE,
     sample_level_fn=ifeval_metric,
     corpus_level_fn={
         "prompt_level_strict_acc": np.mean,
@@ -154,7 +152,7 @@ ifeval = LightevalTaskConfig(
     suite=["extended"],
     hf_repo="google/IFEval",
     hf_subset="default",
-    metric=[ifeval_metrics],
+    metrics=[ifeval_metrics],
     hf_avail_splits=["train"],
     evaluation_splits=["train"],
     few_shots_split="train",

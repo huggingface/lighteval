@@ -21,12 +21,11 @@
 # SOFTWARE.
 
 import random
-from collections import Counter
 
 import pytest
 
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
-from lighteval.tasks.prompt_manager import FewShotSampler, PromptManager
+from lighteval.tasks.prompt_manager import FewShotSampler
 from lighteval.tasks.requests import Doc
 
 
@@ -35,13 +34,13 @@ def test_fewshot_sampler(fewshot_select: str):
     config = LightevalTaskConfig(
         name="test_fewshot_task",
         prompt_function=lambda _, __: None,
-        hf_repo=None,
+        hf_repo="",
         hf_subset="default",
-        metric=[],
+        metrics=[],
         few_shots_split="test",
         few_shots_select=fewshot_select,
     )
-    task = LightevalTask("test_fewshot_task", config)
+    task = LightevalTask(config)
     rnd = random.Random(0)
     task._fewshot_docs = [
         Doc(str(i), ["A", "B"], rnd.randint(0, 2), fewshot_sorting_class=str(i % 20)) for i in range(100)
@@ -49,10 +48,8 @@ def test_fewshot_sampler(fewshot_select: str):
     sampler = FewShotSampler(task)
     seed = 1
     docs = sampler.sample_fewshot_examples(20, seed)
+
     match task.fewshot_selection:
-        case "balanced":
-            labels = Counter([PromptManager.doc_to_fewshot_sorting_class(d) for d in docs])
-            assert labels.total() / len(labels) == 1
         case "sequential":
             assert docs == task.fewshot_docs()[:20]
         case "random":

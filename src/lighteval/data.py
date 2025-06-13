@@ -36,11 +36,7 @@ else:
     from torch.utils.data.distributed import T_co as _T_co
 
 from lighteval.tasks.requests import (
-    GreedyUntilRequest,
-    LoglikelihoodRequest,
-    LoglikelihoodRollingRequest,
-    LoglikelihoodSingleTokenRequest,
-    Request,
+    Doc,
 )
 
 
@@ -50,7 +46,7 @@ logger = logging.getLogger(__name__)
 class DynamicBatchDataset(Dataset):
     def __init__(
         self,
-        requests: list,
+        requests: list[Doc],
         num_dataset_splits: int,
     ):
         """
@@ -129,7 +125,7 @@ class DynamicBatchDataset(Dataset):
             split_start, split_end = self.splits[i]
             yield Subset(self, range(split_start, split_end))
 
-    def __getitem__(self, index) -> Request:
+    def __getitem__(self, index) -> Doc:
         """
         Get an item from the dataset.
 
@@ -152,7 +148,7 @@ class DynamicBatchDataset(Dataset):
         """
         return len(self.sorted_data)
 
-    def __iter__(self) -> Iterator[Request]:
+    def __iter__(self) -> Iterator[Doc]:
         """
         Iterator that yields the items of the dataset depending on the split we
         are currently in. For instance, if we are in split 0, we will get the
@@ -166,12 +162,12 @@ class DynamicBatchDataset(Dataset):
         for i in range(len(self)):
             yield self.sorted_data[i]
 
-    def _sorting_criteria(self, request) -> int:
+    def _sorting_criteria(self, doc: Doc):
         raise NotImplementedError()
 
 
 class LoglikelihoodDataset(DynamicBatchDataset):
-    def _sorting_criteria(self, request: LoglikelihoodRequest | LoglikelihoodRollingRequest) -> int:
+    def _sorting_criteria(self, doc: Doc) -> int:
         """
         Collates the input data for batching.
 
@@ -191,27 +187,7 @@ class LoglikelihoodDataset(DynamicBatchDataset):
         Returns:
             tuple: A tuple containing the sorted input data.
         """
-        toks = request.tokenized_context + request.tokenized_continuation
-        return -len(toks)
-
-
-class LoglikelihoodSingleTokenDataset(DynamicBatchDataset):
-    def _sorting_criteria(self, request: LoglikelihoodSingleTokenRequest) -> int:
-        """
-        Collates the input data for batching.
-
-        the negative sign on len(toks) sorts descending - this has a few # advantages:
-        - time estimates will always be over not underestimates, which is
-        more useful for planning
-        - to know the size of a batch when going through the list, you
-        know the first one is always the batch padded context length. this
-        is useful to simplify the batching logic and more importantly to make
-        automatic adaptive batches much much easier to implement
-        - any OOMs will happen right away rather than near the end
-        """
-        # We take only the prompt, no need for the continuation (since it's a list of single tokens)
-        toks = request.tokenized_context
-        return -len(toks)
+        return -len(doc.query)
 
 
 class GenerativeTaskDataset(DynamicBatchDataset):
@@ -256,7 +232,7 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         splits_indices = [tuple(e) for e in splits_indices]
         return num_dataset_splits, splits_indices
 
-    def _sorting_criteria(self, request: GreedyUntilRequest) -> tuple[bool, bool, list, int, int]:
+    def _sorting_criteria(self, doc: Doc) -> tuple[bool, bool, tuple, int, int]:
         """
         Collate function for generating batches.
 
@@ -266,24 +242,24 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         Returns:
             Any: The collated data.
         """
-        toks = request.context
-        gen_length = request.generation_size
+        query = doc.query
+        gen_length = doc.generation_size
 
         # The generative task has no limit except the model context
         if gen_length is None:
             gen_length = 0
 
         return (
-            request.do_sample,
-            request.use_logits,
-            tuple(request.stop_sequence),
+            doc.do_sample,
+            doc.use_logits,
+            tuple(doc.stop_sequences),
             gen_length,
-            -(len(toks) + gen_length),
+            -(len(query) + gen_length),
         )
 
 
 class GenerativeTaskDatasetNanotron(GenerativeTaskDataset):
-    def __getitem__(self, index) -> Request:
+    def __getitem__(self, index) -> Doc:
         """
         Get an item from the dataset depending on the split we are currently in.
         For instance, if we are in split 0, we will get the item at index 0, if
@@ -296,7 +272,7 @@ class GenerativeTaskDatasetNanotron(GenerativeTaskDataset):
         Returns:
             Any: The item at the specified index.
         """
-        return index, self.sorted_data[index + self.split_start]
+        return self.sorted_data[index + self.split_start]
 
 
 class GenDistributedSampler(DistributedSampler):

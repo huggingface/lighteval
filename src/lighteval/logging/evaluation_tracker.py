@@ -196,6 +196,21 @@ class EvaluationTracker:
             for task_name, task_details in self.details_logger.details.items()
         }
 
+    def preview_outputs(self) -> None:
+        logger.info("Previewing outputs for your eval run, one per task")
+        from pprint import pprint
+
+        for task_name, task_details in self.details_logger.details.items():
+            logger.info(f"Task: {task_name}")
+            detail = task_details[0]
+            # We convert the detail to a markdown string
+            model_response = detail.model_response
+            metrics = detail.metric
+
+            pprint(model_response.text)
+            pprint(model_response.input)
+            pprint(metrics)
+
     def save(self) -> None:
         """Saves the experiment information and results to files, and to the hub if requested."""
         logger.info("Saving experiment tracker")
@@ -214,6 +229,7 @@ class EvaluationTracker:
             "summary_tasks": self.details_logger.compiled_details,
             "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
         }
+        self.preview_outputs()
 
         # Create the details datasets for later upload
         details_datasets: dict[str, Dataset] = {}
@@ -321,6 +337,7 @@ class EvaluationTracker:
         logger.info(f"Saving details to {output_dir_details_sub_folder}")
         for task_name, dataset in details_datasets.items():
             output_file_details = output_dir_details_sub_folder / f"details_{task_name}_{date_id}.parquet"
+            breakpoint()
             with self.fs.open(str(output_file_details), "wb") as f:
                 dataset.to_parquet(f)
 
