@@ -176,7 +176,6 @@ class InferenceProvidersClient(LightevalModel):
         """
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         results = []
-        breakpoint()
 
         for split in tqdm(
             dataset.splits_iterator(),

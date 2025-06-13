@@ -200,7 +200,6 @@ class InferenceEndpointModel(LightevalModel):
                             )
                         else:  # Endpoint exists
                             logger.info("Reusing existing endpoint.")
-                            breakpoint()
                             self.endpoint = get_inference_endpoint(name=endpoint_name, namespace=config.namespace)
 
                     else:

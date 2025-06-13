@@ -30,6 +30,7 @@ from datetime import timedelta
 from enum import Enum, auto
 
 import numpy as np
+from tqdm import tqdm
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.metrics import apply_metric
@@ -271,7 +272,7 @@ class Pipeline:
         self.evaluation_tracker.general_config_logger.log_args_info(
             num_fewshot_seeds=self.pipeline_parameters.num_fewshot_seeds,
             max_samples=self.pipeline_parameters.max_samples,
-            job_id=self.pipeline_parameters.job_id,
+            job_id=str(self.pipeline_parameters.job_id),
             config=self.model_config,
         )
 
@@ -386,6 +387,31 @@ class Pipeline:
                 for output, doc, response in zip(outputs, docs, responses):
                     self.evaluation_tracker.metrics_logger.log(task_name, output)
                     self.evaluation_tracker.details_logger.log(task_name, doc, response, output)
+
+    def _load_responses_from_details(self):
+        logger.info("--- LOADING RESPONSES FROM DETAILS ---")
+        model_responses = {}
+        tasks_names = list(self.tasks_dict.keys())
+        sampling_methods = list(self.sampling_docs.keys())
+
+        if len(sampling_methods) > 1:
+            raise ValueError(
+                "Loading responses from details when there are multiple request types is currently not supported"
+            )
+
+        assert self.pipeline_parameters.load_responses_from_details_date_id is not None
+
+        details_datasets = self.evaluation_tracker.load_details_datasets(
+            self.pipeline_parameters.load_responses_from_details_date_id, tasks_names
+        )
+
+        for _, dataset in tqdm(details_datasets.items(), desc="Loading responses from details for tasks"):
+            for sampling_method in sampling_methods:
+                model_responses[sampling_method] = [
+                    ModelResponse(**model_response["model_response"]) for model_response in dataset
+                ]
+
+        return model_responses
 
     def save_and_push_results(self):
         logger.info("--- SAVING AND PUSHING RESULTS ---")
