@@ -229,7 +229,7 @@ class EvaluationTracker:
             "summary_tasks": self.details_logger.compiled_details,
             "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
         }
-        self.preview_outputs()
+        # self.preview_outputs()
 
         # Create the details datasets for later upload
         details_datasets: dict[str, Dataset] = {}
