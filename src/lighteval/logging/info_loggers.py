@@ -393,7 +393,6 @@ class MetricsLogger:
         """
 
         for task_name, metrics in self.metrics_values.items():
-            # fix the fact that we need the task_dict
             task = task_dict[task_name]
 
             skip_metric = []

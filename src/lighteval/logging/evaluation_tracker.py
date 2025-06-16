@@ -229,7 +229,6 @@ class EvaluationTracker:
             "summary_tasks": self.details_logger.compiled_details,
             "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
         }
-        # self.preview_outputs()
 
         # Create the details datasets for later upload
         details_datasets: dict[str, Dataset] = {}
@@ -318,6 +317,9 @@ class EvaluationTracker:
         details_datasets = {}
         for file in self.fs.glob(str(output_dir_details_sub_folder / f"details_*_{date_id}.parquet")):
             task_name = Path(file).stem.replace("details_", "").replace(f"_{date_id}", "")
+            if "|".join(task_name.split("|")[:-1]) not in task_names:
+                logger.info(f"Skipping {task_name} because it is not in the task_names list")
+                continue
             dataset = load_dataset("parquet", data_files=file, split="train")
             details_datasets[task_name] = dataset
 

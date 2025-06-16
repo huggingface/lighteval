@@ -92,7 +92,7 @@ class LiteLLMClient(LightevalModel):
         self.pairwise_tokenization = False
         litellm.drop_params = True
         litellm.set_verbose = False
-        self.prompt_manager = PromptManager(True, self.tokenizer)
+        self.prompt_manager = PromptManager(use_chat_template=True, tokenizer=self.tokenizer)
 
     def _prepare_stop_sequence(self, stop_sequence):
         """Prepare and validate stop sequence."""

@@ -28,7 +28,7 @@ import torch
 from transformers.tokenization_utils_base import BatchEncoding, PreTrainedTokenizerBase
 
 from lighteval.models.model_output import ModelResponse
-from lighteval.tasks.requests import Doc, SamplingMethod
+from lighteval.tasks.requests import Doc
 
 
 TokenSequence = Union[list[int], torch.LongTensor, torch.Tensor, BatchEncoding]
@@ -71,12 +71,6 @@ class LightevalModel(ABC):
     @property
     def disable_tqdm(self) -> bool:
         return False
-
-    def get_method_from_request_type(self, request_type: SamplingMethod):
-        if request_type == SamplingMethod.LOGPROBS:
-            return self.loglikelihood
-        if request_type == SamplingMethod.GENERATIVE:
-            return self.greedy_until
 
     @abstractmethod
     def greedy_until(

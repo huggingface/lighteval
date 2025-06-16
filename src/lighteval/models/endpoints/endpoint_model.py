@@ -262,7 +262,7 @@ class InferenceEndpointModel(LightevalModel):
         self._tokenizer = AutoTokenizer.from_pretrained(self.name)
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
 
-        self.prompt_manager = PromptManager(True, self.tokenizer)
+        self.prompt_manager = PromptManager(use_chat_template=True, tokenizer=self.tokenizer)
         self.model_info = ModelInfo(
             model_name=self.name,
             model_sha=self.revision,
@@ -510,9 +510,9 @@ class InferenceEndpointModel(LightevalModel):
                     max_equal = (greedy_tokens == cont_toks).all().squeeze(0)
                     results.append(
                         ModelResponse(
-                            result=(sum(logits), bool(max_equal)),
+                            logprobs=(sum(logits), bool(max_equal)),
                             input_tokens=[t.id for t in response.details.prefill[:-len_choice]],
-                            generated_tokens=[t.id for t in response.details.prefill[-len_choice:]],
+                            output_tokens=[t.id for t in response.details.prefill[-len_choice:]],
                             truncated_tokens_count=-1,
                             padded_tokens_count=-1,
                         )

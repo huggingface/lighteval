@@ -129,7 +129,6 @@ def test_task_duplicates():
     task_info = registry.taskinfo_selector("custom|test_task_revision|0|0,custom|test_task_revision|0|0")
 
     assert list(task_info.keys()) == ["custom|test_task_revision"]
-    # assert task_info["custom|test_task_revision"] == [{'fewshots': 0, 'truncate_fewshots': False}]
 
 
 def test_task_creation():

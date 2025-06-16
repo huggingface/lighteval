@@ -237,7 +237,7 @@ class Pipeline:
             if self._metric_options:
                 self._update_num_samples(list(self.tasks_dict.values()))
 
-            # self.evaluation_tracker.task_config_logger.log(tasks)
+            self.evaluation_tracker.task_config_logger.log(self.tasks_dict)
 
     def _update_num_samples(self, tasks: list[LightevalTask]):
         """Helper function to update the num_samples of a given metric via the yaml file.

@@ -482,7 +482,7 @@ def inference_providers(
     ] = 0,
 ):
     """
-    Evaluate models using HuggingFace's inference proiders as backend.
+    Evaluate models using HuggingFace's inference providers as backend.
     """
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker

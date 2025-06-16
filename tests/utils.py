@@ -126,7 +126,6 @@ def fake_evaluate_task(
 
     # This is a bit hacky, because there is no way to run end to end, with
     # dynamic task :(, so we just mock the registry
-    # task_run_string = f"{task_name}|{n_fewshot}|{n_fewshot_seeds}"
     with patch("lighteval.pipeline.Registry", FakeRegistry):
         pipeline = Pipeline(
             tasks=task_name,

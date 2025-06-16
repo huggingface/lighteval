@@ -48,9 +48,6 @@ class ModelResponse:
         None  # Log probabilities of the unconditioned model (if applicable)
     )
 
-    def get_result_for_eval(self):
-        raise NotImplementedError()
-
 
 @dataclass
 class Batch:
