@@ -744,6 +744,9 @@ class TransformersModel(LightevalModel):
                 starting_batch_size=starting_batch_size,
             )
             starting_batch_size = batch_size * 2
+            logger.warning(
+                f"batch size is set to {batch_size} however, logliklehood evaluates on n choices per samples so batch size will be muiltiplied by number of choices per sample"
+            )
 
             dataloader = DataLoader(split, batch_size=batch_size, collate_fn=lambda batch: batch)
             if self.accelerator:
