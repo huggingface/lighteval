@@ -64,7 +64,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
         metafunc.parametrize("prompt_inputs", parameters, scope="session")
 
 
-def test_model_prediction(prompt_inputs: tuple[str, str, list]):
+def test_model_prediction(prompt_inputs: tuple[str, str, list]):  # noqa: C901
     """Evaluates a model on a full task - is parametrized using pytest_generate_test"""
     metric, task_name, examples = prompt_inputs
     metric_name = metric
