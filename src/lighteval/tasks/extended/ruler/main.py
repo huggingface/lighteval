@@ -23,8 +23,14 @@
 import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+import os
 
-
+ruler_model = os.environ.get("RULER_MODEL")
+ruler_org = os.environ.get("RULER_ORG")
+if ruler_model is None:
+    raise ValueError("RULER_MODEL environment variable is not set, set it to the model you want to evaluate")
+if ruler_org is None:
+    raise ValueError("RULER_ORG environment variable is not set, set it to the organization you want to evaluate")
 subsets = [
     "niah_single_1",
     "niah_single_2",
@@ -52,7 +58,7 @@ for subset in subsets:
                 name=f"ruler_{length}:{subset}",
                 suite=["lighteval"],
                 prompt_function=prompt.ruler,
-                hf_repo=f"SaylorTwift/RULER-{length}-llama-3.2-tokenizer",
+                hf_repo=f"{ruler_org}/RULER-{length}-{ruler_model}",
                 hf_subset="default",
                 hf_avail_splits=[subset],
                 evaluation_splits=[subset],
