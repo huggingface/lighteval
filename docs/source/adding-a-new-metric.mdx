@@ -57,8 +57,7 @@ with [`~metrics.utils.metric_utils.SampleLevelMetric`]:
 my_custom_metric = SampleLevelMetric(
     metric_name={custom_metric_name},
     higher_is_better={either True or False},
-    category={MetricCategory},
-    use_case={MetricUseCase},
+    category={SamplingMethod},
     sample_level_fn=custom_metric,
     corpus_level_fn=agg_function,
 )
@@ -71,8 +70,7 @@ with [`~metrics.utils.metric_utils.SampleLevelMetricGrouping`]:
 custom_metric = SampleLevelMetricGrouping(
     metric_name={submetric_names},
     higher_is_better={n: {True or False} for n in submetric_names},
-    category={MetricCategory},
-    use_case={MetricUseCase},
+    category={SamplingMethod},
     sample_level_fn=custom_metric,
     corpus_level_fn={
         "accuracy": np.mean,
