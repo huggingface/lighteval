@@ -122,7 +122,7 @@ class TargetPerplexityPreparator:
             ValueError: If the unit type is not words or byte, raises a ValueError
         """
         if units_type not in ["words", "bytes"]:
-            raise ValueError("Perplexity must be used with either words or bytes.")
+            raise ValueError("Perplexity must be computed at either the word or byte level.")
         self.units_type = units_type
 
     def count_units(self, text: str) -> int:

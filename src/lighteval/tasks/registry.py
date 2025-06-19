@@ -161,7 +161,7 @@ class Registry:
 
         Args:
             tasks (str): A string containing a comma-separated list of tasks definitions in the
-                format "task_definition|few_shot|truncate_few_shots" or a path to a file
+                format: "task_definition", where it can be
                 containing a list of tasks.
                 where task_definition can be:
                 - path to a file containing a list of tasks (one per line)
