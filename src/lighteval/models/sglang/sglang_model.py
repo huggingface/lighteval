@@ -248,6 +248,10 @@ class SGLangModel(LightevalModel):
             self.sampling_params["max_new_tokens"] = max_new_tokens
             self.sampling_params["stop"] = stop_tokens
             self.sampling_params["n"] = num_samples
+            if num_samples > 1 and self.sampling_params["temperature"] == 0:
+                logger.warning(
+                    "Generating multiple samples with temperature=0 is not recommended, as it will return the same sample multiple times."
+                )
         else:
             self.sampling_params["max_new_tokens"] = 1
             self.sampling_params["temperature"] = 0
