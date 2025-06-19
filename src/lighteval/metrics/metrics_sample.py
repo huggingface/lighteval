@@ -608,7 +608,7 @@ class BertScore:
         self.normalize_gold = normalize_gold
         self.normalize_pred = normalize_pred
 
-    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> dict:
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> dict[str, float]:
         """Computes the prediction, recall and f1 score using the bert scorer.
 
         Args:
@@ -662,7 +662,7 @@ class Extractiveness:
         self.normalize_pred = normalize_pred
         self.input_column = input_column
 
-    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> dict:
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> dict[str, float]:
         """
         Compute the extractiveness of the predictions.
 

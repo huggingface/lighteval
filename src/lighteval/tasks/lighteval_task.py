@@ -35,7 +35,6 @@ from lighteval.metrics.metrics import Metric, Metrics
 from lighteval.tasks.prompt_manager import FewShotSampler
 from lighteval.tasks.requests import (
     Doc,
-    SamplingMethod,
 )
 from lighteval.utils.utils import ListLike, as_list, download_dataset_worker
 
@@ -187,9 +186,7 @@ class LightevalTask:
 
         # Metrics
         self.metrics = config.metrics
-
         self.sampling_methods = list({metric.category for metric in self.metrics})
-        self.has_metric_category = {category: (category in self.sampling_methods) for category in SamplingMethod}
 
         # generation parameters
         self.generation_size = config.generation_size
@@ -331,7 +328,6 @@ class LightevalTask:
             )
             doc.sampling_methods.extend(self.sampling_methods)
             doc.generation_size = self.generation_size
-            doc.do_sample = True
             doc.use_logits = True
             doc.stop_sequences = self.stop_sequence
             doc.num_samples = max(self.num_samples)

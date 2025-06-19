@@ -129,7 +129,7 @@ class TransformersModelConfig(ModelConfig):
     dtype: str | None = None
     device: Union[int, str] = "cuda"
     trust_remote_code: bool = False
-    use_chat_template: bool = True
+    use_chat_template: bool = False
     compile: bool = False
     multichoice_continuations_start_space: bool | None = None
     pairwise_tokenization: bool = False
@@ -208,7 +208,7 @@ class TransformersModel(LightevalModel):
             model_name=self.config.model_name,
             model_sha=self.model_sha,
             model_dtype=config.dtype,
-            model_size=str(model_size),
+            model_size=model_size,
         )
 
         self.prompt_manager = PromptManager(self.use_chat_template, self.tokenizer)
@@ -277,8 +277,8 @@ class TransformersModel(LightevalModel):
         self.model_info = ModelInfo(
             model_name=self.model_name,
             model_sha=self.model_sha,
-            model_dtype=self.precision,
-            model_size=model_size,
+            model_dtype=str(self.precision),
+            model_size=int(model_size),
         )
         return self
 
@@ -753,7 +753,7 @@ class TransformersModel(LightevalModel):
                 dataloader = self.accelerator.prepare(dataloader)
 
             for batch in tqdm(dataloader, disable=self.disable_tqdm):
-                contexts = [self.prompt_manager.prepare_prompt(doc) for doc in batch]
+                contexts: list[str] = [self.prompt_manager.prepare_prompt(doc) for doc in batch]
                 tokenized_contexts_batch = []
                 tokenized_continuations_batch = []
 
@@ -774,6 +774,7 @@ class TransformersModel(LightevalModel):
                 logits = F.log_softmax(model_output, dim=-1)  # [batch, sequence_length, vocab]
 
                 flat_index = 0
+                # Flatten the logits to match the number of choices per sample
                 for i, doc in enumerate(batch):
                     # Get the size of the corresponding nested list
                     choices_count = len(tokenized_continuations_batch[i])
@@ -795,8 +796,7 @@ class TransformersModel(LightevalModel):
                             tokenized_continuation, dtype=torch.long, device=self.device
                         )
                         continuation_length = len(tokenized_continuation)
-                        if continuation_length > input_length:
-                            # Continuation is longer than the input size, we are in rolling mode (only continuation)
+                        if rolling:
                             logits_for_request = logits_for_request.unsqueeze(0).to(self.device)  # [1, seq, vocab]
                             tokenized_continuation = (
                                 tokenized_continuation[:input_length].unsqueeze(0).to(self.device)
@@ -840,24 +840,17 @@ class TransformersModel(LightevalModel):
         tokenized_contexts: list[list[list[int]]],
         tokenized_continuations: list[list[list[int]]],
         max_context: Optional[int] = None,
-        single_token: bool = False,
     ):
         """Tokenize a batch of inputs and return also the length, truncations and padding.
         This step is done manually since we tokenize log probability inputs together with their continuation,
         to manage possible extra spaces added at the start by tokenizers, see tok_encode_pair.
         """
-        if single_token:
-            inputs = tokenized_contexts
-        else:
-            inputs = []
-            # we used to remove the last token of continuation, but it's not needed
-            for tokenized_context, tokenized_continuation in zip(tokenized_contexts, tokenized_continuations):
-                inputs.extend(
-                    [
-                        context + continuation
-                        for context, continuation in zip(tokenized_context, tokenized_continuation)
-                    ]
-                )
+        inputs = []
+        # we used to remove the last token of continuation, but it's not needed
+        for tokenized_context, tokenized_continuation in zip(tokenized_contexts, tokenized_continuations):
+            inputs.extend(
+                [context + continuation for context, continuation in zip(tokenized_context, tokenized_continuation)]
+            )
 
         input_tokens = []
         attention_masks = []

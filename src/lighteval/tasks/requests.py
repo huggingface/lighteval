@@ -38,51 +38,54 @@ class SamplingMethod(str, Enum):
     """
 
     GENERATIVE = "GENERATIVE"
-    LOGPROBS = "LOGPROBS"
+    LOGPROBS = "LOGPROBS"  # computes logprobs of choices
+    PERPLEXITY = "PERPLEXITY"  # computes logprobs of the whole prompt
 
 
 @dataclass(slots=True)
 class Doc:
     """
-    Dataclass used to represent the content of a task example
+    Dataclass used to represent the content of a benchmark sample
     almost every field is optional, but some tasks require some fields to be present.
+    The Doc is created from the benchmark dataset, one line of the datsaet is one Doc.
+    That list of Doc is then fed to the LLM.
+
     When adding a new task, please add the required fields to the doc class.
     Each task will have a different set of fields needed.
+
+    Attributes:
+    query: str
+        The query or prompt to be sent to the model.
+    choices: list[str]
+        The list of possible choices or answers for the query.
+
     """
 
     query: str
     choices: list[str]
     gold_index: Union[int, list[int]]
+    instruction: str | None = None  # system prompt to use for the model, if any
     id: str = ""
-    original_query: Optional[str] = ""  # the query before preprocessing, if stored
+    images: list["Image"] | None = None  # for multimodal benchmarks
     specific: dict | None = None  # Information which is specific to the current eval
+
     task_name: str = ""
-    system_prompt: str | None = None  # system prompt to use for the model, if any
-    full_prompt: Optional[str] = None  # full prompt to use for the model, if any
-    # For multi-modal tasks
-    images: Optional[list["Image"]] = None
 
-    # For few-shot
-    instruction: str | None = None
-    fewshot_sorting_class: Optional[str] = None  # class to use to select balanced few-shot samples
-
-    # Filled when parsing and adding the few-shot context
+    # Fewshots parameters
     num_asked_few_shots: int = -1
     num_effective_few_shots: int = -1
+    fewshot_samples: list = field(default_factory=list)
+    sampling_methods: list[SamplingMethod] = field(default_factory=list)
+    fewshot_sorting_class: Optional[str] = None  # class to use to select balanced few-shot samples
 
     # Uncoditioned query is used for PMI normalization, that's
     # log P(choice | Query) - log P(choice | Unconditioned Query)
     # The uncoditioned query shouldn't contain any information about the task, thus usually it's empty string or 'Answer:'.
     unconditioned_query: Optional[str] = None
-
     original_query: str | None = None  # the query before preprocessing, if stored
-
-    fewshot_samples: list = field(default_factory=list)
-    sampling_methods: list[SamplingMethod] = field(default_factory=list)
 
     # Generation parameters
     generation_size: int | None = None  # number of tokens to generate for each sample
-    do_sample: bool = False  # whether to sample or not
     stop_sequences: list[str] | None = None
     use_logits: bool = False  # whether to use logits for the generation or not
     num_samples: int = 1  # number of samples to generate for each sample

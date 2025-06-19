@@ -293,9 +293,14 @@ class SGLangModel(LightevalModel):
 
             flat_index = 0
             for _, doc in enumerate(dataset):
-                outputs_doc = outputs[flat_index : flat_index + len(doc.choices)]
-                tokenized_continuations_doc = tokenized_continuations_batch[flat_index : flat_index + len(doc.choices)]
-                tokenized_contexts_doc = tokenized_contexts_batch[flat_index : flat_index + len(doc.choices)]
+                # all the element generated from one doc (one element per choice)
+                outputs_doc: list[dict] = outputs[flat_index : flat_index + len(doc.choices)]
+                tokenized_continuations_doc: list[list[int]] = tokenized_continuations_batch[
+                    flat_index : flat_index + len(doc.choices)
+                ]
+                tokenized_contexts_doc: list[list[int]] = tokenized_contexts_batch[
+                    flat_index : flat_index + len(doc.choices)
+                ]
                 logprobs_doc = []
                 argmax_doc = []
                 output_tokens_doc = []

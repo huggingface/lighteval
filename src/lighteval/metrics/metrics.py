@@ -108,7 +108,7 @@ class Metrics(Enum):
     bits_per_byte = CorpusLevelMetric(
         metric_name="bits_per_byte",
         sample_level_fn=PerplexityPreparator(units_type="bytes").prepare,
-        category=SamplingMethod.LOGPROBS,
+        category=SamplingMethod.PERPLEXITY,
         corpus_level_fn=CorpusLevelPerplexityMetric("bits_per_byte").compute,
         higher_is_better=False,
     )
@@ -144,7 +144,7 @@ class Metrics(Enum):
     byte_perplexity = CorpusLevelMetric(
         metric_name="byte_perplexity",
         sample_level_fn=PerplexityPreparator(units_type="bytes").prepare,
-        category=SamplingMethod.LOGPROBS,
+        category=SamplingMethod.PERPLEXITY,
         corpus_level_fn=CorpusLevelPerplexityMetric("weighted_perplexity").compute,
         higher_is_better=False,
     )
@@ -645,7 +645,7 @@ class Metrics(Enum):
     prediction_perplexity = SampleLevelMetric(
         metric_name="ppl",
         sample_level_fn=None,  # todo!!!
-        category=SamplingMethod.LOGPROBS,
+        category=SamplingMethod.PERPLEXITY,
         corpus_level_fn=CorpusLevelPerplexityMetric("perplexity").compute,
         higher_is_better=True,
     )
@@ -805,7 +805,7 @@ class Metrics(Enum):
     word_perplexity = CorpusLevelMetric(
         metric_name="word_perplexity",
         sample_level_fn=PerplexityPreparator(units_type="words").prepare,
-        category=SamplingMethod.LOGPROBS,
+        category=SamplingMethod.PERPLEXITY,
         corpus_level_fn=CorpusLevelPerplexityMetric("weighted_perplexity").compute,
         higher_is_better=False,
     )

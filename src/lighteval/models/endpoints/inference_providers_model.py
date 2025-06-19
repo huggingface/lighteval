@@ -80,7 +80,7 @@ class InferenceProvidersClient(LightevalModel):
             model_name=config.model_name,
             model_sha="",
             model_dtype=None,
-            model_size="",
+            model_size=-1,
         )
         self.model_name = config.model_name
         self.provider = config.provider

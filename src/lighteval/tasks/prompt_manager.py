@@ -43,9 +43,7 @@ class PromptManager:
     def __init__(self, use_chat_template: bool = False, tokenizer=None):
         self.use_chat_template = use_chat_template
         self.tokenizer = tokenizer
-
-        if self.use_chat_template and tokenizer is None:
-            raise ValueError("Tokenizer must be provided when using chat template format.")
+        self.system_prompt = None  # System prompt to be used in chat templates
 
     def prepare_prompt(self, doc: Doc) -> str:
         """Prepare a prompt from a document, either using chat template or plain text format."""
@@ -66,9 +64,9 @@ class PromptManager:
         message = {"role": "user", "content": text_content + image_content}
 
         if (
-            doc.system_prompt is not None or doc.instruction is not None
+            self.system_prompt is not None or doc.instruction is not None
         ):  # We add system prompt and instruction jointly if possible
-            system_prompt = doc.system_prompt if doc.system_prompt is not None else ""
+            system_prompt = self.system_prompt if self.system_prompt is not None else ""
             instruction = doc.instruction if doc.instruction is not None else ""
             system_content = [{"type": "text", "text": system_prompt + instruction}]
             system_prompt_message = {"role": "system", "content": system_content}
@@ -91,9 +89,9 @@ class PromptManager:
         message = {"role": "user", "content": doc.query}
 
         if (
-            doc.system_prompt is not None or doc.instruction is not None
+            self.system_prompt is not None or doc.instruction is not None
         ):  # We add system prompt and instruction jointly if possible
-            system_prompt = doc.system_prompt if doc.system_prompt is not None else ""
+            system_prompt = self.system_prompt if self.system_prompt is not None else ""
             instruction = doc.instruction if doc.instruction is not None else ""
             system_prompt_message = {"role": "system", "content": system_prompt + instruction}
             message = [system_prompt_message, message]
@@ -107,8 +105,8 @@ class PromptManager:
         messages = []
 
         # Add system prompt if available
-        if doc.system_prompt is not None:
-            messages.append({"role": "system", "content": doc.system_prompt})
+        if self.system_prompt is not None:
+            messages.append({"role": "system", "content": self.system_prompt})
 
         # Add few-shot examples
         has_previous_shots = False
@@ -136,8 +134,8 @@ class PromptManager:
         parts = []
 
         # Add system prompt if available
-        if doc.system_prompt is not None:
-            parts.append(doc.system_prompt)
+        if self.system_prompt is not None:
+            parts.append(self.system_prompt)
 
         # Add few-shot examples
         has_previous_shots = False

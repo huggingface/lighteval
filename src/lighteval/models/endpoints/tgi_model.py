@@ -88,7 +88,7 @@ class ModelClient(InferenceEndpointModel):
             model_name=model_name,
             model_sha=model_sha,
             model_dtype=model_precision,
-            model_size="",
+            model_size=-1,
         )
 
     def _async_process_request(

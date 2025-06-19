@@ -21,24 +21,9 @@
 # SOFTWARE.
 
 from dataclasses import dataclass
-from enum import Enum, auto
 from typing import Callable
 
 from lighteval.tasks.requests import SamplingMethod
-
-
-class MetricCategory(str, Enum):
-    TARGET_PERPLEXITY = auto()
-    PERPLEXITY = auto()
-    GENERATIVE = auto()
-    GENERATIVE_LOGPROB = auto()
-    GENERATIVE_SAMPLING = auto()
-    LLM_AS_JUDGE_MULTI_TURN = auto()
-    LLM_AS_JUDGE = auto()
-    MULTICHOICE = auto()
-    MULTICHOICE_PMI = auto()
-    MULTICHOICE_ONE_TOKEN = auto()
-    IGNORED = auto()
 
 
 @dataclass

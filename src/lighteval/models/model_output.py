@@ -29,7 +29,7 @@ import torch
 @dataclass
 class ModelResponse:
     """
-    Used for Both Loglikelihood and Generative responses.
+    A class to represent the response from a model.
     """
 
     input: str | list | None = None

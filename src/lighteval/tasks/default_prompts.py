@@ -2732,6 +2732,7 @@ def wmt(line, alphabetical, task_name: str = None):
         query=f"{language(l_in)} phrase: " + line["translation"][l_in].rstrip() + f"\n{language(l_out)} phrase:",
         gold_index=0,
         choices=[line["translation"][l_out].rstrip()],
+        system_prompt=f"Translate {language(l_in)} to {language(l_out)}, do not explain, only output the translation.",
     )
 
 

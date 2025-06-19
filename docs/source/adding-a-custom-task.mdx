@@ -41,7 +41,6 @@ def prompt_fn(line, task_name: str = None):
         query=line["question"],
         choices=[f" {c}" for c in line["choices"]],
         gold_index=line["gold"],
-        system_prompt="",
     )
 ```
 

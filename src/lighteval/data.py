@@ -28,16 +28,14 @@ import torch
 from packaging import version
 from torch.utils.data import Dataset, Subset
 
+from lighteval.tasks.requests import Doc
+
 
 if version.parse(torch.__version__) >= version.parse("2.5.0"):
     from torch.utils.data.distributed import DistributedSampler, _T_co
 else:
     from torch.utils.data.distributed import DistributedSampler
     from torch.utils.data.distributed import T_co as _T_co
-
-from lighteval.tasks.requests import (
-    Doc,
-)
 
 
 logger = logging.getLogger(__name__)
@@ -187,7 +185,9 @@ class LoglikelihoodDataset(DynamicBatchDataset):
         Returns:
             tuple: A tuple containing the sorted input data.
         """
-        return -len(doc.query)
+        len_doc_query = len(doc.query)
+        max_len_choices = max(len(choice) for choice in doc.choices) if doc.choices else 0
+        return -(len_doc_query + max_len_choices)
 
 
 class GenerativeTaskDataset(DynamicBatchDataset):
@@ -232,7 +232,7 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         splits_indices = [tuple(e) for e in splits_indices]
         return num_dataset_splits, splits_indices
 
-    def _sorting_criteria(self, doc: Doc) -> tuple[bool, bool, tuple, int, int]:
+    def _sorting_criteria(self, doc: Doc) -> tuple[int, bool, tuple, int, int]:
         """
         Collate function for generating batches.
 
@@ -248,18 +248,19 @@ class GenerativeTaskDataset(DynamicBatchDataset):
         # The generative task has no limit except the model context
         if gen_length is None:
             gen_length = 0
+        stop_sequences = doc.stop_sequences or []
 
         return (
-            doc.do_sample,
+            doc.num_samples,
             doc.use_logits,
-            tuple(doc.stop_sequences),
+            tuple(stop_sequences),
             gen_length,
             -(len(query) + gen_length),
         )
 
 
 class GenerativeTaskDatasetNanotron(GenerativeTaskDataset):
-    def __getitem__(self, index) -> Doc:
+    def __getitem__(self, index) -> tuple[int, Doc]:
         """
         Get an item from the dataset depending on the split we are currently in.
         For instance, if we are in split 0, we will get the item at index 0, if
@@ -272,7 +273,7 @@ class GenerativeTaskDatasetNanotron(GenerativeTaskDataset):
         Returns:
             Any: The item at the specified index.
         """
-        return self.sorted_data[index + self.split_start]
+        return index, self.sorted_data[index + self.split_start]
 
 
 class GenDistributedSampler(DistributedSampler):

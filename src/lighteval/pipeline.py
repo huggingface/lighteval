@@ -331,6 +331,9 @@ class Pipeline:
                 case SamplingMethod.LOGPROBS:
                     model_outputs = self.model.loglikelihood(docs)
                     outputs[sampling_method] = model_outputs
+                case SamplingMethod.PERPLEXITY:
+                    model_outputs = self.model.loglikelihood_rolling(docs)
+                    outputs[sampling_method] = model_outputs
 
         return outputs
 
