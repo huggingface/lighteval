@@ -320,7 +320,6 @@ class DetailsLogger:
 
         hash = self.Hash()
         hash.example = xxhash.xxh64(doc.query).hexdigest()
-        hash.full_prompt = xxhash.xxh64(str(doc.full_prompt)).hexdigest()
         hash.input_tokens = xxhash.xxh64(str(model_response.input_tokens)).hexdigest()
         hash.cont_tokens = xxhash.xxh64(str(model_response.output_tokens)).hexdigest()
         self.hashes[task_name].append(hash)

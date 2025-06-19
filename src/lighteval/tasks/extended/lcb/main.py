@@ -41,7 +41,8 @@ from lighteval.tasks.extended.lcb.codegen_metrics import (
     extract_code,
     translate_private_test_cases,
 )
-from lighteval.tasks.lighteval_task import Doc, LightevalTaskConfig, SamplingMethod
+from lighteval.tasks.lighteval_task import Doc, LightevalTaskConfig
+from lighteval.tasks.requests import SamplingMethod
 
 
 def prepare_prompt(line: dict[str, Any]) -> str:
