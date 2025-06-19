@@ -554,7 +554,6 @@ class TransformersModel(LightevalModel):
 
                 max_new_tokens = batch[0].generation_size
                 num_samples = batch[0].num_samples
-                do_sample = batch[0].do_sample
 
                 # See doc https://huggingface.co/docs/transformers/v4.38.2/en/pad_truncation#padding-and-truncation
                 # Will do left truncation and padding, as defined when creating the tokenizer
@@ -603,7 +602,6 @@ class TransformersModel(LightevalModel):
                     stop_tokens=stop_tokens,
                     returns_logits=False,
                     num_samples=num_samples,
-                    do_sample=do_sample,
                 )
                 results.extend(cur_reponses)
 
@@ -615,8 +613,7 @@ class TransformersModel(LightevalModel):
         max_new_tokens: int,
         stop_tokens: list[str],
         returns_logits: Optional[bool] = False,
-        num_samples: Optional[int] = 1,
-        do_sample: Optional[bool] = False,
+        num_samples: int = 1,
     ) -> list[ModelResponse]:
         """Contains the actual logic of the generation.
         First computes the stop sequences, then generates the predictions, then converts the outputs to GenerativeResponse.
@@ -624,12 +621,16 @@ class TransformersModel(LightevalModel):
         stopping_criteria = stop_sequences_criteria(self.tokenizer, stop_sequences=stop_tokens, batch=batch)
         batch_size, _ = batch.input_ids.shape
 
+        if num_samples > 1 and self.generation_config_dict["temperature"] == 0:
+            logger.warning(
+                "You are generating multiple samples with temperature=0. This will lead to identical outputs for each sample."
+            )
+
         generation_config = self.generation_config_dict.copy()
         generation_config.update(
             max_new_tokens=max_new_tokens,
             pad_token_id=self.tokenizer.pad_token_id if self.tokenizer.pad_token_id else self.tokenizer.eos_token_id,
             eos_token_id=self.tokenizer.eos_token_id,
-            do_sample=do_sample if generation_config.get("temperature", 1.0) > 0 else False,
             num_return_sequences=num_samples,
             output_logits=returns_logits,
             renormalize_logits=True,
