@@ -22,9 +22,19 @@
 
 # ruff: noqa: F405, F403, F401
 """
-Custom evaluation tasks for lighteval
+Task to evaluate LLMs on TUMLU-mini benchmark: https://huggingface.co/datasets/jafarisbarov/TUMLU-mini
 
-This file generally creates just a TASKS_TABLE and TASKS_GROUPS which are then imported by LightEval.
+For more details, see the associated paper:
+
+@misc{isbarov2025tumluunifiednativelanguage,
+    title={{TUMLU: A Unified and Native Language Understanding Benchmark for Turkic Languages}},
+    author={Jafar Isbarov and Arofat Akhundjanova and Mammad Hajili and Kavsar Huseynova and Dmitry Gaynullin and Anar Rzayev and Osman Tursun and Ilshat Saetov and Rinat Kharisov and Saule Belginova and Ariana Kenbayeva and Amina Alisheva and Aizirek Turdubaeva and Abdullatif Köksal and Samir Rustamov and Duygu Ataman},
+    year={2025},
+    eprint={2502.11020},
+    archivePrefix={arXiv},
+    primaryClass={cs.CL},
+    url={https://arxiv.org/abs/2502.11020},
+}
 """
 
 import random
