@@ -36,7 +36,9 @@ class GenerationParameters(BaseModel, extra="forbid"):
 
     seed: NonNegativeInt | None = None  # vllm, tgi, litellm
     stop_tokens: list[str] | None = None  # vllm, transformers, tgi, litellm, sglang
-    temperature: NonNegativeFloat | None = None  # vllm, transformers, tgi, litellm, sglang
+    temperature: NonNegativeFloat = (
+        0  # vllm, transformers, tgi, litellm, sglang # if not set, defaults to greedy decoding
+    )
     top_k: NonNegativeInt | None = None  # vllm, transformers, tgi, sglang
     min_p: NonNegativeFloat | None = None  # vllm, transformers, sglang
     top_p: NonNegativeFloat | None = None  # vllm, transformers, tgi, litellm, sglang
