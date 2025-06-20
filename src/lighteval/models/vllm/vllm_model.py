@@ -327,8 +327,8 @@ class VLLMModel(LightevalModel):
             sampling_params.stop = stop_tokens
             sampling_params.logprobs = 1 if returns_logits else 0
             if num_samples > 1 and sampling_params.temperature == 0:
-                logger.warning(
-                    "Sampling with multiple samples but temperature is set to 0. This will result in deterministic outputs."
+                raise ValueError(
+                    "num_samples > 1 is not supported with temperature=0, please set temperature > 0 or use non sampling metrics."
                 )
         else:
             sampling_params.temperature = 0

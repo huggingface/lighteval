@@ -386,14 +386,14 @@ class VLMTransformersModel(LightevalModel):
                     batch_inputs = batch_inputs.to(self.torch_dtype)
 
                 max_new_tokens = self.config.generation_size or batch_requests[0].generation_size
-                do_sample = True
-                if self.generation_config_dict.get("temperature", 0) == 0:
-                    logger.warning(
-                        "The request is asking for sampling but the temperature is set to 0. "
-                        "This will result in greedy decoding. "
-                        "Please set the temperature to a value > 0 to enable sampling."
+                num_samples = batch_requests[0].num_samples
+                do_sample = num_samples > 1 or self.generation_config_dict["temperature"] > 0
+
+                if num_samples > 1 and self.generation_config_dict["temperature"] == 0:
+                    raise ValueError(
+                        "num_samples > 1 is not supported with temperature=0, please set temperature > 0 or use non sampling metrics."
                     )
-                    do_sample = False
+
                 outputs = self.model.generate(
                     **batch_inputs,
                     **self.generation_config_dict,  # custom generation params

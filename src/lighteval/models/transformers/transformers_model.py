@@ -622,8 +622,8 @@ class TransformersModel(LightevalModel):
         batch_size, _ = batch.input_ids.shape
 
         if num_samples > 1 and self.generation_config_dict["temperature"] == 0:
-            logger.warning(
-                "You are generating multiple samples with temperature=0. This will lead to identical outputs for each sample."
+            raise ValueError(
+                "You cannot generate multiple samples with temperature=0. Please set temperature > 0. Or use a non sampling metric."
             )
 
         generation_config = self.generation_config_dict.copy()

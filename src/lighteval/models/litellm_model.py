@@ -236,6 +236,11 @@ class LiteLLMClient(LightevalModel):
             num_samples = split[0].num_samples
             stop_sequence = split[0].stop_sequences
 
+            if num_samples > 1 and self.generation_parameters.temperature == 0:
+                raise ValueError(
+                    "num_samples > 1 is not supported with temperature=0, please set temperature > 0 or use non sampling metrics."
+                )
+
             responses = self.__call_api_parallel(contexts, return_logits, max_new_tokens, num_samples, stop_sequence)
 
             for response, context in zip(responses, contexts):
