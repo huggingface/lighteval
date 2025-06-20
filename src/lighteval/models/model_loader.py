@@ -35,7 +35,6 @@ from lighteval.models.endpoints.inference_providers_model import (
     InferenceProvidersClient,
     InferenceProvidersModelConfig,
 )
-from lighteval.models.endpoints.openai_model import OpenAIClient, OpenAIModelConfig
 from lighteval.models.endpoints.tgi_model import ModelClient, TGIModelConfig
 from lighteval.models.litellm_model import LiteLLMClient, LiteLLMModelConfig
 from lighteval.models.sglang.sglang_model import SGLangModel, SGLangModelConfig
@@ -51,7 +50,6 @@ from lighteval.utils.imports import (
     NO_TGI_ERROR_MSG,
     NO_VLLM_ERROR_MSG,
     is_litellm_available,
-    is_openai_available,
     is_sglang_available,
     is_tgi_available,
     is_vllm_available,
@@ -104,9 +102,6 @@ def load_model(  # noqa: C901
     if isinstance(config, SGLangModelConfig):
         return load_sglang_model(config)
 
-    if isinstance(config, OpenAIModelConfig):
-        return load_openai_model(config)
-
     if isinstance(config, LiteLLMModelConfig):
         return load_litellm_model(config)
 
@@ -130,15 +125,6 @@ def load_litellm_model(config: LiteLLMModelConfig):
         raise ImportError(NO_LITELLM_ERROR_MSG)
 
     model = LiteLLMClient(config)
-    return model
-
-
-def load_openai_model(config: OpenAIModelConfig):
-    if not is_openai_available():
-        raise ImportError()
-
-    model = OpenAIClient(config)
-
     return model
 
 

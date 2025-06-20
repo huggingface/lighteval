@@ -31,13 +31,9 @@ from pydantic import BaseModel
 
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.metrics_sample import JudgeLLM
-from lighteval.metrics.utils.metric_utils import (
-    CorpusLevelMetricGrouping,
-    MetricCategory,
-    MetricUseCase,
-)
+from lighteval.metrics.utils.metric_utils import CorpusLevelMetricGrouping
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Doc, SamplingMethod
 
 
 logger = logging.getLogger(__name__)
@@ -195,7 +191,7 @@ def calib_err(confidence, correct, p="2", beta=100):
 
 def hle_text_only(line, task_name: str = None):
     if line["image"] not in [None, ""]:
-        return
+        return None
 
     return Doc(
         task_name=task_name,
@@ -209,8 +205,7 @@ def hle_text_only(line, task_name: str = None):
 hle_metrics = CorpusLevelMetricGrouping(
     metric_name=["accuracy", "confidence_half_width", "calibration_error"],
     higher_is_better=dict.fromkeys(["accuracy", "confidence_half_width", "calibration_error"], True),
-    category=MetricCategory.LLM_AS_JUDGE,
-    use_case=MetricUseCase.ACCURACY,
+    category=SamplingMethod.GENERATIVE,
     sample_level_fn=JudgeLLMHLE().compute,
     corpus_level_fn=JudgeLLMHLE().compute_corpus,
 )
@@ -227,7 +222,7 @@ hle = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=8192,
-    metric=[Metrics.exact_match, Metrics.hle_metrics],
+    metrics=[Metrics.exact_match, Metrics.hle_metrics],
     stop_sequence=[],
     trust_dataset=True,
     version=0,

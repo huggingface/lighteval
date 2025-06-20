@@ -21,57 +21,32 @@
 # SOFTWARE.
 
 from dataclasses import dataclass, field
-from typing import Optional, Union
+from typing import Optional
 
 import torch
 
 
 @dataclass
 class ModelResponse:
-    result: Union[tuple, list, str]
+    """
+    A class to represent the response from a model.
+    """
+
+    input: str | list | None = None
+    text: list[str] = field(default_factory=list)  # The text of the response
+    logprobs: list[float] = field(default_factory=list)  # Log probabilities of the response
+    argmax_logits_eq_gold: list[bool] = field(default_factory=list)  # Whether the argmax logits match the gold text
+    logits: list[list[float]] | None = None  # Logits of the response, if applicable
+
+    truncated_tokens_count: int = 0  # How many tokens truncated
+    padded_tokens_count: int = 0  # How many tokens of padding
+
     input_tokens: list[int] = field(default_factory=list)  # model inputs
-    generated_tokens: list[int] = field(default_factory=list)  # model generations
-    truncated_tokens_count: Optional[int] = 0  # How many tokens truncated
-    padded_tokens_count: Optional[int] = 0  # How many tokens of padding
+    output_tokens: list[list[int]] = field(default_factory=list)  # model generations
 
-    def get_result_for_eval(self):
-        raise NotImplementedError()
-
-
-@dataclass
-class LoglikelihoodResponse(ModelResponse):
-    # Float: Total log prob of the continuation
-    # Optional(Bool): Whether the continuation is greedy (= all the tokens in the continuation are argmax of prob)
-    result: Union[tuple[float, bool], float] = field(default_factory=tuple[float, bool])
-
-    def get_result_for_eval(self):
-        return self.result
-
-
-@dataclass
-class LoglikelihoodSingleTokenResponse(ModelResponse):
-    # Log probs of the various single token options
-    result: list[float] = field(default_factory=list)
-
-    def get_result_for_eval(self):
-        return self.result
-
-
-@dataclass
-class GenerativeResponse(ModelResponse):
-    result: list[str] = field(default_factory=str)  # generated text continuation
-    logits: Optional[list[float]] = None  # Generated text logits
-
-    def get_result_for_eval(self):
-        return self.result
-
-
-@dataclass
-class GenerativeMultiturnResponse(ModelResponse):
-    result: list[str] = field(default_factory=list)
-
-    def get_result_for_eval(self):
-        return self.result
+    unconditioned_logprobs: Optional[list[float]] = (
+        None  # Log probabilities of the unconditioned model (if applicable)
+    )
 
 
 @dataclass

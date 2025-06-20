@@ -27,8 +27,11 @@ from typing import List, Set, Tuple
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
+from lighteval.models.model_output import ModelResponse
+from lighteval.tasks.requests import Doc
 
-def drop_metrics(predictions: list[str], formatted_doc, **kwargs):  # noqa: C901
+
+def drop_metrics(doc: Doc, model_response: ModelResponse):  # noqa: C901
     """F1 score from bag of words: comes from Harness Drop. DROP offers two metrics,
     a quasi exact match and a numeracy-focused F1 score. Quasi in the sense that it
     does some normalizations before matching and numeracy-focused in the sense that
@@ -161,8 +164,8 @@ def drop_metrics(predictions: list[str], formatted_doc, **kwargs):  # noqa: C901
 
     max_em = 0
     max_f1 = 0
-    for gold_answer in formatted_doc.specific["golds_no_preprocessing"]:
-        exact_match, f1_score = _get_metrics(predictions, gold_answer)
+    for gold_answer in doc.specific["golds_no_preprocessing"]:
+        exact_match, f1_score = _get_metrics(model_response.text, gold_answer)
         if isinstance(gold_answer, list):
             gold_answer = gold_answer[0]
         if gold_answer.strip():

@@ -23,25 +23,16 @@
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import Optional
 
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.endpoints.endpoint_model import ModelInfo
-from lighteval.models.model_output import (
-    GenerativeResponse,
-    LoglikelihoodResponse,
-    LoglikelihoodSingleTokenResponse,
-)
+from lighteval.models.model_output import ModelResponse
 from lighteval.models.utils import ModelConfig
-from lighteval.tasks.requests import (
-    GreedyUntilRequest,
-    LoglikelihoodRequest,
-    LoglikelihoodRollingRequest,
-    LoglikelihoodSingleTokenRequest,
-)
+from lighteval.tasks.prompt_manager import PromptManager
+from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import is_litellm_available
 
 
@@ -51,12 +42,18 @@ if is_litellm_available():
     import litellm
     from litellm import encode
     from litellm.caching.caching import Cache
-    from litellm.utils import ModelResponse
+    from litellm.utils import ModelResponse as LitellmModelResponse
 
     logging.getLogger("LiteLLM").setLevel(logging.WARNING)
     logging.getLogger("LiteLLM").handlers.clear()
 
     litellm.cache = Cache(type="disk")
+else:
+    from unittest.mock import Mock
+
+    litellm = Mock()
+    encode = Mock()
+    LitellmModelResponse = Mock()
 
 
 class LiteLLMModelConfig(ModelConfig):
@@ -78,7 +75,7 @@ class LiteLLMClient(LightevalModel):
             model_name=config.model_name,
             model_sha="",
             model_dtype=None,
-            model_size="",
+            model_size=-1,
         )
         self.model = config.model_name
         self.provider = config.provider or config.model_name.split("/")[0]
@@ -89,12 +86,13 @@ class LiteLLMClient(LightevalModel):
         self.API_MAX_RETRY = 5
         self.API_RETRY_SLEEP = 3
         self.API_RETRY_MULTIPLIER = 2
-        self.CONCURENT_CALLS = 20  # 100 leads to hitting Anthropic rate limits
+        self.CONCURENT_CALLS = 10  # 100 leads to hitting Anthropic rate limits
 
         self._tokenizer = encode
         self.pairwise_tokenization = False
         litellm.drop_params = True
         litellm.set_verbose = False
+        self.prompt_manager = PromptManager(use_chat_template=True, tokenizer=self.tokenizer)
 
     def _prepare_stop_sequence(self, stop_sequence):
         """Prepare and validate stop sequence."""
@@ -116,7 +114,7 @@ class LiteLLMClient(LightevalModel):
 
     def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, stop_sequence):
         """Make API call with retries."""
-        response = ModelResponse()
+        response = LitellmModelResponse()
         for attempt in range(self.API_MAX_RETRY):
             try:
                 stop_sequence = self._prepare_stop_sequence(stop_sequence)
@@ -158,7 +156,7 @@ class LiteLLMClient(LightevalModel):
                     )
                     if error_string in e.__dict__["message"]:
                         logger.warning(f"{error_string}. Returning empty response.")
-                        return ModelResponse()
+                        return LitellmModelResponse()
             except Exception as e:
                 wait_time = min(64, self.API_RETRY_SLEEP * (2**attempt))  # Exponential backoff with max 64s
                 logger.warning(
@@ -167,13 +165,13 @@ class LiteLLMClient(LightevalModel):
                 time.sleep(wait_time)
 
         logger.error(f"API call failed after {self.API_MAX_RETRY} attempts, returning empty response.")
-        return ModelResponse()
+        return LitellmModelResponse()
 
     def __call_api_parallel(
         self,
         prompts,
         return_logits: bool | list[bool],
-        max_new_tokens: int | list[int],
+        max_new_tokens: int | list[int] | None,
         num_samples: int | list[int],
         stop_sequence: list[str] | None = None,
     ):
@@ -210,9 +208,8 @@ class LiteLLMClient(LightevalModel):
 
     def greedy_until(
         self,
-        requests: list[GreedyUntilRequest],
-        override_bs: Optional[int] = None,
-    ) -> list[GenerativeResponse]:
+        docs: list[Doc],
+    ) -> list[ModelResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
@@ -223,10 +220,7 @@ class LiteLLMClient(LightevalModel):
         Returns:
             list[GenerativeResponse]: list of generated responses.
         """
-        for request in requests:
-            request.tokenized_context = self.tok_encode(request.context)
-
-        dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
+        dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         results = []
 
         for split in tqdm(
@@ -236,23 +230,26 @@ class LiteLLMClient(LightevalModel):
             position=0,
             disable=self.disable_tqdm,
         ):
-            contexts = [sample.context for sample in split]
+            contexts = [self.prompt_manager.prepare_prompt_api(doc) for doc in dataset]
             max_new_tokens = split[0].generation_size  # could be none
             return_logits = split[0].use_logits
             num_samples = split[0].num_samples
-            stop_sequence = requests[0].stop_sequence
+            stop_sequence = split[0].stop_sequences
+
+            if num_samples > 1 and self.generation_parameters.temperature == 0:
+                raise ValueError(
+                    "num_samples > 1 is not supported with temperature=0, please set temperature > 0 or use non sampling metrics."
+                )
 
             responses = self.__call_api_parallel(contexts, return_logits, max_new_tokens, num_samples, stop_sequence)
 
-            for response in responses:
+            for response, context in zip(responses, contexts):
                 result: list[str] = [choice.message.content for choice in response.choices]
 
-                cur_response = GenerativeResponse(
+                cur_response = ModelResponse(
                     # In empty responses, the model should return an empty string instead of None
-                    result=result if result[0] else [""],
-                    logits=None,
-                    generated_tokens=[],
-                    input_tokens=[],
+                    text=result if result[0] else [""],
+                    input=context,
                 )
                 results.append(cur_response)
 
@@ -261,19 +258,6 @@ class LiteLLMClient(LightevalModel):
     @property
     def tokenizer(self):
         return self._tokenizer
-
-    def _encode(self, text: str):
-        enc = encode(model=self.model, text=text)
-        if hasattr(enc, "ids"):
-            return enc.ids
-        return enc
-
-    def tok_encode(self, text: str | list[str]):
-        if isinstance(text, list):
-            toks = [self._encode(t["content"]) for t in text]
-            toks = [tok for tok in toks if tok]
-            return toks
-        return self._encode(text)
 
     @property
     def add_special_tokens(self) -> bool:
@@ -284,24 +268,12 @@ class LiteLLMClient(LightevalModel):
         """Return the maximum sequence length of the model."""
         return 4096
 
-    def loglikelihood(
-        self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
+    def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
         raise NotImplementedError
 
-    def loglikelihood_rolling(
-        self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
+    def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
-        raise NotImplementedError
-
-    def loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodSingleTokenResponse]:
-        """Tokenize the context and continuation and compute the log likelihood of those
-        tokenized sequences.
-        """
         raise NotImplementedError

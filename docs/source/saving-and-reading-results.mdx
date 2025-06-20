@@ -98,22 +98,9 @@ for detail in details:
 
 
 The detail file contains the following columns:
-- `choices`: The choices presented to the model in the case of mutlichoice tasks.
-- `gold`: The gold answer.
-- `gold_index`: The index of the gold answer in the choices list.
-- `cont_tokens`: The continuation tokens.
-- `example`: The input in text form.
-- `full_prompt`: The full prompt, that will be inputed to the model.
-- `input_tokens`: The tokens of the full prompt.
-- `instruction`: The instruction given to the model.
-- `metrics`: The metrics computed for the example.
-- `num_asked_few_shots`: The number of few shots asked to the model.
-- `num_effective_few_shots`: The number of effective few shots.
-- `padded`: Whether the input was padded.
-- `pred_logits`: The logits of the model.
-- `predictions`: The predictions of the model.
-- `specifics`: The specifics of the task.
-- `truncated`: Whether the input was truncated.
+- __doc__: The doc used for the evaluation, this will contain the gold reference, the fewshots and other hyperparamters used for the task.
+- __model_response__: where you will find model generations, logprobs and the input that was sent to the model
+- __metric__: the value of the metrics for this sample
 
 
 ## Example of a result file

@@ -22,9 +22,9 @@
 
 # ruff: noqa: F405, F403, F401, I001
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.metrics.metrics_sample import JudgeLLMMTBench
-from lighteval.metrics.utils.metric_utils import SampleLevelMetricGrouping, MetricCategory, MetricUseCase
+from lighteval.metrics.utils.metric_utils import SampleLevelMetricGrouping
 from lighteval.tasks.extended.mt_bench.judge_prompt_templates import (
     flow_judge_prompt_mt_bench_with_ref,
     flow_judge_prompt_mt_bench_without_ref,
@@ -64,8 +64,7 @@ def flow_judge_mt_bench_prompt(question, answer, options, gold):
 llm_judge_mt_bench = SampleLevelMetricGrouping(
     metric_name=["judge_score_turn_1", "judge_score_turn_2"],
     higher_is_better={"judge_score_turn_1": True, "judge_score_turn_2": True},
-    category=MetricCategory.LLM_AS_JUDGE_MULTI_TURN,
-    use_case=MetricUseCase.SUMMARIZATION,
+    category=SamplingMethod.GENERATIVE,
     sample_level_fn=JudgeLLMMTBench(
         judge_model_name="flowaicom/Flow-Judge-v0.1",
         template=flow_judge_mt_bench_prompt,
@@ -88,7 +87,7 @@ task = LightevalTaskConfig(
     evaluation_splits=["train"],
     few_shots_split="",
     few_shots_select="random",
-    metric=[llm_judge_mt_bench],
+    metrics=[llm_judge_mt_bench],
     generation_size=1024,
     stop_sequence=[],
 )

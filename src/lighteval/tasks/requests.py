@@ -21,11 +21,9 @@
 # SOFTWARE.
 
 import json
-from dataclasses import asdict, dataclass
-from enum import Enum, auto
-from typing import TYPE_CHECKING, NamedTuple, Optional, Union
-
-from huggingface_hub import TextGenerationInputGrammarType
+from dataclasses import asdict, dataclass, field
+from enum import Enum
+from typing import TYPE_CHECKING, Optional, Union
 
 from lighteval.utils.utils import as_list
 
@@ -34,177 +32,64 @@ if TYPE_CHECKING:
     from PIL.Image import Image
 
 
-class RequestType(Enum):
-    LOGLIKELIHOOD = auto()
-    LOGLIKELIHOOD_SINGLE_TOKEN = auto()
-    LOGLIKELIHOOD_ROLLING = auto()
-    GREEDY_UNTIL = auto()
-    GREEDY_UNTIL_MULTI_TURN = auto()
-
-
-@dataclass
-class Request:
+class SamplingMethod(str, Enum):
     """
-    Represents a request for a specific task, example and request within that
-    example in the evaluation process.
-    For example in the task "boolq", the example "Is the sun hot?" and the
-    requests for that example "Is the sun hot? Yes" and "Is the sun hot? No".
-
-    Attributes:
-        task_name (str): The name of the task.
-        sample_index (int): The index of the example.
-        request_index (int): The index of the request.
-        context (str): The context for the request.
-        metric_categories (list[MetricCategory]): All the metric categories which concern this request
+    Enum representing different sampling methods for text generation.
     """
 
-    task_name: str
-    sample_index: int
-    request_index: int
-    context: str
-    metric_categories: list["MetricCategory"]  # noqa F821
-
-
-@dataclass
-class LoglikelihoodRequest(Request):
-    """
-    Represents a request for log-likelihood evaluation.
-
-    Attributes:
-        choice (str): The choice to evaluate the log-likelihood for.
-        request_type (RequestType): The type of the request (LOGLIKELIHOOD).
-    """
-
-    choice: str
-    request_type = RequestType.LOGLIKELIHOOD
-    tokenized_context: list[int] = None
-    tokenized_continuation: list[int] = None
-    images: Optional[list["Image"]] = None
-
-
-@dataclass
-class LoglikelihoodSingleTokenRequest(Request):
-    """
-    Represents a request for calculating the log-likelihood of a single token.
-    Faster because we can get all the loglikelihoods in one pass.
-
-    Attributes:
-        choices (list[str]): The list of token choices.
-        request_type (RequestType): The type of the request.
-    """
-
-    choices: list[str]
-    request_type = RequestType.LOGLIKELIHOOD_SINGLE_TOKEN
-    tokenized_context: list[int] = None
-    tokenized_continuation: list[int] = None
-    images: Optional[list["Image"]] = None
-
-
-@dataclass
-class LoglikelihoodRollingRequest(Request):
-    """
-    Represents a request for log-likelihood rolling evaluation.
-
-    Inherits from the base Request class.
-    """
-
-    request_type = RequestType.LOGLIKELIHOOD_ROLLING
-    tokenized_context: list[int] = None
-    tokenized_continuation: list[int] = None
-    images: Optional[list["Image"]] = None
-
-
-@dataclass
-class GreedyUntilRequest(Request):
-    """
-    Represents a request for generating text using the Greedy-Until algorithm.
-
-    Attributes:
-        stop_sequence (str): The sequence of tokens that indicates when to stop generating text.
-        generation_size (int): The maximum number of tokens to generate.
-        generation_grammar (TextGenerationInputGrammarType): The grammar to generate completion according to.
-            Currently only available for TGI models.
-        request_type (RequestType): The type of the request, set to RequestType.GREEDY_UNTIL.
-    """
-
-    stop_sequence: Union[str, tuple[str], list[str]]
-    generation_size: Union[int, None]
-    generation_grammar: Union[TextGenerationInputGrammarType, None] = None
-    request_type = RequestType.GREEDY_UNTIL
-    tokenized_context: list[int] = None
-    num_samples: int = None
-    do_sample: bool = False
-    use_logits: bool = False
-    images: Optional[list["Image"]] = None
-
-
-@dataclass
-class GreedyUntilMultiTurnRequest(Request):
-    """
-    Represents a request for generating text using the Greedy-Until algorithm.
-
-    Attributes:
-        stop_sequence (str): The sequence of tokens that indicates when to stop generating text.
-        generation_size (int): The maximum number of tokens to generate.
-        request_type (RequestType): The type of the request, set to RequestType.GREEDY_UNTIL.
-    """
-
-    stop_sequence: str
-    generation_size: int
-    request_type = RequestType.GREEDY_UNTIL_MULTI_TURN
-    use_logits: bool = False
-    images: Optional[list["Image"]] = None
-
-
-class SampleUid(NamedTuple):
-    """
-    Represents the identifier for an example in a task.
-
-    Attributes:
-        task_name (str): The name of the task in `name|num_fewshot` format.
-        doc_id_seed (str): The document id with the seed used for few_shot appended at the end.
-    """
-
-    task_name: str
-    doc_id_seed: str
+    GENERATIVE = "GENERATIVE"
+    LOGPROBS = "LOGPROBS"  # computes logprobs of choices
+    PERPLEXITY = "PERPLEXITY"  # computes logprobs of the whole prompt
 
 
 @dataclass(slots=True)
 class Doc:
     """
-    Dataclass used to represent the content of a task example
+    Dataclass used to represent the content of a benchmark sample
     almost every field is optional, but some tasks require some fields to be present.
+    The Doc is created from the benchmark dataset, one line of the datsaet is one Doc.
+    That list of Doc is then fed to the LLM.
+
     When adding a new task, please add the required fields to the doc class.
     Each task will have a different set of fields needed.
+
+    Attributes:
+    query: str
+        The query or prompt to be sent to the model.
+    choices: list[str]
+        The list of possible choices or answers for the query.
+
     """
 
     query: str
     choices: list[str]
     gold_index: Union[int, list[int]]
-    original_query: Optional[str] = ""  # the query before preprocessing, if stored
-    specific: dict = None  # Information which is specific to the current eval
+    instruction: str | None = None  # system prompt to use for the model, if any
+    id: str = ""
+    images: list["Image"] | None = None  # for multimodal benchmarks
+    specific: dict | None = None  # Information which is specific to the current eval
+
     task_name: str = ""
 
-    # For few-shot
-    instruction: Optional[str] = ""
-    fewshot_sorting_class: Optional[str] = None  # class to use to select balanced few-shot samples
-
-    # Filled when parsing and adding the few-shot context
-    ctx: Optional[str] = ""
+    # Fewshots parameters
     num_asked_few_shots: int = -1
     num_effective_few_shots: int = -1
+    fewshot_samples: list = field(default_factory=list)
+    sampling_methods: list[SamplingMethod] = field(default_factory=list)
+    fewshot_sorting_class: Optional[str] = None  # class to use to select balanced few-shot samples
 
     # Uncoditioned query is used for PMI normalization, that's
     # log P(choice | Query) - log P(choice | Unconditioned Query)
     # The uncoditioned query shouldn't contain any information about the task, thus usually it's empty string or 'Answer:'.
     unconditioned_query: Optional[str] = None
+    original_query: str | None = None  # the query before preprocessing, if stored
 
-    # For multi-modal tasks
-    images: Optional[list["Image"]] = None
-
-    def __post_init__(self):
-        if self.instruction is None:
-            self.instruction = ""
+    # Generation parameters
+    generation_size: int | None = None  # number of tokens to generate for each sample
+    stop_sequences: list[str] | None = None
+    use_logits: bool = False  # whether to use logits for the generation or not
+    num_samples: int = 1  # number of samples to generate for each sample
+    generation_grammar: None = None
 
     def get_golds(self):
         """Return gold targets extracted from the target dict"""

@@ -30,7 +30,7 @@ import torch
 import yaml
 from huggingface_hub import HfApi
 from pydantic import BaseModel
-from transformers import AutoConfig
+from transformers.models.auto.configuration_auto import AutoConfig
 
 from lighteval.models.model_input import GenerationParameters
 

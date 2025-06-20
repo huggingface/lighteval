@@ -25,20 +25,17 @@ import logging
 import os
 import time
 from dataclasses import asdict, dataclass, field
-from typing import Optional, Union
+from typing import Union
 
 import git
-import numpy as np
 import xxhash
 
-from lighteval.metrics import MetricCategory
 from lighteval.metrics.stderr import get_stderr_function
 from lighteval.models.abstract_model import ModelInfo
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import is_nanotron_available
-from lighteval.utils.utils import as_list, sanitize_numpy
 
 
 logger = logging.getLogger(__name__)
@@ -196,23 +193,9 @@ class DetailsLogger:
 
         """
 
-        example: str = ""
-        instruction: str = ""
-        full_prompt: str = ""
-        num_effective_few_shots: int = 0
-        num_asked_few_shots: int = 0
-        predictions: list = field(default_factory=list)
-        prediction_logits: list = field(default_factory=list)
-        input_tokens: list = field(default_factory=list)
-        cont_tokens: list = field(default_factory=list)
-        truncated: list = field(default_factory=list)
-        padded: list = field(default_factory=list)
-        gold: list = field(default_factory=list)
-        pred_logits: list = field(default_factory=list)
-        choices: list = field(default_factory=list)
-        gold_index: list = field(default_factory=list)
-        metrics: dict = field(default_factory=dict)
-        specifics: dict = field(default_factory=dict)
+        doc: Doc
+        model_response: ModelResponse
+        metric: dict
 
     @dataclass
     class CompiledDetail:
@@ -317,11 +300,9 @@ class DetailsLogger:
     def log(
         self,
         task_name: str,
-        task: LightevalTask,
         doc: Doc,
-        outputs: list[ModelResponse],
+        model_response: ModelResponse,
         metrics: dict,
-        llm_as_prompt_judgement: Optional[tuple[str, str]] = None,
     ) -> None:
         """Stores the relevant information for one sample of one task to the total list of samples stored in the DetailsLogger.
 
@@ -334,79 +315,13 @@ class DetailsLogger:
             llm_as_prompt_judgement (tuple[str, str]): Tuple containing the
                 prompt passed to the judge and the judgement for the current sample when using llm-as-judge metric.
         """
-        detail = self.Detail()
-        detail.example = doc.query
-        detail.instruction = doc.instruction
-        detail.full_prompt = doc.ctx
-
-        predictions = [model_response.get_result_for_eval() for model_response in outputs]
-
-        if isinstance(predictions[0], list):
-            # loglikelihood_single_token returns a list of list of floats (but has
-            # only one request), we therefore need to flatten the responses in this case.
-            predictions = [x for resp in predictions for x in resp]
-
-        detail.predictions = predictions
-        detail.input_tokens = [o.input_tokens for o in outputs]
-        detail.cont_tokens = [o.generated_tokens for o in outputs]
-        detail.truncated = [o.truncated_tokens_count for o in outputs]
-        detail.padded = [o.padded_tokens_count for o in outputs]
-        detail.num_effective_few_shots = doc.num_effective_few_shots
-        detail.num_asked_few_shots = doc.num_asked_few_shots
-
-        pred_saved = False
-        if (
-            task.has_metric_category[MetricCategory.PERPLEXITY]
-            or task.has_metric_category[MetricCategory.TARGET_PERPLEXITY]
-        ):
-            pred_saved = True
-            pass  # should we log something?
-        if (
-            task.has_metric_category[MetricCategory.GENERATIVE]
-            or task.has_metric_category[MetricCategory.GENERATIVE_SAMPLING]
-        ):
-            detail.gold = doc.get_golds()
-            pred_saved = True
-        if task.has_metric_category[MetricCategory.GENERATIVE_LOGPROB]:
-            detail.gold = doc.get_golds()
-            detail.pred_logits = [o.logits for o in outputs]
-            pred_saved = True
-        if task.has_metric_category[MetricCategory.MULTICHOICE]:
-            detail.choices = doc.choices
-            detail.gold_index = as_list(doc.gold_index)
-            pred_saved = True
-        if task.has_metric_category[MetricCategory.MULTICHOICE_ONE_TOKEN]:
-            detail.choices = doc.choices
-            detail.gold_index = as_list(doc.gold_index)
-            pred_saved = True
-        if task.has_metric_category[MetricCategory.MULTICHOICE_PMI]:
-            detail.choices = doc.choices
-            detail.gold_index = as_list(doc.gold_index)
-            doc.specific = {**(doc.specific or {}), **{"unconditioned_query": doc.unconditioned_query}}
-            pred_saved = True
-        if (
-            task.has_metric_category[MetricCategory.LLM_AS_JUDGE_MULTI_TURN]
-            or task.has_metric_category[MetricCategory.LLM_AS_JUDGE]
-        ):
-            detail.choices = doc.choices
-            detail.gold_index = as_list(doc.gold_index)
-            pred_saved = True
-
-        detail.specifics = doc.specific
-
-        if not pred_saved:
-            raise NotImplementedError(
-                "No metric prediction saved."
-            )  # We probably need to handle this case if we're here.
-
-        detail.metrics = sanitize_numpy(metrics)
+        detail = self.Detail(doc, model_response, metrics)
         self.details[task_name].append(detail)
 
         hash = self.Hash()
         hash.example = xxhash.xxh64(doc.query).hexdigest()
-        hash.full_prompt = xxhash.xxh64(str(doc.ctx)).hexdigest()
-        hash.input_tokens = xxhash.xxh64(str([o.input_tokens for o in outputs])).hexdigest()
-        hash.cont_tokens = xxhash.xxh64(str([o.generated_tokens for o in outputs])).hexdigest()
+        hash.input_tokens = xxhash.xxh64(str(model_response.input_tokens)).hexdigest()
+        hash.cont_tokens = xxhash.xxh64(str(model_response.output_tokens)).hexdigest()
         self.hashes[task_name].append(hash)
 
     def aggregate(self):
@@ -431,20 +346,8 @@ class DetailsLogger:
             ).hexdigest()  # hash of all the hash - sorted for reproducibility
             self.compiled_hashes[task_name] = compiled_hash
 
-        for task_name, task_examples in self.details.items():
+        for task_name, _ in self.details.items():
             self.compiled_details[task_name].hashes = asdict(self.compiled_hashes[task_name])
-            self.compiled_details[task_name].truncated = sum(di > 0 for d in task_examples for di in d.truncated)
-            self.compiled_details[task_name].non_truncated = (
-                len(task_examples) - self.compiled_details[task_name].truncated
-            )
-            self.compiled_details[task_name].padded = sum(di > 0 for d in task_examples for di in d.padded)
-            self.compiled_details[task_name].non_padded = sum(di == 0 for d in task_examples for di in d.padded)
-            self.compiled_details[task_name].effective_few_shots = np.mean(
-                [d.num_effective_few_shots for d in task_examples]
-            )
-            self.compiled_details[task_name].num_truncated_few_shots = sum(
-                d.num_effective_few_shots != d.num_asked_few_shots for d in task_examples
-            )
 
         hash_types: list[str] = list(self.compiled_details.values())[0].hashes.keys()
 
@@ -454,16 +357,6 @@ class DetailsLogger:
                     compiled_detail.hashes[hash_type] for _, compiled_detail in sorted(self.compiled_details.items())
                 )
             ).hexdigest()
-
-        self.compiled_details_over_all_tasks.truncated = sum(d.truncated for d in self.compiled_details.values())
-        self.compiled_details_over_all_tasks.non_truncated = sum(
-            d.non_truncated for d in self.compiled_details.values()
-        )
-        self.compiled_details_over_all_tasks.padded = sum(d.padded for d in self.compiled_details.values())
-        self.compiled_details_over_all_tasks.non_padded = sum(d.non_padded for d in self.compiled_details.values())
-        self.compiled_details_over_all_tasks.num_truncated_few_shots = sum(
-            d.num_truncated_few_shots for d in self.compiled_details.values()
-        )
 
 
 @dataclass
@@ -499,9 +392,7 @@ class MetricsLogger:
         """
 
         for task_name, metrics in self.metrics_values.items():
-            cur_task_name, _ = task_name.rsplit("|", 1)
-            # fix the fact that we need the task_dict
-            task = task_dict[cur_task_name]
+            task = task_dict[task_name]
 
             skip_metric = []
             for metric_name, metric_values in metrics.items():
@@ -600,7 +491,7 @@ class TaskConfigLogger:
     tasks_configs: dict[str, LightevalTaskConfig] = field(default_factory=dict)
 
     def log(self, task_dict: dict[str, LightevalTask]) -> None:
-        self.tasks_configs = {name: task.cfg for name, task in task_dict.items()}
+        self.tasks_configs = {name: task.config for name, task in task_dict.items()}
 
     def log_num_docs(self, task_name: str, original_num_docs: int, effective_num_docs: int) -> None:
         self.tasks_configs[task_name].original_num_docs = original_num_docs

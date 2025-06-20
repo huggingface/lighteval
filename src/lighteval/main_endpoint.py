@@ -482,7 +482,8 @@ def inference_providers(
     ] = 0,
 ):
     """
-    Evaluate models using LiteLLM as backend.
+    Evaluate models using HuggingFace's inference providers as backend.
+            # fix the fact that we need the task_dict
     """
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker

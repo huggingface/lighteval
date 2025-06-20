@@ -29,10 +29,10 @@ def test_tok_encode_pair():
     model = DummyModel(config=DummyModelConfig(seed=42))
     model._tokenizer = AutoTokenizer.from_pretrained("facebook/xglm-564M")
     context = "答案："
-    continuation = "1"
+    continuation = ["1"]
     non_pairwise_tokens = model.tok_encode_pair(context, continuation, pairwise=False)
     pairwise_tokens = model.tok_encode_pair(context, continuation, pairwise=True)
     # Non-pairwise merged "：1" to one token
-    assert non_pairwise_tokens == ([6, 47873], [34871])
+    assert non_pairwise_tokens == ([[6, 47873]], [[34871]])
     # Pairwise separated "：" and "1"
-    assert pairwise_tokens == ([6, 47873, 13], [82])
+    assert pairwise_tokens == ([[6, 47873, 13]], [[82]])
