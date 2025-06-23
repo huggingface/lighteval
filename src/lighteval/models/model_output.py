@@ -29,7 +29,114 @@ import torch
 @dataclass
 class ModelResponse:
     """
-    A class to represent the response from a model.
+    A class to represent the response from a model during evaluation.
+
+    This dataclass contains all the information returned by a model during inference,
+    including generated text, log probabilities, token information, and metadata.
+    Different attributes are required for different types of evaluation metrics.
+
+    Attributes:
+        input (str | list | None):
+            The original input prompt or context that was fed to the model.
+            Used for debugging and analysis purposes.
+
+        text (list[str]):
+            The generated text responses from the model. Each element represents
+            one generation (useful when num_samples > 1).
+            **Required for**: Generative tasks, text completion evaluation,
+            BLEU, ROUGE, exact match, and other generation-based metrics.
+
+        logprobs (list[float]):
+            Log probabilities of the generated tokens or sequences.
+            **Required for**: Perplexity calculation, probability-based metrics,
+            likelihood evaluation, and uncertainty estimation.
+
+        argmax_logits_eq_gold (list[bool]):
+            Whether the argmax logits match the gold/expected text.
+            Used for accuracy calculations in multiple choice and classification tasks.
+            **Required for**: Multiple choice accuracy, classification accuracy,
+            and other discrete choice evaluation metrics.
+
+        logits (list[list[float]] | None):
+            Raw logits from the model output (before softmax).
+            **Required for**: Detailed probability analysis, confidence scoring,
+            and custom probability-based metrics.
+
+        truncated_tokens_count (int):
+            Number of tokens that were truncated from the input.
+            **Required for**: Input length analysis, truncation statistics,
+            and understanding model behavior with long contexts.
+
+        padded_tokens_count (int):
+            Number of padding tokens added to the input.
+            **Required for**: Batch efficiency analysis, padding statistics,
+            and understanding model behavior with variable-length inputs.
+
+        input_tokens (list[int]):
+            Token IDs of the input sequence.
+            **Required for**: Token-level analysis, input tokenization verification,
+            and debugging tokenization issues.
+
+        output_tokens (list[list[int]]):
+            Token IDs of the generated output sequences.
+            **Required for**: Token-level generation analysis, vocabulary usage statistics,
+            and debugging generation issues.
+
+        unconditioned_logprobs (Optional[list[float]]):
+            Log probabilities from an unconditioned model (e.g., without context).
+            Used for PMI (Pointwise Mutual Information) normalization.
+            **Required for**: PMI-based metrics, bias analysis, and context-aware
+            probability calculations.
+
+    Usage Examples:
+
+        **For generative tasks (text completion, summarization):**
+        ```python
+        response = ModelResponse(
+            text=["The capital of France is Paris."],
+            input_tokens=[1, 2, 3, 4],
+            output_tokens=[[5, 6, 7, 8]]
+        )
+        ```
+
+        **For multiple choice tasks:**
+        ```python
+        response = ModelResponse(
+            logprobs=[-0.5, -1.2, -2.1, -1.8],  # Logprobs for each choice
+            argmax_logits_eq_gold=[False, False, False, False],  # Whether correct choice was selected
+            input_tokens=[1, 2, 3, 4],
+            output_tokens=[[5], [6], [7], [8]]
+        )
+        ```
+
+        **For perplexity calculation:**
+        ```python
+        response = ModelResponse(
+            text=["The model generated this text."],
+            logprobs=[-1.2, -0.8, -1.5, -0.9, -1.1],  # Logprobs for each token
+            input_tokens=[1, 2, 3, 4, 5],
+            output_tokens=[[6], [7], [8], [9], [10]]
+        )
+        ```
+
+        **For PMI analysis:**
+        ```python
+        response = ModelResponse(
+            text=["The answer is 42."],
+            logprobs=[-1.1, -0.9, -1.3, -0.7],  # Conditioned logprobs
+            unconditioned_logprobs=[-2.1, -1.8, -2.3, -1.5],  # Unconditioned logprobs
+            input_tokens=[1, 2, 3, 4],
+            output_tokens=[[5], [6], [7], [8]]
+        )
+        ```
+
+    Notes:
+        - For most evaluation tasks, only a subset of attributes is required
+        - The `text` attribute is the most commonly used for generative tasks
+        - `logprobs` are essential for probability-based metrics like perplexity
+        - `argmax_logits_eq_gold` is specifically for certain multiple choice/classification tasks
+        - Token-level attributes (`input_tokens`, `output_tokens`) are useful for debugging
+        - Truncation and padding counts help understand model behavior with long inputs
     """
 
     input: str | list | None = None
