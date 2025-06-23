@@ -45,15 +45,9 @@ def accelerate(  # noqa C901
     ],
     tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
     # === Common parameters ===
-    use_chat_template: Annotated[
-        bool, Option(help="Use chat template for evaluation.", rich_help_panel=HELP_PANEL_NAME_4)
-    ] = False,
     vision_model: Annotated[
         bool, Option(help="Use vision model for evaluation.", rich_help_panel=HELP_PANEL_NAME_4)
     ] = False,
-    system_prompt: Annotated[
-        Optional[str], Option(help="Use system prompt for evaluation.", rich_help_panel=HELP_PANEL_NAME_4)
-    ] = None,
     dataset_loading_processes: Annotated[
         int, Option(help="Number of processes to use for dataset loading.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = 1,
@@ -137,8 +131,6 @@ def accelerate(  # noqa C901
         custom_tasks_directory=custom_tasks,
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
-        use_chat_template=use_chat_template,
-        system_prompt=system_prompt,
         load_responses_from_details_date_id=load_responses_from_details_date_id,
     )
 
@@ -148,8 +140,6 @@ def accelerate(  # noqa C901
     else:
         # We extract the model args
         config: dict = ModelConfig._parse_args(model_args)
-
-    config["use_chat_template"] = use_chat_template
 
     if config.get("delta_weights", False):
         model_config = DeltaModelConfig(**config)
