@@ -234,7 +234,7 @@ class TransformersModel(LightevalModel):
             model_name=self.config.model_name,
             model_sha=self.model_sha,
             model_dtype=config.dtype,
-            model_size=int(model_size),
+            model_size=model_size,
         )
 
         self.prompt_manager = PromptManager(
