@@ -70,7 +70,7 @@ class FakeModel(LightevalModel):
         return ModelInfo(model_name="fake_model")
 
     def greedy_until(self, docs: list[Doc]) -> list[ModelResponse]:
-        ret_resp, self.greedy_until_resp = (
+        ret_resp, self.greedy_until_responses = (
             self.greedy_until_responses[: len(docs)],
             self.greedy_until_responses[len(docs) :],
         )
