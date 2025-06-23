@@ -104,11 +104,15 @@ class PromptManager:
         """Prepare prompt using chat template format."""
         messages = []
 
+        system_content = []
         # Add system prompt if available
-        if self.system_prompt is not None or doc.instruction is not None:
-            system_prompt = self.system_prompt if self.system_prompt is not None else ""
-            instruction = doc.instruction if doc.instruction is not None else ""
-            messages.append({"role": "system", "content": system_prompt + instruction})
+        if self.system_prompt is not None:
+            system_content.append(self.system_prompt)
+        if doc.instruction is not None:
+            system_content.append(doc.instruction)
+
+        if len(system_content) > 0:
+            messages.append({"role": "system", "content": "\n".join(system_content)})
 
         # Add few-shot examples
         for fewshot_sample in doc.fewshot_samples:

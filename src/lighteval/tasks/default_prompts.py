@@ -1831,7 +1831,7 @@ def mmlu_harness(line, task_name: str = None):
         query=query,
         choices=[" A", " B", " C", " D"],
         gold_index=gold_ix,
-        instruction=f"The following are multiple choice questions (with answers) about {topic.replace('_', ' ')}.\n\n",
+        instruction=f"The following are multiple choice questions (with answers) about {topic.replace('_', ' ')}.",
     )
 
 
