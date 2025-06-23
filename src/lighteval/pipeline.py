@@ -101,7 +101,6 @@ class PipelineParameters:
     custom_tasks_directory: str | None = None
     num_fewshot_seeds: int = 1
     max_samples: int | None = None
-    use_chat_template: bool = False
     cot_prompt: str | None = None
     load_responses_from_details_date_id: str | None = None
     bootstrap_iters: int = 1000

@@ -459,7 +459,6 @@ def inference_providers(
 ):
     """
     Evaluate models using HuggingFace's inference providers as backend.
-            # fix the fact that we need the task_dict
     """
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
@@ -479,14 +478,12 @@ def inference_providers(
         wandb=wandb,
     )
 
-    # TODO (nathan): better handling of model_args
     parallelism_manager = ParallelismManager.NONE
 
     if model_args.endswith(".yaml"):
         model_config = InferenceProvidersModelConfig.from_path(model_args)
     else:
-        model_args_dict: dict = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in model_args.split(",")}
-        model_config = InferenceProvidersModelConfig(**model_args_dict)
+        model_config = InferenceProvidersModelConfig.from_args(model_args)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,
