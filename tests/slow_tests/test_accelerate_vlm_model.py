@@ -65,7 +65,7 @@ def generate_tests() -> list[ModelInput]:
 
     tests = []
     for model_args in MODELS_ARGS:
-        predictions_lite = partial(run_model, model_args["model_name"], model_args["use_chat_template"])
+        predictions_lite = partial(run_model, model_args["model_name"])
         tests.append((model_args, predictions_lite))
 
     return tests
