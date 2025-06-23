@@ -45,20 +45,193 @@ class SamplingMethod(str, Enum):
 @dataclass(slots=True)
 class Doc:
     """
-    Dataclass used to represent the content of a benchmark sample
-    almost every field is optional, but some tasks require some fields to be present.
-    The Doc is created from the benchmark dataset, one line of the datsaet is one Doc.
-    That list of Doc is then fed to the LLM.
+    Dataclass representing a single evaluation sample or benchmark instance.
 
-    When adding a new task, please add the required fields to the doc class.
-    Each task will have a different set of fields needed.
+    This class encapsulates all the information needed to evaluate a model on a single
+    task instance. It contains the input query, expected outputs, metadata, and
+    configuration parameters for different types of evaluation tasks.
+
+    The Doc is created from benchmark datasets, where each line/instance becomes one Doc.
+    A list of Doc objects is then fed to the model for evaluation.
+
+    **Required Fields (for most tasks):**
+        - `query`: The input prompt or question
+        - `choices`: Available answer choices (for multiple choice tasks)
+        - `gold_index`: Index(es) of the correct answer(s)
+
+    **Optional Fields (task-dependent):**
+        - `instruction`: System prompt or task instructions
+        - `images`: Visual inputs for multimodal tasks
 
     Attributes:
-    query: str
-        The query or prompt to be sent to the model.
-    choices: list[str]
-        The list of possible choices or answers for the query.
+        query (str):
+            The main query, prompt, or question to be sent to the model.
+            This is the primary input that the model will process.
+            **Required for**: All evaluation tasks.
 
+        choices (list[str]):
+            List of possible answer choices for the query.
+            For multiple choice tasks, this contains all options (A, B, C, D, etc.).
+            For generative tasks, this may be empty or contain reference answers.
+            **Required for**: Multiple choice tasks, classification tasks.
+
+        gold_index (Union[int, list[int]]):
+            Index or indices of the correct answer(s) in the choices list.
+            For single correct answers, use an integer (e.g., 0 for first choice).
+            For multiple correct answers, use a list (e.g., [0, 2] for first and third).
+            **Required for**: All tasks that have defined correct answers.
+
+        instruction (str | None):
+            System prompt or task-specific instructions to guide the model.
+            This is typically prepended to the query to set context or behavior.
+            **Used for**: Chat models, instruction-following tasks, system prompts.
+
+        id (str):
+            Unique identifier for this evaluation instance.
+            Useful for tracking results and debugging.
+            **Used for**: Result tracking, error analysis, dataset management.
+
+        images (list["Image"] | None):
+            List of PIL Image objects for multimodal tasks.
+            **Required for**: Vision-language tasks, image captioning, visual question answering.
+
+        specific (dict | None):
+            Task-specific information or metadata.
+            Can contain any additional data needed for evaluation.
+            **Used for**: Custom metrics, task-specific processing, metadata storage.
+
+        task_name (str):
+            Name of the task or benchmark this Doc belongs to.
+            **Used for**: Task identification, result organization, metric calculation.
+
+        # Few-shot Learning Parameters
+        num_asked_few_shots (int):
+            Number of few-shot examples requested for this instance.
+            **Used for**: Few-shot learning configuration, example counting.
+
+        num_effective_few_shots (int):
+            Actual number of few-shot examples used (may differ from requested).
+            **Used for**: Few-shot analysis, performance correlation studies.
+
+        fewshot_samples (list):
+            List of Doc objects representing few-shot examples.
+            These examples are prepended to the main query to provide context.
+            **Required for**: Few-shot learning tasks, in-context learning evaluation.
+
+        sampling_methods (list[SamplingMethod]):
+            List of sampling methods to use for this instance.
+            Options: GENERATIVE, LOGPROBS, PERPLEXITY.
+            **Used for**: Multi-method evaluation, comprehensive model assessment.
+
+        fewshot_sorting_class (Optional[str]):
+            Class label for balanced few-shot example selection.
+            Used to ensure diverse representation in few-shot examples.
+            **Used for**: Balanced few-shot sampling, fair evaluation.
+
+        # PMI and Context Parameters
+        unconditioned_query (Optional[str]):
+            Query without task-specific context for PMI normalization.
+            Used to calculate: log P(choice | Query) - log P(choice | Unconditioned Query).
+            **Required for**: PMI-based metrics, bias analysis, context-aware evaluation.
+
+        original_query (str | None):
+            The query before any preprocessing or modification.
+            **Used for**: Debugging, preprocessing analysis, result interpretation.
+
+        # Generation Control Parameters
+        generation_size (int | None):
+            Maximum number of tokens to generate for this instance.
+            **Used for**: Controlling generation length, preventing infinite loops.
+
+        stop_sequences (list[str] | None):
+            List of strings that should stop generation when encountered.
+            **Used for**: Controlled generation, preventing unwanted continuations.
+
+        use_logits (bool):
+            Whether to return logits (raw model outputs) in addition to text.
+            **Used for**: Probability analysis, confidence scoring, detailed evaluation.
+
+        num_samples (int):
+            Number of different samples to generate for this instance.
+            **Used for**: Diversity analysis, uncertainty estimation, ensemble methods.
+
+        generation_grammar (None):
+            Grammar constraints for generation (currently not implemented).
+            **Reserved for**: Future structured generation features.
+
+    Methods:
+        get_golds():
+            Returns the correct answer(s) as strings based on gold_index.
+            Handles both single and multiple correct answers.
+
+    Usage Examples:
+
+        **Multiple Choice Question:**
+        ```python
+        doc = Doc(
+            query="What is the capital of France?",
+            choices=["London", "Paris", "Berlin", "Madrid"],
+            gold_index=1,  # Paris is the correct answer
+            instruction="Answer the following geography question:",
+        )
+        ```
+
+        **Generative Task:**
+        ```python
+        doc = Doc(
+            query="Write a short story about a robot.",
+            choices=[],  # No predefined choices for generative tasks
+            gold_index=0,  # Not used for generative tasks
+            generation_size=100,
+            stop_sequences=["\n\n", "The End"],
+        )
+        ```
+
+        **Few-shot Learning:**
+        ```python
+        doc = Doc(
+            query="Translate 'Hello world' to Spanish.",
+            choices=["Hola mundo", "Bonjour monde", "Ciao mondo"],
+            gold_index=0,
+            fewshot_samples=[
+                Doc(query="Translate 'Good morning' to Spanish.",
+                    choices=["Buenos días", "Bonjour", "Buongiorno"],
+                    gold_index=0),
+                Doc(query="Translate 'Thank you' to Spanish.",
+                    choices=["Gracias", "Merci", "Grazie"],
+                    gold_index=0)
+            ],
+        )
+        ```
+
+        **Multimodal Task:**
+        ```python
+        doc = Doc(
+            query="What is shown in this image?",
+            choices=["A cat", "A dog", "A bird"],
+            gold_index=0,
+            images=[pil_image],  # PIL Image object
+        )
+        ```
+
+        **PMI Analysis:**
+        ```python
+        doc = Doc(
+            query="The answer to the math problem is: 42",
+            choices=["42", "43", "41"],
+            gold_index=0,
+            unconditioned_query="The answer is:",  # Context-free version
+        )
+        ```
+
+    Notes:
+        - Most fields are optional, but `query`, `choices`, and `gold_index` are required for most tasks
+        - The `choices` field can be empty for purely generative tasks
+        - `gold_index` can be a single integer or list of integers for multiple correct answers
+        - Few-shot examples are themselves Doc objects, creating a nested structure
+        - Multimodal tasks require the `images` field to be populated
+        - PMI analysis requires both `query` and `unconditioned_query` to be set
+        - Task-specific metadata can be stored in the `specific` field
     """
 
     query: str
