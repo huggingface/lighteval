@@ -102,7 +102,6 @@ class PipelineParameters:
     num_fewshot_seeds: int = 1
     max_samples: int | None = None
     use_chat_template: bool = False
-    system_prompt: str | None = None
     cot_prompt: str | None = None
     load_responses_from_details_date_id: str | None = None
     bootstrap_iters: int = 1000
@@ -295,14 +294,6 @@ class Pipeline:
                 task_dict=self.tasks_dict, bootstrap_iters=self.pipeline_parameters.bootstrap_iters
             )
             self.evaluation_tracker.details_logger.aggregate()
-
-    def _unpack(self, x):
-        if isinstance(x, str):
-            return x
-        elif isinstance(x, (list, tuple)):
-            return self._unpack(x[0])
-        else:
-            raise ValueError(f"Unknown type {type(x)} of prediction {x}")
 
     async def _run_model_async(self):
         outputs = {}

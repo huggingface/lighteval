@@ -104,7 +104,9 @@ class InferenceProvidersClient(LightevalModel):
             logger.warning(f"Could not load model's tokenizer for the model {self.model_name}.")
             self._tokenizer = None
 
-        self.prompt_manager = PromptManager(use_chat_template=True, tokenizer=self.tokenizer)
+        self.prompt_manager = PromptManager(
+            use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
+        )
 
     async def __call_api(self, prompt: List[dict], num_samples: int) -> Optional[ChatCompletionOutput]:
         """Make API call with exponential backoff retry logic.

@@ -93,7 +93,7 @@ class SGLangModel(LightevalModel):
         self.sampling_backend = config.sampling_backend
         self.attention_backend = config.attention_backend
         self.pairwise_tokenization = config.pairwise_tokenization
-        self.prompt_manager = PromptManager(self.use_chat_template, self.tokenizer)
+        self.prompt_manager = PromptManager(self.use_chat_template, self.tokenizer, config.system_prompt)
 
     @property
     def tokenizer(self):

@@ -37,6 +37,7 @@ from lighteval.models.model_input import GenerationParameters
 
 class ModelConfig(BaseModel, extra="forbid"):
     generation_parameters: GenerationParameters = GenerationParameters()
+    system_prompt: str | None = None
 
     @classmethod
     def from_path(cls, path: str):

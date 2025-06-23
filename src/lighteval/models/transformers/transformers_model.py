@@ -209,10 +209,12 @@ class TransformersModel(LightevalModel):
             model_name=self.config.model_name,
             model_sha=self.model_sha,
             model_dtype=config.dtype,
-            model_size=model_size,
+            model_size=int(model_size),
         )
 
-        self.prompt_manager = PromptManager(self.use_chat_template, self.tokenizer)
+        self.prompt_manager = PromptManager(
+            use_chat_template=self.use_chat_template, tokenizer=self.tokenizer, system_prompt=config.system_prompt
+        )
 
     def cleanup(self):
         """Clean up operations if needed, such as closing an endpoint."""

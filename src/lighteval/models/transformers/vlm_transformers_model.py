@@ -176,7 +176,9 @@ class VLMTransformersModel(LightevalModel):
         self.generation_config_dict["eos_token_id"] = self.eos_token_id
         self.generation_config_dict["renormalize_logits"] = True
 
-        self.prompt_manager = PromptManager(use_chat_template=True, tokenizer=self.tokenizer)
+        self.prompt_manager = PromptManager(
+            use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
+        )
 
         self.model_info = ModelInfo(
             model_name=self.config.model_name,

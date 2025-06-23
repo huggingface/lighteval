@@ -40,10 +40,10 @@ if TYPE_CHECKING:
 
 
 class PromptManager:
-    def __init__(self, use_chat_template: bool = False, tokenizer=None):
+    def __init__(self, use_chat_template: bool = False, tokenizer=None, system_prompt: str | None = None):
         self.use_chat_template = use_chat_template
         self.tokenizer = tokenizer
-        self.system_prompt = None  # System prompt to be used in chat templates
+        self.system_prompt = system_prompt  # System prompt to be used in chat templates
 
     def prepare_prompt(self, doc: Doc) -> str:
         """Prepare a prompt from a document, either using chat template or plain text format."""
@@ -105,20 +105,20 @@ class PromptManager:
         messages = []
 
         # Add system prompt if available
-        if self.system_prompt is not None:
-            messages.append({"role": "system", "content": self.system_prompt})
+        if self.system_prompt is not None or doc.instruction is not None:
+            system_prompt = self.system_prompt if self.system_prompt is not None else ""
+            instruction = doc.instruction if doc.instruction is not None else ""
+            messages.append({"role": "system", "content": system_prompt + instruction})
 
         # Add few-shot examples
-        has_previous_shots = False
         for fewshot_sample in doc.fewshot_samples:
-            query = self._extract_query(fewshot_sample.query, fewshot_sample.instruction, has_previous_shots)
+            query = self._extract_query(fewshot_sample.query, fewshot_sample.instruction)
 
             messages.append({"role": "user", "content": query})
             messages.append({"role": "assistant", "content": fewshot_sample.get_golds()[0]})
-            has_previous_shots = True
 
         # Add main query
-        query = self._extract_query(doc.query, doc.instruction, has_previous_shots)
+        query = self._extract_query(doc.query, doc.instruction)
         messages.append({"role": "user", "content": query})
 
         assert self.tokenizer is not None, "Tokenizer must be set for chat template formatting."
@@ -137,23 +137,27 @@ class PromptManager:
         if self.system_prompt is not None:
             parts.append(self.system_prompt)
 
+        if doc.instruction is not None:
+            parts.append(doc.instruction)
+
         # Add few-shot examples
-        has_previous_shots = False
         for fewshot_sample in doc.fewshot_samples:
-            query = self._extract_query(fewshot_sample.query, fewshot_sample.instruction, has_previous_shots)
-            parts.append(query + fewshot_sample.get_golds()[0])
-            has_previous_shots = True
+            query = self._extract_query(fewshot_sample.query, fewshot_sample.instruction)
+            parts.append(query + " " + fewshot_sample.get_golds()[0].strip())
 
         # Add main query
-        query = self._extract_query(doc.query, doc.instruction, has_previous_shots)
+        query = self._extract_query(doc.query, doc.instruction)
         parts.append(query)
 
         return "\n\n".join(parts)
 
-    def _extract_query(self, query: str, instruction: str | None, has_previous_shots: bool) -> str:
+    def _extract_query(self, query: str, instruction: str | None) -> str:
         """Extract query content, removing instruction prefix if appropriate."""
-        if has_previous_shots and instruction is not None:
-            return query[len(instruction) :]
+        if instruction is not None:
+            if query.startswith(instruction):
+                return query[len(instruction) :].strip()
+            else:
+                return query
         return query
 
 

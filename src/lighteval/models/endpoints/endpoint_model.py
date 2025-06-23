@@ -262,7 +262,9 @@ class InferenceEndpointModel(LightevalModel):
         self._tokenizer = AutoTokenizer.from_pretrained(self.name)
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
 
-        self.prompt_manager = PromptManager(use_chat_template=True, tokenizer=self.tokenizer)
+        self.prompt_manager = PromptManager(
+            use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
+        )
         self.model_info = ModelInfo(
             model_name=self.name,
             model_sha=self.revision,
