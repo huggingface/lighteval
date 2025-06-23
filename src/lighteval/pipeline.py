@@ -202,7 +202,6 @@ class Pipeline:
         else:
             return TransformersModel.from_model(
                 model=model,
-                use_chat_template=self.pipeline_parameters.use_chat_template,
                 accelerator=self.accelerator,
             )
 

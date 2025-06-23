@@ -255,7 +255,6 @@ class TransformersModel(LightevalModel):
         accelerator: "Accelerator" = None,
         tokenizer_name: str = None,  # custom tokenizer
         trust_remote_code: bool = False,
-        use_chat_template: bool = False,
         add_special_tokens: bool = True,
         pairwise_tokenization: bool = False,
         multichoice_continuations_start_space: bool = None,
@@ -290,7 +289,7 @@ class TransformersModel(LightevalModel):
         else:
             self._device = self.config.device
 
-        self.use_chat_template = use_chat_template
+        self.use_chat_template = config.use_chat_template if config else False
         self._add_special_tokens = add_special_tokens if add_special_tokens is not None else False
         self.pairwise_tokenization = pairwise_tokenization
         self.multichoice_continuations_start_space = multichoice_continuations_start_space
