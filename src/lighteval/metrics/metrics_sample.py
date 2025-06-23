@@ -1015,7 +1015,6 @@ class JudgeLLMSimpleQA(JudgeLLM):
 
 
 class JudgeLLMMTBench(JudgeLLM):
-    # TODO: Broken, needs to be
     def compute(self, model_response: list[ModelResponse], docs: list[Doc], **kwargs):
         """
         Compute the score of a generative task using a llm as a judge.
