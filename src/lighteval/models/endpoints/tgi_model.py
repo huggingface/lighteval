@@ -51,6 +51,44 @@ def divide_chunks(array, n):
 
 
 class TGIModelConfig(ModelConfig):
+    """
+    Configuration class for Text Generation Inference (TGI) servers.
+
+    This configuration is used to connect to TGI servers that serve HuggingFace models
+    using the text-generation-inference library. TGI provides high-performance inference
+    with features like continuous batching and efficient memory management.
+
+    Attributes:
+        inference_server_address (str | None):
+            Address of the TGI server. Format: "http://host:port" or "https://host:port".
+            Example: "http://localhost:8080"
+        inference_server_auth (str | None):
+            Authentication token for the TGI server. If None, no authentication is used.
+        model_name (str | None):
+            Optional model name override. If None, uses the model name from server info.
+
+    Example:
+        ```python
+        config = TGIModelConfig(
+            inference_server_address="http://localhost:8080",
+            inference_server_auth="your-auth-token",
+            model_name="microsoft/DialoGPT-medium",
+            generation_parameters=GenerationParameters(
+                temperature=0.7,
+                max_new_tokens=100
+            )
+        )
+        ```
+
+    Note:
+        - Requires a running TGI server
+        - TGI provides high-performance inference with continuous batching
+        - Supports various quantization methods and optimizations
+        - Can be deployed locally or on cloud infrastructure
+        - Requires the `text-generation` Python package
+        - Server must be compatible with the text-generation-inference library
+    """
+
     inference_server_address: str | None
     inference_server_auth: str | None
     model_name: str | None

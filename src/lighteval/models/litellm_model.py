@@ -57,6 +57,50 @@ else:
 
 
 class LiteLLMModelConfig(ModelConfig):
+    """
+    Configuration class for LiteLLM unified API client.
+
+    This configuration is used to connect to various LLM providers through the LiteLLM
+    unified API. LiteLLM provides a consistent interface to multiple providers including
+    OpenAI, Anthropic, Google, and many others.
+
+    Attributes:
+        model_name (str):
+            Model identifier. Can include provider prefix (e.g., "gpt-4", "claude-3-sonnet")
+            or use provider/model format (e.g., "openai/gpt-4", "anthropic/claude-3-sonnet").
+        provider (str | None):
+            Optional provider name override. If None, inferred from model_name.
+            Examples: "openai", "anthropic", "google", "cohere", etc.
+        base_url (str | None):
+            Custom base URL for the API. If None, uses provider's default URL.
+            Useful for using custom endpoints or local deployments.
+        api_key (str | None):
+            API key for authentication. If None, reads from environment variables.
+            Environment variable names are provider-specific (e.g., OPENAI_API_KEY).
+
+    Example:
+        ```python
+        config = LiteLLMModelConfig(
+            model_name="gpt-4",
+            provider="openai",
+            base_url="https://api.openai.com/v1",
+            generation_parameters=GenerationParameters(
+                temperature=0.7,
+                max_new_tokens=100
+            )
+        )
+        ```
+
+    Note:
+        - Supports 100+ LLM providers through unified API
+        - Automatic retry logic with exponential backoff
+        - Built-in caching for cost optimization
+        - Rate limiting and concurrent request handling
+        - API keys should be set in environment variables for security
+        - Different providers have different rate limits and pricing
+        - Some features (like logprobs) are provider-specific
+    """
+
     model_name: str
     provider: str | None = None
     base_url: str | None = None

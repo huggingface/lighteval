@@ -36,6 +36,53 @@ logger = logging.getLogger(__name__)
 
 
 class DeltaModelConfig(TransformersModelConfig):
+    """
+    Configuration class for delta models (weight difference models).
+
+    This configuration is used to load models that represent the difference between a
+    fine-tuned model and its base model. The delta weights are added to the base model
+    during loading to reconstruct the full fine-tuned model.
+
+    Attributes:
+        base_model (str):
+            HuggingFace Hub model ID or path to the base model. This is the original
+            pre-trained model that the delta was computed from.
+            Example: "microsoft/DialoGPT-medium"
+        delta_weights (bool):
+            Flag indicating that this is a delta model. Must be set to True.
+            This is used for validation and to distinguish from regular models.
+
+    Inherited Attributes:
+        All attributes from TransformersModelConfig are inherited, including:
+        - model_name: Should point to the delta weights repository
+        - tokenizer: Uses the delta model's tokenizer (may have different vocabulary)
+        - dtype, device, trust_remote_code: Applied to both base and delta models
+
+    Methods:
+        get_model_sha():
+            Retrieves the Git SHA of the delta model from HuggingFace Hub.
+
+    Example:
+        ```python
+        config = DeltaModelConfig(
+            model_name="microsoft/DialoGPT-medium-delta",  # Delta weights
+            base_model="microsoft/DialoGPT-medium",        # Base model
+            delta_weights=True,
+            dtype="float16",
+            generation_parameters=GenerationParameters(
+                temperature=0.7,
+                max_new_tokens=100
+            )
+        )
+        ```
+
+    Note:
+        - Delta models represent the difference: fine_tuned_model = base_model + delta_weights
+        - The delta weights are added to the base model during loading
+        - The merged model is temporarily saved to disk for efficient loading
+        - This approach is useful for sharing fine-tuned models without storing the full weights
+    """
+
     # Delta models look at the pretrained (= the delta weights) for the tokenizer and model config
     base_model: str
     delta_weights: bool

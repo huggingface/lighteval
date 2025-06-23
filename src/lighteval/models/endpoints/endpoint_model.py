@@ -69,12 +69,123 @@ SORTED_INSTANCE_SIZES = [  # sorted by incremental overall RAM (to load models)
 
 
 class ServerlessEndpointModelConfig(ModelConfig):
+    """
+    Configuration class for HuggingFace Inference API (serverless endpoints).
+
+    This configuration is used to connect to HuggingFace's free Inference API,
+    which provides access to thousands of models without requiring dedicated
+    infrastructure or API keys for many models.
+
+    Attributes:
+        model_name (str):
+            HuggingFace Hub model ID to use with the Inference API.
+            Example: "microsoft/DialoGPT-medium"
+        add_special_tokens (bool):
+            Whether to add special tokens during tokenization. Defaults to True.
+        batch_size (int):
+            Batch size for requests. Defaults to 1 (serverless API limitation).
+
+    Example:
+        ```python
+        config = ServerlessEndpointModelConfig(
+            model_name="microsoft/DialoGPT-medium",
+            generation_parameters=GenerationParameters(
+                temperature=0.7,
+                max_new_tokens=100
+            )
+        )
+        ```
+
+    Note:
+        - Uses HuggingFace's free Inference API
+        - No API key required for many models
+        - Limited to batch size of 1
+        - Subject to rate limits and availability
+        - Good for testing and small-scale evaluations
+    """
+
     model_name: str
     add_special_tokens: bool = True
     batch_size: int = 1
 
 
 class InferenceEndpointModelConfig(ModelConfig):
+    """
+    Configuration class for HuggingFace Inference Endpoints (dedicated infrastructure).
+
+    This configuration is used to create and manage dedicated inference endpoints
+    on HuggingFace's infrastructure. These endpoints provide dedicated compute
+    resources and can handle larger batch sizes and higher throughput.
+
+    Attributes:
+        endpoint_name (str | None):
+            Name for the inference endpoint. If None, auto-generated from model_name.
+        model_name (str | None):
+            HuggingFace Hub model ID to deploy. Required if endpoint_name is None.
+        reuse_existing (bool):
+            Whether to reuse an existing endpoint with the same name. Defaults to False.
+        accelerator (str):
+            Type of accelerator to use. Defaults to "gpu". Options: "gpu", "cpu".
+        dtype (str | None):
+            Model data type. If None, uses model default. Options: "float16", "bfloat16", "awq", "gptq", "8bit", "4bit".
+        vendor (str):
+            Cloud vendor for the endpoint. Defaults to "aws". Options: "aws", "azure", "gcp".
+        region (str):
+            Cloud region for the endpoint. Defaults to "us-east-1".
+        instance_size (str | None):
+            Instance size for the endpoint. If None, auto-scaled.
+        instance_type (str | None):
+            Instance type for the endpoint. If None, auto-scaled.
+        framework (str):
+            ML framework to use. Defaults to "pytorch".
+        endpoint_type (str):
+            Type of endpoint. Defaults to "protected". Options: "protected", "public".
+        add_special_tokens (bool):
+            Whether to add special tokens during tokenization. Defaults to True.
+        revision (str):
+            Git revision of the model. Defaults to "main".
+        namespace (str | None):
+            Namespace for the endpoint. If None, uses current user's namespace.
+        image_url (str | None):
+            Custom Docker image URL. If None, uses default TGI image.
+        env_vars (dict | None):
+            Additional environment variables for the endpoint.
+        batch_size (int):
+            Batch size for requests. Defaults to 1.
+
+    Methods:
+        model_post_init():
+            Validates configuration and ensures proper parameter combinations.
+        get_dtype_args():
+            Returns environment variables for dtype configuration.
+        get_custom_env_vars():
+            Returns custom environment variables for the endpoint.
+
+    Example:
+        ```python
+        config = InferenceEndpointModelConfig(
+            model_name="microsoft/DialoGPT-medium",
+            instance_type="nvidia-a100",
+            instance_size="x1",
+            vendor="aws",
+            region="us-east-1",
+            dtype="float16",
+            generation_parameters=GenerationParameters(
+                temperature=0.7,
+                max_new_tokens=100
+            )
+        )
+        ```
+
+    Note:
+        - Creates dedicated infrastructure for model inference
+        - Supports various quantization methods and hardware configurations
+        - Auto-scaling available for optimal resource utilization
+        - Requires HuggingFace Pro subscription for most features
+        - Endpoints can take several minutes to start up
+        - Billed based on compute usage and duration
+    """
+
     endpoint_name: str | None = None
     model_name: str | None = None
     reuse_existing: bool = False

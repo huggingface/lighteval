@@ -68,54 +68,79 @@ STARTING_BATCH_SIZE = 512
 
 class TransformersModelConfig(ModelConfig):
     """
-    Base configuration class for models.
+    Configuration class for HuggingFace Transformers models.
+
+    This configuration is used to load and configure models from the HuggingFace Transformers library.
+    It supports both causal language models (like GPT-2, LLaMA) and sequence-to-sequence models
+    (like T5, BART) for text generation and evaluation tasks.
 
     Attributes:
         model_name (str):
-            HuggingFace Hub model ID name or the path to a pre-trained
-            model to load. This is effectively the `pretrained_model_name_or_path`
-            argument of `from_pretrained` in the HuggingFace `transformers` API.
-        accelerator (Accelerator): accelerator to use for model training.
-        tokenizer (Optional[str]): HuggingFace Hub tokenizer ID that will be
-            used for tokenization.
-        multichoice_continuations_start_space (Optional[bool]): Whether to add a
-            space at the start of each continuation in multichoice generation.
-            For example, context: "What is the capital of France?" and choices: "Paris", "London".
-            Will be tokenized as: "What is the capital of France? Paris" and "What is the capital of France? London".
-            True adds a space, False strips a space, None does nothing
-        pairwise_tokenization (bool): Whether to tokenize the context and continuation as separately or together.
-        subfolder (Optional[str]): The subfolder within the model repository.
-        revision (str): The revision of the model.
-        batch_size (int): The batch size for model training.
-        max_gen_toks (Optional[int]): The maximum number of tokens to generate.
-        max_length (Optional[int]): The maximum length of the generated output.
-        add_special_tokens (bool, optional, defaults to True): Whether to add special tokens to the input sequences.
-           If `None`, the default value will be set to `True` for seq2seq models (e.g. T5) and
-            `False` for causal models.
-        model_parallel (bool, optional, defaults to None):
-            True/False: force to use or not the `accelerate` library to load a large
-            model across multiple devices.
-            Default: None which corresponds to comparing the number of processes with
-                the number of GPUs. If it's smaller => model-parallelism, else not.
-        dtype (Union[str, torch.dtype], optional, defaults to None):):
-            Converts the model weights to `dtype`, if specified. Strings get
-            converted to `torch.dtype` objects (e.g. `float16` -> `torch.float16`).
-            Use `dtype="auto"` to derive the type from the model's weights.
-        device (Union[int, str]): device to use for model training.
-        quantization_config (Optional[BitsAndBytesConfig]): quantization
-            configuration for the model, manually provided to load a normally floating point
-            model at a quantized precision. Needed for 4-bit and 8-bit precision.
-        trust_remote_code (bool): Whether to trust remote code during model
-            loading.
-        generation_parameters (GenerationParameters): Range of parameters which will affect the generation.
-        generation_config (GenerationConfig): GenerationConfig object (only passed during manual creation)
+            HuggingFace Hub model ID or path to a pre-trained model. This corresponds to the
+            `pretrained_model_name_or_path` argument in HuggingFace's `from_pretrained` method.
+            Examples: "gpt2", "microsoft/DialoGPT-medium", "/path/to/local/model"
+        tokenizer (str | None):
+            Optional HuggingFace Hub tokenizer ID. If not specified, uses the same ID as model_name.
+            Useful when the tokenizer is different from the model (e.g., for multilingual models).
+        subfolder (str | None):
+            Subfolder within the model repository. Used when models are stored in subdirectories.
+        revision (str):
+            Git revision of the model to load. Defaults to "main".
+        batch_size (PositiveInt | None):
+            Batch size for model inference. If None, will be automatically determined.
+        max_length (PositiveInt | None):
+            Maximum sequence length for tokenization. If None, uses model's default.
+        model_loading_kwargs (dict):
+            Additional keyword arguments passed to `from_pretrained`. Defaults to empty dict.
+        add_special_tokens (bool):
+            Whether to add special tokens during tokenization. Defaults to True.
+            For seq2seq models, this is typically True; for causal models, it may be False.
+        model_parallel (bool | None):
+            Whether to use model parallelism across multiple GPUs. If None, automatically
+            determined based on available GPUs and model size.
+        dtype (str | None):
+            Data type for model weights. Can be "float16", "bfloat16", "float32", "auto", "4bit", "8bit".
+            If "auto", uses the model's default dtype.
+        device (Union[int, str]):
+            Device to load the model on. Can be "cuda", "cpu", or GPU index. Defaults to "cuda".
+        trust_remote_code (bool):
+            Whether to trust remote code when loading models. Defaults to False.
+        use_chat_template (bool):
+            Whether to use chat templates for conversation-style prompts. Defaults to False.
+        compile (bool):
+            Whether to compile the model using torch.compile for optimization. Defaults to False.
+        multichoice_continuations_start_space (bool | None):
+            Whether to add a space before multiple choice continuations. If None, uses model default.
+            True forces adding space, False removes leading space if present.
+        pairwise_tokenization (bool):
+            Whether to tokenize context and continuation separately or together. Defaults to False.
 
     Methods:
-        __post_init__(): Performs post-initialization checks on the configuration.
-        _init_configs(model_name, env_config): Initializes the model configuration.
-        init_configs(env_config): Initializes the model configuration using the environment configuration.
-        get_model_sha(): Retrieves the SHA of the model.
+        model_post_init():
+            Post-initialization validation and warnings for configuration.
+        get_transformers_config():
+            Returns the HuggingFace AutoConfig for the model.
+        get_model_sha():
+            Retrieves the Git SHA of the model from HuggingFace Hub.
 
+    Example:
+        ```python
+        config = TransformersModelConfig(
+            model_name="gpt2",
+            batch_size=8,
+            dtype="float16",
+            use_chat_template=True,
+            generation_parameters=GenerationParameters(
+                temperature=0.7,
+                max_new_tokens=100
+            )
+        )
+        ```
+
+    Note:
+        This configuration supports quantization (4-bit and 8-bit) through the dtype parameter.
+        When using quantization, ensure you have the required dependencies installed
+        (bitsandbytes for 4-bit/8-bit quantization).
     """
 
     model_name: str

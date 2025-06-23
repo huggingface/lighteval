@@ -73,6 +73,80 @@ STARTING_BATCH_SIZE = 512
 
 
 class VLLMModelConfig(ModelConfig):
+    """
+    Configuration class for VLLM (Very Large Language Model) inference engine.
+
+    This configuration is used to load and configure models using the VLLM inference engine,
+    which provides high-performance inference for large language models with features like
+    PagedAttention, continuous batching, and efficient memory management.
+
+    Attributes:
+        model_name (str):
+            HuggingFace Hub model ID or path to the model to load.
+        revision (str):
+            Git revision of the model. Defaults to "main".
+        dtype (str):
+            Data type for model weights. Defaults to "bfloat16". Options: "float16", "bfloat16", "float32".
+        tensor_parallel_size (PositiveInt):
+            Number of GPUs to use for tensor parallelism. Defaults to 1.
+        data_parallel_size (PositiveInt):
+            Number of GPUs to use for data parallelism. Defaults to 1.
+        pipeline_parallel_size (PositiveInt):
+            Number of GPUs to use for pipeline parallelism. Defaults to 1.
+        gpu_memory_utilization (NonNegativeFloat):
+            Fraction of GPU memory to use. Lower this if running out of memory. Defaults to 0.9.
+        max_model_length (PositiveInt | None):
+            Maximum sequence length for the model. If None, automatically inferred.
+            Reduce this if encountering OOM issues (4096 is usually sufficient).
+        quantization (str | None):
+            Quantization method. Options: "awq", "gptq", "squeezellm", "marlin", etc.
+        load_format (str | None):
+            Model loading format. Options: "auto", "hf", "safetensors", etc.
+        swap_space (PositiveInt):
+            CPU swap space size in GiB per GPU. Defaults to 4.
+        seed (NonNegativeInt):
+            Random seed for reproducibility. Defaults to 1234.
+        trust_remote_code (bool):
+            Whether to trust remote code when loading models. Defaults to False.
+        add_special_tokens (bool):
+            Whether to add special tokens during tokenization. Defaults to True.
+        multichoice_continuations_start_space (bool):
+            Whether to add a space before multiple choice continuations. Defaults to True.
+        pairwise_tokenization (bool):
+            Whether to tokenize context and continuation separately. Defaults to False.
+        max_num_seqs (PositiveInt):
+            Maximum number of sequences per iteration. Controls batch size at prefill stage. Defaults to 128.
+        max_num_batched_tokens (PositiveInt):
+            Maximum number of tokens per batch. Defaults to 2048.
+        subfolder (str | None):
+            Subfolder within the model repository. Defaults to None.
+        use_chat_template (bool):
+            Whether to use chat templates for conversation-style prompts. Defaults to False.
+        is_async (bool):
+            Whether to use the async version of VLLM. Defaults to False.
+
+    Example:
+        ```python
+        config = VLLMModelConfig(
+            model_name="microsoft/DialoGPT-medium",
+            tensor_parallel_size=2,
+            gpu_memory_utilization=0.8,
+            max_model_length=4096,
+            generation_parameters=GenerationParameters(
+                temperature=0.7,
+                max_new_tokens=100
+            )
+        )
+        ```
+
+    Note:
+        - VLLM provides significant performance improvements for large models
+        - Supports various quantization methods for memory efficiency
+        - Continuous batching allows efficient processing of variable-length sequences
+        - PagedAttention reduces memory fragmentation and improves throughput
+        - Requires CUDA-compatible GPUs
+    """
+
     model_name: str
     revision: str = "main"  # revision of the model
     dtype: str = "bfloat16"

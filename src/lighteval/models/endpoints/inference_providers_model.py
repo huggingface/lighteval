@@ -44,15 +44,49 @@ logger = logging.getLogger(__name__)
 
 
 class InferenceProvidersModelConfig(ModelConfig):
-    """Configuration for InferenceProvidersClient.
+    """
+    Configuration class for inference providers (like Together AI, Anyscale, etc.).
 
-    Args:
-        model: Name or path of the model to use
-        provider: Name of the inference provider
-        timeout: Request timeout in seconds
-        proxies: Proxy configuration for requests
-        org_to_bill: Organisation to bill if not the user
-        generation_parameters: Parameters for text generation
+    This configuration is used to connect to external inference providers that host
+    and serve language models via API endpoints. It supports various providers with
+    different authentication and configuration requirements.
+
+    Attributes:
+        model_name (str):
+            Name or identifier of the model to use. This is provider-specific and
+            may include provider prefixes (e.g., "togethercomputer/llama-2-7b").
+        provider (str):
+            Name of the inference provider. Examples: "together", "anyscale", "runpod", etc.
+        timeout (int | None):
+            Request timeout in seconds. If None, uses provider default.
+        proxies (Any | None):
+            Proxy configuration for requests. Can be a dict or proxy URL string.
+        org_to_bill (str | None):
+            Organization to bill for API usage. If None, bills the user's account.
+        parallel_calls_count (NonNegativeInt):
+            Number of parallel API calls to make. Defaults to 10.
+            Higher values increase throughput but may hit rate limits.
+
+    Example:
+        ```python
+        config = InferenceProvidersModelConfig(
+            model_name="togethercomputer/llama-2-7b",
+            provider="together",
+            timeout=60,
+            parallel_calls_count=5,
+            generation_parameters=GenerationParameters(
+                temperature=0.7,
+                max_new_tokens=100
+            )
+        )
+        ```
+
+    Note:
+        - Requires HF API keys to be set in environment variable
+        - Different providers have different rate limits and pricing
+        - Parallel calls can improve throughput but may hit rate limits
+        - Some providers support specific model formats or optimizations
+        - Network latency may affect overall evaluation speed
     """
 
     model_name: str

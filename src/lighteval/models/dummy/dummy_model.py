@@ -33,6 +33,37 @@ from lighteval.tasks.requests import Doc
 
 
 class DummyModelConfig(ModelConfig):
+    """
+    Configuration class for dummy models used for testing and baselines.
+
+    This configuration is used to create dummy models that generate random responses
+    or baselines for evaluation purposes. Useful for testing evaluation pipelines
+    without requiring actual model inference.
+
+    Attributes:
+        seed (int):
+            Random seed for reproducible dummy responses. Defaults to 42.
+            This seed controls the randomness of the generated responses and log probabilities.
+
+    Example:
+        ```python
+        config = DummyModelConfig(
+            seed=123,
+            generation_parameters=GenerationParameters(
+                temperature=0.7,
+                max_new_tokens=100
+            )
+        )
+        ```
+
+    Note:
+        - Dummy models are useful for testing evaluation pipelines
+        - They generate random responses and log probabilities
+        - No actual model inference is performed
+        - Useful for establishing baseline performance metrics
+        - Can be used to test evaluation infrastructure without GPU requirements
+    """
+
     seed: int = 42
 
 
