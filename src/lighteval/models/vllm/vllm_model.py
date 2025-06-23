@@ -74,7 +74,7 @@ STARTING_BATCH_SIZE = 512
 
 class VLLMModelConfig(ModelConfig):
     """
-    Configuration class for VLLM (Very Large Language Model) inference engine.
+    Configuration class for VLLM inference engine.
 
     This configuration is used to load and configure models using the VLLM inference engine,
     which provides high-performance inference for large language models with features like

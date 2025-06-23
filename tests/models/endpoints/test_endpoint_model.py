@@ -50,6 +50,7 @@ class TestInferenceEndpointModelConfig:
                     "image_url": None,
                     "env_vars": None,
                     "add_special_tokens": True,
+                    "system_prompt": None,
                     "generation_parameters": {
                         "early_stopping": None,
                         "frequency_penalty": None,
