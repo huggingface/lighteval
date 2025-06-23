@@ -36,6 +36,7 @@ class TestTGIModelConfig:
                     "inference_server_address": "",
                     "inference_server_auth": None,
                     "model_name": None,
+                    "system_prompt": None,
                     "generation_parameters": {
                         "early_stopping": None,
                         "frequency_penalty": None,
