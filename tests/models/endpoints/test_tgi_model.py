@@ -48,7 +48,7 @@ class TestTGIModelConfig:
                         "repetition_penalty": None,
                         "seed": None,
                         "stop_tokens": None,
-                        "temperature": None,
+                        "temperature": 0,
                         "top_k": None,
                         "top_p": None,
                         "truncate_prompt": None,
