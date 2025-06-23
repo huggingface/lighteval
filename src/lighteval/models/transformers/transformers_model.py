@@ -663,6 +663,8 @@ class TransformersModel(LightevalModel):
             output_logits=returns_logits,
             renormalize_logits=True,
         )
+        if num_samples > 1 and generation_config["temperature"] == 0:
+            logger.warning("num_samples > 1 but temperature is set to 0, this will not sample different outputs.")
 
         # Compute model generation
         outputs: GenerateOutput = self.model.generate(
