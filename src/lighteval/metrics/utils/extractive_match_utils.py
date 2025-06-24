@@ -89,7 +89,7 @@ class IndicesExtractionConfig:
     """
 
     prefix_for_extraction: ChoicePrefix
-    try_extract_without_anchor: bool = True
+    try_extract_without_anchor: bool = False
 
 
 ExtractionTarget = LatexExtractionConfig | ExprExtractionConfig | IndicesExtractionConfig
