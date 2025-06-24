@@ -31,6 +31,7 @@ from datasets import DatasetDict
 from huggingface_hub import TextGenerationInputGrammarType
 from multiprocess import Pool
 from pytablewriter import MarkdownTableWriter
+from tqdm import tqdm
 
 from lighteval.metrics import (
     apply_generative_metric,
@@ -560,7 +561,7 @@ class LightevalTask:
                     task.dataset_filter,
                     task.dataset_revision,
                 )
-                for task in tasks
+                for task in tqdm(tasks)
             ]
         else:
             with Pool(processes=dataset_loading_processes) as pool:
@@ -627,7 +628,7 @@ def create_requests_from_tasks(  # noqa: C901
     task_dict_items = [(name, task) for name, task in task_dict.items() if len(task.eval_docs()) > 0]
 
     # Get lists of each type of request
-    for task_name, task in task_dict_items:
+    for task_name, task in tqdm(task_dict_items):
         task_docs = list(task.eval_docs())
         n_samples = min(max_samples, len(task_docs)) if max_samples else len(task_docs)
         evaluation_tracker.task_config_logger.log_num_docs(task_name, len(task_docs), n_samples)
