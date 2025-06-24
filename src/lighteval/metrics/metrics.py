@@ -874,8 +874,12 @@ class Metrics(Enum):
     )
     gpqa_instruct_metric = multilingual_extractive_match_metric(
         language=Language.ENGLISH,
-        gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
-        pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+        gold_extraction_target=[
+            IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=False)
+        ],
+        pred_extraction_target=[
+            IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=False)
+        ],
         precision=6,
     )
     gpqa_instruct_pass_at_1_1n = SampleLevelMetric(
@@ -885,8 +889,12 @@ class Metrics(Enum):
             n=1,
             sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
                 language=Language.ENGLISH,
-                gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
-                pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                gold_extraction_target=[
+                    IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=False)
+                ],
+                pred_extraction_target=[
+                    IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=False)
+                ],
                 precision=6,
             ).sample_level_fn([ref], [pred], doc),
         ).compute,
@@ -902,8 +910,12 @@ class Metrics(Enum):
             n=4,
             sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
                 language=Language.ENGLISH,
-                gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
-                pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                gold_extraction_target=[
+                    IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=False)
+                ],
+                pred_extraction_target=[
+                    IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=False)
+                ],
                 precision=6,
             ).sample_level_fn([ref], [pred], doc),
         ).compute,
@@ -919,8 +931,12 @@ class Metrics(Enum):
             n=8,
             sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
                 language=Language.ENGLISH,
-                gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
-                pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                gold_extraction_target=[
+                    IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=False)
+                ],
+                pred_extraction_target=[
+                    IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=False)
+                ],
                 precision=6,
             ).sample_level_fn([ref], [pred], doc),
         ).compute,
