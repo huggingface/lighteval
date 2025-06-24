@@ -86,19 +86,15 @@ class PromptManager:
         Prepare a prompt for API calls, using a chat-like format.
         Will not tokenize the message because APIs will usually handle this.
         """
-        message = {"role": "user", "content": doc.query}
+        messages = []
+        if self.system_prompt is not None:
+            system_prompt_message = {"role": "system", "content": self.system_prompt}
+            messages.append(system_prompt_message)
 
-        if (
-            self.system_prompt is not None or doc.instruction is not None
-        ):  # We add system prompt and instruction jointly if possible
-            system_prompt = self.system_prompt if self.system_prompt is not None else ""
-            instruction = doc.instruction if doc.instruction is not None else ""
-            system_prompt_message = {"role": "system", "content": system_prompt + instruction}
-            message = [system_prompt_message, message]
-        else:
-            message = [message]
+        user_message = {"role": "user", "content": (doc.instruction or "") + doc.query}
+        messages.append(user_message)
 
-        return message
+        return messages
 
     def _prepare_chat_template(self, doc: Doc) -> str:
         """Prepare prompt using chat template format."""
@@ -109,8 +105,10 @@ class PromptManager:
             messages.append({"role": "system", "content": self.system_prompt})
 
         # Add few-shot examples
-        for fewshot_sample in doc.fewshot_samples:
+        for ix, fewshot_sample in enumerate(doc.fewshot_samples):
             query = self._extract_query(fewshot_sample.query, fewshot_sample.instruction)
+            if ix == 0 and doc.instruction is not None:
+                query = doc.instruction + query
 
             messages.append({"role": "user", "content": query})
             messages.append({"role": "assistant", "content": fewshot_sample.get_golds()[0]})
@@ -118,9 +116,6 @@ class PromptManager:
         # Add main query
         query = self._extract_query(doc.query, doc.instruction)
         messages.append({"role": "user", "content": query})
-
-        if doc.instruction is not None:
-            messages[0]["content"] = doc.instruction + messages[0]["content"]
 
         assert self.tokenizer is not None, "Tokenizer must be set for chat template formatting."
 
