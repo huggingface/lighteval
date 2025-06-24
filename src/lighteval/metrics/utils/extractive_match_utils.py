@@ -85,7 +85,8 @@ class IndicesExtractionConfig:
 
     Attributes:
         prefix_for_extraction (ChoicePrefix): The style to use for extracting choice indices (e.g. A,B,C or 1,2,3)
-        try_extract_without_anchor (bool): Whether to try extracting indices without requiring specific anchors like "answer:" or "final answer is"
+        try_extract_without_anchor (bool): Whether to try extracting indices without requiring specific anchors like "answer:" or "final answer is".
+            Recommended False for indices extraction, as some indices (for example `A` which is also a word) can lead to a lot of false positives.
     """
 
     prefix_for_extraction: ChoicePrefix
