@@ -86,17 +86,9 @@ class PromptManager:
         Prepare a prompt for API calls, using a chat-like format.
         Will not tokenize the message because APIs will usually handle this.
         """
-        messages = []
-        if self.system_prompt is not None:
-            system_prompt_message = {"role": "system", "content": self.system_prompt}
-            messages.append(system_prompt_message)
+        return self._prepare_chat_template(doc, tokenize=False)
 
-        user_message = {"role": "user", "content": (doc.instruction or "") + doc.query}
-        messages.append(user_message)
-
-        return messages
-
-    def _prepare_chat_template(self, doc: Doc) -> str:
+    def _prepare_chat_template(self, doc: Doc, tokenize: bool = True) -> str:
         """Prepare prompt using chat template format."""
         messages = []
 
@@ -114,16 +106,20 @@ class PromptManager:
             messages.append({"role": "assistant", "content": fewshot_sample.get_golds()[0]})
 
         # Add main query
-        query = self._extract_query(doc.query, doc.instruction)
-        messages.append({"role": "user", "content": query})
+        main_query = self._extract_query(doc.query, doc.instruction)
+        messages.append({"role": "user", "content": main_query})
 
-        assert self.tokenizer is not None, "Tokenizer must be set for chat template formatting."
+        if tokenize:  # for local models
+            assert self.tokenizer is not None, "Tokenizer must be set for chat template formatting."
 
-        return self.tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True,
-        )
+            return self.tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=True,
+            )
+
+        else:  # for apis
+            return messages
 
     def _prepare_plain_text(self, doc: Doc) -> str:
         """Prepare prompt using plain text format."""

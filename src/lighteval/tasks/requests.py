@@ -198,7 +198,7 @@ class Doc:
     query: str
     choices: list[str]
     gold_index: Union[int, list[int]]
-    instruction: str | None = None  # system prompt to use for the model, if any
+    instruction: str | None = None  # task prompt to use, if any
     images: list["Image"] | None = None  # for multimodal benchmarks
     specific: dict | None = None  # Information which is specific to the current eval
 
