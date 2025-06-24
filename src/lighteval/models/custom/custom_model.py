@@ -59,18 +59,15 @@ class CustomModelConfig(ModelConfig):
                 super().__init__(config, env_config)
                 # Custom initialization...
 
-            def greedy_until(self, *args, **kwargs):
+            def greedy_until(self, docs: list[Doc]) -> list[ModelResponse]:
                 # Custom generation logic...
+                pass
+
+            def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
                 pass
         ```
 
     An example of a custom model can be found in `examples/custom_models/google_translate_model.py`.
-
-    Notes:
-        - The custom model class must inherit from LightevalModel and implement all required methods
-        - Only one class inheriting from LightevalModel should be defined in the file
-        - The model file is dynamically loaded at runtime, so ensure all dependencies are available
-        - Exercise caution when loading custom model files as they can execute arbitrary code
     """
 
     model_name: str

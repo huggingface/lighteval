@@ -70,7 +70,7 @@ class BatchCollator:
 
 class VLMTransformersModelConfig(ModelConfig):
     """
-    Base configuration class for models.
+    Configuration class for VLM (image-text-to-text) models.
 
     Attributes:
         model_name (str):
@@ -85,7 +85,7 @@ class VLMTransformersModelConfig(ModelConfig):
         revision (str): The revision of the model.
         batch_size (int): The batch size for model training.
         generation_size (Optional[int]): The maximum number of tokens to generate.
-        max_length (Optional[int]): The maximum length of the generated output.
+        max_length (Optional[int]): The maximum length of the input + generated output.
         add_special_tokens (bool, optional, defaults to True): Whether to add special tokens to the input sequences.
         model_parallel (bool, optional, defaults to None):
             True/False: force to use or not the `accelerate` library to load a large
@@ -102,15 +102,6 @@ class VLMTransformersModelConfig(ModelConfig):
             model at a quantized precision. Needed for 4-bit and 8-bit precision.
         trust_remote_code (bool): Whether to trust remote code during model
             loading.
-        generation_parameters (GenerationParameters): Range of parameters which will affect the generation.
-        generation_config (GenerationConfig): GenerationConfig object (only passed during manual creation)
-
-    Methods:
-        __post_init__(): Performs post-initialization checks on the configuration.
-        _init_configs(model_name, env_config): Initializes the model configuration.
-        init_configs(env_config): Initializes the model configuration using the environment configuration.
-        get_model_sha(): Retrieves the SHA of the model.
-
     """
 
     model_name: str

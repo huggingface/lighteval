@@ -71,14 +71,11 @@ class TransformersModelConfig(ModelConfig):
     Configuration class for HuggingFace Transformers models.
 
     This configuration is used to load and configure models from the HuggingFace Transformers library.
-    It supports both causal language models (like GPT-2, LLaMA) and sequence-to-sequence models
-    (like T5, BART) for text generation and evaluation tasks.
 
     Attributes:
         model_name (str):
             HuggingFace Hub model ID or path to a pre-trained model. This corresponds to the
             `pretrained_model_name_or_path` argument in HuggingFace's `from_pretrained` method.
-            Examples: "gpt2", "microsoft/DialoGPT-medium", "/path/to/local/model"
         tokenizer (str | None):
             Optional HuggingFace Hub tokenizer ID. If not specified, uses the same ID as model_name.
             Useful when the tokenizer is different from the model (e.g., for multilingual models).
@@ -89,12 +86,11 @@ class TransformersModelConfig(ModelConfig):
         batch_size (PositiveInt | None):
             Batch size for model inference. If None, will be automatically determined.
         max_length (PositiveInt | None):
-            Maximum sequence length for tokenization. If None, uses model's default.
+            Maximum sequence length for the model. If None, uses model's default.
         model_loading_kwargs (dict):
             Additional keyword arguments passed to `from_pretrained`. Defaults to empty dict.
         add_special_tokens (bool):
             Whether to add special tokens during tokenization. Defaults to True.
-            For seq2seq models, this is typically True; for causal models, it may be False.
         model_parallel (bool | None):
             Whether to use model parallelism across multiple GPUs. If None, automatically
             determined based on available GPUs and model size.
@@ -115,19 +111,11 @@ class TransformersModelConfig(ModelConfig):
         pairwise_tokenization (bool):
             Whether to tokenize context and continuation separately or together. Defaults to False.
 
-    Methods:
-        model_post_init():
-            Post-initialization validation and warnings for configuration.
-        get_transformers_config():
-            Returns the HuggingFace AutoConfig for the model.
-        get_model_sha():
-            Retrieves the Git SHA of the model from HuggingFace Hub.
-
     Example:
         ```python
         config = TransformersModelConfig(
-            model_name="gpt2",
-            batch_size=8,
+            model_name="meta-llama/Llama-3.1-8B-Instruct",
+            batch_size=4,
             dtype="float16",
             use_chat_template=True,
             generation_parameters=GenerationParameters(

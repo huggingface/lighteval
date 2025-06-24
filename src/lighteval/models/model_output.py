@@ -43,50 +43,21 @@ class ModelResponse:
         text (list[str]):
             The generated text responses from the model. Each element represents
             one generation (useful when num_samples > 1).
-            **Required for**: Generative tasks, text completion evaluation,
-            BLEU, ROUGE, exact match, and other generation-based metrics.
+            **Required for**: Generative metrics, exact match, llm as a judge, etc.
 
         logprobs (list[float]):
             Log probabilities of the generated tokens or sequences.
-            **Required for**: Perplexity calculation, probability-based metrics,
-            likelihood evaluation, and uncertainty estimation.
+            **Required for**: loglikelihood and perplexity metrics.
 
         argmax_logits_eq_gold (list[bool]):
             Whether the argmax logits match the gold/expected text.
             Used for accuracy calculations in multiple choice and classification tasks.
-            **Required for**: Multiple choice accuracy, classification accuracy,
-            and other discrete choice evaluation metrics.
-
-        logits (list[list[float]] | None):
-            Raw logits from the model output (before softmax).
-            **Required for**: Detailed probability analysis, confidence scoring,
-            and custom probability-based metrics.
-
-        truncated_tokens_count (int):
-            Number of tokens that were truncated from the input.
-            **Required for**: Input length analysis, truncation statistics,
-            and understanding model behavior with long contexts.
-
-        padded_tokens_count (int):
-            Number of padding tokens added to the input.
-            **Required for**: Batch efficiency analysis, padding statistics,
-            and understanding model behavior with variable-length inputs.
-
-        input_tokens (list[int]):
-            Token IDs of the input sequence.
-            **Required for**: Token-level analysis, input tokenization verification,
-            and debugging tokenization issues.
-
-        output_tokens (list[list[int]]):
-            Token IDs of the generated output sequences.
-            **Required for**: Token-level generation analysis, vocabulary usage statistics,
-            and debugging generation issues.
+            **Required for**: certain loglikelihood metrics.
 
         unconditioned_logprobs (Optional[list[float]]):
             Log probabilities from an unconditioned model (e.g., without context).
             Used for PMI (Pointwise Mutual Information) normalization.
-            **Required for**: PMI-based metrics, bias analysis, and context-aware
-            probability calculations.
+            **Required for**: PMI metrics.
 
     Usage Examples:
 

@@ -80,6 +80,8 @@ class VLLMModelConfig(ModelConfig):
     which provides high-performance inference for large language models with features like
     PagedAttention, continuous batching, and efficient memory management.
 
+    vllm doc: https://docs.vllm.ai/en/v0.7.1/serving/engine_args.html
+
     Attributes:
         model_name (str):
             HuggingFace Hub model ID or path to the model to load.
@@ -99,9 +101,9 @@ class VLLMModelConfig(ModelConfig):
             Maximum sequence length for the model. If None, automatically inferred.
             Reduce this if encountering OOM issues (4096 is usually sufficient).
         quantization (str | None):
-            Quantization method. Options: "awq", "gptq", "squeezellm", "marlin", etc.
+            Quantization method.
         load_format (str | None):
-            Model loading format. Options: "auto", "hf", "safetensors", etc.
+            The format of the model weights to load. choices: auto, pt, safetensors, npcache, dummy, tensorizer, sharded_state, gguf, bitsandbytes, mistral, runai_streamer.
         swap_space (PositiveInt):
             CPU swap space size in GiB per GPU. Defaults to 4.
         seed (NonNegativeInt):
@@ -113,7 +115,7 @@ class VLLMModelConfig(ModelConfig):
         multichoice_continuations_start_space (bool):
             Whether to add a space before multiple choice continuations. Defaults to True.
         pairwise_tokenization (bool):
-            Whether to tokenize context and continuation separately. Defaults to False.
+            Whether to tokenize context and continuation separately for loglikelihood evals. Defaults to False.
         max_num_seqs (PositiveInt):
             Maximum number of sequences per iteration. Controls batch size at prefill stage. Defaults to 128.
         max_num_batched_tokens (PositiveInt):
@@ -128,7 +130,7 @@ class VLLMModelConfig(ModelConfig):
     Example:
         ```python
         config = VLLMModelConfig(
-            model_name="microsoft/DialoGPT-medium",
+            model_name="meta-llama/Llama-3.1-8B-Instruct",
             tensor_parallel_size=2,
             gpu_memory_utilization=0.8,
             max_model_length=4096,
@@ -138,13 +140,6 @@ class VLLMModelConfig(ModelConfig):
             )
         )
         ```
-
-    Note:
-        - VLLM provides significant performance improvements for large models
-        - Supports various quantization methods for memory efficiency
-        - Continuous batching allows efficient processing of variable-length sequences
-        - PagedAttention reduces memory fragmentation and improves throughput
-        - Requires CUDA-compatible GPUs
     """
 
     model_name: str

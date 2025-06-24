@@ -51,43 +51,14 @@ class AdapterModelConfig(TransformersModelConfig):
         base_model (str):
             HuggingFace Hub model ID or path to the base model. This is the original
             pre-trained model that the adapter was trained on.
-            Example: "microsoft/DialoGPT-medium"
         adapter_weights (bool):
             Flag indicating that this is an adapter model. Must be set to True.
-            This is used for validation and to distinguish from regular models.
-
-    Inherited Attributes:
-        All attributes from TransformersModelConfig are inherited, including:
-        - model_name: Should point to the adapter weights repository
-        - tokenizer: Uses the base model's tokenizer
-        - dtype, device, trust_remote_code: Applied to both base and adapter models
-
-    Methods:
-        model_post_init():
-            Validates that PEFT is available and adapter_weights is set to True.
-
-    Example:
-        ```python
-        config = AdapterModelConfig(
-            model_name="microsoft/DialoGPT-medium-lora",  # Adapter weights
-            base_model="microsoft/DialoGPT-medium",       # Base model
-            adapter_weights=True,
-            dtype="float16",
-            generation_parameters=GenerationParameters(
-                temperature=0.7,
-                max_new_tokens=100
-            )
-        )
-        ```
 
     Note:
-        - Requires the `peft` library to be installed
-        - The adapter weights will be merged with the base model during loading
-        - The merged model is temporarily saved to disk for efficient loading
-        - Tokenizer vocabulary is automatically resized if the adapter adds new tokens
+        - Requires the `peft` library to be installed, `pip install lighteval[adapters]`
+        - Adapter models have the specificity that they look at the base model (= the parent) for the tokenizer and config
     """
 
-    # Adapter models have the specificity that they look at the base model (= the parent) for the tokenizer and config
     base_model: str
     adapter_weights: bool
 

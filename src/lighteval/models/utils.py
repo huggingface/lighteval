@@ -41,7 +41,7 @@ class ModelConfig(BaseModel, extra="forbid"):
 
     This is the foundation class that all specific model configurations inherit from.
     It provides common functionality for parsing configuration from files and command-line arguments,
-    as well as shared attributes like generation parameters and system prompts.
+    as well as shared attributes that are used by all models like generation parameters and system prompts.
 
     Attributes:
         generation_parameters (GenerationParameters):
@@ -65,18 +65,15 @@ class ModelConfig(BaseModel, extra="forbid"):
         config = ModelConfig.from_path("model_config.yaml")
 
         # Load from command line arguments
-        config = ModelConfig.from_args("model_name=gpt2,generation_parameters={temperature=0.7}")
+        config = ModelConfig.from_args("model_name=meta-llama/Llama-3.1-8B-Instruct,system_prompt='You are a helpful assistant.',generation_parameters={temperature=0.7}")
 
         # Direct instantiation
         config = ModelConfig(
+            model_name="meta-llama/Llama-3.1-8B-Instruct",
             generation_parameters=GenerationParameters(temperature=0.7),
             system_prompt="You are a helpful assistant."
         )
         ```
-
-    Note:
-        This class uses Pydantic's BaseModel with `extra="forbid"` to ensure that
-        only explicitly defined fields are allowed, preventing configuration errors.
     """
 
     generation_parameters: GenerationParameters = GenerationParameters()

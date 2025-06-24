@@ -49,19 +49,8 @@ class DummyModelConfig(ModelConfig):
         ```python
         config = DummyModelConfig(
             seed=123,
-            generation_parameters=GenerationParameters(
-                temperature=0.7,
-                max_new_tokens=100
-            )
         )
         ```
-
-    Note:
-        - Dummy models are useful for testing evaluation pipelines
-        - They generate random responses and log probabilities
-        - No actual model inference is performed
-        - Useful for establishing baseline performance metrics
-        - Can be used to test evaluation infrastructure without GPU requirements
     """
 
     seed: int = 42

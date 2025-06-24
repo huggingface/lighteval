@@ -70,16 +70,14 @@ SORTED_INSTANCE_SIZES = [  # sorted by incremental overall RAM (to load models)
 
 class ServerlessEndpointModelConfig(ModelConfig):
     """
-    Configuration class for HuggingFace Inference API (serverless endpoints).
+    Configuration class for HuggingFace Inference API (inference endpoints).
 
-    This configuration is used to connect to HuggingFace's free Inference API,
-    which provides access to thousands of models without requiring dedicated
-    infrastructure or API keys for many models.
+    https://huggingface.co/inference-endpoints/dedicated
 
     Attributes:
         model_name (str):
             HuggingFace Hub model ID to use with the Inference API.
-            Example: "microsoft/DialoGPT-medium"
+            Example: "meta-llama/Llama-3.1-8B-Instruct"
         add_special_tokens (bool):
             Whether to add special tokens during tokenization. Defaults to True.
         batch_size (int):
@@ -88,20 +86,13 @@ class ServerlessEndpointModelConfig(ModelConfig):
     Example:
         ```python
         config = ServerlessEndpointModelConfig(
-            model_name="microsoft/DialoGPT-medium",
+            model_name="meta-llama/Llama-3.1-8B-Instruct",
             generation_parameters=GenerationParameters(
                 temperature=0.7,
                 max_new_tokens=100
             )
         )
         ```
-
-    Note:
-        - Uses HuggingFace's free Inference API
-        - No API key required for many models
-        - Limited to batch size of 1
-        - Subject to rate limits and availability
-        - Good for testing and small-scale evaluations
     """
 
     model_name: str
@@ -578,7 +569,7 @@ class InferenceEndpointModel(LightevalModel):
                     responses = asyncio.run(self._async_process_batch_generate(batch))
                 else:
                     responses = self._process_batch_generate(batch)
-                for _, response in enumerate(responses):
+                for response in responses:
                     results.append(
                         ModelResponse(
                             text=[response.generated_text],

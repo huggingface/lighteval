@@ -55,14 +55,15 @@ class SGLangModelConfig(ModelConfig):
     Configuration class for SGLang inference engine.
 
     This configuration is used to load and configure models using the SGLang inference engine,
-    which provides high-performance inference with features like structured generation,
-    efficient memory management, and flexible sampling backends.
+    which provides high-performance inference.
+
+    sglang doc: https://docs.sglang.ai/index.html#
 
     Attributes:
         model_name (str):
             HuggingFace Hub model ID or path to the model to load.
         load_format (str):
-            Model loading format. Defaults to "auto". Options: "auto", "hf", "safetensors", etc.
+            The format of the model weights to load. choices: auto, pt, safetensors, npcache, dummy, tensorizer, sharded_state, gguf, bitsandbytes, mistral, runai_streamer.
         dtype (str):
             Data type for model weights. Defaults to "auto". Options: "auto", "float16", "bfloat16", "float32".
         tp_size (PositiveInt):
@@ -70,7 +71,7 @@ class SGLangModelConfig(ModelConfig):
         dp_size (PositiveInt):
             Number of GPUs to use for data parallelism. Defaults to 1.
         context_length (PositiveInt | None):
-            Maximum context length for the model. If None, defaults to 8192.
+            Maximum context length for the model.
         random_seed (PositiveInt | None):
             Random seed for reproducibility. Defaults to 1234.
         trust_remote_code (bool):
@@ -86,11 +87,11 @@ class SGLangModelConfig(ModelConfig):
         add_special_tokens (bool):
             Whether to add special tokens during tokenization. Defaults to True.
         pairwise_tokenization (bool):
-            Whether to tokenize context and continuation separately. Defaults to False.
+            Whether to tokenize context and continuation separately for loglikelihood evals. Defaults to False.
         sampling_backend (str | None):
-            Sampling backend to use. Options: "cpu", "cuda", etc. If None, uses default.
+            Sampling backend to use. If None, uses default.
         attention_backend (str | None):
-            Attention backend to use. Options: "flash_attn", "xformers", etc. If None, uses default.
+            Attention backend to use. If None, uses default.
         mem_fraction_static (PositiveFloat):
             Fraction of GPU memory to use for static allocation. Defaults to 0.8.
         chunked_prefill_size (PositiveInt):
@@ -99,23 +100,15 @@ class SGLangModelConfig(ModelConfig):
     Example:
         ```python
         config = SGLangModelConfig(
-            model_name="microsoft/DialoGPT-medium",
+            model_name="meta-llama/Llama-3.1-8B-Instruct",
             tp_size=2,
             context_length=8192,
-            sampling_backend="cuda",
             generation_parameters=GenerationParameters(
                 temperature=0.7,
                 max_new_tokens=100
             )
         )
         ```
-
-    Note:
-        - SGLang provides efficient inference with structured generation capabilities
-        - Supports multiple sampling and attention backends for optimization
-        - Flexible memory management with configurable memory fractions
-        - Chunked prefill allows processing of very long sequences
-        - Requires CUDA-compatible GPUs for optimal performance
     """
 
     model_name: str
@@ -363,7 +356,7 @@ class SGLangModel(LightevalModel):
             outputs = self._generate(inputs, generate=False)
 
             flat_index = 0
-            for _, doc in enumerate(dataset):
+            for doc in dataset:
                 # all the element generated from one doc (one element per choice)
                 outputs_doc: list[dict] = outputs[flat_index : flat_index + len(doc.choices)]
                 tokenized_continuations_doc: list[list[int]] = tokenized_continuations_batch[

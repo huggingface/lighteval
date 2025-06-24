@@ -64,6 +64,8 @@ class LiteLLMModelConfig(ModelConfig):
     unified API. LiteLLM provides a consistent interface to multiple providers including
     OpenAI, Anthropic, Google, and many others.
 
+    litellm doc: https://docs.litellm.ai/docs/
+
     Attributes:
         model_name (str):
             Model identifier. Can include provider prefix (e.g., "gpt-4", "claude-3-sonnet")
@@ -90,15 +92,6 @@ class LiteLLMModelConfig(ModelConfig):
             )
         )
         ```
-
-    Note:
-        - Supports 100+ LLM providers through unified API
-        - Automatic retry logic with exponential backoff
-        - Built-in caching for cost optimization
-        - Rate limiting and concurrent request handling
-        - API keys should be set in environment variables for security
-        - Different providers have different rate limits and pricing
-        - Some features (like logprobs) are provider-specific
     """
 
     model_name: str
@@ -181,7 +174,7 @@ class LiteLLMClient(LightevalModel):
                 }
 
                 if num_samples > 1 and self.generation_parameters.temperature == 0:
-                    logger.warning(
+                    raise ValueError(
                         "num_samples > 1 but temperature is set to 0, this will not sample different outputs."
                     )
 

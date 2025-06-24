@@ -45,16 +45,13 @@ logger = logging.getLogger(__name__)
 
 class InferenceProvidersModelConfig(ModelConfig):
     """
-    Configuration class for inference providers (like Together AI, Anyscale, etc.).
+    Configuration class for HuggingFace's inference providers (like Together AI, Anyscale, etc.).
 
-    This configuration is used to connect to external inference providers that host
-    and serve language models via API endpoints. It supports various providers with
-    different authentication and configuration requirements.
+    inference providers doc: https://huggingface.co/docs/inference-providers/en/index
 
     Attributes:
         model_name (str):
-            Name or identifier of the model to use. This is provider-specific and
-            may include provider prefixes (e.g., "togethercomputer/llama-2-7b").
+            Name or identifier of the model to use.
         provider (str):
             Name of the inference provider. Examples: "together", "anyscale", "runpod", etc.
         timeout (int | None):
@@ -70,9 +67,8 @@ class InferenceProvidersModelConfig(ModelConfig):
     Example:
         ```python
         config = InferenceProvidersModelConfig(
-            model_name="togethercomputer/llama-2-7b",
+            model_name="deepseek-ai/DeepSeek-R1-0528",
             provider="together",
-            timeout=60,
             parallel_calls_count=5,
             generation_parameters=GenerationParameters(
                 temperature=0.7,
@@ -84,9 +80,6 @@ class InferenceProvidersModelConfig(ModelConfig):
     Note:
         - Requires HF API keys to be set in environment variable
         - Different providers have different rate limits and pricing
-        - Parallel calls can improve throughput but may hit rate limits
-        - Some providers support specific model formats or optimizations
-        - Network latency may affect overall evaluation speed
     """
 
     model_name: str
