@@ -907,7 +907,6 @@ def gpqa_instruct(line, task_name: str = None):
         query=query,
         choices=LETTER_INDICES[: len(choices)],
         gold_index=gold_index,
-        instruction=query,
     )
 
 

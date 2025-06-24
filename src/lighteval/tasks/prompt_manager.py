@@ -104,15 +104,9 @@ class PromptManager:
         """Prepare prompt using chat template format."""
         messages = []
 
-        system_content = []
         # Add system prompt if available
         if self.system_prompt is not None:
-            system_content.append(self.system_prompt)
-        if doc.instruction is not None:
-            system_content.append(doc.instruction)
-
-        if len(system_content) > 0:
-            messages.append({"role": "system", "content": "\n".join(system_content)})
+            messages.append({"role": "system", "content": self.system_prompt})
 
         # Add few-shot examples
         for fewshot_sample in doc.fewshot_samples:
@@ -124,6 +118,9 @@ class PromptManager:
         # Add main query
         query = self._extract_query(doc.query, doc.instruction)
         messages.append({"role": "user", "content": query})
+
+        if doc.instruction is not None:
+            messages[0]["content"] = doc.instruction + messages[0]["content"]
 
         assert self.tokenizer is not None, "Tokenizer must be set for chat template formatting."
 

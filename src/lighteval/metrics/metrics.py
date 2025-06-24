@@ -601,7 +601,7 @@ class Metrics(Enum):
             k=16,
             n=48,
             strip_strings=True,
-            sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
+            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
                 language=Language.ENGLISH,
                 fallback_mode="first_match",
                 precision=5,
@@ -609,7 +609,7 @@ class Metrics(Enum):
                 # Match boxed first before trying other regexes
                 pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
                 aggregation_function=max,
-            ).sample_level_fn([ref], [pred], doc),
+            ).sample_level_fn(doc, model_response),
         ).compute,
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, np.mean),
@@ -621,7 +621,7 @@ class Metrics(Enum):
             k=16,
             n=48,
             strip_strings=True,
-            sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
+            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
                 language=Language.ENGLISH,
                 fallback_mode="first_match",
                 precision=5,
@@ -629,7 +629,7 @@ class Metrics(Enum):
                 # Match boxed first before trying other regexes
                 pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
                 aggregation_function=max,
-            ).sample_level_fn([ref], [pred], doc),
+            ).sample_level_fn(doc, model_response),
         ).compute,
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, np.mean),
@@ -820,12 +820,12 @@ class Metrics(Enum):
         sample_level_fn=PassAtK(
             k=1,
             n=1,
-            sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
+            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
                 language=Language.ENGLISH,
                 gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
                 pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
                 precision=6,
-            ).sample_level_fn([ref], [pred], doc),
+            ).sample_level_fn(doc, model_response),
         ).compute,
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
@@ -836,12 +836,12 @@ class Metrics(Enum):
         sample_level_fn=PassAtK(
             k=1,
             n=4,
-            sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
+            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
                 language=Language.ENGLISH,
                 gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
                 pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
                 precision=6,
-            ).sample_level_fn([ref], [pred], doc),
+            ).sample_level_fn(doc, model_response),
         ).compute,
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
@@ -852,12 +852,12 @@ class Metrics(Enum):
         sample_level_fn=PassAtK(
             k=1,
             n=8,
-            sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
+            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
                 language=Language.ENGLISH,
                 gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
                 pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
                 precision=6,
-            ).sample_level_fn([ref], [pred], doc),
+            ).sample_level_fn(doc, model_response),
         ).compute,
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,

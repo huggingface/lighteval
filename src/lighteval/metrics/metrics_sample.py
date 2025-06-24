@@ -1171,7 +1171,7 @@ class PassAtK:
         normalize_gold: Callable | None = None,
         normalize_pred: Callable | None = None,
         strip_strings: bool = False,
-        sample_scoring_function: Callable[[str, str], float] | str | None = None,
+        sample_scoring_function: Callable[[Doc, ModelResponse], float] | str | None = None,
     ):
         """Computing pass at k
 
@@ -1239,7 +1239,11 @@ class PassAtK:
         all_scores = []
         for pred in predictions[: self.n]:
             cur_pred = self.get_processed_pred(pred=pred)
-            all_scores.append(self.score_sample(cur_pred, gold, doc))
+            new_doc = Doc(query=doc.query, choices=[gold], gold_index=0)
+            new_model_response = ModelResponse(
+                text=[cur_pred],
+            )
+            all_scores.append(self.score_sample(new_doc, new_model_response))
 
         return self.pass_at_k(all_scores)
 
@@ -1264,7 +1268,10 @@ class PassAtK:
 
         return pred
 
-    def default_sample_scoring(self, pred: str, gold: str) -> int:
+    def default_sample_scoring(self, doc, model_response) -> int:
+        pred = model_response.text[0]
+        gold = doc.get_golds()[0]
+
         if self.type_exact_match == "prefix":
             return 1 if pred.startswith(gold) else 0
         if self.type_exact_match == "suffix":
@@ -1289,7 +1296,7 @@ class GPassAtK:
         normalize_gold: Callable | None = None,
         normalize_pred: Callable | None = None,
         strip_strings: bool = False,
-        sample_scoring_function: Callable[[str, str], float] | str | None = None,
+        sample_scoring_function: Callable[[Doc, ModelResponse], float] | str | None = None,
     ):
         """Computing G-Pass@k from http://arxiv.org/abs/2412.13147
 
@@ -1331,7 +1338,7 @@ class GPassAtK:
                 self.type_exact_match = "full"
             self.score_sample = self.default_sample_scoring
 
-    def compute(self, model_response: ModelResponse, doc: Doc, **kwargs) -> dict[str, float]:
+    def compute(self, model_response: ModelResponse, doc: Doc, **kwargs) -> float:
         """Computes the metric over a list of golds and predictions for one single item with possibly many samples.
         It applies normalisation (if needed) to model prediction and gold, computes their per prediction score,
         then aggregates the scores over the samples using a pass@k.
@@ -1362,7 +1369,11 @@ class GPassAtK:
         all_scores = []
         for pred in predictions[: self.n]:
             cur_pred = self.get_processed_pred(pred=pred)
-            all_scores.append(self.score_sample(cur_pred, gold, doc))
+            new_doc = Doc(query="", choices=[gold], gold_index=0)
+            new_model_response = ModelResponse(
+                text=[cur_pred],
+            )
+            all_scores.append(self.score_sample(new_doc, new_model_response))
 
         return self.g_pass_at_k(all_scores)
 
@@ -1387,7 +1398,9 @@ class GPassAtK:
 
         return pred
 
-    def default_sample_scoring(self, pred: str, gold: str) -> int:
+    def default_sample_scoring(self, doc: Doc, model_response: ModelResponse) -> int:
+        gold = doc.get_golds()[0]
+        pred = model_response.text[0]
         if self.type_exact_match == "prefix":
             return 1 if pred.startswith(gold) else 0
         if self.type_exact_match == "suffix":

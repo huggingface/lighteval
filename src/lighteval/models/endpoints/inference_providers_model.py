@@ -153,6 +153,11 @@ class InferenceProvidersClient(LightevalModel):
                     "n": num_samples,
                 }
                 kwargs.update(self.generation_parameters.to_inference_providers_dict())
+                if kwargs.get("temperature") == 0.0 and num_samples > 1:
+                    raise ValueError(
+                        "Temperature is set to 0.0, but num_samples > 1. "
+                        "This is not supported by the inference providers API."
+                    )
                 response: ChatCompletionOutput = await self.client.chat.completions.create(**kwargs)
                 return response
             except Exception as e:
