@@ -28,49 +28,29 @@ from lighteval.tasks.requests import Doc
 # test data that will need to be sorted by length of the string
 TEST_DATA = [
     Doc(
-        task_name="test",
         query="1 The quick brown fox jumps over the lazy dog",
         choices=["A", "B", "C"],
         gold_index=0,
-        stop_sequences=[":", "stop"],
-        generation_size=10,
-        sampling_methods=[SamplingMethod.GENERATIVE],
     ),
     Doc(
-        task_name="test",
         query="2 The quick brown fox jumps over the lazy dog njsa",
         choices=["A", "B", "C"],
         gold_index=0,
-        stop_sequences=[":", "stop"],
-        generation_size=10,
-        sampling_methods=[SamplingMethod.GENERATIVE],
     ),
     Doc(
-        task_name="test",
         query="Some text",
-        stop_sequences=[":", "stop"],
         choices=["A", "B", "C"],
         gold_index=0,
-        generation_size=10,
-        sampling_methods=[SamplingMethod.GENERATIVE],
     ),
     Doc(
-        task_name="test",
         query="some more text",
         choices=["A", "B", "C"],
         gold_index=0,
-        stop_sequences=[":", "stop"],
-        generation_size=10,
-        sampling_methods=[SamplingMethod.GENERATIVE],
     ),
     Doc(
-        task_name="test",
         query="not sure what to write here",
         choices=["A", "B", "C"],
         gold_index=0,
-        stop_sequences=[":", "stop"],
-        generation_size=10,
-        sampling_methods=[SamplingMethod.GENERATIVE],
     ),
 ]
 
@@ -80,6 +60,11 @@ DATASET_SPLITS = 1
 class TestReorderGenerativeTaskDataset:
     def test_reorder_dataset(self):
         data = TEST_DATA.copy()
+        for d in data:
+            d.task_name = "test"
+            d.sampling_methods = [SamplingMethod.GENERATIVE]
+            d.generation_size = 10
+            d.stop_sequences = ["stop", ":", "end"]
 
         dataset = GenerativeTaskDataset(requests=data, num_dataset_splits=DATASET_SPLITS)
 

@@ -208,22 +208,22 @@ class Doc:
     unconditioned_query: str | None = None
     original_query: str | None = None  # the query before preprocessing, if stored
 
-    id: str = field(init=False)
-    task_name: str = field(init=False)
+    id: str = ""
+    task_name: str = ""
 
     # Fewshots parameters
-    num_asked_few_shots: int = field(init=False)
-    num_effective_few_shots: int = field(init=False)
-    fewshot_samples: list = field(init=False, default_factory=list)
-    sampling_methods: list[SamplingMethod] = field(init=False, default_factory=list)
-    fewshot_sorting_class: str | None = field(init=False)  # class to use to select balanced few-shot samples
+    num_asked_few_shots: int = 0
+    num_effective_few_shots: int = 0
+    fewshot_samples: list = field(default_factory=list)
+    sampling_methods: list[SamplingMethod] = field(default_factory=list)
+    fewshot_sorting_class: str | None = None  # class to use to select balanced few-shot samples
 
     # Generation parameters
-    generation_size: int | None = field(init=False)  # number of tokens to generate for each sample
-    stop_sequences: list[str] | None = field(init=False)
-    use_logits: bool = field(init=False)  # whether to use logits for the generation or not
-    num_samples: int = field(init=False)  # number of samples to generate for each sample
-    generation_grammar: None = field(init=False)
+    generation_size: int | None = None  # number of tokens to generate for each sample
+    stop_sequences: list[str] | None = None
+    use_logits: bool = False  # whether to use logits for the generation or not
+    num_samples: int = 1  # number of samples to generate for each sample
+    generation_grammar: None = None
 
     def get_golds(self):
         """Return gold targets extracted from the target dict"""

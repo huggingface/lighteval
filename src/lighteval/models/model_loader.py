@@ -73,27 +73,36 @@ def load_model(  # noqa: C901
     Returns:
         LightevalModel: The model that will be evaluated
     """
-    match isinstance(config):
-        case TGIModelConfig():
-            return load_model_with_tgi(config)
-        case InferenceEndpointModelConfig() | ServerlessEndpointModelConfig():
-            return load_model_with_inference_endpoints(config)
-        case TransformersModelConfig():
-            return load_model_with_accelerate_or_default(config)
-        case VLMTransformersModelConfig():
-            return load_model_with_accelerate_or_default(config)
-        case DummyModelConfig():
-            return load_dummy_model(config)
-        case VLLMModelConfig():
-            return load_model_with_accelerate_or_default(config)
-        case CustomModelConfig():
-            return load_custom_model(config=config)
-        case SGLangModelConfig():
-            return load_sglang_model(config)
-        case LiteLLMModelConfig():
-            return load_litellm_model(config)
-        case InferenceProvidersModelConfig():
-            return load_inference_providers_model(config=config)
+    # Inference server loading
+    if isinstance(config, TGIModelConfig):
+        return load_model_with_tgi(config)
+
+    if isinstance(config, InferenceEndpointModelConfig) or isinstance(config, ServerlessEndpointModelConfig):
+        return load_model_with_inference_endpoints(config)
+
+    if isinstance(config, TransformersModelConfig):
+        return load_model_with_accelerate_or_default(config)
+
+    if isinstance(config, VLMTransformersModelConfig):
+        return load_model_with_accelerate_or_default(config)
+
+    if isinstance(config, DummyModelConfig):
+        return load_dummy_model(config)
+
+    if isinstance(config, VLLMModelConfig):
+        return load_model_with_accelerate_or_default(config)
+
+    if isinstance(config, CustomModelConfig):
+        return load_custom_model(config=config)
+
+    if isinstance(config, SGLangModelConfig):
+        return load_sglang_model(config)
+
+    if isinstance(config, LiteLLMModelConfig):
+        return load_litellm_model(config)
+
+    if isinstance(config, InferenceProvidersModelConfig):
+        return load_inference_providers_model(config=config)
 
 
 def load_model_with_tgi(config: TGIModelConfig):

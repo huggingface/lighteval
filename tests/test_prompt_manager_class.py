@@ -96,7 +96,8 @@ class TestPromptManager:
         # Create few-shot sample
         fewshot_doc = Doc(query="What is 1+1?", choices=["1", "2", "3"], gold_index=1)
 
-        doc = Doc(query="What is 2+2?", choices=["3", "4", "5"], gold_index=1, fewshot_samples=[fewshot_doc])
+        doc = Doc(query="What is 2+2?", choices=["3", "4", "5"], gold_index=1)
+        doc.fewshot_samples = [fewshot_doc]
 
         result = pm.prepare_prompt(doc)
         assert result == "What is 1+1? 2\n\nWhat is 2+2?"
@@ -118,11 +119,10 @@ class TestPromptManager:
             choices=["3", "4", "5"],
             gold_index=1,
             instruction="Please answer the following question:",
-            fewshot_samples=[fewshot_doc],
         )
+        doc.fewshot_samples = [fewshot_doc]
 
         result = pm.prepare_prompt(doc)
-        print(result)
         assert result == "Please answer the following question:\n\nWhat is 1+1? 2\n\nWhat is 2+2?"
 
     def test_prepare_prompt_chat_template_basic(self):
@@ -171,7 +171,8 @@ class TestPromptManager:
         # Create few-shot sample
         fewshot_doc = Doc(query="What is 1+1?", choices=["1", "2", "3"], gold_index=1)
 
-        doc = Doc(query="What is 2+2?", choices=["3", "4", "5"], gold_index=1, fewshot_samples=[fewshot_doc])
+        doc = Doc(query="What is 2+2?", choices=["3", "4", "5"], gold_index=1)
+        doc.fewshot_samples = [fewshot_doc]
 
         result = pm.prepare_prompt(doc)
         assert result == "<|user|>\nWhat is 1+1?<|assistant|>\n2<|user|>\nWhat is 2+2?<|assistant|>"
@@ -207,8 +208,8 @@ class TestPromptManager:
             choices=["3", "4", "5"],
             gold_index=1,
             instruction="Please answer the following question:",
-            fewshot_samples=[fewshot_doc],
         )
+        doc.fewshot_samples = [fewshot_doc]
 
         result = pm.prepare_prompt(doc)
         assert (
@@ -249,8 +250,8 @@ class TestPromptManager:
             choices=["3", "4", "5"],
             gold_index=1,
             instruction="Please answer the following question:",
-            fewshot_samples=[fewshot_doc],
         )
+        doc.fewshot_samples = [fewshot_doc]
 
         result = pm.prepare_prompt(doc)
         assert (
@@ -428,9 +429,8 @@ class TestPromptManager:
         fewshot_doc1 = Doc(query="What is 1+1?", choices=["1", "2", "3"], gold_index=1)
         fewshot_doc2 = Doc(query="What is 3+3?", choices=["5", "6", "7"], gold_index=1)
 
-        doc = Doc(
-            query="What is 2+2?", choices=["3", "4", "5"], gold_index=1, fewshot_samples=[fewshot_doc1, fewshot_doc2]
-        )
+        doc = Doc(query="What is 2+2?", choices=["3", "4", "5"], gold_index=1)
+        doc.fewshot_samples = [fewshot_doc1, fewshot_doc2]
 
         result = pm.prepare_prompt(doc)
         assert result == "What is 1+1? 2\n\nWhat is 3+3? 6\n\nWhat is 2+2?"
@@ -438,7 +438,8 @@ class TestPromptManager:
     def test_prepare_prompt_with_empty_fewshot_samples(self):
         """Test prepare_prompt with empty few-shot samples."""
         pm = PromptManager()
-        doc = Doc(query="What is 2+2?", choices=["3", "4", "5"], gold_index=1, fewshot_samples=[])
+        doc = Doc(query="What is 2+2?", choices=["3", "4", "5"], gold_index=1)
+        doc.fewshot_samples = []
 
         result = pm.prepare_prompt(doc)
         assert result == "What is 2+2?"
@@ -456,8 +457,8 @@ class TestPromptManager:
             choices=["3", "4", "5"],
             gold_index=1,
             instruction=instruction,
-            fewshot_samples=[fewshot_doc],
         )
+        doc.fewshot_samples = [fewshot_doc]
 
         result = pm.prepare_prompt(doc)
         expected = f"{instruction}\n\nWhat is 1+1? 2\n\nWhat is 2+2?"
