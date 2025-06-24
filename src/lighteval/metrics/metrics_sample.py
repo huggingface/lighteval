@@ -1234,12 +1234,16 @@ class PassAtK:
         elif len(predictions) < self.n:
             logger.warning(f"Number of predictions is less than {self.n} for pass@k.")
 
-        gold = self.get_processed_gold(golds[0])
+        processed_choices = [self.get_processed_gold(gold=g) for g in doc.choices]
+        new_doc = Doc(
+            choices=processed_choices,
+            query=doc.query,
+            gold_index=doc.gold_index,
+        )
 
         all_scores = []
         for pred in predictions[: self.n]:
             cur_pred = self.get_processed_pred(pred=pred)
-            new_doc = Doc(query=doc.query, choices=[gold], gold_index=0)
             new_model_response = ModelResponse(
                 text=[cur_pred],
             )
