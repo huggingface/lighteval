@@ -125,6 +125,7 @@ BELEBELE_TASKS = [
         "spa",
     ]
 ]
+TASKS_TABLE.extend(BELEBELE_TASKS)
 
 
 MMLU_SUBSETS = [
@@ -225,8 +226,8 @@ class GlobalMMLUPrompt:
 GLOBAL_MMLU_TASKS = [
     LightevalTaskConfig(
         name=f"global_mmlu_instruct_{sensitivity_label.lower()}_{language.value}:{subset}",
-        prompt_function=GlobalMMLUPrompt(language).prompt,
-        suite=("extended"),
+        prompt_function=GlobalMMLUPrompt(language.value).prompt,
+        suite=["extended"],
         hf_repo="CohereForAI/Global-MMLU",
         hf_subset=standardize_tag(language.value),
         evaluation_splits=("test",),
@@ -240,23 +241,25 @@ GLOBAL_MMLU_TASKS = [
             subset,
             sensitivity_label,
         ),
-        metric=SampleLevelMetric(
-            metric_name="pass@1:1_samples",
-            sample_level_fn=PassAtK(
-                k=1,
-                n=1,
-                sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
-                    language=language,
-                    gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
-                    pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
-                    precision=6,
-                ).sample_level_fn([ref], [pred], doc),
-            ).compute,
-            category=MetricCategory.GENERATIVE_SAMPLING,
-            use_case=MetricUseCase.REASONING,
-            corpus_level_fn=np.mean,
-            higher_is_better=True,
-        ),
+        metric=[
+            SampleLevelMetric(
+                metric_name="pass@1:1_samples",
+                sample_level_fn=PassAtK(
+                    k=1,
+                    n=1,
+                    sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
+                        language=language,
+                        gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                        pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                        precision=6,
+                    ).sample_level_fn([ref], [pred], doc),
+                ).compute,
+                category=MetricCategory.GENERATIVE_SAMPLING,
+                use_case=MetricUseCase.REASONING,
+                corpus_level_fn=np.mean,
+                higher_is_better=True,
+            )
+        ],
         generation_size=32768,  # needed for reasoning models like R1
         stop_sequence=[],  # no stop sequence, will use eos token
     )
@@ -266,45 +269,47 @@ GLOBAL_MMLU_TASKS = [
         Language.ENGLISH,
         Language.SPANISH,
         Language.FRENCH,
-        Language.HEBREW,
+        # Language.HEBREW,
         Language.HINDI,
         Language.INDONESIAN,
         Language.ITALIAN,
         Language.JAPANESE,
-        Language.KOREAN,
-        Language.MALAY,
+        # Language.KOREAN,
+        # Language.MALAY,
         Language.DUTCH,
         Language.NORWEGIAN,
         Language.POLISH,
         Language.PORTUGUESE,
-        Language.ROMANIAN,
+        # Language.ROMANIAN,
         Language.RUSSIAN,
         Language.SERBIAN,
         Language.SWEDISH,
         Language.SWAHILI,
-        Language.TAMIL,
+        # Language.TAMIL,
         Language.TELUGU,
         Language.THAI,
         Language.TURKISH,
         Language.UKRAINIAN,
         Language.URDU,
         Language.VIETNAMESE,
-        Language.YORUBA,
-        Language.ZULU,
+        # Language.YORUBA,
+        # Language.ZULU, missing literals
     ]
     for sensitivity_label in ["ALL", "CA", "CS", "UNK"]
 ]
+TASKS_TABLE.extend(GLOBAL_MMLU_TASKS)
 
 
 def mmlu_pro(line, task_name: str = None):
-    instruction = f"Given the following question about {line['category']} and answer choices, output the letter corresponding to the correct answer. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of {' ,'.join(LETTER_INDICES[: len(line['choices'] - 1)])}, or {LETTER_INDICES[len(line['choices'])]}. Think step by step before answering.\n\n"
+    num_choices = len(line["options"])
+    instruction = f"Given the following question about {line['category']} and answer choices, output the letter corresponding to the correct answer. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of {' ,'.join(LETTER_INDICES[: num_choices - 1])}, or {LETTER_INDICES[num_choices]}. Think step by step before answering.\n\n"
     query = f"{instruction}###\nQuery:\n{line['question']}\n###\nChoices:\n"
-    query += "".join([f"\n{key}) {choice}" for key, choice in zip(LETTER_INDICES, line["choices"])])
+    query += "".join([f"\n{key}) {choice}" for key, choice in zip(LETTER_INDICES, line["options"])])
 
     return Doc(
         task_name=task_name,
         query=query,
-        choices=LETTER_INDICES[: len(line["choices"])],
+        choices=LETTER_INDICES[:num_choices],
         gold_index=line["answer_index"],
         instruction=instruction,
     )
@@ -322,27 +327,27 @@ mmlu_pro = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=32768,  # needed for reasoning models like R1
     stop_sequence=[],  # no stop sequence, will use eos token
-    metric=SampleLevelMetric(
-        metric_name="pass@1:1_samples",
-        sample_level_fn=PassAtK(
-            k=1,
-            n=1,
-            sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
-                language=Language.ENGLISH,
-                gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
-                pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
-                precision=6,
-            ).sample_level_fn([ref], [pred], doc),
-        ).compute,
-        category=MetricCategory.GENERATIVE_SAMPLING,
-        use_case=MetricUseCase.REASONING,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    ),
+    metric=[
+        SampleLevelMetric(
+            metric_name="pass@1:1_samples",
+            sample_level_fn=PassAtK(
+                k=1,
+                n=1,
+                sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
+                    language=Language.ENGLISH,
+                    gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                    pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                    precision=6,
+                ).sample_level_fn([ref], [pred], doc),
+            ).compute,
+            category=MetricCategory.GENERATIVE_SAMPLING,
+            use_case=MetricUseCase.REASONING,
+            corpus_level_fn=np.mean,
+            higher_is_better=True,
+        )
+    ],
     trust_dataset=True,
     version=0,
 )
 
-TASKS_TABLE.extend(BELEBELE_TASKS)
-TASKS_TABLE.extend(GLOBAL_MMLU_TASKS)
 TASKS_TABLE.append(mmlu_pro)
