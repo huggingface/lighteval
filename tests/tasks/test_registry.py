@@ -23,7 +23,7 @@
 import pytest
 
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
-from lighteval.tasks.registry import Registry, taskinfo_selector
+from lighteval.tasks.registry import Registry
 
 
 TASKS_TABLE = [
@@ -34,7 +34,7 @@ TASKS_TABLE = [
         hf_repo="test",
         hf_subset="default",
         evaluation_splits=["train"],
-        metric=[],
+        metrics=[],
     )
 ]
 
@@ -49,11 +49,13 @@ def test_custom_task_groups():
     Tests that task info selector correctly handles custom task groups.
     """
     registry = Registry(custom_tasks="tests.tasks.test_registry")
-    tasks, task_info = taskinfo_selector("zero_and_one", registry)
+    task_info = registry.taskinfo_selector("zero_and_one")
 
-    assert set(tasks) == {"custom|test_task_revision"}
-    assert all(task in task_info for task in tasks)
-    assert all(task_info[task] == [(1, False), (0, False)] for task in tasks)
+    assert set(task_info.keys()) == {"custom|test_task_revision"}
+    assert task_info["custom|test_task_revision"] == [
+        {"fewshots": 0, "truncate_fewshots": False},
+        {"fewshots": 1, "truncate_fewshots": False},
+    ]
 
 
 def test_custom_tasks():
@@ -61,10 +63,10 @@ def test_custom_tasks():
     Tests that task info selector correctly handles custom tasks.
     """
     registry = Registry(custom_tasks="tests.tasks.test_registry")
-    tasks, task_info = taskinfo_selector("custom|test_task_revision|0|0", registry)
+    task_info = registry.taskinfo_selector("custom|test_task_revision|0|0")
 
-    assert tasks == ["custom|test_task_revision"]
-    assert task_info["custom|test_task_revision"] == [(0, False)]
+    assert list(task_info.keys()) == ["custom|test_task_revision"]
+    assert task_info["custom|test_task_revision"] == [{"fewshots": 0, "truncate_fewshots": False}]
 
 
 def test_superset_expansion():
@@ -73,10 +75,12 @@ def test_superset_expansion():
     """
     registry = Registry()
 
-    tasks, task_info = taskinfo_selector("lighteval|storycloze|0|0", registry)
+    task_info = registry.taskinfo_selector("lighteval|storycloze|0|0")
 
-    assert set(tasks) == {"lighteval|storycloze:2016", "lighteval|storycloze:2018"}
-    assert all(task_info[task] == [(0, False)] for task in tasks)
+    assert list(task_info.keys()) == ["lighteval|storycloze:2016", "lighteval|storycloze:2018"]
+    assert task_info["lighteval|storycloze:2016"] == [{"fewshots": 0, "truncate_fewshots": False}] and task_info[
+        "lighteval|storycloze:2018"
+    ] == [{"fewshots": 0, "truncate_fewshots": False}]
 
 
 def test_superset_with_subset_task():
@@ -85,12 +89,15 @@ def test_superset_with_subset_task():
     """
     registry = Registry()
 
-    tasks, task_info = taskinfo_selector("original|mmlu|3|0,original|mmlu:abstract_algebra|5|0", registry)
+    task_info = registry.taskinfo_selector("original|mmlu|3|0,original|mmlu:abstract_algebra|5|0")
 
     # We have all mmlu tasks
-    assert len(tasks) == 57
+    assert len(task_info.keys()) == 57
     # Since it's defined twice
-    assert task_info["original|mmlu:abstract_algebra"] == [(5, False), (3, False)]
+    assert task_info["original|mmlu:abstract_algebra"] == [
+        {"fewshots": 3, "truncate_fewshots": False},
+        {"fewshots": 5, "truncate_fewshots": False},
+    ]
 
 
 def test_task_group_expansion_with_subset_expansion():
@@ -99,9 +106,9 @@ def test_task_group_expansion_with_subset_expansion():
     """
     registry = Registry(custom_tasks="tests.tasks.test_registry")
 
-    tasks = taskinfo_selector("all_mmlu", registry)[0]
+    task_info = registry.taskinfo_selector("all_mmlu")
 
-    assert len(tasks) == 57
+    assert len(task_info.keys()) == 57
 
 
 def test_invalid_task_creation():
@@ -110,7 +117,7 @@ def test_invalid_task_creation():
     """
     registry = Registry()
     with pytest.raises(ValueError):
-        registry.get_task_dict(["custom|task_revision"])
+        registry.get_tasks_configs("custom|task_revision")
 
 
 def test_task_duplicates():
@@ -119,10 +126,9 @@ def test_task_duplicates():
     """
     registry = Registry()
 
-    tasks, task_info = taskinfo_selector("custom|test_task_revision|0|0,custom|test_task_revision|0|0", registry)
+    task_info = registry.taskinfo_selector("custom|test_task_revision|0|0,custom|test_task_revision|0|0")
 
-    assert tasks == ["custom|test_task_revision"]
-    assert task_info["custom|test_task_revision"] == [(0, False)]
+    assert list(task_info.keys()) == ["custom|test_task_revision"]
 
 
 def test_task_creation():
@@ -130,7 +136,8 @@ def test_task_creation():
     Tests that tasks registry correctly creates tasks
     """
     registry = Registry()
-    task_info = registry.get_task_dict(["lighteval|storycloze:2016"])["lighteval|storycloze:2016"]
+    task_config = registry.get_tasks_configs("lighteval|storycloze:2016|0|0")
+    task = registry.get_tasks_from_configs(task_config)["lighteval|storycloze:2016|0"]
 
-    assert isinstance(task_info, LightevalTask)
-    assert task_info.name == "lighteval|storycloze:2016"
+    assert isinstance(task, LightevalTask)
+    assert task.name == "storycloze:2016"

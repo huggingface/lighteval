@@ -6,7 +6,7 @@ model_parameters:
   context_length: null
   random_seed: 1
   trust_remote_code: False
-  use_chat_template: False
+  use_chat_template: True
   device: "cuda"
   skip_tokenizer_init: False
   kv_cache_dtype: "auto"

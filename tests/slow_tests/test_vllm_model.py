@@ -49,12 +49,11 @@ ModelInput = Tuple[str, Callable[[], dict]]
 
 
 @lru_cache(maxsize=len(MODELS_ARGS))
-def run_model(model_name: str, use_chat_template: bool):
+def run_model(model_name: str):
     """Runs the full main as a black box, using the input model and tasks, on 10 samples without parallelism"""
     results = vllm(
         model_args=model_name,
         tasks=TASKS_PATH,
-        use_chat_template=use_chat_template,
         output_dir="",
         dataset_loading_processes=1,
         save_details=False,
@@ -69,7 +68,7 @@ def generate_tests() -> list[ModelInput]:
 
     tests = []
     for model_args in MODELS_ARGS:
-        predictions_lite = partial(run_model, model_args["model_name"], model_args["use_chat_template"])
+        predictions_lite = partial(run_model, model_args["model_name"])
         tests.append((model_args, predictions_lite))
 
     return tests

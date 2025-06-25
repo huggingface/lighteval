@@ -32,16 +32,7 @@ See : https://huggingface.co/fr-gouv-coordination-ia
 
 import random
 
-import numpy as np
-from aenum import extend_enum
-
-import lighteval.tasks.extended.ifeval.instructions_registry as instructions_registry
-from lighteval.metrics.metrics import Metrics, SampleLevelMetric
-from lighteval.metrics.utils.metric_utils import (
-    MetricCategory,
-    MetricUseCase,
-    SampleLevelMetricGrouping,
-)
+from lighteval.metrics.metrics import Metrics
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.extended.ifeval.main import ifeval_metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
@@ -106,7 +97,7 @@ ifeval_fr_task = LightevalTaskConfig(
     suite=["community"],
     hf_repo="fr-gouv-coordination-ia/IFEval-fr",
     hf_subset="default",
-    metric=[ifeval_metrics],
+    metrics=[ifeval_metrics],
     hf_avail_splits=["train"],
     evaluation_splits=["train"],
     few_shots_split="train",
@@ -128,7 +119,7 @@ gpqa_fr_task = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling",
     generation_size=1,
-    metric=[Metrics.loglikelihood_acc],
+    metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
     trust_dataset=True,
     version=0,
@@ -146,7 +137,7 @@ bac_fr_task = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling",
     generation_size=1,
-    metric=[Metrics.quasi_exact_match_math, Metrics.exact_match],
+    metrics=[Metrics.quasi_exact_match_math, Metrics.exact_match],
     stop_sequence=["\n"],
     trust_dataset=True,
     version=0,

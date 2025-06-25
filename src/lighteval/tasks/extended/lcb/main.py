@@ -35,13 +35,14 @@ from typing import Any
 import numpy as np
 from aenum import extend_enum
 
-from lighteval.metrics.metrics import MetricCategory, Metrics, MetricUseCase, SampleLevelMetric
+from lighteval.metrics.metrics import Metrics, SampleLevelMetric
 from lighteval.tasks.extended.lcb.codegen_metrics import (
     codegen_metrics,
     extract_code,
     translate_private_test_cases,
 )
 from lighteval.tasks.lighteval_task import Doc, LightevalTaskConfig
+from lighteval.tasks.requests import SamplingMethod
 
 
 def prepare_prompt(line: dict[str, Any]) -> str:
@@ -104,8 +105,7 @@ def codegen_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> floa
 
 lcb_codegen_metric = SampleLevelMetric(
     metric_name="codegen_pass@1:16",  # This is the way of informing the number of generations currently
-    category=MetricCategory.GENERATIVE_SAMPLING,
-    use_case=MetricUseCase.REASONING,
+    category=SamplingMethod.GENERATIVE,
     higher_is_better=True,
     sample_level_fn=codegen_metric,
     corpus_level_fn=np.mean,
@@ -154,7 +154,7 @@ for subset in configs:
         hf_avail_splits=["test"],
         evaluation_splits=["test"],
         generation_size=32768,
-        metric=[Metrics.lcb_codegen_metric],
+        metrics=[Metrics.lcb_codegen_metric],
         stop_sequence=[],  # no stop sequence, will use EOS token
         trust_dataset=True,
         version=0,
