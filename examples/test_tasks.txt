@@ -25,3 +25,4 @@ lighteval|bigbench:temporal_sequences|3|0
 lighteval|bigbench:tracking_shuffled_objects_five_objects|3|0
 lighteval|bigbench:tracking_shuffled_objects_seven_objects|3|0
 test|gsm8k|0|1
+lighteval|gpqa:diamond|0|1

@@ -449,6 +449,7 @@ class VLLMModel(LightevalModel):
 
         for split in tqdm(dataset.splits_iterator()):
             contexts = [self.prompt_manager.prepare_prompt(doc) for doc in split]
+            breakpoint()
 
             inputs = []
             tokenized_continuations_batch = []
