@@ -21,46 +21,20 @@
 # SOFTWARE.
 
 from dataclasses import dataclass
-from enum import Enum, auto
+from typing import Callable
 
-
-class MetricCategory(str, Enum):
-    TARGET_PERPLEXITY = auto()
-    PERPLEXITY = auto()
-    GENERATIVE = auto()
-    GENERATIVE_LOGPROB = auto()
-    GENERATIVE_SAMPLING = auto()
-    LLM_AS_JUDGE_MULTI_TURN = auto()
-    LLM_AS_JUDGE = auto()
-    MULTICHOICE = auto()
-    MULTICHOICE_PMI = auto()
-    MULTICHOICE_ONE_TOKEN = auto()
-    IGNORED = auto()
-
-
-class MetricUseCase(str, Enum):
-    # General
-    ACCURACY = auto()
-    PERPLEXITY = auto()
-    # Task specific
-    CODE = auto()
-    COPYRIGHT = auto()
-    MATH = auto()
-    REASONING = auto()
-    SOCIAL_IMPACTS = auto()
-    SUMMARIZATION = auto()
-    TRANSLATION = auto()
-    NONE = auto()
+from lighteval.tasks.requests import SamplingMethod
 
 
 @dataclass
 class Metric:
     metric_name: str
     higher_is_better: bool
-    category: MetricCategory
-    use_case: MetricUseCase
-    sample_level_fn: callable
-    corpus_level_fn: callable
+    category: SamplingMethod
+    sample_level_fn: Callable
+    corpus_level_fn: Callable
+
+    batched_compute: bool = False
 
     def get_doc(self):
         return self.sample_level_fn.__doc__
@@ -68,8 +42,6 @@ class Metric:
     def compute(
         self, **kwargs
     ) -> dict:  # result: Union[list[ModelResponse], ModelResponse], formatted_doc: Doc) -> dict:
-        if self.category == MetricCategory.IGNORED:
-            return {}
         if isinstance(self, MetricGrouping):
             return self.sample_level_fn(**kwargs)  # result, formatted_doc,
         return {self.metric_name: self.sample_level_fn(**kwargs)}  # result, formatted_doc,
@@ -82,8 +54,8 @@ class MetricGrouping(Metric):
     """
 
     metric_name: list[str]
-    corpus_level_fn: dict[str:callable]
-    higher_is_better: dict[str:callable]
+    corpus_level_fn: dict[str, Callable]
+    higher_is_better: dict[str, Callable]
 
 
 @dataclass

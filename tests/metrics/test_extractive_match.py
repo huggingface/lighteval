@@ -30,6 +30,7 @@ from lighteval.metrics.dynamic_metrics import (
     multilingual_extractive_match_metric,
 )
 from lighteval.metrics.utils.math_comparison import sympy_expr_eq
+from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
 from lighteval.utils.language import Language
 
@@ -62,15 +63,17 @@ def compare_strings(
 
     extraction_targets = tuple(extraction_targets)  # Convert to tuple
 
+    model_response = ModelResponse(text=[pred])
+    doc = Doc(choices=[gold, "", "", ""], query="", gold_index=0)
+
     return multilingual_extractive_match_metric(
         language=language,
         gold_extraction_target=extraction_targets,
         pred_extraction_target=extraction_targets,
         precision=precision,
     ).sample_level_fn(
-        golds=[gold],
-        predictions=[pred],
-        formatted_doc=Doc(choices=["", "", "", ""], query="", gold_index=0),
+        model_response=model_response,
+        doc=doc,
     )
 
 

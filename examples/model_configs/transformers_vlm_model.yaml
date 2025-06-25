@@ -5,6 +5,8 @@ model_parameters:
   compile: false
   model_parallel: false
   batch_size: 1
+  use_fast_image_processor: true
+  use_chat_template: true
   generation_parameters:
-    temperature: 0.2
+    temperature: 0.0
     top_p: 0.9

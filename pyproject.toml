@@ -96,7 +96,7 @@ nanotron = [
 tensorboardX = ["tensorboardX"]
 vllm = ["vllm>=0.8.4", "ray", "more_itertools"]
 quality = ["ruff>=v0.11.0","pre-commit"]
-tests = ["pytest==7.4.0","deepdiff"]
+tests = ["pytest>=7.4.0","deepdiff"]
 dev = ["lighteval[accelerate,quality,tests,multilingual,math,extended_tasks,vllm]"]
 docs = ["hf-doc-builder", "watchdog"]
 extended_tasks = [

@@ -31,6 +31,5 @@ def test_empty_requests():
     model: TransformersModel = load_model(config=model_config)
 
     assert model.loglikelihood([]) == []
-    assert model.loglikelihood_single_token([]) == []
     assert model.loglikelihood_rolling([]) == []
     assert model.greedy_until([]) == []
