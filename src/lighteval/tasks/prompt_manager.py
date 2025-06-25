@@ -310,10 +310,10 @@ class PromptManager:
 
         # System prompt and instruction
         if use_chat_template:
-            if system_prompt is not None:  # We add system prompt and instruction jointly if possible
-                examples.insert(0, {"role": "system", "content": system_prompt + instruction})
-            else:  # Else we add the instruction to the first example
-                examples[0]["content"] = instruction + examples[0]["content"]
+            # We add the instruction to the first example
+            examples[0]["content"] = instruction + examples[0]["content"]
+            if system_prompt is not None:  # We add system prompt if available
+                examples.insert(0, {"role": "system", "content": system_prompt})
             return examples
         else:
             system_prompt = system_prompt if system_prompt is not None else ""

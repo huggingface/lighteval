@@ -344,6 +344,8 @@ class VLLMModel(LightevalModel):
             sampling_params.stop = stop_tokens
             sampling_params.logprobs = 1 if returns_logits else 0
 
+            if num_samples > 1 and sampling_params.temperature == 0:
+                logger.warning("num_samples > 1 but temperature is set to 0, this will not sample different outputs.")
         else:
             sampling_params.temperature = 0
             sampling_params.prompt_logprobs = 1

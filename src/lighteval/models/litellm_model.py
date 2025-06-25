@@ -114,7 +114,7 @@ class LiteLLMClient(LightevalModel):
             max_new_tokens = min(max_new_tokens * 10, 32000)
         return max_new_tokens
 
-    def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, stop_sequence):
+    def __call_api(self, prompt, return_logits, max_new_tokens, num_samples, stop_sequence):  # noqa: C901
         """Make API call with retries."""
         response = ModelResponse()
         for attempt in range(self.API_MAX_RETRY):
@@ -135,6 +135,12 @@ class LiteLLMClient(LightevalModel):
                     "caching": True,
                     "api_key": self.api_key,
                 }
+
+                if num_samples > 1 and self.generation_parameters.temperature == 0:
+                    logger.warning(
+                        "num_samples > 1 but temperature is set to 0, this will not sample different outputs."
+                    )
+
                 if "o1" in self.model:
                     logger.warning("O1 models do not support temperature, top_p, stop sequence. Disabling.")
                 else:

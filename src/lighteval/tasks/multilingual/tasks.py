@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 from functools import partial
-from itertools import combinations
+from itertools import permutations
 
 from langcodes import Language as LangCodeLanguage
 from langcodes import standardize_tag
@@ -4383,7 +4383,7 @@ flores200_tasks = [
         trust_dataset=True,
         version=0,
     )
-    for (lang1, lang2) in combinations(flores_200_languages, 2)
+    for (lang1, lang2) in permutations(flores_200_languages, 2)
 ]
 
 TASKS_TABLE.extend(
