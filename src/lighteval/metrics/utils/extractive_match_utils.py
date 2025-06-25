@@ -252,7 +252,7 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) ->
             regexes.append((final_answer_prefixed_just_is, 50))
 
         # Match with answer word - higher priority than plain latex
-        answer_re_colon = f"{answer_prefix_re}\s?{colon_re}.{{0,50}}?{latex_re}"
+        answer_re_colon = rf"{answer_prefix_re}\s?{colon_re}.{{0,50}}?{latex_re}"
         answer_re = f"{answer_prefix_re}.{{0,50}}?{latex_re}"
 
         regexes.extend([(answer_re_colon, 100), (answer_re, 200)])
@@ -321,7 +321,7 @@ def lazy_indices_regex(
     regexes.extend(
         [
             # Most specific patterns first
-            (f"{answer_word}\s?{colon_re}.{{0,50}}?{answer_re}", 100),
+            (rf"{answer_word}\s?{colon_re}.{{0,50}}?{answer_re}", 100),
             # Answer word patterns
             (f"{answer_word}.{{0,50}}?{answer_re}", 150),
             # Start of the string
