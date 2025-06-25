@@ -7960,6 +7960,22 @@ gre_reading_comprehension_bigbench = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
+gsm_plus = LightevalTaskConfig(
+    name="gsm_plus",
+    suite=["lighteval"],
+    prompt_function=prompt.gsm_plus,
+    hf_repo="qintongli/GSM-Plus",
+    hf_subset="default",
+    hf_avail_splits=["test", "testmini"],
+    evaluation_splits=["test"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=None,
+    metric=[Metrics.expr_gold_metric],
+    stop_sequence=None,
+    trust_dataset=True,
+    version=0,
+)
 gsm8k_leaderboard = LightevalTaskConfig(
     name="gsm8k",
     suite=["leaderboard"],
