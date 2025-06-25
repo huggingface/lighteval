@@ -265,9 +265,11 @@ GLOBAL_MMLU_TASKS = [
     )
     for subset in MMLU_SUBSETS
     for language in [
+        Language.ARABIC,
+        Language.BENGALI,
         Language.GERMAN,
-        Language.ENGLISH,
         Language.SPANISH,
+        Language.ENGLISH,
         Language.FRENCH,
         # Language.HEBREW,
         Language.HINDI,
