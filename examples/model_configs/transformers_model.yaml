@@ -6,6 +6,7 @@ model_parameters:
   model_parallel: false
   batch_size: 1
   multichoice_continuations_start_space: null # If true/false, will force multiple choice continuations to start/not start with a space. If none, will do nothing
+  use_chat_template: true
   generation_parameters:
-    temperature: 0.2
+    temperature: 0.0
     top_p: 0.9

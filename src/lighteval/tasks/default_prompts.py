@@ -61,7 +61,7 @@ def mmmu_pro(line, task_name: Optional[str] = None):
 
     # Construct prompt
     formatted_choices = "\n".join(choices)
-    prompt = f"{instructions}\n{question}\n{formatted_choices}"
+    prompt = f"\n{question}\n{formatted_choices}"
 
     # Collect images
     image_order = []
@@ -907,7 +907,6 @@ def gpqa_instruct(line, task_name: str = None):
         query=query,
         choices=LETTER_INDICES[: len(choices)],
         gold_index=gold_index,
-        instruction=query,
     )
 
 
@@ -2732,6 +2731,7 @@ def wmt(line, alphabetical, task_name: str = None):
         query=f"{language(l_in)} phrase: " + line["translation"][l_in].rstrip() + f"\n{language(l_out)} phrase:",
         gold_index=0,
         choices=[line["translation"][l_out].rstrip()],
+        instruction=f"Translate {language(l_in)} to {language(l_out)}, do not explain, only output the translation.",
     )
 
 

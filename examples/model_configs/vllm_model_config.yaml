@@ -17,11 +17,12 @@ model_parameters:
   subfolder: null
   max_num_seqs: 1
   max_num_batched_tokens: 8192
+  is_async: false
   generation_parameters:
     presence_penalty: 0.0
     repetition_penalty: 1.0
     frequency_penalty: 0.0
-    temperature: 0.3
+    temperature: 0.0
     top_k: null
     min_p: 0.0
     top_p: 0.9

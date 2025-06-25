@@ -36,6 +36,21 @@ logger = logging.getLogger(__name__)
 
 
 class DeltaModelConfig(TransformersModelConfig):
+    """
+    Configuration class for delta models (weight difference models).
+
+    This configuration is used to load models that represent the difference between a
+    fine-tuned model and its base model. The delta weights are added to the base model
+    during loading to reconstruct the full fine-tuned model.
+
+    Attributes:
+        base_model (str):
+            HuggingFace Hub model ID or path to the base model. This is the original
+            pre-trained model that the delta was computed from.
+        delta_weights (bool):
+            Flag indicating that this is a delta model. Must be set to True.
+    """
+
     # Delta models look at the pretrained (= the delta weights) for the tokenizer and model config
     base_model: str
     delta_weights: bool
