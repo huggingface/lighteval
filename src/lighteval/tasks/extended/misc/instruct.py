@@ -303,7 +303,7 @@ TASKS_TABLE.extend(GLOBAL_MMLU_TASKS)
 def mmlu_pro(line, task_name: str = None):
     num_choices = len(line["options"])
     instruction = f"Given the following question about {line['category']} and answer choices, output the letter corresponding to the correct answer. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of {' ,'.join(LETTER_INDICES[: num_choices - 1])}, or {LETTER_INDICES[num_choices]}. Think step by step before answering.\n\n"
-    query = f"{instruction}###\nQuery:\n{line['question']}\n###\nChoices:\n"
+    query = f"{instruction}###\nQuery:\n{line['question']}\n###\nChoices:"
     query += "".join([f"\n{key}) {choice}" for key, choice in zip(LETTER_INDICES, line["options"])])
 
     return Doc(
