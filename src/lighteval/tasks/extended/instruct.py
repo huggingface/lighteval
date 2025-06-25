@@ -126,8 +126,6 @@ BELEBELE_TASKS = [
     ]
 ]
 
-TASKS_TABLE.extend(BELEBELE_TASKS)
-
 
 MMLU_SUBSETS = [
     "abstract_algebra",
@@ -224,7 +222,7 @@ class GlobalMMLUPrompt:
         )
 
 
-global_mmlu_tasks = [
+GLOBAL_MMLU_TASKS = [
     LightevalTaskConfig(
         name=f"global_mmlu_instruct_{sensitivity_label.lower()}_{language.value}:{subset}",
         prompt_function=GlobalMMLUPrompt(language).prompt,
@@ -314,7 +312,7 @@ def mmlu_pro(line, task_name: str = None):
 
 mmlu_pro = LightevalTaskConfig(
     name="mmlu_pro",
-    suite=["lighteval"],
+    suite=["extended"],
     prompt_function=mmlu_pro,
     hf_repo="TIGER-Lab/MMLU-Pro",
     hf_subset="default",
@@ -344,3 +342,7 @@ mmlu_pro = LightevalTaskConfig(
     trust_dataset=True,
     version=0,
 )
+
+TASKS_TABLE.extend(BELEBELE_TASKS)
+TASKS_TABLE.extend(GLOBAL_MMLU_TASKS)
+TASKS_TABLE.append(mmlu_pro)
