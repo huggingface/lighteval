@@ -20,10 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from functools import partial
 
 import numpy as np
-from langcodes import standardize_tag
 
 from lighteval.metrics.dynamic_metrics import (
     IndicesExtractionConfig,
@@ -128,67 +126,6 @@ BELEBELE_TASKS = [
 TASKS_TABLE.extend(BELEBELE_TASKS)
 
 
-MMLU_SUBSETS = [
-    "abstract_algebra",
-    "anatomy",
-    "astronomy",
-    "business_ethics",
-    "clinical_knowledge",
-    "college_biology",
-    "college_chemistry",
-    "college_computer_science",
-    "college_mathematics",
-    "college_medicine",
-    "college_physics",
-    "computer_security",
-    "conceptual_physics",
-    "econometrics",
-    "electrical_engineering",
-    "elementary_mathematics",
-    "formal_logic",
-    "global_facts",
-    "high_school_biology",
-    "high_school_chemistry",
-    "high_school_computer_science",
-    "high_school_european_history",
-    "high_school_geography",
-    "high_school_government_and_politics",
-    "high_school_macroeconomics",
-    "high_school_mathematics",
-    "high_school_microeconomics",
-    "high_school_physics",
-    "high_school_psychology",
-    "high_school_statistics",
-    "high_school_us_history",
-    "high_school_world_history",
-    "human_aging",
-    "human_sexuality",
-    "international_law",
-    "jurisprudence",
-    "logical_fallacies",
-    "machine_learning",
-    "management",
-    "marketing",
-    "medical_genetics",
-    "miscellaneous",
-    "moral_disputes",
-    "moral_scenarios",
-    "nutrition",
-    "philosophy",
-    "prehistory",
-    "professional_accounting",
-    "professional_law",
-    "professional_medicine",
-    "professional_psychology",
-    "public_relations",
-    "security_studies",
-    "sociology",
-    "us_foreign_policy",
-    "virology",
-    "world_religions",
-]
-
-
 class GlobalMMLUPrompt:
     def __init__(self, lang):
         self.lang = lang
@@ -225,22 +162,13 @@ class GlobalMMLUPrompt:
 
 GLOBAL_MMLU_TASKS = [
     LightevalTaskConfig(
-        name=f"global_mmlu_instruct_{sensitivity_label.lower()}_{language.value}:{subset}",
+        name=f"global_mmlu_instruct_{language.value}",
         prompt_function=GlobalMMLUPrompt(language.value).prompt,
         suite=["extended"],
         hf_repo="CohereForAI/Global-MMLU",
-        hf_subset=standardize_tag(language.value),
+        hf_subset=lang,
         evaluation_splits=("test",),
         few_shots_split="dev",
-        hf_filter=partial(
-            lambda subset, sensitivity_label, x: x["subject"].lower() == subset
-            and (
-                sensitivity_label == "ALL" or sensitivity_label in x["cultural_sensitivity_label"].replace("-", "UNK")
-            )
-            and all(x[f"option_{opt}"] is not None and x[f"option_{opt}"].strip() for opt in "abcd"),
-            subset,
-            sensitivity_label,
-        ),
         metric=[
             SampleLevelMetric(
                 metric_name="pass@1:1_samples",
@@ -263,41 +191,50 @@ GLOBAL_MMLU_TASKS = [
         generation_size=32768,  # needed for reasoning models like R1
         stop_sequence=[],  # no stop sequence, will use eos token
     )
-    for subset in MMLU_SUBSETS
-    for language in [
-        Language.ARABIC,
-        Language.BENGALI,
-        Language.GERMAN,
-        Language.SPANISH,
-        Language.ENGLISH,
-        Language.FRENCH,
-        # Language.HEBREW,
-        Language.HINDI,
-        Language.INDONESIAN,
-        Language.ITALIAN,
-        Language.JAPANESE,
-        # Language.KOREAN,
-        # Language.MALAY,
-        Language.DUTCH,
-        Language.NORWEGIAN,
-        Language.POLISH,
-        Language.PORTUGUESE,
-        # Language.ROMANIAN,
-        Language.RUSSIAN,
-        Language.SERBIAN,
-        Language.SWEDISH,
-        Language.SWAHILI,
-        # Language.TAMIL,
-        Language.TELUGU,
-        Language.THAI,
-        Language.TURKISH,
-        Language.UKRAINIAN,
-        Language.URDU,
-        Language.VIETNAMESE,
-        # Language.YORUBA,
-        # Language.ZULU, missing literals
+    for lang, language in [
+        ("am", Language.AMHARIC),
+        ("ar", Language.ARABIC),
+        ("bn", Language.BENGALI),
+        ("cs", Language.CZECH),
+        ("de", Language.GERMAN),
+        ("el", Language.GREEK),
+        ("en", Language.ENGLISH),
+        ("es", Language.SPANISH),
+        ("fa", Language.PERSIAN),
+        # ("fil", Language.FILIPINO),
+        ("fr", Language.FRENCH),
+        ("ha", Language.HAUSA),
+        ("he", Language.HEBREW),
+        ("hi", Language.HINDI),
+        ("id", Language.INDONESIAN),
+        ("ig", Language.IGBO),
+        ("it", Language.ITALIAN),
+        ("ja", Language.JAPANESE),
+        ("ko", Language.KOREAN),
+        ("ky", Language.KYRGYZ),
+        ("lt", Language.LITHUANIAN),
+        ("mg", Language.MALAGASY),
+        ("ms", Language.MALAY),
+        ("ne", Language.NEPALI),
+        ("nl", Language.DUTCH),
+        ("ny", Language.NORWEGIAN),
+        ("pl", Language.POLISH),
+        ("pt", Language.PORTUGUESE),
+        ("ro", Language.ROMANIAN),
+        ("ru", Language.RUSSIAN),
+        ("si", Language.SINHALA),
+        ("sn", Language.SHONA),
+        ("so", Language.SOMALI),
+        ("sr", Language.SERBIAN),
+        ("sv", Language.SWEDISH),
+        ("sw", Language.SWAHILI),
+        ("te", Language.TELUGU),
+        ("tr", Language.TURKISH),
+        ("uk", Language.UKRAINIAN),
+        ("vi", Language.VIETNAMESE),
+        ("yo", Language.YORUBA),
+        ("zh", Language.CHINESE),
     ]
-    for sensitivity_label in ["ALL", "CA", "CS", "UNK"]
 ]
 TASKS_TABLE.extend(GLOBAL_MMLU_TASKS)
 
@@ -353,3 +290,4 @@ mmlu_pro = LightevalTaskConfig(
 )
 
 TASKS_TABLE.append(mmlu_pro)
+print(TASKS_TABLE)
