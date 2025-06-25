@@ -58,7 +58,7 @@ class GoogleTranslateClient(LightevalModel):
             model_name=config.model_name,
             model_sha="",
             model_dtype=None,
-            model_size="",
+            model_size=-1,
         )
 
         self._tokenizer = AutoTokenizer.from_pretrained("gpt2")  # Use a dummy tokenizer for compatibility

@@ -468,6 +468,8 @@ def normalize_log_probs(
     match normalization:
         case LogProbCharNorm(ignore_first_space=True):
             assert choices_text is not None, "choices_text must be provided for character normalization"
+            if len(choices_text) != len(choices_logprob):
+                raise ValueError("choices_text and choices_logprob must have the same length")
             normalized_log_probs = [
                 choices_logprob[ix] / (len(choice) - 1 if choice[0] == " " else len(choice))
                 for ix, choice in enumerate(choices_text)
