@@ -410,11 +410,11 @@ aime25 = LightevalTaskConfig(
     generation_size=10000,
     metrics=[
         Metrics.math_pass_at_1_1n,
-        Metrics.math_pass_at_1_4n,
-        Metrics.math_pass_at_1_8n,
-        Metrics.math_pass_at_1_16n,
-        Metrics.math_pass_at_1_32n,
-        Metrics.math_pass_at_1_64n,
+        # Metrics.math_pass_at_1_4n,
+        # Metrics.math_pass_at_1_8n,
+        # Metrics.math_pass_at_1_16n,
+        # Metrics.math_pass_at_1_32n,
+        # Metrics.math_pass_at_1_64n,
     ],
     version=2,
 )
@@ -7988,7 +7988,7 @@ gsm8k_leaderboard = LightevalTaskConfig(
     few_shots_select="random_sampling_from_train",
     generation_size=256,
     metrics=[Metrics.quasi_exact_match_gsm8k],
-    stop_sequence=["Question:"],
+    stop_sequence=[],
     trust_dataset=True,
     version=0,
 )

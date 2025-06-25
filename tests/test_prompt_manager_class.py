@@ -191,7 +191,7 @@ class TestPromptManager:
     def test_prepare_prompt_chat_template_with_fewshot_and_instruction(self):
         """Test prepare_prompt with chat template format, few-shot examples and instruction."""
         tokenizer = Mock()
-        tokenizer.apply_chat_template.return_value = "<|system|>\nPlease answer the following question:<|user|>\nWhat is 1+1?<|assistant|>\n2<|user|>\nWhat is 2+2?<|assistant|>"
+        tokenizer.apply_chat_template.return_value = "<|user|>\nPlease answer the following question: What is 1+1?<|assistant|>\n2<|user|>\nWhat is 2+2?<|assistant|>"
 
         pm = PromptManager(use_chat_template=True, tokenizer=tokenizer)
 
@@ -200,35 +200,33 @@ class TestPromptManager:
             query="Please answer the following question: What is 1+1?",
             choices=["1", "2", "3"],
             gold_index=1,
-            instruction="Please answer the following question:",
+            instruction="Please answer the following question: ",
         )
 
         doc = Doc(
             query="Please answer the following question: What is 2+2?",
             choices=["3", "4", "5"],
             gold_index=1,
-            instruction="Please answer the following question:",
+            instruction="Please answer the following question: ",
         )
         doc.fewshot_samples = [fewshot_doc]
 
         result = pm.prepare_prompt(doc)
         assert (
             result
-            == "<|system|>\nPlease answer the following question:<|user|>\nWhat is 1+1?<|assistant|>\n2<|user|>\nWhat is 2+2?<|assistant|>"
+            == "<|user|>\nPlease answer the following question: What is 1+1?<|assistant|>\n2<|user|>\nWhat is 2+2?<|assistant|>"
         )
 
         # Verify the call arguments
         call_args = tokenizer.apply_chat_template.call_args
         messages = call_args[0][0]
-        assert len(messages) == 4
-        assert messages[0]["role"] == "system"
-        assert messages[0]["content"] == "Please answer the following question:"
-        assert messages[1]["role"] == "user"
-        assert messages[1]["content"] == "What is 1+1?"
-        assert messages[2]["role"] == "assistant"
-        assert messages[2]["content"] == "2"
-        assert messages[3]["role"] == "user"
-        assert messages[3]["content"] == "What is 2+2?"
+        assert len(messages) == 3
+        assert messages[0]["role"] == "user"
+        assert messages[0]["content"] == "Please answer the following question: What is 1+1?"
+        assert messages[1]["role"] == "assistant"
+        assert messages[1]["content"] == "2"
+        assert messages[2]["role"] == "user"
+        assert messages[2]["content"] == "What is 2+2?"
 
     def test_prepare_prompt_chat_template_with_fewshot_and_instruction_and_system_prompt(self):
         """Test prepare_prompt with chat template format, few-shot examples, instruction and system prompt."""
@@ -298,13 +296,13 @@ class TestPromptManager:
             query="What is 2+2?",
             choices=["3", "4", "5"],
             gold_index=1,
-            instruction="Please answer the following question:",
+            instruction="Please answer the following question: ",
         )
 
         result = pm.prepare_prompt_api(doc)
+
         assert result == [
-            {"role": "system", "content": "Please answer the following question:"},
-            {"role": "user", "content": "What is 2+2?"},
+            {"role": "user", "content": "Please answer the following question: What is 2+2?"},
         ]
 
     def test_prepare_prompt_api_with_system_and_instruction(self):
@@ -314,13 +312,13 @@ class TestPromptManager:
             query="What is 2+2?",
             choices=["3", "4", "5"],
             gold_index=1,
-            instruction="Please answer the following question:",
+            instruction="Please answer the following question: ",
         )
 
         result = pm.prepare_prompt_api(doc)
         assert result == [
-            {"role": "system", "content": "You are a math tutor.Please answer the following question:"},
-            {"role": "user", "content": "What is 2+2?"},
+            {"role": "system", "content": "You are a math tutor."},
+            {"role": "user", "content": "Please answer the following question: What is 2+2?"},
         ]
 
     def test_prepare_prompt_multimodal_basic(self):

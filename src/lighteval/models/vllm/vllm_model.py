@@ -314,10 +314,9 @@ class VLLMModel(LightevalModel):
                 # NOTE: we are assuming all items in a batch behave similarly (same
                 # stop_tokens and max_tokens genrated) which is not necessarily
                 # the case! Because of that we only use batch size of 1
-                stop_tokens = split[0].stop_sequences
+                stop_tokens = split[0].stop_sequences or []
 
             max_new_tokens = self._config.generation_parameters.max_new_tokens or split[0].generation_size
-            returns_logits = split[0].use_logits
             num_samples = split[0].num_samples
 
             context = [self.prompt_manager.prepare_prompt(doc) for doc in split]
@@ -356,21 +355,18 @@ class VLLMModel(LightevalModel):
                 inputs=inputs,
                 max_new_tokens=max_new_tokens,
                 stop_tokens=stop_tokens,
-                returns_logits=returns_logits,
+                returns_logits=False,
                 num_samples=num_samples,
             )
 
             for i, vllm_output in enumerate(vllm_outputs):
                 output_token_ids = [outputs.token_ids for outputs in vllm_output.outputs]
-                logprobs = [output.logprobs for output in vllm_output.outputs] or []
-                logprobs = [logprob[token_id].logprob for token_id, logprob in zip(output_token_ids[0], logprobs[0])]
                 result = [output.text for output in vllm_output.outputs]
                 input_token_ids = vllm_output.prompt_token_ids
 
                 cur_response = ModelResponse(
                     input=context[i],
                     text=result,
-                    logprobs=logprobs,
                     output_tokens=list(output_token_ids),
                     input_tokens=input_token_ids,
                 )

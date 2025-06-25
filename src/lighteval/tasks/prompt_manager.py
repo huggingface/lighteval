@@ -91,6 +91,7 @@ class PromptManager:
     def _prepare_chat_template(self, doc: Doc, tokenize: bool = True) -> str:
         """Prepare prompt using chat template format."""
         messages = []
+        instruction_used = False  # Flag to check if instruction is used in the first few-shot example
 
         # Add system prompt if available
         if self.system_prompt is not None:
@@ -100,6 +101,7 @@ class PromptManager:
         for ix, fewshot_sample in enumerate(doc.fewshot_samples):
             query = self._extract_query(fewshot_sample.query, fewshot_sample.instruction)
             if ix == 0 and doc.instruction is not None:
+                instruction_used = True
                 query = doc.instruction + query
 
             messages.append({"role": "user", "content": query})
@@ -107,6 +109,11 @@ class PromptManager:
 
         # Add main query
         main_query = self._extract_query(doc.query, doc.instruction)
+
+        if doc.instruction is not None and not instruction_used:
+            # If instruction is provided, prepend it to the main query
+            main_query = doc.instruction + main_query
+
         messages.append({"role": "user", "content": main_query})
 
         if tokenize:  # for local models
