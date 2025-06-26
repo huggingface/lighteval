@@ -22,11 +22,12 @@
 
 import lighteval.tasks.extended.instruct.belebele as belebele
 import lighteval.tasks.extended.instruct.global_mmlu as global_mmlu
+import lighteval.tasks.extended.instruct.mgsm as mgsm
 import lighteval.tasks.extended.instruct.mmlu_pro as mmlu_pro
 from lighteval.utils.imports import can_load_extended_tasks
 
 
-AVAILABLE_EXTENDED_TASKS_MODULES = [belebele, mmlu_pro, global_mmlu]
+AVAILABLE_EXTENDED_TASKS_MODULES = [belebele, mmlu_pro, mgsm, global_mmlu]
 
 if can_load_extended_tasks():
     import lighteval.tasks.extended.hle.main as hle
