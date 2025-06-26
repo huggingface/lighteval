@@ -308,7 +308,8 @@ class GlobalMMLUPrompt:
     def prompt(self, line, task_name: str = None):
         gold_index = LETTER_INDICES.index(line["answer"])
         choices = [line["option_a"], line["option_b"], line["option_c"], line["option_d"]]
-        query_template = self.lang_to_template.get(self.lang, "eng")
+        lang = self.lang if self.lang in self.lang_to_template.keys() else "eng"
+        query_template = self.lang_to_template[lang]
         query = query_template.format(
             A=choices[0],
             B=choices[1],
