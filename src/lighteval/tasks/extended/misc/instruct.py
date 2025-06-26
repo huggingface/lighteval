@@ -33,6 +33,7 @@ from lighteval.metrics.metrics_sample import (
 )
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.multilingual.tasks import LangCodeLanguage, iso_639_3_ind_to_iso_639_3_macro
 from lighteval.tasks.requests import Doc
 from lighteval.utils.language import Language
 
@@ -48,6 +49,11 @@ lang_to_literal = {
 }
 
 
+def belebele_prompt_en_instruct(line, task_name: str = None):
+    line["dialect"] == "eng_Latn"
+    return belebele_prompt(line, task_name)
+
+
 def belebele_prompt(line, task_name: str = None):
     lang_to_template = {
         "eng_Latn": "Given the following passage, query, and answer choices, output the letter corresponding to the correct answer. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of A, B, C, or D. Think step by step before answering.\n\n###\nPassage:\n{Passage}\n###\nQuery:\n{Question}\n###\nChoices:\nA) {A}\nB) {B}\nC) {C}\nD) {D}",
@@ -60,7 +66,7 @@ def belebele_prompt(line, task_name: str = None):
 
     gold_index = int(line["correct_answer_num"]) - 1
     choices = [line["mc_answer1"], line["mc_answer2"], line["mc_answer3"], line["mc_answer4"]]
-    query_template = lang_to_template.get(line["dialect"], "eng_Latn")
+    query_template = lang_to_template[line["dialect"]]
     query = query_template.format(
         A=choices[0],
         B=choices[1],
@@ -80,9 +86,9 @@ def belebele_prompt(line, task_name: str = None):
     )
 
 
-BELEBELE_TASKS = [
+BELEBELE_TASKS_NATIVE_INSTRUCT = [
     LightevalTaskConfig(
-        name=f"belebele_instruct_{lang}_Latn",
+        name=f"belebele_native_instruct_{lang}_Latn",
         prompt_function=belebele_prompt,
         suite=["extended"],
         hf_repo="facebook/belebele",
@@ -123,7 +129,168 @@ BELEBELE_TASKS = [
         "spa",
     ]
 ]
-TASKS_TABLE.extend(BELEBELE_TASKS)
+
+BELEBELE_TASKS_EN_INSTRUCT = [
+    LightevalTaskConfig(
+        name=f"belebele_en_instruct_{lang}",
+        prompt_function=belebele_prompt_en_instruct,
+        suite=["extended"],
+        hf_repo="facebook/belebele",
+        hf_subset=f"{lang}_Latn",
+        evaluation_splits=["test"],
+        hf_avail_splits=["test"],
+        few_shots_split=None,
+        few_shots_select=None,
+        generation_size=32768,  # needed for reasoning models like R1
+        metric=[
+            SampleLevelMetric(
+                metric_name="pass@1:1_samples",
+                sample_level_fn=PassAtK(
+                    k=1,
+                    n=1,
+                    sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
+                        language=iso_639_3_ind_to_iso_639_3_macro[LangCodeLanguage.get(lang).to_alpha3()],
+                        gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                        pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                        precision=6,
+                    ).sample_level_fn([ref], [pred], doc),
+                ).compute,
+                category=MetricCategory.GENERATIVE_SAMPLING,
+                use_case=MetricUseCase.REASONING,
+                corpus_level_fn=np.mean,
+                higher_is_better=True,
+            )
+        ],
+        stop_sequence=[],  # no stop sequence, will use eos token
+        trust_dataset=True,
+        version=1,
+    )
+    for lang in [
+        "acm_Arab",
+        "arz_Arab",
+        "ceb_Latn",
+        "fin_Latn",
+        "hin_Deva",
+        "ita_Latn",
+        "khm_Khmr",
+        "lvs_Latn",
+        "npi_Deva",
+        "pol_Latn",
+        "slv_Latn",
+        "swe_Latn",
+        # "tso_Latn",
+        # "xho_Latn",
+        "afr_Latn",
+        "asm_Beng",
+        "ces_Latn",
+        "fra_Latn",
+        "hin_Latn",
+        "jav_Latn",
+        # "kin_Latn",
+        "mal_Mlym",
+        "npi_Latn",
+        "por_Latn",
+        # "sna_Latn",
+        "swh_Latn",
+        "tur_Latn",
+        "yor_Latn",
+        "als_Latn",
+        "azj_Latn",
+        "ckb_Arab",
+        # "fuv_Latn",
+        "hrv_Latn",
+        "jpn_Jpan",
+        "kir_Cyrl",
+        "mar_Deva",
+        # "nso_Latn",
+        "snd_Arab",
+        "tam_Taml",
+        "ukr_Cyrl",
+        "zho_Hans",
+        "amh_Ethi",
+        # "bam_Latn",
+        "dan_Latn",
+        # "gaz_Latn",
+        "hun_Latn",
+        # "kac_Latn",
+        "kor_Hang",
+        "mkd_Cyrl",
+        # "nya_Latn",
+        "ron_Latn",
+        "som_Latn",
+        "tel_Telu",
+        "urd_Arab",
+        "zho_Hant",
+        "apc_Arab",
+        "ben_Beng",
+        "deu_Latn",
+        # "grn_Latn",
+        "hye_Armn",
+        "kan_Knda",
+        "lao_Laoo",
+        "mlt_Latn",
+        "ory_Orya",
+        "rus_Cyrl",
+        # "sot_Latn",
+        "tgk_Cyrl",
+        "urd_Latn",
+        "zsm_Latn",
+        "arb_Arab",
+        "ben_Latn",
+        "ell_Grek",
+        "guj_Gujr",
+        # "ibo_Latn",
+        "kat_Geor",
+        # "lin_Latn",
+        # "mri_Latn",
+        "pan_Guru",
+        # "shn_Mymr",
+        "spa_Latn",
+        "tgl_Latn",
+        "uzn_Latn",
+        # "zul_Latn",
+        "arb_Latn",
+        # "bod_Tibt",
+        "eng_Latn",
+        # "hat_Latn",
+        # "ilo_Latn",
+        "kaz_Cyrl",
+        "lit_Latn",
+        "mya_Mymr",
+        "pbt_Arab",
+        "sin_Latn",
+        "srp_Cyrl",
+        "tha_Thai",
+        "vie_Latn",
+        "ars_Arab",
+        "bul_Cyrl",
+        "est_Latn",
+        # "hau_Latn",
+        "ind_Latn",
+        # "kea_Latn",
+        # "lug_Latn",
+        "nld_Latn",
+        "pes_Arab",
+        "sin_Sinh",
+        # "ssw_Latn",
+        # "tir_Ethi",
+        "war_Latn",
+        "ary_Arab",
+        "cat_Latn",
+        "eus_Latn",
+        "heb_Hebr",
+        "isl_Latn",
+        # "khk_Cyrl",
+        # "luo_Latn",
+        "nob_Latn",
+        "plt_Latn",
+        "slk_Latn",
+        # "sun_Latn",
+        # "tsn_Latn",
+        # "wol_Latn",
+    ]
+]
+TASKS_TABLE.extend(BELEBELE_TASKS_NATIVE_INSTRUCT + BELEBELE_TASKS_EN_INSTRUCT)
 
 
 class GlobalMMLUPrompt:
