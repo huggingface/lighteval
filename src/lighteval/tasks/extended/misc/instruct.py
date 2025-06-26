@@ -50,7 +50,7 @@ lang_to_literal = {
 
 
 def belebele_prompt_en_instruct(line, task_name: str = None):
-    line["dialect"] == "eng_Latn"
+    line["dialect"] = "eng_Latn"
     return belebele_prompt(line, task_name)
 
 
@@ -75,7 +75,7 @@ def belebele_prompt(line, task_name: str = None):
         Passage=line["flores_passage"],
         Question=line["question"],
     )
-    instruction = query_template.split("\n\n###")[0]
+    instruction = query_template.split("###\n")[0]
 
     return Doc(
         task_name=task_name,
@@ -136,7 +136,7 @@ BELEBELE_TASKS_EN_INSTRUCT = [
         prompt_function=belebele_prompt_en_instruct,
         suite=["extended"],
         hf_repo="facebook/belebele",
-        hf_subset=f"{lang}_Latn",
+        hf_subset=lang,
         evaluation_splits=["test"],
         hf_avail_splits=["test"],
         few_shots_split=None,
@@ -302,7 +302,7 @@ class GlobalMMLUPrompt:
             "fra": "A partir de la question et des choix de réponses suivants, indiquez la lettre correspondant à la bonne réponse. La dernière ligne de votre réponse doit avoir le format suivant : 'Réponse: '$LETTRE' (sans les guillemets) où LETTRE est l'une des lettres: A, B, C ou D. Réfléchissez étape par étape avant de répondre.\n\n###\nRequête:\n{Question}\n###\nChoix:\nA) {A}\nB) {B}\nC) {C}\nD) {D}",
             "ita": "Dato il seguente quesito e le diverse opzioni per una risposta, indicare la lettera corrispondente alla risposta corretta. L'ultima riga della risposta deve avere il seguente formato: 'Risposta: $LETTERA' (senza virgolette), e LETTERA è necessariamente una tra A, B, C, D. Prima di rispondere, è importante che si ragioni passo per passo.\n\n###\nQuesito:\n{Question}\n###\nOpzioni:\nA) {A}\nB) {B}\nC) {C}\nD) {D}",
             "por": "Tendo em conta a seguinte pergunta e opções de resposta, indique a letra correspondente à resposta correta. A última linha da sua resposta deve ter o seguinte formato: 'Resposta: $LETRA' (sem aspas) em que LETRA é uma de A, B, C ou D. Pense passo a passo antes de responder.\n\n###\nPergunta:\n{Question}\n###\nOpções:\nA) {A}\nB) {B}\nC) {C}\nD) {D}",
-            "spa": "Dado el siguiente pregunta y opciones para la respuesta, escriba la letra correspondiente a la respuesta correcta. La última línea de su respuesta debe seguir el siguiente formato: 'Respuesta: $LETTER' (sin comillas) donde LETTER es A, B, C o D. Piense paso a paso antes de responder.\n\\###\nPregunta:\n{Question}\n###\nOpciones:\nA) {A}\nB) {B}\nC) {C}\nD) {D}",
+            "spa": "Dado el siguiente pregunta y opciones para la respuesta, escriba la letra correspondiente a la respuesta correcta. La última línea de su respuesta debe seguir el siguiente formato: 'Respuesta: $LETTER' (sin comillas) donde LETTER es A, B, C o D. Piense paso a paso antes de responder.\n\n###\nPregunta:\n{Question}\n###\nOpciones:\nA) {A}\nB) {B}\nC) {C}\nD) {D}",
         }
 
     def prompt(self, line, task_name: str = None):
@@ -316,7 +316,7 @@ class GlobalMMLUPrompt:
             D=choices[3],
             Question=line["question"],
         )
-        instruction = query_template.split("\n\n###")[0]
+        instruction = query_template.split("###\n")[0]
 
         return Doc(
             task_name=task_name,
@@ -457,4 +457,4 @@ mmlu_pro = LightevalTaskConfig(
 )
 
 TASKS_TABLE.append(mmlu_pro)
-print(TASKS_TABLE)
+# print("\n".join([f"extended|{task.name}|0|0" for task in TASKS_TABLE]))
