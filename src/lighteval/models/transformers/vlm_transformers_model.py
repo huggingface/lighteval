@@ -22,9 +22,12 @@
 
 import logging
 import os
+from datetime import timedelta
 from typing import Optional, Tuple, Union
 
 import torch
+from accelerate import Accelerator, InitProcessGroupKwargs
+from accelerate.utils import gather_object, get_max_memory
 from pydantic import PositiveInt
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -32,56 +35,42 @@ from transformers import (
     AutoConfig,
     AutoModelForImageTextToText,
     AutoProcessor,
-    BitsAndBytesConfig,
-    PretrainedConfig,
 )
+from transformers.configuration_utils import PretrainedConfig
+from transformers.utils.quantization_config import BitsAndBytesConfig
 
 from lighteval.data import GenerativeTaskDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_output import (
-    GenerativeResponse,
-    LoglikelihoodResponse,
-    LoglikelihoodSingleTokenResponse,
-)
+from lighteval.models.model_output import ModelResponse
 from lighteval.models.utils import ModelConfig, _get_dtype, _get_model_sha, _simplify_name
-from lighteval.tasks.requests import (
-    GreedyUntilRequest,
-    LoglikelihoodRequest,
-    LoglikelihoodSingleTokenRequest,
-)
+from lighteval.tasks.prompt_manager import PromptManager
+from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import (
     is_accelerate_available,
 )
-from lighteval.utils.utils import as_list
 
 
 logger = logging.getLogger(__name__)
 
 
-if is_accelerate_available():
-    from datetime import timedelta
-
-    from accelerate import Accelerator, InitProcessGroupKwargs
-    from accelerate.utils import gather_object, get_max_memory
-
-
 class BatchCollator:
     """Collator for batching requests"""
 
-    def __init__(self, processor, **kwargs):
+    def __init__(self, prompt_manager, processor, **kwargs):
         self.processor = processor
+        self.prompt_manager = prompt_manager
         self.kwargs = kwargs
 
-    def __call__(self, requests: list[GreedyUntilRequest]) -> Tuple[dict[str, torch.Tensor], list[GreedyUntilRequest]]:
-        texts = [request.context for request in requests]
+    def __call__(self, requests: list[Doc]) -> Tuple[dict[str, torch.Tensor], list[Doc], list[str]]:
+        texts = [self.prompt_manager.prepare_prompt_multimodal(request) for request in requests]
         images = [request.images for request in requests]
         inputs = self.processor(text=texts, images=images, **self.kwargs)
-        return inputs, requests
+        return inputs, requests, texts
 
 
 class VLMTransformersModelConfig(ModelConfig):
     """
-    Base configuration class for models.
+    Configuration class for VLM (image-text-to-text) models.
 
     Attributes:
         model_name (str):
@@ -96,7 +85,7 @@ class VLMTransformersModelConfig(ModelConfig):
         revision (str): The revision of the model.
         batch_size (int): The batch size for model training.
         generation_size (Optional[int]): The maximum number of tokens to generate.
-        max_length (Optional[int]): The maximum length of the generated output.
+        max_length (Optional[int]): The maximum length of the input + generated output.
         add_special_tokens (bool, optional, defaults to True): Whether to add special tokens to the input sequences.
         model_parallel (bool, optional, defaults to None):
             True/False: force to use or not the `accelerate` library to load a large
@@ -113,15 +102,6 @@ class VLMTransformersModelConfig(ModelConfig):
             model at a quantized precision. Needed for 4-bit and 8-bit precision.
         trust_remote_code (bool): Whether to trust remote code during model
             loading.
-        generation_parameters (GenerationParameters): Range of parameters which will affect the generation.
-        generation_config (GenerationConfig): GenerationConfig object (only passed during manual creation)
-
-    Methods:
-        __post_init__(): Performs post-initialization checks on the configuration.
-        _init_configs(model_name, env_config): Initializes the model configuration.
-        init_configs(env_config): Initializes the model configuration using the environment configuration.
-        get_model_sha(): Retrieves the SHA of the model.
-
     """
 
     model_name: str
@@ -186,6 +166,10 @@ class VLMTransformersModel(LightevalModel):
         self.generation_config_dict["pad_token_id"] = self.pad_token_id
         self.generation_config_dict["eos_token_id"] = self.eos_token_id
         self.generation_config_dict["renormalize_logits"] = True
+
+        self.prompt_manager = PromptManager(
+            use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
+        )
 
         self.model_info = ModelInfo(
             model_name=self.config.model_name,
@@ -352,17 +336,10 @@ class VLMTransformersModel(LightevalModel):
 
         return 2048
 
-    def _tokenize_requests_context_inplace(self, requests: list[GreedyUntilRequest]):
-        """Preprocess requests to fill in the tokenized_context field for sorting in the dataset"""
-        for request in requests:
-            request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
-            inputs = self.processor(text=request.context, images=request.images)
-            request.tokenized_context = inputs["input_ids"][0]
-
     def greedy_until(
         self,
-        requests: list[GreedyUntilRequest],
-    ) -> list[GenerativeResponse]:
+        docs: list[Doc],
+    ) -> list[ModelResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
@@ -375,12 +352,10 @@ class VLMTransformersModel(LightevalModel):
         """
 
         # Tokenizing context for sorting in the dataset
-        logger.info("Tokenizing requests context for sorting in the dataset")
-        self._tokenize_requests_context_inplace(requests)
-        logger.info("Done tokenizing!")
 
-        dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
+        dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         collator = BatchCollator(
+            self.prompt_manager,
             self.processor,
             truncation="longest_first",  # we truncate to the model max length if needed
             padding="longest",  # we pad to the longest sequence
@@ -396,7 +371,7 @@ class VLMTransformersModel(LightevalModel):
             if self.accelerator:
                 dataloader = self.accelerator.prepare(dataloader)
 
-            for batch_inputs, batch_requests in tqdm(
+            for batch_inputs, batch_requests, input_context in tqdm(
                 dataloader, desc="Greedy generation", position=1, leave=True, disable=self.disable_tqdm
             ):
                 batch_inputs = batch_inputs.to(self.device)
@@ -404,13 +379,21 @@ class VLMTransformersModel(LightevalModel):
                     batch_inputs = batch_inputs.to(self.torch_dtype)
 
                 max_new_tokens = self.config.generation_size or batch_requests[0].generation_size
+                num_samples = batch_requests[0].num_samples
+                do_sample = num_samples > 1 or self.generation_config_dict["temperature"] > 0
+
+                if num_samples > 1 and self.generation_config_dict["temperature"] == 0:
+                    raise ValueError(
+                        "num_samples > 1 is not supported with temperature=0, please set temperature > 0 or use non sampling metrics."
+                    )
+
                 outputs = self.model.generate(
                     **batch_inputs,
                     **self.generation_config_dict,  # custom generation params
                     max_new_tokens=max_new_tokens,
-                    do_sample=batch_requests[0].do_sample,
                     num_return_sequences=batch_requests[0].num_samples,
                     output_logits=batch_requests[0].use_logits,
+                    do_sample=do_sample,
                 )
                 input_tokens = batch_inputs.input_ids
                 generated_tokens = outputs.sequences[:, input_tokens.shape[1] :]
@@ -420,9 +403,10 @@ class VLMTransformersModel(LightevalModel):
 
                 batch_results = []
                 for i in range(len(generated_texts)):
-                    generated_response = GenerativeResponse(
-                        result=generated_texts[i],
-                        generated_tokens=generated_tokens[i].cpu().numpy(),
+                    generated_response = ModelResponse(
+                        input=input_context[i],
+                        text=generated_texts[i],
+                        output_tokens=generated_tokens[i].cpu().numpy(),
                         input_tokens=input_tokens[i].cpu().numpy(),
                         truncated_tokens_count=-1,
                         padded_tokens_count=padded_tokens_count[i].item(),
@@ -439,17 +423,12 @@ class VLMTransformersModel(LightevalModel):
 
     def loglikelihood(
         self,
-        requests: list[LoglikelihoodRequest],
-    ) -> list[LoglikelihoodResponse]:
-        raise NotImplementedError()
-
-    def loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest]
-    ) -> list[LoglikelihoodSingleTokenResponse]:
+        docs: list[Doc],
+    ) -> list[ModelResponse]:
         raise NotImplementedError()
 
     def loglikelihood_rolling(
         self,
-        requests: list[LoglikelihoodRequest],
-    ) -> list[LoglikelihoodResponse]:
+        docs: list[Doc],
+    ) -> list[ModelResponse]:
         raise NotImplementedError()
