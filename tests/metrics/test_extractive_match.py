@@ -56,7 +56,9 @@ def compare_strings(
         elif match_type == "expr":
             extraction_targets.append(ExprExtractionConfig())
         elif match_type == "NativeLetters":
-            extraction_targets.append(IndicesExtractionConfig(prefix_for_extraction="NativeLetters"))
+            extraction_targets.append(
+                IndicesExtractionConfig(prefix_for_extraction="NativeLetters", try_extract_without_anchor=True)
+            )
 
     extraction_targets = tuple(extraction_targets)  # Convert to tuple
 
