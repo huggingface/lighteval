@@ -1,0 +1,14 @@
+extended|global_mmlu_instruct_ara|0|0
+extended|global_mmlu_instruct_ben|0|0
+extended|global_mmlu_instruct_deu|0|0
+extended|global_mmlu_instruct_eng|0|0
+extended|global_mmlu_instruct_spa|0|0
+extended|global_mmlu_instruct_fra|0|0
+extended|global_mmlu_instruct_hin|0|0
+extended|global_mmlu_instruct_ind|0|0
+extended|global_mmlu_instruct_ita|0|0
+extended|global_mmlu_instruct_jpn|0|0
+extended|global_mmlu_instruct_kor|0|0
+extended|global_mmlu_instruct_por|0|0
+extended|global_mmlu_instruct_swa|0|0
+extended|global_mmlu_instruct_zho|0|0
