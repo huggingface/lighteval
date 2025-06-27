@@ -308,6 +308,13 @@ class PromptManager:
         else:
             examples.append(content)
 
+        # Assistant prefix
+        if doc.assistant_prefix:
+            if use_chat_template:
+                examples.append({"role": "assistant", "content": doc.assistant_prefix})
+            else:
+                examples.append(doc.assistant_prefix)
+
         # System prompt and instruction
         if use_chat_template:
             # We add the instruction to the first example
