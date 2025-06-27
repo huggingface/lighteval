@@ -75,12 +75,12 @@ class GlobalMMLUPrompt:
         )
 
 
-GLOBAL_MMLU_TASKS = [
-    LightevalTaskConfig(
-        name=f"global_mmlu_instruct_{language.value}",
-        prompt_function=GlobalMMLUPrompt(language.value).prompt,
+def create_mmlu_task(lang: str, language: Language, is_lite: bool = False) -> LightevalTaskConfig:
+    return LightevalTaskConfig(
+        name=f"global_mmlu_instruct{'_lite' if is_lite else ''}_{language.value}",
+        prompt_function=GlobalMMLUPrompt(lang).prompt,
         suite=["extended"],
-        hf_repo="CohereForAI/Global-MMLU",
+        hf_repo="CohereForAI/Global-MMLU-lite" if is_lite else "CohereForAI/Global-MMLU",
         hf_subset=lang,
         evaluation_splits=("test",),
         few_shots_split="dev",
@@ -91,12 +91,16 @@ GLOBAL_MMLU_TASKS = [
                     k=1,
                     n=1,
                     sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
-                        language=lang,
+                        language=language,
                         gold_extraction_target=[
-                            IndicesExtractionConfig(prefix_for_extraction="Letters", try_extract_without_anchor=False)
+                            IndicesExtractionConfig(
+                                prefix_for_extraction="NativeLetters", try_extract_without_anchor=False
+                            )
                         ],
                         pred_extraction_target=[
-                            IndicesExtractionConfig(prefix_for_extraction="Letters", try_extract_without_anchor=False)
+                            IndicesExtractionConfig(
+                                prefix_for_extraction="NativeLetters", try_extract_without_anchor=False
+                            )
                         ],
                         precision=6,
                     ).sample_level_fn([ref], [pred], doc),
@@ -110,6 +114,10 @@ GLOBAL_MMLU_TASKS = [
         generation_size=30000,  # needed for reasoning models like R1
         stop_sequence=[],  # no stop sequence, will use eos token
     )
+
+
+GLOBAL_MMLU_TASKS = [
+    create_mmlu_task(lang, language)
     for (lang, language) in [
         ("am", Language.AMHARIC),
         ("ar", Language.ARABIC),
@@ -157,44 +165,7 @@ GLOBAL_MMLU_TASKS = [
 TASKS_TABLE.extend(GLOBAL_MMLU_TASKS)
 
 GLOBAL_MMLU_LITE_TASKS = [
-    LightevalTaskConfig(
-        name=f"global_mmlu_lite_instruct_{language.value}",
-        prompt_function=GlobalMMLUPrompt(language.value).prompt,
-        suite=["extended"],
-        hf_repo="CohereForAI/Global-MMLU-Lite",
-        hf_subset=lang,
-        evaluation_splits=("test",),
-        few_shots_split="dev",
-        metric=[
-            SampleLevelMetric(
-                metric_name="pass@1:1_samples",
-                sample_level_fn=PassAtK(
-                    k=1,
-                    n=1,
-                    sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
-                        language=language,
-                        gold_extraction_target=[
-                            IndicesExtractionConfig(
-                                prefix_for_extraction="NativeLetters", try_extract_without_anchor=False
-                            )
-                        ],
-                        pred_extraction_target=[
-                            IndicesExtractionConfig(
-                                prefix_for_extraction="NativeLetters", try_extract_without_anchor=False
-                            )
-                        ],
-                        precision=6,
-                    ).sample_level_fn([ref], [pred], doc),
-                ).compute,
-                category=MetricCategory.GENERATIVE_SAMPLING,
-                use_case=MetricUseCase.REASONING,
-                corpus_level_fn=np.mean,
-                higher_is_better=True,
-            )
-        ],
-        generation_size=30000,  # needed for reasoning models like R1
-        stop_sequence=[],  # no stop sequence, will use eos token
-    )
+    create_mmlu_task(lang, language, is_lite=True)
     for lang, language in [
         ("am", Language.AMHARIC),
         ("ar", Language.ARABIC),
