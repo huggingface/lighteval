@@ -298,7 +298,7 @@ def lazy_indices_regex(
     space_re = rf"(?:\s|{re.escape(translation_literal.sentence_space)})"
 
     answer_prefix_re = rf"(?:^|{space_re})(?:\*\*)?"
-    answer_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|\)|$)"
+    answer_suffix_re = rf"(?:\))?(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|$)"
     answer_re = rf"{answer_prefix_re}{indice_str_re}{answer_suffix_re}"
     answer_re_start = rf"^(?:\*\*)?{indice_str_re}{answer_suffix_re}"
     answer_re_line_start = rf"\n(?:\*\*)?{indice_str_re}{answer_suffix_re}"
