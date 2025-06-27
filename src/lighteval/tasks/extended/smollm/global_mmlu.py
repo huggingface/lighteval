@@ -91,16 +91,12 @@ GLOBAL_MMLU_TASKS = [
                     k=1,
                     n=1,
                     sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
-                        language=language,
+                        language=lang,
                         gold_extraction_target=[
-                            IndicesExtractionConfig(
-                                prefix_for_extraction="NativeLetters", try_extract_without_anchor=False
-                            )
+                            IndicesExtractionConfig(prefix_for_extraction="Letters", try_extract_without_anchor=False)
                         ],
                         pred_extraction_target=[
-                            IndicesExtractionConfig(
-                                prefix_for_extraction="NativeLetters", try_extract_without_anchor=False
-                            )
+                            IndicesExtractionConfig(prefix_for_extraction="Letters", try_extract_without_anchor=False)
                         ],
                         precision=6,
                     ).sample_level_fn([ref], [pred], doc),
@@ -114,7 +110,7 @@ GLOBAL_MMLU_TASKS = [
         generation_size=30000,  # needed for reasoning models like R1
         stop_sequence=[],  # no stop sequence, will use eos token
     )
-    for lang, language in [
+    for (lang, language) in [
         ("am", Language.AMHARIC),
         ("ar", Language.ARABIC),
         ("bn", Language.BENGALI),
@@ -124,7 +120,6 @@ GLOBAL_MMLU_TASKS = [
         ("en", Language.ENGLISH),
         ("es", Language.SPANISH),
         ("fa", Language.PERSIAN),
-        # ("fil", Language.FILIPINO),
         ("fr", Language.FRENCH),
         ("ha", Language.HAUSA),
         ("he", Language.HEBREW),
