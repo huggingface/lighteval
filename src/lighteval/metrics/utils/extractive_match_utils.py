@@ -252,8 +252,8 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) ->
             regexes.append((final_answer_prefixed_just_is, 50))
 
         # Match with answer word - higher priority than plain latex
-        answer_re_colon = f"{answer_prefix_re}{colon_re}.{{0,50}}?{latex_re}"
-        answer_re = f"{answer_prefix_re}.{{0,50}}?{latex_re}"
+        answer_re_colon = rf"{answer_prefix_re}{colon_re}.{{0,50}}?{latex_re}"
+        answer_re = rf"{answer_prefix_re}.{{0,50}}?{latex_re}"
 
         regexes.extend([(answer_re_colon, 100), (answer_re, 200)])
 
@@ -295,7 +295,7 @@ def lazy_indices_regex(
     full_stop_re = rf"[{re.escape(translation_literal.full_stop)}\.]"
     comma_re = rf"[{re.escape(translation_literal.comma)}\,]"
     colon_re = rf"[{re.escape(translation_literal.colon)}\:]"
-    space_re = re.escape(translation_literal.sentence_space)
+    space_re = rf"(?:\s|{re.escape(translation_literal.sentence_space)})"
 
     answer_prefix_re = rf"(?:^|{space_re})(?:\*\*)?"
     answer_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|$)"

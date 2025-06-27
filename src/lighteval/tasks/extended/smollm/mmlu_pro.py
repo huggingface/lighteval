@@ -39,9 +39,10 @@ from lighteval.utils.language import Language
 
 def mmlu_pro(line, task_name: str = None):
     num_choices = len(line["options"])
-    instruction = f"Given the following question about {line['category']} and answer choices, output the letter corresponding to the correct answer. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of {' ,'.join(LETTER_INDICES[: num_choices - 1])}, or {LETTER_INDICES[num_choices]}. Think step by step before answering.\n\n"
+    instruction = f"Given the following question about {line['category']} and answer choices, output the letter corresponding to the correct answer. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of {', '.join(LETTER_INDICES[: num_choices - 1])}, or {LETTER_INDICES[num_choices]}. Think step by step before answering.\n\n"
     query = f"{instruction}###\nQuery:\n{line['question']}\n###\nChoices:"
     query += "".join([f"\n{key}) {choice}" for key, choice in zip(LETTER_INDICES, line["options"])])
+    # query += "\n###"
 
     return Doc(
         task_name=task_name,
@@ -62,7 +63,7 @@ mmlu_pro = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select=None,
-    generation_size=32768,  # needed for reasoning models like R1
+    generation_size=300,  # needed for reasoning models like R1
     stop_sequence=[],  # no stop sequence, will use eos token
     metric=[
         SampleLevelMetric(
@@ -72,8 +73,16 @@ mmlu_pro = LightevalTaskConfig(
                 n=1,
                 sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
                     language=Language.ENGLISH,
-                    gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
-                    pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                    gold_extraction_target=[
+                        IndicesExtractionConfig(
+                            prefix_for_extraction="NativeLetters", try_extract_without_anchor=False
+                        )
+                    ],
+                    pred_extraction_target=[
+                        IndicesExtractionConfig(
+                            prefix_for_extraction="NativeLetters", try_extract_without_anchor=False
+                        )
+                    ],
                     precision=6,
                 ).sample_level_fn([ref], [pred], doc),
             ).compute,
