@@ -51,7 +51,6 @@ def mmlu_pro(line, task_name: str = None):
         choices=LETTER_INDICES[:num_choices],
         gold_index=line["answer_index"],
         instruction=instruction,
-        assistant_prefix="Let's think step by step",
     )
 
 
