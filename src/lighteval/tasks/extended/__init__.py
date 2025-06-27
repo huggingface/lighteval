@@ -20,8 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import lighteval.tasks.extended.smollm.mgsm as mgsm
 from lighteval.utils.imports import can_load_extended_tasks
 
+
+AVAILABLE_EXTENDED_TASKS_MODULES = [mgsm]
 
 if can_load_extended_tasks():
     import lighteval.tasks.extended.hle.main as hle
@@ -32,7 +35,4 @@ if can_load_extended_tasks():
     import lighteval.tasks.extended.olympiade_bench.main as olympiad_bench
     import lighteval.tasks.extended.tiny_benchmarks.main as tiny_benchmarks
 
-    AVAILABLE_EXTENDED_TASKS_MODULES = [ifeval, tiny_benchmarks, mt_bench, mix_eval, olympiad_bench, hle, lcb]
-
-else:
-    AVAILABLE_EXTENDED_TASKS_MODULES = []
+    AVAILABLE_EXTENDED_TASKS_MODULES.extend([ifeval, tiny_benchmarks, mt_bench, mix_eval, olympiad_bench, hle, lcb])
