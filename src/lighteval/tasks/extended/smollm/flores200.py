@@ -62,7 +62,7 @@ flores200_tasks = [
         few_shots_select=None,
         generation_size=30000,
         metric=[Metrics.chrf_plus, Metrics.bleu, Metrics.bleu_1, Metrics.bleu_4],
-        stop_sequence=["\n"],
+        stop_sequence=[],
         trust_dataset=True,
         version=0,
     )
