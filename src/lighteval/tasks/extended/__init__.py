@@ -20,11 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import lighteval.tasks.extended.smollm.belebele as belebele
 import lighteval.tasks.extended.smollm.mmlu_pro as mmlu_pro
 from lighteval.utils.imports import can_load_extended_tasks
 
 
-AVAILABLE_EXTENDED_TASKS_MODULES = [mmlu_pro]
+AVAILABLE_EXTENDED_TASKS_MODULES = [belebele, mmlu_pro]
 
 if can_load_extended_tasks():
     import lighteval.tasks.extended.hle.main as hle
