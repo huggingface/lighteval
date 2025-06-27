@@ -76,14 +76,10 @@ MGSM_TASKS = [
                     sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
                         language=language,
                         gold_extraction_target=[
-                            IndicesExtractionConfig(
-                                prefix_for_extraction="NativeLetters", try_extract_without_anchor=False
-                            )
+                            IndicesExtractionConfig(prefix_for_extraction="Letters", try_extract_without_anchor=False)
                         ],
                         pred_extraction_target=[
-                            IndicesExtractionConfig(
-                                prefix_for_extraction="NativeLetters", try_extract_without_anchor=False
-                            )
+                            IndicesExtractionConfig(prefix_for_extraction="Letters", try_extract_without_anchor=False)
                         ],
                         precision=6,
                     ).sample_level_fn([ref], [pred], doc),
