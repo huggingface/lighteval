@@ -86,10 +86,10 @@ def belebele_prompt(line, task_name: str = None):
     )
 
 
-BELEBELE_TASKS_NATIVE_INSTRUCT = [
-    LightevalTaskConfig(
-        name=f"belebele_native_instruct_{lang}_Latn",
-        prompt_function=belebele_prompt,
+def create_belebele_task(lang: str, en_prompt: bool = False) -> LightevalTaskConfig:
+    return LightevalTaskConfig(
+        name=f"belebele_en_instruct_{lang}" if en_prompt else f"belebele_native_instruct_{lang}_Latn",
+        prompt_function=belebele_prompt_en_instruct if en_prompt else belebele_prompt,
         suite=["extended"],
         hf_repo="facebook/belebele",
         hf_subset=f"{lang}_Latn",
@@ -105,9 +105,15 @@ BELEBELE_TASKS_NATIVE_INSTRUCT = [
                     k=1,
                     n=1,
                     sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
-                        language=lang_to_literal[lang],
-                        gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
-                        pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                        language=iso_639_3_ind_to_iso_639_3_macro[LangCodeLanguage.get(lang).to_alpha3()]
+                        if en_prompt
+                        else lang_to_literal[lang],
+                        gold_extraction_target=[
+                            IndicesExtractionConfig(prefix_for_extraction="Letters", try_extract_without_anchor=False)
+                        ],
+                        pred_extraction_target=[
+                            IndicesExtractionConfig(prefix_for_extraction="Letters", try_extract_without_anchor=False)
+                        ],
                         precision=6,
                     ).sample_level_fn([ref], [pred], doc),
                 ).compute,
@@ -121,6 +127,10 @@ BELEBELE_TASKS_NATIVE_INSTRUCT = [
         trust_dataset=True,
         version=1,
     )
+
+
+BELEBELE_TASKS_NATIVE_INSTRUCT = [
+    create_belebele_task(lang)
     for lang in [
         "deu",
         "fra",
@@ -130,41 +140,9 @@ BELEBELE_TASKS_NATIVE_INSTRUCT = [
     ]
 ]
 
+
 BELEBELE_TASKS_EN_INSTRUCT = [
-    LightevalTaskConfig(
-        name=f"belebele_en_instruct_{lang}",
-        prompt_function=belebele_prompt_en_instruct,
-        suite=["extended"],
-        hf_repo="facebook/belebele",
-        hf_subset=lang,
-        evaluation_splits=["test"],
-        hf_avail_splits=["test"],
-        few_shots_split=None,
-        few_shots_select=None,
-        generation_size=32768,  # needed for reasoning models like R1
-        metric=[
-            SampleLevelMetric(
-                metric_name="pass@1:1_samples",
-                sample_level_fn=PassAtK(
-                    k=1,
-                    n=1,
-                    sample_scoring_function=lambda pred, ref, doc: multilingual_extractive_match_metric(
-                        language=iso_639_3_ind_to_iso_639_3_macro[LangCodeLanguage.get(lang).to_alpha3()],
-                        gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
-                        pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
-                        precision=6,
-                    ).sample_level_fn([ref], [pred], doc),
-                ).compute,
-                category=MetricCategory.GENERATIVE_SAMPLING,
-                use_case=MetricUseCase.REASONING,
-                corpus_level_fn=np.mean,
-                higher_is_better=True,
-            )
-        ],
-        stop_sequence=[],  # no stop sequence, will use eos token
-        trust_dataset=True,
-        version=1,
-    )
+    create_belebele_task(lang, en_prompt=True)
     for lang in [
         "acm_Arab",
         "arz_Arab",
