@@ -67,13 +67,22 @@ flores200_tasks = [
         version=0,
     )
     for (lang1, lang2) in [
-        ("fra_Latn", "eng_Latn")("eng_Latn", "fra_Latn")("spa_Latn", "eng_Latn")("eng_Latn", "spa_Latn")(
-            "deu_Latn", "eng_Latn"
-        )("eng_Latn", "deu_Latn")("ita_Latn", "eng_Latn")("eng_Latn", "ita_Latn")("por_Latn", "eng_Latn")(
-            "eng_Latn", "por_Latn"
-        )("zho_Hans", "eng_Latn")("eng_Latn", "zho_Hans")("rus_Cyrl", "eng_Latn")("eng_Latn", "rus_Cyrl")(
-            "arb_Arab", "eng_Latn"
-        )("eng_Latn", "arb_Arab")
+        ("fra_Latn", "eng_Latn"),
+        ("eng_Latn", "fra_Latn"),
+        ("spa_Latn", "eng_Latn"),
+        ("eng_Latn", "spa_Latn"),
+        ("deu_Latn", "eng_Latn"),
+        ("eng_Latn", "deu_Latn"),
+        ("ita_Latn", "eng_Latn"),
+        ("eng_Latn", "ita_Latn"),
+        ("por_Latn", "eng_Latn"),
+        ("eng_Latn", "por_Latn"),
+        ("zho_Hans", "eng_Latn"),
+        ("eng_Latn", "zho_Hans"),
+        ("rus_Cyrl", "eng_Latn"),
+        ("eng_Latn", "rus_Cyrl"),
+        ("arb_Arab", "eng_Latn"),
+        ("eng_Latn", "arb_Arab"),
     ]
 ]
 
