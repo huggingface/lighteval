@@ -46,7 +46,7 @@ class GlobalMMLUPrompt:
         self.lang_to_template = {
             "eng": "Given the following query and answer choices, output the letter corresponding to the correct answer. The last line of your response should be of the following format: 'Answer: $LETTER' (without quotes) where LETTER is one of A, B, C, or D. Think step by step before answering.\n\n###\nQuery:\n{Question}\n###\nChoices:\nA) {A}\nB) {B}\nC) {C}\nD) {D}",
             "deu": "Gib basierend auf der folgenden Frage und den Antwortmöglichkeiten den Buchstaben aus, der der richtigen Antwort entspricht. Die letzte Zeile deiner Antwort sollte folgendes Format haben: 'Antwort: $BUCHSTABE' (ohne Anführungszeichen), wobei BUCHSTABE einer der folgenden ist: A, B, C oder D. Denke Schritt für Schritt, bevor du antwortest.\n\n###\nFrage:\n{Question}\n###\nAntwortmöglichkeiten:\nA) {A}\nB) {B}\nC) {C}\nD) {D}",
-            "fra": "A partir de la question et des choix de réponses suivants, indiquez la lettre correspondant à la bonne réponse. La dernière ligne de votre réponse doit avoir le format suivant : 'Réponse: '$LETTRE' (sans les guillemets) où LETTRE est l'une des lettres: A, B, C ou D. Réfléchissez étape par étape avant de répondre.\n\n###\nRequête:\n{Question}\n###\nChoix:\nA) {A}\nB) {B}\nC) {C}\nD) {D}",
+            "fra": "A partir de la question et des choix de réponses suivants, indiquez la lettre correspondant à la bonne réponse. La dernière ligne de votre réponse doit avoir le format suivant : 'Réponse: $LETTRE' (sans les guillemets) où LETTRE est l'une des lettres: A, B, C ou D. Réfléchissez étape par étape avant de répondre.\n\n###\nRequête:\n{Question}\n###\nChoix:\nA) {A}\nB) {B}\nC) {C}\nD) {D}",
             "ita": "Dato il seguente quesito e le diverse opzioni per una risposta, indicare la lettera corrispondente alla risposta corretta. L'ultima riga della risposta deve avere il seguente formato: 'Risposta: $LETTERA' (senza virgolette), e LETTERA è necessariamente una tra A, B, C, D. Prima di rispondere, è importante che si ragioni passo per passo.\n\n###\nQuesito:\n{Question}\n###\nOpzioni:\nA) {A}\nB) {B}\nC) {C}\nD) {D}",
             "por": "Tendo em conta a seguinte pergunta e opções de resposta, indique a letra correspondente à resposta correta. A última linha da sua resposta deve ter o seguinte formato: 'Resposta: $LETRA' (sem aspas) em que LETRA é uma de A, B, C ou D. Pense passo a passo antes de responder.\n\n###\nPergunta:\n{Question}\n###\nOpções:\nA) {A}\nB) {B}\nC) {C}\nD) {D}",
             "spa": "Dado el siguiente pregunta y opciones para la respuesta, escriba la letra correspondiente a la respuesta correcta. La última línea de su respuesta debe seguir el siguiente formato: 'Respuesta: $LETTER' (sin comillas) donde LETTER es A, B, C o D. Piense paso a paso antes de responder.\n\n###\nPregunta:\n{Question}\n###\nOpciones:\nA) {A}\nB) {B}\nC) {C}\nD) {D}",
@@ -111,7 +111,7 @@ GLOBAL_MMLU_TASKS = [
                 higher_is_better=True,
             )
         ],
-        generation_size=32768,  # needed for reasoning models like R1
+        generation_size=30000,  # needed for reasoning models like R1
         stop_sequence=[],  # no stop sequence, will use eos token
     )
     for lang, language in [
@@ -197,7 +197,7 @@ GLOBAL_MMLU_LITE_TASKS = [
                 higher_is_better=True,
             )
         ],
-        generation_size=32768,  # needed for reasoning models like R1
+        generation_size=30000,  # needed for reasoning models like R1
         stop_sequence=[],  # no stop sequence, will use eos token
     )
     for lang, language in [
