@@ -129,7 +129,7 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
 
     currency_units = re.escape("$€£¥₹₽₪₩₫฿₡₢₣₤₥₦₧₨₩₪₫₭₮₯₰₱₲₳₴₵₶₷₸₹₺₻₼₽₾₿")
     expr_prefix_re = rf"(?:^|{space_re}|\=)(?:\*\*)?"
-    expr_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|\)|\$|$)"
+    expr_suffix_re = rf"(?:\))?(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|\$|$)"
     # Expressions must be prefixed and suffixed while, digits don't need suffix and can have currency units preceeded, this is to ensure
     # That we can extract stuff like $100 or 100m2, while we don't extract XDY2K as 2
     expr_with_anchors = rf"(?:{expr_prefix_re}{expr_re}{expr_suffix_re})"
