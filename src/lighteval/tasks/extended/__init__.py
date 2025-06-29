@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import lighteval.tasks.extended.smollm.mgsm as mgsm
 import lighteval.tasks.extended.smollm.belebele as belebele
 import lighteval.tasks.extended.smollm.global_mmlu as global_mmlu
 import lighteval.tasks.extended.smollm.mmlu_pro as mmlu_pro
