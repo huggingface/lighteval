@@ -167,6 +167,7 @@ class VLLMModelConfig(ModelConfig):
     subfolder: str | None = None
     use_chat_template: bool = False
     is_async: bool = False  # Whether to use the async version or sync version of the model
+    enforce_eager: bool = False
 
 
 class VLLMModel(LightevalModel):
@@ -251,6 +252,7 @@ class VLLMModel(LightevalModel):
             "seed": int(config.seed),
             "max_num_seqs": int(config.max_num_seqs),
             "max_num_batched_tokens": int(config.max_num_batched_tokens),
+            "enforce_eager": bool(config.enforce_eager),
         }
 
         if config.quantization is not None:
