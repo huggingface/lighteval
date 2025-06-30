@@ -36,8 +36,8 @@ class Flores:
 
     def prompt(self, line, task_name: str = None):
         instruction = f"Translate the following query from {self.lang1} to {self.lang2}. Think step by step before answering.\n\n"
-        source = (line[f"sentence_{self.lang1}"],)
-        target = (line[f"sentence_{self.lang2}"],)
+        source = line[f"sentence_{self.lang1}"]
+        target = line[f"sentence_{self.lang2}"]
         query = f"{instruction}###\nQuery:\n{source}"
 
         return Doc(
