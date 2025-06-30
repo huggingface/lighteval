@@ -92,6 +92,10 @@ class TinyCorpusAggregator:
     def download(self):
         # Likely to crash in // processes if we don't include the pkl
         path_dld = os.path.join(pathlib.Path(__file__).parent.resolve(), "tinyBenchmarks.pkl")
+        local_dataset_path = os.getenv("LOCAL_DATASET_PATH", None)
+        if local_dataset_path is not None:
+            # If LOCAL_DATASET_PATH is set, use it as the tinyBenchmarks path
+            path_dld = os.path.join(local_dataset_path, "tinyBenchmarks.pkl")
         # Downloading files
         if not os.path.isfile(path_dld):
             url = "https://raw.githubusercontent.com/felipemaiapolo/tinyBenchmarks/main/tinyBenchmarks/tinyBenchmarks.pkl"
