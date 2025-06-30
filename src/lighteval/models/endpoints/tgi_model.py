@@ -26,7 +26,7 @@ from typing import Coroutine, Optional
 
 import requests
 from huggingface_hub import TextGenerationInputGenerateParameters, TextGenerationInputGrammarType, TextGenerationOutput
-from transformers import AutoTokenizer
+from transformers.models.auto.tokenization_auto import AutoTokenizer
 
 from lighteval.models.endpoints.endpoint_model import InferenceEndpointModel, ModelInfo
 from lighteval.models.utils import ModelConfig
@@ -35,6 +35,10 @@ from lighteval.utils.imports import NO_TGI_ERROR_MSG, is_tgi_available
 
 if is_tgi_available():
     from text_generation import AsyncClient
+else:
+    from unittest.mock import Mock
+
+    AsyncClient = Mock()
 
 
 BATCH_SIZE = 50
@@ -47,6 +51,38 @@ def divide_chunks(array, n):
 
 
 class TGIModelConfig(ModelConfig):
+    """
+    Configuration class for Text Generation Inference (TGI) backend.
+
+    doc: https://huggingface.co/docs/text-generation-inference/en/index
+
+    This configuration is used to connect to TGI servers that serve HuggingFace models
+    using the text-generation-inference library. TGI provides high-performance inference
+    with features like continuous batching and efficient memory management.
+
+    Attributes:
+        inference_server_address (str | None):
+            Address of the TGI server. Format: "http://host:port" or "https://host:port".
+            Example: "http://localhost:8080"
+        inference_server_auth (str | None):
+            Authentication token for the TGI server. If None, no authentication is used.
+        model_name (str | None):
+            Optional model name override. If None, uses the model name from server info.
+
+    Example:
+        ```python
+        config = TGIModelConfig(
+            inference_server_address="http://localhost:8080",
+            inference_server_auth="your-auth-token",
+            model_name="meta-llama/Llama-3.1-8B-Instruct",
+            generation_parameters=GenerationParameters(
+                temperature=0.7,
+                max_new_tokens=100
+            )
+        )
+        ```
+    """
+
     inference_server_address: str | None
     inference_server_auth: str | None
     model_name: str | None
@@ -71,8 +107,8 @@ class ModelClient(InferenceEndpointModel):
         self.model_info = requests.get(f"{config.inference_server_address}/info", headers=headers).json()
         if "model_id" not in self.model_info:
             raise ValueError("Error occurred when fetching info: " + str(self.model_info))
-        if config.model_id:
-            self.model_info["model_id"] = config.model_id
+        if config.model_name:
+            self.model_info["model_id"] = config.model_name
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_info["model_id"])
         self._add_special_tokens = True
         self.use_async = True
@@ -131,7 +167,7 @@ class ModelClient(InferenceEndpointModel):
 
     @property
     def disable_tqdm(self) -> bool:
-        False
+        return False
 
     def cleanup(self):
         pass

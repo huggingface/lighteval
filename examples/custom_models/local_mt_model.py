@@ -93,7 +93,7 @@ class LocalMTClient(LightevalModel):
             model_name=config.model,
             model_sha="",
             model_dtype=None,
-            model_size="",
+            model_size=-1,
         )
 
         # Update model initialization to handle both models

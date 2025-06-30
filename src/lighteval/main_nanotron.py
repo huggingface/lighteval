@@ -101,8 +101,6 @@ def nanotron(
         custom_tasks_directory=lighteval_config.tasks.custom_tasks,
         num_fewshot_seeds=1,
         max_samples=lighteval_config.tasks.max_samples,
-        use_chat_template=False,
-        system_prompt=None,
     )
 
     pipeline = Pipeline(
