@@ -115,6 +115,7 @@ MGSM_TASKS = [
         few_shots_split="train",
         metric=[
             Metrics.math_pass_at_1_1n,
+            Metrics.math_pass_at_1_4n,
         ],
         generation_size=32768,  # needed for reasoning models like R1
         stop_sequence=[],  # no stop sequence, will use eos token
