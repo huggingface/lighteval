@@ -1,12 +1,13 @@
 model_parameters:
-  model_name: "HuggingFaceTB/SmolLM2-1.7B-Instruct"
-  revision: "57aa3c6599c53705406c648e7acca7e11dc45ea3"
+  model_name: "meta-llama/Llama-3.1-8B-Instruct"
+  revision: "main"
   dtype: "float16"
   compile: false
   model_parallel: false
   batch_size: 1
-  multichoice_continuations_start_space: null # If true/false, will force multiple choice continuations to start/not start with a space. If none, will do nothing
   use_chat_template: true
+  model_loading_kwargs:
+    attn_implementation: "sdpa_paged"
   generation_parameters:
-    temperature: 0.0
-    top_p: 0.9
+    num_blocks: 2048
+    block_size: 256

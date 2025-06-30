@@ -22,9 +22,9 @@
 
 import logging
 import os
-from typing import Dict, Optional, Tuple, Union
 from datetime import timedelta
-from typing import Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
+
 import torch
 import torch.nn.functional as F
 import transformers
@@ -505,13 +505,6 @@ class TransformersModel(LightevalModel):
         logger.info(f"Determined largest batch size: {batch_size}")
         return batch_size
 
-
-    def greedy_until_multi_turn(  # noqa: C901
-        self,
-        docs: list[Doc],
-    ) -> ModelResponse:
-        raise NotImplementedError("This method is not implemented for this model")
-
     def _continious_greedy_until(
         self,
         docs: list[Doc],
@@ -526,11 +519,7 @@ class TransformersModel(LightevalModel):
         Returns:
             list[GenerateReturn]: list of generated responses.
         """
-        for request in requests:
-            request.stop_sequence = as_list(request.stop_sequence) + [self.tokenizer.eos_token]
-            request.tokenized_context = self.tok_encode(request.context)
-
-        dataset = GenerativeTaskDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
+        dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         results = []
 
         for split in tqdm(
@@ -552,9 +541,8 @@ class TransformersModel(LightevalModel):
             max_new_tokens = self.config.generation_parameters.max_new_tokens or split[0].generation_size
             returns_logits = split[0].use_logits
             num_samples = split[0].num_samples
-
-            context = [sample.context for sample in split]
-            tokenized = self.tokenizer(context, add_special_tokens=self.add_special_tokens)
+            contexts = [self.prompt_manager.prepare_prompt(doc) for doc in split]
+            tokenized = self.tokenizer(contexts, add_special_tokens=self.add_special_tokens)
 
             # The main question for this step is the following:
             # Would we rather truncate the prompt to allow generation to go to max_new_tokens, at the risk
@@ -609,18 +597,17 @@ class TransformersModel(LightevalModel):
                     logprobs = []
 
                 input_token_ids = _output.full_prompt_ids
-                cur_response = GenerativeResponse(
-                    result=result,
-                    logits=logprobs,
-                    generated_tokens=output_token_ids,
+                cur_response = ModelResponse(
+                    text=result,
+                    logprobs=logprobs,
+                    output_tokens=output_token_ids,
                     input_tokens=input_token_ids,
                 )
                 results.append(cur_response)
 
         return dataset.get_original_order(results)
 
-      
-    def greedy_until(
+    def _padded_greedy_until(
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
@@ -733,7 +720,6 @@ class TransformersModel(LightevalModel):
                     stop_tokens=stop_tokens,
                     returns_logits=False,
                     num_samples=num_samples,
-                    do_sample=do_sample,
                     use_fast=False,
                 )
                 results.extend(cur_reponses)
@@ -742,13 +728,13 @@ class TransformersModel(LightevalModel):
 
     def greedy_until(
         self,
-        requests: list[GreedyUntilRequest],
+        docs: list[Doc],
         use_fast: bool = True,
-    ) -> list[GenerativeResponse]:
+    ) -> list[ModelResponse]:
         if use_fast:
-            return self._continious_greedy_until(requests)
+            return self._continious_greedy_until(docs)
         else:
-            return self._padded_greedy_until(requests)
+            return self._padded_greedy_until(docs)
 
     def _generate_fast(
         self,
@@ -758,7 +744,7 @@ class TransformersModel(LightevalModel):
         returns_logits: Optional[bool] = False,
         num_samples: int = 1,
         generate: bool = True,
-    ) -> Dict[str, GenerativeResponse]:
+    ) -> Dict[str, ModelResponse]:
         # Compute model generation
         batch_outputs = self.model.generate_batch(
             inputs=inputs,
@@ -858,7 +844,7 @@ class TransformersModel(LightevalModel):
         self,
         use_fast: bool = True,
         **kwargs,
-    ) -> list[GenerativeResponse]:
+    ) -> list[ModelResponse]:
         if use_fast:
             return self._generate_fast(**kwargs)
         else:
