@@ -35,7 +35,7 @@ class Flores:
         self.lang2 = lang2
 
     def prompt(self, line, task_name: str = None):
-        instruction = f"Translate the following query from {self.lang1} to {self.lang2}. Think step by step before answering.\n\n"
+        instruction = f"Translate the following query from {self.lang1} to {self.lang2}. Give the reasoning steps before giving the final answer on the last line by itself in the format of 'Answer:'. Do not add anything other than the translation after 'Answer:'\n\n"
         source = line[f"sentence_{self.lang1}"]
         target = line[f"sentence_{self.lang2}"]
         query = f"{instruction}###\nQuery:\n{source}"
