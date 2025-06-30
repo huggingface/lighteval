@@ -210,7 +210,6 @@ class VLLMModel(LightevalModel):
         return model
 
     def _create_auto_tokenizer(self, config: VLLMModelConfig):
-        
         tokenizer = get_tokenizer(
             config.model_name,
             tokenizer_mode="auto",
@@ -265,11 +264,11 @@ class VLLMModel(LightevalModel):
             context = [sample.context for sample in split]
             # tokenized = self.tokenizer(context, add_special_tokens=self.add_special_tokens)
             tokenized = self.tokenizer(
-                    context,
-                    truncation="longest_first",  # we truncate to the model max length if needed
-                    padding="longest",  # we pad to the longest sequence
-                    max_length=self.max_length,  # we always allow minimum one token of generation
-                    add_special_tokens=self.add_special_tokens,
+                context,
+                # truncation="longest_first",  # we truncate to the model max length if needed
+                # padding="longest",  # we pad to the longest sequence
+                # max_length=self.max_length,  # we always allow minimum one token of generation
+                add_special_tokens=False,
             )
             # The main question for this step is the following:
             # Would we rather truncate the prompt to allow generation to go to max_new_tokens, at the risk

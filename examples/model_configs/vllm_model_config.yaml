@@ -1,12 +1,12 @@
 model_parameters:
-  model_name: "HuggingFaceTB/SmolLM2-1.7B-Instruct"
-  revision: "57aa3c6599c53705406c648e7acca7e11dc45ea3"
+  model_name: "meta-llama/Llama-3.1-8B-Instruct"
+  revision: "main"
   dtype: "float16"
   tensor_parallel_size: 1
   data_parallel_size: 1
   pipeline_parallel_size: 1
-  gpu_memory_utilization: 0.6
-  max_model_length: null
+  gpu_memory_utilization: 0.8
+  max_model_length: 16384
   swap_space: 4
   seed: 42
   trust_remote_code: False
@@ -15,19 +15,16 @@ model_parameters:
   multichoice_continuations_start_space: False
   pairwise_tokenization: False
   subfolder: null
-  max_num_seqs: 1
+  max_num_seqs: 128
   max_num_batched_tokens: 8192
   generation_parameters:
     presence_penalty: 0.0
     repetition_penalty: 1.0
     frequency_penalty: 0.0
-    temperature: 0.3
+    temperature: 0.0
     top_k: null
     min_p: 0.0
     top_p: 0.9
     seed: 42
     stop_tokens: null
-    max_new_tokens: 2048
     min_new_tokens: 0
-metrics_options:
-  yo: null

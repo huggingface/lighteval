@@ -249,8 +249,14 @@ class PromptManager:
             return output, num_effective_fewshots
 
         elif use_chat_template:
+            add_generation_prompt = True
+            if doc.specific and "prefill_prompt" in doc.specific:
+                add_generation_prompt = False
             return self.model.tokenizer.apply_chat_template(
-                output, tokenize=False, add_generation_prompt=True
+                output,
+                tokenize=False,
+                add_generation_prompt=add_generation_prompt,
+                continue_final_message=not add_generation_prompt,
             ), num_effective_fewshots
 
         return output, num_effective_fewshots
@@ -305,8 +311,13 @@ class PromptManager:
         # Actual example
         if use_chat_template:
             examples.append({"role": "user", "content": content})
+            if doc.specific and "prefill_prompt" in doc.specific:
+                examples.append({"role": "assistant", "content": doc.specific["prefill_prompt"]})
         else:
             examples.append(content)
+            if doc.specific and "answer_prefix" in doc.specific:
+                examples.append(doc.specific["answer_prefix"].strip())  # sometime a space is before the prefix.
+                # examples[-1] += doc.specific["answer_prefix"]
 
         # System prompt and instruction
         if use_chat_template:
