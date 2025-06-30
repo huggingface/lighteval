@@ -21,9 +21,14 @@
 # SOFTWARE.
 
 import lighteval.tasks.extended.smollm.flores200 as flores200
+import lighteval.tasks.extended.smollm.belebele as belebele
+import lighteval.tasks.extended.smollm.global_mmlu as global_mmlu
+import lighteval.tasks.extended.smollm.mgsm as mgsm
+import lighteval.tasks.extended.smollm.mmlu_pro as mmlu_pro
 from lighteval.utils.imports import can_load_extended_tasks
 
 
+AVAILABLE_EXTENDED_TASKS_MODULES = [belebele, mmlu_pro, global_mmlu, mgsm]
 AVAILABLE_EXTENDED_TASKS_MODULES = [flores200]
 
 if can_load_extended_tasks():
