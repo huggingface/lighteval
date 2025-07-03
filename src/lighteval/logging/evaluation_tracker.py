@@ -352,6 +352,7 @@ class EvaluationTracker:
             "config_tasks": self.task_config_logger.tasks_configs,
             "summary_tasks": self.details_logger.compiled_details,
             "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
+            "num_samples": self.calculate_num_samples(),
         }
 
         final_dict = {
