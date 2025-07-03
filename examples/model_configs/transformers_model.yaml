@@ -6,8 +6,10 @@ model_parameters:
   model_parallel: false
   batch_size: 1
   use_chat_template: true
+  continuous_batching: true
   model_loading_kwargs:
     attn_implementation: "sdpa_paged"
   generation_parameters:
-    num_blocks: 2048
+    num_blocks: 1024
     block_size: 256
+      #max_new_tokens: 512
