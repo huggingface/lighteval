@@ -41,6 +41,7 @@ from transformers import (
     BitsAndBytesConfig,
     PretrainedConfig,
 )
+from transformers.generation.configuration_utils import GenerationConfig
 from transformers.generation.utils import GenerateOutput
 from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 
@@ -110,6 +111,8 @@ class TransformersModelConfig(ModelConfig):
             True forces adding space, False removes leading space if present.
         pairwise_tokenization (bool):
             Whether to tokenize context and continuation separately or together. Defaults to False.
+        continuous_batching (bool):
+            Whether to use continuous batching for generation. Defaults to False.
 
     Example:
         ```python
@@ -147,6 +150,7 @@ class TransformersModelConfig(ModelConfig):
     compile: bool = False
     multichoice_continuations_start_space: bool | None = None
     pairwise_tokenization: bool = False
+    continuous_batching: bool = False
 
     def model_post_init(self, __context):
         if self.multichoice_continuations_start_space is True:
@@ -190,7 +194,9 @@ class TransformersModel(LightevalModel):
         self._add_special_tokens = config.add_special_tokens or False
         self.pairwise_tokenization = config.pairwise_tokenization
         self.batch_size = config.batch_size
+        self.continuous_batching = config.continuous_batching
         self.transformers_config = config.get_transformers_config()
+        self.generation_config_dict = config.generation_parameters.to_transformers_dict()
 
         self.model_sha = config.get_model_sha()
         self._max_length = self._init_max_length()
@@ -209,8 +215,6 @@ class TransformersModel(LightevalModel):
                 logger.warning("Could not compile the model because: ", e)
 
         self.model_name = _simplify_name(config.model_name)
-
-        self.generation_config_dict = config.generation_parameters.to_transformers_dict()
 
         if is_accelerate_available():
             model_size, _ = calculate_maximum_sizes(self.model)
@@ -403,6 +407,11 @@ class TransformersModel(LightevalModel):
         # model.to(self.device)
         model.eval()
         torch.set_grad_enabled(False)
+        if self.continuous_batching:
+            generation_config = GenerationConfig(
+                **self.generation_config_dict,
+            )
+            model.generation_config = generation_config
 
         if self.config.compile:
             try:
@@ -505,7 +514,7 @@ class TransformersModel(LightevalModel):
         logger.info(f"Determined largest batch size: {batch_size}")
         return batch_size
 
-    def _continious_greedy_until(
+    def _continuous_greedy_until(
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
@@ -579,6 +588,7 @@ class TransformersModel(LightevalModel):
                 stop_tokens=stop_tokens,
                 returns_logits=returns_logits,
                 num_samples=num_samples,
+                continuous_batching=True,
             )
 
             for req_id, _output in _outputs.items():
@@ -587,16 +597,16 @@ class TransformersModel(LightevalModel):
                 result = []
 
                 # for output in _output.outputs:
-                output_token_ids.append(_output.static_outputs)
+                output_token_ids.append(_output.generated_tokens)
                 # logprobs_raw.append(output.logprobs)
-                result.append(self.tokenizer.decode(_output.static_outputs))
+                result.append(self.tokenizer.decode(_output.generated_tokens))
 
                 if logprobs_raw and output_token_ids and False:
                     logprobs = [logprobs_raw[0][token_id].logprob for token_id in output_token_ids[0]]
                 else:
                     logprobs = []
 
-                input_token_ids = _output.full_prompt_ids
+                input_token_ids = _output.prompt_ids
                 cur_response = ModelResponse(
                     text=result,
                     logprobs=logprobs,
@@ -720,7 +730,7 @@ class TransformersModel(LightevalModel):
                     stop_tokens=stop_tokens,
                     returns_logits=False,
                     num_samples=num_samples,
-                    use_fast=False,
+                    continuous_batching=False,
                 )
                 results.extend(cur_reponses)
 
@@ -729,10 +739,9 @@ class TransformersModel(LightevalModel):
     def greedy_until(
         self,
         docs: list[Doc],
-        use_fast: bool = True,
     ) -> list[ModelResponse]:
-        if use_fast:
-            return self._continious_greedy_until(docs)
+        if self.continuous_batching:
+            return self._continuous_greedy_until(docs)
         else:
             return self._padded_greedy_until(docs)
 
@@ -746,6 +755,9 @@ class TransformersModel(LightevalModel):
         generate: bool = True,
     ) -> Dict[str, ModelResponse]:
         # Compute model generation
+        self.model.generation_config.use_cuda_graph = False  # Disable CUDA graph for batch generation
+        self.model.generation_config.max_batch_tokens = 256  # Disable CUDA graph for batch generation
+        # self.model.generation_config.do_sample = False  # Disable CUDA graph for batch generation
         batch_outputs = self.model.generate_batch(
             inputs=inputs,
             generation_config=self.model.generation_config,
@@ -842,10 +854,10 @@ class TransformersModel(LightevalModel):
 
     def _generate(
         self,
-        use_fast: bool = True,
+        continuous_batching: bool,
         **kwargs,
     ) -> list[ModelResponse]:
-        if use_fast:
+        if continuous_batching:
             return self._generate_fast(**kwargs)
         else:
             return self._generate_padded(**kwargs)
