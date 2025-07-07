@@ -84,7 +84,7 @@ FILIPINO_BALITA_TASKS = [
         hf_subset="no-image",
         hf_avail_splits=["train", "validation", "test"],
         evaluation_splits=("validation", "test"),
-        metric=get_metrics_for_formulation(
+        metrics=get_metrics_for_formulation(
             formulation,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
@@ -114,7 +114,7 @@ FILIPINO_BELEBELE_TASKS = [
         hf_subset=language,
         evaluation_splits=("test",),
         hf_avail_splits=["test"],
-        metric=get_metrics_for_formulation(
+        metrics=get_metrics_for_formulation(
             formulation,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
@@ -151,7 +151,7 @@ FILIPINO_CEBUANER_TASKS = [
         suite=["community"],
         generation_size=-1,
         trust_dataset=True,
-        metric=get_metrics_for_formulation(
+        metrics=get_metrics_for_formulation(
             formulation,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
@@ -188,7 +188,7 @@ FILIPINO_READABILITY_TASKS = [
         suite=("community",),
         hf_subset="default",
         hf_repo="UD-Filipino/cebuano-readability",
-        metric=get_metrics_for_formulation(
+        metrics=get_metrics_for_formulation(
             formulation,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
@@ -243,7 +243,7 @@ FILIPINO_DENGUE_TASKS = [
         hf_subset="default",
         prompt_function=filipino_dengue_pfn,
         hf_repo="jcblaise/dengue_filipino",
-        metric=[Metrics.loglikelihood_acc_norm],
+        metrics=[Metrics.loglikelihood_acc_norm],
         hf_avail_splits=["train", "test", "validation"],
         evaluation_splits=["train"],
         few_shots_split="train",
@@ -272,7 +272,7 @@ FILIPINO_FIRECS_TASK = [
             },
         ),
         hf_repo="ccosme/FiReCS",
-        metric=get_metrics_for_formulation(
+        metrics=get_metrics_for_formulation(
             formulation,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
@@ -324,7 +324,7 @@ FILIPINO_GLOBAL_MMLU_TASKS = [
             subset,
             sensitivity_label,
         ),
-        metric=get_metrics_for_formulation(
+        metrics=get_metrics_for_formulation(
             formulation,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
@@ -357,7 +357,7 @@ FILIPINO_INCLUDE_TASKS = [
         hf_subset="Tagalog",
         hf_repo="CohereForAI/include-base-44",
         hf_filter=partial(lambda subset, x: x["subject"].replace(" ", "_").lower() == subset, subset),
-        metric=get_metrics_for_formulation(
+        metrics=get_metrics_for_formulation(
             formulation,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
@@ -395,7 +395,7 @@ FILIPINO_KALAHI_TASKS = [
         hf_repo="aisingapore/cultural_evaluation-kalahi",
         hf_subset="default",
         evaluation_splits=["tl"],
-        metric=[
+        metrics=[
             loglikelihood_acc_metric(normalization=None),
             loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
             loglikelihood_acc_metric(normalization=LogProbCharNorm()),
@@ -424,7 +424,7 @@ FILIPINO_NEWSPH_NLI_TASKS = [
         hf_subset="default",
         evaluation_splits=["validation"],
         few_shots_split="train",
-        metric=get_metrics_for_formulation(
+        metrics=get_metrics_for_formulation(
             formulation,
             [
                 loglikelihood_acc_metric(normalization=None),
@@ -453,7 +453,7 @@ FILIPINO_NTREX_TASK = [
         suite=("community",),
         hf_repo="mteb/NTREX",
         hf_subset="default",
-        metric=[
+        metrics=[
             Metrics.rougeL,
             Metrics.bleu,
             Metrics.bleurt,
@@ -506,7 +506,7 @@ def create_task(language: Language, formulation):
         suite=("community",),
         hf_subset=f"{language.value}_Latn",
         hf_repo="Davlan/sib200",
-        metric=get_metrics_for_formulation(
+        metrics=get_metrics_for_formulation(
             formulation,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
@@ -562,7 +562,7 @@ FILIPINO_STINGRAY_CORRECTNESS_TASKS = [
         suite=("community",),
         hf_subset="id_tl",
         hf_repo="StingrayBench/StingrayBench",
-        metric=get_metrics_for_formulation(
+        metrics=get_metrics_for_formulation(
             formulation,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
@@ -592,7 +592,7 @@ FILIPINO_STINGRAY_SEMANTIC_TAKS = [
         suite=("community",),
         hf_subset="id_tl",
         hf_repo="StingrayBench/StingrayBench",
-        metric=get_metrics_for_formulation(
+        metrics=get_metrics_for_formulation(
             formulation,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
@@ -643,7 +643,7 @@ FILIPINO_TATOEBA_TASKS = [
         suite=("community",),
         hf_repo="Helsinki-NLP/tatoeba_mt",
         hf_subset=meta.get("subset"),
-        metric=[
+        metrics=[
             Metrics.rougeL,
             Metrics.bleu,
             Metrics.bleurt,
@@ -674,7 +674,7 @@ FILIPINO_TICO19_TASKS = [
         suite=("community",),
         hf_repo="gmnlp/tico19",
         hf_subset="en-tl",
-        metric=[
+        metrics=[
             Metrics.rougeL,
             Metrics.bleu,
             Metrics.bleurt,
@@ -715,7 +715,7 @@ FILIPINO_TLUNIFIED_NER_TASK = [
         suite=["community"],
         generation_size=-1,
         trust_dataset=True,
-        metric=get_metrics_for_formulation(
+        metrics=get_metrics_for_formulation(
             formulation,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
@@ -759,7 +759,7 @@ def create_task(language: Language, formulation):
         suite=["community"],
         generation_size=-1,
         trust_dataset=True,
-        metric=get_metrics_for_formulation(
+        metrics=get_metrics_for_formulation(
             formulation,
             [
                 loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
