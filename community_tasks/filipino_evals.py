@@ -26,6 +26,13 @@
 This file contains the tasks for the Filipino language, collectively known as FilBench.
 It includes several tasks for the following categories: Cultural Knowledge, Classical NLP, Reading Comprehension, and Generation.
 For more information, please read the paper: https://github.com/filbench/filbench-eval/blob/main/filbench.pdf
+
+Contact:
+- Lester James V. Miranda <ljvmiranda@gmail.com>
+- Elyanah Aco <elyanah.aco02@gmail.com>
+- Conner Manuel <manuel.conner.g@berkeley.edu>
+- Jan Christian Blaise Cruz <jcbcruz02@gmail.com>
+- Joseph Imperial <jmri20@bath.ac.uk>
 """
 
 from collections import OrderedDict
