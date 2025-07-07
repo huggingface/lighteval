@@ -1,14 +1,14 @@
 model_parameters:
-  model_name: "meta-llama/Llama-3.1-8B-Instruct"
-  revision: "main"
+  model_name: "HuggingFaceTB/SmolLM2-1.7B-Instruct"
+  revision: "57aa3c6599c53705406c648e7acca7e11dc45ea3"
   dtype: "float16"
   compile: false
   model_parallel: false
-  batch_size: 20
+  batch_size: 1
   use_chat_template: true
   continuous_batching: false
   model_loading_kwargs:
-    attn_implementation: "flash_attention_2"
+    attn_implementation: "eager"
     #tp_plan: "auto"
   generation_parameters:
     #num_blocks: 4096
