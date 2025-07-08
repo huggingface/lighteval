@@ -29,13 +29,9 @@ from aenum import extend_enum
 
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.metrics_sample import JudgeLLM
-from lighteval.metrics.utils.metric_utils import (
-    CorpusLevelMetricGrouping,
-    MetricCategory,
-    MetricUseCase,
-)
+from lighteval.metrics.utils.metric_utils import CorpusLevelMetricGrouping
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Doc, SamplingMethod
 
 
 logger = logging.getLogger(__name__)
@@ -243,8 +239,7 @@ def yourbench_prompt(line, task_name: str = ""):
 yourbench_metrics = CorpusLevelMetricGrouping(
     metric_name=["accuracy"],
     higher_is_better={"accuracy": True},
-    category=MetricCategory.LLM_AS_JUDGE,
-    use_case=MetricUseCase.ACCURACY,
+    category=SamplingMethod.GENERATIVE,
     sample_level_fn=JudgeLLMYourBench().compute,
     corpus_level_fn={"accuracy": np.mean},
 )
@@ -261,7 +256,7 @@ yourbench = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=8192,
-    metric=[Metrics.yourbench_metrics],
+    metrics=[Metrics.yourbench_metrics],
     stop_sequence=[],
     trust_dataset=True,
     version=0,

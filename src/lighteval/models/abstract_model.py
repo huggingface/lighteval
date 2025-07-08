@@ -25,22 +25,10 @@ from dataclasses import dataclass
 from typing import Optional, Union
 
 import torch
-from transformers import BatchEncoding, PreTrainedTokenizerBase
+from transformers.tokenization_utils_base import BatchEncoding, PreTrainedTokenizerBase
 
-from lighteval.models.model_output import (
-    GenerativeMultiturnResponse,
-    GenerativeResponse,
-    LoglikelihoodResponse,
-    LoglikelihoodSingleTokenResponse,
-)
-from lighteval.tasks.requests import (
-    GreedyUntilMultiTurnRequest,
-    GreedyUntilRequest,
-    LoglikelihoodRequest,
-    LoglikelihoodRollingRequest,
-    LoglikelihoodSingleTokenRequest,
-    RequestType,
-)
+from lighteval.models.model_output import ModelResponse
+from lighteval.tasks.requests import Doc
 
 
 TokenSequence = Union[list[int], torch.LongTensor, torch.Tensor, BatchEncoding]
@@ -49,9 +37,9 @@ TokenSequence = Union[list[int], torch.LongTensor, torch.Tensor, BatchEncoding]
 @dataclass
 class ModelInfo:
     model_name: str
-    model_sha: Optional[str] = None
-    model_dtype: Optional[str] = None
-    model_size: Optional[str] = None
+    model_sha: str | None = None
+    model_dtype: str | None = None
+    model_size: int | None = None
 
 
 class LightevalModel(ABC):
@@ -84,37 +72,16 @@ class LightevalModel(ABC):
     def disable_tqdm(self) -> bool:
         return False
 
-    def get_method_from_request_type(self, request_type: RequestType):
-        if request_type == RequestType.LOGLIKELIHOOD:
-            return self.loglikelihood
-        if request_type == RequestType.LOGLIKELIHOOD_SINGLE_TOKEN:
-            return self.loglikelihood_single_token
-        if request_type == RequestType.LOGLIKELIHOOD_ROLLING:
-            return self.loglikelihood_rolling
-        if request_type == RequestType.GREEDY_UNTIL:
-            return self.greedy_until
-        if request_type == RequestType.GREEDY_UNTIL_MULTI_TURN:
-            return self.greedy_until_multi_turn
-        raise NotImplementedError(f"Request type {request_type} not supported")
-
-    def greedy_until_multi_turn(  # noqa: C901
-        self, requests: list[GreedyUntilMultiTurnRequest]
-    ) -> GenerativeMultiturnResponse:
-        """Generates responses using a greedy decoding strategy until certain ending conditions are met."""
-        return NotImplemented
-
     @abstractmethod
     def greedy_until(
         self,
-        requests: list[GreedyUntilRequest],
-    ) -> list[GenerativeResponse]:
+        docs: list[Doc],
+    ) -> list[ModelResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
-            disable_tqdm (bool, optional): Whether to disable the progress bar. Defaults to False.
-            override_bs (int, optional): Override the batch size for generation. Defaults to None.
+            docs (list[Doc]): List of documents containing the context for generation.
 
         Returns:
             list[GenerativeResponse]: list of generated responses.
@@ -122,24 +89,15 @@ class LightevalModel(ABC):
         return NotImplemented
 
     @abstractmethod
-    def loglikelihood(self, requests: list[LoglikelihoodRequest]) -> list[LoglikelihoodResponse]:
+    def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
         return NotImplemented
 
     @abstractmethod
-    def loglikelihood_rolling(self, requests: list[LoglikelihoodRollingRequest]) -> list[LoglikelihoodResponse]:
+    def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
-        return NotImplemented
-
-    @abstractmethod
-    def loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest]
-    ) -> list[LoglikelihoodSingleTokenResponse]:
-        """Tokenize the context and continuation and compute the log likelihood of those
-        tokenized sequences.
-        """
         return NotImplemented
 
     # Tokenization utils
@@ -155,54 +113,57 @@ class LightevalModel(ABC):
             return_tensors="pt",
         )
 
-    def tok_encode_pair(self, context, continuation, pairwise: bool = False):
-        """Encodes a context, continuation pair by taking care of the spaces in between.
+    def tok_encode_pair(self, context, continuations: list[str], pairwise: bool = False):
+        """Encodes a context with a list of continuations by taking care of the spaces in between.
         Args:
             context (str): The context string to be encoded.
-            continuation (str): The continuation string to be encoded.
+            continuation (list[str]): List of continuation strings to be encoded.
             pairwise (bool):
-                If True, encode context and continuation separately.
+                If True, encode context and continuations separately.
                 If False, encode them together and then split.
 
         Returns:
-            Tuple[TokenSequence, TokenSequence]: A tuple containing the encoded context and continuation.
+            Tuple[TokenSequence, list[TokenSequence]]:
+                A tuple containing the encoded context and a list of encoded continuations.
 
         The advantage of pairwise is:
         1) It better aligns with how LLM predicts tokens
         2) Works in case len(tok(context,cont)) != len(tok(context)) + len(tok(continuation)).
         E.g this can happen for chinese if no space is used between context/continuation
         """
-
         n_spaces = len(context) - len(context.rstrip())
         if n_spaces > 0:
-            continuation = context[-n_spaces:] + continuation
+            continuations = [context[-n_spaces:] + cont for cont in continuations]
             context = context[:-n_spaces]
 
         if pairwise:
             # We don't add special tokens to the continuation as if bos is added
             # models tend to to completely ignore a context
-            context_enc, continuation_enc = (
-                self.tok_encode(context, add_special_tokens=self.add_special_tokens),
-                self.tok_encode(continuation, add_special_tokens=False),
-            )
+            context_enc = self.tok_encode(context, add_special_tokens=self.add_special_tokens)
+            continuation_enc = [self.tok_encode(cont, add_special_tokens=False) for cont in continuations]
 
             # In theory the context_enc can be ended with eos token, this would again
             # cause the model to ignore the context. We thus strip the eos token from context_enc
             if len(context_enc) > 0 and context_enc[-1] == self.tokenizer.eos_token_id:
                 context_enc = context_enc[:-1]
 
-            return context_enc, continuation_enc
+            context_encs = [context_enc] * len(continuation_enc)
 
-        whole_enc = self.tok_encode(context + continuation)
+            return context_encs, continuation_enc
+
+        # Handle list of continuations
         context_enc = self.tok_encode(context)
-        context_enc_len = len(context_enc)
-        # In case continuation tokens merge with context tokens we use the merged token as continuation
-        if len(context_enc) == len(whole_enc):
-            context_enc_len = len(context_enc) - 1
-            context_enc = whole_enc[:context_enc_len]
+        context_encs = []
+        continuations_encs = []
+        for cont in continuations:
+            whole_enc = self.tok_encode(context + cont)
+            context_enc_len = len(context_enc)
+            if len(context_enc) == len(whole_enc):
+                context_enc_len = len(context_enc) - 1
+            continuations_encs.append(whole_enc[context_enc_len:])
+            context_encs.append(whole_enc[:context_enc_len])
 
-        continuation_enc = whole_enc[context_enc_len:]
-        return context_enc, continuation_enc
+        return context_encs, continuations_encs
 
     def tok_decode(self, tokens: torch.LongTensor) -> list[str]:
         return self.tokenizer.batch_decode(tokens, skip_special_tokens=True)

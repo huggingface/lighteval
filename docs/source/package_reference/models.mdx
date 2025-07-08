@@ -1,40 +1,43 @@
-# Models
+# Model Configs
 
-## Model
-### LightevalModel
-[[autodoc]] models.abstract_model.LightevalModel
+The model configs are used to define the model and its parameters. All the parameters can be
+set in the `model-args` or in the model yaml file (see example
+[here](https://github.com/huggingface/lighteval/blob/main/examples/model_configs/vllm_model_config.yaml)).
 
+### Base model config
+[[autodoc]] models.utils.ModelConfig
 
-## Accelerate and Transformers Models
-### TransformersModel
+## Local Models
+
+### Transformers Model
 [[autodoc]] models.transformers.transformers_model.TransformersModelConfig
-[[autodoc]] models.transformers.transformers_model.TransformersModel
-
-### AdapterModel
 [[autodoc]] models.transformers.adapter_model.AdapterModelConfig
-[[autodoc]] models.transformers.adapter_model.AdapterModel
-
-### DeltaModel
 [[autodoc]] models.transformers.delta_model.DeltaModelConfig
-[[autodoc]] models.transformers.delta_model.DeltaModel
+
+### VLLM Model
+[[autodoc]] models.vllm.vllm_model.VLLMModelConfig
+
+### SGLang Model
+[[autodoc]] models.sglang.sglang_model.SGLangModelConfig
+
+### Dummy Model
+[[autodoc]] models.dummy.dummy_model.DummyModelConfig
+
 
 ## Endpoints-based Models
+
+### Inference Providers Model
+[[autodoc]] models.endpoints.inference_providers_model.InferenceProvidersModelConfig
+
 ### InferenceEndpointModel
 [[autodoc]] models.endpoints.endpoint_model.InferenceEndpointModelConfig
 [[autodoc]] models.endpoints.endpoint_model.ServerlessEndpointModelConfig
-[[autodoc]] models.endpoints.endpoint_model.InferenceEndpointModel
 
 ### TGI ModelClient
 [[autodoc]] models.endpoints.tgi_model.TGIModelConfig
-[[autodoc]] models.endpoints.tgi_model.ModelClient
 
-### Custom Model
+### Litellm Model
+[[autodoc]] models.litellm_model.LiteLLMModelConfig
+
+## Custom Model
 [[autodoc]] models.custom.custom_model.CustomModelConfig
-
-### Open AI Models
-[[autodoc]] models.endpoints.openai_model.OpenAIClient
-
-## VLLM Model
-### VLLMModel
-[[autodoc]] models.vllm.vllm_model.VLLMModelConfig
-[[autodoc]] models.vllm.vllm_model.VLLMModel
