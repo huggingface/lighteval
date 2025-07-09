@@ -107,6 +107,11 @@ class PromptManager:
             messages.append({"role": "user", "content": query})
             messages.append({"role": "assistant", "content": fewshot_sample.get_golds()[0]})
 
+        # If there are any additional messages to include, lets do it
+        if doc.additional_messages:
+            messages += doc.additional_messages
+
+
         # Add main query
         main_query = self._extract_query(doc.query, doc.instruction)
 
