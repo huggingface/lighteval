@@ -581,7 +581,7 @@ FILIPINO_STINGRAY_CORRECTNESS_TASKS = [
     for formulation in [MCFFormulation(), HybridFormulation()]
 ]
 
-FILIPINO_STINGRAY_SEMANTIC_TAKS = [
+FILIPINO_STINGRAY_SEMANTIC_TASKS = [
     LightevalTaskConfig(
         name=f"stingraybench_semantic_appropriateness_tgl_{formulation.name.lower()}",
         prompt_function=get_mcq_prompt_function(
@@ -611,7 +611,7 @@ FILIPINO_STINGRAY_SEMANTIC_TAKS = [
     for formulation in [MCFFormulation(), HybridFormulation()]
 ]
 
-FILIPINO_STINGRAY_TASKS = FILIPINO_STINGRAY_SEMANTIC_TAKS + FILIPINO_STINGRAY_CORRECTNESS_TASKS
+FILIPINO_STINGRAY_TASKS = FILIPINO_STINGRAY_SEMANTIC_TASKS + FILIPINO_STINGRAY_CORRECTNESS_TASKS
 
 # Tatoeba
 # We follow the original translation direction from tatoeba
