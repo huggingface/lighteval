@@ -733,7 +733,7 @@ universalner_choices = ["PERSON", "ORGANIZATION", "LOCATION"]
 universalner_answer_idx = ["A", "B", "C"]
 
 
-def create_task(language: Language, formulation):
+def create_universalner_task(language: Language, formulation):
     if language == Language.CEBUANO:
         question = "Unsa ang ginganlan nga named-entity sa pulong '{entity}' niini nga sentence: {text}"
     if language == Language.TAGALOG:
