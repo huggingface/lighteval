@@ -491,7 +491,7 @@ def get_instruction(language: Language) -> str:
         return "Tungkol saan ang sumusunod na pangungusap?\n"
 
 
-def create_task(language: Language, formulation):
+def create_sib200_task(language: Language, formulation):
     return LightevalTaskConfig(
         name=f"sib200_{language.value}_{formulation.name.lower()}",
         prompt_function=get_mcq_prompt_function(
