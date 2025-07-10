@@ -525,7 +525,7 @@ def create_sib200_task(language: Language, formulation):
 
 
 FILIPINO_SIB_TASKS = [
-    create_task(language, formulation)
+    create_sib200_task(language, formulation)
     for language in [Language.TAGALOG, Language.CEBUANO]
     for formulation in [MCFFormulation(), HybridFormulation()]
 ]
@@ -772,7 +772,7 @@ def create_universalner_task(language: Language, formulation):
 
 
 FILIPINO_UNIVERSALNER_TASKS = [
-    create_task(language, formulation)
+    create_universalner_task(language, formulation)
     for language in [Language.CEBUANO, Language.TAGALOG]
     for formulation in [MCFFormulation(), HybridFormulation()]
 ]
