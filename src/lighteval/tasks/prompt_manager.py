@@ -111,7 +111,6 @@ class PromptManager:
         if doc.additional_messages:
             messages += doc.additional_messages
 
-
         # Add main query
         main_query = self._extract_query(doc.query, doc.instruction)
 
