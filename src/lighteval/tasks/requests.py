@@ -202,11 +202,12 @@ class Doc:
     images: list["Image"] | None = None  # for multimodal benchmarks
     specific: dict | None = None  # Information which is specific to the current eval
 
-    # Uncoditioned query is used for PMI normalization, that's
+    # Unconditioned query is used for PMI normalization, that's
     # log P(choice | Query) - log P(choice | Unconditioned Query)
-    # The uncoditioned query shouldn't contain any information about the task, thus usually it's empty string or 'Answer:'.
+    # The unconditioned query shouldn't contain any information about the task, thus usually it's empty string or 'Answer:'.
     unconditioned_query: str | None = None
     original_query: str | None = None  # the query before preprocessing, if stored
+    additional_messages: list[object] | None = None
 
     id: str = ""
     task_name: str = ""
