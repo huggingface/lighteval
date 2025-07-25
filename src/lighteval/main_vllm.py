@@ -60,12 +60,12 @@ def vllm(
         bool, Option(help="Remove reasoning tags from responses.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = False,
     reasoning_tags: Annotated[
-        list[str],
+        list[tuple[str]],
         Option(
-            help="List of reasoning tags to remove from responses. Default is ['<think>', '</think>'].",
+            help="List of reasoning tags to remove from responses. Default is [('<think>', '</think>')].",
             rich_help_panel=HELP_PANEL_NAME_1,
         ),
-    ] = ["<think>", "</think>"],
+    ] = [("<think>", "</think>")],
     # === saving ===
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)

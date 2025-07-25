@@ -47,12 +47,12 @@ def nanotron(
         bool, Option(help="Remove reasoning tags from responses.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = True,
     reasoning_tags: Annotated[
-        list[str],
+        list[tuple[str]],
         Option(
-            help="List of reasoning tags to remove from responses. Default is ['<think>', '</think>'].",
+            help="List of reasoning tags to remove from responses. Default is [('<think>', '</think>')].",
             rich_help_panel=HELP_PANEL_NAME_1,
         ),
-    ] = ["<think>", "</think>"],
+    ] = [("<think>", "</think>")],
 ):
     """
     Evaluate models using nanotron as backend.

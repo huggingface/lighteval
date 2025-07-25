@@ -103,7 +103,7 @@ class PipelineParameters:
     max_samples: int | None = None
     cot_prompt: str | None = None
     remove_reasoning_tags: bool = True
-    reasoning_tags: list[str] = field(default_factory=lambda: ["<think>", "</think>"])
+    reasoning_tags: list[tuple[str]] = field(default_factory=lambda: [("<think>", "</think>")])
     load_responses_from_details_date_id: str | None = None
     bootstrap_iters: int = 1000
 
@@ -354,7 +354,7 @@ class Pipeline:
                     response.final_text = [
                         remove_reasoning_tags(
                             text=text,
-                            reasoning_tags=self.pipeline_parameters.reasoning_tags,
+                            tag_pairs=self.pipeline_parameters.reasoning_tags,
                         )
                         for text in response.text
                     ]
