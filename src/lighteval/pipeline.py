@@ -25,7 +25,7 @@ import collections
 import os
 import random
 from contextlib import nullcontext
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum, auto
 
@@ -103,7 +103,7 @@ class PipelineParameters:
     max_samples: int | None = None
     cot_prompt: str | None = None
     remove_reasoning_tags: bool = True
-    reasoning_tags: list[tuple[str]] = field(default_factory=lambda: [("<think>", "</think>")])
+    reasoning_tags: list[tuple[str, str]] | None = None
     load_responses_from_details_date_id: str | None = None
     bootstrap_iters: int = 1000
 
@@ -126,6 +126,8 @@ class PipelineParameters:
         elif self.launcher_type == ParallelismManager.OPENAI:
             if not is_openai_available():
                 raise ImportError(NO_OPENAI_ERROR_MSG)
+        if self.reasoning_tags is None:
+            self.reasoning_tags = [("<think>", "</think>")]
 
 
 class Pipeline:
@@ -351,7 +353,7 @@ class Pipeline:
         if self.pipeline_parameters.remove_reasoning_tags:
             for _, responses in sampling_method_responses.items():
                 for response in responses:
-                    response.final_text = [
+                    response.text_post_processed = [
                         remove_reasoning_tags(
                             text=text,
                             tag_pairs=self.pipeline_parameters.reasoning_tags,
