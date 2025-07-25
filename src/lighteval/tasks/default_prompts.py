@@ -1862,6 +1862,30 @@ def mmlu_helm(line, task_name: str = None):
     )
 
 
+def mmlu_redux_2(line, topic, task_name: str = None):
+    """
+    MMLU-Redux-2 prompt function.
+    The dataset uses integer indices for answers and has additional metadata fields.
+    """
+    query = f"The following are multiple choice questions (with answers) about {topic.replace('_', ' ')}.\n\n"
+    query += line["question"] + "\n"
+    query += "".join([f"{key}. {choice}\n" for key, choice in zip(LETTER_INDICES, line["choices"])])
+    query += "Answer: "
+
+    # Handle answer format - MMLU-Redux-2 uses integer indices directly
+    gold_ix = line["answer"] if isinstance(line["answer"], int) else int(line["answer"])
+    is_few_shots = line.get("__few_shots", False)
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=LETTER_INDICES[:len(line["choices"])],
+        gold_index=gold_ix,
+        instruction=f"The following are multiple choice questions (with answers) about {topic.replace('_', ' ')}.\n\n",
+        target_for_fewshot_sorting=LETTER_INDICES[gold_ix] if not is_few_shots else None,
+    )
+
+
 def mmlu_qa_abstract_algebra(line, task_name: str = None):
     return mmlu_qa(line, "abstract_algebra", task_name)
 
