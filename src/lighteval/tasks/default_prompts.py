@@ -1864,8 +1864,7 @@ def mmlu_helm(line, task_name: str = None):
 
 def mmlu_redux_2(line, topic, task_name: str = None):
     """
-    MMLU-Redux-2 prompt function.
-    The dataset uses integer indices for answers and has additional metadata fields.
+    Ref: https://arxiv.org/abs/2406.04127
     """
     query = f"The following are multiple choice questions (with answers) about {topic.replace('_', ' ')}.\n\n"
     query += line["question"] + "\n"
