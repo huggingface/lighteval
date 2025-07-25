@@ -62,6 +62,16 @@ def inference_endpoint(
     load_responses_from_details_date_id: Annotated[
         Optional[str], Option(help="Load responses from details directory.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
+    remove_reasoning_tags: Annotated[
+        bool, Option(help="Remove reasoning tags from responses.", rich_help_panel=HELP_PANEL_NAME_1)
+    ] = True,
+    reasoning_tags: Annotated[
+        list[str],
+        Option(
+            help="List of reasoning tags to remove from responses. Default is ['<think>', '</think>'].",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = ["<think>", "</think>"],
     # === saving ===
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
@@ -136,6 +146,8 @@ def inference_endpoint(
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         load_responses_from_details_date_id=load_responses_from_details_date_id,
+        remove_reasoning_tags=remove_reasoning_tags,
+        reasoning_tags=reasoning_tags,
     )
     pipeline = Pipeline(
         tasks=tasks,
@@ -175,6 +187,16 @@ def tgi(
     load_responses_from_details_date_id: Annotated[
         Optional[str], Option(help="Load responses from details directory.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
+    remove_reasoning_tags: Annotated[
+        bool, Option(help="Remove reasoning tags from responses.", rich_help_panel=HELP_PANEL_NAME_1)
+    ] = True,
+    reasoning_tags: Annotated[
+        list[str],
+        Option(
+            help="List of reasoning tags to remove from responses. Default is ['<think>', '</think>'].",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = ["<think>", "</think>"],
     # === saving ===
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
@@ -253,6 +275,8 @@ def tgi(
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         load_responses_from_details_date_id=load_responses_from_details_date_id,
+        remove_reasoning_tags=remove_reasoning_tags,
+        reasoning_tags=reasoning_tags,
     )
     pipeline = Pipeline(
         tasks=tasks,
@@ -295,6 +319,16 @@ def litellm(
     load_responses_from_details_date_id: Annotated[
         Optional[str], Option(help="Load responses from details directory.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
+    remove_reasoning_tags: Annotated[
+        bool, Option(help="Remove reasoning tags from responses.", rich_help_panel=HELP_PANEL_NAME_1)
+    ] = True,
+    reasoning_tags: Annotated[
+        list[str],
+        Option(
+            help="List of reasoning tags to remove from responses. Default is ['<think>', '</think>'].",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = ["<think>", "</think>"],
     # === saving ===
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
@@ -376,6 +410,8 @@ def litellm(
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         load_responses_from_details_date_id=load_responses_from_details_date_id,
+        remove_reasoning_tags=remove_reasoning_tags,
+        reasoning_tags=reasoning_tags,
     )
     pipeline = Pipeline(
         tasks=tasks,
@@ -449,6 +485,16 @@ def inference_providers(
             rich_help_panel=HELP_PANEL_NAME_2,
         ),
     ] = False,
+    remove_reasoning_tags: Annotated[
+        bool, Option(help="Remove reasoning tags from responses.", rich_help_panel=HELP_PANEL_NAME_1)
+    ] = True,
+    reasoning_tags: Annotated[
+        list[str],
+        Option(
+            help="List of reasoning tags to remove from responses. Default is ['<think>', '</think>'].",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = ["<think>", "</think>"],
     # === debug ===
     max_samples: Annotated[
         Optional[int], Option(help="Maximum number of samples to evaluate on.", rich_help_panel=HELP_PANEL_NAME_3)
@@ -493,6 +539,8 @@ def inference_providers(
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         load_responses_from_details_date_id=None,
+        remove_reasoning_tags=remove_reasoning_tags,
+        reasoning_tags=reasoning_tags,
     )
     pipeline = Pipeline(
         tasks=tasks,
