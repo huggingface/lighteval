@@ -58,7 +58,7 @@ def vllm(
     ] = None,
     remove_reasoning_tags: Annotated[
         bool, Option(help="Remove reasoning tags from responses.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = True,
+    ] = False,
     reasoning_tags: Annotated[
         list[str],
         Option(
