@@ -110,7 +110,7 @@ class ExactMatches:
         # We might need to flatten golds if they are a list of lists
         golds = doc.get_golds()
         for gold in golds:
-            for pred in model_response.text:
+            for pred in model_response.final_text:
                 results.append(self.compute_one_item(gold=gold, pred=pred))
         return self.aggregation_function(results)
 
@@ -186,7 +186,7 @@ class F1_score:
         """
         results = []
         golds = doc.get_golds()
-        predictions = model_response.text
+        predictions = model_response.final_text
         # We might need to flatten golds if they are a list of lists
         for gold in golds:
             for pred in predictions:
@@ -528,7 +528,7 @@ class ROUGE:
         from rouge_score import rouge_scorer
 
         golds = doc.get_golds()
-        predictions = model_response.text
+        predictions = model_response.final_text
 
         if self.scorer is None:
             self.scorer = rouge_scorer.RougeScorer(self.methods, tokenizer=self.tokenizer)
@@ -619,7 +619,7 @@ class BertScore:
             dict: Scores over the current sample's items.
         """
         golds = doc.get_golds()
-        predictions = model_response.text
+        predictions = model_response.final_text
 
         if self.bert_scorer is None:
             logger.warning("The first metric computation step might be a bit longer as we need to download the model.")
@@ -680,7 +680,7 @@ class Extractiveness:
             self.stats_metric = DataStatsMetric()
 
         inp = doc.specific[self.input_column]
-        prediction = model_response.text[0]
+        prediction = model_response.final_text[0]
         if self.normalize_input:
             inp = self.normalize_input(inp)
         if self.normalize_pred:
@@ -734,7 +734,7 @@ class Faithfulness:
                 granularity="sentence", model_name="vitc", imager_load_cache=False
             )  # , device=device)
         inp = doc.specific[self.input_column]
-        predictions = model_response.text
+        predictions = model_response.final_text
         prediction = predictions[0]
         if self.normalize_input:
             inp = self.normalize_input(inp)
@@ -774,7 +774,7 @@ class BLEURT:
         Returns:
             float: Score over the current sample's items.
         """
-        predictions = model_response.text
+        predictions = model_response.final_text
         golds = doc.get_golds()
         if len(predictions) == 1:
             predictions = predictions * len(golds)
@@ -803,7 +803,7 @@ class BLEU:
             float: Score over the current sample's items.
         """
         golds = doc.get_golds()
-        predictions = model_response.text
+        predictions = model_response.final_text
         return np.mean([self._bleu_score(golds, p) for p in predictions])
 
     def _bleu_score(self, gold: list[str], pred: str):
@@ -852,7 +852,7 @@ class StringDistance:
         Returns:
            dict: The different scores computed
         """
-        predictions = model_response.text
+        predictions = model_response.final_text
         golds = doc.get_golds()
         if len(golds) > 1:
             logger.warning(
@@ -1123,7 +1123,7 @@ class MajAtK:
             float: Aggregated score over the current sample's items.
         """
         golds = docs.get_golds()
-        predictions = model_response.text
+        predictions = model_response.final_text
         if len(golds) > 1:
             raise Exception("Cannot compute maj@k with several golds")
 
@@ -1224,7 +1224,7 @@ class PassAtK:
             float: Aggregated score over the current sample's items.
         """
         golds = doc.get_golds()
-        predictions = model_response.text
+        predictions = model_response.final_text
         if len(golds) > 1:
             raise Exception("Cannot compute pass@k with several golds")
 
@@ -1273,7 +1273,7 @@ class PassAtK:
         return pred
 
     def default_sample_scoring(self, doc, model_response) -> int:
-        pred = model_response.text[0]
+        pred = model_response.final_text[0]
         gold = doc.get_golds()[0]
 
         if self.type_exact_match == "prefix":
@@ -1355,7 +1355,7 @@ class GPassAtK:
             float: Aggregated score over the current sample's items.
         """
         golds = doc.get_golds()
-        predictions = model_response.text
+        predictions = model_response.final_text
 
         if len(golds) > 1:
             raise Exception("Cannot compute G-Pass@k with several golds")
@@ -1408,7 +1408,7 @@ class GPassAtK:
 
     def default_sample_scoring(self, doc: Doc, model_response: ModelResponse) -> int:
         gold = doc.get_golds()[0]
-        pred = model_response.text[0]
+        pred = model_response.final_text[0]
         if self.type_exact_match == "prefix":
             return 1 if pred.startswith(gold) else 0
         if self.type_exact_match == "suffix":

@@ -56,7 +56,7 @@ from lighteval.utils.imports import (
     is_vllm_available,
 )
 from lighteval.utils.parallelism import test_all_gather
-from lighteval.utils.utils import make_results_table
+from lighteval.utils.utils import make_results_table, remove_reasoning_tags
 
 
 if is_accelerate_available():
@@ -102,6 +102,8 @@ class PipelineParameters:
     num_fewshot_seeds: int = 1
     max_samples: int | None = None
     cot_prompt: str | None = None
+    remove_reasoning_tags: bool = True
+    reasoning_tags: list[str] = ["<think>", "</think>"]
     load_responses_from_details_date_id: str | None = None
     bootstrap_iters: int = 1000
 
@@ -284,9 +286,10 @@ class Pipeline:
         else:
             outputs = self._run_model()
 
-        self._compute_metrics(outputs)
-
         if self.is_main_process():
+            self._post_process_outputs(outputs)
+            self._compute_metrics(outputs)
+
             self.evaluation_tracker.general_config_logger.log_end_time()
             self.evaluation_tracker.metrics_logger.aggregate(
                 task_dict=self.tasks_dict, bootstrap_iters=self.pipeline_parameters.bootstrap_iters
@@ -340,6 +343,21 @@ class Pipeline:
         self.model.cleanup()
 
         return outputs
+
+    def _post_process_outputs(self, sampling_method_responses: dict[str, list[ModelResponse]]):
+        # Removes reasoning tags if needed
+        logger.info("--- POST-PROCESSING MODEL RESPONSES ---")
+
+        if self.pipeline_parameters.remove_reasoning_tags:
+            for _, responses in sampling_method_responses.items():
+                for response in responses:
+                    response.final_text = [
+                        remove_reasoning_tags(
+                            text=text,
+                            reasoning_tags=self.pipeline_parameters.reasoning_tags,
+                        )
+                        for text in response.text
+                    ]
 
     def _compute_metrics(self, sampling_method_responses: dict[str, list[ModelResponse]]):
         # To compute the metrics we first group the samples and task and then by metrics.

@@ -21,7 +21,6 @@
 # SOFTWARE.
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 import torch
 
@@ -40,10 +39,22 @@ class ModelResponse:
             The original input prompt or context that was fed to the model.
             Used for debugging and analysis purposes.
 
+        input_tokens (list[int]):
+            The tokenized representation of the input prompt.
+            Useful for understanding how the model processes the input.
+
         text (list[str]):
             The generated text responses from the model. Each element represents
             one generation (useful when num_samples > 1).
             **Required for**: Generative metrics, exact match, llm as a judge, etc.
+
+        text_post_processed (Optional[list[str]]):
+            The generated text responses from the model, but post processed.
+            Atm, post processing removes thinking/reasoning steps.
+
+            Careful! This is not computed by default, but in a separate step by calling
+            `post_process` on the ModelResponse object.
+            **Required for**: Generative metrics that require direct answers.
 
         logprobs (list[float]):
             Log probabilities of the generated tokens or sequences.
@@ -53,6 +64,7 @@ class ModelResponse:
             Whether the argmax logits match the gold/expected text.
             Used for accuracy calculations in multiple choice and classification tasks.
             **Required for**: certain loglikelihood metrics.
+
 
         unconditioned_logprobs (Optional[list[float]]):
             Log probabilities from an unconditioned model (e.g., without context).
@@ -105,26 +117,32 @@ class ModelResponse:
         - For most evaluation tasks, only a subset of attributes is required
         - The `text` attribute is the most commonly used for generative tasks
         - `logprobs` are essential for probability-based metrics like perplexity
-        - `argmax_logits_eq_gold` is specifically for certain multiple choice/classification tasks
-        - Token-level attributes (`input_tokens`, `output_tokens`) are useful for debugging
-        - Truncation and padding counts help understand model behavior with long inputs
     """
 
+    # Model inputs
     input: str | list | None = None
+    input_tokens: list[int] = field(default_factory=list)
+
+    # Model text outputs
     text: list[str] = field(default_factory=list)  # The text of the response
+    output_tokens: list[list[int]] = field(default_factory=list)  # Model generations
+    text_post_processed: list[str] | None = None  # The text of the response postprocessed
+
+    # Model logprob outputs
     logprobs: list[float] = field(default_factory=list)  # Log probabilities of the response
     argmax_logits_eq_gold: list[bool] = field(default_factory=list)  # Whether the argmax logits match the gold text
     logits: list[list[float]] | None = None  # Logits of the response, if applicable
+    unconditioned_logprobs: list[float] | None = None  # Log probabilities of the unconditioned model (if applicable)
 
+    # Other metadata
     truncated_tokens_count: int = 0  # How many tokens truncated
     padded_tokens_count: int = 0  # How many tokens of padding
 
-    input_tokens: list[int] = field(default_factory=list)  # model inputs
-    output_tokens: list[list[int]] = field(default_factory=list)  # model generations
-
-    unconditioned_logprobs: Optional[list[float]] = (
-        None  # Log probabilities of the unconditioned model (if applicable)
-    )
+    @property
+    def final_text(self) -> list[str]:
+        if self.text_post_processed is not None:
+            return self.text_post_processed
+        return self.text
 
 
 @dataclass
