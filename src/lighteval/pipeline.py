@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import ast
 import asyncio
 import collections
 import os
@@ -128,6 +129,15 @@ class PipelineParameters:
                 raise ImportError(NO_OPENAI_ERROR_MSG)
         if self.reasoning_tags is None:
             self.reasoning_tags = [("<think>", "</think>")]
+        else:
+            self.reasoning_tags = ast.literal_eval(self.reasoning_tags)
+            if not isinstance(self.reasoning_tags, list) or not all(
+                isinstance(tag, tuple) and len(tag) == 2 for tag in self.reasoning_tags
+            ):
+                raise ValueError(
+                    "reasoning_tags must be a list of pair tuples, e.g. [('start_tag', 'end_tag'), ...]. "
+                    f"Got {self.reasoning_tags} instead."
+                )
 
 
 class Pipeline:
