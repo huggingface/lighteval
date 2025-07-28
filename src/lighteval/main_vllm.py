@@ -62,7 +62,7 @@ def vllm(
     reasoning_tags: Annotated[
         str | None,
         Option(
-            help="List of reasoning tags to remove from responses. Default is [('<think>', '</think>')].",
+            help="List of reasoning tags (provided as pairs) to remove from responses. Default is [('<think>', '</think>')].",
             rich_help_panel=HELP_PANEL_NAME_1,
         ),
     ] = None,
