@@ -182,7 +182,9 @@ class VLLMModel(LightevalModel):
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
         self._tokenizer = self._create_auto_tokenizer(config)
 
-        self._max_length = config.max_model_length if config.max_model_length is not None else None
+        self._max_length = (
+            config.max_model_length
+        )  # will be None if the config is None, then defined in _create_auto_model
 
         # If model_parallel is not set we compare the number of processes with the number of GPUs
         self.model = self._create_auto_model(config)
@@ -261,6 +263,15 @@ class VLLMModel(LightevalModel):
         if config.data_parallel_size > 1:
             self.model_args["distributed_executor_backend"] = "ray"
             self._batch_size = "auto"
+
+            if self._max_length is None:
+                # Todo: we will want to manage this automatically - atm this arg must be set at least 2 times (in gen params + model args) for
+                # vllm models, which is an issue.
+                logger.warning(
+                    "The model max_length was not set in the model arguments. Since the model is using data parallelism, it is created later "
+                    " with `ray`, so we can't infer the max_length automatically atm. It might raise issues later on: if it does, relaunch your "
+                    "run, but set `max_model_length` explicitely in the model args."
+                )
             return None
 
         model = LLM(**self.model_args)

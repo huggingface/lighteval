@@ -1075,6 +1075,106 @@ class JudgeLLMMixEval(JudgeLLM):
         return metrics
 
 
+class AvgAtK:
+    def __init__(
+        self,
+        k: int,
+        normalize_gold: Callable | None = None,
+        normalize_pred: Callable | None = None,
+        strip_strings: bool = False,
+        sample_scoring_function: Callable[[Doc, ModelResponse], float] | str | None = None,
+    ):
+        """Sample score averages all the individual k predictions scores.
+
+        Args:
+            normalize_gold (callable, optional): Function to use to normalize the reference strings.
+                Defaults to None if no normalization is applied.
+            normalize_pred (callable, optional): Function to use to normalize the predicted strings.
+                Defaults to None if no normalization is applied.
+            strip_strings (bool, optional): Whether to strip both reference and predictions. Defaults to False.
+            sample_scoring_function (callable | str, optional): Function to use to compute the score for each sample.
+                If None, uses the default scoring function which is a simple exact match.
+        """
+        self.k = k
+        self.normalize_gold = normalize_gold
+        self.normalize_pred = normalize_pred
+        self.strip_strings = strip_strings
+        # Managed the logic of the per prediction of sample scoring
+        if callable(sample_scoring_function):
+            self.compute_score = sample_scoring_function
+        else:
+            if isinstance(sample_scoring_function, str):
+                if sample_scoring_function not in ["prefix", "suffix", "full"]:
+                    raise ValueError(
+                        f"type_exact_match (used in parametrized_exact_match) must be one of prefix, suffix, or full. Was {sample_scoring_function} instead."
+                    )
+                type_exact_match = sample_scoring_function
+            else:
+                type_exact_match = "full"
+            self.compute_score = self.default_sample_scoring(type_exact_match)
+
+    def compute(self, model_response: ModelResponse, doc: Doc, **kwargs):
+        """Computes the metric over a list of golds and predictions for one single sample.
+        It applies normalisation (if needed) to model prediction and gold, and takes the most frequent answer of all the available ones,
+        then compares it to the gold.
+
+        Args:
+            golds (list[str]): Reference targets
+            predictions (list[str]): k predicted strings
+
+        Returns:
+            float: Aggregated score over the current sample's items.
+        """
+        golds = doc.get_golds()
+        predictions = model_response.final_text
+        if len(golds) > 1:
+            raise Exception("Cannot compute avg@k with several golds")
+
+        gold = self.get_processed_gold(golds[0])
+        all_scores = []
+        for pred in predictions[: self.k]:
+            cur_answer = self.get_processed_pred(pred=pred)
+            all_scores.append(self.compute_score(cur_answer, gold))
+
+        avg_score = np.mean(all_scores)
+        return avg_score
+
+    def get_processed_gold(self, gold: str) -> str:
+        if self.strip_strings:
+            gold = gold.strip()
+
+        if self.normalize_gold:
+            gold = self.normalize_gold(gold)
+
+        return gold
+
+    def get_processed_pred(self, pred: str) -> str:
+        if not pred:
+            return ""
+
+        if self.strip_strings:
+            pred = pred.strip()
+
+        if self.normalize_pred:
+            pred = self.normalize_pred(pred)
+
+        return pred
+
+    def default_sample_scoring(self, type_exact_match: str) -> callable:
+        def sample_scoring_function(doc: Doc, model_response: ModelResponse) -> int:
+            """Default sample scoring function that checks if the prediction is equal to the gold."""
+            pred = model_response.final_text[0]
+            gold = doc.get_golds()[0]
+
+            if type_exact_match == "prefix":
+                return 1 if pred.startswith(gold) else 0
+            if type_exact_match == "suffix":
+                return 1 if pred.endswith(gold) else 0
+            return 1 if gold == pred else 0
+
+        return sample_scoring_function
+
+
 class MajAtK:
     def __init__(
         self,
