@@ -46,6 +46,7 @@ class GenerationParameters(BaseModel, extra="forbid"):
     min_p: NonNegativeFloat | None = None  # vllm, transformers, sglang
     top_p: NonNegativeFloat | None = None  # vllm, transformers, tgi, litellm, sglang
     truncate_prompt: bool | None = None  # vllm, tgi
+    do_sample: bool | None = None  # transformers, tgi, sglang
 
     cache_implementation: str | None = None  # transformers
 
@@ -184,6 +185,7 @@ class GenerationParameters(BaseModel, extra="forbid"):
             "min_new_tokens": self.min_new_tokens,
             "early_stopping": self.early_stopping,
             "stop_strings": self.stop_tokens,
+            "do_sample": self.do_sample,
             "temperature": self.temperature,
             "top_k": self.top_k,
             "top_p": self.top_p,

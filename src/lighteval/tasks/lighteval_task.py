@@ -301,7 +301,7 @@ class LightevalTask:
                 self._docs = self.remove_duplicate_docs(self._docs)
         return self._docs
 
-    def get_docs(self, max_samples: int | None = None) -> list[Doc]:
+    def get_docs(self, max_samples: int | None = None, generation_size: int | None = None) -> list[Doc]:
         eval_docs = self.eval_docs()
 
         if len(eval_docs) == 0:
@@ -321,7 +321,7 @@ class LightevalTask:
                 num_fewshots, 0, formatted_doc=doc, sampler=rnd
             )
             doc.sampling_methods.extend(self.sampling_methods)
-            doc.generation_size = self.generation_size
+            doc.generation_size = generation_size or self.generation_size
             doc.use_logits = True
             doc.stop_sequences = self.stop_sequence
             doc.num_samples = max(self.num_samples)

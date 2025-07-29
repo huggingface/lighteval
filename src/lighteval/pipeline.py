@@ -107,6 +107,7 @@ class PipelineParameters:
     reasoning_tags: str | list[tuple[str, str]] | None = None
     load_responses_from_details_date_id: str | None = None
     bootstrap_iters: int = 1000
+    generation_size: int | None = None
 
     def __post_init__(self):  # noqa C901
         # Import testing
@@ -240,7 +241,7 @@ class Pipeline:
             self.tasks_dict: dict[str, LightevalTask] = registry.get_tasks_from_configs(task_configs)
             LightevalTask.load_datasets(self.tasks_dict, self.pipeline_parameters.dataset_loading_processes)
             self.documents_dict = {
-                task.full_name: task.get_docs(self.pipeline_parameters.max_samples)
+                task.full_name: task.get_docs(self.pipeline_parameters.max_samples,self.pipeline_parameters.generation_size)
                 for _, task in self.tasks_dict.items()
             }
 
@@ -455,7 +456,8 @@ class Pipeline:
         logger.info("--- DISPLAYING RESULTS ---")
         self._init_final_dict()
         if self.is_main_process():
-            print(make_results_table(self.final_dict))
+            results_table=make_results_table(self.final_dict)
+            logger.info("Evaluation Results:\n%s", results_table)
 
     def get_results(self):
         self._init_final_dict()

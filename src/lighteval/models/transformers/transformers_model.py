@@ -33,7 +33,7 @@ from accelerate.utils import calculate_maximum_sizes, convert_bytes, get_max_mem
 from pydantic import Field, PositiveInt
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
-from tqdm import tqdm
+from tqdm.autonotebook import tqdm
 from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
