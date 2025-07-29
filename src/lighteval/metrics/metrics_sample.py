@@ -1079,9 +1079,6 @@ class AvgAtK:
     def __init__(
         self,
         k: int,
-        normalize_gold: Callable | None = None,
-        normalize_pred: Callable | None = None,
-        strip_strings: bool = False,
         sample_scoring_function: Callable[[Doc, ModelResponse], float] | str | None = None,
     ):
         """Sample score averages all the individual k predictions scores.
@@ -1096,9 +1093,6 @@ class AvgAtK:
                 If None, uses the default scoring function which is a simple exact match.
         """
         self.k = k
-        self.normalize_gold = normalize_gold
-        self.normalize_pred = normalize_pred
-        self.strip_strings = strip_strings
         # Managed the logic of the per prediction of sample scoring
         if callable(sample_scoring_function):
             self.compute_score = sample_scoring_function
@@ -1125,40 +1119,12 @@ class AvgAtK:
         Returns:
             float: Aggregated score over the current sample's items.
         """
-        golds = doc.get_golds()
-        predictions = model_response.final_text
-        if len(golds) > 1:
-            raise Exception("Cannot compute avg@k with several golds")
-
-        gold = self.get_processed_gold(golds[0])
         all_scores = []
-        for pred in predictions[: self.k]:
-            cur_answer = self.get_processed_pred(pred=pred)
-            all_scores.append(self.compute_score(cur_answer, gold))
+        for i in range(self.k):
+            all_scores.append(self.compute_score(doc, model_response[i]))
 
         avg_score = np.mean(all_scores)
         return avg_score
-
-    def get_processed_gold(self, gold: str) -> str:
-        if self.strip_strings:
-            gold = gold.strip()
-
-        if self.normalize_gold:
-            gold = self.normalize_gold(gold)
-
-        return gold
-
-    def get_processed_pred(self, pred: str) -> str:
-        if not pred:
-            return ""
-
-        if self.strip_strings:
-            pred = pred.strip()
-
-        if self.normalize_pred:
-            pred = self.normalize_pred(pred)
-
-        return pred
 
     def default_sample_scoring(self, type_exact_match: str) -> callable:
         def sample_scoring_function(doc: Doc, model_response: ModelResponse) -> int:

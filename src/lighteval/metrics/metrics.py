@@ -354,7 +354,6 @@ class Metrics(Enum):
         metric_name="math_avg@64",
         sample_level_fn=AvgAtK(
             k=64,
-            strip_strings=True,
             sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
                 language=Language.ENGLISH,
                 gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],

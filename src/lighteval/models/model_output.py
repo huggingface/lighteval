@@ -144,6 +144,20 @@ class ModelResponse:
             return self.text_post_processed
         return self.text
 
+    def __getitem__(self, index: int) -> "ModelResponse":
+        return ModelResponse(
+            input=self.input,
+            input_tokens=self.input_tokens,
+            text=[self.text[index]],
+            output_tokens=[self.output_tokens[index]],
+            logprobs=[self.logprobs[index]] if self.logprobs else [],
+            argmax_logits_eq_gold=[self.argmax_logits_eq_gold[index]] if self.argmax_logits_eq_gold else [],
+            logits=[self.logits[index]] if self.logits else None,
+            unconditioned_logprobs=[self.unconditioned_logprobs[index]] if self.unconditioned_logprobs else None,
+            truncated_tokens_count=self.truncated_tokens_count,
+            padded_tokens_count=self.padded_tokens_count,
+        )
+
 
 @dataclass
 class Batch:
