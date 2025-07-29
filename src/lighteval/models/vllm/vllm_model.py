@@ -342,7 +342,11 @@ class VLLMModel(LightevalModel):
             context_size = len(inputs[0])
 
             # left truncate the inputs to the maximum length
-            if max_new_tokens is not None:
+            if self.max_length is None:
+                logger.warning(
+                    "The model max_length was not set in the model arguments, so we cannot check if we need to truncate the context."
+                )
+            elif max_new_tokens is not None:
                 if context_size + max_new_tokens > self.max_length:
                     logger.warning(
                         f"{context_size + max_new_tokens=} which is greater than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
