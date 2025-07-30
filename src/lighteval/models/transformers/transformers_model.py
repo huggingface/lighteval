@@ -300,6 +300,9 @@ class TransformersModel(LightevalModel):
             model_dtype=config.dtype,
             model_size=model_size,
         )
+        self.prompt_manager=PromptManager(
+            use_chat_template=self.use_chat_template,tokenizer=self.tokenizer, system_prompt=config.system_prompt
+        )
         return self
 
     @property
