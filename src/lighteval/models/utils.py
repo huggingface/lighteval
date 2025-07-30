@@ -223,7 +223,7 @@ def batched(iterable, n):
         yield batch
 
 
-def uses_chat_template(model_name: str) -> bool:
+def uses_chat_template(model_name: str = None, tokenizer: AutoTokenizer = None) -> bool:
     """Returns a boolean depending on whether the Transformers AutoTokenizer contains
     a chat template or not
 
@@ -233,8 +233,13 @@ def uses_chat_template(model_name: str) -> bool:
     Returns:
         bool: True if Tokenizer config contains a chat template, False otherwise
     """
+    if model_name is None and tokenizer is None:
+        raise Exception("`uses_chat_template` requires either a tokenizer or model name as input")
     try:
-        tk = AutoTokenizer.from_pretrained(model_name)
+        if tokenizer:
+            tk = tokenizer
+        else:
+            tk = AutoTokenizer.from_pretrained(model_name)
         return tk.chat_template is not None
     except Exception:
         logger.warning(

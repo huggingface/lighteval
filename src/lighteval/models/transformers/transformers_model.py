@@ -41,7 +41,7 @@ from transformers import (
     BitsAndBytesConfig,
     PretrainedConfig,
 )
-from transformers.generation.utils import GenerateOutput
+from transformers.generation.utils import GenerateOutput, uses_chat_template
 from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
@@ -190,7 +190,7 @@ class TransformersModel(LightevalModel):
         self.model_sha = config.get_model_sha()
         self._max_length = self._init_max_length()
         self._tokenizer = self._create_auto_tokenizer()
-        self.use_chat_template = self._tokenizer.chat_template is not None
+        self.use_chat_template = uses_chat_template(tokenizer=self._tokenizer)
         self.model = self._create_auto_model()
 
         # We are in DP (and launch the script with `accelerate launch`)
@@ -273,7 +273,7 @@ class TransformersModel(LightevalModel):
         else:
             self._device = self.config.device
 
-        self.use_chat_template = self._tokenizer.chat_template is not None
+        self.use_chat_template = uses_chat_template(self._tokenizer)
         self._add_special_tokens = add_special_tokens if add_special_tokens is not None else False
         self.pairwise_tokenization = pairwise_tokenization
         self.multichoice_continuations_start_space = multichoice_continuations_start_space

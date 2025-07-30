@@ -135,7 +135,7 @@ class SGLangModel(LightevalModel):
     ):
         """Initializes an SGLang model."""
         self._config = config
-        self.use_chat_template = uses_chat_template(self._config.model_name)
+        self.use_chat_template = uses_chat_template(model_name=self._config.model_name)
         self.data_parallel_size = config.dp_size
         self.tensor_parallel_size = config.tp_size
         self._add_special_tokens = config.add_special_tokens

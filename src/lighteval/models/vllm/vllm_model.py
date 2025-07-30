@@ -173,7 +173,7 @@ class VLLMModel(LightevalModel):
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self._config = config
-        self.use_chat_template = uses_chat_template(config.model_name)
+        self.use_chat_template = uses_chat_template(model_name=config.model_name)
         self.data_parallel_size = config.data_parallel_size
         self.tensor_parallel_size = config.tensor_parallel_size
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
