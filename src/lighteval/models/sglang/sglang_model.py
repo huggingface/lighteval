@@ -31,7 +31,7 @@ from tqdm import tqdm
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
 from lighteval.models.model_output import ModelResponse
-from lighteval.models.utils import ModelConfig, _simplify_name
+from lighteval.models.utils import ModelConfig, _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import is_sglang_available
@@ -76,8 +76,6 @@ class SGLangModelConfig(ModelConfig):
             Random seed for reproducibility. Defaults to 1234.
         trust_remote_code (bool):
             Whether to trust remote code when loading models. Defaults to False.
-        use_chat_template (bool):
-            Whether to use chat templates for conversation-style prompts. Defaults to False.
         device (str):
             Device to load the model on. Defaults to "cuda".
         skip_tokenizer_init (bool):
@@ -119,7 +117,6 @@ class SGLangModelConfig(ModelConfig):
     context_length: PositiveInt | None = None
     random_seed: PositiveInt | None = 1234
     trust_remote_code: bool = False
-    use_chat_template: bool = False
     device: str = "cuda"
     skip_tokenizer_init: bool = False
     kv_cache_dtype: str = "auto"
@@ -136,9 +133,9 @@ class SGLangModel(LightevalModel):
         self,
         config: SGLangModelConfig,
     ):
-        """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
+        """Initializes an SGLang model."""
         self._config = config
-        self.use_chat_template = config.use_chat_template
+        self.use_chat_template = uses_chat_template(self._config.model_name)
         self.data_parallel_size = config.dp_size
         self.tensor_parallel_size = config.tp_size
         self._add_special_tokens = config.add_special_tokens

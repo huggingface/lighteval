@@ -34,7 +34,7 @@ from tqdm import tqdm
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
 from lighteval.models.model_output import ModelResponse
-from lighteval.models.utils import ModelConfig, _simplify_name
+from lighteval.models.utils import ModelConfig, _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import is_vllm_available
@@ -122,8 +122,6 @@ class VLLMModelConfig(ModelConfig):
             Maximum number of tokens per batch. Defaults to 2048.
         subfolder (str | None):
             Subfolder within the model repository. Defaults to None.
-        use_chat_template (bool):
-            Whether to use chat templates for conversation-style prompts. Defaults to False.
         is_async (bool):
             Whether to use the async version of VLLM. Defaults to False.
 
@@ -165,7 +163,6 @@ class VLLMModelConfig(ModelConfig):
     max_num_seqs: PositiveInt = 128  # maximum number of sequences per iteration; This variable and `max_num_batched_tokens` effectively control the batch size at prefill stage. See https://github.com/vllm-project/vllm/issues/2492 for detailed explaination.
     max_num_batched_tokens: PositiveInt = 2048  # maximum number of tokens per batch
     subfolder: str | None = None
-    use_chat_template: bool = False
     is_async: bool = False  # Whether to use the async version or sync version of the model
 
 
@@ -176,7 +173,7 @@ class VLLMModel(LightevalModel):
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self._config = config
-        self.use_chat_template = config.use_chat_template
+        self.use_chat_template = uses_chat_template(config.model_name)
         self.data_parallel_size = config.data_parallel_size
         self.tensor_parallel_size = config.tensor_parallel_size
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
