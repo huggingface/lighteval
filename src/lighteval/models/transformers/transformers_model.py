@@ -294,6 +294,12 @@ class TransformersModel(LightevalModel):
             model_size = convert_bytes(model_size)
         else:
             model_size = -1
+        self.model_info = ModelInfo(
+            model_name=self.model_name,
+            model_sha=self.model_sha,
+            model_dtype=config.dtype,
+            model_size=model_size,
+        )
         return self
 
     @property
