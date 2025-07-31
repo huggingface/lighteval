@@ -104,11 +104,12 @@ class PipelineParameters:
     max_samples: int | None = None
     cot_prompt: str | None = None
     remove_reasoning_tags: bool = True
-    reasoning_tags: list[tuple[str, str]] | None = None
+    reasoning_tags: str | list[tuple[str, str]] | None = None
     load_responses_from_details_date_id: str | None = None
     bootstrap_iters: int = 1000
 
     def __post_init__(self):  # noqa C901
+        # Import testing
         if self.launcher_type == ParallelismManager.ACCELERATE:
             if not is_accelerate_available():
                 raise ImportError(NO_ACCELERATE_ERROR_MSG)
@@ -130,10 +131,18 @@ class PipelineParameters:
         if self.reasoning_tags is None:
             self.reasoning_tags = [("<think>", "</think>")]
         else:
-            self.reasoning_tags = ast.literal_eval(self.reasoning_tags)
-            if not isinstance(self.reasoning_tags, list) or not all(
-                isinstance(tag, tuple) and len(tag) == 2 for tag in self.reasoning_tags
-            ):
+            # Convert reasoning tags to list if needed
+            if not isinstance(self.reasoning_tags, list):
+                try:
+                    self.reasoning_tags = ast.literal_eval(self.reasoning_tags)
+                except ValueError as e:
+                    raise ValueError(
+                        "reasoning_tags must be a list of pair tuples, e.g. [('start_tag', 'end_tag'), ...]. "
+                        f"Got {self.reasoning_tags} instead, which caused parsing error {e}."
+                    )
+
+            # Make sure format is correct
+            if not all(isinstance(tag, tuple) and len(tag) == 2 for tag in self.reasoning_tags):
                 raise ValueError(
                     "reasoning_tags must be a list of pair tuples, e.g. [('start_tag', 'end_tag'), ...]. "
                     f"Got {self.reasoning_tags} instead."
