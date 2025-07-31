@@ -241,13 +241,7 @@ class LightevalTask:
             list[Doc]: List of documents.
         """
         if self.dataset is None:
-            self.dataset = self.download_dataset_worker(
-                self.dataset_path,
-                self.dataset_config_name,
-                self.trust_dataset,
-                self.dataset_filter,
-                self.dataset_revision,
-            )
+            self.dataset = self.download_dataset_worker(self)
 
         assert self.dataset is not None, f"Dataset {self.dataset_path} not found."
 
