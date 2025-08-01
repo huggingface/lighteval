@@ -399,6 +399,7 @@ class VLLMModel(LightevalModel):
             sampling_params.detokenize = False
 
         if self.data_parallel_size > 1:
+
             @ray.remote(num_gpus=self.tensor_parallel_size)
             def run_inference_one_model(model_args: dict, sampling_params: SamplingParams, requests):
                 llm = LLM(**model_args)
