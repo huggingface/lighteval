@@ -30,7 +30,7 @@ lighteval accelerate \
      "leaderboard|truthfulqa:mc|0|0"
 ```
 
-Here, we first choose a backend (either `accelerate`, `nanotron`, or `vllm`), and then specify the model and task(s) to run.
+Here, we first choose a backend (either `accelerate`, `nanotron`, `endpoint`, or `vllm`), and then specify the model and task(s) to run.
 
 The syntax for the model arguments is `key1=value1,key2=value2,etc`.
 Valid key-value pairs correspond with the backend configuration, and are detailed [below](#Model Arguments).
@@ -104,13 +104,32 @@ GPUs.
 
 ## Backend configuration
 
+#### General information
+
 The `model-args` argument takes a string representing a list of model
 argument. The arguments allowed vary depending on the backend you use and
 correspond to the fields of the model configs.
 
-The model config can be found [here](./package_reference/models).
+The model configurations can be found [here](./package_reference/models).
 
-## Nanotron
+All models allow you to post process your reasoning model predictions,
+to remove the thinking tokens from the trace used to compute the metrics,
+using `--remove-reasoning-tags`, and `--reasoning-tags` to specify which
+reasoning tags to remove (defaults to <think> and </think>).
+
+Here's an example with `mistralai/Magistral-Small-2507` which outputs custom
+think tokens.
+
+```bash
+lighteval vllm \
+    "model_name=mistralai/Magistral-Small-2507,dtype=float16,data_parallel_size=4" \
+    "lighteval|aime24|0|0" \
+    --remove-reasoning-tags \
+    --reasoning-tags="[('[THINK]','[/THINK]')]"
+```
+
+
+#### Nanotron
 
 To evaluate a model trained with nanotron on a single gpu.
 
