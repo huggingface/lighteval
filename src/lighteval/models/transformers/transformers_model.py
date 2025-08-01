@@ -41,7 +41,7 @@ from transformers import (
     BitsAndBytesConfig,
     PretrainedConfig,
 )
-from transformers.generation.utils import GenerateOutput, uses_chat_template
+from transformers.generation.utils import GenerateOutput
 from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
@@ -50,7 +50,7 @@ from lighteval.models.model_output import (
     Batch,
     ModelResponse,
 )
-from lighteval.models.utils import ModelConfig, _get_dtype, _get_model_sha, _simplify_name
+from lighteval.models.utils import ModelConfig, _get_dtype, _get_model_sha, _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import (
