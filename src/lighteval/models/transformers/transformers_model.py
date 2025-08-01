@@ -50,7 +50,7 @@ from lighteval.models.model_output import (
     Batch,
     ModelResponse,
 )
-from lighteval.models.utils import ModelConfig, _get_dtype, _get_model_sha, _simplify_name
+from lighteval.models.utils import ModelConfig, _get_dtype, _get_model_sha, _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import (
@@ -101,8 +101,6 @@ class TransformersModelConfig(ModelConfig):
             Device to load the model on. Can be "cuda", "cpu", or GPU index. Defaults to "cuda".
         trust_remote_code (bool):
             Whether to trust remote code when loading models. Defaults to False.
-        use_chat_template (bool):
-            Whether to use chat templates for conversation-style prompts. Defaults to False.
         compile (bool):
             Whether to compile the model using torch.compile for optimization. Defaults to False.
         multichoice_continuations_start_space (bool | None):
@@ -117,7 +115,6 @@ class TransformersModelConfig(ModelConfig):
             model_name="meta-llama/Llama-3.1-8B-Instruct",
             batch_size=4,
             dtype="float16",
-            use_chat_template=True,
             generation_parameters=GenerationParameters(
                 temperature=0.7,
                 max_new_tokens=100
@@ -143,7 +140,6 @@ class TransformersModelConfig(ModelConfig):
     dtype: str | None = None
     device: Union[int, str] = "cuda"
     trust_remote_code: bool = False
-    use_chat_template: bool = False
     compile: bool = False
     multichoice_continuations_start_space: bool | None = None
     pairwise_tokenization: bool = False
@@ -185,7 +181,6 @@ class TransformersModel(LightevalModel):
         self.config = config
         self.accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
         self._device = self.accelerator.device
-        self.use_chat_template = config.use_chat_template
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
         self._add_special_tokens = config.add_special_tokens or False
         self.pairwise_tokenization = config.pairwise_tokenization
@@ -195,6 +190,7 @@ class TransformersModel(LightevalModel):
         self.model_sha = config.get_model_sha()
         self._max_length = self._init_max_length()
         self._tokenizer = self._create_auto_tokenizer()
+        self.use_chat_template = uses_chat_template(tokenizer=self._tokenizer)
         self.model = self._create_auto_model()
 
         # We are in DP (and launch the script with `accelerate launch`)
@@ -278,7 +274,7 @@ class TransformersModel(LightevalModel):
         else:
             self._device = self.config.device
 
-        self.use_chat_template = config.use_chat_template if config else False
+        self.use_chat_template = uses_chat_template(self._tokenizer)
         self._add_special_tokens = add_special_tokens if add_special_tokens is not None else False
         self.pairwise_tokenization = pairwise_tokenization
         self.multichoice_continuations_start_space = multichoice_continuations_start_space

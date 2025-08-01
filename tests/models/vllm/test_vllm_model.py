@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import unittest
+from unittest.mock import Mock, patch
 
 from transformers import AutoTokenizer
 
@@ -38,3 +39,24 @@ class TestVLLMTokenizerCreation(unittest.TestCase):
             revision=config.revision,
         )
         self.assertEqual(vllm_tokenizer.chat_template, tokenizer.chat_template)
+
+
+class TestVLLMModelUseChatTemplate(unittest.TestCase):
+    @patch("lighteval.models.vllm.vllm_model.VLLMModel._create_auto_model")
+    def test_vllm_model_use_chat_template_with_different_model_names(self, mock_create_model):
+        """Test that VLLMModel correctly calls uses_chat_template with different model names."""
+        test_cases = [
+            ("Qwen/Qwen3-0.6B", True),
+            ("gpt2", False),
+        ]
+
+        for model_name, expected_result in test_cases:
+            with self.subTest(model_name=model_name):
+                # We skip the model creation phase
+                mock_create_model.return_value = Mock()
+
+                config = VLLMModelConfig(model_name=model_name)
+                model = VLLMModel(config)
+
+                self.assertEqual(model.use_chat_template, expected_result)
+                self.assertEqual(model.use_chat_template, model._tokenizer.chat_template is not None)
