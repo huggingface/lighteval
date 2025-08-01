@@ -54,7 +54,7 @@ classifiers = [
 keywords = ["evaluation", "nlp", "llm"]
 dependencies = [
     # Base dependencies
-    "transformers>=4.51.0",
+    "transformers>=4.51.0,<4.54.0", # waiting for a vllm fix
     "accelerate",
     "huggingface_hub[hf_xet]>=0.30.2",
     "torch>=2.0,<3.0",

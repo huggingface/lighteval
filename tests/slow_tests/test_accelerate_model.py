@@ -35,7 +35,6 @@ from lighteval.main_accelerate import accelerate  # noqa: E402
 os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 
 MODELS_ARGS = [
-    # {"model_name": "gpt2", "use_chat_template": False, "revision": "main", "results_file": "tests/reference_scores/gpt2-results.json"},
     {
         "model_name": "examples/model_configs/transformers_model.yaml",
         "results_file": "tests/reference_scores/SmolLM2-1.7B-Instruct-results-accelerate.json",
