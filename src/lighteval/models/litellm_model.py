@@ -123,7 +123,7 @@ class LiteLLMClient(LightevalModel):
         self.API_MAX_RETRY = 5
         self.API_RETRY_SLEEP = 3
         self.API_RETRY_MULTIPLIER = 2
-        self.CONCURENT_CALLS = 10  # 100 leads to hitting Anthropic rate limits
+        self.CONCURRENT_CALLS = 10  # 100 leads to hitting Anthropic rate limits
 
         self._tokenizer = encode
         self.pairwise_tokenization = False
@@ -232,7 +232,7 @@ class LiteLLMClient(LightevalModel):
             f"Length of prompts, return_logitss, max_new_tokenss, num_sampless, stop_sequences, system_prompts should be the same but are {len(prompts)}, {len(return_logitss)}, {len(max_new_tokenss)}, {len(num_sampless)}, {len(stop_sequencess)}"
         )
 
-        with ThreadPoolExecutor(self.CONCURENT_CALLS) as executor:
+        with ThreadPoolExecutor(self.CONCURRENT_CALLS) as executor:
             for entry in tqdm(
                 executor.map(
                     self.__call_api,

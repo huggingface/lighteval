@@ -117,7 +117,6 @@ class VLMTransformersModelConfig(ModelConfig):
     dtype: str | None = None
     device: Union[int, str] = "cuda"
     trust_remote_code: bool = False
-    use_chat_template: bool = False
     compile: bool = False
     device_map: str | None = None
 
@@ -147,7 +146,7 @@ class VLMTransformersModel(LightevalModel):
 
         # Config attributes
         self.config = config
-        self.use_chat_template = config.use_chat_template
+        self.use_chat_template = True
         self.batch_size = config.batch_size
 
         # Model, config, and processor
