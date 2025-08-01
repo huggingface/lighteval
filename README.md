@@ -4,7 +4,6 @@
   <br/>
 </p>
 
-
 <p align="center">
     <i>Your go-to toolkit for lightning-fast, flexible LLM evaluation, from Hugging Face's Leaderboard and Evals Team.</i>
 </p>
@@ -92,6 +91,14 @@ lighteval accelerate \
     "model_name=gpt2" \
     "leaderboard|truthfulqa:mc|0|0"
 ```
+
+### 🔒Offline Usage
+If you are working in a restricted or offline network environment (e.g., behind a firewall or in an air-gapped setting),
+lighteval now supports loading datasets from a local path.
+```shell
+export LOCAL_DATASET_PATH=/path/to/your/local/dataset
+```
+Make sure the local directory contains the dataset in a structure compatible with the Hugging Face datasets library.
 
 ## 🙏 Acknowledgements
 
