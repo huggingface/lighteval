@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import logging
-import os
 from typing import Optional
 
 import typer
@@ -29,7 +28,6 @@ from typing_extensions import Annotated
 
 
 app = typer.Typer()
-CACHE_DIR = os.getenv("HF_HOME")
 
 
 @app.command()
@@ -38,7 +36,6 @@ def inspect(
     custom_tasks: Annotated[Optional[str], Option(help="Path to a file with custom tasks")] = None,
     num_samples: Annotated[int, Option(help="Number of samples to display")] = 10,
     show_config: Annotated[bool, Option(help="Will display the full task config")] = False,
-    cache_dir: Annotated[Optional[str], Option(help="Cache directory used to store datasets and models")] = CACHE_DIR,
 ):
     """
     Inspect a tasks
@@ -50,7 +47,7 @@ def inspect(
 
     from lighteval.tasks.registry import Registry, taskinfo_selector
 
-    registry = Registry(cache_dir=cache_dir, custom_tasks=custom_tasks)
+    registry = Registry(custom_tasks=custom_tasks)
 
     # Loading task
     task_names_list, _ = taskinfo_selector(tasks, task_registry=registry)
@@ -74,7 +71,7 @@ def list(custom_tasks: Annotated[Optional[str], Option(help="Path to a file with
     """
     from lighteval.tasks.registry import Registry
 
-    registry = Registry(cache_dir=CACHE_DIR, custom_tasks=custom_tasks)
+    registry = Registry(custom_tasks=custom_tasks)
     registry.print_all_tasks()
 
 

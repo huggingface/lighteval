@@ -40,7 +40,25 @@ if is_peft_available():
 
 
 class AdapterModelConfig(TransformersModelConfig):
-    # Adapter models have the specificity that they look at the base model (= the parent) for the tokenizer and config
+    """
+    Configuration class for PEFT (Parameter-Efficient Fine-Tuning) adapter models.
+
+    This configuration is used to load models that have been fine-tuned using PEFT adapters,
+    such as LoRA, AdaLoRA, or other parameter-efficient fine-tuning methods. The adapter
+    weights are merged with the base model during loading for efficient inference.
+
+    Attributes:
+        base_model (str):
+            HuggingFace Hub model ID or path to the base model. This is the original
+            pre-trained model that the adapter was trained on.
+        adapter_weights (bool):
+            Flag indicating that this is an adapter model. Must be set to True.
+
+    Note:
+        - Requires the `peft` library to be installed, `pip install lighteval[adapters]`
+        - Adapter models have the specificity that they look at the base model (= the parent) for the tokenizer and config
+    """
+
     base_model: str
     adapter_weights: bool
 

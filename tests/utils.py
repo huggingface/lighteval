@@ -29,20 +29,11 @@ from transformers import AutoTokenizer
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.models.abstract_model import LightevalModel, ModelInfo
-from lighteval.models.model_output import (
-    GenerativeResponse,
-    LoglikelihoodResponse,
-    LoglikelihoodSingleTokenResponse,
-)
+from lighteval.models.model_output import ModelResponse
 from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 from lighteval.tasks.lighteval_task import LightevalTask
 from lighteval.tasks.registry import Registry
-from lighteval.tasks.requests import (
-    GreedyUntilRequest,
-    LoglikelihoodRequest,
-    LoglikelihoodRollingRequest,
-    LoglikelihoodSingleTokenRequest,
-)
+from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import is_accelerate_available
 
 
@@ -51,16 +42,14 @@ class FakeModel(LightevalModel):
 
     def __init__(
         self,
-        greedy_until_responses: list[GenerativeResponse] = [],
-        loglikelihood_responses: list[LoglikelihoodResponse] = [],
-        loglikelihood_rolling_responses: list[LoglikelihoodResponse] = [],
-        loglikelihood_single_token_responses: list[LoglikelihoodSingleTokenResponse] = [],
+        greedy_until_responses: list[ModelResponse] = [],
+        loglikelihood_responses: list[ModelResponse] = [],
+        loglikelihood_rolling_responses: list[ModelResponse] = [],
     ):
         self._tokenizer = None
         self.greedy_until_responses = greedy_until_responses
         self.loglikelihood_responses = loglikelihood_responses
         self.loglikelihood_rolling_responses = loglikelihood_rolling_responses
-        self.loglikelihood_single_token_responses = loglikelihood_single_token_responses
 
     @property
     def tokenizer(self):
@@ -80,63 +69,53 @@ class FakeModel(LightevalModel):
     def model_info(self):
         return ModelInfo(model_name="fake_model")
 
-    def greedy_until(
-        self, requests: list[GreedyUntilRequest], override_bs: Optional[int] = None
-    ) -> list[GenerativeResponse]:
-        ret_resp, self.greedy_until_resp = (
-            self.greedy_until_responses[: len(requests)],
-            self.greedy_until_responses[len(requests) :],
+    def greedy_until(self, docs: list[Doc]) -> list[ModelResponse]:
+        ret_resp, self.greedy_until_responses = (
+            self.greedy_until_responses[: len(docs)],
+            self.greedy_until_responses[len(docs) :],
         )
         return ret_resp
 
-    def loglikelihood(
-        self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
+    def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         ret_resp, self.loglikelihood_responses = (
-            self.loglikelihood_responses[: len(requests)],
-            self.loglikelihood_responses[len(requests) :],
+            self.loglikelihood_responses[: len(docs)],
+            self.loglikelihood_responses[len(docs) :],
         )
         return ret_resp
 
-    def loglikelihood_rolling(
-        self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
+    def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
         ret_resp, self.loglikelihood_rolling_responses = (
-            self.loglikelihood_rolling_responses[: len(requests)],
-            self.loglikelihood_rolling_responses[len(requests) :],
-        )
-        return ret_resp
-
-    def loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodSingleTokenResponse]:
-        ret_resp, self.loglikelihood_single_token_responses = (
-            self.loglikelihood_single_token_responses[: len(requests)],
-            self.loglikelihood_single_token_responses[len(requests) :],
+            self.loglikelihood_rolling_responses[: len(docs)],
+            self.loglikelihood_rolling_responses[len(docs) :],
         )
         return ret_resp
 
 
 def fake_evaluate_task(
-    task: LightevalTask, lm: FakeModel, max_samples: int = 1, n_fewshot: int = 0, n_fewshot_seeds: int = 1
+    lighteval_task: LightevalTask, lm: FakeModel, max_samples: int = 1, n_fewshot: int = 0, n_fewshot_seeds: int = 1
 ):
     # Mock the Registry.get_task_dict method
 
-    task_name = f"{task.suite[0]}|{task.name}"
+    task_name = f"{lighteval_task.suite[0]}|{lighteval_task.name}"
 
-    task_dict = {task_name: task}
+    task_dict = {task_name: lighteval_task}
     evaluation_tracker = EvaluationTracker(output_dir="outputs")
     evaluation_tracker.task_config_logger.log(task_dict)
     # Create a mock Registry class
 
     class FakeRegistry(Registry):
-        def __init__(
-            self, cache_dir: Optional[str] = None, custom_tasks: Optional[Union[str, Path, ModuleType]] = None
-        ):
-            super().__init__(cache_dir=cache_dir, custom_tasks=custom_tasks)
+        def __init__(self, custom_tasks: Optional[Union[str, Path, ModuleType]] = None):
+            super().__init__(custom_tasks=custom_tasks)
 
         def get_task_dict(self, task_names: list[str]):
             return task_dict
+
+        def get_tasks_configs(self, task: str):
+            config = lighteval_task.config
+            config.num_fewshots = n_fewshot
+            config.truncate_fewshots = False
+            config.full_name = f"{task_name}|{config.num_fewshots}"
+            return [config]
 
     # This is due to logger complaining we have no initialised the accelerator
     # It's hard to mock as it's global singleton
@@ -147,10 +126,9 @@ def fake_evaluate_task(
 
     # This is a bit hacky, because there is no way to run end to end, with
     # dynamic task :(, so we just mock the registry
-    task_run_string = f"{task_name}|{n_fewshot}|{n_fewshot_seeds}"
     with patch("lighteval.pipeline.Registry", FakeRegistry):
         pipeline = Pipeline(
-            tasks=task_run_string,
+            tasks=task_name,
             pipeline_parameters=PipelineParameters(max_samples=max_samples, launcher_type=ParallelismManager.NONE),
             evaluation_tracker=evaluation_tracker,
             model=lm,
@@ -158,4 +136,4 @@ def fake_evaluate_task(
         )
         pipeline.evaluate()
 
-    return evaluation_tracker.metrics_logger.metrics_values[f"{task_name}|{n_fewshot}"]
+    return pipeline.get_results()

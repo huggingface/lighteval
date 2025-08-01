@@ -1,6 +1,6 @@
 # MIT License
 
-# Copyright (c) 2024 The HuggingFace Team
+# Copyright (c) 2025 The HuggingFace Team
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,16 +20,25 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from lighteval.models.model_loader import load_model
-from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
+import unittest
+from unittest.mock import Mock
+
+from lighteval.models.utils import uses_chat_template
 
 
-def test_empty_requests():
-    model_config = TransformersModelConfig(
-        model_name="hf-internal-testing/tiny-random-LlamaForCausalLM", model_parallel=False, revision="main"
-    )
-    model: TransformersModel = load_model(config=model_config)
+class TestUseChatTemplate(unittest.TestCase):
+    def test_uses_chat_template_with_chat_template_present(self):
+        """Test that uses_chat_template returns True when tokenizer has a chat template."""
+        mock_tokenizer = Mock()
+        mock_tokenizer.chat_template = "{% for message in messages %}..."
 
-    assert model.loglikelihood([]) == []
-    assert model.loglikelihood_rolling([]) == []
-    assert model.greedy_until([]) == []
+        result = uses_chat_template(tokenizer=mock_tokenizer)
+        self.assertTrue(result)
+
+    def test_uses_chat_template_with_no_chat_template(self):
+        """Test that uses_chat_template returns False when tokenizer has no chat template."""
+        mock_tokenizer = Mock()
+        mock_tokenizer.chat_template = None
+
+        result = uses_chat_template(tokenizer=mock_tokenizer)
+        self.assertFalse(result)

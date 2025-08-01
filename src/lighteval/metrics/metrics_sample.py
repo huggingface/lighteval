@@ -51,6 +51,7 @@ from lighteval.metrics.normalizations import (
     remove_braces_and_strip,
 )
 from lighteval.metrics.utils.judge_utils import get_judge_prompt_simpleqa, process_judge_response_simpleqa
+from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
 from lighteval.utils.utils import as_list, safe_divide
 
@@ -95,7 +96,7 @@ class ExactMatches:
             )
         self.type_exact_match = type_exact_match
 
-    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float:
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> float:
         """Computes the metric over a list of golds and predictions for one single sample.
 
         Args:
@@ -107,8 +108,9 @@ class ExactMatches:
         """
         results = []
         # We might need to flatten golds if they are a list of lists
+        golds = doc.get_golds()
         for gold in golds:
-            for pred in predictions:
+            for pred in model_response.text:
                 results.append(self.compute_one_item(gold=gold, pred=pred))
         return self.aggregation_function(results)
 
@@ -172,7 +174,7 @@ class F1_score:
         self.normalize_pred = normalize_pred
         self.strip_strings = strip_strings
 
-    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float:
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> float:
         """Computes the metric over a list of golds and predictions for one single sample.
 
         Args:
@@ -183,6 +185,8 @@ class F1_score:
             float: Aggregated score over the current sample's items.
         """
         results = []
+        golds = doc.get_golds()
+        predictions = model_response.text
         # We might need to flatten golds if they are a list of lists
         for gold in golds:
             for pred in predictions:
@@ -228,11 +232,8 @@ class LoglikelihoodAcc:
     # Solve the choices token lengths properly
     def compute(
         self,
-        gold_ixs: list[int],
-        choices_logprob: list[float],
-        unconditioned_logprob: list[float] | None,
-        choices_tokens: list[list[int]] | None,
-        formatted_doc: Doc,
+        doc: Doc,
+        model_response: ModelResponse,
         **kwargs,
     ) -> int:
         """Computes the log likelihood accuracy: is the choice with the highest logprob in `choices_logprob` present
@@ -249,17 +250,26 @@ class LoglikelihoodAcc:
         Returns:
             int: The eval score: 1 if the best log-prob choice is in gold, 0 otherwise.
         """
+        n_choices = len(doc.choices)
+        choices_logprobs = model_response.logprobs[:n_choices]
+        unconditioned_logprobs = None
+
+        if len(model_response.logprobs) == n_choices * 2:
+            unconditioned_logprobs = model_response.logprobs[n_choices : n_choices * 2]
+
+        gold_ixs = as_list(doc.gold_index)
+        choices_tokens = model_response.output_tokens[:n_choices]
 
         normalized_log_probs = (
             normalize_log_probs(
                 self.logprob_normalization,
-                choices_logprob,
-                unconditioned_logprob,
-                formatted_doc.choices,
+                choices_logprobs,
+                unconditioned_logprobs,
+                doc.choices,
                 choices_tokens,
             )
             if self.logprob_normalization
-            else choices_logprob
+            else choices_logprobs
         )
 
         best_choice = np.argmax(normalized_log_probs)
@@ -284,11 +294,8 @@ class NormalizedMultiChoiceProbability:
 
     def compute(
         self,
-        gold_ixs: list[int],
-        choices_logprob: list[float],
-        unconditioned_logprob: list[float] | None,
-        choices_tokens: list[list[int]] | None,
-        formatted_doc: Doc,
+        doc: Doc,
+        model_response: ModelResponse,
         **kwargs,
     ) -> float:
         """Computes the log likelihood probability: chance of choosing the best choice.
@@ -304,17 +311,26 @@ class NormalizedMultiChoiceProbability:
         Returns:
             float: The probability of the best log-prob choice being a gold choice.
         """
+        n_choices = len(doc.choices)
+        choices_logprobs = model_response.logprobs[:n_choices]
+        unconditioned_logprobs = None
+
+        if len(model_response.logprobs) == n_choices * 2:
+            unconditioned_logprobs = model_response.logprobs[n_choices : n_choices * 2]
+
+        gold_ixs = as_list(doc.gold_index)
+        choices_tokens = model_response.output_tokens[:n_choices]
 
         normalized_log_probs = (
             normalize_log_probs(
                 self.log_prob_normalization,
-                choices_logprob,
-                unconditioned_logprob,
-                formatted_doc.choices,
+                choices_logprobs,
+                unconditioned_logprobs,
+                doc.choices,
                 choices_tokens,
             )
             if self.log_prob_normalization
-            else choices_logprob
+            else choices_logprobs
         )
         normalized_probs = np.exp(normalized_log_probs)
 
@@ -341,9 +357,8 @@ class Probability:
 
     def compute(
         self,
-        logprobs: list[float],
-        target_tokens: list[list[int]] | None = None,
-        reference_texts: list[str] | None = None,
+        doc: Doc,
+        model_response: ModelResponse,
         **kwargs,
     ) -> float:
         """Computes the log likelihood probability: chance of choosing the best choice.
@@ -358,11 +373,14 @@ class Probability:
         Returns:
             float: The probability of the best log-prob choice being a gold choice.
         """
+        choices_tokens = model_response.output_tokens
+        logprobs = model_response.logprobs
+        reference_texts = doc.choices
 
         normalized_log_probs = (
             normalize_log_probs(
                 normalization=self.log_prob_normalization,
-                choices_tokens=target_tokens,
+                choices_tokens=choices_tokens,
                 choices_logprob=logprobs,
                 choices_text=reference_texts,
                 unconditioned_logprob=None,
@@ -384,7 +402,7 @@ class Recall:
         """
         self.recall_depth = at
 
-    def compute(self, choices_logprob: list[float], gold_ixs: list[int], **kwargs) -> int:
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> int:
         """Computes the recall at the requested depth level: looks at the `n` best predicted choices (with the
         highest log probabilities) and see if there is an actual gold among them.
 
@@ -395,9 +413,12 @@ class Recall:
         Returns:
             int: Score: 1 if one of the top level predicted choices was correct, 0 otherwise.
         """
+        choices_logprobs = model_response.logprobs
+        gold_ixs = as_list(doc.gold_index)
+
         if self.recall_depth == 1:
-            return int(np.argmax(choices_logprob) in gold_ixs)
-        return (int(any(ix in gold_ixs for ix in np.array(choices_logprob).argsort()[::-1][: self.recall_depth])),)
+            return int(np.argmax(choices_logprobs) in gold_ixs)
+        return int(any(ix in gold_ixs for ix in np.array(choices_logprobs).argsort()[::-1][: self.recall_depth]))
 
 
 class MRR:
@@ -409,7 +430,7 @@ class MRR:
         """
         self.length_normalization = length_normalization
 
-    def compute(self, choices_logprob: list[float], gold_ixs: list[float], formatted_doc: Doc, **kwargs) -> float:
+    def compute(self, model_response: ModelResponse, doc: Doc, **kwargs) -> float:
         """Mean reciprocal rank. Measures the quality of a ranking of choices (ordered by correctness).
 
         Args:
@@ -421,13 +442,20 @@ class MRR:
         Returns:
             float: MRR score.
         """
+        choices_logprobs = model_response.logprobs
+        gold_ixs = as_list(doc.gold_index)
+        choices_logprobs = model_response.logprobs
+
         if self.length_normalization:
-            choices_logprob = [choices_logprob[ix] / len(formatted_doc.choices[ix]) for ix in len(choices_logprob)]
-        ranked_choices = [sorted(choices_logprob, reverse=True).index(choices_logprob[gold]) for gold in gold_ixs]
+            choices_logprobs = [
+                choice_logprob / len(choice) for choice_logprob, choice in zip(choices_logprobs, doc.choices)
+            ]
+
+        ranked_choices = [sorted(choices_logprobs, reverse=True).index(choices_logprobs[gold]) for gold in gold_ixs]
         return 1.0 / (min(ranked_choices) + 1)
 
 
-def acc_golds_likelihood(argmax_logits_eq_gold_list: list[int], **kwargs) -> int:
+def acc_golds_likelihood(doc, model_response, **kwargs) -> int:
     """Tests if at least one of predicted gold targets' argmax of logits equals the gold.
 
     Args:
@@ -436,7 +464,7 @@ def acc_golds_likelihood(argmax_logits_eq_gold_list: list[int], **kwargs) -> int
     Returns:
         int: 1 if at least one of the possible golds has argmax of logits == gold, 0 otherwise
     """
-    return int(any(argmax_logits_eq_gold_list))
+    return int(any(model_response.argmax_logits_eq_gold))
 
 
 class ROUGE:
@@ -447,9 +475,9 @@ class ROUGE:
         methods: str | list[str],
         multiple_golds: bool = False,
         bootstrap: bool = False,
-        normalize_gold: callable = None,
-        normalize_pred: callable = None,
-        aggregation_function: callable = None,
+        normalize_gold: Callable | None = None,
+        normalize_pred: Callable | None = None,
+        aggregation_function: Callable | None = None,
         tokenizer: object = None,
     ):
         """A ROUGE wrapper method. Relies on `rouge_scorer`.
@@ -486,7 +514,7 @@ class ROUGE:
         self.tokenizer = tokenizer
         self.scorer = None
 
-    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float | dict:
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> float | dict:
         """Computes the metric(s) over a list of golds and predictions for one single sample.
 
         Args:
@@ -498,6 +526,9 @@ class ROUGE:
                 If several rouge functions have been selected, returns a dict which maps name and scores.
         """
         from rouge_score import rouge_scorer
+
+        golds = doc.get_golds()
+        predictions = model_response.text
 
         if self.scorer is None:
             self.scorer = rouge_scorer.RougeScorer(self.methods, tokenizer=self.tokenizer)
@@ -537,11 +568,11 @@ class ROUGE:
                 scores[method].append(cur_scores[method].fmeasure)
         return {method: self.aggregation_function(scores[method]) for method in self.methods}
 
-    def _rouge_score_with_bootsrap(self, golds: list[str], preds: list[str]):
+    def _rouge_score_with_bootsrap(self, golds: list[str], predictions: list[str]):
         from rouge_score import scoring
 
         aggregator = scoring.BootstrapAggregator()
-        for g, p in zip(golds, preds):
+        for g, p in zip(golds, predictions):
             aggregator.add_scores(self.scorer.score(g, p))
         result = aggregator.aggregate()
         return {method: result[method].mid.fmeasure * 100 for method in self.methods}
@@ -550,8 +581,8 @@ class ROUGE:
 class BertScore:
     def __init__(
         self,
-        normalize_gold: callable = None,
-        normalize_pred: callable = None,
+        normalize_gold: Callable | None = None,
+        normalize_pred: Callable | None = None,
     ):
         r"""A BERT scorer class. Relies on some called extracted from `bert-score`. By default, will use the
         `microsoft/deberta-large-mnli` as scorer. For each tokenized (pred, target) pair, it computes Precision,
@@ -577,7 +608,7 @@ class BertScore:
         self.normalize_gold = normalize_gold
         self.normalize_pred = normalize_pred
 
-    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> dict:
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> dict[str, float]:
         """Computes the prediction, recall and f1 score using the bert scorer.
 
         Args:
@@ -587,6 +618,9 @@ class BertScore:
         Returns:
             dict: Scores over the current sample's items.
         """
+        golds = doc.get_golds()
+        predictions = model_response.text
+
         if self.bert_scorer is None:
             logger.warning("The first metric computation step might be a bit longer as we need to download the model.")
             # We only initialize on first compute
@@ -628,7 +662,7 @@ class Extractiveness:
         self.normalize_pred = normalize_pred
         self.input_column = input_column
 
-    def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> dict[str, float]:
         """
         Compute the extractiveness of the predictions.
 
@@ -645,8 +679,8 @@ class Extractiveness:
         if self.stats_metric is None:
             self.stats_metric = DataStatsMetric()
 
-        inp = formatted_doc.specific[self.input_column]
-        prediction = predictions[0]
+        inp = doc.specific[self.input_column]
+        prediction = model_response.text[0]
         if self.normalize_input:
             inp = self.normalize_input(inp)
         if self.normalize_pred:
@@ -663,8 +697,8 @@ class Extractiveness:
 class Faithfulness:
     def __init__(
         self,
-        normalize_input: callable = remove_braces,
-        normalize_pred: callable = remove_braces_and_strip,
+        normalize_input: Callable = remove_braces,
+        normalize_pred: Callable = remove_braces_and_strip,
         input_column: str = "text",
     ):
         """
@@ -682,7 +716,7 @@ class Faithfulness:
         self.normalize_pred = normalize_pred
         self.input_column = input_column
 
-    def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> dict[str, float]:
         """
         Compute the faithfulness of the predictions.
 
@@ -699,7 +733,8 @@ class Faithfulness:
             self.summac = SummaCZS(
                 granularity="sentence", model_name="vitc", imager_load_cache=False
             )  # , device=device)
-        inp = formatted_doc.specific[self.input_column]
+        inp = doc.specific[self.input_column]
+        predictions = model_response.text
         prediction = predictions[0]
         if self.normalize_input:
             inp = self.normalize_input(inp)
@@ -729,7 +764,7 @@ class BLEURT:
             self._model.eval()
         return self._model
 
-    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> float:
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> float:
         """Uses the stored BLEURT scorer to compute the score on the current sample.
 
         Args:
@@ -739,6 +774,8 @@ class BLEURT:
         Returns:
             float: Score over the current sample's items.
         """
+        predictions = model_response.text
+        golds = doc.get_golds()
         if len(predictions) == 1:
             predictions = predictions * len(golds)
         scores = self.model(**self.tokenizer(golds, predictions, return_tensors="pt"))[0].squeeze()
@@ -755,7 +792,7 @@ class BLEU:
         """
         self.n_gram = n_gram
 
-    def compute(self, golds: list[str], predictions: list[str], **kwargs):
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs):
         """Computes the sentence level BLEU between the golds and each prediction, then takes the average.
 
         Args:
@@ -765,9 +802,11 @@ class BLEU:
         Returns:
             float: Score over the current sample's items.
         """
+        golds = doc.get_golds()
+        predictions = model_response.text
         return np.mean([self._bleu_score(golds, p) for p in predictions])
 
-    def _bleu_score(self, gold: list[str], pred: str) -> float:
+    def _bleu_score(self, gold: list[str], pred: str):
         """Computes the BLEU score between a list of golds and the current prediction.
 
         Args:
@@ -803,7 +842,7 @@ class StringDistance:
         self.strip_prediction = strip_prediction
         self.sample_aggregations = {"longest_common_prefix_length": max, "edit_distance": min, "edit_similarity": max}
 
-    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> dict:
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs):
         """Computes all the requested metrics on the golds and prediction.
 
         Args:
@@ -813,6 +852,8 @@ class StringDistance:
         Returns:
            dict: The different scores computed
         """
+        predictions = model_response.text
+        golds = doc.get_golds()
         if len(golds) > 1:
             logger.warning(
                 "Provided more than one gold to compute a string distance metric. Just using the first one."
@@ -823,6 +864,8 @@ class StringDistance:
         for sequence in predictions:
             if self.strip_prediction:
                 completion = sequence.strip()
+            else:
+                completion = sequence
 
             # `reference` is the entire remaining book for each instance.
             # Truncate it here to be of the same length as the completion to ensure edit-distance is meaningful.
@@ -878,7 +921,7 @@ class JudgeLLM:
         process_judge_response: Callable,
         judge_backend: Literal["litellm", "openai", "transformers", "vllm", "tgi", "inference-providers"],
         short_judge_name: str | None = None,
-        response_format: BaseModel = None,
+        response_format: BaseModel | None = None,
         url: str | None = None,
         hf_provider: str | None = None,
         max_tokens: int | None = None,
@@ -930,7 +973,7 @@ class JudgeLLM:
             max_tokens=max_tokens,
         )
 
-    def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs) -> dict[str, float]:
+    def compute(self, responses: list[ModelResponse], docs: list[Doc], **kwargs) -> list:
         raise NotImplementedError("This method should be implemented in the subclass.")
 
 
@@ -944,22 +987,22 @@ class JudgeLLMSimpleQA(JudgeLLM):
             short_judge_name="gpt4o",
         )
 
-    def compute(self, sample_ids: list[str], responses: list, formatted_docs: list[Doc], **kwargs) -> dict[str, float]:
+    def compute(self, responses: list[ModelResponse], docs: list[Doc], **kwargs) -> list:
         """
         Compute the score of a generative task using a llm as a judge.
         The generative task can be multiturn with 2 turns max, in that case, we
         return scores for turn 1 and 2. Also returns user_prompt and judgement
         which are ignored later by the aggregator.
         """
-        questions = [formatted_doc.query for formatted_doc in formatted_docs]
-        options = [formatted_doc.choices for formatted_doc in formatted_docs]
-        golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
-        predictions = [response[0].result[0] for response in responses]
+        questions = [formatted_doc.query for formatted_doc in docs]
+        options = [formatted_doc.choices for formatted_doc in docs]
+        golds = [formatted_doc.get_golds()[0] for formatted_doc in docs]
+        predictions = [response.text[0] for response in responses]
 
         scores, messages, judgements = self.judge.evaluate_answer_batch(questions, predictions, options, golds)
 
         metrics = []
-        for i in range(len(sample_ids)):
+        for i in range(len(docs)):
             metrics.append(
                 {
                     "simpleqa_judge": scores[i],
@@ -972,7 +1015,7 @@ class JudgeLLMSimpleQA(JudgeLLM):
 
 
 class JudgeLLMMTBench(JudgeLLM):
-    def compute(self, predictions: list[str], formatted_doc: Doc, **kwargs):
+    def compute(self, model_response: list[ModelResponse], docs: list[Doc], **kwargs):
         """
         Compute the score of a generative task using a llm as a judge.
         The generative task can be multiturn with 2 turns max, in that case, we
@@ -982,8 +1025,9 @@ class JudgeLLMMTBench(JudgeLLM):
         import json
 
         # If we are evaluating a multiturn task, we need to have specific field in the formatted doc
-        questions = formatted_doc.specific["multi_turn_queries"]
-        golds = formatted_doc.specific.get("reference", None)
+        questions = [doc.specific["multi_turn_queries"] for doc in docs]
+        golds = [doc.specific.get("reference", None) for doc in docs]
+        predictions = [response.text[0] for response in model_response]
 
         query_context_1 = {"query": questions[0], "context": ""}
         query_context_2 = {"query": questions[1], "context": predictions[0]}
@@ -1004,22 +1048,22 @@ class JudgeLLMMTBench(JudgeLLM):
 
 
 class JudgeLLMMixEval(JudgeLLM):
-    def compute(self, sample_ids: list[str], responses: list, formatted_docs: list[Doc], **kwargs) -> dict[str, float]:
+    def compute(self, model_responses: list[ModelResponse], docs: list[Doc], **kwargs):
         """
         Compute the score of a generative task using a llm as a judge.
         The generative task can be multiturn with 2 turns max, in that case, we
         return scores for turn 1 and 2. Also returns user_prompt and judgement
         which are ignored later by the aggregator.
         """
-        questions = [formatted_doc.specific["question"] for formatted_doc in formatted_docs]
-        options = [formatted_doc.choices for formatted_doc in formatted_docs]
-        golds = [formatted_doc.get_golds()[0] for formatted_doc in formatted_docs]
-        predictions = [response[0].result[0] for response in responses]
+        questions = [doc.specific["question"] for doc in docs]
+        options = [doc.choices for doc in docs]
+        golds = [doc.get_golds()[0] for doc in docs]
+        predictions = [response.text[0] for response in model_responses]
 
         scores, messages, judgements = self.judge.evaluate_answer_batch(questions, predictions, options, golds)
 
         metrics = []
-        for i in range(len(sample_ids)):
+        for i in range(len(docs)):
             metrics.append(
                 {
                     f"judge_score_{self.short_judge_name}": scores[i],
@@ -1035,8 +1079,8 @@ class MajAtK:
     def __init__(
         self,
         k: int,
-        normalize_gold: callable = None,
-        normalize_pred: callable = None,
+        normalize_gold: Callable | None = None,
+        normalize_pred: Callable | None = None,
         strip_strings: bool = False,
         type_exact_match: str = "full",
     ):
@@ -1066,7 +1110,7 @@ class MajAtK:
             )
         self.type_exact_match = type_exact_match
 
-    def compute(self, golds: list[str], predictions: list[str], **kwargs) -> dict[str, float]:
+    def compute(self, model_response: ModelResponse, docs: Doc, **kwargs):
         """Computes the metric over a list of golds and predictions for one single sample.
         It applies normalisation (if needed) to model prediction and gold, and takes the most frequent answer of all the available ones,
         then compares it to the gold.
@@ -1078,6 +1122,8 @@ class MajAtK:
         Returns:
             float: Aggregated score over the current sample's items.
         """
+        golds = docs.get_golds()
+        predictions = model_response.text
         if len(golds) > 1:
             raise Exception("Cannot compute maj@k with several golds")
 
@@ -1088,7 +1134,7 @@ class MajAtK:
         majority_prediction = max(all_answers, key=all_answers.count)
         return self.compute_score(majority_prediction, gold)
 
-    def get_processed_gold(self, gold: str) -> float:
+    def get_processed_gold(self, gold: str) -> str:
         if self.strip_strings:
             gold = gold.strip()
 
@@ -1097,7 +1143,7 @@ class MajAtK:
 
         return gold
 
-    def get_processed_pred(self, pred: str) -> float:
+    def get_processed_pred(self, pred: str) -> str:
         if not pred:
             return ""
 
@@ -1121,11 +1167,11 @@ class PassAtK:
     def __init__(
         self,
         k: int,
-        n: int = None,
-        normalize_gold: Callable = None,
-        normalize_pred: Callable = None,
+        n: int | None = None,
+        normalize_gold: Callable | None = None,
+        normalize_pred: Callable | None = None,
         strip_strings: bool = False,
-        sample_scoring_function: Union[Callable[[str, str], float], str] = None,
+        sample_scoring_function: Callable[[Doc, ModelResponse], float] | str | None = None,
     ):
         """Computing pass at k
 
@@ -1165,9 +1211,7 @@ class PassAtK:
                 self.type_exact_match = "full"
             self.score_sample = self.default_sample_scoring
 
-    def compute(
-        self, golds: list[str], predictions: list[str], formatted_doc: Doc = None, **kwargs
-    ) -> dict[str, float]:
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> float:
         """Computes the metric over a list of golds and predictions for one single item with possibly many samples.
         It applies normalisation (if needed) to model prediction and gold, computes their per prediction score,
         then aggregates the scores over the samples using a pass@k.
@@ -1179,6 +1223,8 @@ class PassAtK:
         Returns:
             float: Aggregated score over the current sample's items.
         """
+        golds = doc.get_golds()
+        predictions = model_response.text
         if len(golds) > 1:
             raise Exception("Cannot compute pass@k with several golds")
 
@@ -1188,16 +1234,24 @@ class PassAtK:
         elif len(predictions) < self.n:
             logger.warning(f"Number of predictions is less than {self.n} for pass@k.")
 
-        gold = self.get_processed_gold(golds[0])
+        processed_choices = [self.get_processed_gold(gold=g) for g in doc.choices]
+        new_doc = Doc(
+            choices=processed_choices,
+            query=doc.query,
+            gold_index=doc.gold_index,
+        )
 
         all_scores = []
         for pred in predictions[: self.n]:
             cur_pred = self.get_processed_pred(pred=pred)
-            all_scores.append(self.score_sample(cur_pred, gold, formatted_doc))
+            new_model_response = ModelResponse(
+                text=[cur_pred],
+            )
+            all_scores.append(self.score_sample(new_doc, new_model_response))
 
         return self.pass_at_k(all_scores)
 
-    def get_processed_gold(self, gold: str) -> float:
+    def get_processed_gold(self, gold: str) -> str:
         if self.strip_strings:
             gold = gold.strip()
 
@@ -1206,7 +1260,7 @@ class PassAtK:
 
         return gold
 
-    def get_processed_pred(self, pred: str) -> float:
+    def get_processed_pred(self, pred: str) -> str:
         if not pred:
             return ""
 
@@ -1218,7 +1272,10 @@ class PassAtK:
 
         return pred
 
-    def default_sample_scoring(self, pred: str, gold: str) -> int:
+    def default_sample_scoring(self, doc, model_response) -> int:
+        pred = model_response.text[0]
+        gold = doc.get_golds()[0]
+
         if self.type_exact_match == "prefix":
             return 1 if pred.startswith(gold) else 0
         if self.type_exact_match == "suffix":
@@ -1238,12 +1295,12 @@ class GPassAtK:
     def __init__(
         self,
         k: Union[int, list[int]],
-        n: int = None,
+        n: int | None = None,
         thresholds: list[float] = [0.0, 0.25, 0.5, 0.75, 1.0],
-        normalize_gold: Callable = None,
-        normalize_pred: Callable = None,
+        normalize_gold: Callable | None = None,
+        normalize_pred: Callable | None = None,
         strip_strings: bool = False,
-        sample_scoring_function: Union[Callable[[str, str], float], str] = None,
+        sample_scoring_function: Callable[[Doc, ModelResponse], float] | str | None = None,
     ):
         """Computing G-Pass@k from http://arxiv.org/abs/2412.13147
 
@@ -1285,7 +1342,7 @@ class GPassAtK:
                 self.type_exact_match = "full"
             self.score_sample = self.default_sample_scoring
 
-    def compute(self, predictions: list[str], formatted_doc: list[Doc], **kwargs) -> dict[str, float]:
+    def compute(self, model_response: ModelResponse, doc: Doc, **kwargs) -> float:
         """Computes the metric over a list of golds and predictions for one single item with possibly many samples.
         It applies normalisation (if needed) to model prediction and gold, computes their per prediction score,
         then aggregates the scores over the samples using a pass@k.
@@ -1297,7 +1354,8 @@ class GPassAtK:
         Returns:
             float: Aggregated score over the current sample's items.
         """
-        golds = formatted_doc.get_golds()
+        golds = doc.get_golds()
+        predictions = model_response.text
 
         if len(golds) > 1:
             raise Exception("Cannot compute G-Pass@k with several golds")
@@ -1310,12 +1368,20 @@ class GPassAtK:
         elif len(predictions) < self.n:
             logger.warning(f"Number of predictions is less than {self.n} for G-Pass@k.")
 
-        gold = self.get_processed_gold(golds[0])
+        processed_choices = [self.get_processed_gold(gold=g) for g in doc.choices]
+        new_doc = Doc(
+            choices=processed_choices,
+            query=doc.query,
+            gold_index=doc.gold_index,
+        )
 
         all_scores = []
         for pred in predictions[: self.n]:
             cur_pred = self.get_processed_pred(pred=pred)
-            all_scores.append(self.score_sample(cur_pred, gold, formatted_doc))
+            new_model_response = ModelResponse(
+                text=[cur_pred],
+            )
+            all_scores.append(self.score_sample(new_doc, new_model_response))
 
         return self.g_pass_at_k(all_scores)
 
@@ -1340,7 +1406,9 @@ class GPassAtK:
 
         return pred
 
-    def default_sample_scoring(self, pred: str, gold: str) -> int:
+    def default_sample_scoring(self, doc: Doc, model_response: ModelResponse) -> int:
+        gold = doc.get_golds()[0]
+        pred = model_response.text[0]
         if self.type_exact_match == "prefix":
             return 1 if pred.startswith(gold) else 0
         if self.type_exact_match == "suffix":
