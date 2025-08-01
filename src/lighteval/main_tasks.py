@@ -45,13 +45,13 @@ def inspect(
 
     from rich import print
 
-    from lighteval.tasks.registry import Registry, taskinfo_selector
+    from lighteval.tasks.registry import Registry
 
     registry = Registry(custom_tasks=custom_tasks)
 
     # Loading task
-    task_names_list, _ = taskinfo_selector(tasks, task_registry=registry)
-    task_dict = registry.get_task_dict(task_names_list)
+    task_configs = registry.get_tasks_configs(tasks)
+    task_dict = registry.get_tasks_from_configs(task_configs)
     for name, task in task_dict.items():
         print("-" * 10, name, "-" * 10)
         if show_config:
