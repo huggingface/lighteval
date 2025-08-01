@@ -171,9 +171,7 @@ class Registry:
 
 
         Returns:
-            tuple[list[str], dict[str, list[tuple[int, bool]]]]: A tuple containing:
-                - A sorted list of unique task names in the format "suite|task".
-                - A dictionary mapping each task name to a list of tuples representing the few_shot and truncate_few_shots values.
+            dict[str, list[dict]]: A dictionary mapping each task name to a list of tuples representing the few_shot and truncate_few_shots values.
         """
         few_shot_dict = collections.defaultdict(list)
 
