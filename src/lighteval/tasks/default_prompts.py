@@ -1873,15 +1873,13 @@ def mmlu_redux_2(line, topic, task_name: str = None):
 
     # Handle answer format - MMLU-Redux-2 uses integer indices directly
     gold_ix = line["answer"] if isinstance(line["answer"], int) else int(line["answer"])
-    is_few_shots = line.get("__few_shots", False)
 
     return Doc(
         task_name=task_name,
         query=query,
-        choices=LETTER_INDICES[:len(line["choices"])],
+        choices=LETTER_INDICES[: len(line["choices"])],
         gold_index=gold_ix,
         instruction=f"The following are multiple choice questions (with answers) about {topic.replace('_', ' ')}.\n\n",
-        target_for_fewshot_sorting=LETTER_INDICES[gold_ix] if not is_few_shots else None,
     )
 
 

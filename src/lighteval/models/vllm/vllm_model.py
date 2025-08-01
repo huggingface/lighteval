@@ -461,7 +461,8 @@ class VLLMModel(LightevalModel):
                     tokenized_contexts_batch.append(tokenized_context)
 
             # Left truncate the inputs to the maximum length
-            inputs = [input[-self.max_length :] for input in inputs]
+            if self.max_length:  # can be None if the model is initialized with ray
+                inputs = [input[-self.max_length :] for input in inputs]
             outputs = self._generate(inputs, generate=False)
 
             flat_index = 0
