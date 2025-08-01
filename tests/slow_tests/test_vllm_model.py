@@ -35,10 +35,8 @@ from lighteval.main_vllm import vllm  # noqa: E402
 os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 
 MODELS_ARGS = [
-    # {"model_name": "gpt2", "use_chat_template": False, "revision": "main", "results_file": "tests/reference_scores/gpt2-results.json"},
     {
         "model_name": "examples/model_configs/vllm_model_config.yaml",
-        "use_chat_template": True,
         "results_file": "tests/reference_scores/SmolLM2-1.7B-Instruct-results-vllm.json",
     }
 ]

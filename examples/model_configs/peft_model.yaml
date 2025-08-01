@@ -7,10 +7,8 @@ model_parameters:
   revision: "main" # revision to use
   trust_remote_code: true # Trust remote code
   model_parallel: null # Model parallel
-  use_chat_template: true # Use chat template
   max_length: 2048 # maximum length of the input text and the generated text
 
   # should go in generation
   max_generation_toks: 256 # maximum number of tokens to generate
-    #use_chat_template: true # Use chat template
   batch_size: 10 # batch size to use
