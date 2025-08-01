@@ -741,7 +741,7 @@ class TransformersModel(LightevalModel):
         else:
             return self._padded_greedy_until(docs)
 
-    def _generate_fast(
+    def _generate_continuous(
         self,
         inputs: list[list[int]],
         max_new_tokens: Optional[int] = None,
@@ -854,7 +854,7 @@ class TransformersModel(LightevalModel):
         **kwargs,
     ) -> list[ModelResponse]:
         if continuous_batching:
-            return self._generate_fast(**kwargs)
+            return self._generate_continuous(**kwargs)
         else:
             return self._generate_padded(**kwargs)
 
