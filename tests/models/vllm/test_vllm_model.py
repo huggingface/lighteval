@@ -38,3 +38,19 @@ class TestVLLMTokenizerCreation(unittest.TestCase):
             revision=config.revision,
         )
         self.assertEqual(vllm_tokenizer.chat_template, tokenizer.chat_template)
+
+
+class TestVLLMModelUseChatTemplate(unittest.TestCase):
+    def test_vllm_model_use_chat_template_with_different_model_names(self):
+        """Test that VLLMModel correctly calls uses_chat_template with different model names."""
+        test_cases = [
+            ("Qwen/Qwen3-0.6B", True),
+            ("gpt2", False),
+        ]
+
+        for model_name, expected_result in test_cases:
+            with self.subTest(model_name=model_name):
+                config = VLLMModelConfig(model_name=model_name)
+                model = VLLMModel(config)
+
+                self.assertEqual(model.use_chat_template, expected_result)
