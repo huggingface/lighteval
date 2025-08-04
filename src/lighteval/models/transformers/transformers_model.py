@@ -654,7 +654,7 @@ class TransformersModel(LightevalModel):
                 tokenized_context = self.tokenizer(context)
 
                 # Longest context in the current split is the first item (since we sort reversed)
-                longest_context_continuation_size_in_split = len(tokenized_context) + split[0].generation_size
+                longest_context_continuation_size_in_split = len(tokenized_context["input_ids"]) + split[0].generation_size
                 max_context_continuation_size_allowed = min(
                     longest_context_continuation_size_in_split, self.max_length
                 )
@@ -677,12 +677,12 @@ class TransformersModel(LightevalModel):
 
                 # For chat models, generation stops with EOS token, so we don't need to specify stop tokens
                 if self.use_chat_template:
-                    stop_tokens = []
+                    stop_tokens = [self.tokenizer.eos_token]
                 else:
                     # NOTE: we are assuming all items in a batch behave similarly (same
                     # stop_tokens and max_tokens genrated) which is not necessarily
                     # the case! Because of that we only use batch size of 1
-                    stop_tokens = batch[0].stop_sequences
+                    stop_tokens = [self.tokenizer.eos_token] + batch[0].stop_sequences
 
                 max_new_tokens = batch[0].generation_size
                 num_samples = batch[0].num_samples
