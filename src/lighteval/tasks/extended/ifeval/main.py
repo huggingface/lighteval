@@ -32,7 +32,6 @@ from lighteval.metrics.utils.metric_utils import (
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc, SamplingMethod
-from lighteval.utils.utils import remove_reasoning_tags
 
 
 # Very specific task where there are no precise outputs but instead we test if the format obeys rules
@@ -60,9 +59,7 @@ REASONING_TAG_PAIRS = [
 
 
 def ifeval_metric(doc: Doc, model_response: ModelResponse, **kwargs) -> dict:
-    response = model_response.text[0]
-    # Remove the reasoning block to avoid false negatives: https://github.com/huggingface/lighteval/issues/790
-    response = remove_reasoning_tags(response, REASONING_TAG_PAIRS)
+    response = model_response.final_text[0]
 
     # Strict instructions
     instruction_list = doc.specific["instructions_id_list"]

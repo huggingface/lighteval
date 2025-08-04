@@ -43,6 +43,16 @@ def nanotron(
         str, Option(help="Path to the nanotron checkpoint YAML or python config file, potentially on s3.")
     ],
     lighteval_config_path: Annotated[str, Option(help="Path to a YAML config to be used for the evaluation.")],
+    remove_reasoning_tags: Annotated[
+        bool, Option(help="Remove reasoning tags from responses.", rich_help_panel=HELP_PANEL_NAME_1)
+    ] = True,
+    reasoning_tags: Annotated[
+        str | None,
+        Option(
+            help="List of reasoning tags (provided as pairs) to remove from responses. Default is [('<think>', '</think>')].",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = None,
 ):
     """
     Evaluate models using nanotron as backend.
@@ -101,6 +111,8 @@ def nanotron(
         custom_tasks_directory=lighteval_config.tasks.custom_tasks,
         num_fewshot_seeds=1,
         max_samples=lighteval_config.tasks.max_samples,
+        remove_reasoning_tags=remove_reasoning_tags,
+        reasoning_tags=reasoning_tags,
     )
 
     pipeline = Pipeline(
