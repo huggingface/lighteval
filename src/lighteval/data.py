@@ -103,9 +103,11 @@ class DynamicBatchDataset(Dataset):
         Returns:
             list: new_arr in the original order.
         """
-        original_order = [None] * self.total_size
+        original_order = [0] * self.total_size
 
         for original_index, v in zip(self.original_order, new_arr):
+            if original_index is None:
+                original_index = 0
             original_order[original_index] = v
 
         if None in original_order:
