@@ -286,7 +286,7 @@ class EvaluationTracker:
             output_dir = self.output_dir
             output_dir_results = Path(self.results_path_template.format(output_dir=output_dir, org=org, model=model))
         else:
-            output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name
+            output_dir_results = f"{self.output_dir}/results/{self.general_config_logger.model_name}"
         self.fs.mkdirs(output_dir_results, exist_ok=True)
         output_results_file = output_dir_results / f"results_{date_id}.json"
         logger.info(f"Saving results to {output_results_file}")
