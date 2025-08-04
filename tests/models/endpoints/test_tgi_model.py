@@ -38,6 +38,8 @@ class TestTGIModelConfig:
                     "model_name": None,
                     "system_prompt": None,
                     "generation_parameters": {
+                        "block_size": None,
+                        "num_blocks": None,
                         "early_stopping": None,
                         "frequency_penalty": None,
                         "length_penalty": None,
