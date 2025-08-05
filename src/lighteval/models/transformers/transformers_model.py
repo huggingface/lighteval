@@ -915,7 +915,7 @@ class TransformersModel(LightevalModel):
             max_num_choices = max(len(d.choices) for d in split)
             # We divide the batch size by the number of choices as batch is samples * num choices
             # then round up to closest 8 multiple
-            batch_size = round(batch_size // max_num_choices / 8) * 8
+            batch_size = max(1, round(batch_size // max_num_choices / 8) * 8)
             logger.warning(
                 f"batch size is set to {batch_size} (it should be understood as '{batch_size} times the maximum number of choices per sample, {max_num_choices}')"
             )
