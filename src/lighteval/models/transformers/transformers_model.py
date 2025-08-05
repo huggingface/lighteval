@@ -402,7 +402,7 @@ class TransformersModel(LightevalModel):
             revision=revision,
             max_memory=max_memory,
             device_map=device_map,
-            #tp_plan="auto",
+            # tp_plan="auto",
             torch_dtype=torch_dtype,
             trust_remote_code=self.config.trust_remote_code,
             **kwargs,
@@ -655,7 +655,9 @@ class TransformersModel(LightevalModel):
                 tokenized_context = self.tokenizer(context)
 
                 # Longest context in the current split is the first item (since we sort reversed)
-                longest_context_continuation_size_in_split = len(tokenized_context["input_ids"]) + split[0].generation_size
+                longest_context_continuation_size_in_split = (
+                    len(tokenized_context["input_ids"]) + split[0].generation_size
+                )
                 max_context_continuation_size_allowed = min(
                     longest_context_continuation_size_in_split, self.max_length
                 )
