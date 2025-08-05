@@ -92,6 +92,8 @@ class TransformersModelConfig(ModelConfig):
             Additional keyword arguments passed to `from_pretrained`. Defaults to empty dict.
         add_special_tokens (bool):
             Whether to add special tokens during tokenization. Defaults to True.
+        skip_special_tokens (bool):
+            Whether the tokenizer should output special tokens back during generation. Needed for reasoning models. Defaults to True
         model_parallel (bool | None):
             Whether to use model parallelism across multiple GPUs. If None, automatically
             determined based on available GPUs and model size.
@@ -139,6 +141,7 @@ class TransformersModelConfig(ModelConfig):
     max_length: PositiveInt | None = None
     model_loading_kwargs: dict = Field(default_factory=dict)
     add_special_tokens: bool = True
+    skip_special_tokens: bool = True
     model_parallel: bool | None = None
     dtype: str | None = None
     device: Union[int, str] = "cuda"
@@ -187,6 +190,7 @@ class TransformersModel(LightevalModel):
         self._device = self.accelerator.device
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
         self._add_special_tokens = config.add_special_tokens or False
+        self.skip_special_tokens = config.skip_special_tokens or True
         self.pairwise_tokenization = config.pairwise_tokenization
         self.batch_size = config.batch_size
         self.continuous_batching = config.continuous_batching
@@ -244,6 +248,7 @@ class TransformersModel(LightevalModel):
         tokenizer_name: str = None,  # custom tokenizer
         trust_remote_code: bool = False,
         add_special_tokens: bool = True,
+        skip_special_tokens: bool = True,
         pairwise_tokenization: bool = False,
         multichoice_continuations_start_space: bool = None,
     ):
@@ -280,6 +285,7 @@ class TransformersModel(LightevalModel):
 
         self.use_chat_template = uses_chat_template(self._tokenizer)
         self._add_special_tokens = add_special_tokens if add_special_tokens is not None else False
+        self.skip_special_tokens = skip_special_tokens if skip_special_tokens is not None else True
         self.pairwise_tokenization = pairwise_tokenization
         self.multichoice_continuations_start_space = multichoice_continuations_start_space
 
@@ -396,6 +402,7 @@ class TransformersModel(LightevalModel):
             revision=revision,
             max_memory=max_memory,
             device_map=device_map,
+            # tp_plan="auto",
             torch_dtype=torch_dtype,
             trust_remote_code=self.config.trust_remote_code,
             **kwargs,
@@ -595,7 +602,9 @@ class TransformersModel(LightevalModel):
                 # for output in _output.outputs:
                 output_token_ids.append(_output.generated_tokens)
                 # logprobs_raw.append(output.logprobs)
-                result.append(self.tokenizer.decode(_output.generated_tokens))
+                result.append(
+                    self.tokenizer.decode(_output.generated_tokens, skip_special_tokens=self.skip_special_tokens)
+                )
 
                 if logprobs_raw and output_token_ids and False:
                     logprobs = [logprobs_raw[0][token_id].logprob for token_id in output_token_ids[0]]
@@ -646,7 +655,9 @@ class TransformersModel(LightevalModel):
                 tokenized_context = self.tokenizer(context)
 
                 # Longest context in the current split is the first item (since we sort reversed)
-                longest_context_continuation_size_in_split = len(tokenized_context) + split[0].generation_size
+                longest_context_continuation_size_in_split = (
+                    len(tokenized_context["input_ids"]) + split[0].generation_size
+                )
                 max_context_continuation_size_allowed = min(
                     longest_context_continuation_size_in_split, self.max_length
                 )
@@ -669,12 +680,12 @@ class TransformersModel(LightevalModel):
 
                 # For chat models, generation stops with EOS token, so we don't need to specify stop tokens
                 if self.use_chat_template:
-                    stop_tokens = []
+                    stop_tokens = [self.tokenizer.eos_token]
                 else:
                     # NOTE: we are assuming all items in a batch behave similarly (same
                     # stop_tokens and max_tokens genrated) which is not necessarily
                     # the case! Because of that we only use batch size of 1
-                    stop_tokens = batch[0].stop_sequences
+                    stop_tokens = [self.tokenizer.eos_token] + batch[0].stop_sequences
 
                 max_new_tokens = batch[0].generation_size
                 num_samples = batch[0].num_samples
@@ -1188,6 +1199,9 @@ class TransformersModel(LightevalModel):
             else:
                 output_tensor = self.accelerator.gather(output_tensor)
         return output_tensor, length_tensor
+
+    def tok_decode(self, tokens: torch.LongTensor) -> list[str]:
+        return self.tokenizer.batch_decode(tokens, skip_special_tokens=self.skip_special_tokens)
 
 
 class MultiTokenEOSCriteria(transformers.StoppingCriteria):
