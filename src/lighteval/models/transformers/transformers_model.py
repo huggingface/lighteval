@@ -401,7 +401,8 @@ class TransformersModel(LightevalModel):
             self.config.model_name,
             revision=revision,
             max_memory=max_memory,
-            device_map=device_map,
+            tp_plan="auto",
+            #device_map=device_map,
             torch_dtype=torch_dtype,
             trust_remote_code=self.config.trust_remote_code,
             **kwargs,
@@ -758,16 +759,27 @@ class TransformersModel(LightevalModel):
         num_samples: int = 1,
         generate: bool = True,
     ) -> Dict[str, ModelResponse]:
+        if num_samples > 1 and self.generation_config_dict["temperature"] == 0:
+            raise ValueError(
+                "You cannot generate multiple samples with temperature=0. Please set temperature > 0. Or use a non sampling metric."
+            )
+
         # Compute model generation
-        self.model.generation_config.use_cuda_graph = False  # Disable CUDA graph for batch generation
-        self.model.generation_config.max_batch_tokens = 256  # Disable CUDA graph for batch generation
-        # self.model.generation_config.do_sample = False  # Disable CUDA graph for batch generation
+        self.model.generation_config.max_new_tokens=max_new_tokens
+        self.model.generation_config.eos_token_id=self.tokenizer.eos_token_id
+        self.model.generation_config.num_return_sequences=num_samples
+        self.model.generation_config.output_logits=returns_logits
+        self.model.generation_config.renormalize_logits=True
+        self.model.generation_config.num_blocks=4096
+        self.model.generation_config.block_size=256
+        self.model.generation_config.max_batch_tokens=16, # Disable CUDA graph for batch generation
+        self.model.generation_config.do_sample = False  # Disable CUDA graph for batch generation
+        self.model.generation_config.use_cuda_graph=False # Disable CUDA graph for batch generation
         batch_outputs = self.model.generate_batch(
             inputs=inputs,
             generation_config=self.model.generation_config,
             # You can pass request-specific overrides here, e.g., max_new_tokens=100
         )
-
         return batch_outputs
 
     def _generate_padded(
