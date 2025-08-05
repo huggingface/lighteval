@@ -42,6 +42,7 @@ class TestTGIModelConfig:
                         "num_blocks": None,
                         "early_stopping": None,
                         "frequency_penalty": None,
+                        "grammar": None,
                         "length_penalty": None,
                         "max_new_tokens": None,
                         "min_new_tokens": None,

@@ -33,10 +33,9 @@ class GenerationParameters(BaseModel, extra="forbid"):
     frequency_penalty: NonNegativeFloat | None = None  # vllm, tgi, sglang
     length_penalty: NonNegativeFloat | None = None  # vllm, transformers
     presence_penalty: NonNegativeFloat | None = None  # vllm, sglang
-
     max_new_tokens: NonNegativeInt | None = None  # vllm, transformers, tgi, litellm, sglang
     min_new_tokens: NonNegativeInt | None = None  # vllm, transformers, sglang
-
+    grammar: str | None = None  # tgi
     seed: NonNegativeInt | None = None  # vllm, tgi, litellm
     stop_tokens: list[str] | None = None  # vllm, transformers, tgi, litellm, sglang
     temperature: NonNegativeFloat = (
@@ -215,6 +214,7 @@ class GenerationParameters(BaseModel, extra="forbid"):
             "top_k": self.top_k,
             "top_p": self.top_p,
             "truncate": self.truncate_prompt,
+            "grammar": self.grammar,
         }
         return {k: v for k, v in args.items() if v is not None}
 
