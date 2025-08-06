@@ -40,6 +40,7 @@ class TestTGIModelConfig:
                     "generation_parameters": {
                         "block_size": None,
                         "num_blocks": None,
+                        "cache_implementation": None,
                         "early_stopping": None,
                         "frequency_penalty": None,
                         "length_penalty": None,
