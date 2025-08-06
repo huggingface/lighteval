@@ -923,8 +923,12 @@ class TransformersModel(LightevalModel):
                 starting_batch_size=starting_batch_size,
             )
             starting_batch_size = batch_size * 2
+            max_num_choices = max(len(d.choices) for d in split)
+            # We divide the batch size by the number of choices as batch is samples * num choices
+            # then round up to closest 8 multiple
+            batch_size = max(1, round(batch_size // max_num_choices / 8) * 8)
             logger.warning(
-                f"batch size is set to {batch_size} however, logliklehood evaluates on n choices per samples so batch size will be muiltiplied by number of choices per sample"
+                f"batch size is set to {batch_size} (it should be understood as '{batch_size} times the maximum number of choices per sample, {max_num_choices}')"
             )
 
             dataloader = DataLoader(split, batch_size=batch_size, collate_fn=lambda batch: batch)
@@ -1026,33 +1030,46 @@ class TransformersModel(LightevalModel):
                 if self.accelerator:
                     # Convert lists to tensors for proper gathering
                     # Pad and stack the tensors to make them gatherable
-                    choices_lengths = [len(choices) for choices in batch_tokenized_continuations_processed]
-                    choices_lengths_tensor = torch.tensor(choices_lengths, device=self.device)
-                    gathered_choices_lengths = self.accelerator.gather_for_metrics(choices_lengths_tensor)
-                    global_max_choices = gathered_choices_lengths.max().item()
+                    shape_choices = [
+                        choices.shape for choices in batch_tokenized_continuations_processed
+                    ]  # num_choices * max len choices
+                    num_choices_tensor = torch.tensor([shape[0] for shape in shape_choices], device=self.device)
+                    len_choices_tensor = torch.tensor([shape[1] for shape in shape_choices], device=self.device)
+                    gathered_num_choices = self.accelerator.gather_for_metrics(num_choices_tensor)
+                    gathered_len_choices = self.accelerator.gather_for_metrics(len_choices_tensor)
+                    max_num_choices = gathered_num_choices.max().item()
+                    max_len_choices = gathered_len_choices.max().item()
+                    len_context_tensor = torch.tensor(
+                        [len(ctx) for ctx in batch_tokenized_contexts_processed], device=self.device
+                    )
+                    gathered_len_context = self.accelerator.gather_for_metrics(len_context_tensor)
+                    max_len_context = gathered_len_context.max().item()
 
-                    # Pad logits_sum_batch to same size
+                    # 1d - Pad logits_sum and max_equals to same number of choices
                     padded_logits_sums = []
                     for logits_sum_doc in batch_logits_sums:
-                        pad_amount = global_max_choices - len(logits_sum_doc)
+                        pad_amount = max_num_choices - len(logits_sum_doc)
                         padded = F.pad(logits_sum_doc, (0, pad_amount), value=-1)
                         padded_logits_sums.append(padded)
 
                     padded_max_equals = []
                     for max_equals_doc in batch_max_equals:
-                        pad_amount = global_max_choices - len(max_equals_doc)
+                        pad_amount = max_num_choices - len(max_equals_doc)
                         padded = F.pad(max_equals_doc, (0, pad_amount), value=False)
                         padded_max_equals.append(padded)
 
+                    # 2d - Pad continuations to max number of choice and max length
                     padded_continuations = []
                     for cont_batch in batch_tokenized_continuations_processed:
-                        pad_amount = global_max_choices - cont_batch.shape[0]
-                        padded = F.pad(cont_batch, (0, pad_amount), value=-1)
+                        pad_amount_num = max_num_choices - cont_batch.shape[0]
+                        pad_amount_len = max_len_choices - cont_batch.shape[1]
+                        padded = F.pad(cont_batch, (0, pad_amount_len, 0, pad_amount_num), value=-1)
                         padded_continuations.append(padded)
 
+                    # 1d - Pad context to maximum context size
                     padded_contexts = []
                     for ctx_batch in batch_tokenized_contexts_processed:
-                        pad_amount = global_max_choices - ctx_batch.shape[0]
+                        pad_amount = max_len_context - len(ctx_batch)
                         padded = F.pad(ctx_batch, (0, pad_amount), value=-1)
                         padded_contexts.append(padded)
 
@@ -1075,12 +1092,19 @@ class TransformersModel(LightevalModel):
                     batch_tokenized_contexts_processed = []
 
                     # Only process if we have gathered results
-                    for i, actual_count in enumerate(gathered_choices_lengths):
-                        # Extract non-padded values based on actual counts
-                        batch_logits_sums.append(gathered_logits_sums[i][:actual_count])
-                        batch_max_equals.append(gathered_max_equals[i][:actual_count])
-                        batch_tokenized_continuations_processed.append(gathered_continuations[i][:actual_count])
-                        batch_tokenized_contexts_processed.append(gathered_contexts[i][:actual_count])
+                    for i, num_choices in enumerate(gathered_num_choices):
+                        # Extract non-padded values
+                        # 1d on num choices
+                        batch_logits_sums.append(gathered_logits_sums[i][:num_choices])
+                        batch_max_equals.append(gathered_max_equals[i][:num_choices])
+                        # 2d on num choices and max len
+                        len_choice = gathered_len_choices[i]
+                        batch_tokenized_continuations_processed.append(
+                            gathered_continuations[i][:num_choices][:len_choice]
+                        )
+                        # 1d on max len context
+                        len_context = gathered_len_context[i]
+                        batch_tokenized_contexts_processed.append(gathered_contexts[i][:len_context])
 
                 # Process the gathered results
                 for i in range(len(batch_logits_sums)):
