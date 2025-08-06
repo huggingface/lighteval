@@ -7893,7 +7893,7 @@ goal_step_wikihow_bigbench = LightevalTaskConfig(
     version=0,
 )
 gpqa_lighteval = LightevalTaskConfig(
-    name="gpqa",
+    name="gpqa:mc",
     suite=["lighteval"],
     prompt_function=prompt.gpqa,
     hf_repo="Idavidrein/gpqa",
