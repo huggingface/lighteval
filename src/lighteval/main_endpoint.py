@@ -377,7 +377,7 @@ def litellm(
     import yaml
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.models.litellm_model import LiteLLMModelConfig
+    from lighteval.models.endpoints.litellm_model import LiteLLMModelConfig
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 
     evaluation_tracker = EvaluationTracker(
