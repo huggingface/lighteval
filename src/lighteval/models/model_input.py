@@ -47,6 +47,8 @@ class GenerationParameters(BaseModel, extra="forbid"):
     top_p: NonNegativeFloat | None = None  # vllm, transformers, tgi, litellm, sglang
     truncate_prompt: bool | None = None  # vllm, tgi
 
+    cache_implementation: str | None = None  # transformers
+
     # response format to be followed by the model,
     # more info here https://platform.openai.com/docs/api-reference/chat/create#chat-create-response_format
     response_format: str | None = None  # inference_providers
@@ -192,6 +194,7 @@ class GenerationParameters(BaseModel, extra="forbid"):
             "num_blocks": self.num_blocks,
             "block_size": self.block_size,
             "return_dict_in_generate": True,
+            "cache_implementation": self.cache_implementation,
         }
         return {k: v for k, v in args.items() if v is not None}
 
