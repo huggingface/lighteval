@@ -134,8 +134,10 @@ class ModelConfig(BaseModel, extra="forbid"):
         for key, value in matches:
             key = key.strip()
             if key == "generation_parameters":
-                # regex by lysandre
-                gen_params = re.sub(r"(\w+)\s*:\s*([A-Za-z_][\w.-]*)\s*(?=[,}])", r'"\1":"\2"', value)
+                # Keys must be quoted (since they are strings)
+                gen_params = re.sub(r"(\w+):", r'"\1":', value)
+                # for k, v where v are strings, we quote them too
+                gen_params = re.sub(r":\s*([A-Za-z_][\w.-]*)\s*(?=[,}])", r':"\1"', gen_params)
                 generation_parameters_dict = json.loads(gen_params)
 
         args = re.sub(r"generation_parameters=\{.*?\},?", "", args).strip(",")
