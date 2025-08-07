@@ -1,0 +1,6 @@
+extended|global_mmlu_lite_instruct_deu|0|0
+extended|global_mmlu_lite_instruct_eng|0|0
+extended|global_mmlu_lite_instruct_spa|0|0
+extended|global_mmlu_lite_instruct_fra|0|0
+extended|global_mmlu_lite_instruct_ita|0|0
+extended|global_mmlu_lite_instruct_por|0|0
