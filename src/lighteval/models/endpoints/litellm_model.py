@@ -27,10 +27,8 @@ from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset
-from lighteval.models.abstract_model import LightevalModel
-from lighteval.models.endpoints.endpoint_model import ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
-from lighteval.models.utils import ModelConfig
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import is_litellm_available
@@ -103,17 +101,12 @@ class LiteLLMModelConfig(ModelConfig):
 class LiteLLMClient(LightevalModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
-    def __init__(self, config) -> None:
+    def __init__(self, config: LiteLLMModelConfig) -> None:
         """
         IMPORTANT: Your API keys should be set in the environment variables.
         If a base_url is not set, it will default to the public API.
         """
-        self.model_info = ModelInfo(
-            model_name=config.model_name,
-            model_sha="",
-            model_dtype=None,
-            model_size=-1,
-        )
+        self.config = config
         self.model = config.model_name
         self.provider = config.provider or config.model_name.split("/")[0]
         self.base_url = config.base_url
