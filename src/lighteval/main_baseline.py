@@ -89,6 +89,7 @@ def baseline(
             model_dtype=None,
             model_size=None,
         ),
+        {},
     )
     evaluation_tracker.task_config_logger.log(tasks_dict)
 

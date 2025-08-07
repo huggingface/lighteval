@@ -34,7 +34,7 @@ from pydantic import BaseModel
 from transformers import AutoTokenizer
 from transformers.models.auto.configuration_auto import AutoConfig
 
-from lighteval.models.model_input import GenerationParameters
+from lighteval.models.model_input import ChatTemplateParameters, GenerationParameters
 
 
 logger = logging.getLogger(__name__)
@@ -70,7 +70,7 @@ class ModelConfig(BaseModel, extra="forbid"):
         config = ModelConfig.from_path("model_config.yaml")
 
         # Load from command line arguments
-        config = ModelConfig.from_args("model_name=meta-llama/Llama-3.1-8B-Instruct,system_prompt='You are a helpful assistant.',generation_parameters={temperature=0.7}")
+        config = ModelConfig.from_args("model_name=meta-llama/Llama-3.1-8B-Instruct,system_prompt='You are a helpful assistant.',generation_parameters={temperature:0.7}")
 
         # Direct instantiation
         config = ModelConfig(
@@ -81,7 +81,9 @@ class ModelConfig(BaseModel, extra="forbid"):
         ```
     """
 
+    model_name: str
     generation_parameters: GenerationParameters = GenerationParameters()
+    chat_template_parameters: ChatTemplateParameters = ChatTemplateParameters()
     system_prompt: str | None = None
 
     @classmethod
@@ -131,19 +133,30 @@ class ModelConfig(BaseModel, extra="forbid"):
         """
         # Looking for generation_parameters in the model_args
         generation_parameters_dict = None
-        pattern = re.compile(r"(\w+)=(\{.*\}|[^,]+)")
+        chat_template_parameters_dict = None
+        pattern = re.compile(r"(\w+)\s*=\s*(\{[^{}]*\}|[^,]+?)(?=,|$)")
         matches = pattern.findall(args)
         for key, value in matches:
             key = key.strip()
             if key == "generation_parameters":
                 gen_params = re.sub(r"(\w+):", r'"\1":', value)
                 generation_parameters_dict = json.loads(gen_params)
+            if key == "chat_template_parameters":
+                # Chat template parameters have strings as values that also need to be quoted
+                chat_template_params = re.sub(r"(\w+)\s*:\s*([A-Za-z_][\w.-]*)\s*(?=[,}])", r'"\1":"\2"', value)
+                chat_template_parameters_dict = json.loads(chat_template_params)
 
         args = re.sub(r"generation_parameters=\{.*?\},?", "", args).strip(",")
-        model_config = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.split(",")}
+        args = re.sub(r"chat_template_parameters=\{.*?\},?", "", args).strip(",")
+        model_config = (
+            {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.split(",")} if args else {}
+        )
 
         if generation_parameters_dict is not None:
             model_config["generation_parameters"] = generation_parameters_dict
+
+        if chat_template_parameters_dict is not None:
+            model_config["chat_template_parameters"] = chat_template_parameters_dict
 
         return model_config
 

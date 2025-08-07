@@ -232,3 +232,18 @@ class GenerationParameters(BaseModel, extra="forbid"):
             "min_new_tokens": self.min_new_tokens,
         }
         return {k: v for k, v in args.items() if v is not None}
+
+
+class ChatTemplateParameters(BaseModel):
+    reasoning_effort: str = None
+
+    def to_transformers_dict(self) -> dict:
+        """Selects relevant chat template parameters for transformers models.
+
+        Returns:
+            dict: Valid parameters for the chat template
+        """
+        args = {
+            "reasoning_effort": self.reasoning_effort,
+        }
+        return {k: v for k, v in args.items() if v is not None}

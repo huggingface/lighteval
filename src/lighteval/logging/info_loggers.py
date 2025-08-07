@@ -87,6 +87,7 @@ class GeneralConfigLogger:
     model_size: str = None
 
     generation_parameters: dict | None = None
+    chat_template_parameters: dict | None = None
 
     # Nanotron config
     config: "Config" = None
@@ -129,7 +130,9 @@ class GeneralConfigLogger:
         self.job_id = job_id
         self.config = config
 
-    def log_model_info(self, generation_parameters: dict, model_info: ModelInfo) -> None:
+    def log_model_info(
+        self, generation_parameters: dict, model_info: ModelInfo, chat_template_parameters: dict
+    ) -> None:
         """
         Logs the model information.
 
@@ -139,6 +142,7 @@ class GeneralConfigLogger:
 
         """
         self.generation_parameters = generation_parameters
+        self.chat_template_parameters = chat_template_parameters
         self.model_name = model_info.model_name
         self.model_sha = model_info.model_sha
         self.model_dtype = model_info.model_dtype

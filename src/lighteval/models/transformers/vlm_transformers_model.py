@@ -104,7 +104,6 @@ class VLMTransformersModelConfig(ModelConfig):
             loading.
     """
 
-    model_name: str
     processor: str | None = None
     use_fast_image_processor: bool | None = None
     subfolder: str | None = None

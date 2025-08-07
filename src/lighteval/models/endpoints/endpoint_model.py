@@ -95,7 +95,6 @@ class ServerlessEndpointModelConfig(ModelConfig):
         ```
     """
 
-    model_name: str
     add_special_tokens: bool = True
     batch_size: int = 1
 

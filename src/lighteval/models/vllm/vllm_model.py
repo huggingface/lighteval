@@ -140,7 +140,6 @@ class VLLMModelConfig(ModelConfig):
         ```
     """
 
-    model_name: str
     revision: str = "main"  # revision of the model
     dtype: str = "bfloat16"
     tensor_parallel_size: PositiveInt = 1  # how many GPUs to use for tensor parallelism
