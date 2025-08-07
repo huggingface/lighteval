@@ -116,7 +116,6 @@ class GeneralConfigLogger:
 
         Args:
             model_config: the model config used to initialize the model.
-            model_info (ModelInfo): Model information to be logged.
 
         """
         self.model_config = model_config

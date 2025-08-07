@@ -28,7 +28,7 @@ from unittest.mock import patch
 from transformers import AutoTokenizer
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
-from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.model_output import ModelResponse
 from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 from lighteval.tasks.lighteval_task import LightevalTask
@@ -64,10 +64,6 @@ class FakeModel(LightevalModel):
     @property
     def max_length(self) -> int:
         return 2048
-
-    @property
-    def model_info(self):
-        return ModelInfo(model_name="fake_model")
 
     def greedy_until(self, docs: list[Doc]) -> list[ModelResponse]:
         ret_resp, self.greedy_until_responses = (
