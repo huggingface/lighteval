@@ -57,18 +57,19 @@ def nanotron(
     """
     Evaluate models using nanotron as backend.
     """
-    from nanotron.config import GeneralArgs, ModelArgs, TokenizerArgs, get_config_from_dict, get_config_from_file
-
-    from lighteval.config.lighteval_config import (
-        FullNanotronConfig,
-        LightEvalConfig,
-    )
-    from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
     from lighteval.utils.imports import NO_NANOTRON_ERROR_MSG, is_nanotron_available
 
     if not is_nanotron_available():
         raise ImportError(NO_NANOTRON_ERROR_MSG)
+
+    from nanotron.config import GeneralArgs, ModelArgs, TokenizerArgs, get_config_from_dict, get_config_from_file
+
+    from lighteval.logging.evaluation_tracker import EvaluationTracker
+    from lighteval.models.nanotron import (
+        FullNanotronConfig,
+        LightEvalConfig,
+    )
+    from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 
     # Create nanotron config
     if not checkpoint_config_path.endswith(".yaml"):
