@@ -157,24 +157,29 @@ def flatten(item: list[Union[list, str]]) -> list[str]:
 def make_results_table(result_dict):
     """Generate table of results."""
     md_writer = MarkdownTableWriter()
-    md_writer.headers = ["Task", "Version", "Metric", "Value", "", "Stderr"]
+    md_writer.headers = ["Task", "Version", "Number of Samples", "Metric", "Value", "", "Stderr"]
 
     values = []
+
+    # For backwards compatibility, create empty dict if result_dict doesn't contain num_samples
+    num_samples_dict = result_dict["num_samples"] if "num_samples" in result_dict else {}
 
     for k in sorted(result_dict["results"].keys()):
         dic = result_dict["results"][k]
         version = result_dict["versions"][k] if k in result_dict["versions"] else ""
+        num_samples = num_samples_dict[k] if k in num_samples_dict else ""
         for m, v in dic.items():
             if m.endswith("_stderr"):
                 continue
 
             if m + "_stderr" in dic:
                 se = dic[m + "_stderr"]
-                values.append([k, version, m, "%.4f" % v, "±", "%.4f" % se])
+                values.append([k, version, num_samples, m, "%.4f" % v, "±", "%.4f" % se])
             else:
-                values.append([k, version, m, "%.4f" % v, "", ""])
+                values.append([k, version, num_samples, m, "%.4f" % v, "", ""])
             k = ""
             version = ""
+            num_samples = ""
     md_writer.value_matrix = values
 
     return md_writer.dumps()
