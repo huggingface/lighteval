@@ -64,11 +64,7 @@ class GeneralConfigLogger:
         start_time (float): Start time of the experiment. Logged at class init.
         end_time (float): End time of the experiment. Logged when calling [`GeneralConfigLogger.log_end_time`]
         total_evaluation_time_secondes (str): Inferred total evaluation time in seconds (from the start and end times).
-        model_name (str): Name of the currently evaluated model.
-        model_sha (str): Commit hash of the currently evaluated model on the hub if available.
-        model_dtype (str): Dtype of the model weights, as obtained when loading the model config.
-        model_size (str): Model size as obtained when loading the model config.
-
+        model_config (ModelConfig): Model configuration
     """
 
     # general
@@ -81,8 +77,7 @@ class GeneralConfigLogger:
     total_evaluation_time_secondes: str = None
 
     model_config: ModelConfig = None
-
-    generation_parameters: dict | None = None
+    model_name: str = None
 
     def __init__(self) -> None:
         """Stores the current lighteval commit for reproducibility, and starts the evaluation timer."""
@@ -124,8 +119,8 @@ class GeneralConfigLogger:
             model_info (ModelInfo): Model information to be logged.
 
         """
-        self.generation_parameters = model_config.generation_parameters.model_dump() if model_config else {}
         self.model_config = model_config
+        self.model_name = model_config.model_name
 
     def log_end_time(self) -> None:
         self.end_time = time.perf_counter()
