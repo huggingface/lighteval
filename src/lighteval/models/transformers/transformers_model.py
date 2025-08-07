@@ -230,7 +230,10 @@ class TransformersModel(LightevalModel):
         )
 
         self.prompt_manager = PromptManager(
-            use_chat_template=self.use_chat_template, tokenizer=self.tokenizer, system_prompt=config.system_prompt
+            use_chat_template=self.use_chat_template,
+            tokenizer=self.tokenizer,
+            system_prompt=config.system_prompt,
+            chat_template_parameters=config.chat_template_parameters
         )
 
     def cleanup(self):

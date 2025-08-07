@@ -34,8 +34,7 @@ from pydantic import BaseModel
 from transformers import AutoTokenizer
 from transformers.models.auto.configuration_auto import AutoConfig
 
-from lighteval.models.model_input import GenerationParameters
-
+from lighteval.models.model_input import GenerationParameters, ChatTemplateParameters
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +81,7 @@ class ModelConfig(BaseModel, extra="forbid"):
     """
 
     generation_parameters: GenerationParameters = GenerationParameters()
+    chat_template_parameters: ChatTemplateParameters = ChatTemplateParameters()
     system_prompt: str | None = None
 
     @classmethod
@@ -131,7 +131,8 @@ class ModelConfig(BaseModel, extra="forbid"):
         """
         # Looking for generation_parameters in the model_args
         generation_parameters_dict = None
-        pattern = re.compile(r"(\w+)=(\{.*\}|[^,]+)")
+        chat_template_parameters_dict = None
+        pattern = re.compile(r'(\w+)\s*=\s*(\{[^{}]*\}|[^,]+?)(?=,|$)')
         matches = pattern.findall(args)
         for key, value in matches:
             key = key.strip()
@@ -139,12 +140,20 @@ class ModelConfig(BaseModel, extra="forbid"):
                 # regex by lysandre
                 gen_params = re.sub(r"(\w+)\s*:\s*([A-Za-z_][\w.-]*)\s*(?=[,}])", r'"\1":"\2"', value)
                 generation_parameters_dict = json.loads(gen_params)
+            if key == "chat_template_parameters":
+                # Chat template parameters have strings as values that also need to be quoted
+                chat_template_params = re.sub(r'(\w+)\s*:\s*([A-Za-z_][\w.-]*)\s*(?=[,}])', r'"\1":"\2"', value)
+                chat_template_parameters_dict = json.loads(chat_template_params)
 
         args = re.sub(r"generation_parameters=\{.*?\},?", "", args).strip(",")
+        args = re.sub(r"chat_template_parameters=\{.*?\},?", "", args).strip(",")
         model_config = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.split(",")}
 
         if generation_parameters_dict is not None:
             model_config["generation_parameters"] = generation_parameters_dict
+
+        if chat_template_parameters_dict is not None:
+            model_config["chat_template_parameters"] = chat_template_parameters_dict
 
         return model_config
 
