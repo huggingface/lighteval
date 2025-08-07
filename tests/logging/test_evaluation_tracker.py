@@ -34,160 +34,359 @@ from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.logging.info_loggers import DetailsLogger
 
 # ruff: noqa
-from tests.fixtures import TESTING_EMPTY_HF_ORG_ID, testing_empty_hf_org_id
+from tests.fixtures import TESTING_EMPTY_HF_ORG_ID
+from unittest.mock import patch, Mock
+import unittest
 
 
-@pytest.fixture
-def mock_evaluation_tracker(request):
-    passed_params = {}
-    if request.keywords.get("evaluation_tracker"):
-        passed_params = request.keywords["evaluation_tracker"].kwargs
+class TestLogging(unittest.TestCase):
+    @pytest.fixture
+    def mock_evaluation_tracker(request):
+        passed_params = {}
+        if request.keywords.get("evaluation_tracker"):
+            passed_params = request.keywords["evaluation_tracker"].kwargs
 
-    with tempfile.TemporaryDirectory() as temp_dir:
-        kwargs = {
-            "output_dir": temp_dir,
-            "save_details": passed_params.get("save_details", False),
-            "push_to_hub": passed_params.get("push_to_hub", False),
-            "push_to_tensorboard": passed_params.get("push_to_tensorboard", False),
-            "hub_results_org": passed_params.get("hub_results_org", ""),
+        with tempfile.TemporaryDirectory() as temp_dir:
+            kwargs = {
+                "output_dir": temp_dir,
+                "save_details": passed_params.get("save_details", False),
+                "push_to_hub": passed_params.get("push_to_hub", False),
+                "push_to_tensorboard": passed_params.get("push_to_tensorboard", False),
+                "hub_results_org": passed_params.get("hub_results_org", ""),
+            }
+            tracker = EvaluationTracker(**kwargs)
+            tracker.general_config_logger.model_name = "test_model"
+            yield tracker
+
+    @pytest.fixture
+    def mock_datetime(monkeypatch):
+        mock_date = datetime(2023, 1, 1, 12, 0, 0)
+
+        class MockDatetime:
+            @classmethod
+            def now(cls):
+                return mock_date
+
+            @classmethod
+            def fromisoformat(cls, date_string: str):
+                return mock_date
+
+        monkeypatch.setattr("lighteval.logging.evaluation_tracker.datetime", MockDatetime)
+        return mock_date
+
+    def test_results_logging(mock_evaluation_tracker: EvaluationTracker):
+        task_metrics = {
+            "task1": {"accuracy": 0.8, "f1": 0.75},
+            "task2": {"precision": 0.9, "recall": 0.85},
         }
-        tracker = EvaluationTracker(**kwargs)
-        tracker.general_config_logger.model_name = "test_model"
-        yield tracker
+        mock_evaluation_tracker.metrics_logger.metric_aggregated = task_metrics
+
+        mock_evaluation_tracker.save()
+
+        results_dir = Path(mock_evaluation_tracker.output_dir) / "results" / "test_model"
+        assert results_dir.exists()
+
+        result_files = list(results_dir.glob("results_*.json"))
+        assert len(result_files) == 1
+
+        with open(result_files[0], "r") as f:
+            saved_results = json.load(f)
+
+        assert "results" in saved_results
+        assert saved_results["results"] == task_metrics
+        assert saved_results["config_general"]["model_name"] == "test_model"
+
+    def test_results_logging_template(mock_evaluation_tracker: EvaluationTracker):
+        task_metrics = {
+            "task1": {"accuracy": 0.8, "f1": 0.75},
+            "task2": {"precision": 0.9, "recall": 0.85},
+        }
+        mock_evaluation_tracker.metrics_logger.metric_aggregated = task_metrics
+        mock_evaluation_tracker.results_path_template = "{output_dir}/{org}_{model}"
+
+        mock_evaluation_tracker.save()
+
+        results_dir = Path(mock_evaluation_tracker.output_dir) / "_test_model"
+        assert results_dir.exists()
+
+        result_files = list(results_dir.glob("results_*.json"))
+        assert len(result_files) == 1
+
+        with open(result_files[0], "r") as f:
+            saved_results = json.load(f)
+
+        assert "results" in saved_results
+        assert saved_results["results"] == task_metrics
+        assert saved_results["config_general"]["model_name"] == "test_model"
+
+    @pytest.mark.evaluation_tracker(save_details=True)
+    def test_details_logging(mock_evaluation_tracker, mock_datetime):
+        task_details = {
+            "task1": [DetailsLogger.CompiledDetail(hashes=None, truncated=10, padded=5)],
+            "task2": [DetailsLogger.CompiledDetail(hashes=None, truncated=20, padded=10)],
+        }
+        mock_evaluation_tracker.details_logger.details = task_details
+
+        mock_evaluation_tracker.save()
+
+        date_id = mock_datetime.isoformat().replace(":", "-")
+        details_dir = Path(mock_evaluation_tracker.output_dir) / "details" / "test_model" / date_id
+        assert details_dir.exists()
+
+        for task in ["task1", "task2"]:
+            file_path = details_dir / f"details_{task}_{date_id}.parquet"
+            dataset = Dataset.from_parquet(str(file_path))
+            assert len(dataset) == 1
+            assert int(dataset[0]["truncated"]) == task_details[task][0].truncated
+            assert int(dataset[0]["padded"]) == task_details[task][0].padded
+
+    @pytest.mark.evaluation_tracker(save_details=False)
+    def test_no_details_output(mock_evaluation_tracker: EvaluationTracker):
+        mock_evaluation_tracker.save()
+
+        details_dir = Path(mock_evaluation_tracker.output_dir) / "details" / "test_model"
+        assert not details_dir.exists()
+
+    @pytest.mark.skip(  # skipif
+        reason="Secrets are not available in this environment",
+        # condition=os.getenv("HF_TEST_TOKEN") is None,
+    )
+    @pytest.mark.evaluation_tracker(push_to_hub=True, hub_results_org=TESTING_EMPTY_HF_ORG_ID)
+    def test_push_to_hub_works(testing_empty_hf_org_id, mock_evaluation_tracker: EvaluationTracker, mock_datetime):
+        # Prepare the dummy data
+        task_metrics = {
+            "task1": {"accuracy": 0.8, "f1": 0.75},
+            "task2": {"precision": 0.9, "recall": 0.85},
+        }
+        mock_evaluation_tracker.metrics_logger.metric_aggregated = task_metrics
+
+        task_details = {
+            "task1": [DetailsLogger.CompiledDetail(truncated=10, padded=5)],
+            "task2": [DetailsLogger.CompiledDetail(truncated=20, padded=10)],
+        }
+        mock_evaluation_tracker.details_logger.details = task_details
+        mock_evaluation_tracker.save()
+
+        # Verify using HfApi
+        api = HfApi()
+
+        # Check if repo exists and it's private
+        expected_repo_id = f"{testing_empty_hf_org_id}/details_test_model_private"
+        assert api.repo_exists(repo_id=expected_repo_id, repo_type="dataset")
+        assert api.repo_info(repo_id=expected_repo_id, repo_type="dataset").private
+
+        repo_files = api.list_repo_files(repo_id=expected_repo_id, repo_type="dataset")
+        # Check if README.md exists
+        assert any(file == "README.md" for file in repo_files)
+
+        # Check that both results files were uploaded
+        result_files = [file for file in repo_files if file.startswith("results_")]
+        assert len(result_files) == 2
+        assert len([file for file in result_files if file.endswith(".json")]) == 1
+        assert len([file for file in result_files if file.endswith(".parquet")]) == 1
+
+        # Check that the details dataset was uploaded
+        details_files = [file for file in repo_files if "details_" in file and file.endswith(".parquet")]
+        assert len(details_files) == 2
 
 
-@pytest.fixture
-def mock_datetime(monkeypatch):
-    mock_date = datetime(2023, 1, 1, 12, 0, 0)
+class TestProperties(unittest.TestCase):
+    def setUp(self):
+        # In setup in case we need to reuse for future tests
+        from lighteval.models.dummy.dummy_model import DummyModelConfig
+        from lighteval.models.endpoints.endpoint_model import (
+            ServerlessEndpointModelConfig,
+            InferenceEndpointModelConfig,
+        )
+        from lighteval.models.endpoints.inference_providers_model import InferenceProvidersModelConfig
+        from lighteval.models.endpoints.litellm_model import LiteLLMModelConfig
+        from lighteval.models.endpoints.tgi_model import TGIModelConfig
+        from lighteval.models.sglang.sglang_model import SGLangModelConfig
+        from lighteval.models.transformers.transformers_model import TransformersModelConfig
+        from lighteval.models.transformers.vlm_transformers_model import VLMTransformersModelConfig
+        from lighteval.models.vllm.vllm_model import VLLMModelConfig
 
-    class MockDatetime:
-        @classmethod
-        def now(cls):
-            return mock_date
+        # Tested model configurations
+        self.dummy_config = DummyModelConfig(model_name="test/case")
+        self.endpoint_serverless_config = ServerlessEndpointModelConfig(model_name="test/case")
+        self.endpoint_ie_config = InferenceEndpointModelConfig(model_name="test/case")
+        self.endpoint_ip_config = InferenceProvidersModelConfig(model_name="test/case", provider="no_provider")
+        self.endpoint_litellm_config = LiteLLMModelConfig(model_name="test/case")
+        self.tgi_config = TGIModelConfig(model_name="test/case")
+        self.sg_lang_config = SGLangModelConfig(model_name="test/case")
+        self.transformers_config = TransformersModelConfig(model_name="test/case")
+        self.vlm_transformers_config = VLMTransformersModelConfig(model_name="test/case")
+        self.vllm_config = VLLMModelConfig(model_name="test/case")
 
-        @classmethod
-        def fromisoformat(cls, date_string: str):
-            return mock_date
+        # Reference configurations for expected results
+        ref_system_prompt = None
+        ref_generation_parameters = {
+            "num_blocks": None,
+            "block_size": None,
+            "early_stopping": None,
+            "repetition_penalty": None,
+            "frequency_penalty": None,
+            "length_penalty": None,
+            "presence_penalty": None,
+            "max_new_tokens": None,
+            "min_new_tokens": None,
+            "seed": None,
+            "stop_tokens": None,
+            "temperature": 0,
+            "top_k": None,
+            "min_p": None,
+            "top_p": None,
+            "truncate_prompt": None,
+            "cache_implementation": None,
+            "response_format": None,
+        }
+        self.dummy_ref_config = {
+            "model_name": "dummy",
+            "seed": 42,
+            "system_prompt": ref_system_prompt,
+            "generation_parameters": ref_generation_parameters,
+        }
+        self.endpoint_serverless_ref_config = {
+            "model_name": "test/case",
+            "provider": "serverless",
+            "system_prompt": ref_system_prompt,
+            "generation_parameters": ref_generation_parameters,
+        }
+        self.endpoint_ie_ref_config = {
+            "model_name": "test/case",
+            "provider": "inference_endpoint",
+            "system_prompt": ref_system_prompt,
+            "generation_parameters": ref_generation_parameters,
+        }
+        self.endpoint_ip_ref_config = {
+            "model_name": "test/case",
+            "provider": "inference_providers",
+            "system_prompt": ref_system_prompt,
+            "generation_parameters": ref_generation_parameters,
+        }
+        self.endpoint_litellm_ref_config = {
+            "model_name": "test/case",
+            "provider": "litellm",
+            "system_prompt": ref_system_prompt,
+            "generation_parameters": ref_generation_parameters,
+        }
+        self.tgi_ref_config = {
+            "model_name": "test/case",
+            "provider": "tgi",
+            "system_prompt": ref_system_prompt,
+            "generation_parameters": ref_generation_parameters,
+        }
+        self.sg_lang_ref_config = {
+            "model_name": "test/case",
+            "provider": "sglang",
+            "system_prompt": ref_system_prompt,
+            "generation_parameters": ref_generation_parameters,
+        }
+        self.transformers_ref_config = {
+            "model_name": "test/case",
+            "provider": "transformers",
+            "system_prompt": ref_system_prompt,
+            "generation_parameters": ref_generation_parameters,
+        }
+        self.vlm_transformers_ref_config = {
+            "model_name": "test/case",
+            "provider": "vlm_transformers",
+            "system_prompt": ref_system_prompt,
+            "generation_parameters": ref_generation_parameters,
+        }
+        self.vllm_ref_config = {
+            "model_name": "test/case",
+            "provider": "vllm",
+            "system_prompt": ref_system_prompt,
+            "generation_parameters": ref_generation_parameters,
+        }
 
-    monkeypatch.setattr("lighteval.logging.evaluation_tracker.datetime", MockDatetime)
-    return mock_date
+    def test_default_property_with_different_model_configs(self):
+        """Test that results property correctly handles different model configurations."""
+        for model_config in [
+            self.dummy_config,
+            self.endpoint_serverless_config,
+            self.endpoint_ie_config,
+            self.endpoint_ip_config,
+            self.endpoint_litellm_config,
+            self.tgi_config,
+            self.sg_lang_config,
+            self.transformers_config,
+            self.vlm_transformers_config,
+            self.vllm_config,
+        ]:
+            with self.subTest(model_config=model_config):
+                with tempfile.TemporaryDirectory() as tmp_dir:
+                    evaluation_tracker = EvaluationTracker(output_dir=tmp_dir)
 
+                evaluation_tracker.general_config_logger.log_model_info(
+                    model_config=model_config,
+                )
 
-def test_results_logging(mock_evaluation_tracker: EvaluationTracker):
-    task_metrics = {
-        "task1": {"accuracy": 0.8, "f1": 0.75},
-        "task2": {"precision": 0.9, "recall": 0.85},
-    }
-    mock_evaluation_tracker.metrics_logger.metric_aggregated = task_metrics
+                results = evaluation_tracker.results
 
-    mock_evaluation_tracker.save()
+                # Verify structure
+                self.assertIsInstance(results, dict)
+                for key in [
+                    "config_general",
+                    "results",
+                    "versions",
+                    "config_tasks",
+                    "summary_tasks",
+                    "summary_general",
+                ]:
+                    self.assertIn(key, results.keys())
 
-    results_dir = Path(mock_evaluation_tracker.output_dir) / "results" / "test_model"
-    assert results_dir.exists()
+                # Configs should all be empty since not initialized
+                self.assertEqual(results["versions"], {})
+                self.assertEqual(results["config_tasks"], {})
+                self.assertEqual(results["summary_tasks"], {})
+                self.assertEqual(
+                    results["summary_general"],
+                    {
+                        "hashes": {},
+                        "truncated": 0,
+                        "non_truncated": 0,
+                        "padded": 0,
+                        "non_padded": 0,
+                        "num_truncated_few_shots": 0,
+                    },
+                )
 
-    result_files = list(results_dir.glob("results_*.json"))
-    assert len(result_files) == 1
+                # Except config_general, which should contain the model config among other things
+                general_config = results["config_general"]
+                # We skip testing lighteval_sha, start_time
+                self.assertIsNone(general_config["num_fewshot_seeds"])
+                self.assertIsNone(general_config["max_samples"])
+                self.assertIsNone(general_config["job_id"])
+                self.assertIsNone(general_config["end_time"])
+                self.assertIsNone(general_config["total_evaluation_time_secondes"])
+                self.assertEqual(general_config["model_name"], "test/case")
 
-    with open(result_files[0], "r") as f:
-        saved_results = json.load(f)
+    def test_model_config_property_with_different_model_configs(self):
+        """Test that the model configs are properly saved."""
+        for model_config, ref_config in [
+            (self.dummy_config, self.dummy_ref_config),
+            (self.endpoint_serverless_config, self.endpoint_serverless_ref_config),
+            (self.endpoint_ie_config, self.endpoint_ie_ref_config),
+            (self.endpoint_ip_config, self.endpoint_ip_ref_config),
+            (self.endpoint_litellm_config, self.endpoint_litellm_ref_config),
+            (self.tgi_config, self.tgi_ref_config),
+            (self.sg_lang_config, self.sg_lang_ref_config),
+            (self.transformers_config, self.transformers_ref_config),
+            (self.vlm_transformers_config, self.vlm_transformers_ref_config),
+            (self.vllm_config, self.vllm_ref_config),
+        ]:
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                evaluation_tracker = EvaluationTracker(output_dir=tmp_dir)
 
-    assert "results" in saved_results
-    assert saved_results["results"] == task_metrics
-    assert saved_results["config_general"]["model_name"] == "test_model"
+                evaluation_tracker.general_config_logger.log_model_info(
+                    model_config=model_config,
+                )
 
+                results = evaluation_tracker.results
 
-def test_results_logging_template(mock_evaluation_tracker: EvaluationTracker):
-    task_metrics = {
-        "task1": {"accuracy": 0.8, "f1": 0.75},
-        "task2": {"precision": 0.9, "recall": 0.85},
-    }
-    mock_evaluation_tracker.metrics_logger.metric_aggregated = task_metrics
-    mock_evaluation_tracker.results_path_template = "{output_dir}/{org}_{model}"
-
-    mock_evaluation_tracker.save()
-
-    results_dir = Path(mock_evaluation_tracker.output_dir) / "_test_model"
-    assert results_dir.exists()
-
-    result_files = list(results_dir.glob("results_*.json"))
-    assert len(result_files) == 1
-
-    with open(result_files[0], "r") as f:
-        saved_results = json.load(f)
-
-    assert "results" in saved_results
-    assert saved_results["results"] == task_metrics
-    assert saved_results["config_general"]["model_name"] == "test_model"
-
-
-@pytest.mark.evaluation_tracker(save_details=True)
-def test_details_logging(mock_evaluation_tracker, mock_datetime):
-    task_details = {
-        "task1": [DetailsLogger.CompiledDetail(hashes=None, truncated=10, padded=5)],
-        "task2": [DetailsLogger.CompiledDetail(hashes=None, truncated=20, padded=10)],
-    }
-    mock_evaluation_tracker.details_logger.details = task_details
-
-    mock_evaluation_tracker.save()
-
-    date_id = mock_datetime.isoformat().replace(":", "-")
-    details_dir = Path(mock_evaluation_tracker.output_dir) / "details" / "test_model" / date_id
-    assert details_dir.exists()
-
-    for task in ["task1", "task2"]:
-        file_path = details_dir / f"details_{task}_{date_id}.parquet"
-        dataset = Dataset.from_parquet(str(file_path))
-        assert len(dataset) == 1
-        assert int(dataset[0]["truncated"]) == task_details[task][0].truncated
-        assert int(dataset[0]["padded"]) == task_details[task][0].padded
-
-
-@pytest.mark.evaluation_tracker(save_details=False)
-def test_no_details_output(mock_evaluation_tracker: EvaluationTracker):
-    mock_evaluation_tracker.save()
-
-    details_dir = Path(mock_evaluation_tracker.output_dir) / "details" / "test_model"
-    assert not details_dir.exists()
-
-
-@pytest.mark.skip(  # skipif
-    reason="Secrets are not available in this environment",
-    # condition=os.getenv("HF_TEST_TOKEN") is None,
-)
-@pytest.mark.evaluation_tracker(push_to_hub=True, hub_results_org=TESTING_EMPTY_HF_ORG_ID)
-def test_push_to_hub_works(testing_empty_hf_org_id, mock_evaluation_tracker: EvaluationTracker, mock_datetime):
-    # Prepare the dummy data
-    task_metrics = {
-        "task1": {"accuracy": 0.8, "f1": 0.75},
-        "task2": {"precision": 0.9, "recall": 0.85},
-    }
-    mock_evaluation_tracker.metrics_logger.metric_aggregated = task_metrics
-
-    task_details = {
-        "task1": [DetailsLogger.CompiledDetail(truncated=10, padded=5)],
-        "task2": [DetailsLogger.CompiledDetail(truncated=20, padded=10)],
-    }
-    mock_evaluation_tracker.details_logger.details = task_details
-    mock_evaluation_tracker.save()
-
-    # Verify using HfApi
-    api = HfApi()
-
-    # Check if repo exists and it's private
-    expected_repo_id = f"{testing_empty_hf_org_id}/details_test_model_private"
-    assert api.repo_exists(repo_id=expected_repo_id, repo_type="dataset")
-    assert api.repo_info(repo_id=expected_repo_id, repo_type="dataset").private
-
-    repo_files = api.list_repo_files(repo_id=expected_repo_id, repo_type="dataset")
-    # Check if README.md exists
-    assert any(file == "README.md" for file in repo_files)
-
-    # Check that both results files were uploaded
-    result_files = [file for file in repo_files if file.startswith("results_")]
-    assert len(result_files) == 2
-    assert len([file for file in result_files if file.endswith(".json")]) == 1
-    assert len([file for file in result_files if file.endswith(".parquet")]) == 1
-
-    # Check that the details dataset was uploaded
-    details_files = [file for file in repo_files if "details_" in file and file.endswith(".parquet")]
-    assert len(details_files) == 2
+                # Now to the core test, the model_config
+                for k, v in ref_config.items():
+                    with self.subTest(model_config=model_config, model_property=k):
+                        self.assertEqual(results["config_general"]["model_config"][k], v)

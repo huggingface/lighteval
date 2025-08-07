@@ -83,10 +83,10 @@ class TGIModelConfig(ModelConfig):
         ```
     """
 
-    inference_server_address: str | None
-    inference_server_auth: str | None
+    inference_server_address: str | None = None
+    inference_server_auth: str | None = None
     model_name: str | None
-    model_info: dict | None
+    model_info: dict | None = None
 
 
 # inherit from InferenceEndpointModel instead of LightevalModel since they both use the same interface, and only overwrite
