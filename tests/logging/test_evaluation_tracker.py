@@ -239,67 +239,152 @@ class TestProperties(unittest.TestCase):
             "truncate_prompt": None,
             "cache_implementation": None,
             "response_format": None,
-        }
+        }  # ruff: noqa: E501
         self.dummy_ref_config = {
-            "model_name": "dummy",
+            "model_name": "test/case",
             "seed": 42,
             "system_prompt": ref_system_prompt,
             "generation_parameters": ref_generation_parameters,
-        }
+        }  # ruff: noqa: E501
         self.endpoint_serverless_ref_config = {
             "model_name": "test/case",
-            "provider": "serverless",
+            "add_special_tokens": True,
+            "batch_size": 1,
             "system_prompt": ref_system_prompt,
             "generation_parameters": ref_generation_parameters,
-        }
+        }  # ruff: noqa: E501
         self.endpoint_ie_ref_config = {
+            "endpoint_name": None,
             "model_name": "test/case",
-            "provider": "inference_endpoint",
+            "reuse_existing": False,
+            "accelerator": "gpu",
+            "dtype": None,
+            "vendor": "aws",
+            "region": "us-east-1",
+            "instance_size": None,
+            "instance_type": None,
+            "framework": "pytorch",
+            "endpoint_type": "protected",
+            "add_special_tokens": True,
+            "revision": "main",
+            "namespace": None,
+            "image_url": None,
+            "env_vars": None,
+            "batch_size": 1,
             "system_prompt": ref_system_prompt,
             "generation_parameters": ref_generation_parameters,
-        }
+        }  # ruff: noqa: E501
         self.endpoint_ip_ref_config = {
             "model_name": "test/case",
-            "provider": "inference_providers",
+            "provider": "no_provider",
+            "timeout": None,
+            "proxies": None,
+            "org_to_bill": None,
+            "parallel_calls_count": 10,
             "system_prompt": ref_system_prompt,
             "generation_parameters": ref_generation_parameters,
-        }
+        }  # ruff: noqa: E501
         self.endpoint_litellm_ref_config = {
             "model_name": "test/case",
-            "provider": "litellm",
+            "provider": None,
+            "base_url": None,
+            "api_key": None,
             "system_prompt": ref_system_prompt,
             "generation_parameters": ref_generation_parameters,
-        }
+        }  # ruff: noqa: E501
         self.tgi_ref_config = {
+            "inference_server_address": None,
+            "inference_server_auth": None,
             "model_name": "test/case",
-            "provider": "tgi",
+            "model_info": None,
             "system_prompt": ref_system_prompt,
             "generation_parameters": ref_generation_parameters,
-        }
+        }  # ruff: noqa: E501
         self.sg_lang_ref_config = {
             "model_name": "test/case",
-            "provider": "sglang",
+            "load_format": "auto",
+            "dtype": "auto",
+            "tp_size": 1,
+            "dp_size": 1,
+            "context_length": None,
+            "random_seed": 1234,
+            "trust_remote_code": False,
+            "device": "cuda",
+            "skip_tokenizer_init": False,
+            "kv_cache_dtype": "auto",
+            "add_special_tokens": True,
+            "pairwise_tokenization": False,
+            "sampling_backend": None,
+            "attention_backend": None,
+            "mem_fraction_static": 0.8,
+            "chunked_prefill_size": 4096,
             "system_prompt": ref_system_prompt,
             "generation_parameters": ref_generation_parameters,
-        }
+        }  # ruff: noqa: E501
         self.transformers_ref_config = {
             "model_name": "test/case",
-            "provider": "transformers",
+            "tokenizer": None,
+            "subfolder": None,
+            "revision": "main",
+            "batch_size": None,
+            "max_length": None,
+            "model_loading_kwargs": {},
+            "add_special_tokens": True,
+            "skip_special_tokens": True,
+            "model_parallel": None,
+            "dtype": None,
+            "device": "cuda",
+            "trust_remote_code": False,
+            "compile": False,
+            "multichoice_continuations_start_space": None,
+            "pairwise_tokenization": False,
+            "continuous_batching": False,
             "system_prompt": ref_system_prompt,
             "generation_parameters": ref_generation_parameters,
-        }
+        }  # ruff: noqa: E501
         self.vlm_transformers_ref_config = {
             "model_name": "test/case",
-            "provider": "vlm_transformers",
+            "processor": None,
+            "use_fast_image_processor": None,
+            "subfolder": None,
+            "revision": "main",
+            "batch_size": 1,
+            "generation_size": None,
+            "max_length": None,
+            "add_special_tokens": True,
+            "model_parallel": None,
+            "dtype": None,
+            "device": "cuda",
+            "trust_remote_code": False,
+            "compile": False,
+            "device_map": None,
             "system_prompt": ref_system_prompt,
             "generation_parameters": ref_generation_parameters,
-        }
+        }  # ruff: noqa: E501
         self.vllm_ref_config = {
             "model_name": "test/case",
-            "provider": "vllm",
+            "revision": "main",
+            "dtype": "bfloat16",
+            "tensor_parallel_size": 1,
+            "data_parallel_size": 1,
+            "pipeline_parallel_size": 1,
+            "gpu_memory_utilization": 0.9,
+            "max_model_length": None,
+            "quantization": None,
+            "load_format": None,
+            "swap_space": 4,
+            "seed": 1234,
+            "trust_remote_code": False,
+            "add_special_tokens": True,
+            "multichoice_continuations_start_space": True,
+            "pairwise_tokenization": False,
+            "max_num_seqs": 128,
+            "max_num_batched_tokens": 2048,
+            "subfolder": None,
+            "is_async": False,
             "system_prompt": ref_system_prompt,
             "generation_parameters": ref_generation_parameters,
-        }
+        }  # ruff: noqa: E501
 
     def test_default_property_with_different_model_configs(self):
         """Test that results property correctly handles different model configurations."""
