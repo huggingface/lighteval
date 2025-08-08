@@ -32,7 +32,7 @@ from tqdm import tqdm
 from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset
-from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
@@ -53,13 +53,7 @@ class GoogleTranslateClient(LightevalModel):
     def __init__(self, config) -> None:
         self.model = config.model_name
         self.model_definition_file_path = config.model_definition_file_path
-
-        self.model_info = ModelInfo(
-            model_name=config.model_name,
-            model_sha="",
-            model_dtype=None,
-            model_size=-1,
-        )
+        self.config = config
 
         self._tokenizer = AutoTokenizer.from_pretrained("gpt2")  # Use a dummy tokenizer for compatibility
 

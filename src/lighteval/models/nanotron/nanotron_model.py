@@ -48,7 +48,7 @@ from lighteval.models.model_output import (
     LoglikelihoodResponse,
     LoglikelihoodSingleTokenResponse,
 )
-from lighteval.models.transformers.transformers_model import LightevalModel, ModelInfo
+from lighteval.models.transformers.transformers_model import LightevalModel
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -184,6 +184,7 @@ class NanotronLightevalModel(LightevalModel):
         """Initializes a nanotron model for evaluation.
         Args:
         """
+        self.config = nanotron_config
         model_args = nanotron_config.nanotron_model
         tokenizer = nanotron_config.nanotron_tokenizer
         lighteval_config = nanotron_config.lighteval_config
@@ -294,10 +295,6 @@ class NanotronLightevalModel(LightevalModel):
         self.multichoice_continuations_start_space = multichoice_continuations_start_space
         self.pairwise_tokenization = nanotron_config.lighteval_config.tasks.pairwise_tokenization
         self.batch_size = nanotron_config.lighteval_config.batch_size
-
-        self.model_info = ModelInfo(
-            model_name=f"{nanotron_config.nanotron_general.run}/{nanotron_config.nanotron_general.step}"
-        )
 
     @property
     def tokenizer(self):

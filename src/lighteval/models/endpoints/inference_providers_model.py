@@ -32,10 +32,8 @@ from tqdm.asyncio import tqdm as async_tqdm
 from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset
-from lighteval.models.abstract_model import LightevalModel
-from lighteval.models.endpoints.endpoint_model import ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
-from lighteval.models.utils import ModelConfig
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
 
@@ -103,12 +101,7 @@ class InferenceProvidersClient(LightevalModel):
         Args:
             config: Configuration object containing model and provider settings
         """
-        self.model_info = ModelInfo(
-            model_name=config.model_name,
-            model_sha="",
-            model_dtype=None,
-            model_size=-1,
-        )
+        self.config = config
         self.model_name = config.model_name
         self.provider = config.provider
         self.generation_parameters = config.generation_parameters

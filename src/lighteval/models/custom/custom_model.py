@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from lighteval.models.utils import ModelConfig
+from lighteval.models.abstract_model import ModelConfig
 
 
 class CustomModelConfig(ModelConfig):
