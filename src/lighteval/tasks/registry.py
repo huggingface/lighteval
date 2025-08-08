@@ -37,6 +37,36 @@ from lighteval.tasks.extended import AVAILABLE_EXTENDED_TASKS_MODULES
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.utils.imports import CANNOT_USE_EXTENDED_TASKS_MSG, can_load_extended_tasks
 
+# Import community tasks
+AVAILABLE_COMMUNITY_TASKS_MODULES = []
+def load_community_tasks():
+    """Dynamically load community tasks, handling errors gracefully."""
+    modules = []
+    try:
+        # Community tasks are in the lighteval directory, not under src
+        import sys
+        import os
+        community_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "community_tasks")
+        if os.path.exists(community_path):
+            sys.path.insert(0, os.path.dirname(community_path))
+            
+            # List all python files in community_tasks
+            community_files = [f[:-3] for f in os.listdir(community_path) 
+                             if f.endswith('.py') and not f.startswith('_')]
+            
+            for module_name in community_files:
+                try:
+                    module = importlib.import_module(f"community_tasks.{module_name}")
+                    if hasattr(module, 'TASKS_TABLE'):
+                        modules.append(module)
+                        logger.info(f"Successfully loaded community tasks from {module_name}")
+                except Exception as e:
+                    logger.warning(f"Failed to load community tasks from {module_name}: {e}")
+    except Exception as e:
+        logger.warning(f"Error loading community tasks directory: {e}")
+    
+    return modules
+
 
 logger = logging.getLogger(__name__)
 
@@ -136,6 +166,23 @@ class Registry:
                 custom_tasks_module.append(extended_task_module)
         else:
             logger.warning(CANNOT_USE_EXTENDED_TASKS_MSG)
+
+        # Load community tasks
+        community_modules = load_community_tasks()
+        for community_task_module in community_modules:
+            custom_tasks_module.append(community_task_module)
+        
+        # Load multilingual tasks
+        MULTILINGUAL_TASKS_AVAILABLE = False
+        multilingual_tasks = None
+        try:
+            import lighteval.tasks.multilingual.tasks as multilingual_tasks
+            MULTILINGUAL_TASKS_AVAILABLE = True
+        except ImportError as e:
+            logger.warning(f"Could not load multilingual tasks: {e}. You may need to install additional dependencies.")
+
+        if MULTILINGUAL_TASKS_AVAILABLE and multilingual_tasks is not None:
+            custom_tasks_module.append(multilingual_tasks)
 
         for module in custom_tasks_module:
             custom_task_configs.extend(module.TASKS_TABLE)
@@ -285,13 +332,26 @@ class Registry:
         Print all the tasks in the task registry.
         """
         tasks_names = list(self.task_registry.keys())
+        
+        # Ensure all default suites are present
+        suites_in_registry = {name.split("|")[0] for name in tasks_names}
+        for suite in DEFAULT_SUITES:
+            if suite not in suites_in_registry:
+                # We add a dummy task to make sure the suite is printed
+                tasks_names.append(f"{suite}|")
+
         tasks_names.sort()
+        
         for suite, g in groupby(tasks_names, lambda x: x.split("|")[0]):
-            tasks_names = list(g)
-            tasks_names.sort()
+            tasks_in_suite = [name for name in g if name.split("|")[1]] # Filter out dummy tasks
+            tasks_in_suite.sort()
+            
             print(f"\n- {suite}:")
-            for task_name in tasks_names:
-                print(f"  - {task_name}")
+            if not tasks_in_suite:
+                print("  (no tasks in this suite)")
+            else:
+                for task_name in tasks_in_suite:
+                    print(f"  - {task_name}")
 
     @staticmethod
     def create_custom_tasks_module(custom_tasks: str | Path | ModuleType) -> ModuleType:
