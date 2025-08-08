@@ -47,6 +47,7 @@ class FakeModel(LightevalModel):
         loglikelihood_rolling_responses: list[ModelResponse] = [],
     ):
         self._tokenizer = None
+        self.config = {}
         self.greedy_until_responses = greedy_until_responses
         self.loglikelihood_responses = loglikelihood_responses
         self.loglikelihood_rolling_responses = loglikelihood_rolling_responses
