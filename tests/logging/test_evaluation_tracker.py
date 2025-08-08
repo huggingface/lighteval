@@ -39,42 +39,51 @@ from unittest.mock import patch, Mock
 import unittest
 
 
-class TestLogging(unittest.TestCase):
-    @pytest.fixture
-    def mock_evaluation_tracker(request):
-        passed_params = {}
-        if request.keywords.get("evaluation_tracker"):
-            passed_params = request.keywords["evaluation_tracker"].kwargs
+@pytest.fixture
+def mock_evaluation_tracker(request):
+    passed_params = {}
+    if request.keywords.get("evaluation_tracker"):
+        passed_params = request.keywords["evaluation_tracker"].kwargs
 
-        with tempfile.TemporaryDirectory() as temp_dir:
-            kwargs = {
-                "output_dir": temp_dir,
-                "save_details": passed_params.get("save_details", False),
-                "push_to_hub": passed_params.get("push_to_hub", False),
-                "push_to_tensorboard": passed_params.get("push_to_tensorboard", False),
-                "hub_results_org": passed_params.get("hub_results_org", ""),
-            }
-            tracker = EvaluationTracker(**kwargs)
-            tracker.general_config_logger.model_name = "test_model"
-            yield tracker
+    with tempfile.TemporaryDirectory() as temp_dir:
+        kwargs = {
+            "output_dir": temp_dir,
+            "save_details": passed_params.get("save_details", False),
+            "push_to_hub": passed_params.get("push_to_hub", False),
+            "push_to_tensorboard": passed_params.get("push_to_tensorboard", False),
+            "hub_results_org": passed_params.get("hub_results_org", ""),
+        }
+        tracker = EvaluationTracker(**kwargs)
+        tracker.general_config_logger.model_name = "test_model"
 
-    @pytest.fixture
-    def mock_datetime(monkeypatch):
-        mock_date = datetime(2023, 1, 1, 12, 0, 0)
+        # Create a dummy model config to prevent model_config.model_dump() errors
+        from lighteval.models.dummy.dummy_model import DummyModelConfig
 
-        class MockDatetime:
-            @classmethod
-            def now(cls):
-                return mock_date
+        dummy_model_config = DummyModelConfig(model_name="test_model")
+        tracker.general_config_logger.log_model_info(model_config=dummy_model_config)
 
-            @classmethod
-            def fromisoformat(cls, date_string: str):
-                return mock_date
+        yield tracker
 
-        monkeypatch.setattr("lighteval.logging.evaluation_tracker.datetime", MockDatetime)
-        return mock_date
 
-    def test_results_logging(mock_evaluation_tracker: EvaluationTracker):
+@pytest.fixture
+def mock_datetime(monkeypatch):
+    mock_date = datetime(2023, 1, 1, 12, 0, 0)
+
+    class MockDatetime:
+        @classmethod
+        def now(cls):
+            return mock_date
+
+        @classmethod
+        def fromisoformat(cls, date_string: str):
+            return mock_date
+
+    monkeypatch.setattr("lighteval.logging.evaluation_tracker.datetime", MockDatetime)
+    return mock_date
+
+
+class TestLogging:
+    def test_results_logging(self, mock_evaluation_tracker: EvaluationTracker):
         task_metrics = {
             "task1": {"accuracy": 0.8, "f1": 0.75},
             "task2": {"precision": 0.9, "recall": 0.85},
@@ -96,7 +105,7 @@ class TestLogging(unittest.TestCase):
         assert saved_results["results"] == task_metrics
         assert saved_results["config_general"]["model_name"] == "test_model"
 
-    def test_results_logging_template(mock_evaluation_tracker: EvaluationTracker):
+    def test_results_logging_template(self, mock_evaluation_tracker: EvaluationTracker):
         task_metrics = {
             "task1": {"accuracy": 0.8, "f1": 0.75},
             "task2": {"precision": 0.9, "recall": 0.85},
@@ -120,7 +129,7 @@ class TestLogging(unittest.TestCase):
         assert saved_results["config_general"]["model_name"] == "test_model"
 
     @pytest.mark.evaluation_tracker(save_details=True)
-    def test_details_logging(mock_evaluation_tracker, mock_datetime):
+    def test_details_logging(self, mock_evaluation_tracker, mock_datetime):
         task_details = {
             "task1": [DetailsLogger.CompiledDetail(hashes=None, truncated=10, padded=5)],
             "task2": [DetailsLogger.CompiledDetail(hashes=None, truncated=20, padded=10)],
@@ -141,7 +150,7 @@ class TestLogging(unittest.TestCase):
             assert int(dataset[0]["padded"]) == task_details[task][0].padded
 
     @pytest.mark.evaluation_tracker(save_details=False)
-    def test_no_details_output(mock_evaluation_tracker: EvaluationTracker):
+    def test_no_details_output(self, mock_evaluation_tracker: EvaluationTracker):
         mock_evaluation_tracker.save()
 
         details_dir = Path(mock_evaluation_tracker.output_dir) / "details" / "test_model"
@@ -152,7 +161,9 @@ class TestLogging(unittest.TestCase):
         # condition=os.getenv("HF_TEST_TOKEN") is None,
     )
     @pytest.mark.evaluation_tracker(push_to_hub=True, hub_results_org=TESTING_EMPTY_HF_ORG_ID)
-    def test_push_to_hub_works(testing_empty_hf_org_id, mock_evaluation_tracker: EvaluationTracker, mock_datetime):
+    def test_push_to_hub_works(
+        self, testing_empty_hf_org_id, mock_evaluation_tracker: EvaluationTracker, mock_datetime
+    ):
         # Prepare the dummy data
         task_metrics = {
             "task1": {"accuracy": 0.8, "f1": 0.75},
