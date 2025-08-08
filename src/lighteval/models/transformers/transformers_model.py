@@ -54,6 +54,7 @@ from lighteval.models.model_output import (
 from lighteval.models.utils import ModelConfig, _get_dtype, _get_model_sha, _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
+from lighteval.utils.cache_management import SampleCache, cached
 from lighteval.utils.imports import (
     is_accelerate_available,
 )
@@ -233,6 +234,9 @@ class TransformersModel(LightevalModel):
             use_chat_template=self.use_chat_template, tokenizer=self.tokenizer, system_prompt=config.system_prompt
         )
 
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config)
+
     def cleanup(self):
         """Clean up operations if needed, such as closing an endpoint."""
         del self.model
@@ -302,6 +306,16 @@ class TransformersModel(LightevalModel):
             model_dtype=str(self.precision),
             model_size=int(model_size),
         )
+
+        self.prompt_manager = PromptManager(
+            use_chat_template=self.use_chat_template,
+            tokenizer=self.tokenizer,
+            system_prompt=config.system_prompt if config else None,
+        )
+
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config) if config else None
+
         return self
 
     @property
@@ -743,6 +757,7 @@ class TransformersModel(LightevalModel):
 
         return dataset.get_original_order(results)
 
+    @cached("predictions")
     def greedy_until(
         self,
         docs: list[Doc],
@@ -869,6 +884,7 @@ class TransformersModel(LightevalModel):
         else:
             return self._generate_padded(**kwargs)
 
+    @cached("predictions")
     def loglikelihood(
         self,
         docs: list[Doc],
@@ -884,6 +900,7 @@ class TransformersModel(LightevalModel):
         """
         return self._loglikelihood_tokens(docs)
 
+    @cached("predictions")
     def loglikelihood_rolling(
         self,
         docs: list[Doc],
