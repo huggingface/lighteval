@@ -286,7 +286,7 @@ class EvaluationTracker:
             output_dir = self.output_dir
             output_dir_results = Path(self.results_path_template.format(output_dir=output_dir, org=org, model=model))
         else:
-            output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name
+            output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name.strip("/")
         self.fs.mkdirs(output_dir_results, exist_ok=True)
         output_results_file = output_dir_results / f"results_{date_id}.json"
         logger.info(f"Saving results to {output_results_file}")
@@ -294,7 +294,7 @@ class EvaluationTracker:
             f.write(json.dumps(results_dict, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False))
 
     def _get_details_sub_folder(self, date_id: str):
-        output_dir_details = Path(self.output_dir) / "details" / self.general_config_logger.model_name
+        output_dir_details = Path(self.output_dir) / "details" / self.general_config_logger.model_name.strip("/")
         if date_id in ["first", "last"]:
             # Get all folders in output_dir_details
             if not self.fs.exists(output_dir_details):
@@ -655,7 +655,7 @@ class EvaluationTracker:
             global_step = 0
             run = prefix
 
-        output_dir_tb = Path(self.output_dir) / "tb" / run
+        output_dir_tb = Path(self.output_dir) / "tb" / run.strip("/")
         output_dir_tb.mkdir(parents=True, exist_ok=True)
 
         tb_context = HFSummaryWriter(

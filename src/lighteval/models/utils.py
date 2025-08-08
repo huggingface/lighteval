@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import json
+import logging
 import os
 import re
 from itertools import islice
@@ -30,9 +31,13 @@ import torch
 import yaml
 from huggingface_hub import HfApi
 from pydantic import BaseModel
+from transformers import AutoTokenizer
 from transformers.models.auto.configuration_auto import AutoConfig
 
 from lighteval.models.model_input import GenerationParameters
+
+
+logger = logging.getLogger(__name__)
 
 
 class ModelConfig(BaseModel, extra="forbid"):
@@ -131,7 +136,8 @@ class ModelConfig(BaseModel, extra="forbid"):
         for key, value in matches:
             key = key.strip()
             if key == "generation_parameters":
-                gen_params = re.sub(r"(\w+):", r'"\1":', value)
+                # regex by lysandre
+                gen_params = re.sub(r"(\w+)\s*:\s*([A-Za-z_][\w.-]*)\s*(?=[,}])", r'"\1":"\2"', value)
                 generation_parameters_dict = json.loads(gen_params)
 
         args = re.sub(r"generation_parameters=\{.*?\},?", "", args).strip(",")
@@ -216,3 +222,28 @@ def batched(iterable, n):
     it = iter(iterable)
     while batch := tuple(islice(it, n)):
         yield batch
+
+
+def uses_chat_template(model_name: str = None, tokenizer: AutoTokenizer = None) -> bool:
+    """Returns a boolean depending on whether the Transformers AutoTokenizer contains
+    a chat template or not
+
+    Args:
+        model_name (str): Model name on HF
+
+    Returns:
+        bool: True if Tokenizer config contains a chat template, False otherwise
+    """
+    if model_name is None and tokenizer is None:
+        raise Exception("`uses_chat_template` requires either a tokenizer or model name as input")
+    try:
+        if tokenizer:
+            tk = tokenizer
+        else:
+            tk = AutoTokenizer.from_pretrained(model_name)
+        return tk.chat_template is not None
+    except Exception:
+        logger.warning(
+            "We were not able to detect if the chat template should be used for your model: {e}. Assuming we're using a chat template"
+        )
+        return True

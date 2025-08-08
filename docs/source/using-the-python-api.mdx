@@ -31,7 +31,7 @@ def main():
 
     pipeline_params = PipelineParameters(
         launcher_type=ParallelismManager.ACCELERATE,
-        custom_task_directory=None, # if using a custom task
+        custom_tasks_directory=None, # if using a custom task
         # Remove the 2 parameters below once your configuration is tested
         max_samples=10
     )
@@ -39,7 +39,6 @@ def main():
     model_config = VLLMModelConfig(
             model_name="HuggingFaceH4/zephyr-7b-beta",
             dtype="float16",
-            use_chat_template=True,
     )
 
     task = "helm|mmlu|5|1"
