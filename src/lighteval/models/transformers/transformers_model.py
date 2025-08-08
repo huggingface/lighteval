@@ -46,12 +46,12 @@ from transformers.generation.utils import GenerateOutput
 from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
-from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import (
     Batch,
     ModelResponse,
 )
-from lighteval.models.utils import ModelConfig, _get_dtype, _get_model_sha, _simplify_name, uses_chat_template
+from lighteval.models.utils import _get_dtype, _get_model_sha, _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
 from lighteval.utils.cache_management import SampleCache, cached
@@ -223,13 +223,6 @@ class TransformersModel(LightevalModel):
         else:
             model_size = -1
 
-        self.model_info = ModelInfo(
-            model_name=self.config.model_name,
-            model_sha=self.model_sha,
-            model_dtype=config.dtype,
-            model_size=model_size,
-        )
-
         self.prompt_manager = PromptManager(
             use_chat_template=self.use_chat_template, tokenizer=self.tokenizer, system_prompt=config.system_prompt
         )
@@ -266,7 +259,12 @@ class TransformersModel(LightevalModel):
         # Instanciate the object without using __init__
         self = cls.__new__(cls)
         self.transformers_config = model.config
-        self.config = config if config is not None else TransformersModelConfig(model_name=model.config.name_or_path)
+        if isinstance(model, TransformersModel):
+            self.config = model.config
+        else:
+            self.config = (
+                config if config is not None else TransformersModelConfig(model_name=model.config.name_or_path)
+            )
         if config is not None:
             self.generation_config_dict = config.generation_parameters.to_transformers_dict()
         self._max_length = self._init_max_length()
@@ -300,13 +298,6 @@ class TransformersModel(LightevalModel):
             model_size = convert_bytes(model_size)
         else:
             model_size = -1
-        self.model_info = ModelInfo(
-            model_name=self.model_name,
-            model_sha=self.model_sha,
-            model_dtype=str(self.precision),
-            model_size=int(model_size),
-        )
-
         self.prompt_manager = PromptManager(
             use_chat_template=self.use_chat_template,
             tokenizer=self.tokenizer,

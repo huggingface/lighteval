@@ -177,8 +177,7 @@ class EvaluationTracker:
     @property
     def results(self):
         config_general = asdict(self.general_config_logger)
-        # We remove the config from logging, which contains context/accelerator objects
-        config_general.pop("config")
+        config_general["model_config"] = config_general["model_config"].model_dump()
         results = {
             "config_general": config_general,
             "results": self.metrics_logger.metric_aggregated,
@@ -216,19 +215,7 @@ class EvaluationTracker:
         logger.info("Saving experiment tracker")
         date_id = datetime.now().isoformat().replace(":", "-")
 
-        # We first prepare data to save
-        config_general = asdict(self.general_config_logger)
-        # We remove the config from logging, which contains context/accelerator objects
-        config_general.pop("config")
-
-        results_dict = {
-            "config_general": config_general,
-            "results": self.metrics_logger.metric_aggregated,
-            "versions": self.versions_logger.versions,
-            "config_tasks": self.task_config_logger.tasks_configs,
-            "summary_tasks": self.details_logger.compiled_details,
-            "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
-        }
+        results_dict = self.results
 
         # Create the details datasets for later upload
         details_datasets: dict[str, Dataset] = {}

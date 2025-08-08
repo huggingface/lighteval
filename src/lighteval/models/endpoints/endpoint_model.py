@@ -45,9 +45,8 @@ from tqdm import tqdm
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
-from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
-from lighteval.models.utils import ModelConfig
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
 
@@ -359,6 +358,8 @@ class InferenceEndpointModel(LightevalModel):
             self.async_client = AsyncInferenceClient(model=config.model_name)
             self.client = InferenceClient(model=config.model_name)
 
+        self.config.revision = self.revision
+
         self.use_async = True  # set to False for debug - async use is faster
 
         self._tokenizer = AutoTokenizer.from_pretrained(self.name)
@@ -366,12 +367,6 @@ class InferenceEndpointModel(LightevalModel):
 
         self.prompt_manager = PromptManager(
             use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
-        )
-        self.model_info = ModelInfo(
-            model_name=self.name,
-            model_sha=self.revision,
-            model_dtype=getattr(config, "dtype", "default"),
-            model_size=-1,
         )
         self.generation_parameters = config.generation_parameters
         self.generation_config = self.generation_parameters.to_tgi_ie_dict()

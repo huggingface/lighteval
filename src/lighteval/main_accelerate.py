@@ -117,11 +117,11 @@ def accelerate(  # noqa C901
     import yaml
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
+    from lighteval.models.abstract_model import ModelConfig
     from lighteval.models.transformers.adapter_model import AdapterModelConfig
     from lighteval.models.transformers.delta_model import DeltaModelConfig
     from lighteval.models.transformers.transformers_model import TransformersModelConfig
     from lighteval.models.transformers.vlm_transformers_model import VLMTransformersModelConfig
-    from lighteval.models.utils import ModelConfig
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 
     evaluation_tracker = EvaluationTracker(

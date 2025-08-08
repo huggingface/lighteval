@@ -23,7 +23,7 @@
 import logging
 from typing import Union
 
-from lighteval.models.abstract_model import LightevalModel
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.custom.custom_model import CustomModelConfig
 from lighteval.models.dummy.dummy_model import DummyModel, DummyModelConfig
 from lighteval.models.endpoints.endpoint_model import (
@@ -42,7 +42,6 @@ from lighteval.models.transformers.adapter_model import AdapterModel, AdapterMod
 from lighteval.models.transformers.delta_model import DeltaModel, DeltaModelConfig
 from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
 from lighteval.models.transformers.vlm_transformers_model import VLMTransformersModel, VLMTransformersModelConfig
-from lighteval.models.utils import ModelConfig
 from lighteval.models.vllm.vllm_model import AsyncVLLMModel, VLLMModel, VLLMModelConfig
 from lighteval.utils.imports import (
     NO_LITELLM_ERROR_MSG,
