@@ -40,9 +40,9 @@ from transformers.configuration_utils import PretrainedConfig
 from transformers.utils.quantization_config import BitsAndBytesConfig
 
 from lighteval.data import GenerativeTaskDataset
-from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
-from lighteval.models.utils import ModelConfig, _get_dtype, _get_model_sha, _simplify_name
+from lighteval.models.utils import _get_dtype, _get_model_sha, _simplify_name
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import (
@@ -168,12 +168,6 @@ class VLMTransformersModel(LightevalModel):
 
         self.prompt_manager = PromptManager(
             use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
-        )
-
-        self.model_info = ModelInfo(
-            model_name=self.config.model_name,
-            model_sha=self.model_sha,
-            model_dtype=config.dtype,
         )
 
     @property

@@ -32,9 +32,9 @@ from pydantic import NonNegativeFloat, NonNegativeInt, PositiveInt
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
-from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
-from lighteval.models.utils import ModelConfig, _simplify_name, uses_chat_template
+from lighteval.models.utils import _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import is_vllm_available
@@ -172,7 +172,7 @@ class VLLMModel(LightevalModel):
         config: VLLMModelConfig,
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
-        self._config = config
+        self.config = config
         self.use_chat_template = uses_chat_template(model_name=config.model_name)
         self.data_parallel_size = config.data_parallel_size
         self.tensor_parallel_size = config.tensor_parallel_size
@@ -193,7 +193,6 @@ class VLLMModel(LightevalModel):
         self.model_sha = ""
         self.precision = config.dtype
 
-        self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
         self.pairwise_tokenization = config.pairwise_tokenization
 
         self.prompt_manager = PromptManager(self.use_chat_template, self.tokenizer, config.system_prompt)
@@ -324,7 +323,7 @@ class VLLMModel(LightevalModel):
                 # the case! Because of that we only use batch size of 1
                 stop_tokens = split[0].stop_sequences or []
 
-            max_new_tokens = self._config.generation_parameters.max_new_tokens or split[0].generation_size
+            max_new_tokens = self.config.generation_parameters.max_new_tokens or split[0].generation_size
             num_samples = split[0].num_samples
 
             context = [self.prompt_manager.prepare_prompt(doc) for doc in split]
@@ -396,7 +395,7 @@ class VLLMModel(LightevalModel):
         generate: bool = True,
     ) -> list:
         """Contains the actual logic of the generation."""
-        sampling_params = SamplingParams(**self._config.generation_parameters.to_vllm_dict())
+        sampling_params = SamplingParams(**self.config.generation_parameters.to_vllm_dict())
 
         if generate:
             sampling_params.n = num_samples
@@ -567,7 +566,7 @@ class AsyncVLLMModel(VLLMModel):
         generative: bool,
     ) -> Coroutine[None, list, str]:
         """Contains the actual logic of the generation."""
-        sampling_params = SamplingParams(**self._config.generation_parameters.to_vllm_dict())
+        sampling_params = SamplingParams(**self.config.generation_parameters.to_vllm_dict())
 
         if not generative:
             sampling_params.temperature = 0
@@ -583,7 +582,7 @@ class AsyncVLLMModel(VLLMModel):
                 logger.warning(
                     "Careful, there can be unexpected behavior when using sampling evals with the async vllm model"
                 )
-            sampling_params.max_tokens = self._config.generation_parameters.max_new_tokens or doc.generation_size
+            sampling_params.max_tokens = self.config.generation_parameters.max_new_tokens or doc.generation_size
             sampling_params.stop = [] if self.use_chat_template else doc.stop_sequences
             sampling_params.logprobs = int(doc.use_logits)
             prompt = self.prompt_manager.prepare_prompt(doc)
