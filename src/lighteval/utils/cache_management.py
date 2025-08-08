@@ -24,6 +24,7 @@ import functools
 import hashlib
 import json
 import logging
+from dataclasses import asdict
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Set, Tuple, Union
 
@@ -49,10 +50,10 @@ class SampleCache:
     Cache Structure:
     - {cache_dir}/
       - tokenization/
-        - {model_hash}/
+        - {model_name}/{model_hash}/
           - {task_name}.parquet
       - predictions/
-        - {model_hash}/
+        - {model_name}/{model_hash}/
           - {task_name}.parquet
     """
 
@@ -68,8 +69,8 @@ class SampleCache:
         self.model_hash = self.get_model_hash(model_config)
 
         # Create cache directory structure
-        self.tokenization_dir = self.cache_dir / "tokenization" / self.model_hash
-        self.predictions_dir = self.cache_dir / "predictions" / self.model_hash
+        self.tokenization_dir = self.cache_dir / "tokenization" / self.model_config.model_name / self.model_hash
+        self.predictions_dir = self.cache_dir / "predictions" / self.model_config.model_name / self.model_hash
 
         self.tokenization_dir.mkdir(parents=True, exist_ok=True)
         self.predictions_dir.mkdir(parents=True, exist_ok=True)
@@ -150,14 +151,7 @@ class SampleCache:
         for doc in docs:
             if doc.id in dataset_df.index:
                 row = dataset_df.loc[doc.id]
-                cached_results.append(
-                    {
-                        "input_tokens": row["input_tokens"],
-                        "context_tokens": row.get("context_tokens"),
-                        "continuation_tokens": row.get("continuation_tokens"),
-                        "input_text": row["input_text"],
-                    }
-                )
+                cached_results.append(row)
             else:
                 cached_results.append(None)
                 uncached_docs.append(doc)
@@ -209,7 +203,7 @@ class SampleCache:
         for row in task_data:
             self._tokenization_indices[task_name].add(row["sample_id"])
 
-        logger.info(f"Stored tokenization results for {len(docs)} samples in {task_name}")
+        logger.info(f"Cached tokenization results for {len(docs)} samples in {task_name} at {str(cache_file)}.")
 
     def get_predictions(self, docs: List[Doc], task_name: str) -> Tuple[List[Optional[ModelResponse]], List[Doc]]:
         """
@@ -236,24 +230,7 @@ class SampleCache:
         for doc in docs:
             if doc.id in dataset_df.index:
                 row = dataset_df.loc[doc.id]
-                cached_results.append(
-                    ModelResponse(
-                        input=row.get("input", ""),
-                        text=json.loads(row["text"]) if isinstance(row["text"], str) else row["text"],
-                        input_tokens=json.loads(row["input_tokens"])
-                        if isinstance(row["input_tokens"], str)
-                        else row["input_tokens"],
-                        output_tokens=json.loads(row["output_tokens"])
-                        if isinstance(row["output_tokens"], str)
-                        else row["output_tokens"],
-                        logprobs=json.loads(row["logprobs"])
-                        if row.get("logprobs") and isinstance(row["logprobs"], str)
-                        else row.get("logprobs"),
-                        argmax_logits_eq_gold=json.loads(row["argmax_logits_eq_gold"])
-                        if row.get("argmax_logits_eq_gold") and isinstance(row["argmax_logits_eq_gold"], str)
-                        else row.get("argmax_logits_eq_gold"),
-                    )
-                )
+                cached_results.append(ModelResponse(**row["response"]))
             else:
                 cached_results.append(None)
                 uncached_docs.append(doc)
@@ -268,19 +245,7 @@ class SampleCache:
         # Prepare data for dataset
         task_data = []
         for doc, response in zip(docs, responses):
-            task_data.append(
-                {
-                    "sample_id": doc.id,
-                    "input": response.input or "",
-                    "text": json.dumps(response.text) if response.text else "[]",
-                    "input_tokens": json.dumps(response.input_tokens) if response.input_tokens else "[]",
-                    "output_tokens": json.dumps(response.output_tokens) if response.output_tokens else "[]",
-                    "logprobs": json.dumps(response.logprobs) if response.logprobs else None,
-                    "argmax_logits_eq_gold": json.dumps(response.argmax_logits_eq_gold)
-                    if response.argmax_logits_eq_gold
-                    else None,
-                }
-            )
+            task_data.append({"sample_id": doc.id, "response": asdict(response)})
 
         # Save dataset
         cache_file = self.predictions_dir / f"{task_name}.parquet"
@@ -309,7 +274,7 @@ class SampleCache:
         for row in task_data:
             self._prediction_indices[task_name].add(row["sample_id"])
 
-        logger.info(f"Stored prediction results for {len(docs)} samples in {task_name}")
+        logger.info(f"Cached prediction results for {len(docs)} samples in {task_name} at {str(cache_file)}.")
 
 
 def cached(cache_type: str, extract_task_name: Optional[Callable] = None):  # noqa C901
@@ -361,9 +326,15 @@ def cached(cache_type: str, extract_task_name: Optional[Callable] = None):  # no
                 raise ValueError(f"Unknown cache_type: {cache_type}")
 
             # Process uncached docs if any
+            if cached_results:
+                logger.info(
+                    f"Cache: Found {len(c for c in cached_results if c is not None)}/{len(docs)} {cache_type} samples for task {task_name}"
+                )
             new_results = []
             if uncached_docs:
-                logger.info(f"Cache miss: processing {len(uncached_docs)}/{len(docs)} samples for {cache_type}")
+                logger.info(
+                    f"Cache: Processing {len(uncached_docs)}/{len(docs)} {cache_type} samples for task {task_name}"
+                )
                 new_results = func(self, uncached_docs, *args, **kwargs)
 
                 # Store new results in cache
@@ -371,8 +342,6 @@ def cached(cache_type: str, extract_task_name: Optional[Callable] = None):  # no
                     cache.store_tokenization(uncached_docs, new_results, task_name)
                 elif cache_type == "predictions":
                     cache.store_predictions(uncached_docs, new_results, task_name)
-            else:
-                logger.info(f"Cache hit: all {len(docs)} samples found for {cache_type}")
 
             # Merge cached and new results in original order
             final_results = []
