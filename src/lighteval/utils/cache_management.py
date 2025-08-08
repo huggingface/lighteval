@@ -27,7 +27,7 @@ import logging
 from dataclasses import asdict
 from enum import Enum
 from pathlib import Path
-from typing import Callable, List, Optional, Set, Tuple, Union
+from typing import Callable, List, Set, Tuple, Union
 
 from datasets import Dataset, load_dataset
 
@@ -48,20 +48,15 @@ class SampleType(Enum):
 class SampleCache:
     """
     Disk-based cache for sample evaluation results using HuggingFace datasets.
-
-    This cache stores tokenization and prediction results with simple structure:
-    - Each model gets its own subdirectory
-    - Each task gets its own parquet file within the model directory
-    - Each sample is a single row in the dataset
+    The model hash is a hash of the model config, to make sure we rerun the eval if any parameter changes
+    (generation param, model version, etc).
 
     Cache Structure:
     - {cache_dir}/
-      - tokenization/
-        - {model_name}/{model_hash}/
-          - {task_name}.parquet
-      - predictions/
-        - {model_name}/{model_hash}/
-          - {task_name}.parquet
+      - {sample_type}/
+        - {model_name}/
+          - {model_hash}/
+            - {task_name}.parquet
     """
 
     def __init__(self, model_config: ModelConfig, cache_dir: str = "./cache/huggingface/lighteval"):
@@ -69,18 +64,54 @@ class SampleCache:
         Initialize the sample cache.
 
         Args:
+            model_config: Configuration for the model being cached
             cache_dir: Directory to store cache files
         """
         self.cache_dir = Path(cache_dir)
         self.model_config = model_config
         self.model_hash = self.get_model_hash(model_config)
 
-        # Create cache directory structure
-        self.tokenization_dir = self.cache_dir / "tokenization" / self.model_config.model_name / self.model_hash
-        self.predictions_dir = self.cache_dir / "predictions" / self.model_config.model_name / self.model_hash
+        # Create cache directory structure and load cached indices if present
+        self.all_cache_dirs = {}
+        self.existing_indices = {}
+        for sample_type in SampleType:
+            self.all_cache_dirs[sample_type] = (
+                self.cache_dir / sample_type.name.lower() / self.model_config.model_name / self.model_hash
+            )
+            self.all_cache_dirs[sample_type].mkdir(parents=True, exist_ok=True)
+            self.existing_indices[sample_type] = self._get_cached_indices(sample_type)
 
-        self.tokenization_dir.mkdir(parents=True, exist_ok=True)
-        self.predictions_dir.mkdir(parents=True, exist_ok=True)
+    def _get_cached_indices(self, sample_type: SampleType) -> dict:
+        """Loads all indices for samples which are properly cached
+
+        Returns:
+            dict: Dictionary mapping task names to lists of cached sample indices
+        """
+        cached_indices = {}
+        cache_dir = self.all_cache_dirs[sample_type]
+
+        if not cache_dir.exists():
+            return cached_indices
+
+        for cache_file in cache_dir.glob("*.parquet"):
+            task_name = cache_file.stem
+            try:
+                dataset = load_dataset("parquet", data_files=str(cache_file), split="train")
+                sample_ids = []
+                for row in dataset:
+                    try:
+                        # We only save indices of correctly formatted samples, though this means we need to load each at least once
+                        self.load_sample(row, sample_type=sample_type)
+                        sample_ids.append(row["sample_id"])
+                    except Exception:
+                        continue
+
+                cached_indices[task_name] = sample_ids
+                logger.debug(f"Loaded {len(sample_ids)} cached indices for task '{task_name}' from {cache_file}")
+            except Exception as e:
+                logger.warning(f"Error loading cached indices for task '{task_name}' from {cache_file}: {e}")
+
+        return cached_indices
 
     def get_model_hash(self, model_config: ModelConfig) -> str:
         """Create a hash for model configuration."""
@@ -89,56 +120,101 @@ class SampleCache:
         config_str = json.dumps(config_dict, sort_keys=True, default=str)
         return hashlib.sha256(config_str.encode()).hexdigest()[:16]
 
-    def get_cache_path(self, task_name: str, sample_type: SampleType) -> str:
-        if sample_type == SampleType.TOKENIZED_INPUTS:
-            cache_file = self.tokenization_dir / f"{task_name}.parquet"
-        elif sample_type == SampleType.PREDICTIONS:
-            cache_file = self.predictions_dir / f"{task_name}.parquet"
-        return cache_file
+    def get_cache_path(self, task_name: str, sample_type: SampleType) -> Path:
+        """Get the file path for a specific task's cache file.
 
-    def get_samples(
-        self, docs: List[Doc], task_names: list[str], sample_type: SampleType
-    ) -> Tuple[List[Optional[dict]], List[Doc], Set]:
-        """
-        Get cached tokenization results for docs.
+        Args:
+            task_name: Name of the task
+            sample_type: Type of samples being cached
 
         Returns:
-            Tuple of (cached_results, uncached_docs, cached_task_names) where
-                - cached_results[i] is None if docs[i] is not cached
-                - uncached_docs contains docs that need processing
-                - cached_task_names are the tasks from which we successfully loaded items
+            Path: Path to the cache file for the given task and sample type
         """
-        task_datasets = dict.fromkeys(task_names)
-        for task_name in task_names:
-            cache_file = self.get_cache_path(task_name=task_name, sample_type=sample_type)
+        return self.all_cache_dirs[sample_type] / f"{task_name}.parquet"
 
-            if cache_file.exists():
-                try:
-                    dataset = load_dataset("parquet", data_files=str(cache_file), split="train")
-                    dataset_df = dataset.to_pandas().set_index("sample_id")
-                    task_datasets[task_name] = dataset_df
-                except Exception as e:
-                    logger.warning(f"Error loading {sample_type.name.lower()} cache for {task_name}: {e}")
+    def load_sample(self, sample, sample_type: SampleType) -> Union[dict, ModelResponse]:
+        """Load a sample from cached data based on sample type.
 
-        results = []
-        uncached_docs = []
-        cached_task_names = []
+        Args:
+            sample: Raw sample data from cache
+            sample_type: Type of sample being loaded
+
+        Returns:
+            Union[dict, ModelResponse]: Loaded sample in appropriate format for processing
+        """
+        if sample_type == SampleType.TOKENIZED_INPUTS:
+            return sample["sample"]
+        elif sample_type == SampleType.PREDICTIONS:
+            return ModelResponse(**sample["sample"])
+
+    def dump_sample(self, result: Union[dict, ModelResponse], sample_type: SampleType) -> dict:
+        """Dumps the sample in the correct format for file saving
+
+        Args:
+            result (Union[dict, ModelResponse]): Processed sample to save
+            sample_type (SampleType): Type of sample
+
+        Returns:
+            dict
+        """
+        if sample_type == SampleType.TOKENIZED_INPUTS:
+            return result
+        elif sample_type == SampleType.PREDICTIONS:
+            return asdict(result)
+
+    def get_notcached_samples(self, docs: List[Doc], sample_type: SampleType) -> Tuple[List[Doc], Set]:
+        """
+        Identify which docs need processing based on cached indices.
+
+        Returns:
+            Tuple of (docs_not_cached, tasks_with_cached_samples) where
+                - docs_not_cached contains docs that need processing
+                - tasks_with_cached_samples are the tasks that have some cached samples
+        """
+        cached_indices = self.existing_indices[sample_type]
+
+        docs_not_cached = []
+        tasks_with_cached_samples = set()
 
         for doc in docs:
+            task_name = doc.task_name
+            if task_name in cached_indices and doc.id in cached_indices[task_name]:
+                tasks_with_cached_samples.add(task_name)
+            else:
+                docs_not_cached.append(doc)
+
+        return docs_not_cached, set(tasks_with_cached_samples)
+
+    def get_samples_from_cache(
+        self, docs: List[Doc], task_names: list | set, sample_type: SampleType
+    ) -> List[dict | ModelResponse]:
+        """
+        Get cached samples for the given docs.
+        Warning: Assumes all docs and task_names provided are stored in cache, will fail otherwise.
+
+        Returns:
+            List of cached items
+        """
+        # Load datasets for tasks that have cached docs
+        task_datasets = {}
+
+        for task_name in task_names:
+            cache_file = self.get_cache_path(task_name=task_name, sample_type=sample_type)
             try:
-                row = task_datasets[doc.task_name].loc[doc.id]
-                if sample_type == SampleType.TOKENIZED_INPUTS:
-                    results.append(row["sample"])
-                elif sample_type == SampleType.PREDICTIONS:
-                    results.append(ModelResponse(**row["sample"]))
-                cached_task_names.append(doc.task_name)
-            # AttributeError -> we did not manage to load the dataset, so task_datasets is None
+                dataset = load_dataset("parquet", data_files=str(cache_file), split="train")
+                dataset_df = dataset.to_pandas().set_index("sample_id")
+                task_datasets[task_name] = dataset_df
+            except Exception as e:
+                logger.warning(f"Error loading {sample_type.name.lower()} cache for {task_name}: {e}")
 
-            except (AttributeError, KeyError, IndexError):
-                results.append(None)
-                uncached_docs.append(doc)
+        # Build results list
+        results = []
 
-        return results, uncached_docs, set(cached_task_names)
+        for doc in docs:
+            row = task_datasets[doc.task_name].loc[doc.id]
+            results.append(self.load_sample(row, sample_type))
+
+        return results
 
     def store_samples(
         self,
@@ -147,20 +223,20 @@ class SampleCache:
         task_names: list[str],
         sample_type: SampleType,
     ):
-        """Store tokenization results for docs."""
+        """Store new results for samples in docs"""
         if not results:
             return
 
-        # Prepare data for dataset
-        tasks_data = {task_name: [] for task_name in task_names}
+        # Prepare newly processed data for dataset
+        processed_data = {task_name: [] for task_name in task_names}
         for doc, result in zip(docs, results):
-            if sample_type == SampleType.TOKENIZED_INPUTS:
-                tasks_data[doc.task_name].append({"sample_id": doc.id, "sample": result})
-            elif sample_type == SampleType.PREDICTIONS:
-                tasks_data[doc.task_name].append({"sample_id": doc.id, "sample": asdict(result)})
+            processed_data[doc.task_name].append(
+                {"sample_id": doc.id, "sample": self.dump_sample(result, sample_type)}
+            )
+        processed_data = {task_name: task_data for task_name, task_data in processed_data.items() if task_data}
 
-        for task_name in task_names:
-            # Save dataset
+        # Concatenate it with existing data and save to file
+        for task_name, task_data in processed_data.items():
             cache_file = self.get_cache_path(task_name=task_name, sample_type=sample_type)
 
             # Load existing data if present
@@ -170,23 +246,27 @@ class SampleCache:
                     existing_dataset = load_dataset("parquet", data_files=str(cache_file), split="train")
                     existing_data = existing_dataset.to_list()
                 except Exception as e:
-                    logger.warning(f"Error loading existing {sample_type.name.lower()} cache for {task_name}: {e}")
+                    logger.error(f"Error loading existing {sample_type.name.lower()} cache for {task_name}: {e}")
 
             # Merge with new data (new data overwrites existing)
             existing_ids = {row["sample_id"] for row in existing_data}
-            task_data = tasks_data[task_name]
 
             if any(row["sample_id"] in existing_ids for row in task_data):
-                logger.warning(f"Careful, you are overwriting samples for task {task_name}.")
-            all_data = existing_data + [row for row in task_data if row["sample_id"] not in existing_ids]
+                logger.warning(
+                    "Unexpected behavior: You have reprocessed already cached items - we will ignore the new version."
+                )
+            all_samples = existing_data + [row for row in task_data if row["sample_id"] not in existing_ids]
 
             # Save updated dataset
-            dataset = Dataset.from_list(all_data)
+            dataset = Dataset.from_list(all_samples)
             dataset.to_parquet(str(cache_file))
 
             logger.info(
-                f"Cached {len(all_data)} {sample_type.name.lower()} samples of {task_name} at {str(cache_file)}."
+                f"Cached {len(all_samples)} {sample_type.name.lower()} samples of {task_name} at {str(cache_file)}."
             )
+
+            # Refresh cached indices after storing new samples
+            self.existing_indices[sample_type][task_name] = [sample["sample_id"] for sample in all_samples]
 
 
 def cached(cache_type_name: str):  # noqa C901
@@ -194,7 +274,7 @@ def cached(cache_type_name: str):  # noqa C901
     Decorator to cache method results based on Doc inputs.
 
     Args:
-        cache_type: Type of cache ("tokenization" or "predictions")
+        cache_type_name: Type of cache ("tokenization" or "predictions")
 
     Usage:
         @cached("tokenization")
@@ -218,40 +298,40 @@ def cached(cache_type_name: str):  # noqa C901
 
             cache: SampleCache = self._cache
 
-            # Extract task name
+            # Extract task names
             task_names = {doc.task_name for doc in docs}
-            results, uncached_docs, cached_tasks_names = cache.get_samples(docs, task_names, cache_type)
 
-            # Process uncached docs if any
-            cached_results = [c for c in results if c is not None]
-            if cached_results:
+            # 1) Identify which samples must be processed because they are not cached
+            docs_not_cached, tasks_with_cached_samples = cache.get_notcached_samples(docs, cache_type)
+
+            # Log cache statistics
+            cached_count = len(docs) - len(docs_not_cached)
+            if cached_count > 0:
                 logger.info(
-                    f"Cache: Found {len(cached_results)}/{len(docs)} {cache_type.name.lower()} samples for tasks {', '.join(cached_tasks_names)}"
+                    f"Cache: {cached_count}/{len(docs)} {cache_type.name.lower()} samples are cached for tasks {', '.join(tasks_with_cached_samples)}"
                 )
 
+            # 2) Process not cached docs and save to file
             new_results = []
-            if uncached_docs:
-                uncached_tasks_names = {doc.task_name for doc in uncached_docs}
+            if docs_not_cached:
+                notcached_task_names = {doc.task_name for doc in docs_not_cached}
                 logger.info(
-                    f"Cache: Processing {len(uncached_docs)}/{len(docs)} {cache_type.name.lower()} samples for task {', '.join(uncached_tasks_names)}"
+                    f"Cache: Processing {len(docs_not_cached)}/{len(docs)} {cache_type.name.lower()} samples for tasks {', '.join(notcached_task_names)}"
                 )
-                new_results = func(self, uncached_docs, *args, **kwargs)
+                new_results = func(self, docs_not_cached, *args, **kwargs)
 
-                # Store new results in cache
-                cache.store_samples(uncached_docs, new_results, task_names, cache_type)
+                # Store new results in file cache
+                cache.store_samples(
+                    docs=docs_not_cached, results=new_results, task_names=task_names, sample_type=cache_type
+                )
 
-            # Merge cached and new results in original order
-            new_idx = 0
+            # 3) Create final results by pulling from newly saved file cache
+            final_results = cache.get_samples_from_cache(docs, task_names, cache_type)
 
-            for i, result in enumerate(results):
-                if result is None:  # nothing cached
-                    results[i] = new_results[new_idx]
-                    new_idx += 1
-
-            if any(r is None for r in results):
+            if any(r is None for r in final_results):
                 raise ValueError("Problem while loading and aggregating items from cache.")
 
-            return results
+            return final_results
 
         return wrapper
 
