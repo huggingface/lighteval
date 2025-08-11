@@ -31,6 +31,7 @@ from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
+from lighteval.utils.cache_management import SampleCache, cached
 from lighteval.utils.imports import is_litellm_available
 
 
@@ -125,6 +126,9 @@ class LiteLLMClient(LightevalModel):
         self.prompt_manager = PromptManager(
             use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
         )
+
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config)
 
     def _prepare_stop_sequence(self, stop_sequence):
         """Prepare and validate stop sequence."""
@@ -244,6 +248,7 @@ class LiteLLMClient(LightevalModel):
 
         return results
 
+    @cached("predictions")
     def greedy_until(
         self,
         docs: list[Doc],
@@ -256,7 +261,7 @@ class LiteLLMClient(LightevalModel):
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
 
         Returns:
-            list[GenerativeResponse]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         results = []
@@ -306,12 +311,14 @@ class LiteLLMClient(LightevalModel):
         """Return the maximum sequence length of the model."""
         return 4096
 
+    @cached("predictions")
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
         raise NotImplementedError
 
+    @cached("predictions")
     def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         raise NotImplementedError
