@@ -154,8 +154,10 @@ def accelerate(  # noqa C901
         config: dict = ModelConfig._parse_args(model_args)
 
     if config.get("delta_weights", False):
+        config.pop("delta_weights")
         model_config = DeltaModelConfig(**config)
     elif config.get("adapter_weights", False):
+        config.pop("adapter_weights")
         model_config = AdapterModelConfig(**config)
     else:
         if vision_model:
