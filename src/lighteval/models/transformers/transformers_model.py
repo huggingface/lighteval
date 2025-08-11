@@ -113,6 +113,9 @@ class TransformersModelConfig(ModelConfig):
             Whether to tokenize context and continuation separately or together. Defaults to False.
         continuous_batching (bool):
             Whether to use continuous batching for generation. Defaults to False.
+        override_chat_template (bool):
+            If True, we force the model to use a chat template. If alse, we prevent the model from using
+            a chat template. If None, we use the default (true if present in the tokenizer, false otherwise)
 
     Example:
         ```python
@@ -150,6 +153,7 @@ class TransformersModelConfig(ModelConfig):
     multichoice_continuations_start_space: bool | None = None
     pairwise_tokenization: bool = False
     continuous_batching: bool = False
+    override_chat_template: bool = None
 
     def model_post_init(self, __context):
         if self.multichoice_continuations_start_space is True:
@@ -200,7 +204,9 @@ class TransformersModel(LightevalModel):
         self.model_sha = config.get_model_sha()
         self._max_length = self._init_max_length()
         self._tokenizer = self._create_auto_tokenizer()
-        self.use_chat_template = uses_chat_template(tokenizer=self._tokenizer)
+        self.use_chat_template = uses_chat_template(
+            tokenizer=self._tokenizer, override_chat_template=config.override_chat_template
+        )
         self.model = self._create_auto_model()
 
         # We are in DP (and launch the script with `accelerate launch`)
@@ -281,7 +287,9 @@ class TransformersModel(LightevalModel):
         else:
             self._device = self.config.device
 
-        self.use_chat_template = uses_chat_template(self._tokenizer)
+        self.use_chat_template = uses_chat_template(
+            tokenizer=self._tokenizer, override_chat_template=config.override_chat_template
+        )
         self._add_special_tokens = add_special_tokens if add_special_tokens is not None else False
         self.skip_special_tokens = skip_special_tokens if skip_special_tokens is not None else True
         self.pairwise_tokenization = pairwise_tokenization

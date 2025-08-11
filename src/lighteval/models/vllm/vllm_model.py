@@ -124,6 +124,9 @@ class VLLMModelConfig(ModelConfig):
             Subfolder within the model repository. Defaults to None.
         is_async (bool):
             Whether to use the async version of VLLM. Defaults to False.
+        override_chat_template (bool):
+            If True, we force the model to use a chat template. If alse, we prevent the model from using
+            a chat template. If None, we use the default (true if present in the tokenizer, false otherwise)
 
     Example:
         ```python
@@ -164,6 +167,7 @@ class VLLMModelConfig(ModelConfig):
     max_num_batched_tokens: PositiveInt = 2048  # maximum number of tokens per batch
     subfolder: str | None = None
     is_async: bool = False  # Whether to use the async version or sync version of the model
+    override_chat_template: bool = None
 
 
 class VLLMModel(LightevalModel):
@@ -173,7 +177,9 @@ class VLLMModel(LightevalModel):
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
         self.config = config
-        self.use_chat_template = uses_chat_template(model_name=config.model_name)
+        self.use_chat_template = uses_chat_template(
+            model_name=config.model_name, override_chat_template=config.override_chat_template
+        )
         self.data_parallel_size = config.data_parallel_size
         self.tensor_parallel_size = config.tensor_parallel_size
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
