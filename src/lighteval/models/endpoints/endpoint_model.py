@@ -543,6 +543,9 @@ class InferenceEndpointModel(LightevalModel):
         self,
         docs: List[Doc],
     ) -> List[ModelResponse]:
+        return self._greedy_until(docs)
+
+    def _greedy_until(self, docs: List[Doc]) -> list[ModelResponse]:
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         batch_size = self.config.batch_size
         results = []
@@ -581,55 +584,15 @@ class InferenceEndpointModel(LightevalModel):
 
     @cached("predictions")
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
-        dataset = LoglikelihoodDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
-        batch_size = self.config.batch_size
-        results = []
-
-        for split in tqdm(
-            dataset.splits_iterator(),
-            total=dataset.num_dataset_splits,
-            desc="Splits",
-            position=0,
-            disable=self.disable_tqdm,
-        ):
-            dataloader = DataLoader(split, batch_size=batch_size, collate_fn=lambda batch: batch)
-
-            for batch in tqdm(dataloader, desc="Loglikelihoods", position=1, leave=False, disable=self.disable_tqdm):
-                if self.use_async:
-                    responses = asyncio.run(self._async_process_batch_logprob(batch))
-                else:
-                    responses = self._process_batch_logprob(batch)
-
-                for cur_request, response in zip(batch, responses):
-                    cont_toks = torch.tensor(cur_request.tokenized_continuation)
-                    len_choice = len(cont_toks)
-
-                    if self.endpoint:  # inference endpoint
-                        logits = [
-                            t.logprob for t in response.details.prefill[-len_choice:] if t.logprob is not None
-                        ]  # to check
-                    else:  # serverless endpoint
-                        logits = [t.logprob for t in response.details.tokens[-len_choice:] if t.logprob is not None]
-
-                    greedy_tokens = torch.tensor(logits).argmax(dim=-1)
-                    max_equal = (greedy_tokens == cont_toks).all().squeeze(0)
-                    results.append(
-                        ModelResponse(
-                            logprobs=(sum(logits), bool(max_equal)),
-                            input_tokens=[t.id for t in response.details.prefill[:-len_choice]],
-                            output_tokens=[t.id for t in response.details.prefill[-len_choice:]],
-                            truncated_tokens_count=-1,
-                            padded_tokens_count=-1,
-                        )
-                    )
-
-        return dataset.get_original_order(results)
+        return self._loglikelihood(docs, rolling=False)
 
     @cached("predictions")
-    def loglikelihood_rolling(self, requests: list[Doc], override_bs=None) -> list[ModelResponse]:
-        """This function is used to compute the log likelihood of the context for perplexity metrics."""
-        dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)
-        batch_size = override_bs if override_bs is not None else BATCH_SIZE
+    def loglikelihood_rolling(self, docs: list[Doc], override_bs=None) -> list[ModelResponse]:
+        return self._loglikelihood(docs, rolling=True)
+
+    def _loglikelihood(self, docs: list[Doc], rolling: bool = False) -> list[ModelResponse]:
+        dataset = LoglikelihoodDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
+        batch_size = self.config.batch_size
         results: list[ModelResponse] = []
 
         for split in tqdm(
@@ -642,24 +605,53 @@ class InferenceEndpointModel(LightevalModel):
             dataloader = DataLoader(split, batch_size=batch_size, collate_fn=lambda batch: batch)
 
             for batch in tqdm(
-                dataloader, desc="Loglikelihoods, rolling", position=1, leave=False, disable=self.disable_tqdm
+                dataloader,
+                desc=f"Loglikelihoods {'rolling' if rolling else ''}",
+                position=1,
+                leave=False,
+                disable=self.disable_tqdm,
             ):
                 if self.use_async:
-                    responses = asyncio.run(self._async_process_batch_logprob(batch, rolling=True))
+                    responses = asyncio.run(self._async_process_batch_logprob(batch, rolling=rolling))
                 else:
-                    responses = self._process_batch_logprob(batch, rolling=True)
+                    responses = self._process_batch_logprob(batch, rolling=rolling)
 
-                for response in responses:
-                    logits = [t.logprob for t in response.details.tokens[:-1]]
+                for cur_request, response in zip(batch, responses):
+                    cont_toks = torch.tensor(cur_request.tokenized_continuation)
+                    len_choice = len(cont_toks)
 
-                    results.append(
-                        ModelResponse(
-                            result=sum(logits),
-                            input_tokens=[t.id for t in response.details.prefill],
-                            generated_tokens=[t.id for t in response.details.tokens[:-1]],
-                            truncated_tokens_count=-1,
-                            padded_tokens_count=-1,
+                    if rolling:
+                        logits = [t.logprob for t in response.details.tokens[:-1]]
+                        results.append(
+                            ModelResponse(
+                                result=sum(logits),
+                                input_tokens=[t.id for t in response.details.prefill],
+                                generated_tokens=[t.id for t in response.details.tokens[:-1]],
+                                truncated_tokens_count=-1,
+                                padded_tokens_count=-1,
+                            )
                         )
-                    )
+
+                    else:
+                        if self.endpoint:  # inference endpoint
+                            logits = [
+                                t.logprob for t in response.details.prefill[-len_choice:] if t.logprob is not None
+                            ]  # to check
+                        else:  # serverless endpoint
+                            logits = [
+                                t.logprob for t in response.details.tokens[-len_choice:] if t.logprob is not None
+                            ]
+
+                        greedy_tokens = torch.tensor(logits).argmax(dim=-1)
+                        max_equal = (greedy_tokens == cont_toks).all().squeeze(0)
+                        results.append(
+                            ModelResponse(
+                                logprobs=(sum(logits), bool(max_equal)),
+                                input_tokens=[t.id for t in response.details.prefill[:-len_choice]],
+                                output_tokens=[t.id for t in response.details.prefill[-len_choice:]],
+                                truncated_tokens_count=-1,
+                                padded_tokens_count=-1,
+                            )
+                        )
 
         return dataset.get_original_order(results)

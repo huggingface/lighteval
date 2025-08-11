@@ -342,13 +342,18 @@ class VLMTransformersModel(LightevalModel):
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
-            override_bs (int, optional): Override the batch size for generation. Defaults to None.
+            docs (list[Docs]): list of docs containing the context and ending conditions.
 
         Returns:
             list[ModelResponse]: list of generated responses.
         """
+        return self._greedy_until(docs)
 
+    def _greedy_until(
+        self,
+        docs: list[Doc],
+    ) -> list[ModelResponse]:
+        """Wrapper for the greedy until logic, to avoid interface changes in the future"""
         # Tokenizing context for sorting in the dataset
 
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)

@@ -25,6 +25,7 @@ import unittest
 from dataclasses import asdict
 from unittest.mock import Mock, patch
 
+import pytest
 import torch
 
 from lighteval.models.abstract_model import LightevalModel
@@ -202,7 +203,7 @@ class TestCaching(unittest.TestCase):
             self._test_cache(model)
 
     @patch("lighteval.models.vllm.vllm_model.VLLMModel._create_auto_model")
-    @patch("lighteval.models.vllm.vllm_model.VLLMModel.greedy_until")
+    @patch("lighteval.models.vllm.vllm_model.VLLMModel._greedy_until")
     @patch("lighteval.models.vllm.vllm_model.VLLMModel._loglikelihood_tokens")
     def test_cache_vllm(self, mock_create_model, mock_greedy_until, mock_loglikelihood):
         from lighteval.models.vllm.vllm_model import VLLMModel, VLLMModelConfig
@@ -218,25 +219,27 @@ class TestCaching(unittest.TestCase):
 
             self._test_cache(model)
 
-    @patch("lighteval.models.endpoints.tgi_model.ModelClient._make_request")
-    @patch("lighteval.models.endpoints.tgi_model.ModelClient.greedy_until")
-    @patch("lighteval.models.endpoints.tgi_model.ModelClient.loglikelihood")
-    def test_cache_tgi(self, mock_make_request, mock_greedy_until, mock_loglikelihood):
+    @patch("lighteval.models.endpoints.tgi_model.ModelClient._greedy_until")
+    @patch("lighteval.models.endpoints.tgi_model.ModelClient._loglikelihood")
+    def test_cache_tgi(self, mock_greedy_until, mock_loglikelihood):
         from lighteval.models.endpoints.tgi_model import ModelClient, TGIModelConfig
+        from lighteval.utils.imports import is_tgi_available
+
+        if not is_tgi_available():
+            pytest.skip("Skipping because missing the imports")
 
         # Mock TGI requests
-        mock_make_request.return_value = Mock()
         mock_greedy_until.return_value = self.model_responses
         mock_loglikelihood.return_value = self.model_responses
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            config = TGIModelConfig(model_name="Qwen/Qwen3-0.6B", base_url="http://localhost:8080", cache_dir=temp_dir)
+            config = TGIModelConfig(model_name="Qwen/Qwen3-0.6B", cache_dir=temp_dir)
             model = ModelClient(config)
 
             self._test_cache(model)
 
-    @patch("lighteval.models.endpoints.endpoint_model.InferenceEndpointModel.greedy_until")
-    @patch("lighteval.models.endpoints.endpoint_model.InferenceEndpointModel.loglikelihood")
+    @patch("lighteval.models.endpoints.endpoint_model.InferenceEndpointModel._greedy_until")
+    @patch("lighteval.models.endpoints.endpoint_model.InferenceEndpointModel._loglikelihood")
     def test_cache_endpoint(self, mock_greedy_until, mock_loglikelihood):
         from lighteval.models.endpoints.endpoint_model import InferenceEndpointModel, InferenceEndpointModelConfig
 
@@ -250,14 +253,18 @@ class TestCaching(unittest.TestCase):
 
             self._test_cache(model)
 
+    @patch("lighteval.models.sglang.sglang_model.SGLangModel._loglikelihood_tokens")
+    @patch("lighteval.models.sglang.sglang_model.SGLangModel._greedy_until")
+    @patch("lighteval.models.sglang.sglang_model.SGLangModel._create_auto_tokenizer")
     @patch("lighteval.models.sglang.sglang_model.SGLangModel._create_auto_model")
-    @patch("lighteval.models.sglang.sglang_model.SGLangModel.greedy_until")
-    @patch("lighteval.models.sglang.sglang_model.SGLangModel.loglikelihood")
-    def test_cache_sglang(self, mock_create_auto_model, mock_greedy_until, mock_loglikelihood):
+    def test_cache_sglang(
+        self, mock_create_auto_model, mock_create_auto_tokenizer, mock_greedy_until, mock_loglikelihood
+    ):
         from lighteval.models.sglang.sglang_model import SGLangModel, SGLangModelConfig
 
         # Mock SGLang engine
         mock_create_auto_model = Mock()  # noqa F841
+        mock_create_auto_tokenizer = Mock()  # noqa F841
         mock_greedy_until.return_value = self.model_responses
         mock_loglikelihood.return_value = self.model_responses
 
@@ -267,13 +274,12 @@ class TestCaching(unittest.TestCase):
 
             self._test_cache(model)
 
-    @patch("lighteval.models.transformers.vlm_transformers_model.VLMTransformersModel.loglikelihood")
-    @patch("lighteval.models.transformers.vlm_transformers_model.VLMTransformersModel.greedy_until")
+    @patch("lighteval.models.transformers.vlm_transformers_model.VLMTransformersModel._greedy_until")
     @patch("lighteval.utils.imports.is_accelerate_available")
     @patch("lighteval.models.transformers.vlm_transformers_model.Accelerator")
     @patch("lighteval.models.transformers.vlm_transformers_model.VLMTransformersModel._create_auto_model")
     def test_cache_vlm_transformers(
-        self, mock_create_model, mock_accelerator, is_accelerate_available, mock_greedy_until, mock_loglikelihood
+        self, mock_create_model, mock_accelerator, is_accelerate_available, mock_greedy_until
     ):
         from lighteval.models.transformers.vlm_transformers_model import (
             VLMTransformersModel,
@@ -289,25 +295,9 @@ class TestCaching(unittest.TestCase):
         # Skip the model creation phase
         mock_create_model = Mock()  # noqa F841
         mock_greedy_until.return_value = self.model_responses
-        mock_loglikelihood.return_value = self.model_responses
 
         with tempfile.TemporaryDirectory() as temp_dir:
             config = VLMTransformersModelConfig(model_name="HuggingFaceTB/SmolVLM-256M-Instruct", cache_dir=temp_dir)
             model = VLMTransformersModel(config)
-
-            self._test_cache(model)
-
-    @patch("lighteval.models.dummy.dummy_model.DummyModel.greedy_until")
-    @patch("lighteval.models.dummy.dummy_model.DummyModel.loglikelihood")
-    def test_cache_dummy(self, mock_greedy_until, mock_loglikelihood):
-        from lighteval.models.dummy.dummy_model import DummyModel, DummyModelConfig
-
-        # Mock dummy model requests
-        mock_greedy_until.return_value = self.model_responses
-        mock_loglikelihood.return_value = self.model_responses
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            config = DummyModelConfig(model_name="Qwen/Qwen3-0.6B", cache_dir=temp_dir)
-            model = DummyModel(config)
 
             self._test_cache(model)

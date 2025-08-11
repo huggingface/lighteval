@@ -225,6 +225,12 @@ class SGLangModel(LightevalModel):
         Returns:
             list[GenerateReturn]: list of generated responses.
         """
+        return self._greedy_until(docs)
+
+    def _greedy_until(
+        self,
+        docs: list[Doc],
+    ) -> list[ModelResponse]:
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         results = []
 
