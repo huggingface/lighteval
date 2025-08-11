@@ -54,6 +54,7 @@ from lighteval.models.model_output import (
 from lighteval.models.utils import _get_dtype, _get_model_sha, _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
+from lighteval.utils.cache_management import SampleCache, cached
 from lighteval.utils.imports import (
     is_accelerate_available,
 )
@@ -113,6 +114,9 @@ class TransformersModelConfig(ModelConfig):
             Whether to tokenize context and continuation separately or together. Defaults to False.
         continuous_batching (bool):
             Whether to use continuous batching for generation. Defaults to False.
+        override_chat_template (bool):
+            If True, we force the model to use a chat template. If alse, we prevent the model from using
+            a chat template. If None, we use the default (true if present in the tokenizer, false otherwise)
 
     Example:
         ```python
@@ -150,6 +154,7 @@ class TransformersModelConfig(ModelConfig):
     multichoice_continuations_start_space: bool | None = None
     pairwise_tokenization: bool = False
     continuous_batching: bool = False
+    override_chat_template: bool = None
 
     def model_post_init(self, __context):
         if self.multichoice_continuations_start_space is True:
@@ -200,7 +205,9 @@ class TransformersModel(LightevalModel):
         self.model_sha = config.get_model_sha()
         self._max_length = self._init_max_length()
         self._tokenizer = self._create_auto_tokenizer()
-        self.use_chat_template = uses_chat_template(tokenizer=self._tokenizer)
+        self.use_chat_template = uses_chat_template(
+            tokenizer=self._tokenizer, override_chat_template=config.override_chat_template
+        )
         self.model = self._create_auto_model()
 
         # We are in DP (and launch the script with `accelerate launch`)
@@ -225,6 +232,9 @@ class TransformersModel(LightevalModel):
         self.prompt_manager = PromptManager(
             use_chat_template=self.use_chat_template, tokenizer=self.tokenizer, system_prompt=config.system_prompt
         )
+
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config)
 
     def cleanup(self):
         """Clean up operations if needed, such as closing an endpoint."""
@@ -281,7 +291,9 @@ class TransformersModel(LightevalModel):
         else:
             self._device = self.config.device
 
-        self.use_chat_template = uses_chat_template(self._tokenizer)
+        self.use_chat_template = uses_chat_template(
+            tokenizer=self._tokenizer, override_chat_template=config.override_chat_template
+        )
         self._add_special_tokens = add_special_tokens if add_special_tokens is not None else False
         self.skip_special_tokens = skip_special_tokens if skip_special_tokens is not None else True
         self.pairwise_tokenization = pairwise_tokenization
@@ -294,6 +306,15 @@ class TransformersModel(LightevalModel):
             model_size = convert_bytes(model_size)
         else:
             model_size = -1
+        self.prompt_manager = PromptManager(
+            use_chat_template=self.use_chat_template,
+            tokenizer=self.tokenizer,
+            system_prompt=config.system_prompt if config else None,
+        )
+
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config) if config else None
+
         return self
 
     @property
@@ -626,7 +647,7 @@ class TransformersModel(LightevalModel):
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
 
         Returns:
-            list[GenerativeResponse]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
         results = []
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
@@ -735,6 +756,7 @@ class TransformersModel(LightevalModel):
 
         return dataset.get_original_order(results)
 
+    @cached("predictions")
     def greedy_until(
         self,
         docs: list[Doc],
@@ -774,7 +796,7 @@ class TransformersModel(LightevalModel):
         num_samples: int = 1,
     ) -> list[ModelResponse]:
         """Contains the actual logic of the generation.
-        First computes the stop sequences, then generates the predictions, then converts the outputs to GenerativeResponse.
+        First computes the stop sequences, then generates the predictions, then converts the outputs to ModelResponse.
         """
         stopping_criteria = stop_sequences_criteria(self.tokenizer, stop_sequences=stop_tokens, batch=batch)
         batch_size, _ = batch.input_ids.shape
@@ -821,7 +843,7 @@ class TransformersModel(LightevalModel):
         if self.accelerator:
             batch.padded = self.accelerator.gather_for_metrics(batch.padded)
 
-        # We convert to GenerativeResponse outputs
+        # We convert to ModelResponse outputs
         all_responses = []
         for ix, (batched_generations, batched_input, trunc, padded) in enumerate(
             zip(generations, batch.input_ids, batch.truncated, batch.padded)
@@ -861,6 +883,7 @@ class TransformersModel(LightevalModel):
         else:
             return self._generate_padded(**kwargs)
 
+    @cached("predictions")
     def loglikelihood(
         self,
         docs: list[Doc],
@@ -876,6 +899,7 @@ class TransformersModel(LightevalModel):
         """
         return self._loglikelihood_tokens(docs)
 
+    @cached("predictions")
     def loglikelihood_rolling(
         self,
         docs: list[Doc],
