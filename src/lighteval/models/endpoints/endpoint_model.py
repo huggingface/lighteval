@@ -24,7 +24,7 @@ import asyncio
 import logging
 import re
 import time
-from typing import Coroutine, Dict, List, Optional, Union
+from typing import Coroutine, Dict, List, Optional, Tuple, Union
 
 import requests
 import torch
@@ -230,134 +230,20 @@ class InferenceEndpointModel(LightevalModel):
     endpoints, which will use text-generation-inference to deploy your model for the duration of the evaluation.
     """
 
-    def __init__(  # noqa: C901
-        self, config: Union[InferenceEndpointModelConfig, ServerlessEndpointModelConfig]
-    ) -> None:
+    def __init__(self, config: Union[InferenceEndpointModelConfig, ServerlessEndpointModelConfig]) -> None:
         self.config = config
         self.reuse_existing = getattr(config, "reuse_existing", False)
         self._max_length = None
-        self.endpoint = None
         self.model_name = None
+        self.endpoint, self.async_client, self.client = self._create_endpoint(config)
         if isinstance(config, InferenceEndpointModelConfig):
-            if config.instance_type and config.instance_size and config.vendor and config.region:
-                vendor, region, instance_type, instance_size = (
-                    config.vendor,
-                    config.region,
-                    config.instance_type,
-                    config.instance_size,
-                )
-            else:
-                try:
-                    vendor, region, instance_type, instance_size = InferenceEndpointModel.get_suggested_model_config(
-                        config.model_name
-                    )
-                except Exception:
-                    vendor, region, instance_type, instance_size = (
-                        "aws",
-                        "us-east-1",
-                        *InferenceEndpointModel.get_larger_hardware_suggestion(),
-                    )
-
-            must_scaleup_endpoint = False
-            timer_start = time.time()
-            # Endpoint names do not allow special characters
-            endpoint_name = config.endpoint_name or re.sub(
-                "[^a-zA-Z0-9-]", "-", config.model_name.lower() + "-lighteval"
-            )
-            # If no endpoint or endpoint not running, and we're below an hour
-            while (self.endpoint is None or self.endpoint.status != "running") and (
-                time.time() - timer_start < MAX_TIME_FOR_SPINUP
-            ):
-                try:
-                    if self.endpoint is None:  # Endpoint does not exist yet locally
-                        if not config.reuse_existing:  # New endpoint
-                            logger.info("Creating endpoint.")
-                            self.endpoint: InferenceEndpoint = create_inference_endpoint(
-                                name=endpoint_name,
-                                namespace=config.namespace,
-                                repository=config.model_name,
-                                revision=config.revision,
-                                framework=config.framework,
-                                task="text-generation",
-                                accelerator=config.accelerator,
-                                type=config.endpoint_type,
-                                vendor=vendor,
-                                region=region,
-                                instance_size=instance_size,
-                                instance_type=instance_type,
-                                custom_image={
-                                    "health_route": "/health",
-                                    "env": {
-                                        # Documentation: https://huggingface.co/docs/text-generation-inference/en/basic_tutorials/launcher
-                                        "MAX_BATCH_PREFILL_TOKENS": "2048",
-                                        "MAX_INPUT_LENGTH": "2047",
-                                        "MAX_TOTAL_TOKENS": "2048",
-                                        "MODEL_ID": "/repository",
-                                        "HF_MODEL_TRUST_REMOTE_CODE": "true",
-                                        **config.get_dtype_args(),
-                                        **config.get_custom_env_vars(),
-                                    },
-                                    "url": (config.image_url or "ghcr.io/huggingface/text-generation-inference:3.0.1"),
-                                },
-                            )
-                        else:  # Endpoint exists
-                            logger.info("Reusing existing endpoint.")
-                            self.endpoint = get_inference_endpoint(name=endpoint_name, namespace=config.namespace)
-
-                    else:
-                        # Endpoint exists locally but either failed (and most likely it must be scaled up)
-                        if must_scaleup_endpoint:
-                            logger.info("Rescaling existing endpoint.")
-                            self.endpoint.update(instance_size=instance_size, instance_type=instance_type)
-                            must_scaleup_endpoint = False
-                        # or we got a connection error, in which case we do nothing and just wait at the next step
-
-                    # Waits for the endpoint to be deployed - we could also check for the status in updating', 'pending', 'initializing'
-                    logger.info("Trying to deploy your endpoint. Please wait for 10 min.")
-                    self.endpoint.wait(timeout=600, refresh_every=60)  # We wait for 10 min
-                except InferenceEndpointError as e:
-                    logger.info(
-                        f"Endpoint failed to start on current hardware with error {e}. Trying to autoscale to ({instance_type}, {instance_size})."
-                    )
-                    instance_type, instance_size = InferenceEndpointModel.get_larger_hardware_suggestion(
-                        instance_type, instance_size
-                    )
-                    must_scaleup_endpoint = True
-
-                except HfHubHTTPError as e:
-                    # The endpoint actually already exists, we'll spin it up instead of trying to create a new one
-                    if "409 Client Error: Conflict for url:" in str(e):
-                        config.endpoint_name = endpoint_name
-                        config.reuse_existing = True
-                    # Requested resources are not available
-                    elif "Bad Request: Compute instance not available yet" in str(e):
-                        logger.error(
-                            f"The hardware combination you are requesting does not seem to be available: ({instance_type}, {instance_size}, {config.region})."
-                        )
-                        raise e
-                    # User account does not have access to requested resources
-                    elif "Conflict: Quota exceeded" in str(e):
-                        raise e
-                except ConnectionError as e:
-                    logger.error(f"Connection failed with error {e}. Retrying")
-
-            if not self.endpoint.status == "running":
-                raise Exception("Did not manage to start endpoint within the elapsed time and on suggested hardware.")
-
-            logger.info("Endpoint successfully deployed!")
             self.endpoint_name = config.endpoint_name
             self.name = self.endpoint.repository
             self.revision = self.endpoint.revision
-            self.async_client: AsyncInferenceClient = self.endpoint.async_client
-            self.client: InferenceClient = self.endpoint.client
-
         else:  # Free inference client
-            self.endpoint = None
             self.endpoint_name = None
             self.name = config.model_name
             self.revision = "default"
-            self.async_client = AsyncInferenceClient(model=config.model_name)
-            self.client = InferenceClient(model=config.model_name)
 
         self.config.revision = self.revision
 
@@ -374,6 +260,125 @@ class InferenceEndpointModel(LightevalModel):
 
         # Initialize cache for tokenization and predictions
         self._cache = SampleCache(config)
+
+    def _create_endpoint(  # noqa: C901
+        self, config: InferenceEndpointModelConfig | ServerlessEndpointModelConfig
+    ) -> Tuple[Union[InferenceEndpoint | None], AsyncInferenceClient, InferenceClient]:  # noqa: C901
+        """Creates the endpoint depending on the configuration - for an InferenceEnpointModelConfig, will retry to start
+        TODO: should probably split ServerlessEndpointModelConfig and make it a derived class
+        """
+        if isinstance(config, ServerlessEndpointModelConfig):
+            return None, AsyncInferenceClient(model=config.model_name), InferenceClient(model=config.model_name)
+
+        endpoint = None
+
+        if config.instance_type and config.instance_size and config.vendor and config.region:
+            vendor, region, instance_type, instance_size = (
+                config.vendor,
+                config.region,
+                config.instance_type,
+                config.instance_size,
+            )
+        else:
+            try:
+                vendor, region, instance_type, instance_size = InferenceEndpointModel.get_suggested_model_config(
+                    config.model_name
+                )
+            except Exception:
+                vendor, region, instance_type, instance_size = (
+                    "aws",
+                    "us-east-1",
+                    *InferenceEndpointModel.get_larger_hardware_suggestion(),
+                )
+
+        must_scaleup_endpoint = False
+        timer_start = time.time()
+        # Endpoint names do not allow special characters
+        endpoint_name = config.endpoint_name or re.sub("[^a-zA-Z0-9-]", "-", config.model_name.lower() + "-lighteval")
+        # If no endpoint or endpoint not running, and we're below an hour
+        while (endpoint is None or endpoint.status != "running") and (time.time() - timer_start < MAX_TIME_FOR_SPINUP):
+            try:
+                if endpoint is None:  # Endpoint does not exist yet locally
+                    if not config.reuse_existing:  # New endpoint
+                        logger.info("Creating endpoint.")
+                        endpoint: InferenceEndpoint = create_inference_endpoint(
+                            name=endpoint_name,
+                            namespace=config.namespace,
+                            repository=config.model_name,
+                            revision=config.revision,
+                            framework=config.framework,
+                            task="text-generation",
+                            accelerator=config.accelerator,
+                            type=config.endpoint_type,
+                            vendor=vendor,
+                            region=region,
+                            instance_size=instance_size,
+                            instance_type=instance_type,
+                            custom_image={
+                                "health_route": "/health",
+                                "env": {
+                                    # Documentation: https://huggingface.co/docs/text-generation-inference/en/basic_tutorials/launcher
+                                    "MAX_BATCH_PREFILL_TOKENS": "2048",
+                                    "MAX_INPUT_LENGTH": "2047",
+                                    "MAX_TOTAL_TOKENS": "2048",
+                                    "MODEL_ID": "/repository",
+                                    "HF_MODEL_TRUST_REMOTE_CODE": "true",
+                                    **config.get_dtype_args(),
+                                    **config.get_custom_env_vars(),
+                                },
+                                "url": (config.image_url or "ghcr.io/huggingface/text-generation-inference:3.0.1"),
+                            },
+                        )
+                    else:  # Endpoint exists
+                        logger.info("Reusing existing endpoint.")
+                        endpoint = get_inference_endpoint(name=endpoint_name, namespace=config.namespace)
+
+                else:
+                    # Endpoint exists locally but either failed (and most likely it must be scaled up)
+                    if must_scaleup_endpoint:
+                        logger.info("Rescaling existing endpoint.")
+                        endpoint.update(instance_size=instance_size, instance_type=instance_type)
+                        must_scaleup_endpoint = False
+                    # or we got a connection error, in which case we do nothing and just wait at the next step
+
+                # Waits for the endpoint to be deployed - we could also check for the status in updating', 'pending', 'initializing'
+                logger.info("Trying to deploy your endpoint. Please wait for 10 min.")
+                endpoint.wait(timeout=600, refresh_every=60)  # We wait for 10 min
+            except InferenceEndpointError as e:
+                logger.info(
+                    f"Endpoint failed to start on current hardware with error {e}. Trying to autoscale to ({instance_type}, {instance_size})."
+                )
+                instance_type, instance_size = InferenceEndpointModel.get_larger_hardware_suggestion(
+                    instance_type, instance_size
+                )
+                must_scaleup_endpoint = True
+
+            except HfHubHTTPError as e:
+                # The endpoint actually already exists, we'll spin it up instead of trying to create a new one
+                if "409 Client Error: Conflict for url:" in str(e):
+                    config.endpoint_name = endpoint_name
+                    config.reuse_existing = True
+                # Requested resources are not available
+                elif "Bad Request: Compute instance not available yet" in str(e):
+                    logger.error(
+                        f"The hardware combination you are requesting does not seem to be available: ({instance_type}, {instance_size}, {config.region})."
+                    )
+                    raise e
+                # User account does not have access to requested resources
+                elif "Conflict: Quota exceeded" in str(e):
+                    raise e
+            except ConnectionError as e:
+                logger.error(f"Connection failed with error {e}. Retrying")
+
+        if not endpoint.status == "running":
+            raise Exception("Did not manage to start endpoint within the elapsed time and on suggested hardware.")
+
+        logger.info("Endpoint successfully deployed!")
+
+        async_client: AsyncInferenceClient = endpoint.async_client
+        client: InferenceClient = endpoint.client
+
+        return endpoint, async_client, client
 
     @staticmethod
     def get_larger_hardware_suggestion(cur_instance_type: str = None, cur_instance_size: str = None):

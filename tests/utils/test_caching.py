@@ -240,12 +240,16 @@ class TestCaching(unittest.TestCase):
 
     @patch("lighteval.models.endpoints.endpoint_model.InferenceEndpointModel._loglikelihood")
     @patch("lighteval.models.endpoints.endpoint_model.InferenceEndpointModel._greedy_until")
-    @patch("lighteval.models.endpoints.endpoint_model.InferenceEndpointModel.__init__")
+    @patch("lighteval.models.endpoints.endpoint_model.InferenceEndpointModel._create_endpoint")
     def test_cache_endpoint(self, mock_init, mock_greedy_until, mock_loglikelihood):
         from lighteval.models.endpoints.endpoint_model import InferenceEndpointModel, InferenceEndpointModelConfig
 
         # Mock endpoint requests
-        mock_init = None  # noqa F841
+        auto_model = Mock()
+        auto_model.repository = "Qwen/Qwen3-0.6B"
+        auto_model.revision = ""
+        mock_init.return_value = auto_model, Mock(), Mock()  # noqa F841
+
         mock_greedy_until.return_value = self.model_responses
         mock_loglikelihood.return_value = self.model_responses
 
