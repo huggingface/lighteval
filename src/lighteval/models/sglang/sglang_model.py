@@ -95,6 +95,9 @@ class SGLangModelConfig(ModelConfig):
             Fraction of GPU memory to use for static allocation. Defaults to 0.8.
         chunked_prefill_size (PositiveInt):
             Size of chunks for prefill operations. Defaults to 4096.
+        override_chat_template (bool):
+            If True, we force the model to use a chat template. If alse, we prevent the model from using
+            a chat template. If None, we use the default (true if present in the tokenizer, false otherwise)
 
     Example:
         ```python
@@ -127,6 +130,7 @@ class SGLangModelConfig(ModelConfig):
     attention_backend: str | None = None
     mem_fraction_static: PositiveFloat = 0.8
     chunked_prefill_size: PositiveInt = 4096
+    override_chat_template: bool = None
 
 
 class SGLangModel(LightevalModel):
@@ -136,7 +140,9 @@ class SGLangModel(LightevalModel):
     ):
         """Initializes an SGLang model."""
         self.config = config
-        self.use_chat_template = uses_chat_template(model_name=self.config.model_name)
+        self.use_chat_template = uses_chat_template(
+            model_name=self.config.model_name, override_chat_template=config.override_chat_template
+        )
         self.data_parallel_size = config.dp_size
         self.tensor_parallel_size = config.tp_size
         self._add_special_tokens = config.add_special_tokens
