@@ -24,6 +24,7 @@ import functools
 import hashlib
 import json
 import logging
+import os
 from dataclasses import asdict
 from enum import Enum
 from pathlib import Path
@@ -68,7 +69,7 @@ class SampleCache:
             model_config: Configuration for the model being cached
             cache_dir: Directory to store cache files
         """
-        self.cache_dir = Path(model_config.cache_dir)
+        self.cache_dir = Path(os.path.expanduser(model_config.cache_dir))
         self.model_config = model_config
         self.model_hash = self.get_model_hash(model_config)
 
