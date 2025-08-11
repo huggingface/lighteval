@@ -36,13 +36,10 @@ from transformers import (
 from lighteval.data import GenerativeTaskDataset
 from lighteval.models.abstract_model import LightevalModel, TokenSequence
 from lighteval.models.model_output import (
-    GenerativeResponse,
-    LoglikelihoodResponse,
+    ModelResponse,
 )
 from lighteval.tasks.requests import (
-    GreedyUntilRequest,
-    LoglikelihoodRequest,
-    LoglikelihoodRollingRequest,
+    Doc,
 )
 
 
@@ -117,9 +114,9 @@ class LocalMTClient(LightevalModel):
 
     def greedy_until(
         self,
-        requests: list[GreedyUntilRequest],
+        requests: list[Doc],
         override_bs: Optional[int] = None,
-    ) -> list[GenerativeResponse]:
+    ) -> list[ModelResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
         Results are cached to disk to avoid repeated translations.
@@ -129,7 +126,7 @@ class LocalMTClient(LightevalModel):
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
 
         Returns:
-            list[GenerativeResponse]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
 
         def get_langs(task_name: str) -> tuple[str, str]:
@@ -202,7 +199,7 @@ class LocalMTClient(LightevalModel):
                 # Create responses for the batch
                 for input_tokens, output_tokens, translation in zip(input_ids, output_ids, translations):
                     results.append(
-                        GenerativeResponse(
+                        ModelResponse(
                             input_tokens=input_tokens,
                             generated_tokens=output_tokens,
                             result=translation,
@@ -254,16 +251,12 @@ class LocalMTClient(LightevalModel):
         """Return the maximum sequence length of the model."""
         return 4096
 
-    def loglikelihood(
-        self, requests: list[LoglikelihoodRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
+    def loglikelihood(self, requests: list[Doc], override_bs: Optional[int] = None) -> list[ModelResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
         raise NotImplementedError
 
-    def loglikelihood_rolling(
-        self, requests: list[LoglikelihoodRollingRequest], override_bs: Optional[int] = None
-    ) -> list[LoglikelihoodResponse]:
+    def loglikelihood_rolling(self, requests: list[Doc], override_bs: Optional[int] = None) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         raise NotImplementedError

@@ -397,5 +397,6 @@ class SGLangModel(LightevalModel):
                 res.append(answer)
         return dataset.get_original_order(res)
 
+    @cached("predictions")
     def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
         raise NotImplementedError()

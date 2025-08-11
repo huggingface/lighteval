@@ -59,7 +59,7 @@ class SampleCache:
             - {task_name}.parquet
     """
 
-    def __init__(self, model_config: ModelConfig, cache_dir: str = "./cache/huggingface/lighteval"):
+    def __init__(self, model_config: ModelConfig):
         """
         Initialize the sample cache.
 
@@ -67,7 +67,7 @@ class SampleCache:
             model_config: Configuration for the model being cached
             cache_dir: Directory to store cache files
         """
-        self.cache_dir = Path(cache_dir)
+        self.cache_dir = Path(model_config.cache_dir)
         self.model_config = model_config
         self.model_hash = self.get_model_hash(model_config)
 
@@ -101,7 +101,7 @@ class SampleCache:
                 for row in dataset:
                     try:
                         # We only save indices of correctly formatted samples, though this means we need to load each at least once
-                        self.load_sample(row, sample_type=sample_type)
+                        self._load_sample(row, sample_type=sample_type)
                         sample_ids.append(row["sample_id"])
                     except Exception:
                         continue
@@ -132,7 +132,7 @@ class SampleCache:
         """
         return self.all_cache_dirs[sample_type] / f"{task_name}.parquet"
 
-    def load_sample(self, sample, sample_type: SampleType) -> Union[dict, ModelResponse]:
+    def _load_sample(self, sample, sample_type: SampleType) -> Union[dict, ModelResponse]:
         """Load a sample from cached data based on sample type.
 
         Args:
@@ -147,7 +147,7 @@ class SampleCache:
         elif sample_type == SampleType.PREDICTIONS:
             return ModelResponse(**sample["sample"])
 
-    def dump_sample(self, result: Union[dict, ModelResponse], sample_type: SampleType) -> dict:
+    def _dump_sample(self, result: Union[dict, ModelResponse], sample_type: SampleType) -> dict:
         """Dumps the sample in the correct format for file saving
 
         Args:
@@ -212,7 +212,7 @@ class SampleCache:
 
         for doc in docs:
             row = task_datasets[doc.task_name].loc[doc.id]
-            results.append(self.load_sample(row, sample_type))
+            results.append(self._load_sample(row, sample_type))
 
         return results
 
@@ -231,7 +231,7 @@ class SampleCache:
         processed_data = {task_name: [] for task_name in task_names}
         for doc, result in zip(docs, results):
             processed_data[doc.task_name].append(
-                {"sample_id": doc.id, "sample": self.dump_sample(result, sample_type)}
+                {"sample_id": doc.id, "sample": self._dump_sample(result, sample_type)}
             )
         processed_data = {task_name: task_data for task_name, task_data in processed_data.items() if task_data}
 

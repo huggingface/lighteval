@@ -659,7 +659,7 @@ class AsyncVLLMModel(VLLMModel):
             requests (list[Request]): list of requests containing the context and ending conditions.
 
         Returns:
-            list[LoglikelihoodResponse]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
         results = []
 

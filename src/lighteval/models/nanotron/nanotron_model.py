@@ -43,14 +43,11 @@ from lighteval.data import (
 )
 from lighteval.models.model_output import (
     Batch,
-    GenerativeResponse,
-    LoglikelihoodResponse,
+    ModelResponse,
 )
 from lighteval.models.transformers.transformers_model import LightevalModel
 from lighteval.tasks.requests import (
-    GreedyUntilRequest,
-    LoglikelihoodRequest,
-    LoglikelihoodRollingRequest,
+    Doc,
 )
 from lighteval.utils.cache_management import SampleCache, cached
 from lighteval.utils.imports import is_nanotron_available
@@ -477,7 +474,7 @@ class NanotronLightevalModel(LightevalModel):
         return continuation
 
     @cached("predictions")
-    def loglikelihood(self, requests: List[LoglikelihoodRequest]) -> List[LoglikelihoodResponse]:
+    def loglikelihood(self, requests: List[Doc]) -> List[ModelResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
@@ -500,7 +497,7 @@ class NanotronLightevalModel(LightevalModel):
         )
 
     @cached("predictions")
-    def loglikelihood_rolling(self, requests: List[LoglikelihoodRollingRequest]) -> List[LoglikelihoodResponse]:
+    def loglikelihood_rolling(self, requests: List[Doc]) -> List[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         for request in tqdm(
             requests, desc="Tokenizing", disable=bool(dist.get_rank(self.parallel_context.world_pg) != 0)
@@ -687,7 +684,7 @@ class NanotronLightevalModel(LightevalModel):
         disable_tqdm: bool = False,
         num_dataset_splits: int = 1,
         return_bool_score: bool = True,
-    ) -> List[LoglikelihoodResponse]:
+    ) -> List[ModelResponse]:
         dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=num_dataset_splits)
         res = []
 
@@ -884,7 +881,7 @@ class NanotronLightevalModel(LightevalModel):
                             batch_padded,
                         )
                     ):
-                        answer = LoglikelihoodResponse(
+                        answer = ModelResponse(
                             result=(float(logit), bool(maxe)) if return_bool_score else float(logit.sum()),
                             input_tokens=batched_input[: batched_length.item()].numpy(force=True),
                             generated_tokens=cont_tokens[: cont_length.item()].numpy(force=True),
@@ -937,10 +934,10 @@ class NanotronLightevalModel(LightevalModel):
     @cached("predictions")
     def greedy_until(
         self,
-        requests: List[GreedyUntilRequest],
+        requests: List[Doc],
         disable_tqdm: bool = False,
         num_dataset_splits: int = 1,
-    ) -> List[GenerativeResponse]:
+    ) -> List[ModelResponse]:
         """Greedy generation until a stop token is generated."""
         # automatic (variable) batch size detection for vectorization
         # pull longest context sample from request
@@ -1118,7 +1115,7 @@ class NanotronLightevalModel(LightevalModel):
                         for stop_term in stop_terms:
                             decoded_response = decoded_response.split(stop_term)[0]
                         # partial caching
-                        cur_response = GenerativeResponse(
+                        cur_response = ModelResponse(
                             result=decoded_response,
                             logits=logits[ix][: len_logits[ix]] if returns_logits else None,
                             generated_tokens=generation,

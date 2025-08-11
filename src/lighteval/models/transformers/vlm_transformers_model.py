@@ -346,7 +346,7 @@ class VLMTransformersModel(LightevalModel):
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
 
         Returns:
-            list[GenerativeResponse]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
 
         # Tokenizing context for sorting in the dataset

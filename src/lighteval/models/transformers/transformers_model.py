@@ -639,7 +639,7 @@ class TransformersModel(LightevalModel):
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
 
         Returns:
-            list[GenerativeResponse]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
         results = []
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
@@ -788,7 +788,7 @@ class TransformersModel(LightevalModel):
         num_samples: int = 1,
     ) -> list[ModelResponse]:
         """Contains the actual logic of the generation.
-        First computes the stop sequences, then generates the predictions, then converts the outputs to GenerativeResponse.
+        First computes the stop sequences, then generates the predictions, then converts the outputs to ModelResponse.
         """
         stopping_criteria = stop_sequences_criteria(self.tokenizer, stop_sequences=stop_tokens, batch=batch)
         batch_size, _ = batch.input_ids.shape
@@ -835,7 +835,7 @@ class TransformersModel(LightevalModel):
         if self.accelerator:
             batch.padded = self.accelerator.gather_for_metrics(batch.padded)
 
-        # We convert to GenerativeResponse outputs
+        # We convert to ModelResponse outputs
         all_responses = []
         for ix, (batched_generations, batched_input, trunc, padded) in enumerate(
             zip(generations, batch.input_ids, batch.truncated, batch.padded)

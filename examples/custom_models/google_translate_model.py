@@ -34,13 +34,10 @@ from transformers import AutoTokenizer
 from lighteval.data import GenerativeTaskDataset
 from lighteval.models.abstract_model import LightevalModel
 from lighteval.models.model_output import (
-    GenerativeResponse,
-    LoglikelihoodResponse,
+    ModelResponse,
 )
 from lighteval.tasks.requests import (
-    GreedyUntilRequest,
-    LoglikelihoodRequest,
-    LoglikelihoodRollingRequest,
+    Doc,
 )
 
 
@@ -105,8 +102,8 @@ class GoogleTranslateClient(LightevalModel):
 
     def greedy_until(
         self,
-        requests: list[GreedyUntilRequest],
-    ) -> list[GenerativeResponse]:
+        requests: list[Doc],
+    ) -> list[ModelResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
         Results are cached to disk to avoid repeated translations.
@@ -116,7 +113,7 @@ class GoogleTranslateClient(LightevalModel):
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
 
         Returns:
-            list[GenerativeResponse]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
         for request in requests:
             request.tokenized_context = self.tok_encode(request.context)
@@ -141,7 +138,7 @@ class GoogleTranslateClient(LightevalModel):
                 if result is None:
                     result = ""  # Set to empty string to prevent errors in metric computation
 
-                cur_response = GenerativeResponse(
+                cur_response = ModelResponse(
                     result=result,
                     logits=None,
                     generated_tokens=[],
@@ -167,7 +164,7 @@ class GoogleTranslateClient(LightevalModel):
         """Return the maximum sequence length of the model."""
         return 4096
 
-    def loglikelihood(self, requests: list[LoglikelihoodRequest]) -> list[LoglikelihoodResponse]:
+    def loglikelihood(self, requests: list[Doc]) -> list[ModelResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
@@ -175,7 +172,7 @@ class GoogleTranslateClient(LightevalModel):
 
     def loglikelihood_rolling(
         self,
-        requests: list[LoglikelihoodRollingRequest],
-    ) -> list[LoglikelihoodResponse]:
+        requests: list[Doc],
+    ) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         raise NotImplementedError
