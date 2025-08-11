@@ -34,7 +34,7 @@ from transformers import (
 )
 
 from lighteval.data import GenerativeTaskDataset
-from lighteval.models.abstract_model import LightevalModel, ModelInfo, TokenSequence
+from lighteval.models.abstract_model import LightevalModel, TokenSequence
 from lighteval.models.model_output import (
     GenerativeResponse,
     LoglikelihoodResponse,
@@ -88,13 +88,7 @@ class LocalMTClient(LightevalModel):
         self.model_definition_file_path = config.model_definition_file_path
         self.batch_size = 32
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-
-        self.model_info = ModelInfo(
-            model_name=config.model,
-            model_sha="",
-            model_dtype=None,
-            model_size=-1,
-        )
+        self.config = config
 
         # Update model initialization to handle both models
         if "seamless-m4t" in config.model:

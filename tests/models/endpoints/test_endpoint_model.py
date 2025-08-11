@@ -52,6 +52,9 @@ class TestInferenceEndpointModelConfig:
                     "add_special_tokens": True,
                     "system_prompt": None,
                     "generation_parameters": {
+                        "num_blocks": None,
+                        "block_size": None,
+                        "cache_implementation": None,
                         "early_stopping": None,
                         "frequency_penalty": None,
                         "length_penalty": None,

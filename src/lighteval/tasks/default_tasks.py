@@ -383,6 +383,22 @@ aime24 = LightevalTaskConfig(
     ],
     version=2,
 )
+aime24_avg = LightevalTaskConfig(
+    name="aime24_avg",
+    suite=["lighteval"],
+    prompt_function=prompt.aime_prompt_fn,
+    hf_repo="HuggingFaceH4/aime_2024",
+    hf_subset="default",
+    hf_avail_splits=["train"],
+    evaluation_splits=["train"],
+    few_shots_split=None,
+    few_shots_select=None,
+    generation_size=None,
+    metrics=[
+        Metrics.math_avg_at_64,
+    ],
+    version=2,
+)
 aime24_gpassk = LightevalTaskConfig(
     name="aime24_gpassk",
     suite=["lighteval"],
@@ -7877,7 +7893,7 @@ goal_step_wikihow_bigbench = LightevalTaskConfig(
     version=0,
 )
 gpqa_lighteval = LightevalTaskConfig(
-    name="gpqa",
+    name="gpqa:mc",
     suite=["lighteval"],
     prompt_function=prompt.gpqa,
     hf_repo="Idavidrein/gpqa",

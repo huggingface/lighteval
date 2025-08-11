@@ -32,9 +32,9 @@ from pydantic import NonNegativeFloat, NonNegativeInt, PositiveInt
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
-from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
-from lighteval.models.utils import ModelConfig, _simplify_name, uses_chat_template
+from lighteval.models.utils import _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import is_vllm_available
@@ -172,14 +172,16 @@ class VLLMModel(LightevalModel):
         config: VLLMModelConfig,
     ):
         """Initializes a HuggingFace `AutoModel` and `AutoTokenizer` for evaluation."""
-        self._config = config
+        self.config = config
         self.use_chat_template = uses_chat_template(model_name=config.model_name)
         self.data_parallel_size = config.data_parallel_size
         self.tensor_parallel_size = config.tensor_parallel_size
         self._add_special_tokens = config.add_special_tokens if config.add_special_tokens is not None else False
         self._tokenizer = self._create_auto_tokenizer(config)
 
-        self._max_length = config.max_model_length if config.max_model_length is not None else None
+        self._max_length = (
+            config.max_model_length
+        )  # will be None if the config is None, then defined in _create_auto_model
 
         # If model_parallel is not set we compare the number of processes with the number of GPUs
         self.model = self._create_auto_model(config)
@@ -191,7 +193,6 @@ class VLLMModel(LightevalModel):
         self.model_sha = ""
         self.precision = config.dtype
 
-        self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
         self.pairwise_tokenization = config.pairwise_tokenization
 
         self.prompt_manager = PromptManager(self.use_chat_template, self.tokenizer, config.system_prompt)
@@ -258,6 +259,15 @@ class VLLMModel(LightevalModel):
         if config.data_parallel_size > 1:
             self.model_args["distributed_executor_backend"] = "ray"
             self._batch_size = "auto"
+
+            if self._max_length is None:
+                # Todo: we will want to manage this automatically - atm this arg must be set at least 2 times (in gen params + model args) for
+                # vllm models, which is an issue.
+                logger.warning(
+                    "The model max_length was not set in the model arguments. Since the model is using data parallelism, it is created later "
+                    " with `ray`, so we can't infer the max_length automatically atm. It might raise issues later on: if it does, relaunch your "
+                    "run, but set `max_model_length` explicitely in the model args."
+                )
             return None
 
         model = LLM(**self.model_args)
@@ -313,7 +323,7 @@ class VLLMModel(LightevalModel):
                 # the case! Because of that we only use batch size of 1
                 stop_tokens = split[0].stop_sequences or []
 
-            max_new_tokens = self._config.generation_parameters.max_new_tokens or split[0].generation_size
+            max_new_tokens = self.config.generation_parameters.max_new_tokens or split[0].generation_size
             num_samples = split[0].num_samples
 
             context = [self.prompt_manager.prepare_prompt(doc) for doc in split]
@@ -328,7 +338,11 @@ class VLLMModel(LightevalModel):
             context_size = len(inputs[0])
 
             # left truncate the inputs to the maximum length
-            if max_new_tokens is not None:
+            if self.max_length is None:
+                logger.warning(
+                    "The model max_length was not set in the model arguments, so we cannot check if we need to truncate the context."
+                )
+            elif max_new_tokens is not None:
                 if context_size + max_new_tokens > self.max_length:
                     logger.warning(
                         f"{context_size + max_new_tokens=} which is greater than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
@@ -381,7 +395,7 @@ class VLLMModel(LightevalModel):
         generate: bool = True,
     ) -> list:
         """Contains the actual logic of the generation."""
-        sampling_params = SamplingParams(**self._config.generation_parameters.to_vllm_dict())
+        sampling_params = SamplingParams(**self.config.generation_parameters.to_vllm_dict())
 
         if generate:
             sampling_params.n = num_samples
@@ -399,14 +413,8 @@ class VLLMModel(LightevalModel):
             sampling_params.detokenize = False
 
         if self.data_parallel_size > 1:
-            # vLLM hangs if tensor_parallel > 1 and resources are set in ray.remote
-            # also seems to only work with decorator and not with ray.remote() fn
-            # see https://github.com/vllm-project/vllm/issues/973
-            # note: this has changed on 0.3.3, and it only works now if num_gpus are set.
-            # but then tensor_parallel breaks
-            # Hynek: With the newest vllm, it actually breaks when tensor_parallel_size == 1 and num_gpus not set,
-            # as VLLM complains about no GPUs available.
-            @ray.remote(num_gpus=1 if self.tensor_parallel_size == 1 else None)
+
+            @ray.remote(num_gpus=self.tensor_parallel_size)
             def run_inference_one_model(model_args: dict, sampling_params: SamplingParams, requests):
                 llm = LLM(**model_args)
                 return llm.generate(prompt_token_ids=requests, sampling_params=sampling_params)
@@ -559,7 +567,7 @@ class AsyncVLLMModel(VLLMModel):
         generative: bool,
     ) -> Coroutine[None, list, str]:
         """Contains the actual logic of the generation."""
-        sampling_params = SamplingParams(**self._config.generation_parameters.to_vllm_dict())
+        sampling_params = SamplingParams(**self.config.generation_parameters.to_vllm_dict())
 
         if not generative:
             sampling_params.temperature = 0
@@ -575,7 +583,7 @@ class AsyncVLLMModel(VLLMModel):
                 logger.warning(
                     "Careful, there can be unexpected behavior when using sampling evals with the async vllm model"
                 )
-            sampling_params.max_tokens = self._config.generation_parameters.max_new_tokens or doc.generation_size
+            sampling_params.max_tokens = self.config.generation_parameters.max_new_tokens or doc.generation_size
             sampling_params.stop = [] if self.use_chat_template else doc.stop_sequences
             sampling_params.logprobs = int(doc.use_logits)
             prompt = self.prompt_manager.prepare_prompt(doc)

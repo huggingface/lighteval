@@ -27,10 +27,8 @@ from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset
-from lighteval.models.abstract_model import LightevalModel
-from lighteval.models.endpoints.endpoint_model import ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
-from lighteval.models.utils import ModelConfig
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import is_litellm_available
@@ -103,17 +101,12 @@ class LiteLLMModelConfig(ModelConfig):
 class LiteLLMClient(LightevalModel):
     _DEFAULT_MAX_LENGTH: int = 4096
 
-    def __init__(self, config) -> None:
+    def __init__(self, config: LiteLLMModelConfig) -> None:
         """
         IMPORTANT: Your API keys should be set in the environment variables.
         If a base_url is not set, it will default to the public API.
         """
-        self.model_info = ModelInfo(
-            model_name=config.model_name,
-            model_sha="",
-            model_dtype=None,
-            model_size=-1,
-        )
+        self.config = config
         self.model = config.model_name
         self.provider = config.provider or config.model_name.split("/")[0]
         self.base_url = config.base_url
@@ -123,7 +116,7 @@ class LiteLLMClient(LightevalModel):
         self.API_MAX_RETRY = 5
         self.API_RETRY_SLEEP = 3
         self.API_RETRY_MULTIPLIER = 2
-        self.CONCURENT_CALLS = 10  # 100 leads to hitting Anthropic rate limits
+        self.CONCURRENT_CALLS = 10  # 100 leads to hitting Anthropic rate limits
 
         self._tokenizer = encode
         self.pairwise_tokenization = False
@@ -232,7 +225,7 @@ class LiteLLMClient(LightevalModel):
             f"Length of prompts, return_logitss, max_new_tokenss, num_sampless, stop_sequences, system_prompts should be the same but are {len(prompts)}, {len(return_logitss)}, {len(max_new_tokenss)}, {len(num_sampless)}, {len(stop_sequencess)}"
         )
 
-        with ThreadPoolExecutor(self.CONCURENT_CALLS) as executor:
+        with ThreadPoolExecutor(self.CONCURRENT_CALLS) as executor:
             for entry in tqdm(
                 executor.map(
                     self.__call_api,

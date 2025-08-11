@@ -29,9 +29,9 @@ from pydantic import PositiveFloat, PositiveInt
 from tqdm import tqdm
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
-from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
-from lighteval.models.utils import ModelConfig, _simplify_name, uses_chat_template
+from lighteval.models.utils import _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import is_sglang_available
@@ -134,8 +134,8 @@ class SGLangModel(LightevalModel):
         config: SGLangModelConfig,
     ):
         """Initializes an SGLang model."""
-        self._config = config
-        self.use_chat_template = uses_chat_template(model_name=self._config.model_name)
+        self.config = config
+        self.use_chat_template = uses_chat_template(model_name=self.config.model_name)
         self.data_parallel_size = config.dp_size
         self.tensor_parallel_size = config.tp_size
         self._add_special_tokens = config.add_special_tokens
@@ -146,7 +146,6 @@ class SGLangModel(LightevalModel):
         self.model_sha = ""  # config.get_model_sha()
         self.precision = config.dtype
         self.sampling_params = config.generation_parameters.to_sglang_dict()
-        self.model_info = ModelInfo(model_name=self.model_name, model_sha=self.model_sha)
         self.sampling_backend = config.sampling_backend
         self.attention_backend = config.attention_backend
         self.pairwise_tokenization = config.pairwise_tokenization

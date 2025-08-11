@@ -26,9 +26,8 @@ import random
 
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 
-from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
-from lighteval.models.utils import ModelConfig
 from lighteval.tasks.requests import Doc
 
 
@@ -41,6 +40,8 @@ class DummyModelConfig(ModelConfig):
     without requiring actual model inference.
 
     Attributes:
+        model_name (str):
+            Name of your choice - "dummy" by default
         seed (int):
             Random seed for reproducible dummy responses. Defaults to 42.
             This seed controls the randomness of the generated responses and log probabilities.
@@ -48,11 +49,13 @@ class DummyModelConfig(ModelConfig):
     Example:
         ```python
         config = DummyModelConfig(
+            model_name="my_dummy",
             seed=123,
         )
         ```
     """
 
+    model_name: str = "dummy"
     seed: int = 42
 
 
@@ -66,7 +69,6 @@ class DummyModel(LightevalModel):
         self.config = config
         self._random = random.Random(self.config.seed)
         self._tokenizer = None
-        self.model_info = ModelInfo(model_name="dummy", model_sha=str(config.seed))
 
     @property
     def tokenizer(self):

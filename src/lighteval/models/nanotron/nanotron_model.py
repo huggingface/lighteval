@@ -19,23 +19,23 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 # ruff: noqa: C901
 import logging
 import os
 import time
-from typing import List, Optional, Tuple, Type, Union
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple, Type, Union
 
 import torch
 import torch.nn.functional as F
 import transformers
 from datasets.download.streaming_download_manager import xPath
+from pydantic import BaseModel
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
 from transformers import AutoTokenizer, BatchEncoding
 
-from lighteval.config.lighteval_config import FullNanotronConfig
 from lighteval.data import (
     GenDistributedSampler,
     GenerativeTaskDatasetNanotron,
@@ -48,7 +48,7 @@ from lighteval.models.model_output import (
     LoglikelihoodResponse,
     LoglikelihoodSingleTokenResponse,
 )
-from lighteval.models.transformers.transformers_model import LightevalModel, ModelInfo
+from lighteval.models.transformers.transformers_model import LightevalModel
 from lighteval.tasks.requests import (
     GreedyUntilRequest,
     LoglikelihoodRequest,
@@ -69,7 +69,10 @@ TokenSequence = Union[List[int], torch.LongTensor, torch.Tensor, BatchEncoding]
 if is_nanotron_available():
     from nanotron import distributed as dist
     from nanotron import logging
+    from nanotron.config import GeneralArgs, ModelArgs, TokenizerArgs
+    from nanotron.config.parallelism_config import ParallelismArgs
     from nanotron.generation.decode import decode_tokenized
+    from nanotron.generation.sampler import SamplerType
     from nanotron.logging import human_format, log_rank
     from nanotron.models import build_model
     from nanotron.parallel.context import ParallelContext
@@ -82,6 +85,82 @@ if is_nanotron_available():
     from nanotron.trainer import CONFIG_TO_MODEL_CLASS, mark_tied_parameters
 
     logger = logging.get_logger(__name__)
+
+DEFAULT_GENERATION_SEED = 42
+
+
+class GenerationArgs(BaseModel):
+    sampler: Optional["SamplerType"] = None
+    temperature: Optional[float] = None
+    top_k: Optional[int] = None
+    top_p: Optional[float] = None
+    n_samples: Optional[int] = None
+    eos: Optional[str] = None
+    seed: Optional[int] = None
+    use_cache: Optional[bool] = False
+
+    def __post_init__(self):
+        if self.seed is None:
+            self.seed = DEFAULT_GENERATION_SEED
+
+
+@dataclass
+class LightEvalLoggingArgs:
+    """Arguments related to logging for LightEval"""
+
+    output_dir: str
+    results_path_template: str | None = None
+    save_details: bool = True
+    push_to_hub: bool = False
+    push_to_tensorboard: bool = False
+    public_run: bool = False
+    results_org: str | None = None
+    tensorboard_metric_prefix: str = "eval"
+
+
+@dataclass
+class LightEvalTasksArgs:
+    """Arguments related to tasks for LightEval"""
+
+    tasks: str
+    custom_tasks: Optional[str] = None
+    max_samples: Optional[int] = None
+    num_fewshot_seeds: Optional[int] = None
+
+    dataset_loading_processes: int = 8
+    multichoice_continuations_start_space: Optional[bool] = None
+    pairwise_tokenization: bool = False
+
+
+@dataclass
+class LightEvalConfig:
+    """Arguments related to running LightEval on checkpoints.
+
+    All is optional because you can also use this class to later supply arguments to override
+    the saved config when running LightEval after training.
+    """
+
+    logging: LightEvalLoggingArgs
+    tasks: LightEvalTasksArgs
+    parallelism: "ParallelismArgs"
+    batch_size: int = 0
+    generation: Optional[Union[GenerationArgs, Dict[str, GenerationArgs]]] = None
+
+
+@dataclass
+class FullNanotronConfig:
+    lighteval_config: LightEvalConfig
+    nanotron_model: "ModelArgs"
+    nanotron_tokenizer: "TokenizerArgs"
+    nanotron_general: "GeneralArgs"
+
+    @property
+    def generation_parameters(self):
+        # Return the generation parameters from the lighteval config
+        # or create default generation parameters if none are set
+        if self.lighteval_config.generation:
+            return self.lighteval_config.generation
+        return GenerationArgs()
 
 
 class NanotronLightevalModel(LightevalModel):
@@ -105,6 +184,7 @@ class NanotronLightevalModel(LightevalModel):
         """Initializes a nanotron model for evaluation.
         Args:
         """
+        self.config = nanotron_config
         model_args = nanotron_config.nanotron_model
         tokenizer = nanotron_config.nanotron_tokenizer
         lighteval_config = nanotron_config.lighteval_config
@@ -215,10 +295,6 @@ class NanotronLightevalModel(LightevalModel):
         self.multichoice_continuations_start_space = multichoice_continuations_start_space
         self.pairwise_tokenization = nanotron_config.lighteval_config.tasks.pairwise_tokenization
         self.batch_size = nanotron_config.lighteval_config.batch_size
-
-        self.model_info = ModelInfo(
-            model_name=f"{nanotron_config.nanotron_general.run}/{nanotron_config.nanotron_general.step}"
-        )
 
     @property
     def tokenizer(self):
