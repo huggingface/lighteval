@@ -49,7 +49,7 @@ class TestUseChatTemplate(unittest.TestCase):
         mock_tokenizer.chat_template = "{% for message in messages %}..."
 
         result = uses_chat_template(tokenizer=mock_tokenizer, override_chat_template=False)
-        self.asserFalse(result)
+        self.assertFalse(result)
 
     def test_uses_chat_template_with_no_chat_template_override(self):
         """Test that uses_chat_template returns False when tokenizer has no chat template."""
