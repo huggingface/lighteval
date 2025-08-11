@@ -50,11 +50,11 @@ For custom models you need to add a cache to the model class and decorators on a
 To clear cache for a specific model, delete the corresponding directory:
 
 ```bash
-rm -rf ./cache/huggingface/lighteval/predictions/{model_name}/{model_hash}/
+rm -rf ~/.cache/huggingface/lighteval/predictions/{model_name}/{model_hash}/
 ```
 
 To clear all caches:
 
 ```bash
-rm -rf ./cache/huggingface/lighteval/predictions
+rm -rf ~/.cache/huggingface/lighteval/predictions
 ```

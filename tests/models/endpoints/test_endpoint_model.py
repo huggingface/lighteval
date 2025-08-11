@@ -71,7 +71,7 @@ class TestInferenceEndpointModelConfig:
                         "truncate_prompt": None,
                         "response_format": None,
                     },
-                    "cache_dir": "./cache/huggingface/lighteval",
+                    "cache_dir": "~/.cache/huggingface/lighteval",
                 },
             ),
         ],
