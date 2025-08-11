@@ -53,6 +53,16 @@ def sglang(
     load_responses_from_details_date_id: Annotated[
         Optional[str], Option(help="Load responses from details directory.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
+    remove_reasoning_tags: Annotated[
+        bool, Option(help="Remove reasoning tags from responses.", rich_help_panel=HELP_PANEL_NAME_1)
+    ] = True,
+    reasoning_tags: Annotated[
+        str | None,
+        Option(
+            help="List of reasoning tags (provided as pairs) to remove from responses. Default is [('<think>', '</think>')].",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = None,
     # === saving ===
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
@@ -122,6 +132,8 @@ def sglang(
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
         load_responses_from_details_date_id=load_responses_from_details_date_id,
+        remove_reasoning_tags=remove_reasoning_tags,
+        reasoning_tags=reasoning_tags,
     )
 
     if model_args.endswith(".yaml"):

@@ -137,9 +137,7 @@ def prompt_fn_oz_eval_task(line, task_name: str = None):
                     or if 'answer_str' is not one of ["A", "B", "C", "D", "E"].
 
     Note:
-        This function is part of the LightEval setup, specifically for loading OZ Eval dataset questions
-        into the evaluation environment. For consistent evaluation results, run the task with
-        `--use_chat_template`. The OZ Eval dataset is available at https://huggingface.co/datasets/DjMel/oz-eval.
+        The OZ Eval dataset is available at https://huggingface.co/datasets/DjMel/oz-eval.
 
     """
     query_template = """Pitanje: {question}\n
