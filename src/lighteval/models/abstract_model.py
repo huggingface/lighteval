@@ -81,7 +81,7 @@ class ModelConfig(BaseModel, extra="forbid"):
 
     generation_parameters: GenerationParameters = GenerationParameters()
     system_prompt: str | None = None
-    cache_dir: str = "./cache/huggingface/lighteval"
+    cache_dir: str = "~/.cache/huggingface/lighteval"
 
     @classmethod
     def from_path(cls, path: str):
