@@ -29,6 +29,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Callable, List, Set, Tuple, Union
 
+import pandas as pd
 from datasets import Dataset, load_dataset
 
 from lighteval.models.abstract_model import ModelConfig
@@ -42,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 class SampleType(Enum):
     PREDICTIONS = 1
-    TOKENIZED_INPUTS = 2
+    TOKENIZED_INPUTS = 2  # Not implemented yet
 
 
 class SampleCache:
@@ -132,16 +133,21 @@ class SampleCache:
         """
         return self.all_cache_dirs[sample_type] / f"{task_name}.parquet"
 
-    def _load_sample(self, sample, sample_type: SampleType) -> Union[dict, ModelResponse]:
+    def _load_sample(
+        self, sample: pd.core.series.Series | dict, sample_type: SampleType
+    ) -> Union[dict, ModelResponse]:
         """Load a sample from cached data based on sample type.
 
         Args:
-            sample: Raw sample data from cache
+            sample: Raw sample data from cache, arrives as a dataframe row
             sample_type: Type of sample being loaded
 
         Returns:
             Union[dict, ModelResponse]: Loaded sample in appropriate format for processing
         """
+        # If we just use the pandas dict, lists are converted to np arrays which we don't want
+        if isinstance(sample, pd.core.series.Series):
+            sample = json.loads(sample.to_json())
         if sample_type == SampleType.TOKENIZED_INPUTS:
             return sample["sample"]
         elif sample_type == SampleType.PREDICTIONS:

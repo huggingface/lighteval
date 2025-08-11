@@ -20,103 +20,294 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-Tests for the caching infrastructure in VLLMModel.
-"""
-
 import tempfile
+import unittest
+from dataclasses import asdict
+from unittest.mock import Mock, patch
+
+import torch
+
+from lighteval.models.abstract_model import LightevalModel
+from lighteval.models.model_output import ModelResponse
+from lighteval.tasks.requests import Doc
+from lighteval.utils.cache_management import SampleCache, SampleType
 
 
-# Test imports
-try:
-    from lighteval.models.utils import GenerationParameters
-    from lighteval.models.vllm.vllm_model import VLLMModel, VLLMModelConfig
-    from lighteval.tasks.requests import Doc
-    from lighteval.utils.cache_management import SampleCache
+class TestCaching(unittest.TestCase):
+    def setUp(self):
+        """Create simple test documents."""
+        self.docs = []
+        self.model_responses = []
+        self.task_name = "cache_test"
+        for i in range(3):
+            doc = Doc(
+                id=f"test_doc_{i}",
+                task_name=self.task_name,
+                query=f"Test question {i}: What is 2+2?",
+                choices=["3", "4", "5", "6"],
+                gold_index=1,
+                instruction="Answer the math question",
+            )
+            model_resp = ModelResponse(
+                input=doc.query,
+                text=[f"Answer {i}"],
+                input_tokens=[1, 2, 3, 4],
+                output_tokens=[[5, 6, 7]],
+                logprobs=[-0.1, -0.2, -0.3],
+                argmax_logits_eq_gold=True,
+            )
+            self.docs.append(doc)
+            self.model_responses.append(model_resp)
 
-    print("✅ All imports successful")
-except ImportError as e:
-    print(f"❌ Import error: {e}")
-    exit(1)
+    def test_cache_directory_structure(self):
+        """Test that cache directories are created correctly."""
+        from lighteval.models.dummy.dummy_model import DummyModelConfig
+        from lighteval.models.endpoints.endpoint_model import InferenceEndpointModelConfig
+        from lighteval.models.endpoints.tgi_model import TGIModelConfig
+        from lighteval.models.sglang.sglang_model import SGLangModelConfig
+        from lighteval.models.transformers.transformers_model import TransformersModelConfig
+        from lighteval.models.transformers.vlm_transformers_model import VLMTransformersModelConfig
+        from lighteval.models.vllm.vllm_model import VLLMModelConfig
 
+        # We skip AdapterModelConfig, DeltaModelConfig because of imports
+        # We skip FullNanotronConfig as it's not standardized with our other configs, will need to be homogeneized
+        model_configs = [
+            TransformersModelConfig,
+            VLMTransformersModelConfig,
+            VLLMModelConfig,
+            InferenceEndpointModelConfig,
+            TGIModelConfig,
+            SGLangModelConfig,
+            DummyModelConfig,
+        ]
 
-def test_cache_initialization():
-    """Test that cache is properly initialized in VLLMModel."""
-    config = VLLMModelConfig(
-        model_name="HuggingFaceTB/SmolLM2-1.7B-Instruct",
-        revision="main",
-        dtype="float16",
-        tensor_parallel_size=1,
-        gpu_memory_utilization=0.6,
-        max_model_length=512,  # Small for testing
-        max_num_seqs=1,
-        max_num_batched_tokens=1024,
-        generation_parameters=GenerationParameters(
-            temperature=0.0,
-            max_new_tokens=10,  # Very small for testing
-        ),
-    )
+        for model_config in model_configs:
+            with self.subTest(model_config=model_config):
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    model_name = f"test_model_{model_config.__name__}"
+                    # if model_config in [AdapterModelConfig, DeltaModelConfig]:
+                    #    config = model_config(model_name=model_name, base_model=model_name + "2", cache_dir=temp_dir)
+                    # else:
+                    config = model_config(model_name=model_name, cache_dir=temp_dir)
 
-    # Test cache initialization
-    cache = SampleCache(config)
+                    # Create cache with custom directory
+                    cache = SampleCache(config)
 
-    assert cache.cache_dir is not None
-    assert cache.model_hash is not None
-    assert cache.tokenization_dir.exists()
-    assert cache.predictions_dir.exists()
+                    # Check directory structure
+                    cache_dirs = list(cache.all_cache_dirs.values())
+                    self.assertEqual(len(cache_dirs), 2)
+                    for folder in cache_dirs:
+                        self.assertTrue(folder.exists())
+                        self.assertIn(str(temp_dir), str(folder))
+                        self.assertIn(model_name, str(folder))
 
+    def test_cache_decorator_presence(self):
+        """Test that @cached decorators are present on the right methods."""
+        from lighteval.models.dummy.dummy_model import DummyModel
+        from lighteval.models.endpoints.endpoint_model import InferenceEndpointModel
+        from lighteval.models.endpoints.tgi_model import ModelClient
+        from lighteval.models.nanotron.nanotron_model import NanotronLightevalModel
+        from lighteval.models.sglang.sglang_model import SGLangModel
+        from lighteval.models.transformers.adapter_model import AdapterModel
+        from lighteval.models.transformers.delta_model import DeltaModel
+        from lighteval.models.transformers.transformers_model import TransformersModel
+        from lighteval.models.transformers.vlm_transformers_model import VLMTransformersModel
+        from lighteval.models.vllm.vllm_model import AsyncVLLMModel, VLLMModel
 
-def test_cache_decorator_presence():
-    """Test that @cached decorators are present on the right methods."""
-    # Check if the methods have the cached decorator
-    methods_to_check = ["greedy_until", "loglikelihood", "loglikelihood_rolling"]
+        model_classes = [
+            TransformersModel,
+            AdapterModel,
+            DeltaModel,
+            VLMTransformersModel,
+            VLLMModel,
+            AsyncVLLMModel,
+            InferenceEndpointModel,
+            ModelClient,
+            NanotronLightevalModel,
+            SGLangModel,
+            DummyModel,
+        ]
+        methods_to_check = ["greedy_until", "loglikelihood", "loglikelihood_rolling"]
 
-    for method_name in methods_to_check:
-        assert hasattr(VLLMModel, method_name), f"{method_name} method not found"
-        method = getattr(VLLMModel, method_name)
-        # Check if method has been wrapped by @cached decorator
-        assert hasattr(method, "__wrapped__"), f"{method_name} missing @cached decorator"
+        for model_class in model_classes:
+            for method_name in methods_to_check:
+                with self.subTest(model_class=model_class, method_name=method_name):
+                    self.assertTrue(
+                        hasattr(model_class, method_name), f"{method_name} method not found for {model_class}"
+                    )
+                    method = getattr(model_class, method_name)
+                    # Check if method has been wrapped by @cached decorator
+                    self.assertTrue(
+                        hasattr(method, "__wrapped__"), f"{method_name} missing @cached decorator for {model_class}"
+                    )
 
+    def _test_cache(self, model: LightevalModel):
+        """Test that the @cached decorator logic works correctly - called by all model specific functions below."""
+        for function_name in ["greedy_until", "loglikelihood", "loglikelihood_rolling"]:
+            with self.subTest(function_name=function_name):
+                process_inputs = getattr(model, function_name)
+                process_inputs(self.docs)
 
-def test_sample_docs():
-    """Create sample Doc objects for testing."""
-    docs = [
-        Doc(
-            id="doc1",
-            task_name="test_task",
-            query="What is the capital of France?",
-            choices=["Paris", "London", "Berlin", "Madrid"],
-            gold_index=0,
-            instruction="Answer the question",
-        ),
-        Doc(
-            id="doc2",
-            task_name="test_task",
-            query="What color is the sky?",
-            choices=["Blue", "Red", "Green", "Yellow"],
-            gold_index=0,
-            instruction="Answer the question",
-        ),
-    ]
-    assert len(docs) == 2
-    assert all(doc.task_name == "test_task" for doc in docs)
-    assert all(len(doc.choices) == 4 for doc in docs)
+                cache: SampleCache = model._cache
 
+                # Verify cache files were created
+                cache_file = cache.get_cache_path(task_name=self.task_name, sample_type=SampleType.PREDICTIONS)
+                self.assertTrue(cache_file.exists(), "Cache file not created")
 
-def test_cache_directory_structure():
-    """Test that cache directories are created correctly."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        config = VLLMModelConfig(
-            model_name="test-model", revision="main", dtype="float16", generation_parameters=GenerationParameters()
+                # Test retrieving from cache
+                self.assertEqual(
+                    cache._get_cached_indices(SampleType.PREDICTIONS), {self.task_name: [doc.id for doc in self.docs]}
+                )
+                uncached_docs, tasks_with_cached_samples = cache.get_notcached_samples(
+                    docs=self.docs, sample_type=SampleType.PREDICTIONS
+                )
+
+                self.assertEqual(tasks_with_cached_samples, {self.task_name})
+                self.assertEqual(
+                    len(uncached_docs), 0, f"{len(uncached_docs)} documents not found in cache when it should be 0"
+                )
+
+                # Verify cached results match original
+                cached_responses = cache.get_samples_from_cache(
+                    docs=self.docs, task_names=[self.task_name], sample_type=SampleType.PREDICTIONS
+                )
+                for cached_response, response in zip(cached_responses, self.model_responses):
+                    self.assertEqual(asdict(cached_response), asdict(response))
+
+    @patch("lighteval.models.transformers.transformers_model.TransformersModel._loglikelihood_tokens")
+    @patch("lighteval.models.transformers.transformers_model.TransformersModel._padded_greedy_until")
+    @patch("lighteval.utils.imports.is_accelerate_available")
+    @patch("lighteval.models.transformers.transformers_model.Accelerator")
+    @patch("lighteval.models.transformers.transformers_model.TransformersModel._create_auto_model")
+    def test_cache_transformers(
+        self, mock_create_model, mock_accelerator, mock_is_accelerate_available, mock_greedy_until, mock_loglikelihood
+    ):
+        from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
+
+        # Skip the model creation phase
+        mock_create_model = Mock()  # noqa F841
+
+        # Mock accelerate related params
+        mock_accelerator_instance = Mock()
+        mock_accelerator_instance.device = torch.device("cpu")
+        mock_accelerator.return_value = mock_accelerator_instance
+        mock_is_accelerate_available = False  # noqa F841
+
+        mock_greedy_until.return_value = self.model_responses
+        mock_loglikelihood.return_value = self.model_responses
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = TransformersModelConfig(model_name="Qwen/Qwen3-0.6B", cache_dir=temp_dir)
+            model = TransformersModel(config)
+
+            self._test_cache(model)
+
+    @patch("lighteval.models.vllm.vllm_model.VLLMModel._create_auto_model")
+    @patch("lighteval.models.vllm.vllm_model.VLLMModel.greedy_until")
+    @patch("lighteval.models.vllm.vllm_model.VLLMModel._loglikelihood_tokens")
+    def test_cache_vllm(self, mock_create_model, mock_greedy_until, mock_loglikelihood):
+        from lighteval.models.vllm.vllm_model import VLLMModel, VLLMModelConfig
+
+        # Mock VLLM LLM
+        mock_create_model = Mock()  # noqa F841
+        mock_greedy_until.return_value = self.model_responses
+        mock_loglikelihood.return_value = self.model_responses
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = VLLMModelConfig(model_name="Qwen/Qwen3-0.6B", cache_dir=temp_dir)
+            model = VLLMModel(config)
+
+            self._test_cache(model)
+
+    @patch("lighteval.models.endpoints.tgi_model.ModelClient._make_request")
+    @patch("lighteval.models.endpoints.tgi_model.ModelClient.greedy_until")
+    @patch("lighteval.models.endpoints.tgi_model.ModelClient.loglikelihood")
+    def test_cache_tgi(self, mock_make_request, mock_greedy_until, mock_loglikelihood):
+        from lighteval.models.endpoints.tgi_model import ModelClient, TGIModelConfig
+
+        # Mock TGI requests
+        mock_make_request.return_value = Mock()
+        mock_greedy_until.return_value = self.model_responses
+        mock_loglikelihood.return_value = self.model_responses
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = TGIModelConfig(model_name="Qwen/Qwen3-0.6B", base_url="http://localhost:8080", cache_dir=temp_dir)
+            model = ModelClient(config)
+
+            self._test_cache(model)
+
+    @patch("lighteval.models.endpoints.endpoint_model.InferenceEndpointModel.greedy_until")
+    @patch("lighteval.models.endpoints.endpoint_model.InferenceEndpointModel.loglikelihood")
+    def test_cache_endpoint(self, mock_greedy_until, mock_loglikelihood):
+        from lighteval.models.endpoints.endpoint_model import InferenceEndpointModel, InferenceEndpointModelConfig
+
+        # Mock endpoint requests
+        mock_greedy_until.return_value = self.model_responses
+        mock_loglikelihood.return_value = self.model_responses
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = InferenceEndpointModelConfig(model_name="Qwen/Qwen3-0.6B", cache_dir=temp_dir)
+            model = InferenceEndpointModel(config)
+
+            self._test_cache(model)
+
+    @patch("lighteval.models.sglang.sglang_model.SGLangModel._create_auto_model")
+    @patch("lighteval.models.sglang.sglang_model.SGLangModel.greedy_until")
+    @patch("lighteval.models.sglang.sglang_model.SGLangModel.loglikelihood")
+    def test_cache_sglang(self, mock_create_auto_model, mock_greedy_until, mock_loglikelihood):
+        from lighteval.models.sglang.sglang_model import SGLangModel, SGLangModelConfig
+
+        # Mock SGLang engine
+        mock_create_auto_model = Mock()  # noqa F841
+        mock_greedy_until.return_value = self.model_responses
+        mock_loglikelihood.return_value = self.model_responses
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = SGLangModelConfig(model_name="Qwen/Qwen3-0.6B", cache_dir=temp_dir)
+            model = SGLangModel(config)
+
+            self._test_cache(model)
+
+    @patch("lighteval.models.transformers.vlm_transformers_model.VLMTransformersModel.loglikelihood")
+    @patch("lighteval.models.transformers.vlm_transformers_model.VLMTransformersModel.greedy_until")
+    @patch("lighteval.utils.imports.is_accelerate_available")
+    @patch("lighteval.models.transformers.vlm_transformers_model.Accelerator")
+    @patch("lighteval.models.transformers.vlm_transformers_model.VLMTransformersModel._create_auto_model")
+    def test_cache_vlm_transformers(
+        self, mock_create_model, mock_accelerator, is_accelerate_available, mock_greedy_until, mock_loglikelihood
+    ):
+        from lighteval.models.transformers.vlm_transformers_model import (
+            VLMTransformersModel,
+            VLMTransformersModelConfig,
         )
 
-        # Create cache with custom directory
-        cache = SampleCache(config, cache_dir=temp_dir)
+        # Mock accelerate related params
+        mock_accelerator_instance = Mock()
+        mock_accelerator_instance.device = torch.device("cpu")
+        mock_accelerator.return_value = mock_accelerator_instance
+        is_accelerate_available = False  # noqa F841
 
-        # Check directory structure
-        assert cache.tokenization_dir.exists()
-        assert cache.predictions_dir.exists()
-        assert str(temp_dir) in str(cache.cache_dir)
+        # Skip the model creation phase
+        mock_create_model = Mock()  # noqa F841
+        mock_greedy_until.return_value = self.model_responses
+        mock_loglikelihood.return_value = self.model_responses
 
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = VLMTransformersModelConfig(model_name="HuggingFaceTB/SmolVLM-256M-Instruct", cache_dir=temp_dir)
+            model = VLMTransformersModel(config)
 
-# These tests can be run with pytest as part of the test suite
+            self._test_cache(model)
+
+    @patch("lighteval.models.dummy.dummy_model.DummyModel.greedy_until")
+    @patch("lighteval.models.dummy.dummy_model.DummyModel.loglikelihood")
+    def test_cache_dummy(self, mock_greedy_until, mock_loglikelihood):
+        from lighteval.models.dummy.dummy_model import DummyModel, DummyModelConfig
+
+        # Mock dummy model requests
+        mock_greedy_until.return_value = self.model_responses
+        mock_loglikelihood.return_value = self.model_responses
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = DummyModelConfig(model_name="Qwen/Qwen3-0.6B", cache_dir=temp_dir)
+            model = DummyModel(config)
+
+            self._test_cache(model)
