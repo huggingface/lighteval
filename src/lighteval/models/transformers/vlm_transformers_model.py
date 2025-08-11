@@ -45,6 +45,7 @@ from lighteval.models.model_output import ModelResponse
 from lighteval.models.utils import _get_dtype, _get_model_sha, _simplify_name
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
+from lighteval.utils.cache_management import SampleCache, cached
 from lighteval.utils.imports import (
     is_accelerate_available,
 )
@@ -169,6 +170,9 @@ class VLMTransformersModel(LightevalModel):
         self.prompt_manager = PromptManager(
             use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
         )
+
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config)
 
     @property
     def tokenizer(self):
@@ -329,6 +333,7 @@ class VLMTransformersModel(LightevalModel):
 
         return 2048
 
+    @cached("predictions")
     def greedy_until(
         self,
         docs: list[Doc],
@@ -414,12 +419,14 @@ class VLMTransformersModel(LightevalModel):
 
         return dataset.get_original_order(results)
 
+    @cached("predictions")
     def loglikelihood(
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
         raise NotImplementedError()
 
+    @cached("predictions")
     def loglikelihood_rolling(
         self,
         docs: list[Doc],

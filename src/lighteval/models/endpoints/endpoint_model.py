@@ -49,6 +49,7 @@ from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
+from lighteval.utils.cache_management import SampleCache, cached
 
 
 logger = logging.getLogger(__name__)
@@ -371,6 +372,9 @@ class InferenceEndpointModel(LightevalModel):
         self.generation_parameters = config.generation_parameters
         self.generation_config = self.generation_parameters.to_tgi_ie_dict()
 
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config)
+
     @staticmethod
     def get_larger_hardware_suggestion(cur_instance_type: str = None, cur_instance_size: str = None):
         cur_instance_ix = -1
@@ -534,6 +538,7 @@ class InferenceEndpointModel(LightevalModel):
             for context, doc in zip(contexts, docs)
         ]
 
+    @cached("predictions")
     def greedy_until(
         self,
         docs: List[Doc],
@@ -574,6 +579,7 @@ class InferenceEndpointModel(LightevalModel):
 
         return dataset.get_original_order(results)
 
+    @cached("predictions")
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         dataset = LoglikelihoodDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         batch_size = self.config.batch_size
@@ -619,6 +625,7 @@ class InferenceEndpointModel(LightevalModel):
 
         return dataset.get_original_order(results)
 
+    @cached("predictions")
     def loglikelihood_rolling(self, requests: list[Doc], override_bs=None) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=self.DATASET_SPLITS)

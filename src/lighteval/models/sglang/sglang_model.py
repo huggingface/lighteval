@@ -34,6 +34,7 @@ from lighteval.models.model_output import ModelResponse
 from lighteval.models.utils import _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
+from lighteval.utils.cache_management import SampleCache, cached
 from lighteval.utils.imports import is_sglang_available
 
 
@@ -151,6 +152,9 @@ class SGLangModel(LightevalModel):
         self.pairwise_tokenization = config.pairwise_tokenization
         self.prompt_manager = PromptManager(self.use_chat_template, self.tokenizer, config.system_prompt)
 
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config)
+
     @property
     def tokenizer(self):
         return self._tokenizer
@@ -206,6 +210,7 @@ class SGLangModel(LightevalModel):
         tokenizer.pad_token = tokenizer.eos_token
         return tokenizer
 
+    @cached("predictions")
     def greedy_until(
         self,
         docs: list[Doc],
@@ -323,6 +328,7 @@ class SGLangModel(LightevalModel):
         )
         return outputs
 
+    @cached("predictions")
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         return self._loglikelihood_tokens(docs)
 
@@ -392,7 +398,4 @@ class SGLangModel(LightevalModel):
         return dataset.get_original_order(res)
 
     def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
-        raise NotImplementedError()
-
-    def loglikelihood_single_token(self, docs: list[Doc]) -> list[ModelResponse]:
         raise NotImplementedError()
