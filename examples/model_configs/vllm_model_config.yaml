@@ -10,7 +10,6 @@ model_parameters:
   swap_space: 4
   seed: 42
   trust_remote_code: False
-  use_chat_template: True
   add_special_tokens: True
   multichoice_continuations_start_space: False
   pairwise_tokenization: False

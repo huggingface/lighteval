@@ -236,7 +236,7 @@ def multilingual_extractive_match_metric(
 
     def sample_level_fn(doc: Doc, model_response: ModelResponse) -> float:
         golds = doc.get_golds()
-        predictions = model_response.text
+        predictions = model_response.final_text
 
         gold_extraction_regexes = get_extraction_regexes(doc, gold_extraction_target, language)
         pred_extraction_regexes = get_extraction_regexes(doc, pred_extraction_target, language)

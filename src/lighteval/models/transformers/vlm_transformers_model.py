@@ -40,11 +40,12 @@ from transformers.configuration_utils import PretrainedConfig
 from transformers.utils.quantization_config import BitsAndBytesConfig
 
 from lighteval.data import GenerativeTaskDataset
-from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
-from lighteval.models.utils import ModelConfig, _get_dtype, _get_model_sha, _simplify_name
+from lighteval.models.utils import _get_dtype, _get_model_sha, _simplify_name
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
+from lighteval.utils.cache_management import SampleCache, cached
 from lighteval.utils.imports import (
     is_accelerate_available,
 )
@@ -117,7 +118,6 @@ class VLMTransformersModelConfig(ModelConfig):
     dtype: str | None = None
     device: Union[int, str] = "cuda"
     trust_remote_code: bool = False
-    use_chat_template: bool = False
     compile: bool = False
     device_map: str | None = None
 
@@ -147,7 +147,7 @@ class VLMTransformersModel(LightevalModel):
 
         # Config attributes
         self.config = config
-        self.use_chat_template = config.use_chat_template
+        self.use_chat_template = True
         self.batch_size = config.batch_size
 
         # Model, config, and processor
@@ -171,11 +171,8 @@ class VLMTransformersModel(LightevalModel):
             use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
         )
 
-        self.model_info = ModelInfo(
-            model_name=self.config.model_name,
-            model_sha=self.model_sha,
-            model_dtype=config.dtype,
-        )
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config)
 
     @property
     def tokenizer(self):
@@ -336,6 +333,7 @@ class VLMTransformersModel(LightevalModel):
 
         return 2048
 
+    @cached("predictions")
     def greedy_until(
         self,
         docs: list[Doc],
@@ -344,13 +342,18 @@ class VLMTransformersModel(LightevalModel):
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
-            override_bs (int, optional): Override the batch size for generation. Defaults to None.
+            docs (list[Docs]): list of docs containing the context and ending conditions.
 
         Returns:
-            list[GenerativeResponse]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
+        return self._greedy_until(docs)
 
+    def _greedy_until(
+        self,
+        docs: list[Doc],
+    ) -> list[ModelResponse]:
+        """Wrapper for the greedy until logic, to avoid interface changes in the future"""
         # Tokenizing context for sorting in the dataset
 
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
@@ -421,12 +424,14 @@ class VLMTransformersModel(LightevalModel):
 
         return dataset.get_original_order(results)
 
+    @cached("predictions")
     def loglikelihood(
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
         raise NotImplementedError()
 
+    @cached("predictions")
     def loglikelihood_rolling(
         self,
         docs: list[Doc],

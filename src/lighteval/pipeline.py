@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import ast
 import asyncio
 import collections
 import os
@@ -56,7 +57,7 @@ from lighteval.utils.imports import (
     is_vllm_available,
 )
 from lighteval.utils.parallelism import test_all_gather
-from lighteval.utils.utils import make_results_table
+from lighteval.utils.utils import make_results_table, remove_reasoning_tags
 
 
 if is_accelerate_available():
@@ -102,10 +103,13 @@ class PipelineParameters:
     num_fewshot_seeds: int = 1
     max_samples: int | None = None
     cot_prompt: str | None = None
+    remove_reasoning_tags: bool = True
+    reasoning_tags: str | list[tuple[str, str]] | None = None
     load_responses_from_details_date_id: str | None = None
     bootstrap_iters: int = 1000
 
     def __post_init__(self):  # noqa C901
+        # Import testing
         if self.launcher_type == ParallelismManager.ACCELERATE:
             if not is_accelerate_available():
                 raise ImportError(NO_ACCELERATE_ERROR_MSG)
@@ -124,6 +128,25 @@ class PipelineParameters:
         elif self.launcher_type == ParallelismManager.OPENAI:
             if not is_openai_available():
                 raise ImportError(NO_OPENAI_ERROR_MSG)
+        if self.reasoning_tags is None:
+            self.reasoning_tags = [("<think>", "</think>")]
+        else:
+            # Convert reasoning tags to list if needed
+            if not isinstance(self.reasoning_tags, list):
+                try:
+                    self.reasoning_tags = ast.literal_eval(self.reasoning_tags)
+                except ValueError as e:
+                    raise ValueError(
+                        "reasoning_tags must be a list of pair tuples, e.g. [('start_tag', 'end_tag'), ...]. "
+                        f"Got {self.reasoning_tags} instead, which caused parsing error {e}."
+                    )
+
+            # Make sure format is correct
+            if not all(isinstance(tag, tuple) and len(tag) == 2 for tag in self.reasoning_tags):
+                raise ValueError(
+                    "reasoning_tags must be a list of pair tuples, e.g. [('start_tag', 'end_tag'), ...]. "
+                    f"Got {self.reasoning_tags} instead."
+                )
 
 
 class Pipeline:
@@ -153,9 +176,7 @@ class Pipeline:
         self.accelerator, self.parallel_context = self._init_parallelism_manager()
         self.model = self._init_model(model_config, model)
 
-        generation_parameters = model_config.generation_parameters.model_dump() if model_config else {}
-
-        self.evaluation_tracker.general_config_logger.log_model_info(generation_parameters, self.model.model_info)
+        self.evaluation_tracker.general_config_logger.log_model_info(model_config=self.model.config)
 
         self._init_random_seeds()
         self._init_tasks_and_requests(tasks=tasks)
@@ -270,7 +291,6 @@ class Pipeline:
             num_fewshot_seeds=self.pipeline_parameters.num_fewshot_seeds,
             max_samples=self.pipeline_parameters.max_samples,
             job_id=str(self.pipeline_parameters.job_id),
-            config=self.model_config,
         )
 
         if self.pipeline_parameters.load_responses_from_details_date_id:
@@ -284,9 +304,10 @@ class Pipeline:
         else:
             outputs = self._run_model()
 
-        self._compute_metrics(outputs)
-
         if self.is_main_process():
+            self._post_process_outputs(outputs)
+            self._compute_metrics(outputs)
+
             self.evaluation_tracker.general_config_logger.log_end_time()
             self.evaluation_tracker.metrics_logger.aggregate(
                 task_dict=self.tasks_dict, bootstrap_iters=self.pipeline_parameters.bootstrap_iters
@@ -340,6 +361,21 @@ class Pipeline:
         self.model.cleanup()
 
         return outputs
+
+    def _post_process_outputs(self, sampling_method_responses: dict[str, list[ModelResponse]]):
+        # Removes reasoning tags if needed
+        logger.info("--- POST-PROCESSING MODEL RESPONSES ---")
+
+        if self.pipeline_parameters.remove_reasoning_tags:
+            for _, responses in sampling_method_responses.items():
+                for response in responses:
+                    response.text_post_processed = [
+                        remove_reasoning_tags(
+                            text=text,
+                            tag_pairs=self.pipeline_parameters.reasoning_tags,
+                        )
+                        for text in response.text
+                    ]
 
     def _compute_metrics(self, sampling_method_responses: dict[str, list[ModelResponse]]):
         # To compute the metrics we first group the samples and task and then by metrics.
