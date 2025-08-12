@@ -97,7 +97,7 @@ class LiteLLMModelConfig(ModelConfig):
     provider: str | None = None
     base_url: str | None = None
     api_key: str | None = None
-    concurrent_requests: int = 10  # 100 leads to hitting Anthropic rate limits
+    concurrent_requests: int = 10
 
 
 class LiteLLMClient(LightevalModel):
