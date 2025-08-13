@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import asdict, is_dataclass
-from typing import Callable, TypeVar, Union
+from typing import TypeVar, Union
 
 import numpy as np
-from datasets import DatasetDict, load_dataset
 from pytablewriter import MarkdownTableWriter
 
 
@@ -197,34 +196,6 @@ def boolstring_to_bool(x: Union[str, bool, int]) -> Union[bool, None]:
     if x in ["False", "false", False, 0]:
         return False
     raise ValueError(f"You tried to convert {x} to a boolean but it's not possible.")
-
-
-def download_dataset_worker(
-    dataset_path: str,
-    dataset_config_name: str,
-    trust_dataset: bool,
-    dataset_filter: Callable[[dict], bool] | None = None,
-    revision: str | None = None,
-) -> DatasetDict:
-    """
-    Worker function to download a dataset from the HuggingFace Hub.
-    Used for parallel dataset loading.
-    """
-    dataset = load_dataset(
-        path=dataset_path,
-        name=dataset_config_name,
-        data_dir=None,
-        cache_dir=None,
-        download_mode=None,
-        trust_remote_code=trust_dataset,
-        revision=revision,
-    )
-
-    if dataset_filter is not None:
-        dataset = dataset.filter(dataset_filter)
-
-    # It returns DatasetDict because we don't specify a split
-    return dataset  # type: ignore
 
 
 def safe_divide(numerator: np.ndarray, denominator: float, default_value: float = 0.0) -> np.ndarray:

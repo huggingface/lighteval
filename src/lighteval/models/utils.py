@@ -20,132 +20,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import json
 import logging
 import os
-import re
 from itertools import islice
 from typing import Optional, Union
 
 import torch
-import yaml
 from huggingface_hub import HfApi
-from pydantic import BaseModel
 from transformers import AutoTokenizer
 from transformers.models.auto.configuration_auto import AutoConfig
 
-from lighteval.models.model_input import GenerationParameters
-
 
 logger = logging.getLogger(__name__)
-
-
-class ModelConfig(BaseModel, extra="forbid"):
-    """
-    Base configuration class for all model types in Lighteval.
-
-    This is the foundation class that all specific model configurations inherit from.
-    It provides common functionality for parsing configuration from files and command-line arguments,
-    as well as shared attributes that are used by all models like generation parameters and system prompts.
-
-    Attributes:
-        generation_parameters (GenerationParameters):
-            Configuration parameters that control text generation behavior, including
-            temperature, top_p, max_new_tokens, etc. Defaults to empty GenerationParameters.
-        system_prompt (str | None):
-            Optional system prompt to be used with chat models. This prompt sets the
-            behavior and context for the model during evaluation.
-
-    Methods:
-        from_path(path: str):
-            Load configuration from a YAML file.
-        from_args(args: str):
-            Parse configuration from a command-line argument string.
-        _parse_args(args: str):
-            Static method to parse argument strings into configuration dictionaries.
-
-    Example:
-        ```python
-        # Load from YAML file
-        config = ModelConfig.from_path("model_config.yaml")
-
-        # Load from command line arguments
-        config = ModelConfig.from_args("model_name=meta-llama/Llama-3.1-8B-Instruct,system_prompt='You are a helpful assistant.',generation_parameters={temperature=0.7}")
-
-        # Direct instantiation
-        config = ModelConfig(
-            model_name="meta-llama/Llama-3.1-8B-Instruct",
-            generation_parameters=GenerationParameters(temperature=0.7),
-            system_prompt="You are a helpful assistant."
-        )
-        ```
-    """
-
-    generation_parameters: GenerationParameters = GenerationParameters()
-    system_prompt: str | None = None
-
-    @classmethod
-    def from_path(cls, path: str):
-        with open(path, "r") as f:
-            config = yaml.safe_load(f)
-
-        return cls(**config["model_parameters"])
-
-    @classmethod
-    def from_args(cls, args: str):
-        config = cls._parse_args(args)
-        return cls(**config)
-
-    @staticmethod
-    def _parse_args(args: str) -> dict:
-        """Parse a string of arguments into a configuration dictionary.
-
-        This function parses a string containing model arguments and generation parameters
-        into a structured dictionary with two main sections: 'model' and 'generation'.
-        It specifically handles generation parameters enclosed in curly braces.
-
-        Args:
-            args (str): A string containing comma-separated key-value pairs, where generation
-                parameters can be specified in a nested JSON-like format.
-
-        Returns:
-            dict: A dictionary with two keys:
-                - 'model': Contains general model configuration parameters
-                - 'generation': Contains generation-specific parameters
-
-        Examples:
-            >>> parse_args("model_name=gpt2,max_length=100")
-            {
-                'model': {'model_name': 'gpt2', 'max_length': '100'},
-            }
-
-            >>> parse_args("model_name=gpt2,generation_parameters={temperature:0.7,top_p:0.9}")
-            {
-                'model': {'model_name': 'gpt2', 'generation_parameters': {'temperature': 0.7, 'top_p': 0.9},
-            }
-
-            >>> parse_args("model_name=gpt2,use_cache,generation_parameters={temperature:0.7}")
-            {
-                'model': {'model_name': 'gpt2', 'use_cache': True, 'generation_parameters': {'temperature': 0.7}},
-            }
-        """
-        # Looking for generation_parameters in the model_args
-        generation_parameters_dict = None
-        pattern = re.compile(r"(\w+)=(\{.*\}|[^,]+)")
-        matches = pattern.findall(args)
-        for key, value in matches:
-            key = key.strip()
-            if key == "generation_parameters":
-                gen_params = re.sub(r"(\w+):", r'"\1":', value)
-                generation_parameters_dict = json.loads(gen_params)
-
-        args = re.sub(r"generation_parameters=\{.*?\},?", "", args).strip(",")
-        model_config = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.split(",")}
-
-        if generation_parameters_dict is not None:
-            model_config["generation_parameters"] = generation_parameters_dict
-
-        return model_config
 
 
 def _get_dtype(dtype: Union[str, torch.dtype, None], config: Optional[AutoConfig] = None) -> Optional[torch.dtype]:
@@ -223,7 +109,9 @@ def batched(iterable, n):
         yield batch
 
 
-def uses_chat_template(model_name: str = None, tokenizer: AutoTokenizer = None) -> bool:
+def uses_chat_template(
+    model_name: str = None, tokenizer: AutoTokenizer = None, override_chat_template: bool = None
+) -> bool:
     """Returns a boolean depending on whether the Transformers AutoTokenizer contains
     a chat template or not
 
@@ -233,6 +121,8 @@ def uses_chat_template(model_name: str = None, tokenizer: AutoTokenizer = None) 
     Returns:
         bool: True if Tokenizer config contains a chat template, False otherwise
     """
+    if override_chat_template is not None:
+        return override_chat_template
     if model_name is None and tokenizer is None:
         raise Exception("`uses_chat_template` requires either a tokenizer or model name as input")
     try:

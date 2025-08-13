@@ -54,6 +54,7 @@ class TestInferenceEndpointModelConfig:
                     "generation_parameters": {
                         "num_blocks": None,
                         "block_size": None,
+                        "cache_implementation": None,
                         "early_stopping": None,
                         "frequency_penalty": None,
                         "length_penalty": None,
@@ -70,6 +71,7 @@ class TestInferenceEndpointModelConfig:
                         "truncate_prompt": None,
                         "response_format": None,
                     },
+                    "cache_dir": "~/.cache/huggingface/lighteval",
                 },
             ),
         ],

@@ -177,8 +177,7 @@ class EvaluationTracker:
     @property
     def results(self):
         config_general = asdict(self.general_config_logger)
-        # We remove the config from logging, which contains context/accelerator objects
-        config_general.pop("config")
+        config_general["model_config"] = config_general["model_config"].model_dump()
         results = {
             "config_general": config_general,
             "results": self.metrics_logger.metric_aggregated,
@@ -216,19 +215,7 @@ class EvaluationTracker:
         logger.info("Saving experiment tracker")
         date_id = datetime.now().isoformat().replace(":", "-")
 
-        # We first prepare data to save
-        config_general = asdict(self.general_config_logger)
-        # We remove the config from logging, which contains context/accelerator objects
-        config_general.pop("config")
-
-        results_dict = {
-            "config_general": config_general,
-            "results": self.metrics_logger.metric_aggregated,
-            "versions": self.versions_logger.versions,
-            "config_tasks": self.task_config_logger.tasks_configs,
-            "summary_tasks": self.details_logger.compiled_details,
-            "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
-        }
+        results_dict = self.results
 
         # Create the details datasets for later upload
         details_datasets: dict[str, Dataset] = {}
@@ -286,7 +273,7 @@ class EvaluationTracker:
             output_dir = self.output_dir
             output_dir_results = Path(self.results_path_template.format(output_dir=output_dir, org=org, model=model))
         else:
-            output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name
+            output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name.strip("/")
         self.fs.mkdirs(output_dir_results, exist_ok=True)
         output_results_file = output_dir_results / f"results_{date_id}.json"
         logger.info(f"Saving results to {output_results_file}")
@@ -294,7 +281,7 @@ class EvaluationTracker:
             f.write(json.dumps(results_dict, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False))
 
     def _get_details_sub_folder(self, date_id: str):
-        output_dir_details = Path(self.output_dir) / "details" / self.general_config_logger.model_name
+        output_dir_details = Path(self.output_dir) / "details" / self.general_config_logger.model_name.strip("/")
         if date_id in ["first", "last"]:
             # Get all folders in output_dir_details
             if not self.fs.exists(output_dir_details):
@@ -655,7 +642,7 @@ class EvaluationTracker:
             global_step = 0
             run = prefix
 
-        output_dir_tb = Path(self.output_dir) / "tb" / run
+        output_dir_tb = Path(self.output_dir) / "tb" / run.strip("/")
         output_dir_tb.mkdir(parents=True, exist_ok=True)
 
         tb_context = HFSummaryWriter(
