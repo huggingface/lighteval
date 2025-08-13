@@ -78,6 +78,10 @@ class LiteLLMModelConfig(ModelConfig):
         api_key (str | None):
             API key for authentication. If None, reads from environment variables.
             Environment variable names are provider-specific (e.g., OPENAI_API_KEY).
+        concurrent_requests (int):
+            Maximum number of concurrent API requests to execute in parallel.
+            Higher values can improve throughput for batch processing but may hit rate limits
+            or exhaust API quotas faster. Default is 10.
 
     Example:
         ```python
@@ -85,6 +89,7 @@ class LiteLLMModelConfig(ModelConfig):
             model_name="gpt-4",
             provider="openai",
             base_url="https://api.openai.com/v1",
+            concurrent_requests=5,
             generation_parameters=GenerationParameters(
                 temperature=0.7,
                 max_new_tokens=100
