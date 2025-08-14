@@ -32,12 +32,11 @@ from tqdm.asyncio import tqdm as async_tqdm
 from transformers import AutoTokenizer
 
 from lighteval.data import GenerativeTaskDataset
-from lighteval.models.abstract_model import LightevalModel
-from lighteval.models.endpoints.endpoint_model import ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
-from lighteval.models.utils import ModelConfig
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
+from lighteval.utils.cache_management import SampleCache, cached
 
 
 logger = logging.getLogger(__name__)
@@ -103,12 +102,7 @@ class InferenceProvidersClient(LightevalModel):
         Args:
             config: Configuration object containing model and provider settings
         """
-        self.model_info = ModelInfo(
-            model_name=config.model_name,
-            model_sha="",
-            model_dtype=None,
-            model_size=-1,
-        )
+        self.config = config
         self.model_name = config.model_name
         self.provider = config.provider
         self.generation_parameters = config.generation_parameters
@@ -134,6 +128,9 @@ class InferenceProvidersClient(LightevalModel):
         self.prompt_manager = PromptManager(
             use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
         )
+
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config)
 
     async def __call_api(self, prompt: List[dict], num_samples: int) -> Optional[ChatCompletionOutput]:
         """Make API call with exponential backoff retry logic.
@@ -194,6 +191,7 @@ class InferenceProvidersClient(LightevalModel):
 
         return results
 
+    @cached("predictions")
     def greedy_until(
         self,
         docs: list[Doc],
@@ -206,7 +204,7 @@ class InferenceProvidersClient(LightevalModel):
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
 
         Returns:
-            list[GenerativeResponse]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         results = []
@@ -252,12 +250,14 @@ class InferenceProvidersClient(LightevalModel):
             logger.warning("Tokenizer was not correctly loaded. Max model context length is assumed to be 30K tokens")
             return 30000
 
+    @cached("predictions")
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
         raise NotImplementedError
 
+    @cached("predictions")
     def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         raise NotImplementedError

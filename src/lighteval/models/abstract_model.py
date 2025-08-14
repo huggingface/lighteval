@@ -20,13 +20,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import json
+import re
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import Optional, Union
 
 import torch
+import yaml
+from pydantic import BaseModel
 from transformers.tokenization_utils_base import BatchEncoding, PreTrainedTokenizerBase
 
+from lighteval.models.model_input import GenerationParameters
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
 
@@ -34,12 +38,116 @@ from lighteval.tasks.requests import Doc
 TokenSequence = Union[list[int], torch.LongTensor, torch.Tensor, BatchEncoding]
 
 
-@dataclass
-class ModelInfo:
-    model_name: str
-    model_sha: str | None = None
-    model_dtype: str | None = None
-    model_size: int | None = None
+class ModelConfig(BaseModel, extra="forbid"):
+    """
+    Base configuration class for all model types in Lighteval.
+
+    This is the foundation class that all specific model configurations inherit from.
+    It provides common functionality for parsing configuration from files and command-line arguments,
+    as well as shared attributes that are used by all models like generation parameters and system prompts.
+
+    Attributes:
+        generation_parameters (GenerationParameters):
+            Configuration parameters that control text generation behavior, including
+            temperature, top_p, max_new_tokens, etc. Defaults to empty GenerationParameters.
+        system_prompt (str | None):
+            Optional system prompt to be used with chat models. This prompt sets the
+            behavior and context for the model during evaluation.
+
+    Methods:
+        from_path(path: str):
+            Load configuration from a YAML file.
+        from_args(args: str):
+            Parse configuration from a command-line argument string.
+        _parse_args(args: str):
+            Static method to parse argument strings into configuration dictionaries.
+
+    Example:
+        ```python
+        # Load from YAML file
+        config = ModelConfig.from_path("model_config.yaml")
+
+        # Load from command line arguments
+        config = ModelConfig.from_args("model_name=meta-llama/Llama-3.1-8B-Instruct,system_prompt='You are a helpful assistant.',generation_parameters={temperature=0.7}")
+
+        # Direct instantiation
+        config = ModelConfig(
+            model_name="meta-llama/Llama-3.1-8B-Instruct",
+            generation_parameters=GenerationParameters(temperature=0.7),
+            system_prompt="You are a helpful assistant."
+        )
+        ```
+    """
+
+    generation_parameters: GenerationParameters = GenerationParameters()
+    system_prompt: str | None = None
+    cache_dir: str = "~/.cache/huggingface/lighteval"
+
+    @classmethod
+    def from_path(cls, path: str):
+        with open(path, "r") as f:
+            config = yaml.safe_load(f)
+
+        return cls(**config["model_parameters"])
+
+    @classmethod
+    def from_args(cls, args: str):
+        config = cls._parse_args(args)
+        return cls(**config)
+
+    @staticmethod
+    def _parse_args(args: str) -> dict:
+        """Parse a string of arguments into a configuration dictionary.
+
+        This function parses a string containing model arguments and generation parameters
+        into a structured dictionary with two main sections: 'model' and 'generation'.
+        It specifically handles generation parameters enclosed in curly braces.
+
+        Args:
+            args (str): A string containing comma-separated key-value pairs, where generation
+                parameters can be specified in a nested JSON-like format.
+
+        Returns:
+            dict: A dictionary with two keys:
+                - 'model': Contains general model configuration parameters
+                - 'generation': Contains generation-specific parameters
+
+        Examples:
+            >>> parse_args("model_name=gpt2,max_length=100")
+            {
+                'model': {'model_name': 'gpt2', 'max_length': '100'},
+            }
+
+            >>> parse_args("model_name=gpt2,generation_parameters={temperature:0.7,top_p:0.9}")
+            {
+                'model': {'model_name': 'gpt2', 'generation_parameters': {'temperature': 0.7, 'top_p': 0.9},
+            }
+
+            >>> parse_args("model_name=gpt2,use_cache,generation_parameters={temperature:0.7}")
+            {
+                'model': {'model_name': 'gpt2', 'use_cache': True, 'generation_parameters': {'temperature': 0.7}},
+            }
+        """
+        # Looking for generation_parameters in the model_args
+        generation_parameters_dict = None
+        pattern = re.compile(r"(\w+)=(\{.*\}|[^,]+)")
+        matches = pattern.findall(args)
+        for key, value in matches:
+            key = key.strip()
+            if key == "generation_parameters":
+                # Keys must be quoted (since they are strings)
+                gen_params = re.sub(r"(\w+):", r'"\1":', value)
+                # for k, v where v are strings, we quote them too
+                gen_params = re.sub(r":\s*([A-Za-z_][\w.-]*)\s*(?=[,}])", r':"\1"', gen_params)
+                generation_parameters_dict = json.loads(gen_params)
+
+        args = re.sub(r"generation_parameters=\{.*?\},?", "", args).strip(",")
+        model_config = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.split(",")}
+
+        if generation_parameters_dict is not None:
+            model_config["generation_parameters"] = generation_parameters_dict
+
+        return model_config
 
 
 class LightevalModel(ABC):
@@ -84,7 +192,7 @@ class LightevalModel(ABC):
             docs (list[Doc]): List of documents containing the context for generation.
 
         Returns:
-            list[GenerativeResponse]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
         return NotImplemented
 

@@ -28,13 +28,17 @@ from unittest.mock import patch
 from transformers import AutoTokenizer
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
-from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
 from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 from lighteval.tasks.lighteval_task import LightevalTask
 from lighteval.tasks.registry import Registry
 from lighteval.tasks.requests import Doc
 from lighteval.utils.imports import is_accelerate_available
+
+
+class FakeModelConfig(ModelConfig):
+    model_name: str = "fake_model"
 
 
 class FakeModel(LightevalModel):
@@ -47,6 +51,7 @@ class FakeModel(LightevalModel):
         loglikelihood_rolling_responses: list[ModelResponse] = [],
     ):
         self._tokenizer = None
+        self.config = FakeModelConfig()
         self.greedy_until_responses = greedy_until_responses
         self.loglikelihood_responses = loglikelihood_responses
         self.loglikelihood_rolling_responses = loglikelihood_rolling_responses
@@ -64,10 +69,6 @@ class FakeModel(LightevalModel):
     @property
     def max_length(self) -> int:
         return 2048
-
-    @property
-    def model_info(self):
-        return ModelInfo(model_name="fake_model")
 
     def greedy_until(self, docs: list[Doc]) -> list[ModelResponse]:
         ret_resp, self.greedy_until_responses = (

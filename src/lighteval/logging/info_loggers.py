@@ -31,7 +31,7 @@ import git
 import xxhash
 
 from lighteval.metrics.stderr import get_stderr_function
-from lighteval.models.abstract_model import ModelInfo
+from lighteval.models.abstract_model import ModelConfig
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 
 if is_nanotron_available():
-    from nanotron.config import Config
+    pass
 
 
 @dataclass(init=False)
@@ -64,11 +64,7 @@ class GeneralConfigLogger:
         start_time (float): Start time of the experiment. Logged at class init.
         end_time (float): End time of the experiment. Logged when calling [`GeneralConfigLogger.log_end_time`]
         total_evaluation_time_secondes (str): Inferred total evaluation time in seconds (from the start and end times).
-        model_name (str): Name of the currently evaluated model.
-        model_sha (str): Commit hash of the currently evaluated model on the hub if available.
-        model_dtype (str): Dtype of the model weights, as obtained when loading the model config.
-        model_size (str): Model size as obtained when loading the model config.
-
+        model_config (ModelConfig): Model configuration
     """
 
     # general
@@ -80,16 +76,8 @@ class GeneralConfigLogger:
     end_time: float = None
     total_evaluation_time_secondes: str = None
 
-    # model info
+    model_config: ModelConfig = None
     model_name: str = None
-    model_sha: str = None
-    model_dtype: str = None
-    model_size: str = None
-
-    generation_parameters: dict | None = None
-
-    # Nanotron config
-    config: "Config" = None
 
     def __init__(self) -> None:
         """Stores the current lighteval commit for reproducibility, and starts the evaluation timer."""
@@ -106,7 +94,6 @@ class GeneralConfigLogger:
         num_fewshot_seeds: int,
         max_samples: Union[None, int],
         job_id: str,
-        config: "Config" = None,
     ) -> None:
         """
         Logs the information about the arguments passed to the method.
@@ -118,31 +105,21 @@ class GeneralConfigLogger:
                 Else, the batch size is automatically inferred depending on what fits in memory.
             max_samples (Union[None, int]): maximum number of samples, if None, use all the samples available.
             job_id (str): job ID, used to retrieve logs.
-            config (optional): Nanotron Config
-
-        Returns:
-            None
-
         """
         self.num_fewshot_seeds = num_fewshot_seeds
         self.max_samples = max_samples
         self.job_id = job_id
-        self.config = config
 
-    def log_model_info(self, generation_parameters: dict, model_info: ModelInfo) -> None:
+    def log_model_info(self, model_config: ModelConfig) -> None:
         """
         Logs the model information.
 
         Args:
             model_config: the model config used to initialize the model.
-            model_info (ModelInfo): Model information to be logged.
 
         """
-        self.generation_parameters = generation_parameters
-        self.model_name = model_info.model_name
-        self.model_sha = model_info.model_sha
-        self.model_dtype = model_info.model_dtype
-        self.model_size = model_info.model_size
+        self.model_config = model_config
+        self.model_name = model_config.model_name
 
     def log_end_time(self) -> None:
         self.end_time = time.perf_counter()

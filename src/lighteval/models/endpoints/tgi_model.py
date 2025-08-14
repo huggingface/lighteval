@@ -28,8 +28,8 @@ import requests
 from huggingface_hub import TextGenerationInputGenerateParameters, TextGenerationInputGrammarType, TextGenerationOutput
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 
-from lighteval.models.endpoints.endpoint_model import InferenceEndpointModel, ModelInfo
-from lighteval.models.utils import ModelConfig
+from lighteval.models.abstract_model import ModelConfig
+from lighteval.models.endpoints.endpoint_model import InferenceEndpointModel
 from lighteval.utils.imports import NO_TGI_ERROR_MSG, is_tgi_available
 
 
@@ -83,9 +83,10 @@ class TGIModelConfig(ModelConfig):
         ```
     """
 
-    inference_server_address: str | None
-    inference_server_auth: str | None
+    inference_server_address: str | None = None
+    inference_server_auth: str | None = None
     model_name: str | None
+    model_info: dict | None = None
 
 
 # inherit from InferenceEndpointModel instead of LightevalModel since they both use the same interface, and only overwrite
@@ -109,19 +110,11 @@ class ModelClient(InferenceEndpointModel):
             raise ValueError("Error occurred when fetching info: " + str(self.model_info))
         if config.model_name:
             self.model_info["model_id"] = config.model_name
+        self.config = config
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_info["model_id"])
         self._add_special_tokens = True
         self.use_async = True
-
-        model_name = str(self.model_info["model_id"])
-        model_sha = self.model_info["model_sha"]
-        model_precision = self.model_info["model_dtype"]
-        self.model_info = ModelInfo(
-            model_name=model_name,
-            model_sha=model_sha,
-            model_dtype=model_precision,
-            model_size=-1,
-        )
+        self.config.model_info = self.model_info
 
     def _async_process_request(
         self,

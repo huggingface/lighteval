@@ -117,11 +117,11 @@ def accelerate(  # noqa C901
     import yaml
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
+    from lighteval.models.abstract_model import ModelConfig
     from lighteval.models.transformers.adapter_model import AdapterModelConfig
     from lighteval.models.transformers.delta_model import DeltaModelConfig
     from lighteval.models.transformers.transformers_model import TransformersModelConfig
     from lighteval.models.transformers.vlm_transformers_model import VLMTransformersModelConfig
-    from lighteval.models.utils import ModelConfig
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 
     evaluation_tracker = EvaluationTracker(
@@ -154,8 +154,10 @@ def accelerate(  # noqa C901
         config: dict = ModelConfig._parse_args(model_args)
 
     if config.get("delta_weights", False):
+        config.pop("delta_weights")
         model_config = DeltaModelConfig(**config)
     elif config.get("adapter_weights", False):
+        config.pop("adapter_weights")
         model_config = AdapterModelConfig(**config)
     else:
         if vision_model:

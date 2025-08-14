@@ -348,8 +348,8 @@ class TestTransformersModelProcessing(unittest.TestCase):
 
 
 class TestTransformersModelUseChatTemplate(unittest.TestCase):
-    @patch("lighteval.models.transformers.transformers_model.TransformersModel._create_auto_model")
     @patch("lighteval.models.transformers.transformers_model.Accelerator")
+    @patch("lighteval.models.transformers.transformers_model.TransformersModel._create_auto_model")
     @patch("lighteval.utils.imports.is_accelerate_available")
     def test_transformers_model_use_chat_template_with_different_model_names(
         self, mock_accelerator, mock_create_model, is_accelerate_available
