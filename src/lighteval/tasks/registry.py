@@ -25,6 +25,7 @@ import copy
 import importlib
 import logging
 import os
+import sys
 from functools import lru_cache
 from itertools import groupby
 from pathlib import Path
@@ -44,24 +45,26 @@ def load_community_tasks():
     modules = []
     try:
         # Community tasks are in the lighteval directory, not under src
-        import sys
-        import os
-        community_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "community_tasks")
-        if os.path.exists(community_path):
-            sys.path.insert(0, os.path.dirname(community_path))
-            
-            # List all python files in community_tasks
-            community_files = [f[:-3] for f in os.listdir(community_path) 
-                             if f.endswith('.py') and not f.startswith('_')]
-            
-            for module_name in community_files:
-                try:
-                    module = importlib.import_module(f"community_tasks.{module_name}")
-                    if hasattr(module, 'TASKS_TABLE'):
-                        modules.append(module)
-                        logger.info(f"Successfully loaded community tasks from {module_name}")
-                except Exception as e:
-                    logger.warning(f"Failed to load community tasks from {module_name}: {e}")
+        community_path = Path(__file__).parent.parent.parent / "community_tasks"
+        if not community_path.exists():
+            return modules
+
+        # Ensure the parent directory is on sys.path so we can import `community_tasks.*`
+        parent_dir = str(community_path.parent)
+        if parent_dir not in sys.path:
+            sys.path.insert(0, parent_dir)
+        
+        # List all python files in community_tasks
+        community_files = [p.stem for p in community_path.glob("*.py") if not p.name.startswith('_')]
+        
+        for module_name in community_files:
+            try:
+                module = importlib.import_module(f"community_tasks.{module_name}")
+                if hasattr(module, 'TASKS_TABLE'):
+                    modules.append(module)
+                    logger.info(f"Successfully loaded community tasks from {module_name}")
+            except Exception as e:
+                logger.warning(f"Failed to load community tasks from {module_name}: {e}")
     except Exception as e:
         logger.warning(f"Error loading community tasks directory: {e}")
     
@@ -218,7 +221,9 @@ class Registry:
 
 
         Returns:
-            dict[str, list[dict]]: A dictionary mapping each task name to a list of tuples representing the few_shot and truncate_few_shots values.
+            tuple[list[str], dict[str, list[tuple[int, bool]]]]: A tuple containing:
+                - A sorted list of unique task names in the format "suite|task".
+                - A dictionary mapping each task name to a list of tuples representing the few_shot and truncate_few_shots values.
         """
         few_shot_dict = collections.defaultdict(list)
 
