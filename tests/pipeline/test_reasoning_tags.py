@@ -142,13 +142,15 @@ class TestPipelineReasoningTags(unittest.TestCase):
             )
 
             evaluation_tracker = EvaluationTracker(output_dir=self.temp_dir)
-            model = TestDummyModel(DummyModelConfig(seed=42))
+            model_config = DummyModelConfig(seed=42)
+            model = TestDummyModel(model_config)
 
             pipeline = Pipeline(
                 tasks="test|test_reasoning_task|0|0",
                 pipeline_parameters=pipeline_params,
                 evaluation_tracker=evaluation_tracker,
                 model=model,
+                model_config=model_config,
             )
 
             # Run the pipeline
@@ -188,13 +190,15 @@ class TestPipelineReasoningTags(unittest.TestCase):
             )
 
             evaluation_tracker = EvaluationTracker(output_dir=self.temp_dir)
-            model = TestDummyModel(DummyModelConfig(seed=42))
+            model_config = DummyModelConfig(seed=42)
+            model = TestDummyModel(model_config)
 
             pipeline = Pipeline(
                 tasks="test|test_reasoning_task|0|0",
                 pipeline_parameters=pipeline_params,
                 evaluation_tracker=evaluation_tracker,
                 model=model,
+                model_config=model_config,
             )
 
             # Run the pipeline
@@ -231,13 +235,15 @@ class TestPipelineReasoningTags(unittest.TestCase):
             )
 
             evaluation_tracker = EvaluationTracker(output_dir=self.temp_dir)
-            model = TestDummyModel(DummyModelConfig(seed=42))
+            model_config = DummyModelConfig(seed=42)
+            model = TestDummyModel(model_config)
 
             pipeline = Pipeline(
                 tasks="test|test_reasoning_task|0|0",
                 pipeline_parameters=pipeline_params,
                 evaluation_tracker=evaluation_tracker,
                 model=model,
+                model_config=model_config,
             )
 
             # Run the pipeline
@@ -277,13 +283,15 @@ class TestPipelineReasoningTags(unittest.TestCase):
             )
 
             evaluation_tracker = EvaluationTracker(output_dir=self.temp_dir)
-            model = TestDummyModel(DummyModelConfig(seed=42))
+            model_config = DummyModelConfig(seed=42)
+            model = TestDummyModel(model_config)
 
             pipeline = Pipeline(
                 tasks="test|test_reasoning_task|0|0",
                 pipeline_parameters=pipeline_params,
                 evaluation_tracker=evaluation_tracker,
                 model=model,
+                model_config=model_config,
             )
 
             # Run the pipeline
@@ -323,13 +331,15 @@ class TestPipelineReasoningTags(unittest.TestCase):
             )
 
             evaluation_tracker = EvaluationTracker(output_dir=self.temp_dir)
-            model = TestDummyModel(DummyModelConfig(seed=42))
+            model_config = DummyModelConfig(seed=42)
+            model = TestDummyModel(model_config)
 
             pipeline = Pipeline(
                 tasks="test|test_reasoning_task|0|0",
                 pipeline_parameters=pipeline_params,
                 evaluation_tracker=evaluation_tracker,
                 model=model,
+                model_config=model_config,
             )
 
             # Run the pipeline
@@ -369,13 +379,15 @@ class TestPipelineReasoningTags(unittest.TestCase):
             )
 
             evaluation_tracker = EvaluationTracker(output_dir=self.temp_dir)
-            model = TestDummyModel(DummyModelConfig(seed=42))
+            model_config = DummyModelConfig(seed=42)
+            model = TestDummyModel(model_config)
 
             pipeline = Pipeline(
                 tasks="test|test|test_reasoning_task|0|0",
                 pipeline_parameters=pipeline_params,
                 evaluation_tracker=evaluation_tracker,
                 model=model,
+                model_config=model_config,
             )
 
             # Run the pipeline
