@@ -118,14 +118,8 @@ class TestTransformersModelCreation(unittest.TestCase):
 
 
 class TestTransformersModelCreationFromModel(unittest.TestCase):
-    @patch("lighteval.models.transformers.transformers_model.Accelerator")
-    def setUp(self, mock_accelerator):
+    def setUp(self):
         """Set up shared model instance for all tests."""
-        # Mock accelerate related params
-        mock_accelerator_instance = Mock()
-        mock_accelerator_instance.device = torch.device("cpu")
-        mock_accelerator.return_value = mock_accelerator_instance
-
         self.reference_model = AutoModelForCausalLM.from_pretrained("gpt2")
         self.reference_tokenizer = AutoTokenizer.from_pretrained("gpt2")
 
