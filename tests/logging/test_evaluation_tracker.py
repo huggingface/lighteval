@@ -241,6 +241,7 @@ class TestProperties(unittest.TestCase):
             "presence_penalty": None,
             "max_new_tokens": None,
             "min_new_tokens": None,
+            "grammar": None,
             "seed": None,
             "stop_tokens": None,
             "temperature": 0,
