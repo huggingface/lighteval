@@ -111,7 +111,6 @@ class CustomArabicMMLUTask(LightevalTaskConfig):
             suite=["community"],
             generation_size=-1,
             stop_sequence=None,
-            trust_dataset=True,
             version=0,
         )
 
@@ -173,7 +172,6 @@ class CustomArabicMMLUHTTask(LightevalTaskConfig):
             suite=["community"],
             generation_size=-1,
             stop_sequence=None,
-            trust_dataset=True,
             version=0,
         )
 
@@ -238,7 +236,6 @@ class CustomArabicMMLUMTTask(LightevalTaskConfig):
             suite=["community"],
             generation_size=-1,
             stop_sequence=None,
-            trust_dataset=True,
             version=0,
         )
 
@@ -294,7 +291,6 @@ class CustomACVATask(LightevalTaskConfig):
             suite=["community"],
             generation_size=-1,
             stop_sequence=None,
-            trust_dataset=True,
             version=0,
         )
 
@@ -351,7 +347,6 @@ class CustomAraTrustTask(LightevalTaskConfig):
             suite=["community"],
             generation_size=-1,
             stop_sequence=None,
-            trust_dataset=True,
             version=0,
         )
 
@@ -393,7 +388,6 @@ arabic_exams_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metrics=[Metrics.loglikelihood_acc_norm],
-    trust_dataset=True,
     version=0,
 )
 
@@ -451,7 +445,6 @@ class CustomAlGhafaNativeTask(LightevalTaskConfig):
             suite=["community"],
             generation_size=-1,
             stop_sequence=None,
-            trust_dataset=True,
             version=0,
         )
 
@@ -471,7 +464,6 @@ race_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metrics=[Metrics.loglikelihood_acc_norm],
-    trust_dataset=True,
     version=0,
 )
 
@@ -488,7 +480,6 @@ piqa_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metrics=[Metrics.loglikelihood_acc_norm],
-    trust_dataset=True,
     version=0,
 )
 
@@ -505,7 +496,6 @@ arc_easy_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metrics=[Metrics.loglikelihood_acc_norm],
-    trust_dataset=True,
     version=0,
 )
 
@@ -522,7 +512,6 @@ arc_challenge_okapi_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metrics=[Metrics.loglikelihood_acc_norm],
-    trust_dataset=True,
     version=0,
 )
 
@@ -539,7 +528,6 @@ mmlu_okapi_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metrics=[Metrics.loglikelihood_acc_norm],
-    trust_dataset=True,
     version=0,
 )
 
@@ -556,7 +544,6 @@ openbook_qa_ext_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metrics=[Metrics.loglikelihood_acc_norm],
-    trust_dataset=True,
     version=0,
 )
 
@@ -594,7 +581,6 @@ boolq_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metrics=[Metrics.loglikelihood_acc_norm],
-    trust_dataset=True,
     version=0,
 )
 
@@ -629,7 +615,6 @@ copa_ext_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metrics=[Metrics.loglikelihood_acc_norm],
-    trust_dataset=True,
     version=0,
 )
 
@@ -673,7 +658,6 @@ hellaswag_okapi_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metrics=[Metrics.loglikelihood_acc_norm],
-    trust_dataset=True,
     version=0,
 )
 
@@ -710,7 +694,6 @@ toxigen_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metrics=[Metrics.loglikelihood_acc_norm],
-    trust_dataset=True,
     version=0,
 )
 
@@ -761,7 +744,6 @@ sciq_ar_task = LightevalTaskConfig(
     few_shots_split="validation",
     few_shots_select="sequential",
     metrics=[Metrics.loglikelihood_acc_norm],
-    trust_dataset=True,
     version=0,
 )
 
@@ -826,7 +808,6 @@ class CustomMadinahQATask(LightevalTaskConfig):
             suite=["community"],
             generation_size=-1,
             stop_sequence=None,
-            trust_dataset=True,
             version=0,
         )
 
@@ -1038,7 +1019,6 @@ alrage_qa_task = LightevalTaskConfig(
     hf_avail_splits=["train"],
     evaluation_splits=["train"],
     metrics=[wrapped_judge],
-    trust_dataset=True,
     generation_size=200,
     stop_sequence=[],
     version=0,

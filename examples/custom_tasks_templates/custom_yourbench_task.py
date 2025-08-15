@@ -258,7 +258,6 @@ yourbench = LightevalTaskConfig(
     generation_size=8192,
     metrics=[Metrics.yourbench_metrics],
     stop_sequence=[],
-    trust_dataset=True,
     version=0,
 )
 

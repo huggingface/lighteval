@@ -59,7 +59,6 @@ class TestPipelineReasoningTags(unittest.TestCase):
             few_shots_select=None,
             generation_size=10,
             stop_sequence=["\n"],
-            trust_dataset=True,
             num_fewshots=0,
         )
 

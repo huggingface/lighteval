@@ -156,7 +156,6 @@ for subset in configs:
         generation_size=32768,
         metrics=[Metrics.lcb_codegen_metric],
         stop_sequence=[],  # no stop sequence, will use EOS token
-        trust_dataset=True,
         version=0,
     )
     tasks.append(task)
