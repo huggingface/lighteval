@@ -207,7 +207,23 @@ class Pipeline:
     def _init_model(self, model_config, model):
         logger.info("--- LOADING MODEL ---")
 
-        if model is None:
+        if model is not None and model_config is not None:
+            if isinstance(model, LightevalModel):
+                raise ValueError(
+                    "You are trying to provide both a LightevalModel and a model config. Please provide only one of them."
+                )
+            return TransformersModel.from_model(
+                model=model,
+                config=model_config,
+                accelerator=self.accelerator,
+            )
+
+        elif model is not None:
+            if isinstance(model, LightevalModel):
+                return model
+            raise ValueError("You are trying to provide a model that is not a LightevalModel with no config.")
+
+        elif model_config is not None:
             if self.parallel_context:
                 return NanotronLightevalModel(
                     checkpoint_path=os.path.dirname(self.pipeline_parameters.nanotron_checkpoint_path)
@@ -220,20 +236,6 @@ class Pipeline:
                 )
             else:
                 return load_model(config=model_config)
-
-        if isinstance(model, LightevalModel):
-            if model_config is not None:
-                logger.warning(
-                    "You are providing a Lighteval model instance and a model config. The model config will be ignored."
-                )
-            return model
-
-        else:
-            return TransformersModel.from_model(
-                model=model,
-                config=model_config,
-                accelerator=self.accelerator,
-            )
 
     def _init_tasks_and_requests(self, tasks: str):
         with local_ranks_zero_first() if self.launcher_type == ParallelismManager.NANOTRON else nullcontext():
