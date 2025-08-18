@@ -123,7 +123,10 @@ class TestTransformersModelCreationFromModel(unittest.TestCase):
         self.reference_model = AutoModelForCausalLM.from_pretrained("gpt2")
         self.reference_tokenizer = AutoTokenizer.from_pretrained("gpt2")
 
-        self.config = TransformersModelConfig(model_name="gpt2")
+        max_length = 1234
+        self.reference_tokenizer.model_max_length = max_length
+
+        self.config = TransformersModelConfig(model_name="gpt2", max_length=max_length)
 
         # Create full model instance
         self.model = TransformersModel.from_model(
@@ -154,6 +157,8 @@ class TestTransformersModelCreationFromModel(unittest.TestCase):
         self.assertFalse(self.model.pairwise_tokenization)
         self.assertIsNone(self.model.batch_size)
         self.assertFalse(self.model.continuous_batching)
+        self.assertEqual(self.model.model_name, self.config.model_name)
+        self.assertEqual(self.model.max_length, self.config.max_length)
 
     def test_model_creation_model(self):
         # We can't compare objects directly
