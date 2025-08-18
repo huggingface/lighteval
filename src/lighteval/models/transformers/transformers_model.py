@@ -255,7 +255,7 @@ class TransformersModel(LightevalModel):
 
         self.config = config
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
-        self._add_special_tokens = config.add_special_tokens or False
+        self._add_special_tokens = config.add_special_tokens
         self.skip_special_tokens = config.skip_special_tokens or True
         self.pairwise_tokenization = config.pairwise_tokenization
         self.batch_size = config.batch_size
