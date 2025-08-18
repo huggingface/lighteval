@@ -117,6 +117,54 @@ class TestTransformersModelCreation(unittest.TestCase):
         self.assertEqual(str(self.model.model), str(self.reference_model))
 
 
+class TestTransformersModelCreationFromModel(unittest.TestCase):
+    def setUp(self):
+        """Set up shared model instance for all tests."""
+        self.reference_model = AutoModelForCausalLM.from_pretrained("gpt2")
+        self.reference_tokenizer = AutoTokenizer.from_pretrained("gpt2")
+
+        max_length = 1234
+        self.reference_tokenizer.model_max_length = max_length
+
+        self.config = TransformersModelConfig(model_name="gpt2", max_length=max_length)
+
+        # Create full model instance
+        self.model = TransformersModel.from_model(
+            model=self.reference_model,
+            config=self.config,
+        )
+
+    def test_model_creation_tokenizer(self):
+        for attribute in [
+            "name_or_path",
+            "vocab_size",
+            "model_max_length",
+            "is_fast",
+            "clean_up_tokenization_spaces",
+            "added_tokens_decoder",
+        ]:
+            with self.subTest(attribute=attribute):
+                self.assertEqual(
+                    getattr(self.model.tokenizer, attribute), getattr(self.reference_tokenizer, attribute)
+                )
+
+    def test_model_creation_attributes(self):
+        """Test that TransformersModel creates and initializes basic attributes correctly."""
+        # Test attributes are set correctly
+        self.assertEqual(self.model.config, self.config)
+        self.assertEqual(self.model.multichoice_continuations_start_space, None)
+        self.assertTrue(self.model._add_special_tokens)
+        self.assertFalse(self.model.pairwise_tokenization)
+        self.assertIsNone(self.model.batch_size)
+        self.assertFalse(self.model.continuous_batching)
+        self.assertEqual(self.model.model_name, self.config.model_name)
+        self.assertEqual(self.model.max_length, self.config.max_length)
+
+    def test_model_creation_model(self):
+        # We can't compare objects directly
+        self.assertEqual(str(self.model.model), str(self.reference_model))
+
+
 class TestTransformersModelProcessing(unittest.TestCase):
     @patch("lighteval.models.transformers.transformers_model.Accelerator")
     def setUp(self, mock_accelerator):
