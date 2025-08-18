@@ -156,7 +156,7 @@ class Pipeline:
         tasks: str,
         pipeline_parameters: PipelineParameters,
         evaluation_tracker: EvaluationTracker,
-        model_config: ModelConfig,
+        model_config: ModelConfig | None = None,
         model=None,
         metric_options=None,
     ):
@@ -222,6 +222,10 @@ class Pipeline:
                 return load_model(config=model_config)
 
         if isinstance(model, LightevalModel):
+            if model_config is not None:
+                logger.warning(
+                    "You are providing a Lighteval model instance and a model config. The model config will be ignored."
+                )
             return model
 
         else:

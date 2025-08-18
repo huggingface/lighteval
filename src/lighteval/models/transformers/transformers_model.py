@@ -248,6 +248,9 @@ class TransformersModel(LightevalModel):
         config: TransformersModelConfig,
         accelerator: Accelerator | None = None,
     ) -> "TransformersModel":
+        if config is None:
+            raise ValueError("Config must be provided to initialize the TransformersModel via `from_model` method.")
+
         # Instanciate the object without using __init__
         self = cls.__new__(cls)
 
@@ -255,14 +258,14 @@ class TransformersModel(LightevalModel):
 
         self.config = config
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
-        self._add_special_tokens = config.add_special_tokens or False
-        self.skip_special_tokens = config.skip_special_tokens or True
+        self._add_special_tokens = config.add_special_tokens
+        self.skip_special_tokens = config.skip_special_tokens
         self.pairwise_tokenization = config.pairwise_tokenization
         self.batch_size = config.batch_size
         self.continuous_batching = config.continuous_batching
-        self.transformers_config = config.get_transformers_config()
         self.generation_config_dict = config.generation_parameters.to_transformers_dict()
 
+        self.model_name = config.model_name
         self.model_sha = config.get_model_sha()
         self._max_length = self._init_max_length()
         self._tokenizer = self._create_auto_tokenizer()
