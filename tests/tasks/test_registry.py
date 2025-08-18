@@ -53,8 +53,8 @@ def test_custom_task_groups():
 
     assert set(task_info.keys()) == {"custom|test_task_revision"}
     assert task_info["custom|test_task_revision"] == [
-        {"fewshots": 0, "truncate_fewshots": False},
-        {"fewshots": 1, "truncate_fewshots": False},
+        {"fewshots": 0, "truncate_fewshots": False, "metric_params": {}},
+        {"fewshots": 1, "truncate_fewshots": False, "metric_params": {}},
     ]
 
 
@@ -66,7 +66,7 @@ def test_custom_tasks():
     task_info = registry.taskinfo_selector("custom|test_task_revision|0|0")
 
     assert list(task_info.keys()) == ["custom|test_task_revision"]
-    assert task_info["custom|test_task_revision"] == [{"fewshots": 0, "truncate_fewshots": False}]
+    assert task_info["custom|test_task_revision"] == [{"fewshots": 0, "truncate_fewshots": False, "metric_params": {}}]
 
 
 def test_superset_expansion():
@@ -78,9 +78,9 @@ def test_superset_expansion():
     task_info = registry.taskinfo_selector("lighteval|storycloze|0|0")
 
     assert list(task_info.keys()) == ["lighteval|storycloze:2016", "lighteval|storycloze:2018"]
-    assert task_info["lighteval|storycloze:2016"] == [{"fewshots": 0, "truncate_fewshots": False}] and task_info[
-        "lighteval|storycloze:2018"
-    ] == [{"fewshots": 0, "truncate_fewshots": False}]
+    assert task_info["lighteval|storycloze:2016"] == [
+        {"fewshots": 0, "truncate_fewshots": False, "metric_params": {}}
+    ] and task_info["lighteval|storycloze:2018"] == [{"fewshots": 0, "truncate_fewshots": False, "metric_params": {}}]
 
 
 def test_superset_with_subset_task():
@@ -95,9 +95,36 @@ def test_superset_with_subset_task():
     assert len(task_info.keys()) == 57
     # Since it's defined twice
     assert task_info["original|mmlu:abstract_algebra"] == [
-        {"fewshots": 3, "truncate_fewshots": False},
-        {"fewshots": 5, "truncate_fewshots": False},
+        {
+            "fewshots": 3,
+            "truncate_fewshots": False,
+            "metric_params": {},
+        },
+        {"fewshots": 5, "truncate_fewshots": False, "metric_params": {}},
     ]
+
+
+def test_cli_sampling_params():
+    """
+    Tests that task info selector correctly handles supersets.
+    """
+    registry = Registry()
+
+    task_info = registry.taskinfo_selector("lighteval|math_500@k=1|0|0")
+
+    assert list(task_info.keys()) == ["lighteval|math_500"]
+    assert task_info["lighteval|math_500"] == [{"fewshots": 0, "truncate_fewshots": False, "metric_params": {"k": 1}}]
+
+
+def test_cli_sampling_params_fail():
+    """
+    Tests that task info selector correctly handles supersets.
+    """
+    registry = Registry()
+
+    # creation of object should fail
+    with pytest.raises(ValueError):
+        registry.taskinfo_selector("lighteval|math_500@|0|0")
 
 
 def test_task_group_expansion_with_subset_expansion():
