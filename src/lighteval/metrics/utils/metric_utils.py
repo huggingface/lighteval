@@ -23,6 +23,7 @@
 from dataclasses import dataclass
 from typing import Callable
 
+from lighteval.metrics.sample_preparator import Preparator
 from lighteval.tasks.requests import SamplingMethod
 
 
@@ -31,7 +32,7 @@ class Metric:
     metric_name: str
     higher_is_better: bool
     category: SamplingMethod
-    sample_level_fn: Callable
+    sample_level_fn: Callable | Preparator | object
     corpus_level_fn: Callable
 
     batched_compute: bool = False
@@ -42,9 +43,16 @@ class Metric:
     def compute(
         self, **kwargs
     ) -> dict:  # result: Union[list[ModelResponse], ModelResponse], formatted_doc: Doc) -> dict:
+        if isinstance(self.sample_level_fn, Callable):
+            sample_level_fn = self.sample_level_fn
+        elif isinstance(self.sample_level_fn, Preparator):
+            sample_level_fn = self.sample_level_fn.prepare
+        else:
+            sample_level_fn = self.sample_level_fn.compute
+
         if isinstance(self, MetricGrouping):
-            return self.sample_level_fn(**kwargs)  # result, formatted_doc,
-        return {self.metric_name: self.sample_level_fn(**kwargs)}  # result, formatted_doc,
+            return sample_level_fn(**kwargs)  # result, formatted_doc,
+        return {self.metric_name: sample_level_fn(**kwargs)}  # result, formatted_doc,
 
 
 @dataclass

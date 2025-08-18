@@ -32,6 +32,7 @@ from multiprocess import Pool
 from pytablewriter import MarkdownTableWriter
 
 from lighteval.metrics.metrics import Metric, Metrics
+from lighteval.metrics.metrics_sample import SamplingMetric
 from lighteval.tasks.prompt_manager import FewShotSampler
 from lighteval.tasks.requests import (
     Doc,
@@ -196,11 +197,9 @@ class LightevalTask:
         # We assume num_samples always contains 1 (for base generative evals)
         self.num_samples = [1]
         for metric in self.metrics:
-            metric_names = as_list(metric.metric_name)
-
-            for metric_name in metric_names:
+            if isinstance(metric.sample_level_fn, SamplingMetric):
                 # Update the number of samples to generate using the information in the metric name
-                self.num_samples.append(extract_num_samples(metric_name))
+                self.num_samples.append(metric.sample_level_fn.num_samples())
 
     def get_first_possible_fewshot_splits(self, available_splits: ListLike[str]) -> str | None:
         """
@@ -386,24 +385,3 @@ class LightevalTask:
 
         # It returns DatasetDict because we don't specify a split
         return dataset  # type: ignore
-
-
-def extract_num_samples(metric_name: str) -> int:
-    """Gets the number of samples to generate from the metric name.
-    Assumes that any metric with @ in it's name depends on the number of samples.
-
-    Args:
-        metric_name (str): The metric name in the task.
-
-    Returns:
-        int: The number of samples to generate.
-    """
-    if "@" in metric_name:
-        metric_name = metric_name.split("@")[-1]
-        if "_" in metric_name:
-            metric_name = metric_name.split("_")[0]
-        if ":" in metric_name:
-            return int(metric_name.split(":")[-1])
-        else:
-            return int(metric_name)
-    return 1

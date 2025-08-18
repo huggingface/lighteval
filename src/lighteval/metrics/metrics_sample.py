@@ -1075,12 +1075,54 @@ class JudgeLLMMixEval(JudgeLLM):
         return metrics
 
 
-class AvgAtK:
+class SamplingMetric:
     def __init__(
         self,
-        k: int,
+        normalize: Callable | None = None,
+        strip_strings: bool = False,
         sample_scoring_function: Callable[[Doc, ModelResponse], float] | str | None = None,
     ):
+        self.normalize = normalize
+        self.strip_strings = strip_strings
+
+        if callable(sample_scoring_function):
+            self.score_sample = sample_scoring_function
+            self.type_exact_match = None
+        else:
+            if isinstance(sample_scoring_function, str):
+                if sample_scoring_function not in ["prefix", "suffix", "full"]:
+                    raise ValueError(
+                        f"type_exact_match (used in parametrized_exact_match) must be one of prefix, suffix, or full. Was {sample_scoring_function} instead."
+                    )
+                self.type_exact_match = sample_scoring_function
+            else:
+                self.type_exact_match = "full"
+            self.compute_score = self.default_sample_scoring
+
+    def preprocess(self, text: str) -> str:
+        if not text:
+            return ""
+
+        if self.strip_strings:
+            text = text.strip()
+
+        if self.normalize:
+            text = self.normalize(text)
+
+        return text
+
+    def default_sample_scoring(self, doc: Doc, model_response: ModelResponse) -> int:
+        gold = doc.get_golds()[0]
+        pred = model_response.final_text[0]
+        if self.type_exact_match == "prefix":
+            return 1 if pred.startswith(gold) else 0
+        if self.type_exact_match == "suffix":
+            return 1 if pred.endswith(gold) else 0
+        return 1 if gold == pred else 0
+
+
+class AvgAtK(SamplingMetric):
+    def __init__(self, k: int | None = None, **kwargs):
         """Sample score averages all the individual k predictions scores.
 
         Args:
@@ -1092,20 +1134,9 @@ class AvgAtK:
             sample_scoring_function (callable | str, optional): Function to use to compute the score for each sample.
                 If None, uses the default scoring function which is a simple exact match.
         """
+        super().__init__(kwargs)
         self.k = k
-        # Managed the logic of the per prediction of sample scoring
-        if callable(sample_scoring_function):
-            self.compute_score = sample_scoring_function
-        else:
-            if isinstance(sample_scoring_function, str):
-                if sample_scoring_function not in ["prefix", "suffix", "full"]:
-                    raise ValueError(
-                        f"type_exact_match (used in parametrized_exact_match) must be one of prefix, suffix, or full. Was {sample_scoring_function} instead."
-                    )
-                type_exact_match = sample_scoring_function
-            else:
-                type_exact_match = "full"
-            self.compute_score = self.default_sample_scoring(type_exact_match)
+        self.attribute_must_be_set = ["k"]
 
     def compute(self, model_response: ModelResponse, doc: Doc, **kwargs):
         """Computes the metric over a list of golds and predictions for one single sample.
@@ -1126,55 +1157,17 @@ class AvgAtK:
         avg_score = np.mean(all_scores)
         return avg_score
 
-    def default_sample_scoring(self, type_exact_match: str) -> callable:
-        def sample_scoring_function(doc: Doc, model_response: ModelResponse) -> int:
-            """Default sample scoring function that checks if the prediction is equal to the gold."""
-            pred = model_response.final_text[0]
-            gold = doc.get_golds()[0]
-
-            if type_exact_match == "prefix":
-                return 1 if pred.startswith(gold) else 0
-            if type_exact_match == "suffix":
-                return 1 if pred.endswith(gold) else 0
-            return 1 if gold == pred else 0
-
-        return sample_scoring_function
+    def num_samples(self):
+        return self.k
 
 
-class MajAtK:
-    def __init__(
-        self,
-        k: int,
-        normalize_gold: Callable | None = None,
-        normalize_pred: Callable | None = None,
-        strip_strings: bool = False,
-        type_exact_match: str = "full",
-    ):
-        """An exact match class.
+class MajAtK(SamplingMetric):
+    def __init__(self, k: int = None, **kwargs):
+        """An exact match class."""
+        super().__init__(kwargs)
 
-        Args:
-            normalize_gold (callable, optional): Function to use to normalize the reference strings.
-                Defaults to None if no normalization is applied.
-            normalize_pred (callable, optional): Function to use to normalize the predicted strings.
-                Defaults to None if no normalization is applied.
-            strip_strings (bool, optional): Whether to strip both reference and predictions. Defaults to False.
-            type_exact_match (str, optional): Defines what type of match to apply (post normalization if present).
-                Can be any of `prefix`, `suffix` or `full`. Defaults to "full".
-                `prefix` checks if the prediction starts with the gold,
-                `suffix` if the prediction ends with the gold,
-                `full` if the prediction and gold are equal
-        """
         self.k = k
-        self.normalize_gold = normalize_gold
-        self.normalize_pred = normalize_pred
-        self.strip_strings = strip_strings
-
-        if type_exact_match not in ["prefix", "suffix", "full"]:
-            # todo: we could add a set exact match
-            raise ValueError(
-                f"type_exact_match (used in parametrized_exact_match) must be one of prefix, suffix, or full. Was {type_exact_match} instead."
-            )
-        self.type_exact_match = type_exact_match
+        self.attribute_must_be_set = ["k"]
 
     def compute(self, model_response: ModelResponse, docs: Doc, **kwargs):
         """Computes the metric over a list of golds and predictions for one single sample.
@@ -1188,94 +1181,43 @@ class MajAtK:
         Returns:
             float: Aggregated score over the current sample's items.
         """
+        if self.k is None:
+            raise Exception("You did not set the value of k")
         golds = docs.get_golds()
-        predictions = model_response.final_text
         if len(golds) > 1:
             raise Exception("Cannot compute maj@k with several golds")
 
-        gold = self.get_processed_gold(golds[0])
+        processed_choices = [self.preprocess(gold=g) for g in docs.get_golds()]
+        new_doc = Doc(
+            choices=processed_choices,
+            query=docs.query,
+            gold_index=docs.gold_index,
+        )
         all_answers = []
-        for pred in predictions[: self.k]:
-            all_answers.append(self.get_processed_pred(pred=pred))
+        for pred in model_response.final_text[: self.k]:
+            all_answers.append(self.preprocess(pred=pred))
         majority_prediction = max(all_answers, key=all_answers.count)
-        return self.compute_score(majority_prediction, gold)
+        new_model_response = ModelResponse(
+            text=[majority_prediction],
+        )
+        return self.compute_score(new_model_response, new_doc)
 
-    def get_processed_gold(self, gold: str) -> str:
-        if self.strip_strings:
-            gold = gold.strip()
-
-        if self.normalize_gold:
-            gold = self.normalize_gold(gold)
-
-        return gold
-
-    def get_processed_pred(self, pred: str) -> str:
-        if not pred:
-            return ""
-
-        if self.strip_strings:
-            pred = pred.strip()
-
-        if self.normalize_pred:
-            pred = self.normalize_pred(pred)
-
-        return pred
-
-    def compute_score(self, pred: str, gold: str) -> int:
-        if self.type_exact_match == "prefix":
-            return 1 if pred.startswith(gold) else 0
-        if self.type_exact_match == "suffix":
-            return 1 if pred.endswith(gold) else 0
-        return 1 if gold == pred else 0
+    def num_samples(self):
+        return self.k
 
 
-class PassAtK:
-    def __init__(
-        self,
-        k: int,
-        n: int | None = None,
-        normalize_gold: Callable | None = None,
-        normalize_pred: Callable | None = None,
-        strip_strings: bool = False,
-        sample_scoring_function: Callable[[Doc, ModelResponse], float] | str | None = None,
-    ):
+class PassAtK(SamplingMetric):
+    def __init__(self, k: int | None = None, n: int | None = None, **kwargs):
         """Computing pass at k
 
         Args:
             k (int): Threshold for the number of successful attempts.
             n (int): Number of samples to generate
-            normalize_gold (callable, optional): Function to use to normalize the reference strings.
-                Defaults to None if no normalization is applied.
-            normalize_pred (callable, optional): Function to use to normalize the predicted strings.
-                Defaults to None if no normalization is applied.
-            strip_strings (bool, optional): Whether to strip both reference and predictions. Defaults to False.
-            sample_scoring_function (callable or str, optional): Function to use to score each sample.
-                Either pass the full function (should take a string prediction and a string gold, and return a score between 0 and 1)
-                a string (any of `prefix`, `suffix` or `full`) to define the type of exact match that you want, or nothing to defaults to "full".
-                    `prefix` checks if the prediction starts with the gold,
-                    `suffix` if the prediction ends with the gold,
-                    `full` if the prediction and gold are equal
         """
+        super().__init__(kwargs)
         self.k = k
         self.n = n
-        self.normalize_gold = normalize_gold
-        self.normalize_pred = normalize_pred
-        self.strip_strings = strip_strings
-
-        # Managed the logic of the per prediction of sample scoring
-        if callable(sample_scoring_function):
-            self.score_sample = sample_scoring_function
-            self.type_exact_match = None
-        else:
-            if isinstance(sample_scoring_function, str):
-                if sample_scoring_function not in ["prefix", "suffix", "full"]:
-                    raise ValueError(
-                        f"type_exact_match (used in parametrized_exact_match) must be one of prefix, suffix, or full. Was {sample_scoring_function} instead."
-                    )
-                self.type_exact_match = sample_scoring_function
-            else:
-                self.type_exact_match = "full"
-            self.score_sample = self.default_sample_scoring
+        self.attribute_must_be_set = ["k"]
 
     def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> float:
         """Computes the metric over a list of golds and predictions for one single item with possibly many samples.
@@ -1290,17 +1232,17 @@ class PassAtK:
             float: Aggregated score over the current sample's items.
         """
         golds = doc.get_golds()
-        predictions = model_response.final_text
         if len(golds) > 1:
             raise Exception("Cannot compute pass@k with several golds")
 
+        predictions = model_response.final_text
         if self.n is None:
             self.n = len(predictions)
             logger.warning("n undefined in the pass@k. We assume it's the same as the sample's number of predictions.")
         elif len(predictions) < self.n:
             logger.warning(f"Number of predictions is less than {self.n} for pass@k.")
 
-        processed_choices = [self.get_processed_gold(gold=g) for g in doc.choices]
+        processed_choices = [self.preprocess(gold=g) for g in doc.choices]
         new_doc = Doc(
             choices=processed_choices,
             query=doc.query,
@@ -1309,44 +1251,13 @@ class PassAtK:
 
         all_scores = []
         for pred in predictions[: self.n]:
-            cur_pred = self.get_processed_pred(pred=pred)
+            cur_pred = self.preprocess(pred=pred)
             new_model_response = ModelResponse(
                 text=[cur_pred],
             )
             all_scores.append(self.score_sample(new_doc, new_model_response))
 
         return self.pass_at_k(all_scores)
-
-    def get_processed_gold(self, gold: str) -> str:
-        if self.strip_strings:
-            gold = gold.strip()
-
-        if self.normalize_gold:
-            gold = self.normalize_gold(gold)
-
-        return gold
-
-    def get_processed_pred(self, pred: str) -> str:
-        if not pred:
-            return ""
-
-        if self.strip_strings:
-            pred = pred.strip()
-
-        if self.normalize_pred:
-            pred = self.normalize_pred(pred)
-
-        return pred
-
-    def default_sample_scoring(self, doc, model_response) -> int:
-        pred = model_response.final_text[0]
-        gold = doc.get_golds()[0]
-
-        if self.type_exact_match == "prefix":
-            return 1 if pred.startswith(gold) else 0
-        if self.type_exact_match == "suffix":
-            return 1 if pred.endswith(gold) else 0
-        return 1 if gold == pred else 0
 
     def pass_at_k(self, all_scores: list[int]) -> float:
         """Algo from https://arxiv.org/pdf/2107.03374"""
@@ -1356,17 +1267,17 @@ class PassAtK:
 
         return 1.0 - np.prod(1.0 - self.k / np.arange(self.n - c + 1, self.n + 1))
 
+    def num_samples(self):
+        return self.n if self.n is not None else self.k
 
-class GPassAtK:
+
+class GPassAtK(SamplingMetric):
     def __init__(
         self,
-        k: Union[int, list[int]],
+        k: Union[int, list[int]] | None = None,
         n: int | None = None,
         thresholds: list[float] = [0.0, 0.25, 0.5, 0.75, 1.0],
-        normalize_gold: Callable | None = None,
-        normalize_pred: Callable | None = None,
-        strip_strings: bool = False,
-        sample_scoring_function: Callable[[Doc, ModelResponse], float] | str | None = None,
+        **kwargs,
     ):
         """Computing G-Pass@k from http://arxiv.org/abs/2412.13147
 
@@ -1374,39 +1285,13 @@ class GPassAtK:
             k (int, list): The number of successful attempts to be considered.
             n (int): Number of samples to generate.
             thresholds (list): Thresholds to control successful attempts in k generate.
-            normalize_gold (callable, optional): Function to use to normalize the reference strings.
-                Defaults to None if no normalization is applied.
-            normalize_pred (callable, optional): Function to use to normalize the predicted strings.
-                Defaults to None if no normalization is applied.
-            strip_strings (bool, optional): Whether to strip both reference and predictions. Defaults to False.
-            sample_scoring_function (callable or str, optional): Function to use to score each sample.
-                Either pass the full function (should take a string prediction and a string gold, and return a score between 0 and 1)
-                a string (any of `prefix`, `suffix` or `full`) to define the type of exact match that you want, or nothing to defaults to "full".
-                    `prefix` checks if the prediction starts with the gold,
-                    `suffix` if the prediction ends with the gold,
-                    `full` if the prediction and gold are equal
         """
+        super().__init__(kwargs)
         self.k = as_list(k)
         self.n = n
-        self.thresholds = thresholds
-        self.normalize_gold = normalize_gold
-        self.normalize_pred = normalize_pred
-        self.strip_strings = strip_strings
+        self.attribute_must_be_set = ["k"]
 
-        # Managed the logic of the per prediction of sample scoring
-        if callable(sample_scoring_function):
-            self.score_sample = sample_scoring_function
-            self.type_exact_match = None
-        else:
-            if isinstance(sample_scoring_function, str):
-                if sample_scoring_function not in ["prefix", "suffix", "full"]:
-                    raise ValueError(
-                        f"type_exact_match (used in parametrized_exact_match) must be one of prefix, suffix, or full. Was {sample_scoring_function} instead."
-                    )
-                self.type_exact_match = sample_scoring_function
-            else:
-                self.type_exact_match = "full"
-            self.score_sample = self.default_sample_scoring
+        self.thresholds = thresholds
 
     def compute(self, model_response: ModelResponse, doc: Doc, **kwargs) -> float:
         """Computes the metric over a list of golds and predictions for one single item with possibly many samples.
@@ -1434,7 +1319,7 @@ class GPassAtK:
         elif len(predictions) < self.n:
             logger.warning(f"Number of predictions is less than {self.n} for G-Pass@k.")
 
-        processed_choices = [self.get_processed_gold(gold=g) for g in doc.choices]
+        processed_choices = [self.preprocess(gold=g) for g in doc.choices]
         new_doc = Doc(
             choices=processed_choices,
             query=doc.query,
@@ -1443,43 +1328,13 @@ class GPassAtK:
 
         all_scores = []
         for pred in predictions[: self.n]:
-            cur_pred = self.get_processed_pred(pred=pred)
+            cur_pred = self.preprocess(pred=pred)
             new_model_response = ModelResponse(
                 text=[cur_pred],
             )
             all_scores.append(self.score_sample(new_doc, new_model_response))
 
         return self.g_pass_at_k(all_scores)
-
-    def get_processed_gold(self, gold: str) -> str:
-        if self.strip_strings:
-            gold = gold.strip()
-
-        if self.normalize_gold:
-            gold = self.normalize_gold(gold)
-
-        return gold
-
-    def get_processed_pred(self, pred: str) -> str:
-        if not pred:
-            return ""
-
-        if self.strip_strings:
-            pred = pred.strip()
-
-        if self.normalize_pred:
-            pred = self.normalize_pred(pred)
-
-        return pred
-
-    def default_sample_scoring(self, doc: Doc, model_response: ModelResponse) -> int:
-        gold = doc.get_golds()[0]
-        pred = model_response.final_text[0]
-        if self.type_exact_match == "prefix":
-            return 1 if pred.startswith(gold) else 0
-        if self.type_exact_match == "suffix":
-            return 1 if pred.endswith(gold) else 0
-        return 1 if gold == pred else 0
 
     def g_pass_at_k(self, all_scores: list[int]) -> float:
         """Computation of G-Pass@k details from http://arxiv.org/abs/2412.13147"""
@@ -1527,3 +1382,6 @@ class GPassAtK:
             metrics.append(f"mG-Pass@{k}")
 
         return metrics
+
+    def num_samples(self):
+        return self.n if self.n is not None else self.k

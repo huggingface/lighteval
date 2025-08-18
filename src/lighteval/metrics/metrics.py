@@ -98,35 +98,35 @@ class Metrics(Enum):
     )
     bert_score = SampleLevelMetricGrouping(
         metric_name=["BERTScore-P", "BERTScore-R", "BERTScore-F"],
-        sample_level_fn=BertScore(normalize_gold=remove_braces, normalize_pred=remove_braces_and_strip).compute,
+        sample_level_fn=BertScore(normalize_gold=remove_braces, normalize_pred=remove_braces_and_strip),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn={"BERTScore-P": np.mean, "BERTScore-R": np.mean, "BERTScore-F": np.mean},
         higher_is_better={"BERTScore-P": True, "BERTScore-R": True, "BERTScore-F": True},
     )
     bits_per_byte = CorpusLevelMetric(
         metric_name="bits_per_byte",
-        sample_level_fn=PerplexityPreparator(units_type="bytes").prepare,
+        sample_level_fn=PerplexityPreparator(units_type="bytes"),
         category=SamplingMethod.PERPLEXITY,
         corpus_level_fn=CorpusLevelPerplexityMetric("bits_per_byte").compute,
         higher_is_better=False,
     )
     bleu = CorpusLevelMetric(
         metric_name="bleu",
-        sample_level_fn=GenerativePreparator().prepare,
+        sample_level_fn=GenerativePreparator(),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=CorpusLevelTranslationMetric("bleu").compute,
         higher_is_better=True,
     )
     bleu_1 = SampleLevelMetric(
         metric_name="bleu_1",
-        sample_level_fn=BLEU(n_gram=1).compute,
+        sample_level_fn=BLEU(n_gram=1),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     bleu_4 = SampleLevelMetric(
         metric_name="bleu_4",
-        sample_level_fn=BLEU(n_gram=4).compute,
+        sample_level_fn=BLEU(n_gram=4),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -134,28 +134,28 @@ class Metrics(Enum):
 
     bleurt = SampleLevelMetric(
         metric_name="bleurt",
-        sample_level_fn=BLEURT().compute,
+        sample_level_fn=BLEURT(),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     byte_perplexity = CorpusLevelMetric(
         metric_name="byte_perplexity",
-        sample_level_fn=PerplexityPreparator(units_type="bytes").prepare,
+        sample_level_fn=PerplexityPreparator(units_type="bytes"),
         category=SamplingMethod.PERPLEXITY,
         corpus_level_fn=CorpusLevelPerplexityMetric("weighted_perplexity").compute,
         higher_is_better=False,
     )
     chrf = CorpusLevelMetric(
         metric_name="chrf",
-        sample_level_fn=GenerativePreparator().prepare,
+        sample_level_fn=GenerativePreparator(),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=CorpusLevelTranslationMetric("chrf").compute,
         higher_is_better=True,
     )
     chrf_plus = CorpusLevelMetric(
         metric_name="chrf++",
-        sample_level_fn=GenerativePreparator().prepare,
+        sample_level_fn=GenerativePreparator(),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=CorpusLevelTranslationMetric("chrf++").compute,
         higher_is_better=True,
@@ -164,7 +164,7 @@ class Metrics(Enum):
         metric_name=["longest_common_prefix_length", "edit_distance", "edit_similarity"],
         sample_level_fn=StringDistance(
             metric_types=["longest_common_prefix_length", "edit_distance", "edit_similarity"], strip_prediction=True
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn={"longest_common_prefix_length": max, "edit_distance": min, "edit_similarity": max},
         higher_is_better={"longest_common_prefix_length": True, "edit_distance": False, "edit_similarity": True},
@@ -178,7 +178,7 @@ class Metrics(Enum):
     )
     exact_match = SampleLevelMetric(
         metric_name="em",
-        sample_level_fn=ExactMatches(strip_strings=True).compute,
+        sample_level_fn=ExactMatches(strip_strings=True),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -196,7 +196,7 @@ class Metrics(Enum):
         metric_name=["summarization_coverage", "summarization_density", "summarization_compression"],
         sample_level_fn=Extractiveness(
             normalize_input=remove_braces, normalize_pred=remove_braces_and_strip, input_column="text"
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn={
             "summarization_coverage": np.mean,
@@ -211,28 +211,28 @@ class Metrics(Enum):
     )
     f1_score_quasi = SampleLevelMetric(
         metric_name="f1_score_quasi",
-        sample_level_fn=F1_score(normalize_gold=helm_normalizer, normalize_pred=helm_normalizer).compute,
+        sample_level_fn=F1_score(normalize_gold=helm_normalizer, normalize_pred=helm_normalizer),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     f1_score = SampleLevelMetric(
         metric_name="f1",
-        sample_level_fn=F1_score().compute,
+        sample_level_fn=F1_score(),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     f1_score_macro = CorpusLevelMetric(
         metric_name="f1",
-        sample_level_fn=GenerativePreparator().prepare,
+        sample_level_fn=GenerativePreparator(),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=CorpusLevelF1Score(average="macro").compute,
         higher_is_better=True,
     )
     f1_score_micro = CorpusLevelMetric(
         metric_name="f1",
-        sample_level_fn=GenerativePreparator().prepare,
+        sample_level_fn=GenerativePreparator(),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=CorpusLevelF1Score(average="micro").compute,
         higher_is_better=True,
@@ -241,7 +241,7 @@ class Metrics(Enum):
         metric_name="summac",
         sample_level_fn=Faithfulness(
             normalize_input=remove_braces, normalize_pred=remove_braces_and_strip, input_column="text"
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -257,86 +257,161 @@ class Metrics(Enum):
     )
     loglikelihood_acc = SampleLevelMetric(
         metric_name="acc",
-        sample_level_fn=LoglikelihoodAcc(logprob_normalization=None).compute,
+        sample_level_fn=LoglikelihoodAcc(logprob_normalization=None),
         category=SamplingMethod.LOGPROBS,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     loglikelihood_acc_norm = SampleLevelMetric(
         metric_name="acc_norm",
-        sample_level_fn=LoglikelihoodAcc(logprob_normalization=LogProbCharNorm()).compute,
+        sample_level_fn=LoglikelihoodAcc(logprob_normalization=LogProbCharNorm()),
         category=SamplingMethod.LOGPROBS,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     loglikelihood_acc_norm_nospace = SampleLevelMetric(
         metric_name="acc_norm",
-        sample_level_fn=LoglikelihoodAcc(logprob_normalization=LogProbCharNorm(ignore_first_space=True)).compute,
+        sample_level_fn=LoglikelihoodAcc(logprob_normalization=LogProbCharNorm(ignore_first_space=True)),
         category=SamplingMethod.LOGPROBS,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     loglikelihood_acc_norm_single_token = SampleLevelMetric(
         metric_name="acc_norm",
-        sample_level_fn=LoglikelihoodAcc(logprob_normalization=LogProbCharNorm()).compute,
+        sample_level_fn=LoglikelihoodAcc(logprob_normalization=LogProbCharNorm()),
         category=SamplingMethod.LOGPROBS,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     loglikelihood_acc_single_token = SampleLevelMetric(
         metric_name="acc",
-        sample_level_fn=LoglikelihoodAcc(logprob_normalization=None).compute,
+        sample_level_fn=LoglikelihoodAcc(logprob_normalization=None),
         category=SamplingMethod.LOGPROBS,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     loglikelihood_f1 = CorpusLevelMetric(
         metric_name="loglikelihood_f1",
-        sample_level_fn=LoglikelihoodPreparator().prepare,
+        sample_level_fn=LoglikelihoodPreparator(),
         category=SamplingMethod.LOGPROBS,
         corpus_level_fn=CorpusLevelF1Score(None).compute,
         higher_is_better=True,
     )
     loglikelihood_f1_single_token = CorpusLevelMetric(
         metric_name="loglikelihood_f1",
-        sample_level_fn=LoglikelihoodPreparator(is_single_token=True).prepare,
+        sample_level_fn=LoglikelihoodPreparator(is_single_token=True),
         category=SamplingMethod.LOGPROBS,
         corpus_level_fn=CorpusLevelF1Score(None).compute,
         higher_is_better=True,
     )
     mcc = CorpusLevelMetric(
         metric_name="mcc",
-        sample_level_fn=LoglikelihoodPreparator().prepare,
+        sample_level_fn=LoglikelihoodPreparator(),
         category=SamplingMethod.LOGPROBS,
         corpus_level_fn=matthews_corrcoef,
         higher_is_better=True,
     )
     mcc_single_token = CorpusLevelMetric(
         metric_name="mcc",
-        sample_level_fn=LoglikelihoodPreparator().prepare,
+        sample_level_fn=LoglikelihoodPreparator(),
         category=SamplingMethod.LOGPROBS,
         corpus_level_fn=matthews_corrcoef,
         higher_is_better=True,
     )
+    # NEW
+    avg_at_k = SampleLevelMetric(
+        metric_name="avg@k",
+        sample_level_fn=AvgAtK(strip_strings=True),
+        category=SamplingMethod.GENERATIVE,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    avg_at_k_math = SampleLevelMetric(
+        metric_name="avg@k",
+        sample_level_fn=AvgAtK(
+            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
+                language=Language.ENGLISH,
+                gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
+                pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
+                precision=6,
+            ).sample_level_fn(doc, model_response),
+        ),
+        category=SamplingMethod.GENERATIVE,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    g_pass_at_k = SampleLevelMetricGrouping(
+        metric_name=["g-pass@k:n samples"],
+        sample_level_fn=GPassAtK(strip_strings=True),
+        category=SamplingMethod.GENERATIVE,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+
+    maj_at_k = SampleLevelMetric(
+        metric_name="maj@k",
+        sample_level_fn=MajAtK(),
+        category=SamplingMethod.GENERATIVE,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    pass_at_k = SampleLevelMetric(
+        metric_name="pass@k:n samples",
+        sample_level_fn=PassAtK(strip_strings=True),
+        category=SamplingMethod.GENERATIVE,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    pass_at_k_math = SampleLevelMetric(
+        metric_name="pass@k:n samples",
+        sample_level_fn=PassAtK(
+            strip_strings=True,
+            # Extracting mathematical expressions and latex expressions
+            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
+                language=Language.ENGLISH,
+                gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
+                pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
+                precision=6,
+            ).sample_level_fn(doc, model_response),
+        ),
+        category=SamplingMethod.GENERATIVE,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    pass_at_k_letters = SampleLevelMetric(
+        metric_name="pass@k:n samples",
+        sample_level_fn=PassAtK(
+            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
+                language=Language.ENGLISH,
+                gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
+                precision=6,
+            ).sample_level_fn(doc, model_response),
+        ),
+        category=SamplingMethod.GENERATIVE,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    # OLD
     maj_at_4_math = SampleLevelMetric(
         metric_name="maj@4",
         sample_level_fn=MajAtK(
             k=4, strip_strings=True, normalize_pred=math_normalizer, normalize_gold=math_normalizer
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     maj_at_5 = SampleLevelMetric(
         metric_name="maj@5",
-        sample_level_fn=MajAtK(k=5).compute,
+        sample_level_fn=MajAtK(k=5),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     maj_at_8 = SampleLevelMetric(
         metric_name="maj@8",
-        sample_level_fn=MajAtK(k=8).compute,
+        sample_level_fn=MajAtK(k=8),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -345,7 +420,7 @@ class Metrics(Enum):
         metric_name="maj@8",
         sample_level_fn=MajAtK(
             k=8, strip_strings=True, normalize_pred=gsm8k_normalizer, normalize_gold=gsm8k_normalizer
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -360,7 +435,7 @@ class Metrics(Enum):
                 pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 precision=6,
             ).sample_level_fn(doc, model_response),
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -379,7 +454,7 @@ class Metrics(Enum):
                 pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 precision=6,
             ).sample_level_fn(doc, model_response),
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -396,7 +471,7 @@ class Metrics(Enum):
                 pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 precision=6,
             ).sample_level_fn(doc, model_response),
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -414,7 +489,7 @@ class Metrics(Enum):
                 pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 precision=6,
             ).sample_level_fn(doc, model_response),
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -431,7 +506,7 @@ class Metrics(Enum):
                 pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 precision=6,
             ).sample_level_fn(doc, model_response),
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -448,7 +523,7 @@ class Metrics(Enum):
                 pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 precision=6,
             ).sample_level_fn(doc, model_response),
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -465,7 +540,7 @@ class Metrics(Enum):
                 pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 precision=6,
             ).sample_level_fn(doc, model_response),
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -473,7 +548,7 @@ class Metrics(Enum):
 
     mrr = SampleLevelMetric(
         metric_name="mrr",
-        sample_level_fn=MRR().compute,
+        sample_level_fn=MRR(),
         category=SamplingMethod.LOGPROBS,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -487,49 +562,42 @@ class Metrics(Enum):
     )
     multi_f1_numeric = CorpusLevelMetric(
         metric_name="mf1",
-        sample_level_fn=LoglikelihoodPreparator(is_single_token=True).prepare,
+        sample_level_fn=LoglikelihoodPreparator(is_single_token=True),
         category=SamplingMethod.LOGPROBS,
         corpus_level_fn=CorpusLevelF1Score(average=None, num_classes=3).compute,
         higher_is_better=True,
     )
-    avg_at_64 = SampleLevelMetric(
-        metric_name="avg@64",
-        sample_level_fn=PassAtK(k=64, n=64, strip_strings=True).compute,
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
     pass_at_1 = SampleLevelMetric(
         metric_name="pass@1:32_samples",
-        sample_level_fn=PassAtK(k=1, n=32, strip_strings=True).compute,
+        sample_level_fn=PassAtK(k=1, n=32, strip_strings=True),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     pass_at_10 = SampleLevelMetric(
         metric_name="pass@10:32_samples",
-        sample_level_fn=PassAtK(k=10, n=32, strip_strings=True).compute,
+        sample_level_fn=PassAtK(k=10, n=32, strip_strings=True),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     pass_at_100 = SampleLevelMetric(
         metric_name="pass@100:32_samples",
-        sample_level_fn=PassAtK(k=100, n=32, strip_strings=True).compute,
+        sample_level_fn=PassAtK(k=100, n=32, strip_strings=True),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     g_pass_at_16 = SampleLevelMetricGrouping(
         metric_name=["G-Pass@16:48_samples"],
-        sample_level_fn=GPassAtK(k=16, n=48, strip_strings=True).compute,
+        sample_level_fn=GPassAtK(k=16, n=48, strip_strings=True),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, np.mean),
         higher_is_better=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, True),
     )
     g_pass_at_8_16 = SampleLevelMetricGrouping(
         metric_name=["G-Pass@8-16:48_samples"],
-        sample_level_fn=GPassAtK(k=[8, 16], n=48, strip_strings=True).compute,
+        sample_level_fn=GPassAtK(k=[8, 16], n=48, strip_strings=True),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, np.mean),
         higher_is_better=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, True),
@@ -549,7 +617,7 @@ class Metrics(Enum):
                 pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
                 aggregation_function=max,
             ).sample_level_fn(doc, model_response),
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, np.mean),
         higher_is_better=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, True),
@@ -569,14 +637,14 @@ class Metrics(Enum):
                 pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
                 aggregation_function=max,
             ).sample_level_fn(doc, model_response),
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, np.mean),
         higher_is_better=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, True),
     )
     perfect_exact_match = SampleLevelMetric(
         metric_name="perfect_em",
-        sample_level_fn=ExactMatches().compute,
+        sample_level_fn=ExactMatches(),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -590,7 +658,7 @@ class Metrics(Enum):
     )
     prefix_exact_match = SampleLevelMetric(
         metric_name="pem",
-        sample_level_fn=ExactMatches(strip_strings=True, type_exact_match="prefix").compute,
+        sample_level_fn=ExactMatches(strip_strings=True, type_exact_match="prefix"),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -601,7 +669,7 @@ class Metrics(Enum):
             normalize_gold=helm_normalizer,
             normalize_pred=helm_normalizer,
             type_exact_match="prefix",
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -612,7 +680,7 @@ class Metrics(Enum):
             normalize_gold=helm_normalizer,
             normalize_pred=helm_normalizer,
             strip_strings=True,
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -621,14 +689,14 @@ class Metrics(Enum):
         metric_name="qem",
         sample_level_fn=ExactMatches(
             strip_strings=True, normalize_pred=math_normalizer, normalize_gold=math_normalizer
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     quasi_exact_match_triviaqa = SampleLevelMetric(
         metric_name="qem",
-        sample_level_fn=ExactMatches(strip_strings=True, normalize_pred=harness_triviaqa_normalizer).compute,
+        sample_level_fn=ExactMatches(strip_strings=True, normalize_pred=harness_triviaqa_normalizer),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -637,21 +705,21 @@ class Metrics(Enum):
         metric_name="qem",
         sample_level_fn=ExactMatches(
             strip_strings=True, normalize_pred=gsm8k_normalizer, normalize_gold=gsm8k_normalizer
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     recall_at_1_single_token = SampleLevelMetric(
         metric_name="acc",
-        sample_level_fn=Recall(at=1).compute,
+        sample_level_fn=Recall(at=1),
         category=SamplingMethod.LOGPROBS,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     recall_at_2_single_token = SampleLevelMetric(
         metric_name="recall@2",
-        sample_level_fn=Recall(at=2).compute,
+        sample_level_fn=Recall(at=2),
         category=SamplingMethod.LOGPROBS,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -677,35 +745,35 @@ class Metrics(Enum):
             bootstrap=True,
             normalize_gold=bigbench_normalizer,
             normalize_pred=bigbench_normalizer,
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn={"rouge1": np.mean, "rouge2": np.mean, "rougeL": np.mean, "rougeLsum": np.mean},
         higher_is_better={"rouge1": True, "rouge2": True, "rougeL": True, "rougeLsum": True},
     )
     rouge1 = SampleLevelMetric(
         metric_name="rouge1",
-        sample_level_fn=ROUGE("rouge1").compute,
+        sample_level_fn=ROUGE("rouge1"),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     rouge2 = SampleLevelMetric(
         metric_name="rouge2",
-        sample_level_fn=ROUGE("rouge2").compute,
+        sample_level_fn=ROUGE("rouge2"),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     rougeL = SampleLevelMetric(
         metric_name="rougeL",
-        sample_level_fn=ROUGE("rougeL").compute,
+        sample_level_fn=ROUGE("rougeL"),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     rougeLsum = SampleLevelMetric(
         metric_name="rougeLsum",
-        sample_level_fn=ROUGE("rougeLsum").compute,
+        sample_level_fn=ROUGE("rougeLsum"),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -722,14 +790,14 @@ class Metrics(Enum):
     )
     target_perplexity = SampleLevelMetric(
         metric_name="ppl",
-        sample_level_fn=TargetPerplexityPreparator(units_type="words").prepare,
+        sample_level_fn=TargetPerplexityPreparator(units_type="words"),
         category=SamplingMethod.LOGPROBS,
         corpus_level_fn=CorpusLevelPerplexityMetric("perplexity").compute,
         higher_is_better=False,
     )
     ter = CorpusLevelMetric(
         metric_name="ter",
-        sample_level_fn=GenerativePreparator().prepare,
+        sample_level_fn=GenerativePreparator(),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=CorpusLevelTranslationMetric("ter").compute,
         higher_is_better=False,
@@ -743,7 +811,7 @@ class Metrics(Enum):
     )
     word_perplexity = CorpusLevelMetric(
         metric_name="word_perplexity",
-        sample_level_fn=PerplexityPreparator(units_type="words").prepare,
+        sample_level_fn=PerplexityPreparator(units_type="words"),
         category=SamplingMethod.PERPLEXITY,
         corpus_level_fn=CorpusLevelPerplexityMetric("weighted_perplexity").compute,
         higher_is_better=False,
@@ -765,7 +833,7 @@ class Metrics(Enum):
                 pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
                 precision=6,
             ).sample_level_fn(doc, model_response),
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -781,7 +849,7 @@ class Metrics(Enum):
                 pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
                 precision=6,
             ).sample_level_fn(doc, model_response),
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -797,7 +865,7 @@ class Metrics(Enum):
                 pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
                 precision=6,
             ).sample_level_fn(doc, model_response),
-        ).compute,
+        ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
