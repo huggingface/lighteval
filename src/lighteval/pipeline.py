@@ -221,7 +221,7 @@ class Pipeline:
         elif model is not None:
             if isinstance(model, LightevalModel):
                 return model
-            raise ValueError("You are trying to provide a model that is not a LightevalModel with no config.")
+            raise ValueError("If not providing a model_config, you need to provide a Lighteval model.")
 
         elif model_config is not None:
             if self.parallel_context:
