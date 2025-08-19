@@ -9840,7 +9840,7 @@ math_500 = LightevalTaskConfig(
     few_shots_select=None,
     generation_size=32768,
     metrics=[
-        Metrics.pass_at_k_math,
+        Metrics.pass_at_k_math(sample_params={"k": 1, "n": 1}),
     ],
     version=2,
 )

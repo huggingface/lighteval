@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Callable
 
 from lighteval.metrics.sample_preparator import Preparator
@@ -33,7 +33,7 @@ class Metric:
     higher_is_better: bool
     category: SamplingMethod
     sample_level_fn: Callable | Preparator | object
-    corpus_level_fn: Callable
+    corpus_level_fn: Callable | object
 
     batched_compute: bool = False
 
@@ -67,6 +67,15 @@ class Metric:
                 corpus_level_fn[name] = item.compute_corpus
 
         return corpus_level_fn
+
+    def __call__(self, sample_params: dict | None):  # , corpus_params: dict | None):
+        """Allow creating new instances with modified parameters"""
+        if sample_params:
+            self.sample_level_fn = replace(self.sample_level_fn, sample_params)
+        # Corpus params are unused for now, as the registry only expects sample level params
+        # if corpus_params:
+        #    self.corpus_level_fn = replace(self.corpus_level_fn, corpus_params)
+        return self
 
 
 @dataclass
