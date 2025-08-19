@@ -82,7 +82,7 @@ class Metric:
         if isinstance(self, MetricGrouping):
             if hasattr(self.sample_level_fn, "metric_names"):
                 # this is mostly for the gpass@k metrics
-                self.metric_name = self.sample_level_fn.metric_names()
+                self.metric_name = self.sample_level_fn.metric_names
             else:
                 self.metric_name = [metric + str(sample_params) for metric in self.metric_name]
         else:

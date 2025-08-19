@@ -406,7 +406,6 @@ class CustomMMLUEvaluationTask(LightevalTaskConfig):
         prompt_function=mmlu_prompt,
         hf_repo="lighteval/mmlu",
         hf_subset=None,
-        #  metric=[Metrics.loglikelihood_acc_single_token],
         metric=[
             Metrics.loglikelihood_acc,
             Metrics.loglikelihood_acc(
@@ -656,7 +655,6 @@ class CustomAGIEvalEvaluationTask(LightevalTaskConfig):
         prompt_function=agi_eval_prompt_no_letters,
         hf_repo="lighteval/agi_eval_en",
         hf_subset=None,
-        #  metric=[Metrics.loglikelihood_acc_single_token],
         metric=[
             Metrics.loglikelihood_acc,
             Metrics.loglikelihood_acc(
