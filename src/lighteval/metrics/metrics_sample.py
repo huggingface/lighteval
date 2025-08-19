@@ -394,14 +394,14 @@ class Probability:
 
 
 class Recall:
-    def __init__(self, at: int) -> None:
-        """Recall metric class. It checks if the top `at` best choices include one of the golds or not.
+    def __init__(self, k: int) -> None:
+        """Recall metric class. It checks if the top `k` best choices include one of the golds or not.
 
         Args:
             at (int): Depth level of the recall.
                 Recall at 1 is equivalent to a logprob accuracy without normalization.
         """
-        self.recall_depth = at
+        self.recall_depth = k
 
     def compute(self, doc: Doc, model_response: ModelResponse, **kwargs) -> int:
         """Computes the recall at the requested depth level: looks at the `n` best predicted choices (with the

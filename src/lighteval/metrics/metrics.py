@@ -59,12 +59,7 @@ from lighteval.metrics.metrics_sample import (
     acc_golds_likelihood,
 )
 from lighteval.metrics.normalizations import (
-    LogProbCharNorm,
     bigbench_normalizer,
-    gsm8k_normalizer,
-    harness_triviaqa_normalizer,
-    helm_normalizer,
-    math_normalizer,
     remove_braces,
     remove_braces_and_strip,
 )
@@ -227,13 +222,6 @@ class Metrics(Enum):
             "summarization_compression": True,
         },
     )
-    f1_score_quasi = SampleLevelMetric(
-        metric_name="f1_score_quasi",
-        sample_level_fn=F1_score(normalize_gold=helm_normalizer, normalize_pred=helm_normalizer),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
     f1_score = SampleLevelMetric(
         metric_name="f1",
         sample_level_fn=F1_score(),
@@ -316,20 +304,6 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    loglikelihood_acc_norm = SampleLevelMetric(
-        metric_name="acc_norm",
-        sample_level_fn=LoglikelihoodAcc(logprob_normalization=LogProbCharNorm()),
-        category=SamplingMethod.LOGPROBS,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    loglikelihood_acc_norm_nospace = SampleLevelMetric(
-        metric_name="acc_norm",
-        sample_level_fn=LoglikelihoodAcc(logprob_normalization=LogProbCharNorm(ignore_first_space=True)),
-        category=SamplingMethod.LOGPROBS,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
     loglikelihood_f1 = CorpusLevelMetric(
         metric_name="loglikelihood_f1",
         sample_level_fn=LoglikelihoodPreparator(),
@@ -366,14 +340,14 @@ class Metrics(Enum):
         higher_is_better=True,
     )
     pass_at_k = SampleLevelMetric(
-        metric_name="pass@k:n samples",
+        metric_name="pass@k",
         sample_level_fn=PassAtK(strip_strings=True),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     pass_at_k_math = SampleLevelMetric(
-        metric_name="pass@k:n samples",
+        metric_name="pass@k",
         sample_level_fn=PassAtK(
             strip_strings=True,
             # Extracting mathematical expressions and latex expressions
@@ -389,7 +363,7 @@ class Metrics(Enum):
         higher_is_better=True,
     )
     pass_at_k_letters = SampleLevelMetric(
-        metric_name="pass@k:n samples",
+        metric_name="pass@k",
         sample_level_fn=PassAtK(
             sample_scoring_function=DynamicMultilingualExtractiveMatch(
                 language=Language.ENGLISH,
@@ -409,70 +383,9 @@ class Metrics(Enum):
         corpus_level_fn=CorpusLevelPerplexityMetric("perplexity"),
         higher_is_better=True,
     )
-    prefix_exact_match = SampleLevelMetric(
-        metric_name="pem",
-        sample_level_fn=ExactMatches(strip_strings=True, type_exact_match="prefix"),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    prefix_quasi_exact_match = SampleLevelMetric(
-        metric_name="pqem",
-        sample_level_fn=ExactMatches(
-            normalize_gold=helm_normalizer,
-            normalize_pred=helm_normalizer,
-            type_exact_match="prefix",
-        ),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    quasi_exact_match = SampleLevelMetric(
-        metric_name="qem",
-        sample_level_fn=ExactMatches(
-            normalize_gold=helm_normalizer,
-            normalize_pred=helm_normalizer,
-            strip_strings=True,
-        ),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    quasi_exact_match_math = SampleLevelMetric(
-        metric_name="qem",
-        sample_level_fn=ExactMatches(
-            strip_strings=True, normalize_pred=math_normalizer, normalize_gold=math_normalizer
-        ),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    quasi_exact_match_triviaqa = SampleLevelMetric(
-        metric_name="qem",
-        sample_level_fn=ExactMatches(strip_strings=True, normalize_pred=harness_triviaqa_normalizer),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    quasi_exact_match_gsm8k = SampleLevelMetric(
-        metric_name="qem",
-        sample_level_fn=ExactMatches(
-            strip_strings=True, normalize_pred=gsm8k_normalizer, normalize_gold=gsm8k_normalizer
-        ),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    recall_at_1 = SampleLevelMetric(
-        metric_name="acc",
-        sample_level_fn=Recall(at=1),
-        category=SamplingMethod.LOGPROBS,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    recall_at_2 = SampleLevelMetric(
-        metric_name="recall@2",
-        sample_level_fn=Recall(at=2),
+    recall_at_k = SampleLevelMetric(
+        metric_name="recall",
+        sample_level_fn=Recall(k=1),
         category=SamplingMethod.LOGPROBS,
         corpus_level_fn=np.mean,
         higher_is_better=True,

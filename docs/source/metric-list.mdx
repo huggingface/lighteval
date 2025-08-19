@@ -3,14 +3,13 @@
 ## Automatic metrics for multiple-choice tasks
 
 These metrics use log-likelihood of the different possible targets.
-- `loglikelihood_acc`: Fraction of instances where the choice with the best logprob was correct - also exists in a faster version for tasks where the possible choices include only one token
-- `loglikelihood_acc_norm`: Fraction of instances where the choice with the best logprob, normalized by sequence length, was correct - also exists in a faster version for tasks where the possible choices include only one token
+- `loglikelihood_acc`: Fraction of instances where the choice with the best logprob was correct
+- `loglikelihood_acc_norm`: Fraction of instances where the choice with the best logprob, normalized by sequence length, was correct
 - `loglikelihood_acc_norm_nospace`: Fraction of instances where the choice with the best logprob, normalized by sequence length, was correct, with the first space ignored.
-- `loglikelihood_f1`: Corpus level F1 score of the multichoice selection - also exists in a faster version for tasks where the possible choices include only one token
+- `loglikelihood_f1`: Corpus level F1 score of the multichoice selection
 - `mcc`: Matthew's correlation coefficient (a measure of agreement between statistical distributions).
-- `recall_at_1`: Fraction of instances where the choice with the best logprob was correct - also exists in a faster version for tasks where the possible choices include only one token per choice
-- `recall_at_2`: Fraction of instances where the choice with the 2nd best logprob or better was correct - also exists in a faster version for tasks where the possible choices include only one token per choice
-- `mrr`: Mean reciprocal rank, a measure of the quality of a ranking of choices ordered by correctness/relevance - also exists in a faster version for tasks where the possible choices include only one token
+- `recall_at_k`: Fraction of instances where the choice with the k-st best logprob or better was correct
+- `mrr`: Mean reciprocal rank, a measure of the quality of a ranking of choices ordered by correctness/relevance
 - `target_perplexity`: Perplexity of the different choices available.
 - `acc_golds_likelihood`: A bit different, it actually checks if the average logprob of a single target is above or below 0.5.
 - `multi_f1_numeric`: Loglikelihood F1 score for multiple gold targets.
