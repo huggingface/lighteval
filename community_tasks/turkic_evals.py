@@ -44,7 +44,6 @@ from typing import Any, Dict, List, Optional, Union
 
 from lighteval.metrics.llm_as_judge import JudgeLM
 from lighteval.metrics.metrics import Metric, MetricCategory, Metrics
-from lighteval.metrics.utils.metric_utils import MetricUseCase
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
