@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from typing import Callable
 
 from lighteval.metrics.sample_preparator import Preparator
@@ -56,7 +56,10 @@ class Metric:
 
     def get_corpus_aggregations(self) -> dict:
         if isinstance(self, MetricGrouping):
-            corpus_level_fn = self.corpus_level_fn
+            if isinstance(self.corpus_level_fn, dict):
+                corpus_level_fn = self.corpus_level_fn
+            else:
+                corpus_level_fn = dict.fromkeys(self.metric_name, self.corpus_level_fn)
         else:
             corpus_level_fn = {self.metric_name: self.corpus_level_fn}
 
@@ -68,13 +71,22 @@ class Metric:
 
         return corpus_level_fn
 
-    def __call__(self, sample_params: dict | None):  # , corpus_params: dict | None):
+    def __call__(self, sample_params: dict | None):
         """Allow creating new instances with modified parameters"""
         if sample_params:
-            self.sample_level_fn = replace(self.sample_level_fn, sample_params)
-        # Corpus params are unused for now, as the registry only expects sample level params
-        # if corpus_params:
-        #    self.corpus_level_fn = replace(self.corpus_level_fn, corpus_params)
+            for k, v in sample_params.items():
+                setattr(self.sample_level_fn, k, v)
+
+        # Once the parameters are updated, we need to adjust the
+        # metric name to what will be returned
+        if isinstance(self, MetricGrouping):
+            if hasattr(self.sample_level_fn, "metric_names"):
+                # this is mostly for the gpass@k metrics
+                self.metric_name = self.sample_level_fn.metric_names()
+            else:
+                self.metric_name = [metric + str(sample_params) for metric in self.metric_name]
+        else:
+            self.metric_name = self.metric_name + str(sample_params)
         return self
 
 

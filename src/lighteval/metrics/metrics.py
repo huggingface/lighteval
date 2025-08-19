@@ -77,7 +77,6 @@ from lighteval.metrics.sample_preparator import (
 from lighteval.metrics.utils.metric_utils import (
     CorpusLevelMetric,
     CorpusLevelMetricGrouping,
-    MetricGrouping,
     SampleLevelMetric,
     SampleLevelMetricGrouping,
     SamplingMethod,
@@ -91,6 +90,27 @@ class Metrics(Enum):
         metric_name="acc",
         sample_level_fn=acc_golds_likelihood,
         category=SamplingMethod.LOGPROBS,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    avg_at_k = SampleLevelMetric(
+        metric_name="avg@k",
+        sample_level_fn=AvgAtK(strip_strings=True),
+        category=SamplingMethod.GENERATIVE,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    avg_at_k_math = SampleLevelMetric(
+        metric_name="avg@k",
+        sample_level_fn=AvgAtK(
+            sample_scoring_function=DynamicMultilingualExtractiveMatch(
+                language=Language.ENGLISH,
+                gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
+                pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
+                precision=6,
+            ),
+        ),
+        category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
@@ -244,14 +264,50 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    latex_gold_metric = DynamicMultilingualExtractiveMatch(
-        language=Language.ENGLISH,
-        fallback_mode="first_match",
-        precision=5,
-        gold_extraction_target=(LatexExtractionConfig(),),
-        # Match boxed first before trying other regexes
-        pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
-        aggregation_function=max,
+    g_pass_at_k = SampleLevelMetricGrouping(
+        metric_name="g-pass@k",
+        sample_level_fn=GPassAtK(strip_strings=True),
+        category=SamplingMethod.GENERATIVE,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    g_pass_at_k_math = SampleLevelMetricGrouping(
+        metric_name="math-g-pass@k",
+        sample_level_fn=GPassAtK(
+            name_prefix="math",
+            strip_strings=True,
+            sample_scoring_function=DynamicMultilingualExtractiveMatch(
+                language=Language.ENGLISH,
+                fallback_mode="first_match",
+                precision=5,
+                gold_extraction_target=(ExprExtractionConfig(),),
+                # Match boxed first before trying other regexes
+                pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
+                aggregation_function=max,
+            ),
+        ),
+        category=SamplingMethod.GENERATIVE,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+    g_pass_at_k_latex = SampleLevelMetricGrouping(
+        metric_name="latex-g-pass@k",
+        sample_level_fn=GPassAtK(
+            name_prefix="latex",
+            strip_strings=True,
+            sample_scoring_function=DynamicMultilingualExtractiveMatch(
+                language=Language.ENGLISH,
+                fallback_mode="first_match",
+                precision=5,
+                gold_extraction_target=(LatexExtractionConfig(),),
+                # Match boxed first before trying other regexes
+                pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
+                aggregation_function=max,
+            ),
+        ),
+        category=SamplingMethod.GENERATIVE,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
     )
     loglikelihood_acc = SampleLevelMetric(
         metric_name="acc",
@@ -274,20 +330,6 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    loglikelihood_acc_norm_single_token = SampleLevelMetric(
-        metric_name="acc_norm",
-        sample_level_fn=LoglikelihoodAcc(logprob_normalization=LogProbCharNorm()),
-        category=SamplingMethod.LOGPROBS,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    loglikelihood_acc_single_token = SampleLevelMetric(
-        metric_name="acc",
-        sample_level_fn=LoglikelihoodAcc(logprob_normalization=None),
-        category=SamplingMethod.LOGPROBS,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
     loglikelihood_f1 = CorpusLevelMetric(
         metric_name="loglikelihood_f1",
         sample_level_fn=LoglikelihoodPreparator(),
@@ -295,11 +337,11 @@ class Metrics(Enum):
         corpus_level_fn=CorpusLevelF1Score(None),
         higher_is_better=True,
     )
-    loglikelihood_f1_single_token = CorpusLevelMetric(
-        metric_name="loglikelihood_f1",
-        sample_level_fn=LoglikelihoodPreparator(is_single_token=True),
-        category=SamplingMethod.LOGPROBS,
-        corpus_level_fn=CorpusLevelF1Score(None),
+    maj_at_k = SampleLevelMetric(
+        metric_name="maj@k",
+        sample_level_fn=MajAtK(),
+        category=SamplingMethod.GENERATIVE,
+        corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     mcc = CorpusLevelMetric(
@@ -309,48 +351,18 @@ class Metrics(Enum):
         corpus_level_fn=matthews_corrcoef,
         higher_is_better=True,
     )
-    mcc_single_token = CorpusLevelMetric(
-        metric_name="mcc",
-        sample_level_fn=LoglikelihoodPreparator(),
+    mrr = SampleLevelMetric(
+        metric_name="mrr",
+        sample_level_fn=MRR(),
         category=SamplingMethod.LOGPROBS,
-        corpus_level_fn=matthews_corrcoef,
-        higher_is_better=True,
-    )
-    # NEW
-    avg_at_k = SampleLevelMetric(
-        metric_name="avg@k",
-        sample_level_fn=AvgAtK(strip_strings=True),
-        category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    avg_at_k_math = SampleLevelMetric(
-        metric_name="avg@k",
-        sample_level_fn=AvgAtK(
-            sample_scoring_function=DynamicMultilingualExtractiveMatch(
-                language=Language.ENGLISH,
-                gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
-                pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
-                precision=6,
-            ),
-        ),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    g_pass_at_k = SampleLevelMetricGrouping(
-        metric_name=["g-pass@k:n samples"],
-        sample_level_fn=GPassAtK(strip_strings=True),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-
-    maj_at_k = SampleLevelMetric(
-        metric_name="maj@k",
-        sample_level_fn=MajAtK(),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
+    multi_f1_numeric = CorpusLevelMetric(
+        metric_name="mf1",
+        sample_level_fn=LoglikelihoodPreparator(is_single_token=True),
+        category=SamplingMethod.LOGPROBS,
+        corpus_level_fn=CorpusLevelF1Score(average=None, num_classes=3),
         higher_is_better=True,
     )
     pass_at_k = SampleLevelMetric(
@@ -390,266 +402,9 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    # OLD
-    maj_at_4_math = SampleLevelMetric(
-        metric_name="maj@4",
-        sample_level_fn=MajAtK(
-            k=4, strip_strings=True, normalize_pred=math_normalizer, normalize_gold=math_normalizer
-        ),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    maj_at_5 = SampleLevelMetric(
-        metric_name="maj@5",
-        sample_level_fn=MajAtK(k=5),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    maj_at_8 = SampleLevelMetric(
-        metric_name="maj@8",
-        sample_level_fn=MajAtK(k=8),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    maj_at_8_gsm8k = SampleLevelMetric(
-        metric_name="maj@8",
-        sample_level_fn=MajAtK(
-            k=8, strip_strings=True, normalize_pred=gsm8k_normalizer, normalize_gold=gsm8k_normalizer
-        ),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    math_avg_at_64 = SampleLevelMetric(
-        metric_name="math_avg@64",
-        sample_level_fn=AvgAtK(
-            k=64,
-            sample_scoring_function=DynamicMultilingualExtractiveMatch(
-                language=Language.ENGLISH,
-                gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
-                pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
-                precision=6,
-            ),
-        ),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-
-    math_pass_at_1_1n = SampleLevelMetric(
-        metric_name="math_pass@1:1_samples",
-        sample_level_fn=PassAtK(
-            k=1,
-            n=1,
-            strip_strings=True,
-            # Extracting mathematical expressions and latex expressions
-            sample_scoring_function=DynamicMultilingualExtractiveMatch(
-                language=Language.ENGLISH,
-                gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
-                pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
-                precision=6,
-            ),
-        ),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    math_pass_at_1_4n = SampleLevelMetric(
-        metric_name="math_pass@1:4_samples",
-        sample_level_fn=PassAtK(
-            k=1,
-            n=4,
-            strip_strings=True,
-            sample_scoring_function=DynamicMultilingualExtractiveMatch(
-                language=Language.ENGLISH,
-                gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
-                pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
-                precision=6,
-            ),
-        ),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    math_pass_at_1_8n = SampleLevelMetric(
-        metric_name="math_pass@1:8_samples",
-        sample_level_fn=PassAtK(
-            k=1,
-            n=8,
-            strip_strings=True,
-            # Extracting mathematical expressions and latex expressions
-            sample_scoring_function=DynamicMultilingualExtractiveMatch(
-                language=Language.ENGLISH,
-                gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
-                pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
-                precision=6,
-            ),
-        ),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    math_pass_at_1_16n = SampleLevelMetric(
-        metric_name="math_pass@1:16_samples",
-        sample_level_fn=PassAtK(
-            k=1,
-            n=16,
-            strip_strings=True,
-            sample_scoring_function=DynamicMultilingualExtractiveMatch(
-                language=Language.ENGLISH,
-                gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
-                pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
-                precision=6,
-            ),
-        ),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    math_pass_at_1_32n = SampleLevelMetric(
-        metric_name="math_pass@1:32_samples",
-        sample_level_fn=PassAtK(
-            k=1,
-            n=32,
-            strip_strings=True,
-            sample_scoring_function=DynamicMultilingualExtractiveMatch(
-                language=Language.ENGLISH,
-                gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
-                pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
-                precision=6,
-            ),
-        ),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    math_pass_at_1_64n = SampleLevelMetric(
-        metric_name="math_pass@1:64_samples",
-        sample_level_fn=PassAtK(
-            k=1,
-            n=64,
-            strip_strings=True,
-            sample_scoring_function=DynamicMultilingualExtractiveMatch(
-                language=Language.ENGLISH,
-                gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
-                pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
-                precision=6,
-            ),
-        ),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-
-    mrr = SampleLevelMetric(
-        metric_name="mrr",
-        sample_level_fn=MRR(),
-        category=SamplingMethod.LOGPROBS,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    mrr_single_token = SampleLevelMetric(
-        metric_name="mrr",
-        sample_level_fn=mrr,
-        category=SamplingMethod.LOGPROBS,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    multi_f1_numeric = CorpusLevelMetric(
-        metric_name="mf1",
-        sample_level_fn=LoglikelihoodPreparator(is_single_token=True),
-        category=SamplingMethod.LOGPROBS,
-        corpus_level_fn=CorpusLevelF1Score(average=None, num_classes=3),
-        higher_is_better=True,
-    )
-    pass_at_1 = SampleLevelMetric(
-        metric_name="pass@1:32_samples",
-        sample_level_fn=PassAtK(k=1, n=32, strip_strings=True),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    pass_at_10 = SampleLevelMetric(
-        metric_name="pass@10:32_samples",
-        sample_level_fn=PassAtK(k=10, n=32, strip_strings=True),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    pass_at_100 = SampleLevelMetric(
-        metric_name="pass@100:32_samples",
-        sample_level_fn=PassAtK(k=100, n=32, strip_strings=True),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    g_pass_at_16 = SampleLevelMetricGrouping(
-        metric_name=["G-Pass@16:48_samples"],
-        sample_level_fn=GPassAtK(k=16, n=48, strip_strings=True),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, np.mean),
-        higher_is_better=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, True),
-    )
-    g_pass_at_8_16 = SampleLevelMetricGrouping(
-        metric_name=["G-Pass@8-16:48_samples"],
-        sample_level_fn=GPassAtK(k=[8, 16], n=48, strip_strings=True),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, np.mean),
-        higher_is_better=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, True),
-    )
-    g_pass_at_16_expr_gold = SampleLevelMetricGrouping(
-        metric_name=["G-Pass@16:48_samples"],
-        sample_level_fn=GPassAtK(
-            k=16,
-            n=48,
-            strip_strings=True,
-            sample_scoring_function=DynamicMultilingualExtractiveMatch(
-                language=Language.ENGLISH,
-                fallback_mode="first_match",
-                precision=5,
-                gold_extraction_target=(ExprExtractionConfig(),),
-                # Match boxed first before trying other regexes
-                pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
-                aggregation_function=max,
-            ),
-        ),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, np.mean),
-        higher_is_better=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, True),
-    )
-    g_pass_at_16_latex_gold = SampleLevelMetricGrouping(
-        metric_name=["G-Pass@16:48_samples"],
-        sample_level_fn=GPassAtK(
-            k=16,
-            n=48,
-            strip_strings=True,
-            sample_scoring_function=DynamicMultilingualExtractiveMatch(
-                language=Language.ENGLISH,
-                fallback_mode="first_match",
-                precision=5,
-                gold_extraction_target=(LatexExtractionConfig(),),
-                # Match boxed first before trying other regexes
-                pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
-                aggregation_function=max,
-            ),
-        ),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, np.mean),
-        higher_is_better=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, True),
-    )
-    perfect_exact_match = SampleLevelMetric(
-        metric_name="perfect_em",
-        sample_level_fn=ExactMatches(),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
     prediction_perplexity = SampleLevelMetric(
         metric_name="ppl",
-        sample_level_fn=None,  # todo!!!
+        sample_level_fn=PerplexityPreparator("words"),
         category=SamplingMethod.PERPLEXITY,
         corpus_level_fn=CorpusLevelPerplexityMetric("perplexity"),
         higher_is_better=True,
@@ -705,20 +460,6 @@ class Metrics(Enum):
             strip_strings=True, normalize_pred=gsm8k_normalizer, normalize_gold=gsm8k_normalizer
         ),
         category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    recall_at_1_single_token = SampleLevelMetric(
-        metric_name="acc",
-        sample_level_fn=Recall(at=1),
-        category=SamplingMethod.LOGPROBS,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    recall_at_2_single_token = SampleLevelMetric(
-        metric_name="recall@2",
-        sample_level_fn=Recall(at=2),
-        category=SamplingMethod.LOGPROBS,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
@@ -820,43 +561,9 @@ class Metrics(Enum):
         pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
         precision=6,
     )
-    gpqa_instruct_pass_at_1_1n = SampleLevelMetric(
-        metric_name="gpqa_pass@1:1_samples",
+    gpqa_instruct_pass_at_k = SampleLevelMetric(
+        metric_name="gpqa_pass@k",
         sample_level_fn=PassAtK(
-            k=1,
-            n=1,
-            sample_scoring_function=DynamicMultilingualExtractiveMatch(
-                language=Language.ENGLISH,
-                gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
-                pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
-                precision=6,
-            ),
-        ),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    gpqa_instruct_pass_at_1_4n = SampleLevelMetric(
-        metric_name="gpqa_pass@1:4_samples",
-        sample_level_fn=PassAtK(
-            k=1,
-            n=4,
-            sample_scoring_function=DynamicMultilingualExtractiveMatch(
-                language=Language.ENGLISH,
-                gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
-                pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
-                precision=6,
-            ),
-        ),
-        category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=np.mean,
-        higher_is_better=True,
-    )
-    gpqa_instruct_pass_at_1_8n = SampleLevelMetric(
-        metric_name="gpqa_pass@1:8_samples",
-        sample_level_fn=PassAtK(
-            k=1,
-            n=8,
             sample_scoring_function=DynamicMultilingualExtractiveMatch(
                 language=Language.ENGLISH,
                 gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
@@ -872,15 +579,10 @@ class Metrics(Enum):
     def __str__(self):
         return self.name.replace("_at_", "@")
 
-    @staticmethod
-    def higher_is_better():
-        res = {}
-        for metric in Metrics:
-            if isinstance(metric.value, MetricGrouping):
-                res.update(metric.value.higher_is_better)
-            else:
-                res[metric.value.metric_name] = metric.value.higher_is_better
-        return res
+    def __call__(self, **kwargs):
+        # When parametrizing, we don't look at the Metrics enum,
+        # but at a specific single metric (a value)
+        return self.value(kwargs)
 
     @staticmethod
     def all_metrics():

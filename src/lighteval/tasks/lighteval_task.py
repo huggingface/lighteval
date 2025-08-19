@@ -31,8 +31,9 @@ from huggingface_hub import TextGenerationInputGrammarType
 from multiprocess import Pool
 from pytablewriter import MarkdownTableWriter
 
-from lighteval.metrics.metrics import Metric, Metrics
+from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.metrics_sample import SamplingMetric
+from lighteval.metrics.utils.metric_utils import Metric
 from lighteval.tasks.prompt_manager import FewShotSampler
 from lighteval.tasks.requests import (
     Doc,

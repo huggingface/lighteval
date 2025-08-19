@@ -1132,6 +1132,9 @@ class SamplingMetric:
             return 1 if pred.endswith(gold) else 0
         return 1 if gold == pred else 0
 
+    def name_metrics(self) -> str | list[str]:
+        raise NotImplementedError
+
 
 class AvgAtK(SamplingMetric):
     def __init__(self, k: int | None = None, **kwargs):
@@ -1289,6 +1292,7 @@ class GPassAtK(SamplingMetric):
         k: Union[int, list[int]] | None = None,
         n: int | None = None,
         thresholds: list[float] = [0.0, 0.25, 0.5, 0.75, 1.0],
+        name_prefix: str = None,
         **kwargs,
     ):
         """Computing G-Pass@k from http://arxiv.org/abs/2412.13147
@@ -1304,6 +1308,7 @@ class GPassAtK(SamplingMetric):
         self.attribute_must_be_set = ["k"]
 
         self.thresholds = thresholds
+        self.name = (f"{name_prefix}_" if name_prefix else "") + "g-pass@"
 
     def compute(self, model_response: ModelResponse, doc: Doc, **kwargs) -> float:
         """Computes the metric over a list of golds and predictions for one single item with possibly many samples.
@@ -1377,21 +1382,21 @@ class GPassAtK(SamplingMetric):
         metrics = {}
         for k in ks:
             for t in thresholds:
-                metrics[f"G-Pass@{k}_{t}"] = compute_g_pass_at_k(n, c, k, t)
-            metrics[f"mG-Pass@{k}"] = compute_mg_pass_at_k(n, c, k)
+                metrics[f"{self.name}@{k}_{t}"] = compute_g_pass_at_k(n, c, k, t)
+            metrics[f"m{self.name}@{k}"] = compute_mg_pass_at_k(n, c, k)
 
         return metrics
 
     @property
-    def all_metrics(self):
+    def metric_names(self):
         ks: int = self.k
         thresholds: list[float] = self.thresholds
 
         metrics = []
         for k in ks:
             for t in thresholds:
-                metrics.append(f"G-Pass@{k}_{t}")
-            metrics.append(f"mG-Pass@{k}")
+                metrics.append(f"{self.name}@{k}_{t}")
+            metrics.append(f"m{self.name}@{k}")
 
         return metrics
 
