@@ -24,6 +24,7 @@
 using simple function (min, mean, max, ...) at the corpus level. Most metrics fall under this category.
 """
 
+import inspect
 import logging
 import os
 from typing import Callable, Literal, Union
@@ -1078,11 +1079,22 @@ class JudgeLLMMixEval(JudgeLLM):
 class SamplingMetric:
     def __init__(
         self,
-        normalize: Callable | None = None,
+        normalize: Callable | str | None = None,
         strip_strings: bool = False,
         sample_scoring_function: Callable[[Doc, ModelResponse], float] | str | None = None,
     ):
-        self.normalize = normalize
+        if isinstance(normalize, str):
+            import lighteval.metrics.normalizations
+
+            allowed_normalizations = inspect.getmembers(
+                lighteval.metrics.normalizations, inspect.isfunction
+            )  # -> {name: fn}
+            if normalize in allowed_normalizations:
+                self.normalize = allowed_normalizations[normalize]
+            else:
+                raise ValueError(f"Unknown normalization function: {normalize}")
+        else:
+            self.normalize = normalize
         self.strip_strings = strip_strings
 
         if callable(sample_scoring_function):
