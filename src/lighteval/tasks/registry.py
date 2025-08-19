@@ -349,6 +349,7 @@ class Registry:
 
         Args:
             suites: Comma-separated list of suites to display. If None, shows core suites only.
+                   Use 'all' to show all available suites (core + optional).
                    Special handling for 'multilingual' suite with dependency checking.
         """
         # Parse requested suites
@@ -356,6 +357,10 @@ class Registry:
             requested_suites = CORE_SUITES.copy()
         else:
             requested_suites = [s.strip() for s in suites.split(",")]
+
+            # Handle 'all' special case
+            if "all" in requested_suites:
+                requested_suites = DEFAULT_SUITES.copy()
 
             # Check for multilingual dependencies if requested
             if "multilingual" in requested_suites:
