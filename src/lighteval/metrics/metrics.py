@@ -21,6 +21,8 @@
 # SOFTWARE.
 
 
+from copy import deepcopy
+
 import numpy as np
 from aenum import Enum
 
@@ -77,7 +79,6 @@ from lighteval.metrics.utils.metric_utils import (
     SamplingMethod,
 )
 from lighteval.utils.language import Language
-from lighteval.utils.utils import as_list
 
 
 class Metrics(Enum):
@@ -495,11 +496,5 @@ class Metrics(Enum):
     def __call__(self, **kwargs):
         # When parametrizing, we don't look at the Metrics enum,
         # but at a specific single metric (a value)
-        return self.value(kwargs)
-
-    @staticmethod
-    def all_metrics():
-        res = []
-        for metric in Metrics:
-            res.extend(as_list(metric.value.metric_name))
-        return res
+        # Be very careful to not change the default value of the enum
+        return deepcopy(self.value)(kwargs)
