@@ -104,7 +104,7 @@ def test_model_prediction(prompt_inputs: tuple[str, str, list]):  # noqa: C901
 
         metric_result = {k: list(v) if isinstance(v, tuple) else v for k, v in results.items()}
 
-        metric_reference = {k: v for k, v in example.items() if k in results.keys()}
+        metric_reference = {k: example[k] for k in results.keys()}
         error_msg += f"Prediction: {results}\n"
         error_msg += f"Reference: {metric_reference}\n"
         error_msg += f"Returned : {metric_result}"
