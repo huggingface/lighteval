@@ -70,7 +70,7 @@ def list(
     suites: Annotated[
         Optional[str],
         Option(
-            help="Comma-separated list of suites to display (e.g., 'helm,harness'). If not specified, shows core suites only."
+            help="Comma-separated list of suites to display (e.g., 'helm,harness'). Use 'all' for all suites. If not specified, shows core suites only."
         ),
     ] = None,
 ):
