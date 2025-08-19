@@ -18357,7 +18357,9 @@ triviaqa_lighteval = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=20,
-    metrics=[Metrics.exact_match(sample_params={"normalize_pred": harness_triviaqa_normalizer})],
+    metrics=[
+        Metrics.exact_match(sample_params={"strip_strings": True, "normalize_pred": harness_triviaqa_normalizer})
+    ],
     stop_sequence=["\n", ".", ","],
     trust_dataset=True,
     version=0,

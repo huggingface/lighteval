@@ -183,11 +183,11 @@ class Metrics(Enum):
         higher_is_better={"longest_common_prefix_length": True, "edit_distance": False, "edit_similarity": True},
     )
     drop = SampleLevelMetricGrouping(
-        metric_name=["qem", "f1"],
+        metric_name=["em", "f1"],
         sample_level_fn=drop_metrics,
         category=SamplingMethod.GENERATIVE,
-        corpus_level_fn={"qem": max, "f1": max},
-        higher_is_better={"qem": True, "f1": True},
+        corpus_level_fn={"em": max, "f1": max},
+        higher_is_better={"em": True, "f1": True},
     )
     exact_match = SampleLevelMetric(
         metric_name="em",

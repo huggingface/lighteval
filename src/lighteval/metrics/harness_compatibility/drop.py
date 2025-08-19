@@ -171,4 +171,4 @@ def drop_metrics(doc: Doc, model_response: ModelResponse):  # noqa: C901
         if gold_answer.strip():
             max_em = max(max_em, exact_match)
             max_f1 = max(max_f1, f1_score)
-    return {"qem": max_em, "f1": max_f1}
+    return {"em": max_em, "f1": max_f1}
