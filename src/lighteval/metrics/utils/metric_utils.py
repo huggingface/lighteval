@@ -40,7 +40,7 @@ class Metric:
     def get_doc(self):
         return self.sample_level_fn.__doc__
 
-    def compute(
+    def compute_sample(
         self, **kwargs
     ) -> dict:  # result: Union[list[ModelResponse], ModelResponse], formatted_doc: Doc) -> dict:
         if isinstance(self.sample_level_fn, Callable):
@@ -53,6 +53,20 @@ class Metric:
         if isinstance(self, MetricGrouping):
             return sample_level_fn(**kwargs)  # result, formatted_doc,
         return {self.metric_name: sample_level_fn(**kwargs)}  # result, formatted_doc,
+
+    def get_corpus_aggregations(self) -> dict:
+        if isinstance(self, MetricGrouping):
+            corpus_level_fn = self.corpus_level_fn
+        else:
+            corpus_level_fn = {self.metric_name: self.corpus_level_fn}
+
+        for name, item in corpus_level_fn.items():
+            if isinstance(item, Callable):
+                corpus_level_fn[name] = item
+            else:
+                corpus_level_fn[name] = item.compute_corpus
+
+        return corpus_level_fn
 
 
 @dataclass

@@ -20,16 +20,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Callable
 
 import numpy as np
 from aenum import Enum
 
 from lighteval.metrics.dynamic_metrics import (
+    DynamicMultilingualExtractiveMatch,
     ExprExtractionConfig,
     IndicesExtractionConfig,
     LatexExtractionConfig,
-    multilingual_extractive_match_metric,
 )
 from lighteval.metrics.harness_compatibility.drop import drop_metrics
 from lighteval.metrics.harness_compatibility.truthful_qa import truthfulqa_mc_metrics
@@ -78,7 +77,6 @@ from lighteval.metrics.sample_preparator import (
 from lighteval.metrics.utils.metric_utils import (
     CorpusLevelMetric,
     CorpusLevelMetricGrouping,
-    Metric,
     MetricGrouping,
     SampleLevelMetric,
     SampleLevelMetricGrouping,
@@ -107,14 +105,14 @@ class Metrics(Enum):
         metric_name="bits_per_byte",
         sample_level_fn=PerplexityPreparator(units_type="bytes"),
         category=SamplingMethod.PERPLEXITY,
-        corpus_level_fn=CorpusLevelPerplexityMetric("bits_per_byte").compute,
+        corpus_level_fn=CorpusLevelPerplexityMetric("bits_per_byte"),
         higher_is_better=False,
     )
     bleu = CorpusLevelMetric(
         metric_name="bleu",
         sample_level_fn=GenerativePreparator(),
         category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=CorpusLevelTranslationMetric("bleu").compute,
+        corpus_level_fn=CorpusLevelTranslationMetric("bleu"),
         higher_is_better=True,
     )
     bleu_1 = SampleLevelMetric(
@@ -143,21 +141,21 @@ class Metrics(Enum):
         metric_name="byte_perplexity",
         sample_level_fn=PerplexityPreparator(units_type="bytes"),
         category=SamplingMethod.PERPLEXITY,
-        corpus_level_fn=CorpusLevelPerplexityMetric("weighted_perplexity").compute,
+        corpus_level_fn=CorpusLevelPerplexityMetric("weighted_perplexity"),
         higher_is_better=False,
     )
     chrf = CorpusLevelMetric(
         metric_name="chrf",
         sample_level_fn=GenerativePreparator(),
         category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=CorpusLevelTranslationMetric("chrf").compute,
+        corpus_level_fn=CorpusLevelTranslationMetric("chrf"),
         higher_is_better=True,
     )
     chrf_plus = CorpusLevelMetric(
         metric_name="chrf++",
         sample_level_fn=GenerativePreparator(),
         category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=CorpusLevelTranslationMetric("chrf++").compute,
+        corpus_level_fn=CorpusLevelTranslationMetric("chrf++"),
         higher_is_better=True,
     )
     copyright = SampleLevelMetricGrouping(
@@ -183,7 +181,7 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    expr_gold_metric = multilingual_extractive_match_metric(
+    expr_gold_metric = DynamicMultilingualExtractiveMatch(
         language=Language.ENGLISH,
         fallback_mode="first_match",
         precision=5,
@@ -227,14 +225,14 @@ class Metrics(Enum):
         metric_name="f1",
         sample_level_fn=GenerativePreparator(),
         category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=CorpusLevelF1Score(average="macro").compute,
+        corpus_level_fn=CorpusLevelF1Score(average="macro"),
         higher_is_better=True,
     )
     f1_score_micro = CorpusLevelMetric(
         metric_name="f1",
         sample_level_fn=GenerativePreparator(),
         category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=CorpusLevelF1Score(average="micro").compute,
+        corpus_level_fn=CorpusLevelF1Score(average="micro"),
         higher_is_better=True,
     )
     faithfulness = SampleLevelMetric(
@@ -246,7 +244,7 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
-    latex_gold_metric = multilingual_extractive_match_metric(
+    latex_gold_metric = DynamicMultilingualExtractiveMatch(
         language=Language.ENGLISH,
         fallback_mode="first_match",
         precision=5,
@@ -294,14 +292,14 @@ class Metrics(Enum):
         metric_name="loglikelihood_f1",
         sample_level_fn=LoglikelihoodPreparator(),
         category=SamplingMethod.LOGPROBS,
-        corpus_level_fn=CorpusLevelF1Score(None).compute,
+        corpus_level_fn=CorpusLevelF1Score(None),
         higher_is_better=True,
     )
     loglikelihood_f1_single_token = CorpusLevelMetric(
         metric_name="loglikelihood_f1",
         sample_level_fn=LoglikelihoodPreparator(is_single_token=True),
         category=SamplingMethod.LOGPROBS,
-        corpus_level_fn=CorpusLevelF1Score(None).compute,
+        corpus_level_fn=CorpusLevelF1Score(None),
         higher_is_better=True,
     )
     mcc = CorpusLevelMetric(
@@ -329,12 +327,12 @@ class Metrics(Enum):
     avg_at_k_math = SampleLevelMetric(
         metric_name="avg@k",
         sample_level_fn=AvgAtK(
-            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
+            sample_scoring_function=DynamicMultilingualExtractiveMatch(
                 language=Language.ENGLISH,
                 gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 precision=6,
-            ).sample_level_fn(doc, model_response),
+            ),
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
@@ -367,12 +365,12 @@ class Metrics(Enum):
         sample_level_fn=PassAtK(
             strip_strings=True,
             # Extracting mathematical expressions and latex expressions
-            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
+            sample_scoring_function=DynamicMultilingualExtractiveMatch(
                 language=Language.ENGLISH,
                 gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 precision=6,
-            ).sample_level_fn(doc, model_response),
+            ),
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
@@ -381,12 +379,12 @@ class Metrics(Enum):
     pass_at_k_letters = SampleLevelMetric(
         metric_name="pass@k:n samples",
         sample_level_fn=PassAtK(
-            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
+            sample_scoring_function=DynamicMultilingualExtractiveMatch(
                 language=Language.ENGLISH,
                 gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
                 pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
                 precision=6,
-            ).sample_level_fn(doc, model_response),
+            ),
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
@@ -429,12 +427,12 @@ class Metrics(Enum):
         metric_name="math_avg@64",
         sample_level_fn=AvgAtK(
             k=64,
-            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
+            sample_scoring_function=DynamicMultilingualExtractiveMatch(
                 language=Language.ENGLISH,
                 gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 precision=6,
-            ).sample_level_fn(doc, model_response),
+            ),
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
@@ -448,12 +446,12 @@ class Metrics(Enum):
             n=1,
             strip_strings=True,
             # Extracting mathematical expressions and latex expressions
-            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
+            sample_scoring_function=DynamicMultilingualExtractiveMatch(
                 language=Language.ENGLISH,
                 gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 precision=6,
-            ).sample_level_fn(doc, model_response),
+            ),
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
@@ -465,12 +463,12 @@ class Metrics(Enum):
             k=1,
             n=4,
             strip_strings=True,
-            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
+            sample_scoring_function=DynamicMultilingualExtractiveMatch(
                 language=Language.ENGLISH,
                 gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 precision=6,
-            ).sample_level_fn(doc, model_response),
+            ),
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
@@ -483,12 +481,12 @@ class Metrics(Enum):
             n=8,
             strip_strings=True,
             # Extracting mathematical expressions and latex expressions
-            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
+            sample_scoring_function=DynamicMultilingualExtractiveMatch(
                 language=Language.ENGLISH,
                 gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 precision=6,
-            ).sample_level_fn(doc, model_response),
+            ),
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
@@ -500,12 +498,12 @@ class Metrics(Enum):
             k=1,
             n=16,
             strip_strings=True,
-            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
+            sample_scoring_function=DynamicMultilingualExtractiveMatch(
                 language=Language.ENGLISH,
                 gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 precision=6,
-            ).sample_level_fn(doc, model_response),
+            ),
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
@@ -517,12 +515,12 @@ class Metrics(Enum):
             k=1,
             n=32,
             strip_strings=True,
-            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
+            sample_scoring_function=DynamicMultilingualExtractiveMatch(
                 language=Language.ENGLISH,
                 gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 precision=6,
-            ).sample_level_fn(doc, model_response),
+            ),
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
@@ -534,12 +532,12 @@ class Metrics(Enum):
             k=1,
             n=64,
             strip_strings=True,
-            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
+            sample_scoring_function=DynamicMultilingualExtractiveMatch(
                 language=Language.ENGLISH,
                 gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
                 precision=6,
-            ).sample_level_fn(doc, model_response),
+            ),
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
@@ -564,7 +562,7 @@ class Metrics(Enum):
         metric_name="mf1",
         sample_level_fn=LoglikelihoodPreparator(is_single_token=True),
         category=SamplingMethod.LOGPROBS,
-        corpus_level_fn=CorpusLevelF1Score(average=None, num_classes=3).compute,
+        corpus_level_fn=CorpusLevelF1Score(average=None, num_classes=3),
         higher_is_better=True,
     )
     pass_at_1 = SampleLevelMetric(
@@ -608,7 +606,7 @@ class Metrics(Enum):
             k=16,
             n=48,
             strip_strings=True,
-            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
+            sample_scoring_function=DynamicMultilingualExtractiveMatch(
                 language=Language.ENGLISH,
                 fallback_mode="first_match",
                 precision=5,
@@ -616,7 +614,7 @@ class Metrics(Enum):
                 # Match boxed first before trying other regexes
                 pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
                 aggregation_function=max,
-            ).sample_level_fn(doc, model_response),
+            ),
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, np.mean),
@@ -628,7 +626,7 @@ class Metrics(Enum):
             k=16,
             n=48,
             strip_strings=True,
-            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
+            sample_scoring_function=DynamicMultilingualExtractiveMatch(
                 language=Language.ENGLISH,
                 fallback_mode="first_match",
                 precision=5,
@@ -636,7 +634,7 @@ class Metrics(Enum):
                 # Match boxed first before trying other regexes
                 pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig(boxed_match_priority=0)),
                 aggregation_function=max,
-            ).sample_level_fn(doc, model_response),
+            ),
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=dict.fromkeys(GPassAtK(k=16, n=48, strip_strings=True).all_metrics, np.mean),
@@ -653,7 +651,7 @@ class Metrics(Enum):
         metric_name="ppl",
         sample_level_fn=None,  # todo!!!
         category=SamplingMethod.PERPLEXITY,
-        corpus_level_fn=CorpusLevelPerplexityMetric("perplexity").compute,
+        corpus_level_fn=CorpusLevelPerplexityMetric("perplexity"),
         higher_is_better=True,
     )
     prefix_exact_match = SampleLevelMetric(
@@ -782,24 +780,24 @@ class Metrics(Enum):
         metric_name=["simpleqa_judge"],
         higher_is_better={"simpleqa_judge": True},
         category=SamplingMethod.GENERATIVE,
-        sample_level_fn=JudgeLLMSimpleQA().compute,
-        batched_compute=True,
+        sample_level_fn=JudgeLLMSimpleQA(),
         corpus_level_fn={
             "simpleqa_judge": np.mean,
         },
+        batched_compute=True,
     )
     target_perplexity = SampleLevelMetric(
         metric_name="ppl",
         sample_level_fn=TargetPerplexityPreparator(units_type="words"),
         category=SamplingMethod.LOGPROBS,
-        corpus_level_fn=CorpusLevelPerplexityMetric("perplexity").compute,
+        corpus_level_fn=CorpusLevelPerplexityMetric("perplexity"),
         higher_is_better=False,
     )
     ter = CorpusLevelMetric(
         metric_name="ter",
         sample_level_fn=GenerativePreparator(),
         category=SamplingMethod.GENERATIVE,
-        corpus_level_fn=CorpusLevelTranslationMetric("ter").compute,
+        corpus_level_fn=CorpusLevelTranslationMetric("ter"),
         higher_is_better=False,
     )
     truthfulqa_mc_metrics = SampleLevelMetricGrouping(
@@ -813,10 +811,10 @@ class Metrics(Enum):
         metric_name="word_perplexity",
         sample_level_fn=PerplexityPreparator(units_type="words"),
         category=SamplingMethod.PERPLEXITY,
-        corpus_level_fn=CorpusLevelPerplexityMetric("weighted_perplexity").compute,
+        corpus_level_fn=CorpusLevelPerplexityMetric("weighted_perplexity"),
         higher_is_better=False,
     )
-    gpqa_instruct_metric = multilingual_extractive_match_metric(
+    gpqa_instruct_metric = DynamicMultilingualExtractiveMatch(
         language=Language.ENGLISH,
         gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
         pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
@@ -827,12 +825,12 @@ class Metrics(Enum):
         sample_level_fn=PassAtK(
             k=1,
             n=1,
-            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
+            sample_scoring_function=DynamicMultilingualExtractiveMatch(
                 language=Language.ENGLISH,
                 gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
                 pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
                 precision=6,
-            ).sample_level_fn(doc, model_response),
+            ),
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
@@ -843,12 +841,12 @@ class Metrics(Enum):
         sample_level_fn=PassAtK(
             k=1,
             n=4,
-            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
+            sample_scoring_function=DynamicMultilingualExtractiveMatch(
                 language=Language.ENGLISH,
                 gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
                 pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
                 precision=6,
-            ).sample_level_fn(doc, model_response),
+            ),
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
@@ -859,12 +857,12 @@ class Metrics(Enum):
         sample_level_fn=PassAtK(
             k=1,
             n=8,
-            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
+            sample_scoring_function=DynamicMultilingualExtractiveMatch(
                 language=Language.ENGLISH,
                 gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
                 pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
                 precision=6,
-            ).sample_level_fn(doc, model_response),
+            ),
         ),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
@@ -882,21 +880,6 @@ class Metrics(Enum):
                 res.update(metric.value.higher_is_better)
             else:
                 res[metric.value.metric_name] = metric.value.higher_is_better
-        return res
-
-    @staticmethod
-    def corpus_level_fns(metrics: list[Metric]) -> dict[str, Callable]:
-        res = {}
-        for metric in metrics:
-            if isinstance(metric, MetricGrouping):
-                if isinstance(metric.corpus_level_fn, dict):
-                    res.update(metric.corpus_level_fn)
-                else:
-                    # Must make sure there is a caching implementation here
-                    for m in metric.metric_name:
-                        res[m] = metric.corpus_level_fn
-            else:
-                res[metric.metric_name] = metric.corpus_level_fn
         return res
 
     @staticmethod

@@ -32,7 +32,7 @@ def apply_metric(responses: list[ModelResponse], docs: list[Doc], metrics: list[
         if metric.batched_compute:
             outputs_per_metrics: list = []
 
-            outputs_per_metrics.append(metric.compute(responses=responses, docs=docs))
+            outputs_per_metrics.append(metric.compute_sample(responses=responses, docs=docs))
 
             # We merge the outputs per metric in a list of dict for each sample
             # example: [{metric1_sample1, metric2_sample1}, {metric1_sample2, metric2_sample2}]
@@ -47,7 +47,7 @@ def apply_metric(responses: list[ModelResponse], docs: list[Doc], metrics: list[
                 output = {}
                 for metric in metrics:
                     output.update(
-                        metric.compute(
+                        metric.compute_sample(
                             model_response=model_response,
                             doc=doc,
                         )

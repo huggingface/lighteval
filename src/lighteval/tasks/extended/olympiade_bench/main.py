@@ -22,9 +22,9 @@
 
 
 from lighteval.metrics.dynamic_metrics import (
+    DynamicMultilingualExtractiveMatch,
     ExprExtractionConfig,
     LatexExtractionConfig,
-    multilingual_extractive_match_metric,
 )
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -200,7 +200,7 @@ olympiad_bench_subsets = set(olympiad_bench_subsets).intersection(available_subs
 
 extraction_targets = [ExprExtractionConfig(), LatexExtractionConfig()]
 
-metric = multilingual_extractive_match_metric(
+metric = DynamicMultilingualExtractiveMatch(
     language=Language.ENGLISH,
     gold_extraction_target=extraction_targets,
     pred_extraction_target=extraction_targets,

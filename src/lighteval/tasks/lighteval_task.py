@@ -333,7 +333,10 @@ class LightevalTask:
         Return a dict with metric name and its aggregation function for all
         metrics
         """
-        return Metrics.corpus_level_fns(self.metrics)
+        aggregations = {}
+        for metric in self.metrics:
+            aggregations.update(metric.get_corpus_aggregations())
+        return aggregations
 
     @staticmethod
     def load_datasets(tasks: dict[str, "LightevalTask"], dataset_loading_processes: int = 1) -> None:
