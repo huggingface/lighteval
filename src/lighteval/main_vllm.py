@@ -57,8 +57,12 @@ def vllm(
         Optional[str], Option(help="Load responses from details directory.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
     remove_reasoning_tags: Annotated[
-        bool, Option(help="Remove reasoning tags from responses.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = False,
+        bool | None,
+        Option(
+            help="Remove reasoning tags from responses (true to remove, false to leave - true by default).",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = True,
     reasoning_tags: Annotated[
         str | None,
         Option(
