@@ -124,7 +124,7 @@ def test_cli_sampling_params_fail():
 
     # creation of object should fail
     with pytest.raises(ValueError):
-        registry.taskinfo_selector("lighteval|math_500@|0|0")
+        registry.get_tasks_configs("lighteval|math_500@|0|0")
 
 
 def test_task_group_expansion_with_subset_expansion():
