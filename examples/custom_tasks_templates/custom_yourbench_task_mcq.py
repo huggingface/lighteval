@@ -86,8 +86,7 @@ yourbench_mcq = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select=None,
     generation_size=8192,
-    metric=[Metrics.yourbench_metrics],
-    trust_dataset=True,
+    metrics=[Metrics.yourbench_metrics],
     version=0,
 )
 

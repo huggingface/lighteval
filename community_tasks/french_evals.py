@@ -122,7 +122,6 @@ gpqa_fr_task = LightevalTaskConfig(
     generation_size=1,
     metrics=[Metrics.loglikelihood_acc],
     stop_sequence=["\n"],
-    trust_dataset=True,
     version=0,
 )
 
@@ -143,7 +142,6 @@ bac_fr_task = LightevalTaskConfig(
         Metrics.exact_match,
     ],
     stop_sequence=["\n"],
-    trust_dataset=True,
     version=0,
 )
 

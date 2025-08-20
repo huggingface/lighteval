@@ -528,8 +528,6 @@ copa_indic_tasks = [
         ),
         hf_repo="ai4bharat/IndicCOPA",
         hf_subset=f"translation-{standardize_tag(language.value)}",
-        # Since we use trust_dataset, we have to be careful about what is inside the dataset
-        # script. We thus lock the revision to ensure that the script doesn't change
         hf_revision="d356ef19a4eb287e88a51d07a56b73ba88c7f188",
         evaluation_splits=["test"],
         hf_avail_splits=["test"],
@@ -540,7 +538,6 @@ copa_indic_tasks = [
                 LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
-        trust_dataset=True,
     )
     for language in [
         Language.ASSAMESE,
@@ -624,8 +621,6 @@ mlmm_hellaswag_tasks = [
         ),
         hf_repo="jon-tow/okapi_hellaswag",
         hf_subset=standardize_tag(lang.value),
-        # Since we use trust_dataset, we have to be careful about what is inside the dataset
-        # script. We thus lock the revision to ensure that the script doesn't change
         hf_revision="96ed8e0dfc6172dad1d3df338d7b8ba6c1ff9d83",
         evaluation_splits=["validation"],
         hf_avail_splits=["validation"],
@@ -636,7 +631,6 @@ mlmm_hellaswag_tasks = [
                 LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
-        trust_dataset=True,
     )
     for lang in [
         Language.ARABIC,
@@ -878,7 +872,6 @@ germanquad_tasks = [
         suite=("lighteval",),
         hf_repo="deepset/germanquad",
         hf_subset="plain_text",
-        trust_dataset=True,
         hf_revision="fff05ceaf2ffbe5b65c7e0c57e678f7b7e1a0581",
         hf_filter=lambda line: any(len(ans) > 0 for ans in line["answers"]["text"]),
         evaluation_splits=("test",),
@@ -991,7 +984,6 @@ faquad_tasks = [
         suite=("lighteval",),
         hf_repo="eraldoluis/faquad",
         hf_subset="plain_text",
-        trust_dataset=True,
         hf_revision="205ba826a2282a4a5aa9bd3651e55ee4f2da1546",
         hf_filter=lambda line: any(len(ans) > 0 for ans in line["answers"]["text"]),
         evaluation_splits=("validation",),
@@ -1160,10 +1152,7 @@ indicqa_tasks = [
         hf_repo="ai4bharat/IndicQA",
         hf_subset=f"indicqa.{LangCodeLanguage.get(language.value).language}",
         hf_filter=lambda line: any(len(ans) > 0 for ans in line["answers"]["text"]),
-        # Since we use trust_dataset, we have to be careful about what is inside the dataset
-        # script. We thus lock the revision to ensure that the script doesn't change
         hf_revision="92d96092ae229950973dac3b9998f8b3a8949b0a",
-        trust_dataset=True,
         evaluation_splits=("test",),
         hf_avail_splits=("test",),
         generation_size=400,
@@ -1331,13 +1320,10 @@ race_ar_task = [
         suite=["lighteval"],
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
         hf_subset="race_ar",
-        # Since we use trust_dataset, we have to be careful about what is inside the dataset
-        # script. We thus lock the revision to ensure that the script doesn't change
         hf_revision="08663706ee7cab30c4b7dc1bb00042a3227ce1ff",
         hf_avail_splits=["test", "validation"],
         evaluation_splits=["test"],
         few_shots_split="validation",
-        trust_dataset=True,
         metrics=get_metrics_for_formulation(
             formulation,
             [
@@ -1397,7 +1383,6 @@ mlqa_tasks = [
         hf_repo="facebook/mlqa",
         hf_subset=f"mlqa.{standardize_tag(lang.value)}.{standardize_tag(lang.value)}",
         hf_revision="397ed406c1a7902140303e7faf60fff35b58d285",
-        trust_dataset=True,
         evaluation_splits=("test",),
         hf_avail_splits=["test"],
         generation_size=400,
@@ -1736,7 +1721,6 @@ mlmm_mmlu_tasks = [
         hf_subset=standardize_tag(language.value),
         hf_revision="refs/pr/1",
         hf_filter=partial(lambda subset, line: line["id"].split("/")[0] == subset, subset),
-        trust_dataset=True,
         evaluation_splits=("test",),
         few_shots_split="dev",
         metrics=get_metrics_for_formulation(
@@ -2339,7 +2323,6 @@ mlmm_arc_challenge_tasks = [
         hf_repo="jon-tow/okapi_arc_challenge",
         hf_subset=standardize_tag(language.value),
         hf_revision="823d5d7bfaf8974a3ab52a825b6cf4903b35dbc4",
-        trust_dataset=True,
         evaluation_splits=("test",),
         few_shots_split="train",
         metrics=get_metrics_for_formulation(
@@ -2398,7 +2381,6 @@ arabic_ledarboard_arc_easy = [
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
         hf_subset="arc_easy_ar",
         hf_revision="08663706ee7cab30c4b7dc1bb00042a3227ce1ff",
-        trust_dataset=True,
         evaluation_splits=["test"],
         few_shots_split="validation",
         metrics=get_metrics_for_formulation(
@@ -2557,7 +2539,6 @@ arabic_arc_tasks = [
                 LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
-        trust_dataset=True,
     )
     for formulation in [
         MCFFormulation(),
@@ -2645,7 +2626,6 @@ mlmm_truthfulqa_tasks = [
         hf_repo="jon-tow/okapi_truthfulqa",
         hf_subset=standardize_tag(language.value),
         hf_revision="cdd5db1a66fd04105622109d1c2a5cbc8cde7586",
-        trust_dataset=True,
         evaluation_splits=("validation",),
         hf_avail_splits=["validation"],
         metrics=get_metrics_for_formulation(
@@ -3068,7 +3048,6 @@ piqa_ar_tasks = [
         hf_avail_splits=["test", "validation"],
         evaluation_splits=["test"],
         few_shots_split="validation",
-        trust_dataset=True,
         metrics=get_metrics_for_formulation(
             formulation,
             [
@@ -3105,7 +3084,6 @@ openbook_ara_tasks = [
         hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Translated",
         hf_subset="openbook_qa_ext_ar",
         hf_revision="08663706ee7cab30c4b7dc1bb00042a3227ce1ff",
-        trust_dataset=True,
         evaluation_splits=["test"],
         few_shots_split="validation",
         metrics=get_metrics_for_formulation(
@@ -3230,7 +3208,6 @@ sciqa_ar_task = [
                 LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
-        trust_dataset=True,
     )
     for formulation in [
         MCFFormulation(),
@@ -3858,7 +3835,6 @@ mkqa_tasks = [
             language,
             subset,
         ),
-        trust_dataset=True,
         evaluation_splits=("train",),
         hf_avail_splits=["train"],
         stop_sequence=("\n",),
@@ -4380,7 +4356,6 @@ flores200_tasks = [
         generation_size=300,
         metrics=[Metrics.chrf_plus, Metrics.bleu, Metrics.bleu_1, Metrics.bleu_4],
         stop_sequence=["\n"],
-        trust_dataset=True,
         version=0,
     )
     for (lang1, lang2) in permutations(flores_200_languages, 2)

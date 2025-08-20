@@ -224,7 +224,6 @@ hle = LightevalTaskConfig(
     generation_size=8192,
     metrics=[Metrics.exact_match, Metrics.hle_metrics],
     stop_sequence=[],
-    trust_dataset=True,
     version=0,
 )
 
