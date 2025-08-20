@@ -72,7 +72,7 @@ def list(custom_tasks: Annotated[Optional[str], Option(help="Path to a file with
     from lighteval.tasks.registry import Registry
 
     registry = Registry(custom_tasks=custom_tasks)
-    registry.verify_tasks()
+    registry.print_all_tasks()
 
 
 @app.command()
