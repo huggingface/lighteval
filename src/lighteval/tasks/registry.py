@@ -23,14 +23,13 @@
 import collections
 import copy
 import importlib
+import importlib.util
 import logging
 import os
 from functools import lru_cache
 from itertools import groupby
 from pathlib import Path
 from types import ModuleType
-
-from datasets.load import dataset_module_factory
 
 import lighteval.tasks.default_tasks as default_tasks
 from lighteval.tasks.extended import AVAILABLE_EXTENDED_TASKS_MODULES
@@ -304,8 +303,15 @@ class Registry:
         if isinstance(custom_tasks, ModuleType):
             return custom_tasks
         if isinstance(custom_tasks, (str, Path)) and os.path.exists(custom_tasks):
-            dataset_module = dataset_module_factory(str(custom_tasks), trust_remote_code=True)
-            return importlib.import_module(dataset_module.module_path)
+            module_name = os.path.splitext(os.path.basename(custom_tasks))[0]
+            spec = importlib.util.spec_from_file_location(module_name, custom_tasks)
+
+            if spec is None:
+                raise ValueError(f"Cannot find module {module_name} at {custom_tasks}")
+
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            return module
         if isinstance(custom_tasks, (str, Path)):
             return importlib.import_module(str(custom_tasks))
 
