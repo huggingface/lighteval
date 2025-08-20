@@ -43,7 +43,6 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from lighteval.metrics.imports.bert_scorer import BERTScorer
 from lighteval.metrics.imports.data_stats_metric import DataStatsMetric
 from lighteval.metrics.imports.summac import SummaCZS
-from lighteval.metrics.llm_as_judge import JudgeLM
 from lighteval.metrics.normalizations import (
     LogProbNormalization,
     LogProbTokenNorm,
@@ -52,6 +51,7 @@ from lighteval.metrics.normalizations import (
     remove_braces_and_strip,
 )
 from lighteval.metrics.utils.judge_utils import get_judge_prompt_simpleqa, process_judge_response_simpleqa
+from lighteval.metrics.utils.llm_as_judge import JudgeLM
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
 from lighteval.utils.utils import as_list, safe_divide
@@ -60,7 +60,12 @@ from lighteval.utils.utils import as_list, safe_divide
 logger = logging.getLogger(__name__)
 
 
-class ExactMatches:
+class SampleLevelComputation:
+    def compute(self, doc: Doc, model_response: ModelResponse, **kwargs):
+        raise NotImplementedError
+
+
+class ExactMatches(SampleLevelComputation):
     def __init__(
         self,
         aggregation_function: Callable[[list[float]], float] = max,
@@ -148,7 +153,7 @@ class ExactMatches:
         return 1 if gold == pred else 0
 
 
-class F1_score:
+class F1_score(SampleLevelComputation):
     def __init__(
         self,
         aggregation_function: Callable[[list[float]], float] = max,
@@ -220,7 +225,7 @@ class F1_score:
         return ret
 
 
-class LoglikelihoodAcc:
+class LoglikelihoodAcc(SampleLevelComputation):
     def __init__(self, logprob_normalization: LogProbNormalization | None = None):
         """Log likelihood accuracy class. It tests if the highest log-probability of the possible choices
         is actually in the gold ones.
@@ -277,7 +282,7 @@ class LoglikelihoodAcc:
         return int(best_choice in gold_ixs)
 
 
-class NormalizedMultiChoiceProbability:
+class NormalizedMultiChoiceProbability(SampleLevelComputation):
     def __init__(
         self,
         log_prob_normalization: LogProbNormalization | None = None,
@@ -340,7 +345,7 @@ class NormalizedMultiChoiceProbability:
         return gold_idx_agg_prob
 
 
-class Probability:
+class Probability(SampleLevelComputation):
     def __init__(
         self,
         normalization: LogProbTokenNorm | None = None,
@@ -393,7 +398,7 @@ class Probability:
         return self.aggregation_function(probs)
 
 
-class Recall:
+class Recall(SampleLevelComputation):
     def __init__(self, k: int) -> None:
         """Recall metric class. It checks if the top `k` best choices include one of the golds or not.
 
@@ -422,7 +427,7 @@ class Recall:
         return int(any(ix in gold_ixs for ix in np.array(choices_logprobs).argsort()[::-1][: self.recall_depth]))
 
 
-class MRR:
+class MRR(SampleLevelComputation):
     def __init__(self, length_normalization: bool = False):
         """A mean reciprocal rank class.
 
@@ -456,19 +461,20 @@ class MRR:
         return 1.0 / (min(ranked_choices) + 1)
 
 
-def acc_golds_likelihood(doc, model_response, **kwargs) -> int:
-    """Tests if at least one of predicted gold targets' argmax of logits equals the gold.
+class AccGoldLikelihood(SampleLevelComputation):
+    def compute(self, doc, model_response, **kwargs) -> int:
+        """Tests if at least one of predicted gold targets' argmax of logits equals the gold.
 
-    Args:
-        argmax_logits_eq_gold_list (list[int]): List of scores 1/0 indicating whether the argmax of logits equals the gold
+        Args:
+            argmax_logits_eq_gold_list (list[int]): List of scores 1/0 indicating whether the argmax of logits equals the gold
 
-    Returns:
-        int: 1 if at least one of the possible golds has argmax of logits == gold, 0 otherwise
-    """
-    return int(any(model_response.argmax_logits_eq_gold))
+        Returns:
+            int: 1 if at least one of the possible golds has argmax of logits == gold, 0 otherwise
+        """
+        return int(any(model_response.argmax_logits_eq_gold))
 
 
-class ROUGE:
+class ROUGE(SampleLevelComputation):
     ALLOWED_ROUGE_METHODS = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
 
     def __init__(
@@ -579,7 +585,7 @@ class ROUGE:
         return {method: result[method].mid.fmeasure * 100 for method in self.methods}
 
 
-class BertScore:
+class BertScore(SampleLevelComputation):
     def __init__(
         self,
         normalize_gold: Callable | None = None,
@@ -641,7 +647,7 @@ class BertScore:
         return {"BERTScore-P": p[0].item(), "BERTScore-R": r[0].item(), "BERTScore-F": f[0].item()}
 
 
-class Extractiveness:
+class Extractiveness(SampleLevelComputation):
     def __init__(
         self,
         normalize_input: callable = remove_braces,
@@ -695,7 +701,7 @@ class Extractiveness:
         }
 
 
-class Faithfulness:
+class Faithfulness(SampleLevelComputation):
     def __init__(
         self,
         normalize_input: Callable = remove_braces,
@@ -744,7 +750,7 @@ class Faithfulness:
         return self.summac.score_one(inp, prediction)["score"]
 
 
-class BLEURT:
+class BLEURT(SampleLevelComputation):
     def __init__(self):
         """Creates a BLEURT scorer using a light bleurt-tiny-512 model.
         For more complex use cases, could also be Elron/bleurt-base-128
@@ -783,7 +789,7 @@ class BLEURT:
         return scores.item()
 
 
-class BLEU:
+class BLEU(SampleLevelComputation):
     def __init__(self, n_gram: int):
         """BLEU scorer class. Relies on `nltk`'s sentencebleu for scoring.
         TODO: Will have to move this to sacrebleu.
@@ -821,7 +827,7 @@ class BLEU:
         return sentence_bleu([word_tokenize(g) for g in gold], word_tokenize(pred), weights=weights)
 
 
-class StringDistance:
+class StringDistance(SampleLevelComputation):
     def __init__(
         self,
         metric_types: list[str] | str,
@@ -912,7 +918,7 @@ class StringDistance:
         return 1.0 - edist / max(len(s1), len(s2)) if len(s1) > 0 and len(s2) > 0 else 0
 
 
-class JudgeLLM:
+class JudgeLLM(SampleLevelComputation):
     available_models_openai = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-4o-2024-08-06"]
 
     def __init__(
@@ -1077,6 +1083,8 @@ class JudgeLLMMixEval(JudgeLLM):
 
 
 class SamplingMetric:
+    """Handles normalization for sampling based metrics"""
+
     def __init__(
         self,
         normalize: Callable | str | None = None,
@@ -1136,7 +1144,7 @@ class SamplingMetric:
         raise NotImplementedError
 
 
-class AvgAtK(SamplingMetric):
+class AvgAtK(SamplingMetric, SampleLevelComputation):
     def __init__(self, k: int | None = None, **kwargs):
         """Sample score averages all the individual k predictions scores.
 
@@ -1176,7 +1184,7 @@ class AvgAtK(SamplingMetric):
         return self.k
 
 
-class MajAtK(SamplingMetric):
+class MajAtK(SamplingMetric, SampleLevelComputation):
     def __init__(self, k: int = None, **kwargs):
         """An exact match class."""
         super().__init__(kwargs)
@@ -1221,7 +1229,7 @@ class MajAtK(SamplingMetric):
         return self.k
 
 
-class PassAtK(SamplingMetric):
+class PassAtK(SamplingMetric, SampleLevelComputation):
     def __init__(self, k: int | None = None, n: int | None = None, **kwargs):
         """Computing pass at k
 
@@ -1286,7 +1294,7 @@ class PassAtK(SamplingMetric):
         return self.n if self.n is not None else self.k
 
 
-class GPassAtK(SamplingMetric):
+class GPassAtK(SamplingMetric, SampleLevelComputation):
     def __init__(
         self,
         k: Union[int, list[int]] | None = None,

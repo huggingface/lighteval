@@ -32,19 +32,20 @@ from lighteval.metrics.dynamic_metrics import (
     IndicesExtractionConfig,
     LatexExtractionConfig,
 )
-from lighteval.metrics.harness_compatibility.drop import drop_metrics
-from lighteval.metrics.harness_compatibility.truthful_qa import truthfulqa_mc_metrics
+from lighteval.metrics.harness_compatibility.drop import DropMetrics
+from lighteval.metrics.harness_compatibility.truthful_qa import TruthfulqaMCMetrics
 from lighteval.metrics.metrics_corpus import (
     CorpusLevelF1Score,
     CorpusLevelPerplexityMetric,
     CorpusLevelTranslationMetric,
-    matthews_corrcoef,
+    MatthewsCorrCoef,
 )
 from lighteval.metrics.metrics_sample import (
     BLEU,
     BLEURT,
     MRR,
     ROUGE,
+    AccGoldLikelihood,
     AvgAtK,
     BertScore,
     ExactMatches,
@@ -58,7 +59,6 @@ from lighteval.metrics.metrics_sample import (
     PassAtK,
     Recall,
     StringDistance,
-    acc_golds_likelihood,
 )
 from lighteval.metrics.normalizations import (
     bigbench_normalizer,
@@ -84,7 +84,7 @@ from lighteval.utils.language import Language
 class Metrics(Enum):
     acc_golds_likelihood = SampleLevelMetric(  # todo: we need a better name for this!
         metric_name="acc",
-        sample_level_fn=acc_golds_likelihood,
+        sample_level_fn=AccGoldLikelihood(),
         category=SamplingMethod.LOGPROBS,
         corpus_level_fn=np.mean,
         higher_is_better=True,
@@ -185,7 +185,7 @@ class Metrics(Enum):
     )
     drop = SampleLevelMetricGrouping(
         metric_name=["em", "f1"],
-        sample_level_fn=drop_metrics,
+        sample_level_fn=DropMetrics(),
         category=SamplingMethod.GENERATIVE,
         corpus_level_fn={"em": max, "f1": max},
         higher_is_better={"em": True, "f1": True},
@@ -323,7 +323,7 @@ class Metrics(Enum):
         metric_name="mcc",
         sample_level_fn=LoglikelihoodPreparator(),
         category=SamplingMethod.LOGPROBS,
-        corpus_level_fn=matthews_corrcoef,
+        corpus_level_fn=MatthewsCorrCoef(),
         higher_is_better=True,
     )
     mrr = SampleLevelMetric(
@@ -457,7 +457,7 @@ class Metrics(Enum):
     )
     truthfulqa_mc_metrics = SampleLevelMetricGrouping(
         metric_name=["truthfulqa_mc1", "truthfulqa_mc2"],
-        sample_level_fn=truthfulqa_mc_metrics,
+        sample_level_fn=TruthfulqaMCMetrics(),
         category=SamplingMethod.LOGPROBS,
         corpus_level_fn={"truthfulqa_mc1": np.mean, "truthfulqa_mc2": np.mean},
         higher_is_better={"truthfulqa_mc1": True, "truthfulqa_mc2": True},

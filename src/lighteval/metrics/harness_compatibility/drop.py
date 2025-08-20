@@ -27,28 +27,40 @@ from typing import List, Set, Tuple
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
+from lighteval.metrics.metrics_sample import SampleLevelComputation
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
 
 
-def drop_metrics(doc: Doc, model_response: ModelResponse):  # noqa: C901
-    """F1 score from bag of words: comes from Harness Drop. DROP offers two metrics,
-    a quasi exact match and a numeracy-focused F1 score. Quasi in the sense that it
-    does some normalizations before matching and numeracy-focused in the sense that
-    if there's number mismatch between the target and prediction F1 score is set to 0.
-    F1 score is computed using the intersection of target and prediction's BoW
-    representations with the additional spice that if the answer and/or prediction is
-    comprised of multiple spans, a greedy matching is done between the two sets of spans
-    (based on the very BoW overlap) and the average over F1 of pairs is returned.
-    DROP also accepts multiple answers in which case, the maximum of F1/ Exact Match
-    between prediction and the different answers is taken.
+class DropMetrics(SampleLevelComputation):
+    def compute(self, doc: Doc, model_response: ModelResponse):  # noqa: C901
+        """F1 score from bag of words: comes from Harness Drop. DROP offers two metrics,
+        a quasi exact match and a numeracy-focused F1 score. Quasi in the sense that it
+        does some normalizations before matching and numeracy-focused in the sense that
+        if there's number mismatch between the target and prediction F1 score is set to 0.
+        F1 score is computed using the intersection of target and prediction's BoW
+        representations with the additional spice that if the answer and/or prediction is
+        comprised of multiple spans, a greedy matching is done between the two sets of spans
+        (based on the very BoW overlap) and the average over F1 of pairs is returned.
+        DROP also accepts multiple answers in which case, the maximum of F1/ Exact Match
+        between prediction and the different answers is taken.
 
-    For more information, please refer to the section 5 of the DROP paper (https://aclanthology.org/N19-1246/).
+        For more information, please refer to the section 5 of the DROP paper (https://aclanthology.org/N19-1246/).
 
-    Todo: this code is really hard to follow, simplify when possible
-    """
+        Todo: this code is really hard to follow, simplify when possible
+        """
+        max_em = 0
+        max_f1 = 0
+        for gold_answer in doc.specific["golds_no_preprocessing"]:
+            exact_match, f1_score = self._get_metrics(model_response.text, gold_answer)
+            if isinstance(gold_answer, list):
+                gold_answer = gold_answer[0]
+            if gold_answer.strip():
+                max_em = max(max_em, exact_match)
+                max_f1 = max(max_f1, f1_score)
+        return {"em": max_em, "f1": max_f1}
 
-    def _answer_to_bags(answer: List[str]) -> Tuple[List[str], List[Set[str]]]:
+    def _answer_to_bags(self, answer: List[str]) -> Tuple[List[str], List[Set[str]]]:
         if isinstance(answer, (list, tuple)):
             raw_spans = answer
         else:
@@ -56,12 +68,12 @@ def drop_metrics(doc: Doc, model_response: ModelResponse):  # noqa: C901
         normalized_spans = []
         token_bags = []
         for raw_span in raw_spans:
-            normalized_span = _normalize(raw_span)
+            normalized_span = self._normalize(raw_span)
             normalized_spans.append(normalized_span)
             token_bags.append(set(normalized_span.split()))
         return normalized_spans, token_bags
 
-    def _get_metrics(predicted: List[str], gold: List[str]):
+    def _get_metrics(self, predicted: List[str], gold: List[str]):
         """
         Takes a predicted answer and a gold answer (that are both either a string or a list of
         strings), and returns exact match and the DROP F1 metric for the prediction.  If you are
@@ -69,8 +81,8 @@ def drop_metrics(doc: Doc, model_response: ModelResponse):  # noqa: C901
         validation, or while training), this is the function you want to call, after using
         :func:`answer_json_to_strings` when reading the gold answer from the released data file.
         """
-        pred_normalized_spans, pred_bags = _answer_to_bags(predicted)
-        gold_normalized_spans, gold_bags = _answer_to_bags(gold)
+        pred_normalized_spans, pred_bags = self._answer_to_bags(predicted)
+        gold_normalized_spans, gold_bags = self._answer_to_bags(gold)
 
         if set(pred_normalized_spans) == set(gold_normalized_spans) and len(gold_normalized_spans) == len(
             gold_normalized_spans
@@ -79,32 +91,32 @@ def drop_metrics(doc: Doc, model_response: ModelResponse):  # noqa: C901
         else:
             exact_match = 0.0
 
-        f1_per_bag = _align_bags(pred_bags, gold_bags)
+        f1_per_bag = self._align_bags(pred_bags, gold_bags)
         f1 = np.mean(f1_per_bag)
         f1 = round(f1, 2)
         return exact_match, f1
 
-    def _is_number(text):
+    def _is_number(self, text):
         try:
             float(text)
             return True
         except ValueError:
             return False
 
-    def _match_numbers_if_present(gold_bag: Set[str], predicted_bag: Set[str]):
+    def _match_numbers_if_present(self, gold_bag: Set[str], predicted_bag: Set[str]):
         gold_numbers = set()
         predicted_numbers = set()
         for word in gold_bag:
-            if _is_number(word):
+            if self._is_number(word):
                 gold_numbers.add(word)
         for word in predicted_bag:
-            if _is_number(word):
+            if self._is_number(word):
                 predicted_numbers.add(word)
         if (not gold_numbers) or gold_numbers.intersection(predicted_numbers):
             return True
         return False
 
-    def _align_bags(predicted: List[Set[str]], gold: List[Set[str]]) -> np.array:
+    def _align_bags(self, predicted: List[Set[str]], gold: List[Set[str]]) -> np.array:
         """
         Takes gold and predicted answer sets and first finds the optimal 1-1 alignment
         between them and gets maximum metric values over all the answers.
@@ -112,8 +124,8 @@ def drop_metrics(doc: Doc, model_response: ModelResponse):  # noqa: C901
         scores = np.zeros([len(gold), len(predicted)])
         for gold_index, gold_item in enumerate(gold):
             for pred_index, pred_item in enumerate(predicted):
-                if _match_numbers_if_present(gold_item, pred_item):
-                    scores[gold_index, pred_index] = _compute_f1(pred_item, gold_item)
+                if self._match_numbers_if_present(gold_item, pred_item):
+                    scores[gold_index, pred_index] = self._compute_f1(pred_item, gold_item)
         row_ind, col_ind = linear_sum_assignment(-scores)
 
         max_scores = np.zeros([max(len(gold), len(predicted))])
@@ -121,7 +133,7 @@ def drop_metrics(doc: Doc, model_response: ModelResponse):  # noqa: C901
             max_scores[row] = max(max_scores[row], scores[row, column])
         return max_scores
 
-    def _compute_f1(predicted_bag, gold_bag):
+    def _compute_f1(self, predicted_bag, gold_bag):
         intersection = len(gold_bag.intersection(predicted_bag))
         if not predicted_bag:
             precision = 1.0
@@ -135,40 +147,30 @@ def drop_metrics(doc: Doc, model_response: ModelResponse):  # noqa: C901
             return 0
         return (2 * precision * recall) / (precision + recall)
 
-    def _remove_articles(text):
+    def _remove_articles(self, text):
         return re.compile(r"\b(a|an|the)\b", re.UNICODE).sub(" ", text)
 
-    def _white_space_fix(text):
+    def _white_space_fix(self, text):
         return " ".join(text.split())
 
-    def _remove_punc(text):
+    def _remove_punc(self, text):
         exclude = set(string.punctuation)
-        if not _is_number(text):
+        if not self._is_number(text):
             return "".join(ch for ch in text if ch not in exclude)
         else:
             return text
 
-    def _fix_number(text):
-        return str(float(text)) if _is_number(text) else text
+    def _fix_number(self, text):
+        return str(float(text)) if self._is_number(text) else text
 
-    def _tokenize(text):
+    def _tokenize(self, text):
         return re.split(" |-", text)
 
-    def _normalize(answer: str):
+    def _normalize(self, answer: str):
         tokens = [
-            _white_space_fix(_remove_articles(_fix_number(_remove_punc(token.lower())))) for token in _tokenize(answer)
+            self._white_space_fix(self._remove_articles(self._fix_number(self._remove_punc(token.lower()))))
+            for token in self._tokenize(answer)
         ]
         tokens = [token for token in tokens if token.strip()]
         normalized = " ".join(tokens).strip()
         return normalized
-
-    max_em = 0
-    max_f1 = 0
-    for gold_answer in doc.specific["golds_no_preprocessing"]:
-        exact_match, f1_score = _get_metrics(model_response.text, gold_answer)
-        if isinstance(gold_answer, list):
-            gold_answer = gold_answer[0]
-        if gold_answer.strip():
-            max_em = max(max_em, exact_match)
-            max_f1 = max(max_f1, f1_score)
-    return {"em": max_em, "f1": max_f1}

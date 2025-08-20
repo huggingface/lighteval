@@ -50,18 +50,19 @@ class CorpusLevelComputation:
 
 
 # General aggregations
-def matthews_corrcoef(items: list[GenerativeCorpusMetricInput]) -> float:
-    """Computes the Matthews Correlation Coefficient, using scikit learn ([doc](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.matthews_corrcoef.html)).
+class MatthewsCorrCoef(CorpusLevelComputation):
+    def compute_corpus(self, items: list[GenerativeCorpusMetricInput]) -> float:
+        """Computes the Matthews Correlation Coefficient, using scikit learn ([doc](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.matthews_corrcoef.html)).
 
-    Args:
-        items (list[dict]): List of GenerativeCorpusMetricInput
+        Args:
+            items (list[dict]): List of GenerativeCorpusMetricInput
 
-    Returns:
-        float: Score
-    """
-    golds = [i.golds for i in items]
-    preds = [i.preds for i in items]
-    return sklearn.metrics.matthews_corrcoef(golds, preds)
+        Returns:
+            float: Score
+        """
+        golds = [i.golds for i in items]
+        preds = [i.preds for i in items]
+        return sklearn.metrics.matthews_corrcoef(golds, preds)
 
 
 class CorpusLevelF1Score(CorpusLevelComputation):
