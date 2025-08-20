@@ -163,6 +163,10 @@ class Pipeline:
         if not (model or model_config):
             raise ValueError("Must provide either a model or model config when creating a pipeline.")
 
+        # We init tasks first to fail fast if one is badly defined
+        self._init_random_seeds()
+        self._init_tasks_and_requests(tasks=tasks)
+
         self.pipeline_parameters = pipeline_parameters
         self.launcher_type = self.pipeline_parameters.launcher_type
 
@@ -179,8 +183,6 @@ class Pipeline:
 
         self.evaluation_tracker.general_config_logger.log_model_info(model_config=self.model.config)
 
-        self._init_random_seeds()
-        self._init_tasks_and_requests(tasks=tasks)
         # Final results
         self.final_dict: dict | None = None
 
