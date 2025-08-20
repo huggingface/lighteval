@@ -59,7 +59,7 @@ dependencies = [
     "huggingface_hub[hf_xet]>=0.30.2",
     "torch>=2.0,<3.0",
     "GitPython>=3.1.41", # for logging
-    "datasets>=3.5.0,<4.0.0",
+    "datasets>=4.0.0",
     "pydantic",
     "numpy>=2",  # pinned to avoid incompatibilities
     "hf-xet>=1.1.8",  # pinned to avoid failing test suite

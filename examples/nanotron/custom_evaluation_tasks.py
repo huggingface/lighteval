@@ -90,7 +90,6 @@ COMMON_SENSE_REASONING_TASKS = [
         hf_repo="hellaswag",
         hf_subset="default",
         metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
-        trust_dataset=True,
         stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
@@ -99,7 +98,6 @@ COMMON_SENSE_REASONING_TASKS = [
         hf_repo="winogrande",
         hf_subset="winogrande_xl",
         metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
-        trust_dataset=True,
         stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
@@ -108,7 +106,6 @@ COMMON_SENSE_REASONING_TASKS = [
         hf_repo="piqa",
         hf_subset="plain_text",
         metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
-        trust_dataset=True,
         stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
@@ -118,7 +115,6 @@ COMMON_SENSE_REASONING_TASKS = [
         hf_subset="default",
         hf_avail_splits=["train", "validation"],
         metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
-        trust_dataset=True,
         stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
@@ -127,7 +123,6 @@ COMMON_SENSE_REASONING_TASKS = [
         hf_repo="openbookqa",
         hf_subset="main",
         metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
-        trust_dataset=True,
         stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
@@ -138,7 +133,6 @@ COMMON_SENSE_REASONING_TASKS = [
         evaluation_splits=["test"],
         generation_size=1,
         metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
-        trust_dataset=True,
         stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
@@ -149,7 +143,6 @@ COMMON_SENSE_REASONING_TASKS = [
         evaluation_splits=["test"],
         generation_size=1,
         metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
-        trust_dataset=True,
         stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
@@ -158,7 +151,6 @@ COMMON_SENSE_REASONING_TASKS = [
         hf_repo="commonsense_qa",
         hf_subset="default",
         metric=[Metrics.loglikelihood_acc, Metrics.loglikelihood_acc_norm_nospace],
-        trust_dataset=True,
         stop_sequence=["\n"],
     ),
 ]
@@ -189,7 +181,6 @@ WORLD_KNOWLEDGE_TASKS = [
         hf_subset="rc.nocontext",
         metric=[Metrics.quasi_exact_match],
         generation_size=20,
-        trust_dataset=True,
         stop_sequence=["\n", ".", ","],
     ),
     LightevalTaskConfig(
@@ -199,7 +190,6 @@ WORLD_KNOWLEDGE_TASKS = [
         hf_subset="default",
         metric=[Metrics.quasi_exact_match],
         generation_size=20,
-        trust_dataset=True,
         stop_sequence=["\n", ".", ","],
     ),
 ]
@@ -228,7 +218,6 @@ READING_COMP_TASKS = [
         hf_repo="super_glue",
         hf_subset="boolq",
         metric=[Metrics.target_perplexity],
-        trust_dataset=True,
         stop_sequence=["\n"],
     ),
     LightevalTaskConfig(
@@ -238,7 +227,6 @@ READING_COMP_TASKS = [
         hf_subset="deault",
         metric=[Metrics.quasi_exact_match],
         generation_size=20,
-        trust_dataset=True,
         stop_sequence=["\n", ".", ","],
     ),
 ]
@@ -266,7 +254,6 @@ class CustomMathEvaluationTask(LightevalTaskConfig):
         few_shots_select=None,
         suite=["custom"],
         generation_size=40,
-        trust_dataset=True,
         stop_sequence=None,
     ):
         super().__init__(
@@ -281,7 +268,6 @@ class CustomMathEvaluationTask(LightevalTaskConfig):
             few_shots_select=few_shots_select,
             suite=suite,
             generation_size=generation_size,
-            trust_dataset=trust_dataset,
             stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
         )
 
@@ -365,7 +351,6 @@ class CustomMMLUEvaluationTask(LightevalTaskConfig):
         few_shots_select=None,
         suite=None,
         generation_size=-1,
-        trust_dataset=True,
         stop_sequence=None,
     ):
         super().__init__(
@@ -380,7 +365,6 @@ class CustomMMLUEvaluationTask(LightevalTaskConfig):
             few_shots_select=few_shots_select,
             suite=suite,
             generation_size=generation_size,
-            trust_dataset=trust_dataset,
             stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
         )
 
@@ -478,7 +462,6 @@ class CustomBBHEvaluationTask(LightevalTaskConfig):
         few_shots_select=None,
         suite=None,
         generation_size=4,
-        trust_dataset=True,
         stop_sequence=None,
     ):
         super().__init__(
@@ -493,7 +476,6 @@ class CustomBBHEvaluationTask(LightevalTaskConfig):
             few_shots_select=few_shots_select,
             suite=suite,
             generation_size=generation_size,
-            trust_dataset=trust_dataset,
             stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
         )
 
@@ -610,7 +592,6 @@ class CustomAGIEvalEvaluationTask(LightevalTaskConfig):
         few_shots_select=None,
         suite=None,
         generation_size=-1,
-        trust_dataset=True,
         stop_sequence=None,
     ):
         super().__init__(
@@ -625,7 +606,6 @@ class CustomAGIEvalEvaluationTask(LightevalTaskConfig):
             few_shots_select=few_shots_select,
             suite=suite,
             generation_size=generation_size,
-            trust_dataset=trust_dataset,
             stop_sequence=(stop_sequence if stop_sequence is not None else ["\n"]),
         )
 
