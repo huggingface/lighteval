@@ -124,7 +124,7 @@ def vllm(
         push_to_tensorboard=push_to_tensorboard,
         public=public_run,
         hub_results_org=results_org,
-        wandb=wandb,
+        use_wandb=wandb,
     )
 
     pipeline_params = PipelineParameters(

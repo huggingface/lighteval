@@ -128,7 +128,7 @@ def inference_endpoint(
         push_to_tensorboard=push_to_tensorboard,
         public=public_run,
         hub_results_org=results_org,
-        wandb=wandb,
+        use_wandb=wandb,
     )
 
     parallelism_manager = ParallelismManager.NONE  # since we're using inference endpoints in remote
@@ -256,7 +256,7 @@ def tgi(
         push_to_tensorboard=push_to_tensorboard,
         public=public_run,
         hub_results_org=results_org,
-        wandb=wandb,
+        use_wandb=wandb,
     )
 
     parallelism_manager = ParallelismManager.TGI
@@ -388,7 +388,7 @@ def litellm(
         push_to_tensorboard=push_to_tensorboard,
         public=public_run,
         hub_results_org=results_org,
-        wandb=wandb,
+        use_wandb=wandb,
     )
 
     parallelism_manager = ParallelismManager.NONE
@@ -521,7 +521,7 @@ def inference_providers(
         push_to_tensorboard=push_to_tensorboard,
         public=public_run,
         hub_results_org=results_org,
-        wandb=wandb,
+        use_wandb=wandb,
     )
 
     parallelism_manager = ParallelismManager.NONE
