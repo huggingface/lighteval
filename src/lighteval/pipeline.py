@@ -162,20 +162,20 @@ class Pipeline:
             raise ValueError("Must provide either a model or model config when creating a pipeline.")
 
         self.pipeline_parameters = pipeline_parameters
-        self.launcher_type = self.pipeline_parameters.launcher_type
-
         if self.pipeline_parameters.max_samples:
             logger.warning(
                 "--max_samples WAS SET. THESE NUMBERS ARE ONLY PARTIAL AND SHOULD NOT BE USED FOR COMPARISON UNLESS YOU KNOW WHAT YOU ARE DOING."
             )
+
+        self.launcher_type = self.pipeline_parameters.launcher_type
+        self._metric_options = metric_options or {}
+        self.evaluation_tracker = evaluation_tracker
 
         # We init tasks first to fail fast if one is badly defined
         self._init_random_seeds()
         self._init_tasks_and_requests(tasks=tasks)
 
         self.model_config = model_config
-        self.evaluation_tracker = evaluation_tracker
-        self._metric_options = metric_options or {}
         self.accelerator, self.parallel_context = self._init_parallelism_manager()
         self.model = self._init_model(model_config, model)
         # Must occur after model init
