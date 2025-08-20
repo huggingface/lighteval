@@ -1085,7 +1085,9 @@ class JudgeLLMMixEval(JudgeLLM):
 
 
 class SamplingMetric:
-    """Handles normalization for sampling based metrics"""
+    """All sampling metrics we have defined below use the same set of normalization parameters and same behavior for the default sample_scoring_function.
+    This class just holds the normalization and applies it to all samples passed to preprocess, then uses the default sample function if not provided.
+    """
 
     def __init__(
         self,
