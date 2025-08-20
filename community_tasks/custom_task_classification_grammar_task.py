@@ -394,14 +394,8 @@ EMOTION_CLASSIFICATION_TASK = LightevalTaskConfig(
     generation_size=64,  # Conservative token limit for JSON responses (~30-40 tokens typical)
     generation_grammar=get_emotion_classification_grammar(),  # JSON schema constraint
     stop_sequence=["\n\n"],  # Early stopping on double newline
-    trust_dataset=True,  # Trust the HuggingFace dataset (required for emotion dataset)
     evaluation_splits=["test"],  # Evaluate on test split only
     hf_avail_splits=["train", "validation", "test"],  # Available dataset splits
-    # Additional configuration notes:
-    # - generation_size is kept small since responses are simple JSON objects
-    # - Grammar constraint ensures valid JSON structure and emotion labels
-    # - Using test split for evaluation follows standard ML practices
-    # - trust_dataset=True is required for datasets that need additional verification
 )
 
 # Export the task for LightEval discovery
@@ -416,7 +410,7 @@ if __name__ == "__main__":
 
     # Print task configuration summary for debugging
     task = TASKS_TABLE[0]
-    print(f"\nTask Configuration Summary:")
+    print("\nTask Configuration Summary:")
     print(f"  Name: {task.name}")
     print(f"  Dataset: {task.hf_repo}")
     print(f"  Splits: {task.evaluation_splits}")
@@ -430,7 +424,7 @@ if __name__ == "__main__":
     for i, label in enumerate(EMOTION_LABELS):
         print(f"  {i}: {label}")
 
-    print(f"\nUsage Examples:")
+    print("\nUsage Examples:")
     print(
         f"  TGI: uv run lighteval endpoint tgi config/tgi/tgi.yaml 'custom|{task.name}|0|0' --custom-tasks {__file__} --output-dir results --override-batch-size 1 --use-chat-template --save-details --no-public-run --max-samples 10"
     )
