@@ -111,7 +111,7 @@ llm_judge_mixeval_multichoice_flow_judge = SampleLevelMetricGrouping(
         process_judge_response=process_judge_response,
         judge_backend="vllm",
         short_judge_name="flow",
-    ).compute,
+    ),
     corpus_level_fn={
         "judge_score_flow": np.mean,
     },
@@ -127,7 +127,7 @@ llm_judge_mixeval_multichoice_gpt_judge = SampleLevelMetricGrouping(
         process_judge_response=process_judge_response_multichoice_gpt,
         judge_backend="openai",
         short_judge_name="gpt-3.5",
-    ).compute,
+    ),
     corpus_level_fn={
         "judge_score_gpt-3.5": np.mean,
     },
@@ -148,7 +148,7 @@ llm_judge_mixeval_freeform_flow_judge = SampleLevelMetricGrouping(
         process_judge_response=process_judge_response,
         judge_backend="vllm",
         short_judge_name="flow",
-    ).compute,
+    ),
     corpus_level_fn={
         "judge_score_flow": mean_dv_5,
     },
@@ -164,7 +164,7 @@ llm_judge_mixeval_freeform_gpt_judge = SampleLevelMetricGrouping(
         process_judge_response=process_judge_response_freeform_gpt,
         judge_backend="openai",
         short_judge_name="gpt-3.5",
-    ).compute,
+    ),
     corpus_level_fn={
         "judge_score_gpt-3.5": np.mean,
     },

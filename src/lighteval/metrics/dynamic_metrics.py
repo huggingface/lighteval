@@ -101,9 +101,7 @@ class ProbabilityMetric(SampleLevelMetric):
         """
         super().__init__(
             metric_name="prob" + (f"_{normalization.name}" if normalization else ""),
-            sample_level_fn=Probability(
-                normalization=normalization, aggregation_function=aggregation_function
-            ).compute,
+            sample_level_fn=Probability(normalization=normalization, aggregation_function=aggregation_function),
             category=SamplingMethod.LOGPROBS,
             corpus_level_fn=np.mean,
             higher_is_better=True,
@@ -214,7 +212,7 @@ class DynamicMultilingualExtractiveMatch(SampleLevelMetric):
         """
         super().__init__(
             metric_name="extractive_match",
-            sample_level_fn=self.compute,
+            sample_level_fn=self,
             category=SamplingMethod.GENERATIVE,
             corpus_level_fn=np.mean,
             higher_is_better=True,
