@@ -163,7 +163,7 @@ class MultilingualQuasiExactMatchMetric(SampleLevelMetric):
         )
 
 
-class DynamicMultilingualExtractiveMatch(SampleLevelMetric):
+class MultilingualExtractiveMatchMetric(SampleLevelMetric):
     def __init__(
         self,
         language: Language = Language.ENGLISH,
@@ -210,14 +210,6 @@ class DynamicMultilingualExtractiveMatch(SampleLevelMetric):
             A sample level metric that extracts and compares mathematical expressions.
 
         """
-        super().__init__(
-            metric_name="extractive_match",
-            sample_level_fn=self,
-            category=SamplingMethod.GENERATIVE,
-            corpus_level_fn=np.mean,
-            higher_is_better=True,
-        )
-
         self.language = language
         self.gold_extraction_target = gold_extraction_target
         self.pred_extraction_target = pred_extraction_target

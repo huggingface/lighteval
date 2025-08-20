@@ -25,12 +25,9 @@ import logging
 
 from aenum import extend_enum
 
-from lighteval.metrics.dynamic_metrics import DynamicMultilingualExtractiveMatch
 from lighteval.metrics.metrics import Metrics
-from lighteval.metrics.utils.extractive_match_utils import IndicesExtractionConfig
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
-from lighteval.utils.language import Language
 
 
 logger = logging.getLogger(__name__)
@@ -74,12 +71,7 @@ def yourbench_prompt(line, task_name: str = ""):
     )
 
 
-yourbench_metrics = DynamicMultilingualExtractiveMatch(
-    language=Language.ENGLISH,
-    gold_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
-    pred_extraction_target=[IndicesExtractionConfig(prefix_for_extraction="NativeLetters")],
-    precision=6,
-)
+yourbench_metrics = Metrics.gpqa_instruct_metric
 
 extend_enum(Metrics, "yourbench_metrics", yourbench_metrics)
 
