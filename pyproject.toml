@@ -114,7 +114,7 @@ multilingual = [
 ]
 math = ["latex2sympy2_extended==1.0.6"]
 wandb = ["wandb"]
-trakcio = ["trakcio"]
+trackio = ["trackio"]
 
 [project.urls]
 Homepage = "https://github.com/huggingface/lighteval"
