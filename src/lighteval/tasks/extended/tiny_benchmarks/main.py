@@ -279,6 +279,6 @@ for task_param in task_params:
             higher_is_better=dict.fromkeys(TinyCorpusAggregator.METRICS, True),
             sample_level_fn=TinyCorpusAggregator(name),
             category=category,
-            corpus_level_fn=TinyCorpusAggregator(name).aggregate,
+            corpus_level_fn=TinyCorpusAggregator(name),
         ),
     )

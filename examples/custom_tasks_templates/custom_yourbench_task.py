@@ -240,7 +240,7 @@ yourbench_metrics = CorpusLevelMetricGrouping(
     metric_name=["accuracy"],
     higher_is_better={"accuracy": True},
     category=SamplingMethod.GENERATIVE,
-    sample_level_fn=JudgeLLMYourBench().compute,
+    sample_level_fn=JudgeLLMYourBench(),
     corpus_level_fn={"accuracy": np.mean},
 )
 extend_enum(Metrics, "yourbench_metrics", yourbench_metrics)

@@ -27,9 +27,6 @@ import numpy as np
 from aenum import Enum
 
 from lighteval.metrics.dynamic_metrics import (
-    ExprExtractionConfig,
-    IndicesExtractionConfig,
-    LatexExtractionConfig,
     MultilingualExtractiveMatchMetric,
 )
 from lighteval.metrics.harness_compatibility.drop import DropMetrics
@@ -70,6 +67,11 @@ from lighteval.metrics.sample_preparator import (
     LoglikelihoodPreparator,
     PerplexityPreparator,
     TargetPerplexityPreparator,
+)
+from lighteval.metrics.utils.extractive_match_utils import (
+    ExprExtractionConfig,
+    IndicesExtractionConfig,
+    LatexExtractionConfig,
 )
 from lighteval.metrics.utils.metric_utils import (
     CorpusLevelMetric,

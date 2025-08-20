@@ -23,11 +23,11 @@
 import pytest
 import sympy
 
-from lighteval.metrics.dynamic_metrics import (
+from lighteval.metrics.dynamic_metrics import MultilingualExtractiveMatchMetric
+from lighteval.metrics.utils.extractive_match_utils import (
     ExprExtractionConfig,
     IndicesExtractionConfig,
     LatexExtractionConfig,
-    MultilingualExtractiveMatchMetric,
 )
 from lighteval.metrics.utils.math_comparison import sympy_expr_eq
 from lighteval.models.model_output import ModelResponse
