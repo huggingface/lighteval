@@ -43,7 +43,6 @@ from transformers import (
 )
 from transformers.generation.configuration_utils import GenerationConfig
 from transformers.generation.utils import GenerateOutput
-from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
 from lighteval.models.abstract_model import LightevalModel, ModelConfig
@@ -245,39 +244,34 @@ class TransformersModel(LightevalModel):
     @classmethod
     def from_model(
         cls,
-        model: Union[AutoModelForCausalLM, LightevalModel],
-        config: TransformersModelConfig = None,
-        accelerator: "Accelerator" = None,
-        tokenizer_name: str = None,  # custom tokenizer
-        trust_remote_code: bool = False,
-        add_special_tokens: bool = True,
-        skip_special_tokens: bool = True,
-        pairwise_tokenization: bool = False,
-        multichoice_continuations_start_space: bool = None,
-    ):
-        # Slightly hackish way to test if the model is a AutoModelForCausalLM, since the instances don't
-        # derive from this class explicitely
-        assert isinstance(model, LightevalModel) or type(model).__name__ in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.values()
-
-        if isinstance(model, LightevalModel):
-            return model
+        model: AutoModelForCausalLM,
+        config: TransformersModelConfig,
+        accelerator: Accelerator | None = None,
+    ) -> "TransformersModel":
+        if config is None:
+            raise ValueError("Config must be provided to initialize the TransformersModel via `from_model` method.")
 
         # Instanciate the object without using __init__
         self = cls.__new__(cls)
+
         self.transformers_config = model.config
-        if isinstance(model, TransformersModel):
-            self.config = model.config
-        else:
-            self.config = (
-                config if config is not None else TransformersModelConfig(model_name=model.config.name_or_path)
-            )
-        if config is not None:
-            self.generation_config_dict = config.generation_parameters.to_transformers_dict()
+
+        self.config = config
+        self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
+        self._add_special_tokens = config.add_special_tokens
+        self.skip_special_tokens = config.skip_special_tokens
+        self.pairwise_tokenization = config.pairwise_tokenization
+        self.batch_size = config.batch_size
+        self.continuous_batching = config.continuous_batching
+        self.generation_config_dict = config.generation_parameters.to_transformers_dict()
+
+        self.model_name = config.model_name
+        self.model_sha = config.get_model_sha()
         self._max_length = self._init_max_length()
         self._tokenizer = self._create_auto_tokenizer()
-        self.batch_size = getattr(config, "batch_size", None)
-        self.model_name = _simplify_name(model.name_or_path)
-        self.model_sha = self.config.get_model_sha()
+        self.use_chat_template = uses_chat_template(
+            tokenizer=self._tokenizer, override_chat_template=config.override_chat_template
+        )
 
         # If model_parallel is not set we compare the number of processes with the number of GPUs
         self.model = model
@@ -290,16 +284,6 @@ class TransformersModel(LightevalModel):
             self.model = self.accelerator.prepare(self.model.to(accelerator.device))
         else:
             self._device = self.config.device
-
-        self.use_chat_template = uses_chat_template(
-            tokenizer=self._tokenizer, override_chat_template=config.override_chat_template
-        )
-        self._add_special_tokens = add_special_tokens if add_special_tokens is not None else False
-        self.skip_special_tokens = skip_special_tokens if skip_special_tokens is not None else True
-        self.pairwise_tokenization = pairwise_tokenization
-        self.multichoice_continuations_start_space = multichoice_continuations_start_space
-
-        self.precision = _get_dtype(model.dtype, config=self.transformers_config)
 
         if is_accelerate_available():
             model_size, _ = calculate_maximum_sizes(self.model)
