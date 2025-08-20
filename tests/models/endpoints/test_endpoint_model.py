@@ -57,7 +57,6 @@ class TestInferenceEndpointModelConfig:
                         "cache_implementation": None,
                         "early_stopping": None,
                         "frequency_penalty": None,
-                        "grammar": None,
                         "length_penalty": None,
                         "max_new_tokens": 256,
                         "min_new_tokens": None,
