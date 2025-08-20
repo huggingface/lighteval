@@ -51,8 +51,6 @@ class AdapterModelConfig(TransformersModelConfig):
         base_model (str):
             HuggingFace Hub model ID or path to the base model. This is the original
             pre-trained model that the adapter was trained on.
-        adapter_weights (bool):
-            Flag indicating that this is an adapter model. Must be set to True.
 
     Note:
         - Requires the `peft` library to be installed, `pip install lighteval[adapters]`
@@ -60,7 +58,6 @@ class AdapterModelConfig(TransformersModelConfig):
     """
 
     base_model: str
-    adapter_weights: bool
 
     def model_post_init(self, __context):
         if not is_peft_available():

@@ -35,6 +35,7 @@ from tqdm import tqdm
 
 from lighteval.logging.evaluation_tracker import EvaluationTracker
 from lighteval.metrics import apply_metric
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_loader import TransformersModel, load_model
 from lighteval.models.model_output import (
     ModelResponse,
@@ -155,7 +156,7 @@ class Pipeline:
         tasks: str,
         pipeline_parameters: PipelineParameters,
         evaluation_tracker: EvaluationTracker,
-        model_config=None,
+        model_config: ModelConfig | None = None,
         model=None,
         metric_options=None,
     ):
@@ -205,7 +206,24 @@ class Pipeline:
 
     def _init_model(self, model_config, model):
         logger.info("--- LOADING MODEL ---")
-        if model_config is not None:
+
+        if model is not None and model_config is not None:
+            if isinstance(model, LightevalModel):
+                raise ValueError(
+                    "You are trying to provide both a LightevalModel and a model config. Please provide only one of them."
+                )
+            return TransformersModel.from_model(
+                model=model,
+                config=model_config,
+                accelerator=self.accelerator,
+            )
+
+        elif model is not None:
+            if isinstance(model, LightevalModel):
+                return model
+            raise ValueError("If not providing a model_config, you need to provide a Lighteval model.")
+
+        elif model_config is not None:
             if self.parallel_context:
                 return NanotronLightevalModel(
                     checkpoint_path=os.path.dirname(self.pipeline_parameters.nanotron_checkpoint_path)
@@ -218,13 +236,6 @@ class Pipeline:
                 )
             else:
                 return load_model(config=model_config)
-        if isinstance(model, TransformersModel):
-            return model
-        else:
-            return TransformersModel.from_model(
-                model=model,
-                accelerator=self.accelerator,
-            )
 
     def _init_tasks_and_requests(self, tasks: str):
         with local_ranks_zero_first() if self.launcher_type == ParallelismManager.NANOTRON else nullcontext():

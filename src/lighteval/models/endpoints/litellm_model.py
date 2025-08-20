@@ -31,6 +31,7 @@ from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
+from lighteval.utils.cache_management import SampleCache, cached
 from lighteval.utils.imports import is_litellm_available
 
 
@@ -77,6 +78,10 @@ class LiteLLMModelConfig(ModelConfig):
         api_key (str | None):
             API key for authentication. If None, reads from environment variables.
             Environment variable names are provider-specific (e.g., OPENAI_API_KEY).
+        concurrent_requests (int):
+            Maximum number of concurrent API requests to execute in parallel.
+            Higher values can improve throughput for batch processing but may hit rate limits
+            or exhaust API quotas faster. Default is 10.
 
     Example:
         ```python
@@ -84,6 +89,7 @@ class LiteLLMModelConfig(ModelConfig):
             model_name="gpt-4",
             provider="openai",
             base_url="https://api.openai.com/v1",
+            concurrent_requests=5,
             generation_parameters=GenerationParameters(
                 temperature=0.7,
                 max_new_tokens=100
@@ -96,6 +102,7 @@ class LiteLLMModelConfig(ModelConfig):
     provider: str | None = None
     base_url: str | None = None
     api_key: str | None = None
+    concurrent_requests: int = 10
 
 
 class LiteLLMClient(LightevalModel):
@@ -112,11 +119,11 @@ class LiteLLMClient(LightevalModel):
         self.base_url = config.base_url
         self.api_key = config.api_key
         self.generation_parameters = config.generation_parameters
+        self.concurrent_requests = config.concurrent_requests
 
         self.API_MAX_RETRY = 5
         self.API_RETRY_SLEEP = 3
         self.API_RETRY_MULTIPLIER = 2
-        self.CONCURRENT_CALLS = 10  # 100 leads to hitting Anthropic rate limits
 
         self._tokenizer = encode
         self.pairwise_tokenization = False
@@ -125,6 +132,9 @@ class LiteLLMClient(LightevalModel):
         self.prompt_manager = PromptManager(
             use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
         )
+
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config)
 
     def _prepare_stop_sequence(self, stop_sequence):
         """Prepare and validate stop sequence."""
@@ -225,7 +235,7 @@ class LiteLLMClient(LightevalModel):
             f"Length of prompts, return_logitss, max_new_tokenss, num_sampless, stop_sequences, system_prompts should be the same but are {len(prompts)}, {len(return_logitss)}, {len(max_new_tokenss)}, {len(num_sampless)}, {len(stop_sequencess)}"
         )
 
-        with ThreadPoolExecutor(self.CONCURRENT_CALLS) as executor:
+        with ThreadPoolExecutor(self.concurrent_requests) as executor:
             for entry in tqdm(
                 executor.map(
                     self.__call_api,
@@ -244,6 +254,7 @@ class LiteLLMClient(LightevalModel):
 
         return results
 
+    @cached("predictions")
     def greedy_until(
         self,
         docs: list[Doc],
@@ -256,7 +267,7 @@ class LiteLLMClient(LightevalModel):
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
 
         Returns:
-            list[GenerativeResponse]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
         results = []
@@ -306,12 +317,14 @@ class LiteLLMClient(LightevalModel):
         """Return the maximum sequence length of the model."""
         return 4096
 
+    @cached("predictions")
     def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
         raise NotImplementedError
 
+    @cached("predictions")
     def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         raise NotImplementedError

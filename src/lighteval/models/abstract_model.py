@@ -81,6 +81,7 @@ class ModelConfig(BaseModel, extra="forbid"):
 
     generation_parameters: GenerationParameters = GenerationParameters()
     system_prompt: str | None = None
+    cache_dir: str = "~/.cache/huggingface/lighteval"
 
     @classmethod
     def from_path(cls, path: str):
@@ -191,7 +192,7 @@ class LightevalModel(ABC):
             docs (list[Doc]): List of documents containing the context for generation.
 
         Returns:
-            list[GenerativeResponse]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
         return NotImplemented
 

@@ -61,7 +61,11 @@ def accelerate(  # noqa C901
         Optional[str], Option(help="Load responses from details directory.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
     remove_reasoning_tags: Annotated[
-        bool, Option(help="Remove reasoning tags from responses.", rich_help_panel=HELP_PANEL_NAME_1)
+        bool | None,
+        Option(
+            help="Remove reasoning tags from responses (true to remove, false to leave - true by default).",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
     ] = True,
     reasoning_tags: Annotated[
         str | None,
@@ -154,8 +158,10 @@ def accelerate(  # noqa C901
         config: dict = ModelConfig._parse_args(model_args)
 
     if config.get("delta_weights", False):
+        config.pop("delta_weights")
         model_config = DeltaModelConfig(**config)
     elif config.get("adapter_weights", False):
+        config.pop("adapter_weights")
         model_config = AdapterModelConfig(**config)
     else:
         if vision_model:
