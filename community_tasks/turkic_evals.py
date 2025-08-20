@@ -136,7 +136,6 @@ class CustomTUMLUTask(LightevalTaskConfig):
             suite=["community"],
             generation_size=-1,
             stop_sequence=None,
-            trust_dataset=False,
             version=0,
         )
 
