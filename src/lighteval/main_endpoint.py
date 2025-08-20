@@ -265,7 +265,7 @@ def tgi(
         config = yaml.safe_load(f)
 
     generation_parameters = GenerationParameters(**config.get("generation", {}))
-    model_config = TGIModelConfig(**config["model"], generation_parameters=generation_parameters)
+    model_config = TGIModelConfig(**config["model_parameters"], generation_parameters=generation_parameters)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,

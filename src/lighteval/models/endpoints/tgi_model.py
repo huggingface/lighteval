@@ -30,6 +30,8 @@ from transformers.models.auto.tokenization_auto import AutoTokenizer
 
 from lighteval.models.abstract_model import ModelConfig
 from lighteval.models.endpoints.endpoint_model import InferenceEndpointModel
+from lighteval.tasks.prompt_manager import PromptManager
+from lighteval.utils.cache_management import SampleCache
 from lighteval.utils.imports import NO_TGI_ERROR_MSG, is_tgi_available
 
 
@@ -87,6 +89,7 @@ class TGIModelConfig(ModelConfig):
     inference_server_auth: str | None = None
     model_name: str | None
     model_info: dict | None = None
+    batch_size: int = 1
 
 
 # inherit from InferenceEndpointModel instead of LightevalModel since they both use the same interface, and only overwrite
@@ -110,11 +113,22 @@ class ModelClient(InferenceEndpointModel):
             raise ValueError("Error occurred when fetching info: " + str(self.model_info))
         if config.model_name:
             self.model_info["model_id"] = config.model_name
+        else:
+            # Set the model_name in config to the actual model_id from server for caching
+            config.model_name = self.model_info["model_id"]
         self.config = config
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_info["model_id"])
         self._add_special_tokens = True
         self.use_async = True
         self.config.model_info = self.model_info
+        
+        # Initialize prompt manager (required by parent class)
+        self.prompt_manager = PromptManager(
+            use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
+        )
+        
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config)
 
     def _async_process_request(
         self,
