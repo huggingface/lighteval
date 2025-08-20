@@ -47,6 +47,7 @@ from lighteval.tasks.lighteval_task import (
 )
 from lighteval.tasks.requests import Doc, SamplingMethod
 
+
 logger = logging.getLogger(__name__)
 
 # Emotion labels for the emotion dataset from HuggingFace Hub
@@ -57,34 +58,34 @@ EMOTION_LABELS = ["sadness", "joy", "love", "anger", "fear", "surprise"]
 
 def parse_emotion_response(response: str | dict) -> dict[str, Any]:
     """Parse the model's response into a standardized format.
-    
+
     This function handles both JSON string and dictionary inputs, providing robust
     parsing with validation against the predefined emotion labels. Invalid predictions
     are automatically mapped to 'unknown' with appropriate logging.
-    
+
     Args:
         response (str | dict): The model's response, either as a JSON string
             containing {"classification": "emotion_label"} or as a dictionary
             with the same structure.
-    
+
     Returns:
         dict[str, Any]: Standardized dictionary containing:
             - classification (str): The predicted emotion label, validated against
               EMOTION_LABELS or 'unknown' if invalid/unparseable
-    
+
     Examples:
         >>> parse_emotion_response('{"classification": "joy"}')
         {'classification': 'joy'}
-        
+
         >>> parse_emotion_response({'classification': 'ANGER'})
         {'classification': 'anger'}
-        
+
         >>> parse_emotion_response('{"classification": "invalid_emotion"}')
         {'classification': 'unknown'}  # with warning logged
-        
+
         >>> parse_emotion_response('malformed json')
         {'classification': 'unknown'}  # with error logged
-    
+
     Note:
         - Case-insensitive matching: 'ANGER' and 'Anger' are normalized to 'anger'
         - Whitespace is automatically stripped from predictions
@@ -100,7 +101,7 @@ def parse_emotion_response(response: str | dict) -> dict[str, Any]:
 
         # Extract and normalize the predicted emotion
         predicted_emotion = result["classification"].lower().strip()
-        
+
         # Validate that the prediction is one of the valid emotion labels
         if predicted_emotion not in EMOTION_LABELS:
             logger.warning(
@@ -116,7 +117,7 @@ def parse_emotion_response(response: str | dict) -> dict[str, Any]:
         # Handle specific parsing errors with detailed logging
         logger.error(f"Error parsing response: {str(e)}")
         logger.error(f"Failed response was: {response}")
-        logger.error("Expected format: {\"classification\": \"emotion_label\"}")
+        logger.error('Expected format: {"classification": "emotion_label"}')
         return {
             "classification": "unknown",
         }
@@ -129,15 +130,13 @@ def parse_emotion_response(response: str | dict) -> dict[str, Any]:
         }
 
 
-def emotion_classification_metric(
-    model_response: ModelResponse, doc: Doc, **kwargs
-) -> dict[str, float]:
+def emotion_classification_metric(model_response: ModelResponse, doc: Doc, **kwargs) -> dict[str, float]:
     """Evaluate emotion classification predictions at the sample level.
-    
+
     This function computes evaluation metrics for a single prediction, comparing
     the model's emotion classification against the gold standard. It provides
     detailed logging for debugging and tracks prediction quality.
-    
+
     Args:
         model_response (ModelResponse): The model's response containing generated text
             in the text attribute, typically containing one prediction as either a
@@ -147,26 +146,26 @@ def emotion_classification_metric(
             correct emotion label index.
         **kwargs: Additional keyword arguments (unused but required for compatibility
             with LightEval's metric interface)
-    
+
     Returns:
         dict[str, float]: Dictionary containing sample-level metrics:
             - exact_match (float): 1.0 if prediction matches gold label, 0.0 otherwise
             - unknown_prediction (float): 1.0 if prediction was 'unknown' (parsing
               failure), 0.0 otherwise
             - total_samples (float): Always 1.0 (count for this sample)
-    
+
     Examples:
         >>> doc = Doc(query="I'm so happy!", gold_index=2)  # joy
         >>> model_response = ModelResponse(text=['{"classification": "joy"}'], ...)
         >>> result = emotion_classification_metric(model_response, doc)
         >>> result
         {'exact_match': 1.0, 'unknown_prediction': 0.0, 'total_samples': 1.0}
-        
+
         >>> model_response = ModelResponse(text=['{"classification": "sadness"}'], ...)
         >>> result = emotion_classification_metric(model_response, doc)
         >>> result
         {'exact_match': 0.0, 'unknown_prediction': 0.0, 'total_samples': 1.0}
-    
+
     Note:
         - The function expects exactly one prediction in the model_response.text list
         - Gold labels are mapped from integer indices to emotion label strings
@@ -176,7 +175,7 @@ def emotion_classification_metric(
     try:
         # Parse the first (and typically only) prediction
         prediction = parse_emotion_response(model_response.text[0])
-        
+
         # Map the gold label index to the corresponding emotion string
         # The emotion dataset uses integer indices: 0=anger, 1=fear, 2=joy, etc.
         gold_label_idx = doc.gold_index
@@ -192,7 +191,7 @@ def emotion_classification_metric(
         # Calculate evaluation metrics
         is_exact_match = prediction["classification"] == expected_emotion
         is_unknown = prediction["classification"] == "unknown"
-        
+
         metrics = {
             "exact_match": float(is_exact_match),
             "unknown_prediction": float(is_unknown),
@@ -235,40 +234,40 @@ def emotion_classification_metric(
 # This configures both sample-level and corpus-level metric calculations
 emotion_classification_group = SampleLevelMetricGrouping(
     metric_name=[
-        "exact_match",        # Primary accuracy metric
+        "exact_match",  # Primary accuracy metric
         "unknown_prediction",  # Tracks parsing failures
-        "total_samples",       # Sample count for aggregation
+        "total_samples",  # Sample count for aggregation
     ],
     higher_is_better={
-        "exact_match": True,        # Higher accuracy is better
-        "unknown_prediction": False, # Fewer parsing failures is better
-        "total_samples": True,       # More samples processed is better
+        "exact_match": True,  # Higher accuracy is better
+        "unknown_prediction": False,  # Fewer parsing failures is better
+        "total_samples": True,  # More samples processed is better
     },
     category=SamplingMethod.GENERATIVE,  # Classification via text generation
     sample_level_fn=emotion_classification_metric,  # Function for individual samples
     corpus_level_fn={
-        "exact_match": np.mean,        # Average accuracy across all samples
+        "exact_match": np.mean,  # Average accuracy across all samples
         "unknown_prediction": np.mean,  # Proportion of parsing failures
-        "total_samples": np.sum,        # Total number of samples processed
+        "total_samples": np.sum,  # Total number of samples processed
     },
 )
 
 
 def prompt_emotion_classification(line: dict[str, Any], task_name: str = None) -> Doc:
     """Format the emotion classification task with detailed prompt engineering.
-    
+
     This function converts a single sample from the emotion dataset into a structured
     prompt that provides clear instructions and emotion definitions to improve
     classification accuracy. The prompt includes detailed explanations of each
     emotion category to reduce ambiguity.
-    
+
     Args:
         line (dict[str, Any]): A single sample from the emotion dataset containing:
             - 'text' (str): The input text to classify
             - 'label' (int): The gold standard emotion label (0-5)
         task_name (str, optional): Name of the task for identification purposes.
             Defaults to None.
-    
+
     Returns:
         Doc: A formatted document object containing:
             - task_name: Task identifier
@@ -276,7 +275,7 @@ def prompt_emotion_classification(line: dict[str, Any], task_name: str = None) -
             - choices: List of available emotion labels
             - gold_index: The correct emotion label index
             - instruction: Empty string (instructions are embedded in query)
-    
+
     Examples:
         >>> line = {'text': 'I am so excited for tomorrow!', 'label': 2}
         >>> doc = prompt_emotion_classification(line, 'emotion_test')
@@ -287,7 +286,7 @@ def prompt_emotion_classification(line: dict[str, Any], task_name: str = None) -
         2
         >>> doc.choices
         ['sadness', 'joy', 'love', 'anger', 'fear', 'surprise']
-    
+
     Note:
         - The prompt includes detailed definitions for each emotion to improve accuracy
         - Emotion definitions are based on common psychological categorizations
@@ -295,7 +294,7 @@ def prompt_emotion_classification(line: dict[str, Any], task_name: str = None) -
     """
     # Extract the text to be classified
     text = line["text"]
-    
+
     # Create a comprehensive classification prompt with detailed emotion definitions
     # This approach helps models understand the subtle differences between emotions
     prompt = f"""Classify the emotion expressed in the following text: "{text}"
@@ -315,7 +314,7 @@ Available emotion labels and their meanings:
   reactions, amazement, or responses to sudden or unanticipated events.
 
 Choose the emotion that best matches the sentiment expressed in the text."""
-    
+
     return Doc(
         task_name=task_name,
         query=prompt,
@@ -327,17 +326,17 @@ Choose the emotion that best matches the sentiment expressed in the text."""
 
 def get_emotion_classification_grammar() -> TextGenerationInputGrammarType:
     """Define the JSON schema grammar for constrained emotion classification responses.
-    
+
     This function creates a strict JSON schema that constrains the model's output
     to only valid emotion labels, preventing hallucination and ensuring consistent
     response format. The grammar constraint is enforced during text generation.
-    
+
     Returns:
         TextGenerationInputGrammarType: A JSON schema grammar specification that:
             - Enforces JSON object structure with required "classification" field
             - Constrains classification values to only valid emotion labels
             - Ensures consistent response parsing across different models
-    
+
     Schema Structure:
         {
           "type": "object",
@@ -350,17 +349,17 @@ def get_emotion_classification_grammar() -> TextGenerationInputGrammarType:
           },
           "required": ["classification"]
         }
-    
+
     Examples:
         Valid responses that match this grammar:
         - {"classification": "joy"}
         - {"classification": "anger"}
-        
+
         Invalid responses that would be rejected:
         - {"emotion": "joy"}  # Wrong field name
         - {"classification": "happy"}  # Invalid emotion label
         - "joy"  # Not a JSON object
-    
+
     Note:
         - This grammar constraint significantly improves response consistency
         - It prevents the model from generating invalid emotion labels
@@ -415,7 +414,7 @@ if __name__ == "__main__":
     # Print available tasks for verification
     print("Available tasks:", [t.name for t in TASKS_TABLE])
     print("Total tasks:", len(TASKS_TABLE))
-    
+
     # Print task configuration summary for debugging
     task = TASKS_TABLE[0]
     print(f"\nTask Configuration Summary:")
@@ -426,12 +425,16 @@ if __name__ == "__main__":
     print(f"  Generation size: {task.generation_size}")
     print(f"  Grammar constrained: {task.generation_grammar is not None}")
     print(f"  Stop sequences: {task.stop_sequence}")
-    
+
     # Verify emotion labels configuration
     print(f"\nEmotion Labels ({len(EMOTION_LABELS)}):")
     for i, label in enumerate(EMOTION_LABELS):
         print(f"  {i}: {label}")
-    
+
     print(f"\nUsage Examples:")
-    print(f"  TGI: uv run lighteval endpoint tgi config/tgi/tgi.yaml 'custom|{task.name}|0|0' --custom-tasks {__file__} --output-dir results --override-batch-size 1 --use-chat-template --save-details --no-public-run --max-samples 10")
-    print(f"  Full: uv run lighteval endpoint tgi config/tgi/tgi.yaml 'custom|{task.name}|5|1' --custom-tasks {__file__} --output-dir results --override-batch-size 1 --use-chat-template --save-details --no-public-run")
+    print(
+        f"  TGI: uv run lighteval endpoint tgi config/tgi/tgi.yaml 'custom|{task.name}|0|0' --custom-tasks {__file__} --output-dir results --override-batch-size 1 --use-chat-template --save-details --no-public-run --max-samples 10"
+    )
+    print(
+        f"  Full: uv run lighteval endpoint tgi config/tgi/tgi.yaml 'custom|{task.name}|5|1' --custom-tasks {__file__} --output-dir results --override-batch-size 1 --use-chat-template --save-details --no-public-run"
+    )
