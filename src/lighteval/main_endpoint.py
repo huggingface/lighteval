@@ -272,8 +272,15 @@ def tgi(
     with open(model_config_path, "r") as f:
         config = yaml.safe_load(f)
 
-    generation_parameters = GenerationParameters(**config.get("generation", {}))
-    model_config = TGIModelConfig(**config["model_parameters"], generation_parameters=generation_parameters)
+    # Extract generation_parameters from model_parameters if they exist
+    model_params = config["model_parameters"].copy()
+    yaml_gen_params = model_params.pop("generation_parameters", {})
+    
+    # Start with defaults and override with YAML values
+    generation_parameters = GenerationParameters(**yaml_gen_params)
+    
+    # Create model config without generation_parameters in model_params
+    model_config = TGIModelConfig(**model_params, generation_parameters=generation_parameters)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,

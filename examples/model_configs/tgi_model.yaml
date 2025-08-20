@@ -1,10 +1,6 @@
 model_parameters:
-  inference_server_address: "http://localhost:8080"  # Replace with your actual TGI server address
+  inference_server_address: "http://localhost:8080" # Replace with your actual TGI server address
   inference_server_auth: null
   model_name: null # Optional, only required if the TGI container was launched with model_id pointing to a local directory
-  batch_size: 1  # Batch size for inference
-
-generation:
-  temperature: 0.1
-  max_new_tokens: 256
-  top_p: 0.9
+  generation_parameters:
+    temperature: 0.1
