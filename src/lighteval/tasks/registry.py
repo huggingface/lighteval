@@ -277,30 +277,6 @@ class Registry:
         # Then it must be a single task
         return [task_definition]
 
-    def verify_tasks(self):
-        from datasets import load_dataset_builder
-
-        failed = []
-        success = []
-
-        for task_name, task_config in self.task_registry.items():
-            try:
-                # Attempt to load the dataset builder to verify the task
-                load_dataset_builder(task_config.hf_repo, task_config.hf_subset)
-                success.append(task_config.hf_repo)
-            except Exception as e:
-                logger.warning(f"Task {task_name} failed to load: {e}. This task will be skipped.")
-                failed.append(task_config.hf_repo)
-
-        json_report = {
-            "success": success,
-            "failed": failed,
-        }
-        with open("task_verification_report.json", "w") as f:
-            import json
-
-            json.dump(json_report, f, indent=2)
-
     def print_all_tasks(self):
         """
         Print all the tasks in the task registry.
