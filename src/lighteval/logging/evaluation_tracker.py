@@ -150,7 +150,7 @@ class EvaluationTracker:
 
         self.should_push_to_hub = push_to_hub
         self.should_save_details = save_details
-        self.wandb = use_wandb
+        self.use_wandb = use_wandb
 
         self.should_push_results_to_tensorboard = push_to_tensorboard
         self.tensorboard_repo = f"{hub_results_org}/tensorboard_logs"
@@ -259,7 +259,7 @@ class EvaluationTracker:
                 results_dict=results_dict,
             )
 
-        if self.wandb is True:
+        if self.use_wandb is True:
             self.push_to_wandb(
                 results_dict=results_dict,
                 details_datasets=details_datasets,
