@@ -369,9 +369,6 @@ class LightevalTask:
         dataset = load_dataset(
             path=task.dataset_path,
             name=task.dataset_config_name,
-            data_dir=None,
-            cache_dir=None,
-            download_mode=None,
             revision=task.dataset_revision,
         )
 
