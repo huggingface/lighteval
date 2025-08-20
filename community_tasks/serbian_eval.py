@@ -283,10 +283,7 @@ def create_task_config(
         few_shots_select="sequential",
         metric=metric,
         generation_size=generation_size,
-        # Since we use trust_dataset, we have to be careful about what is inside the dataset
-        # script. We thus lock the revision to ensure that the script doesn't change
         hf_revision=HFSubsets.HF_REVISION.value,
-        trust_dataset=True,
         version=0,
     )
 

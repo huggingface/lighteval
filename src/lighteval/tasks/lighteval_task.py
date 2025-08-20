@@ -63,7 +63,6 @@ class LightevalTaskConfig:
         original_num_docs (int): Number of documents in the task
         effective_num_docs (int): Number of documents used in a specific evaluation
         truncated_num_docs (bool): Whether less than the total number of documents were used
-        trust_dataset (bool): Whether to trust the dataset at execution or not
         version (int): The version of the task. Defaults to 0. Can be increased if the underlying dataset or the prompt changes.
     """
 
@@ -79,9 +78,6 @@ class LightevalTaskConfig:
     hf_revision: str | None = None
     hf_filter: Callable[[dict], bool] | None = None
     hf_avail_splits: ListLike[str] = field(default_factory=lambda: ["train", "validation", "test"])
-
-    # We default to false, to reduce security issues
-    trust_dataset: bool = False
 
     # Splits
     evaluation_splits: ListLike[str] = field(default_factory=lambda: ["validation"])
@@ -169,7 +165,6 @@ class LightevalTask:
         self.dataset_config_name = config.hf_subset
         self.dataset_revision = config.hf_revision
         self.dataset_filter = config.hf_filter
-        self.trust_dataset = config.trust_dataset
         self.dataset: DatasetDict | None = None  # Delayed download
         self.evaluation_split = as_list(config.evaluation_splits)
         self._docs = None
@@ -380,10 +375,6 @@ class LightevalTask:
         dataset = load_dataset(
             path=task.dataset_path,
             name=task.dataset_config_name,
-            data_dir=None,
-            cache_dir=None,
-            download_mode=None,
-            trust_remote_code=task.trust_dataset,
             revision=task.dataset_revision,
         )
 
