@@ -161,10 +161,6 @@ class Pipeline:
         if not (model or model_config):
             raise ValueError("Must provide either a model or model config when creating a pipeline.")
 
-        # We init tasks first to fail fast if one is badly defined
-        self._init_random_seeds()
-        self._init_tasks_and_requests(tasks=tasks)
-
         self.pipeline_parameters = pipeline_parameters
         self.launcher_type = self.pipeline_parameters.launcher_type
 
@@ -172,6 +168,10 @@ class Pipeline:
             logger.warning(
                 "--max_samples WAS SET. THESE NUMBERS ARE ONLY PARTIAL AND SHOULD NOT BE USED FOR COMPARISON UNLESS YOU KNOW WHAT YOU ARE DOING."
             )
+
+        # We init tasks first to fail fast if one is badly defined
+        self._init_random_seeds()
+        self._init_tasks_and_requests(tasks=tasks)
 
         self.model_config = model_config
         self.evaluation_tracker = evaluation_tracker
