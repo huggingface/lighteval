@@ -35,7 +35,7 @@ class Metric:
     higher_is_better: bool
     category: SamplingMethod
     sample_level_fn: SampleLevelComputation | Preparator
-    corpus_level_fn: Callable | CorpusLevelComputation
+    corpus_level_fn: CorpusLevelComputation | Callable
 
     batched_compute: bool = False
 
@@ -77,7 +77,7 @@ class Metric:
 
     def __call__(self, sample_params: dict | None):
         """Allow creating new instances with modified parameters"""
-        if sample_params:
+        if sample_params is not None:
             for k, v in sample_params.items():
                 setattr(self.sample_level_fn, k, v)
 

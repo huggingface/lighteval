@@ -114,12 +114,13 @@ class Registry:
                 for metric in [m for m in config.metrics if "@" in m.metric_name]:  # parametrizable metric
                     for attribute, value in subtask_param["metric_params"].items():
                         setattr(metric.sample_level_fn, attribute, value)
-                    if hasattr(metric.sample_level_fn, "attribute_must_be_set"):
-                        for attribute in metric.sample_level_fn.attribute_must_be_set:
-                            if getattr(metric.sample_level_fn, attribute) is None:
-                                raise ValueError(
-                                    f"Metric {metric.metric_name} for task {task_name} was not correctly parametrized. Forgot to set {attribute}."
-                                )
+                    required = getattr(metric.sample_level_fn, "attribute_must_be_set", []) 
+                    for attribute in required: 
+                        if getattr(metric.sample_level_fn, attribute) is None: 
+                            raise ValueError( 
+                                 f"Metric {metric.metric_name} for task {task_name} " 
+                                 f"was not correctly parametrized. Forgot to set '{attribute}'." 
+                             )
 
                 configs.append(config)
 

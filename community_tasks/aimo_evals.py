@@ -50,7 +50,7 @@ task = LightevalTaskConfig(
     evaluation_splits=["train"],
     few_shots_split="train",
     few_shots_select="sequential",
-    metric=[Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer})],
+    metrics=[Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer})],
     generation_size=2048,
     stop_sequence=None,
 )
