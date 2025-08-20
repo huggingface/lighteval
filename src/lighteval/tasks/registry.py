@@ -305,7 +305,10 @@ class Registry:
         if isinstance(custom_tasks, (str, Path)) and os.path.exists(custom_tasks):
             module_name = os.path.splitext(os.path.basename(custom_tasks))[0]
             spec = importlib.util.spec_from_file_location(module_name, custom_tasks)
-            assert spec is not None, f"Cannot find module {module_name} at {custom_tasks}"
+
+            if spec is None:
+                raise ValueError(f"Cannot find module {module_name} at {custom_tasks}")
+
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             return module
