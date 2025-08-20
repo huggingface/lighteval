@@ -164,7 +164,7 @@ class EvaluationTracker:
             try:
                 import trackio as wandb
 
-                logger.warning("Trackio was found avaialable in your environment, using it instead of wandb")
+                logger.warning("Trackio was found available in your environment, using it instead of wandb")
                 self.wandb_project = os.environ.get("WANDB_PROJECT", None)
                 self.space_id = os.environ.get("WANDB_SPACE_ID", None)
 
