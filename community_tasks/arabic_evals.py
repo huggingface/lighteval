@@ -31,9 +31,9 @@ import random
 import re
 from typing import Any, Dict, List, Optional, Union
 
-from lighteval.metrics.llm_as_judge import JudgeLM
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.normalizations import LogProbCharNorm
+from lighteval.metrics.utils.llm_as_judge import JudgeLM
 from lighteval.metrics.utils.metric_utils import Metric
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig

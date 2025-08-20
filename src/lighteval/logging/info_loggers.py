@@ -30,7 +30,7 @@ from typing import Union
 import git
 import xxhash
 
-from lighteval.metrics.stderr import get_stderr_function
+from lighteval.metrics.utils.stderr import get_stderr_function
 from lighteval.models.abstract_model import ModelConfig
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
