@@ -27,6 +27,7 @@ using simple function (min, mean, max, ...) at the corpus level. Most metrics fa
 import inspect
 import logging
 import os
+from abc import ABC, abstractmethod
 from typing import Callable, Literal, Union
 
 import nltk
@@ -60,7 +61,8 @@ from lighteval.utils.utils import as_list, safe_divide
 logger = logging.getLogger(__name__)
 
 
-class SampleLevelComputation:
+class SampleLevelComputation(ABC):
+    @abstractmethod
     def compute(self, doc: Doc, model_response: ModelResponse, **kwargs):
         raise NotImplementedError
 

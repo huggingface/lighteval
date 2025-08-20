@@ -106,7 +106,7 @@ def test_superset_with_subset_task():
 
 def test_cli_sampling_params():
     """
-    Tests that task info selector correctly handles supersets.
+    Tests task setting the sampling parameters in CLI.
     """
     registry = Registry()
 
@@ -118,7 +118,7 @@ def test_cli_sampling_params():
 
 def test_cli_sampling_params_fail():
     """
-    Tests that task info selector correctly handles supersets.
+    Tests task setting the sampling parameters in CLI failure when args are wrong.
     """
     registry = Registry()
 

@@ -27,6 +27,7 @@ A number of these aggregations come from the EleutherAIHarness
 
 import logging
 import math
+from abc import ABC, abstractmethod
 from typing import Literal
 
 import numpy as np
@@ -44,7 +45,8 @@ from lighteval.utils.utils import as_list
 logger = logging.getLogger(__name__)
 
 
-class CorpusLevelComputation:
+class CorpusLevelComputation(ABC):
+    @abstractmethod
     def compute_corpus(self):
         raise NotImplementedError
 

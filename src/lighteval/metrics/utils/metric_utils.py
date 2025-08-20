@@ -55,8 +55,8 @@ class Metric:
             )
 
         if isinstance(self, MetricGrouping):
-            return sample_level_fn(**kwargs)  # result, formatted_doc,
-        return {self.metric_name: sample_level_fn(**kwargs)}  # result, formatted_doc,
+            return sample_level_fn(**kwargs)
+        return {self.metric_name: sample_level_fn(**kwargs)}
 
     def get_corpus_aggregations(self) -> dict:
         if isinstance(self, MetricGrouping):
