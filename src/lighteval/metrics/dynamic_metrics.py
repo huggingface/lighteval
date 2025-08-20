@@ -40,13 +40,12 @@ from lighteval.metrics.normalizations import (
 from lighteval.metrics.utils.extractive_match_utils import (  # noqa: F401
     ExprExtractionConfig,
     ExtractionTarget,
-    IndicesExtractionConfig,
     LatexExtractionConfig,
     extract_target_from_pred,
     get_extraction_regexes,
 )
 from lighteval.metrics.utils.math_comparison import compare_gold_target
-from lighteval.metrics.utils.metric_utils import SampleLevelMetric
+from lighteval.metrics.utils.metric_utils import SampleLevelComputation, SampleLevelMetric
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.language import Language
@@ -163,7 +162,7 @@ class MultilingualQuasiExactMatchMetric(SampleLevelMetric):
         )
 
 
-class MultilingualExtractiveMatchMetric(SampleLevelMetric):
+class MultilingualExtractiveMatchMetric(SampleLevelComputation):
     def __init__(
         self,
         language: Language = Language.ENGLISH,
