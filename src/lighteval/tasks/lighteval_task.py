@@ -251,12 +251,12 @@ class LightevalTask:
                 item["__index"] = ix
                 doc = self.formatter(item, self.name)
                 doc.id = str(ix)
-                
+
                 # Transfer task-level generation parameters to the document
                 doc.generation_grammar = self.generation_grammar
                 doc.generation_size = self.generation_size
                 doc.stop_sequences = self.stop_sequence
-                
+
                 docs.append(doc)
 
         return docs

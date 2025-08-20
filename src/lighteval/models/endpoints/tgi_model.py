@@ -121,12 +121,12 @@ class ModelClient(InferenceEndpointModel):
         self._add_special_tokens = True
         self.use_async = True
         self.config.model_info = self.model_info
-        
+
         # Initialize prompt manager (required by parent class)
         self.prompt_manager = PromptManager(
             use_chat_template=True, tokenizer=self.tokenizer, system_prompt=config.system_prompt
         )
-        
+
         # Initialize cache for tokenization and predictions
         self._cache = SampleCache(config)
 

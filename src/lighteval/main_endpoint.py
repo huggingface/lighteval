@@ -275,10 +275,10 @@ def tgi(
     # Extract generation_parameters from model_parameters if they exist
     model_params = config["model_parameters"].copy()
     yaml_gen_params = model_params.pop("generation_parameters", {})
-    
+
     # Start with defaults and override with YAML values
     generation_parameters = GenerationParameters(**yaml_gen_params)
-    
+
     # Create model config without generation_parameters in model_params
     model_config = TGIModelConfig(**model_params, generation_parameters=generation_parameters)
 

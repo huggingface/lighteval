@@ -115,16 +115,15 @@ def parse_emotion_response(response: str | dict) -> dict[str, Any]:
         }
     except (json.JSONDecodeError, KeyError, AttributeError, TypeError) as e:
         # Handle specific parsing errors with detailed logging
-        logger.error(f"Error parsing response: {str(e)}")
-        logger.error(f"Failed response was: {response}")
-        logger.error('Expected format: {"classification": "emotion_label"}')
+        logger.error(
+            f"Error parsing response: {str(e)}. Failed response was: {response}. Expected format: {{'classification': 'emotion_label'}}"
+        )
         return {
             "classification": "unknown",
         }
     except Exception as e:
         # Catch any other unexpected errors
-        logger.error(f"Unexpected error parsing response: {str(e)}")
-        logger.error(f"Failed response was: {response}")
+        logger.error(f"Unexpected error parsing response: {str(e)}. Failed response was: {response}")
         return {
             "classification": "unknown",
         }
