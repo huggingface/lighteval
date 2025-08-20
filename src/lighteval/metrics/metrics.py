@@ -493,8 +493,8 @@ class Metrics(Enum):
     def __str__(self):
         return self.name.replace("_at_", "@")
 
-    def __call__(self, **kwargs):
+    def __call__(self, sample_params):
         # When parametrizing, we don't look at the Metrics enum,
         # but at a specific single metric (a value)
         # Be very careful to not change the default value of the enum
-        return deepcopy(self.value)(kwargs)
+        return deepcopy(self.value)(sample_params=sample_params)

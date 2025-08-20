@@ -1303,12 +1303,20 @@ class GPassAtK(SamplingMetric):
             thresholds (list): Thresholds to control successful attempts in k generate.
         """
         super().__init__(kwargs)
-        self.k = as_list(k)
+        self._k = k
         self.n = n
         self.attribute_must_be_set = ["k"]
 
         self.thresholds = thresholds
         self.name = (f"{name_prefix}_" if name_prefix else "") + "g-pass@"
+
+    @property
+    def k(self):
+        return as_list(self._k)
+
+    @k.setter
+    def k(self, new_val):
+        self._k = as_list(new_val)
 
     def compute(self, model_response: ModelResponse, doc: Doc, **kwargs) -> float:
         """Computes the metric over a list of golds and predictions for one single item with possibly many samples.

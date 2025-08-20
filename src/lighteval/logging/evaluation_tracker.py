@@ -81,7 +81,13 @@ class EnhancedJSONEncoder(json.JSONEncoder):
             return str(o)
         if isinstance(o, Enum):
             return o.name
-        return super().default(o)
+        if hasattr(o, "__str__"):
+            return str(o)
+        try:
+            return super().default(o)
+        except TypeError:
+            # For classes without json serialization
+            return type(o).__name__
 
 
 class EvaluationTracker:
