@@ -164,7 +164,6 @@ class Pipeline:
             raise ValueError("Must provide either a model or model config when creating a pipeline.")
 
         # We init tasks first to fail fast if one is badly defined
-        self._init_random_seeds()
         self._init_tasks_and_requests(tasks=tasks)
 
         self.pipeline_parameters = pipeline_parameters
@@ -180,6 +179,8 @@ class Pipeline:
         self._metric_options = metric_options or {}
         self.accelerator, self.parallel_context = self._init_parallelism_manager()
         self.model = self._init_model(model_config, model)
+        # Must occur after model init
+        self._init_random_seeds()
 
         self.evaluation_tracker.general_config_logger.log_model_info(model_config=self.model.config)
 
