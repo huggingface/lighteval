@@ -56,7 +56,7 @@ LoadResponsesFromDetailsDateId = Annotated[
 ]
 
 RemoveReasoningTags = Annotated[
-    bool | None,
+    bool,
     Option(
         help="Remove reasoning tags from responses (true to remove, false to leave - true by default).",
         rich_help_panel=HELP_PANEL_NAME_1,
