@@ -96,7 +96,7 @@ def sglang(
     wandb: Annotated[
         bool,
         Option(
-            help="Push results to wandb. This will only work if you have wandb installed and logged in. We use env variable to configure wandb. see here: https://docs.wandb.ai/guides/track/environment-variables/",
+            help="Push results to wandb or trackio if available. We use env variable to configure trackio or wandb. see here: https://docs.wandb.ai/guides/track/environment-variables/, https://github.com/gradio-app/trackio",
             rich_help_panel=HELP_PANEL_NAME_2,
         ),
     ] = False,
@@ -125,7 +125,7 @@ def sglang(
         push_to_tensorboard=push_to_tensorboard,
         public=public_run,
         hub_results_org=results_org,
-        wandb=wandb,
+        use_wandb=wandb,
     )
 
     pipeline_params = PipelineParameters(
