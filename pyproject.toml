@@ -111,7 +111,6 @@ multilingual = [
     "spacy[ja,ko,th]",
     "jieba", # for chinese tokenizer
     "pyvi", # for vietnamese tokenizer
-    "langcodes>=3.5.0",
 ]
 math = ["latex2sympy2_extended==1.0.6"]
 wandb = ["wandb"]
