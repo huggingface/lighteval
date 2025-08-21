@@ -33,8 +33,10 @@ class GenerationParameters(BaseModel, extra="forbid"):
     frequency_penalty: NonNegativeFloat | None = None  # vllm, tgi, sglang
     length_penalty: NonNegativeFloat | None = None  # vllm, transformers
     presence_penalty: NonNegativeFloat | None = None  # vllm, sglang
+
     max_new_tokens: NonNegativeInt | None = None  # vllm, transformers, tgi, litellm, sglang
     min_new_tokens: NonNegativeInt | None = None  # vllm, transformers, sglang
+
     seed: NonNegativeInt | None = None  # vllm, tgi, litellm
     stop_tokens: list[str] | None = None  # vllm, transformers, tgi, litellm, sglang
     temperature: NonNegativeFloat = (
