@@ -105,7 +105,7 @@ class PipelineParameters:
     max_samples: int | None = None
     cot_prompt: str | None = None
     remove_reasoning_tags: bool = True
-    reasoning_tags: str | list[tuple[str, str]] = [("<think>", "</think>")]
+    reasoning_tags: str | list[tuple[str, str]] = "[('<think>', '</think>')]"
     load_responses_from_details_date_id: str | None = None
     bootstrap_iters: int = 1000
 
