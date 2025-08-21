@@ -43,9 +43,7 @@ DatasetLoadingProcesses = Annotated[
     int, Option(help="Number of processes to use for dataset loading.", rich_help_panel=HELP_PANEL_NAME_1)
 ]
 
-CustomTasks = Annotated[
-    Optional[str], Option(help="Path to custom tasks directory.", rich_help_panel=HELP_PANEL_NAME_1)
-]
+CustomTasks = Annotated[Optional[str], Option(help="Path to custom tasks file.", rich_help_panel=HELP_PANEL_NAME_1)]
 
 NumFewshotSeeds = Annotated[
     int, Option(help="Number of seeds to use for few-shot evaluation.", rich_help_panel=HELP_PANEL_NAME_1)
@@ -58,15 +56,15 @@ LoadResponsesFromDetailsDateId = Annotated[
 RemoveReasoningTags = Annotated[
     bool,
     Option(
-        help="Remove reasoning tags from responses (true to remove, false to leave - true by default).",
+        help="Remove reasoning tags from responses.",
         rich_help_panel=HELP_PANEL_NAME_1,
     ),
 ]
 
 ReasoningTags = Annotated[
-    str | None,
+    str,
     Option(
-        help="List of reasoning tags (provided as pairs) to remove from responses. Default is [('<think>', '</think>')].",
+        help="List of reasoning tags (provided as pairs) to remove from responses.",
         rich_help_panel=HELP_PANEL_NAME_1,
     ),
 ]
@@ -134,7 +132,7 @@ DEFAULT_VALUES = {
     "num_fewshot_seeds": 1,
     "load_responses_from_details_date_id": None,
     "remove_reasoning_tags": True,
-    "reasoning_tags": None,
+    "reasoning_tags": "[('<think>', '</think>')]",
     "output_dir": "results",
     "results_path_template": None,
     "push_to_hub": False,

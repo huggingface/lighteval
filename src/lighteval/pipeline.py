@@ -105,7 +105,7 @@ class PipelineParameters:
     max_samples: int | None = None
     cot_prompt: str | None = None
     remove_reasoning_tags: bool = True
-    reasoning_tags: str | list[tuple[str, str]] | None = None
+    reasoning_tags: str | list[tuple[str, str]] = [("<think>", "</think>")]
     load_responses_from_details_date_id: str | None = None
     bootstrap_iters: int = 1000
 
@@ -129,8 +129,6 @@ class PipelineParameters:
         elif self.launcher_type == ParallelismManager.OPENAI:
             if not is_openai_available():
                 raise ImportError(NO_OPENAI_ERROR_MSG)
-        if self.reasoning_tags is None:
-            self.reasoning_tags = [("<think>", "</think>")]
         else:
             # Convert reasoning tags to list if needed
             if not isinstance(self.reasoning_tags, list):
