@@ -62,7 +62,7 @@ dependencies = [
     "datasets>=4.0.0",
     "pydantic",
     "numpy>=2",  # pinned to avoid incompatibilities
-    "hf-xet==1.1.5",  # pinned to avoid failing test suite
+    "hf-xet>=1.1.8",  # pinned to avoid failing test suite
     # Prettiness
     "typer",
     "termcolor==2.3.0",

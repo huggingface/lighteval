@@ -127,6 +127,7 @@ class ModelResponse:
     text: list[str] = field(default_factory=list)  # The text of the response
     output_tokens: list[list[int]] = field(default_factory=list)  # Model generations
     text_post_processed: list[str] | None = None  # The text of the response postprocessed
+    reasonings: list[str | None] = field(default_factory=list)  # The reasoning content of the response
 
     # Model logprob outputs
     logprobs: list[float] = field(default_factory=list)  # Log probabilities of the response
