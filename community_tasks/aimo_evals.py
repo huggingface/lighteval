@@ -49,7 +49,7 @@ task = LightevalTaskConfig(
     evaluation_splits=["train"],
     few_shots_split="train",
     few_shots_select="sequential",
-    metric=[Metrics.quasi_exact_match_math],
+    metrics=[Metrics.quasi_exact_match_math],
     generation_size=2048,
     stop_sequence=None,
 )

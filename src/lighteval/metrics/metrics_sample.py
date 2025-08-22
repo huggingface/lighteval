@@ -110,7 +110,7 @@ class ExactMatches:
         # We might need to flatten golds if they are a list of lists
         golds = doc.get_golds()
         for gold in golds:
-            for pred in model_response.text:
+            for pred in model_response.final_text:
                 results.append(self.compute_one_item(gold=gold, pred=pred))
         return self.aggregation_function(results)
 
@@ -186,7 +186,7 @@ class F1_score:
         """
         results = []
         golds = doc.get_golds()
-        predictions = model_response.text
+        predictions = model_response.final_text
         # We might need to flatten golds if they are a list of lists
         for gold in golds:
             for pred in predictions:
@@ -528,7 +528,7 @@ class ROUGE:
         from rouge_score import rouge_scorer
 
         golds = doc.get_golds()
-        predictions = model_response.text
+        predictions = model_response.final_text
 
         if self.scorer is None:
             self.scorer = rouge_scorer.RougeScorer(self.methods, tokenizer=self.tokenizer)
@@ -619,7 +619,7 @@ class BertScore:
             dict: Scores over the current sample's items.
         """
         golds = doc.get_golds()
-        predictions = model_response.text
+        predictions = model_response.final_text
 
         if self.bert_scorer is None:
             logger.warning("The first metric computation step might be a bit longer as we need to download the model.")
@@ -680,7 +680,7 @@ class Extractiveness:
             self.stats_metric = DataStatsMetric()
 
         inp = doc.specific[self.input_column]
-        prediction = model_response.text[0]
+        prediction = model_response.final_text[0]
         if self.normalize_input:
             inp = self.normalize_input(inp)
         if self.normalize_pred:
@@ -734,7 +734,7 @@ class Faithfulness:
                 granularity="sentence", model_name="vitc", imager_load_cache=False
             )  # , device=device)
         inp = doc.specific[self.input_column]
-        predictions = model_response.text
+        predictions = model_response.final_text
         prediction = predictions[0]
         if self.normalize_input:
             inp = self.normalize_input(inp)
@@ -774,7 +774,7 @@ class BLEURT:
         Returns:
             float: Score over the current sample's items.
         """
-        predictions = model_response.text
+        predictions = model_response.final_text
         golds = doc.get_golds()
         if len(predictions) == 1:
             predictions = predictions * len(golds)
@@ -803,7 +803,7 @@ class BLEU:
             float: Score over the current sample's items.
         """
         golds = doc.get_golds()
-        predictions = model_response.text
+        predictions = model_response.final_text
         return np.mean([self._bleu_score(golds, p) for p in predictions])
 
     def _bleu_score(self, gold: list[str], pred: str):
@@ -852,7 +852,7 @@ class StringDistance:
         Returns:
            dict: The different scores computed
         """
-        predictions = model_response.text
+        predictions = model_response.final_text
         golds = doc.get_golds()
         if len(golds) > 1:
             logger.warning(
@@ -1075,6 +1075,72 @@ class JudgeLLMMixEval(JudgeLLM):
         return metrics
 
 
+class AvgAtK:
+    def __init__(
+        self,
+        k: int,
+        sample_scoring_function: Callable[[Doc, ModelResponse], float] | str | None = None,
+    ):
+        """Sample score averages all the individual k predictions scores.
+
+        Args:
+            normalize_gold (callable, optional): Function to use to normalize the reference strings.
+                Defaults to None if no normalization is applied.
+            normalize_pred (callable, optional): Function to use to normalize the predicted strings.
+                Defaults to None if no normalization is applied.
+            strip_strings (bool, optional): Whether to strip both reference and predictions. Defaults to False.
+            sample_scoring_function (callable | str, optional): Function to use to compute the score for each sample.
+                If None, uses the default scoring function which is a simple exact match.
+        """
+        self.k = k
+        # Managed the logic of the per prediction of sample scoring
+        if callable(sample_scoring_function):
+            self.compute_score = sample_scoring_function
+        else:
+            if isinstance(sample_scoring_function, str):
+                if sample_scoring_function not in ["prefix", "suffix", "full"]:
+                    raise ValueError(
+                        f"type_exact_match (used in parametrized_exact_match) must be one of prefix, suffix, or full. Was {sample_scoring_function} instead."
+                    )
+                type_exact_match = sample_scoring_function
+            else:
+                type_exact_match = "full"
+            self.compute_score = self.default_sample_scoring(type_exact_match)
+
+    def compute(self, model_response: ModelResponse, doc: Doc, **kwargs):
+        """Computes the metric over a list of golds and predictions for one single sample.
+        It applies normalisation (if needed) to model prediction and gold, and takes the most frequent answer of all the available ones,
+        then compares it to the gold.
+
+        Args:
+            golds (list[str]): Reference targets
+            predictions (list[str]): k predicted strings
+
+        Returns:
+            float: Aggregated score over the current sample's items.
+        """
+        all_scores = []
+        for i in range(self.k):
+            all_scores.append(self.compute_score(doc, model_response[i]))
+
+        avg_score = np.mean(all_scores)
+        return avg_score
+
+    def default_sample_scoring(self, type_exact_match: str) -> callable:
+        def sample_scoring_function(doc: Doc, model_response: ModelResponse) -> int:
+            """Default sample scoring function that checks if the prediction is equal to the gold."""
+            pred = model_response.final_text[0]
+            gold = doc.get_golds()[0]
+
+            if type_exact_match == "prefix":
+                return 1 if pred.startswith(gold) else 0
+            if type_exact_match == "suffix":
+                return 1 if pred.endswith(gold) else 0
+            return 1 if gold == pred else 0
+
+        return sample_scoring_function
+
+
 class MajAtK:
     def __init__(
         self,
@@ -1123,7 +1189,7 @@ class MajAtK:
             float: Aggregated score over the current sample's items.
         """
         golds = docs.get_golds()
-        predictions = model_response.text
+        predictions = model_response.final_text
         if len(golds) > 1:
             raise Exception("Cannot compute maj@k with several golds")
 
@@ -1224,7 +1290,7 @@ class PassAtK:
             float: Aggregated score over the current sample's items.
         """
         golds = doc.get_golds()
-        predictions = model_response.text
+        predictions = model_response.final_text
         if len(golds) > 1:
             raise Exception("Cannot compute pass@k with several golds")
 
@@ -1273,7 +1339,7 @@ class PassAtK:
         return pred
 
     def default_sample_scoring(self, doc, model_response) -> int:
-        pred = model_response.text[0]
+        pred = model_response.final_text[0]
         gold = doc.get_golds()[0]
 
         if self.type_exact_match == "prefix":
@@ -1355,7 +1421,7 @@ class GPassAtK:
             float: Aggregated score over the current sample's items.
         """
         golds = doc.get_golds()
-        predictions = model_response.text
+        predictions = model_response.final_text
 
         if len(golds) > 1:
             raise Exception("Cannot compute G-Pass@k with several golds")
@@ -1408,7 +1474,7 @@ class GPassAtK:
 
     def default_sample_scoring(self, doc: Doc, model_response: ModelResponse) -> int:
         gold = doc.get_golds()[0]
-        pred = model_response.text[0]
+        pred = model_response.final_text[0]
         if self.type_exact_match == "prefix":
             return 1 if pred.startswith(gold) else 0
         if self.type_exact_match == "suffix":

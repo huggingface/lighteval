@@ -23,7 +23,7 @@
 import logging
 import os
 from datetime import timedelta
-from typing import Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 
 import torch
 import torch.nn.functional as F
@@ -41,18 +41,19 @@ from transformers import (
     BitsAndBytesConfig,
     PretrainedConfig,
 )
+from transformers.generation.configuration_utils import GenerationConfig
 from transformers.generation.utils import GenerateOutput
-from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 
 from lighteval.data import GenerativeTaskDataset, LoglikelihoodDataset
-from lighteval.models.abstract_model import LightevalModel, ModelInfo
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.model_output import (
     Batch,
     ModelResponse,
 )
-from lighteval.models.utils import ModelConfig, _get_dtype, _get_model_sha, _simplify_name
+from lighteval.models.utils import _get_dtype, _get_model_sha, _simplify_name, uses_chat_template
 from lighteval.tasks.prompt_manager import PromptManager
 from lighteval.tasks.requests import Doc
+from lighteval.utils.cache_management import SampleCache, cached
 from lighteval.utils.imports import (
     is_accelerate_available,
 )
@@ -91,6 +92,8 @@ class TransformersModelConfig(ModelConfig):
             Additional keyword arguments passed to `from_pretrained`. Defaults to empty dict.
         add_special_tokens (bool):
             Whether to add special tokens during tokenization. Defaults to True.
+        skip_special_tokens (bool):
+            Whether the tokenizer should output special tokens back during generation. Needed for reasoning models. Defaults to True
         model_parallel (bool | None):
             Whether to use model parallelism across multiple GPUs. If None, automatically
             determined based on available GPUs and model size.
@@ -101,8 +104,6 @@ class TransformersModelConfig(ModelConfig):
             Device to load the model on. Can be "cuda", "cpu", or GPU index. Defaults to "cuda".
         trust_remote_code (bool):
             Whether to trust remote code when loading models. Defaults to False.
-        use_chat_template (bool):
-            Whether to use chat templates for conversation-style prompts. Defaults to False.
         compile (bool):
             Whether to compile the model using torch.compile for optimization. Defaults to False.
         multichoice_continuations_start_space (bool | None):
@@ -110,6 +111,11 @@ class TransformersModelConfig(ModelConfig):
             True forces adding space, False removes leading space if present.
         pairwise_tokenization (bool):
             Whether to tokenize context and continuation separately or together. Defaults to False.
+        continuous_batching (bool):
+            Whether to use continuous batching for generation. Defaults to False.
+        override_chat_template (bool):
+            If True, we force the model to use a chat template. If alse, we prevent the model from using
+            a chat template. If None, we use the default (true if present in the tokenizer, false otherwise)
 
     Example:
         ```python
@@ -117,7 +123,6 @@ class TransformersModelConfig(ModelConfig):
             model_name="meta-llama/Llama-3.1-8B-Instruct",
             batch_size=4,
             dtype="float16",
-            use_chat_template=True,
             generation_parameters=GenerationParameters(
                 temperature=0.7,
                 max_new_tokens=100
@@ -139,14 +144,16 @@ class TransformersModelConfig(ModelConfig):
     max_length: PositiveInt | None = None
     model_loading_kwargs: dict = Field(default_factory=dict)
     add_special_tokens: bool = True
+    skip_special_tokens: bool = True
     model_parallel: bool | None = None
     dtype: str | None = None
     device: Union[int, str] = "cuda"
     trust_remote_code: bool = False
-    use_chat_template: bool = False
     compile: bool = False
     multichoice_continuations_start_space: bool | None = None
     pairwise_tokenization: bool = False
+    continuous_batching: bool = False
+    override_chat_template: bool = None
 
     def model_post_init(self, __context):
         if self.multichoice_continuations_start_space is True:
@@ -185,16 +192,21 @@ class TransformersModel(LightevalModel):
         self.config = config
         self.accelerator = Accelerator(kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=3000))])
         self._device = self.accelerator.device
-        self.use_chat_template = config.use_chat_template
         self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
         self._add_special_tokens = config.add_special_tokens or False
+        self.skip_special_tokens = config.skip_special_tokens or True
         self.pairwise_tokenization = config.pairwise_tokenization
         self.batch_size = config.batch_size
+        self.continuous_batching = config.continuous_batching
         self.transformers_config = config.get_transformers_config()
+        self.generation_config_dict = config.generation_parameters.to_transformers_dict()
 
         self.model_sha = config.get_model_sha()
         self._max_length = self._init_max_length()
         self._tokenizer = self._create_auto_tokenizer()
+        self.use_chat_template = uses_chat_template(
+            tokenizer=self._tokenizer, override_chat_template=config.override_chat_template
+        )
         self.model = self._create_auto_model()
 
         # We are in DP (and launch the script with `accelerate launch`)
@@ -210,24 +222,18 @@ class TransformersModel(LightevalModel):
 
         self.model_name = _simplify_name(config.model_name)
 
-        self.generation_config_dict = config.generation_parameters.to_transformers_dict()
-
         if is_accelerate_available():
             model_size, _ = calculate_maximum_sizes(self.model)
             model_size = convert_bytes(model_size)
         else:
             model_size = -1
 
-        self.model_info = ModelInfo(
-            model_name=self.config.model_name,
-            model_sha=self.model_sha,
-            model_dtype=config.dtype,
-            model_size=model_size,
-        )
-
         self.prompt_manager = PromptManager(
             use_chat_template=self.use_chat_template, tokenizer=self.tokenizer, system_prompt=config.system_prompt
         )
+
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config)
 
     def cleanup(self):
         """Clean up operations if needed, such as closing an endpoint."""
@@ -238,32 +244,34 @@ class TransformersModel(LightevalModel):
     @classmethod
     def from_model(
         cls,
-        model: Union[AutoModelForCausalLM, LightevalModel],
-        config: TransformersModelConfig = None,
-        accelerator: "Accelerator" = None,
-        tokenizer_name: str = None,  # custom tokenizer
-        trust_remote_code: bool = False,
-        add_special_tokens: bool = True,
-        pairwise_tokenization: bool = False,
-        multichoice_continuations_start_space: bool = None,
-    ):
-        # Slightly hackish way to test if the model is a AutoModelForCausalLM, since the instances don't
-        # derive from this class explicitely
-        assert isinstance(model, LightevalModel) or type(model).__name__ in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.values()
-
-        if isinstance(model, LightevalModel):
-            return model
+        model: AutoModelForCausalLM,
+        config: TransformersModelConfig,
+        accelerator: Accelerator | None = None,
+    ) -> "TransformersModel":
+        if config is None:
+            raise ValueError("Config must be provided to initialize the TransformersModel via `from_model` method.")
 
         # Instanciate the object without using __init__
         self = cls.__new__(cls)
-        self.config = config
+
         self.transformers_config = model.config
+
+        self.config = config
+        self.multichoice_continuations_start_space = config.multichoice_continuations_start_space
+        self._add_special_tokens = config.add_special_tokens
+        self.skip_special_tokens = config.skip_special_tokens
+        self.pairwise_tokenization = config.pairwise_tokenization
+        self.batch_size = config.batch_size
+        self.continuous_batching = config.continuous_batching
         self.generation_config_dict = config.generation_parameters.to_transformers_dict()
+
+        self.model_name = config.model_name
+        self.model_sha = config.get_model_sha()
         self._max_length = self._init_max_length()
         self._tokenizer = self._create_auto_tokenizer()
-        self.batch_size = config.batch_size
-        self.model_name = _simplify_name(model.name_or_path)
-        self.model_sha = config.get_model_sha()
+        self.use_chat_template = uses_chat_template(
+            tokenizer=self._tokenizer, override_chat_template=config.override_chat_template
+        )
 
         # If model_parallel is not set we compare the number of processes with the number of GPUs
         self.model = model
@@ -277,24 +285,20 @@ class TransformersModel(LightevalModel):
         else:
             self._device = self.config.device
 
-        self.use_chat_template = config.use_chat_template if config else False
-        self._add_special_tokens = add_special_tokens if add_special_tokens is not None else False
-        self.pairwise_tokenization = pairwise_tokenization
-        self.multichoice_continuations_start_space = multichoice_continuations_start_space
-
-        self.precision = _get_dtype(model.dtype, config=self.transformers_config)
-
         if is_accelerate_available():
             model_size, _ = calculate_maximum_sizes(self.model)
             model_size = convert_bytes(model_size)
         else:
             model_size = -1
-        self.model_info = ModelInfo(
-            model_name=self.model_name,
-            model_sha=self.model_sha,
-            model_dtype=str(self.precision),
-            model_size=int(model_size),
+        self.prompt_manager = PromptManager(
+            use_chat_template=self.use_chat_template,
+            tokenizer=self.tokenizer,
+            system_prompt=config.system_prompt if config else None,
         )
+
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(config) if config else None
+
         return self
 
     @property
@@ -395,6 +399,7 @@ class TransformersModel(LightevalModel):
             revision=revision,
             max_memory=max_memory,
             device_map=device_map,
+            # tp_plan="auto",
             torch_dtype=torch_dtype,
             trust_remote_code=self.config.trust_remote_code,
             **kwargs,
@@ -402,6 +407,11 @@ class TransformersModel(LightevalModel):
         # model.to(self.device)
         model.eval()
         torch.set_grad_enabled(False)
+        if self.continuous_batching:
+            generation_config = GenerationConfig(
+                **self.generation_config_dict,
+            )
+            model.generation_config = generation_config
 
         if self.config.compile:
             try:
@@ -504,7 +514,7 @@ class TransformersModel(LightevalModel):
         logger.info(f"Determined largest batch size: {batch_size}")
         return batch_size
 
-    def greedy_until(
+    def _continuous_greedy_until(
         self,
         docs: list[Doc],
     ) -> list[ModelResponse]:
@@ -516,7 +526,112 @@ class TransformersModel(LightevalModel):
             override_bs (int, optional): Override the batch size for generation. Defaults to None.
 
         Returns:
-            list[GenerativeResponse]: list of generated responses.
+            list[GenerateReturn]: list of generated responses.
+        """
+        dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
+        results = []
+
+        for split in tqdm(
+            dataset.splits_iterator(),
+            total=dataset.num_dataset_splits,
+            desc="Splits",
+            position=0,
+            disable=False,  # self.disable_tqdm,
+        ):
+            # For chat models, generation stops with EOS token, so we don't need to specify stop tokens
+            if self.use_chat_template:
+                stop_tokens = []
+            else:
+                # NOTE: we are assuming all items in a batch behave similarly (same
+                # stop_tokens and max_tokens genrated) which is not necessarily
+                # the case! Because of that we only use batch size of 1
+                stop_tokens = split[0].stop_sequence
+
+            max_new_tokens = self.config.generation_parameters.max_new_tokens or split[0].generation_size
+            returns_logits = split[0].use_logits
+            num_samples = split[0].num_samples
+            contexts = [self.prompt_manager.prepare_prompt(doc) for doc in split]
+            tokenized = self.tokenizer(contexts, add_special_tokens=self.add_special_tokens)
+
+            # The main question for this step is the following:
+            # Would we rather truncate the prompt to allow generation to go to max_new_tokens, at the risk
+            # of losing some meaning, or have some generations that are exceedingly short?
+            # The choice we go for here is to avoid truncating the prompt if we can, since it
+            # should have been managed by the prompt creator/few shot manager if requested by the user.
+            inputs = tokenized["input_ids"]
+            context_size = len(inputs[0])
+
+            # left truncate the inputs to the maximum length
+            if max_new_tokens is not None:
+                if context_size + max_new_tokens > self.max_length:
+                    logger.warning(
+                        f"{context_size + max_new_tokens=} which is greater than {self.max_length=}. Truncating context to {self.max_length - max_new_tokens} tokens."
+                    )
+                    context_size = self.max_length - max_new_tokens
+                    if context_size < 0:
+                        logger.critical(
+                            f"{context_size=} is less than 0, either reduce the max_new_tokens or increase model max length."
+                        )
+                        raise ValueError("Context size is less than 0.")
+                    inputs = [input[-context_size:] for input in inputs]
+            else:
+                if context_size > self.max_length:
+                    logger.warning(
+                        f"{context_size=} which is greater than {self.max_length=}. Truncating context to {self.max_length} tokens."
+                    )
+                    context_size = self.max_length
+                    inputs = [input[-context_size:] for input in inputs]
+
+            _outputs = self._generate(
+                inputs=inputs,
+                max_new_tokens=max_new_tokens,
+                stop_tokens=stop_tokens,
+                returns_logits=returns_logits,
+                num_samples=num_samples,
+                continuous_batching=True,
+            )
+
+            for req_id, _output in _outputs.items():
+                output_token_ids = []
+                logprobs_raw = []
+                result = []
+
+                # for output in _output.outputs:
+                output_token_ids.append(_output.generated_tokens)
+                # logprobs_raw.append(output.logprobs)
+                result.append(
+                    self.tokenizer.decode(_output.generated_tokens, skip_special_tokens=self.skip_special_tokens)
+                )
+
+                if logprobs_raw and output_token_ids and False:
+                    logprobs = [logprobs_raw[0][token_id].logprob for token_id in output_token_ids[0]]
+                else:
+                    logprobs = []
+
+                input_token_ids = _output.prompt_ids
+                cur_response = ModelResponse(
+                    text=result,
+                    logprobs=logprobs,
+                    output_tokens=output_token_ids,
+                    input_tokens=input_token_ids,
+                )
+                results.append(cur_response)
+
+        return dataset.get_original_order(results)
+
+    def _padded_greedy_until(
+        self,
+        docs: list[Doc],
+    ) -> list[ModelResponse]:
+        """
+        Generates responses using a greedy decoding strategy until certain ending conditions are met.
+
+        Args:
+            requests (list[Request]): list of requests containing the context and ending conditions.
+            override_bs (int, optional): Override the batch size for generation. Defaults to None.
+
+        Returns:
+            list[ModelResponse]: list of generated responses.
         """
         results = []
         dataset = GenerativeTaskDataset(requests=docs, num_dataset_splits=self.DATASET_SPLITS)
@@ -537,7 +652,9 @@ class TransformersModel(LightevalModel):
                 tokenized_context = self.tokenizer(context)
 
                 # Longest context in the current split is the first item (since we sort reversed)
-                longest_context_continuation_size_in_split = len(tokenized_context) + split[0].generation_size
+                longest_context_continuation_size_in_split = (
+                    len(tokenized_context["input_ids"]) + split[0].generation_size
+                )
                 max_context_continuation_size_allowed = min(
                     longest_context_continuation_size_in_split, self.max_length
                 )
@@ -560,12 +677,12 @@ class TransformersModel(LightevalModel):
 
                 # For chat models, generation stops with EOS token, so we don't need to specify stop tokens
                 if self.use_chat_template:
-                    stop_tokens = []
+                    stop_tokens = [self.tokenizer.eos_token]
                 else:
                     # NOTE: we are assuming all items in a batch behave similarly (same
                     # stop_tokens and max_tokens genrated) which is not necessarily
                     # the case! Because of that we only use batch size of 1
-                    stop_tokens = batch[0].stop_sequences
+                    stop_tokens = [self.tokenizer.eos_token] + batch[0].stop_sequences
 
                 max_new_tokens = batch[0].generation_size
                 num_samples = batch[0].num_samples
@@ -617,12 +734,44 @@ class TransformersModel(LightevalModel):
                     stop_tokens=stop_tokens,
                     returns_logits=False,
                     num_samples=num_samples,
+                    continuous_batching=False,
                 )
                 results.extend(cur_reponses)
 
         return dataset.get_original_order(results)
 
-    def _generate(
+    @cached("predictions")
+    def greedy_until(
+        self,
+        docs: list[Doc],
+    ) -> list[ModelResponse]:
+        if self.continuous_batching:
+            return self._continuous_greedy_until(docs)
+        else:
+            return self._padded_greedy_until(docs)
+
+    def _generate_continuous(
+        self,
+        inputs: list[list[int]],
+        max_new_tokens: Optional[int] = None,
+        stop_tokens: Optional[list[str]] = None,
+        returns_logits: Optional[bool] = False,
+        num_samples: int = 1,
+        generate: bool = True,
+    ) -> Dict[str, ModelResponse]:
+        # Compute model generation
+        self.model.generation_config.use_cuda_graph = False  # Disable CUDA graph for batch generation
+        self.model.generation_config.max_batch_tokens = 256  # Disable CUDA graph for batch generation
+        # self.model.generation_config.do_sample = False  # Disable CUDA graph for batch generation
+        batch_outputs = self.model.generate_batch(
+            inputs=inputs,
+            generation_config=self.model.generation_config,
+            # You can pass request-specific overrides here, e.g., max_new_tokens=100
+        )
+
+        return batch_outputs
+
+    def _generate_padded(
         self,
         batch: Batch,
         max_new_tokens: int,
@@ -631,7 +780,7 @@ class TransformersModel(LightevalModel):
         num_samples: int = 1,
     ) -> list[ModelResponse]:
         """Contains the actual logic of the generation.
-        First computes the stop sequences, then generates the predictions, then converts the outputs to GenerativeResponse.
+        First computes the stop sequences, then generates the predictions, then converts the outputs to ModelResponse.
         """
         stopping_criteria = stop_sequences_criteria(self.tokenizer, stop_sequences=stop_tokens, batch=batch)
         batch_size, _ = batch.input_ids.shape
@@ -678,7 +827,7 @@ class TransformersModel(LightevalModel):
         if self.accelerator:
             batch.padded = self.accelerator.gather_for_metrics(batch.padded)
 
-        # We convert to GenerativeResponse outputs
+        # We convert to ModelResponse outputs
         all_responses = []
         for ix, (batched_generations, batched_input, trunc, padded) in enumerate(
             zip(generations, batch.input_ids, batch.truncated, batch.padded)
@@ -708,6 +857,17 @@ class TransformersModel(LightevalModel):
 
         return all_responses
 
+    def _generate(
+        self,
+        continuous_batching: bool,
+        **kwargs,
+    ) -> list[ModelResponse]:
+        if continuous_batching:
+            return self._generate_continuous(**kwargs)
+        else:
+            return self._generate_padded(**kwargs)
+
+    @cached("predictions")
     def loglikelihood(
         self,
         docs: list[Doc],
@@ -723,6 +883,7 @@ class TransformersModel(LightevalModel):
         """
         return self._loglikelihood_tokens(docs)
 
+    @cached("predictions")
     def loglikelihood_rolling(
         self,
         docs: list[Doc],
@@ -762,8 +923,12 @@ class TransformersModel(LightevalModel):
                 starting_batch_size=starting_batch_size,
             )
             starting_batch_size = batch_size * 2
+            max_num_choices = max(len(d.choices) for d in split)
+            # We divide the batch size by the number of choices as batch is samples * num choices
+            # then round up to closest 8 multiple
+            batch_size = max(1, round(batch_size // max_num_choices / 8) * 8)
             logger.warning(
-                f"batch size is set to {batch_size} however, logliklehood evaluates on n choices per samples so batch size will be muiltiplied by number of choices per sample"
+                f"batch size is set to {batch_size} (it should be understood as '{batch_size} times the maximum number of choices per sample, {max_num_choices}')"
             )
 
             dataloader = DataLoader(split, batch_size=batch_size, collate_fn=lambda batch: batch)
@@ -865,33 +1030,46 @@ class TransformersModel(LightevalModel):
                 if self.accelerator:
                     # Convert lists to tensors for proper gathering
                     # Pad and stack the tensors to make them gatherable
-                    choices_lengths = [len(choices) for choices in batch_tokenized_continuations_processed]
-                    choices_lengths_tensor = torch.tensor(choices_lengths, device=self.device)
-                    gathered_choices_lengths = self.accelerator.gather_for_metrics(choices_lengths_tensor)
-                    global_max_choices = gathered_choices_lengths.max().item()
+                    shape_choices = [
+                        choices.shape for choices in batch_tokenized_continuations_processed
+                    ]  # num_choices * max len choices
+                    num_choices_tensor = torch.tensor([shape[0] for shape in shape_choices], device=self.device)
+                    len_choices_tensor = torch.tensor([shape[1] for shape in shape_choices], device=self.device)
+                    gathered_num_choices = self.accelerator.gather_for_metrics(num_choices_tensor)
+                    gathered_len_choices = self.accelerator.gather_for_metrics(len_choices_tensor)
+                    max_num_choices = gathered_num_choices.max().item()
+                    max_len_choices = gathered_len_choices.max().item()
+                    len_context_tensor = torch.tensor(
+                        [len(ctx) for ctx in batch_tokenized_contexts_processed], device=self.device
+                    )
+                    gathered_len_context = self.accelerator.gather_for_metrics(len_context_tensor)
+                    max_len_context = gathered_len_context.max().item()
 
-                    # Pad logits_sum_batch to same size
+                    # 1d - Pad logits_sum and max_equals to same number of choices
                     padded_logits_sums = []
                     for logits_sum_doc in batch_logits_sums:
-                        pad_amount = global_max_choices - len(logits_sum_doc)
+                        pad_amount = max_num_choices - len(logits_sum_doc)
                         padded = F.pad(logits_sum_doc, (0, pad_amount), value=-1)
                         padded_logits_sums.append(padded)
 
                     padded_max_equals = []
                     for max_equals_doc in batch_max_equals:
-                        pad_amount = global_max_choices - len(max_equals_doc)
+                        pad_amount = max_num_choices - len(max_equals_doc)
                         padded = F.pad(max_equals_doc, (0, pad_amount), value=False)
                         padded_max_equals.append(padded)
 
+                    # 2d - Pad continuations to max number of choice and max length
                     padded_continuations = []
                     for cont_batch in batch_tokenized_continuations_processed:
-                        pad_amount = global_max_choices - cont_batch.shape[0]
-                        padded = F.pad(cont_batch, (0, pad_amount), value=-1)
+                        pad_amount_num = max_num_choices - cont_batch.shape[0]
+                        pad_amount_len = max_len_choices - cont_batch.shape[1]
+                        padded = F.pad(cont_batch, (0, pad_amount_len, 0, pad_amount_num), value=-1)
                         padded_continuations.append(padded)
 
+                    # 1d - Pad context to maximum context size
                     padded_contexts = []
                     for ctx_batch in batch_tokenized_contexts_processed:
-                        pad_amount = global_max_choices - ctx_batch.shape[0]
+                        pad_amount = max_len_context - len(ctx_batch)
                         padded = F.pad(ctx_batch, (0, pad_amount), value=-1)
                         padded_contexts.append(padded)
 
@@ -914,12 +1092,19 @@ class TransformersModel(LightevalModel):
                     batch_tokenized_contexts_processed = []
 
                     # Only process if we have gathered results
-                    for i, actual_count in enumerate(gathered_choices_lengths):
-                        # Extract non-padded values based on actual counts
-                        batch_logits_sums.append(gathered_logits_sums[i][:actual_count])
-                        batch_max_equals.append(gathered_max_equals[i][:actual_count])
-                        batch_tokenized_continuations_processed.append(gathered_continuations[i][:actual_count])
-                        batch_tokenized_contexts_processed.append(gathered_contexts[i][:actual_count])
+                    for i, num_choices in enumerate(gathered_num_choices):
+                        # Extract non-padded values
+                        # 1d on num choices
+                        batch_logits_sums.append(gathered_logits_sums[i][:num_choices])
+                        batch_max_equals.append(gathered_max_equals[i][:num_choices])
+                        # 2d on num choices and max len
+                        len_choice = gathered_len_choices[i]
+                        batch_tokenized_continuations_processed.append(
+                            gathered_continuations[i][:num_choices][:len_choice]
+                        )
+                        # 1d on max len context
+                        len_context = gathered_len_context[i]
+                        batch_tokenized_contexts_processed.append(gathered_contexts[i][:len_context])
 
                 # Process the gathered results
                 for i in range(len(batch_logits_sums)):
@@ -1038,6 +1223,9 @@ class TransformersModel(LightevalModel):
             else:
                 output_tensor = self.accelerator.gather(output_tensor)
         return output_tensor, length_tensor
+
+    def tok_decode(self, tokens: torch.LongTensor) -> list[str]:
+        return self.tokenizer.batch_decode(tokens, skip_special_tokens=self.skip_special_tokens)
 
 
 class MultiTokenEOSCriteria(transformers.StoppingCriteria):

@@ -36,7 +36,7 @@ This will create a Tensorboard dashboard in a HF org set with the `--results-org
 option.
 
 
-## Pushing results to WandB
+## Pushing results to Trackio or WandB
 
 You can push the results to WandB by setting `--wandb`. This will init a WandB
 run and log the results.
@@ -48,6 +48,15 @@ export WANDB_PROJECT="lighteval"
 ```
 
 You can find a list of variable in the [wandb documentation](https://docs.wandb.ai/guides/track/environment-variables/).
+
+If trackio is available in your environment `pip install
+lighteval[trackio]`, it will be used to log and push the results on a
+huggingface dataset. Choose the dataset name and org with:
+
+```
+export WANDB_SPACE_ID="org/name"
+```
+
 
 
 ## How to load and investigate details
@@ -182,7 +191,6 @@ The detail file contains the following columns:
       ],
       "original_num_docs": 1319,
       "effective_num_docs": 1,
-      "trust_dataset": true,
       "must_remove_duplicate_docs": null,
       "version": 0
     }

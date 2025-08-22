@@ -60,6 +60,20 @@ def accelerate(  # noqa C901
     load_responses_from_details_date_id: Annotated[
         Optional[str], Option(help="Load responses from details directory.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
+    remove_reasoning_tags: Annotated[
+        bool | None,
+        Option(
+            help="Remove reasoning tags from responses (true to remove, false to leave - true by default).",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = True,
+    reasoning_tags: Annotated[
+        str | None,
+        Option(
+            help="List of reasoning tags (as pairs) to remove from responses. Default is [('<think>', '</think>')].",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = None,
     # === saving ===
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
@@ -89,7 +103,7 @@ def accelerate(  # noqa C901
     wandb: Annotated[
         bool,
         Option(
-            help="Push results to wandb. This will only work if you have wandb installed and logged in. We use env variable to configure wandb. see here: https://docs.wandb.ai/guides/track/environment-variables/",
+            help="Push results to wandb or trackio if available. We use env variable to configure trackio or wandb. see here: https://docs.wandb.ai/guides/track/environment-variables/, https://github.com/gradio-app/trackio",
             rich_help_panel=HELP_PANEL_NAME_2,
         ),
     ] = False,
@@ -107,11 +121,11 @@ def accelerate(  # noqa C901
     import yaml
 
     from lighteval.logging.evaluation_tracker import EvaluationTracker
+    from lighteval.models.abstract_model import ModelConfig
     from lighteval.models.transformers.adapter_model import AdapterModelConfig
     from lighteval.models.transformers.delta_model import DeltaModelConfig
     from lighteval.models.transformers.transformers_model import TransformersModelConfig
     from lighteval.models.transformers.vlm_transformers_model import VLMTransformersModelConfig
-    from lighteval.models.utils import ModelConfig
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 
     evaluation_tracker = EvaluationTracker(
@@ -122,7 +136,7 @@ def accelerate(  # noqa C901
         push_to_tensorboard=push_to_tensorboard,
         public=public_run,
         hub_results_org=results_org,
-        wandb=wandb,
+        use_wandb=wandb,
     )
     pipeline_params = PipelineParameters(
         launcher_type=ParallelismManager.ACCELERATE,
@@ -131,6 +145,8 @@ def accelerate(  # noqa C901
         custom_tasks_directory=custom_tasks,
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
+        remove_reasoning_tags=remove_reasoning_tags,
+        reasoning_tags=reasoning_tags,
         load_responses_from_details_date_id=load_responses_from_details_date_id,
     )
 
@@ -142,8 +158,10 @@ def accelerate(  # noqa C901
         config: dict = ModelConfig._parse_args(model_args)
 
     if config.get("delta_weights", False):
+        config.pop("delta_weights")
         model_config = DeltaModelConfig(**config)
     elif config.get("adapter_weights", False):
+        config.pop("adapter_weights")
         model_config = AdapterModelConfig(**config)
     else:
         if vision_model:

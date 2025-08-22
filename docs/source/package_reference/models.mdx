@@ -5,7 +5,7 @@ set in the `model-args` or in the model yaml file (see example
 [here](https://github.com/huggingface/lighteval/blob/main/examples/model_configs/vllm_model_config.yaml)).
 
 ### Base model config
-[[autodoc]] models.utils.ModelConfig
+[[autodoc]] models.abstract_model.ModelConfig
 
 ## Local Models
 
@@ -37,7 +37,7 @@ set in the `model-args` or in the model yaml file (see example
 [[autodoc]] models.endpoints.tgi_model.TGIModelConfig
 
 ### Litellm Model
-[[autodoc]] models.litellm_model.LiteLLMModelConfig
+[[autodoc]] models.endpoints.litellm_model.LiteLLMModelConfig
 
 ## Custom Model
 [[autodoc]] models.custom.custom_model.CustomModelConfig

@@ -9,6 +9,8 @@
 - sections:
   - local: saving-and-reading-results
     title: Save and read results
+  - local: caching
+    title: Caching
   - local: using-the-python-api
     title: Use the Python API
   - local: adding-a-custom-task

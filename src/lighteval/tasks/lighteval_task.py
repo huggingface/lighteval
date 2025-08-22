@@ -26,7 +26,7 @@ import random
 from dataclasses import asdict, dataclass, field
 from typing import Callable
 
-from datasets import DatasetDict
+from datasets import DatasetDict, load_dataset
 from huggingface_hub import TextGenerationInputGrammarType
 from multiprocess import Pool
 from pytablewriter import MarkdownTableWriter
@@ -36,7 +36,7 @@ from lighteval.tasks.prompt_manager import FewShotSampler
 from lighteval.tasks.requests import (
     Doc,
 )
-from lighteval.utils.utils import ListLike, as_list, download_dataset_worker
+from lighteval.utils.utils import ListLike, as_list
 
 
 logger = logging.getLogger(__name__)
@@ -63,7 +63,6 @@ class LightevalTaskConfig:
         original_num_docs (int): Number of documents in the task
         effective_num_docs (int): Number of documents used in a specific evaluation
         truncated_num_docs (bool): Whether less than the total number of documents were used
-        trust_dataset (bool): Whether to trust the dataset at execution or not
         version (int): The version of the task. Defaults to 0. Can be increased if the underlying dataset or the prompt changes.
     """
 
@@ -79,9 +78,6 @@ class LightevalTaskConfig:
     hf_revision: str | None = None
     hf_filter: Callable[[dict], bool] | None = None
     hf_avail_splits: ListLike[str] = field(default_factory=lambda: ["train", "validation", "test"])
-
-    # We default to false, to reduce security issues
-    trust_dataset: bool = False
 
     # Splits
     evaluation_splits: ListLike[str] = field(default_factory=lambda: ["validation"])
@@ -169,7 +165,6 @@ class LightevalTask:
         self.dataset_config_name = config.hf_subset
         self.dataset_revision = config.hf_revision
         self.dataset_filter = config.hf_filter
-        self.trust_dataset = config.trust_dataset
         self.dataset: DatasetDict | None = None  # Delayed download
         self.evaluation_split = as_list(config.evaluation_splits)
         self._docs = None
@@ -241,13 +236,7 @@ class LightevalTask:
             list[Doc]: List of documents.
         """
         if self.dataset is None:
-            self.dataset = download_dataset_worker(
-                self.dataset_path,
-                self.dataset_config_name,
-                self.trust_dataset,
-                self.dataset_filter,
-                self.dataset_revision,
-            )
+            self.dataset = self.download_dataset_worker(self)
 
         assert self.dataset is not None, f"Dataset {self.dataset_path} not found."
 
@@ -356,34 +345,38 @@ class LightevalTask:
         """
 
         if dataset_loading_processes <= 1:
-            datasets = [
-                download_dataset_worker(
-                    task.dataset_path,
-                    task.dataset_config_name,
-                    task.trust_dataset,
-                    task.dataset_filter,
-                    task.dataset_revision,
-                )
-                for task in tasks.values()
-            ]
+            # Useful for the test suite: we can mock loading tasks by overwriting the
+            # individual download_dataset_worker functions
+            datasets = [task.download_dataset_worker(task) for task in tasks.values()]
         else:
             with Pool(processes=dataset_loading_processes) as pool:
                 datasets = pool.starmap(
-                    download_dataset_worker,
-                    [
-                        (
-                            task.dataset_path,
-                            task.dataset_config_name,
-                            task.trust_dataset,
-                            task.dataset_filter,
-                            task.dataset_revision,
-                        )
-                        for task in tasks.values()
-                    ],
+                    LightevalTask.download_dataset_worker,
+                    [tasks.values()],
                 )
 
         for task, dataset in zip(tasks, datasets):
             tasks[task].dataset = dataset
+
+    @staticmethod
+    def download_dataset_worker(
+        task: "LightevalTask",
+    ) -> DatasetDict:
+        """
+        Worker function to download a dataset from the HuggingFace Hub.
+        Used for parallel dataset loading.
+        """
+        dataset = load_dataset(
+            path=task.dataset_path,
+            name=task.dataset_config_name,
+            revision=task.dataset_revision,
+        )
+
+        if task.dataset_filter is not None:
+            dataset = dataset.filter(task.dataset_filter)
+
+        # It returns DatasetDict because we don't specify a split
+        return dataset  # type: ignore
 
 
 def extract_num_samples(metric_name: str) -> int:
