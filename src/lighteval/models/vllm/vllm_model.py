@@ -202,7 +202,9 @@ class VLLMModel(LightevalModel):
 
         self.pairwise_tokenization = config.pairwise_tokenization
 
-        self.prompt_manager = PromptManager(self.use_chat_template, self.tokenizer, config.system_prompt)
+        self.prompt_manager = PromptManager(
+            self.use_chat_template, self.tokenizer, config.system_prompt, config.enable_thinking
+        )
 
         # Initialize cache for tokenization and predictions
         self._cache = SampleCache(config)

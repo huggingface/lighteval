@@ -229,7 +229,10 @@ class TransformersModel(LightevalModel):
             model_size = -1
 
         self.prompt_manager = PromptManager(
-            use_chat_template=self.use_chat_template, tokenizer=self.tokenizer, system_prompt=config.system_prompt
+            use_chat_template=self.use_chat_template,
+            tokenizer=self.tokenizer,
+            system_prompt=config.system_prompt,
+            enable_thinking=config.enable_thinking,
         )
 
         # Initialize cache for tokenization and predictions
