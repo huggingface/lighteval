@@ -20,38 +20,134 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import json
+import re
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import Optional, Union
 
 import torch
-from transformers import BatchEncoding, PreTrainedTokenizerBase
+import yaml
+from pydantic import BaseModel
+from transformers.tokenization_utils_base import BatchEncoding, PreTrainedTokenizerBase
 
-from lighteval.models.model_output import (
-    GenerativeMultiturnResponse,
-    GenerativeResponse,
-    LoglikelihoodResponse,
-    LoglikelihoodSingleTokenResponse,
-)
-from lighteval.tasks.requests import (
-    GreedyUntilMultiTurnRequest,
-    GreedyUntilRequest,
-    LoglikelihoodRequest,
-    LoglikelihoodRollingRequest,
-    LoglikelihoodSingleTokenRequest,
-    RequestType,
-)
+from lighteval.models.model_input import GenerationParameters
+from lighteval.models.model_output import ModelResponse
+from lighteval.tasks.requests import Doc
 
 
 TokenSequence = Union[list[int], torch.LongTensor, torch.Tensor, BatchEncoding]
 
 
-@dataclass
-class ModelInfo:
-    model_name: str
-    model_sha: Optional[str] = None
-    model_dtype: Optional[str] = None
-    model_size: Optional[str] = None
+class ModelConfig(BaseModel, extra="forbid"):
+    """
+    Base configuration class for all model types in Lighteval.
+
+    This is the foundation class that all specific model configurations inherit from.
+    It provides common functionality for parsing configuration from files and command-line arguments,
+    as well as shared attributes that are used by all models like generation parameters and system prompts.
+
+    Attributes:
+        generation_parameters (GenerationParameters):
+            Configuration parameters that control text generation behavior, including
+            temperature, top_p, max_new_tokens, etc. Defaults to empty GenerationParameters.
+        system_prompt (str | None):
+            Optional system prompt to be used with chat models. This prompt sets the
+            behavior and context for the model during evaluation.
+
+    Methods:
+        from_path(path: str):
+            Load configuration from a YAML file.
+        from_args(args: str):
+            Parse configuration from a command-line argument string.
+        _parse_args(args: str):
+            Static method to parse argument strings into configuration dictionaries.
+
+    Example:
+        ```python
+        # Load from YAML file
+        config = ModelConfig.from_path("model_config.yaml")
+
+        # Load from command line arguments
+        config = ModelConfig.from_args("model_name=meta-llama/Llama-3.1-8B-Instruct,system_prompt='You are a helpful assistant.',generation_parameters={temperature=0.7}")
+
+        # Direct instantiation
+        config = ModelConfig(
+            model_name="meta-llama/Llama-3.1-8B-Instruct",
+            generation_parameters=GenerationParameters(temperature=0.7),
+            system_prompt="You are a helpful assistant."
+        )
+        ```
+    """
+
+    generation_parameters: GenerationParameters = GenerationParameters()
+    system_prompt: str | None = None
+    cache_dir: str = "~/.cache/huggingface/lighteval"
+
+    @classmethod
+    def from_path(cls, path: str):
+        with open(path, "r") as f:
+            config = yaml.safe_load(f)
+
+        return cls(**config["model_parameters"])
+
+    @classmethod
+    def from_args(cls, args: str):
+        config = cls._parse_args(args)
+        return cls(**config)
+
+    @staticmethod
+    def _parse_args(args: str) -> dict:
+        """Parse a string of arguments into a configuration dictionary.
+
+        This function parses a string containing model arguments and generation parameters
+        into a structured dictionary with two main sections: 'model' and 'generation'.
+        It specifically handles generation parameters enclosed in curly braces.
+
+        Args:
+            args (str): A string containing comma-separated key-value pairs, where generation
+                parameters can be specified in a nested JSON-like format.
+
+        Returns:
+            dict: A dictionary with two keys:
+                - 'model': Contains general model configuration parameters
+                - 'generation': Contains generation-specific parameters
+
+        Examples:
+            >>> parse_args("model_name=gpt2,max_length=100")
+            {
+                'model': {'model_name': 'gpt2', 'max_length': '100'},
+            }
+
+            >>> parse_args("model_name=gpt2,generation_parameters={temperature:0.7,top_p:0.9}")
+            {
+                'model': {'model_name': 'gpt2', 'generation_parameters': {'temperature': 0.7, 'top_p': 0.9},
+            }
+
+            >>> parse_args("model_name=gpt2,use_cache,generation_parameters={temperature:0.7}")
+            {
+                'model': {'model_name': 'gpt2', 'use_cache': True, 'generation_parameters': {'temperature': 0.7}},
+            }
+        """
+        # Looking for generation_parameters in the model_args
+        generation_parameters_dict = None
+        pattern = re.compile(r"(\w+)=(\{.*\}|[^,]+)")
+        matches = pattern.findall(args)
+        for key, value in matches:
+            key = key.strip()
+            if key == "generation_parameters":
+                # Keys must be quoted (since they are strings)
+                gen_params = re.sub(r"(\w+):", r'"\1":', value)
+                # for k, v where v are strings, we quote them too
+                gen_params = re.sub(r":\s*([A-Za-z_][\w.-]*)\s*(?=[,}])", r':"\1"', gen_params)
+                generation_parameters_dict = json.loads(gen_params)
+
+        args = re.sub(r"generation_parameters=\{.*?\},?", "", args).strip(",")
+        model_config = {k.split("=")[0]: k.split("=")[1] if "=" in k else True for k in args.split(",")}
+
+        if generation_parameters_dict is not None:
+            model_config["generation_parameters"] = generation_parameters_dict
+
+        return model_config
 
 
 class LightevalModel(ABC):
@@ -84,62 +180,32 @@ class LightevalModel(ABC):
     def disable_tqdm(self) -> bool:
         return False
 
-    def get_method_from_request_type(self, request_type: RequestType):
-        if request_type == RequestType.LOGLIKELIHOOD:
-            return self.loglikelihood
-        if request_type == RequestType.LOGLIKELIHOOD_SINGLE_TOKEN:
-            return self.loglikelihood_single_token
-        if request_type == RequestType.LOGLIKELIHOOD_ROLLING:
-            return self.loglikelihood_rolling
-        if request_type == RequestType.GREEDY_UNTIL:
-            return self.greedy_until
-        if request_type == RequestType.GREEDY_UNTIL_MULTI_TURN:
-            return self.greedy_until_multi_turn
-        raise NotImplementedError(f"Request type {request_type} not supported")
-
-    def greedy_until_multi_turn(  # noqa: C901
-        self, requests: list[GreedyUntilMultiTurnRequest]
-    ) -> GenerativeMultiturnResponse:
-        """Generates responses using a greedy decoding strategy until certain ending conditions are met."""
-        return NotImplemented
-
     @abstractmethod
     def greedy_until(
         self,
-        requests: list[GreedyUntilRequest],
-    ) -> list[GenerativeResponse]:
+        docs: list[Doc],
+    ) -> list[ModelResponse]:
         """
         Generates responses using a greedy decoding strategy until certain ending conditions are met.
 
         Args:
-            requests (list[Request]): list of requests containing the context and ending conditions.
-            disable_tqdm (bool, optional): Whether to disable the progress bar. Defaults to False.
-            override_bs (int, optional): Override the batch size for generation. Defaults to None.
+            docs (list[Doc]): List of documents containing the context for generation.
 
         Returns:
-            list[GenerativeResponse]: list of generated responses.
+            list[ModelResponse]: list of generated responses.
         """
         return NotImplemented
 
     @abstractmethod
-    def loglikelihood(self, requests: list[LoglikelihoodRequest]) -> list[LoglikelihoodResponse]:
+    def loglikelihood(self, docs: list[Doc]) -> list[ModelResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
         return NotImplemented
 
     @abstractmethod
-    def loglikelihood_rolling(self, requests: list[LoglikelihoodRollingRequest]) -> list[LoglikelihoodResponse]:
+    def loglikelihood_rolling(self, docs: list[Doc]) -> list[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
-        return NotImplemented
-
-    @abstractmethod
-    def loglikelihood_single_token(
-        self, requests: list[LoglikelihoodSingleTokenRequest]
-    ) -> list[LoglikelihoodSingleTokenResponse]:
-        """Tokenize the context and continuation and compute the log likelihood of those
-        tokenized sequences.
-        """
         return NotImplemented
 
     # Tokenization utils
@@ -155,54 +221,57 @@ class LightevalModel(ABC):
             return_tensors="pt",
         )
 
-    def tok_encode_pair(self, context, continuation, pairwise: bool = False):
-        """Encodes a context, continuation pair by taking care of the spaces in between.
+    def tok_encode_pair(self, context, continuations: list[str], pairwise: bool = False):
+        """Encodes a context with a list of continuations by taking care of the spaces in between.
         Args:
             context (str): The context string to be encoded.
-            continuation (str): The continuation string to be encoded.
+            continuation (list[str]): List of continuation strings to be encoded.
             pairwise (bool):
-                If True, encode context and continuation separately.
+                If True, encode context and continuations separately.
                 If False, encode them together and then split.
 
         Returns:
-            Tuple[TokenSequence, TokenSequence]: A tuple containing the encoded context and continuation.
+            Tuple[TokenSequence, list[TokenSequence]]:
+                A tuple containing the encoded context and a list of encoded continuations.
 
         The advantage of pairwise is:
         1) It better aligns with how LLM predicts tokens
         2) Works in case len(tok(context,cont)) != len(tok(context)) + len(tok(continuation)).
         E.g this can happen for chinese if no space is used between context/continuation
         """
-
         n_spaces = len(context) - len(context.rstrip())
         if n_spaces > 0:
-            continuation = context[-n_spaces:] + continuation
+            continuations = [context[-n_spaces:] + cont for cont in continuations]
             context = context[:-n_spaces]
 
         if pairwise:
             # We don't add special tokens to the continuation as if bos is added
             # models tend to to completely ignore a context
-            context_enc, continuation_enc = (
-                self.tok_encode(context, add_special_tokens=self.add_special_tokens),
-                self.tok_encode(continuation, add_special_tokens=False),
-            )
+            context_enc = self.tok_encode(context, add_special_tokens=self.add_special_tokens)
+            continuation_enc = [self.tok_encode(cont, add_special_tokens=False) for cont in continuations]
 
             # In theory the context_enc can be ended with eos token, this would again
             # cause the model to ignore the context. We thus strip the eos token from context_enc
             if len(context_enc) > 0 and context_enc[-1] == self.tokenizer.eos_token_id:
                 context_enc = context_enc[:-1]
 
-            return context_enc, continuation_enc
+            context_encs = [context_enc] * len(continuation_enc)
 
-        whole_enc = self.tok_encode(context + continuation)
+            return context_encs, continuation_enc
+
+        # Handle list of continuations
         context_enc = self.tok_encode(context)
-        context_enc_len = len(context_enc)
-        # In case continuation tokens merge with context tokens we use the merged token as continuation
-        if len(context_enc) == len(whole_enc):
-            context_enc_len = len(context_enc) - 1
-            context_enc = whole_enc[:context_enc_len]
+        context_encs = []
+        continuations_encs = []
+        for cont in continuations:
+            whole_enc = self.tok_encode(context + cont)
+            context_enc_len = len(context_enc)
+            if len(context_enc) == len(whole_enc):
+                context_enc_len = len(context_enc) - 1
+            continuations_encs.append(whole_enc[context_enc_len:])
+            context_encs.append(whole_enc[:context_enc_len])
 
-        continuation_enc = whole_enc[context_enc_len:]
-        return context_enc, continuation_enc
+        return context_encs, continuations_encs
 
     def tok_decode(self, tokens: torch.LongTensor) -> list[str]:
         return self.tokenizer.batch_decode(tokens, skip_special_tokens=True)

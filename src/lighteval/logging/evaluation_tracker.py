@@ -130,7 +130,7 @@ class EvaluationTracker:
         tensorboard_metric_prefix: str = "eval",
         public: bool = False,
         nanotron_run_info: "GeneralArgs" = None,
-        wandb: bool = False,
+        use_wandb: bool = False,
     ) -> None:
         """Creates all the necessary loggers for evaluation tracking."""
         self.details_logger = DetailsLogger()
@@ -150,7 +150,7 @@ class EvaluationTracker:
 
         self.should_push_to_hub = push_to_hub
         self.should_save_details = save_details
-        self.wandb = wandb
+        self.use_wandb = use_wandb
 
         self.should_push_results_to_tensorboard = push_to_tensorboard
         self.tensorboard_repo = f"{hub_results_org}/tensorboard_logs"
@@ -160,25 +160,38 @@ class EvaluationTracker:
 
         self.public = public
 
-        if wandb is True:
-            import wandb
+        if use_wandb is True:
+            try:
+                import trackio as wandb
 
-            self.wandb_project = os.environ.get("WANDB_PROJECT", None)
+                logger.warning("Trackio was found available in your environment, using it instead of wandb")
+                self.wandb_project = os.environ.get("WANDB_PROJECT", None)
+                self.space_id = os.environ.get("WANDB_SPACE_ID", None)
+
+                wandb_kwargs = {
+                    "space_id": self.space_id,
+                }
+
+            except ImportError:
+                import wandb
+
+                self.wandb_project = os.environ.get("WANDB_PROJECT", None)
+                wandb.login()
+                wandb_kwargs = {}
 
             if self.wandb_project is None:
-                raise ValueError("You need to specify the project name in wandb_args")
+                raise ValueError("You need to specify the project name using the WANDB_PROJECT environment variable")
 
-            wandb.login()
             self.wandb_run = wandb.init(
                 project=self.wandb_project,
                 resume="allow",
+                **wandb_kwargs,
             )
 
     @property
     def results(self):
         config_general = asdict(self.general_config_logger)
-        # We remove the config from logging, which contains context/accelerator objects
-        config_general.pop("config")
+        config_general["model_config"] = config_general["model_config"].model_dump()
         results = {
             "config_general": config_general,
             "results": self.metrics_logger.metric_aggregated,
@@ -196,24 +209,27 @@ class EvaluationTracker:
             for task_name, task_details in self.details_logger.details.items()
         }
 
+    def preview_outputs(self) -> None:
+        logger.info("Previewing outputs for your eval run, one per task")
+        from pprint import pprint
+
+        for task_name, task_details in self.details_logger.details.items():
+            logger.info(f"Task: {task_name}")
+            detail = task_details[0]
+            # We convert the detail to a markdown string
+            model_response = detail.model_response
+            metrics = detail.metric
+
+            pprint(model_response.text)
+            pprint(model_response.input)
+            pprint(metrics)
+
     def save(self) -> None:
         """Saves the experiment information and results to files, and to the hub if requested."""
         logger.info("Saving experiment tracker")
         date_id = datetime.now().isoformat().replace(":", "-")
 
-        # We first prepare data to save
-        config_general = asdict(self.general_config_logger)
-        # We remove the config from logging, which contains context/accelerator objects
-        config_general.pop("config")
-
-        results_dict = {
-            "config_general": config_general,
-            "results": self.metrics_logger.metric_aggregated,
-            "versions": self.versions_logger.versions,
-            "config_tasks": self.task_config_logger.tasks_configs,
-            "summary_tasks": self.details_logger.compiled_details,
-            "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
-        }
+        results_dict = self.results
 
         # Create the details datasets for later upload
         details_datasets: dict[str, Dataset] = {}
@@ -243,7 +259,7 @@ class EvaluationTracker:
                 results_dict=results_dict,
             )
 
-        if self.wandb is True:
+        if self.use_wandb is True:
             self.push_to_wandb(
                 results_dict=results_dict,
                 details_datasets=details_datasets,
@@ -271,7 +287,7 @@ class EvaluationTracker:
             output_dir = self.output_dir
             output_dir_results = Path(self.results_path_template.format(output_dir=output_dir, org=org, model=model))
         else:
-            output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name
+            output_dir_results = Path(self.output_dir) / "results" / self.general_config_logger.model_name.strip("/")
         self.fs.mkdirs(output_dir_results, exist_ok=True)
         output_results_file = output_dir_results / f"results_{date_id}.json"
         logger.info(f"Saving results to {output_results_file}")
@@ -279,7 +295,7 @@ class EvaluationTracker:
             f.write(json.dumps(results_dict, cls=EnhancedJSONEncoder, indent=2, ensure_ascii=False))
 
     def _get_details_sub_folder(self, date_id: str):
-        output_dir_details = Path(self.output_dir) / "details" / self.general_config_logger.model_name
+        output_dir_details = Path(self.output_dir) / "details" / self.general_config_logger.model_name.strip("/")
         if date_id in ["first", "last"]:
             # Get all folders in output_dir_details
             if not self.fs.exists(output_dir_details):
@@ -579,7 +595,7 @@ class EvaluationTracker:
         new_dictionary.update(results_dict)
         results_string = json.dumps(new_dictionary, indent=4)
 
-        # If we are pushing to the Oppen LLM Leaderboard, we'll store specific data in the model card.
+        # If we are pushing to the Open LLM Leaderboard, we'll store specific data in the model card.
         is_open_llm_leaderboard = repo_id.split("/")[0] == "open-llm-leaderboard"
         if is_open_llm_leaderboard:
             org_string = (
@@ -640,7 +656,7 @@ class EvaluationTracker:
             global_step = 0
             run = prefix
 
-        output_dir_tb = Path(self.output_dir) / "tb" / run
+        output_dir_tb = Path(self.output_dir) / "tb" / run.strip("/")
         output_dir_tb.mkdir(parents=True, exist_ok=True)
 
         tb_context = HFSummaryWriter(
@@ -695,7 +711,7 @@ class EvaluationTracker:
         # We are doing parallel evaluations of multiple checkpoints and recording the steps not in order
         # This messes up with tensorboard, so the easiest is to rename files in the order of the checkpoints
         # See: https://github.com/tensorflow/tensorboard/issues/5958
-        # But tensorboardX don't let us control the prefix of the files (only the suffix), so we need to do it ourselves before commiting the files
+        # But tensorboardX don't let us control the prefix of the files (only the suffix), so we need to do it ourselves before committing the files
 
         # tb_context.close()  # flushes the unfinished write operations
         time.sleep(5)

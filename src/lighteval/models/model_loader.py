@@ -23,7 +23,7 @@
 import logging
 from typing import Union
 
-from lighteval.models.abstract_model import LightevalModel
+from lighteval.models.abstract_model import LightevalModel, ModelConfig
 from lighteval.models.custom.custom_model import CustomModelConfig
 from lighteval.models.dummy.dummy_model import DummyModel, DummyModelConfig
 from lighteval.models.endpoints.endpoint_model import (
@@ -35,15 +35,13 @@ from lighteval.models.endpoints.inference_providers_model import (
     InferenceProvidersClient,
     InferenceProvidersModelConfig,
 )
-from lighteval.models.endpoints.openai_model import OpenAIClient, OpenAIModelConfig
+from lighteval.models.endpoints.litellm_model import LiteLLMClient, LiteLLMModelConfig
 from lighteval.models.endpoints.tgi_model import ModelClient, TGIModelConfig
-from lighteval.models.litellm_model import LiteLLMClient, LiteLLMModelConfig
 from lighteval.models.sglang.sglang_model import SGLangModel, SGLangModelConfig
 from lighteval.models.transformers.adapter_model import AdapterModel, AdapterModelConfig
 from lighteval.models.transformers.delta_model import DeltaModel, DeltaModelConfig
 from lighteval.models.transformers.transformers_model import TransformersModel, TransformersModelConfig
 from lighteval.models.transformers.vlm_transformers_model import VLMTransformersModel, VLMTransformersModelConfig
-from lighteval.models.utils import ModelConfig
 from lighteval.models.vllm.vllm_model import AsyncVLLMModel, VLLMModel, VLLMModelConfig
 from lighteval.utils.imports import (
     NO_LITELLM_ERROR_MSG,
@@ -51,7 +49,6 @@ from lighteval.utils.imports import (
     NO_TGI_ERROR_MSG,
     NO_VLLM_ERROR_MSG,
     is_litellm_available,
-    is_openai_available,
     is_sglang_available,
     is_tgi_available,
     is_vllm_available,
@@ -64,20 +61,16 @@ logger = logging.getLogger(__name__)
 def load_model(  # noqa: C901
     config: ModelConfig,
 ) -> LightevalModel:
-    """Will load either a model from an inference server or a model from a checkpoint, depending
-    on the config type.
+    """
+    Load a model from a checkpoint, depending on the config type.
 
     Args:
-        args (Namespace): arguments passed to the program
-        accelerator (Accelerator): Accelerator that will be used by the model
+        config (ModelConfig): configuration of the model to load
 
     Raises:
-        ValueError: If you try to load a model from an inference server and from a checkpoint at the same time
         ValueError: If you try to have both the multichoice continuations start with a space and not to start with a space
-        ValueError: If you did not specify a base model when using delta weights or adapter weights
-
     Returns:
-        Union[TransformersModel, AdapterModel, DeltaModel, ModelClient]: The model that will be evaluated
+        LightevalModel: The model that will be evaluated
     """
     # Inference server loading
     if isinstance(config, TGIModelConfig):
@@ -104,9 +97,6 @@ def load_model(  # noqa: C901
     if isinstance(config, SGLangModelConfig):
         return load_sglang_model(config)
 
-    if isinstance(config, OpenAIModelConfig):
-        return load_openai_model(config)
-
     if isinstance(config, LiteLLMModelConfig):
         return load_litellm_model(config)
 
@@ -130,15 +120,6 @@ def load_litellm_model(config: LiteLLMModelConfig):
         raise ImportError(NO_LITELLM_ERROR_MSG)
 
     model = LiteLLMClient(config)
-    return model
-
-
-def load_openai_model(config: OpenAIModelConfig):
-    if not is_openai_available():
-        raise ImportError()
-
-    model = OpenAIClient(config)
-
     return model
 
 

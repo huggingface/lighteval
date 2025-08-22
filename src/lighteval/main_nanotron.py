@@ -43,22 +43,37 @@ def nanotron(
         str, Option(help="Path to the nanotron checkpoint YAML or python config file, potentially on s3.")
     ],
     lighteval_config_path: Annotated[str, Option(help="Path to a YAML config to be used for the evaluation.")],
+    remove_reasoning_tags: Annotated[
+        bool | None,
+        Option(
+            help="Remove reasoning tags from responses (true to remove, false to leave - true by default).",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = True,
+    reasoning_tags: Annotated[
+        str | None,
+        Option(
+            help="List of reasoning tags (provided as pairs) to remove from responses. Default is [('<think>', '</think>')].",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = None,
 ):
     """
     Evaluate models using nanotron as backend.
     """
-    from nanotron.config import GeneralArgs, ModelArgs, TokenizerArgs, get_config_from_dict, get_config_from_file
-
-    from lighteval.config.lighteval_config import (
-        FullNanotronConfig,
-        LightEvalConfig,
-    )
-    from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
     from lighteval.utils.imports import NO_NANOTRON_ERROR_MSG, is_nanotron_available
 
     if not is_nanotron_available():
         raise ImportError(NO_NANOTRON_ERROR_MSG)
+
+    from nanotron.config import GeneralArgs, ModelArgs, TokenizerArgs, get_config_from_dict, get_config_from_file
+
+    from lighteval.logging.evaluation_tracker import EvaluationTracker
+    from lighteval.models.nanotron import (
+        FullNanotronConfig,
+        LightEvalConfig,
+    )
+    from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 
     # Create nanotron config
     if not checkpoint_config_path.endswith(".yaml"):
@@ -101,8 +116,8 @@ def nanotron(
         custom_tasks_directory=lighteval_config.tasks.custom_tasks,
         num_fewshot_seeds=1,
         max_samples=lighteval_config.tasks.max_samples,
-        use_chat_template=False,
-        system_prompt=None,
+        remove_reasoning_tags=remove_reasoning_tags,
+        reasoning_tags=reasoning_tags,
     )
 
     pipeline = Pipeline(
