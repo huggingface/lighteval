@@ -78,7 +78,7 @@ oz_eval_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split=None,
     few_shots_select=None,
-    metric=[Metrics.loglikelihood_acc],
+    metrics=[Metrics.loglikelihood_acc],
     version=0,
 )
 
