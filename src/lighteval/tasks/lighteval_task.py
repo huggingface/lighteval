@@ -44,26 +44,65 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class LightevalTaskConfig:
-    """Stored configuration of a given [`LightevalTask`].
+    """Configuration dataclass for a LightevalTask.
 
-    Arguments:
+    This class stores all the configuration parameters needed to define and run
+    an evaluation task, including dataset information, prompt formatting,
+    evaluation metrics, and generation parameters.
+
+    Args:
         name (str): Short name of the evaluation task.
-        suite (list[str]): Evaluation suites to which the task belongs.
-        prompt_function (Callable[[dict, str], Doc]): Function used to create the [`Doc`] samples from each line of the evaluation dataset.
-        hf_repo (str): Path of the hub dataset repository containing the evaluation information.
-        hf_subset (str): Subset used for the current task, will be default if none is selected.
-        hf_avail_splits (list[str]): All the available splits in the evaluation dataset
-        evaluation_splits (list[str]): List of the splits actually used for this evaluation
-        few_shots_split (str): Name of the split from which to sample few-shot examples
-        few_shots_select (str): Method with which to sample few-shot examples
-        generation_size (int): Maximum allowed size of the generation
-        generation_grammar (TextGenerationInputGrammarType): The grammar to generate completion according to. Currently only available for TGI and Inference Endpoint models.
-        metric (list[str]): List of all the metrics for the current task.
-        stop_sequence (list[str]): Stop sequence which interrupts the generation for generative metrics.
-        original_num_docs (int): Number of documents in the task
-        effective_num_docs (int): Number of documents used in a specific evaluation
-        truncated_num_docs (bool): Whether less than the total number of documents were used
-        version (int): The version of the task. Defaults to 0. Can be increased if the underlying dataset or the prompt changes.
+        prompt_function (Callable[[dict, str], Doc]): Function that converts dataset
+            items to Doc objects for evaluation. Takes a dataset item dict and task
+            name as input.
+        hf_repo (str): HuggingFace Hub repository path containing the evaluation dataset.
+        hf_subset (str): Dataset subset/configuration name to use for this task.
+        metrics (ListLike[Metric]): List of metrics to compute for this task.
+
+    Dataset Configuration:
+        hf_revision (str | None, optional): Specific dataset revision to use.
+            Defaults to None (latest).
+        hf_filter (Callable[[dict], bool] | None, optional): Filter function to
+            apply to dataset items. Defaults to None.
+        hf_avail_splits (ListLike[str], optional): Available dataset splits.
+            Defaults to ["train", "validation", "test"].
+
+    Evaluation Splits:
+        evaluation_splits (ListLike[str], optional): Dataset splits to use for
+            evaluation. Defaults to ["validation"].
+        few_shots_split (str | None, optional): Split to sample few-shot examples
+            from. Defaults to None.
+        few_shots_select (str | None, optional): Method for selecting few-shot
+            examples. Defaults to None.
+
+    Generation Parameters:
+        generation_size (int | None, optional): Maximum token length for generated
+            text. Defaults to None.
+        generation_grammar (TextGenerationInputGrammarType | None, optional): Grammar
+            for structured text generation. Only available for TGI and Inference
+            Endpoint models. Defaults to None.
+        stop_sequence (ListLike[str] | None, optional): Sequences that stop text
+            generation. Defaults to None.
+        num_samples (list[int] | None, optional): Number of samples to generate
+            per input. Defaults to None.
+
+    Task Configuration:
+        suite (ListLike[str], optional): Evaluation suites this task belongs to.
+            Defaults to ["custom"].
+        version (int, optional): Task version number. Increment when dataset or
+            prompt changes. Defaults to 0.
+        num_fewshots (int, optional): Number of few-shot examples to include.
+            Defaults to 0.
+        truncate_fewshots (bool, optional): Whether to truncate few-shot examples.
+            Defaults to False.
+        must_remove_duplicate_docs (bool, optional): Whether to remove duplicate
+            documents. Defaults to False.
+
+    Document Tracking:
+        original_num_docs (int, optional): Total number of documents in the task.
+            Defaults to -1.
+        effective_num_docs (int, optional): Number of documents actually used
+            in evaluation. Defaults to -1.
     """
 
     name: str
@@ -228,9 +267,9 @@ class LightevalTask:
         Get the documents from the dataset for the given keys (splits).
 
         Args:
-            splits (list[str]): List of splits, (e.g. ["train", "dev"])
-            few_shots (bool, optional): Whether the documents are used for few
-                shot examples. Defaults to False.
+            splits (list[str]): List of dataset splits to process (e.g. ["train", "dev"])
+            few_shots (bool, optional): Whether the documents are used for few-shot
+                examples. This affects how the formatter processes the items. Defaults to False.
 
         Returns:
             list[Doc]: List of documents.
@@ -297,6 +336,24 @@ class LightevalTask:
         return self._docs
 
     def get_docs(self, max_samples: int | None = None) -> list[Doc]:
+        """
+        Get evaluation documents with few-shot examples and generation parameters configured.
+
+        Retrieves evaluation documents, optionally limits the number of samples,
+        shuffles them for reproducibility, and configures each document with
+        few-shot examples and generation parameters for evaluation.
+
+        Args:
+            max_samples (int | None, optional): Maximum number of documents to return.
+                If None, returns all available documents. Defaults to None.
+
+        Returns:
+            list[Doc]: List of documents ready for evaluation with few-shot examples
+                and generation parameters configured.
+
+        Raises:
+            ValueError: If no documents are available for evaluation.
+        """
         eval_docs = self.eval_docs()
 
         if len(eval_docs) == 0:
@@ -337,8 +394,9 @@ class LightevalTask:
         Load datasets from the HuggingFace Hub for the given tasks.
 
         Args:
-            tasks (list): A list of tasks.
-            dataset_loading_processes (int, optional): number of processes to use for dataset loading. Defaults to 1.
+            tasks (dict[str, LightevalTask]): Dictionary mapping task names to task objects.
+            dataset_loading_processes (int, optional): Number of processes to use for
+                parallel dataset loading. Defaults to 1 (sequential loading).
 
         Returns:
             None
@@ -364,7 +422,16 @@ class LightevalTask:
     ) -> DatasetDict:
         """
         Worker function to download a dataset from the HuggingFace Hub.
-        Used for parallel dataset loading.
+
+        Downloads the dataset specified in the task configuration, optionally
+        applies a filter if configured, and returns the dataset dictionary.
+        This method is designed to be used for parallel dataset loading.
+
+        Args:
+            task (LightevalTask): The task object containing dataset configuration.
+
+        Returns:
+            DatasetDict: The loaded dataset dictionary containing all splits.
         """
         dataset = load_dataset(
             path=task.dataset_path,
