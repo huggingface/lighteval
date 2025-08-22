@@ -41,12 +41,6 @@ def vllm(
     ],
     tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
     # === Common parameters ===
-    use_chat_template: Annotated[
-        bool, Option(help="Use chat template for evaluation.", rich_help_panel=HELP_PANEL_NAME_4)
-    ] = False,
-    system_prompt: Annotated[
-        Optional[str], Option(help="Use system prompt for evaluation.", rich_help_panel=HELP_PANEL_NAME_4)
-    ] = None,
     cot_prompt: Annotated[
         Optional[str], Option(help="Use chain of thought prompt for evaluation.", rich_help_panel=HELP_PANEL_NAME_4)
     ] = None,
@@ -62,10 +56,31 @@ def vllm(
     load_responses_from_details_date_id: Annotated[
         Optional[str], Option(help="Load responses from details directory.", rich_help_panel=HELP_PANEL_NAME_1)
     ] = None,
+    remove_reasoning_tags: Annotated[
+        bool | None,
+        Option(
+            help="Remove reasoning tags from responses (true to remove, false to leave - true by default).",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = True,
+    reasoning_tags: Annotated[
+        str | None,
+        Option(
+            help="List of reasoning tags (provided as pairs) to remove from responses. Default is [('<think>', '</think>')].",
+            rich_help_panel=HELP_PANEL_NAME_1,
+        ),
+    ] = None,
     # === saving ===
     output_dir: Annotated[
         str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = "results",
+    results_path_template: Annotated[
+        str | None,
+        Option(
+            help="Template path for where to save the results, you have access to 3 variables, `output_dir`, `org` and `model`. for example a template can be `'{output_dir}/1234/{org}+{model}'`",
+            rich_help_panel=HELP_PANEL_NAME_2,
+        ),
+    ] = None,
     push_to_hub: Annotated[
         bool, Option(help="Push results to the huggingface hub.", rich_help_panel=HELP_PANEL_NAME_2)
     ] = False,
@@ -84,7 +99,7 @@ def vllm(
     wandb: Annotated[
         bool,
         Option(
-            help="Push results to wandb. This will only work if you have wandb installed and logged in. We use env variable to configure wandb. see here: https://docs.wandb.ai/guides/track/environment-variables/",
+            help="Push results to wandb or trackio if available. We use env variable to configure trackio or wandb. see here: https://docs.wandb.ai/guides/track/environment-variables/, https://github.com/gradio-app/trackio",
             rich_help_panel=HELP_PANEL_NAME_2,
         ),
     ] = False,
@@ -107,12 +122,13 @@ def vllm(
 
     evaluation_tracker = EvaluationTracker(
         output_dir=output_dir,
+        results_path_template=results_path_template,
         save_details=save_details,
         push_to_hub=push_to_hub,
         push_to_tensorboard=push_to_tensorboard,
         public=public_run,
         hub_results_org=results_org,
-        wandb=wandb,
+        use_wandb=wandb,
     )
 
     pipeline_params = PipelineParameters(
@@ -122,10 +138,10 @@ def vllm(
         custom_tasks_directory=custom_tasks,
         num_fewshot_seeds=num_fewshot_seeds,
         max_samples=max_samples,
-        use_chat_template=use_chat_template,
-        system_prompt=system_prompt,
         cot_prompt=cot_prompt,
         load_responses_from_details_date_id=load_responses_from_details_date_id,
+        remove_reasoning_tags=remove_reasoning_tags,
+        reasoning_tags=reasoning_tags,
     )
 
     if model_args.endswith(".yaml"):

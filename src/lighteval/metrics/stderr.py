@@ -42,7 +42,7 @@ LIGHTEVAL_DISABLE_TQDM = int(os.environ.get("LIGHTEVAL_DISABLE_TQDM", "0"))
 
 def _stddev(arr):
     mu = np.mean(arr)
-    return math.sqrt(sum([(x - mu) ** 2 for x in arr]) / (len(arr) - 1))
+    return math.sqrt(sum((x - mu) ** 2 for x in arr) / (len(arr) - 1))
 
 
 def mean_stderr(arr):

@@ -30,13 +30,10 @@ Author:
 """
 
 import numpy as np
-from aenum import extend_enum
 
-from lighteval.metrics.metrics import Metrics, SampleLevelMetric
-from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase
-from lighteval.tasks.default_prompts import LETTER_INDICES
+from lighteval.metrics.metrics import SampleLevelMetric
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc
+from lighteval.tasks.requests import Doc, SamplingMethod
 
 
 # DEFINE YOUR PROMPT FUNCTIONS
@@ -49,7 +46,7 @@ def prompt_fn(line, task_name: str = None):
     return Doc(
         task_name=task_name,
         query="",
-        choices="",
+        choices=[""],
         gold_index=0,
         instruction="",
     )
@@ -68,7 +65,7 @@ task = LightevalTaskConfig(
     evaluation_splits=[],
     few_shots_split="",
     few_shots_select="",
-    metric=[],  # select your metric in Metrics
+    metrics=[],  # select your metric in Metrics
 )
 
 # EVALS WITH SUBSET
@@ -91,7 +88,7 @@ class CustomSubsetTask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=prompt_fn,  # must be defined in the file or imported from src/lighteval/tasks/tasks_prompt_formatting.py
             hf_repo="",
-            metric=[custom_metric],  # select your metric in Metrics or use your custom_metric
+            metrics=[custom_metric],  # select your metric in Metrics or use your custom_metric
             hf_avail_splits=[],
             evaluation_splits=[],
             few_shots_split="",
@@ -111,8 +108,7 @@ TASKS_TABLE = SUBSET_TASKS + [task]
 custom_metric = SampleLevelMetric(
     metric_name="my_custom_metric_name",
     higher_is_better=True,
-    category=MetricCategory.IGNORED,
-    use_case=MetricUseCase.NONE,
+    category=SamplingMethod.GENERATIVE,  # or LOGPROBS, PERPLEXITY, etc.
     sample_level_fn=lambda x: x,  # how to compute score for one sample
     corpus_level_fn=np.mean,  # aggregation
 )

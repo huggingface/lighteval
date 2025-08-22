@@ -85,11 +85,12 @@ class IndicesExtractionConfig:
 
     Attributes:
         prefix_for_extraction (ChoicePrefix): The style to use for extracting choice indices (e.g. A,B,C or 1,2,3)
-        try_extract_without_anchor (bool): Whether to try extracting indices without requiring specific anchors like "answer:" or "final answer is"
+        try_extract_without_anchor (bool): Whether to try extracting indices without requiring specific anchors like "answer:" or "final answer is".
+            Recommended False for indices extraction, as some indices (for example `A` which is also a word) can lead to a lot of false positives.
     """
 
     prefix_for_extraction: ChoicePrefix
-    try_extract_without_anchor: bool = True
+    try_extract_without_anchor: bool = False
 
 
 ExtractionTarget = LatexExtractionConfig | ExprExtractionConfig | IndicesExtractionConfig
@@ -129,7 +130,7 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
 
     currency_units = re.escape("$€£¥₹₽₪₩₫฿₡₢₣₤₥₦₧₨₩₪₫₭₮₯₰₱₲₳₴₵₶₷₸₹₺₻₼₽₾₿")
     expr_prefix_re = rf"(?:^|{space_re}|\=)(?:\*\*)?"
-    expr_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|\)|\$|$)"
+    expr_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|\s?{colon_re}|{space_re}|\)|\$|$)"
     # Expressions must be prefixed and suffixed while, digits don't need suffix and can have currency units preceeded, this is to ensure
     # That we can extract stuff like $100 or 100m2, while we don't extract XDY2K as 2
     expr_with_anchors = rf"(?:{expr_prefix_re}{expr_re}{expr_suffix_re})"
@@ -147,7 +148,7 @@ def lazy_expr_regex(expr_config: ExprExtractionConfig, language: Language) -> li
     answer_prefix_re = rf"(?i:{translation_literal.answer})"
 
     # Match after the last equals with answer word - require the number pattern,
-    equals_re_colon = rf"{answer_prefix_re}{colon_re}(?:.{{0,100}}=\s*|.{{0,50}}?){expr_or_number}(?!\s*=)"
+    equals_re_colon = rf"{answer_prefix_re}\s?{colon_re}(?:.{{0,100}}=\s*|.{{0,50}}?){expr_or_number}(?!\s*=)"
     equals_re = rf"{answer_prefix_re}(?:.{{0,100}}=\s*|.{{0,50}}?){expr_or_number}(?!\s*=)"
     regexes.extend([(equals_re_colon, 100), (equals_re, 200)])
 
@@ -252,7 +253,7 @@ def lazy_latex_regex(latex_config: LatexExtractionConfig, language: Language) ->
             regexes.append((final_answer_prefixed_just_is, 50))
 
         # Match with answer word - higher priority than plain latex
-        answer_re_colon = f"{answer_prefix_re}{colon_re}.{{0,50}}?{latex_re}"
+        answer_re_colon = rf"{answer_prefix_re}\s?{colon_re}.{{0,50}}?{latex_re}"
         answer_re = f"{answer_prefix_re}.{{0,50}}?{latex_re}"
 
         regexes.extend([(answer_re_colon, 100), (answer_re, 200)])
@@ -298,7 +299,7 @@ def lazy_indices_regex(
     space_re = re.escape(translation_literal.sentence_space)
 
     answer_prefix_re = rf"(?:^|{space_re})(?:\*\*)?"
-    answer_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|{colon_re}|{space_re}|$)"
+    answer_suffix_re = rf"(?:\*\*)?(?:{full_stop_re}|{comma_re}|\s?{colon_re}|{space_re}|$)"
     answer_re = f"{answer_prefix_re}{indice_str_re}{answer_suffix_re}"
     answer_re_start = rf"^(?:\*\*)?{indice_str_re}{answer_suffix_re}"
     answer_re_line_start = rf"\n(?:\*\*)?{indice_str_re}{answer_suffix_re}"
@@ -321,7 +322,7 @@ def lazy_indices_regex(
     regexes.extend(
         [
             # Most specific patterns first
-            (f"{answer_word}{colon_re}.{{0,50}}?{answer_re}", 100),
+            (rf"{answer_word}\s?{colon_re}.{{0,50}}?{answer_re}", 100),
             # Answer word patterns
             (f"{answer_word}.{{0,50}}?{answer_re}", 150),
             # Start of the string

@@ -35,13 +35,15 @@ from typing import Any
 import numpy as np
 from aenum import extend_enum
 
-from lighteval.metrics.metrics import MetricCategory, Metrics, MetricUseCase, SampleLevelMetric
+from lighteval.metrics.metrics import Metrics, SampleLevelMetric
+from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.extended.lcb.codegen_metrics import (
     codegen_metrics,
     extract_code,
     translate_private_test_cases,
 )
 from lighteval.tasks.lighteval_task import Doc, LightevalTaskConfig
+from lighteval.tasks.requests import SamplingMethod
 
 
 def prepare_prompt(line: dict[str, Any]) -> str:
@@ -78,17 +80,20 @@ def lcb_codegeneration_prompt_fn(line, task_name: str = "lcb:codegeneration") ->
     )
 
 
-def codegen_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> float:
+def codegen_metric(model_response: ModelResponse, doc: Doc, **kwargs) -> float:
     """Estimates the Pass@1 metric for the code generation task.
     Extract the code from each prediction, Runs it for each sample and generations,
     and computes the Pass@1 over the outputs.
     """
+    assert doc.specific is not None, "Doc specific field is required for codegen_metric"
+
+    predictions = model_response.final_text
     # Extract generated code snippets
     generated_code_snippets = [[extract_code(pred) for pred in predictions]]  # noqa: F841
     evaluation_sample = {  # noqa: F841
-        "inputs": formatted_doc.specific["inputs"],
-        "outputs": formatted_doc.specific["outputs"],
-        "fn_name": formatted_doc.specific["fn_name"],
+        "inputs": doc.specific["inputs"],
+        "outputs": doc.specific["outputs"],
+        "fn_name": doc.specific["fn_name"],
     }
     # This is a list of lists because
     evaluation_sample = [{"input_output": json.dumps(evaluation_sample)}]
@@ -104,8 +109,7 @@ def codegen_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> floa
 
 lcb_codegen_metric = SampleLevelMetric(
     metric_name="codegen_pass@1:16",  # This is the way of informing the number of generations currently
-    category=MetricCategory.GENERATIVE_SAMPLING,
-    use_case=MetricUseCase.REASONING,
+    category=SamplingMethod.GENERATIVE,
     higher_is_better=True,
     sample_level_fn=codegen_metric,
     corpus_level_fn=np.mean,
@@ -149,14 +153,13 @@ for subset in configs:
         name=name,
         suite=["extended"],
         prompt_function=lcb_codegeneration_prompt_fn,
-        hf_repo="livecodebench/code_generation_lite",
+        hf_repo="lighteval/code_generation_lite",
         hf_subset=subset,  # https://github.com/LiveCodeBench/LiveCodeBench/tree/main?tab=readme-ov-file#dataset-versions
         hf_avail_splits=["test"],
         evaluation_splits=["test"],
         generation_size=32768,
-        metric=[Metrics.lcb_codegen_metric],
+        metrics=[Metrics.lcb_codegen_metric],
         stop_sequence=[],  # no stop sequence, will use EOS token
-        trust_dataset=True,
         version=0,
     )
     tasks.append(task)
