@@ -129,23 +129,23 @@ class PipelineParameters:
         elif self.launcher_type == ParallelismManager.OPENAI:
             if not is_openai_available():
                 raise ImportError(NO_OPENAI_ERROR_MSG)
-        else:
-            # Convert reasoning tags to list if needed
-            if not isinstance(self.reasoning_tags, list):
-                try:
-                    self.reasoning_tags = ast.literal_eval(self.reasoning_tags)
-                except ValueError as e:
-                    raise ValueError(
-                        "reasoning_tags must be a list of pair tuples, e.g. [('start_tag', 'end_tag'), ...]. "
-                        f"Got {self.reasoning_tags} instead, which caused parsing error {e}."
-                    )
 
-            # Make sure format is correct
-            if not all(isinstance(tag, tuple) and len(tag) == 2 for tag in self.reasoning_tags):
+        # Convert reasoning tags to list if needed
+        if not isinstance(self.reasoning_tags, list):
+            try:
+                self.reasoning_tags = ast.literal_eval(self.reasoning_tags)
+            except ValueError as e:
                 raise ValueError(
                     "reasoning_tags must be a list of pair tuples, e.g. [('start_tag', 'end_tag'), ...]. "
-                    f"Got {self.reasoning_tags} instead."
+                    f"Got {self.reasoning_tags} instead, which caused parsing error {e}."
                 )
+
+        # Make sure format is correct
+        if not all(isinstance(tag, tuple) and len(tag) == 2 for tag in self.reasoning_tags):
+            raise ValueError(
+                "reasoning_tags must be a list of pair tuples, e.g. [('start_tag', 'end_tag'), ...]. "
+                f"Got {self.reasoning_tags} instead."
+            )
 
 
 class Pipeline:
