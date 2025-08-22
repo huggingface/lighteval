@@ -40,8 +40,15 @@ if TYPE_CHECKING:
 
 
 class PromptManager:
-    def __init__(self, use_chat_template: bool = False, tokenizer=None, system_prompt: str | None = None):
+    def __init__(
+        self,
+        use_chat_template: bool = False,
+        tokenizer=None,
+        system_prompt: str | None = None,
+        enable_thinking: bool | None = None,
+    ):
         self.use_chat_template = use_chat_template
+        self.enable_thinking = enable_thinking
         self.tokenizer = tokenizer
         self.system_prompt = system_prompt  # System prompt to be used in chat templates
 
@@ -119,10 +126,16 @@ class PromptManager:
         if tokenize:  # for local models
             assert self.tokenizer is not None, "Tokenizer must be set for chat template formatting."
 
+            if self.enable_thinking is not None:
+                tokenizer_kwargs = {"enable_thinking": self.enable_thinking}
+            else:
+                tokenizer_kwargs = {}
+
             return self.tokenizer.apply_chat_template(
                 messages,
                 tokenize=False,
                 add_generation_prompt=True,
+                **tokenizer_kwargs,
             )
 
         else:  # for apis

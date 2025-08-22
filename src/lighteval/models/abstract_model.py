@@ -81,6 +81,7 @@ class ModelConfig(BaseModel, extra="forbid"):
 
     generation_parameters: GenerationParameters = GenerationParameters()
     system_prompt: str | None = None
+    enable_thinking: bool | None = None
     cache_dir: str = "~/.cache/huggingface/lighteval"
 
     @classmethod
