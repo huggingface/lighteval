@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from dataclasses import asdict
 
 import pytest
 
@@ -36,8 +35,13 @@ class TestTGIModelConfig:
                 {
                     "inference_server_address": "",
                     "inference_server_auth": None,
-                    "model_id": None,
+                    "model_name": None,
+                    "model_info": None,
+                    "system_prompt": None,
                     "generation_parameters": {
+                        "block_size": None,
+                        "num_blocks": None,
+                        "cache_implementation": None,
                         "early_stopping": None,
                         "frequency_penalty": None,
                         "length_penalty": None,
@@ -48,16 +52,17 @@ class TestTGIModelConfig:
                         "repetition_penalty": None,
                         "seed": None,
                         "stop_tokens": None,
-                        "temperature": None,
+                        "temperature": 0,
                         "top_k": None,
                         "top_p": None,
                         "truncate_prompt": None,
                         "response_format": None,
                     },
+                    "cache_dir": "~/.cache/huggingface/lighteval",
                 },
             ),
         ],
     )
     def test_from_path(self, config_path, expected_config):
         config = TGIModelConfig.from_path(config_path)
-        assert asdict(config) == expected_config
+        assert config.model_dump() == expected_config

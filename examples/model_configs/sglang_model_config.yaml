@@ -1,13 +1,29 @@
-model:
-  base_params:
-    model_args: "pretrained=HuggingFaceTB/SmolLM-1.7B,dtype=float16,chunked_prefill_size=4096,mem_fraction_static=0.9"
-  generation:
-    temperature: 0.3
+model_parameters:
+  model_name: "HuggingFaceTB/SmolLM-1.7B-Instruct"
+  dtype: "auto"
+  tp_size: 1
+  dp_size: 1
+  context_length: null
+  random_seed: 1
+  trust_remote_code: False
+  device: "cuda"
+  skip_tokenizer_init: False
+  kv_cache_dtype: "auto"
+  add_special_tokens: True
+  pairwise_tokenization: False
+  sampling_backend: null
+  attention_backend: null
+  mem_fraction_static: 0.8
+  chunked_prefill_size: 4096
+  generation_parameters:
+    max_new_tokens: 1024
+    min_new_tokens: 0
+    temperature: 1.0
+    top_k: 50
+    min_p: 0.0
+    top_p: 1.0
+    presence_penalty: 0.0
     repetition_penalty: 1.0
     frequency_penalty: 0.0
-    presence_penalty: 0.0
-    top_k: -1
-    min_p: 0.0
-    top_p: 0.9
-    max_new_tokens: 256
-    stop_tokens: ["<EOS>", "<PAD>"]
+metrics_options:
+  yo: null

@@ -35,10 +35,8 @@ from lighteval.main_accelerate import accelerate  # noqa: E402
 os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 
 MODELS_ARGS = [
-    # {"model_name": "gpt2", "use_chat_template": False, "revision": "main", "results_file": "tests/reference_scores/gpt2-results.json"},
     {
         "model_name": "examples/model_configs/transformers_model.yaml",
-        "use_chat_template": True,
         "results_file": "tests/reference_scores/SmolLM2-1.7B-Instruct-results-accelerate.json",
     }
 ]
@@ -49,13 +47,11 @@ ModelInput = Tuple[str, Callable[[], dict]]
 
 
 @lru_cache(maxsize=len(MODELS_ARGS))
-def run_model(model_name: str, use_chat_template: bool):
+def run_model(model_name: str):
     """Runs the full main as a black box, using the input model and tasks, on 10 samples without parallelism"""
     results = accelerate(
         model_args=model_name,
         tasks=TASKS_PATH,
-        override_batch_size=1,
-        use_chat_template=use_chat_template,
         output_dir="",
         dataset_loading_processes=1,
         save_details=False,
@@ -70,7 +66,7 @@ def generate_tests() -> list[ModelInput]:
 
     tests = []
     for model_args in MODELS_ARGS:
-        predictions_lite = partial(run_model, model_args["model_name"], model_args["use_chat_template"])
+        predictions_lite = partial(run_model, model_args["model_name"])
         tests.append((model_args, predictions_lite))
 
     return tests
@@ -87,8 +83,6 @@ def test_accelerate_model_prediction(tests: list[ModelInput]):
     """Evaluates a model on a full task - is parametrized using pytest_generate_test"""
     model_args, get_predictions = tests
 
-    predictions = get_predictions()["results"]
-
     # Load the reference results
     with open(model_args["results_file"], "r") as f:
         reference_results = json.load(f)["results"]
@@ -96,9 +90,13 @@ def test_accelerate_model_prediction(tests: list[ModelInput]):
     # Change the key names, replace '|' with ':'
     reference_results = {k.replace("|", ":"): v for k, v in reference_results.items()}
 
+    # Get the predictions
+    predictions = get_predictions()["results"]
+
     # Convert defaultdict values to regular dict for comparison
     predictions_dict = {k: dict(v) if hasattr(v, "default_factory") else v for k, v in predictions.items()}
 
+    # Compare the predictions with the reference results
     diff = DeepDiff(reference_results, predictions_dict, ignore_numeric_type_changes=True, math_epsilon=0.05)
 
     assert diff == {}, f"Differences found: {diff}"

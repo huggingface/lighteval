@@ -25,6 +25,7 @@ import os
 
 import pytest
 
+from lighteval.metrics import apply_metric
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.sample_preparator import (
     GenerativeCorpusMetricInput,
@@ -32,7 +33,6 @@ from lighteval.metrics.sample_preparator import (
     PerplexityCorpusMetricInput,
 )
 from lighteval.models.model_output import ModelResponse
-from lighteval.tasks.lighteval_task import LightevalTask
 from lighteval.tasks.requests import Doc
 from lighteval.utils.utils import as_list
 
@@ -64,30 +64,47 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
         metafunc.parametrize("prompt_inputs", parameters, scope="session")
 
 
-def test_model_prediction(prompt_inputs: tuple[str, str, list]):
+def test_model_prediction(prompt_inputs: tuple[str, str, list]):  # noqa: C901
     """Evaluates a model on a full task - is parametrized using pytest_generate_test"""
     metric, task_name, examples = prompt_inputs
     metric_name = metric
     metric = Metrics[metric].value
-    print(metric_name, task_name)
+
     for example in examples:
-        formatted_doc = {
+        doc = {
             k: v
             for k, v in example.items()
             if k in ["full_prompt", "choices", "gold_index", "original_query", "specific"]
         }
-        print(formatted_doc)
-        formatted_doc["query"] = formatted_doc.pop("full_prompt")
-        formatted_doc = Doc(**formatted_doc)
-        error_msg = f"Metric {metric_name} failed on input {formatted_doc} from task {task_name}.\n"
+        doc["query"] = doc.pop("full_prompt")
+        doc = Doc(**doc)
+        error_msg = f"Metric {metric_name} failed on input {doc} from task {task_name}.\n"
 
-        results = [ModelResponse(result=i, input_tokens=[], generated_tokens=[]) for i in example["predictions"]]
-        # todo: update to create list of ModelResults in results
-        metric_result = apply_metric(
-            sample_ids=["0"], metric=metric, responses=[results], formatted_docs=[formatted_doc]
-        )[0]
-        assert metric_result is not None, error_msg
-        metric_result = {k: list(v) if isinstance(v, tuple) else v for k, v in metric_result.items()}
+        match example["predictions"]:
+            case [first_element, *_] if isinstance(first_element, str):
+                # If the predictions are a list of strings, we assume it's a generative task
+                responses = [ModelResponse(text=example["predictions"], output_tokens=[[]], input_tokens=[])]
+            case [first_element, *_] if isinstance(first_element, float):
+                # If the predictions are a list of floats, we assume it's a logprob task
+                responses = [ModelResponse(logprobs=example["predictions"], output_tokens=[[]], input_tokens=[])]
+            case [first_element, *_] if len(first_element) == 2 and isinstance(first_element[1], bool):
+                # If the predictions are a list of lists with two elements, we assume it's a loglikelihood task with argmax
+                responses = [
+                    ModelResponse(
+                        logprobs=[pred[0] for pred in example["predictions"]],
+                        argmax_logits_eq_gold=[pred[1] for pred in example["predictions"]],
+                        output_tokens=[[]],
+                        input_tokens=[],
+                    )
+                ]
+            case _:
+                # If the predictions are not a list of strings or floats, we assume it's a custom task
+                responses = [ModelResponse(logprobs=example["predictions"][0], input_tokens=[])]
+
+        results = apply_metric(responses=responses, docs=[doc], metrics=[metric])[0]
+        assert responses is not None, error_msg
+
+        metric_result = {k: list(v) if isinstance(v, tuple) else v for k, v in results.items()}
 
         metric_reference = {k: v for k, v in example.items() if k in POSSIBLE_METRICS}
         error_msg += f"Prediction: {results}\n"
@@ -110,16 +127,15 @@ def test_model_prediction(prompt_inputs: tuple[str, str, list]):
                 for res, ref in zip(cur_result_list, cur_ref_list):
                     try:
                         assert res == pytest.approx(ref, rel=1e-8), error_msg
-                    except Exception as e:
-                        assert False, error_msg + "\n" + str(e)
+                    except Exception:
+                        assert False, (
+                            key + "\n" + str(cur_result_list) + "\n" + str(cur_ref_list) + "\n" + task_name + "\n"
+                        )
             else:
                 try:
                     assert cur_result_list == pytest.approx(cur_ref_list, rel=1e-8), error_msg
-                except Exception as e:
-                    assert False, error_msg + "\n" + str(e)
-
-
-def apply_metric(sample_ids, metric, responses, formatted_docs: list[Doc]):
-    method = LightevalTask._get_metric_method_from_category(metric.category)
-    cur_outputs = method(sample_ids=sample_ids, metrics=[metric], responses=responses, formatted_docs=formatted_docs)
-    return cur_outputs
+                except Exception:
+                    # assert False, error_msg + "\n" + str(e)
+                    assert False, (
+                        key + "\n" + str(cur_result_list) + "\n" + str(cur_ref_list) + "\n" + task_name + "\n"
+                    )

@@ -32,6 +32,7 @@ from lighteval.metrics.dynamic_metrics import (
 )
 from lighteval.metrics.metrics_sample import ExactMatches
 from lighteval.metrics.normalizations import LogProbCharNorm, helm_normalizer
+from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.requests import Doc
 from lighteval.utils.language import Language
 
@@ -191,87 +192,88 @@ class TestBaseMetrics:
         assert res == 0
 
     def test_prob(self):
+        doc = Doc(query="Test query", choices=["A", "B", "C"], gold_index=0, task_name="test")
+
         # Simple case
+        model_response = ModelResponse(logprobs=np.log([0.7]))
         prob_metric = probability_metric()
-        result = prob_metric.sample_level_fn(logprobs=np.log([0.7]), target_tokens=None)
+        result = prob_metric.sample_level_fn(doc, model_response)
         assert result == pytest.approx(0.7)
 
         # Aggregation function test
+        model_response = ModelResponse(logprobs=np.log([0.7, 0.1]))
         prob_min_metric = probability_metric(aggregation_function=np.min)
-        result = prob_min_metric.sample_level_fn(logprobs=np.log([0.7, 0.1]), target_tokens=None)
+        result = prob_min_metric.sample_level_fn(doc, model_response)
         assert result == pytest.approx(0.1)
 
     def test_mc_probability_metric(self):
+        doc = Doc(query="Test query", choices=["A", "B", "C"], gold_index=0, task_name="test")
+        model_response = ModelResponse(logprobs=np.log([0.35, 0.1, 0.05]))
+
         mc_prob_metric = normalized_multi_choice_prob_metric()
+
         result = mc_prob_metric.sample_level_fn(
-            gold_ixs=[0],
-            choices_logprob=np.log([0.35, 0.1, 0.05]),
-            unconditioned_logprob=None,
-            choices_tokens=None,
-            formatted_doc=Doc(choices=["A", "B", "C"], gold_index=0, query=""),
+            doc,
+            model_response,
         )
         assert result == pytest.approx(0.7)
 
+        doc = Doc(query="Test query", choices=["AA", "BB", "CCC"], gold_index=1, task_name="test")
+        model_response = ModelResponse(logprobs=np.log([0.1**2, 0.35**2, 0.05**3]))
+
         prob_norm_metric = normalized_multi_choice_prob_metric(normalization=LogProbCharNorm())
         result = prob_norm_metric.sample_level_fn(
-            gold_ixs=[1],
-            choices_logprob=np.log([0.1**2, 0.35**2, 0.05**3]),
-            unconditioned_logprob=None,
-            choices_tokens=None,
-            formatted_doc=Doc(choices=["AA", "BB", "CCC"], gold_index=1, query=""),
+            doc,
+            model_response,
         )
         assert result == pytest.approx(0.7)
 
     def test_acc(self):
         # Test without normalization
+        doc = Doc(query="Test query", choices=["A", "B", "C", "D"], gold_index=0, task_name="test")
+        model_response = ModelResponse(logprobs=np.log([0.7, 0.2, 0.3, 0.4]))
+
         acc_metric = loglikelihood_acc_metric()
         result = acc_metric.sample_level_fn(
-            gold_ixs=[0],
-            choices_logprob=np.log([0.7, 0.2, 0.3, 0.4]),
-            unconditioned_logprob=None,
-            choices_tokens=None,
-            formatted_doc=Doc(choices=["A", "B", "C", "D"], gold_index=0, query=""),
+            doc,
+            model_response,
         )
         assert result == 1  # The highest logprob (3.0) is at index 3, which is not in gold_ixs
 
         # Test 0 acc
+        doc = Doc(query="Test query", choices=["A", "B", "C", "D"], gold_index=0, task_name="test")
+        model_response = ModelResponse(logprobs=np.log([0.1, 0.2, 0.3, 0.4]))
         result = acc_metric.sample_level_fn(
-            gold_ixs=[0],
-            choices_logprob=np.log([0.1, 0.2, 0.3, 0.4]),
-            unconditioned_logprob=None,
-            choices_tokens=None,
-            formatted_doc=Doc(choices=["A", "B", "C", "D"], gold_index=0, query=""),
+            doc,
+            model_response,
         )
         assert result == 0
 
         # Test with normalization
+        doc = Doc(query="Test query", choices=["ABCDE", "AB"], gold_index=0, task_name="test")
+        model_response = ModelResponse(logprobs=np.log([0.5, 0.6]))
         acc_norm_metric = loglikelihood_acc_metric(normalization=LogProbCharNorm())
         result_norm = acc_norm_metric.sample_level_fn(
-            gold_ixs=[0],
-            choices_logprob=np.log([0.5, 0.6]),
-            unconditioned_logprob=None,
-            choices_tokens=None,
-            formatted_doc=Doc(choices=["ABCDE", "AB"], gold_index=0, query=""),
+            doc,
+            model_response,
         )
         assert result_norm == 1  # After normalization, "ABCDE" should have the highest score
 
         # Test with multiple correct solutions
+        doc = Doc(query="Test query", choices=["A", "B", "C", "D"], gold_index=[1, 3], task_name="test")
+        model_response = ModelResponse(logprobs=np.log([0.5, 0.6, 0.7, 0.8]))
         result_multi = acc_metric.sample_level_fn(
-            gold_ixs=[1, 3],
-            choices_logprob=np.log([0.5, 0.6, 0.7, 0.8]),
-            unconditioned_logprob=None,
-            choices_tokens=None,
-            formatted_doc=Doc(choices=["A", "B", "C", "D"], gold_index=[1, 3], query=""),
+            doc,
+            model_response,
         )
         assert result_multi == 1
 
         # Test when the highest logprob is not in gold_ixs
+        doc = Doc(query="Test query", choices=["A", "B", "C", "D"], gold_index=[1, 2], task_name="test")
+        model_response = ModelResponse(logprobs=[0.5, 0.6, 0.7, 0.8])
         result_incorrect = acc_metric.sample_level_fn(
-            gold_ixs=[1, 2],
-            choices_logprob=np.log([0.5, 0.6, 0.7, 0.8]),
-            unconditioned_logprob=None,
-            choices_tokens=None,
-            formatted_doc=Doc(choices=["A", "B", "C", "D"], gold_index=[1, 3], query=""),
+            doc,
+            model_response,
         )
         assert result_incorrect == 0
 
@@ -280,18 +282,22 @@ class TestBaseMetrics:
         Tests that normalization works correctly. We don't test the behavior of the F1_score class as it should be already tested.
         """
 
+        doc = Doc(query="Test query", choices=["hello world"], gold_index=[0], task_name="test")
+        model_response = ModelResponse(text=["hello, the world"])
+
         # Normalization test
         f1_metric = multilingual_quasi_f1_score_metric(language=Language.ENGLISH)
         result = f1_metric.sample_level_fn(
-            golds=["hello world"],
-            predictions=["hello, the world"],
+            doc,
+            model_response,
         )
         assert result == 1
 
+        model_response = ModelResponse(text=["hello, the world how"])
         f1_metric = multilingual_quasi_f1_score_metric(language=Language.ENGLISH, aggregation_function=np.min)
         result = f1_metric.sample_level_fn(
-            golds=["hello world"],
-            predictions=["hello, the world how"],
+            doc,
+            model_response,
         )
         # 2 * (precision * recall) / (precision + recall) = 2 * (1 * 2/3) / (1 + 2/3) = 0.8
         assert result == 0.8
@@ -300,19 +306,22 @@ class TestBaseMetrics:
         """
         Tests that normalization works correctly. We don't test the behavior of the ExactMatch class as it should be already tested.
         """
+        doc = Doc(query="Test query", choices=["hello world"], gold_index=[0], task_name="test")
+        model_response = ModelResponse(text=["hello, the world"])
 
         # Normalization test
         em_metric = multilingual_quasi_exact_match_metric(language=Language.ENGLISH, match_type="full")
         result = em_metric.sample_level_fn(
-            golds=["hello world"],
-            predictions=["hello, the world"],
+            doc,
+            model_response,
         )
         assert result == 1
 
+        model_response = ModelResponse(text=["hello, the world how"])
         em_metric = multilingual_quasi_exact_match_metric(language=Language.ENGLISH, match_type="full")
         result = em_metric.sample_level_fn(
-            golds=["hello world"],
-            predictions=["hello, the world how"],
+            doc,
+            model_response,
         )
         assert result == 0
 

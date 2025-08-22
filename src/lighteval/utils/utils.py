@@ -11,12 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-from dataclasses import asdict, dataclass, is_dataclass
-from typing import Callable, TypeVar, Union
+from dataclasses import asdict, is_dataclass
+from typing import TypeVar, Union
 
 import numpy as np
-from datasets import DatasetDict, load_dataset
 from pytablewriter import MarkdownTableWriter
 
 
@@ -182,20 +180,6 @@ def make_results_table(result_dict):
     return md_writer.dumps()
 
 
-@dataclass
-class EnvConfig:
-    """
-    Configuration class for environment settings.
-
-    Attributes:
-        cache_dir (str): directory for caching data.
-        token (str): authentication token used for accessing the HuggingFace Hub.
-    """
-
-    cache_dir: str = os.getenv("HF_HUB_CACHE", "/scratch")
-    token: str = os.getenv("HF_TOKEN")
-
-
 def boolstring_to_bool(x: Union[str, bool, int]) -> Union[bool, None]:
     """Allows to manage string or bool to bool conversion, in case a configuration input is badly formatted.
 
@@ -214,33 +198,30 @@ def boolstring_to_bool(x: Union[str, bool, int]) -> Union[bool, None]:
     raise ValueError(f"You tried to convert {x} to a boolean but it's not possible.")
 
 
-def download_dataset_worker(
-    dataset_path: str,
-    dataset_config_name: str,
-    trust_dataset: bool,
-    dataset_filter: Callable[[dict], bool] | None = None,
-    revision: str | None = None,
-) -> DatasetDict:
-    """
-    Worker function to download a dataset from the HuggingFace Hub.
-    Used for parallel dataset loading.
-    """
-    dataset = load_dataset(
-        path=dataset_path,
-        name=dataset_config_name,
-        data_dir=None,
-        cache_dir=None,
-        download_mode=None,
-        trust_remote_code=trust_dataset,
-        revision=revision,
-    )
-
-    if dataset_filter is not None:
-        dataset = dataset.filter(dataset_filter)
-
-    # It returns DatasetDict because we don't specify a split
-    return dataset  # type: ignore
-
-
 def safe_divide(numerator: np.ndarray, denominator: float, default_value: float = 0.0) -> np.ndarray:
     return np.where(denominator != 0, numerator / denominator, default_value)
+
+
+def remove_reasoning_tags(text: str, tag_pairs: list[tuple[str, str]]) -> str:
+    """Remove all instances of reasoning tag pairs from text.
+
+    See: https://github.com/huggingface/lighteval/issues/790
+
+    Example:
+    >>> text = "<think> Reasoning section </think> Answer section"
+    >>> tag_pairs = [("<think>", "</think>")]
+    >>> remove_reasoning_tags(text, tag_pairs)
+    ' Answer section'
+    """
+    result = text
+
+    for start_tag, end_tag in tag_pairs:
+        while start_tag in result and end_tag in result:
+            start = result.find(start_tag)
+            end = result.find(end_tag, start)
+            if start != -1 and end != -1:
+                result = result[:start] + result[end + len(end_tag) :]
+            else:
+                break
+
+    return result

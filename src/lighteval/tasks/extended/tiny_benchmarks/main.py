@@ -26,6 +26,7 @@ See https://github.com/felipemaiapolo/tinyBenchmarks/ for the original code.
 
 Test with `python run_evals_accelerate.py --model_args "pretrained=EleutherAI/pythia-70m" --tasks "extended|tiny:winogrande|0|0,extended|tiny:gsm8k|0|0,extended|tiny:hellaswag|0|0,extended|tiny:arc|0|0,extended|tiny:truthfulqa|0|0" --extended_tasks extended_tasks --output_dir "./evals"`
 """
+
 import os
 import pathlib
 import pickle
@@ -39,8 +40,8 @@ import lighteval.tasks.default_prompts as prompt
 from lighteval.metrics.metrics import CorpusLevelMetricGrouping, Metrics
 from lighteval.metrics.metrics_sample import ExactMatches, LoglikelihoodAcc
 from lighteval.metrics.normalizations import gsm8k_normalizer
-from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import SamplingMethod
 
 
 # Utility functions
@@ -105,10 +106,10 @@ class TinyCorpusAggregator:
             res = ExactMatches(
                 strip_strings=True, normalize_pred=gsm8k_normalizer, normalize_gold=gsm8k_normalizer
             ).compute(**args)
-            return {m: res for m in self.METRICS}
+            return dict.fromkeys(self.METRICS, res)
         else:
             res = LoglikelihoodAcc().compute(**args)
-            return {m: res for m in self.METRICS}
+            return dict.fromkeys(self.METRICS, res)
 
     def aggregate(self, y_input):
         if len(y_input) == self.num_samples and self.estimates is not None:
@@ -255,7 +256,7 @@ for task in task_params:
         evaluation_splits=task["evaluation_split"],
         few_shots_split=None,
         few_shots_select="random_sampling",
-        metric=[f"tinybench_metric_{name}"],
+        metrics=[f"tinybench_metric_{name}"],
         generation_size=generation_size,
         stop_sequence=stop_sequence,
     )
@@ -265,21 +266,18 @@ for task in task_params:
 for task_param in task_params:
     name = task_param["name"]
     if name == "gsm8k":
-        category = MetricCategory.GENERATIVE
-        use_case = MetricUseCase.MATH
+        category = SamplingMethod.GENERATIVE
     else:
-        category = MetricCategory.MULTICHOICE
-        use_case = MetricUseCase.ACCURACY
+        category = SamplingMethod.LOGPROBS
 
     extend_enum(
         Metrics,
         f"tinybench_metric_{name}",
         CorpusLevelMetricGrouping(
             metric_name=TinyCorpusAggregator.METRICS,
-            higher_is_better={m: True for m in TinyCorpusAggregator.METRICS},
+            higher_is_better=dict.fromkeys(TinyCorpusAggregator.METRICS, True),
             sample_level_fn=TinyCorpusAggregator(name).compute,
             category=category,
-            use_case=use_case,
             corpus_level_fn=TinyCorpusAggregator(name).aggregate,
         ),
     )

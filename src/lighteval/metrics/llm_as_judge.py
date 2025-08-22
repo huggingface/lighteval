@@ -127,7 +127,7 @@ class JudgeLM:
         if self.backend == "inference-providers" and self.hf_provider is None:
             raise ValueError("When using 'inference-providers' as backend, you must specify an 'hf_provider'")
 
-    def __lazy_load_client(self):
+    def __lazy_load_client(self):  # noqa: C901
         match self.backend:
             # Both "openai" and "tgi" backends use the OpenAI-compatible API
             # They are handled separately to allow for backend-specific validation and setup

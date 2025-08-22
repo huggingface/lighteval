@@ -34,7 +34,6 @@ from lighteval.metrics.metrics_sample import (
 )
 from lighteval.metrics.normalizations import (
     LogProbNormalization,
-    LogProbPMINorm,
     LogProbTokenNorm,
     get_multilingual_normalizer,
 )
@@ -47,8 +46,9 @@ from lighteval.metrics.utils.extractive_match_utils import (  # noqa: F401
     get_extraction_regexes,
 )
 from lighteval.metrics.utils.math_comparison import compare_gold_target
-from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase, SampleLevelMetric
-from lighteval.tasks.requests import Doc
+from lighteval.metrics.utils.metric_utils import SampleLevelMetric
+from lighteval.models.model_output import ModelResponse
+from lighteval.tasks.requests import Doc, SamplingMethod
 from lighteval.utils.language import Language
 from lighteval.utils.timeout import timeout
 
@@ -58,18 +58,15 @@ logger = logging.getLogger(__name__)
 
 def loglikelihood_acc_metric(normalization: LogProbNormalization | None = None) -> SampleLevelMetric:
     """
-    Creates a accuracy (loglikelihood) metric, which returns accuracy given normalization.
+    Creates an accuracy (loglikelihood) metric, which returns accuracy given normalization.
     """
 
-    normalization_str = normalization.name if normalization else ""
-    metric_name = f"acc_{normalization_str}"
+    normalization_str = f"_{normalization.name}" if normalization else ""
+    metric_name = f"acc{normalization_str}"
     return SampleLevelMetric(
         metric_name=metric_name,
         sample_level_fn=LoglikelihoodAcc(logprob_normalization=normalization).compute,
-        category=MetricCategory.MULTICHOICE
-        if not normalization == LogProbPMINorm()
-        else MetricCategory.MULTICHOICE_PMI,
-        use_case=MetricUseCase.ACCURACY,
+        category=SamplingMethod.LOGPROBS,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
@@ -83,18 +80,15 @@ def normalized_multi_choice_prob_metric(
     Creates a normalized multi-choice probability metric, which returns the probability of the gold choice / sum of probabilities of all choices (after logprobs are normalized).
     """
 
-    normalization_str = normalization.name if normalization else ""
-    metric_name = "_".join(filter(None, ["normalized_mc_prob_", normalization_str]))
+    normalization_str = f"_{normalization.name}" if normalization else ""
+    metric_name = f"normalized_mc_prob{normalization_str}"
 
     return SampleLevelMetric(
         metric_name=metric_name,
         sample_level_fn=NormalizedMultiChoiceProbability(
             log_prob_normalization=normalization, aggregation_function=aggregation_function
         ).compute,
-        category=MetricCategory.MULTICHOICE
-        if not normalization == LogProbPMINorm()
-        else MetricCategory.MULTICHOICE_PMI,
-        use_case=MetricUseCase.ACCURACY,
+        category=SamplingMethod.LOGPROBS,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
@@ -108,14 +102,13 @@ def probability_metric(
     Creates a probability metric, which returns the probability of the gold choice given normalization.
     """
 
-    normalization_str = normalization.name if normalization else ""
-    metric_name = "_".join(filter(None, ["prob", normalization_str]))
+    normalization_str = f"_{normalization.name}" if normalization else ""
+    metric_name = f"prob{normalization_str}"
 
     return SampleLevelMetric(
         metric_name=metric_name,
         sample_level_fn=Probability(normalization=normalization, aggregation_function=aggregation_function).compute,
-        category=MetricCategory.TARGET_PERPLEXITY,
-        use_case=MetricUseCase.PERPLEXITY,
+        category=SamplingMethod.LOGPROBS,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
@@ -144,8 +137,7 @@ def multilingual_quasi_f1_score_metric(
             normalize_pred=multilang_normalizer,
             aggregation_function=aggregation_function,
         ).compute,
-        category=MetricCategory.GENERATIVE,
-        use_case=MetricUseCase.ACCURACY,
+        category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
@@ -178,8 +170,7 @@ def multilingual_quasi_exact_match_metric(
             aggregation_function=aggregation_function,
             type_exact_match=match_type,
         ).compute,
-        category=MetricCategory.GENERATIVE,
-        use_case=MetricUseCase.ACCURACY,
+        category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
@@ -188,7 +179,7 @@ def multilingual_quasi_exact_match_metric(
 def multilingual_extractive_match_metric(
     language: Language = Language.ENGLISH,
     gold_extraction_target: Sequence[ExtractionTarget] = (ExprExtractionConfig(),),
-    pred_extraction_target: Sequence[ExtractionTarget] = (ExprExtractionConfig(),),
+    pred_extraction_target: Sequence[ExtractionTarget] = (ExprExtractionConfig(), LatexExtractionConfig()),
     aggregation_function: Callable[[list[float]], float] = max,
     fallback_mode: Literal["no_fallback", "first_match"] = "first_match",
     extraction_mode: Literal["first_match", "any_match"] = "any_match",
@@ -199,7 +190,7 @@ def multilingual_extractive_match_metric(
 
     Known issues:
     - If the task is to simplify an expression, the metric might overestimate the accuracy. This is because if the model doesn't output any anchor for the extraction (e.g final answer is..),
-        it's possible that the the extracted prediction will be the expression to simplify. Because we do simplifications ourselves, it can thus happen that sympy will correctly simplify the expression,
+        it's possible that the extracted prediction will be the expression to simplify. Because we do simplifications ourselves, it can thus happen that sympy will correctly simplify the expression,
         thus it will match gold, despite model not doing anything. PRs to fix this are welcome.
 
     - There is currently no StringExtractionConfig, so if the gold is \boxed{\text{Friday}} and model outputs Friday it will not match, because nothing will be extracted.
@@ -243,9 +234,12 @@ def multilingual_extractive_match_metric(
         ]
         formatted_doc.specific["extracted_golds"] = [str(gold) for golds in extracted_golds for gold in golds]
 
-    def sample_level_fn(golds: list[str], predictions: list[str], formatted_doc: Doc) -> float:
-        gold_extraction_regexes = get_extraction_regexes(formatted_doc, gold_extraction_target, language)
-        pred_extraction_regexes = get_extraction_regexes(formatted_doc, pred_extraction_target, language)
+    def sample_level_fn(doc: Doc, model_response: ModelResponse) -> float:
+        golds = doc.get_golds()
+        predictions = model_response.final_text
+
+        gold_extraction_regexes = get_extraction_regexes(doc, gold_extraction_target, language)
+        pred_extraction_regexes = get_extraction_regexes(doc, pred_extraction_target, language)
 
         extracted_predictions = [
             extract_target_from_pred(pred, pred_extraction_regexes, fallback_mode, extraction_mode, timeout_seconds)
@@ -268,7 +262,7 @@ def multilingual_extractive_match_metric(
 
         # We have to use timeout because the sypmy to str conversion can be very slow
         try:
-            add_to_specifics_with_timeout(formatted_doc, extracted_predictions, extracted_golds)
+            add_to_specifics_with_timeout(doc, extracted_predictions, extracted_golds)
         except Exception:  # noqa: E722
             logger.warning("Timeout when adding extracted predictions and golds to specific")
 
@@ -289,8 +283,7 @@ def multilingual_extractive_match_metric(
     return SampleLevelMetric(
         metric_name="extractive_match",
         sample_level_fn=sample_level_fn,
-        category=MetricCategory.GENERATIVE,
-        use_case=MetricUseCase.ACCURACY,
+        category=SamplingMethod.GENERATIVE,
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
