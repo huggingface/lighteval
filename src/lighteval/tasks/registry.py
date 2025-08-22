@@ -23,19 +23,54 @@
 import collections
 import copy
 import importlib
+import importlib.util
 import logging
 import os
+import sys
 from functools import lru_cache
 from itertools import groupby
 from pathlib import Path
 from types import ModuleType
 
-from datasets.load import dataset_module_factory
-
 import lighteval.tasks.default_tasks as default_tasks
 from lighteval.tasks.extended import AVAILABLE_EXTENDED_TASKS_MODULES
 from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
 from lighteval.utils.imports import CANNOT_USE_EXTENDED_TASKS_MSG, can_load_extended_tasks
+
+
+# Import community tasks
+AVAILABLE_COMMUNITY_TASKS_MODULES = []
+
+
+def load_community_tasks():
+    """Dynamically load community tasks, handling errors gracefully."""
+    modules = []
+    try:
+        # Community tasks are in the lighteval directory, not under src
+        community_path = Path(__file__).parent.parent.parent.parent / "community_tasks"
+        if not community_path.exists():
+            return modules
+
+        # Ensure the parent directory is on sys.path so we can import `community_tasks.*`
+        parent_dir = str(community_path.parent)
+        if parent_dir not in sys.path:
+            sys.path.insert(0, parent_dir)
+
+        # List all python files in community_tasks
+        community_files = [p.stem for p in community_path.glob("*.py") if not p.name.startswith("_")]
+
+        for module_name in community_files:
+            try:
+                module = importlib.import_module(f"community_tasks.{module_name}")
+                if hasattr(module, "TASKS_TABLE"):
+                    modules.append(module)
+                    logger.info(f"Successfully loaded community tasks from {module_name}")
+            except Exception as e:
+                logger.warning(f"Failed to load community tasks from {module_name}: {e}")
+    except Exception as e:
+        logger.warning(f"Error loading community tasks directory: {e}")
+
+    return modules
 
 
 logger = logging.getLogger(__name__)
@@ -46,7 +81,9 @@ logger = logging.getLogger(__name__)
 # Community are for community added evaluations
 # Extended are for evaluations with custom logic
 # Custom is for all the experiments you might want to do!
-DEFAULT_SUITES = [
+
+# Core suites - always available without extra dependencies
+CORE_SUITES = [
     "helm",
     "bigbench",
     "harness",
@@ -55,9 +92,16 @@ DEFAULT_SUITES = [
     "original",
     "extended",
     "custom",
-    "community",
     "test",
 ]
+
+# Optional suites - may require extra dependencies
+OPTIONAL_SUITES = [
+    "community",
+    "multilingual",
+]
+
+DEFAULT_SUITES = CORE_SUITES + OPTIONAL_SUITES
 
 TRUNCATE_FEW_SHOTS_DEFAULTS = True
 
@@ -136,6 +180,24 @@ class Registry:
                 custom_tasks_module.append(extended_task_module)
         else:
             logger.warning(CANNOT_USE_EXTENDED_TASKS_MSG)
+
+        # Load community tasks
+        community_modules = load_community_tasks()
+        for community_task_module in community_modules:
+            custom_tasks_module.append(community_task_module)
+
+        # Load multilingual tasks
+        MULTILINGUAL_TASKS_AVAILABLE = False
+        multilingual_tasks = None
+        try:
+            import lighteval.tasks.multilingual.tasks as multilingual_tasks
+
+            MULTILINGUAL_TASKS_AVAILABLE = True
+        except ImportError as e:
+            logger.warning(f"Could not load multilingual tasks: {e}. You may need to install additional dependencies.")
+
+        if MULTILINGUAL_TASKS_AVAILABLE and multilingual_tasks is not None:
+            custom_tasks_module.append(multilingual_tasks)
 
         for module in custom_tasks_module:
             custom_task_configs.extend(module.TASKS_TABLE)
@@ -280,18 +342,66 @@ class Registry:
         # Then it must be a single task
         return [task_definition]
 
-    def print_all_tasks(self):
+    def print_all_tasks(self, suites: str | None = None):
         """
         Print all the tasks in the task registry.
+
+        Args:
+            suites: Comma-separated list of suites to display. If None, shows core suites only.
+                   Use 'all' to show all available suites (core + optional).
+                   Special handling for 'multilingual' suite with dependency checking.
         """
-        tasks_names = list(self.task_registry.keys())
+        # Parse requested suites
+        if suites is None:
+            requested_suites = CORE_SUITES.copy()
+        else:
+            requested_suites = [s.strip() for s in suites.split(",")]
+
+            # Handle 'all' special case
+            if "all" in requested_suites:
+                requested_suites = DEFAULT_SUITES.copy()
+
+            # Check for multilingual dependencies if requested
+            if "multilingual" in requested_suites:
+                import importlib.util
+
+                if importlib.util.find_spec("langcodes") is None:
+                    logger.warning(
+                        "Multilingual tasks require additional dependencies (langcodes). "
+                        "Install them with: pip install langcodes"
+                    )
+                    requested_suites.remove("multilingual")
+
+        # Get all tasks and filter by requested suites
+        all_tasks = list(self.task_registry.keys())
+        tasks_names = [task for task in all_tasks if task.split("|")[0] in requested_suites]
+
+        # Ensure all requested suites are present (even if empty)
+        suites_in_registry = {name.split("|")[0] for name in tasks_names}
+        for suite in requested_suites:
+            if suite not in suites_in_registry:
+                # We add a dummy task to make sure the suite is printed
+                tasks_names.append(f"{suite}|")
+
         tasks_names.sort()
+
+        print(f"Displaying tasks for suites: {', '.join(requested_suites)}")
+        print("=" * 60)
+
         for suite, g in groupby(tasks_names, lambda x: x.split("|")[0]):
-            tasks_names = list(g)
-            tasks_names.sort()
+            tasks_in_suite = [name for name in g if name.split("|")[1]]  # Filter out dummy tasks
+            tasks_in_suite.sort()
+
             print(f"\n- {suite}:")
-            for task_name in tasks_names:
-                print(f"  - {task_name}")
+            if not tasks_in_suite:
+                print("  (no tasks in this suite)")
+            else:
+                for task_name in tasks_in_suite:
+                    print(f"  - {task_name}")
+
+        # Print summary
+        total_tasks = len([t for t in tasks_names if t.split("|")[1]])
+        print(f"\nTotal tasks displayed: {total_tasks}")
 
     @staticmethod
     def create_custom_tasks_module(custom_tasks: str | Path | ModuleType) -> ModuleType:
@@ -306,8 +416,15 @@ class Registry:
         if isinstance(custom_tasks, ModuleType):
             return custom_tasks
         if isinstance(custom_tasks, (str, Path)) and os.path.exists(custom_tasks):
-            dataset_module = dataset_module_factory(str(custom_tasks), trust_remote_code=True)
-            return importlib.import_module(dataset_module.module_path)
+            module_name = os.path.splitext(os.path.basename(custom_tasks))[0]
+            spec = importlib.util.spec_from_file_location(module_name, custom_tasks)
+
+            if spec is None:
+                raise ValueError(f"Cannot find module {module_name} at {custom_tasks}")
+
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            return module
         if isinstance(custom_tasks, (str, Path)):
             return importlib.import_module(str(custom_tasks))
 

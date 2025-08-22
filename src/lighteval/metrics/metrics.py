@@ -44,6 +44,7 @@ from lighteval.metrics.metrics_sample import (
     BLEURT,
     MRR,
     ROUGE,
+    AvgAtK,
     BertScore,
     ExactMatches,
     Extractiveness,
@@ -349,6 +350,22 @@ class Metrics(Enum):
         corpus_level_fn=np.mean,
         higher_is_better=True,
     )
+    math_avg_at_64 = SampleLevelMetric(
+        metric_name="math_avg@64",
+        sample_level_fn=AvgAtK(
+            k=64,
+            sample_scoring_function=lambda doc, model_response: multilingual_extractive_match_metric(
+                language=Language.ENGLISH,
+                gold_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
+                pred_extraction_target=[ExprExtractionConfig(), LatexExtractionConfig()],
+                precision=6,
+            ).sample_level_fn(doc, model_response),
+        ).compute,
+        category=SamplingMethod.GENERATIVE,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+    )
+
     math_pass_at_1_1n = SampleLevelMetric(
         metric_name="math_pass@1:1_samples",
         sample_level_fn=PassAtK(
@@ -473,6 +490,13 @@ class Metrics(Enum):
         sample_level_fn=LoglikelihoodPreparator(is_single_token=True).prepare,
         category=SamplingMethod.LOGPROBS,
         corpus_level_fn=CorpusLevelF1Score(average=None, num_classes=3).compute,
+        higher_is_better=True,
+    )
+    avg_at_64 = SampleLevelMetric(
+        metric_name="avg@64",
+        sample_level_fn=PassAtK(k=64, n=64, strip_strings=True).compute,
+        category=SamplingMethod.GENERATIVE,
+        corpus_level_fn=np.mean,
         higher_is_better=True,
     )
     pass_at_1 = SampleLevelMetric(

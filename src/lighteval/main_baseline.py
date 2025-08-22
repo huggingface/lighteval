@@ -62,7 +62,6 @@ def baseline(
         This baseline computation may not be suitable for all task types and should be used with caution.
     """
     from lighteval.logging.evaluation_tracker import EvaluationTracker
-    from lighteval.models.abstract_model import ModelInfo
     from lighteval.tasks.lighteval_task import LightevalTask, LightevalTaskConfig
     from lighteval.tasks.registry import Registry
     from lighteval.tasks.requests import SamplingMethod
@@ -82,13 +81,7 @@ def baseline(
         hub_results_org=None,
     )
     evaluation_tracker.general_config_logger.log_model_info(
-        {},
-        ModelInfo(
-            model_name="lighteval/baseline",
-            model_sha=None,
-            model_dtype=None,
-            model_size=None,
-        ),
+        model_config=None,
     )
     evaluation_tracker.task_config_logger.log(tasks_dict)
 

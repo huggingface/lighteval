@@ -44,7 +44,6 @@ from typing import Any, Dict, List, Optional, Union
 
 from lighteval.metrics.llm_as_judge import JudgeLM
 from lighteval.metrics.metrics import Metric, MetricCategory, Metrics
-from lighteval.metrics.utils.metric_utils import MetricUseCase
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -128,7 +127,7 @@ class CustomTUMLUTask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=partial(tumlu_pfn, language=hf_subset),
             hf_repo="jafarisbarov/TUMLU-mini",
-            metric=[Metrics.loglikelihood_acc_norm],
+            metrics=[Metrics.loglikelihood_acc_norm],
             hf_avail_splits=["test", "dev"],
             evaluation_splits=["test"],
             few_shots_split=["dev"],
@@ -136,7 +135,6 @@ class CustomTUMLUTask(LightevalTaskConfig):
             suite=["community"],
             generation_size=-1,
             stop_sequence=None,
-            trust_dataset=False,
             version=0,
         )
 

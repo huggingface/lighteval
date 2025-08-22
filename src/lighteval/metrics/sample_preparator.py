@@ -73,7 +73,7 @@ class GenerativePreparator:
             GenerativeCorpusMetricInput: Stores the golds and predictions as such
         """
         golds = as_list(doc.get_golds())
-        predictions = model_response.text
+        predictions = model_response.final_text
         return GenerativeCorpusMetricInput(golds=golds, preds=predictions)
 
 

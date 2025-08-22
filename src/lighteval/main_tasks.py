@@ -65,14 +65,22 @@ def inspect(
 
 
 @app.command()
-def list(custom_tasks: Annotated[Optional[str], Option(help="Path to a file with custom tasks")] = None):
+def list(
+    custom_tasks: Annotated[Optional[str], Option(help="Path to a file with custom tasks")] = None,
+    suites: Annotated[
+        Optional[str],
+        Option(
+            help="Comma-separated list of suites to display (e.g., 'helm,harness'). Use 'all' for all suites. If not specified, shows core suites only."
+        ),
+    ] = None,
+):
     """
     List all tasks
     """
     from lighteval.tasks.registry import Registry
 
     registry = Registry(custom_tasks=custom_tasks)
-    registry.print_all_tasks()
+    registry.print_all_tasks(suites=suites)
 
 
 @app.command()
