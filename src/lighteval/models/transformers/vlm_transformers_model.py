@@ -103,6 +103,14 @@ class VLMTransformersModelConfig(ModelConfig):
             model at a quantized precision. Needed for 4-bit and 8-bit precision.
         trust_remote_code (bool): Whether to trust remote code during model
             loading.
+        compile (bool, optional, defaults to False): Whether to compile the model for faster inference.
+        device_map (str | None, optional, defaults to None): Device mapping strategy for model loading.
+        generation_parameters (GenerationParameters, optional, defaults to empty GenerationParameters):
+            Configuration parameters that control text generation behavior, including
+            temperature, top_p, max_new_tokens, etc.
+        system_prompt (str | None, optional, defaults to None): Optional system prompt to be used with chat models.
+            This prompt sets the behavior and context for the model during evaluation.
+        cache_dir (str, optional, defaults to "~/.cache/huggingface/lighteval"): Directory to cache the model.
     """
 
     model_name: str

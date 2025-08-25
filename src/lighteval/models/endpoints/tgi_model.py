@@ -68,6 +68,12 @@ class TGIModelConfig(ModelConfig):
             Authentication token for the TGI server. If None, no authentication is used.
         model_name (str | None):
             Optional model name override. If None, uses the model name from server info.
+        generation_parameters (GenerationParameters, optional, defaults to empty GenerationParameters):
+            Configuration parameters that control text generation behavior, including
+            temperature, top_p, max_new_tokens, etc.
+        system_prompt (str | None, optional, defaults to None): Optional system prompt to be used with chat models.
+            This prompt sets the behavior and context for the model during evaluation.
+        cache_dir (str, optional, defaults to "~/.cache/huggingface/lighteval"): Directory to cache the model.
 
     Example:
         ```python

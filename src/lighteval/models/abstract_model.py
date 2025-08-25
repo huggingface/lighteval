@@ -53,6 +53,8 @@ class ModelConfig(BaseModel, extra="forbid"):
         system_prompt (str | None):
             Optional system prompt to be used with chat models. This prompt sets the
             behavior and context for the model during evaluation.
+        cache_dir (str):
+            Directory to cache the model. Defaults to "~/.cache/huggingface/lighteval".
 
     Methods:
         from_path(path: str):
