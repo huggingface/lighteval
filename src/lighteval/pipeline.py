@@ -103,7 +103,7 @@ class PipelineParameters:
     max_samples: int | None = None
     cot_prompt: str | None = None
     remove_reasoning_tags: bool = True
-    reasoning_tags: str | list[tuple[str, str]] | None = None
+    reasoning_tags: str | list[tuple[str, str]] = "[('<think>', '</think>')]"
     load_responses_from_details_date_id: str | None = None
     bootstrap_iters: int = 1000
 
@@ -127,25 +127,23 @@ class PipelineParameters:
         elif self.launcher_type == ParallelismManager.OPENAI:
             if not is_openai_available():
                 raise ImportError(NO_OPENAI_ERROR_MSG)
-        if self.reasoning_tags is None:
-            self.reasoning_tags = [("<think>", "</think>")]
-        else:
-            # Convert reasoning tags to list if needed
-            if not isinstance(self.reasoning_tags, list):
-                try:
-                    self.reasoning_tags = ast.literal_eval(self.reasoning_tags)
-                except ValueError as e:
-                    raise ValueError(
-                        "reasoning_tags must be a list of pair tuples, e.g. [('start_tag', 'end_tag'), ...]. "
-                        f"Got {self.reasoning_tags} instead, which caused parsing error {e}."
-                    )
 
-            # Make sure format is correct
-            if not all(isinstance(tag, tuple) and len(tag) == 2 for tag in self.reasoning_tags):
+        # Convert reasoning tags to list if needed
+        if not isinstance(self.reasoning_tags, list):
+            try:
+                self.reasoning_tags = ast.literal_eval(self.reasoning_tags)
+            except ValueError as e:
                 raise ValueError(
                     "reasoning_tags must be a list of pair tuples, e.g. [('start_tag', 'end_tag'), ...]. "
-                    f"Got {self.reasoning_tags} instead."
+                    f"Got {self.reasoning_tags} instead, which caused parsing error {e}."
                 )
+
+        # Make sure format is correct
+        if not all(isinstance(tag, tuple) and len(tag) == 2 for tag in self.reasoning_tags):
+            raise ValueError(
+                "reasoning_tags must be a list of pair tuples, e.g. [('start_tag', 'end_tag'), ...]. "
+                f"Got {self.reasoning_tags} instead."
+            )
 
 
 class Pipeline:

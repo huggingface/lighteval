@@ -21,32 +21,22 @@
 # SOFTWARE.
 
 
-from typing import Optional
-
-from typer import Argument, Option
-from typing_extensions import Annotated
-
-
-HELP_PANEL_NAME_1 = "Common Parameters"
-HELP_PANEL_NAME_2 = "Logging Parameters"
-HELP_PANEL_NAME_3 = "Debug Parameters"
-HELP_PANEL_NAME_4 = "Modeling Parameters"
+from lighteval.cli_args import (
+    DEFAULT_VALUES,
+    CustomTasks,
+    DatasetLoadingProcesses,
+    MaxSamples,
+    OutputDir,
+    Tasks,
+)
 
 
 def baseline(
-    tasks: Annotated[str, Argument(help="Comma-separated list of tasks to evaluate on.")],
-    custom_tasks: Annotated[
-        Optional[str], Option(help="Path to custom tasks directory.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = None,
-    dataset_loading_processes: Annotated[
-        int, Option(help="Number of processes to use for dataset loading.", rich_help_panel=HELP_PANEL_NAME_1)
-    ] = 1,
-    output_dir: Annotated[
-        str, Option(help="Output directory for evaluation results.", rich_help_panel=HELP_PANEL_NAME_2)
-    ] = "results",
-    max_samples: Annotated[
-        Optional[int], Option(help="Maximum number of samples to evaluate on.", rich_help_panel=HELP_PANEL_NAME_3)
-    ] = None,
+    tasks: Tasks,
+    custom_tasks: CustomTasks = DEFAULT_VALUES["custom_tasks"],
+    dataset_loading_processes: DatasetLoadingProcesses = DEFAULT_VALUES["dataset_loading_processes"],
+    output_dir: OutputDir = DEFAULT_VALUES["output_dir"],
+    max_samples: MaxSamples = DEFAULT_VALUES["max_samples"],
 ):
     """
     Compute baselines for given tasks.
