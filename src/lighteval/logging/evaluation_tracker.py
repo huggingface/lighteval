@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import collections
 import json
 import logging
 import os
@@ -235,7 +236,20 @@ class EvaluationTracker:
         logger.info("Saving experiment tracker")
         date_id = datetime.now().isoformat().replace(":", "-")
 
-        results_dict = self.results
+        # We first prepare data to save
+        config_general = asdict(self.general_config_logger)
+        # We remove the config from logging, which contains context/accelerator objects
+        config_general.pop("config")
+
+        results_dict = {
+            "config_general": config_general,
+            "results": self.metrics_logger.metric_aggregated,
+            "versions": self.versions_logger.versions,
+            "config_tasks": self.task_config_logger.tasks_configs,
+            "summary_tasks": self.details_logger.compiled_details,
+            "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
+            "num_samples": self.calculate_num_samples(),
+        }
 
         # Create the details datasets for later upload
         details_datasets: dict[str, Dataset] = {}
@@ -358,6 +372,7 @@ class EvaluationTracker:
             "config_tasks": self.task_config_logger.tasks_configs,
             "summary_tasks": self.details_logger.compiled_details,
             "summary_general": asdict(self.details_logger.compiled_details_over_all_tasks),
+            "num_samples": self.calculate_num_samples(),
         }
 
         final_dict = {
@@ -731,3 +746,29 @@ class EvaluationTracker:
             f"Pushed to tensorboard at https://huggingface.co/{self.tensorboard_repo}/{output_dir_tb}/tensorboard"
             f" at global_step {global_step}"
         )
+
+    def calculate_num_samples(self) -> dict[str, int]:
+        """
+        Counts the number of samples per task, includes grouped tasks.
+        This implementation is oriented on MetricsLogger.aggregate(), to make sure the subgroups of tasks match up.
+        """
+
+        # Count samples of individual tasks
+        num_samples = {task: len(samples) for task, samples in self.details_logger.details.items()}
+
+        # Count samples for sub groups
+        grouped_tasks = collections.defaultdict(list)
+
+        for task in num_samples:
+            if "|" in task:
+                suite, task, fewshot = task.split("|")
+                grouped_tasks[f"{suite}|{task.split(':')[0]}:_average|{fewshot}"].append(task)
+
+        for average_task, list_of_subtasks in grouped_tasks.items():
+            if len(list_of_subtasks) > 1:
+                num_samples[average_task] = sum(num_samples[k] for k in list_of_subtasks)
+
+        # Add sample count for all
+        num_samples["all"] = sum(count for task, count in num_samples.items() if task != "all")
+
+        return num_samples
