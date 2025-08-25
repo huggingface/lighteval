@@ -31,8 +31,10 @@ import random
 import re
 from typing import Any, Dict, List, Optional, Union
 
-from lighteval.metrics.llm_as_judge import JudgeLM
-from lighteval.metrics.metrics import Metric, Metrics
+from lighteval.metrics.metrics import Metrics
+from lighteval.metrics.normalizations import LogProbCharNorm
+from lighteval.metrics.utils.llm_as_judge import JudgeLM
+from lighteval.metrics.utils.metric_utils import Metric
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc, SamplingMethod
@@ -103,7 +105,7 @@ class CustomArabicMMLUTask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=arabic_mmlu_pfn,
             hf_repo="MBZUAI/ArabicMMLU",
-            metrics=[Metrics.loglikelihood_acc_norm],
+            metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
             hf_avail_splits=["test"],
             evaluation_splits=["test"],
             few_shots_split=["dev"],
@@ -164,7 +166,7 @@ class CustomArabicMMLUHTTask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=arabic_mmlu_ht_pfn,
             hf_repo="MBZUAI/human_translated_arabic_mmlu",
-            metrics=[Metrics.loglikelihood_acc_norm],
+            metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
             hf_avail_splits=["test"],
             evaluation_splits=["test"],
             few_shots_split=None,
@@ -228,7 +230,7 @@ class CustomArabicMMLUMTTask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=arabic_mmlu_mt_pfn,
             hf_repo="OALL/Arabic_MMLU",
-            metrics=[Metrics.loglikelihood_acc_norm],
+            metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
             hf_avail_splits=["test", "dev"],
             evaluation_splits=["test"],
             few_shots_split="dev",
@@ -283,7 +285,7 @@ class CustomACVATask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=acva_pfn,
             hf_repo="OALL/ACVA",
-            metrics=[Metrics.loglikelihood_acc_norm],
+            metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
             hf_avail_splits=["test", "validation"],
             evaluation_splits=["test"],
             few_shots_split="validation",
@@ -339,7 +341,7 @@ class CustomAraTrustTask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=aratrust_pfn,
             hf_repo="asas-ai/AraTrust-categorized",
-            metrics=[Metrics.loglikelihood_acc_norm],
+            metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
             hf_avail_splits=["train"],
             evaluation_splits=["train"],
             few_shots_split=None,
@@ -387,7 +389,7 @@ arabic_exams_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metrics=[Metrics.loglikelihood_acc_norm],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
     version=0,
 )
 
@@ -437,7 +439,7 @@ class CustomAlGhafaNativeTask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=alghafa_pfn,
             hf_repo="OALL/AlGhafa-Arabic-LLM-Benchmark-Native",
-            metrics=[Metrics.loglikelihood_acc_norm],
+            metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
             hf_avail_splits=["test", "validation"],
             evaluation_splits=["test"],
             few_shots_split="validation",
@@ -463,7 +465,7 @@ race_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metrics=[Metrics.loglikelihood_acc_norm],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
     version=0,
 )
 
@@ -479,7 +481,7 @@ piqa_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metrics=[Metrics.loglikelihood_acc_norm],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
     version=0,
 )
 
@@ -495,7 +497,7 @@ arc_easy_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metrics=[Metrics.loglikelihood_acc_norm],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
     version=0,
 )
 
@@ -511,7 +513,7 @@ arc_challenge_okapi_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metrics=[Metrics.loglikelihood_acc_norm],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
     version=0,
 )
 
@@ -527,7 +529,7 @@ mmlu_okapi_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metrics=[Metrics.loglikelihood_acc_norm],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
     version=0,
 )
 
@@ -543,7 +545,7 @@ openbook_qa_ext_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metrics=[Metrics.loglikelihood_acc_norm],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
     version=0,
 )
 
@@ -580,7 +582,7 @@ boolq_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metrics=[Metrics.loglikelihood_acc_norm],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
     version=0,
 )
 
@@ -614,7 +616,7 @@ copa_ext_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metrics=[Metrics.loglikelihood_acc_norm],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
     version=0,
 )
 
@@ -657,7 +659,7 @@ hellaswag_okapi_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metrics=[Metrics.loglikelihood_acc_norm],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
     version=0,
 )
 
@@ -693,7 +695,7 @@ toxigen_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metrics=[Metrics.loglikelihood_acc_norm],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
     version=0,
 )
 
@@ -743,7 +745,7 @@ sciq_ar_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split="validation",
     few_shots_select="sequential",
-    metrics=[Metrics.loglikelihood_acc_norm],
+    metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
     version=0,
 )
 
@@ -800,7 +802,7 @@ class CustomMadinahQATask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=madinah_qa_pfn,
             hf_repo="MBZUAI/MadinahQA",
-            metrics=[Metrics.loglikelihood_acc_norm],
+            metrics=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
             hf_avail_splits=["test"],
             evaluation_splits=["test"],
             few_shots_split=["dev"],

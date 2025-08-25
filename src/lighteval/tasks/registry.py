@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import ast
 import collections
 import copy
 import importlib
@@ -139,21 +140,33 @@ class Registry:
 
         returns a LightevalTaskConfig object based on the task name and fewshot and truncate_few_shots values.
         """
-        task_info_dict = self.taskinfo_selector(task)
+        task_to_params = self.taskinfo_selector(task)
         configs = []
 
-        for task_name, task_info in task_info_dict.items():
-            # We can have multiple few_shot and truncate_few_shots values for the same task
-            for task_info_dict in task_info:
+        for task_name, task_param in task_to_params.items():
+            # We can have multiple versions of the same task running (for ex, different few shots, different metric params, etc)
+            for subtask_param in task_param:
                 config = self.task_registry.get(task_name)
-                if config is not None:
-                    config = copy.deepcopy(config)
-                    config.num_fewshots = task_info_dict["fewshots"]
-                    config.truncate_fewshots = task_info_dict["truncate_fewshots"]
-                    config.full_name = f"{task_name}|{config.num_fewshots}"
-                    configs.append(config)
-                else:
+                if config is None:
                     raise ValueError(f"Cannot find task {task_name} in task list or in custom task registry")
+
+                config = copy.deepcopy(config)
+                config.num_fewshots = subtask_param["fewshots"]
+                config.truncate_fewshots = subtask_param["truncate_fewshots"]
+                config.full_name = f"{task_name}|{config.num_fewshots}"
+                # If some tasks are parametrizable and in cli, we set attributes here
+                for metric in [m for m in config.metrics if "@" in m.metric_name]:  # parametrizable metric
+                    for attribute, value in subtask_param["metric_params"].items():
+                        setattr(metric.sample_level_fn, attribute, value)
+                    required = getattr(metric.sample_level_fn, "attribute_must_be_set", [])
+                    for attribute in required:
+                        if getattr(metric.sample_level_fn, attribute) is None:
+                            raise ValueError(
+                                f"Metric {metric.metric_name} for task {task_name} "
+                                f"was not correctly parametrized. Forgot to set '{attribute}'."
+                            )
+
+                configs.append(config)
 
         return configs
 
@@ -237,7 +250,7 @@ class Registry:
                 - A sorted list of unique task names in the format "suite|task".
                 - A dictionary mapping each task name to a list of tuples representing the few_shot and truncate_few_shots values.
         """
-        few_shot_dict = collections.defaultdict(list)
+        task_to_params = collections.defaultdict(list)
 
         # We can provide a path to a file with a list of tasks or a string of comma-separated tasks
         if os.path.exists(tasks):
@@ -257,8 +270,15 @@ class Registry:
             expanded_tasks_list.extend(expanded_tasks)
 
         for task in expanded_tasks_list:
+            metric_params_dict = {}
             try:
                 suite_name, task_name, few_shot, truncate_few_shots = tuple(task.split("|"))
+                if "@" in task_name:
+                    task_name, metric_params = task_name.split("@")
+                    # We convert k:v,k2:v2 to {"k": "v", "k2": "v2"}, then to correct type
+                    metric_params_dict = dict(item.split("=") for item in metric_params.split(",") if item)
+                    metric_params_dict = {k: ast.literal_eval(v) for k, v in metric_params_dict.items()}
+
                 truncate_few_shots = int(truncate_few_shots)
             except ValueError:
                 raise ValueError(
@@ -279,9 +299,15 @@ class Registry:
             # This adds support for task supersets (eg: mmlu -> all the mmlu tasks)
             for expanded_task in self.expand_task_definition(f"{suite_name}|{task_name}"):
                 # Store few_shot info for each task name (suite|task)
-                few_shot_dict[expanded_task].append({"fewshots": few_shot, "truncate_fewshots": truncate_few_shots})
+                task_to_params[expanded_task].append(
+                    {
+                        "fewshots": few_shot,
+                        "truncate_fewshots": truncate_few_shots,
+                        "metric_params": metric_params_dict,
+                    }
+                )
 
-        return few_shot_dict
+        return task_to_params
 
     @property
     @lru_cache

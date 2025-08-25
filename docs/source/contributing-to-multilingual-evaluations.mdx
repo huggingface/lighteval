@@ -64,9 +64,9 @@ your_tasks = [
         metric=get_metrics_for_formulation(
             formulation,
             [
-                loglikelihood_acc_metric(normalization=None),
-                loglikelihood_acc_metric(normalization=LogProbTokenNorm()),
-                loglikelihood_acc_metric(normalization=LogProbCharNorm()),
+                LogLikelihoodAccMetric(normalization=None),
+                LogLikelihoodAccMetric(normalization=LogProbTokenNorm()),
+                LogLikelihoodAccMetric(normalization=LogProbCharNorm()),
             ],
         ),
         # In this function, you choose which template to follow and for which language and formulation

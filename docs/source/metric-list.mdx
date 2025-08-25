@@ -3,20 +3,14 @@
 ## Automatic metrics for multiple-choice tasks
 
 These metrics use log-likelihood of the different possible targets.
-- `loglikelihood_acc`: Fraction of instances where the choice with the best logprob was correct - also exists in a faster version for tasks where the possible choices include only one token (`loglikelihood_acc_single_token`).
-- `loglikelihood_acc_norm`: Fraction of instances where the choice with the best logprob, normalized by sequence length, was correct - also exists in a faster version for tasks where the possible choices include only one token (`loglikelihood_acc_norm_single_token`).
-- `loglikelihood_acc_norm_nospace`: Fraction of instances where the choice with the best logprob, normalized by sequence length, was correct, with the first space ignored.
-- `loglikelihood_f1`: Corpus level F1 score of the multichoice selection - also exists in a faster version for tasks where the possible choices include only one token (`loglikelihood_f1_single_token`).
+- `loglikelihood_acc`: Fraction of instances where the choice with the best logprob was correct - we recommend using a normalization by length
+- `loglikelihood_f1`: Corpus level F1 score of the multichoice selection
 - `mcc`: Matthew's correlation coefficient (a measure of agreement between statistical distributions).
-- `recall_at_1`: Fraction of instances where the choice with the best logprob was correct - also exists in a faster version for tasks where the possible choices include only one token per choice (`recall_at_1_single_token`).
-- `recall_at_2`: Fraction of instances where the choice with the 2nd best logprob or better was correct - also exists in a faster version for tasks where the possible choices include only one token per choice (`recall_at_2_single_token`).
-- `mrr`: Mean reciprocal rank, a measure of the quality of a ranking of choices ordered by correctness/relevance - also exists in a faster version for tasks where the possible choices include only one token (`mrr_single_token`).
+- `recall_at_k`: Fraction of instances where the choice with the k-st best logprob or better was correct
+- `mrr`: Mean reciprocal rank, a measure of the quality of a ranking of choices ordered by correctness/relevance
 - `target_perplexity`: Perplexity of the different choices available.
 - `acc_golds_likelihood`: A bit different, it actually checks if the average logprob of a single target is above or below 0.5.
 - `multi_f1_numeric`: Loglikelihood F1 score for multiple gold targets.
-
-All these metrics also exist in a "single token" version (`loglikelihood_acc_single_token`, `loglikelihood_acc_norm_single_token`, `loglikelihood_f1_single_token`, `mcc_single_token`, `recall@2_single_token` and `mrr_single_token`). When the multichoice option compares only one token (ex: "A" vs "B" vs "C" vs "D", or "yes" vs "no"), using these metrics in the single token version will divide the time spent by the number of choices. Single token evals also include:
-- `multi_f1_numeric`: Computes the f1 score of all possible choices and averages it.
 
 ## Automatic metrics for perplexity and language modeling
 These metrics use log-likelihood of prompt.
@@ -28,17 +22,13 @@ These metrics use log-likelihood of prompt.
 ## Automatic metrics for generative tasks
 These metrics need the model to generate an output. They are therefore slower.
 - Base:
-    - `perfect_exact_match`: Fraction of instances where the prediction matches the gold exactly.
-    - `exact_match`: Fraction of instances where the prediction matches the gold with the exception of the border whitespaces (= after a `strip` has been applied to both).
-    - `quasi_exact_match`: Fraction of instances where the normalized prediction matches the normalized gold (normalization done on whitespace, articles, capitalization, ...). Other variations exist, with other normalizers, such as `quasi_exact_match_triviaqa`, which only normalizes the predictions after applying a strip to all sentences.
-    - `prefix_exact_match`: Fraction of instances where the beginning of the prediction matches the gold at the exception of the border whitespaces (= after a `strip` has been applied to both).
-    - `prefix_quasi_exact_match`: Fraction of instances where the normalized beginning of the prediction matches the normalized gold (normalization done on whitespace, articles, capitalization, ...).
-    - `exact_match_indicator`: Exact match with some preceding context (before an indicator) removed.
-    - `f1_score_quasi`: Average F1 score in terms of word overlap between the model output and gold, with both being normalized first.
-    - `f1_score`:  Average F1 score in terms of word overlap between the model output and gold without normalisation.
+    - `exact_match`: Fraction of instances where the prediction matches the gold. Several variations can be made through parametrization:
+        - normalization on string pre-comparision on whitespace, articles, capitalization, ....
+        - comparing the full string, or only subsets (prefix, suffix, ...)
+    - `maj_at_k`: Model majority vote. Samples k generations from the model and assumes the most frequent is the actual prediction.
+    - `f1_score`:  Average F1 score in terms of word overlap between the model output and gold (normalisation optional).
     - `f1_score_macro`: Corpus level macro F1 score.
     - `f1_score_macro`: Corpus level micro F1 score.
-    - `maj_at_5` and `maj_at_8`: Model majority vote. Takes n (5 or 8) generations from the model and assumes the most frequent is the actual prediction.
 - Summarization:
     - `rouge`: Average ROUGE score [(Lin, 2004)](https://aclanthology.org/W04-1013/).
     - `rouge1`: Average ROUGE score [(Lin, 2004)](https://aclanthology.org/W04-1013/) based on 1-gram overlap.
@@ -64,10 +54,7 @@ These metrics need the model to generate an output. They are therefore slower.
         - `edit_distance`: Average Levenshtein edit distance between model generation and reference,
         - `edit_similarity`: Average Levenshtein edit similarity (normalized by the length of longer sequence) between model generation and reference.
 - Math:
-    - `quasi_exact_match_math`: Fraction of instances where the normalized prediction matches the normalized gold (normalization done for math, where latex symbols, units, etc are removed).
-    - `maj_at_4_math`: Majority choice evaluation, using the math normalisation for the predictions and gold.
-    - `quasi_exact_match_gsm8k`: Fraction of instances where the normalized prediction matches the normalized gold (normalization done for gsm8k, where latex symbols, units, etc are removed).
-    - `maj_at_8_gsm8k`: Majority choice evaluation, using the gsm8k normalisation for the predictions and gold.
+    - Both `exact_match` and `maj_at_k` can be used to evaluate mathematics tasks with math specific normalization to remove and filter latex.
 
 ## LLM-as-Judge
 - `llm_judge_gpt3p5`: Can be used for any generative task, the model will be scored by a GPT3.5 model using the OpenAI API.
