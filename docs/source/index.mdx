@@ -1,19 +1,103 @@
 # Lighteval
 
-🤗 Lighteval is your all-in-one toolkit for evaluating LLMs across multiple
-backends—whether it's
-[transformers](https://github.com/huggingface/transformers),
-[tgi](https://github.com/huggingface/text-generation-inference),
-[inference providers](https://huggingface.co/docs/huggingface_hub/en/guides/inference),
-[vllm](https://github.com/vllm-project/vllm), or
-[nanotron](https://github.com/huggingface/nanotron)-with
-ease. Dive deep into your model’s performance by saving and exploring detailed,
-sample-by-sample results to debug and see how your models stack-up.
+🤗 Lighteval is your all-in-one toolkit for evaluating Large Language Models (LLMs) across multiple backends—whether it's
+[Transformers](https://github.com/huggingface/transformers),
+[Text Generation Inference (TGI)](https://github.com/huggingface/text-generation-inference),
+[Inference Providers](https://huggingface.co/docs/huggingface_hub/en/guides/inference),
+[VLLM](https://github.com/vllm-project/vllm), or
+[Nanotron](https://github.com/huggingface/nanotron)—with
+ease. Dive deep into your model's performance by saving and exploring detailed,
+sample-by-sample results to debug and see how your models stack up.
 
-Customization at your fingertips: letting you effortlessly create [new
-tasks](adding-a-custom-task) and
-[metrics](adding-a-new-metric)
-tailored to your needs, or browsing all our existing tasks and metrics.
+## Key Features
 
-Seamlessly experiment, benchmark, and store your results on the Hugging Face
-Hub, S3, or locally.
+### 🚀 **Multi-Backend Support**
+Evaluate your models using the most popular and efficient inference backends:
+- **Transformers**: Standard Hugging Face models with full customization
+- **VLLM**: High-performance inference with optimized memory usage
+- **SGLang**: Fast and efficient model serving
+- **TGI**: Production-ready text generation inference
+- **Inference Endpoints**: Cloud-based model deployment
+- **LiteLLM**: Unified interface for multiple LLM providers
+- **Nanotron**: Distributed training and evaluation
+
+### 📊 **Comprehensive Evaluation**
+- **Extensive Task Library**: 100+ pre-built evaluation tasks
+- **Custom Task Creation**: Build your own evaluation tasks
+- **Flexible Metrics**: Support for custom metrics and scoring
+- **Detailed Analysis**: Sample-by-sample results for deep insights
+
+### 🔧 **Easy Customization**
+Customization at your fingertips: create [new tasks](adding-a-custom-task) and
+[metrics](adding-a-new-metric) tailored to your needs, or browse all our existing tasks and metrics.
+
+### ☁️ **Seamless Integration**
+Seamlessly experiment, benchmark, and store your results on the Hugging Face Hub, S3, or locally.
+
+## Quick Start
+
+### Installation
+
+```bash
+pip install lighteval
+```
+
+### Basic Usage
+
+```bash
+# Evaluate a model using Transformers backend
+lighteval accelerate \
+    "model_name=openai-community/gpt2" \
+    "leaderboard|truthfulqa:mc|0|0"
+
+# Evaluate using VLLM for better performance
+lighteval vllm \
+    "model_name=HuggingFaceH4/zephyr-7b-beta,dtype=float16" \
+    "leaderboard|gsm8k|3|1"
+```
+
+### Save Results
+
+```bash
+# Save locally
+lighteval accelerate \
+    "model_name=openai-community/gpt2" \
+    "leaderboard|truthfulqa:mc|0|0" \
+    --output-dir ./results
+
+# Push to Hugging Face Hub
+lighteval accelerate \
+    "model_name=openai-community/gpt2" \
+    "leaderboard|truthfulqa:mc|0|0" \
+    --push-to-hub \
+    --results-org your-username
+```
+
+## What's Next?
+
+- **[Quick Tour](quicktour)**: Get started with Lighteval in minutes
+- **[Installation Guide](installation)**: Set up your environment
+- **[Available Tasks](available-tasks)**: Explore our task library
+- **[Backend Guides](use-vllm-as-backend)**: Learn about different backends
+- **[Python API](using-the-python-api)**: Use Lighteval programmatically
+- **[Custom Tasks](adding-a-custom-task)**: Create your own evaluation tasks
+- **[Saving Results](saving-and-reading-results)**: Manage and analyze your results
+
+## Community and Support
+
+- **GitHub**: [Report issues and contribute](https://github.com/huggingface/lighteval)
+- **Discussions**: [Join the community](https://github.com/huggingface/lighteval/discussions)
+- **Documentation**: [Comprehensive guides and API reference](https://huggingface.co/docs/lighteval)
+
+## Citation
+
+If you use Lighteval in your research, please cite our paper:
+
+```bibtex
+@misc{lighteval2024,
+  title={Lighteval: A Comprehensive Toolkit for LLM Evaluation},
+  author={Hugging Face Team},
+  year={2024},
+  url={https://github.com/huggingface/lighteval}
+}
+```
