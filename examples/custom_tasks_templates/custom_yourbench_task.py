@@ -240,7 +240,7 @@ yourbench_metrics = CorpusLevelMetricGrouping(
     metric_name=["accuracy"],
     higher_is_better={"accuracy": True},
     category=SamplingMethod.GENERATIVE,
-    sample_level_fn=JudgeLLMYourBench().compute,
+    sample_level_fn=JudgeLLMYourBench(),
     corpus_level_fn={"accuracy": np.mean},
 )
 extend_enum(Metrics, "yourbench_metrics", yourbench_metrics)
@@ -258,7 +258,6 @@ yourbench = LightevalTaskConfig(
     generation_size=8192,
     metrics=[Metrics.yourbench_metrics],
     stop_sequence=[],
-    trust_dataset=True,
     version=0,
 )
 

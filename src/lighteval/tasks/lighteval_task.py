@@ -31,7 +31,9 @@ from huggingface_hub import TextGenerationInputGrammarType
 from multiprocess import Pool
 from pytablewriter import MarkdownTableWriter
 
-from lighteval.metrics.metrics import Metric, Metrics
+from lighteval.metrics.metrics import Metrics
+from lighteval.metrics.metrics_sample import SamplingMetric
+from lighteval.metrics.utils.metric_utils import Metric
 from lighteval.tasks.prompt_manager import FewShotSampler
 from lighteval.tasks.requests import (
     Doc,
@@ -63,7 +65,6 @@ class LightevalTaskConfig:
         original_num_docs (int): Number of documents in the task
         effective_num_docs (int): Number of documents used in a specific evaluation
         truncated_num_docs (bool): Whether less than the total number of documents were used
-        trust_dataset (bool): Whether to trust the dataset at execution or not
         version (int): The version of the task. Defaults to 0. Can be increased if the underlying dataset or the prompt changes.
     """
 
@@ -79,9 +80,6 @@ class LightevalTaskConfig:
     hf_revision: str | None = None
     hf_filter: Callable[[dict], bool] | None = None
     hf_avail_splits: ListLike[str] = field(default_factory=lambda: ["train", "validation", "test"])
-
-    # We default to false, to reduce security issues
-    trust_dataset: bool = False
 
     # Splits
     evaluation_splits: ListLike[str] = field(default_factory=lambda: ["validation"])
@@ -169,7 +167,6 @@ class LightevalTask:
         self.dataset_config_name = config.hf_subset
         self.dataset_revision = config.hf_revision
         self.dataset_filter = config.hf_filter
-        self.trust_dataset = config.trust_dataset
         self.dataset: DatasetDict | None = None  # Delayed download
         self.evaluation_split = as_list(config.evaluation_splits)
         self._docs = None
@@ -196,11 +193,9 @@ class LightevalTask:
         # We assume num_samples always contains 1 (for base generative evals)
         self.num_samples = [1]
         for metric in self.metrics:
-            metric_names = as_list(metric.metric_name)
-
-            for metric_name in metric_names:
+            if isinstance(metric.sample_level_fn, SamplingMetric):
                 # Update the number of samples to generate using the information in the metric name
-                self.num_samples.append(extract_num_samples(metric_name))
+                self.num_samples.append(metric.sample_level_fn.num_samples())
 
     def get_first_possible_fewshot_splits(self, available_splits: ListLike[str]) -> str | None:
         """
@@ -256,6 +251,12 @@ class LightevalTask:
                 item["__index"] = ix
                 doc = self.formatter(item, self.name)
                 doc.id = str(ix)
+
+                # Transfer task-level generation parameters to the document
+                doc.generation_grammar = self.generation_grammar
+                doc.generation_size = self.generation_size
+                doc.stop_sequences = self.stop_sequence
+
                 docs.append(doc)
 
         return docs
@@ -334,7 +335,10 @@ class LightevalTask:
         Return a dict with metric name and its aggregation function for all
         metrics
         """
-        return Metrics.corpus_level_fns(self.metrics)
+        aggregations = {}
+        for metric in self.metrics:
+            aggregations.update(metric.get_corpus_aggregations())
+        return aggregations
 
     @staticmethod
     def load_datasets(tasks: dict[str, "LightevalTask"], dataset_loading_processes: int = 1) -> None:
@@ -374,10 +378,6 @@ class LightevalTask:
         dataset = load_dataset(
             path=task.dataset_path,
             name=task.dataset_config_name,
-            data_dir=None,
-            cache_dir=None,
-            download_mode=None,
-            trust_remote_code=task.trust_dataset,
             revision=task.dataset_revision,
         )
 
@@ -386,24 +386,3 @@ class LightevalTask:
 
         # It returns DatasetDict because we don't specify a split
         return dataset  # type: ignore
-
-
-def extract_num_samples(metric_name: str) -> int:
-    """Gets the number of samples to generate from the metric name.
-    Assumes that any metric with @ in it's name depends on the number of samples.
-
-    Args:
-        metric_name (str): The metric name in the task.
-
-    Returns:
-        int: The number of samples to generate.
-    """
-    if "@" in metric_name:
-        metric_name = metric_name.split("@")[-1]
-        if "_" in metric_name:
-            metric_name = metric_name.split("_")[0]
-        if ":" in metric_name:
-            return int(metric_name.split(":")[-1])
-        else:
-            return int(metric_name)
-    return 1
