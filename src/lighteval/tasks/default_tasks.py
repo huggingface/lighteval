@@ -22803,7 +22803,6 @@ _mmlu_redux_2_tasks = {
         generation_size=1,
         metrics=[Metrics.loglikelihood_acc],
         stop_sequence=["\n"],
-        trust_dataset=True,
         version=0,
     )
     for subset in _MMLU_REDUX_2_SUBSETS
