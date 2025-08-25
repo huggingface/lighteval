@@ -249,11 +249,8 @@ def tgi(
     """
     Evaluate models using TGI as backend.
     """
-    import yaml
-
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.models.endpoints.tgi_model import TGIModelConfig
-    from lighteval.models.model_input import GenerationParameters
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
 
     evaluation_tracker = EvaluationTracker(
@@ -269,11 +266,7 @@ def tgi(
 
     parallelism_manager = ParallelismManager.TGI
 
-    with open(model_config_path, "r") as f:
-        config = yaml.safe_load(f)
-
-    generation_parameters = GenerationParameters(**config.get("generation", {}))
-    model_config = TGIModelConfig(**config["model"], generation_parameters=generation_parameters)
+    model_config = TGIModelConfig.from_path(model_config_path)
 
     pipeline_params = PipelineParameters(
         launcher_type=parallelism_manager,

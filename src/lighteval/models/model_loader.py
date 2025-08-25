@@ -109,9 +109,7 @@ def load_model_with_tgi(config: TGIModelConfig):
         raise ImportError(NO_TGI_ERROR_MSG)
 
     logger.info(f"Load model from inference server: {config.inference_server_address}")
-    model = ModelClient(
-        address=config.inference_server_address, auth_token=config.inference_server_auth, model_id=config.model_id
-    )
+    model = ModelClient(config=config)
     return model
 
 

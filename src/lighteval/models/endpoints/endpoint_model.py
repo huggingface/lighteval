@@ -527,6 +527,7 @@ class InferenceEndpointModel(LightevalModel):
                     context=context if rolling else context + doc.choices[0],
                     stop_tokens=[],
                     max_tokens=1,
+                    grammar=doc.generation_grammar,
                 )
                 for context, doc in zip(contexts, docs)
             ]
@@ -539,6 +540,7 @@ class InferenceEndpointModel(LightevalModel):
                 context=context if rolling else context + doc.choices[0],
                 stop_tokens=[],
                 max_tokens=1,
+                grammar=doc.generation_grammar,
             )
             for context, doc in zip(contexts, docs)
         ]
