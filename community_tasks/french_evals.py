@@ -33,6 +33,7 @@ See : https://huggingface.co/fr-gouv-coordination-ia
 import random
 
 from lighteval.metrics.metrics import Metrics
+from lighteval.metrics.normalizations import math_normalizer
 from lighteval.tasks.default_prompts import LETTER_INDICES
 from lighteval.tasks.extended.ifeval.main import ifeval_metrics
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
@@ -136,7 +137,10 @@ bac_fr_task = LightevalTaskConfig(
     few_shots_split=None,
     few_shots_select="random_sampling",
     generation_size=1,
-    metrics=[Metrics.quasi_exact_match_math, Metrics.exact_match],
+    metrics=[
+        Metrics.exact_match(sample_params={"normalize_gold": math_normalizer, "normalize_pred": math_normalizer}),
+        Metrics.exact_match,
+    ],
     stop_sequence=["\n"],
     version=0,
 )

@@ -37,14 +37,10 @@ For more details, see the associated paper:
 }
 """
 
-import random
-import re
 from functools import partial
-from typing import Any, Dict, List, Optional, Union
 
-from lighteval.metrics.llm_as_judge import JudgeLM
-from lighteval.metrics.metrics import Metric, MetricCategory, Metrics
-from lighteval.tasks.default_prompts import LETTER_INDICES
+from lighteval.metrics.metrics import Metrics
+from lighteval.metrics.normalizations import LogProbCharNorm
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
 
@@ -127,7 +123,7 @@ class CustomTUMLUTask(LightevalTaskConfig):
             hf_subset=hf_subset,
             prompt_function=partial(tumlu_pfn, language=hf_subset),
             hf_repo="jafarisbarov/TUMLU-mini",
-            metrics=[Metrics.loglikelihood_acc_norm],
+            metric=[Metrics.loglikelihood_acc(sample_params={"logprob_normalization": LogProbCharNorm()})],
             hf_avail_splits=["test", "dev"],
             evaluation_splits=["test"],
             few_shots_split=["dev"],
