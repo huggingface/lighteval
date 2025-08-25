@@ -248,7 +248,7 @@ def create_task_config(
     prompt_function,
     hf_repo: str,
     hf_subset: str,
-    metric: List,
+    metrics: List,
     evaluation_splits: List[str] = ["test"],
     suite: List[str] = ["community"],
     hf_avail_splits: List[str] = ["test", "validation"],
@@ -263,7 +263,7 @@ def create_task_config(
         prompt_function: The function to generate task prompts.
         hf_repo: Hugging Face repository.
         hf_subset: Subset of the dataset.
-        metric: The metric(s) to use for the task.
+        metrics: The metrics to use for the task.
         evaluation_splits: The evaluation splits to use (default is "test").
         suite: The suite of tasks.
         hf_avail_splits: Available splits (default is "test", "validation").
@@ -282,7 +282,7 @@ def create_task_config(
         evaluation_splits=evaluation_splits,
         few_shots_split=few_shots_split,
         few_shots_select="sequential",
-        metric=metric,
+        metrics=metrics,
         generation_size=generation_size,
         hf_revision=HFSubsets.HF_REVISION.value,
         version=0,
@@ -345,7 +345,7 @@ oz_eval = create_task_config(
     prompt_function=prompt_fn_oz_eval_task,
     hf_repo=HFSubsets.HF_BASE_REPO.value,
     hf_subset=HFSubsets.OZ_EVAL.value,
-    metric=[Metrics.loglikelihood_acc],
+    metrics=[Metrics.loglikelihood_acc],
 )
 
 # ============================================

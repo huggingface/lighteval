@@ -136,7 +136,7 @@ class EvaluationTracker:
         tensorboard_metric_prefix: str = "eval",
         public: bool = False,
         nanotron_run_info: "GeneralArgs" = None,
-        wandb: bool = False,
+        use_wandb: bool = False,
     ) -> None:
         """Creates all the necessary loggers for evaluation tracking."""
         self.details_logger = DetailsLogger()
@@ -156,7 +156,7 @@ class EvaluationTracker:
 
         self.should_push_to_hub = push_to_hub
         self.should_save_details = save_details
-        self.wandb = wandb
+        self.use_wandb = use_wandb
 
         self.should_push_results_to_tensorboard = push_to_tensorboard
         self.tensorboard_repo = f"{hub_results_org}/tensorboard_logs"
@@ -166,18 +166,32 @@ class EvaluationTracker:
 
         self.public = public
 
-        if wandb is True:
-            import wandb
+        if use_wandb is True:
+            try:
+                import trackio as wandb
 
-            self.wandb_project = os.environ.get("WANDB_PROJECT", None)
+                logger.warning("Trackio was found available in your environment, using it instead of wandb")
+                self.wandb_project = os.environ.get("WANDB_PROJECT", None)
+                self.space_id = os.environ.get("WANDB_SPACE_ID", None)
+
+                wandb_kwargs = {
+                    "space_id": self.space_id,
+                }
+
+            except ImportError:
+                import wandb
+
+                self.wandb_project = os.environ.get("WANDB_PROJECT", None)
+                wandb.login()
+                wandb_kwargs = {}
 
             if self.wandb_project is None:
-                raise ValueError("You need to specify the project name in wandb_args")
+                raise ValueError("You need to specify the project name using the WANDB_PROJECT environment variable")
 
-            wandb.login()
             self.wandb_run = wandb.init(
                 project=self.wandb_project,
                 resume="allow",
+                **wandb_kwargs,
             )
 
     @property
@@ -251,7 +265,7 @@ class EvaluationTracker:
                 results_dict=results_dict,
             )
 
-        if self.wandb is True:
+        if self.use_wandb is True:
             self.push_to_wandb(
                 results_dict=results_dict,
                 details_datasets=details_datasets,
