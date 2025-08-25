@@ -19,44 +19,40 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 # ruff: noqa: C901
 import logging
 import os
 import time
-from typing import List, Optional, Tuple, Type, Union
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple, Type, Union
 
 import torch
 import torch.nn.functional as F
 import transformers
 from datasets.download.streaming_download_manager import xPath
+from pydantic import BaseModel
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
 from transformers import AutoTokenizer, BatchEncoding
 
-from lighteval.config.lighteval_config import FullNanotronConfig
 from lighteval.data import (
     GenDistributedSampler,
     GenerativeTaskDatasetNanotron,
     LoglikelihoodDataset,
-    LoglikelihoodSingleTokenDataset,
 )
 from lighteval.models.model_output import (
     Batch,
-    GenerativeResponse,
-    LoglikelihoodResponse,
-    LoglikelihoodSingleTokenResponse,
+    ModelResponse,
 )
-from lighteval.models.transformers.transformers_model import LightevalModel, ModelInfo
+from lighteval.models.transformers.transformers_model import LightevalModel
 from lighteval.tasks.requests import (
-    GreedyUntilRequest,
-    LoglikelihoodRequest,
-    LoglikelihoodRollingRequest,
+    Doc,
 )
+from lighteval.utils.cache_management import SampleCache, cached
 from lighteval.utils.imports import is_nanotron_available
 from lighteval.utils.parallelism import find_executable_batch_size
-from lighteval.utils.utils import EnvConfig, as_list
+from lighteval.utils.utils import as_list
 
 
 logger = logging.getLogger(__name__)
@@ -69,7 +65,10 @@ TokenSequence = Union[List[int], torch.LongTensor, torch.Tensor, BatchEncoding]
 if is_nanotron_available():
     from nanotron import distributed as dist
     from nanotron import logging
+    from nanotron.config import GeneralArgs, ModelArgs, TokenizerArgs
+    from nanotron.config.parallelism_config import ParallelismArgs
     from nanotron.generation.decode import decode_tokenized
+    from nanotron.generation.sampler import SamplerType
     from nanotron.logging import human_format, log_rank
     from nanotron.models import build_model
     from nanotron.parallel.context import ParallelContext
@@ -82,6 +81,82 @@ if is_nanotron_available():
     from nanotron.trainer import CONFIG_TO_MODEL_CLASS, mark_tied_parameters
 
     logger = logging.get_logger(__name__)
+
+DEFAULT_GENERATION_SEED = 42
+
+
+class GenerationArgs(BaseModel):
+    sampler: Optional["SamplerType"] = None
+    temperature: Optional[float] = None
+    top_k: Optional[int] = None
+    top_p: Optional[float] = None
+    n_samples: Optional[int] = None
+    eos: Optional[str] = None
+    seed: Optional[int] = None
+    use_cache: Optional[bool] = False
+
+    def __post_init__(self):
+        if self.seed is None:
+            self.seed = DEFAULT_GENERATION_SEED
+
+
+@dataclass
+class LightEvalLoggingArgs:
+    """Arguments related to logging for LightEval"""
+
+    output_dir: str
+    results_path_template: str | None = None
+    save_details: bool = True
+    push_to_hub: bool = False
+    push_to_tensorboard: bool = False
+    public_run: bool = False
+    results_org: str | None = None
+    tensorboard_metric_prefix: str = "eval"
+
+
+@dataclass
+class LightEvalTasksArgs:
+    """Arguments related to tasks for LightEval"""
+
+    tasks: str
+    custom_tasks: Optional[str] = None
+    max_samples: Optional[int] = None
+    num_fewshot_seeds: Optional[int] = None
+
+    dataset_loading_processes: int = 8
+    multichoice_continuations_start_space: Optional[bool] = None
+    pairwise_tokenization: bool = False
+
+
+@dataclass
+class LightEvalConfig:
+    """Arguments related to running LightEval on checkpoints.
+
+    All is optional because you can also use this class to later supply arguments to override
+    the saved config when running LightEval after training.
+    """
+
+    logging: LightEvalLoggingArgs
+    tasks: LightEvalTasksArgs
+    parallelism: "ParallelismArgs"
+    batch_size: int = 0
+    generation: Optional[Union[GenerationArgs, Dict[str, GenerationArgs]]] = None
+
+
+@dataclass
+class FullNanotronConfig:
+    lighteval_config: LightEvalConfig
+    nanotron_model: "ModelArgs"
+    nanotron_tokenizer: "TokenizerArgs"
+    nanotron_general: "GeneralArgs"
+
+    @property
+    def generation_parameters(self):
+        # Return the generation parameters from the lighteval config
+        # or create default generation parameters if none are set
+        if self.lighteval_config.generation:
+            return self.lighteval_config.generation
+        return GenerationArgs()
 
 
 class NanotronLightevalModel(LightevalModel):
@@ -96,18 +171,18 @@ class NanotronLightevalModel(LightevalModel):
         parallel_context: "ParallelContext",
         max_gen_toks: Optional[int] = 256,
         max_length: Optional[int] = None,
-        add_special_tokens: Optional[bool] = True,
+        add_special_tokens: Optional[bool] = False,
         dtype: Optional[Union[str, torch.dtype]] = None,
         trust_remote_code: bool = False,
         debug_one_layer_model: bool = False,
         model_class: Optional[Type] = None,
-        env_config: EnvConfig = None,
     ):
         """Initializes a nanotron model for evaluation.
         Args:
         """
-        model_args = nanotron_config.nanotron_config.model
-        tokenizer = nanotron_config.nanotron_config.tokenizer
+        self.config = nanotron_config
+        model_args = nanotron_config.nanotron_model
+        tokenizer = nanotron_config.nanotron_tokenizer
         lighteval_config = nanotron_config.lighteval_config
         parallel_config = nanotron_config.lighteval_config.parallelism
 
@@ -138,7 +213,6 @@ class NanotronLightevalModel(LightevalModel):
         self._add_special_tokens = add_special_tokens
         self._tokenizer = self._create_auto_tokenizer(
             pretrained=tokenizer.tokenizer_name_or_path,
-            env_config=env_config,
             trust_remote_code=trust_remote_code,
         )
         self._tokenizer.model_max_length = self.max_length
@@ -216,10 +290,10 @@ class NanotronLightevalModel(LightevalModel):
 
         self.multichoice_continuations_start_space = multichoice_continuations_start_space
         self.pairwise_tokenization = nanotron_config.lighteval_config.tasks.pairwise_tokenization
+        self.batch_size = nanotron_config.lighteval_config.batch_size
 
-        self.model_info = ModelInfo(
-            model_name=f"{nanotron_config.nanotron_config.general.run}/{nanotron_config.nanotron_config.general.step}"
-        )
+        # Initialize cache for tokenization and predictions
+        self._cache = SampleCache(nanotron_config)
 
     @property
     def tokenizer(self):
@@ -230,7 +304,6 @@ class NanotronLightevalModel(LightevalModel):
         *,
         pretrained: str,
         tokenizer: Optional[str] = None,
-        env_config: EnvConfig = None,
         trust_remote_code: bool = False,
     ) -> transformers.PreTrainedTokenizer:
         """Returns a pre-trained tokenizer from a pre-trained tokenizer configuration."""
@@ -238,15 +311,11 @@ class NanotronLightevalModel(LightevalModel):
         try:
             tokenizer = AutoTokenizer.from_pretrained(
                 pretrained if tokenizer is None else tokenizer,
-                cache_dir=env_config.cache_dir,
-                token=env_config.token,
                 trust_remote_code=trust_remote_code,
             )
         except RecursionError:
             tokenizer = AutoTokenizer.from_pretrained(
                 pretrained if tokenizer is None else tokenizer,
-                cache_dir=env_config.cache_dir,
-                token=env_config.token,
                 unk_token="<unk>",
                 trust_remote_code=trust_remote_code,
             )
@@ -343,7 +412,12 @@ class NanotronLightevalModel(LightevalModel):
         return self.tokenizer.batch_decode(tokens, skip_special_tokens=True)
 
     def _model_call(self, inputs: torch.Tensor) -> torch.Tensor:
-        return self.model(inputs)
+        position_ids = (
+            torch.arange(inputs.shape[1], device=inputs.device, dtype=torch.int32)
+            .unsqueeze(0)
+            .repeat(inputs.shape[0], 1)
+        )
+        return self.model(inputs, position_ids)
 
     def homogeneize_ending_conditions(self, ending_condition: tuple | dict | list | str) -> tuple[list, int]:
         """Ending conditions are submitted in several possible formats.
@@ -399,48 +473,12 @@ class NanotronLightevalModel(LightevalModel):
                 continuation = continuation.lstrip()
         return continuation
 
-    def loglikelihood_single_token(
-        self, requests: List[Tuple[str, dict]], override_bs=0
-    ) -> List[LoglikelihoodSingleTokenResponse]:
-        """Tokenize the context and continuation and compute the log likelihood of those
-        tokenized sequences.
-
-        Args:
-            requests (List[Tuple[str, dict]]): _description_
-
-        Returns:
-            List[Tuple[float, bool]]: _description_
-        """
-        for request in tqdm(
-            requests, desc="Tokenizing", disable=bool(dist.get_rank(self.parallel_context.world_pg) != 0)
-        ):
-            if request.context == "":
-                request.tokenized_context = [self.tokenizer.eos_token_id]
-            else:
-                request.tokenized_context = self.tok_encode(request.context)
-
-            # Some models tokenizer want a space at the beginning and other not
-            continuations = [self._check_continuations_start_space(c) for c in request.choices]
-
-            # We must not accidentally prepend a continuation with a start of sentence token.
-            continuations_enc = [self.tok_encode(c, add_special_tokens=False) for c in continuations]
-            if any(len(c) > 1 for c in continuations_enc):
-                raise ValueError(
-                    f"Trying to do single token multiple choice but one choice has several tokens: {continuations_enc}. "
-                    "If the additional pre-token is a space, try to set multichoice_continuations_start_space=False in the model parameters "
-                )
-            request.tokenized_continuation = continuations_enc
-
-        return self._loglikelihood_single_token(
-            requests,
-            override_bs=override_bs,
-            disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
-        )
-
-    def loglikelihood(self, requests: List[LoglikelihoodRequest], override_bs=None) -> List[LoglikelihoodResponse]:
+    @cached("predictions")
+    def loglikelihood(self, requests: List[Doc]) -> List[ModelResponse]:
         """Tokenize the context and continuation and compute the log likelihood of those
         tokenized sequences.
         """
+        # requests = requests[:10256]
         for request in tqdm(
             requests, desc="Tokenizing", disable=bool(dist.get_rank(self.parallel_context.world_pg) != 0)
         ):
@@ -455,13 +493,11 @@ class NanotronLightevalModel(LightevalModel):
 
         return self._loglikelihood_tokens(
             requests,
-            override_bs=override_bs,
             disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
         )
 
-    def loglikelihood_rolling(
-        self, requests: List[LoglikelihoodRollingRequest], override_bs: int = 0
-    ) -> List[LoglikelihoodResponse]:
+    @cached("predictions")
+    def loglikelihood_rolling(self, requests: List[Doc]) -> List[ModelResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         for request in tqdm(
             requests, desc="Tokenizing", disable=bool(dist.get_rank(self.parallel_context.world_pg) != 0)
@@ -471,7 +507,6 @@ class NanotronLightevalModel(LightevalModel):
 
         results = self._loglikelihood_tokens(
             requests,
-            override_bs=override_bs,
             disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
             return_bool_score=False,
         )
@@ -490,10 +525,10 @@ class NanotronLightevalModel(LightevalModel):
         We truncate to keep only at most `max_context` tokens
         We pad to `padding_length` tokens
         """
-        # if not full_attention_masks:
-        #     raise ValueError(
-        #         "Only full attention masks are supported for now - fix Flash Attention 2 support for more"
-        #     )
+        assert full_attention_masks is False, (
+            "full_attention_masks=True means we would be doing attention of padding tokens, which would affect negatively the results."
+        )
+        assert pad_on_left is False, "pad_on_left=True not supported yet, see TODOs below"
         current_pp_rank = dist.get_rank(self.parallel_context.pp_pg)
 
         if current_pp_rank != self.input_pp_rank:
@@ -509,31 +544,34 @@ class NanotronLightevalModel(LightevalModel):
         if max_context is None:
             max_context = self.max_length
 
-        if max_context % self.parallel_config.tp != 0:
-            # We need to round up to the next multiple of self.parallel_config.tp
-            if (max_context + (self.parallel_config.tp - max_context % self.parallel_config.tp)) < self.max_length:
-                # We can add some tokens
-                max_context = max_context + (self.parallel_config.tp - max_context % self.parallel_config.tp)
-            else:
-                # We need to remove some tokens
-                max_context = max_context - (max_context % self.parallel_config.tp)
+        assert self.parallel_config.tp_mode == TensorParallelLinearMode.ALL_REDUCE, (
+            "No reason to have tp_mode==REDUCE_SCATTER when doing inference"
+        )
+        # if max_context % self.parallel_config.tp != 0:
+        #     # We need to round up to the next multiple of self.parallel_config.tp
+        #     if (max_context + (self.parallel_config.tp - max_context % self.parallel_config.tp)) < self.max_length:
+        #         # We can add some tokens
+        #         max_context = max_context + (self.parallel_config.tp - max_context % self.parallel_config.tp)
+        #     else:
+        #         # We need to remove some tokens
+        #         max_context = max_context - (max_context % self.parallel_config.tp)
 
-        if padding_length % self.parallel_config.tp != 0:
-            # We need to round up to the next multiple of self.parallel_config.tp
-            if (
-                padding_length + (self.parallel_config.tp - padding_length % self.parallel_config.tp)
-            ) < self.max_length:
-                # We can add some tokens
-                padding_length = padding_length + (self.parallel_config.tp - padding_length % self.parallel_config.tp)
-            else:
-                # We need to remove some tokens
-                padding_length = padding_length - (padding_length % self.parallel_config.tp)
+        # if padding_length % self.parallel_config.tp != 0:
+        #     # We need to round up to the next multiple of self.parallel_config.tp
+        #     if (
+        #         padding_length + (self.parallel_config.tp - padding_length % self.parallel_config.tp)
+        #     ) < self.max_length:
+        #         # We can add some tokens
+        #         padding_length = padding_length + (self.parallel_config.tp - padding_length % self.parallel_config.tp)
+        #     else:
+        #         # We need to remove some tokens
+        #         padding_length = padding_length - (padding_length % self.parallel_config.tp)
 
         # because vectorizing is annoying, we first convert each (context, continuation) pair to padded
         # tensors, then we pack them together into a batch, call the model, and then pick it all apart
         # again because vectorizing is annoying
 
-        # Each sample is concatenated and cut to lenght or padded to max_length
+        # Each sample is concatenated and cut to length or padded to max_length
         for tokens in batch:
             truncated.append(max(len(tokens) - max_context, 0))
 
@@ -569,7 +607,9 @@ class NanotronLightevalModel(LightevalModel):
             if pad_on_left:
                 inp = torch.cat(
                     [
-                        torch.zeros(padding_length - inplen, dtype=torch.long),  # [padding_length - seq]
+                        torch.zeros(
+                            padding_length - inplen, dtype=torch.long
+                        ),  # [padding_length - seq] #TODO: padding_token not always 0
                         inp,  # [seq]
                     ],
                     dim=0,
@@ -578,7 +618,9 @@ class NanotronLightevalModel(LightevalModel):
                 inp = torch.cat(
                     [
                         inp,  # [seq]
-                        torch.zeros(padding_length - inplen, dtype=torch.long),  # [padding_length - seq]
+                        torch.zeros(
+                            padding_length - inplen, dtype=torch.long
+                        ),  # [padding_length - seq] #TODO: padding_token not always 0
                     ],
                     dim=0,
                 )
@@ -636,240 +678,13 @@ class NanotronLightevalModel(LightevalModel):
         return total_length, subset_length
 
     @torch.inference_mode()
-    def _loglikelihood_single_token(
-        self, requests, disable_tqdm: bool = False, override_bs: int = 0, num_dataset_splits: int = 1
-    ) -> List[LoglikelihoodSingleTokenResponse]:
-        dataset = LoglikelihoodSingleTokenDataset(requests=requests)
-        res = []
-
-        # Dataset is sorted in descending size.
-        # every 20-25% of the dataset we try to double the batch size for speed up
-        printed_error = False
-        starting_batch_size = 512
-
-        total_length, subset_length = self._get_subsets(dataset, num_dataset_splits)
-
-        for s, subset_start in enumerate(
-            tqdm(
-                range(0, total_length, subset_length),
-                disable=disable_tqdm,
-                position=0,
-                desc=f"loglikelihood_single_token -- for Node {dist.get_rank(self.parallel_context.world_pg)}",
-            )
-        ):
-            dataset.split_start = subset_start
-            dataset.split_end = min(subset_start + subset_length, total_length)
-
-            # automatic (variable) batch size detection for vectorization
-            # pull longest context sample from request
-            context_enc = dataset[0].tokenized_context
-            max_context = len(context_enc[-self.max_length :])
-            batch_size = self._get_batch_size(
-                override_bs=override_bs, max_input_length=max_context, starting_batch_size=starting_batch_size
-            )
-
-            starting_batch_size = batch_size * 2  # for the next round
-
-            # For the DP replicas
-            distributed_sampler = DistributedSampler(
-                dataset,
-                num_replicas=self.parallel_context.dp_pg.size(),
-                rank=dist.get_rank(self.parallel_context.dp_pg),
-                shuffle=False,
-                drop_last=False,
-            )
-            to_remove_at_the_end = distributed_sampler.total_size - len(dataset)
-
-            dataloader = DataLoader(
-                dataset,
-                batch_size=batch_size,
-                sampler=distributed_sampler,
-                collate_fn=lambda batch: batch,
-                drop_last=False,
-            )
-
-            tq = tqdm(
-                dataloader,
-                disable=disable_tqdm,
-                position=1,
-                desc=f"loglikelihood_single_token in subset {s} Node {dist.get_rank(self.parallel_context.world_pg)}",
-            )
-
-            for j, batch_data in enumerate(tq):
-                if j < 3:
-                    log_rank(
-                        f"Memory usage: {torch.cuda.memory_allocated() / 1024**2:.2f}MB. Peak reserved memory: {torch.cuda.max_memory_reserved() / 1024**2:.2f}MB",
-                        logger=logger,
-                        level=logging.INFO,
-                        group=self.parallel_context.world_pg,
-                        rank=0,
-                    )
-                iteration_start_time = time.time()
-                inputs = [item.tokenized_context for item in batch_data]
-
-                batch_model = self.prepare_batch(
-                    inputs, padding_length=max_context, max_context=max_context, full_attention_masks=True
-                )
-                # batched_inputs, batch_attention, input_lengths, truncated, padded
-
-                out = self.model(input_ids=batch_model.input_ids, input_mask=batch_model.input_mask)
-
-                if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
-                    # This process got outputs
-
-                    # Gather all the output accross TP
-                    out = out.transpose(0, 1).contiguous()  # [batch, seq_length, vocab]
-
-                    gathered_out = [torch.zeros_like(out) for _ in range(self.parallel_context.tp_pg.size())]
-                    dist.all_gather(gathered_out, out, group=self.parallel_context.tp_pg, async_op=False)
-                    out = torch.cat(gathered_out, dim=-1)
-
-                    out = F.log_softmax(out, dim=-1)  # [batch, padding_length, vocab]
-
-                    batch_probs = []
-                    batch_cont_tokens = []
-                    for i, (batch, logits, inplen) in enumerate(zip(batch_data, out, batch_model.input_lengths)):
-                        context = batch.context
-                        cont_toks = batch.tokenized_continuation
-                        # Get the last token
-                        logits = logits[inplen - 1]  # [vocab]
-
-                        cont_toks = torch.tensor(cont_toks, dtype=torch.long, device=self.device).squeeze(
-                            -1
-                        )  # [num_choices]
-
-                        top_k = torch.topk(logits, 20)[1].tolist()
-                        if any(bool(el not in top_k) for el in cont_toks) and not printed_error:
-                            top_toks_str = "|".join(self.tokenizer.decode(tt).replace("\n", "") for tt in top_k)
-                            cont_toks_str = "|".join(
-                                self.tokenizer.decode(tt).replace("\n", "") for tt in cont_toks.tolist()
-                            )
-                            logger.error(
-                                f"Not all the solutions are in the top 20 most likely tokens on rank {dist.get_rank(self.parallel_context.world_pg)} "
-                                f"Batch {j} element {i}: {context[0][-150:]} "
-                                f"top_tokens: {top_toks_str}\ncont_tokens: {cont_toks_str}"
-                            )
-                            # for i in range(inplen - 50, min(len(out[1]), inplen + 10)):
-                            #     print(
-                            #         i,
-                            #         "|".join(
-                            #             self.tokenizer.decode(tt) for tt in torch.topk(out[1][i], 10)[1].tolist()
-                            #         ),
-                            #     )
-
-                            printed_error = True
-                        # Obtain log-probs at the corresponding continuation token indices
-                        # last_token_slice = logits[:, -1, :].squeeze(0).tolist()
-                        probs = torch.gather(logits, dim=0, index=cont_toks)  # [num_choices]
-
-                        # Answer: (log prob, is-exact-match)
-                        # probs = torch.nn.functional.softmax(logits.float(), dim=0)  # [num_choices]
-                        batch_probs.append(probs)
-                        batch_cont_tokens.append(cont_toks)
-
-                    # Sync all
-                    # Need reshape/padding both locally (on each node) and generally accross nodes
-                    batched_inputs, _ = self.pad_and_gather(batch_model.input_ids)
-                    lengths = torch.tensor(batch_model.input_lengths, device=self.device)
-                    batched_lengths = self.gather(lengths)
-
-                    probs_lengths = torch.tensor([len(b) for b in batch_probs], device=self.device)
-                    max_probs_lengths = probs_lengths.max().item()
-                    batched_probs_lengths = self.gather(probs_lengths)
-                    batch_probs = torch.stack(
-                        [F.pad(c, (0, max_probs_lengths - c.shape[0]), value=0) for c in batch_probs],
-                        dim=0,
-                    )
-                    batch_probs, _ = self.pad_and_gather(batch_probs)
-
-                    cont_tokens_lengths = torch.tensor([len(b) for b in batch_cont_tokens], device=self.device)
-                    max_cont_tokens_lengths = cont_tokens_lengths.max().item()
-                    batched_cont_tokens_lengths = self.gather(cont_tokens_lengths)
-                    batch_cont_tokens = torch.stack(
-                        [F.pad(c, (0, max_cont_tokens_lengths - c.shape[0]), value=0) for c in batch_probs],
-                        dim=0,
-                    )
-                    batch_cont_tokens, _ = self.pad_and_gather(batch_cont_tokens)
-
-                    # No reshape
-                    batch_truncated = torch.tensor(batch_model.truncated, device=self.device)
-                    batch_truncated = self.gather(batch_truncated)
-                    batch_padded = torch.tensor(batch_model.padded, device=self.device)
-                    batch_padded = self.gather(batch_padded)
-
-                    batch_res = []
-                    for ix, (probs, cont_tokens, batched_input, trunc, padded, batched_length) in enumerate(
-                        zip(
-                            batch_probs,
-                            batch_cont_tokens,
-                            batched_inputs,
-                            batch_truncated,
-                            batch_padded,
-                            batched_lengths,
-                        )
-                    ):
-                        answer = LoglikelihoodSingleTokenResponse(
-                            result=probs[: batched_probs_lengths[ix]].numpy(force=True),
-                            input_tokens=batched_input[: batched_length.item()].numpy(force=True),
-                            generated_tokens=cont_tokens[: batched_cont_tokens_lengths[ix]].numpy(force=True),
-                            truncated_tokens_count=trunc.cpu().item(),
-                            padded_tokens_count=padded.cpu().item(),
-                        )
-                        batch_res.append(answer)
-
-                    # Sort batches back when we add then in res - because of the DistributedSampler, they are interleaved in the results:
-                    # Ex with DP=3 and a batch of size 3 we end up with 0 2 4 6 1 3 5 7 instead of 0 1 2 3 4 5 6 7
-                    assert len(batch_res) % self.parallel_context.dp_pg.size() == 0
-                    for i in range(len(batch_res) // self.parallel_context.dp_pg.size()):
-                        for j in range(self.parallel_context.dp_pg.size()):
-                            res.append(batch_res[i + j * (len(batch_res) // self.parallel_context.dp_pg.size())])
-
-                    # A bit of logging
-                    elapsed_time_per_iteration_ms = (time.time() - iteration_start_time) * 1000
-                    tokens_per_sec = batched_inputs.numel() / (elapsed_time_per_iteration_ms / 1000)
-
-                    tq.desc = f"loglikelihood_single_token Subset {s} Node {dist.get_rank(self.parallel_context.world_pg)} - {human_format(tokens_per_sec)} tokens/s"
-
-                    # Clean up GPUs
-                    del out
-                    del batch_probs
-                    del batched_inputs
-                    del batch_cont_tokens
-                    del batch_truncated
-                    del batch_padded
-
-            # At the end of the subset, remove the additional samples we may have added to make the dataset divisible by the number of processes
-            assert to_remove_at_the_end >= 0
-            res = res[: len(res) - to_remove_at_the_end]
-
-        # if dist.get_rank(self.parallel_context.tp_pg) == 0:
-        #     for i, r in enumerate(res):
-        #         print(f"i {i} results: {r.result[-30:]}")
-        #         print(f"i {i} input_tokens: {r.input_tokens[-(r.padded + 10):-r.padded]}")
-        #         print(f"i {i} cont_tokens: {r.cont_tokens[-30:]}")
-        #         print(f"i {i} truncated: {r.truncated}")
-        #         print(f"i {i} padded: {r.padded}")
-
-        if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
-            assert (
-                len(res) == total_length
-            ), f"we didn't cover all the data: len(res) == total_length ({len(res)} == {total_length})"
-
-        if len(res) == 0:
-            # We are in a process which return no output (beginning/middle of the PP group)
-            return []
-
-        return dataset.get_original_order(res)
-
-    @torch.inference_mode()
     def _loglikelihood_tokens(
         self,
         requests,
         disable_tqdm: bool = False,
-        override_bs: int = -1,
         num_dataset_splits: int = 1,
         return_bool_score: bool = True,
-    ) -> List[LoglikelihoodResponse]:
+    ) -> List[ModelResponse]:
         dataset = LoglikelihoodDataset(requests=requests, num_dataset_splits=num_dataset_splits)
         res = []
 
@@ -898,7 +713,9 @@ class NanotronLightevalModel(LightevalModel):
             max_context = len((context_enc + continuation_enc)[-(self.max_length + 1) :][:-1])
 
             batch_size = self._get_batch_size(
-                override_bs=override_bs, max_input_length=max_context, starting_batch_size=starting_batch_size
+                max_input_length=max_context,
+                override_bs=self.batch_size,
+                starting_batch_size=starting_batch_size,
             )
             starting_batch_size = batch_size * 2  # for the next round
 
@@ -939,22 +756,40 @@ class NanotronLightevalModel(LightevalModel):
                 inputs = [
                     item.tokenized_context + item.tokenized_continuation[:-1] for item in batch_data
                 ]  # The last token doesn't need to be input in the model
+
+                pad_on_left = (
+                    False  # if we unpad in modeling, it doesn't matter if left or right # TODO: not supported yet
+                )
                 batch_model = self.prepare_batch(
-                    inputs, padding_length=max_context, max_context=max_context, full_attention_masks=True
+                    inputs,
+                    padding_length=max_context,
+                    max_context=max_context,
+                    full_attention_masks=False,
+                    pad_on_left=pad_on_left,
                 )
                 # batched_inputs, batch_attention, input_lengths, truncated, padded
                 with torch.no_grad():
-                    out = self.model(input_ids=batch_model.input_ids, input_mask=batch_model.input_mask)
+                    # Create sequential position_ids initialized to -1 (for padding)
+                    position_ids = torch.full(
+                        batch_model.input_ids.shape, fill_value=-1, dtype=torch.long, device=self.device
+                    )
+
+                    for i, length in enumerate(batch_model.input_lengths):
+                        if pad_on_left:
+                            position_ids[i, -length:] = torch.arange(length, device=self.device, dtype=torch.int32)
+                        else:
+                            position_ids[i, :length] = torch.arange(length, device=self.device, dtype=torch.int32)
+                    out = self.model(input_ids=batch_model.input_ids, position_ids=position_ids)
 
                 if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
                     # This process got outputs
 
-                    # Gather all the output accross TP
+                    # Gather all the output across TP
                     gathered_out = [torch.zeros_like(out) for _ in range(self.parallel_context.tp_pg.size())]
                     dist.all_gather(gathered_out, out, group=self.parallel_context.tp_pg, async_op=False)
                     out = torch.cat(gathered_out, dim=-1)
 
-                    out = out.transpose(0, 1)  # [batch, seq_length, vocab]
+                    out = out.view(*batch_model.input_ids.shape, -1)  # [batch, seq_length, vocab]
                     multi_logits = F.log_softmax(out, dim=-1)  # [batch, padding_length, vocab]
 
                     logits_sum = []
@@ -982,7 +817,7 @@ class NanotronLightevalModel(LightevalModel):
 
                             cur_logits = (
                                 cur_logits[inplen - contlen : inplen].unsqueeze(0).to(self.device)
-                            )  # [1, seq, voc]
+                            )  # [1, seq, voc] #TODO: this assumes padding on the right
                             cont_toks = cont_toks.unsqueeze(0).to(self.device)  # [1, seq]
 
                         # Check if per-token argmax is exactly equal to continuation
@@ -1046,7 +881,7 @@ class NanotronLightevalModel(LightevalModel):
                             batch_padded,
                         )
                     ):
-                        answer = LoglikelihoodResponse(
+                        answer = ModelResponse(
                             result=(float(logit), bool(maxe)) if return_bool_score else float(logit.sum()),
                             input_tokens=batched_input[: batched_length.item()].numpy(force=True),
                             generated_tokens=cont_tokens[: cont_length.item()].numpy(force=True),
@@ -1096,13 +931,13 @@ class NanotronLightevalModel(LightevalModel):
         return dataset.get_original_order(res)
 
     @torch.inference_mode()
+    @cached("predictions")
     def greedy_until(
         self,
-        requests: List[GreedyUntilRequest],
+        requests: List[Doc],
         disable_tqdm: bool = False,
-        override_bs: int = -1,
         num_dataset_splits: int = 1,
-    ) -> List[GenerativeResponse]:
+    ) -> List[ModelResponse]:
         """Greedy generation until a stop token is generated."""
         # automatic (variable) batch size detection for vectorization
         # pull longest context sample from request
@@ -1140,7 +975,7 @@ class NanotronLightevalModel(LightevalModel):
                 max_input_length = min(len(context_enc) + max_gen, self.max_length)
 
             batch_size = self._get_batch_size(
-                override_bs=override_bs,
+                override_bs=self.batch_size,
                 max_input_length=max_input_length,
                 starting_batch_size=starting_batch_size,
             )
@@ -1234,7 +1069,7 @@ class NanotronLightevalModel(LightevalModel):
                     padded=[sum(mask == 0) for mask in tokenized["attention_mask"]],
                 )
 
-                # responses, logits and input_ids have all been gathered accross GPUs already
+                # responses, logits and input_ids have all been gathered across GPUs already
                 # but we also grab the original length of these vectors, which have been padded
                 # while being gathered - the added info
                 outputs = decode_tokenized(
@@ -1245,6 +1080,7 @@ class NanotronLightevalModel(LightevalModel):
                     max_new_tokens=max_new_tokens,
                     max_micro_batch_size=batch_size,  # ok for PP=1 for PP>1 we'll need to split the batch
                     returns_logits=returns_logits,
+                    tokenizer=self.tokenizer,
                     generation_config=self.generation_config,
                 )
                 dist.barrier()  # Got everyone to send their stuff
@@ -1279,7 +1115,7 @@ class NanotronLightevalModel(LightevalModel):
                         for stop_term in stop_terms:
                             decoded_response = decoded_response.split(stop_term)[0]
                         # partial caching
-                        cur_response = GenerativeResponse(
+                        cur_response = ModelResponse(
                             result=decoded_response,
                             logits=logits[ix][: len_logits[ix]] if returns_logits else None,
                             generated_tokens=generation,
@@ -1310,9 +1146,9 @@ class NanotronLightevalModel(LightevalModel):
             res = res[: len(res) - to_remove_at_the_end]
 
         if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
-            assert (
-                len(res) == total_length
-            ), f"we didn't cover all the data: len(res) == total_length ({len(res)} == {total_length})"
+            assert len(res) == total_length, (
+                f"we didn't cover all the data: len(res) == total_length ({len(res)} == {total_length})"
+            )
 
         if len(res) == 0:
             # We are in a process which return no output (beginning/middle of the PP group)

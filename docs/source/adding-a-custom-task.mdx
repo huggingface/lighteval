@@ -41,7 +41,6 @@ def prompt_fn(line, task_name: str = None):
         query=line["question"],
         choices=[f" {c}" for c in line["choices"]],
         gold_index=line["gold"],
-        instruction="",
     )
 ```
 
@@ -53,10 +52,9 @@ in [`lighteval.metrics.metrics.Metrics`]) or [create a custom one](adding-a-new-
 custom_metric = SampleLevelMetric(
     metric_name="my_custom_metric_name",
     higher_is_better=True,
-    category=MetricCategory.IGNORED,
-    use_case=MetricUseCase.NONE,
+    category=SamplingMethod.{GENERATIVE,LOGPROBS},
     sample_level_fn=lambda x: x,  # how to compute score for one sample
-    corpus_level_fn=np.mean,  # How to aggreagte the samples metrics
+    corpus_level_fn=np.mean,  # How to aggregate the samples metrics
 )
 ```
 
@@ -77,7 +75,7 @@ task = LightevalTaskConfig(
     evaluation_splits=[],
     few_shots_split=None,
     few_shots_select=None,
-    metric=[],  # select your metric in Metrics
+    metrics=[],  # select your metric in Metrics
 )
 ```
 
@@ -111,50 +109,6 @@ class CustomSubsetTask(LightevalTaskConfig):
 SUBSET_TASKS = [CustomSubsetTask(name=f"mytask:{subset}", hf_subset=subset) for subset in SAMPLE_SUBSETS]
 ```
 
-Here is a list of the parameters and their meaning:
-
-- `name` (str), your evaluation name
-- `suite` (list), the suite(s) to which your evaluation should belong. This
-  field allows us to compare different task implementations and is used as a
-  task selection to differentiate the versions to launch. At the moment, you'll
-  find the keywords ["helm", "bigbench", "original", "lighteval", "community",
-  "custom"]; for core evals, please choose `lighteval`.
-- `prompt_function` (Callable), the prompt function you defined in the step
-  above
-- `hf_repo` (str), the path to your evaluation dataset on the hub
-- `hf_subset` (str), the specific subset you want to use for your evaluation
-  (note: when the dataset has no subset, fill this field with `"default"`, not
-  with `None` or `""`)
-- `hf_avail_splits` (list), all the splits available for your dataset (train,
-  valid or validation, test, other...)
-- `evaluation_splits` (list), the splits you want to use for evaluation
-- `few_shots_split` (str, can be `null`), the specific split from which you
-  want to select samples for your few-shot examples. It should be different
-  from the sets included in `evaluation_splits`
-- `few_shots_select` (str, can be `null`), the method that you will use to
-  select items for your few-shot examples. Can be `null`, or one of:
-    - `balanced` select examples from the `few_shots_split` with balanced
-      labels, to avoid skewing the few shot examples (hence the model
-      generations) toward one specific label
-    - `random` selects examples at random from the `few_shots_split`
-    - `random_sampling` selects new examples at random from the
-      `few_shots_split` for every new item, but if a sampled item is equal to
-      the current one, it is removed from the available samples
-    - `random_sampling_from_train` selects new examples at random from the
-      `few_shots_split` for every new item, but if a sampled item is equal to
-      the current one, it is kept! Only use this if you know what you are
-      doing.
-    - `sequential` selects the first `n` examples of the `few_shots_split`
-- `generation_size` (int), the maximum number of tokens allowed for a
-  generative evaluation. If your evaluation is a log likelihood evaluation
-  (multi-choice), this value should be -1
-- `stop_sequence` (list), a list of strings acting as end of sentence tokens
-  for your generation
-- `metric` (list), the metrics you want to use for your evaluation (see next
-  section for a detailed explanation)
-- `trust_dataset` (bool), set to True if you trust the dataset.
-
-
 Then you need to add your task to the `TASKS_TABLE` list.
 
 ```python
@@ -171,7 +125,7 @@ Once your file is created you can then run the evaluation with the following com
 
 ```bash
 lighteval accelerate \
-    "pretrained=HuggingFaceH4/zephyr-7b-beta" \
+    "model_name=HuggingFaceH4/zephyr-7b-beta" \
     "community|{custom_task}|{fewshots}|{truncate_few_shot}" \
     --custom-tasks {path_to_your_custom_task_file}
 ```

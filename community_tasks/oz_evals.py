@@ -30,8 +30,6 @@ OZ Eval (sr. Opšte Znanje Evaluacija) dataset was created for the purposes of e
 Data consists of 1k+ high-quality questions and answers which were used as part of entry exams at the Faculty of Philosophy and Faculty of Organizational Sciences, University of Belgrade.
 The exams test the General Knowledge of students and were used in the enrollment periods from 2003 to 2024.
 For more details and results see: https://huggingface.co/datasets/DjMel/oz-eval
-
-In order to have comparable results to ours, please do not forget to run with --use_chat_template
 """
 
 from lighteval.metrics.metrics import Metrics
@@ -80,7 +78,7 @@ oz_eval_task = LightevalTaskConfig(
     evaluation_splits=["test"],
     few_shots_split=None,
     few_shots_select=None,
-    metric=[Metrics.loglikelihood_acc],
+    metrics=[Metrics.loglikelihood_acc],
     version=0,
 )
 

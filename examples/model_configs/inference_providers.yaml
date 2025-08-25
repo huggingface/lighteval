@@ -1,0 +1,8 @@
+model_parameters:
+  model_name: "meta-llama/Llama-3.1-8B-Instruct"
+  provider: "nebius"
+  timeout: null
+  proxies: null
+  parallel_calls_count: 20
+  generation_parameters:
+    temperature: 0.4

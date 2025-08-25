@@ -136,7 +136,7 @@ def get_mcq_prompt_function(
         context = f"{capitalize(fix_ending_punct(context_val, translation_literals))}\n" if context_val else ""
 
         question = capitalize(fix_ending_punct(mcq_input["question"], translation_literals))
-        answers = [capitalize(fix_ending_punct(answer, translation_literals)) for answer in mcq_input["choices"]]
+        answers = [capitalize(fix_ending_punct(str(answer), translation_literals)) for answer in mcq_input["choices"]]
 
         options = build_choices(answers, formulation, translation_literals)
         options = f"{options}\n" if options else ""
