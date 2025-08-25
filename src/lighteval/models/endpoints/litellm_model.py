@@ -82,6 +82,12 @@ class LiteLLMModelConfig(ModelConfig):
             Maximum number of concurrent API requests to execute in parallel.
             Higher values can improve throughput for batch processing but may hit rate limits
             or exhaust API quotas faster. Default is 10.
+        generation_parameters (GenerationParameters, optional, defaults to empty GenerationParameters):
+            Configuration parameters that control text generation behavior, including
+            temperature, top_p, max_new_tokens, etc.
+        system_prompt (str | None, optional, defaults to None): Optional system prompt to be used with chat models.
+            This prompt sets the behavior and context for the model during evaluation.
+        cache_dir (str, optional, defaults to "~/.cache/huggingface/lighteval"): Directory to cache the model.
 
     Example:
         ```python

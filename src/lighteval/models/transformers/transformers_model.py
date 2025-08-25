@@ -116,6 +116,12 @@ class TransformersModelConfig(ModelConfig):
         override_chat_template (bool):
             If True, we force the model to use a chat template. If alse, we prevent the model from using
             a chat template. If None, we use the default (true if present in the tokenizer, false otherwise)
+        generation_parameters (GenerationParameters, optional, defaults to empty GenerationParameters):
+            Configuration parameters that control text generation behavior, including
+            temperature, top_p, max_new_tokens, etc.
+        system_prompt (str | None, optional, defaults to None): Optional system prompt to be used with chat models.
+            This prompt sets the behavior and context for the model during evaluation.
+        cache_dir (str, optional, defaults to "~/.cache/huggingface/lighteval"): Directory to cache the model.
 
     Example:
         ```python

@@ -82,6 +82,12 @@ class ServerlessEndpointModelConfig(ModelConfig):
             Whether to add special tokens during tokenization. Defaults to True.
         batch_size (int):
             Batch size for requests. Defaults to 1 (serverless API limitation).
+        generation_parameters (GenerationParameters, optional, defaults to empty GenerationParameters):
+            Configuration parameters that control text generation behavior, including
+            temperature, top_p, max_new_tokens, etc.
+        system_prompt (str | None, optional, defaults to None): Optional system prompt to be used with chat models.
+            This prompt sets the behavior and context for the model during evaluation.
+        cache_dir (str, optional, defaults to "~/.cache/huggingface/lighteval"): Directory to cache the model.
 
     Example:
         ```python
@@ -143,6 +149,12 @@ class InferenceEndpointModelConfig(ModelConfig):
             Additional environment variables for the endpoint.
         batch_size (int):
             Batch size for requests. Defaults to 1.
+        generation_parameters (GenerationParameters, optional, defaults to empty GenerationParameters):
+            Configuration parameters that control text generation behavior, including
+            temperature, top_p, max_new_tokens, etc.
+        system_prompt (str | None, optional, defaults to None): Optional system prompt to be used with chat models.
+            This prompt sets the behavior and context for the model during evaluation.
+        cache_dir (str, optional, defaults to "~/.cache/huggingface/lighteval"): Directory to cache the model.
 
     Methods:
         model_post_init():

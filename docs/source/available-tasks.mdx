@@ -1,13 +1,28 @@
 # Available Tasks
 
-You can get a list of all the available tasks by running:
+Lighteval provides a comprehensive collection of evaluation tasks covering various aspects of language model capabilities. You can explore and use these tasks to evaluate your models across different domains and skills.
+
+## Discovering Available Tasks
+
+### List All Tasks
+
+You can get a list of all available tasks by running:
 
 ```bash
 lighteval tasks list
 ```
 
-You can also inspect a specific task by running:
+This command will display all tasks organized by their suites (e.g., leaderboard, lighteval, community).
+
+### Inspect Specific Tasks
+
+You can inspect a specific task to see its configuration, metrics, and requirements by running:
 
 ```bash
 lighteval tasks inspect <task_name>
+```
+
+For example:
+```bash
+lighteval tasks inspect "leaderboard|truthfulqa:mc|0|0"
 ```

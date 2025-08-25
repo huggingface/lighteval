@@ -1,13 +1,12 @@
-# Inference Providers as backend
+# Using Inference Providers as Backend
 
-Lighteval allows to use Hugging Face's Inference Providers to evaluate llms on supported providers such as Black Forest Labs, Cerebras, Fireworks AI, Nebius, Together AI and many more.
-
-## Quick use
+Lighteval allows you to use Hugging Face's Inference Providers to evaluate LLMs on supported providers such as Black Forest Labs, Cerebras, Fireworks AI, Nebius, Together AI, and many more.
 
 > [!WARNING]
-> Do not forget to set your HuggingFace API key.
+> Do not forget to set your Hugging Face API key.
 > You can set it using the `HF_TOKEN` environment variable or by using the `huggingface-cli` command.
 
+## Basic Usage
 
 ```bash
 lighteval endpoint inference-providers \
@@ -15,9 +14,9 @@ lighteval endpoint inference-providers \
     "lighteval|gsm8k|0|0"
 ```
 
-## Using a config file
+## Using a Configuration File
 
-You can use config files to define the model and the provider to use.
+You can use configuration files to define the model and the provider to use.
 
 ```bash
 lighteval endpoint inference-providers \
@@ -25,7 +24,7 @@ lighteval endpoint inference-providers \
     "lighteval|gsm8k|0|0"
 ```
 
-with the following config file:
+With the following configuration file:
 
 ```yaml
 model_parameters:
@@ -42,3 +41,76 @@ model_parameters:
 
 By default, inference requests are billed to your personal account.
 Optionally, you can charge them to an organization by setting `org_to_bill="<your_org_name>"` (requires being a member of that organization).
+
+## Supported Providers
+
+Hugging Face Inference Providers supports a wide range of LLM providers see the [Inference Providers documentation](https://huggingface.co/docs/inference-endpoints/guides/inference_providers) for the complete list.
+
+
+## Key Parameters
+
+### Provider Configuration
+- `model_name`: The Hugging Face model ID to use
+- `provider`: The inference provider (together, fireworks, novita, etc.)
+- `timeout`: Request timeout in seconds (null for default)
+- `proxies`: Proxy configuration (null for default)
+- `parallel_calls_count`: Number of parallel API calls (default: 10)
+- `org_to_bill`: Organization name for billing (optional)
+
+### Generation Parameters
+- `temperature`: Controls randomness in generation (0.0 = deterministic, 1.0 = random)
+- `max_new_tokens`: Maximum number of tokens to generate
+- `top_k`: Top-k sampling parameter
+- `top_p`: Nucleus sampling parameter
+- `repetition_penalty`: Penalty for repeating tokens
+- `stop_tokens`: List of tokens that stop generation
+
+### Advanced Configuration
+- `trust_remote_code`: Whether to trust remote code from the model
+- `use_auth_token`: Custom authentication token
+- `device_map`: Device mapping for model loading
+
+## Billing and Costs
+
+### Personal Account Billing
+By default, all inference requests are billed to your personal Hugging Face account. You can monitor your usage in the [Hugging Face billing dashboard](https://huggingface.co/settings/billing).
+
+### Organization Billing
+To bill requests to an organization:
+
+1. Ensure you are a member of the organization
+2. Add `org_to_bill="<organization_name>"` to your configuration
+3. The organization must have sufficient credits
+
+```yaml
+model_parameters:
+  model_name: "meta-llama/Llama-2-7b-chat-hf"
+  provider: "together"
+  org_to_bill: "my-organization"
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **API Key Errors**: Ensure your `HF_TOKEN` is set correctly
+2. **Provider Not Available**: Check that the provider supports your model
+3. **Billing Issues**: Verify you have sufficient credits or organization permissions
+4. **Timeout Errors**: Increase the timeout parameter for large models
+
+### Performance Tips
+
+- Use appropriate `parallel_calls_count` based on your needs
+- Monitor your usage to avoid unexpected costs
+- Consider using organization billing for team projects
+- Use appropriate timeout values for your model size
+
+### Error Handling
+
+Common error messages and solutions:
+- **"Provider not found"**: Check the provider name is correct
+- **"Model not available"**: Verify the model is supported by the provider
+- **"Insufficient credits"**: Add credits to your account or organization
+- **"Timeout"**: Increase the timeout parameter or use a smaller model
+
+For more detailed error handling and provider-specific information, refer to the [Hugging Face Inference Providers documentation](https://huggingface.co/docs/inference-endpoints/guides/inference_providers).

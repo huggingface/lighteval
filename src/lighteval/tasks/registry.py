@@ -68,20 +68,29 @@ class Registry:
 
     def __init__(self, custom_tasks: str | Path | ModuleType | None = None):
         """
-        Initialize the Registry class.
-        Registry is responsible for holding a dict of task and their config, initializing a LightevalTask instance when asked.
+        Initialize the Registry with optional custom tasks.
+
+        The registry is responsible for holding a dictionary of tasks and their
+        configurations, and initializing LightevalTask instances when requested.
 
         Args:
-            custom_tasks (Optional[Union[str, Path, ModuleType]]): Custom tasks to be included in registry. Can be a string path, Path object, or a module.
-                Each custom task should be a module with a TASKS_TABLE exposing a list of LightevalTaskConfig.
-                E.g:
-                TASKS_TABLE = [
-                    LightevalTaskConfig(
-                        name="custom_task",
-                        suite="custom",
-                        ...
-                    )
-                ]
+            custom_tasks: Custom tasks to be included in the registry. Can be:
+                - A string path to a Python file containing custom tasks
+                - A Path object pointing to a custom tasks file
+                - A module object containing custom task configurations
+                - None for default behavior (no custom tasks)
+
+                Each custom task module should contain a TASKS_TABLE exposing
+                a list of LightevalTaskConfig objects.
+
+                Example:
+                    TASKS_TABLE = [
+                        LightevalTaskConfig(
+                            name="custom_task",
+                            suite="custom",
+                            ...
+                        )
+                    ]
         """
         self._custom_tasks = custom_tasks
 
