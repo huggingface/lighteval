@@ -23,9 +23,9 @@
 # flake8: noqa: C901
 import os
 
+import yaml
 from typer import Option
 from typing_extensions import Annotated
-import yaml
 from yaml import SafeLoader
 
 
@@ -47,16 +47,19 @@ def nanotron(
     """
     Evaluate models using nanotron as backend.
     """
-    from nanotron.config import get_config_from_dict, get_config_from_file, ModelArgs, TokenizerArgs, GeneralArgs
+    from nanotron.config import GeneralArgs, ModelArgs, TokenizerArgs, get_config_from_dict, get_config_from_file
 
-    from lighteval.config.lighteval_config import FullNanotronConfig, LightEvalConfig, LightEvalLoggingArgs, LightEvalTasksArgs
+    from lighteval.config.lighteval_config import (
+        FullNanotronConfig,
+        LightEvalConfig,
+    )
     from lighteval.logging.evaluation_tracker import EvaluationTracker
     from lighteval.pipeline import ParallelismManager, Pipeline, PipelineParameters
     from lighteval.utils.imports import NO_NANOTRON_ERROR_MSG, is_nanotron_available
 
     if not is_nanotron_available():
         raise ImportError(NO_NANOTRON_ERROR_MSG)
-    
+
     # Create nanotron config
     if not checkpoint_config_path.endswith(".yaml"):
         raise ValueError("The checkpoint path should point to a YAML file")
@@ -64,12 +67,15 @@ def nanotron(
     with open(checkpoint_config_path) as f:
         nanotron_yaml = yaml.load(f, Loader=SafeLoader)
 
-    model_config, tokenizer_config, general_config = [get_config_from_dict(
-        nanotron_yaml[key],
-        config_class=config_class,
-        skip_unused_config_keys=True,
-        skip_null_keys=True,
-    ) for key, config_class in [("model", ModelArgs), ("tokenizer", TokenizerArgs), ("general", GeneralArgs)]]
+    model_config, tokenizer_config, general_config = [
+        get_config_from_dict(
+            nanotron_yaml[key],
+            config_class=config_class,
+            skip_unused_config_keys=True,
+            skip_null_keys=True,
+        )
+        for key, config_class in [("model", ModelArgs), ("tokenizer", TokenizerArgs), ("general", GeneralArgs)]
+    ]
 
     # Load lighteval config
     lighteval_config: LightEvalConfig = get_config_from_file(lighteval_config_path, config_class=LightEvalConfig)  # type: ignore

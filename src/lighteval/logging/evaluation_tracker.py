@@ -213,6 +213,7 @@ class EvaluationTracker:
         # Create the details datasets for later upload
         details_datasets: dict[str, Dataset] = {}
         for task_name, task_details in self.details_logger.details.items():
+            # pickle the task_details and save to a file
             # Create a dataset from the dictionary - we force cast to str to avoid formatting problems for nested objects
             dataset = Dataset.from_list([asdict(detail) for detail in task_details])
 
@@ -327,7 +328,7 @@ class EvaluationTracker:
         }
 
         final_dict = {
-            k: {eval_name.replace("|", ":"): eval_score for eval_name, eval_score in v.items()}
+            k: {eval_name: eval_score for eval_name, eval_score in v.items()}
             for k, v in to_dump.items()
         }
 
@@ -591,7 +592,7 @@ class EvaluationTracker:
             f"To load the details from a run, you can for instance do the following:\n"
             f'```python\nfrom datasets import load_dataset\ndata = load_dataset("{repo_id}",\n\t"{sanitized_task}",\n\tsplit="train")\n```\n\n'
             f"## Latest results\n\n"
-            f'These are the [latest results from run {max_last_eval_date_results}]({last_results_file_path.replace("/resolve/", "/blob/")})'
+            f"These are the [latest results from run {max_last_eval_date_results}]({last_results_file_path.replace('/resolve/', '/blob/')})"
             f"(note that their might be results for other tasks in the repos if successive evals didn't cover the same tasks. "
             f'You find each in the results and the "latest" split for each eval):\n\n'
             f"```python\n{results_string}\n```",

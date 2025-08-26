@@ -65,7 +65,6 @@ from lighteval.utils.parallelism import test_all_gather
 from lighteval.utils.utils import make_results_table
 
 
-
 if is_accelerate_available():
     from accelerate import Accelerator, InitProcessGroupKwargs
 if is_nanotron_available():
@@ -384,7 +383,7 @@ class Pipeline:
         try:
             return ast.literal_eval(processed)
         except Exception as e:
-            raise ValueError(f"Failed to parse after preprocessing. " f"Processed string:\n{processed}\n\nError: {e}")
+            raise ValueError(f"Failed to parse after preprocessing. Processed string:\n{processed}\n\nError: {e}")
 
     def _load_responses_from_details(self):
         logger.info("--- LOADING RESPONSES FROM DETAILS ---")
@@ -509,7 +508,16 @@ class Pipeline:
         for task_name, samples_per_metric in task_metric_category_groups.items():
             task: LightevalTask = self._get_task(task_name)
 
+            num_metric_categories = len(samples_per_metric)
+
             for metric_category, samples in samples_per_metric.items():
+
+                details_task_name = task_name
+                if len(samples_per_metric) > 1:
+                    parts = task_name.split("|")
+                    parts[1] = parts[1] + f"_v{metric_category.name}"
+                    details_task_name = "|".join(parts)
+
                 sample_ids = samples["ids"]
                 responses = samples["responses"]
                 docs = samples["docs"]
@@ -525,7 +533,7 @@ class Pipeline:
 
                 for output, doc, response in zip(outputs, docs, responses):
                     self.evaluation_tracker.metrics_logger.log(task_name, output)
-                    self.evaluation_tracker.details_logger.log(task_name, task, doc, response, output)
+                    self.evaluation_tracker.details_logger.log(details_task_name, task, doc, response, output)
 
     def save_and_push_results(self):
         logger.info("--- SAVING AND PUSHING RESULTS ---")

@@ -22,6 +22,7 @@
 # SOFTWARE.
 
 """Simplified version of the BertScorer lib - we only import what we need."""
+
 import logging
 import os
 import time

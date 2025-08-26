@@ -338,9 +338,7 @@ class NanotronLightevalModel(LightevalModel):
 
     def _model_call(self, inputs: torch.Tensor) -> torch.Tensor:
         position_ids = (
-            torch.arange(
-                inputs.shape[1], device=inputs.device, dtype=torch.int32
-            )
+            torch.arange(inputs.shape[1], device=inputs.device, dtype=torch.int32)
             .unsqueeze(0)
             .repeat(inputs.shape[0], 1)
         )
@@ -460,9 +458,7 @@ class NanotronLightevalModel(LightevalModel):
             disable_tqdm=bool(dist.get_rank(self.parallel_context.world_pg) != 0),
         )
 
-    def loglikelihood_rolling(
-        self, requests: List[LoglikelihoodRollingRequest]
-    ) -> List[LoglikelihoodResponse]:
+    def loglikelihood_rolling(self, requests: List[LoglikelihoodRollingRequest]) -> List[LoglikelihoodResponse]:
         """This function is used to compute the log likelihood of the context for perplexity metrics."""
         for request in tqdm(
             requests, desc="Tokenizing", disable=bool(dist.get_rank(self.parallel_context.world_pg) != 0)
@@ -490,7 +486,9 @@ class NanotronLightevalModel(LightevalModel):
         We truncate to keep only at most `max_context` tokens
         We pad to `padding_length` tokens
         """
-        assert full_attention_masks == False, "full_attention_masks=True means we would be doing attention of padding tokens, which would affect negatively the results."
+        assert full_attention_masks == False, (
+            "full_attention_masks=True means we would be doing attention of padding tokens, which would affect negatively the results."
+        )
         assert pad_on_left == False, "pad_on_left=True not supported yet, see TODOs below"
         current_pp_rank = dist.get_rank(self.parallel_context.pp_pg)
 
@@ -507,7 +505,9 @@ class NanotronLightevalModel(LightevalModel):
         if max_context is None:
             max_context = self.max_length
 
-        assert self.parallel_config.tp_mode == TensorParallelLinearMode.ALL_REDUCE, "No reason to have tp_mode==REDUCE_SCATTER when doing inference"
+        assert self.parallel_config.tp_mode == TensorParallelLinearMode.ALL_REDUCE, (
+            "No reason to have tp_mode==REDUCE_SCATTER when doing inference"
+        )
         # if max_context % self.parallel_config.tp != 0:
         #     # We need to round up to the next multiple of self.parallel_config.tp
         #     if (max_context + (self.parallel_config.tp - max_context % self.parallel_config.tp)) < self.max_length:
@@ -568,7 +568,9 @@ class NanotronLightevalModel(LightevalModel):
             if pad_on_left:
                 inp = torch.cat(
                     [
-                        torch.zeros(padding_length - inplen, dtype=torch.long),  # [padding_length - seq] #TODO: padding_token not always 0
+                        torch.zeros(
+                            padding_length - inplen, dtype=torch.long
+                        ),  # [padding_length - seq] #TODO: padding_token not always 0
                         inp,  # [seq]
                     ],
                     dim=0,
@@ -577,7 +579,9 @@ class NanotronLightevalModel(LightevalModel):
                 inp = torch.cat(
                     [
                         inp,  # [seq]
-                        torch.zeros(padding_length - inplen, dtype=torch.long),  # [padding_length - seq] #TODO: padding_token not always 0
+                        torch.zeros(
+                            padding_length - inplen, dtype=torch.long
+                        ),  # [padding_length - seq] #TODO: padding_token not always 0
                     ],
                     dim=0,
                 )
@@ -856,9 +860,9 @@ class NanotronLightevalModel(LightevalModel):
         #         print(f"i {i} padded: {r.padded}")
 
         if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
-            assert (
-                len(res) == total_length
-            ), f"we didn't cover all the data: len(res) == total_length ({len(res)} == {total_length})"
+            assert len(res) == total_length, (
+                f"we didn't cover all the data: len(res) == total_length ({len(res)} == {total_length})"
+            )
 
         if len(res) == 0:
             # We are in a process which return no output (beginning/middle of the PP group)
@@ -946,14 +950,22 @@ class NanotronLightevalModel(LightevalModel):
                     item.tokenized_context + item.tokenized_continuation[:-1] for item in batch_data
                 ]  # The last token doesn't need to be input in the model
 
-                pad_on_left = False # if we unpad in modeling, it doesn't matter if left or right # TODO: not supported yet
+                pad_on_left = (
+                    False  # if we unpad in modeling, it doesn't matter if left or right # TODO: not supported yet
+                )
                 batch_model = self.prepare_batch(
-                    inputs, padding_length=max_context, max_context=max_context, full_attention_masks=False, pad_on_left=pad_on_left
+                    inputs,
+                    padding_length=max_context,
+                    max_context=max_context,
+                    full_attention_masks=False,
+                    pad_on_left=pad_on_left,
                 )
                 # batched_inputs, batch_attention, input_lengths, truncated, padded
                 with torch.no_grad():
                     # Create sequential position_ids initialized to -1 (for padding)
-                    position_ids = torch.full(batch_model.input_ids.shape, fill_value=-1, dtype=torch.long, device=self.device)
+                    position_ids = torch.full(
+                        batch_model.input_ids.shape, fill_value=-1, dtype=torch.long, device=self.device
+                    )
 
                     for i, length in enumerate(batch_model.input_lengths):
                         if pad_on_left:
@@ -1325,9 +1337,9 @@ class NanotronLightevalModel(LightevalModel):
             res = res[: len(res) - to_remove_at_the_end]
 
         if dist.get_rank(self.parallel_context.pp_pg) == self.output_pp_rank:
-            assert (
-                len(res) == total_length
-            ), f"we didn't cover all the data: len(res) == total_length ({len(res)} == {total_length})"
+            assert len(res) == total_length, (
+                f"we didn't cover all the data: len(res) == total_length ({len(res)} == {total_length})"
+            )
 
         if len(res) == 0:
             # We are in a process which return no output (beginning/middle of the PP group)

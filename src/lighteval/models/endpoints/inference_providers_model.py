@@ -157,9 +157,9 @@ class InferenceProvidersClient(LightevalModel):
         results = []
 
         num_sampless = [num_samples for _ in prompts] if not isinstance(num_samples, list) else num_samples
-        assert len(prompts) == len(
-            num_sampless
-        ), f"Length of prompts and max_new_tokenss should be the same but are {len(prompts)}, {len(num_sampless)}"
+        assert len(prompts) == len(num_sampless), (
+            f"Length of prompts and max_new_tokenss should be the same but are {len(prompts)}, {len(num_sampless)}"
+        )
 
         async def bounded_api_call(prompt, num_samples):
             async with self.semaphore:

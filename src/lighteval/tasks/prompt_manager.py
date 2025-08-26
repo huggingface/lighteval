@@ -238,6 +238,7 @@ class PromptManager:
                     system_prompt=system_prompt,
                     use_chat_template=use_chat_template,
                     cot_prompt=cot_prompt,
+                    doc=doc,
                 )
                 if not use_chat_template:
                     toks = self.model.tok_encode(output)

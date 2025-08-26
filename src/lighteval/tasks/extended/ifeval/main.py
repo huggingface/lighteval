@@ -127,7 +127,7 @@ def agg_inst_level_acc(items):
 
 ifeval_metrics = SampleLevelMetricGrouping(
     metric_name=submetric_names,
-    higher_is_better={n: True for n in submetric_names},
+    higher_is_better=dict.fromkeys(submetric_names, True),
     category=MetricCategory.GENERATIVE,
     use_case=MetricUseCase.ACCURACY,
     sample_level_fn=ifeval_metric,

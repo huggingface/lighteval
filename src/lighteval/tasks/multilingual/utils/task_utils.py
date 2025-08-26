@@ -21,9 +21,10 @@
 # SOFTWARE.
 
 
-from lighteval.metrics.dynamic_metrics import loglikelihood_acc_metric
+from lighteval.metrics.dynamic_metrics import loglikelihood_acc_metric, probability_metric
 from lighteval.metrics.utils.metric_utils import Metric
 from lighteval.tasks.templates.utils.formulation import Formulation, MCFFormulation
+from lighteval.metrics.normalizations import LogProbTokenNorm
 
 
 def normalize_subset(subset: str) -> str:
@@ -39,4 +40,4 @@ def get_metrics_for_formulation(formulation: Formulation, metrics: list[Metric])
         case MCFFormulation(choice_prefix="Letters"):
             return [loglikelihood_acc_metric(normalization=None)]
         case _:
-            return metrics
+            return metrics + [probability_metric(normalization=LogProbTokenNorm()),]

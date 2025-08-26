@@ -447,9 +447,9 @@ class LightevalTask:
                 for i, choice in enumerate(formatted_doc.choices)
             ]
         if self.has_metric_category[MetricCategory.MULTICHOICE_PMI]:
-            assert (
-                formatted_doc.unconditioned_query is not None
-            ), "Unconditioned query is required for PMI normalization"
+            assert formatted_doc.unconditioned_query is not None, (
+                "Unconditioned query is required for PMI normalization"
+            )
             requests[RequestType.LOGLIKELIHOOD] += [
                 LoglikelihoodRequest(
                     task_name=current_task_name,

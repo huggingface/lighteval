@@ -20,19 +20,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Optional, Union
+
 from pydantic import BaseModel
-from dataclasses import field
 
 from lighteval.utils.imports import is_nanotron_available
 
 
 if is_nanotron_available():
-    from nanotron.config import ModelArgs, TokenizerArgs, GeneralArgs
+    from nanotron.config import GeneralArgs, ModelArgs, TokenizerArgs
     from nanotron.config.parallelism_config import ParallelismArgs
     from nanotron.generation.sampler import SamplerType
     from nanotron.logging import get_logger
+
     logger = get_logger(__name__)
 
 DEFAULT_GENERATION_SEED = 42
@@ -47,6 +48,7 @@ class GenerationArgs(BaseModel):
     eos: Optional[str] = None
     seed: Optional[int] = DEFAULT_GENERATION_SEED
     use_cache: Optional[bool] = False
+
 
 @dataclass
 class LightEvalLoggingArgs:

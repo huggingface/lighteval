@@ -527,7 +527,8 @@ class MetricsLogger:
                     stderr = None  # We skip stderr for some corpus metrics that return dicts
                 else:
                     aggregation = task.aggregation()[metric_name]
-                    stderr = get_stderr_function(aggregation=aggregation, number_experiments=1000)
+                    # stderr = get_stderr_function(aggregation=aggregation, number_experiments=1000)
+                    stderr = None
                 if stderr is not None and len(metric_values) > 1:
                     try:
                         self.metric_aggregated[task_name][f"{metric_name}_stderr"] = stderr(metric_values)

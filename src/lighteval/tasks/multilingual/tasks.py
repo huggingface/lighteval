@@ -30,6 +30,7 @@ from lighteval.metrics.dynamic_metrics import (
     loglikelihood_acc_metric,
     multilingual_quasi_exact_match_metric,
     multilingual_quasi_f1_score_metric,
+    probability_metric
 )
 from lighteval.metrics.metrics import Metrics
 from lighteval.metrics.normalizations import LogProbCharNorm, LogProbPMINorm, LogProbTokenNorm
@@ -39,6 +40,7 @@ from lighteval.tasks.multilingual.adapters import (
     agieval_adapter,
     alghafa_adapter,
     ceval_adapter,
+    enem_adapter,
     get_m3exam_adapter,
     get_mkqa_adapter,
     sciqa_adapter,
@@ -62,8 +64,6 @@ from lighteval.tasks.templates.utils.formulation import (
 )
 from lighteval.tasks.templates.utils.translation_literals import TRANSLATION_LITERALS
 from lighteval.utils.language import Language, iso_639_3_ind_to_iso_639_3_macro, manage_duplicate_language_codes
-
-from lighteval.tasks.multilingual.adapters import enem_adapter
 
 
 TASKS_TABLE = []
@@ -843,8 +843,9 @@ xquad_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metric=(
-            multilingual_quasi_exact_match_metric(language, "prefix"),
-            multilingual_quasi_f1_score_metric(language),
+            # multilingual_quasi_exact_match_metric(language, "prefix"),
+            # multilingual_quasi_f1_score_metric(language),
+            probability_metric(normalization=LogProbTokenNorm()),
         ),
     )
     for language in [
@@ -887,8 +888,9 @@ germanquad_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metric=(
-            multilingual_quasi_exact_match_metric(Language.GERMAN, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.GERMAN),
+            # multilingual_quasi_exact_match_metric(Language.GERMAN, "prefix"),
+            # multilingual_quasi_f1_score_metric(Language.GERMAN),
+            probability_metric(normalization=LogProbTokenNorm()),
         ),
     )
 ]
@@ -903,7 +905,7 @@ squad_it_tasks = [
             Language.ITALIAN,
             lambda line: {
                 "question": line["question"],
-                "context": line["context"], 
+                "context": line["context"],
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
@@ -916,8 +918,9 @@ squad_it_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metric=(
-            multilingual_quasi_exact_match_metric(Language.ITALIAN, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.ITALIAN),
+            # multilingual_quasi_exact_match_metric(Language.ITALIAN, "prefix"),
+            # multilingual_quasi_f1_score_metric(Language.ITALIAN),
+            probability_metric(normalization=LogProbTokenNorm()),
         ),
     )
 ]
@@ -943,8 +946,9 @@ thaiqa_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metric=(
-            multilingual_quasi_exact_match_metric(Language.THAI, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.THAI),
+            # multilingual_quasi_exact_match_metric(Language.THAI, "prefix"),
+            # multilingual_quasi_f1_score_metric(Language.THAI),
+            probability_metric(normalization=LogProbTokenNorm()),
         ),
     )
 ]
@@ -968,8 +972,9 @@ sber_squad_tasks = [
         evaluation_splits=("validation",),
         few_shots_split="train",
         metric=(
-            multilingual_quasi_exact_match_metric(Language.RUSSIAN, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.RUSSIAN),
+            # multilingual_quasi_exact_match_metric(Language.RUSSIAN, "prefix"),
+            # multilingual_quasi_f1_score_metric(Language.RUSSIAN),
+            probability_metric(normalization=LogProbTokenNorm()),
         ),
         generation_size=400,
         stop_sequence=("\n",),
@@ -998,8 +1003,9 @@ faquad_tasks = [
         evaluation_splits=("validation",),
         few_shots_split="train",
         metric=(
-            multilingual_quasi_exact_match_metric(Language.PORTUGUESE, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.PORTUGUESE),
+            # multilingual_quasi_exact_match_metric(Language.PORTUGUESE, "prefix"),
+            # multilingual_quasi_f1_score_metric(Language.PORTUGUESE),
+            probability_metric(normalization=LogProbTokenNorm()),
         ),
         generation_size=400,
         stop_sequence=("\n",),
@@ -1016,7 +1022,7 @@ squad_es_tasks = [
             Language.SPANISH,
             lambda line: {
                 "question": line["question"],
-                "context": line["context"], 
+                "context": line["context"],
                 "choices": [ans for ans in line["answers"]["text"] if len(ans) > 0],
             },
         ),
@@ -1027,14 +1033,14 @@ squad_es_tasks = [
         evaluation_splits=("validation",),
         few_shots_split="train",
         metric=(
-            multilingual_quasi_exact_match_metric(Language.SPANISH, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.SPANISH),
+            # multilingual_quasi_exact_match_metric(Language.SPANISH, "prefix"),
+            # multilingual_quasi_f1_score_metric(Language.SPANISH),
+            probability_metric(normalization=LogProbTokenNorm()),
         ),
         generation_size=400,
         stop_sequence=("\n",),
     )
 ]
-
 
 
 # ARCD: Arabic Reading Comprehension Dataset.
@@ -1056,8 +1062,9 @@ arcd_tasks = [
         evaluation_splits=("validation",),
         few_shots_split="train",
         metric=(
-            multilingual_quasi_exact_match_metric(Language.ARABIC, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.ARABIC),
+            # multilingual_quasi_exact_match_metric(Language.ARABIC, "prefix"),
+            # multilingual_quasi_f1_score_metric(Language.ARABIC),
+            probability_metric(normalization=LogProbTokenNorm()),
         ),
         generation_size=400,
         stop_sequence=("\n",),
@@ -1083,8 +1090,9 @@ kenswquad_tasks = [
         evaluation_splits=("test",),
         few_shots_split="validation",
         metric=(
-            multilingual_quasi_exact_match_metric(Language.SWAHILI, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.SWAHILI),
+            # multilingual_quasi_exact_match_metric(Language.SWAHILI, "prefix"),
+            # multilingual_quasi_f1_score_metric(Language.SWAHILI),
+            probability_metric(normalization=LogProbTokenNorm()),
         ),
         generation_size=400,
         stop_sequence=("\n",),
@@ -1110,8 +1118,9 @@ chinese_squad_tasks = [
         evaluation_splits=("validation",),
         few_shots_split="train",
         metric=(
-            multilingual_quasi_exact_match_metric(Language.CHINESE, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.CHINESE),
+            # multilingual_quasi_exact_match_metric(Language.CHINESE, "prefix"),
+            # multilingual_quasi_f1_score_metric(Language.CHINESE),
+            probability_metric(normalization=LogProbTokenNorm()),
         ),
         generation_size=400,
         stop_sequence=("\n",),
@@ -1138,8 +1147,9 @@ cmrc2018_tasks = [
         few_shots_split="train",
         generation_size=400,
         metric=(
-            multilingual_quasi_exact_match_metric(Language.CHINESE, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.CHINESE),
+            # multilingual_quasi_exact_match_metric(Language.CHINESE, "prefix"),
+            # multilingual_quasi_f1_score_metric(Language.CHINESE),
+            probability_metric(normalization=LogProbTokenNorm()),
         ),
         stop_sequence=("\n",),
     )
@@ -1170,8 +1180,9 @@ indicqa_tasks = [
         hf_avail_splits=("test",),
         generation_size=400,
         metric=(
-            multilingual_quasi_exact_match_metric(language, "prefix"),
-            multilingual_quasi_f1_score_metric(language),
+            # multilingual_quasi_exact_match_metric(language, "prefix"),
+            # multilingual_quasi_f1_score_metric(language),
+            probability_metric(normalization=LogProbTokenNorm()),
         ),
         stop_sequence=("\n",),
     )
@@ -1211,8 +1222,9 @@ fquad_v2_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metric=(
-            multilingual_quasi_exact_match_metric(Language.FRENCH, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.FRENCH),
+            # multilingual_quasi_exact_match_metric(Language.FRENCH, "prefix"),
+            # multilingual_quasi_f1_score_metric(Language.FRENCH),
+            probability_metric(normalization=LogProbTokenNorm()),
         ),
     )
 ]
@@ -1237,8 +1249,9 @@ tquad_v2_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metric=(
-            multilingual_quasi_exact_match_metric(Language.TURKISH, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.TURKISH),
+            # multilingual_quasi_exact_match_metric(Language.TURKISH, "prefix"),
+            # multilingual_quasi_f1_score_metric(Language.TURKISH),
+            probability_metric(normalization=LogProbTokenNorm()),
         ),
     )
 ]
@@ -1266,8 +1279,9 @@ tydiqa_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metric=(
-            multilingual_quasi_exact_match_metric(language, "prefix"),
-            multilingual_quasi_f1_score_metric(language),
+            # multilingual_quasi_exact_match_metric(language, "prefix"),
+            # multilingual_quasi_f1_score_metric(language),
+            probability_metric(normalization=LogProbTokenNorm()),
         ),
     )
     for language in [
@@ -1405,8 +1419,9 @@ mlqa_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metric=[
-            multilingual_quasi_exact_match_metric(lang, "prefix"),
-            multilingual_quasi_f1_score_metric(lang),
+            # multilingual_quasi_exact_match_metric(lang, "prefix"),
+            # multilingual_quasi_f1_score_metric(lang),
+            probability_metric(normalization=LogProbTokenNorm()),
         ],
     )
     for lang in [
@@ -2338,9 +2353,8 @@ mlmm_arc_challenge_tasks = [
             formulation=formulation,
         ),
         suite=("lighteval",),
-        hf_repo="jon-tow/okapi_arc_challenge",
+        hf_repo="lighteval/okapi_arc_challenge",
         hf_subset=standardize_tag(language.value),
-        hf_revision="823d5d7bfaf8974a3ab52a825b6cf4903b35dbc4",
         trust_dataset=True,
         evaluation_splits=("test",),
         few_shots_split="train",
@@ -3154,7 +3168,7 @@ openbook_es_tasks = [
     )
     for formulation in [
         MCFFormulation(),
-        CFFormulation(), 
+        CFFormulation(),
         HybridFormulation(),
     ]
 ]
@@ -3578,8 +3592,8 @@ oab_exams_tasks = [
     ]
 ]
 
-# ENEM (Exame Nacional do Ensino Médio) is a standardized Brazilian national secondary 
-# education examination. The exam is used both as a university admission test and as a 
+# ENEM (Exame Nacional do Ensino Médio) is a standardized Brazilian national secondary
+# education examination. The exam is used both as a university admission test and as a
 # high school evaluation test.
 # Dataset: https://huggingface.co/datasets/maritaca-ai/enem
 enem_tasks = [
@@ -3613,7 +3627,6 @@ enem_tasks = [
         HybridFormulation(),
     ]
 ]
-
 
 
 # WorldTree is a dataset for multi-hop inference in science question answering.
@@ -3866,8 +3879,9 @@ mkqa_tasks = [
         hf_avail_splits=["train"],
         stop_sequence=("\n",),
         metric=[
-            multilingual_quasi_exact_match_metric(language, "prefix"),
-            multilingual_quasi_f1_score_metric(language),
+            # multilingual_quasi_exact_match_metric(language, "prefix"),
+            # multilingual_quasi_f1_score_metric(language),
+            probability_metric(normalization=LogProbTokenNorm()),
         ]
         if subset in ["entity", "long_answer", "short_phrase"]
         else [
@@ -3923,8 +3937,9 @@ mintaka_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metric=[
-            multilingual_quasi_exact_match_metric(lang, "prefix"),
-            multilingual_quasi_f1_score_metric(lang),
+            # multilingual_quasi_exact_match_metric(lang, "prefix"),
+            # multilingual_quasi_f1_score_metric(lang),
+            probability_metric(normalization=LogProbTokenNorm()),
         ],
     )
     for lang in [
@@ -3958,8 +3973,9 @@ french_triviqa_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metric=[
-            multilingual_quasi_exact_match_metric(Language.FRENCH, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.FRENCH),
+            # multilingual_quasi_exact_match_metric(Language.FRENCH, "prefix"),
+            # multilingual_quasi_f1_score_metric(Language.FRENCH),
+            probability_metric(normalization=LogProbTokenNorm()),
         ],
     )
 ]
@@ -3983,8 +3999,9 @@ chegeka_tasks = [
         generation_size=400,
         stop_sequence=("\n",),
         metric=[
-            multilingual_quasi_exact_match_metric(Language.RUSSIAN, "prefix"),
-            multilingual_quasi_f1_score_metric(Language.RUSSIAN),
+            # multilingual_quasi_exact_match_metric(Language.RUSSIAN, "prefix"),
+            # multilingual_quasi_f1_score_metric(Language.RUSSIAN),
+            probability_metric(normalization=LogProbTokenNorm()),
         ],
     )
 ]
